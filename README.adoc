@@ -195,5 +195,7 @@ foo:
   int: VALUE
 ----
 
+|===
+
 == Additional Notes
 
