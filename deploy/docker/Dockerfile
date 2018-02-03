@@ -1,4 +1,3 @@
-# Hawkular OpenShift Agent Dockerfile
 FROM centos:centos7
 
 MAINTAINER TODO <TODO-dev@lists.jboss.org>
