@@ -1,0 +1,24 @@
+== Setup Your Own Local OpenShift Server From Source
+
+These files are used to build, start, and stop your own OpenShift environment from source:
+
+[cols="1,1"]
+|===
+|Script Name|Description
+
+|`env-openshift.sh`|Defines the OpenShift environment. Edit this so the variables are set to the appropriate values.
+|`build-openshift.sh`|Downloads the OpenShift Origin source code and builds it.
+|`cluster-openshift.sh`|Starts and stops your OpenShift Origin environment via "oc cluster up". Pass "up"/"down" to start/stop OpenShift.
+|===
+
+To build your own OpenShift Origin:
+
+1. Edit `env-openshift.sh` and set some of the variables to match your environment. Typically, you will leave most of this file the same, but you may want to edit the value of OPENSHIFT_GOPATH to point to a directory where you want the OpenShift Origin source to go. OPENSHIFT_IP_ADDRESS should pick up the IP address of your local machine, but if for some reason it does not, or if you want to use a different IP address, you may change the value of this variable to the custom IP address you want OpenShift Origin to bind to.
+
+2. Run `build-openshift.sh` which will update the OpenShift Origin code to the latest version (cloning the git repository if it has not yet been downloaded to your filesystem) and then run the build.
+
+At this point, you have your own copy of OpenShift Origin built. You can start and stop it using the `cluster-openshift.sh` script (which uses the "oc cluster" command):
+
+* You can start it via: `cluster-openshift.sh up`
+* You can stop it via: `cluster-openshift.sh down`
+* You can get version and status information via: `cluster-openshift.sh status`
