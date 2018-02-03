@@ -9,5 +9,4 @@ metadata:
 data:
   config.yaml: |
     foo:
-      string: default-foo
       int: 1234

@@ -25,28 +25,12 @@ clean:
 build:  clean
 	@echo Building...
 	${GO_BUILD_ENVVARS} go build \
-	   -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
-
-docker:
-	@echo Building Docker Image...
-	@mkdir -p _output/docker
-	@cp -r deploy/docker/* _output/docker
-	@cp sws _output/docker	
-	docker build -t ${DOCKER_TAG} _output/docker
-
-openshift-deploy: openshift-undeploy
-	@echo Deploying Components to OpenShift
-	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
-	oc process -f deploy/openshift/sws.yaml -v IMAGE_VERSION=${DOCKER_VERSION} | oc create -n ${NAMESPACE} -f -
-
-openshift-undeploy:
-	@echo Undeploying Components from OpenShift
-	oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles --selector=app=sws -n ${NAMESPACE}
+		-ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
 install:
 	@echo Installing...
 	${GO_BUILD_ENVVARS} go install \
-           -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
+		-ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
 build-test:
 	@echo Building and installing test dependencies to help speed up test runs.
@@ -74,3 +58,22 @@ dep-install:
 dep-update:
 	@echo Updating dependencies and storing in vendor directory
 	@dep ensure
+
+# cloud targets - building images and deploying
+
+docker:
+	@echo Building Docker Image...
+	@mkdir -p _output/docker
+	@cp -r deploy/docker/* _output/docker
+	@cp sws _output/docker
+	docker build -t ${DOCKER_TAG} _output/docker
+
+openshift-deploy: openshift-undeploy
+	@echo Deploying to OpenShift
+	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
+	oc process -f deploy/openshift/sws.yaml -p IMAGE_VERSION=${DOCKER_VERSION} | oc create -n ${NAMESPACE} -f -
+
+openshift-undeploy:
+	@echo Undeploying from OpenShift
+	oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles --selector=app=sws -n ${NAMESPACE}
+

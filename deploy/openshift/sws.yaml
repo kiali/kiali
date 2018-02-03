@@ -42,7 +42,7 @@ objects:
             - "-config"
             - "/sws-configuration/config.yaml"
             - "-v"
-            - "4"
+            - "5"
           env:
           - name: FOO_STRING
             valueFrom:
@@ -53,8 +53,5 @@ objects:
             mountPath: "/sws-configuration"
         volumes:
         - name: sws-configuration
-          configMap:
-            name: sws-configuration
-        - name: sws
           configMap:
             name: sws-configuration
