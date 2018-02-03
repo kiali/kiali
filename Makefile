@@ -77,3 +77,12 @@ openshift-undeploy:
 	@echo Undeploying from OpenShift
 	oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles --selector=app=sws -n ${NAMESPACE}
 
+k8s-deploy: k8s-undeploy
+	@echo Deploying to Kubernetes
+	kubectl create -f deploy/kubernetes/sws-configmap.yaml -n ${NAMESPACE}
+	kubectl create -f deploy/kubernetes/sws.yaml -n ${NAMESPACE}
+
+k8s-undeploy:
+	@echo Undeploying from Kubernetes
+	kubectl delete all,secrets,sa,configmaps,daemonsets,clusterroles --selector=app=sws -n ${NAMESPACE}
+

@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sws
+  labels:
+    app: sws
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: sws
+  labels:
+    name: sws
+    app: sws
+spec:
+  selector:
+    matchLabels:
+      name: sws
+  template:
+    metadata:
+      labels:
+        name: sws
+        app: sws
+    spec:
+      serviceAccount: sws
+      containers:
+      - image: jmazzitelli/sws:latest
+        name: sws
+        command:
+          - "/opt/sws/sws"
+          - "-config"
+          - "/sws-configuration/config.yaml"
+          - "-v"
+          - "5"
+        env:
+        - name: FOO_STRING
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        volumeMounts:
+        - name: sws-configuration
+          mountPath: "/sws-configuration"
+      volumes:
+      - name: sws-configuration
+        configMap:
+          name: sws-configuration
