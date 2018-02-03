@@ -40,7 +40,6 @@ after_success:
 - make build
 - docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
 - make docker
-- make docker-examples
 - docker push jmazzitelli/sws
 
 # Build only the master branch (for "latest" release) and version tags (e.g. "1.2.3" or "1.1.2.RC2" or "2.1.5.Final")
