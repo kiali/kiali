@@ -23,11 +23,11 @@ These build instructions assume you have the following installed on your system:
 
 To build SWS:
 
-* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/go/sws" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH.
+* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/go/jmazzitelli/sws" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH.
 
 [source,shell]
 ----
-export GOPATH=/source/go/sws
+export GOPATH=/source/go/jmazzitelli/sws
 mkdir -p $GOPATH
 cd $GOPATH
 mkdir -p src/github.com/sws

@@ -21,9 +21,9 @@ env:
 # The project committed the vendor directory into source so there is no need for
 # travis to install dep and pull down dependencies.
 # See: https://github.com/golang/dep/blob/master/docs/FAQ.md#should-i-commit-my-vendor-directory
-#install:
-#- make dep-install
-#- make dep-update
+install:
+- make dep-install
+- make dep-update
 
 script: make test
 
