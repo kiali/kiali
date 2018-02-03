@@ -78,7 +78,7 @@ The following section assumes that the user has link:https://github.com/openshif
 
 The link:https://docs.openshift.org/latest/welcome/index.html[OpenShift Origin Documentation] will outline all the steps required.
 
-You can alternatively build OpenShift Origin from source and run that. See link:hack/README.adoc for a quick way to do this using the *-openshift.sh scripts provided by this project.
+You can alternatively build OpenShift Origin from source and run that. See link:hack/README.adoc[] for a quick way to do this using the *-openshift.sh scripts provided by this project.
 
 ==== Building the Docker Image
 
