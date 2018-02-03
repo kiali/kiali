@@ -19,7 +19,7 @@ See the link:./LICENSE[LICENSE file].
 == Building
 
 [NOTE]
-These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language] which must be at least version 1.8, (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker], and (4) make. To run SWS inside OpenShift after you build it, it is assumed you have a running OpenShift environment available to you. If you do not, you can find a set of link:#setting-up-openshift[instructions on how to set up OpenShift below].
+These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language] which must be at least version 1.8, (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker], and (4) make. To run SWS on OpenShift after you build it, it is assumed you have a running OpenShift environment available to you. If you do not, you can find a set of link:#setting-up-openshift[instructions on how to set up OpenShift below]. To run SWS on Kubernetes after you built it, it is assumed you have a running Kubernetes environment available to you.
 
 To build SWS:
 
@@ -40,7 +40,7 @@ export PATH=${PATH}:${GOPATH}/bin
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/sws
+cd ${GOPATH}/src/github.com/jmazzitelli/sws
 make dep-install
 ----
 
@@ -48,7 +48,7 @@ make dep-install
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/sws
+cd ${GOPATH}/src/github.com/jmazzitelli/sws
 make dep-update
 ----
 
@@ -56,7 +56,7 @@ make dep-update
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/sws
+cd ${GOPATH}/src/github.com/jmazzitelli/sws
 make build
 ----
 
@@ -64,25 +64,21 @@ make build
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/sws
+cd ${GOPATH}/src/github.com/jmazzitelli/sws
 make test
 ----
 
 == Running
 
-=== Running Inside OpenShift
+=== Running on OpenShift
 
 ==== Setting up OpenShift
+
 The following section assumes that the user has link:https://github.com/openshift/origin[OpenShift Origin] installed.
 
 The link:https://docs.openshift.org/latest/welcome/index.html[OpenShift Origin Documentation] will outline all the steps required.
 
-If you wish to forgo installing and configuring OpenShift, the `oc cluster up` command can be used to get an instance of OpenShift Origin:
-
-[source,shell]
-----
-oc cluster up
-----
+You can alternatively build OpenShift Origin from source and run that. See link:hack/README.adoc for a quick way to do this using the *-openshift.sh scripts provided by this project.
 
 ==== Building the Docker Image
 
@@ -90,70 +86,82 @@ Create the SWS docker image through the "docker" make target:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/sws
+cd ${GOPATH}/src/github.com/jmazzitelli/sws
 make docker
 ----
 
-==== Deploying SWS Inside OpenShift
+==== Deploying SWS to OpenShift
 
 [NOTE]
-The following sections assume that the `oc` command is available in the user's path and that the user is logged in.
+The following commands assume that the `oc` command is available in the user's path and that the user is logged in.
 
-[TIP]
-====
-If you do not want to manually deploy SWS into OpenShift, the steps are automated in the Makefile. The following will undeploy an old installation of SWS, if available, and deploy a new one:
+The deploy and undeploy commands are automated in the Makefile. The following will undeploy an old installation of SWS, if available, and deploy a new one:
 ----
 make openshift-deploy
 ----
-====
 
-To deploy SWS, you will need to follow the following commands:
-
-[source,shell]
-----
-oc create -f deploy/openshift/sws-configmap.yaml -n default
-oc process -f deploy/openshift/sws.yaml | oc create -n default -f -
-----
-
-==== Undeploying SWS
+==== Undeploying SWS from OpenShift
 
 If you want to remove SWS from your OpenShift environment, you can do so by running the following command:
-
-[source,shell]
-----
-oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles --selector=app=sws -n default
-----
-
-Alternatively, the following will also perform the same task from the Makefile:
 
 [source,shell]
 ----
 make openshift-undeploy
 ----
 
-=== Running Outside OpenShift
+=== Running on Kubernetes
+
+==== Setting up Kubernetes
+
+The following section assumes that the user has link:https://github.com/kubernetes/kubernetes[Kubernetes] installed.
+
+==== Building the Docker Image
+
+Create the SWS docker image through the "docker" make target:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/sws
+cd ${GOPATH}/src/github.com/jmazzitelli/sws
+make docker
+----
+
+==== Deploying SWS to Kubernetes
+
+[NOTE]
+The following commands assume that the `kubectl` command is available in the user's path and that the user is logged in.
+
+The deploy and undeploy commands are automated in the Makefile. The following will undeploy an old installation of SWS, if available, and deploy a new one:
+----
+make k8s-deploy
+----
+
+==== Undeploying SWS from Kubernetes
+
+If you want to remove SWS from your Kubernetes environment, you can do so by running the following command:
+
+[source,shell]
+----
+make k8s-undeploy
+----
+
+=== Running Standalone
+
+Sometimes you may want to run SWS outside of any container environment, perhaps for debugging purposes. To do this, run:
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/jmazzitelli/sws
 make install
 make run
 ----
 
-The "install" target installs SWS executable in your GOPATH /bin directory so you can run it outside of the Makefile:
+The "install" target installs the SWS executable in your GOPATH /bin directory so you can run it outside of the Makefile:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/sws
+cd ${GOPATH}/src/github.com/jmazzitelli/sws
 make install
 ${GOPATH}/bin/sws -config <your-config-file>
-----
-
-If you don't want to store your token in the YAML file, you can pass it via an environment variable:
-
-[source,shell]
-----
-K8S_TOKEN=`oc whoami -t` ${GOPATH}/bin/sws -config config.yaml
 ----
 
 == Environment Variables
@@ -183,4 +191,3 @@ foo:
 |===
 
 == Additional Notes
-
