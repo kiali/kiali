@@ -1,12 +1,12 @@
 sudo: required
 
 services:
-  - docker
+- docker
 
 language: go
 
 go:
-  - 1.8.3
+- 1.8.3
 
 notifications:
   irc:
@@ -15,29 +15,29 @@ notifications:
 
 env:
   global:
-    - secure: ""
-    - secure: ""
+  - secure: aWVa9+scNmuGOu/6ehHR8C2yjRKMX7JQwjAv6+xkEM3v3dm/p3go+96RaRHYTLid0wfPjPm5h3P3UiN0kjwQsuN+x9MGsGnn10On7+Yf1gwBRRYq4r4gEzsnkTfofrApuqHjRwee81MaBDnrogtVP5swAM8Izas6YUkc3p0Jta16iGDw91LI9ykpAy5+ZX3d5v5hO/rg3YoOd9/FaC4AXxyG0cjQ1WnQ4tayHF19zCAGE9iUhOEtSDPgOFNT7qW1mgyqZ+t+sPBnxNKDnFpiYyFhU2WX27kdG2UEQ/1e4yB5y21KHUzbIJ/N7L8Z1JKeUkycwbkuoYYW+2dOhHictcQSyW2jkh2YJ7jpEqi13zof0c2IoN6z0i83t1Gh4gdxum9q8q9pqnZn/05iS0/4Mb8qQSKsLsQbW6Qqy+4OrIR4kM9URKbZ+DXCaNBctjUTxIFTnDOEFTT6I1TJTLPo6ZMV/bqhlt9cCJef+iz6d8a0m567iRw9RwioZQ3YUiEyWx4NauMojT7q94Ebu+ZQKxJxcxnwuB3Q3+znNMAuV+RvdbHN4agQp8mxtY6kXPPqe+w6wsVpkP1R9cqEPN7kkxJECbCvRibAOcZ9hDolevLB/dS05AxubgJJZCU3mX+0iyaDixqSYIIbTxTJaB8ArYGLwF7zaK/7uqmBNaDzmVk=
+  - secure: e+uNmKPbNpSdqL/rZQDCQiVvWuRUpLeOqriV/sYoRVa6pgh579exGBDi0pOxPKKAPB7QInIwXkh9Mm51tYOhd6EO1WzsCnNrd6zlXolCl0R56YtzGR+iny1gr+sEIRVNIRfikMjtilexMmBWjgdIO0qBY8LO3k2fnFnvXZTb0lucpKmSV9ffHPmyRIpRdPqJg3q43Y7xKa3HtunSudCKjqRhx54A5IFVv2w7Fby1Yh2+eSwQwh6AL/iPCsctgN+AGh6Hm5mP5FNkKyAtkBEV/325vqHrBnwl2nF23nwmBzCRbTc/Muh0N2BEj/e6pfzXABxCLeD7gfC/njGakGAUOpjY4ucS18uO+HsNEsS1D1mwD8e7IzvQDLxk3dOjm1/2cidBxLxogcsGoNCD/DEBgnePt592B1TLri/38gQS1kHHfZYM1gIRdGrDzazpB2SfOWwDP/PGwqMauFkqbVynIri08FlypaUrRzFkzSbL5r+AG7QJt2ClpIJbObYFxJVrrD39PNJD/bL1LFIf1stzWA7VXz2Cd3XXboJY8f80Ju7rFfiqEM+oOLN2yY6qGbhssW2Gyt0tsi7GT8qm8XkaxFN86scmXNa8JkmYn8wV+UszmOQlf9eE5BpTPZUiV+zyrdkVm9d3tl8Tw53HBpFHr/Q7Pl/79TgHqkIoSo4EcmE=
 
 # Via Makefile, tell dep to install our dependencies, and then run the tests.
 install:
-  - make dep-install
-  - make dep-update
+- make dep-install
+- make dep-update
 
 script: make test
 
 # Push the docker images to docker hub
 # If a tag build, use the tag as docker version; otherwise, use branch name as docker version (where master==latest)
 after_success:
-  - export COMMIT_HASH=${TRAVIS_COMMIT}
-  - export DOCKER_VERSION=$(if [ "$TRAVIS_TAG" != "" ]; then echo $TRAVIS_TAG; elif [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi)
-  - export DOCKER_USER=$(if [ "$DOCKER_USER" == "" ]; then echo "unknown"; else echo $DOCKER_USER ; fi)
-  - export DOCKER_PASS=$(if [ "$DOCKER_PASS" == "" ]; then echo "unknown"; else echo $DOCKER_PASS ; fi)
-  - echo DOCKER_VERSION=$DOCKER_VERSION
-  - make build
-  - docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-  - make docker
-  - make docker-examples
-  - docker push jmazzitelli/sws
+- export COMMIT_HASH=${TRAVIS_COMMIT}
+- export DOCKER_VERSION=$(if [ "$TRAVIS_TAG" != "" ]; then echo $TRAVIS_TAG; elif [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi)
+- export DOCKER_USER=$(if [ "$DOCKER_USER" == "" ]; then echo "unknown"; else echo $DOCKER_USER ; fi)
+- export DOCKER_PASS=$(if [ "$DOCKER_PASS" == "" ]; then echo "unknown"; else echo $DOCKER_PASS ; fi)
+- echo DOCKER_VERSION=$DOCKER_VERSION
+- make build
+- docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+- make docker
+- make docker-examples
+- docker push jmazzitelli/sws
 
 # Build only the master branch (for "latest" release) and version tags (e.g. "1.2.3" or "1.1.2.RC2" or "2.1.5.Final")
 # Add branch names below if we want to push docker images built off of those branches.
