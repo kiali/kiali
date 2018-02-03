@@ -1,0 +1,13 @@
+id: sws
+kind: ConfigMap
+apiVersion: v1
+name: SWS Configuration
+metadata:
+  name: sws-configuration
+  labels:
+    app: sws
+data:
+  config.yaml: |
+    foo:
+      string: default-foo
+      int: 1234

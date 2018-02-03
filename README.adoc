@@ -1,0 +1,199 @@
+= SWS image:https://travis-ci.org/jmazzitelli/sws.svg["Build Status", link="https://travis-ci.org/jmazzitelli/sws"]
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Introduction
+
+An SWS application implemented in the Go Programming Language.
+
+=== Docker Image
+
+SWS is published as a docker image on https://hub.docker.com/r/jmazzitelli/sws[Docker hub at jmazzitelli/sws]
+
+=== License and Copyright
+
+....
+   Copyright 2016-2017 Red Hat, Inc. and/or its affiliates
+   and other contributors.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+....
+
+== Building
+
+[NOTE]
+These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language] which must be at least version 1.7, (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker], and (4) make. To run SWS inside OpenShift after you build it, it is assumed you have a running OpenShift environment available to you. If you do not, you can find a set of link:#setting-up-openshift[instructions on how to set up OpenShift below].
+
+To build SWS:
+
+* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/go/sws" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH.
+
+[source,shell]
+----
+export GOPATH=/source/go/sws
+mkdir -p $GOPATH
+cd $GOPATH
+mkdir -p src/github.com/sws
+cd src/github.com/sws
+git clone git@github.com:jmazzitelli/sws
+export PATH=${PATH}:${GOPATH}/bin
+----
+
+* Install Glide - a Go dependency management tool that SWS uses to build itself
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/sws
+make install-glide
+----
+
+* Tell Glide to install the SWS dependencies
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/sws
+make install-deps
+----
+
+* Build SWS
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/sws
+make build
+----
+
+* At this point you can run the SWS tests
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/sws
+make test
+----
+
+== Running
+
+=== Running Inside OpenShift
+
+==== Setting up OpenShift
+The following section assumes that the user has link:https://github.com/openshift/origin[OpenShift Origin] installed.
+
+The link:https://docs.openshift.org/latest/welcome/index.html[OpenShift Origin Documentation] will outline all the steps required.
+
+If you wish to forgo installing and configuring OpenShift, the `oc cluster up` command can be used to get an instance of OpenShift Origin:
+
+[source,shell]
+----
+oc cluster up
+----
+
+==== Building the Docker Image
+
+Create the SWS docker image through the "docker" make target:
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/sws
+make docker
+----
+
+==== Deploying SWS Inside OpenShift
+
+[NOTE]
+The following sections assume that the `oc` command is available in the user's path and that the user is logged in.
+
+[TIP]
+====
+If you do not want to manually deploy SWS into OpenShift, the steps are automated in the Makefile. The following will undeploy an old installation of SWS, if available, and deploy a new one:
+----
+make openshift-deploy
+----
+====
+
+To deploy SWS, you will need to follow the following commands:
+
+[source,shell]
+----
+oc create -f deploy/openshift/sws-configmap.yaml -n default
+oc process -f deploy/openshift/sws.yaml | oc create -n default -f -
+----
+
+==== Undeploying SWS
+
+If you want to remove SWS from your OpenShift environment, you can do so by running the following command:
+
+[source,shell]
+----
+oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles --selector=app=sws -n default
+----
+
+Alternatively, the following will also perform the same task from the Makefile:
+
+[source,shell]
+----
+make openshift-undeploy
+----
+
+=== Running Outside OpenShift
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/sws
+make install
+make run
+----
+
+The "install" target installs SWS executable in your GOPATH /bin directory so you can run it outside of the Makefile:
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/sws
+make install
+${GOPATH}/bin/sws -config <your-config-file>
+----
+
+If you don't want to store your token in the YAML file, you can pass it via an environment variable:
+
+[source,shell]
+----
+K8S_TOKEN=`oc whoami -t` ${GOPATH}/bin/sws -config config.yaml
+----
+
+== Environment Variables
+
+Many configuration settings can optionally be set via environment variables. If one of the environment variables below are set, they serve as the default value for its associated YAML configuration setting. The following are currently supported:
+
+[cols="1a,1a"]
+|===
+|Environment Variable Name|Description and YAML Setting
+
+|`FOO_STRING`
+|Description of string here.
+[source,yaml]
+----
+foo:
+  string: VALUE
+----
+
+|`FOO_INT`
+|Description of int here.
+[source,yaml]
+----
+foo:
+  int: VALUE
+----
+
+== Additional Notes
+

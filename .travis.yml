@@ -1,0 +1,58 @@
+sudo: required
+
+services:
+  - docker
+
+language: go
+
+go:
+  - 1.7.5
+
+notifications:
+  irc:
+    channels:
+    - chat.freenode.net#BOGUS_DOES_NOT_EXIST
+
+env:
+  global:
+    - secure: ""
+    - secure: ""
+
+# Workaround issue https://github.com/Masterminds/glide/issues/639
+# Run this before_install and do not run "make install-glide" during the install.
+before_install:
+  - GLIDE_OS_ARCH=`go env GOHOSTOS`-`go env GOHOSTARCH`
+  - GLIDE_TAG=$(curl -s https://glide.sh/version)
+  - GLIDE_LATEST_RELEASE_URL="https://github.com/Masterminds/glide/releases/download/${GLIDE_TAG}/glide-${GLIDE_TAG}-${GLIDE_OS_ARCH}.tar.gz"
+  - wget ${GLIDE_LATEST_RELEASE_URL} -O /tmp/glide.tar.gz
+  - mkdir /tmp/glide
+  - tar --directory=/tmp/glide -xvf /tmp/glide.tar.gz
+  - export PATH=$PATH:/tmp/glide/${GLIDE_OS_ARCH}
+
+# Via Makefile, tell glide to install our dependencies, and then run the tests.
+install:
+#  - make install-glide
+  - make install-deps
+
+script: make test
+
+# Push the docker images to docker hub
+# If a tag build, use the tag as docker version; otherwise, use branch name as docker version (where master==latest)
+after_success:
+  - export COMMIT_HASH=${TRAVIS_COMMIT}
+  - export DOCKER_VERSION=$(if [ "$TRAVIS_TAG" != "" ]; then echo $TRAVIS_TAG; elif [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi)
+  - export DOCKER_USER=$(if [ "$DOCKER_USER" == "" ]; then echo "unknown"; else echo $DOCKER_USER ; fi)
+  - export DOCKER_PASS=$(if [ "$DOCKER_PASS" == "" ]; then echo "unknown"; else echo $DOCKER_PASS ; fi)
+  - echo DOCKER_VERSION=$DOCKER_VERSION
+  - make build
+  - docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+  - make docker
+  - make docker-examples
+  - docker push jmazzitelli/sws
+
+# Build only the master branch (for "latest" release) and version tags (e.g. "1.2.3" or "1.1.2.RC2" or "2.1.5.Final")
+# Add branch names below if we want to push docker images built off of those branches.
+branches:
+  only:
+  - master
+  - /^(\d+\.){2}(\d+){1}(\.[a-zA-Z\d]+)?$/

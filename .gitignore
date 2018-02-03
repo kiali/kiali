@@ -12,3 +12,22 @@
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
+
+# The compliled binary
+sws
+
+# Files specific to our build process
+_output
+
+# Swap files
+.*.sw*
+
+# Eclipse
+.project
+.settings/
+
+# IntelliJ
+.idea/
+
+# The vendor directory is to be committed to the git repo
+#vendor/
