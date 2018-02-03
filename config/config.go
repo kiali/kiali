@@ -9,7 +9,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/sws/log"
+	"github.com/jmazzitelli/sws/log"
 )
 
 // Environment vars can define some default values.

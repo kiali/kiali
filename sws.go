@@ -9,8 +9,8 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/sws/config"
-	"github.com/sws/log"
+	"github.com/jmazzitelli/sws/config"
+	"github.com/jmazzitelli/sws/log"
 )
 
 // Identifies the build. These are set via ldflags during the build (see Makefile).
