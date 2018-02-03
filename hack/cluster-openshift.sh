@@ -14,6 +14,7 @@
 source ./env-openshift.sh
 
 echo Will use OpenShift that is located here: ${OPENSHIFT_BINARY_DIR}
+echo Will use oc that is located here: ${OPENSHIFT_EXE_OC}
 cd ${OPENSHIFT_BINARY_DIR}
 
 if [ "$1" = "up" ];then
