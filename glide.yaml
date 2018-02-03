@@ -1,4 +1,0 @@
-package: github.com/sws
-import:
-- package: github.com/golang/glog
-- package: gopkg.in/yaml.v2

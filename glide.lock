@@ -1,8 +1,0 @@
-hash: ac95ac947d28994dd58a51a34c0b0316536a19f7001597f0ed2a884877ff79b8
-updated: 2018-02-02T21:49:24.482784239-05:00
-imports:
-- name: github.com/golang/glog
-  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
-- name: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
-testImports: []

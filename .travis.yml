@@ -6,7 +6,7 @@ services:
 language: go
 
 go:
-  - 1.7.5
+  - 1.8.3
 
 notifications:
   irc:
@@ -18,21 +18,10 @@ env:
     - secure: ""
     - secure: ""
 
-# Workaround issue https://github.com/Masterminds/glide/issues/639
-# Run this before_install and do not run "make install-glide" during the install.
-before_install:
-  - GLIDE_OS_ARCH=`go env GOHOSTOS`-`go env GOHOSTARCH`
-  - GLIDE_TAG=$(curl -s https://glide.sh/version)
-  - GLIDE_LATEST_RELEASE_URL="https://github.com/Masterminds/glide/releases/download/${GLIDE_TAG}/glide-${GLIDE_TAG}-${GLIDE_OS_ARCH}.tar.gz"
-  - wget ${GLIDE_LATEST_RELEASE_URL} -O /tmp/glide.tar.gz
-  - mkdir /tmp/glide
-  - tar --directory=/tmp/glide -xvf /tmp/glide.tar.gz
-  - export PATH=$PATH:/tmp/glide/${GLIDE_OS_ARCH}
-
-# Via Makefile, tell glide to install our dependencies, and then run the tests.
+# Via Makefile, tell dep to install our dependencies, and then run the tests.
 install:
-#  - make install-glide
-  - make install-deps
+  - make dep-install
+  - make dep-update
 
 script: make test
 

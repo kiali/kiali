@@ -34,7 +34,7 @@ SWS is published as a docker image on https://hub.docker.com/r/jmazzitelli/sws[D
 == Building
 
 [NOTE]
-These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language] which must be at least version 1.7, (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker], and (4) make. To run SWS inside OpenShift after you build it, it is assumed you have a running OpenShift environment available to you. If you do not, you can find a set of link:#setting-up-openshift[instructions on how to set up OpenShift below].
+These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language] which must be at least version 1.8, (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker], and (4) make. To run SWS inside OpenShift after you build it, it is assumed you have a running OpenShift environment available to you. If you do not, you can find a set of link:#setting-up-openshift[instructions on how to set up OpenShift below].
 
 To build SWS:
 
@@ -51,20 +51,20 @@ git clone git@github.com:jmazzitelli/sws
 export PATH=${PATH}:${GOPATH}/bin
 ----
 
-* Install Glide - a Go dependency management tool that SWS uses to build itself
+* Install dep - the Go dependency management tool that SWS uses to build itself
 
 [source,shell]
 ----
 cd ${GOPATH}/src/github.com/sws
-make install-glide
+make dep-install
 ----
 
-* Tell Glide to install the SWS dependencies
+* Tell dep to install the SWS dependencies
 
 [source,shell]
 ----
 cd ${GOPATH}/src/github.com/sws
-make install-deps
+make dep-update
 ----
 
 * Build SWS

@@ -64,29 +64,13 @@ run:
 	@echo Running...
 	@sws -v ${VERBOSE_MODE} -config config.yaml
 
-# Glide Targets
-#   install-glide - Installs the Glide executable itself. Just need to do this once.
-#   glide-create  - Examines all imports and creates Glide YAML file.
-#   install-deps  - Installs the dependencies declared in the Glide Lock file in the
-#                   vendor directory. Does an update and creates the Glide Lock file if necessary.
-#                   Use this to install the dependencies after cloning the git repo.
-#   update-deps   - Updates the dependencies found in the Glide YAML file and
-#                   installs them in the vendor directory. Creates/Updates the Glide Lock file.
-#                   Use this if you've updated or added dependencies.
+# dep targets - dependency management
 
-install-glide:
-	@echo Installing Glide itself
+dep-install:
+	@echo Installing dep itself
 	@mkdir -p ${GOPATH}/bin
-	@curl https://glide.sh/get | sh
+	@hack/get-go-dep.sh
 
-glide-create:
-	@echo Creating Glide YAML file
-	@glide create
-
-install-deps:
-	@echo Installing dependencies in vendor directory
-	@glide install --strip-vendor
-
-update-deps:
+dep-update:
 	@echo Updating dependencies and storing in vendor directory
-	@glide update --strip-vendor
+	@dep ensure
