@@ -30,8 +30,8 @@ To build SWS:
 export GOPATH=/source/go/jmazzitelli/sws
 mkdir -p $GOPATH
 cd $GOPATH
-mkdir -p src/github.com/jmazzitelli/sws
-cd src/github.com/jmazzitelli/sws
+mkdir -p src/github.com/jmazzitelli
+cd src/github.com/jmazzitelli
 git clone git@github.com:jmazzitelli/sws
 export PATH=${PATH}:${GOPATH}/bin
 ----
