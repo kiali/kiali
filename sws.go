@@ -9,8 +9,8 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/jmazzitelli/sws/config"
-	"github.com/jmazzitelli/sws/log"
+	"github.com/swift-sunshine/swscore/config"
+	"github.com/swift-sunshine/swscore/log"
 )
 
 // Identifies the build. These are set via ldflags during the build (see Makefile).
