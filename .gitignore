@@ -16,6 +16,9 @@
 # The compliled binary
 sws
 
+# Locks / temporary files
+*.lock
+
 # Files specific to our build process
 _output
 
