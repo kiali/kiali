@@ -44,7 +44,7 @@ There is now a git tag that marks the code that produced the release and there a
 
 * link:https://github.com/swift-sunshine/swscore/tags[Git Tags]
 * DockerHub images:
-** link:https://hub.docker.com/r/swift-sunshine/swscore/tags/[SWS]
+** link:https://hub.docker.com/r/jmazzitelli/sws/tags/[SWS]
 
 == How It Works
 

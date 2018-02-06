@@ -1,4 +1,4 @@
-= SWS image:https://travis-ci.org/jmazzitelli/sws.svg["Build Status", link="https://travis-ci.org/jmazzitelli/sws"]
+= SWS image:https://travis-ci.org/swift-sunshine/swscore.svg["Build Status", link="https://travis-ci.org/swift-sunshine/swscore"]
 :toc: macro
 :toc-title:
 
@@ -23,11 +23,11 @@ These build instructions assume you have the following installed on your system:
 
 To build SWS:
 
-* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/go/jmazzitelli/sws" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH.
+* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/go/swift-sunshine/swscore" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH.
 
 [source,shell]
 ----
-export GOPATH=/source/go/jmazzitelli/sws
+export GOPATH=/source/go/swift-sunshine/sws
 mkdir -p $GOPATH
 cd $GOPATH
 mkdir -p src/github.com/swift-sunshine
