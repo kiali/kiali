@@ -36,7 +36,7 @@ git clone git@github.com:swift-sunshine/swscore
 export PATH=${PATH}:${GOPATH}/bin
 ----
 
-* Install dep - the Go dependency management tool that SWS uses to build itself
+* Install Glide - the Go dependency management tool that SWS uses to build itself
 
 [source,shell]
 ----
@@ -44,7 +44,9 @@ cd ${GOPATH}/src/github.com/swift-sunshine/swscore
 make dep-install
 ----
 
-* Tell dep to install the SWS dependencies
+* Tell the dependency manager tool to update the SWS dependencies
+[NOTE]
+You should only run this command if you add, remove, or modify a dependency. If you are simply git cloning and building from source, you should skip this step.
 
 [source,shell]
 ----
