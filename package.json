@@ -1,0 +1,31 @@
+{
+  "name": "swsui",
+  "version": "0.1.0",
+  "bugs": {
+    "url": "https://issues.jboss.org/projects/SWS/issues/"
+  },
+  "dependencies": {
+    "axios": "~0.17.1",
+    "axios-mock-adapter": "~1.12.0",
+    "patternfly": "~3.38.1",
+    "patternfly-react": "~1.7.0",
+    "react": "~16.2.0",
+    "react-bootstrap": "~0.32.1",
+    "react-dom": "~16.2.0",
+    "react-router-dom": "^4.2.2",
+    "react-scripts-ts": "2.13.0"
+  },
+  "scripts": {
+    "start": "react-scripts-ts start",
+    "build": "react-scripts-ts build",
+    "test": "react-scripts-ts test --env=jsdom",
+    "eject": "react-scripts-ts eject"
+  },
+  "devDependencies": {
+    "@types/jest": "~22.1.1",
+    "@types/node": "~9.4.0",
+    "@types/react": "~16.0.36",
+    "@types/react-dom": "~16.0.3",
+    "typescript": "~2.7.1"
+  }
+}
