@@ -6,5 +6,8 @@ metadata:
     app: sws
 data:
   config.yaml: |
-    foo:
-      int: 1234
+    fileserver:
+      port: 20001
+      credentials:
+        username: jdoe
+        password: password

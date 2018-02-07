@@ -1,3 +1,7 @@
-foo:
-  string: foo
-  int: 12345
+fileserver:
+  address: localhost
+  port: 12345
+  root_directory: /tmp
+  credentials:
+    username: bob
+    password: pw

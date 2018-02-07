@@ -10,6 +10,7 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/swift-sunshine/swscore/config"
+	"github.com/swift-sunshine/swscore/fileserver"
 	"github.com/swift-sunshine/swscore/log"
 )
 
@@ -30,6 +31,7 @@ var Configuration *config.Config
 func init() {
 	// log everything to stderr so that it can be easily gathered by logs, separate log files are problematic with containers
 	flag.Set("logtostderr", "true")
+
 }
 
 func main() {
@@ -60,12 +62,18 @@ func main() {
 		glog.Fatal(err)
 	}
 
+	startStaticFileServer()
+
 	// wait forever, or at least until we are told to exit
 	waitForTermination()
 
 	// Shutdown internal components
 	log.Info("Shutting down internal components")
 
+}
+
+func startStaticFileServer() {
+	fileserver.StartFileServer(Configuration)
 }
 
 func waitForTermination() {
@@ -86,9 +94,20 @@ func waitForTermination() {
 }
 
 func validateConfig() error {
-	if Configuration.Foo.Int < 0 {
-		return fmt.Errorf("foo int is negative: %v", Configuration.Foo.Int)
+	if Configuration.FileServer.Port < 0 {
+		return fmt.Errorf("fileserver port is negative: %v", Configuration.FileServer.Port)
 	}
+
+	if err := Configuration.FileServer.Credentials.ValidateCredentials(); err != nil {
+		return fmt.Errorf("fileserver credentials are invalid: %v", err)
+	}
+	if strings.Contains(Configuration.FileServer.Root_Directory, "..") {
+		return fmt.Errorf("fileserver directory must not contain '..': %v", Configuration.FileServer.Root_Directory)
+	}
+	if _, err := os.Stat(Configuration.FileServer.Root_Directory); os.IsNotExist(err) {
+		return fmt.Errorf("fileserver directory does not exist: %v", Configuration.FileServer.Root_Directory)
+	}
+
 	return nil
 }
 
