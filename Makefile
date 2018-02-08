@@ -25,7 +25,7 @@ clean:
 build:  clean
 	@echo Building...
 	${GO_BUILD_ENVVARS} go build \
-		-o sws -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
+		-o ${GOPATH}/bin/sws -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
 install:
 	@echo Installing...
