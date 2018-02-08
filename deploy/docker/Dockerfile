@@ -7,6 +7,6 @@ ENV SWS_HOME=/opt/sws \
 
 COPY sws $SWS_HOME/
 
-ADD npm/ $SWS_HOME/npm/
+ADD npm/lib/node_modules/swsui/build $SWS_HOME/console/
 
 ENTRYPOINT ["/opt/sws/sws"]

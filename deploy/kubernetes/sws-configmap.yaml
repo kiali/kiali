@@ -8,7 +8,7 @@ data:
   config.yaml: |
     fileserver:
       port: 20001
-      root_directory: /opt/sws/npm
+      root_directory: /opt/sws/console
       credentials:
         username: jdoe
         password: password

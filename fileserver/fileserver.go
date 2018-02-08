@@ -10,15 +10,17 @@ import (
 )
 
 func StartFileServer(conf *config.Config) {
+	consolePrefix := "/console/"
+
 	proxyHandler := fileServerAuthProxyHandler{
 		credentials: security.Credentials{
 			Username: conf.FileServer.Credentials.Username,
 			Password: conf.FileServer.Credentials.Password,
 		},
-		trueHandler: http.FileServer(http.Dir(conf.FileServer.Root_Directory)),
+		trueHandler: http.StripPrefix(consolePrefix, http.FileServer(http.Dir(conf.FileServer.Root_Directory))),
 	}
 
-	http.HandleFunc("/", proxyHandler.handler)
+	http.HandleFunc(consolePrefix, proxyHandler.handler)
 
 	server := &http.Server{
 		Addr: fmt.Sprintf("%v:%v", conf.FileServer.Address, conf.FileServer.Port),

@@ -5,6 +5,21 @@ metadata:
   labels:
     app: sws
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sws
+  labels:
+    app: sws
+parameters:
+spec:
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 20001
+  selector:
+    app: sws
+---
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
