@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/swift-sunshine/swscore/config"
 	"github.com/swift-sunshine/swscore/fileserver"
 	"github.com/swift-sunshine/swscore/log"
+	"github.com/swift-sunshine/swscore/routing"
 )
 
 // Identifies the build. These are set via ldflags during the build (see Makefile).
@@ -62,7 +64,8 @@ func main() {
 		glog.Fatal(err)
 	}
 
-	startStaticFileServer()
+	// Start listening to requests
+	startServer()
 
 	// wait forever, or at least until we are told to exit
 	waitForTermination()
@@ -72,8 +75,8 @@ func main() {
 
 }
 
-func startStaticFileServer() {
-	fileserver.StartFileServer(Configuration)
+func startServer() {
+	server.StartServer(Configuration)
 }
 
 func waitForTermination() {
