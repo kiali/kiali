@@ -67,7 +67,8 @@ docker:
 	@echo Building Docker Image...
 	@mkdir -p _output/docker
 	@cp -r deploy/docker/* _output/docker
-	@cp sws _output/docker
+	@cp ${GOPATH}/bin/sws _output/docker
+	@npm --prefix _output/docker/npm -g install swsui
 	docker build -t ${DOCKER_TAG} _output/docker
 
 openshift-deploy: openshift-undeploy
