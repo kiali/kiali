@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/swift-sunshine/swscore/config"
 	"github.com/swift-sunshine/swscore/log"
+	"github.com/swift-sunshine/swscore/routing"
 )
 
 // Identifies the build. These are set via ldflags during the build (see Makefile).
@@ -60,12 +62,21 @@ func main() {
 		glog.Fatal(err)
 	}
 
+	// Start listening request
+	startServer()
+
 	// wait forever, or at least until we are told to exit
 	waitForTermination()
 
 	// Shutdown internal components
 	log.Info("Shutting down internal components")
 
+}
+
+func startServer() {
+	log.Info("SWS: Starting http server")
+	router := routing.NewRouter()
+	glog.Fatal(http.ListenAndServe(":8080", router))
 }
 
 func waitForTermination() {
