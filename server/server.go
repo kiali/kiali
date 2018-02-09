@@ -18,7 +18,7 @@ func StartServer(conf *config.Config) {
 	fileServerHandler := http.FileServer(http.Dir(conf.Server.Static_Content_Root_Directory))
 
 	// tell the router to pass all static file requests to the file handler - this includes our console UI
-	router.PathPrefix("/console/").Handler(http.StripPrefix("/console/", fileServerHandler))
+	router.PathPrefix("/console").Handler(http.StripPrefix("/console", fileServerHandler))
 	router.PathPrefix("/").Handler(fileServerHandler)
 
 	// put our proxy handler in front to handle auth
@@ -42,7 +42,7 @@ func StartServer(conf *config.Config) {
 		var err error
 		secure := conf.Identity.Cert_File != "" && conf.Identity.Private_Key_File != ""
 		if secure {
-			log.Infof("File Server endpoint will require https")
+			log.Infof("Server endpoint will require https")
 			err = server.ListenAndServeTLS(conf.Identity.Cert_File, conf.Identity.Private_Key_File)
 		} else {
 			err = server.ListenAndServe()
@@ -68,7 +68,7 @@ func (h *serverAuthProxyHandler) handler(w http.ResponseWriter, r *http.Request)
 			statusCode = http.StatusForbidden
 		}
 	} else {
-		log.Trace("Access to the file server endpoint is not secured with credentials - letting request come in")
+		log.Trace("Access to the server endpoint is not secured with credentials - letting request come in")
 	}
 
 	switch statusCode {

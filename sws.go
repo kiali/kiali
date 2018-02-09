@@ -103,10 +103,10 @@ func validateConfig() error {
 		return fmt.Errorf("server credentials are invalid: %v", err)
 	}
 	if strings.Contains(Configuration.Server.Static_Content_Root_Directory, "..") {
-		return fmt.Errorf("server directory must not contain '..': %v", Configuration.Server.Static_Content_Root_Directory)
+		return fmt.Errorf("server static content root directory must not contain '..': %v", Configuration.Server.Static_Content_Root_Directory)
 	}
 	if _, err := os.Stat(Configuration.Server.Static_Content_Root_Directory); os.IsNotExist(err) {
-		return fmt.Errorf("server directory does not exist: %v", Configuration.Server.Static_Content_Root_Directory)
+		return fmt.Errorf("server static content root directory does not exist: %v", Configuration.Server.Static_Content_Root_Directory)
 	}
 
 	return nil
