@@ -7,23 +7,19 @@ import (
 	"github.com/swift-sunshine/swscore/config"
 	"github.com/swift-sunshine/swscore/config/security"
 	"github.com/swift-sunshine/swscore/log"
+	"github.com/swift-sunshine/swscore/routing"
 )
 
 func StartFileServer(conf *config.Config) {
 	consolePrefix := "/console/"
 
-	proxyHandler := fileServerAuthProxyHandler{
-		credentials: security.Credentials{
-			Username: conf.FileServer.Credentials.Username,
-			Password: conf.FileServer.Credentials.Password,
-		},
-		trueHandler: http.StripPrefix(consolePrefix, http.FileServer(http.Dir(conf.FileServer.Root_Directory))),
-	}
-
-	http.HandleFunc(consolePrefix, proxyHandler.handler)
+	router := routing.NewRouter()
+	router.PathPrefix(consolePrefix).
+		Handler(http.StripPrefix(consolePrefix, http.FileServer(http.Dir(conf.FileServer.Root_Directory))))
 
 	server := &http.Server{
-		Addr: fmt.Sprintf("%v:%v", conf.FileServer.Address, conf.FileServer.Port),
+		Handler: router,
+		Addr:    fmt.Sprintf("%v:%v", conf.FileServer.Address, conf.FileServer.Port),
 	}
 
 	log.Infof("File Server endpoint will start at [%v]", server.Addr)
