@@ -9,32 +9,50 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/swift-sunshine/swscore/config/security"
 	"github.com/swift-sunshine/swscore/log"
 )
 
 // Environment vars can define some default values.
 const (
-	ENV_FOO_STRING = "FOO_STRING"
-	ENV_FOO_INT    = "FOO_INT"
+	ENV_IDENTITY_CERT_FILE        = "IDENTITY_CERT_FILE"
+	ENV_IDENTITY_PRIVATE_KEY_FILE = "IDENTITY_PRIVATE_KEY_FILE"
+
+	ENV_FILESERVER_ADDRESS              = "FILESERVER_ADDRESS"
+	ENV_FILESERVER_PORT                 = "FILESERVER_PORT"
+	ENV_FILESERVER_CREDENTIALS_USERNAME = "FILESERVER_CREDENTIALS_USERNAME"
+	ENV_FILESERVER_CREDENTIALS_PASSWORD = "FILESERVER_CREDENTIALS_PASSWORD"
+	ENV_FILESERVER_ROOT_DIRECTORY       = "FILESERVER_ROOT_DIRECTORY"
 )
 
 // USED FOR YAML
-type Foo struct {
-	String string
-	Int    int
+type FileServer struct {
+	Address        string               ",omitempty"
+	Port           int                  ",omitempty"
+	Credentials    security.Credentials ",omitempty"
+	Root_Directory string               ",omitempty"
 }
 
 // Config defines full YAML configuration.
 // USED FOR YAML
 type Config struct {
-	Foo Foo
+	Identity   security.Identity ",omitempty"
+	FileServer FileServer        ",omitempty"
 }
 
 func NewConfig() (c *Config) {
 	c = new(Config)
 
-	c.Foo.String = strings.TrimSpace(getDefaultString(ENV_FOO_STRING, ""))
-	c.Foo.Int = getDefaultInt(ENV_FOO_INT, 0)
+	c.Identity.Cert_File = getDefaultString(ENV_IDENTITY_CERT_FILE, "")
+	c.Identity.Private_Key_File = getDefaultString(ENV_IDENTITY_PRIVATE_KEY_FILE, "")
+
+	c.FileServer.Address = strings.TrimSpace(getDefaultString(ENV_FILESERVER_ADDRESS, ""))
+	c.FileServer.Port = getDefaultInt(ENV_FILESERVER_PORT, 20000)
+	c.FileServer.Credentials = security.Credentials{
+		Username: getDefaultString(ENV_FILESERVER_CREDENTIALS_USERNAME, ""),
+		Password: getDefaultString(ENV_FILESERVER_CREDENTIALS_PASSWORD, ""),
+	}
+	c.FileServer.Root_Directory = strings.TrimSpace(getDefaultString(ENV_FILESERVER_ROOT_DIRECTORY, "/static-files"))
 
 	return
 }

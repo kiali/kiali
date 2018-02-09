@@ -8,5 +8,9 @@ metadata:
     app: sws
 data:
   config.yaml: |
-    foo:
-      int: 1234
+    fileserver:
+      port: 20001
+      root_directory: /opt/sws/console
+      credentials:
+        username: jdoe
+        password: password

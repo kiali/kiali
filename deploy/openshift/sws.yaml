@@ -16,6 +16,29 @@ objects:
     name: sws
     labels:
       app: sws
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: sws
+    labels:
+      app: sws
+  parameters:
+  spec:
+    ports:
+      - protocol: TCP
+        port: 20001
+    selector:
+      app: sws
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: sws
+    labels:
+      app: sws
+  spec:
+    to:
+      kind: Service
+      name: sws
 - apiVersion: extensions/v1beta1
   kind: DaemonSet
   metadata:

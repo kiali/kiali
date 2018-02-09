@@ -174,20 +174,62 @@ Many configuration settings can optionally be set via environment variables. If 
 |===
 |Environment Variable Name|Description and YAML Setting
 
-|`FOO_STRING`
-|Description of string here.
+|`IDENTITY_CERT_FILE`
+|Certificate file used to identify the file server. If set, you must go over https to retrieve content from the file server.
 [source,yaml]
 ----
-foo:
-  string: VALUE
+identity:
+  cert_file: VALUE
 ----
 
-|`FOO_INT`
-|Description of int here.
+|`IDENTITY_PRIVATE_KEY_FILE`
+|Private key file used to identify the server. If set, you must go over https to retrieve content from the file server.
 [source,yaml]
 ----
-foo:
-  int: VALUE
+identity:
+  private_key_file: VALUE
+----
+
+|`FILESERVER_ADDRESS`
+|Where the http file server is bound to.
+[source,yaml]
+----
+fileserver:
+  address: VALUE
+----
+
+|`FILESERVER_PORT`
+|Where the http file server is listening to.
+[source,yaml]
+----
+fileserver:
+  port: VALUE
+----
+
+|`FILESERVER_CREDENTIALS_USERNAME`
+|If this (and password) is set, these credentials are required in order to get content from the file server.
+[source,yaml]
+----
+fileserver:
+  credentials:
+    username: VALUE
+----
+
+|`FILESERVER_CREDENTIALS_PASSWORD`
+|If this (and username) is set, these credentials are required in order to get content from the file server.
+[source,yaml]
+----
+fileserver:
+  credentials:
+    password: VALUE
+----
+
+|`FILESERVER_ROOT_DIRECTORY`
+|The file server will serve all static content found under this root directory.
+[source,yaml]
+----
+fileserver:
+  root_directory: VALUE
 ----
 
 |===
