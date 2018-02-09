@@ -11,11 +11,13 @@ import (
 )
 
 func StartServer(conf *config.Config) {
+	// create a router that will route all incoming API server requests to different handlers
+	router := routing.NewRouter()
+
 	// create the file server handler that will serve the webapp js files and other static content
 	fileServerHandler := http.FileServer(http.Dir(conf.Server.Static_Content_Root_Directory))
 
-	// create a router that will route all incoming API server requests to different handlers
-	router := routing.NewRouter()
+	// tell the router to pass all static file requests to the file handler - this includes our console UI
 	router.PathPrefix("/console/").Handler(http.StripPrefix("/console/", fileServerHandler))
 	router.PathPrefix("/").Handler(fileServerHandler)
 
