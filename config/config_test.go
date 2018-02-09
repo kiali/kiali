@@ -6,36 +6,36 @@ import (
 )
 
 func TestEnvVar(t *testing.T) {
-	defer os.Setenv(ENV_FILESERVER_ADDRESS, os.Getenv(ENV_FILESERVER_ADDRESS))
-	defer os.Setenv(ENV_FILESERVER_PORT, os.Getenv(ENV_FILESERVER_PORT))
-	os.Setenv(ENV_FILESERVER_ADDRESS, "test-address")
-	os.Setenv(ENV_FILESERVER_PORT, "12345")
+	defer os.Setenv(ENV_SERVER_ADDRESS, os.Getenv(ENV_SERVER_ADDRESS))
+	defer os.Setenv(ENV_SERVER_PORT, os.Getenv(ENV_SERVER_PORT))
+	os.Setenv(ENV_SERVER_ADDRESS, "test-address")
+	os.Setenv(ENV_SERVER_PORT, "12345")
 
 	conf := NewConfig()
 
-	if conf.FileServer.Address != "test-address" {
-		t.Error("fileserver address is wrong")
+	if conf.Server.Address != "test-address" {
+		t.Error("server address is wrong")
 	}
-	if conf.FileServer.Port != 12345 {
-		t.Error("fileserver port is wrong")
+	if conf.Server.Port != 12345 {
+		t.Error("server port is wrong")
 	}
 }
 
 func TestDefaults(t *testing.T) {
 	conf := NewConfig()
 
-	if conf.FileServer.Address != "" {
-		t.Error("fileserver address default is wrong")
+	if conf.Server.Address != "" {
+		t.Error("server address default is wrong")
 	}
 
-	if conf.FileServer.Port != 20000 {
-		t.Error("fileserver port default is wrong")
+	if conf.Server.Port != 20000 {
+		t.Error("server port default is wrong")
 	}
 }
 
 func TestMarshalUnmarshal(t *testing.T) {
 	testConf := Config{
-		FileServer: FileServer{
+		Server: Server{
 			Address: "foo-test",
 			Port:    321,
 		},
@@ -54,17 +54,17 @@ func TestMarshalUnmarshal(t *testing.T) {
 		t.Errorf("Failed to unmarshal: %v", err)
 	}
 
-	if conf.FileServer.Address != "foo-test" {
-		t.Errorf("Failed to unmarshal fileserver address:\n%v", conf)
+	if conf.Server.Address != "foo-test" {
+		t.Errorf("Failed to unmarshal server address:\n%v", conf)
 	}
-	if conf.FileServer.Port != 321 {
-		t.Errorf("Failed to unmarshal fileserver port:\n%v", conf)
+	if conf.Server.Port != 321 {
+		t.Errorf("Failed to unmarshal server port:\n%v", conf)
 	}
 }
 
 func TestLoadSave(t *testing.T) {
 	testConf := Config{
-		FileServer: FileServer{
+		Server: Server{
 			Address: "foo-test",
 			Port:    321,
 		},
@@ -85,11 +85,11 @@ func TestLoadSave(t *testing.T) {
 
 	t.Logf("Config from file\n%v", conf)
 
-	if conf.FileServer.Address != "foo-test" {
-		t.Errorf("Failed to unmarshal fileserver address:\n%v", conf)
+	if conf.Server.Address != "foo-test" {
+		t.Errorf("Failed to unmarshal server address:\n%v", conf)
 	}
-	if conf.FileServer.Port != 321 {
-		t.Errorf("Failed to unmarshal fileserver port:\n%v", conf)
+	if conf.Server.Port != 321 {
+		t.Errorf("Failed to unmarshal server port:\n%v", conf)
 	}
 }
 

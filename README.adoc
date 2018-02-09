@@ -27,7 +27,7 @@ To build SWS:
 
 [source,shell]
 ----
-export GOPATH=/source/go/swift-sunshine/sws
+export GOPATH=/source/go/swift-sunshine/swscore
 mkdir -p $GOPATH
 cd $GOPATH
 mkdir -p src/github.com/swift-sunshine
@@ -190,46 +190,46 @@ identity:
   private_key_file: VALUE
 ----
 
-|`FILESERVER_ADDRESS`
-|Where the http file server is bound to.
+|`SERVER_ADDRESS`
+|Where the http server is bound to.
 [source,yaml]
 ----
-fileserver:
+server:
   address: VALUE
 ----
 
-|`FILESERVER_PORT`
-|Where the http file server is listening to.
+|`SERVER_PORT`
+|Where the http server is listening.
 [source,yaml]
 ----
-fileserver:
+server:
   port: VALUE
 ----
 
-|`FILESERVER_CREDENTIALS_USERNAME`
-|If this (and password) is set, these credentials are required in order to get content from the file server.
+|`SERVER_CREDENTIALS_USERNAME`
+|If this (and password) is set, these credentials are required in order to get content from the server.
 [source,yaml]
 ----
-fileserver:
+server:
   credentials:
     username: VALUE
 ----
 
-|`FILESERVER_CREDENTIALS_PASSWORD`
-|If this (and username) is set, these credentials are required in order to get content from the file server.
+|`SERVER_CREDENTIALS_PASSWORD`
+|If this (and username) is set, these credentials are required in order to get content from the server.
 [source,yaml]
 ----
-fileserver:
+server:
   credentials:
     password: VALUE
 ----
 
-|`FILESERVER_ROOT_DIRECTORY`
+|`SERVER_STATIC_CONTENT_ROOT_DIRECTORY`
 |The file server will serve all static content found under this root directory.
 [source,yaml]
 ----
-fileserver:
-  root_directory: VALUE
+server:
+  static_content_root_directory: VALUE
 ----
 
 |===

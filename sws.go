@@ -10,8 +10,8 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/swift-sunshine/swscore/config"
-	"github.com/swift-sunshine/swscore/fileserver"
 	"github.com/swift-sunshine/swscore/log"
+	"github.com/swift-sunshine/swscore/server"
 )
 
 // Identifies the build. These are set via ldflags during the build (see Makefile).
@@ -95,18 +95,18 @@ func waitForTermination() {
 }
 
 func validateConfig() error {
-	if Configuration.FileServer.Port < 0 {
-		return fmt.Errorf("fileserver port is negative: %v", Configuration.FileServer.Port)
+	if Configuration.Server.Port < 0 {
+		return fmt.Errorf("server port is negative: %v", Configuration.Server.Port)
 	}
 
-	if err := Configuration.FileServer.Credentials.ValidateCredentials(); err != nil {
-		return fmt.Errorf("fileserver credentials are invalid: %v", err)
+	if err := Configuration.Server.Credentials.ValidateCredentials(); err != nil {
+		return fmt.Errorf("server credentials are invalid: %v", err)
 	}
-	if strings.Contains(Configuration.FileServer.Root_Directory, "..") {
-		return fmt.Errorf("fileserver directory must not contain '..': %v", Configuration.FileServer.Root_Directory)
+	if strings.Contains(Configuration.Server.Static_Content_Root_Directory, "..") {
+		return fmt.Errorf("server directory must not contain '..': %v", Configuration.Server.Static_Content_Root_Directory)
 	}
-	if _, err := os.Stat(Configuration.FileServer.Root_Directory); os.IsNotExist(err) {
-		return fmt.Errorf("fileserver directory does not exist: %v", Configuration.FileServer.Root_Directory)
+	if _, err := os.Stat(Configuration.Server.Static_Content_Root_Directory); os.IsNotExist(err) {
+		return fmt.Errorf("server directory does not exist: %v", Configuration.Server.Static_Content_Root_Directory)
 	}
 
 	return nil

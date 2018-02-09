@@ -1,8 +1,9 @@
 package routing
 
 import (
-	"github.com/swift-sunshine/swscore/handlers"
 	"net/http"
+
+	"github.com/swift-sunshine/swscore/handlers"
 )
 
 type Route struct {
@@ -14,11 +15,12 @@ type Route struct {
 
 type Routes []Route
 
+// Constant that defines all the paths and the handlers for those paths
 var paths = Routes{
 	Route{
 		"Root",
 		"GET",
-		"/",
+		"/api",
 		handlers.Root,
 	},
 }
