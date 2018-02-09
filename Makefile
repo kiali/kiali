@@ -46,7 +46,7 @@ test-debug:
 
 run:
 	@echo Running...
-	@./sws -v ${VERBOSE_MODE} -config config.yaml
+	@${GOPATH}/bin/sws -v ${VERBOSE_MODE} -config config.yaml
 
 # dep targets - dependency management
 
