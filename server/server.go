@@ -12,14 +12,7 @@ import (
 
 func StartServer(conf *config.Config) {
 	// create a router that will route all incoming API server requests to different handlers
-	router := routing.NewRouter()
-
-	// create the file server handler that will serve the webapp js files and other static content
-	fileServerHandler := http.FileServer(http.Dir(conf.Server.Static_Content_Root_Directory))
-
-	// tell the router to pass all static file requests to the file handler - this includes our console UI
-	router.PathPrefix("/console").Handler(http.StripPrefix("/console", fileServerHandler))
-	router.PathPrefix("/").Handler(fileServerHandler)
+	router := routing.NewRouter(conf)
 
 	// put our proxy handler in front to handle auth
 	proxyHandler := serverAuthProxyHandler{
@@ -73,18 +66,12 @@ func (h *serverAuthProxyHandler) handler(w http.ResponseWriter, r *http.Request)
 
 	switch statusCode {
 	case http.StatusOK:
-		{
-			h.trueHandler.ServeHTTP(w, r)
-		}
+		h.trueHandler.ServeHTTP(w, r)
 	case http.StatusUnauthorized:
-		{
-			w.Header().Set("WWW-Authenticate", "Basic realm=\"Swift-Sunshine\"")
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		}
+		w.Header().Set("WWW-Authenticate", "Basic realm=\"Swift-Sunshine\"")
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 	default:
-		{
-			http.Error(w, http.StatusText(statusCode), statusCode)
-			log.Errorf("Cannot send response to unauthorized user: %v", statusCode)
-		}
+		http.Error(w, http.StatusText(statusCode), statusCode)
+		log.Errorf("Cannot send response to unauthorized user: %v", statusCode)
 	}
 }

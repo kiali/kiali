@@ -13,14 +13,21 @@ type Route struct {
 	HandlerFunc http.HandlerFunc
 }
 
-type Routes []Route
+type Routes struct {
+	Routes []Route
+}
 
-// Constant that defines all the paths and the handlers for those paths
-var paths = Routes{
-	Route{
-		"Root",
-		"GET",
-		"/api",
-		handlers.Root,
-	},
+func NewRoutes() (r *Routes) {
+	r = new(Routes)
+
+	r.Routes = []Route{
+		Route{
+			"Root",
+			"GET",
+			"/api",
+			handlers.Root,
+		},
+	}
+
+	return
 }

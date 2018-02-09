@@ -4,10 +4,12 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+
+	"github.com/swift-sunshine/swscore/config"
 )
 
 func TestDrawPathProperly(t *testing.T) {
-	router := NewRouter()
+	router := NewRouter(new(config.Config))
 	testRoute(router, "Root", "GET", t)
 }
 
