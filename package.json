@@ -49,6 +49,6 @@
     "monitoring"
   ],
   "author": "Red Hat",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "homepage": "https://github.com/mtho11/swsui#readme"
 }
