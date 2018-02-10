@@ -22,10 +22,10 @@ var (
 
 // Command line arguments
 var (
-	argConfigFile = flag.String("config", "", "Path to the YAML configuration file. If not specified, environment variables will be used to configure the agent.")
+	argConfigFile = flag.String("config", "", "Path to the YAML configuration file. If not specified, environment variables will be used for configuration.")
 )
 
-// Configuration is the configuration for the agent itself
+// Configuration is the main configuration for our process
 var Configuration *config.Config
 
 func init() {
@@ -63,18 +63,15 @@ func main() {
 	}
 
 	// Start listening to requests
-	startServer()
+	server := server.NewServer(Configuration)
+	server.Start()
 
 	// wait forever, or at least until we are told to exit
 	waitForTermination()
 
 	// Shutdown internal components
 	log.Info("Shutting down internal components")
-
-}
-
-func startServer() {
-	server.StartServer(Configuration)
+	server.Stop()
 }
 
 func waitForTermination() {

@@ -10,7 +10,14 @@ import (
 	"github.com/swift-sunshine/swscore/routing"
 )
 
-func StartServer(conf *config.Config) {
+type Server struct {
+	configuration config.Config
+	httpServer    *http.Server
+}
+
+// NewServer creates a new server configured with the given settings.
+// Start and Stop it with the corresponding functions.
+func NewServer(conf *config.Config) *Server {
 	// create a router that will route all incoming API server requests to different handlers
 	router := routing.NewRouter(conf)
 
@@ -25,23 +32,36 @@ func StartServer(conf *config.Config) {
 	http.HandleFunc("/", proxyHandler.handler)
 
 	// create the server definition that will handle both console and api server traffic
-	server := &http.Server{
+	httpServer := &http.Server{
 		Addr: fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.Port),
 	}
 
-	log.Infof("Server endpoint will start at [%v]", server.Addr)
-	log.Infof("Server endpoint will serve static content from [%v]", conf.Server.Static_Content_Root_Directory)
+	// return our new Server - note that we make our own copy of the configuration
+	return &Server{
+		httpServer:    httpServer,
+		configuration: *conf,
+	}
+}
+
+func (s *Server) Start() {
+	log.Infof("Server endpoint will start at [%v]", s.httpServer.Addr)
+	log.Infof("Server endpoint will serve static content from [%v]", s.configuration.Server.Static_Content_Root_Directory)
 	go func() {
 		var err error
-		secure := conf.Identity.Cert_File != "" && conf.Identity.Private_Key_File != ""
+		secure := s.configuration.Identity.Cert_File != "" && s.configuration.Identity.Private_Key_File != ""
 		if secure {
 			log.Infof("Server endpoint will require https")
-			err = server.ListenAndServeTLS(conf.Identity.Cert_File, conf.Identity.Private_Key_File)
+			err = s.httpServer.ListenAndServeTLS(s.configuration.Identity.Cert_File, s.configuration.Identity.Private_Key_File)
 		} else {
-			err = server.ListenAndServe()
+			err = s.httpServer.ListenAndServe()
 		}
 		log.Warning(err)
 	}()
+}
+
+func (s *Server) Stop() {
+	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
+	s.httpServer.Close()
 }
 
 type serverAuthProxyHandler struct {
