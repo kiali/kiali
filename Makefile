@@ -87,5 +87,5 @@ k8s-deploy: k8s-undeploy
 
 k8s-undeploy:
 	@echo Undeploying from Kubernetes
-	kubectl delete all,secrets,sa,configmaps,daemonsets,clusterroles --selector=app=sws -n ${NAMESPACE}
+	kubectl delete all,secrets,sa,configmaps,daemonsets,ingresses,clusterroles --selector=app=sws -n ${NAMESPACE}
 
