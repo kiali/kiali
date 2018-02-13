@@ -56,6 +56,7 @@ func main() {
 		log.Infof("No configuration file specified. Will rely on environment for configuration.")
 		Configuration = config.NewConfig()
 	}
+	config.SWSConfig = Configuration
 	log.Tracef("SWS Configuration:\n%s", Configuration)
 
 	if err := validateConfig(); err != nil {

@@ -18,12 +18,19 @@ const (
 	ENV_IDENTITY_CERT_FILE        = "IDENTITY_CERT_FILE"
 	ENV_IDENTITY_PRIVATE_KEY_FILE = "IDENTITY_PRIVATE_KEY_FILE"
 
+	ENV_PROMETHEUS_SERVICE = "PROMETHEUS_SERVICE"
+
 	ENV_SERVER_ADDRESS                       = "SERVER_ADDRESS"
 	ENV_SERVER_PORT                          = "SERVER_PORT"
 	ENV_SERVER_CREDENTIALS_USERNAME          = "SERVER_CREDENTIALS_USERNAME"
 	ENV_SERVER_CREDENTIALS_PASSWORD          = "SERVER_CREDENTIALS_PASSWORD"
 	ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
 )
+
+// Store SWS Config.
+// Access to the config can be necessary to other areas and I guess is better to have a global variable instead of
+// passing the config in the function signature as it can be harder to follow.
+var SWSConfig *Config
 
 // USED FOR YAML
 type Server struct {
@@ -36,8 +43,9 @@ type Server struct {
 // Config defines full YAML configuration.
 // USED FOR YAML
 type Config struct {
-	Identity security.Identity ",omitempty"
-	Server   Server            ",omitempty"
+	Identity 		  security.Identity ",omitempty"
+	Server   		  Server            ",omitempty"
+	PrometheusService string 			",omitempty"
 }
 
 func NewConfig() (c *Config) {
@@ -53,7 +61,7 @@ func NewConfig() (c *Config) {
 		Password: getDefaultString(ENV_SERVER_CREDENTIALS_PASSWORD, ""),
 	}
 	c.Server.Static_Content_Root_Directory = strings.TrimSpace(getDefaultString(ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY, "/static-files"))
-
+	c.PrometheusService = strings.TrimSpace(getDefaultString(ENV_PROMETHEUS_SERVICE, "http://prometheus:9090"))
 	return
 }
 
