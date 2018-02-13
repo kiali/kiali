@@ -11,6 +11,8 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+
+	"github.com/swift-sunshine/swscore/models"
 )
 
 const (
@@ -112,16 +114,13 @@ func (in *IstioClient) GetNamespaces() ([]string, error) {
 
 // GetServices returns a list of services for a given namespace.
 // It returns an error on any problem.
-func (in *IstioClient) GetServices(namespace string) ([]string, error) {
-	services, err := in.k8s.CoreV1().Services(namespace).List(emptyListOptions)
+func (in *IstioClient) GetServices(namespaceName string) (*v1.ServiceList, error) {
+	services, err := in.k8s.CoreV1().Services(namespaceName).List(emptyListOptions)
 	if err != nil {
 		return nil, err
 	}
-	names := make([]string, len(services.Items))
-	for i, service := range services.Items {
-		names[i] = service.Name
-	}
-	return names, nil
+
+	return services, nil
 }
 
 // GetServiceDetails returns full details for a given service, consisting on service description, endpoints and pods.
