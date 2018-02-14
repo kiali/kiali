@@ -18,12 +18,17 @@ const (
 	ENV_IDENTITY_CERT_FILE        = "IDENTITY_CERT_FILE"
 	ENV_IDENTITY_PRIVATE_KEY_FILE = "IDENTITY_PRIVATE_KEY_FILE"
 
+	ENV_PROMETHEUS_SERVICE_URL = "PROMETHEUS_SERVICE_URL"
+
 	ENV_SERVER_ADDRESS                       = "SERVER_ADDRESS"
 	ENV_SERVER_PORT                          = "SERVER_PORT"
 	ENV_SERVER_CREDENTIALS_USERNAME          = "SERVER_CREDENTIALS_USERNAME"
 	ENV_SERVER_CREDENTIALS_PASSWORD          = "SERVER_CREDENTIALS_PASSWORD"
 	ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
 )
+
+// Global configuration for the application.
+var configuration *Config
 
 // USED FOR YAML
 type Server struct {
@@ -36,8 +41,9 @@ type Server struct {
 // Config defines full YAML configuration.
 // USED FOR YAML
 type Config struct {
-	Identity security.Identity ",omitempty"
-	Server   Server            ",omitempty"
+	Identity               security.Identity ",omitempty"
+	Server                 Server            ",omitempty"
+	Prometheus_Service_Url string            ",omitempty"
 }
 
 func NewConfig() (c *Config) {
@@ -53,8 +59,16 @@ func NewConfig() (c *Config) {
 		Password: getDefaultString(ENV_SERVER_CREDENTIALS_PASSWORD, ""),
 	}
 	c.Server.Static_Content_Root_Directory = strings.TrimSpace(getDefaultString(ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY, "/static-files"))
-
+	c.Prometheus_Service_Url = strings.TrimSpace(getDefaultString(ENV_PROMETHEUS_SERVICE_URL, "http://prometheus:9090"))
 	return
+}
+
+func Get() (conf *Config) {
+	return configuration
+}
+
+func Set(conf *Config) {
+	configuration = conf
 }
 
 func getDefaultString(envvar string, defaultValue string) (retVal string) {
