@@ -78,7 +78,9 @@ func TestSecureComm(t *testing.T) {
 	consoleUrl := serverUrl + "/console"
 	apiUrl := serverUrl + "/api"
 
-	server := NewServer(conf)
+	config.Set(conf)
+
+	server := NewServer()
 	server.Start()
 	t.Logf("Started test http server: %v", serverUrl)
 	defer func() {

@@ -9,6 +9,9 @@ parameters:
 - description: The version of the image to use
   name: IMAGE_VERSION
   value: dev
+- description: The namespace to use
+  name: NAMESPACE
+  value: istio-system
 objects:
 - apiVersion: v1
   kind: ServiceAccount
@@ -78,3 +81,46 @@ objects:
         - name: sws-configuration
           configMap:
             name: sws-configuration
+- apiVersion: v1
+  kind: ClusterRole
+  metadata:
+    name: sws
+    labels:
+      name: sws
+      app: sws
+  rules:
+  - apiGroups: [""]
+    attributeRestrictions: null
+    resources:
+    - configmaps
+    - namespaces
+    - nodes
+    - pods
+    - projects
+    - services
+    - endpoints
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups: ["config.istio.io"]
+    attributeRestrictions: null
+    resources:
+    - routerules
+    verbs:
+    - get
+    - list
+    - watch
+- apiVersion: v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: sws
+    labels:
+      name: sws
+      app: sws
+  roleRef:
+    name: sws
+  subjects:
+  - kind: ServiceAccount
+    name: sws
+    namespace: ${NAMESPACE}

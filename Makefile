@@ -6,7 +6,7 @@ DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
 
 VERBOSE_MODE ?= 4
-NAMESPACE ?= default
+NAMESPACE ?= istio-system
 
 GO_BUILD_ENVVARS = \
 	GOOS=linux \
@@ -74,11 +74,11 @@ docker:
 openshift-deploy: openshift-undeploy
 	@echo Deploying to OpenShift
 	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
-	oc process -f deploy/openshift/sws.yaml -p IMAGE_VERSION=${DOCKER_VERSION} | oc create -n ${NAMESPACE} -f -
+	oc process -f deploy/openshift/sws.yaml -p IMAGE_VERSION=${DOCKER_VERSION} -p NAMESPACE=${NAMESPACE}| oc create -n ${NAMESPACE} -f -
 
 openshift-undeploy:
 	@echo Undeploying from OpenShift
-	oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles --selector=app=sws -n ${NAMESPACE}
+	oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles,clusterrolebindings --selector=app=sws -n ${NAMESPACE}
 
 k8s-deploy: k8s-undeploy
 	@echo Deploying to Kubernetes
