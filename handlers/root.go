@@ -95,7 +95,7 @@ func demoFetchAllServicesAndPrintThem(w http.ResponseWriter) {
 			}
 
 			fmt.Fprintf(w, "Dependencies: \n")
-			if incomeServices, err := prometheusClient.GetIncomeServices(namespace, service); err != nil {
+			if incomeServices, err := prometheusClient.GetSourceServices(namespace, service); err != nil {
 				log.Error(err)
 				return
 			} else {
