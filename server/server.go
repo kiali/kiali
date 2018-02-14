@@ -11,13 +11,13 @@ import (
 )
 
 type Server struct {
-	configuration config.Config
 	httpServer    *http.Server
 }
 
 // NewServer creates a new server configured with the given settings.
 // Start and Stop it with the corresponding functions.
-func NewServer(conf *config.Config) *Server {
+func NewServer() *Server {
+	conf := config.Configuration
 	// create a router that will route all incoming API server requests to different handlers
 	router := routing.NewRouter(conf)
 
@@ -36,22 +36,21 @@ func NewServer(conf *config.Config) *Server {
 		Addr: fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.Port),
 	}
 
-	// return our new Server - note that we make our own copy of the configuration
+	// return our new Server
 	return &Server{
 		httpServer:    httpServer,
-		configuration: *conf,
 	}
 }
 
 func (s *Server) Start() {
 	log.Infof("Server endpoint will start at [%v]", s.httpServer.Addr)
-	log.Infof("Server endpoint will serve static content from [%v]", s.configuration.Server.Static_Content_Root_Directory)
+	log.Infof("Server endpoint will serve static content from [%v]", config.Configuration.Server.Static_Content_Root_Directory)
 	go func() {
 		var err error
-		secure := s.configuration.Identity.Cert_File != "" && s.configuration.Identity.Private_Key_File != ""
+		secure := config.Configuration.Identity.Cert_File != "" && config.Configuration.Identity.Private_Key_File != ""
 		if secure {
 			log.Infof("Server endpoint will require https")
-			err = s.httpServer.ListenAndServeTLS(s.configuration.Identity.Cert_File, s.configuration.Identity.Private_Key_File)
+			err = s.httpServer.ListenAndServeTLS(config.Configuration.Identity.Cert_File, config.Configuration.Identity.Private_Key_File)
 		} else {
 			err = s.httpServer.ListenAndServe()
 		}

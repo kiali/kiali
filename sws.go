@@ -25,9 +25,6 @@ var (
 	argConfigFile = flag.String("config", "", "Path to the YAML configuration file. If not specified, environment variables will be used for configuration.")
 )
 
-// Configuration is the main configuration for our process
-var Configuration *config.Config
-
 func init() {
 	// log everything to stderr so that it can be easily gathered by logs, separate log files are problematic with containers
 	flag.Set("logtostderr", "true")
@@ -51,19 +48,19 @@ func main() {
 		if err != nil {
 			glog.Fatal(err)
 		}
-		Configuration = c
+		config.Configuration = c
 	} else {
 		log.Infof("No configuration file specified. Will rely on environment for configuration.")
-		Configuration = config.NewConfig()
+		config.Configuration = config.NewConfig()
 	}
-	log.Tracef("SWS Configuration:\n%s", Configuration)
+	log.Tracef("SWS Configuration:\n%s", config.Configuration)
 
 	if err := validateConfig(); err != nil {
 		glog.Fatal(err)
 	}
 
 	// Start listening to requests
-	server := server.NewServer(Configuration)
+	server := server.NewServer()
 	server.Start()
 
 	// wait forever, or at least until we are told to exit
@@ -92,18 +89,18 @@ func waitForTermination() {
 }
 
 func validateConfig() error {
-	if Configuration.Server.Port < 0 {
-		return fmt.Errorf("server port is negative: %v", Configuration.Server.Port)
+	if config.Configuration.Server.Port < 0 {
+		return fmt.Errorf("server port is negative: %v", config.Configuration.Server.Port)
 	}
 
-	if err := Configuration.Server.Credentials.ValidateCredentials(); err != nil {
+	if err := config.Configuration.Server.Credentials.ValidateCredentials(); err != nil {
 		return fmt.Errorf("server credentials are invalid: %v", err)
 	}
-	if strings.Contains(Configuration.Server.Static_Content_Root_Directory, "..") {
-		return fmt.Errorf("server static content root directory must not contain '..': %v", Configuration.Server.Static_Content_Root_Directory)
+	if strings.Contains(config.Configuration.Server.Static_Content_Root_Directory, "..") {
+		return fmt.Errorf("server static content root directory must not contain '..': %v", config.Configuration.Server.Static_Content_Root_Directory)
 	}
-	if _, err := os.Stat(Configuration.Server.Static_Content_Root_Directory); os.IsNotExist(err) {
-		return fmt.Errorf("server static content root directory does not exist: %v", Configuration.Server.Static_Content_Root_Directory)
+	if _, err := os.Stat(config.Configuration.Server.Static_Content_Root_Directory); os.IsNotExist(err) {
+		return fmt.Errorf("server static content root directory does not exist: %v", config.Configuration.Server.Static_Content_Root_Directory)
 	}
 
 	return nil

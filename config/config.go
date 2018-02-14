@@ -18,12 +18,20 @@ const (
 	ENV_IDENTITY_CERT_FILE        = "IDENTITY_CERT_FILE"
 	ENV_IDENTITY_PRIVATE_KEY_FILE = "IDENTITY_PRIVATE_KEY_FILE"
 
+	ENV_PROMETHEUS_SERVICE = "PROMETHEUS_SERVICE"
+
 	ENV_SERVER_ADDRESS                       = "SERVER_ADDRESS"
 	ENV_SERVER_PORT                          = "SERVER_PORT"
 	ENV_SERVER_CREDENTIALS_USERNAME          = "SERVER_CREDENTIALS_USERNAME"
 	ENV_SERVER_CREDENTIALS_PASSWORD          = "SERVER_CREDENTIALS_PASSWORD"
 	ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
 )
+
+// Global configuration for the application.
+// The application is not going to manage multiple configurations, so having a single location will help to not
+// propagate on every function signature as once we add some backend functionality the stack of calls increases and
+// it is hard to follow.
+var Configuration *Config
 
 // USED FOR YAML
 type Server struct {
@@ -36,8 +44,9 @@ type Server struct {
 // Config defines full YAML configuration.
 // USED FOR YAML
 type Config struct {
-	Identity security.Identity ",omitempty"
-	Server   Server            ",omitempty"
+	Identity 		  security.Identity ",omitempty"
+	Server   		  Server            ",omitempty"
+	PrometheusService string 			",omitempty"
 }
 
 func NewConfig() (c *Config) {
@@ -53,7 +62,7 @@ func NewConfig() (c *Config) {
 		Password: getDefaultString(ENV_SERVER_CREDENTIALS_PASSWORD, ""),
 	}
 	c.Server.Static_Content_Root_Directory = strings.TrimSpace(getDefaultString(ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY, "/static-files"))
-
+	c.PrometheusService = strings.TrimSpace(getDefaultString(ENV_PROMETHEUS_SERVICE, "http://prometheus:9090"))
 	return
 }
 
