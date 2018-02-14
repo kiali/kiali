@@ -48,6 +48,32 @@ func NewRoutes() (r *Routes) {
 			"/api/namespaces/{namespace}/services/{service}/metrics",
 			handlers.ServiceMetrics,
 		},
+		{
+			// Supported query parameters:
+			// vendor:         cytoscape (default) | vizceral
+			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
+			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
+			// offset:         Duration indicating desired query offset (default 0m)
+			// interval:       Duration indicating desired query period (default 10m)
+
+			"GraphNamespace",
+			"GET",
+			"/api/namespaces/{namespace}/graphs",
+			handlers.GraphNamespace,
+		},
+		{
+			// Supported query parameters:
+			// vendor:         cytoscape (default)
+			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
+			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
+			// offset:         Duration indicating desired query offset (default 0m)
+			// interval:       Duration indicating desired query period (default 10m)
+
+			"GraphService",
+			"GET",
+			"/api/namespaces/{namespace}/services/{service}/graphs",
+			handlers.GraphService,
+		},
 	}
 
 	return

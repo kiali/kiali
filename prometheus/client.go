@@ -100,3 +100,8 @@ func (in *Client) GetServiceMetrics(namespace string, servicename string, durati
 func (in *Client) API() v1.API {
 	return in.api
 }
+
+// Address return the configured Prometheus service URL
+func (in *Client) Address() string {
+	return config.Get().PrometheusServiceURL
+}
