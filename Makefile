@@ -68,7 +68,7 @@ docker:
 	@mkdir -p _output/docker
 	@cp -r deploy/docker/* _output/docker
 	@cp ${GOPATH}/bin/sws _output/docker
-	@npm --prefix _output/docker/npm -g install swsui
+	@if [ ! -d "_output/docker/npm" ]; then npm --prefix _output/docker/npm -g install swsui; fi
 	docker build -t ${DOCKER_TAG} _output/docker
 
 openshift-deploy: openshift-undeploy
