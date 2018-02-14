@@ -12,7 +12,7 @@ const IstioAPIGroup = "config.istio.io"
 const IstioAPIVersion = "v1alpha2"
 
 var IstioGroupVersion = schema.GroupVersion{
-	Group: IstioAPIGroup,
+	Group:   IstioAPIGroup,
 	Version: IstioAPIVersion,
 }
 
@@ -51,9 +51,9 @@ type IstioObjectList interface {
 // ServiceDetails is a wrapper to group full Service description, Endpoints and Pods.
 // Used to fetch all details in a single operation instead to invoke individual APIs per each group.
 type ServiceDetails struct {
-	Service *v1.Service `json:"service"`
+	Service   *v1.Service   `json:"service"`
 	Endpoints *v1.Endpoints `json:"endpoints"`
-	Pods []*v1.Pod `json:pods`
+	Pods      []*v1.Pod     `json:pods`
 }
 
 // IstioDetails is a wrapper to group all Istio objects related to a Service.
