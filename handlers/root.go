@@ -11,8 +11,8 @@ import (
 )
 
 // This method shows how to use the API to fetch and print all info that would be necessary
-// for listing services and details.
-// It is temporal, so don't be afraid to delete it when handlers are in place.
+// for listing services and details
+// It is temporal, so don't be afraid to delete it when handlers are in place
 func demoFetchAllServicesAndPrintThem(w http.ResponseWriter) {
 	istioClient, err := kubernetes.NewClient()
 	if err != nil {
@@ -47,6 +47,7 @@ func demoFetchAllServicesAndPrintThem(w http.ResponseWriter) {
 				log.Error(err)
 				return
 			}
+
 			fmt.Fprintf(w,"Service Labels: \n")
 			for key, value := range details.Service.Labels {
 				fmt.Fprintf(w,"%s = %s \n", key, value)
@@ -60,7 +61,6 @@ func demoFetchAllServicesAndPrintThem(w http.ResponseWriter) {
 			}
 
 			fmt.Fprintf(w,"Endpoints: \n")
-
 			for _, subset := range details.Endpoints.Subsets {
 				for _, address := range subset.Addresses {
 					fmt.Fprintf(w,"Address: %s \n", address.IP)
@@ -77,7 +77,6 @@ func demoFetchAllServicesAndPrintThem(w http.ResponseWriter) {
 			}
 
 			fmt.Fprintf(w,"Pods: \n")
-
 			for _, pod := range details.Pods {
 				fmt.Fprintf(w,"Pod: %s \n", pod.Name)
 				fmt.Fprintf(w,"Pod Labels: \n")
@@ -87,23 +86,26 @@ func demoFetchAllServicesAndPrintThem(w http.ResponseWriter) {
 			}
 
 			fmt.Fprintf(w,"Istio Rules: \n")
-
-			istioDetails, err := istioClient.GetIstioDetails(namespace, service)
-			if err != nil {
+			if istioDetails, err := istioClient.GetIstioDetails(namespace, service) ; err != nil {
 				log.Error(err)
 				return
-			}
-			for _, rule := range istioDetails.RouteRules {
-				fmt.Fprintf(w,"RouteRule: %+v \n", rule.Spec)
+			} else {
+				for _, rule := range istioDetails.RouteRules {
+					fmt.Fprintf(w,"RouteRule: %+v \n", rule.Spec)
+				}
 			}
 
 			fmt.Fprintf(w,"Dependencies: \n")
-			incomeServices, err := prometheusClient.GetIncomeServices(namespace, service)
-			for dest, origin := range incomeServices {
-				fmt.Fprintf(w,"To: %s, From: %s \n", dest, origin)
+			if incomeServices, err := prometheusClient.GetIncomeServices(namespace, service) ; err != nil {
+				log.Error(err)
+				return
+			} else {
+				for dest, origin := range incomeServices {
+					fmt.Fprintf(w,"To: %s, From: %s \n", dest, origin)
+				}
 			}
 
-			fmt.Fprintf(w,"\n")
+			fmt.Fprint(w,"\n")
 		}
 	}
 }

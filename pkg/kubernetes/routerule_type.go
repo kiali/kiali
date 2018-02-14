@@ -10,6 +10,7 @@ import (
 // types.go will collect common/shared types.
 // This type is extracted from Istio Pilot as models used are not public and it doesn't make sense to fetch all
 // Istio project as a dependency.
+// Reference: https://github.com/istio/istio/blob/master/pilot/pkg/config/kube/crd/types.go
 
 const RouteRules = "routerules"
 const RouteRuleType = "RouteRule"

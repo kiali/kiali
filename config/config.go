@@ -27,10 +27,11 @@ const (
 	ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
 )
 
-// Store SWS Config.
-// Access to the config can be necessary to other areas and I guess is better to have a global variable instead of
-// passing the config in the function signature as it can be harder to follow.
-var SWSConfig *Config
+// Global configuration for the application.
+// The application is not going to manage multiple configurations, so having a single location will help to not
+// propagate on every function signature as once we add some backend functionality the stack of calls increases and
+// it is hard to follow.
+var Configuration *Config
 
 // USED FOR YAML
 type Server struct {

@@ -1,15 +1,17 @@
 package prometheus
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
 	"github.com/prometheus/client_golang/api"
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+
 	"github.com/swift-sunshine/swscore/config"
-	"fmt"
-	"time"
-	"context"
-	"strings"
-	"errors"
 )
 
 const istio_request_query = "istio_request_count{destination_service=~\"%s.%s.*\"}"
@@ -25,10 +27,10 @@ type PrometheusClient struct {
 // It returns an error on any problem.
 func NewClient() (*PrometheusClient, error) {
 	client := PrometheusClient{}
-	if config.SWSConfig == nil {
+	if config.Configuration == nil {
 		return nil, errors.New("config.SWSConfig must be not null")
 	}
-	p8s, err := api.NewClient(api.Config{Address: config.SWSConfig.PrometheusService})
+	p8s, err := api.NewClient(api.Config{Address: config.Configuration.PrometheusService})
 	if err != nil {
 		return nil, err
 	}
