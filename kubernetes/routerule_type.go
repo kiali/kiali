@@ -16,7 +16,6 @@ const RouteRules = "routerules"
 const RouteRuleType = "RouteRule"
 const RouteRuleLabel = "route-rule"
 
-
 // RouteRule is the generic Kubernetes API object wrapper
 type RouteRule struct {
 	meta_v1.TypeMeta   `json:",inline"`
@@ -119,4 +118,3 @@ func (in *RouteRuleList) DeepCopyObject() runtime.Object {
 
 	return nil
 }
-

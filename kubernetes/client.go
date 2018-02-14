@@ -9,20 +9,20 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
 var (
 	emptyListOptions = meta_v1.ListOptions{}
-	emptyGetOptions = meta_v1.GetOptions{}
+	emptyGetOptions  = meta_v1.GetOptions{}
 )
 
 // Client for Kubernetes and Istio APIs
 // It hides the way it queries each API
 type IstioClient struct {
-	k8s *kubernetes.Clientset
+	k8s   *kubernetes.Clientset
 	istio *rest.RESTClient
 }
 
@@ -63,14 +63,14 @@ func NewClient() (*IstioClient, error) {
 
 	// Istio needs another type as it queries a different K8S API.
 	istioConfig := rest.Config{
-		Host: config.Host,
+		Host:    config.Host,
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{
 			GroupVersion:         &IstioGroupVersion,
 			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)},
-			ContentType: runtime.ContentTypeJSON,
+			ContentType:          runtime.ContentTypeJSON,
 		},
-		BearerToken: config.BearerToken,
+		BearerToken:     config.BearerToken,
 		TLSClientConfig: config.TLSClientConfig,
 	}
 
@@ -136,7 +136,7 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 			}
 		}
 	}
-	return &ServiceDetails{service,endpoints, pods}, nil
+	return &ServiceDetails{service, endpoints, pods}, nil
 }
 
 // It returns Istio details for a given service, on this version it describes the RouterRules defined for a service.
