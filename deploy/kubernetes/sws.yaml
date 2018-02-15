@@ -21,6 +21,17 @@ spec:
     app: sws
 ---
 apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: sws
+  labels:
+    app: sws
+spec:
+  backend:
+    serviceName: sws
+    servicePort: 20001
+---
+apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
   name: sws
