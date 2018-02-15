@@ -19,7 +19,7 @@
     "react-scripts-ts": "2.13.0"
   },
   "lint-staged": {
-    "src/**/*.{js,jsx,tsx,json,css}": [
+    "src/**/*.{js,jsx,ts,tsx,json,css}": [
       "prettier --single-quote --write",
       "git add"
     ]
