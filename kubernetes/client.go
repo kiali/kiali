@@ -14,6 +14,15 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const (
+	// These constants are tweaks to the k8s client I think once are set up they won't change so no need to put them on the config
+	// Default QPS and Burst are quite low and those are not designed for a backend that should perform several
+	// queries to build an inventory of entities from a k8s backend.
+	// Other k8s clients have increased these values to a similar values.
+	K8S_QPS   = 100
+	K8S_Burst = 200
+)
+
 var (
 	emptyListOptions = meta_v1.ListOptions{}
 	emptyGetOptions  = meta_v1.GetOptions{}
@@ -37,6 +46,9 @@ func NewClient() (*IstioClient, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	config.QPS = K8S_QPS
+	config.Burst = K8S_Burst
 
 	k8s, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -72,6 +84,8 @@ func NewClient() (*IstioClient, error) {
 		},
 		BearerToken:     config.BearerToken,
 		TLSClientConfig: config.TLSClientConfig,
+		QPS:             config.QPS,
+		Burst:           config.Burst,
 	}
 
 	istio, err := rest.RESTClientFor(&istioConfig)
