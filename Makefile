@@ -1,7 +1,7 @@
 VERSION ?= 0.0.1.Final-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
-DOCKER_NAME = jmazzitelli/sws
+DOCKER_NAME ?= jmazzitelli/sws
 DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
 
@@ -74,7 +74,7 @@ docker:
 openshift-deploy: openshift-undeploy
 	@echo Deploying to OpenShift
 	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
-	oc process -f deploy/openshift/sws.yaml -p IMAGE_VERSION=${DOCKER_VERSION} -p NAMESPACE=${NAMESPACE}| oc create -n ${NAMESPACE} -f -
+	oc process -f deploy/openshift/sws.yaml -p IMAGE_NAME=${DOCKER_NAME} -p IMAGE_VERSION=${DOCKER_VERSION} -p NAMESPACE=${NAMESPACE} | oc create -n ${NAMESPACE} -f -
 
 openshift-undeploy:
 	@echo Undeploying from OpenShift
