@@ -6,6 +6,9 @@ metadata:
   name: sws
   app: sws
 parameters:
+- description: The name of the image to use
+  name: IMAGE_NAME
+  value: jmazzitelli/sws
 - description: The version of the image to use
   name: IMAGE_VERSION
   value: dev
@@ -61,7 +64,7 @@ objects:
       spec:
         serviceAccount: sws
         containers:
-        - image: jmazzitelli/sws:${IMAGE_VERSION}
+        - image: ${IMAGE_NAME}:${IMAGE_VERSION}
           name: sws
           command:
             - "/opt/sws/sws"
