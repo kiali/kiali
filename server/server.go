@@ -11,7 +11,7 @@ import (
 )
 
 type Server struct {
-	httpServer    *http.Server
+	httpServer *http.Server
 }
 
 // NewServer creates a new server configured with the given settings.
@@ -38,7 +38,7 @@ func NewServer() *Server {
 
 	// return our new Server
 	return &Server{
-		httpServer:    httpServer,
+		httpServer: httpServer,
 	}
 }
 
