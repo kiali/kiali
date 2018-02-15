@@ -1,6 +1,12 @@
 import * as React from 'react';
 import './App.css';
 
+import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom';
+
+import ServiceGraphPage from './pages/ServiceGraph/ServiceGraphPage';
+import ServiceDetailsPage from './pages/ServiceDetails/ServiceDetailsPage';
+import HomePage from './pages/Home/HomePage';
+
 const logo = require('./logo.svg');
 
 class App extends React.Component {
@@ -9,11 +15,16 @@ class App extends React.Component {
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
+          <h1 className="App-title">Swift Sunshine</h1>
         </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.tsx</code> and save to reload.
-        </p>
+        <BrowserRouter>
+          <Switch>
+            <Route path="/service-graph" component={ServiceGraphPage} />
+            <Route path="/namespaces/:namespace/services/:service" component={ServiceDetailsPage} />
+            <Route path="/" exact={true} component={HomePage} />
+            <Redirect to="/" />
+          </Switch>
+        </BrowserRouter>
       </div>
     );
   }
