@@ -5,6 +5,7 @@
 
 # IDE
 /.idea
+/.vscode
 
 # testing
 /coverage

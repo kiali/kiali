@@ -19,10 +19,7 @@
     "react-scripts-ts": "2.13.0"
   },
   "lint-staged": {
-    "src/**/*.{js,jsx,ts,tsx,json,css}": [
-      "prettier --single-quote --write",
-      "git add"
-    ]
+    "src/**/*.{js,jsx,ts,tsx,json,css}": ["prettier --single-quote --parser typescript --print-width 120 --write", "git add"]
   },
   "scripts": {
     "start": "react-scripts-ts start",
@@ -51,13 +48,7 @@
     "type": "git",
     "url": "git+https://github.com/swift-sunshine/swsui.git"
   },
-  "keywords": [
-    "hawkular",
-    "istio",
-    "openshift",
-    "observability",
-    "monitoring"
-  ],
+  "keywords": ["hawkular", "istio", "openshift", "observability", "monitoring"],
   "author": "Red Hat",
   "license": "Apache-2.0",
   "homepage": "https://github.com/mtho11/swsui#readme"
