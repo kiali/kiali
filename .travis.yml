@@ -13,6 +13,9 @@ notifications:
     channels:
     - chat.freenode.net#BOGUS_DOES_NOT_EXIST
 
+before_script:
+  - GO_FILES=$(find . -iname '*.go' -type f | grep -v /vendor/) # All the .go files, excluding vendor/
+
 env:
   global:
   - secure: "NxfAB5mYGZDzw9YS51eruUsLf9tLiiiVMcHIy/2CNhCNorMKXIjCAegGeHxo2iuZKmrJeLokMtFQ13gsCqOR5tKsYxG9D7trFO4nLh5nOJ2otrlE0/ggSFBq0jieh00fJYX/MJ76YYZlBvXdTwdmaaCNVFG+DDApRwErMvQF/TakrZlVpLi4M1hZtChELvCpNsKNDrcj1jkKIUSypIWPziSsGP7u7MD7Dbk5T5oHumaHuMfQ9R0gidaD040fFDVfhQ73So8VTVQCljO7Ut+eMyGLGQow5t6p8ntI3ZuznBXIBRHnwYIRyZy4Ygu5IjIKxtjhMXByFQ3TyUQAarKfNKE7ifU+Mz6CMpRVz/VkfTn6J53V8CDC0Kgh4L7hTikiCi39+pjAXWX69ci33ioYE/ey5gr40jgzehrq88hf7MZEUIGhuNMmdTvgl5m7fokimNXT6EISNhjt5IICt2SCamqjpyGqhKEE3yV2jGg6XCkmyT/vkvnm4B/Pznwerp9BWxruHF86DKAZ24+8JwvUP3UtMVglOnNIb/Bh7A+Gpj0mGQFbrd+mB/OB0lJ7HnLHOXf8tasApS/d1NOlCSFdKWj9ZCbpNn0optBOeKM/0pxx9tAWGyz1NEN0U0K9JmHiFb/FO2Eba2wQcmDhlV5AWKQ14v3nKnKQIRYQpWkjfgA="
@@ -27,7 +30,9 @@ env:
 #- make dep-install
 #- make dep-update
 
-script: make test
+script: 
+  - test -z "$(gofmt -s -l ${GO_FILES})" # Gofmt Linter
+  - make test
 
 # Push the docker images to docker hub
 # If a tag build, use the tag as docker version; otherwise, use branch name as docker version (where master==latest)

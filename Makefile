@@ -22,7 +22,11 @@ clean:
 	@rm -rf ${GOPATH}/pkg/*
 	@rm -rf _output/*
 
-build:  clean
+git-init:
+	@echo Setting Git Hooks
+	cp hack/hooks/* .git/hooks
+
+build:  clean format
 	@echo Building...
 	${GO_BUILD_ENVVARS} go build \
 		-o ${GOPATH}/bin/sws -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
@@ -32,6 +36,11 @@ install:
 	${GO_BUILD_ENVVARS} go install \
 		-ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
+format:
+	# Exclude more paths find . \( -path './vendor' -o -path <new_path_to_exclude> \) -prune -o -type f -iname '*.go' -print
+	@for gofile in $$(find . -path './vendor' -prune -o -type f -iname '*.go' -print); do \
+			gofmt -w $$gofile; \
+	done
 build-test:
 	@echo Building and installing test dependencies to help speed up test runs.
 	go test -i $(shell go list ./... | grep -v -e /vendor/)
