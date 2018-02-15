@@ -32,6 +32,7 @@
     "@types/node": "~9.4.0",
     "@types/react": "~16.0.36",
     "@types/react-dom": "~16.0.3",
+    "@types/react-router-dom": "^4.2.4",
     "typescript": "~2.7.1",
     "@storybook/react": "^3.3.12",
     "@storybook/addon-actions": "^3.3.12",
@@ -45,7 +46,13 @@
     "type": "git",
     "url": "git+https://github.com/swift-sunshine/swsui.git"
   },
-  "keywords": ["hawkular", "istio", "openshift", "observability", "monitoring"],
+  "keywords": [
+    "hawkular",
+    "istio",
+    "openshift",
+    "observability",
+    "monitoring"
+  ],
   "author": "Red Hat",
   "license": "Apache-2.0",
   "homepage": "https://github.com/mtho11/swsui#readme"
