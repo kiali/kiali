@@ -79,7 +79,7 @@ func waitForTermination() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
 	go func() {
-		for _ = range signalChan {
+		for range signalChan {
 			log.Info("Termination Signal Received")
 			doneChan <- true
 		}
