@@ -9,6 +9,7 @@
     "axios-mock-adapter": "~1.12.0",
     "husky": "^0.14.3",
     "lint-staged": "^6.1.0",
+    "lodash": "~4.17.5",
     "patternfly": "~3.38.1",
     "patternfly-react": "~1.7.0",
     "prettier": "^1.10.2",
