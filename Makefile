@@ -80,6 +80,10 @@ docker:
 	@if [ ! -d "_output/docker/npm" ]; then npm --prefix _output/docker/npm -g install swsui; fi
 	docker build -t ${DOCKER_TAG} _output/docker
 
+docker-push:
+	@echo Pushing current docker image to ${DOCKER_TAG}
+	docker push ${DOCKER_TAG}
+
 openshift-deploy: openshift-undeploy
 	@echo Deploying to OpenShift
 	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
