@@ -96,11 +96,11 @@ func validateConfig() error {
 	if err := config.Get().Server.Credentials.ValidateCredentials(); err != nil {
 		return fmt.Errorf("server credentials are invalid: %v", err)
 	}
-	if strings.Contains(config.Get().Server.Static_Content_Root_Directory, "..") {
-		return fmt.Errorf("server static content root directory must not contain '..': %v", config.Get().Server.Static_Content_Root_Directory)
+	if strings.Contains(config.Get().Server.StaticContentRootDirectory, "..") {
+		return fmt.Errorf("server static content root directory must not contain '..': %v", config.Get().Server.StaticContentRootDirectory)
 	}
-	if _, err := os.Stat(config.Get().Server.Static_Content_Root_Directory); os.IsNotExist(err) {
-		return fmt.Errorf("server static content root directory does not exist: %v", config.Get().Server.Static_Content_Root_Directory)
+	if _, err := os.Stat(config.Get().Server.StaticContentRootDirectory); os.IsNotExist(err) {
+		return fmt.Errorf("server static content root directory does not exist: %v", config.Get().Server.StaticContentRootDirectory)
 	}
 
 	return nil

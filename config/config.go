@@ -30,27 +30,25 @@ const (
 // Global configuration for the application.
 var configuration *Config
 
-// USED FOR YAML
 type Server struct {
-	Address                       string               ",omitempty"
-	Port                          int                  ",omitempty"
-	Credentials                   security.Credentials ",omitempty"
-	Static_Content_Root_Directory string               ",omitempty"
+	Address                    string               ",omitempty"
+	Port                       int                  ",omitempty"
+	Credentials                security.Credentials ",omitempty"
+	StaticContentRootDirectory string               "static_content_root_directory,omitempty"
 }
 
 // Config defines full YAML configuration.
-// USED FOR YAML
 type Config struct {
-	Identity               security.Identity ",omitempty"
-	Server                 Server            ",omitempty"
-	Prometheus_Service_Url string            ",omitempty"
+	Identity             security.Identity ",omitempty"
+	Server               Server            ",omitempty"
+	PrometheusServiceUrl string            "prometheus_service_url,omitempty"
 }
 
 func NewConfig() (c *Config) {
 	c = new(Config)
 
-	c.Identity.Cert_File = getDefaultString(ENV_IDENTITY_CERT_FILE, "")
-	c.Identity.Private_Key_File = getDefaultString(ENV_IDENTITY_PRIVATE_KEY_FILE, "")
+	c.Identity.CertFile = getDefaultString(ENV_IDENTITY_CERT_FILE, "")
+	c.Identity.PrivateKeyFile = getDefaultString(ENV_IDENTITY_PRIVATE_KEY_FILE, "")
 
 	c.Server.Address = strings.TrimSpace(getDefaultString(ENV_SERVER_ADDRESS, ""))
 	c.Server.Port = getDefaultInt(ENV_SERVER_PORT, 20000)
@@ -58,8 +56,8 @@ func NewConfig() (c *Config) {
 		Username: getDefaultString(ENV_SERVER_CREDENTIALS_USERNAME, ""),
 		Password: getDefaultString(ENV_SERVER_CREDENTIALS_PASSWORD, ""),
 	}
-	c.Server.Static_Content_Root_Directory = strings.TrimSpace(getDefaultString(ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY, "/static-files"))
-	c.Prometheus_Service_Url = strings.TrimSpace(getDefaultString(ENV_PROMETHEUS_SERVICE_URL, "http://prometheus:9090"))
+	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY, "/static-files"))
+	c.PrometheusServiceUrl = strings.TrimSpace(getDefaultString(ENV_PROMETHEUS_SERVICE_URL, "http://prometheus:9090"))
 	return
 }
 

@@ -66,11 +66,11 @@ func TestSecureComm(t *testing.T) {
 	defer os.Remove(staticFile)
 
 	conf := new(config.Config)
-	conf.Identity.Cert_File = testServerCertFile
-	conf.Identity.Private_Key_File = testServerKeyFile
+	conf.Identity.CertFile = testServerCertFile
+	conf.Identity.PrivateKeyFile = testServerKeyFile
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
-	conf.Server.Static_Content_Root_Directory = tmpDir
+	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Server.Credentials.Username = authorizedUsername
 	conf.Server.Credentials.Password = authorizedPassword
 
@@ -91,8 +91,8 @@ func TestSecureComm(t *testing.T) {
 	// the client
 	httpConfig := HttpClientConfig{
 		Identity: &security.Identity{
-			Cert_File:        testClientCertFile,
-			Private_Key_File: testClientKeyFile,
+			CertFile:       testClientCertFile,
+			PrivateKeyFile: testClientKeyFile,
 		},
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -295,8 +295,8 @@ func (conf *HttpClientConfig) BuildHttpClient() (*http.Client, error) {
 		*tlsConfig = *conf.TLSConfig
 	}
 
-	if conf.Identity != nil && conf.Identity.Cert_File != "" {
-		cert, err := tls.LoadX509KeyPair(conf.Identity.Cert_File, conf.Identity.Private_Key_File)
+	if conf.Identity != nil && conf.Identity.CertFile != "" {
+		cert, err := tls.LoadX509KeyPair(conf.Identity.CertFile, conf.Identity.PrivateKeyFile)
 		if err != nil {
 			return nil, fmt.Errorf("Error loading the client certificates: %v", err)
 		}
