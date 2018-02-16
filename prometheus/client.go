@@ -77,8 +77,8 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 			metric := sample.Metric
 			index := fmt.Sprintf("%s", metric["destination_version"])
 			sourceService := string(metric["source_service"])
-			// .svc sufix is a pure Istio label, I guess we can skip it at the moment for clarity
-			if i := strings.Index(sourceService, ".svc"); i > 0 {
+			// sourceService is in the form "service.namespace.istio_identity_domain". We want to keep only "service.namespace".
+			if i := strings.Index(sourceService, "."+config.Get().Istio_Identity_Domain); i > 0 {
 				sourceService = sourceService[:i]
 			}
 			routes[index] = fmt.Sprintf("%s/%s", sourceService, metric["source_version"])
