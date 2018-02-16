@@ -33,6 +33,9 @@ class HomePage extends React.Component<RouteComponentProps<any>, HomeState> {
                 <Link to={'/service-graph'}>Graph</Link>
               </li>
               <li>
+                  <Link to={'/services'}>Service List</Link>
+              </li>
+              <li>
                 <Link to={'/namespaces/myproject/services/myservice'}>Details</Link>
               </li>
             </ul>
