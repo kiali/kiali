@@ -73,10 +73,32 @@ fi
 # Build OpenShift Origin.
 
 cd ${OPENSHIFT_GITHUB_SOURCE_DIR}
-git pull
+git fetch origin
+
+if [ ! -z "${OPENSHIFT_VERSION}" ]; then
+  if [ "${OPENSHIFT_VERSION}" == "latest" ]; then
+    echo "Switching to the master branch to build the latest version"
+    git co origin/master
+  else
+    echo "Switching to the origin/${OPENSHIFT_VERSION} branch"
+    git co origin/${OPENSHIFT_VERSION}
+    if [ "$?" != "0" ]; then
+      echo "Cannot build - there is no branch for the version you want: ${OPENSHIFT_VERSION}"
+      exit 1
+    fi
+  fi
+else
+  # pull whatever branch we are on
+  git pull
+fi
 
 export GOPATH=${OPENSHIFT_GOPATH}
-make clean build
+
+echo Building OpenShift Origin binaries ...
+hack/env make clean build
+
+echo Building OpenShift Origin images...
+hack/build-local-images.py
 
 if [ "$?" = "0" ]; then
   echo OpenShift Origin build is complete!
