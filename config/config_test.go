@@ -33,6 +33,29 @@ func TestDefaults(t *testing.T) {
 	}
 }
 
+func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {
+	testConf := Config{
+		Server: Server{
+			StaticContentRootDirectory: "/tmp",
+		},
+	}
+
+	yamlString, err := Marshal(&testConf)
+	if err != nil {
+		t.Errorf("Failed to marshal: %v", err)
+	}
+	if yamlString != "server:\n  static_content_root_directory: /tmp\n" {
+		t.Errorf("Failed to marshal - StaticContentRootDirectory to static_content_root_directory: [%v]", yamlString)
+	}
+	conf, err := Unmarshal(yamlString)
+	if err != nil {
+		t.Errorf("Failed to unmarshal: %v", err)
+	}
+	if conf.Server.StaticContentRootDirectory != "/tmp" {
+		t.Errorf("Failed to unmarshal static content root directory:\n%v", conf)
+	}
+}
+
 func TestMarshalUnmarshal(t *testing.T) {
 	testConf := Config{
 		Server: Server{
