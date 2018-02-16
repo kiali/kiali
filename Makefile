@@ -26,7 +26,7 @@ git-init:
 	@echo Setting Git Hooks
 	cp hack/hooks/* .git/hooks
 
-build:  clean format
+build:
 	@echo Building...
 	${GO_BUILD_ENVVARS} go build \
 		-o ${GOPATH}/bin/sws -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
