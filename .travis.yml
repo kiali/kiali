@@ -32,7 +32,7 @@ env:
 
 script:
   - if [ ! -z "$(gofmt -s -l ${GO_FILES})" ]; then echo "These files need to be formatted:" "$(gofmt -s -l ${GO_FILES})"; exit 1; fi # Gofmt Linter
-  - make test
+  - make clean build test
 
 # Push the docker images to docker hub
 # If a tag build, use the tag as docker version; otherwise, use branch name as docker version (where master==latest)
@@ -42,7 +42,6 @@ after_success:
 - export DOCKER_USER=$(if [ "$DOCKER_USER" == "" ]; then echo "unknown"; else echo $DOCKER_USER ; fi)
 - export DOCKER_PASS=$(if [ "$DOCKER_PASS" == "" ]; then echo "unknown"; else echo $DOCKER_PASS ; fi)
 - echo DOCKER_VERSION=$DOCKER_VERSION
-- make build
 - docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
 - make docker
 - docker push jmazzitelli/sws
