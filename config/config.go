@@ -19,6 +19,7 @@ const (
 	EnvIdentityPrivateKeyFile = "IDENTITY_PRIVATE_KEY_FILE"
 
 	EnvPrometheusServiceURL = "PROMETHEUS_SERVICE_URL"
+	EnvIstioIdentityDomain  = "ISTIO_IDENTITY_DOMAIN"
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
@@ -63,6 +64,7 @@ func NewConfig() (c *Config) {
 	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/static-files"))
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
 	c.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
+	c.IstioIdentityDomain = strings.TrimSpace(getDefaultString(ENV_ISTIO_IDENTITY_DOMAIN, "svc.cluster.local"))
 	return
 }
 
