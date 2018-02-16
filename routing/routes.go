@@ -21,7 +21,7 @@ func NewRoutes() (r *Routes) {
 	r = new(Routes)
 
 	r.Routes = []Route{
-		Route{
+		{
 			"Root",
 			"GET",
 			"/api",
