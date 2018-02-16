@@ -38,6 +38,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		Server: Server{
 			Address: "foo-test",
 			Port:    321,
+			StaticContentRootDirectory: "/tmp",
 		},
 	}
 
@@ -59,6 +60,9 @@ func TestMarshalUnmarshal(t *testing.T) {
 	}
 	if conf.Server.Port != 321 {
 		t.Errorf("Failed to unmarshal server port:\n%v", conf)
+	}
+	if conf.Server.StaticContentRootDirectory != "/tmp" {
+		t.Errorf("Failed to unmarshal static content root directory:\n%v", conf)
 	}
 }
 
