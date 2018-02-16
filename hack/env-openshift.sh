@@ -18,15 +18,17 @@ OPENSHIFT_IP_ADDRESS=$(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{
 # If you want to run the last release of OpenShift, use "latest".
 # If you want to run with a specific version, set it to the version you want.
 # If you comment this out, no specific version is declared (i.e. the default version is used)
-OPENSHIFT_VERSION="latest"
+OPENSHIFT_VERSION="release-3.8"
 
 #-----------------------------------------------------------------------------
 # Variables below have values derived from the user-defined variables above.
 # These variables below are not meant for users to change.
 #-----------------------------------------------------------------------------
 
+# because we are locally building the images, they will always be tagged latest
+OPENSHIFT_VERSION_ARG="--version=latest"
+
 if [ "${OPENSHIFT_VERSION}" != "" ]; then
-  OPENSHIFT_VERSION_ARG="--version=${OPENSHIFT_VERSION}"
   OPENSHIFT_IMAGE_VERSION_ARG="-p IMAGE_VERSION=${OPENSHIFT_VERSION}"
 fi
 

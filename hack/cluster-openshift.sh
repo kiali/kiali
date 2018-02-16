@@ -19,6 +19,24 @@ cd ${OPENSHIFT_BINARY_DIR}
 
 if [ "$1" = "up" ];then
 
+  # The OpenShift docs say to define docker with an insecure registry setting. This checks such a setting is enabled.
+  pgrep -a dockerd | grep '[-]-insecure-registry' > /dev/null 2>&1
+  if [ "$?" != "0" ]; then
+    grep 'OPTIONS=.*--insecure-registry' /etc/sysconfig/docker > /dev/null 2>&1
+    if [ "$?" != "0" ]; then
+      grep 'insecure-registries' /etc/docker/daemon.json > /dev/null 2>&1
+      if [ "$?" != "0" ]; then
+        echo 'WARNING: You must run Docker with the --insecure-registry argument with an appropriate value (usually "--insecure-registry 172.30.0.0/16"). See the OpenShift Origin documentation for more details: https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md#linux'
+      else
+        echo /etc/docker/daemon.json has the insecure-registry setting. This is good.
+      fi
+    else
+      echo /etc/sysconfig/docker has defined the insecure-registry setting. This is good.
+    fi
+  else
+    echo Docker daemon is running with --insecure-registry setting. This is good.
+  fi
+
   # The OpenShift docs say to disable firewalld for now. Just in case it is running, stop it now.
   # If firewalld was running and is shutdown, it changes the iptable rules and screws up docker,
   # so we must restart docker in order for it to rebuild its iptable rules.
