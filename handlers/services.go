@@ -22,8 +22,10 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 
 func ServiceShow(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	var service = models.ServiceNew(params["id"], params["namespace_id"])
+	response, err := models.ServiceDetailsGet(params["namespace_id"], params["id"])
+	if err != nil {
+		RespondWithJSON(w, 500, nil)
+	}
 
-	RespondWithJSON(w, 200, service)
-	log.Info("ROOT HANDLER CALLED!")
+	RespondWithJSON(w, 200, response)
 }
