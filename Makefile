@@ -1,6 +1,7 @@
 VERSION ?= 0.0.1.Final-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
+GO_VERSION_SWS = 1.8.3
 DOCKER_NAME ?= jmazzitelli/sws
 DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
@@ -26,7 +27,10 @@ git-init:
 	@echo Setting Git Hooks
 	cp hack/hooks/* .git/hooks
 
-build:
+go_check:
+	@hack/check_go_version.sh "${GO_VERSION_SWS}"
+
+build: go_check
 	@echo Building...
 	${GO_BUILD_ENVVARS} go build \
 		-o ${GOPATH}/bin/sws -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
