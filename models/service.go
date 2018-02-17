@@ -34,3 +34,16 @@ func ServiceDetailsGet(namespace string, serviceName string) (interface{}, error
 	}
 	return details, nil
 }
+
+func ServicesNamespace(namespace string) (interface{}, error) {
+	client, err := KubernetesClient()
+	if err != nil {
+		return nil, err
+	}
+	servicesList, err := client.GetServices(namespace)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+	return servicesList, nil
+}

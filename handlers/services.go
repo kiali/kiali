@@ -29,3 +29,13 @@ func ServiceShow(w http.ResponseWriter, r *http.Request) {
 
 	RespondWithJSON(w, 200, response)
 }
+
+func ServicesNamespace(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	response, err := models.ServicesNamespace(params["id"])
+	if err != nil {
+		RespondWithJSON(w, 500, nil)
+	}
+
+	RespondWithJSON(w, 200, response)
+}
