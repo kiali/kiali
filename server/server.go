@@ -44,13 +44,13 @@ func NewServer() *Server {
 
 func (s *Server) Start() {
 	log.Infof("Server endpoint will start at [%v]", s.httpServer.Addr)
-	log.Infof("Server endpoint will serve static content from [%v]", config.Get().Server.Static_Content_Root_Directory)
+	log.Infof("Server endpoint will serve static content from [%v]", config.Get().Server.StaticContentRootDirectory)
 	go func() {
 		var err error
-		secure := config.Get().Identity.Cert_File != "" && config.Get().Identity.Private_Key_File != ""
+		secure := config.Get().Identity.CertFile != "" && config.Get().Identity.PrivateKeyFile != ""
 		if secure {
 			log.Infof("Server endpoint will require https")
-			err = s.httpServer.ListenAndServeTLS(config.Get().Identity.Cert_File, config.Get().Identity.Private_Key_File)
+			err = s.httpServer.ListenAndServeTLS(config.Get().Identity.CertFile, config.Get().Identity.PrivateKeyFile)
 		} else {
 			err = s.httpServer.ListenAndServe()
 		}

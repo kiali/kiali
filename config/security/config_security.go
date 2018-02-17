@@ -6,26 +6,23 @@ import (
 )
 
 // Identity security details about a client.
-// USED FOR YAML
 type Identity struct {
-	Cert_File        string
-	Private_Key_File string
+	CertFile       string "cert_file"
+	PrivateKeyFile string "private_key_file"
 }
 
 // Credentials provides information when needing to authenticate to remote endpoints.
 // Credentials are either a username/password or a bearer token, but not both.
-// USED FOR YAML
 type Credentials struct {
 	Username string ",omitempty"
 	Password string ",omitempty"
 	Token    string ",omitempty"
 }
 
-// Skip_Certificate_Validation will disable server certificate verification - the client
+// SkipCertificateValidation will disable server certificate verification - the client
 // will accept any certificate presented by the server and any host name in that certificate.
-// USED FOR YAML
 type TLS struct {
-	Skip_Certificate_Validation bool ",omitempty"
+	SkipCertificateValidation bool "skip_certificate_validation,omitempty"
 }
 
 // ValidateCredentials makes sure that if username is provided, so is password (and vice versa)

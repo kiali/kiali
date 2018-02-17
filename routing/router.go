@@ -25,7 +25,7 @@ func NewRouter(conf *config.Config) *mux.Router {
 	// Build our console routes by first creating the file server handler that will serve
 	// the webapp js files and other static content. Then tell the router about our fixed
 	// routes which pass all static file requests to the file handler.
-	fileServerHandler := http.FileServer(http.Dir(conf.Server.Static_Content_Root_Directory))
+	fileServerHandler := http.FileServer(http.Dir(conf.Server.StaticContentRootDirectory))
 	router.PathPrefix("/console").Handler(http.StripPrefix("/console", fileServerHandler))
 	router.PathPrefix("/").Handler(fileServerHandler)
 
