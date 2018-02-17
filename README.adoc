@@ -1,0 +1,54 @@
+:toc: macro
+:toc-title:
+
+toc::[]
+= SWS UI
+== Introduction
+
+A UI for the Swift-Sunshine Istio Observability Project
+
+== Technologies
+* React.js
+* TBD
+
+== Quick Start
+[source,shell]
+----
+npm install
+npm start
+----
+
+A new browser window should automatically open.
+But, if it doesn't then use:
+`http://localhost:3000`
+
+This launches a development environment that instantly
+reloads any changes to the browser for rapid development.
+
+== Production Builds
+Use `npm run build` which will bundle the build artifacts using webpack into the `build` directory.
+
+== Directory Structure
+* `src` : Source and test code
+* `src/assets` : Images and other assets
+* `src/components` : Stateless components (pure functions)
+* `src/containers` : Stateful (smart) components
+* `src/hoc` : High rder Components
+* `src/pages` : Top level pages and nested components
+* `stories`: Storybook files
+* `build`: Production build output
+* `public`: home of index.html
+
+== For Storybook Components
+[source,shell]
+----
+npm run storybook
+http://localhost:6006
+----
+
+== General
+
+This project was bootstrapped with https://github.com/facebookincubator/create-react-app[create-react-app]
+
+== License and Copyright
+See the link:./LICENSE[LICENSE file].
