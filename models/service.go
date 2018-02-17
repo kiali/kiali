@@ -1,7 +1,10 @@
 package models
 
 import (
+	"github.com/swift-sunshine/swscore/kubernetes"
 	"github.com/swift-sunshine/swscore/log"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"math/rand"
 )
 
@@ -23,7 +26,7 @@ func ServiceNew(name, namespace string) *Service {
 }
 
 func ServiceDetailsGet(namespace string, serviceName string) (interface{}, error) {
-	client, err := KubernetesClient()
+	client, err := kubernetes.NewClient()
 	if err != nil {
 		return nil, err
 	}
@@ -36,9 +39,17 @@ func ServiceDetailsGet(namespace string, serviceName string) (interface{}, error
 }
 
 func ServicesNamespace(namespace string) (interface{}, error) {
-	client, err := KubernetesClient()
+	client, err := kubernetes.NewClient()
 	if err != nil {
 		return nil, err
+	}
+	listNamespaces, err := client.GetNamespaces()
+	if err != nil {
+		return nil, err
+	}
+	if !stringInSlice(namespace, listNamespaces) {
+
+		return nil, errors.NewNotFound(schema.GroupResource{Resource: "namespaces"}, namespace)
 	}
 	servicesList, err := client.GetServices(namespace)
 	if err != nil {
