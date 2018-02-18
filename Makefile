@@ -85,20 +85,21 @@ docker-push:
 	docker push ${DOCKER_TAG}
 
 openshift-deploy: openshift-undeploy
-	@echo Deploying to OpenShift
+	@echo Deploying to OpenShift project ${NAMESPACE}
+	@oc get project ${NAMESPACE}
 	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
 	oc process -f deploy/openshift/sws.yaml -p IMAGE_NAME=${DOCKER_NAME} -p IMAGE_VERSION=${DOCKER_VERSION} -p NAMESPACE=${NAMESPACE} | oc create -n ${NAMESPACE} -f -
 
 openshift-undeploy:
-	@echo Undeploying from OpenShift
+	@echo Undeploying from OpenShift project ${NAMESPACE}
 	oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles,clusterrolebindings --selector=app=sws -n ${NAMESPACE}
 
 k8s-deploy: k8s-undeploy
-	@echo Deploying to Kubernetes
+	@echo Deploying to Kubernetes namespace ${NAMESPACE}
 	kubectl create -f deploy/kubernetes/sws-configmap.yaml -n ${NAMESPACE}
 	kubectl create -f deploy/kubernetes/sws.yaml -n ${NAMESPACE}
 
 k8s-undeploy:
-	@echo Undeploying from Kubernetes
+	@echo Undeploying from Kubernetes namespace ${NAMESPACE}
 	kubectl delete all,secrets,sa,configmaps,daemonsets,ingresses,clusterroles --selector=app=sws -n ${NAMESPACE}
 
