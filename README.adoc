@@ -116,6 +116,9 @@ make openshift-undeploy
 
 === Running on Kubernetes
 
+[WARNING]
+These instructions may not be fully working. Try OpenShift if these SWS instructions do not work on Kubernetes.
+
 ==== Setting up Kubernetes
 
 The following section assumes that the user has link:https://github.com/kubernetes/kubernetes[Kubernetes] installed.
