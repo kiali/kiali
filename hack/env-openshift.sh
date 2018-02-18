@@ -15,22 +15,17 @@ OPENSHIFT_GOPATH=${HOME}/source/go/openshift
 # NOTE: Do not use any IP address within the loopback range of 127.0.0.x.
 OPENSHIFT_IP_ADDRESS=$(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/')
 
-# If you want to run the last release of OpenShift, use "latest".
-# If you want to run with a specific version, set it to the version you want.
-# If you comment this out, no specific version is declared (i.e. the default version is used)
-OPENSHIFT_VERSION="release-3.8"
+# If you want to run the last release of OpenShift, use "latest" or "master".
+# If you want to run with a specific version, set it to the branch you want.
+OPENSHIFT_BRANCH_NAME="release-3.7"
+
+# How to tell oc cluster up what version to use
+#OPENSHIFT_VERSION_ARG="--version=latest"
 
 #-----------------------------------------------------------------------------
 # Variables below have values derived from the user-defined variables above.
 # These variables below are not meant for users to change.
 #-----------------------------------------------------------------------------
-
-# because we are locally building the images, they will always be tagged latest
-OPENSHIFT_VERSION_ARG="--version=latest"
-
-if [ "${OPENSHIFT_VERSION}" != "" ]; then
-  OPENSHIFT_IMAGE_VERSION_ARG="-p IMAGE_VERSION=${OPENSHIFT_VERSION}"
-fi
 
 # This is where the OpenShift Origin github source code will live when building from source.
 OPENSHIFT_GITHUB_SOURCE_DIR=${OPENSHIFT_GOPATH}/src/github.com/openshift/origin
