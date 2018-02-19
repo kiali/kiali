@@ -84,13 +84,15 @@ docker-push:
 	@echo Pushing current docker image to ${DOCKER_TAG}
 	docker push ${DOCKER_TAG}
 
+openshift-validate:
+	@oc get project ${NAMESPACE}
+
 openshift-deploy: openshift-undeploy
 	@echo Deploying to OpenShift project ${NAMESPACE}
-	@oc get project ${NAMESPACE}
 	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
 	oc process -f deploy/openshift/sws.yaml -p IMAGE_NAME=${DOCKER_NAME} -p IMAGE_VERSION=${DOCKER_VERSION} -p NAMESPACE=${NAMESPACE} | oc create -n ${NAMESPACE} -f -
 
-openshift-undeploy:
+openshift-undeploy: openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
 	oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles,clusterrolebindings --selector=app=sws -n ${NAMESPACE}
 
