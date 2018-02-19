@@ -75,15 +75,15 @@ fi
 cd ${OPENSHIFT_GITHUB_SOURCE_DIR}
 git fetch origin
 
-if [ ! -z "${OPENSHIFT_VERSION}" ]; then
-  if [ "${OPENSHIFT_VERSION}" == "latest" ]; then
+if [ ! -z "${OPENSHIFT_BRANCH_NAME}" ]; then
+  if [ "${OPENSHIFT_BRANCH_NAME}" == "latest" ]; then
     echo "Switching to the master branch to build the latest version"
     git co origin/master
   else
-    echo "Switching to the origin/${OPENSHIFT_VERSION} branch"
-    git co origin/${OPENSHIFT_VERSION}
+    echo "Switching to the origin/${OPENSHIFT_BRANCH_NAME} branch"
+    git co origin/${OPENSHIFT_BRANCH_NAME}
     if [ "$?" != "0" ]; then
-      echo "Cannot build - there is no branch for the version you want: ${OPENSHIFT_VERSION}"
+      echo "Cannot build - there is no branch for the version you want: ${OPENSHIFT_BRANCH_NAME}"
       exit 1
     fi
   fi
