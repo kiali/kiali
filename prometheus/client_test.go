@@ -6,7 +6,7 @@ import (
 
 func setupConfig() {
 	conf := config.NewConfig()
-	conf.Prometheus_Service_Url = "http://prometheus-istio-system.127.0.0.1.nip.io"
+	conf.PrometheusServiceUrl = "http://prometheus-istio-system.127.0.0.1.nip.io"
 	config.Set(conf)
 }
 

@@ -46,6 +46,7 @@ type Config struct {
 	Identity             security.Identity `yaml:",omitempty"`
 	Server               Server            `yaml:",omitempty"`
 	PrometheusServiceURL string            `yaml:"prometheus_service_url,omitempty"`
+	IstioIdentityDomain  string            "istio_identity_domain,omitempty"
 }
 
 // NewConfig creates a default Config struct
