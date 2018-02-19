@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 # make sure we are logged in first
 oc whoami > /dev/null 2>&1
 if [ "$?" != 0 ]; then
