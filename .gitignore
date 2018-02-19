@@ -31,3 +31,6 @@ _output
 
 # The vendor directory is to be committed to the git repo
 #vendor/
+
+# Configuration files for the hack scripts
+hack/*.local.sh

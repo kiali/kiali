@@ -54,3 +54,7 @@ if [ "$?" != "0" ]; then
   echo Go is not in your PATH. Aborting.
   exit 1
 fi
+
+# Loads user env configuration
+DIR="$( cd "$(dirname "${BASH_SOURCE[0]}")" && pwd )"
+[ -f $DIR/env-openshift.local.sh ] && . $DIR/env-openshift.local.sh
