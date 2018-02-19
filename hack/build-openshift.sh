@@ -78,10 +78,10 @@ git fetch origin
 if [ ! -z "${OPENSHIFT_BRANCH_NAME}" ]; then
   if [ "${OPENSHIFT_BRANCH_NAME}" == "latest" ]; then
     echo "Switching to the master branch to build the latest version"
-    git co origin/master
+    git checkout origin/master
   else
     echo "Switching to the origin/${OPENSHIFT_BRANCH_NAME} branch"
-    git co origin/${OPENSHIFT_BRANCH_NAME}
+    git checkout origin/${OPENSHIFT_BRANCH_NAME}
     if [ "$?" != "0" ]; then
       echo "Cannot build - there is no branch for the version you want: ${OPENSHIFT_BRANCH_NAME}"
       exit 1
