@@ -15,56 +15,60 @@ import (
 
 // Environment vars can define some default values.
 const (
-	ENV_IDENTITY_CERT_FILE        = "IDENTITY_CERT_FILE"
-	ENV_IDENTITY_PRIVATE_KEY_FILE = "IDENTITY_PRIVATE_KEY_FILE"
+	EnvIdentityCertFile       = "IDENTITY_CERT_FILE"
+	EnvIdentityPrivateKeyFile = "IDENTITY_PRIVATE_KEY_FILE"
 
-	ENV_PROMETHEUS_SERVICE_URL = "PROMETHEUS_SERVICE_URL"
+	EnvPrometheusServiceURL = "PROMETHEUS_SERVICE_URL"
 
-	ENV_SERVER_ADDRESS                       = "SERVER_ADDRESS"
-	ENV_SERVER_PORT                          = "SERVER_PORT"
-	ENV_SERVER_CREDENTIALS_USERNAME          = "SERVER_CREDENTIALS_USERNAME"
-	ENV_SERVER_CREDENTIALS_PASSWORD          = "SERVER_CREDENTIALS_PASSWORD"
-	ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
+	EnvServerAddress                    = "SERVER_ADDRESS"
+	EnvServerPort                       = "SERVER_PORT"
+	EnvServerCredentialsUsername        = "SERVER_CREDENTIALS_USERNAME"
+	EnvServerCredentialsPassword        = "SERVER_CREDENTIALS_PASSWORD"
+	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
 )
 
 // Global configuration for the application.
 var configuration *Config
 
+// Server configuration
 type Server struct {
-	Address                    string               ",omitempty"
-	Port                       int                  ",omitempty"
-	Credentials                security.Credentials ",omitempty"
-	StaticContentRootDirectory string               "static_content_root_directory,omitempty"
+	Address                    string               `yaml:",omitempty"`
+	Port                       int                  `yaml:",omitempty"`
+	Credentials                security.Credentials `yaml:",omitempty"`
+	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
 }
 
 // Config defines full YAML configuration.
 type Config struct {
-	Identity             security.Identity ",omitempty"
-	Server               Server            ",omitempty"
-	PrometheusServiceUrl string            "prometheus_service_url,omitempty"
+	Identity             security.Identity `yaml:",omitempty"`
+	Server               Server            `yaml:",omitempty"`
+	PrometheusServiceURL string            `yaml:"prometheus_service_url,omitempty"`
 }
 
+// NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = new(Config)
 
-	c.Identity.CertFile = getDefaultString(ENV_IDENTITY_CERT_FILE, "")
-	c.Identity.PrivateKeyFile = getDefaultString(ENV_IDENTITY_PRIVATE_KEY_FILE, "")
+	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
+	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")
 
-	c.Server.Address = strings.TrimSpace(getDefaultString(ENV_SERVER_ADDRESS, ""))
-	c.Server.Port = getDefaultInt(ENV_SERVER_PORT, 20000)
+	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
+	c.Server.Port = getDefaultInt(EnvServerPort, 20000)
 	c.Server.Credentials = security.Credentials{
-		Username: getDefaultString(ENV_SERVER_CREDENTIALS_USERNAME, ""),
-		Password: getDefaultString(ENV_SERVER_CREDENTIALS_PASSWORD, ""),
+		Username: getDefaultString(EnvServerCredentialsUsername, ""),
+		Password: getDefaultString(EnvServerCredentialsPassword, ""),
 	}
-	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY, "/static-files"))
-	c.PrometheusServiceUrl = strings.TrimSpace(getDefaultString(ENV_PROMETHEUS_SERVICE_URL, "http://prometheus:9090"))
+	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/static-files"))
+	c.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
 	return
 }
 
+// Get the global Config
 func Get() (conf *Config) {
 	return configuration
 }
 
+// Set the global Config
 func Set(conf *Config) {
 	configuration = conf
 }

@@ -29,7 +29,7 @@ func NewClient() (*Client, error) {
 	if config.Get() == nil {
 		return nil, errors.New("config.Get() must be not null")
 	}
-	p8s, err := api.NewClient(api.Config{Address: config.Get().PrometheusServiceUrl})
+	p8s, err := api.NewClient(api.Config{Address: config.Get().PrometheusServiceURL})
 	if err != nil {
 		return nil, err
 	}
