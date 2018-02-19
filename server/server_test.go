@@ -74,22 +74,22 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.Credentials.Username = authorizedUsername
 	conf.Server.Credentials.Password = authorizedPassword
 
-	serverUrl := fmt.Sprintf("https://%v", testServerHostPort)
-	consoleUrl := serverUrl + "/console"
-	apiUrl := serverUrl + "/api"
+	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
+	consoleURL := serverURL + "/console"
+	apiURL := serverURL + "/api"
 
 	config.Set(conf)
 
 	server := NewServer()
 	server.Start()
-	t.Logf("Started test http server: %v", serverUrl)
+	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
 		server.Stop()
-		t.Logf("Stopped test server: %v", serverUrl)
+		t.Logf("Stopped test server: %v", serverURL)
 	}()
 
 	// the client
-	httpConfig := HttpClientConfig{
+	httpConfig := httpClientConfig{
 		Identity: &security.Identity{
 			CertFile:       testClientCertFile,
 			PrivateKeyFile: testClientKeyFile,
@@ -98,7 +98,7 @@ func TestSecureComm(t *testing.T) {
 			InsecureSkipVerify: true,
 		},
 	}
-	httpClient, err := httpConfig.BuildHttpClient()
+	httpClient, err := httpConfig.buildHTTPClient()
 	if err != nil {
 		t.Fatalf("Failed to create http client")
 	}
@@ -119,35 +119,35 @@ func TestSecureComm(t *testing.T) {
 	noCredentials := &security.Credentials{}
 
 	// wait for our test http server to come up
-	checkHttpReady(httpClient, serverUrl)
+	checkHTTPReady(httpClient, serverURL)
 
 	// TEST WITH AN AUTHORIZED USER
 
-	if _, err = getRequestResults(t, httpClient, consoleUrl, basicCredentials); err != nil {
+	if _, err = getRequestResults(t, httpClient, consoleURL, basicCredentials); err != nil {
 		t.Fatalf("Failed: Basic Auth Console URL: %v", err)
 	}
 
-	if _, err = getRequestResults(t, httpClient, apiUrl, basicCredentials); err != nil {
+	if _, err = getRequestResults(t, httpClient, apiURL, basicCredentials); err != nil {
 		t.Fatalf("Failed: Basic Auth API URL: %v", err)
 	}
 
 	// TEST WITH AN INVALID USER
 
-	if _, err = getRequestResults(t, httpClient, consoleUrl, badBasicCredentials); err == nil {
+	if _, err = getRequestResults(t, httpClient, consoleURL, badBasicCredentials); err == nil {
 		t.Fatalf("Failed: Basic Auth Console URL should have failed")
 	}
 
-	if _, err = getRequestResults(t, httpClient, apiUrl, badBasicCredentials); err == nil {
+	if _, err = getRequestResults(t, httpClient, apiURL, badBasicCredentials); err == nil {
 		t.Fatalf("Failed: Basic Auth API URL should have failed")
 	}
 
 	// TEST WITH NO USER
 
-	if _, err = getRequestResults(t, httpClient, consoleUrl, noCredentials); err == nil {
+	if _, err = getRequestResults(t, httpClient, consoleURL, noCredentials); err == nil {
 		t.Fatalf("Failed: Basic Auth Console URL should have failed with no credentials: %v", err)
 	}
 
-	if _, err = getRequestResults(t, httpClient, apiUrl, noCredentials); err == nil {
+	if _, err = getRequestResults(t, httpClient, apiURL, noCredentials); err == nil {
 		t.Fatalf("Failed: Basic Auth API URL should have failed with with no credentials")
 	}
 }
@@ -158,7 +158,7 @@ func getRequestResults(t *testing.T, httpClient *http.Client, url string, creden
 		t.Fatal(err)
 		return "", err
 	}
-	if headerName, headerValue, err := credentials.GetHttpAuthHeader(); err != nil {
+	if headerName, headerValue, err := credentials.GetHTTPAuthHeader(); err != nil {
 		t.Fatal(err)
 		return "", err
 	} else if headerName != "" {
@@ -268,7 +268,7 @@ func getFreePort(host string) (int, error) {
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
-func checkHttpReady(httpClient *http.Client, url string) {
+func checkHTTPReady(httpClient *http.Client, url string) {
 	for i := 0; i < 60; i++ {
 		if r, err := httpClient.Get(url); err == nil {
 			r.Body.Close()
@@ -280,14 +280,13 @@ func checkHttpReady(httpClient *http.Client, url string) {
 }
 
 // A generic HTTP client used to test accessing the server
-
-type HttpClientConfig struct {
+type httpClientConfig struct {
 	Identity      *security.Identity
 	TLSConfig     *tls.Config
 	HTTPTransport *http.Transport
 }
 
-func (conf *HttpClientConfig) BuildHttpClient() (*http.Client, error) {
+func (conf *httpClientConfig) buildHTTPClient() (*http.Client, error) {
 
 	// make our own copy of TLS config
 	tlsConfig := &tls.Config{}

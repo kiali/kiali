@@ -7,22 +7,22 @@ import (
 
 // Identity security details about a client.
 type Identity struct {
-	CertFile       string "cert_file"
-	PrivateKeyFile string "private_key_file"
+	CertFile       string `yaml:"cert_file"`
+	PrivateKeyFile string `yaml:"private_key_file"`
 }
 
 // Credentials provides information when needing to authenticate to remote endpoints.
 // Credentials are either a username/password or a bearer token, but not both.
 type Credentials struct {
-	Username string ",omitempty"
-	Password string ",omitempty"
-	Token    string ",omitempty"
+	Username string `yaml:",omitempty"`
+	Password string `yaml:",omitempty"`
+	Token    string `yaml:",omitempty"`
 }
 
-// SkipCertificateValidation will disable server certificate verification - the client
+// TLS options - SkipCertificateValidation will disable server certificate verification - the client
 // will accept any certificate presented by the server and any host name in that certificate.
 type TLS struct {
-	SkipCertificateValidation bool "skip_certificate_validation,omitempty"
+	SkipCertificateValidation bool `yaml:"skip_certificate_validation,omitempty"`
 }
 
 // ValidateCredentials makes sure that if username is provided, so is password (and vice versa)
@@ -30,21 +30,22 @@ type TLS struct {
 // It is valid to have nothing defined (no username, password, nor token).
 func (c *Credentials) ValidateCredentials() error {
 	if c.Username != "" && c.Password == "" {
-		return fmt.Errorf("A password must be provided if a username is set.")
+		return fmt.Errorf("A password must be provided if a username is set")
 	}
 
 	if c.Username == "" && c.Password != "" {
-		return fmt.Errorf("A username must be provided if a password is set.")
+		return fmt.Errorf("A username must be provided if a password is set")
 	}
 
 	if c.Username != "" && c.Token != "" {
-		return fmt.Errorf("Username/password cannot be specified if a token is specified also. Only Username/Password or Token can be set but not both.")
+		return fmt.Errorf("Username/password cannot be specified if a token is specified also. Only Username/Password or Token can be set but not both")
 	}
 
 	return nil
 }
 
-func (c *Credentials) GetHttpAuthHeader() (headerName string, headerValue string, err error) {
+// GetHTTPAuthHeader provides the authentication ehader name and value (can be empty), or an error
+func (c *Credentials) GetHTTPAuthHeader() (headerName string, headerValue string, err error) {
 	// if no credentials are provided, this is fine, we are just going to do an insecure request
 	if c == nil {
 		return "", "", nil
