@@ -25,3 +25,13 @@ yarn-debug.log*
 yarn-error.log*
 
 yarn.lock
+
+# compiled patternfly assets
+src/css/*
+!src/css/.gitkeep
+src/img/*
+!src/img/.gitkeep
+src/fonts/*
+!src/fonts/.gitkeep
+src/sass/*
+!src/sass/index.sass

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import ServiceListComponent from './ServiceListComponent';
 
 type ServiceListState = {
   alertVisible: boolean;
@@ -33,6 +34,7 @@ class ServiceListPage extends React.Component<ServiceListProps, ServiceListState
             <h2>Service List Page</h2>
           </div>
         </div>
+        <ServiceListComponent />
       </div>
     );
   }
