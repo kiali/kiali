@@ -7,8 +7,6 @@ if [ "$?" != 0 ]; then
   exit 1
 fi
 
-set -e
-
 # find istio that we installed from the install script
 INSTALL_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )/_output/istio"
 if [ ! -d $INSTALL_DIR ]; then
@@ -33,6 +31,8 @@ if [ "$?" != "0" ]; then
   echo "Cannot find istioctl in the istio installation. Aborting."
   exit 1
 fi
+
+set -e
 
 # from https://istio.io/docs/guides/bookinfo.html
 # from https://blog.openshift.com/evaluate-istio-openshift/
