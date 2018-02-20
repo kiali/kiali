@@ -1,13 +1,13 @@
 #!/bin/sh
 
-set -e
-
 # make sure we are logged in first
 oc whoami > /dev/null 2>&1
 if [ "$?" != 0 ]; then
   echo "Please log in to OpenShift using 'oc login'"
   exit 1
 fi
+
+set -e
 
 # find istio that we installed from the install script
 INSTALL_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )/_output/istio"
