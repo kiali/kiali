@@ -46,7 +46,7 @@ type Config struct {
 	Identity             security.Identity `yaml:",omitempty"`
 	Server               Server            `yaml:",omitempty"`
 	PrometheusServiceURL string            `yaml:"prometheus_service_url,omitempty"`
-	IstioIdentityDomain  string            "istio_identity_domain,omitempty"
+	IstioIdentityDomain  string            `yaml:"istio_identity_domain,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -65,7 +65,7 @@ func NewConfig() (c *Config) {
 	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/static-files"))
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
 	c.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
-	c.IstioIdentityDomain = strings.TrimSpace(getDefaultString(ENV_ISTIO_IDENTITY_DOMAIN, "svc.cluster.local"))
+	c.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
 	return
 }
 

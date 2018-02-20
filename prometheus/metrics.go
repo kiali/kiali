@@ -15,6 +15,7 @@ import (
 
 // Metric is a base interface for either MetricValue (single scalar, gauge or counter) or MetricHistogram
 type Metric interface {
+	exists() bool
 }
 
 type namedMetric struct {
@@ -24,17 +25,27 @@ type namedMetric struct {
 
 // MetricValue represents a metric holding a single scalar (gauge or counter)
 type MetricValue struct {
-	Metric
-	Value float64
+	Metric `json:"-"`
+	Value  float64
+	found  bool
+}
+
+func (m MetricValue) exists() bool {
+	return m.found
 }
 
 // MetricHistogram hold some pre-defined stats from an histogram
 type MetricHistogram struct {
-	Metric
+	Metric      `json:"-"`
 	Average     float64
 	Median      float64
 	NinetyFiveP float64
 	NinetyNineP float64
+	found       bool
+}
+
+func (m MetricHistogram) exists() bool {
+	return m.found
 }
 
 func getServiceMetricsAsync(api v1.API, namespace string, servicename string, duration string, metricChan chan namedMetric,
@@ -50,53 +61,53 @@ func getServiceMetricsAsync(api v1.API, namespace string, servicename string, du
 	}
 	// Curry calls
 	calls := []namedCall{{
-		name: "Request count in",
+		name: "request_count_in",
 		fcall: func() (Metric, error) {
 			return fetchRate(api, "istio_request_count",
 				fmt.Sprintf("{destination_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
 		}}, {
-		name: "Request count out",
+		name: "request_count_out",
 		fcall: func() (Metric, error) {
 			return fetchRate(api, "istio_request_count",
 				fmt.Sprintf("{source_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
 		}}, {
-		name: "Request size in",
+		name: "request_size_in",
 		fcall: func() (Metric, error) {
 			return fetchHistogram(api, "istio_request_size",
 				fmt.Sprintf("{destination_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
 		}}, {
-		name: "Request size out",
+		name: "request_size_out",
 		fcall: func() (Metric, error) {
 			return fetchHistogram(api, "istio_request_size",
 				fmt.Sprintf("{source_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
 		}}, {
-		name: "Request duration in",
+		name: "request_duration_in",
 		fcall: func() (Metric, error) {
 			return fetchHistogram(api, "istio_request_duration",
 				fmt.Sprintf("{destination_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
 		}}, {
-		name: "Request duration out",
+		name: "request_duration_out",
 		fcall: func() (Metric, error) {
 			return fetchHistogram(api, "istio_request_duration",
 				fmt.Sprintf("{source_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
 		}}, {
-		name: "Response size in",
+		name: "response_size_in",
 		fcall: func() (Metric, error) {
 			return fetchHistogram(api, "istio_response_size",
 				fmt.Sprintf("{destination_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
 		}}, {
-		name: "Response size out",
+		name: "response_size_out",
 		fcall: func() (Metric, error) {
 			return fetchHistogram(api, "istio_response_size",
 				fmt.Sprintf("{source_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
 		}}, {
-		name: "Healthy replicas",
+		name: "healthy_replicas",
 		fcall: func() (Metric, error) {
 			return fetchGauge(api,
 				fmt.Sprintf("envoy_cluster_out_%s_%s_%s_http_membership_healthy", servicename, namespace, envoyClustername),
 				"", now)
 		}}, {
-		name: "Total replicas",
+		name: "total_replicas",
 		fcall: func() (Metric, error) {
 			return fetchGauge(api,
 				fmt.Sprintf("envoy_cluster_out_%s_%s_%s_http_membership_total", servicename, namespace, envoyClustername),
@@ -124,8 +135,11 @@ func fetchGauge(api v1.API, metricName string, labels string, now time.Time) (*M
 	if err != nil {
 		return nil, err
 	}
-	return &MetricValue{
-		Value: val}, nil
+	// NaN value is considered as a missing metric
+	if math.IsNaN(val) {
+		return &MetricValue{found: false}, nil
+	}
+	return &MetricValue{Value: val, found: true}, nil
 }
 
 func fetchRate(api v1.API, metricName string, labels string, duration string, now time.Time) (*MetricValue, error) {
@@ -134,8 +148,11 @@ func fetchRate(api v1.API, metricName string, labels string, duration string, no
 	if err != nil {
 		return nil, err
 	}
-	return &MetricValue{
-		Value: val}, nil
+	// NaN value is considered as a missing metric
+	if math.IsNaN(val) {
+		return &MetricValue{found: false}, nil
+	}
+	return &MetricValue{Value: val, found: true}, nil
 }
 
 func fetchHistogram(api v1.API, metricName string, labels string, duration string, now time.Time) (*MetricHistogram, error) {
@@ -191,25 +208,29 @@ func fetchHistogram(api v1.API, metricName string, labels string, duration strin
 		}
 	}()
 
-	var histo MetricHistogram
-	var error error
+	var histo = MetricHistogram{found: true}
+	var metricError error
 	select {
 	case histo.Average = <-avgChan:
-	case error = <-errChan:
+	case metricError = <-errChan:
 	}
 	select {
 	case histo.Median = <-medChan:
-	case error = <-errChan:
+	case metricError = <-errChan:
 	}
 	select {
 	case histo.NinetyFiveP = <-q95Chan:
-	case error = <-errChan:
+	case metricError = <-errChan:
 	}
 	select {
 	case histo.NinetyNineP = <-q99Chan:
-	case error = <-errChan:
+	case metricError = <-errChan:
 	}
-	return &histo, error
+	// Any NaN value is considered as a missing metric
+	if math.IsNaN(histo.Average) || math.IsNaN(histo.Median) || math.IsNaN(histo.NinetyFiveP) || math.IsNaN(histo.NinetyNineP) {
+		return &MetricHistogram{found: false}, nil
+	}
+	return &histo, metricError
 }
 
 func fetchScalarDouble(api v1.API, query string, now time.Time) (float64, error) {
@@ -223,6 +244,8 @@ func fetchScalarDouble(api v1.API, query string, now time.Time) (float64, error)
 		if len(matrix) > 0 {
 			return float64(matrix[0].Value), nil
 		}
+		// Else, no value
+		return math.NaN(), nil
 	}
-	return math.NaN(), nil
+	return 0, fmt.Errorf("Invalid query, vector expected: %s", query)
 }

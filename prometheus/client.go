@@ -78,7 +78,9 @@ func (in *Client) GetServiceMetrics(namespace string, servicename string, durati
 	for i := 0; i < nbCalls; i++ {
 		select {
 		case namedMetric := <-metricChan:
-			metrics[namedMetric.name] = namedMetric.metric
+			if namedMetric.metric.exists() {
+				metrics[namedMetric.name] = namedMetric.metric
+			}
 		case e := <-errChan:
 			err = e
 		}
