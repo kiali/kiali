@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 # make sure we are logged in first
 oc whoami > /dev/null 2>&1
 if [ "$?" != 0 ]; then
@@ -33,6 +31,8 @@ if [ "$?" != "0" ]; then
   echo "Cannot find istioctl in the istio installation. Aborting."
   exit 1
 fi
+
+set -e
 
 # from https://istio.io/docs/guides/bookinfo.html
 # from https://blog.openshift.com/evaluate-istio-openshift/
