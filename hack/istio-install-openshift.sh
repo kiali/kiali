@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 # make sure we are logged in first
 oc whoami > /dev/null 2>&1
 if [ "$?" != 0 ]; then
@@ -15,6 +13,8 @@ if [ "$1" = "" ]; then
 else
   echo "Will download and install Istio version $1"
 fi
+
+set -e
 
 # put istio files in the output directory
 INSTALL_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )/_output/istio"
