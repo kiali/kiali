@@ -27,6 +27,25 @@ func NewRoutes() (r *Routes) {
 			"/api",
 			handlers.Root,
 		},
+		{
+			"ServiceList",
+			"GET",
+			"/api/services",
+			handlers.ServiceList,
+		},
+
+		{
+			"ServiceShow",
+			"GET",
+			"/api/namespaces/{namespace_id}/services/{id}",
+			handlers.ServiceShow,
+		},
+		{
+			"ServicesNamespace",
+			"GET",
+			"/api/namespaces/{id}/services",
+			handlers.ServicesNamespace,
+		},
 	}
 
 	return
