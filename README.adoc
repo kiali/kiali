@@ -39,6 +39,14 @@ Use `npm run build` which will bundle the build artifacts using webpack into the
 * `build`: Production build output
 * `public`: home of index.html
 
+== Styling
+PatternFly is the main UI components framework. It defines style based on SASS preprocessor.
+All Patternfly build assets are copied to `src`. The `App.scss` file will include all PatternFly Sass along with
+PatternFly React Sass extensions. Once Sass compiles, the resulting CSS can be found in `src/css/App.css`.
+
+Note:
+Only static assets which are `import` 'ed into your application will be included in your resulting build output.
+
 == For Storybook Components
 [source,shell]
 ----
