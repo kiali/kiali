@@ -236,12 +236,28 @@ server:
     password: VALUE
 ----
 
+|`SERVER_CORS_ALLOW_ALL`
+|When true, allows the web console to send requests to other domains other than where the console came from. Typically used for development environments only.
+[source,yaml]
+----
+server:
+  cors_allow_all: (true\|false)
+----
+
 |`SERVER_STATIC_CONTENT_ROOT_DIRECTORY`
 |The file server will serve all static content found under this root directory.
 [source,yaml]
 ----
 server:
   static_content_root_directory: VALUE
+----
+
+|`PROMETHEUS_SERVICE_URL`
+|The URL used to access and query the Prometheus Server.
+[source,yaml]
+----
+server:
+  prometheus_service_url: VALUE
 ----
 
 |===
