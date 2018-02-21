@@ -25,6 +25,7 @@ const (
 	EnvServerCredentialsUsername        = "SERVER_CREDENTIALS_USERNAME"
 	EnvServerCredentialsPassword        = "SERVER_CREDENTIALS_PASSWORD"
 	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
+	EnvServerCORSAllowAll               = "SERVER_CORS_ALLOW_ALL"
 )
 
 // Global configuration for the application.
@@ -36,6 +37,7 @@ type Server struct {
 	Port                       int                  `yaml:",omitempty"`
 	Credentials                security.Credentials `yaml:",omitempty"`
 	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
+	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
 }
 
 // Config defines full YAML configuration.
@@ -59,6 +61,7 @@ func NewConfig() (c *Config) {
 		Password: getDefaultString(EnvServerCredentialsPassword, ""),
 	}
 	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/static-files"))
+	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
 	c.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
 	return
 }
@@ -91,6 +94,21 @@ func getDefaultInt(envvar string, defaultValue int) (retVal int) {
 			retVal = defaultValue
 		} else {
 			retVal = num
+		}
+	}
+	return
+}
+
+func getDefaultBool(envvar string, defaultValue bool) (retVal bool) {
+	retValString := os.Getenv(envvar)
+	if retValString == "" {
+		retVal = defaultValue
+	} else {
+		if b, err := strconv.ParseBool(retValString); err != nil {
+			log.Warningf("Invalid boolean for envvar [%v]. err=%v", envvar, err)
+			retVal = defaultValue
+		} else {
+			retVal = b
 		}
 	}
 	return
