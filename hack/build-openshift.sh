@@ -45,6 +45,8 @@ fi
 
 # Software prerequisites have been met so we can continue.
 
+# Change to the directory where this script is and set our env
+cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./env-openshift.sh
 
 echo Will build OpenShift here: ${OPENSHIFT_GITHUB_SOURCE_DIR}
