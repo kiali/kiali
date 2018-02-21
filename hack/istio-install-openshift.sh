@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# change to the directory where this script is
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
 # make sure we are logged in first
 oc whoami > /dev/null 2>&1
 if [ "$?" != 0 ]; then
@@ -16,8 +19,8 @@ fi
 
 set -e
 
-# put istio files in the output directory
-INSTALL_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )/_output/istio"
+# put istio files in the output directory (cwd is the hack dir)
+INSTALL_DIR="$(pwd)/../_output/istio"
 mkdir -p $INSTALL_DIR
 cd $INSTALL_DIR
 

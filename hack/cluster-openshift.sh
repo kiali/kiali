@@ -11,6 +11,8 @@
 #   status: outputs the current status of the OpenShift environment
 ##############################################################################
 
+# Change to the directory where this script is and set our env
+cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./env-openshift.sh
 
 echo Will use OpenShift that is located here: ${OPENSHIFT_BINARY_DIR}

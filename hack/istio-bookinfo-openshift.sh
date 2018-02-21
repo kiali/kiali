@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# change to the directory where this script is
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
 # make sure we are logged in first
 oc whoami > /dev/null 2>&1
 if [ "$?" != 0 ]; then
@@ -7,8 +10,8 @@ if [ "$?" != 0 ]; then
   exit 1
 fi
 
-# find istio that we installed from the install script
-INSTALL_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )/_output/istio"
+# find istio that we installed from the install script (cwd is the hack dir)
+INSTALL_DIR="$(pwd)/../_output/istio"
 if [ ! -d $INSTALL_DIR ]; then
   echo "You did not install Istio using the hack script. Please do that first."
   exit 1
