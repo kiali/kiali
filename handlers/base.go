@@ -6,7 +6,23 @@ import (
 )
 
 func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.Marshal(payload)
+	response, err := json.Marshal(payload)
+	if err != nil {
+		response, _ = json.Marshal(map[string]string{"error": err.Error()})
+		code = http.StatusInternalServerError
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(response)
+}
+
+func RespondWithJSONIndent(w http.ResponseWriter, code int, payload interface{}) {
+	response, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		response, _ = json.Marshal(map[string]string{"error": err.Error()})
+		code = http.StatusInternalServerError
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
