@@ -57,4 +57,4 @@ fi
 
 # Loads user env configuration
 DIR="$( cd "$(dirname "${BASH_SOURCE[0]}")" && pwd )"
-[ -f $DIR/env-openshift.local.sh ] && . $DIR/env-openshift.local.sh
+[ -f $DIR/env-openshift.local.sh ] && . $DIR/env-openshift.local.sh || true
