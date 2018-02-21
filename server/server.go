@@ -21,6 +21,10 @@ func NewServer() *Server {
 	// create a router that will route all incoming API server requests to different handlers
 	router := routing.NewRouter(conf)
 
+	if conf.Server.CORSAllowAll {
+		router.Use(corsAllowed)
+	}
+
 	// put our proxy handler in front to handle auth
 	proxyHandler := serverAuthProxyHandler{
 		credentials: security.Credentials{
@@ -42,6 +46,7 @@ func NewServer() *Server {
 	}
 }
 
+// Start HTTP server asynchronously. TLS may be active depending on the global configuration.
 func (s *Server) Start() {
 	log.Infof("Server endpoint will start at [%v]", s.httpServer.Addr)
 	log.Infof("Server endpoint will serve static content from [%v]", config.Get().Server.StaticContentRootDirectory)
@@ -58,6 +63,7 @@ func (s *Server) Start() {
 	}()
 }
 
+// Stop the HTTP server
 func (s *Server) Stop() {
 	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
 	s.httpServer.Close()
@@ -93,4 +99,12 @@ func (h *serverAuthProxyHandler) handler(w http.ResponseWriter, r *http.Request)
 		http.Error(w, http.StatusText(statusCode), statusCode)
 		log.Errorf("Cannot send response to unauthorized user: %v", statusCode)
 	}
+}
+
+func corsAllowed(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+		next.ServeHTTP(w, r)
+	})
 }

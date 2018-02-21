@@ -1,7 +1,6 @@
-fileserver:
+server:
   address: localhost
-  port: 12345
-  root_directory: /tmp
-  credentials:
-    username: bob
-    password: pw
+  port: 8000
+  static_content_root_directory: /tmp
+  cors_allow_all: true
+prometheus_service_url: http://prometheus-istio-system.127.0.0.1.nip.io

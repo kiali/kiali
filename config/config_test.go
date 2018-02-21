@@ -8,8 +8,10 @@ import (
 func TestEnvVar(t *testing.T) {
 	defer os.Setenv(EnvServerAddress, os.Getenv(EnvServerAddress))
 	defer os.Setenv(EnvServerPort, os.Getenv(EnvServerPort))
+	defer os.Setenv(EnvServerCORSAllowAll, os.Getenv(EnvServerCORSAllowAll))
 	os.Setenv(EnvServerAddress, "test-address")
 	os.Setenv(EnvServerPort, "12345")
+	os.Setenv(EnvServerCORSAllowAll, "true")
 
 	conf := NewConfig()
 
@@ -18,6 +20,9 @@ func TestEnvVar(t *testing.T) {
 	}
 	if conf.Server.Port != 12345 {
 		t.Error("server port is wrong")
+	}
+	if !conf.Server.CORSAllowAll {
+		t.Error("server CORS setting is wrong")
 	}
 }
 
@@ -30,6 +35,10 @@ func TestDefaults(t *testing.T) {
 
 	if conf.Server.Port != 20000 {
 		t.Error("server port default is wrong")
+	}
+
+	if conf.Server.CORSAllowAll {
+		t.Error("server CORS default setting is wrong")
 	}
 }
 
