@@ -25,6 +25,41 @@ But, if it doesn't then use:
 This launches a development environment that instantly
 reloads any changes to the browser for rapid development.
 
+== Developing
+
+When developing, is usual to run this application outside of https://github.com/swift-sunshine/swscore[swscore].
+
+Is possible to proxy the API requests without having to push the changes to swscore.
+Add the https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#proxying-api-requests-in-development[proxy]
+property to `package.json` with the url of the swscore.
+[source, json]
+----
+{
+  "name": "swsui",
+  "version": "0.2.1",
+  "proxy": "http://sws-istio-system.127.0.0.1.nip.io",
+  "bugs": {
+...
+----
+
+Run `npm start` and try it!
+[source, bash]
+----
+$ curl -u jdoe:password http://localhost:3000/api
+Namespaces: [default istio-system kube-public kube-system myproject openshift openshift-infra openshift-node]
+
+Namespace: default Services [docker-registry kubernetes router]
+
+Service Name: docker-registry
+Service Labels:
+docker-registry = default
+Type: ClusterIP
+...
+----
+
+WARNING: The proxy will only serve requests without the text/html accept header,
+using the browser directly won't work.
+
 == Production Builds
 Use `npm run build` which will bundle the build artifacts using webpack into the `build` directory.
 
@@ -33,7 +68,7 @@ Use `npm run build` which will bundle the build artifacts using webpack into the
 * `src/assets` : Images and other assets
 * `src/components` : Stateless components (pure functions)
 * `src/containers` : Stateful (smart) components
-* `src/hoc` : High rder Components
+* `src/hoc` : High order Components
 * `src/pages` : Top level pages and nested components
 * `stories`: Storybook files
 * `build`: Production build output
