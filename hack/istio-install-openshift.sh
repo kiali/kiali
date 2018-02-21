@@ -46,6 +46,7 @@ oc adm policy add-cluster-role-to-user cluster-admin -z default
 oc adm policy add-scc-to-user anyuid -z istio-grafana-service-account
 oc adm policy add-scc-to-user privileged -z istio-pilot-service-account
 oc adm policy add-scc-to-user anyuid -z istio-prometheus-service-account
+oc adm policy add-scc-to-user anyuid -z prometheus
 oc adm policy add-scc-to-user privileged -z istio-prometheus-service-account
 
 oc apply -f install/kubernetes/istio.yaml
@@ -54,8 +55,6 @@ oc expose svc istio-ingress
 oc create -f install/kubernetes/addons/prometheus.yaml
 oc create -f install/kubernetes/addons/grafana.yaml
 oc create -f install/kubernetes/addons/servicegraph.yaml
-## Workaround for servicegraph bug https://github.com/istio/issues/issues/179
-oc set image deploy/servicegraph servicegraph="docker.io/istio/servicegraph:0.4.0"
 
 oc process -f https://raw.githubusercontent.com/jaegertracing/jaeger-openshift/master/all-in-one/jaeger-all-in-one-template.yml | oc create -f -
 
@@ -67,4 +66,3 @@ oc expose svc prometheus
 echo "Prometheus route:" "$(oc get route prometheus -o jsonpath='{.spec.host}{"\n"}')"
 echo "Grafana route:" "$(oc get route grafana -o jsonpath='{.spec.host}{"\n"}')"
 echo "Servicegraph route:" "$(oc get route servicegraph -o jsonpath='{.spec.host}{"\n"}')"
-
