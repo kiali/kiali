@@ -14,7 +14,7 @@ import (
 	"github.com/swift-sunshine/swscore/config"
 )
 
-const istio_request_query = "istio_request_count{destination_service=~\"%s.%s.*\"}"
+const istioRequestQuery = "istio_request_count{destination_service=~\"%s.%s.*\"}"
 
 // Client for Prometheus API.
 // It hides the way we query Prometheus offering a layer with a high level defined API.
@@ -29,7 +29,7 @@ func NewClient() (*Client, error) {
 	if config.Get() == nil {
 		return nil, errors.New("config.Get() must be not null")
 	}
-	p8s, err := api.NewClient(api.Config{Address: config.Get().PrometheusServiceUrl})
+	p8s, err := api.NewClient(api.Config{Address: config.Get().PrometheusServiceURL})
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func NewClient() (*Client, error) {
 // Destination service is not included in the map as it is passed as argument.
 // It returns an error on any problem.
 func (in *Client) GetSourceServices(namespace string, servicename string) (map[string]string, error) {
-	query := fmt.Sprintf(istio_request_query, servicename, namespace)
+	query := fmt.Sprintf(istioRequestQuery, servicename, namespace)
 	api := v1.NewAPI(in.p8s)
 	result, err := api.Query(context.Background(), query, time.Now())
 	if err != nil {
@@ -67,6 +67,6 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by thi client
-func (in *Client) Api() v1.API {
+func (in *Client) API() v1.API {
 	return v1.NewAPI(in.p8s)
 }

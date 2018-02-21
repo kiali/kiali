@@ -6,10 +6,10 @@ import (
 )
 
 func TestEnvVar(t *testing.T) {
-	defer os.Setenv(ENV_SERVER_ADDRESS, os.Getenv(ENV_SERVER_ADDRESS))
-	defer os.Setenv(ENV_SERVER_PORT, os.Getenv(ENV_SERVER_PORT))
-	os.Setenv(ENV_SERVER_ADDRESS, "test-address")
-	os.Setenv(ENV_SERVER_PORT, "12345")
+	defer os.Setenv(EnvServerAddress, os.Getenv(EnvServerAddress))
+	defer os.Setenv(EnvServerPort, os.Getenv(EnvServerPort))
+	os.Setenv(EnvServerAddress, "test-address")
+	os.Setenv(EnvServerPort, "12345")
 
 	conf := NewConfig()
 

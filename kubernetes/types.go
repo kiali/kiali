@@ -53,7 +53,7 @@ type IstioObjectList interface {
 type ServiceDetails struct {
 	Service   *v1.Service   `json:"service"`
 	Endpoints *v1.Endpoints `json:"endpoints"`
-	Pods      []*v1.Pod     `json:pods`
+	Pods      []*v1.Pod     `json:"pods"`
 }
 
 // IstioDetails is a wrapper to group all Istio objects related to a Service.

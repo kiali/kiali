@@ -12,7 +12,7 @@ func TestValidateCredentials(t *testing.T) {
 		t.Errorf("Empty credentials should be valid: %v", err)
 	}
 
-	if headerName, headerValue, err := creds.GetHttpAuthHeader(); err != nil {
+	if headerName, headerValue, err := creds.GetHTTPAuthHeader(); err != nil {
 		t.Errorf("Should not have received error: %v", err)
 	} else {
 		if headerName != "" || headerValue != "" {
@@ -28,7 +28,7 @@ func TestValidateCredentials(t *testing.T) {
 		t.Errorf("Username/Password credentials should be valid: %v", err)
 	}
 
-	if headerName, headerValue, err := creds.GetHttpAuthHeader(); err != nil {
+	if headerName, headerValue, err := creds.GetHTTPAuthHeader(); err != nil {
 		t.Errorf("Should not have received error: %v", err)
 	} else {
 		if headerName != "Authorization" || headerValue != "Basic dTpw" {
@@ -43,7 +43,7 @@ func TestValidateCredentials(t *testing.T) {
 		t.Errorf("Token credentials should be valid: %v", err)
 	}
 
-	if headerName, headerValue, err := creds.GetHttpAuthHeader(); err != nil {
+	if headerName, headerValue, err := creds.GetHTTPAuthHeader(); err != nil {
 		t.Errorf("Should not have received error: %v", err)
 	} else {
 		if headerName != "Authorization" || headerValue != "Bearer t" {
