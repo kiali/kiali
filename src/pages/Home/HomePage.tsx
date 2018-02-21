@@ -1,5 +1,7 @@
 import * as React from 'react';
-import { RouteComponentProps, Link } from 'react-router-dom';
+import { RouteComponentProps } from 'react-router-dom';
+
+const logo = require('../../logo.svg');
 
 interface HomeState {
   alertVisible: boolean;
@@ -21,24 +23,16 @@ class HomePage extends React.Component<RouteComponentProps<any>, HomeState> {
 
   render() {
     return (
-      <div className="container-fluid container-pf-nav-pf-vertical">
-        <div className="page-header">
-          <h2>Home Page</h2>
-        </div>
-        <div className="App-body">
-          <div className="App-intro">
-            <h2>Welcome to SWS UI</h2>
-            <ul>
-              <li>
-                <Link to={'/service-graph'}>Graph</Link>
-              </li>
-              <li>
-                <Link to={'/services'}>Service List</Link>
-              </li>
-              <li>
-                <Link to={'/namespaces/myproject/services/myservice'}>Details</Link>
-              </li>
-            </ul>
+      <div>
+        <div className="container-fluid container-pf-nav-pf-vertical">
+          <div className="page-header">
+            <h2>Home Page</h2>
+          </div>
+          <div className="App-body">
+            <div className="App-intro">
+              <img src={logo} className="App-logo" alt="logo" />
+              <h2>Welcome to SWS UI</h2>
+            </div>
           </div>
         </div>
       </div>

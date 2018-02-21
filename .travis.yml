@@ -6,6 +6,6 @@ cache:
     - node_modules
 script:
   - npm run prettier -- --list-different &&
+    npm run build-css &&
     npm run build &&
     npm test
-
