@@ -96,32 +96,27 @@ func NewClient() (*IstioClient, error) {
 	return &client, nil
 }
 
-// GetNamespaces returns a list of all namespaces/projects of the cluster.
+// GetNamespaces returns a list of all namespaces of the cluster.
+// It returns a list of all namespaces of the cluster.
 // It returns an error on any problem.
-func (in *IstioClient) GetNamespaces() ([]string, error) {
+func (in *IstioClient) GetNamespaces() (*v1.NamespaceList, error) {
 	namespaces, err := in.k8s.CoreV1().Namespaces().List(emptyListOptions)
 	if err != nil {
 		return nil, err
 	}
-	names := make([]string, len(namespaces.Items))
-	for i, namespace := range namespaces.Items {
-		names[i] = namespace.Name
-	}
-	return names, nil
+
+	return namespaces, nil
 }
 
 // GetServices returns a list of services for a given namespace.
 // It returns an error on any problem.
-func (in *IstioClient) GetServices(namespace string) ([]string, error) {
-	services, err := in.k8s.CoreV1().Services(namespace).List(emptyListOptions)
+func (in *IstioClient) GetServices(namespaceName string) (*v1.ServiceList, error) {
+	services, err := in.k8s.CoreV1().Services(namespaceName).List(emptyListOptions)
 	if err != nil {
 		return nil, err
 	}
-	names := make([]string, len(services.Items))
-	for i, service := range services.Items {
-		names[i] = service.Name
-	}
-	return names, nil
+
+	return services, nil
 }
 
 // GetServiceDetails returns full details for a given service, consisting on service description, endpoints and pods.

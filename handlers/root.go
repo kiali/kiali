@@ -31,7 +31,8 @@ func demoFetchAllServicesAndPrintThem(w http.ResponseWriter) {
 	}
 	fmt.Fprintf(w, "Namespaces: %v \n\n", namespaces)
 
-	for _, namespace := range namespaces {
+	for _, namespace_object := range namespaces.Items {
+		namespace := namespace_object.Name
 		services, err := istioClient.GetServices(namespace)
 		if err != nil {
 			log.Error(err)
@@ -39,7 +40,8 @@ func demoFetchAllServicesAndPrintThem(w http.ResponseWriter) {
 		}
 		fmt.Fprintf(w, "Namespace: %s Services %v \n\n", namespace, services)
 
-		for _, service := range services {
+		for _, service_object := range services.Items {
+			service := service_object.Name
 			fmt.Fprintf(w, "Service Name: %s \n", service)
 			details, err := istioClient.GetServiceDetails(namespace, service)
 			if err != nil {
