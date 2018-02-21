@@ -8,7 +8,38 @@
 */
 @import 'patternfly-react';
 
-.App {
+/**
+  Application Overrides
+*/
+//override navbar-default from React Boostrap NavBar
+.navbar-default .navbar-toggle {
+  &:focus,
+  &:hover {
+    background-color: transparent;
+  }
+}
+
+a:hover,
+a:focus {
+  text-decoration: none;
+}
+
+.pficon.pficon-info.form-pficon-info {
+  color: #1589cb;
+  font-size: 15px;
+  padding-left: 10px;
+  vertical-align: middle;
+}
+
+.App-body {
+  text-align: center;
+}
+
+.App-intro {
+  background-color: #222;
+  height: 180px;
+  padding: 20px;
+  color: white;
   text-align: center;
 }
 
@@ -17,19 +48,9 @@
   height: 80px;
 }
 
-.App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
-}
-
-.App-title {
-  font-size: 1.5em;
-}
-
-.App-intro {
+.App-paragraph {
   font-size: large;
+  margin: 20px 0;
 }
 
 @keyframes App-logo-spin {
@@ -39,4 +60,9 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.NotFound {
+  padding-top: 100px;
+  text-align: center;
 }
