@@ -14,18 +14,16 @@ import (
 	"github.com/swift-sunshine/swscore/config"
 )
 
-const istioRequestQuery = "istio_request_count{destination_service=~\"%s.%s.*\"}"
-
 // Client for Prometheus API.
 // It hides the way we query Prometheus offering a layer with a high level defined API.
 type Client struct {
 	p8s api.Client
+	api v1.API
 }
 
 // NewClient creates a new client to the Prometheus API.
 // It returns an error on any problem.
 func NewClient() (*Client, error) {
-	client := Client{}
 	if config.Get() == nil {
 		return nil, errors.New("config.Get() must be not null")
 	}
@@ -33,22 +31,27 @@ func NewClient() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	client.p8s = p8s
+	client := Client{p8s: p8s, api: v1.NewAPI(p8s)}
 	return &client, nil
 }
 
-// GetSourceServices returns a map of source services for a given service identified by its namespace and service name.
-// Returned map has a destination version as a key and a "<origin service>/<origin version>" pair as value.
+// For testing / mocking
+func (in *Client) inject(api v1.API) {
+	in.api = api
+}
+
+// GetSourceServices returns a map of list of source services for a given service identified by its namespace and service name.
+// Returned map has a destination version as a key and a list of "<origin service>/<origin version>" pairs as values.
 // Destination service is not included in the map as it is passed as argument.
 // It returns an error on any problem.
-func (in *Client) GetSourceServices(namespace string, servicename string) (map[string]string, error) {
-	query := fmt.Sprintf(istioRequestQuery, servicename, namespace)
-	api := v1.NewAPI(in.p8s)
-	result, err := api.Query(context.Background(), query, time.Now())
+func (in *Client) GetSourceServices(namespace string, servicename string) (map[string][]string, error) {
+	query := fmt.Sprintf("istio_request_count{destination_service=\"%s.%s.%s\"}",
+		servicename, namespace, config.Get().IstioIdentityDomain)
+	result, err := in.api.Query(context.Background(), query, time.Now())
 	if err != nil {
 		return nil, err
 	}
-	routes := make(map[string]string)
+	routes := make(map[string][]string)
 	switch result.Type() {
 	case model.ValVector:
 		matrix := result.(model.Vector)
@@ -56,17 +59,44 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 			metric := sample.Metric
 			index := fmt.Sprintf("%s", metric["destination_version"])
 			sourceService := string(metric["source_service"])
-			// .svc sufix is a pure Istio label, I guess we can skip it at the moment for clarity
-			if i := strings.Index(sourceService, ".svc"); i > 0 {
+			// sourceService is in the form "service.namespace.istio_identity_domain". We want to keep only "service.namespace".
+			if i := strings.Index(sourceService, "."+config.Get().IstioIdentityDomain); i > 0 {
 				sourceService = sourceService[:i]
 			}
-			routes[index] = fmt.Sprintf("%s/%s", sourceService, metric["source_version"])
+			source := fmt.Sprintf("%s/%s", sourceService, metric["source_version"])
+			if arr, ok := routes[index]; ok {
+				routes[index] = append(arr, source)
+			} else {
+				routes[index] = []string{source}
+			}
 		}
 	}
 	return routes, nil
 }
 
-// API returns the Prometheus V1 HTTP API for performing calls not supported natively by thi client
+// GetServiceMetrics returns a map of metrics (indexed by description) related to the provided service identified by its namespace and service name.
+// Returned map includes istio metrics and envoy health.
+// It returns an error on any problem.
+func (in *Client) GetServiceMetrics(namespace string, servicename string, duration string) (map[string]Metric, error) {
+	metricChan, errChan := make(chan namedMetric), make(chan error)
+	nbCalls := getServiceMetricsAsync(in.api, namespace, servicename, duration, metricChan, errChan)
+
+	metrics := make(map[string]Metric)
+	var err error
+	for i := 0; i < nbCalls; i++ {
+		select {
+		case namedMetric := <-metricChan:
+			if namedMetric.metric.exists() {
+				metrics[namedMetric.name] = namedMetric.metric
+			}
+		case e := <-errChan:
+			err = e
+		}
+	}
+	return metrics, err
+}
+
+// API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client
 func (in *Client) API() v1.API {
-	return v1.NewAPI(in.p8s)
+	return in.api
 }
