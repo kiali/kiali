@@ -79,12 +79,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
 
   fetchMetrics() {
     console.log('Fetching metrics...');
-    API.newRequest(
-      'GetServiceMetrics',
-      { namespace_id: this.props.namespace, service_id: this.props.service },
-      { range: this.state.range },
-      {}
-    )
+    API.GetServiceMetrics(this.props.namespace, this.props.service, { range: this.state.range })
       .then(response => {
         console.log(response);
         const metrics: { [key: string]: any } = response['data'];
