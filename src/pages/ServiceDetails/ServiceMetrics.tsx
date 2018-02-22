@@ -5,6 +5,8 @@ import * as API from '../../services/Api';
 
 type ServiceMetricsState = {
   range: string;
+  loading: boolean;
+  delayedLoading: boolean;
   requestCountIn?: MetricValue;
   requestCountOut?: MetricValue;
   requestSizeIn?: MetricHistogram;
@@ -21,7 +23,9 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   constructor(props: ServiceId) {
     super(props);
     this.state = {
-      range: '5m'
+      range: '5m',
+      loading: false,
+      delayedLoading: false
     };
     this.onRangeChanged = this.onRangeChanged.bind(this);
     this.fetchMetrics();
@@ -34,23 +38,12 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   }
 
   render() {
-    return (
+    let metricsDiv;
+    if (this.state.loading && this.state.delayedLoading) {
+      metricsDiv = <div className="spinner spinner-sm left-spinner"/>;
+    } else {
+      metricsDiv = (
       <div>
-        <h1>
-          == SERVICE METRICS ({this.props.namespace} / {this.props.service}) ==
-        </h1>
-        Range:
-        <select value={this.state.range} onChange={this.onRangeChanged}>
-          <option value="1m">1 minute</option>
-          <option value="5m">5 minutes</option>
-          <option value="10m">10 minutes</option>
-          <option value="30m">30 minutes</option>
-          <option value="1h">1 hour</option>
-          <option value="3h">3 hours</option>
-          <option value="6h">6 hours</option>
-          <option value="12h">12 hours</option>
-          <option value="1d">1 day</option>
-        </select>
         <div>
           Health: {this.health()}
           <br />
@@ -73,17 +66,41 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
             <li>Response size: {this.histogram(this.state.responseSizeOut)}</li>
           </ul>
         </div>
+      </div>);
+    }
+    return (
+      <div>
+        <h1>
+          == SERVICE METRICS ({this.props.namespace} / {this.props.service}) ==
+        </h1>
+        Range:
+        <select value={this.state.range} onChange={this.onRangeChanged}>
+          <option value="1m">1 minute</option>
+          <option value="5m">5 minutes</option>
+          <option value="10m">10 minutes</option>
+          <option value="30m">30 minutes</option>
+          <option value="1h">1 hour</option>
+          <option value="3h">3 hours</option>
+          <option value="6h">6 hours</option>
+          <option value="12h">12 hours</option>
+          <option value="1d">1 day</option>
+        </select>
+        {metricsDiv}
       </div>
     );
   }
 
   fetchMetrics() {
-    console.log('Fetching metrics...');
+    this.setState({loading: true, delayedLoading: false});
+    setTimeout(() => {
+      // This will show spinner only after 0.1s of loading to avoid blinking effect on fast response
+      this.setState({delayedLoading: true});
+    }, 100);
     API.GetServiceMetrics(this.props.namespace, this.props.service, { range: this.state.range })
       .then(response => {
-        console.log(response);
         const metrics: { [key: string]: any } = response['data'];
         this.setState({
+          loading: false,
           requestCountIn: metrics.hasOwnProperty('request_count_in') ? metrics['request_count_in'] : null,
           requestCountOut: metrics.hasOwnProperty('request_count_out') ? metrics['request_count_out'] : null,
           requestSizeIn: metrics.hasOwnProperty('request_size_in') ? metrics['request_size_in'] : null,
@@ -97,28 +114,29 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         });
       })
       .catch(error => {
+        this.setState({loading: false});
         console.error(error);
       });
   }
 
   health() {
     if (this.state.healthyReplicas && this.state.totalReplicas) {
-      return this.round(100 * this.state.healthyReplicas.Value / this.state.totalReplicas.Value) + ' %';
+      return this.round(100 * this.state.healthyReplicas.value / this.state.totalReplicas.value) + ' %';
     }
     return 'n/a';
   }
 
   scalar(val?: MetricValue) {
     if (val) {
-      return this.round(val.Value);
+      return this.round(val.value);
     }
     return 'n/a';
   }
 
   histogram(hist?: MetricHistogram) {
     if (hist) {
-      return `avg: ${this.round(hist.Average)}; med: ${this.round(hist.Median)}; 95th:
-        ${this.round(hist.NinetyFiveP)}; 99th: ${this.round(hist.NinetyNineP)}`;
+      return `avg: ${this.round(hist.average)}; med: ${this.round(hist.median)}; 95th:
+        ${this.round(hist.percentile95)}; 99th: ${this.round(hist.percentile99)}`;
     }
     return 'n/a';
   }

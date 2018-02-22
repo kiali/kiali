@@ -1,10 +1,10 @@
 export interface MetricValue {
-  Value: number;
+  value: number;
 }
 
 export interface MetricHistogram {
-  Average: number;
-  Median: number;
-  NinetyFiveP: number;
-  NinetyNineP: number;
+  average: number;
+  median: number;
+  percentile95: number;
+  percentile99: number;
 }
