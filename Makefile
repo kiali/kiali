@@ -2,9 +2,13 @@ VERSION ?= 0.0.1.Final-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 GO_VERSION_SWS = 1.8.3
+
 DOCKER_NAME ?= jmazzitelli/sws
 DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
+
+# Indicates which version of the UI console to be embedded in the docker image
+CONSOLE_VERSION ?= latest
 
 VERBOSE_MODE ?= 4
 NAMESPACE ?= istio-system
@@ -81,9 +85,9 @@ docker:
 	@cp -r deploy/docker/* _output/docker
 	@cp ${GOPATH}/bin/sws _output/docker
 	@if [ ! -d "_output/docker/console" ]; then \
-		echo "Downloading console..." ; \
+		echo "Downloading console (${CONSOLE_VERSION})..." ; \
 		mkdir _output/docker/console ; \
-		curl $$(npm view swsui dist.tarball) \
+		curl $$(npm view swsui@${CONSOLE_VERSION} dist.tarball) \
 		| tar zxf - --strip-components=2 --directory _output/docker/console package/build ; \
 	fi
 	@echo Building Docker Image...
