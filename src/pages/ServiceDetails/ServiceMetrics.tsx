@@ -1,7 +1,7 @@
 import * as React from 'react';
-import axios from 'axios';
 import ServiceId from '../../types/ServiceId';
 import { MetricHistogram, MetricValue } from '../../types/Metrics';
+import * as API from '../../services/Api';
 
 type ServiceMetricsState = {
   range: string;
@@ -79,12 +79,10 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
 
   fetchMetrics() {
     console.log('Fetching metrics...');
-    axios
-      .get(`/api/namespaces/${this.props.namespace}/services/${this.props.service}/metrics?range=${this.state.range}`)
-      // .get(`http://127.0.0.1:8000/api/namespaces/${this.props.namespace}/services/${this.props.service}/metrics?range=${this.state.range}`)
+    API.GetServiceMetrics(this.props.namespace, this.props.service, { range: this.state.range })
       .then(response => {
         console.log(response);
-        const metrics: { [key: string]: any } = response.data;
+        const metrics: { [key: string]: any } = response['data'];
         this.setState({
           requestCountIn: metrics.hasOwnProperty('request_count_in') ? metrics['request_count_in'] : null,
           requestCountOut: metrics.hasOwnProperty('request_count_out') ? metrics['request_count_out'] : null,
