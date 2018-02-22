@@ -262,3 +262,9 @@ prometheus_service_url: VALUE
 |===
 
 == Additional Notes
+
+=== Running the UI outside of the core
+When developing the UI you will find it useful to run it outside of the core to make it easier
+to update the UI code and see the changes without having to recompile.
+The preffered approach for this is to use a proxy on the UI to mount the core. The process is
+described https://github.com/swift-sunshine/swsui#developing[here].
