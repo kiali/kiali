@@ -80,10 +80,8 @@ func (h *serverAuthProxyHandler) handler(w http.ResponseWriter, r *http.Request)
 	// before we handle any requests, make sure the user is authenticated
 	if h.credentials.Username != "" || h.credentials.Password != "" {
 		u, p, ok := r.BasicAuth()
-		if !ok {
+		if !ok || h.credentials.Username != u || h.credentials.Password != p {
 			statusCode = http.StatusUnauthorized
-		} else if h.credentials.Username != u || h.credentials.Password != p {
-			statusCode = http.StatusForbidden
 		}
 	} else {
 		log.Trace("Access to the server endpoint is not secured with credentials - letting request come in")
