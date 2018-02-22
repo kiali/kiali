@@ -27,7 +27,8 @@ yarn-error.log*
 yarn.lock
 
 # compiled patternfly assets
-src/css/*
+src/**/*.css
+!src/index.css
 !src/css/.gitkeep
 src/img/*
 !src/img/.gitkeep

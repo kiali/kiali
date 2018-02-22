@@ -40,33 +40,34 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   render() {
     let metricsDiv;
     if (this.state.loading && this.state.delayedLoading) {
-      metricsDiv = <div className="spinner spinner-sm left-spinner"/>;
+      metricsDiv = <div className="spinner spinner-sm left-spinner" />;
     } else {
       metricsDiv = (
-      <div>
         <div>
-          Health: {this.health()}
-          <br />
+          <div>
+            Health: {this.health()}
+            <br />
+          </div>
+          <div>
+            <h3>Input</h3>
+            <ul>
+              <li>Request count rate: {this.scalar(this.state.requestCountIn)}</li>
+              <li>Request size: {this.histogram(this.state.requestSizeIn)}</li>
+              <li>Request duration: {this.histogram(this.state.requestDurationIn)}</li>
+              <li>Response size: {this.histogram(this.state.responseSizeIn)}</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Output</h3>
+            <ul>
+              <li>Request count rate: {this.scalar(this.state.requestCountOut)}</li>
+              <li>Request size: {this.histogram(this.state.requestSizeOut)}</li>
+              <li>Request duration: {this.histogram(this.state.requestDurationOut)}</li>
+              <li>Response size: {this.histogram(this.state.responseSizeOut)}</li>
+            </ul>
+          </div>
         </div>
-        <div>
-          <h3>Input</h3>
-          <ul>
-            <li>Request count rate: {this.scalar(this.state.requestCountIn)}</li>
-            <li>Request size: {this.histogram(this.state.requestSizeIn)}</li>
-            <li>Request duration: {this.histogram(this.state.requestDurationIn)}</li>
-            <li>Response size: {this.histogram(this.state.responseSizeIn)}</li>
-          </ul>
-        </div>
-        <div>
-          <h3>Output</h3>
-          <ul>
-            <li>Request count rate: {this.scalar(this.state.requestCountOut)}</li>
-            <li>Request size: {this.histogram(this.state.requestSizeOut)}</li>
-            <li>Request duration: {this.histogram(this.state.requestDurationOut)}</li>
-            <li>Response size: {this.histogram(this.state.responseSizeOut)}</li>
-          </ul>
-        </div>
-      </div>);
+      );
     }
     return (
       <div>
@@ -91,10 +92,10 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   }
 
   fetchMetrics() {
-    this.setState({loading: true, delayedLoading: false});
+    this.setState({ loading: true, delayedLoading: false });
     setTimeout(() => {
       // This will show spinner only after 0.1s of loading to avoid blinking effect on fast response
-      this.setState({delayedLoading: true});
+      this.setState({ delayedLoading: true });
     }, 100);
     API.GetServiceMetrics(this.props.namespace, this.props.service, { range: this.state.range })
       .then(response => {
@@ -114,7 +115,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         });
       })
       .catch(error => {
-        this.setState({loading: false});
+        this.setState({ loading: false });
         console.error(error);
       });
   }
