@@ -40,8 +40,8 @@ func (in *Client) inject(api v1.API) {
 	in.api = api
 }
 
-// GetSourceServices returns a map of source services for a given service identified by its namespace and service name.
-// Returned map has a destination version as a key and a "<origin service>/<origin version>" pair as value.
+// GetSourceServices returns a map of list of source services for a given service identified by its namespace and service name.
+// Returned map has a destination version as a key and a list of "<origin service>/<origin version>" pairs as values.
 // Destination service is not included in the map as it is passed as argument.
 // It returns an error on any problem.
 func (in *Client) GetSourceServices(namespace string, servicename string) (map[string][]string, error) {
