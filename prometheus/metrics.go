@@ -26,7 +26,7 @@ type namedMetric struct {
 // MetricValue represents a metric holding a single scalar (gauge or counter)
 type MetricValue struct {
 	Metric `json:"-"`
-	Value  float64
+	Value  float64 `json:"value"`
 	found  bool
 }
 
@@ -36,12 +36,12 @@ func (m MetricValue) exists() bool {
 
 // MetricHistogram hold some pre-defined stats from an histogram
 type MetricHistogram struct {
-	Metric      `json:"-"`
-	Average     float64
-	Median      float64
-	NinetyFiveP float64
-	NinetyNineP float64
-	found       bool
+	Metric       `json:"-"`
+	Average      float64 `json:"average"`
+	Median       float64 `json:"median"`
+	Percentile95 float64 `json:"percentile95"`
+	Percentile99 float64 `json:"percentile99"`
+	found        bool
 }
 
 func (m MetricHistogram) exists() bool {
@@ -157,7 +157,7 @@ func fetchRate(api v1.API, metricName string, labels string, duration string, no
 
 func fetchHistogram(api v1.API, metricName string, labels string, duration string, now time.Time) (*MetricHistogram, error) {
 	// Note: we may want to make returned stats configurable in the future
-	avgChan, medChan, q95Chan, q99Chan := make(chan float64), make(chan float64), make(chan float64), make(chan float64)
+	avgChan, medChan, p95Chan, p99Chan := make(chan float64), make(chan float64), make(chan float64), make(chan float64)
 	errChan := make(chan error)
 
 	// Average
@@ -188,11 +188,11 @@ func fetchHistogram(api v1.API, metricName string, labels string, duration strin
 	go func() {
 		query := fmt.Sprintf(
 			"histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le))", metricName, labels, duration)
-		q95, err := fetchScalarDouble(api, query, now)
+		p95, err := fetchScalarDouble(api, query, now)
 		if err != nil {
 			errChan <- err
 		} else {
-			q95Chan <- q95
+			p95Chan <- p95
 		}
 	}()
 
@@ -200,11 +200,11 @@ func fetchHistogram(api v1.API, metricName string, labels string, duration strin
 	go func() {
 		query := fmt.Sprintf(
 			"histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le))", metricName, labels, duration)
-		q99, err := fetchScalarDouble(api, query, now)
+		p99, err := fetchScalarDouble(api, query, now)
 		if err != nil {
 			errChan <- err
 		} else {
-			q99Chan <- q99
+			p99Chan <- p99
 		}
 	}()
 
@@ -219,15 +219,15 @@ func fetchHistogram(api v1.API, metricName string, labels string, duration strin
 	case metricError = <-errChan:
 	}
 	select {
-	case histo.NinetyFiveP = <-q95Chan:
+	case histo.Percentile95 = <-p95Chan:
 	case metricError = <-errChan:
 	}
 	select {
-	case histo.NinetyNineP = <-q99Chan:
+	case histo.Percentile99 = <-p99Chan:
 	case metricError = <-errChan:
 	}
 	// Any NaN value is considered as a missing metric
-	if math.IsNaN(histo.Average) || math.IsNaN(histo.Median) || math.IsNaN(histo.NinetyFiveP) || math.IsNaN(histo.NinetyNineP) {
+	if math.IsNaN(histo.Average) || math.IsNaN(histo.Median) || math.IsNaN(histo.Percentile95) || math.IsNaN(histo.Percentile99) {
 		return &MetricHistogram{found: false}, nil
 	}
 	return &histo, metricError
