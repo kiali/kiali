@@ -1,6 +1,6 @@
 {
   "name": "swsui",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "bugs": {
     "url": "https://issues.jboss.org/projects/SWS/issues/"
   },
@@ -68,5 +68,5 @@
   ],
   "author": "Red Hat",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/mtho11/swsui#readme"
+  "homepage": "."
 }
