@@ -17,13 +17,13 @@ import (
 // Client for Prometheus API.
 // It hides the way we query Prometheus offering a layer with a high level defined API.
 type Client struct {
+	p8s api.Client
 	api v1.API
 }
 
 // NewClient creates a new client to the Prometheus API.
 // It returns an error on any problem.
 func NewClient() (*Client, error) {
-	client := Client{}
 	if config.Get() == nil {
 		return nil, errors.New("config.Get() must be not null")
 	}
@@ -31,7 +31,7 @@ func NewClient() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	client.api = v1.NewAPI(p8s)
+	client := Client{p8s: p8s, api: v1.NewAPI(p8s)}
 	return &client, nil
 }
 
