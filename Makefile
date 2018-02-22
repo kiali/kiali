@@ -77,11 +77,16 @@ dep-update:
 # cloud targets - building images and deploying
 
 docker:
-	@echo Building Docker Image...
 	@mkdir -p _output/docker
 	@cp -r deploy/docker/* _output/docker
 	@cp ${GOPATH}/bin/sws _output/docker
-	@if [ ! -d "_output/docker/npm" ]; then npm --prefix _output/docker/npm -g install swsui; fi
+	@if [ ! -d "_output/docker/console" ]; then \
+		echo "Downloading console..." ; \
+		mkdir _output/docker/console ; \
+		curl $$(npm view swsui dist.tarball) \
+		| tar zxf - --strip-components=2 --directory _output/docker/console package/build ; \
+	fi
+	@echo Building Docker Image...
 	docker build -t ${DOCKER_TAG} _output/docker
 
 docker-push:
