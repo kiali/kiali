@@ -256,8 +256,7 @@ server:
 |The URL used to access and query the Prometheus Server.
 [source,yaml]
 ----
-server:
-  prometheus_service_url: VALUE
+prometheus_service_url: VALUE
 ----
 
 |===
