@@ -1,10 +1,9 @@
-id: sws
-kind: Template
 apiVersion: v1
-name: SWS Template
+kind: Template
 metadata:
   name: sws
-  app: sws
+  labels:
+    app: sws
 parameters:
 - description: The name of the image to use
   name: IMAGE_NAME
@@ -15,6 +14,9 @@ parameters:
 - description: The namespace to use
   name: NAMESPACE
   value: istio-system
+- description: Dictates the level of logs to emit. 3=INFO, 4=DEBUG, 5=TRACE
+  name: VERBOSE_MODE
+  value: "5"
 objects:
 - apiVersion: v1
   kind: ServiceAccount
@@ -28,10 +30,10 @@ objects:
     name: sws
     labels:
       app: sws
-  parameters:
   spec:
     ports:
-      - protocol: TCP
+      - name: tcp
+        protocol: TCP
         port: 20001
     selector:
       app: sws
@@ -46,21 +48,26 @@ objects:
       kind: Service
       name: sws
 - apiVersion: extensions/v1beta1
-  kind: DaemonSet
+  kind: Deployment
   metadata:
     name: sws
     labels:
-      name: sws
       app: sws
   spec:
+    replicas: 1
     selector:
       matchLabels:
-        name: sws
+        app: sws
     template:
       metadata:
+        name: sws
         labels:
-          name: sws
           app: sws
+      strategy:
+        rollingUpdate:
+          maxSurge: 1
+          maxAvailable: 1
+        type: RollingUpdate
       spec:
         serviceAccount: sws
         containers:
@@ -71,9 +78,9 @@ objects:
             - "-config"
             - "/sws-configuration/config.yaml"
             - "-v"
-            - "5"
+            - "${VERBOSE_MODE}"
           env:
-          - name: FOO_STRING
+          - name: ACTIVE_NAMESPACE
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
@@ -83,13 +90,12 @@ objects:
         volumes:
         - name: sws-configuration
           configMap:
-            name: sws-configuration
+            name: sws
 - apiVersion: v1
   kind: ClusterRole
   metadata:
     name: sws
     labels:
-      name: sws
       app: sws
   rules:
   - apiGroups: [""]
@@ -119,7 +125,6 @@ objects:
   metadata:
     name: sws
     labels:
-      name: sws
       app: sws
   roleRef:
     name: sws

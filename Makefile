@@ -1,8 +1,12 @@
+# Identifies the current build.
+# These will be embedded in the app and displayed when it starts.
 VERSION ?= 0.0.1.Final-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
+# The minimum Go version that must be used to build the app.
 GO_VERSION_SWS = 1.8.3
 
+# Identifies the docker image that will be built and deployed.
 DOCKER_NAME ?= jmazzitelli/sws
 DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
@@ -17,9 +21,17 @@ DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
 CONSOLE_VERSION ?= latest
 CONSOLE_LOCAL_DIR ?= ../../../../../swsui
 
+# Indicates the log level the app will use when started.
+# <4=INFO
+#  4=DEBUG
+#  5=TRACE
 VERBOSE_MODE ?= 4
+
+# Declares the namespace where the objects are to be deployed.
+# For OpenShift, this is the name of the project.
 NAMESPACE ?= istio-system
 
+# Environment variables set when running the Go compiler.
 GO_BUILD_ENVVARS = \
 	GOOS=linux \
 	GOARCH=amd64 \
@@ -72,7 +84,9 @@ run:
 	@echo Running...
 	@${GOPATH}/bin/sws -v ${VERBOSE_MODE} -config config.yaml
 
+#
 # dep targets - dependency management
+#
 
 dep-install:
 	@echo Installing Glide itself
@@ -85,7 +99,9 @@ dep-update:
 	@echo Updating dependencies and storing in vendor directory
 	@glide update --strip-vendor
 
+#
 # cloud targets - building images and deploying
+#
 
 .get-console:
 	@mkdir -p _output/docker
@@ -114,16 +130,20 @@ docker-push:
 	docker push ${DOCKER_TAG}
 
 .openshift-validate:
-	@oc get project ${NAMESPACE}
+	@oc get project ${NAMESPACE} > /dev/null
 
 openshift-deploy: openshift-undeploy
 	@echo Deploying to OpenShift project ${NAMESPACE}
 	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
-	oc process -f deploy/openshift/sws.yaml -p IMAGE_NAME=${DOCKER_NAME} -p IMAGE_VERSION=${DOCKER_VERSION} -p NAMESPACE=${NAMESPACE} | oc create -n ${NAMESPACE} -f -
+	oc process -f deploy/openshift/sws.yaml -p IMAGE_NAME=${DOCKER_NAME} -p IMAGE_VERSION=${DOCKER_VERSION} -p NAMESPACE=${NAMESPACE} -p VERBOSE_MODE=${VERBOSE_MODE} | oc create -n ${NAMESPACE} -f -
 
 openshift-undeploy: .openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
 	oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles,clusterrolebindings --selector=app=sws -n ${NAMESPACE}
+
+openshift-reload-image: .openshift-validate
+	@echo Refreshing Image in OpenShift project ${NAMESPACE}
+	oc delete pod --selector=app=sws -n ${NAMESPACE}
 
 k8s-deploy: k8s-undeploy
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
