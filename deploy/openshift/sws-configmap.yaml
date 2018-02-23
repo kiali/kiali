@@ -1,9 +1,7 @@
-id: sws
-kind: ConfigMap
 apiVersion: v1
-name: SWS Configuration
+kind: ConfigMap
 metadata:
-  name: sws-configuration
+  name: sws
   labels:
     app: sws
 data:
