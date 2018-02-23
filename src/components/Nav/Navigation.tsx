@@ -22,13 +22,13 @@ class Navigation extends React.Component {
           </li>
           <li className={this.itemClass('/service-graph')}>
             <Link to="/service-graph">
-              <span className="fa fa-shield" data-toggle="tooltip" title="Graph" />
+              <span className="fa pficon-topology" data-toggle="tooltip" title="Graph" />
               <span className="list-group-item-value">Graph</span>
             </Link>
           </li>
           <li className={this.itemClass('/services')}>
             <Link to="/services">
-              <span className="fa fa-users" data-toggle="tooltip" title="Services" />
+              <span className="fa pficon-service" data-toggle="tooltip" title="Services" />
               <span className="list-group-item-value">Services</span>
             </Link>
           </li>
