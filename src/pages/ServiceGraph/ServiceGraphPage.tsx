@@ -1,5 +1,4 @@
 import * as React from 'react';
-
 type ServiceGraphState = {
   alertVisible: boolean;
 };
@@ -26,7 +25,7 @@ class ServiceGraphPage extends React.Component<ServiceGraphProps, ServiceGraphSt
     return (
       <div className="container-fluid container-pf-nav-pf-vertical">
         <div className="page-header">
-          <h2>Services Graph</h2>
+          <h2>Service Graph</h2>
         </div>
         <div className="App-body">
           <div className="App-intro">

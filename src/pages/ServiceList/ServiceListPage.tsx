@@ -1,5 +1,7 @@
 import * as React from 'react';
 import ServiceListComponent from './ServiceListComponent';
+import ServiceFilter from './ServiceFilter';
+import ServicePagination from './ServicePagination';
 
 type ServiceListState = {
   alertVisible: boolean;
@@ -26,10 +28,10 @@ class ServiceListPage extends React.Component<ServiceListProps, ServiceListState
   render() {
     return (
       <div className="container-fluid container-pf-nav-pf-vertical">
-        <div className="page-header">
-          <h2>Services</h2>
-        </div>
+        <h2>Services</h2>
+        <ServiceFilter />
         <ServiceListComponent />
+        <ServicePagination />
       </div>
     );
   }
