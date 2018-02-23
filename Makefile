@@ -11,6 +11,9 @@ DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
 # in the docker image. If "local" the CONSOLE_LOCAL_DIR is
 # where the UI project has been git cloned and has its
 # content built in its build/ subdirectory.
+# WARNING: If you have previously run the 'docker' target but
+# later want to change the CONSOLE_VERSION then you must run
+# the 'clean' target first before re-running the 'docker' target.
 CONSOLE_VERSION ?= latest
 CONSOLE_LOCAL_DIR ?= ../../../../../swsui
 
