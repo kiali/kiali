@@ -2,9 +2,20 @@ VERSION ?= 0.0.1.Final-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 GO_VERSION_SWS = 1.8.3
+
 DOCKER_NAME ?= jmazzitelli/sws
 DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
+
+# Indicates which version of the UI console is to be embedded
+# in the docker image. If "local" the CONSOLE_LOCAL_DIR is
+# where the UI project has been git cloned and has its
+# content built in its build/ subdirectory.
+# WARNING: If you have previously run the 'docker' target but
+# later want to change the CONSOLE_VERSION then you must run
+# the 'clean' target first before re-running the 'docker' target.
+CONSOLE_VERSION ?= latest
+CONSOLE_LOCAL_DIR ?= ../../../../../swsui
 
 VERBOSE_MODE ?= 4
 NAMESPACE ?= istio-system
@@ -27,10 +38,10 @@ git-init:
 	@echo Setting Git Hooks
 	cp hack/hooks/* .git/hooks
 
-go_check:
+go-check:
 	@hack/check_go_version.sh "${GO_VERSION_SWS}"
 
-build: go_check
+build: go-check
 	@echo Building...
 	${GO_BUILD_ENVVARS} go build \
 		-o ${GOPATH}/bin/sws -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
@@ -76,16 +87,25 @@ dep-update:
 
 # cloud targets - building images and deploying
 
-docker:
+.get-console:
+	@mkdir -p _output/docker
+ifeq ("${CONSOLE_VERSION}", "local")
+	echo "Copying local console files from ${CONSOLE_LOCAL_DIR}"
+	rm -rf _output/docker/console && mkdir _output/docker/console
+	cp -r ${CONSOLE_LOCAL_DIR}/build/* _output/docker/console
+else
+	@if [ ! -d "_output/docker/console" ]; then \
+		echo "Downloading console (${CONSOLE_VERSION})..." ; \
+		mkdir _output/docker/console ; \
+		curl $$(npm view swsui@${CONSOLE_VERSION} dist.tarball) \
+		| tar zxf - --strip-components=2 --directory _output/docker/console package/build ; \
+	fi
+endif
+
+docker: .get-console
 	@mkdir -p _output/docker
 	@cp -r deploy/docker/* _output/docker
 	@cp ${GOPATH}/bin/sws _output/docker
-	@if [ ! -d "_output/docker/console" ]; then \
-		echo "Downloading console..." ; \
-		mkdir _output/docker/console ; \
-		curl $$(npm view swsui dist.tarball) \
-		| tar zxf - --strip-components=2 --directory _output/docker/console package/build ; \
-	fi
 	@echo Building Docker Image...
 	docker build -t ${DOCKER_TAG} _output/docker
 
@@ -93,7 +113,7 @@ docker-push:
 	@echo Pushing current docker image to ${DOCKER_TAG}
 	docker push ${DOCKER_TAG}
 
-openshift-validate:
+.openshift-validate:
 	@oc get project ${NAMESPACE}
 
 openshift-deploy: openshift-undeploy
@@ -101,7 +121,7 @@ openshift-deploy: openshift-undeploy
 	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
 	oc process -f deploy/openshift/sws.yaml -p IMAGE_NAME=${DOCKER_NAME} -p IMAGE_VERSION=${DOCKER_VERSION} -p NAMESPACE=${NAMESPACE} | oc create -n ${NAMESPACE} -f -
 
-openshift-undeploy: openshift-validate
+openshift-undeploy: .openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
 	oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles,clusterrolebindings --selector=app=sws -n ${NAMESPACE}
 
