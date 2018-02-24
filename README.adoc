@@ -3,6 +3,8 @@
 
 toc::[]
 = SWS UI
+image:https://coveralls.io/repos/github/swift-sunshine/swsui/badge.svg?branch=master[Coverage Status, link=https://coveralls.io/github/swift-sunshine/swsui?branch=master]
+
 == Introduction
 
 A UI for the Swift-Sunshine Istio Observability Project

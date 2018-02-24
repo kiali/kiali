@@ -8,4 +8,6 @@ script:
   - npm run prettier -- --list-different &&
     npm run build-css &&
     npm run build &&
-    npm test
+    npm test -- --coverage
+after_success:
+  - cat ./coverage/lcov.info | coveralls
