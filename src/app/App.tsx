@@ -6,7 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 class App extends React.Component {
   render() {
     return (
-      <BrowserRouter>
+      <BrowserRouter basename="/console">
         <div>
           <Navigation />
         </div>
