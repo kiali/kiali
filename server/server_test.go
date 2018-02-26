@@ -75,7 +75,7 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.Credentials.Password = authorizedPassword
 
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
-	consoleURL := serverURL + "/console"
+	consoleURL := serverURL + "/"
 	apiURL := serverURL + "/api"
 
 	config.Set(conf)
