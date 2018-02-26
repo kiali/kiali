@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"regexp"
 	"strings"
 	"time"
 
@@ -11,6 +12,10 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/swift-sunshine/swscore/config"
+)
+
+var (
+	invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 )
 
 // Metric is a base interface for either MetricValue (single scalar, gauge or counter) or MetricHistogram
@@ -103,15 +108,13 @@ func getServiceMetricsAsync(api v1.API, namespace string, servicename string, du
 		}}, {
 		name: "healthy_replicas",
 		fcall: func() (Metric, error) {
-			return fetchGauge(api,
-				fmt.Sprintf("envoy_cluster_out_%s_%s_%s_http_membership_healthy", servicename, namespace, envoyClustername),
-				"", now)
+			name := replaceInvalidCharacters(fmt.Sprintf("envoy_cluster_out_%s_%s_%s_http_membership_healthy", servicename, namespace, envoyClustername))
+			return fetchGauge(api, name, "", now)
 		}}, {
 		name: "total_replicas",
 		fcall: func() (Metric, error) {
-			return fetchGauge(api,
-				fmt.Sprintf("envoy_cluster_out_%s_%s_%s_http_membership_total", servicename, namespace, envoyClustername),
-				"", now)
+			name := replaceInvalidCharacters(fmt.Sprintf("envoy_cluster_out_%s_%s_%s_http_membership_total", servicename, namespace, envoyClustername))
+			return fetchGauge(api, name, "", now)
 		}}}
 
 	for _, c := range calls {
@@ -248,4 +251,9 @@ func fetchScalarDouble(api v1.API, query string, now time.Time) (float64, error)
 		return math.NaN(), nil
 	}
 	return 0, fmt.Errorf("Invalid query, vector expected: %s", query)
+}
+
+func replaceInvalidCharacters(metricName string) string {
+	// See https://github.com/prometheus/prometheus/blob/master/util/strutil/strconv.go#L43
+	return invalidLabelCharRE.ReplaceAllString(metricName, "_")
 }
