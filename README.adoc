@@ -95,7 +95,7 @@ make docker
 ==== Deploying SWS to OpenShift
 
 [NOTE]
-Before deploying and running SWS, you must install and deploy link:https://istio.io[Istio] first. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio-install-openshift.sh[] script to help you install Istio if you are using OpenShift.
+Before deploying and running SWS, you must install and deploy link:https://istio.io[Istio] first. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio/openshift[OpenShift script] provided to you as a convienence to help you install Istio if you are using OpenShift.
 
 [NOTE]
 The following commands assume that the `oc` command is available in the user's path and that the user is logged in.
@@ -125,8 +125,8 @@ make openshift-reload-image
 
 === Running on Kubernetes
 
-[WARNING]
-These instructions are not fully working. Contributions are welcome to get Kubernetes deployment to work!
+[NOTE]
+These instructions may not fully work. Contributions are welcome.
 
 ==== Setting up Kubernetes
 
@@ -142,10 +142,18 @@ cd ${GOPATH}/src/github.com/swift-sunshine/swscore
 make docker
 ----
 
+Note that if you are using minikube, you can build the docker image and push it directly into the minikube docker daemon using the alternative make target `minikube-docker`:
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/swift-sunshine/swscore
+make minikube-docker
+----
+
 ==== Deploying SWS to Kubernetes
 
 [NOTE]
-Before deploying and running SWS, you must install and deploy link:https://istio.io[Istio] first. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here].
+Before deploying and running SWS, you must install and deploy link:https://istio.io[Istio] first. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio/kubernetes[Kubernetes script] provided to you as a convienence to help you install Istio if you are using Kubernetes.
 
 [NOTE]
 The following commands assume that the `kubectl` command is available in the user's path and that the user is logged in.
@@ -165,6 +173,15 @@ If you want to remove SWS from your Kubernetes environment, you can do so by run
 [source,shell]
 ----
 make k8s-undeploy
+----
+
+==== Reloading SWS image in Kubernetes
+
+If you already have SWS installed but you want to recreate the pod with a new docker image, you can run the following command:
+
+[source,shell]
+----
+make k8s-reload-image
 ----
 
 === Running Standalone

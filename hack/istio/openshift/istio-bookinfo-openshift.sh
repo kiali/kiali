@@ -10,8 +10,8 @@ if [ "$?" != 0 ]; then
   exit 1
 fi
 
-# find istio that we installed from the install script (cwd is the hack dir)
-INSTALL_DIR="$(pwd)/../_output/istio"
+# find istio that we installed from the install script (cwd is under the hack dir)
+INSTALL_DIR="$(pwd)/../../../_output/istio"
 if [ ! -d $INSTALL_DIR ]; then
   echo "You did not install Istio using the hack script. Please do that first."
   exit 1

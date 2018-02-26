@@ -19,8 +19,8 @@ fi
 
 set -e
 
-# put istio files in the output directory (cwd is the hack dir)
-INSTALL_DIR="$(pwd)/../_output/istio"
+# put istio files in the output directory (cwd is under the hack dir)
+INSTALL_DIR="$(pwd)/../../../_output/istio"
 mkdir -p $INSTALL_DIR
 cd $INSTALL_DIR
 

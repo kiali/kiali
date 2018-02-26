@@ -118,11 +118,30 @@ else
 	fi
 endif
 
-docker: .get-console
+.prepare-docker-image-files: .get-console
+	@echo Preparing docker image files...
 	@mkdir -p _output/docker
 	@cp -r deploy/docker/* _output/docker
 	@cp ${GOPATH}/bin/sws _output/docker
-	@echo Building Docker Image...
+
+docker: .prepare-docker-image-files
+	@echo Building docker image into local docker daemon...
+	docker build -t ${DOCKER_TAG} _output/docker
+
+.prepare-minikube:
+	@minikube addons list | grep -q "ingress: enabled" ; \
+	if [ "$$?" != "0" ]; then \
+		echo "Enabling ingress support to minikube" ; \
+		minikube addons enable ingress ; \
+	fi
+	@grep -q sws /etc/hosts ; \
+	if [ "$$?" != "0" ]; then \
+		echo "/etc/hosts should have SWS so you can access the ingress"; \
+	fi
+
+minikube-docker: .prepare-minikube .prepare-docker-image-files
+	@echo Building docker image into minikube docker daemon...
+	@eval $$(minikube docker-env) ; \
 	docker build -t ${DOCKER_TAG} _output/docker
 
 docker-push:
@@ -135,22 +154,28 @@ docker-push:
 openshift-deploy: openshift-undeploy
 	@echo Deploying to OpenShift project ${NAMESPACE}
 	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
-	oc process -f deploy/openshift/sws.yaml -p IMAGE_NAME=${DOCKER_NAME} -p IMAGE_VERSION=${DOCKER_VERSION} -p NAMESPACE=${NAMESPACE} -p VERBOSE_MODE=${VERBOSE_MODE} | oc create -n ${NAMESPACE} -f -
+	cat deploy/openshift/sws.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERBOSE_MODE=${VERBOSE_MODE} envsubst | oc create -n ${NAMESPACE} -f -
 
 openshift-undeploy: .openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
-	oc delete all,secrets,sa,templates,configmaps,daemonsets,clusterroles,clusterrolebindings --selector=app=sws -n ${NAMESPACE}
+	oc delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings --selector=app=sws -n ${NAMESPACE}
 
 openshift-reload-image: .openshift-validate
-	@echo Refreshing Image in OpenShift project ${NAMESPACE}
+	@echo Refreshing image in OpenShift project ${NAMESPACE}
 	oc delete pod --selector=app=sws -n ${NAMESPACE}
+
+.k8s-validate:
+	@kubectl get namespace ${NAMESPACE} > /dev/null
 
 k8s-deploy: k8s-undeploy
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
 	kubectl create -f deploy/kubernetes/sws-configmap.yaml -n ${NAMESPACE}
-	kubectl create -f deploy/kubernetes/sws.yaml -n ${NAMESPACE}
+	cat deploy/kubernetes/sws.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERBOSE_MODE=${VERBOSE_MODE} envsubst | kubectl create -n ${NAMESPACE} -f -
 
 k8s-undeploy:
 	@echo Undeploying from Kubernetes namespace ${NAMESPACE}
-	kubectl delete all,secrets,sa,configmaps,daemonsets,ingresses,clusterroles --selector=app=sws -n ${NAMESPACE}
+	kubectl delete all,secrets,sa,configmaps,deployments,ingresses,clusterroles,clusterrolebindings --selector=app=sws -n ${NAMESPACE}
 
+k8s-reload-image: .k8s-validate
+	@echo Refreshing image in Kubernetes namespace ${NAMESPACE}
+	kubectl delete pod --selector=app=sws -n ${NAMESPACE}
