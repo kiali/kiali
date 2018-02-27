@@ -39,6 +39,8 @@ set -e
 
 # from https://istio.io/docs/guides/bookinfo.html
 
+echo "Installing the BookInfo demo to project istio-system - edit the script if you want to change this"
+
 istioctl kube-inject -f samples/bookinfo/kube/bookinfo.yaml | kubectl apply -n istio-system -f -
 
 echo Services and Pods

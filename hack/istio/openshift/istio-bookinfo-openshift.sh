@@ -40,9 +40,13 @@ set -e
 # from https://istio.io/docs/guides/bookinfo.html
 # from https://blog.openshift.com/evaluate-istio-openshift/
 
-oc project istio-system
-#oc apply -f <(istioctl kube-inject -f samples/bookinfo/kube/bookinfo.yaml)
+echo "Installing the BookInfo demo to project [$(oc project -q)]"
+
+oc adm policy add-scc-to-user anyuid -z default
+oc adm policy add-scc-to-user privileged -z default
+
 istioctl kube-inject -f samples/bookinfo/kube/bookinfo.yaml | oc apply -f -
+
 oc expose svc productpage
 
 PRODUCTPAGE=$(oc get route productpage -o jsonpath='{.spec.host}{"\n"}')
