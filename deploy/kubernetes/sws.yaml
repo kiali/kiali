@@ -11,11 +11,11 @@ metadata:
   name: sws
   labels:
     app: sws
-parameters:
 spec:
   type: NodePort
   ports:
-  - protocol: TCP
+  - name: tcp
+    protocol: TCP
     port: 20001
   selector:
     app: sws
@@ -32,34 +32,39 @@ spec:
     servicePort: 20001
 ---
 apiVersion: extensions/v1beta1
-kind: DaemonSet
+kind: Deployment
 metadata:
   name: sws
   labels:
-    name: sws
     app: sws
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      name: sws
+      app: sws
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
+      name: sws
       labels:
-        name: sws
         app: sws
     spec:
       serviceAccount: sws
       containers:
-      - image: jmazzitelli/sws:latest
+      - image: ${IMAGE_NAME}:${IMAGE_VERSION}
         name: sws
         command:
-          - "/opt/sws/sws"
-          - "-config"
-          - "/sws-configuration/config.yaml"
-          - "-v"
-          - "5"
+        - "/opt/sws/sws"
+        - "-config"
+        - "/sws-configuration/config.yaml"
+        - "-v"
+        - "${VERBOSE_MODE}"
         env:
-        - name: FOO_STRING
+        - name: ACTIVE_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
@@ -69,4 +74,49 @@ spec:
       volumes:
       - name: sws-configuration
         configMap:
-          name: sws-configuration
+          name: sws
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sws
+  labels:
+    app: sws
+rules:
+- apiGroups: [""]
+  attributeRestrictions: null
+  resources:
+  - configmaps
+  - namespaces
+  - nodes
+  - pods
+  - projects
+  - services
+  - endpoints
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["config.istio.io"]
+  attributeRestrictions: null
+  resources:
+  - routerules
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sws
+  labels:
+    app: sws
+roleRef:
+  kind: ClusterRole
+  name: sws
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: sws
+  namespace: ${NAMESPACE}
