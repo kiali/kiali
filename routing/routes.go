@@ -84,7 +84,7 @@ func NewRoutes() (r *Routes) {
 			"GrafanaURL",
 			"GET",
 			"/api/grafana",
-			handlers.GetGrafanaURL,
+			handlers.GetGrafanaInfo,
 		},
 	}
 

@@ -10,18 +10,19 @@ import (
 	"github.com/swift-sunshine/swscore/config"
 	"github.com/swift-sunshine/swscore/kubernetes"
 	"github.com/swift-sunshine/swscore/log"
+	"github.com/swift-sunshine/swscore/models"
 )
 
-// GetGrafanaURL provides the Grafana URL, first by checking if a config exists
+// GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
-func GetGrafanaURL(w http.ResponseWriter, r *http.Request) {
-	url, code, err := getGrafanaURL(getGrafanaService)
+func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
+	info, code, err := getGrafanaInfo(getGrafanaService)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, code, err.Error())
 		return
 	}
-	RespondWithJSON(w, code, url)
+	RespondWithJSON(w, code, info)
 }
 
 func getGrafanaService() (*v1.ServiceSpec, error) {
@@ -36,23 +37,26 @@ func getGrafanaService() (*v1.ServiceSpec, error) {
 	return &details.Service.Spec, nil
 }
 
-// getGrafanaURL returns the URL (string), the HTTP status code (int) and eventually an error
-func getGrafanaURL(serviceSupplier func() (*v1.ServiceSpec, error)) (string, int, error) {
+// getGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
+func getGrafanaInfo(serviceSupplier func() (*v1.ServiceSpec, error)) (*models.GrafanaInfo, int, error) {
+	suffix := config.Get().IstioIdentityDomain
 	configURL := config.Get().GrafanaServiceURL
 	if configURL != "" {
-		return configURL, http.StatusOK, nil
+		return &models.GrafanaInfo{
+			URL:             configURL,
+			VariablesSuffix: suffix}, http.StatusOK, nil
 	}
 
 	spec, err := serviceSupplier()
 	if err != nil {
-		return "", http.StatusInternalServerError, err
+		return nil, http.StatusInternalServerError, err
 	}
 
 	if spec.ClusterIP == "" || spec.ClusterIP == "None" {
-		return "", http.StatusNotFound, errors.New("Unable to find Grafana URL: clusterIP not defined on service 'grafana'")
+		return nil, http.StatusNotFound, errors.New("Unable to find Grafana URL: clusterIP not defined on service 'grafana'")
 	}
 	if len(spec.Ports) == 0 || spec.Ports[0].Port == 0 {
-		return "", http.StatusNotFound, errors.New("Unable to find Grafana URL: no port defined on service 'grafana'")
+		return nil, http.StatusNotFound, errors.New("Unable to find Grafana URL: no port defined on service 'grafana'")
 	}
 
 	if len(spec.Ports) > 1 {
@@ -61,5 +65,7 @@ func getGrafanaURL(serviceSupplier func() (*v1.ServiceSpec, error)) (string, int
 
 	// detect https?
 	url := fmt.Sprintf("http://%s:%d", spec.ClusterIP, spec.Ports[0].Port)
-	return url, http.StatusOK, nil
+	return &models.GrafanaInfo{
+		URL:             url,
+		VariablesSuffix: suffix}, http.StatusOK, nil
 }

@@ -12,7 +12,7 @@ import (
 func TestGetGrafanaURLFromService(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
-	url, code, err := getGrafanaURL(func() (*v1.ServiceSpec, error) {
+	info, code, err := getGrafanaInfo(func() (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ClusterIP: "fromservice",
 			Ports: []v1.ServicePort{
@@ -20,14 +20,15 @@ func TestGetGrafanaURLFromService(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
-	assert.Equal(t, "http://fromservice:3000", url)
+	assert.Equal(t, "http://fromservice:3000", info.URL)
+	assert.Equal(t, "svc.cluster.local", info.VariablesSuffix)
 }
 
 func TestGetGrafanaURLFromConfig(t *testing.T) {
 	conf := config.NewConfig()
 	conf.GrafanaServiceURL = "http://fromconfig:3001"
 	config.Set(conf)
-	url, code, err := getGrafanaURL(func() (*v1.ServiceSpec, error) {
+	info, code, err := getGrafanaInfo(func() (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ClusterIP: "fromservice",
 			Ports: []v1.ServicePort{
@@ -35,13 +36,14 @@ func TestGetGrafanaURLFromConfig(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
-	assert.Equal(t, "http://fromconfig:3001", url)
+	assert.Equal(t, "http://fromconfig:3001", info.URL)
+	assert.Equal(t, "svc.cluster.local", info.VariablesSuffix)
 }
 
 func TestGetGrafanaURLNoPort(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
-	_, code, err := getGrafanaURL(func() (*v1.ServiceSpec, error) {
+	_, code, err := getGrafanaInfo(func() (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ClusterIP: "10.0.0.1",
 			Ports:     []v1.ServicePort{}}, nil
@@ -53,7 +55,7 @@ func TestGetGrafanaURLNoPort(t *testing.T) {
 func TestGetGrafanaURLNoClusterIP(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
-	_, code, err := getGrafanaURL(func() (*v1.ServiceSpec, error) {
+	_, code, err := getGrafanaInfo(func() (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ClusterIP: "",
 			Ports: []v1.ServicePort{
