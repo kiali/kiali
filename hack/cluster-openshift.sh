@@ -50,7 +50,7 @@ if [ "$1" = "up" ];then
   fi
 
   echo Will start the OpenShift cluster at ${OPENSHIFT_IP_ADDRESS}
-  ${OPENSHIFT_EXE_OC} cluster up ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS}
+  ${OPENSHIFT_EXE_OC} cluster up ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS}
 
   echo 'Do you want the admin user to be assigned the cluster-admin role?'
   echo 'NOTE: This could expose your machine to root access!'
@@ -73,7 +73,13 @@ elif [ "$1" = "down" ];then
   echo Will shutdown the OpenShift cluster
   ${OPENSHIFT_EXE_OC} cluster down
   mount | grep "openshift.local.volumes" | awk '{ print $3}' | xargs -l -r sudo umount
-  sudo rm -rf /var/lib/origin/* && sudo rmdir /var/lib/origin
+  # only purge these if we do not want persistence
+  if [ "${OPENSHIFT_PERSISTENCE_ARGS}" == "" ]; then
+    echo "Purging /var/lib/origin files"
+    sudo rm -rf /var/lib/origin/* && sudo rmdir /var/lib/origin
+  else
+    echo "OpenShift has left your persisted data here: ${OPENSHIFT_PERSISTENCE_DIR}"
+  fi
 
 elif [ "$1" = "status" ];then
 

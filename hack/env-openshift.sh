@@ -19,6 +19,10 @@ OPENSHIFT_IP_ADDRESS=$(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{
 # If you want to run with a specific version, set it to the branch you want.
 OPENSHIFT_BRANCH_NAME="release-3.7"
 
+# If you want to persist data across restarts of OpenShift, uncomment this
+# line and set the host data directory to the place where you want the data stored.
+OPENSHIFT_PERSISTENCE_DIR="/var/lib/origin/persistent.data"
+
 # How to tell oc cluster up what version to use
 #OPENSHIFT_VERSION_ARG="--version=latest"
 
@@ -44,6 +48,11 @@ fi
 
 # This is the full path to the 'oc' executable
 OPENSHIFT_EXE_OC="sudo ${OPENSHIFT_BINARY_DIR}/oc"
+
+# If we are to persist data across restarts, set the proper arguments
+if [ "${OPENSHIFT_PERSISTENCE_DIR}" != "" ]; then
+   OPENSHIFT_PERSISTENCE_ARGS="--use-existing-config --host-data-dir=${OPENSHIFT_PERSISTENCE_DIR}"
+fi
 
 #
 # Make sure the environment is as expected
