@@ -1,14 +1,14 @@
 import axios from 'axios';
 import { config } from '../config';
 
-var auth = (user: string, pass: string) => {
+const auth = (user: string, pass: string) => {
   return {
     username: user,
     password: pass
   };
 };
 
-var newRequest = (method: string, url: string, queryParams: any, data: any) => {
+const newRequest = (method: string, url: string, queryParams: any, data: any) => {
   console.log(url);
   return new Promise((resolve, reject) => {
     axios({
