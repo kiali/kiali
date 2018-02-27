@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/swift-sunshine/swscore/kubernetes"
-	"github.com/swift-sunshine/swscore/prometheus"
 
 	"k8s.io/api/core/v1"
 )
@@ -43,31 +42,6 @@ func GetServicesByNamespace(namespaceName string) ([]ServiceOverview, error) {
 	return CastServiceOverviewCollection(services), nil
 }
 
-func GetServiceDetails(namespaceName, serviceName string) (*Service, error) {
-	istioClient, err := kubernetes.NewClient()
-	if err != nil {
-		return nil, err
-	}
-
-	service := Service{}
-	service.Name = serviceName
-	service.Namespace = Namespace{namespaceName}
-
-	if err = service.setKubernetesDetails(istioClient); err != nil {
-		return nil, err
-	}
-
-	if err = service.setIstioDetails(istioClient); err != nil {
-		return nil, err
-	}
-
-	if err = service.setPrometheusDetails(); err != nil {
-		return nil, err
-	}
-
-	return &service, err
-}
-
 func CastServiceOverviewCollection(sl *v1.ServiceList) []ServiceOverview {
 	services := make([]ServiceOverview, len(sl.Items))
 	for i, item := range sl.Items {
@@ -84,52 +58,29 @@ func CastServiceOverview(s v1.Service) ServiceOverview {
 	return service
 }
 
-func (s *Service) setKubernetesDetails(c *kubernetes.IstioClient) error {
-	serviceDetails, err := c.GetServiceDetails(s.Namespace.Name, s.Name)
-	if err != nil {
-		return err
+func (s *Service) SetServiceDetails(serviceDetails *kubernetes.ServiceDetails, istioDetails *kubernetes.IstioDetails, prometheusDetails map[string][]string) {
+
+	s.setKubernetesDetails(serviceDetails)
+	s.setIstioDetails(istioDetails)
+	s.setPrometheusDetails(prometheusDetails)
+}
+
+func (s *Service) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails) {
+	if serviceDetails.Service != nil {
+		s.Labels = serviceDetails.Service.Labels
+		s.Type = string(serviceDetails.Service.Spec.Type)
+		s.Ip = serviceDetails.Service.Spec.ClusterIP
+		(&s.Ports).Parse(serviceDetails.Service.Spec.Ports)
 	}
 
-	s.Labels = serviceDetails.Service.Labels
-	s.Type = string(serviceDetails.Service.Spec.Type)
-	s.Ip = serviceDetails.Service.Spec.ClusterIP
-	(&s.Ports).Parse(serviceDetails.Service.Spec.Ports)
 	(&s.Endpoints).Parse(serviceDetails.Endpoints)
 	(&s.Pods).Parse(serviceDetails.Pods)
-
-	return nil
 }
 
-func (s *Service) setIstioDetails(c *kubernetes.IstioClient) error {
-
-	istioDetails, err := c.GetIstioDetails(s.Namespace.Name, s.Name)
-	if err != nil {
-		return err
-	}
-
+func (s *Service) setIstioDetails(istioDetails *kubernetes.IstioDetails) {
 	(&s.RouteRules).Parse(istioDetails.RouteRules)
-	return nil
 }
 
-func (s *Service) setPrometheusDetails() error {
-
-	prometheusClient, err := prometheus.NewClient()
-	if err != nil {
-		return err
-	}
-
-	incomeServices, err := prometheusClient.GetSourceServices(s.Namespace.Name, s.Name)
-	if err != nil {
-		return err
-	}
-
-	s.Dependencies = incomeServices
-
-	return nil
-}
-
-func CastService(dependencies map[string]string) *Service {
-	service := Service{}
-
-	return &service
+func (s *Service) setPrometheusDetails(prometheusDetails map[string][]string) {
+	s.Dependencies = prometheusDetails
 }

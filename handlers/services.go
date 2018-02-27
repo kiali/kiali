@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/swift-sunshine/swscore/kubernetes"
 	"github.com/swift-sunshine/swscore/log"
 	"github.com/swift-sunshine/swscore/models"
 	"github.com/swift-sunshine/swscore/prometheus"
@@ -63,10 +64,27 @@ func ServiceMetrics(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
+// ServiceDetails is the API handler to fetch full details of an specific service
 func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
-	serviceDetails, err := models.GetServiceDetails(params["namespace"], params["service"])
+	service := models.Service{}
+	service.Name = params["service"]
+	service.Namespace = models.Namespace{params["namespace"]}
+
+	client, err := kubernetes.NewClient()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	prometheusClient, err := prometheus.NewClient()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	serviceDetails, err := client.GetServiceDetails(service.Namespace.Name, service.Name)
 	if errors.IsNotFound(err) {
 		RespondWithError(w, http.StatusNotFound, err.Error())
 		return
@@ -78,5 +96,18 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondWithJSON(w, http.StatusOK, serviceDetails)
+	istioDetails, err := client.GetIstioDetails(service.Namespace.Name, service.Name)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	incomeServices, err := prometheusClient.GetSourceServices(service.Namespace.Name, service.Name)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	service.SetServiceDetails(serviceDetails, istioDetails, incomeServices)
+	RespondWithJSON(w, http.StatusOK, service)
 }
