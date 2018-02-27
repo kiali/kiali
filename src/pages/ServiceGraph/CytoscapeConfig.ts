@@ -33,9 +33,10 @@ export class CytoscapeConfig {
         css: {
           width: 2,
           content: 'data(text)',
-          'target-arrow-shape': 'triangle',
+          'target-arrow-shape': 'vee',
           'line-color': 'data(color)',
-          'target-arrow-color': 'black'
+          'target-arrow-color': 'black',
+          'curve-style': 'bezier'
         }
       },
       {
