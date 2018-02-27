@@ -1,16 +1,14 @@
 import * as React from 'react';
 import { MemoryRouter } from 'react-router';
-import { render, shallow, mount } from 'enzyme';
-//import { ReactCytoscape } from 'react-cytoscape';
+import { render, mount } from 'enzyme';
 
 import Navigation from '../Navigation';
-//import ServiceGraphPage from '../../../pages/ServiceGraph/ServiceGraphPage';
 
 const BROWSING_HISTORY = ['/services', '/service-graph', '/foo/bar'];
 
 jest.mock('react-cytoscape');
 
-describe("Test suite 'Navigation'", () => {
+describe('Test suite Navigation', () => {
   it('should render default (Home) view', function() {
     const app = render(
       <MemoryRouter>
