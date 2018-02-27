@@ -29,7 +29,6 @@ class Navigation extends React.Component {
   }
 
   navigateTo(e: any) {
-    console.log(JSON.stringify(e));
     if (e.title === serviceGraphTitle) {
       this.context.router.history.push(serviceGraphPath);
     } else if (e.title === servicesTitle) {

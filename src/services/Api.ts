@@ -23,9 +23,17 @@ const newRequest = (method: string, url: string, queryParams: any, data: any) =>
         resolve(response);
       })
       .catch(error => {
-        reject(new Error(error));
+        reject(error);
       });
   });
+};
+
+export const GetNamespaces = () => {
+  return newRequest('get', `/api/namespaces`, {}, {});
+};
+
+export const GetServices = (namespace: String) => {
+  return newRequest('get', `/api/namespaces/${namespace}/services`, {}, {});
 };
 
 export const GetServiceMetrics = (namespace: String, service: String, params: any) => {
