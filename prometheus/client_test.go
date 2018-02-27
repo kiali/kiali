@@ -51,40 +51,33 @@ func setupMocked() (*Client, *promAPIMock, error) {
 	return client, api, nil
 }
 
-func setupExternal() (*Client, error) {
-	conf := config.NewConfig()
-	conf.PrometheusServiceURL = "http://prometheus-istio-system.127.0.0.1.nip.io"
-	config.Set(conf)
-	return NewClient()
-}
-
 func TestGetSourceServices(t *testing.T) {
 	rqCustV1 := model.Metric{
 		"__name__":            "istio_request_count",
 		"instance":            "172.17.0.6:42422",
 		"job":                 "istio-mesh",
 		"response_code":       "200",
-		"source_service":      "customer.tutorial.svc.cluster.local",
+		"source_service":      "customer.istio-system.svc.cluster.local",
 		"source_version":      "v1",
-		"destination_service": "preference.tutorial.svc.cluster.local",
+		"destination_service": "productpage.istio-system.svc.cluster.local",
 		"destination_version": "v1"}
 	rqCustV2 := model.Metric{
 		"__name__":            "istio_request_count",
 		"instance":            "172.17.0.6:42422",
 		"job":                 "istio-mesh",
 		"response_code":       "200",
-		"source_service":      "customer.tutorial.svc.cluster.local",
+		"source_service":      "customer.istio-system.svc.cluster.local",
 		"source_version":      "v2",
-		"destination_service": "preference.tutorial.svc.cluster.local",
+		"destination_service": "productpage.istio-system.svc.cluster.local",
 		"destination_version": "v1"}
 	rqCustV2ToV2 := model.Metric{
 		"__name__":            "istio_request_count",
 		"instance":            "172.17.0.6:42422",
 		"job":                 "istio-mesh",
 		"response_code":       "200",
-		"source_service":      "customer.tutorial.svc.cluster.local",
+		"source_service":      "customer.istio-system.svc.cluster.local",
 		"source_version":      "v2",
-		"destination_service": "preference.tutorial.svc.cluster.local",
+		"destination_service": "productpage.istio-system.svc.cluster.local",
 		"destination_version": "v2"}
 	vector := model.Vector{
 		&model.Sample{
@@ -102,18 +95,18 @@ func TestGetSourceServices(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockQuery(api, "istio_request_count{destination_service=\"preference.tutorial.svc.cluster.local\"}", &vector)
-	sources, err := client.GetSourceServices("tutorial", "preference")
+	mockQuery(api, "istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}", &vector)
+	sources, err := client.GetSourceServices("istio-system", "productpage")
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	assert.Equal(t, 2, len(sources), "Map should have 2 keys (versions)")
 	assert.Equal(t, 2, len(sources["v1"]), "v1 should have 2 sources")
-	assert.Equal(t, "customer.tutorial/v1", sources["v1"][0])
-	assert.Equal(t, "customer.tutorial/v2", sources["v1"][1])
+	assert.Equal(t, "customer.istio-system/v1", sources["v1"][0])
+	assert.Equal(t, "customer.istio-system/v2", sources["v1"][1])
 	assert.Equal(t, 1, len(sources["v2"]), "v2 should have 1 source")
-	assert.Equal(t, "customer.tutorial/v2", sources["v2"][0])
+	assert.Equal(t, "customer.istio-system/v2", sources["v2"][0])
 }
 
 func TestGetServiceMetrics(t *testing.T) {
@@ -122,17 +115,17 @@ func TestGetServiceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockSingle(api, "envoy_cluster_out_preference_tutorial_svc_cluster_local_http_membership_healthy", 0)
-	mockSingle(api, "envoy_cluster_out_preference_tutorial_svc_cluster_local_http_membership_total", 1)
-	mockSingle(api, "rate(istio_request_count{source_service=\"preference.tutorial.svc.cluster.local\"}[5m])", 1.5)
-	mockSingle(api, "rate(istio_request_count{destination_service=\"preference.tutorial.svc.cluster.local\"}[5m])", 2.5)
-	mockHistogram(api, "istio_request_size", "{source_service=\"preference.tutorial.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration", "{source_service=\"preference.tutorial.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_response_size", "{source_service=\"preference.tutorial.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.6)
-	mockHistogram(api, "istio_request_size", "{destination_service=\"preference.tutorial.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration", "{destination_service=\"preference.tutorial.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_response_size", "{destination_service=\"preference.tutorial.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics, err := client.GetServiceMetrics("tutorial", "preference", "5m")
+	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_healthy", 0)
+	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", 1)
+	mockSingle(api, "rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])", 1.5)
+	mockSingle(api, "rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])", 2.5)
+	mockHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_duration", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	mockHistogram(api, "istio_response_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.6)
+	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	metrics, err := client.GetServiceMetrics("istio-system", "productpage", "5m")
 	if err != nil {
 		t.Error(err)
 		return
@@ -195,6 +188,13 @@ func mockHistogram(api *promAPIMock, baseName string, suffix string, retAvg mode
 	mockSingle(api, "sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))", retAvg)
 }
 
+func setupExternal() (*Client, error) {
+	conf := config.NewConfig()
+	conf.PrometheusServiceURL = "http://prometheus-istio-system.127.0.0.1.nip.io"
+	config.Set(conf)
+	return NewClient()
+}
+
 // Fake test / runnable function for manual test against actual server.
 func TestAgainstLiveGetSourceServices(t *testing.T) {
 	client, err := setupExternal()
@@ -202,7 +202,7 @@ func TestAgainstLiveGetSourceServices(t *testing.T) {
 		fmt.Printf("TestAgainstLive / Client error: %v\n", err)
 		return
 	}
-	sources, err := client.GetSourceServices("tutorial", "preference")
+	sources, err := client.GetSourceServices("istio-system", "productpage")
 	if err != nil {
 		fmt.Printf("TestAgainstLive / GetSourceServices error: %v\n", err)
 		return
@@ -220,7 +220,7 @@ func TestAgainstLiveGetServiceMetrics(t *testing.T) {
 		return
 	}
 	fmt.Printf("Metrics: \n")
-	metrics, err := client.GetServiceMetrics("tutorial", "preference", "5m")
+	metrics, err := client.GetServiceMetrics("istio-system", "productpage", "5m")
 	if err != nil {
 		fmt.Printf("TestAgainstLive / GetServiceMetrics error: %v\n", err)
 		return
