@@ -80,6 +80,12 @@ func NewRoutes() (r *Routes) {
 			"/api/namespaces/{namespace}/services/{service}/graphs",
 			handlers.GraphService,
 		},
+		{
+			"GrafanaURL",
+			"GET",
+			"/api/grafana",
+			handlers.GetGrafanaURL,
+		},
 	}
 
 	return

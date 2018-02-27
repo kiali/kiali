@@ -20,6 +20,7 @@ const (
 
 	EnvPrometheusServiceURL = "PROMETHEUS_SERVICE_URL"
 	EnvIstioIdentityDomain  = "ISTIO_IDENTITY_DOMAIN"
+	EnvGrafanaServiceURL    = "GRAFANA_SERVICE_URL"
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
@@ -47,6 +48,7 @@ type Config struct {
 	Server               Server            `yaml:",omitempty"`
 	PrometheusServiceURL string            `yaml:"prometheus_service_url,omitempty"`
 	IstioIdentityDomain  string            `yaml:"istio_identity_domain,omitempty"`
+	GrafanaServiceURL    string            `yaml:"grafana_service_url,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -66,6 +68,7 @@ func NewConfig() (c *Config) {
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
 	c.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
 	c.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
+	c.GrafanaServiceURL = strings.TrimSpace(getDefaultString(EnvGrafanaServiceURL, ""))
 	return
 }
 
