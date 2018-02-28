@@ -35,8 +35,8 @@ func NewClient() (*Client, error) {
 	return &client, nil
 }
 
-// For testing / mocking
-func (in *Client) inject(api v1.API) {
+// Inject allows for replacing the API with a mock For testing
+func (in *Client) Inject(api v1.API) {
 	in.api = api
 }
 

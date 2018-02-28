@@ -47,7 +47,7 @@ func setupMocked() (*Client, *promAPIMock, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	client.inject(api)
+	client.Inject(api)
 	return client, api, nil
 }
 
