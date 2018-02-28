@@ -4,7 +4,7 @@ import "k8s.io/api/core/v1"
 
 type Pods []Pod
 type Pod struct {
-	Name   string
+	Name   string            `json:"name"`
 	Labels map[string]string `json:"labels"`
 }
 
