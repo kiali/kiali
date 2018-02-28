@@ -52,11 +52,20 @@ func GetServiceDetails(namespaceName, serviceName string) (*Service, error) {
 	service := Service{}
 	service.Name = serviceName
 	service.Namespace = Namespace{namespaceName}
-	service.setKubernetesDetails(istioClient)
-	service.setIstioDetails(istioClient)
-	service.setPrometheusDetails()
 
-	return &service, nil
+	if err = service.setKubernetesDetails(istioClient); err != nil {
+		return nil, err
+	}
+
+	if err = service.setIstioDetails(istioClient); err != nil {
+		return nil, err
+	}
+
+	if err = service.setPrometheusDetails(); err != nil {
+		return nil, err
+	}
+
+	return &service, err
 }
 
 func CastServiceOverviewCollection(sl *v1.ServiceList) []ServiceOverview {
@@ -76,7 +85,6 @@ func CastServiceOverview(s v1.Service) ServiceOverview {
 }
 
 func (s *Service) setKubernetesDetails(c *kubernetes.IstioClient) error {
-
 	serviceDetails, err := c.GetServiceDetails(s.Namespace.Name, s.Name)
 	if err != nil {
 		return err
