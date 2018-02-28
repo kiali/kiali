@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ReactCytoscape } from 'react-cytoscape';
-import { FakeData } from '../../pages/ServiceGraph/FakeData';
 import { CytoscapeConfig } from './CytoscapeConfig';
+import * as API from '../../services/Api';
 
 type CytoscapeLayoutState = {
   elements?: any;
@@ -18,7 +18,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   constructor(props: CytoscapeLayoutProps) {
     super(props);
 
-    console.log('Starting ServiceGraphPage');
+    console.log('Starting ServiceGraphPage for namespace ' + this.props.namespace);
 
     this.state = {
       elements: {}
@@ -26,7 +26,16 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   }
 
   componentDidMount() {
-    this.setState({ elements: FakeData.getElements() });
+    API.GetGraphElements(this.props.namespace, null)
+      .then(response => {
+        const elements: { [key: string]: any } = response['data'];
+        console.log(elements);
+        this.setState(elements);
+      })
+      .catch(error => {
+        this.setState({});
+        console.error(error);
+      });
   }
 
   cyRef(cy: any) {
@@ -49,7 +58,11 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
           elements={this.state.elements}
           style={CytoscapeConfig.getStyles()}
           cytoscapeOptions={{ wheelSensitivity: 0.1, autounselectify: false }}
-          layout={{ name: 'dagre' }}
+          layout={{
+            name: 'breadthfirst',
+            directed: 'true',
+            maximalAdjustments: 1
+          }}
         />
       </div>
     );

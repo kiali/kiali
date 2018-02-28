@@ -10,7 +10,7 @@ import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 
 const homePath = '/';
 const homeTitle = 'Overview';
-const serviceGraphPath = '/service-graph/default';
+const serviceGraphPath = '/service-graph/istio-system';
 const serviceGraphTitle = 'Graph';
 const servicesPath = '/services';
 const servicesTitle = 'Services';
