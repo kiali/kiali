@@ -10,7 +10,7 @@ import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 
 const homePath = '/';
 const homeTitle = 'Overview';
-const serviceGraphPath = '/service-graph';
+const serviceGraphPath = '/service-graph/default';
 const serviceGraphTitle = 'Graph';
 const servicesPath = '/services';
 const servicesTitle = 'Services';
@@ -55,7 +55,7 @@ class Navigation extends React.Component {
           <VerticalNav.Item title={servicesTitle} iconClass="fa pficon-service" onClick={this.navigateTo} />
         </VerticalNav>
         <Switch>
-          <Route path={serviceGraphPath} component={ServiceGraphPage} />
+          <Route path="/service-graph/:namespace" component={ServiceGraphPage} />
           <Route path={servicesPath} component={ServiceListPage} />
           <Route path="/namespaces/:namespace/services/:service" component={ServiceDetailsPage} />
           <Route path={homePath} exact={true} component={HomePage} />

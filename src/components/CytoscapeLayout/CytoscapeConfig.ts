@@ -4,7 +4,7 @@ export class CytoscapeConfig {
       {
         selector: 'node',
         css: {
-          content: function(ele: any) {
+          content: (ele: any) => {
             return ele.data('text') || ele.data('id');
           },
           color: 'white',
