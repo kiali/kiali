@@ -285,6 +285,62 @@ server:
 prometheus_service_url: VALUE
 ----
 
+|`GRAFANA_DISPLAY_LINK`
+|When true, a link to Grafana will be displayed for more metrics.
+[source,yaml]
+----
+grafana:
+  display_link: (true\|false)
+----
+
+|`GRAFANA_URL`
+|The URL to the Grafana server. When not set, the URL may be automatically detected from OpenShift or Kubernetes API.
+[source,yaml]
+----
+grafana:
+  url: VALUE
+----
+
+|`GRAFANA_SERVICE_NAMESPACE`
+|The Kubernetes namespace that holds the Grafana service. This configuration is ignored if `GRAFANA_URL` is set. Default is `istio-system`.
+[source,yaml]
+----
+grafana:
+  service_namespace: VALUE
+----
+
+|`GRAFANA_SERVICE`
+|The OpenShift route name or the Kubernetes service name for Grafana. This configuration is ignored if `GRAFANA_URL` is set. Default is `grafana`.
+[source,yaml]
+----
+grafana:
+  service: VALUE
+----
+
+|`GRAFANA_DASHBOARD`
+|The name of the Grafana dashboard used as a landing page. Default is `istio-dashboard`.
+[source,yaml]
+----
+grafana:
+  dashboard: VALUE
+----
+
+|`GRAFANA_VAR_SERVICE_SOURCE`
+|The name of the Grafana variable that controls service sources, as defined in the configured `GRAFANA_DASHBOARD`. Default is `var-source`.
+[source,yaml]
+----
+grafana:
+  var_service_source: VALUE
+----
+
+|`GRAFANA_VAR_SERVICE_DEST`
+|The name of the Grafana variable that controls service destinations, as defined in the configured `GRAFANA_DASHBOARD`. Default is `var-http_destination`.
+[source,yaml]
+----
+grafana:
+  var_service_dest: VALUE
+----
+
 |===
 
 == Additional Notes
@@ -310,4 +366,3 @@ If you git cloned the swsui repository in directory `/my/git/repo` and have buil
 ----
 CONSOLE_VERSION=local CONSOLE_LOCAL_DIR=/my/git/repo make docker
 ----
-
