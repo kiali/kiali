@@ -7,6 +7,8 @@ import (
 	"github.com/swift-sunshine/swscore/log"
 	"github.com/swift-sunshine/swscore/models"
 	"github.com/swift-sunshine/swscore/prometheus"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -65,8 +67,13 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	serviceDetails, err := models.GetServiceDetails(params["namespace"], params["service"])
-	if err != nil {
-		log.Error(err)
+	if errors.IsNotFound(err) {
+		RespondWithError(w, http.StatusNotFound, err.Error())
+		return
+	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
+		RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
+		return
+	} else if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
