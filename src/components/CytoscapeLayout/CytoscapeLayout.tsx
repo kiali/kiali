@@ -25,7 +25,19 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     };
   }
 
+  resizeWindow() {
+    let canvasWrapper = document.getElementById('cytoscape-container')!;
+
+    if (canvasWrapper != null) {
+      let dimensions = canvasWrapper.getBoundingClientRect();
+      canvasWrapper.style.height = `${document.documentElement.scrollHeight - dimensions.top}px`;
+    }
+  }
+
   componentDidMount() {
+    window.addEventListener('resize', this.resizeWindow);
+    this.resizeWindow();
+
     API.GetGraphElements(this.props.namespace, null)
       .then(response => {
         const elements: { [key: string]: any } = response['data'];
@@ -42,14 +54,13 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     this.cy = cy;
     cy.on('tap', 'node', (evt: any) => {
       let node = evt.target;
-      console.dir(node);
       console.log('clicked on: ' + node.id());
     });
   }
 
   render() {
     return (
-      <div style={{ height: 600 }}>
+      <div id="cytoscape-container">
         <ReactCytoscape
           containerID="cy"
           cyRef={cy => {
