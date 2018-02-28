@@ -3,6 +3,11 @@ import ServiceId from '../../types/ServiceId';
 import { MetricHistogram, MetricValue } from '../../types/Metrics';
 import * as API from '../../services/Api';
 
+interface GrafanaInfo {
+  url: string;
+  variablesSuffix: string;
+}
+
 type ServiceMetricsState = {
   range: string;
   loading: boolean;
@@ -17,6 +22,7 @@ type ServiceMetricsState = {
   responseSizeOut?: MetricHistogram;
   healthyReplicas?: MetricValue;
   totalReplicas?: MetricValue;
+  grafanaInfo?: GrafanaInfo;
 };
 
 class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
@@ -29,6 +35,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     };
     this.onRangeChanged = this.onRangeChanged.bind(this);
     this.fetchMetrics();
+    this.getGrafanaInfo();
   }
 
   onRangeChanged(event: React.FormEvent<HTMLSelectElement>) {
@@ -38,11 +45,41 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   }
 
   render() {
-    let metricsDiv;
+    return (
+      <div>
+        <h1>
+          == SERVICE METRICS ({this.props.namespace} / {this.props.service}) ==
+        </h1>
+        {this.renderRange()}
+        {this.renderMetrics()}
+      </div>
+    );
+  }
+
+  renderRange() {
+    return (
+      <div>
+        Range:
+        <select value={this.state.range} onChange={this.onRangeChanged}>
+          <option value="1m">1 minute</option>
+          <option value="5m">5 minutes</option>
+          <option value="10m">10 minutes</option>
+          <option value="30m">30 minutes</option>
+          <option value="1h">1 hour</option>
+          <option value="3h">3 hours</option>
+          <option value="6h">6 hours</option>
+          <option value="12h">12 hours</option>
+          <option value="1d">1 day</option>
+        </select>
+      </div>
+    );
+  }
+
+  renderMetrics() {
     if (this.state.loading && this.state.delayedLoading) {
-      metricsDiv = <div className="spinner spinner-sm left-spinner" />;
+      return <div className="spinner spinner-sm left-spinner" />;
     } else {
-      metricsDiv = (
+      return (
         <div>
           <div>
             Health: {this.health()}
@@ -56,6 +93,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
               <li>Request duration: {this.histogram(this.state.requestDurationIn)}</li>
               <li>Response size: {this.histogram(this.state.responseSizeIn)}</li>
             </ul>
+            {this.renderGrafanaLink(false)}
           </div>
           <div>
             <h3>Output</h3>
@@ -65,30 +103,22 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
               <li>Request duration: {this.histogram(this.state.requestDurationOut)}</li>
               <li>Response size: {this.histogram(this.state.responseSizeOut)}</li>
             </ul>
+            {this.renderGrafanaLink(true)}
           </div>
         </div>
       );
     }
-    return (
-      <div>
-        <h1>
-          == SERVICE METRICS ({this.props.namespace} / {this.props.service}) ==
-        </h1>
-        Range:
-        <select value={this.state.range} onChange={this.onRangeChanged}>
-          <option value="1m">1 minute</option>
-          <option value="5m">5 minutes</option>
-          <option value="10m">10 minutes</option>
-          <option value="30m">30 minutes</option>
-          <option value="1h">1 hour</option>
-          <option value="3h">3 hours</option>
-          <option value="6h">6 hours</option>
-          <option value="12h">12 hours</option>
-          <option value="1d">1 day</option>
-        </select>
-        {metricsDiv}
-      </div>
-    );
+  }
+
+  renderGrafanaLink(isSource: boolean) {
+    if (this.state.grafanaInfo) {
+      const varName = isSource ? 'var-source' : 'var-http_destination';
+      const link = `${this.state.grafanaInfo.url}/dashboard/db/istio-dashboard?${varName}=${this.props.service}.${
+        this.props.namespace
+      }.${this.state.grafanaInfo.variablesSuffix}`;
+      return <a href={link}>View in Grafana</a>;
+    }
+    return null;
   }
 
   fetchMetrics() {
@@ -97,7 +127,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       // This will show spinner only after 0.1s of loading to avoid blinking effect on fast response
       this.setState({ delayedLoading: true });
     }, 100);
-    API.GetServiceMetrics(this.props.namespace, this.props.service, { range: this.state.range })
+    API.getServiceMetrics(this.props.namespace, this.props.service, { range: this.state.range })
       .then(response => {
         const metrics: { [key: string]: any } = response['data'];
         this.setState({
@@ -116,6 +146,17 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       })
       .catch(error => {
         this.setState({ loading: false });
+        console.error(error);
+      });
+  }
+
+  getGrafanaInfo() {
+    API.getGrafanaInfo()
+      .then(response => {
+        this.setState({ grafanaInfo: response['data'] });
+      })
+      .catch(error => {
+        this.setState({ grafanaInfo: undefined });
         console.error(error);
       });
   }
