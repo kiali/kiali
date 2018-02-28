@@ -11,6 +11,8 @@ script:
     npm test -- --coverage
 after_success:
   - cat ./coverage/lcov.info | coveralls
+before_deploy:
+  - npm run set-snapshot-version $TRAVIS_BUILD_NUMBER
 deploy:
   provider: npm
   email: jmartine@redhat.com

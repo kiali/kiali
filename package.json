@@ -31,7 +31,8 @@
     "test": "npm run prettier && react-scripts-ts test --env=jsdom",
     "eject": "react-scripts-ts eject",
     "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "build-storybook": "build-storybook",
+    "set-snapshot-version": "npm-snapshot"
   },
   "devDependencies": {
     "@storybook/addon-actions": "^3.3.12",
@@ -50,6 +51,7 @@
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
     "node-sass-chokidar": "0.0.3",
+    "npm-snapshot": "^1.0.3",
     "typescript": "~2.7.1"
   },
   "sassIncludes": {
