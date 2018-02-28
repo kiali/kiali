@@ -1,10 +1,10 @@
 import * as React from 'react';
+import { Alert } from 'patternfly-react';
 import ServiceListComponent from './ServiceListComponent';
-import ServiceFilter from './ServiceFilter';
-import ServicePagination from './ServicePagination';
 
 type ServiceListState = {
   alertVisible: boolean;
+  alertDetails: string;
 };
 
 type ServiceListProps = {
@@ -14,24 +14,38 @@ type ServiceListProps = {
 class ServiceListPage extends React.Component<ServiceListProps, ServiceListState> {
   constructor(props: ServiceListProps) {
     super(props);
-
     console.log('Starting ServiceListPage');
+
+    this.dismissAlert = this.dismissAlert.bind(this);
+    this.handleError = this.handleError.bind(this);
     this.state = {
-      alertVisible: true
+      alertVisible: false,
+      alertDetails: ''
     };
   }
 
-  dismissSuccess() {
+  handleError(error: string) {
+    this.setState({ alertVisible: true, alertDetails: error });
+  }
+
+  dismissAlert() {
     this.setState({ alertVisible: false });
   }
 
   render() {
+    let alertsDiv = <div />;
+    if (this.state.alertVisible) {
+      alertsDiv = (
+        <div>
+          <Alert onDismiss={this.dismissAlert}>{this.state.alertDetails.toString()}</Alert>
+        </div>
+      );
+    }
     return (
       <div className="container-fluid container-pf-nav-pf-vertical">
         <h2>Services</h2>
-        <ServiceFilter />
-        <ServiceListComponent />
-        <ServicePagination />
+        {alertsDiv}
+        <ServiceListComponent onError={this.handleError} />
       </div>
     );
   }

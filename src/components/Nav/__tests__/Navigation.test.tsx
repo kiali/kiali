@@ -28,11 +28,11 @@ describe('Test suite Navigation', () => {
   });
 
   it('should render Services view', function() {
-    const wrapper = mount(
+    const wrapper = render(
       <MemoryRouter initialEntries={BROWSING_HISTORY} initialIndex={0}>
         <Navigation />
       </MemoryRouter>
     );
-    expect(wrapper.text()).toMatch('Namespace');
+    expect(wrapper.text()).toMatch('Services');
   });
 });
