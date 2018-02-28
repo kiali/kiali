@@ -26,6 +26,9 @@ class ServiceGraphPage extends React.Component<ServiceGraphProps, ServiceGraphSt
 
   componentDidMount() {
     this.setState({ elements: FakeData.getElements() });
+
+    window.addEventListener('resize', this.resizeWindow);
+    this.resizeWindow();
   }
 
   cyRef(cy: any) {
@@ -37,13 +40,22 @@ class ServiceGraphPage extends React.Component<ServiceGraphProps, ServiceGraphSt
     });
   }
 
+  resizeWindow() {
+    let canvasWrapper = document.getElementById('cytoscope-container')!;
+
+    if (canvasWrapper != null) {
+      let dimensions = canvasWrapper.getBoundingClientRect();
+      canvasWrapper.style.height = `${document.documentElement.scrollHeight - dimensions.top}px`;
+    }
+  }
+
   render() {
     return (
       <div className="container-fluid container-pf-nav-pf-vertical">
         <div className="page-header">
           <h2>Services Graph</h2>
         </div>
-        <div style={{ height: 600 }}>
+        <div id="cytoscope-container">
           <ReactCytoscape
             containerID="cy"
             cyRef={cy => {
