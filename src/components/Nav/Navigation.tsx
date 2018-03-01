@@ -7,8 +7,6 @@ import ServiceDetailsPage from '../../pages/ServiceDetails/ServiceDetailsPage';
 import ServiceGraphPage from '../../pages/ServiceGraph/ServiceGraphPage';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 
-const homePath = '/';
-const homeTitle = 'Overview';
 const serviceGraphPath = '/service-graph/istio-system';
 const serviceGraphTitle = 'Graph';
 const servicesPath = '/services';
@@ -28,12 +26,10 @@ class Navigation extends React.Component {
   }
 
   navigateTo(e: any) {
-    if (e.title === serviceGraphTitle) {
-      this.context.router.history.push(serviceGraphPath);
-    } else if (e.title === servicesTitle) {
+    if (e.title === servicesTitle) {
       this.context.router.history.push(servicesPath);
     } else {
-      this.context.router.history.push(homePath);
+      this.context.router.history.push(serviceGraphPath);
     }
   }
 
@@ -45,12 +41,11 @@ class Navigation extends React.Component {
             <VerticalNav.Brand iconImg={pfLogo} titleImg={pfBrand} />
           </VerticalNav.Masthead>
           <VerticalNav.Item
-            title={homeTitle}
-            iconClass="fa fa-dashboard"
+            title={serviceGraphTitle}
+            iconClass="fa pficon-topology"
             onClick={this.navigateTo}
             initialActive={true}
           />
-          <VerticalNav.Item title={serviceGraphTitle} iconClass="fa pficon-topology" onClick={this.navigateTo} />
           <VerticalNav.Item title={servicesTitle} iconClass="fa pficon-service" onClick={this.navigateTo} />
         </VerticalNav>
         <Switch>
