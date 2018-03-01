@@ -9,6 +9,7 @@ type RouteRule struct {
 	Destination interface{} `json:"destination"`
 	Precedence  interface{} `json:"precedence"`
 	Route       interface{} `json:"route"`
+	Match       interface{} `json:"match"`
 }
 
 func (rules *RouteRules) Parse(routeRules []*kubernetes.RouteRule) {
@@ -23,4 +24,5 @@ func (rule *RouteRule) Parse(routeRule *kubernetes.RouteRule) {
 	rule.Destination = routeRule.Spec["destination"]
 	rule.Precedence = routeRule.Spec["precedence"]
 	rule.Route = routeRule.Spec["route"]
+	rule.Match = routeRule.Spec["match"]
 }
