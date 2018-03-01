@@ -21,7 +21,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     console.log('Starting ServiceGraphPage for namespace ' + this.props.namespace);
 
     this.state = {
-      elements: {}
+      elements: []
     };
   }
 
@@ -37,17 +37,15 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   componentDidMount() {
     window.addEventListener('resize', this.resizeWindow);
     this.resizeWindow();
+    if (this.props.namespace.length !== 0) {
+      this.updateGraphElements(this.props.namespace);
+    }
+  }
 
-    API.GetGraphElements(this.props.namespace, null)
-      .then(response => {
-        const elements: { [key: string]: any } = response['data'];
-        console.log(elements);
-        this.setState(elements);
-      })
-      .catch(error => {
-        this.setState({});
-        console.error(error);
-      });
+  componentWillReceiveProps(nextProps: CytoscapeLayoutProps) {
+    if (nextProps.namespace !== this.props.namespace) {
+      this.updateGraphElements(nextProps.namespace);
+    }
   }
 
   cyRef(cy: any) {
@@ -78,5 +76,18 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
         />
       </div>
     );
+  }
+
+  private updateGraphElements(newNamespace: string) {
+    API.GetGraphElements(newNamespace, null)
+      .then(response => {
+        const elements: { [key: string]: any } = response['data'];
+        console.log(elements);
+        this.setState(elements);
+      })
+      .catch(error => {
+        this.setState({});
+        console.error(error);
+      });
   }
 }
