@@ -152,10 +152,15 @@ func buildNamespaceTrees(o options, client *prometheus.Client) (trees []tree.Ser
 func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[string]*tree.ServiceNode, o options, client *prometheus.Client) {
 	log.Debugf("Adding children for ServiceNode: %v\n", sn.ID)
 
-	query := fmt.Sprintf("sum(rate(%v{source_service=\"%v\",source_version=\"%v\",response_code=~\"%v\"} [%vs]) * 60) by (%v)",
-		o.metric,                                                // the metric
+	var destinationSvcFilter string
+	if !strings.Contains(sn.Name, o.namespace) {
+		destinationSvcFilter = fmt.Sprintf(",destination_service=~\".*\\\\.%v\\\\..*\"", o.namespace)
+	}
+	query := fmt.Sprintf("sum(rate(%v{source_service=\"%v\",source_version=\"%v\"%v,response_code=~\"%v\"} [%vs]) * 60) by (%v)",
+		o.metric,
 		sn.Name,                                                 // parent service name
 		sn.Version,                                              // parent service version
+		destinationSvcFilter,                                    // regex for namespace-constrained destination service
 		"[2345][0-9][0-9]",                                      // regex for valid response_codes
 		o.interval.Seconds(),                                    // rate over the entire query period
 		"destination_service,destination_version,response_code") // group by
