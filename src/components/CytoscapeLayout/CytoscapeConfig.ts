@@ -7,22 +7,22 @@ export class CytoscapeConfig {
           content: (ele: any) => {
             return ele.data('text') || ele.data('id');
           },
-          color: 'white',
+          color: 'black',
           'background-color': '#bbb',
-          'text-outline-width': 1,
-          'text-outline-color': '#999',
           'text-valign': 'center',
-          'text-halign': 'center'
+          'text-halign': 'right'
         }
       },
       {
         selector: '$node > node',
         css: {
           'padding-top': '10px',
-          'padding-left': '10px',
+          'padding-left': '20px',
           'padding-bottom': '10px',
-          'padding-right': '10px',
-          color: '#070dff',
+          'padding-right': '20px',
+          'text-outline-width': 1,
+          'text-outline-color': '#cfcfcf',
+          color: '#8d7f6c',
           'text-valign': 'top',
           'text-halign': 'center',
           'background-color': '#f5f1d8'
@@ -31,7 +31,8 @@ export class CytoscapeConfig {
       {
         selector: 'edge',
         css: {
-          width: 2,
+          width: 3,
+          color: '#666',
           content: 'data(text)',
           'target-arrow-shape': 'vee',
           'line-color': 'data(color)',
@@ -42,10 +43,10 @@ export class CytoscapeConfig {
       {
         selector: ':selected',
         css: {
-          'background-color': 'yellow',
-          'line-color': 'yellow',
-          'target-arrow-color': 'yellow',
-          'source-arrow-color': 'yellow'
+          'background-color': '#116CD6',
+          'line-color': '#84B5EA',
+          'target-arrow-color': '#84B5EA',
+          'source-arrow-color': '#84B5EA'
         }
       }
     ];
