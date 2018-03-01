@@ -72,7 +72,8 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
           layout={{
             name: 'breadthfirst',
             directed: 'true',
-            maximalAdjustments: 1
+            maximalAdjustments: 2,
+            spacingFactor: 1
           }}
         />
       </div>
