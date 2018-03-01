@@ -8,8 +8,7 @@ const auth = (user: string, pass: string) => {
   };
 };
 
-const newRequest = (method: string, url: string, queryParams: any, data: any) => {
-  console.log(url);
+let newRequest = (method: string, url: string, queryParams: any, data: any) => {
   return new Promise((resolve, reject) => {
     axios({
       method: method,
@@ -46,4 +45,8 @@ export const getGrafanaInfo = () => {
 
 export const GetGraphElements = (namespace: String, params: any) => {
   return newRequest('get', `/api/namespaces/${namespace}/graphs`, params, {});
+};
+
+export const GetServiceDetail = (namespace: String, service: String) => {
+  return newRequest('get', `/api/namespaces/${namespace}/services/${service}`, {}, {});
 };
