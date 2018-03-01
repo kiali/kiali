@@ -5,7 +5,6 @@ import { Route, Switch, Redirect } from 'react-router-dom';
 
 import ServiceDetailsPage from '../../pages/ServiceDetails/ServiceDetailsPage';
 import ServiceGraphPage from '../../pages/ServiceGraph/ServiceGraphPage';
-import HomePage from '../../pages/Home/HomePage';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 
 const homePath = '/';
@@ -58,8 +57,7 @@ class Navigation extends React.Component {
           <Route path="/service-graph/:namespace" component={ServiceGraphPage} />
           <Route path={servicesPath} component={ServiceListPage} />
           <Route path="/namespaces/:namespace/services/:service" component={ServiceDetailsPage} />
-          <Route path={homePath} exact={true} component={HomePage} />
-          <Redirect to={homePath} />
+          <Redirect to={serviceGraphPath} />
         </Switch>
       </div>
     );
