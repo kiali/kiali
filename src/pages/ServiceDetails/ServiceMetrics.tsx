@@ -47,9 +47,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   render() {
     return (
       <div>
-        <h1>
-          == SERVICE METRICS ({this.props.namespace} / {this.props.service}) ==
-        </h1>
         {this.renderRange()}
         {this.renderMetrics()}
       </div>
