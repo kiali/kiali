@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -9,12 +10,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
 	"github.com/swift-sunshine/swscore/config"
 	"github.com/swift-sunshine/swscore/prometheus"
 )
@@ -61,14 +61,14 @@ func mockQuery(api *promAPIMock, query string, ret *model.Vector) {
 		"Query",
 		mock.AnythingOfType("*context.emptyCtx"),
 		query,
-		mock.AnythingOfType("time.Time")).
-		Return(*ret, nil)
+		mock.AnythingOfType("time.Time"),
+	).Return(*ret, nil)
 	api.On(
 		"Query",
 		mock.AnythingOfType("*context.cancelCtx"),
 		query,
-		mock.AnythingOfType("time.Time")).
-		Return(*ret, nil)
+		mock.AnythingOfType("time.Time"),
+	).Return(*ret, nil)
 }
 
 func TestNamespaceGraph(t *testing.T) {
@@ -222,7 +222,9 @@ func TestNamespaceGraph(t *testing.T) {
 	expected, _ := ioutil.ReadFile("testdata/test_namespace_graph.expected")
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	assert.Equal(t, string(expected), string(actual))
+	if !assert.Equal(t, expected, actual) {
+		fmt.Printf("\nActual:\n%v", string(actual))
+	}
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
@@ -341,6 +343,8 @@ func TestServiceGraph(t *testing.T) {
 	expected, _ := ioutil.ReadFile("testdata/test_service_graph.expected")
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	assert.Equal(t, string(expected), string(actual))
+	if !assert.Equal(t, expected, actual) {
+		fmt.Printf("\nActual:\n%v", string(actual))
+	}
 	assert.Equal(t, 200, resp.StatusCode)
 }

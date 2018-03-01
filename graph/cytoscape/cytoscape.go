@@ -15,6 +15,7 @@ package cytoscape
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/swift-sunshine/swscore/graph/tree"
@@ -83,6 +84,21 @@ func NewConfig(namespace string, sn *[]tree.ServiceNode, groupByVersion bool) (r
 		addCompositeNodes(&nodes, &nodeIdSequence)
 	}
 
+	// sort nodes and edges for better json presentation (and predictable testing)
+	sort.Slice(nodes, func(i, j int) bool {
+		return nodes[i].Data.Text < nodes[j].Data.Text
+	})
+	sort.Slice(edges, func(i, j int) bool {
+		switch {
+		case edges[i].Data.Source < edges[j].Data.Source:
+			return true
+		case edges[i].Data.Source == edges[j].Data.Source:
+			return edges[i].Data.Target < edges[j].Data.Target
+		default:
+			return false
+		}
+	})
+
 	elements := Elements{nodes, edges}
 	result = Config{elements}
 	return result
@@ -94,16 +110,16 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		name = tree.UnknownName
 	}
 
-	nodeId, found := findNodeId(nodes, name, sn.Version)
+	nd, found := findNode(nodes, name, sn.Version)
 
 	if !found {
-		nodeId = fmt.Sprintf("n%v", *nodeIdSequence)
+		nodeId := fmt.Sprintf("n%v", *nodeIdSequence)
 		text := strings.Split(name, ".")[0]
 		if tree.UnknownVersion != sn.Version {
 			text = fmt.Sprintf("%v (%v)", text, sn.Version)
 		}
 		*nodeIdSequence++
-		nd := NodeData{
+		nd = &NodeData{
 			Id:            nodeId,
 			Service:       name,
 			Version:       sn.Version,
@@ -111,43 +127,50 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 			LinkPromGraph: sn.Metadata["link_prom_graph"].(string),
 		}
 		nw := NodeWrapper{
-			Data: nd,
+			Data: *nd,
 		}
 		*nodes = append(*nodes, &nw)
 	}
 
 	if parentNodeId != "" {
-		edgeId := fmt.Sprintf("e%v", *edgeIdSequence)
-		*edgeIdSequence++
-		ed := EdgeData{
-			Id:     edgeId,
-			Source: parentNodeId,
-			Target: nodeId,
+		//TODO If we can find a graph layout that handles loop edges well then
+		// we can go back to allowing these but for now, flag the node text
+		if parentNodeId == nd.Id {
+			nd.Text = fmt.Sprintf("%s <%.2fpm>", nd.Text, sn.Metadata["req_per_min"].(float64))
+
+		} else {
+			edgeId := fmt.Sprintf("e%v", *edgeIdSequence)
+			*edgeIdSequence++
+			ed := EdgeData{
+				Id:     edgeId,
+				Source: parentNodeId,
+				Target: nd.Id,
+			}
+			addRpm(&ed, sn)
+			// TODO: Add in the response code breakdowns and/or other metric info
+			//addRpmField(&ed.Rpm2xx, t, "req_per_min_2xx")
+			//addRpmField(&ed.Rpm3xx, t, "req_per_min_3xx")
+			//addRpmField(&ed.Rpm4xx, t, "req_per_min_4xx")
+			//addRpmField(&ed.Rpm5xx, t, "req_per_min_5xx")
+			ew := EdgeWrapper{
+				Data: ed,
+			}
+			*edges = append(*edges, &ew)
 		}
-		addRpm(&ed, sn)
-		// TODO: Add in the response code breakdowns and/or other metric info
-		//addRpmField(&ed.Rpm2xx, t, "req_per_min_2xx")
-		//addRpmField(&ed.Rpm3xx, t, "req_per_min_3xx")
-		//addRpmField(&ed.Rpm4xx, t, "req_per_min_4xx")
-		//addRpmField(&ed.Rpm5xx, t, "req_per_min_5xx")
-		ew := EdgeWrapper{
-			Data: ed,
-		}
-		*edges = append(*edges, &ew)
 	}
 
 	for _, c := range sn.Children {
-		walk(c, nodes, edges, nodeId, nodeIdSequence, edgeIdSequence)
+		walk(c, nodes, edges, nd.Id, nodeIdSequence, edgeIdSequence)
 	}
 }
 
-func findNodeId(nodes *[]*NodeWrapper, service, version string) (string, bool) {
+func findNode(nodes *[]*NodeWrapper, service, version string) (*NodeData, bool) {
 	for _, nw := range *nodes {
 		if nw.Data.Service == service && nw.Data.Version == version {
-			return nw.Data.Id, true
+			return &nw.Data, true
 		}
 	}
-	return "", false
+	return nil, false
 }
 
 func addRpm(ed *EdgeData, sn *tree.ServiceNode) {
@@ -164,17 +187,17 @@ func addRpm(ed *EdgeData, sn *tree.ServiceNode) {
 		switch {
 		case errorRate > 1.0:
 			ed.Color = "red"
-			ed.Text = fmt.Sprintf("rpm=%.2f (err=%.2f%%)", rpm, errorRate)
+			ed.Text = fmt.Sprintf("%.2fpm (err=%.2f%%)", rpm, errorRate)
 		case errorRate > 0.0:
 			ed.Color = "orange"
-			ed.Text = fmt.Sprintf("rpm=%.2f (err=%.2f%%)", rpm, errorRate)
+			ed.Text = fmt.Sprintf("%.2fpm (err=%.2f%%)", rpm, errorRate)
 		default:
 			ed.Color = "green"
-			ed.Text = fmt.Sprintf("rpm=%.2f", rpm)
+			ed.Text = fmt.Sprintf("%.2fpm", rpm)
 		}
 	} else {
 		ed.Color = "black"
-		ed.Text = "rpm=0"
+		ed.Text = "0pm"
 	}
 }
 
