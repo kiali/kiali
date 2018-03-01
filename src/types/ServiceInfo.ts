@@ -29,8 +29,29 @@ export interface Source {
   source: string;
 }
 
+export interface StringMatch {
+  exact?: string;
+  prefix?: string;
+  regex?: string;
+}
+
+export interface MatchSource {
+  name?: string;
+  namespace?: string;
+  domain?: string;
+  service?: string;
+  labels?: Map<String, String>;
+}
+
+export interface MatchRequest {
+  source?: MatchSource;
+  request?: Map<string, StringMatch>;
+}
+
 export interface Rule {
+  name: string;
   destination?: Map<string, string>;
   precedence?: number;
   route?: Label[];
+  match: MatchRequest;
 }
