@@ -417,11 +417,6 @@ func toDestinations(sourceSvc, sourceVer string, vector model.Vector) (destinati
 			log.Warningf("Skipping %v, missing expected labels", m.String())
 		}
 
-		// not expected but remove any self-invocations
-		if sourceSvc == string(destSvc) && sourceVer == string(destVer) {
-			continue
-		}
-
 		if destSvcOk && destVerOk {
 			k := fmt.Sprintf("%v %v", destSvc, destVer)
 			dest, destOk := destinations[k]
