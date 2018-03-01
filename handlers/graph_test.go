@@ -95,7 +95,7 @@ func TestNamespaceGraph(t *testing.T) {
 			Metric: q1m0,
 			Value:  100}}
 
-	q2 := "sum(rate(istio_request_count{source_service=\"\",source_version=\"unknown\",response_code=~\"[2345][0-9][0-9]\"} [600s]) * 60) by (destination_service,destination_version,response_code)"
+	q2 := "sum(rate(istio_request_count{source_service=\"\",source_version=\"unknown\",destination_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [600s]) * 60) by (destination_service,destination_version,response_code)"
 	q2m0 := model.Metric{
 		"destination_service": "productpage.istio-system.svc.cluster.local",
 		"destination_version": "v1",
