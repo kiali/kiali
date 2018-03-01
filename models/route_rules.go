@@ -6,6 +6,7 @@ import (
 
 type RouteRules []RouteRule
 type RouteRule struct {
+	Name        string      `json:"name"`
 	Destination interface{} `json:"destination"`
 	Precedence  interface{} `json:"precedence"`
 	Route       interface{} `json:"route"`
@@ -21,6 +22,7 @@ func (rules *RouteRules) Parse(routeRules []*kubernetes.RouteRule) {
 }
 
 func (rule *RouteRule) Parse(routeRule *kubernetes.RouteRule) {
+	rule.Name = routeRule.ObjectMeta.Name
 	rule.Destination = routeRule.Spec["destination"]
 	rule.Precedence = routeRule.Spec["precedence"]
 	rule.Route = routeRule.Spec["route"]
