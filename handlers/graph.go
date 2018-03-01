@@ -33,6 +33,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -71,6 +72,14 @@ type options struct {
 func GraphNamespace(w http.ResponseWriter, r *http.Request) {
 	defer handlePanic(w)
 
+	client, err := prometheus.NewClient()
+	checkError(err)
+
+	graphNamespace(w, r, client)
+}
+
+// graphNamespace provides a testing hook that can supply a mock client
+func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
 	o := parseRequest(r)
 
 	switch o.vendor {
@@ -82,16 +91,13 @@ func GraphNamespace(w http.ResponseWriter, r *http.Request) {
 
 	log.Debugf("Build roots (root destination services nodes) for [%v] namespace graph with options [%+v]", o.vendor, o)
 
-	trees := buildNamespaceTrees(o)
+	trees := buildNamespaceTrees(o, client)
 
-	generateGraph(&trees, w, r, o)
+	generateGraph(&trees, w, o)
 }
 
 // buildNamespaceTrees returns trees routed at all destination services with "Internet" parents
-func buildNamespaceTrees(o options) (trees []tree.ServiceNode) {
-	client, err := prometheus.NewClient()
-	checkError(err)
-
+func buildNamespaceTrees(o options, client *prometheus.Client) (trees []tree.ServiceNode) {
 	queryTime := time.Now()
 	if o.offset.Seconds() > 0 {
 		queryTime = queryTime.Add(-o.offset)
@@ -172,12 +178,17 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 			log.Debugf("Adding child Service: %v(%v)->%v(%v)\n", sn.Name, sn.Version, child.Name, child.Version)
 			sn.Children[i] = &child
 			i++
-			_, seen := seenNodes[child.ID]
-			if !seen {
-				seenNodes[child.ID] = &child
-				buildNamespaceTree(&child, start, seenNodes, o, client)
+		}
+		// sort children for better presentation (and predictable testing)
+		sort.Slice(sn.Children, func(i, j int) bool {
+			return sn.Children[i].ID < sn.Children[j].ID
+		})
+		for _, child := range sn.Children {
+			if _, seen := seenNodes[child.ID]; !seen {
+				seenNodes[child.ID] = child
+				buildNamespaceTree(child, start, seenNodes, o, client)
 			} else {
-				log.Debugf("Not recursing on sen child service: %v(%v)\n", child.Name, child.Version)
+				log.Debugf("Not recursing on seen child service: %v(%v)\n", child.Name, child.Version)
 			}
 		}
 	}
@@ -187,6 +198,14 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 func GraphService(w http.ResponseWriter, r *http.Request) {
 	defer handlePanic(w)
 
+	client, err := prometheus.NewClient()
+	checkError(err)
+
+	graphService(w, r, client)
+}
+
+// graphService provides a testing hook that can supply a mock client
+func graphService(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
 	o := parseRequest(r)
 
 	switch o.vendor {
@@ -197,16 +216,13 @@ func GraphService(w http.ResponseWriter, r *http.Request) {
 
 	log.Debugf("Build roots (root destination services nodes) for [%v] service graph with options [%+v]", o.vendor, o)
 
-	trees := buildServiceTrees(o)
+	trees := buildServiceTrees(o, client)
 
-	generateGraph(&trees, w, r, o)
+	generateGraph(&trees, w, o)
 }
 
 // buildServiceTrees returns trees routed at source services for versions of the service of interest
-func buildServiceTrees(o options) (trees []tree.ServiceNode) {
-	client, err := prometheus.NewClient()
-	checkError(err)
-
+func buildServiceTrees(o options, client *prometheus.Client) (trees []tree.ServiceNode) {
 	queryTime := time.Now()
 	if o.offset.Seconds() > 0 {
 		queryTime = queryTime.Add(-o.offset)
@@ -299,11 +315,16 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, start time
 			log.Debugf("Child Service: %v(%v)->%v(%v)\n", sn.Name, sn.Version, child.Name, child.Version)
 			sn.Children[i] = &child
 			i++
-			_, seen := seenNodes[child.ID]
-			if !seen {
-				seenNodes[child.ID] = &child
+		}
+		// sort children for better presentation (and predictable testing)
+		sort.Slice(sn.Children, func(i, j int) bool {
+			return sn.Children[i].ID < sn.Children[j].ID
+		})
+		for _, child := range sn.Children {
+			if _, seen := seenNodes[child.ID]; !seen {
+				seenNodes[child.ID] = child
 				if "" != destinationSvc {
-					buildServiceSubtree(&child, "", start, seenNodes, o, client)
+					buildServiceSubtree(child, "", start, seenNodes, o, client)
 				}
 			} else {
 				log.Debugf("Not recursing on seen child service: %v(%v)\n", child.Name, child.Version)
@@ -353,7 +374,7 @@ func parseRequest(r *http.Request) options {
 	}
 }
 
-func generateGraph(trees *[]tree.ServiceNode, w http.ResponseWriter, r *http.Request, o options) {
+func generateGraph(trees *[]tree.ServiceNode, w http.ResponseWriter, o options) {
 	log.Debugf("Generating config for [%v] service graph...", o.vendor)
 
 	var vendorConfig interface{}
