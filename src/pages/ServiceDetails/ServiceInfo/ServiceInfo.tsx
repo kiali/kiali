@@ -95,7 +95,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                 title={this.state.name}
                 items={
                   <Row>
-                    <Col xs={12} sm={6} md={6} lg={6}>
+                    <Col xs={12} sm={6} md={4} lg={4}>
                       <div className="progress-description">
                         <strong>Labels</strong>
                       </div>
@@ -109,12 +109,14 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                           rightText={this.state.labels ? this.state.labels[key] : ''}
                         />
                       ))}
-                      <div className="progress-description">
-                        <strong>Type</strong> {this.state ? this.state.type : ''} <strong> Ip</strong>{' '}
-                        {this.state ? this.state.ip : ''}
+                      <div>
+                        <strong>Type</strong> {this.state.type ? this.state.type : ''}
+                      </div>
+                      <div>
+                        <strong> Ip</strong> {this.state.ip ? this.state.ip : ''}
                       </div>
                     </Col>
-                    <Col xs={12} sm={6} md={6} lg={6}>
+                    <Col xs={12} sm={6} md={2} lg={2}>
                       <div className="progress-description">
                         <strong>Ports</strong>
                       </div>
@@ -124,35 +126,19 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                         </span>
                       ))}
                     </Col>
-                    <Col xs={12} sm={6} md={12} lg={12}>
-                      <hr />
+                    <Col xs={12} sm={6} md={6} lg={6}>
                       <div className="progress-description">
                         <strong>Endpoints</strong>
                       </div>
                       {(this.state.endpoints || []).map((endpoint, i) => (
                         <Row key={'endpoint_' + i}>
-                          <Col xs={12} sm={6} md={6} lg={6}>
-                            <ul>
-                              <li style={{ listStyleType: 'none' }}>Addresses</li>
-                              <ul>
-                                {(endpoint.addresses || []).map((address, u) => (
-                                  <li key={'endpoint_' + i + '_address_' + u}>
-                                    {address.name} ({address.ip})
-                                  </li>
-                                ))}
-                              </ul>
-                            </ul>
-                          </Col>
-                          <Col xs={12} sm={6} md={6} lg={6}>
-                            <ul>
-                              <li style={{ listStyleType: 'none' }}>Ports</li>
-                              <ul>
-                                {(endpoint.ports || []).map((port, u) => (
-                                  <li key={'endpoint_' + i + '_port_' + u}>
-                                    {port.protocol} {port.name} ({port.port})
-                                  </li>
-                                ))}
-                              </ul>
+                          <Col xs={12} sm={12} md={12} lg={12}>
+                            <ul style={{ listStyleType: 'none' }}>
+                              {(endpoint.addresses || []).map((address, u) => (
+                                <li key={'endpoint_' + i + '_address_' + u}>
+                                  <strong>{address.ip} </strong>: {address.name}
+                                </li>
+                              ))}
                             </ul>
                           </Col>
                         </Row>
@@ -169,7 +155,9 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                 title="Pods"
                 items={(this.state.pods || []).map((pod, u) => (
                   <div key={'pods_' + u}>
-                    <div className="progress-description">{pod['name']}</div>
+                    <div>
+                      <strong>Pod</strong>: {pod['name']}
+                    </div>
                     <ul style={{ listStyleType: 'none' }}>
                       {Object.keys(pod.labels || new Map()).map((key, i) => (
                         <li>
@@ -228,16 +216,16 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                 iconName="settings"
                 title="Istio Route Rules"
                 items={(this.state.rules || []).map((rule, i) => (
-                  <ul style={{ listStyleType: 'none' }} key={'rule' + i}>
-                    <li>
-                      <strong>Destination</strong> : {rule.destination ? rule.destination['name'] : ''}
-                    </li>
-                    <li>
-                      <strong>Precendence</strong> :{rule.precedence}
-                    </li>
-                    <li>
+                  <div key={'rule' + i}>
+                    <div>
+                      <strong>Name</strong> : {rule.name}
+                    </div>
+                    <div>
+                      <strong>Precendence</strong> : {rule.precedence}
+                    </div>
+                    <div>
                       <strong>Route</strong>:
-                      <ul>
+                      <ul style={{ listStyleType: 'none' }}>
                         {(rule.route || []).map((label, u) =>
                           Object.keys(label.labels || new Map()).map((key, n) => (
                             <li key={'rule_' + i + '_label_' + u + '_n_' + n}>
@@ -246,9 +234,19 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                           ))
                         )}
                       </ul>
-                    </li>
-                    {<hr />}
-                  </ul>
+                    </div>
+                    <div>
+                      {!rule.match ? null : (
+                        <div>
+                          <strong>Match</strong>:
+                          <textarea className="form-control textarea-resize" readOnly={true}>
+                            {JSON.stringify(rule.match, null, 2)}
+                          </textarea>
+                        </div>
+                      )}
+                    </div>
+                    <hr />
+                  </div>
                 ))}
               />
             </Col>
