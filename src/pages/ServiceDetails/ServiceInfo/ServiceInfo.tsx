@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import ServiceId from '../../../types/ServiceId';
 import ServiceInfoBadge from './ServiceInfoBadge';
 import ServiceInfoCard from './ServiceInfoCard';
@@ -38,8 +39,16 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
   }
 
   componentWillMount() {
+    this.fetchServiceDetails(this.props);
+  }
+
+  componentWillReceiveProps(nextProps: ServiceId) {
+    this.fetchServiceDetails(nextProps);
+  }
+
+  fetchServiceDetails(props: ServiceId) {
     console.log('Fetching info of a service...');
-    API.GetServiceDetail(this.props.namespace, this.props.service)
+    API.GetServiceDetail(props.namespace, props.service)
       .then(response => {
         console.log(response['data']);
         let data = response['data'];
@@ -79,7 +88,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
         ) : null}
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">
-            <Col xs={12} sm={12} md={12} lg={12}>
+            <Col>
               <ServiceInfoCard
                 iconType="pf"
                 iconName="service"
@@ -160,32 +169,19 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                 title="Pods"
                 items={(this.state.pods || []).map((pod, u) => (
                   <div key={'pods_' + u}>
-                    <div className="progress-description">{pod['Name']}</div>
-                    {Object.keys(pod.labels || new Map()).map((key, i) => (
-                      <ServiceInfoBadge
-                        key={'pod_labels_badge_' + i}
-                        scale={0.8}
-                        style="plastic"
-                        color="green"
-                        leftText={key}
-                        rightText={pod.labels ? pod.labels[key] : ''}
-                      />
-                    ))}
-                  </div>
-                ))}
-              />
-            </Col>
-            <Col xs={12} sm={6} md={4} lg={4}>
-              <ServiceInfoCard
-                iconType="pf"
-                iconName="route"
-                title="Dependencies"
-                items={Object.keys(this.state.dependencies || new Map()).map((key, u) => (
-                  <div key={'dependencies_' + u}>
-                    <div className="progress-description">{key}</div>
-                    <ul>
-                      {(this.state.dependencies ? this.state.dependencies[key] : []).map((dependency, i) => (
-                        <li key={'dependencies_' + u + '_dependency_' + i}>{dependency}</li>
+                    <div className="progress-description">{pod['name']}</div>
+                    <ul style={{ listStyleType: 'none' }}>
+                      {Object.keys(pod.labels || new Map()).map((key, i) => (
+                        <li>
+                          <ServiceInfoBadge
+                            key={'pod_labels_badge_' + i}
+                            scale={0.8}
+                            style="plastic"
+                            color="green"
+                            leftText={key}
+                            rightText={pod.labels ? pod.labels[key] : ''}
+                          />
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -195,8 +191,42 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
             <Col xs={12} sm={6} md={4} lg={4}>
               <ServiceInfoCard
                 iconType="pf"
+                iconName="route"
+                title="Source Services"
+                items={Object.keys(this.state.dependencies || new Map()).map((key, u) => (
+                  <div key={'dependencies_' + u}>
+                    <div className="progress-description">
+                      <strong>To: </strong> {key}
+                    </div>
+                    <ul style={{ listStyleType: 'none' }}>
+                      {(this.state.dependencies ? this.state.dependencies[key] : []).map((dependency, i) => {
+                        let nVersion = dependency.indexOf('/');
+                        let nNamespace = dependency.indexOf('.');
+                        let servicename = dependency.substring(0, nNamespace);
+                        let namespace = dependency.substring(nNamespace + 1, nVersion);
+                        console.log('SERVICENAME ' + servicename);
+                        console.log('NAMESPACE ' + namespace);
+                        if (servicename.length > 0 && namespace.length > 0) {
+                          let to = '/namespaces/' + namespace + '/services/' + servicename;
+                          return (
+                            <Link key={to} to={to}>
+                              <li key={'dependencies_' + u + '_dependency_' + i}>{dependency}</li>
+                            </Link>
+                          );
+                        } else {
+                          return <li key={'dependencies_' + u + '_dependency_' + i}>{dependency}</li>;
+                        }
+                      })}
+                    </ul>
+                  </div>
+                ))}
+              />
+            </Col>
+            <Col xs={12} sm={6} md={4} lg={4}>
+              <ServiceInfoCard
+                iconType="pf"
                 iconName="settings"
-                title="Services Source"
+                title="Istio Route Rules"
                 items={(this.state.rules || []).map((rule, i) => (
                   <ul style={{ listStyleType: 'none' }} key={'rule' + i}>
                     <li>
