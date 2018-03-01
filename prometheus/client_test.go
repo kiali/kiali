@@ -52,11 +52,20 @@ func setupMocked() (*Client, *promAPIMock, error) {
 }
 
 func TestGetSourceServices(t *testing.T) {
-	rqCustV1 := model.Metric{
+	rqCustV1C200 := model.Metric{
 		"__name__":            "istio_request_count",
 		"instance":            "172.17.0.6:42422",
 		"job":                 "istio-mesh",
 		"response_code":       "200",
+		"source_service":      "customer.istio-system.svc.cluster.local",
+		"source_version":      "v1",
+		"destination_service": "productpage.istio-system.svc.cluster.local",
+		"destination_version": "v1"}
+	rqCustV1C404 := model.Metric{
+		"__name__":            "istio_request_count",
+		"instance":            "172.17.0.6:42422",
+		"job":                 "istio-mesh",
+		"response_code":       "404",
 		"source_service":      "customer.istio-system.svc.cluster.local",
 		"source_version":      "v1",
 		"destination_service": "productpage.istio-system.svc.cluster.local",
@@ -81,7 +90,10 @@ func TestGetSourceServices(t *testing.T) {
 		"destination_version": "v2"}
 	vector := model.Vector{
 		&model.Sample{
-			Metric: rqCustV1,
+			Metric: rqCustV1C200,
+			Value:  4},
+		&model.Sample{
+			Metric: rqCustV1C404,
 			Value:  4},
 		&model.Sample{
 			Metric: rqCustV2,

@@ -167,7 +167,7 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 		if destination, ok := rule.Spec["destination"]; ok {
 			dest := destination.(map[string]interface{})
 			if dest["name"] == serviceName {
-				routerRules = append(routerRules, &rule)
+				routerRules = append(routerRules, rule.DeepCopy())
 			}
 		}
 	}

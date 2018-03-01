@@ -65,7 +65,16 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 			}
 			source := fmt.Sprintf("%s/%s", sourceService, metric["source_version"])
 			if arr, ok := routes[index]; ok {
-				routes[index] = append(arr, source)
+				found := false
+				for _, s := range arr {
+					if s == source {
+						found = true
+						break
+					}
+				}
+				if !found {
+					routes[index] = append(arr, source)
+				}
 			} else {
 				routes[index] = []string{source}
 			}
