@@ -1,5 +1,5 @@
 interface NamespaceId {
-  namespace: String;
+  namespace: string;
 }
 
 export default NamespaceId;
