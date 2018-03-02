@@ -1,6 +1,26 @@
 server:
   address: localhost
   port: 8000
-  static_content_root_directory: /tmp
-  cors_allow_all: true
+
+  # Uncomment credentials to enable basic authentication for server
+  # credentials:
+  #   username: u
+  #   password: p
+
+  # Uncomment static_content_root_directory to set up a different directory for static front-end content.
+  # Default is /static-files
+  # static_content_root_directory: /static-files
+
+  # Uncomment cors_allow_all to allow serving front-end from a different host (mainly for development)
+  # Default is false
+  # cors_allow_all: true
+
 prometheus_service_url: http://prometheus-istio-system.127.0.0.1.nip.io
+
+# Uncomment istio_identity_domain to set a different value. This value must match the Istio configuration.
+# Default is "svc.cluster.local" (which matches Istio's default)
+# istio_identity_domain: svc.cluster.local
+
+# Uncomment grafana_service_url, used to generate links to Grafana
+# If unset, the Grafana service URL will be looked up from Kubernetes Grafana service. It may not always be available.
+# grafana_service_url: http://grafana-istio-system.127.0.0.1.nip.io
