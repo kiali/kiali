@@ -109,14 +109,17 @@ ifeq ("${CONSOLE_VERSION}", "local")
 	echo "Copying local console files from ${CONSOLE_LOCAL_DIR}"
 	rm -rf _output/docker/console && mkdir _output/docker/console
 	cp -r ${CONSOLE_LOCAL_DIR}/build/* _output/docker/console
+	@echo "$$(cd ${CONSOLE_LOCAL_DIR} && npm view ${CONSOLE_LOCAL_DIR} version)-local-$$(cd ${CONSOLE_LOCAL_DIR} && git rev-parse HEAD)" > _output/docker/console/version.txt
 else
 	@if [ ! -d "_output/docker/console" ]; then \
 		echo "Downloading console (${CONSOLE_VERSION})..." ; \
 		mkdir _output/docker/console ; \
 		curl $$(npm view swsui@${CONSOLE_VERSION} dist.tarball) \
 		| tar zxf - --strip-components=2 --directory _output/docker/console package/build ; \
+		echo "$$(npm view swsui@${CONSOLE_VERSION} version)" > _output/docker/console/version.txt ; \
 	fi
 endif
+	@echo "Console version being packaged: $$(cat _output/docker/console/version.txt)"
 
 .prepare-docker-image-files: .get-console
 	@echo Preparing docker image files...

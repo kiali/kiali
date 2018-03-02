@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
@@ -59,6 +60,8 @@ func main() {
 		glog.Fatal(err)
 	}
 
+	log.Infof("SWS: Console version: %v", determineConsoleVersion())
+
 	// Start listening to requests
 	server := server.NewServer()
 	server.Start()
@@ -114,4 +117,18 @@ func validateFlags() {
 			}
 		}
 	}
+}
+
+// determineConsoleVersion will return the version of the UI console the server will serve to clients.
+// Note this method requires the configuration to be loaded and available via config.Get()
+func determineConsoleVersion() string {
+	consoleVersion := "unknown"
+	filename := config.Get().Server.StaticContentRootDirectory + "/version.txt"
+	fileContent, err := ioutil.ReadFile(filename)
+	if err == nil {
+		consoleVersion = string(fileContent)
+	} else {
+		log.Errorf("Failed to determine console version from file [%v]. error=%v", filename, err)
+	}
+	return consoleVersion
 }
