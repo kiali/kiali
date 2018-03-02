@@ -95,7 +95,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                 title={this.state.name}
                 items={
                   <Row>
-                    <Col xs={12} sm={6} md={4} lg={4}>
+                    <Col xs={12} sm={6} md={2} lg={2}>
                       <div className="progress-description">
                         <strong>Labels</strong>
                       </div>
@@ -116,15 +116,17 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                         <strong> Ip</strong> {this.state.ip ? this.state.ip : ''}
                       </div>
                     </Col>
-                    <Col xs={12} sm={6} md={2} lg={2}>
+                    <Col xs={12} sm={6} md={4} lg={4}>
                       <div className="progress-description">
                         <strong>Ports</strong>
                       </div>
+                      <ul style={{ listStyleType: 'none' }}>
                       {(this.state.ports || []).map((port, i) => (
-                        <span style={{ marginLeft: '10px' }} key={'port_' + i}>
+                        <li key={'port_' + i}>
                           {port.protocol} {port.name} ({port.port})
-                        </span>
+                        </li>
                       ))}
+                      </ul>
                     </Col>
                     <Col xs={12} sm={6} md={6} lg={6}>
                       <div className="progress-description">
