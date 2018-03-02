@@ -112,7 +112,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
                   <li>Request duration: {this.histogram(this.state.requestDurationOut)}</li>
                   <li>Response size: {this.histogram(this.state.responseSizeOut)}</li>
                 </ul>
-                {this.renderGrafanaLink(false)}
+                {this.renderGrafanaLink(true)}
               </div>
             </div>
           </div>
