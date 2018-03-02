@@ -8,7 +8,6 @@ import { ServiceFilterSelected } from '../../components/ServiceFilter/ServiceFil
 import { ActiveFilter } from '../../types/ServiceFilter';
 
 export default function ServiceDetails(routeProps: RouteComponentProps<ServiceId>) {
-
   let updateFilter = () => {
     let activeFilter: ActiveFilter = {
       label: 'Namespace: ' + routeProps.match.params.namespace,
@@ -22,7 +21,11 @@ export default function ServiceDetails(routeProps: RouteComponentProps<ServiceId
     <div className="container-fluid container-pf-nav-pf-vertical">
       <div className="page-header">
         <h2>
-          Service <Link to="/services" onClick={updateFilter}>{routeProps.match.params.namespace}</Link> / {routeProps.match.params.service}
+          Service{' '}
+          <Link to="/services" onClick={updateFilter}>
+            {routeProps.match.params.namespace}
+          </Link>{' '}
+          / {routeProps.match.params.service}
         </h2>
       </div>
       <TabContainer id="basic-tabs" defaultActiveKey={1}>

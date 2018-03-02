@@ -121,11 +121,11 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                         <strong>Ports</strong>
                       </div>
                       <ul style={{ listStyleType: 'none' }}>
-                      {(this.state.ports || []).map((port, i) => (
-                        <li key={'port_' + i}>
-                          {port.protocol} {port.name} ({port.port})
-                        </li>
-                      ))}
+                        {(this.state.ports || []).map((port, i) => (
+                          <li key={'port_' + i}>
+                            {port.protocol} {port.name} ({port.port})
+                          </li>
+                        ))}
                       </ul>
                     </Col>
                     <Col xs={12} sm={6} md={6} lg={6}>
