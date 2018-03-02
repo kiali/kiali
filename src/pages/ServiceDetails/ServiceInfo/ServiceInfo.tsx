@@ -192,8 +192,6 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                         let nNamespace = dependency.indexOf('.');
                         let servicename = dependency.substring(0, nNamespace);
                         let namespace = dependency.substring(nNamespace + 1, nVersion);
-                        console.log('SERVICENAME ' + servicename);
-                        console.log('NAMESPACE ' + namespace);
                         if (servicename.length > 0 && namespace.length > 0) {
                           let to = '/namespaces/' + namespace + '/services/' + servicename;
                           return (
@@ -229,7 +227,14 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                         {(rule.route || []).map((label, u) =>
                           Object.keys(label.labels || new Map()).map((key, n) => (
                             <li key={'rule_' + i + '_label_' + u + '_n_' + n}>
-                              {key} : {label.labels[key]}
+                              <ServiceInfoBadge
+                                key={'rule_labels_badge_' + i}
+                                scale={0.8}
+                                style="plastic"
+                                color="green"
+                                leftText={key}
+                                rightText={label.labels ? label.labels[key] : ''}
+                              />
                             </li>
                           ))
                         )}
