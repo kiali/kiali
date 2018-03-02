@@ -40,6 +40,8 @@ type ServiceListComponentProps = {
   onError: PropTypes.func;
 };
 
+const perPageOptions: number[] = [5, 10, 15];
+
 class ServiceListComponent extends React.Component<ServiceListComponentProps, ServiceListComponentState> {
   constructor(props: ServiceListComponentProps) {
     super(props);
@@ -52,7 +54,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.state = {
       loading: true,
       services: [],
-      pagination: { page: 1, perPage: 10, perPageOptions: [5, 10, 15] },
+      pagination: { page: 1, perPage: 10, perPageOptions: perPageOptions },
       currentSortField: sortFields[0],
       isSortAscending: true
     };
@@ -81,7 +83,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         pagination: {
           page: page,
           perPage: prevState.pagination.perPage,
-          perPageOptions: prevState.pagination.perPageOptions
+          perPageOptions: perPageOptions
         }
       };
     });
@@ -95,7 +97,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         pagination: {
           page: 1,
           perPage: perPage,
-          perPageOptions: prevState.pagination.perPageOptions
+          perPageOptions: perPageOptions
         }
       };
     });
@@ -163,9 +165,16 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
           updatedServices = this.filterServices(updatedServices, servicenameFilters);
         }
         updatedServices = this.sortServices(updatedServices, this.state.currentSortField, this.state.isSortAscending);
-        this.setState({
-          loading: false,
-          services: updatedServices
+        this.setState(prevState => {
+          return {
+            loading: false,
+            services: updatedServices,
+            pagination: {
+              page: 1,
+              perPage: prevState.pagination.perPage,
+              perPageOptions: perPageOptions
+            }
+          };
         });
       })
       .catch(servicesError => {
