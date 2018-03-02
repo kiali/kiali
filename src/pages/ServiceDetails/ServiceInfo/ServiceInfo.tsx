@@ -192,8 +192,6 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                         let nNamespace = dependency.indexOf('.');
                         let servicename = dependency.substring(0, nNamespace);
                         let namespace = dependency.substring(nNamespace + 1, nVersion);
-                        console.log('SERVICENAME ' + servicename);
-                        console.log('NAMESPACE ' + namespace);
                         if (servicename.length > 0 && namespace.length > 0) {
                           let to = '/namespaces/' + namespace + '/services/' + servicename;
                           return (
