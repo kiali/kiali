@@ -152,6 +152,7 @@ docker-push:
 	@oc get project ${NAMESPACE} > /dev/null
 
 openshift-deploy: openshift-undeploy
+	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry"; exit 1; fi
 	@echo Deploying to OpenShift project ${NAMESPACE}
 	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
 	cat deploy/openshift/sws.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERBOSE_MODE=${VERBOSE_MODE} envsubst | oc create -n ${NAMESPACE} -f -
@@ -168,6 +169,7 @@ openshift-reload-image: .openshift-validate
 	@kubectl get namespace ${NAMESPACE} > /dev/null
 
 k8s-deploy: k8s-undeploy
+	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry"; exit 1; fi
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
 	kubectl create -f deploy/kubernetes/sws-configmap.yaml -n ${NAMESPACE}
 	cat deploy/kubernetes/sws.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERBOSE_MODE=${VERBOSE_MODE} envsubst | kubectl create -n ${NAMESPACE} -f -
