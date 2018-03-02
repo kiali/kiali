@@ -2,6 +2,7 @@ import * as React from 'react';
 import { ReactCytoscape } from 'react-cytoscape';
 import { CytoscapeConfig } from './CytoscapeConfig';
 import * as API from '../../services/Api';
+import PropTypes from 'prop-types';
 
 type CytoscapeLayoutState = {
   elements?: any;
@@ -13,6 +14,10 @@ type CytoscapeLayoutProps = {
 };
 
 export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, CytoscapeLayoutState> {
+  static contextTypes = {
+    router: PropTypes.object
+  };
+
   cy: any;
 
   constructor(props: CytoscapeLayoutProps) {
@@ -51,8 +56,13 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   cyRef(cy: any) {
     this.cy = cy;
     cy.on('tap', 'node', (evt: any) => {
-      let node = evt.target;
-      console.log('clicked on: ' + node.id());
+      let target = evt.target;
+      let targetNode = cy.$id(target.id());
+      let svc = targetNode.data('service');
+      let service = svc.split('.')[0];
+      if (service !== 'internet') {
+        this.context.router.history.push('/namespaces/' + this.props.namespace + '/services/' + service);
+      }
     });
   }
 
