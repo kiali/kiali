@@ -77,30 +77,44 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       return <div className="spinner spinner-sm left-spinner" />;
     } else {
       return (
-        <div>
-          <div>
-            Health: {this.health()}
-            <br />
-          </div>
-          <div>
-            <h3>Input</h3>
-            <ul>
-              <li>Request count rate: {this.scalar(this.state.requestCountIn)}</li>
-              <li>Request size: {this.histogram(this.state.requestSizeIn)}</li>
-              <li>Request duration: {this.histogram(this.state.requestDurationIn)}</li>
-              <li>Response size: {this.histogram(this.state.responseSizeIn)}</li>
-            </ul>
-            {this.renderGrafanaLink(false)}
-          </div>
-          <div>
-            <h3>Output</h3>
-            <ul>
-              <li>Request count rate: {this.scalar(this.state.requestCountOut)}</li>
-              <li>Request size: {this.histogram(this.state.requestSizeOut)}</li>
-              <li>Request duration: {this.histogram(this.state.requestDurationOut)}</li>
-              <li>Response size: {this.histogram(this.state.responseSizeOut)}</li>
-            </ul>
-            {this.renderGrafanaLink(true)}
+        <div className="card-pf">
+          <div className="row row-cards-pf">
+            <div className="col-xs-4">
+              <div className="card-pf-accented card-pf-aggregate-status">
+                <div className="card-pf-title">
+                  <span className="fa fa-heart"/>
+                  Health</div>
+                <div className="card-pf-body">{this.health()}</div>
+              </div>
+            </div>
+            <div className="col-xs-4">
+              <div className="card-pf-accented card-pf-aggregate-status">
+                <h3 className="card-pf-title">
+                  <span className="fa fa-bar-chart"/>
+                  Input</h3>
+                <ul className="card-pf-body">
+                  <li>Request count rate: {this.scalar(this.state.requestCountIn)}</li>
+                  <li>Request size: {this.histogram(this.state.requestSizeIn)}</li>
+                  <li>Request duration: {this.histogram(this.state.requestDurationIn)}</li>
+                  <li>Response size: {this.histogram(this.state.responseSizeIn)}</li>
+                </ul>
+                {this.renderGrafanaLink(false)}
+              </div>
+            </div>
+            <div className="col-xs-4">
+              <div className="card-pf-accented card-pf-aggregate-status">
+                <h3 className="card-pf-title">
+                  <span className="fa fa-bar-chart"/>
+                  Output</h3>
+                <ul className="card-pf-body">
+                  <li>Request count rate: {this.scalar(this.state.requestCountOut)}</li>
+                  <li>Request size: {this.histogram(this.state.requestSizeOut)}</li>
+                  <li>Request duration: {this.histogram(this.state.requestDurationOut)}</li>
+                  <li>Response size: {this.histogram(this.state.responseSizeOut)}</li>
+                </ul>
+                {this.renderGrafanaLink(false)}
+              </div>
+            </div>
           </div>
         </div>
       );
