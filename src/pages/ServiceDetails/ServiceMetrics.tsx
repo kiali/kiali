@@ -82,16 +82,18 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
             <div className="col-xs-4">
               <div className="card-pf-accented card-pf-aggregate-status">
                 <div className="card-pf-title">
-                  <span className="fa fa-heart"/>
-                  Health</div>
+                  <span className="fa fa-heart" />
+                  Health
+                </div>
                 <div className="card-pf-body">{this.health()}</div>
               </div>
             </div>
             <div className="col-xs-4">
               <div className="card-pf-accented card-pf-aggregate-status">
                 <h3 className="card-pf-title">
-                  <span className="fa fa-bar-chart"/>
-                  Input</h3>
+                  <span className="fa fa-bar-chart" />
+                  Input
+                </h3>
                 <ul className="card-pf-body">
                   <li>Request count rate: {this.scalar(this.state.requestCountIn)}</li>
                   <li>Request size: {this.histogram(this.state.requestSizeIn)}</li>
@@ -104,8 +106,9 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
             <div className="col-xs-4">
               <div className="card-pf-accented card-pf-aggregate-status">
                 <h3 className="card-pf-title">
-                  <span className="fa fa-bar-chart"/>
-                  Output</h3>
+                  <span className="fa fa-bar-chart" />
+                  Output
+                </h3>
                 <ul className="card-pf-body">
                   <li>Request count rate: {this.scalar(this.state.requestCountOut)}</li>
                   <li>Request size: {this.histogram(this.state.requestSizeOut)}</li>
