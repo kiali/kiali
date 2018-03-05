@@ -177,13 +177,7 @@ func addRpm(ed *EdgeData, sn *tree.ServiceNode) {
 	rpm := sn.Metadata["req_per_min"].(float64)
 	if rpm > 0.0 {
 		rpmSuccess := sn.Metadata["req_per_min_2xx"].(float64)
-		errorRate := rpm - rpmSuccess/rpm*100
-		// TODO remove, just introduce some error for edge 3 and edge 4, just to test
-		//if ed.Id == "e3" {
-		//	errorRate = 1.5
-		//} else if ed.Id == "e4" {
-		//	errorRate = 0.5
-		//}
+		errorRate := (rpm - rpmSuccess) / rpm * 100.0
 		switch {
 		case errorRate > 1.0:
 			ed.Color = "red"
