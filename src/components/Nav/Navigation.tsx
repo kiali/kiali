@@ -3,6 +3,7 @@ import { VerticalNav } from 'patternfly-react';
 import PropTypes from 'prop-types';
 import { Route, Switch, Redirect } from 'react-router-dom';
 
+import HelpDropdown from './HelpDropdown';
 import ServiceDetailsPage from '../../pages/ServiceDetails/ServiceDetailsPage';
 import ServiceGraphPage from '../../pages/ServiceGraph/ServiceGraphPage';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
@@ -39,6 +40,9 @@ class Navigation extends React.Component {
         <VerticalNav>
           <VerticalNav.Masthead title="Swift Sunshine">
             <VerticalNav.Brand iconImg={pfLogo} titleImg={pfBrand} />
+            <VerticalNav.IconBar>
+              <HelpDropdown />
+            </VerticalNav.IconBar>
           </VerticalNav.Masthead>
           <VerticalNav.Item
             title={serviceGraphTitle}
