@@ -13,6 +13,7 @@ import (
 	"github.com/swift-sunshine/swscore/config"
 	"github.com/swift-sunshine/swscore/log"
 	"github.com/swift-sunshine/swscore/server"
+	"github.com/swift-sunshine/swscore/status"
 )
 
 // Identifies the build. These are set via ldflags during the build (see Makefile).
@@ -60,7 +61,12 @@ func main() {
 		glog.Fatal(err)
 	}
 
-	log.Infof("SWS: Console version: %v", determineConsoleVersion())
+	consoleVersion := determineConsoleVersion()
+	log.Infof("SWS: Console version: %v", consoleVersion)
+
+	status.Put(status.ConsoleVersion, consoleVersion)
+	status.Put(status.CoreVersion, version)
+	status.Put(status.CoreCommitHash, commitHash)
 
 	// Start listening to requests
 	server := server.NewServer()
@@ -127,6 +133,7 @@ func determineConsoleVersion() string {
 	fileContent, err := ioutil.ReadFile(filename)
 	if err == nil {
 		consoleVersion = string(fileContent)
+		consoleVersion = strings.TrimSpace(consoleVersion) // also seems to kill off EOF
 	} else {
 		log.Errorf("Failed to determine console version from file [%v]. error=%v", filename, err)
 	}

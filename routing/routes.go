@@ -30,6 +30,12 @@ func NewRoutes() (r *Routes) {
 			"/api",
 			handlers.Root,
 		},
+		{ // another way to get to root, both show status
+			"Status",
+			"GET",
+			"/api/status",
+			handlers.Root,
+		},
 		{
 			"ServiceList",
 			"GET",
