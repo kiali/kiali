@@ -6,6 +6,9 @@ import * as API from '../../services/Api';
 interface GrafanaInfo {
   url: string;
   variablesSuffix: string;
+  dashboard: string;
+  varServiceSource: string;
+  varServiceDest: string;
 }
 
 type ServiceMetricsState = {
@@ -126,10 +129,10 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
 
   renderGrafanaLink(isSource: boolean) {
     if (this.state.grafanaInfo) {
-      const varName = isSource ? 'var-source' : 'var-http_destination';
-      const link = `${this.state.grafanaInfo.url}/dashboard/db/istio-dashboard?${varName}=${this.props.service}.${
-        this.props.namespace
-      }.${this.state.grafanaInfo.variablesSuffix}`;
+      const varName = isSource ? this.state.grafanaInfo.varServiceSource : this.state.grafanaInfo.varServiceDest;
+      const link = `${this.state.grafanaInfo.url}/dashboard/db/${this.state.grafanaInfo.dashboard}?${varName}=${
+        this.props.service
+      }.${this.props.namespace}.${this.state.grafanaInfo.variablesSuffix}`;
       return <a href={link}>View in Grafana</a>;
     }
     return null;
@@ -167,7 +170,11 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   getGrafanaInfo() {
     API.getGrafanaInfo()
       .then(response => {
-        this.setState({ grafanaInfo: response['data'] });
+        if (response['data']) {
+          this.setState({ grafanaInfo: response['data'] });
+        } else {
+          this.setState({ grafanaInfo: undefined });
+        }
       })
       .catch(error => {
         this.setState({ grafanaInfo: undefined });
