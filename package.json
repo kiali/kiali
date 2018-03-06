@@ -21,7 +21,7 @@
     "copy-fonts": "cp -r node_modules/patternfly/dist/fonts src/",
     "copy-img": "cp -r node_modules/patternfly/dist/img src/",
     "build-css": "node-sass-chokidar src/ --output-style compressed $npm_package_sassIncludes_src $npm_package_sassIncludes_patternfly $npm_package_sassIncludes_patternflyReact $npm_package_sassIncludes_bootstrap $npm_package_sassIncludes_fontAwesome -o src/",
-    "prettier": "prettier --single-quote --parser typescript --print-width 120 --write \"src/**/*.{js,jsx,ts,tsx,json}\"",
+    "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json}\"",
     "lint": "tslint --project ./tsconfig.json",
     "start": "npm run copy-fonts && npm run copy-img && npm run build-css && npm run prettier && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$npm_package_gitHead react-scripts-ts start",
     "build": "npm run copy-fonts && npm run copy-img && npm run build-css && npm run prettier && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$npm_package_gitHead react-scripts-ts build",
