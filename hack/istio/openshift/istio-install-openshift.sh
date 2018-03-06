@@ -46,11 +46,8 @@ oc adm policy add-scc-to-user privileged -z istio-pilot-service-account
 oc adm policy add-scc-to-user anyuid -z default
 oc adm policy add-scc-to-user privileged -z default
 oc adm policy add-cluster-role-to-user cluster-admin -z default
-oc adm policy add-scc-to-user anyuid -z istio-grafana-service-account
-oc adm policy add-scc-to-user privileged -z istio-pilot-service-account
-oc adm policy add-scc-to-user anyuid -z istio-prometheus-service-account
+oc adm policy add-scc-to-user anyuid -z grafana
 oc adm policy add-scc-to-user anyuid -z prometheus
-oc adm policy add-scc-to-user privileged -z istio-prometheus-service-account
 
 oc apply -f install/kubernetes/istio.yaml
 oc expose svc istio-ingress
