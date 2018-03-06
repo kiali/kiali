@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import ServiceInfo from './ServiceInfo/ServiceInfo';
+import ServiceInfo from './ServiceInfo';
 import ServiceMetrics from './ServiceMetrics';
 import ServiceId from '../../types/ServiceId';
 import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
