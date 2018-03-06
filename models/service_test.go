@@ -58,7 +58,7 @@ func TestServiceDetailParsing(t *testing.T) {
 				"namespace": "tutorial"},
 			Precedence: 1,
 			Route: map[string]map[string]string{
-				"labels": map[string]string{
+				"labels": {
 					"name":      "version",
 					"namespace": "v1"}}},
 		RouteRule{
@@ -67,14 +67,42 @@ func TestServiceDetailParsing(t *testing.T) {
 				"namespace": "tutorial"},
 			Precedence: 1,
 			Route: map[string]map[string]string{
-				"labels": map[string]string{
+				"labels": {
 					"name":      "version",
 					"namespace": "v3"}}}})
 
+	assert.Equal(service.DestinationPolicies, DestinationPolicies{
+		DestinationPolicy{
+			Source: map[string]string{
+				"name": "recommendation"},
+			Destination: map[string]string{
+				"name":      "reviews",
+				"namespace": "tutorial"},
+			LoadBalancing: map[string]string{
+				"name": "RANDOM"},
+		},
+		DestinationPolicy{
+			Destination: map[string]interface{}{
+				"name":      "reviews",
+				"namespace": "tutorial",
+				"labels": map[string]string{
+					"version": "v2"}},
+			CircuitBreaker: map[string]interface{}{
+				"simpleCb": map[string]interface{}{
+					"maxConnections":               1,
+					"httpMaxPendingRequests":       1,
+					"sleepWindow":                  "2m",
+					"httpDetectionInterval":        "1s",
+					"httpMaxEjectionPercent":       100,
+					"httpConsecutiveErrors":        1,
+					"httpMaxRequestsPerConnection": 1,
+				}},
+		}})
+
 	// Prometheus Client
 	assert.Equal(service.Dependencies, map[string][]string{
-		"v1": []string{"unknown", "/products", "/reviews"},
-		"v2": []string{"/catalog", "/shares"}})
+		"v1": {"unknown", "/products", "/reviews"},
+		"v2": {"/catalog", "/shares"}})
 }
 
 func fakeServiceDetails() *kubernetes.ServiceDetails {
@@ -89,44 +117,44 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 			ClusterIP: "fromservice",
 			Type:      "ClusterIP",
 			Ports: []v1.ServicePort{
-				v1.ServicePort{
+				{
 					Name:     "http",
 					Protocol: "TCP",
 					Port:     3001},
-				v1.ServicePort{
+				{
 					Name:     "http",
 					Protocol: "TCP",
 					Port:     3000}}}}
 
 	endpoints := &v1.Endpoints{
 		Subsets: []v1.EndpointSubset{
-			v1.EndpointSubset{
+			{
 				Addresses: []v1.EndpointAddress{
-					v1.EndpointAddress{
+					{
 						IP: "172.17.0.9",
 						TargetRef: &v1.ObjectReference{
 							Kind: "Pod",
 							Name: "recommendation-v1"}},
-					v1.EndpointAddress{
+					{
 						IP: "172.17.0.8",
 						TargetRef: &v1.ObjectReference{
 							Kind: "Pod",
 							Name: "recommendation-v2"}},
 				},
 				Ports: []v1.EndpointPort{
-					v1.EndpointPort{Name: "http", Protocol: "TCP", Port: 3001},
-					v1.EndpointPort{Name: "http", Protocol: "TCP", Port: 3000},
+					{Name: "http", Protocol: "TCP", Port: 3001},
+					{Name: "http", Protocol: "TCP", Port: 3000},
 				}}}}
 
 	pods := []*v1.Pod{
-		&v1.Pod{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "Pod1",
 				Namespace: "Namespace1",
 				Labels: map[string]string{
 					"label1": "labelName1Pod1",
 					"label2": "labelName2Pod1"}}},
-		&v1.Pod{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "Pod2",
 				Namespace: "Namespace2",
@@ -139,7 +167,7 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 
 func fakeIstioDetails() *kubernetes.IstioDetails {
 	routes := []*kubernetes.RouteRule{
-		&kubernetes.RouteRule{
+		{
 			Spec: map[string]interface{}{
 				"destination": map[string]string{
 					"name":      "reviews",
@@ -149,7 +177,7 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 					"labels": map[string]string{
 						"name":      "version",
 						"namespace": "v1"}}}},
-		&kubernetes.RouteRule{
+		{
 			Spec: map[string]interface{}{
 				"destination": map[string]string{
 					"name":      "reviews",
@@ -159,8 +187,45 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 					"labels": map[string]string{
 						"name":      "version",
 						"namespace": "v3"}}}}}
-
-	return &kubernetes.IstioDetails{routes}
+	policies := []*kubernetes.DestinationPolicy{
+		{
+			Spec: map[string]interface{}{
+				"source": map[string]string{
+					"name": "recommendation",
+				},
+				"destination": map[string]string{
+					"name":      "reviews",
+					"namespace": "tutorial",
+				},
+				"loadBalancing": map[string]string{
+					"name": "RANDOM",
+				},
+			},
+		},
+		{
+			Spec: map[string]interface{}{
+				"destination": map[string]interface{}{
+					"name":      "reviews",
+					"namespace": "tutorial",
+					"labels": map[string]string{
+						"version": "v2",
+					},
+				},
+				"circuitBreaker": map[string]interface{}{
+					"simpleCb": map[string]interface{}{
+						"maxConnections":               1,
+						"httpMaxPendingRequests":       1,
+						"sleepWindow":                  "2m",
+						"httpDetectionInterval":        "1s",
+						"httpMaxEjectionPercent":       100,
+						"httpConsecutiveErrors":        1,
+						"httpMaxRequestsPerConnection": 1,
+					},
+				},
+			},
+		},
+	}
+	return &kubernetes.IstioDetails{routes, policies}
 }
 
 func fakePrometheusDetails() map[string][]string {

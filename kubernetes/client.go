@@ -1,10 +1,6 @@
 package kubernetes
 
 import (
-	"fmt"
-
-	"k8s.io/api/core/v1"
-
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -94,82 +90,4 @@ func NewClient() (*IstioClient, error) {
 		return nil, err
 	}
 	return &client, nil
-}
-
-// GetNamespaces returns a list of all namespaces of the cluster.
-// It returns a list of all namespaces of the cluster.
-// It returns an error on any problem.
-func (in *IstioClient) GetNamespaces() (*v1.NamespaceList, error) {
-	namespaces, err := in.k8s.CoreV1().Namespaces().List(emptyListOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	return namespaces, nil
-}
-
-// GetServices returns a list of services for a given namespace.
-// It returns an error on any problem.
-func (in *IstioClient) GetServices(namespaceName string) (*v1.ServiceList, error) {
-	services, err := in.k8s.CoreV1().Services(namespaceName).List(emptyListOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	return services, nil
-}
-
-// GetServiceDetails returns full details for a given service, consisting on service description, endpoints and pods.
-// A service is defined by the namespace and the service name.
-// It returns an error on any problem.
-func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error) {
-	service, err := in.k8s.CoreV1().Services(namespace).Get(serviceName, emptyGetOptions)
-	if err != nil {
-		return nil, err
-	}
-	endpoints, err := in.k8s.CoreV1().Endpoints(namespace).Get(serviceName, emptyGetOptions)
-	if err != nil {
-		return nil, err
-	}
-	pods := make([]*v1.Pod, 0)
-	for _, subset := range endpoints.Subsets {
-		for _, address := range subset.Addresses {
-			targetRef := address.TargetRef
-			if targetRef != nil && targetRef.Kind == "Pod" {
-				pod, err := in.k8s.CoreV1().Pods(namespace).Get(targetRef.Name, emptyGetOptions)
-				if err != nil {
-					return nil, err
-				}
-				pods = append(pods, pod)
-			}
-		}
-	}
-	return &ServiceDetails{service, endpoints, pods}, nil
-}
-
-// GetIstioDetails returns Istio details for a given service, on this version it describes the RouterRules defined for a service.
-// A service is defined by the namespace and the service name.
-// It returns an error on any problem.
-func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error) {
-	result, err := in.istio.Get().Namespace(namespace).Resource(RouteRules).Do().Get()
-	if err != nil {
-		return nil, err
-	}
-	rulesList, ok := result.(*RouteRuleList)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return a RouteRule list", namespace, serviceName)
-	}
-	// RouterRules have its own names non related to the service which are defined.
-	// So, to fetch the rules per a specific service we need to filter by destination.
-	// Probably in future iterations we might change this if it's not enough.
-	routerRules := make([]*RouteRule, 0)
-	for _, rule := range rulesList.Items {
-		if destination, ok := rule.Spec["destination"]; ok {
-			dest := destination.(map[string]interface{})
-			if dest["name"] == serviceName {
-				routerRules = append(routerRules, rule.DeepCopy())
-			}
-		}
-	}
-	return &IstioDetails{routerRules}, nil
 }

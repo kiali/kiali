@@ -28,6 +28,15 @@ var (
 			},
 			collection: &RouteRuleList{},
 		},
+		DestinationPolicyLabel: {
+			object: &DestinationPolicy{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       DestinationPolicyType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &DestinationPolicyList{},
+		},
 	}
 	osRouteGroupVersion = schema.GroupVersion{
 		Group:   "route.openshift.io",
@@ -61,5 +70,6 @@ type ServiceDetails struct {
 // IstioDetails is a wrapper to group all Istio objects related to a Service.
 // Used to fetch all Istio information in a single operation instead to invoke individual APIs per each group.
 type IstioDetails struct {
-	RouteRules []*RouteRule `json:"routerules"`
+	RouteRules          []*RouteRule         `json:"routerules"`
+	DestinationPolicies []*DestinationPolicy `json:"destinationpolicies"`
 }
