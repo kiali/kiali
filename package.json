@@ -7,12 +7,9 @@
   "dependencies": {
     "axios": "~0.17.1",
     "axios-mock-adapter": "~1.12.0",
-    "husky": "^0.14.3",
-    "lint-staged": "^6.1.0",
     "lodash": "~4.17.5",
     "patternfly": "~3.38.1",
     "patternfly-react": "~1.8.2",
-    "prettier": "^1.10.2",
     "react": "~16.2.0",
     "react-bootstrap": "~0.32.1",
     "react-cytoscape": "^1.0.6",
@@ -32,7 +29,8 @@
     "eject": "react-scripts-ts eject",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
-    "set-snapshot-version": "npm-snapshot"
+    "set-snapshot-version": "npm-snapshot",
+    "precommit": "npm run prettier -- --list-different || (echo 'Above file(s) were modified by prettier, check them before commiting' && false)"
   },
   "devDependencies": {
     "@storybook/addon-actions": "^3.3.12",
@@ -50,8 +48,10 @@
     "coveralls": "^3.0.0",
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
+    "husky": "^0.14.3",
     "node-sass-chokidar": "0.0.3",
     "npm-snapshot": "^1.0.3",
+    "prettier": "^1.10.2",
     "typescript": "~2.7.1"
   },
   "sassIncludes": {
