@@ -1,24 +1,71 @@
 import * as React from 'react';
-import { AboutModal } from 'patternfly-react';
+import { AboutModal, Spinner } from 'patternfly-react';
+import * as API from '../../services/Api';
+import update from 'immutability-helper';
 
 const pfLogo = require('../../img/logo-alt.svg');
+const SWS_CORE_COMMIT_HASH = 'SWS core commit hash';
+const SWS_CORE_VERSION = 'SWS core version';
 
 type AboutUIModalState = {
   showModal: boolean;
+  loadingVersions: boolean;
+  versions: Array<AboutUIModalService>;
+};
+
+type AboutUIModalService = {
+  name: string;
+  version: string;
+};
+
+const getStatus = () => {
+  return API.GetStatus().then(response => {
+    const rawStatus = response['data'];
+    return [
+      {
+        name: 'swscore',
+        version: `${rawStatus[SWS_CORE_VERSION]} (${rawStatus[SWS_CORE_COMMIT_HASH]})`
+      }
+    ];
+  });
 };
 
 class AboutUIModal extends React.Component<Object, AboutUIModalState> {
   constructor(props: any) {
     super(props);
-    this.state = { showModal: false };
+    this.state = { showModal: false, loadingVersions: false, versions: [] };
   }
 
   open = () => {
-    this.setState({ showModal: true });
+    this.setState(state => {
+      if (!state.loadingVersions) {
+        getStatus().then(
+          status => {
+            this.setState(innerState => {
+              return update(innerState, {
+                loadingVersions: { $set: false },
+                versions: { $set: status }
+              });
+            });
+          },
+          error => {
+            console.log(error);
+            return update(state, {
+              loadingVersions: { $set: false },
+              versions: { $set: [] }
+            });
+          }
+        );
+        return { showModal: true, loadingVersions: true, versions: [] };
+      }
+      return state;
+    });
   };
 
   close = () => {
-    this.setState({ showModal: false });
+    this.setState(state => {
+      return update(state, { showModal: { $set: false } });
+    });
   };
 
   render() {
@@ -36,6 +83,11 @@ class AboutUIModal extends React.Component<Object, AboutUIModalState> {
             label={process.env.REACT_APP_NAME}
             versionText={`${process.env.REACT_APP_VERSION} (${process.env.REACT_APP_GIT_HASH})`}
           />
+          <Spinner style={{ marginTop: '15px' }} loading={this.state.loadingVersions} size="lg" inverse={true}>
+            {this.state.versions.map(service => (
+              <AboutModal.VersionItem key={service.name} label={service.name} versionText={service.version} />
+            ))}
+          </Spinner>
         </AboutModal.Versions>
       </AboutModal>
     );
