@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	UnknownName    = "internet"
+	UnknownService = "unknown"
 	UnknownVersion = "unknown"
 )
 
