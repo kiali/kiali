@@ -1,0 +1,43 @@
+{
+  "namespace": {
+    "name": "istio-system"
+  },
+  "services": [
+    {
+      "name": "details"
+    },
+    {
+      "name": "grafana"
+    },
+    {
+      "name": "istio-ingress"
+    },
+    {
+      "name": "istio-mixer"
+    },
+    {
+      "name": "istio-pilot"
+    },
+    {
+      "name": "productpage"
+    },
+    {
+      "name": "prometheus"
+    },
+    {
+      "name": "ratings"
+    },
+    {
+      "name": "reviews"
+    },
+    {
+      "name": "servicegraph"
+    },
+    {
+      "name": "sws"
+    },
+    {
+      "name": "zipkin"
+    }
+  ]
+}
