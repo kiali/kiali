@@ -60,10 +60,10 @@ func NewClient() (*IstioClient, error) {
 	types := runtime.NewScheme()
 	schemeBuilder := runtime.NewSchemeBuilder(
 		func(scheme *runtime.Scheme) error {
-			for _, kind := range KnownTypes {
-				scheme.AddKnownTypes(IstioGroupVersion, kind.object, kind.collection)
+			for _, kind := range istioKnownTypes {
+				scheme.AddKnownTypes(istioGroupVersion, kind.object, kind.collection)
 			}
-			meta_v1.AddToGroupVersion(scheme, IstioGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, istioGroupVersion)
 			return nil
 		})
 
@@ -77,7 +77,7 @@ func NewClient() (*IstioClient, error) {
 		Host:    config.Host,
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{
-			GroupVersion:         &IstioGroupVersion,
+			GroupVersion:         &istioGroupVersion,
 			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)},
 			ContentType:          runtime.ContentTypeJSON,
 		},

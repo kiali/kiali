@@ -20,7 +20,6 @@ const (
 
 	EnvPrometheusServiceURL = "PROMETHEUS_SERVICE_URL"
 	EnvIstioIdentityDomain  = "ISTIO_IDENTITY_DOMAIN"
-	EnvGrafanaServiceURL    = "GRAFANA_SERVICE_URL"
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
@@ -28,6 +27,14 @@ const (
 	EnvServerCredentialsPassword        = "SERVER_CREDENTIALS_PASSWORD"
 	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
 	EnvServerCORSAllowAll               = "SERVER_CORS_ALLOW_ALL"
+
+	EnvGrafanaDisplayLink      = "GRAFANA_DISPLAY_LINK"
+	EnvGrafanaURL              = "GRAFANA_URL"
+	EnvGrafanaServiceNamespace = "GRAFANA_SERVICE_NAMESPACE"
+	EnvGrafanaService          = "GRAFANA_SERVICE"
+	EnvGrafanaDashboard        = "GRAFANA_DASHBOARD"
+	EnvGrafanaVarServiceSource = "GRAFANA_VAR_SERVICE_SOURCE"
+	EnvGrafanaVarServiceDest   = "GRAFANA_VAR_SERVICE_DEST"
 )
 
 // Global configuration for the application.
@@ -42,13 +49,24 @@ type Server struct {
 	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
 }
 
+// GrafanaConfig describes configuration used for Grafana links
+type GrafanaConfig struct {
+	DisplayLink      bool   `yaml:"display_link"`
+	URL              string `yaml:"url"`
+	ServiceNamespace string `yaml:"service_namespace"`
+	Service          string `yaml:"service"`
+	Dashboard        string `yaml:"dashboard"`
+	VarServiceSource string `yaml:"var_service_source"`
+	VarServiceDest   string `yaml:"var_service_dest"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	Identity             security.Identity `yaml:",omitempty"`
 	Server               Server            `yaml:",omitempty"`
 	PrometheusServiceURL string            `yaml:"prometheus_service_url,omitempty"`
 	IstioIdentityDomain  string            `yaml:"istio_identity_domain,omitempty"`
-	GrafanaServiceURL    string            `yaml:"grafana_service_url,omitempty"`
+	Grafana              GrafanaConfig     `yaml:"grafana,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -68,7 +86,14 @@ func NewConfig() (c *Config) {
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
 	c.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
 	c.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
-	c.GrafanaServiceURL = strings.TrimSpace(getDefaultString(EnvGrafanaServiceURL, ""))
+
+	c.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
+	c.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
+	c.Grafana.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaServiceNamespace, "istio-system"))
+	c.Grafana.Service = strings.TrimSpace(getDefaultString(EnvGrafanaService, "grafana"))
+	c.Grafana.Dashboard = strings.TrimSpace(getDefaultString(EnvGrafanaDashboard, "istio-dashboard"))
+	c.Grafana.VarServiceSource = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceSource, "var-source"))
+	c.Grafana.VarServiceDest = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceDest, "var-http_destination"))
 	return
 }
 
