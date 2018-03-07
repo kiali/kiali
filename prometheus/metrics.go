@@ -3,7 +3,6 @@ package prometheus
 import (
 	"context"
 	"fmt"
-	"math"
 	"regexp"
 	"strings"
 	"time"
@@ -18,239 +17,188 @@ var (
 	invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 )
 
-// Metric is a base interface for either MetricValue (single scalar, gauge or counter) or MetricHistogram
-type Metric interface {
-	exists() bool
+// Metrics contains health, all simple metrics and histograms data
+type Metrics struct {
+	Metrics    map[string]Metric    `json:"metrics"`
+	Histograms map[string]Histogram `json:"histograms"`
+	Health     *Health              `json:"health"`
 }
 
-type namedMetric struct {
-	name   string
-	metric Metric
+// Health contains information about healthy replicas for a service
+type Health struct {
+	HealthyReplicas int `json:"healthyReplicas"`
+	TotalReplicas   int `json:"totalReplicas"`
+	err             error
 }
 
-// MetricValue represents a metric holding a single scalar (gauge or counter)
-type MetricValue struct {
-	Metric `json:"-"`
-	Value  float64 `json:"value"`
-	found  bool
+// Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)
+type Metric struct {
+	Matrix model.Matrix `json:"matrix"`
+	err    error
 }
 
-func (m MetricValue) exists() bool {
-	return m.found
+// Histogram contains Metric objects for several histogram-kind statistics
+type Histogram struct {
+	Average      Metric `json:"average"`
+	Median       Metric `json:"median"`
+	Percentile95 Metric `json:"percentile95"`
+	Percentile99 Metric `json:"percentile99"`
 }
 
-// MetricHistogram hold some pre-defined stats from an histogram
-type MetricHistogram struct {
-	Metric       `json:"-"`
-	Average      float64 `json:"average"`
-	Median       float64 `json:"median"`
-	Percentile95 float64 `json:"percentile95"`
-	Percentile99 float64 `json:"percentile99"`
-	found        bool
+type vectorResult struct {
+	v   model.Vector
+	err error
 }
 
-func (m MetricHistogram) exists() bool {
-	return m.found
-}
-
-func getServiceMetricsAsync(api v1.API, namespace string, servicename string, duration string, metricChan chan namedMetric,
-	errChan chan error) int {
-
+func getServiceHealthAsync(api v1.API, namespace string, servicename string, healthCh chan *Health) {
+	envoyClustername := strings.Replace(config.Get().IstioIdentityDomain, ".", "_", -1)
+	queryPart := replaceInvalidCharacters(fmt.Sprintf("%s_%s_%s", servicename, namespace, envoyClustername))
 	now := time.Now()
+
+	healthyCh := make(chan vectorResult)
+	go fetchTimestamp(api, fmt.Sprintf("envoy_cluster_out_%s_http_membership_healthy", queryPart), now, healthyCh)
+
+	totalCh := make(chan vectorResult)
+	go fetchTimestamp(api, fmt.Sprintf("envoy_cluster_out_%s_http_membership_total", queryPart), now, totalCh)
+
+	healthyVect := <-healthyCh
+	totalVect := <-totalCh
+
+	if healthyVect.err != nil {
+		healthCh <- &Health{err: healthyVect.err}
+	} else if totalVect.err != nil {
+		healthCh <- &Health{err: totalVect.err}
+	} else if len(healthyVect.v) == 0 || len(totalVect.v) == 0 {
+		// Missing metrics
+		healthCh <- nil
+	} else {
+		healthCh <- &Health{
+			HealthyReplicas: int(healthyVect.v[0].Value),
+			TotalReplicas:   int(totalVect.v[0].Value)}
+	}
+}
+
+func getServiceMetricsAsync(api v1.API, namespace string, servicename string, duration time.Duration, step time.Duration,
+	rateInterval string, metricsChan chan Metrics) {
+
 	clustername := config.Get().IstioIdentityDomain
-	envoyClustername := strings.Replace(clustername, ".", "_", -1)
+	now := time.Now()
+	bounds := v1.Range{
+		Start: now.Add(-duration),
+		End:   now,
+		Step:  step}
 
-	type namedCall struct {
-		fcall func() (Metric, error)
-		name  string
-	}
-	// Curry calls
-	calls := []namedCall{{
-		name: "request_count_in",
-		fcall: func() (Metric, error) {
-			return fetchRate(api, "istio_request_count",
-				fmt.Sprintf("{destination_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
-		}}, {
-		name: "request_count_out",
-		fcall: func() (Metric, error) {
-			return fetchRate(api, "istio_request_count",
-				fmt.Sprintf("{source_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
-		}}, {
-		name: "request_size_in",
-		fcall: func() (Metric, error) {
-			return fetchHistogram(api, "istio_request_size",
-				fmt.Sprintf("{destination_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
-		}}, {
-		name: "request_size_out",
-		fcall: func() (Metric, error) {
-			return fetchHistogram(api, "istio_request_size",
-				fmt.Sprintf("{source_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
-		}}, {
-		name: "request_duration_in",
-		fcall: func() (Metric, error) {
-			return fetchHistogram(api, "istio_request_duration",
-				fmt.Sprintf("{destination_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
-		}}, {
-		name: "request_duration_out",
-		fcall: func() (Metric, error) {
-			return fetchHistogram(api, "istio_request_duration",
-				fmt.Sprintf("{source_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
-		}}, {
-		name: "response_size_in",
-		fcall: func() (Metric, error) {
-			return fetchHistogram(api, "istio_response_size",
-				fmt.Sprintf("{destination_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
-		}}, {
-		name: "response_size_out",
-		fcall: func() (Metric, error) {
-			return fetchHistogram(api, "istio_response_size",
-				fmt.Sprintf("{source_service=\"%s.%s.%s\"}", servicename, namespace, clustername), duration, now)
-		}}, {
-		name: "healthy_replicas",
-		fcall: func() (Metric, error) {
-			name := replaceInvalidCharacters(fmt.Sprintf("envoy_cluster_out_%s_%s_%s_http_membership_healthy", servicename, namespace, envoyClustername))
-			return fetchGauge(api, name, "", now)
-		}}, {
-		name: "total_replicas",
-		fcall: func() (Metric, error) {
-			name := replaceInvalidCharacters(fmt.Sprintf("envoy_cluster_out_%s_%s_%s_http_membership_total", servicename, namespace, envoyClustername))
-			return fetchGauge(api, name, "", now)
-		}}}
+	labelsIn := fmt.Sprintf("{destination_service=\"%s.%s.%s\"}", servicename, namespace, clustername)
+	labelsOut := fmt.Sprintf("{source_service=\"%s.%s.%s\"}", servicename, namespace, clustername)
 
-	for _, c := range calls {
-		go func(namedCall namedCall) {
-			metric, err := namedCall.fcall()
-			if err != nil {
-				errChan <- err
-			} else {
-				metricChan <- namedMetric{
-					name:   namedCall.name,
-					metric: metric}
-			}
-		}(c)
+	fetchRateAsync := func(metricName string) (chan Metric, chan Metric) {
+		chin := make(chan Metric)
+		chout := make(chan Metric)
+		go fetchRateRange(api, metricName, labelsIn, bounds, rateInterval, chin)
+		go fetchRateRange(api, metricName, labelsOut, bounds, rateInterval, chout)
+		return chin, chout
 	}
-	return len(calls)
+
+	fetchHistoAsync := func(metricName string) (chan Histogram, chan Histogram) {
+		chin := make(chan Histogram)
+		chout := make(chan Histogram)
+		go fetchHistogramRange(api, metricName, labelsIn, bounds, rateInterval, chin)
+		go fetchHistogramRange(api, metricName, labelsOut, bounds, rateInterval, chout)
+		return chin, chout
+	}
+
+	rqcountinCh, rqcountoutCh := fetchRateAsync("istio_request_count")
+	rqsizeinCh, rqsizeoutCh := fetchHistoAsync("istio_request_size")
+	rqdurinCh, rqduroutCh := fetchHistoAsync("istio_request_duration")
+	rssizeinCh, rssizeoutCh := fetchHistoAsync("istio_response_size")
+
+	metrics := make(map[string]Metric)
+	histograms := make(map[string]Histogram)
+
+	metrics["request_count_in"] = <-rqcountinCh
+	metrics["request_count_out"] = <-rqcountoutCh
+	histograms["request_size_in"] = <-rqsizeinCh
+	histograms["request_size_out"] = <-rqsizeoutCh
+	histograms["request_duration_in"] = <-rqdurinCh
+	histograms["request_duration_out"] = <-rqduroutCh
+	histograms["response_size_in"] = <-rssizeinCh
+	histograms["response_size_out"] = <-rssizeoutCh
+
+	metricsChan <- Metrics{
+		Metrics:    metrics,
+		Histograms: histograms}
 }
 
-func fetchGauge(api v1.API, metricName string, labels string, now time.Time) (*MetricValue, error) {
-	query := fmt.Sprintf("%s%s", metricName, labels)
-	val, err := fetchScalarDouble(api, query, now)
-	if err != nil {
-		return nil, err
-	}
-	// NaN value is considered as a missing metric
-	if math.IsNaN(val) {
-		return &MetricValue{found: false}, nil
-	}
-	return &MetricValue{Value: val, found: true}, nil
+func fetchRateRange(api v1.API, metricName string, labels string, bounds v1.Range, rateInterval string, ch chan Metric) {
+	query := fmt.Sprintf("rate(%s%s[%s])", metricName, labels, rateInterval)
+	fetchRange(api, query, bounds, ch)
 }
 
-func fetchRate(api v1.API, metricName string, labels string, duration string, now time.Time) (*MetricValue, error) {
-	query := fmt.Sprintf("rate(%s%s[%s])", metricName, labels, duration)
-	val, err := fetchScalarDouble(api, query, now)
-	if err != nil {
-		return nil, err
-	}
-	// NaN value is considered as a missing metric
-	if math.IsNaN(val) {
-		return &MetricValue{found: false}, nil
-	}
-	return &MetricValue{Value: val, found: true}, nil
-}
-
-func fetchHistogram(api v1.API, metricName string, labels string, duration string, now time.Time) (*MetricHistogram, error) {
+func fetchHistogramRange(api v1.API, metricName string, labels string, bounds v1.Range, rateInterval string, ch chan Histogram) {
 	// Note: we may want to make returned stats configurable in the future
-	avgChan, medChan, p95Chan, p99Chan := make(chan float64), make(chan float64), make(chan float64), make(chan float64)
-	errChan := make(chan error)
+	avgChan, medChan, p95Chan, p99Chan := make(chan Metric), make(chan Metric), make(chan Metric), make(chan Metric)
 
 	// Average
 	go func() {
 		query := fmt.Sprintf(
-			"sum(rate(%s_sum%s[%s])) / sum(rate(%s_count%s[%s]))", metricName, labels, duration, metricName, labels, duration)
-		avg, err := fetchScalarDouble(api, query, now)
-		if err != nil {
-			errChan <- err
-		} else {
-			avgChan <- avg
-		}
+			"sum(rate(%s_sum%s[%s])) / sum(rate(%s_count%s[%s]))", metricName, labels, rateInterval, metricName, labels, rateInterval)
+		fetchRange(api, query, bounds, avgChan)
 	}()
 
 	// Median
 	go func() {
 		query := fmt.Sprintf(
-			"histogram_quantile(0.5, sum(rate(%s_bucket%s[%s])) by (le))", metricName, labels, duration)
-		med, err := fetchScalarDouble(api, query, now)
-		if err != nil {
-			errChan <- err
-		} else {
-			medChan <- med
-		}
+			"histogram_quantile(0.5, sum(rate(%s_bucket%s[%s])) by (le))", metricName, labels, rateInterval)
+		fetchRange(api, query, bounds, medChan)
 	}()
 
 	// Quantile 95
 	go func() {
 		query := fmt.Sprintf(
-			"histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le))", metricName, labels, duration)
-		p95, err := fetchScalarDouble(api, query, now)
-		if err != nil {
-			errChan <- err
-		} else {
-			p95Chan <- p95
-		}
+			"histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le))", metricName, labels, rateInterval)
+		fetchRange(api, query, bounds, p95Chan)
 	}()
 
 	// Quantile 99
 	go func() {
 		query := fmt.Sprintf(
-			"histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le))", metricName, labels, duration)
-		p99, err := fetchScalarDouble(api, query, now)
-		if err != nil {
-			errChan <- err
-		} else {
-			p99Chan <- p99
-		}
+			"histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le))", metricName, labels, rateInterval)
+		fetchRange(api, query, bounds, p99Chan)
 	}()
 
-	var histo = MetricHistogram{found: true}
-	var metricError error
-	select {
-	case histo.Average = <-avgChan:
-	case metricError = <-errChan:
-	}
-	select {
-	case histo.Median = <-medChan:
-	case metricError = <-errChan:
-	}
-	select {
-	case histo.Percentile95 = <-p95Chan:
-	case metricError = <-errChan:
-	}
-	select {
-	case histo.Percentile99 = <-p99Chan:
-	case metricError = <-errChan:
-	}
-	// Any NaN value is considered as a missing metric
-	if math.IsNaN(histo.Average) || math.IsNaN(histo.Median) || math.IsNaN(histo.Percentile95) || math.IsNaN(histo.Percentile99) {
-		return &MetricHistogram{found: false}, nil
-	}
-	return &histo, metricError
+	ch <- Histogram{
+		Average:      <-avgChan,
+		Median:       <-medChan,
+		Percentile95: <-p95Chan,
+		Percentile99: <-p99Chan}
 }
 
-func fetchScalarDouble(api v1.API, query string, now time.Time) (float64, error) {
-	result, err := api.Query(context.Background(), query, now)
+func fetchTimestamp(api v1.API, query string, t time.Time, ch chan vectorResult) {
+	result, err := api.Query(context.Background(), query, t)
 	if err != nil {
-		return 0, err
+		ch <- vectorResult{err: err}
+		return
 	}
 	switch result.Type() {
 	case model.ValVector:
-		matrix := result.(model.Vector)
-		if len(matrix) > 0 {
-			return float64(matrix[0].Value), nil
-		}
-		// Else, no value
-		return math.NaN(), nil
+		ch <- vectorResult{v: result.(model.Vector)}
+		return
 	}
-	return 0, fmt.Errorf("Invalid query, vector expected: %s", query)
+	ch <- vectorResult{err: fmt.Errorf("Invalid query, vector expected: %s", query)}
+}
+
+func fetchRange(api v1.API, query string, bounds v1.Range, ch chan Metric) {
+	result, err := api.QueryRange(context.Background(), query, bounds)
+	if err != nil {
+		ch <- Metric{err: err}
+		return
+	}
+	switch result.Type() {
+	case model.ValMatrix:
+		ch <- Metric{Matrix: result.(model.Matrix)}
+		return
+	}
+	ch <- Metric{err: fmt.Errorf("Invalid query, matrix expected: %s", query)}
 }
 
 func replaceInvalidCharacters(metricName string) string {
