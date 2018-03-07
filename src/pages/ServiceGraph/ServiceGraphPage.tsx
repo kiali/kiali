@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import NamespaceId from '../../types/NamespaceId';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
 import { DropdownButton, MenuItem } from 'patternfly-react';
+import SummaryPanel from './SummaryPanel';
 
 type ServiceGraphPageProps = {
   availableNamespaces: { name: string }[];
@@ -64,7 +65,10 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
             </DropdownButton>
           </h2>
         </div>
-        <CytoscapeLayout namespace={this.state.graphNamespace} />
+        <div style={{ position: 'relative' }}>
+          <SummaryPanel />
+          <CytoscapeLayout namespace={this.state.graphNamespace} />
+        </div>
       </div>
     );
   }
