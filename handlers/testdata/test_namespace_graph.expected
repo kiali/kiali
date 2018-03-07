@@ -21,15 +21,6 @@
       },
       {
         "data": {
-          "id": "n0",
-          "text": "internet",
-          "service": "internet",
-          "version": "unknown",
-          "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bsource_service%3D%22%22%2Csource_version%3D%22unknown%22%7D"
-        }
-      },
-      {
-        "data": {
           "id": "n1",
           "text": "productpage (v1) \u003c20.00pm\u003e",
           "service": "productpage.istio-system.svc.cluster.local",
@@ -48,16 +39,8 @@
       },
       {
         "data": {
-          "id": "n8",
-          "text": "reviews",
-          "service": "reviews.istio-system.svc.cluster.local"
-        }
-      },
-      {
-        "data": {
           "id": "n3",
           "text": "reviews (v1)",
-          "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v1",
           "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D"
@@ -67,7 +50,6 @@
         "data": {
           "id": "n4",
           "text": "reviews (v2) \u003c20.00pm\u003e",
-          "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v2",
           "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v2%22%7D"
@@ -77,10 +59,18 @@
         "data": {
           "id": "n6",
           "text": "reviews (v3) \u003c20.00pm\u003e",
-          "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v3",
           "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v3%22%7D"
+        }
+      },
+      {
+        "data": {
+          "id": "n0",
+          "text": "unknown",
+          "service": "unknown",
+          "version": "unknown",
+          "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bsource_service%3D%22unknown%22%2Csource_version%3D%22unknown%22%7D"
         }
       }
     ],
@@ -90,7 +80,7 @@
           "id": "e0",
           "source": "n0",
           "target": "n1",
-          "text": "50.00pm",
+          "text": "50.00ps",
           "color": "green"
         }
       },
@@ -99,7 +89,7 @@
           "id": "e1",
           "source": "n1",
           "target": "n2",
-          "text": "20.00pm",
+          "text": "20.00ps",
           "color": "green"
         }
       },
@@ -108,7 +98,7 @@
           "id": "e2",
           "source": "n1",
           "target": "n3",
-          "text": "20.00pm",
+          "text": "20.00ps",
           "color": "green"
         }
       },
@@ -117,7 +107,7 @@
           "id": "e3",
           "source": "n1",
           "target": "n4",
-          "text": "20.00pm",
+          "text": "20.00ps",
           "color": "green"
         }
       },
@@ -126,7 +116,7 @@
           "id": "e5",
           "source": "n1",
           "target": "n6",
-          "text": "20.00pm",
+          "text": "20.00ps",
           "color": "green"
         }
       },
@@ -135,7 +125,7 @@
           "id": "e4",
           "source": "n4",
           "target": "n5",
-          "text": "20.00pm",
+          "text": "20.00ps",
           "color": "green"
         }
       },
@@ -144,7 +134,7 @@
           "id": "e6",
           "source": "n6",
           "target": "n5",
-          "text": "20.00pm",
+          "text": "20.00ps",
           "color": "green"
         }
       },
@@ -153,7 +143,7 @@
           "id": "e7",
           "source": "n7",
           "target": "n1",
-          "text": "100.00pm",
+          "text": "100.00ps",
           "color": "green"
         }
       }

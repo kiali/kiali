@@ -95,7 +95,7 @@ make docker
 ==== Deploying SWS to OpenShift
 
 [NOTE]
-Before deploying and running SWS, you must install and deploy link:https://istio.io[Istio] first. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio/openshift[OpenShift script] provided to you as a convienence to help you install Istio if you are using OpenShift.
+Before deploying and running SWS, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 0.6.0+*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio[convenience script] provided to you to help quickly get Istio installed.
 
 [NOTE]
 The following commands assume that the `oc` command is available in the user's path and that the user is logged in.
@@ -153,7 +153,7 @@ make minikube-docker
 ==== Deploying SWS to Kubernetes
 
 [NOTE]
-Before deploying and running SWS, you must install and deploy link:https://istio.io[Istio] first. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio/kubernetes[Kubernetes script] provided to you as a convienence to help you install Istio if you are using Kubernetes.
+Before deploying and running SWS, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 0.6.0+*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio/kubernetes[Kubernetes script] provided to you as a convenience to help you install Istio if you are using Kubernetes.
 
 [NOTE]
 The following commands assume that the `kubectl` command is available in the user's path and that the user is logged in.

@@ -21,16 +21,8 @@
       },
       {
         "data": {
-          "id": "n5",
-          "text": "reviews",
-          "service": "reviews.istio-system.svc.cluster.local"
-        }
-      },
-      {
-        "data": {
           "id": "n1",
           "text": "reviews (v1)",
-          "parent": "n5",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v1",
           "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D"
@@ -40,7 +32,6 @@
         "data": {
           "id": "n2",
           "text": "reviews (v2) \u003c20.00pm\u003e",
-          "parent": "n5",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v2",
           "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v2%22%7D"
@@ -50,7 +41,6 @@
         "data": {
           "id": "n4",
           "text": "reviews (v3) \u003c20.00pm\u003e",
-          "parent": "n5",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v3",
           "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v3%22%7D"
@@ -63,7 +53,7 @@
           "id": "e0",
           "source": "n0",
           "target": "n1",
-          "text": "20.00pm",
+          "text": "20.00ps",
           "color": "green"
         }
       },
@@ -72,7 +62,7 @@
           "id": "e1",
           "source": "n0",
           "target": "n2",
-          "text": "20.00pm",
+          "text": "20.00ps",
           "color": "green"
         }
       },
@@ -81,7 +71,7 @@
           "id": "e3",
           "source": "n0",
           "target": "n4",
-          "text": "20.00pm",
+          "text": "20.00ps",
           "color": "green"
         }
       },
@@ -90,7 +80,7 @@
           "id": "e2",
           "source": "n2",
           "target": "n3",
-          "text": "20.00pm",
+          "text": "20.00ps",
           "color": "green"
         }
       },
@@ -99,7 +89,7 @@
           "id": "e4",
           "source": "n4",
           "target": "n3",
-          "text": "20.00pm",
+          "text": "20.00ps",
           "color": "green"
         }
       }

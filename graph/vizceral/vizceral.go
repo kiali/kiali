@@ -63,11 +63,7 @@ type Node struct {
 type Config Node
 
 func NewConfig(namespace string, sn *[]tree.ServiceNode) (result Config) {
-	namespaceInternetNode := Node{
-		Renderer: "focusedChild",
-		Name:     "INTERNET",
-	}
-	namespaceNodes := []Node{namespaceInternetNode}
+	namespaceNodes := []Node{}
 	var namespaceConnections []Connection
 	var maxVolume float64
 
@@ -112,11 +108,22 @@ func NewConfig(namespace string, sn *[]tree.ServiceNode) (result Config) {
 }
 
 func walk(sn *tree.ServiceNode, nodes *[]Node, connections *[]Connection, volume *float64) {
-	name := fmt.Sprintf("%v (%v)", sn.Name, sn.Version)
+	// The unknown/unknown root node is set to act as the INTERNET node
+	isRoot := "unknown" == sn.Name && "unknown" == sn.Version
+	var name string
+	if isRoot {
+		name = "INTERNET"
+	} else {
+		name = fmt.Sprintf("%v (%v)", sn.Name, sn.Version)
+	}
 	_, found := getNode(nodes, name)
 	if !found {
-		displayName := fmt.Sprintf("%v (%v)", strings.Split(sn.Name, ".")[0], sn.Version)
-
+		var displayName string
+		if isRoot {
+			displayName = "INTERNET"
+		} else {
+			displayName = fmt.Sprintf("%v (%v)", strings.Split(sn.Name, ".")[0], sn.Version)
+		}
 		n := Node{
 			Renderer:    "focusedChild",
 			Name:        name,
@@ -131,28 +138,28 @@ func walk(sn *tree.ServiceNode, nodes *[]Node, connections *[]Connection, volume
 	}
 
 	var c Connection
-	if nil == sn.Parent {
-		c = Connection{
-			Source: "INTERNET",
-			Target: name,
+	if nil != sn.Parent {
+		isParentRoot := "unknown" == sn.Parent.Name && "unknown" == sn.Parent.Version
+		var source string
+		if isParentRoot {
+			source = "INTERNET"
+		} else {
+			source = fmt.Sprintf("%v (%v)", sn.Parent.Name, sn.Parent.Version)
 		}
-		*connections = append(*connections, c)
-
-	} else {
 		c = Connection{
-			Source: fmt.Sprintf("%v (%v)", sn.Parent.Name, sn.Parent.Version),
+			Source: source,
 			Target: name,
 			Metrics: Metrics{
-				Normal:  sn.Metadata["req_per_min_2xx"].(float64) / (sn.Metadata["req_per_min"].(float64) + 0.0001),
-				Warning: sn.Metadata["req_per_min_3xx"].(float64) / (sn.Metadata["req_per_min"].(float64) + 0.0001),
-				Danger:  (sn.Metadata["req_per_min_4xx"].(float64) + sn.Metadata["req_per_min_5xx"].(float64)) / (sn.Metadata["req_per_min"].(float64) + 0.0001),
+				Normal:  sn.Metadata["rate_2xx"].(float64) / (sn.Metadata["rate"].(float64) + 0.0001),
+				Warning: sn.Metadata["rate_3xx"].(float64) / (sn.Metadata["rate"].(float64) + 0.0001),
+				Danger:  (sn.Metadata["rate_4xx"].(float64) + sn.Metadata["rate_5xx"].(float64)) / (sn.Metadata["rate"].(float64) + 0.0001),
 			},
 		}
 
-		*volume += sn.Metadata["req_per_min_2xx"].(float64)
-		*volume += sn.Metadata["req_per_min_3xx"].(float64)
-		*volume += sn.Metadata["req_per_min_4xx"].(float64)
-		*volume += sn.Metadata["req_per_min_5xx"].(float64)
+		*volume += sn.Metadata["rate_2xx"].(float64)
+		*volume += sn.Metadata["rate_3xx"].(float64)
+		*volume += sn.Metadata["rate_4xx"].(float64)
+		*volume += sn.Metadata["rate_5xx"].(float64)
 	}
 	*connections = append(*connections, c)
 

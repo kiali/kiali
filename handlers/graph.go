@@ -24,8 +24,15 @@ package handlers
 //   groupByVersion: If supported by vendor, visually group versions of the same service (default true)
 //   offset:         Duration indicating desired query offset (default 0m)
 //   interval:       Duration indicating desired query period (default 30s)
+//   colorDead       Color for inactive edge (no traffic) (default black)
+//   colorError      Color for active edge with error% > thresholderror (default red)
+//   colorNormal     Color for active edge with error% below thresholdWarn (default green)
+//   colorWarn       Color for active edge with thresholdWarn < error% <= thresholderror (default red)
+//   thresholdError  Error% indicating error (default 2.0)
+//   thresholdWarn   Error% indicating warn  (default 0.0)
 //
-// See the vendor-specific config generators for more details about the specific vendor.
+// * Error% is the percentage of requests with response code != 2XX
+// * See the vendor-specific config generators for more details about the specific vendor.
 //
 import (
 	"context"
@@ -34,38 +41,19 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
 	"github.com/swift-sunshine/swscore/graph/cytoscape"
+	"github.com/swift-sunshine/swscore/graph/options"
 	"github.com/swift-sunshine/swscore/graph/tree"
 	"github.com/swift-sunshine/swscore/graph/vizceral"
 	"github.com/swift-sunshine/swscore/log"
 	"github.com/swift-sunshine/swscore/prometheus"
 )
-
-// options:
-//  namespace:      narrow graphs to services in this namespace (required)
-//  service:        narrow graphs to service (optional, no default)
-//  vendor:         cytoscape | vizceral (default cytoscape)
-//  metric:         Prometheus metric name to be used to generate the dependency graph (default=istio_request_count)
-//  groupByVersion: If supported by vendor, visually group versions of the same service
-//  offset:         Duration indicating desired query offset (default 0m)
-//  interval:       Duration indicating desired query period (default 30s)
-type options struct {
-	namespace      string
-	service        string
-	vendor         string
-	metric         string
-	groupByVersion bool
-	offset         time.Duration
-	interval       time.Duration
-}
 
 // GraphNamespace is a REST http.HandlerFunc handling namespace-wide servicegraph
 // config generation.
@@ -80,16 +68,16 @@ func GraphNamespace(w http.ResponseWriter, r *http.Request) {
 
 // graphNamespace provides a testing hook that can supply a mock client
 func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
-	o := parseRequest(r)
+	o := options.NewOptions(r)
 
-	switch o.vendor {
+	switch o.Vendor {
 	case "cytoscape":
 	case "vizceral":
 	default:
-		checkError(errors.New(fmt.Sprintf("Vendor [%v] does not support Namespace Graphs", o.vendor)))
+		checkError(errors.New(fmt.Sprintf("Vendor [%v] does not support Namespace Graphs", o.Vendor)))
 	}
 
-	log.Debugf("Build roots (root destination services nodes) for [%v] namespace graph with options [%+v]", o.vendor, o)
+	log.Debugf("Build roots (root destination services nodes) for [%v] namespace graph with options [%+v]", o.Vendor, o)
 
 	trees := buildNamespaceTrees(o, client)
 
@@ -97,24 +85,26 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 }
 
 // buildNamespaceTrees returns trees routed at all destination services with "Internet" parents
-func buildNamespaceTrees(o options, client *prometheus.Client) (trees []tree.ServiceNode) {
+func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []tree.ServiceNode) {
 	queryTime := time.Now()
-	if o.offset.Seconds() > 0 {
-		queryTime = queryTime.Add(-o.offset)
+	if o.Offset.Seconds() > 0 {
+		queryTime = queryTime.Add(-o.Offset)
 	}
 
 	// avoid circularities by keeping track of all seen nodes
 	seenNodes := make(map[string]*tree.ServiceNode)
 
+	// The logic below was written for multiple root nodes but as of istio 0.6
+	// there should only be a single root, and the query should return only one. I'll
+	// leave the logic in place, in case Istio changes it's mind...
+
 	// Query for root nodes. Root nodes for the namespace graph represent external
 	// requests (basically the internet) to destination services in the namespace.
-	// The service has label "source_version" == "unknown", which indicates that
-	// the request came from either an unknown or ingress source.
-	query := fmt.Sprintf("sum(rate(%v{source_version=\"unknown\",destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
-		o.metric,
-		fmt.Sprintf(".*\\\\.%v\\\\..*", o.namespace), // regex for namespace-constrained destination service
+	query := fmt.Sprintf("sum(rate(%v{source_service=\"unknown\",source_version=\"unknown\",destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
+		o.Metric,
+		fmt.Sprintf(".*\\\\.%v\\\\..*", o.Namespace), // regex for namespace-constrained destination service
 		"[2345][0-9][0-9]",                           // regex for valid response_codes
-		o.interval.Seconds(),                         // rate for the entire query period
+		o.Interval.Seconds(),                         // rate for the entire query period
 		"source_service")                             // group by
 
 	// fetch the root time series
@@ -128,11 +118,12 @@ func buildNamespaceTrees(o options, client *prometheus.Client) (trees []tree.Ser
 		sourceSvc, sourceSvcOk := m["source_service"]
 		if !sourceSvcOk {
 			log.Warningf("Skipping %v, missing expected labels", m.String())
+			continue
 		}
 
 		rootService := string(sourceSvc)
 		md := make(map[string]interface{})
-		md["link_prom_graph"] = linkPromGraph(client.Address(), o.metric, rootService, tree.UnknownVersion)
+		md["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, rootService, tree.UnknownVersion)
 
 		root := tree.NewServiceNode(rootService, tree.UnknownVersion)
 		root.Parent = nil
@@ -149,20 +140,20 @@ func buildNamespaceTrees(o options, client *prometheus.Client) (trees []tree.Ser
 	return trees
 }
 
-func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[string]*tree.ServiceNode, o options, client *prometheus.Client) {
+func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client) {
 	log.Debugf("Adding children for ServiceNode: %v\n", sn.ID)
 
 	var destinationSvcFilter string
-	if !strings.Contains(sn.Name, o.namespace) {
-		destinationSvcFilter = fmt.Sprintf(",destination_service=~\".*\\\\.%v\\\\..*\"", o.namespace)
+	if !strings.Contains(sn.Name, o.Namespace) {
+		destinationSvcFilter = fmt.Sprintf(",destination_service=~\".*\\\\.%v\\\\..*\"", o.Namespace)
 	}
-	query := fmt.Sprintf("sum(rate(%v{source_service=\"%v\",source_version=\"%v\"%v,response_code=~\"%v\"} [%vs]) * 60) by (%v)",
-		o.metric,
+	query := fmt.Sprintf("sum(rate(%v{source_service=\"%v\",source_version=\"%v\"%v,response_code=~\"%v\"} [%vs])) by (%v)",
+		o.Metric,
 		sn.Name,                                                 // parent service name
 		sn.Version,                                              // parent service version
 		destinationSvcFilter,                                    // regex for namespace-constrained destination service
 		"[2345][0-9][0-9]",                                      // regex for valid response_codes
-		o.interval.Seconds(),                                    // rate over the entire query period
+		o.Interval.Seconds(),                                    // rate over the entire query period
 		"destination_service,destination_version,response_code") // group by
 
 	vector := promQuery(query, start, client.API())
@@ -175,7 +166,7 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 		i := 0
 		for k, d := range destinations {
 			s := strings.Split(k, " ")
-			d["link_prom_graph"] = linkPromGraph(client.Address(), o.metric, s[0], s[1])
+			d["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, s[0], s[1])
 			child := tree.NewServiceNode(s[0], s[1])
 			child.Parent = sn
 			child.Metadata = d
@@ -211,15 +202,15 @@ func GraphService(w http.ResponseWriter, r *http.Request) {
 
 // graphService provides a testing hook that can supply a mock client
 func graphService(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
-	o := parseRequest(r)
+	o := options.NewOptions(r)
 
-	switch o.vendor {
+	switch o.Vendor {
 	case "cytoscape":
 	default:
-		checkError(errors.New(fmt.Sprintf("Vendor [%v] does not support Service Graphs", o.vendor)))
+		checkError(errors.New(fmt.Sprintf("Vendor [%v] does not support Service Graphs", o.Vendor)))
 	}
 
-	log.Debugf("Build roots (root destination services nodes) for [%v] service graph with options [%+v]", o.vendor, o)
+	log.Debugf("Build roots (root destination services nodes) for [%v] service graph with options [%+v]", o.Vendor, o)
 
 	trees := buildServiceTrees(o, client)
 
@@ -227,19 +218,19 @@ func graphService(w http.ResponseWriter, r *http.Request, client *prometheus.Cli
 }
 
 // buildServiceTrees returns trees routed at source services for versions of the service of interest
-func buildServiceTrees(o options, client *prometheus.Client) (trees []tree.ServiceNode) {
+func buildServiceTrees(o options.Options, client *prometheus.Client) (trees []tree.ServiceNode) {
 	queryTime := time.Now()
-	if o.offset.Seconds() > 0 {
-		queryTime = queryTime.Add(-o.offset)
+	if o.Offset.Seconds() > 0 {
+		queryTime = queryTime.Add(-o.Offset)
 	}
 
 	// Query for root nodes. Root nodes for the service graph represent
 	// services requesting the specified destination services in the namespace.
 	query := fmt.Sprintf("sum(rate(%v{destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
-		o.metric,
-		fmt.Sprintf("%v\\\\.%v\\\\..*", o.service, o.namespace), // regex for namespace-constrained destination service
+		o.Metric,
+		fmt.Sprintf("%v\\\\.%v\\\\..*", o.Service, o.Namespace), // regex for namespace-constrained destination service
 		"[2345][0-9][0-9]",                                      // regex for valid response_codes
-		o.interval.Seconds(),                                    // rate for the entire query period
+		o.Interval.Seconds(),                                    // rate for the entire query period
 		"source_service, source_version")                        // group by
 
 	// avoid circularities by keeping track of seen nodes
@@ -259,7 +250,7 @@ func buildServiceTrees(o options, client *prometheus.Client) (trees []tree.Servi
 			log.Warningf("Skipping %v, missing expected labels", m.String())
 			continue
 		}
-		if strings.HasPrefix(string(sourceSvc), o.service) {
+		if strings.HasPrefix(string(sourceSvc), o.Service) {
 			log.Warningf("Skipping %v, self-referential root", m.String())
 			continue
 		}
@@ -267,7 +258,7 @@ func buildServiceTrees(o options, client *prometheus.Client) (trees []tree.Servi
 		rootService := string(sourceSvc)
 		rootVersion := string(sourceVer)
 		md := make(map[string]interface{})
-		md["link_prom_graph"] = linkPromGraph(client.Address(), o.metric, rootService, rootVersion)
+		md["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, rootService, rootVersion)
 
 		root := tree.NewServiceNode(rootService, rootVersion)
 		root.Parent = nil
@@ -276,29 +267,29 @@ func buildServiceTrees(o options, client *prometheus.Client) (trees []tree.Servi
 		seenNodes[root.ID] = &root
 
 		log.Debugf("Building service tree for Root ServiceNode: %v\n", root.ID)
-		buildServiceSubtree(&root, o.service, queryTime, seenNodes, o, client)
+		buildServiceSubtree(&root, o.Service, queryTime, seenNodes, o, client)
 		trees = append(trees, root)
 	}
 
 	return trees
 }
 
-func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, start time.Time, seenNodes map[string]*tree.ServiceNode, o options, client *prometheus.Client) {
+func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, start time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client) {
 	log.Debugf("Adding children for ServiceNode: %v\n", sn.ID)
 
 	var destinationSvcFilter string
 	if "" == destinationSvc {
-		destinationSvcFilter = fmt.Sprintf(".*\\\\.%v\\\\..*", o.namespace)
+		destinationSvcFilter = fmt.Sprintf(".*\\\\.%v\\\\..*", o.Namespace)
 	} else {
-		destinationSvcFilter = fmt.Sprintf("%v\\\\.%v\\\\..*", o.service, o.namespace)
+		destinationSvcFilter = fmt.Sprintf("%v\\\\.%v\\\\..*", o.Service, o.Namespace)
 	}
-	query := fmt.Sprintf("sum(rate(%v{source_service=\"%v\",source_version=\"%v\",destination_service=~\"%v\",response_code=~\"%v\"} [%vs]) * 60) by (%v)",
-		o.metric,
+	query := fmt.Sprintf("sum(rate(%v{source_service=\"%v\",source_version=\"%v\",destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
+		o.Metric,
 		sn.Name,
 		sn.Version,
 		destinationSvcFilter,                                    // regex for destination service
 		"[2345][0-9][0-9]",                                      // regex for valid response_codes
-		o.interval.Seconds(),                                    // rate over the entire query period
+		o.Interval.Seconds(),                                    // rate over the entire query period
 		"destination_service,destination_version,response_code") // group by
 
 	// fetch the root time series
@@ -312,7 +303,7 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, start time
 		i := 0
 		for k, d := range destinations {
 			s := strings.Split(k, " ")
-			d["link_prom_graph"] = linkPromGraph(client.Address(), o.metric, s[0], s[1])
+			d["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, s[0], s[1])
 			child := tree.NewServiceNode(s[0], s[1])
 			child.Parent = sn
 			child.Metadata = d
@@ -338,59 +329,18 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, start time
 	}
 }
 
-func parseRequest(r *http.Request) options {
-	// path variables
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-	service := vars["service"]
-
-	// query params
-	params := r.URL.Query()
-	groupByVersion, groupByVersionErr := strconv.ParseBool(params.Get("groupByVersion"))
-	interval, intervalErr := time.ParseDuration(params.Get("interval"))
-	metric := params.Get("metric")
-	offset, offsetErr := time.ParseDuration(params.Get("offset"))
-	vendor := params.Get("vendor")
-
-	if groupByVersionErr != nil {
-		groupByVersion = true
-	}
-	if intervalErr != nil {
-		interval, _ = time.ParseDuration("10m")
-	}
-	if "" == metric {
-		metric = "istio_request_count"
-	}
-	if offsetErr != nil {
-		offset, _ = time.ParseDuration("0m")
-	}
-	if "" == vendor {
-		vendor = "cytoscape"
-	}
-
-	return options{
-		namespace:      namespace,
-		service:        service,
-		vendor:         vendor,
-		groupByVersion: groupByVersion,
-		interval:       interval,
-		metric:         metric,
-		offset:         offset,
-	}
-}
-
-func generateGraph(trees *[]tree.ServiceNode, w http.ResponseWriter, o options) {
-	log.Debugf("Generating config for [%v] service graph...", o.vendor)
+func generateGraph(trees *[]tree.ServiceNode, w http.ResponseWriter, o options.Options) {
+	log.Debugf("Generating config for [%v] service graph...", o.Vendor)
 
 	var vendorConfig interface{}
-	switch o.vendor {
+	switch o.Vendor {
 	case "vizceral":
-		vendorConfig = vizceral.NewConfig(o.namespace, trees)
+		vendorConfig = vizceral.NewConfig(o.Namespace, trees)
 	case "cytoscape":
-		vendorConfig = cytoscape.NewConfig(o.namespace, trees, o.groupByVersion)
+		vendorConfig = cytoscape.NewConfig(o.Namespace, trees, o.VendorOptions)
 	}
 
-	log.Debugf("Done generating config for [%v] service graph.", o.vendor)
+	log.Debugf("Done generating config for [%v] service graph.", o.Vendor)
 	RespondWithJSONIndent(w, http.StatusOK, vendorConfig)
 }
 
@@ -398,14 +348,14 @@ type Destination map[string]interface{}
 
 // toDestinations takes a slice of [istio] series and returns a map K => D
 // key = "destSvc destVersion"
-// val = Destination (map) with the following keys
-//          source_svc      string
-//          source_ver      string
-//          req_per_min     float64
-//          req_per_min_2xx float64
-//          req_per_min_3xx float64
-//          req_per_min_4xx float64
-//          req_per_min_5xx float64
+// val = Destination (map) with the following keys, rates are requestRatePerSecond
+//          source_svc   string
+//          source_ver   string
+//          rate     float64
+//          rate_2xx float64
+//          rate_3xx float64
+//          rate_4xx float64
+//          rate_5xx float64
 func toDestinations(sourceSvc, sourceVer string, vector model.Vector) (destinations map[string]Destination) {
 	destinations = make(map[string]Destination)
 	for _, s := range vector {
@@ -424,26 +374,26 @@ func toDestinations(sourceSvc, sourceVer string, vector model.Vector) (destinati
 				dest = Destination(make(map[string]interface{}))
 				dest["source_svc"] = sourceSvc
 				dest["source_ver"] = sourceVer
-				dest["req_per_min"] = 0.0
-				dest["req_per_min_2xx"] = 0.0
-				dest["req_per_min_3xx"] = 0.0
-				dest["req_per_min_4xx"] = 0.0
-				dest["req_per_min_5xx"] = 0.0
+				dest["rate"] = 0.0
+				dest["rate_2xx"] = 0.0
+				dest["rate_3xx"] = 0.0
+				dest["rate_4xx"] = 0.0
+				dest["rate_5xx"] = 0.0
 			}
 			val := float64(s.Value)
 			var ck string
 			switch {
 			case strings.HasPrefix(string(code), "2"):
-				ck = "req_per_min_2xx"
+				ck = "rate_2xx"
 			case strings.HasPrefix(string(code), "3"):
-				ck = "req_per_min_3xx"
+				ck = "rate_3xx"
 			case strings.HasPrefix(string(code), "4"):
-				ck = "req_per_min_4xx"
+				ck = "rate_4xx"
 			case strings.HasPrefix(string(code), "5"):
-				ck = "req_per_min_5xx"
+				ck = "rate_5xx"
 			}
 			dest[ck] = dest[ck].(float64) + val
-			dest["req_per_min"] = dest["req_per_min"].(float64) + val
+			dest["rate"] = dest["rate"].(float64) + val
 
 			destinations[k] = dest
 		}

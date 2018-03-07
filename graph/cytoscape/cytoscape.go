@@ -18,6 +18,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/swift-sunshine/swscore/graph/options"
 	"github.com/swift-sunshine/swscore/graph/tree"
 	"github.com/swift-sunshine/swscore/log"
 )
@@ -41,11 +42,11 @@ type EdgeData struct {
 	Text   string `json:"text"`   // display text
 	Color  string `json:"color"`  // link color
 	// App Fields (not required by Cytoscape)
-	Rpm    string `json:"req_per_min,omitempty"`
-	Rpm2xx string `json:"req_per_min_2XX,omitempty"`
-	Rpm3xx string `json:"req_per_min_3XX,omitempty"`
-	Rpm4xx string `json:"req_per_min_4XX,omitempty"`
-	Rpm5xx string `json:"req_per_min_5XX,omitempty"`
+	Rate    string `json:"rate,omitempty"`
+	Rate2xx string `json:"rate_2XX,omitempty"`
+	Rate3xx string `json:"rate_3XX,omitempty"`
+	Rate4xx string `json:"rate_4XX,omitempty"`
+	Rate5xx string `json:"rate_5XX,omitempty"`
 }
 
 type NodeWrapper struct {
@@ -66,7 +67,7 @@ type Config struct {
 }
 
 // NewConfig currently ignores namespace arg
-func NewConfig(namespace string, sn *[]tree.ServiceNode, groupByVersion bool) (result Config) {
+func NewConfig(namespace string, sn *[]tree.ServiceNode, o options.VendorOptions) (result Config) {
 	nodes := []*NodeWrapper{}
 	edges := []*EdgeWrapper{}
 
@@ -76,11 +77,11 @@ func NewConfig(namespace string, sn *[]tree.ServiceNode, groupByVersion bool) (r
 	for _, t := range *sn {
 		log.Debugf("Walk Tree Root %v", t.ID)
 
-		walk(&t, &nodes, &edges, "", &nodeIdSequence, &edgeIdSequence)
+		walk(&t, &nodes, &edges, "", &nodeIdSequence, &edgeIdSequence, o)
 	}
 
 	// Add composite nodes that group together different versions of the same service
-	if groupByVersion {
+	if o.GroupByVersion {
 		addCompositeNodes(&nodes, &nodeIdSequence)
 	}
 
@@ -104,10 +105,10 @@ func NewConfig(namespace string, sn *[]tree.ServiceNode, groupByVersion bool) (r
 	return result
 }
 
-func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, parentNodeId string, nodeIdSequence, edgeIdSequence *int) {
+func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, parentNodeId string, nodeIdSequence, edgeIdSequence *int, o options.VendorOptions) {
 	name := sn.Name
 	if "" == name {
-		name = tree.UnknownName
+		name = tree.UnknownService
 	}
 
 	nd, found := findNode(nodes, name, sn.Version)
@@ -136,8 +137,7 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		//TODO If we can find a graph layout that handles loop edges well then
 		// we can go back to allowing these but for now, flag the node text
 		if parentNodeId == nd.Id {
-			nd.Text = fmt.Sprintf("%s <%.2fpm>", nd.Text, sn.Metadata["req_per_min"].(float64))
-
+			nd.Text = fmt.Sprintf("%s <%.2fpm>", nd.Text, sn.Metadata["rate"].(float64))
 		} else {
 			edgeId := fmt.Sprintf("e%v", *edgeIdSequence)
 			*edgeIdSequence++
@@ -146,12 +146,8 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 				Source: parentNodeId,
 				Target: nd.Id,
 			}
-			addRpm(&ed, sn)
+			addRate(&ed, sn, o)
 			// TODO: Add in the response code breakdowns and/or other metric info
-			//addRpmField(&ed.Rpm2xx, t, "req_per_min_2xx")
-			//addRpmField(&ed.Rpm3xx, t, "req_per_min_3xx")
-			//addRpmField(&ed.Rpm4xx, t, "req_per_min_4xx")
-			//addRpmField(&ed.Rpm5xx, t, "req_per_min_5xx")
 			ew := EdgeWrapper{
 				Data: ed,
 			}
@@ -160,7 +156,7 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 	}
 
 	for _, c := range sn.Children {
-		walk(c, nodes, edges, nd.Id, nodeIdSequence, edgeIdSequence)
+		walk(c, nodes, edges, nd.Id, nodeIdSequence, edgeIdSequence, o)
 	}
 }
 
@@ -173,25 +169,25 @@ func findNode(nodes *[]*NodeWrapper, service, version string) (*NodeData, bool) 
 	return nil, false
 }
 
-func addRpm(ed *EdgeData, sn *tree.ServiceNode) {
-	rpm := sn.Metadata["req_per_min"].(float64)
-	if rpm > 0.0 {
-		rpmSuccess := sn.Metadata["req_per_min_2xx"].(float64)
-		errorRate := (rpm - rpmSuccess) / rpm * 100.0
+func addRate(ed *EdgeData, sn *tree.ServiceNode, o options.VendorOptions) {
+	rate := sn.Metadata["rate"].(float64)
+	if rate > 0.0 {
+		successRate := sn.Metadata["rate_2xx"].(float64)
+		errorPercent := (rate - successRate) / rate * 100.0
 		switch {
-		case errorRate > 1.0:
-			ed.Color = "red"
-			ed.Text = fmt.Sprintf("%.2fpm (err=%.2f%%)", rpm, errorRate)
-		case errorRate > 0.0:
-			ed.Color = "orange"
-			ed.Text = fmt.Sprintf("%.2fpm (err=%.2f%%)", rpm, errorRate)
+		case errorPercent > o.ThresholdError:
+			ed.Color = o.ColorError
+			ed.Text = fmt.Sprintf("%.2fps (err=%.2f%%)", rate, errorPercent)
+		case errorPercent > o.ThresholdWarn:
+			ed.Color = o.ColorWarn
+			ed.Text = fmt.Sprintf("%.2fps (err=%.2f%%)", rate, errorPercent)
 		default:
-			ed.Color = "green"
-			ed.Text = fmt.Sprintf("%.2fpm", rpm)
+			ed.Color = o.ColorNormal
+			ed.Text = fmt.Sprintf("%.2fps", rate)
 		}
 	} else {
-		ed.Color = "black"
-		ed.Text = "0pm"
+		ed.Color = o.ColorDead
+		ed.Text = "0ps"
 	}
 }
 
