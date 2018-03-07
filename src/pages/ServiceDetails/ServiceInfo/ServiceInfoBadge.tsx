@@ -6,7 +6,6 @@ interface BadgeProps {
   color: string;
   leftText: string;
   rightText: string;
-  key?: string;
 }
 
 interface ServiceBadgeState {
@@ -54,7 +53,6 @@ class ServiceInfoBadge extends React.Component<BadgeProps, ServiceBadgeState> {
     let height = 20 * this.props.scale;
     let textSize = 11 * this.props.scale;
     let borderRadius = 3 * this.props.scale * (this.props.style === 'square' ? 0 : 1);
-    let key = this.props.key || this.props.leftText + '_' + this.props.rightText;
     return (
       <svg
         height={height}
@@ -64,7 +62,6 @@ class ServiceInfoBadge extends React.Component<BadgeProps, ServiceBadgeState> {
         xmlns="http://www.w3.org/2000/svg"
         version="1.0"
         style={{ marginLeft: '5px' }}
-        key={key}
       >
         <linearGradient id="a" x2="0" y2={this.props.style === 'plastic' ? '100%' : '0'}>
           <stop stopOpacity=".1" stopColor="#bbb" offset="0" />

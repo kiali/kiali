@@ -53,5 +53,5 @@ export interface Rule {
   destination?: Map<string, string>;
   precedence?: number;
   route?: Label[];
-  match: MatchRequest;
+  match?: MatchRequest;
 }
