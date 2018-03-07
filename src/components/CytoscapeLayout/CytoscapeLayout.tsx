@@ -68,7 +68,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
   render() {
     return (
-      <div id="cytoscape-container">
+      <div id="cytoscape-container" style={{ marginRight: '25em' }}>
         <ReactCytoscape
           containerID="cy"
           cyRef={cy => {
