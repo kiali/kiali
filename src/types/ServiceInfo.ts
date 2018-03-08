@@ -24,11 +24,6 @@ export interface Pod {
   labels?: Map<string, string>;
 }
 
-export interface Source {
-  destination: string;
-  source: string;
-}
-
 export interface StringMatch {
   exact?: string;
   prefix?: string;

@@ -1,0 +1,192 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`#ServiceInfoPods render correctly with data should render service pods 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <ServiceInfoPods
+    pods={
+        Array [
+            Object {
+              "labels": Map {
+                "app" => "reviews",
+                "pod-template-hash" => "4140793682",
+                "version" => "v2",
+              },
+              "name": "reviews-v2-4140793682-qrpm9",
+            },
+            Object {
+              "labels": Map {
+                "app" => "reviews",
+                "pod-template-hash" => "3651831602",
+                "version" => "v3",
+              },
+              "name": "reviews-v3-3651831602-zn9g6",
+            },
+            Object {
+              "labels": Map {
+                "app" => "reviews",
+                "pod-template-hash" => "401049526",
+                "version" => "v1",
+              },
+              "name": "reviews-v1-401049526-tfstp",
+            },
+          ]
+    }
+/>,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "class",
+    "props": Object {
+      "iconName": "cube",
+      "iconType": "fa",
+      "items": Array [
+        <div>
+          <div>
+                    <strong>
+                              Pod
+                    </strong>
+                    : 
+                    reviews-v2-4140793682-qrpm9
+          </div>
+          <ul
+                    style={
+                              Object {
+                                        "listStyleType": "none",
+                                      }
+                    }
+          >
+                    
+          </ul>
+</div>,
+        <div>
+          <div>
+                    <strong>
+                              Pod
+                    </strong>
+                    : 
+                    reviews-v3-3651831602-zn9g6
+          </div>
+          <ul
+                    style={
+                              Object {
+                                        "listStyleType": "none",
+                                      }
+                    }
+          >
+                    
+          </ul>
+</div>,
+        <div>
+          <div>
+                    <strong>
+                              Pod
+                    </strong>
+                    : 
+                    reviews-v1-401049526-tfstp
+          </div>
+          <ul
+                    style={
+                              Object {
+                                        "listStyleType": "none",
+                                      }
+                    }
+          >
+                    
+          </ul>
+</div>,
+      ],
+      "title": "Pods",
+    },
+    "ref": null,
+    "rendered": null,
+    "type": [Function],
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "iconName": "cube",
+        "iconType": "fa",
+        "items": Array [
+          <div>
+            <div>
+                        <strong>
+                                    Pod
+                        </strong>
+                        : 
+                        reviews-v2-4140793682-qrpm9
+            </div>
+            <ul
+                        style={
+                                    Object {
+                                                "listStyleType": "none",
+                                              }
+                        }
+            >
+                        
+            </ul>
+</div>,
+          <div>
+            <div>
+                        <strong>
+                                    Pod
+                        </strong>
+                        : 
+                        reviews-v3-3651831602-zn9g6
+            </div>
+            <ul
+                        style={
+                                    Object {
+                                                "listStyleType": "none",
+                                              }
+                        }
+            >
+                        
+            </ul>
+</div>,
+          <div>
+            <div>
+                        <strong>
+                                    Pod
+                        </strong>
+                        : 
+                        reviews-v1-401049526-tfstp
+            </div>
+            <ul
+                        style={
+                                    Object {
+                                                "listStyleType": "none",
+                                              }
+                        }
+            >
+                        
+            </ul>
+</div>,
+        ],
+        "title": "Pods",
+      },
+      "ref": null,
+      "rendered": null,
+      "type": [Function],
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import ServiceId from '../../types/ServiceId';
 import { ServiceInfoPods, ServiceInfoRules, ServiceInfoRoutes, ServiceInfoDescription } from './ServiceInfo/';
-import { Endpoints, Pod, Port, Source, Rule } from '../../types/ServiceInfo';
+import { Endpoints, Pod, Port, Rule } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { ToastNotification, ToastNotificationList, Col, Row } from 'patternfly-react';
 
@@ -14,7 +14,7 @@ type ServiceInfoState = {
   endpoints?: Endpoints[];
   pods?: Pod[];
   rules?: Rule[];
-  dependencies?: Source[];
+  dependencies?: Map<string, string[]>;
   error: boolean;
   errorMessage: string;
 };
@@ -30,7 +30,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
       ports: [],
       pods: [],
       rules: [],
-      dependencies: [],
+      dependencies: new Map(),
       error: false,
       errorMessage: ''
     };
