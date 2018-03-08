@@ -16,16 +16,17 @@ type ServiceList struct {
 }
 
 type Service struct {
-	Name         string              `json:"name"`
-	Namespace    Namespace           `json:"namespace"`
-	Labels       map[string]string   `json:"labels"`
-	Type         string              `json:"type"`
-	Ip           string              `json:"ip"`
-	Ports        Ports               `json:"ports"`
-	Endpoints    Endpoints           `json:"endpoints"`
-	Pods         Pods                `json:"pods"`
-	RouteRules   RouteRules          `json:"route_rules"`
-	Dependencies map[string][]string `json:"dependencies"`
+	Name                string              `json:"name"`
+	Namespace           Namespace           `json:"namespace"`
+	Labels              map[string]string   `json:"labels"`
+	Type                string              `json:"type"`
+	Ip                  string              `json:"ip"`
+	Ports               Ports               `json:"ports"`
+	Endpoints           Endpoints           `json:"endpoints"`
+	Pods                Pods                `json:"pods"`
+	RouteRules          RouteRules          `json:"route_rules"`
+	DestinationPolicies DestinationPolicies `json:"destination_policies"`
+	Dependencies        map[string][]string `json:"dependencies"`
 }
 
 func GetServicesByNamespace(namespaceName string) ([]ServiceOverview, error) {
@@ -79,6 +80,7 @@ func (s *Service) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails
 
 func (s *Service) setIstioDetails(istioDetails *kubernetes.IstioDetails) {
 	(&s.RouteRules).Parse(istioDetails.RouteRules)
+	(&s.DestinationPolicies).Parse(istioDetails.DestinationPolicies)
 }
 
 func (s *Service) setPrometheusDetails(prometheusDetails map[string][]string) {
