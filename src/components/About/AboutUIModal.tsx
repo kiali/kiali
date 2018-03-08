@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { AboutModal, Spinner } from 'patternfly-react';
 import * as API from '../../services/Api';
-import update from 'immutability-helper';
 
 const pfLogo = require('../../img/logo-alt.svg');
 const SWS_CORE_COMMIT_HASH = 'SWS core commit hash';
@@ -41,18 +40,16 @@ class AboutUIModal extends React.Component<Object, AboutUIModalState> {
       if (!state.loadingVersions) {
         getStatus().then(
           status => {
-            this.setState(innerState => {
-              return update(innerState, {
-                loadingVersions: { $set: false },
-                versions: { $set: status }
-              });
+            this.setState({
+              loadingVersions: false,
+              versions: status
             });
           },
           error => {
             console.log(error);
-            return update(state, {
-              loadingVersions: { $set: false },
-              versions: { $set: [] }
+            this.setState({
+              loadingVersions: false,
+              versions: []
             });
           }
         );
@@ -63,9 +60,7 @@ class AboutUIModal extends React.Component<Object, AboutUIModalState> {
   };
 
   close = () => {
-    this.setState(state => {
-      return update(state, { showModal: { $set: false } });
-    });
+    this.setState({ showModal: false });
   };
 
   render() {
