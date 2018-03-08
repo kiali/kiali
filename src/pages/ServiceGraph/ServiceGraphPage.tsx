@@ -38,7 +38,7 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
   }
 
   populateNamespacesSelect(response: any) {
-    this.setState({ availableNamespaces: response['data'] });
+    this.setState({ availableNamespaces: response['data'] ? response['data'] : [] });
   }
 
   namespaceSelected(selectedNamespace: string) {

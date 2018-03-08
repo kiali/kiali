@@ -6,7 +6,6 @@
   },
   "dependencies": {
     "axios": "~0.17.1",
-    "axios-mock-adapter": "~1.12.0",
     "lodash": "~4.17.5",
     "patternfly": "~3.38.1",
     "patternfly-react": "~1.8.2",
@@ -44,6 +43,7 @@
     "@types/react": "~16.0.36",
     "@types/react-dom": "~16.0.3",
     "@types/react-router-dom": "^4.2.4",
+    "axios-mock-adapter": "^1.14.1",
     "babel-core": "^6.26.0",
     "coveralls": "^3.0.0",
     "enzyme": "^3.3.0",
