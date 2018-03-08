@@ -23,10 +23,10 @@ type Service struct {
 	Ip                  string              `json:"ip"`
 	Ports               Ports               `json:"ports"`
 	Endpoints           Endpoints           `json:"endpoints"`
-	Pods                Pods                `json:"pods"`
 	RouteRules          RouteRules          `json:"route_rules"`
 	DestinationPolicies DestinationPolicies `json:"destination_policies"`
 	Dependencies        map[string][]string `json:"dependencies"`
+	Deployments         Deployments         `json:"deployments"`
 }
 
 func GetServicesByNamespace(namespaceName string) ([]ServiceOverview, error) {
@@ -75,7 +75,7 @@ func (s *Service) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails
 	}
 
 	(&s.Endpoints).Parse(serviceDetails.Endpoints)
-	(&s.Pods).Parse(serviceDetails.Pods)
+	(&s.Deployments).Parse(serviceDetails.Deployments)
 }
 
 func (s *Service) setIstioDetails(istioDetails *kubernetes.IstioDetails) {
