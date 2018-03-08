@@ -65,7 +65,7 @@ func NewOptions(r *http.Request) Options {
 		colorWarn = "orange"
 	}
 	if groupByVersionErr != nil {
-		groupByVersion = false // TODO: back to true after we get a decent layout
+		groupByVersion = true
 	}
 	if intervalErr != nil {
 		interval, _ = time.ParseDuration("30s")
