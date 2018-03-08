@@ -96,18 +96,3 @@ EOF
 ansible-playbook main.yml --verbose -e ''"$ISTIO_INSTALLER_ENV"''
 
 echo "Installed Istio here: $ISTIO_INSTALL_DIR"
-
-# REMOVE THIS NOTICE WHEN THIS PR IS MERGED: https://github.com/istio/istio/pull/4020
-cat << EOM
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! NOTE!
-!! If installing Istio 0.6.0 or higher on OpenShift, run these four commands:
-!! Remove this notice when this is merged: https://github.com/istio/istio/pull/4020
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-oc adm policy add-scc-to-user anyuid -z grafana -n istio-system
-oc adm policy add-scc-to-user anyuid -z prometheus -n istio-system
-oc delete pods --selector=app=grafana -n istio-system
-oc delete pods --selector=app=prometheus -n istio-system
-EOM
