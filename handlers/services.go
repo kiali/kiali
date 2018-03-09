@@ -20,6 +20,12 @@ const (
 	metricsDefaultDurationMin  = 30
 )
 
+// HealthAndMetrics contains health, all simple metrics and histograms data - for json export only
+type healthAndMetrics struct {
+	Metrics prometheus.Metrics `json:"metrics"`
+	Health  prometheus.Health  `json:"health"`
+}
+
 // ServiceList is the API handler to fetch the list of services in a given namespace
 func ServiceList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -77,8 +83,10 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplie
 		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
 		return
 	}
-	metrics := prometheusClient.GetServiceMetrics(namespace, service, duration, step, rateInterval)
-	RespondWithJSON(w, http.StatusOK, metrics)
+	metrics, health := prometheusClient.GetServiceMetrics(namespace, service, duration, step, rateInterval)
+	RespondWithJSON(w, http.StatusOK, healthAndMetrics{
+		Metrics: metrics,
+		Health:  health})
 }
 
 // ServiceDetails is the API handler to fetch full details of an specific service

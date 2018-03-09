@@ -86,17 +86,12 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 // GetServiceMetrics returns the Health and Metrics related to the provided service identified by its namespace and service name.
 // Health might be nil when unavailable
 func (in *Client) GetServiceMetrics(namespace string, servicename string, duration time.Duration, step time.Duration,
-	rateInterval string) Metrics {
+	rateInterval string) (Metrics, Health) {
 
-	healthChan, metricsChan := make(chan *Health), make(chan Metrics)
-	go getServiceHealthAsync(in.api, namespace, servicename, healthChan)
-	go getServiceMetricsAsync(in.api, namespace, servicename, duration, step, rateInterval, metricsChan)
+	metrics := getServiceMetrics(in.api, namespace, servicename, duration, step, rateInterval)
+	health := getServiceHealth(in.api, namespace, servicename)
 
-	// Merge health in metrics
-	metrics := <-metricsChan
-	metrics.Health = <-healthChan
-
-	return metrics
+	return metrics, health
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client
