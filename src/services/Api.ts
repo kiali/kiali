@@ -27,6 +27,10 @@ let newRequest = (method: string, url: string, queryParams: any, data: any) => {
   });
 };
 
+export const GetStatus = () => {
+  return newRequest('get', '/api/status', {}, {});
+};
+
 export const GetNamespaces = () => {
   return newRequest('get', `/api/namespaces`, {}, {});
 };
