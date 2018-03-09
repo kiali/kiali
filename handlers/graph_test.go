@@ -1,16 +1,15 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
+
+	"github.com/swift-sunshine/swscore/prometheus/prometheustest"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,33 +20,9 @@ import (
 
 // Setup mock
 
-type promAPIMock struct {
-	mock.Mock
-}
-
-func (o *promAPIMock) Query(ctx context.Context, query string, ts time.Time) (model.Value, error) {
-	args := o.Called(ctx, query, ts)
-	return args.Get(0).(model.Value), args.Error(1)
-}
-
-func (o *promAPIMock) QueryRange(ctx context.Context, query string, r v1.Range) (model.Value, error) {
-	args := o.Called(ctx, query, r)
-	return args.Get(0).(model.Value), args.Error(1)
-}
-
-func (o *promAPIMock) LabelValues(ctx context.Context, label string) (model.LabelValues, error) {
-	args := o.Called(ctx, label)
-	return args.Get(0).(model.LabelValues), args.Error(1)
-}
-
-func (o *promAPIMock) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]model.LabelSet, error) {
-	args := o.Called(ctx, matches, startTime, endTime)
-	return args.Get(0).([]model.LabelSet), args.Error(1)
-}
-
-func setupMocked() (*prometheus.Client, *promAPIMock, error) {
+func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, error) {
 	config.Set(config.NewConfig())
-	api := new(promAPIMock)
+	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
 	if err != nil {
 		return nil, nil, err
@@ -56,7 +31,7 @@ func setupMocked() (*prometheus.Client, *promAPIMock, error) {
 	return client, api, nil
 }
 
-func mockQuery(api *promAPIMock, query string, ret *model.Vector) {
+func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector) {
 	api.On(
 		"Query",
 		mock.AnythingOfType("*context.emptyCtx"),

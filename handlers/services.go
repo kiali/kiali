@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/swift-sunshine/swscore/kubernetes"
@@ -13,16 +15,15 @@ import (
 )
 
 const (
-	defaultMetricsRange = "5m"
-	namespaceParam      = "namespace"
-	serviceParam        = "service"
-	rangeParam          = "range"
+	metricsDefaultRateInterval = "1m"
+	metricsDefaultStepSec      = 15
+	metricsDefaultDurationMin  = 30
 )
 
 // ServiceList is the API handler to fetch the list of services in a given namespace
 func ServiceList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	namespace := models.Namespace{Name: params[namespaceParam]}
+	namespace := models.Namespace{Name: params["namespace"]}
 
 	services, err := models.GetServicesByNamespace(namespace.Name)
 	if err != nil {
@@ -36,31 +37,47 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 
 // ServiceMetrics is the API handler to fetch metrics to be displayed, related to a single service
 func ServiceMetrics(w http.ResponseWriter, r *http.Request) {
+	getServiceMetrics(w, r, prometheus.NewClient)
+}
+
+// getServiceMetrics (mock-friendly version)
+func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error)) {
 	vars := mux.Vars(r)
-	namespace := vars[namespaceParam]
-	service := vars[serviceParam]
-	rangeV := defaultMetricsRange
-	if ranges, ok := r.URL.Query()[rangeParam]; ok && len(ranges) > 0 {
+	namespace := vars["namespace"]
+	service := vars["service"]
+	queryParams := r.URL.Query()
+	rateInterval := metricsDefaultRateInterval
+	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
 		// Only first is taken into consideration
-		rangeV = ranges[0]
+		rateInterval = rateIntervals[0]
 	}
-	prometheusClient, err := prometheus.NewClient()
+	duration := metricsDefaultDurationMin * time.Minute
+	if durations, ok := queryParams["duration"]; ok && len(durations) > 0 {
+		if num, err := strconv.Atoi(durations[0]); err == nil {
+			duration = time.Duration(num) * time.Second
+		} else {
+			// Bad request
+			RespondWithError(w, http.StatusBadRequest, "Bad request, cannot parse query parameter 'duration'")
+			return
+		}
+	}
+	step := metricsDefaultStepSec * time.Second
+	if steps, ok := queryParams["step"]; ok && len(steps) > 0 {
+		if num, err := strconv.Atoi(steps[0]); err == nil {
+			step = time.Duration(num) * time.Second
+		} else {
+			// Bad request
+			RespondWithError(w, http.StatusBadRequest, "Bad request, cannot parse query parameter 'step'")
+			return
+		}
+	}
+	prometheusClient, err := promClientSupplier()
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
 		return
 	}
-	metrics, err := prometheusClient.GetServiceMetrics(namespace, service, rangeV)
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
-		return
-	}
-	if len(metrics) == 0 {
-		// Every service should have metrics, so most probably it's because the service doesn't exist.
-		RespondWithError(w, http.StatusNotFound, "Metrics not found")
-		return
-	}
+	metrics := prometheusClient.GetServiceMetrics(namespace, service, duration, step, rateInterval)
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 

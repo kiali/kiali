@@ -83,26 +83,20 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 	return routes, nil
 }
 
-// GetServiceMetrics returns a map of metrics (indexed by description) related to the provided service identified by its namespace and service name.
-// Returned map includes istio metrics and envoy health.
-// It returns an error on any problem.
-func (in *Client) GetServiceMetrics(namespace string, servicename string, duration string) (map[string]Metric, error) {
-	metricChan, errChan := make(chan namedMetric), make(chan error)
-	nbCalls := getServiceMetricsAsync(in.api, namespace, servicename, duration, metricChan, errChan)
+// GetServiceMetrics returns the Health and Metrics related to the provided service identified by its namespace and service name.
+// Health might be nil when unavailable
+func (in *Client) GetServiceMetrics(namespace string, servicename string, duration time.Duration, step time.Duration,
+	rateInterval string) Metrics {
 
-	metrics := make(map[string]Metric)
-	var err error
-	for i := 0; i < nbCalls; i++ {
-		select {
-		case namedMetric := <-metricChan:
-			if namedMetric.metric.exists() {
-				metrics[namedMetric.name] = namedMetric.metric
-			}
-		case e := <-errChan:
-			err = e
-		}
-	}
-	return metrics, err
+	healthChan, metricsChan := make(chan *Health), make(chan Metrics)
+	go getServiceHealthAsync(in.api, namespace, servicename, healthChan)
+	go getServiceMetricsAsync(in.api, namespace, servicename, duration, step, rateInterval, metricsChan)
+
+	// Merge health in metrics
+	metrics := <-metricsChan
+	metrics.Health = <-healthChan
+
+	return metrics
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client
