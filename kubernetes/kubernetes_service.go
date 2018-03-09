@@ -1,11 +1,8 @@
 package kubernetes
 
 import (
-	"sync"
-
+	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
-
-	"github.com/swift-sunshine/swscore/log"
 )
 
 type serviceResponse struct {
@@ -16,6 +13,11 @@ type serviceResponse struct {
 type endpointsResponse struct {
 	endpoints *v1.Endpoints
 	err       error
+}
+
+type deploymentsResponse struct {
+	deployments *v1beta1.DeploymentList
+	err         error
 }
 
 type podResponse struct {
@@ -50,7 +52,9 @@ func (in *IstioClient) GetServices(namespaceName string) (*v1.ServiceList, error
 // A service is defined by the namespace and the service name.
 // It returns an error on any problem.
 func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error) {
-	serviceChan, endpointsChan := make(chan serviceResponse), make(chan endpointsResponse)
+	serviceChan := make(chan serviceResponse)
+	endpointsChan := make(chan endpointsResponse)
+	deploymentsChan := make(chan deploymentsResponse)
 
 	go func() {
 		service, err := in.k8s.CoreV1().Services(namespace).Get(serviceName, emptyGetOptions)
@@ -60,6 +64,11 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	go func() {
 		endpoints, err := in.k8s.CoreV1().Endpoints(namespace).Get(serviceName, emptyGetOptions)
 		endpointsChan <- endpointsResponse{endpoints: endpoints, err: err}
+	}()
+
+	go func() {
+		deployments, err := in.k8s.AppsV1beta1().Deployments(namespace).List(emptyListOptions)
+		deploymentsChan <- deploymentsResponse{deployments: filterByService(serviceName, deployments), err: err}
 	}()
 
 	serviceDetails := ServiceDetails{}
@@ -76,41 +85,24 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	}
 	serviceDetails.Endpoints = endpointsResponse.endpoints
 
-	podNames := make([]string, 0)
-	for _, subset := range serviceDetails.Endpoints.Subsets {
-		for _, address := range subset.Addresses {
-			targetRef := address.TargetRef
-			if targetRef != nil && targetRef.Kind == "Pod" {
-				podNames = append(podNames, targetRef.Name)
-			}
-		}
+	deploymentsResponse := <-deploymentsChan
+	if deploymentsResponse.err != nil {
+		return nil, deploymentsResponse.err
 	}
-
-	podChan := make(chan podResponse, len(podNames))
-	var wg sync.WaitGroup
-
-	for _, podName := range podNames {
-		wg.Add(1)
-		go func(podName string) {
-			defer wg.Done()
-			log.Infof("podName %v", podName)
-			pod, err := in.k8s.CoreV1().Pods(namespace).Get(podName, emptyGetOptions)
-			podChan <- podResponse{pod: pod, err: err}
-		}(podName)
-	}
-
-	go func() {
-		wg.Wait()
-		close(podChan)
-	}()
-
-	serviceDetails.Pods = make([]*v1.Pod, 0)
-	for podResponse := range podChan {
-		if podResponse.err != nil {
-			return nil, podResponse.err
-		}
-		serviceDetails.Pods = append(serviceDetails.Pods, podResponse.pod)
-	}
+	serviceDetails.Deployments = deploymentsResponse.deployments
 
 	return &serviceDetails, nil
+}
+
+func filterByService(serviceName string, dl *v1beta1.DeploymentList) *v1beta1.DeploymentList {
+	var deployments []v1beta1.Deployment
+
+	for _, deployment := range dl.Items {
+		if deployment.ObjectMeta.Labels != nil && deployment.ObjectMeta.Labels["app"] == serviceName {
+			deployments = append(deployments, deployment)
+		}
+	}
+
+	dl.Items = deployments
+	return dl
 }

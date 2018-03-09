@@ -83,7 +83,7 @@ metadata:
   labels:
     app: sws
 rules:
-- apiGroups: [""]
+- apiGroups: ["", "apps"]
   attributeRestrictions: null
   resources:
   - configmaps
@@ -93,6 +93,7 @@ rules:
   - projects
   - services
   - endpoints
+  - deployments
   verbs:
   - get
   - list

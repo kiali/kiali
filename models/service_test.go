@@ -2,11 +2,13 @@ package models
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/swift-sunshine/swscore/kubernetes"
 
+	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -38,17 +40,21 @@ func TestServiceDetailParsing(t *testing.T) {
 				Port{Name: "http", Protocol: "TCP", Port: 3001},
 				Port{Name: "http", Protocol: "TCP", Port: 3000},
 			}}})
-	assert.Equal(service.Pods, Pods{
-		Pod{
-			Name: "Pod1",
-			Labels: map[string]string{
-				"label1": "labelName1Pod1",
-				"label2": "labelName2Pod1"}},
-		Pod{
-			Name: "Pod2",
-			Labels: map[string]string{
-				"label1": "labelName1Pod2",
-				"label2": "labelName2Pod2"}}})
+	assert.Equal(service.Deployments, Deployments{
+		Deployment{
+			Name:                "reviews-v1",
+			Labels:              map[string]string{"apps": "reviews", "version": "v1"},
+			CreatedAt:           "2018-03-08T17:44:00+03:00",
+			Replicas:            3,
+			AvailableReplicas:   1,
+			UnavailableReplicas: 2},
+		Deployment{
+			Name:                "reviews-v2",
+			Labels:              map[string]string{"apps": "reviews", "version": "v2"},
+			CreatedAt:           "2018-03-08T17:45:00+03:00",
+			Replicas:            3,
+			AvailableReplicas:   3,
+			UnavailableReplicas: 0}})
 
 	// Istio Details
 	assert.Equal(service.RouteRules, RouteRules{
@@ -146,23 +152,30 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					{Name: "http", Protocol: "TCP", Port: 3000},
 				}}}}
 
-	pods := []*v1.Pod{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:      "Pod1",
-				Namespace: "Namespace1",
-				Labels: map[string]string{
-					"label1": "labelName1Pod1",
-					"label2": "labelName2Pod1"}}},
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:      "Pod2",
-				Namespace: "Namespace2",
-				Labels: map[string]string{
-					"label1": "labelName1Pod2",
-					"label2": "labelName2Pod2"}}}}
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:45 +0300")
+	deployments := &v1beta1.DeploymentList{
+		Items: []v1beta1.Deployment{
+			v1beta1.Deployment{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:              "reviews-v1",
+					CreationTimestamp: meta_v1.NewTime(t1),
+					Labels:            map[string]string{"apps": "reviews", "version": "v1"}},
+				Status: v1beta1.DeploymentStatus{
+					Replicas:            3,
+					AvailableReplicas:   1,
+					UnavailableReplicas: 2}},
+			v1beta1.Deployment{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:              "reviews-v2",
+					CreationTimestamp: meta_v1.NewTime(t2),
+					Labels:            map[string]string{"apps": "reviews", "version": "v2"}},
+				Status: v1beta1.DeploymentStatus{
+					Replicas:            3,
+					AvailableReplicas:   3,
+					UnavailableReplicas: 0}}}}
 
-	return &kubernetes.ServiceDetails{service, endpoints, pods}
+	return &kubernetes.ServiceDetails{service, endpoints, deployments}
 }
 
 func fakeIstioDetails() *kubernetes.IstioDetails {

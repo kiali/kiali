@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,9 +63,9 @@ type IstioObjectList interface {
 // ServiceDetails is a wrapper to group full Service description, Endpoints and Pods.
 // Used to fetch all details in a single operation instead to invoke individual APIs per each group.
 type ServiceDetails struct {
-	Service   *v1.Service   `json:"service"`
-	Endpoints *v1.Endpoints `json:"endpoints"`
-	Pods      []*v1.Pod     `json:"pods"`
+	Service     *v1.Service             `json:"service"`
+	Endpoints   *v1.Endpoints           `json:"endpoints"`
+	Deployments *v1beta1.DeploymentList `json:"deployments"`
 }
 
 // IstioDetails is a wrapper to group all Istio objects related to a Service.
