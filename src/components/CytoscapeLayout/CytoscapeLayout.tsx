@@ -1,16 +1,16 @@
 import * as React from 'react';
 import { ReactCytoscape } from 'react-cytoscape';
-import { CytoscapeConfig } from './CytoscapeConfig';
 import * as API from '../../services/Api';
 import PropTypes from 'prop-types';
+import { GraphStyles } from './graphs/GraphStyles';
 
 type CytoscapeLayoutState = {
   elements?: any;
 };
 
 type CytoscapeLayoutProps = {
-  // none yet
-  namespace: any;
+  namespace: string;
+  layout: any;
 };
 
 export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, CytoscapeLayoutState> {
@@ -56,10 +56,10 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   cyRef(cy: any) {
     this.cy = cy;
     cy.on('tap', 'node', (evt: any) => {
-      let target = evt.target;
-      let targetNode = cy.$id(target.id());
-      let svc = targetNode.data('service');
-      let service = svc.split('.')[0];
+      const target = evt.target;
+      const targetNode = cy.$id(target.id());
+      const svc = targetNode.data('service');
+      const service = svc.split('.')[0];
       if (service !== 'internet') {
         this.context.router.history.push('/namespaces/' + this.props.namespace + '/services/' + service);
       }
@@ -75,14 +75,9 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
             this.cyRef(cy);
           }}
           elements={this.state.elements}
-          style={CytoscapeConfig.getStyles()}
-          cytoscapeOptions={{ wheelSensitivity: 0.1, autounselectify: false }}
-          layout={{
-            name: 'breadthfirst',
-            directed: 'true',
-            maximalAdjustments: 2,
-            spacingFactor: 1
-          }}
+          style={GraphStyles.styles()}
+          cytoscapeOptions={GraphStyles.options()}
+          layout={this.props.layout}
         />
       </div>
     );

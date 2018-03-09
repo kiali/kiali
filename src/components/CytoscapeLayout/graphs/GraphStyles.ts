@@ -1,5 +1,9 @@
-export class CytoscapeConfig {
-  static getStyles() {
+export class GraphStyles {
+  static options() {
+    return { wheelSensitivity: 0.1, autounselectify: false };
+  }
+
+  static styles() {
     return [
       {
         selector: 'node',
@@ -9,8 +13,21 @@ export class CytoscapeConfig {
           },
           color: 'black',
           'background-color': '#bbb',
+          'border-width': '1px',
+          'border-color': '#000',
+          'font-size': '10px',
           'text-valign': 'center',
           'text-halign': 'right'
+        }
+      },
+      {
+        selector: 'node:selected',
+        style: {
+          'border-width': '3px',
+          'border-color': '#116CD6',
+          'border-opacity': '0.7',
+          'background-color': '#77828C',
+          'text-outline-color': '#77828C'
         }
       },
       {
@@ -32,7 +49,9 @@ export class CytoscapeConfig {
         selector: 'edge',
         css: {
           width: 3,
-          color: '#666',
+          color: '#434343',
+          opacity: '0.8',
+          'font-size': '8px',
           content: 'data(text)',
           'target-arrow-shape': 'vee',
           'line-color': 'data(color)',
@@ -47,6 +66,14 @@ export class CytoscapeConfig {
           'line-color': '#84B5EA',
           'target-arrow-color': '#84B5EA',
           'source-arrow-color': '#84B5EA'
+        }
+      },
+      {
+        selector: 'edge.highlighted',
+        style: {
+          'line-color': '#116CD6',
+          opacity: '0.95',
+          width: '25px'
         }
       }
     ];
