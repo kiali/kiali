@@ -1,5 +1,4 @@
 export interface Metrics {
-  health: Health;
   metrics: Map<String, MetricGroup>;
   histograms: Map<String, Histogram>;
 }

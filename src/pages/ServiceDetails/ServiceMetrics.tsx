@@ -148,7 +148,8 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     }, 100);
     API.getServiceMetrics(this.props.namespace, this.props.service, { rateInterval: this.state.rateInterval })
       .then(response => {
-        const metrics: M.Metrics = response['data'];
+        const metrics: M.Metrics = response['data']['metrics'];
+        const health: M.Health = response['data']['health'];
         this.setState({
           loading: false,
           requestCountIn: metrics.metrics['request_count_in'],
@@ -159,7 +160,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
           requestDurationOut: metrics.histograms['request_duration_out'],
           responseSizeIn: metrics.histograms['response_size_in'],
           responseSizeOut: metrics.histograms['response_size_out'],
-          health: metrics.health
+          health: health
         });
       })
       .catch(error => {
