@@ -1,12 +1,24 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import App from '../App';
+import 'jest-canvas-mock';
 
 const axios = require('axios');
 const MockAdapter = require('axios-mock-adapter');
 
-// Mock graph component due to direct DOM/div access
-jest.mock('../../components/CytoscapeLayout/CytoscapeLayout');
+// Mock getComputedStyle: Cytoscape relies on the result of this to have a valid paddingXXX
+// Current implementation returns '' which is parsed to float as NAN, breaking cytoscape.
+// Uses the default implementation and ensures we are returning a valid paddingXXX
+const defaultGetComputedStyle = window.getComputedStyle;
+window.getComputedStyle = jest.fn().mockImplementation(element => {
+  const computedStyle = defaultGetComputedStyle(element);
+  for (let prop of ['paddingTop', 'paddingRight', 'paddingLeft', 'paddingBottom']) {
+    if (computedStyle[prop] === '') {
+      computedStyle[prop] = '0px';
+    }
+  }
+  return computedStyle;
+});
 
 const mock = new MockAdapter(axios);
 mock.onAny().reply(200);

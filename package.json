@@ -49,6 +49,7 @@
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
     "husky": "^0.14.3",
+    "jest-canvas-mock": "^1.0.2",
     "node-sass-chokidar": "0.0.3",
     "npm-snapshot": "^1.0.3",
     "prettier": "^1.10.2",
