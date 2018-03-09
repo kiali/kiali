@@ -110,14 +110,15 @@ func TestGetServiceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetServiceMetrics("istio-system", "productpage", 1000, 10, "5m")
+	metrics, health := client.GetServiceMetrics("istio-system", "productpage", 1000, 10, "5m")
 
 	// Check health
-	assert.Equal(t, 0, metrics.Health.HealthyReplicas)
-	assert.Equal(t, 1, metrics.Health.TotalReplicas)
+	assert.Equal(t, 0, health.HealthyReplicas)
+	assert.Equal(t, 1, health.TotalReplicas)
 
 	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
+	fmt.Printf("TestAgainstLive / GetServiceMetrics: m=%v ; h=%v\n", metrics, health)
 	rqCountIn := metrics.Metrics["request_count_in"]
 	assert.NotNil(t, rqCountIn)
 	rqCountOut := metrics.Metrics["request_count_out"]
@@ -165,10 +166,10 @@ func TestGetServiceMetricsHealthUnavailable(t *testing.T) {
 	mockEmptyHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
-	metrics := client.GetServiceMetrics("istio-system", "productpage", 1000, 10, "5m")
+	metrics, health := client.GetServiceMetrics("istio-system", "productpage", 1000, 10, "5m")
 
-	// Check health unavailable
-	assert.Nil(t, metrics.Health)
+	// Check health not available (ie. total replicas = 0)
+	assert.Equal(t, 0, health.TotalReplicas)
 
 	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
@@ -294,6 +295,6 @@ func TestAgainstLiveGetServiceMetrics(t *testing.T) {
 		return
 	}
 	fmt.Printf("Metrics: \n")
-	metrics := client.GetServiceMetrics("tutorial", "preference", 1000*time.Second, 10*time.Second, "5m")
-	fmt.Printf("TestAgainstLive / GetServiceMetrics: %v\n", metrics)
+	metrics, health := client.GetServiceMetrics("tutorial", "preference", 1000*time.Second, 10*time.Second, "5m")
+	fmt.Printf("TestAgainstLive / GetServiceMetrics: m=%v ; h=%v\n", metrics, health)
 }
