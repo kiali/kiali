@@ -102,15 +102,15 @@ func TestGetServiceMetrics(t *testing.T) {
 	}
 	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_healthy", 0)
 	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", 1)
-	mockRange(api, "rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])", 1.5)
-	mockRange(api, "rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])", 2.5)
+	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
 	mockHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_duration", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.6)
 	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetServiceMetrics("istio-system", "productpage", 1000, 10, "5m")
+	metrics := client.GetServiceMetrics("istio-system", "productpage", 1000, 10, "5m", []string{}, []string{})
 
 	// Check health
 	assert.Equal(t, 0, metrics.Health.HealthyReplicas)
@@ -157,15 +157,15 @@ func TestGetServiceMetricsHealthUnavailable(t *testing.T) {
 	// Mock everything to return empty data
 	mockQuery(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_healthy", &model.Vector{})
 	mockQuery(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", &model.Vector{})
-	mockEmptyRange(api, "rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])")
-	mockEmptyRange(api, "rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])")
+	mockEmptyRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
 	mockEmptyHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_request_duration", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_response_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
-	metrics := client.GetServiceMetrics("istio-system", "productpage", 1000, 10, "5m")
+	metrics := client.GetServiceMetrics("istio-system", "productpage", 1000, 10, "5m", []string{}, []string{})
 
 	// Check health unavailable
 	assert.Nil(t, metrics.Health)
@@ -294,6 +294,6 @@ func TestAgainstLiveGetServiceMetrics(t *testing.T) {
 		return
 	}
 	fmt.Printf("Metrics: \n")
-	metrics := client.GetServiceMetrics("tutorial", "preference", 1000*time.Second, 10*time.Second, "5m")
+	metrics := client.GetServiceMetrics("tutorial", "preference", 1000*time.Second, 10*time.Second, "5m", []string{}, []string{})
 	fmt.Printf("TestAgainstLive / GetServiceMetrics: %v\n", metrics)
 }

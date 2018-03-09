@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,16 +29,23 @@ func TestServiceMetricsDefault(t *testing.T) {
 	delta := 2 * time.Second
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
+		query := args[1].(string)
 		switch r := args[2].(type) {
 		case time.Time:
 			// Health = envoy metrics
-			assert.Contains(t, args[1], "svc_ns_svc_cluster_local")
+			assert.Contains(t, query, "svc_ns_svc_cluster_local")
 			assert.WithinDuration(t, now, r, delta)
 			coveredPaths |= 2
 		case v1.Range:
 			// Other metrics = Istio metrics
-			assert.Contains(t, args[1], "svc.ns.svc.cluster.local")
-			assert.Contains(t, args[1], "["+metricsDefaultRateInterval+"]")
+			assert.Contains(t, query, "svc.ns.svc.cluster.local")
+			assert.Contains(t, query, "["+metricsDefaultRateInterval+"]")
+			if strings.Contains(query, "histogram_quantile") {
+				// Histogram specific queries
+				assert.Contains(t, query, " by (le)")
+			} else {
+				assert.NotContains(t, query, " by ")
+			}
 			assert.Equal(t, metricsDefaultStepSec*time.Second, r.Step)
 			assert.WithinDuration(t, now, r.End, delta)
 			assert.WithinDuration(t, now.Add(-metricsDefaultDurationMin*time.Minute), r.Start, delta)
@@ -68,6 +76,8 @@ func TestServiceMetricsWithParams(t *testing.T) {
 	q.Add("rateInterval", "5h")
 	q.Add("step", "99")
 	q.Add("duration", "1000")
+	q.Add("byLabelsIn[]", "response_code")
+	q.Add("byLabelsOut[]", "response_code")
 	req.URL.RawQuery = q.Encode()
 
 	coveredPaths := 0
@@ -75,6 +85,7 @@ func TestServiceMetricsWithParams(t *testing.T) {
 	delta := 2 * time.Second
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
+		query := args[1].(string)
 		switch r := args[2].(type) {
 		case time.Time:
 			// Health = envoy metrics
@@ -82,7 +93,13 @@ func TestServiceMetricsWithParams(t *testing.T) {
 			coveredPaths |= 2
 		case v1.Range:
 			// Other metrics = Istio metrics
-			assert.Contains(t, args[1], "[5h]")
+			assert.Contains(t, query, "[5h]")
+			if strings.Contains(query, "histogram_quantile") {
+				// Histogram specific queries
+				assert.Contains(t, query, " by (le,response_code)")
+			} else {
+				assert.Contains(t, query, " by (response_code)")
+			}
 			assert.Equal(t, 99*time.Second, r.Step)
 			assert.WithinDuration(t, now, r.End, delta)
 			assert.WithinDuration(t, now.Add(-1000*time.Second), r.Start, delta)

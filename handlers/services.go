@@ -71,13 +71,21 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplie
 			return
 		}
 	}
+	var byLabelsIn []string
+	var byLabelsOut []string
+	if lblsin, ok := queryParams["byLabelsIn[]"]; ok && len(lblsin) > 0 {
+		byLabelsIn = lblsin
+	}
+	if lblsout, ok := queryParams["byLabelsOut[]"]; ok && len(lblsout) > 0 {
+		byLabelsOut = lblsout
+	}
 	prometheusClient, err := promClientSupplier()
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
 		return
 	}
-	metrics := prometheusClient.GetServiceMetrics(namespace, service, duration, step, rateInterval)
+	metrics := prometheusClient.GetServiceMetrics(namespace, service, duration, step, rateInterval, byLabelsIn, byLabelsOut)
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
