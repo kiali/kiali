@@ -69,10 +69,17 @@ describe('ServiceMetrics', () => {
       })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('#grafana-source-link > a').map(div => div.getElement().props)).toEqual([
+          expect(mounted!.find('#grafana-out-link > a').map(div => div.getElement().props)).toEqual([
             {
               children: 'View in Grafana',
               href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-source=svc.ns.svc.cluster.local'
+            }
+          ]);
+          expect(mounted!.find('#grafana-in-link > a').map(div => div.getElement().props)).toEqual([
+            {
+              children: 'View in Grafana',
+              href:
+                'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-http_destination=svc.ns.svc.cluster.local'
             }
           ]);
         })
