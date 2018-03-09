@@ -50,7 +50,6 @@ export class GraphStyles {
         css: {
           width: 3,
           color: '#434343',
-          opacity: '0.8',
           'font-size': '8px',
           content: 'data(text)',
           'target-arrow-shape': 'vee',
@@ -68,12 +67,27 @@ export class GraphStyles {
           'source-arrow-color': '#84B5EA'
         }
       },
+      // TODO: is this needed anywhere?
       {
         selector: 'edge.highlighted',
         style: {
           'line-color': '#116CD6',
           opacity: '0.95',
           width: '25px'
+        }
+      },
+      // When you mouse over a node, all nodes other than the moused over node
+      // and its direct incoming/outgoing edges/nodes are dimmed by these styles.
+      {
+        selector: 'node.mousedim',
+        style: {
+          opacity: '0.4'
+        }
+      },
+      {
+        selector: 'edge.mousedim',
+        style: {
+          opacity: '0.4'
         }
       }
     ];
