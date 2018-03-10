@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { ReactCytoscape } from 'react-cytoscape';
-import * as API from '../../services/Api';
 import PropTypes from 'prop-types';
+
+import * as API from '../../services/Api';
 import { GraphStyles } from './graphs/GraphStyles';
+import { refreshSettings } from '../../model/RefreshSettings';
 
 type CytoscapeLayoutState = {
   elements?: any;
@@ -19,6 +21,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   };
 
   cy: any;
+  timerID: any;
 
   constructor(props: CytoscapeLayoutProps) {
     super(props);
@@ -26,8 +29,9 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     console.log('Starting ServiceGraphPage for namespace ' + this.props.namespace);
 
     this.state = {
-      elements: []
+      elements: {}
     };
+    this.updateGraphElements = this.updateGraphElements.bind(this);
   }
 
   resizeWindow() {
@@ -44,6 +48,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     this.resizeWindow();
     if (this.props.namespace.length !== 0) {
       this.updateGraphElements(this.props.namespace);
+      this.timerID = setInterval(() => this.updateGraphElements(this.props.namespace), refreshSettings.interval);
     }
   }
 
@@ -51,6 +56,10 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     if (nextProps.namespace !== this.props.namespace) {
       this.updateGraphElements(nextProps.namespace);
     }
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timerID);
   }
 
   cyRef(cy: any) {
@@ -112,12 +121,13 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     );
   }
 
-  private updateGraphElements(newNamespace: string) {
+  updateGraphElements(newNamespace: string) {
     API.GetGraphElements(newNamespace, null)
       .then(response => {
-        const elements: { [key: string]: any } = response['data'];
-        console.log(elements);
-        this.setState(elements);
+        const elements =
+          response['data'] && response['data'].elements ? response['data'].elements : { nodes: [], edges: [] };
+        console.log(`New graph data for ${newNamespace}`, elements);
+        this.setState({ elements: elements });
       })
       .catch(error => {
         this.setState({});

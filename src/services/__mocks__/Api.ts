@@ -1,3 +1,5 @@
+import * as GraphData from '../__mockData__/getGraphElements';
+
 const fs = require('fs');
 
 export const GetNamespaces = () => {
@@ -39,17 +41,12 @@ export const getGrafanaInfo = () => {
   });
 };
 
-export const GetGraphElements = (namespace: String, params: any) => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(`./src/services/__mockData__/getGraphElements.json`, 'utf8', (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        // Parse the data as JSON and put in the key entity (just like the request library does)
-        resolve(JSON.parse(data));
-      }
-    });
-  });
+export const GetGraphElements = (namespace: string, params: any) => {
+  if (GraphData.hasOwnProperty(namespace)) {
+    return Promise.resolve({ data: GraphData[namespace] });
+  } else {
+    return Promise.resolve({ data: {} });
+  }
 };
 
 export const GetServiceDetail = (namespace: String, service: String) => {
