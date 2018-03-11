@@ -60,9 +60,38 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
       const targetNode = cy.$id(target.id());
       const svc = targetNode.data('service');
       const service = svc.split('.')[0];
-      if (service !== 'internet') {
+      if (service !== 'unknown') {
         this.context.router.history.push('/namespaces/' + this.props.namespace + '/services/' + service);
       }
+    });
+
+    // When you mouse over a service node, that node and the nodes it connects (including the edges)
+    // remain the same, but all other nodes and edges will get dimmed, thus highlighting
+    // the moused over node and its "neighborhood".
+    // Note that we never dim the service group box elements (nor do we even process their mouse
+    // events). We know an element is a group box if its isParent() returns true.
+    cy.on('mouseover', 'node', (evt: any) => {
+      const target = evt.target;
+      if (target.isParent()) {
+        return;
+      }
+      cy
+        .elements()
+        .difference(target.closedNeighborhood())
+        .filter(function(ele: any) {
+          return !ele.isParent();
+        })
+        .addClass('mousedim');
+    });
+    cy.on('mouseout', 'node', (evt: any) => {
+      const target = evt.target;
+      if (target.isParent()) {
+        return;
+      }
+      cy
+        .elements()
+        .difference(target.closedNeighborhood())
+        .removeClass('mousedim');
     });
   }
 
