@@ -16,6 +16,16 @@ if [ "$?" != 0 ]; then
     echo "You do not have Ansible installed yet - attempting to install a local copy at $ANSIBLE_DIR"
     cd $OUTPUT_DIR && git clone git://github.com/ansible/ansible.git --recursive
     echo "Ansible has been downloaded here: ${ANSIBLE_DIR}"
+    echo "Will now attempt to pip install required dependencies."
+    pip install -r ${ANSIBLE_DIR}/requirements.txt > /dev/null 2>&1
+    if [ "$?" != 0 ]; then
+      echo "==========================================================="
+      echo "Looks like some Python dependencies might not be installed."
+      echo "If you get errors while trying to install and run Istio,"
+      echo "run this command and then re-run this script:"
+      echo "   sudo pip install -r ${ANSIBLE_DIR}/requirements.txt"
+      echo "==========================================================="
+    fi
   fi
   echo "Setting up environment to use the local installation of Ansible"
   source ${ANSIBLE_ENV_SETUP_SCRIPT}
