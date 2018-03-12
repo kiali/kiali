@@ -1,8 +1,14 @@
 package kubernetes
 
 import (
+	"github.com/kiali/swscore/config"
+
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
+)
+
+const (
+	DeploymentFilterLabelName = "app"
 )
 
 type serviceResponse struct {
@@ -98,7 +104,7 @@ func filterByService(serviceName string, dl *v1beta1.DeploymentList) *v1beta1.De
 	var deployments []v1beta1.Deployment
 
 	for _, deployment := range dl.Items {
-		if deployment.ObjectMeta.Labels != nil && deployment.ObjectMeta.Labels["app"] == serviceName {
+		if deployment.ObjectMeta.Labels != nil && deployment.ObjectMeta.Labels[config.Get().ServiceFilterLabelName] == serviceName {
 			deployments = append(deployments, deployment)
 		}
 	}

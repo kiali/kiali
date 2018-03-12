@@ -282,6 +282,13 @@ server:
 prometheus_service_url: VALUE
 ----
 
+|`SERVICE_FILTER_LABEL_NAME`
+|Label name which all resources of a service are group by. Default is `app`.
+[source,yaml]
+----
+service_filter_label_name: VALUE
+----
+
 |`GRAFANA_DISPLAY_LINK`
 |When true, a link to Grafana will be displayed for more metrics.
 [source,yaml]
