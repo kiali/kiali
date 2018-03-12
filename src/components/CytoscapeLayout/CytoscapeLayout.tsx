@@ -77,30 +77,51 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     // When you mouse over a service node, that node and the nodes it connects (including the edges)
     // remain the same, but all other nodes and edges will get dimmed, thus highlighting
     // the moused over node and its "neighborhood".
+    //
+    // When you mouse over an edge (i.e. a connector betwen nodes), that edge and
+    // the nodes it connects will remain the same, but all others will get dimmed,
+    // thus highlighting the moused over edge and its nodes.
+    //
     // Note that we never dim the service group box elements (nor do we even process their mouse
     // events). We know an element is a group box if its isParent() returns true.
-    cy.on('mouseover', 'node', (evt: any) => {
+    cy.on('mouseover', 'node,edge', (evt: any) => {
       const target = evt.target;
       if (target.isParent()) {
         return;
       }
-      cy
-        .elements()
-        .difference(target.closedNeighborhood())
+      let elesToDim;
+      if (target.isNode()) {
+        elesToDim = cy.elements().difference(target.closedNeighborhood());
+      } else {
+        // is edge
+        elesToDim = cy
+          .elements()
+          .difference(target.connectedNodes())
+          .difference(target);
+      }
+      elesToDim
         .filter(function(ele: any) {
           return !ele.isParent();
         })
         .addClass('mousedim');
     });
-    cy.on('mouseout', 'node', (evt: any) => {
+
+    cy.on('mouseout', 'node,edge', (evt: any) => {
       const target = evt.target;
       if (target.isParent()) {
         return;
       }
-      cy
-        .elements()
-        .difference(target.closedNeighborhood())
-        .removeClass('mousedim');
+      let elesToRestore;
+      if (target.isNode()) {
+        elesToRestore = cy.elements().difference(target.closedNeighborhood());
+      } else {
+        // is edge
+        elesToRestore = cy
+          .elements()
+          .difference(target.connectedNodes())
+          .difference(target);
+      }
+      elesToRestore.removeClass('mousedim');
     });
   }
 
