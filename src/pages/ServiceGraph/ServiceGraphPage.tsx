@@ -1,24 +1,15 @@
 import * as React from 'react';
-import * as API from '../../services/Api';
 import { RouteComponentProps } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import NamespaceId from '../../types/NamespaceId';
+import { Alert } from 'patternfly-react';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
-import { DropdownButton, MenuItem, Alert } from 'patternfly-react';
-import CytoscapeToolbar from './CytoscapeToolbar';
-import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
-import PfHeader from '../../components/Pf/PfHeader';
-import { DagreGraph } from '../../components/CytoscapeLayout/graphs/DagreGraph';
-import { ColaGraph } from '../../components/CytoscapeLayout/graphs/ColaGraph';
-import { BreadthFirstGraph } from '../../components/CytoscapeLayout/graphs/BreadthFirstGraph';
 import SummaryPanel from './SummaryPanel';
+import { GraphFilter, GraphFilters } from '../../components/GraphFilter/GraphFilter';
 
 type ServiceGraphPageProps = {
-  availableNamespaces: { name: string }[];
-  graphNamespace: string;
   alertVisible: boolean;
   alertDetails: string;
-  layout: any;
 };
 
 export default class ServiceGraphPage extends React.Component<RouteComponentProps<NamespaceId>, ServiceGraphPageProps> {
@@ -29,49 +20,22 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
   constructor(routeProps: RouteComponentProps<NamespaceId>) {
     super(routeProps);
     this.state = {
-      availableNamespaces: [],
-      graphNamespace: routeProps.match.params.namespace,
       alertVisible: false,
-      alertDetails: '',
-      layout: 'Cola'
+      alertDetails: ''
     };
 
-    this.populateNamespacesSelect = this.populateNamespacesSelect.bind(this);
+    this.filterChange = this.filterChange.bind(this);
+    this.handleError = this.handleError.bind(this);
+
+    GraphFilters.setGraphNamespace(routeProps.match.params.namespace);
+    // TODO: These should be query params
+    GraphFilters.setGraphInterval('30s');
+    GraphFilters.setGraphLayout('dagre');
   }
 
   componentDidMount() {
-    API.GetNamespaces()
-      .then(this.populateNamespacesSelect)
-      .catch(namespacesError => {
-        console.error(JSON.stringify(namespacesError));
-        this.handleError('Error fetching namespace list.');
-      });
+    // nothing to do yet
   }
-
-  componentWillReceiveProps(nextProps: RouteComponentProps<NamespaceId>) {
-    this.setState({ graphNamespace: nextProps.match.params.namespace });
-  }
-
-  populateNamespacesSelect(response: any) {
-    const namespaces = response['data'] ? response['data'] : [];
-    this.setState({ availableNamespaces: namespaces });
-  }
-
-  namespaceSelected = (selectedNamespace: string) => {
-    this.context.router.history.push(`/service-graph/${selectedNamespace}`);
-  };
-
-  clickGraphType = (name: string) => {
-    if (name === 'Dagre') {
-      this.setState({ layout: DagreGraph.getLayout() });
-    } else if (name === 'Cola') {
-      this.setState({ layout: ColaGraph.getLayout() });
-    } else if (name === 'Breadthfirst') {
-      this.setState({ layout: BreadthFirstGraph.getLayout() });
-    } else {
-      this.setState({ layout: DagreGraph.getLayout() });
-    }
-  };
 
   handleError = (error: string) => {
     this.setState({ alertVisible: true, alertDetails: error });
@@ -80,6 +44,12 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
   dismissAlert = () => {
     this.setState({ alertVisible: false });
   };
+
+  filterChange() {
+    this.context.router.history.push(
+      `/service-graph/${GraphFilters.getGraphNamespace()}?layout=${GraphFilters.getGraphLayoutName()}&interval=${GraphFilters.getGraphInterval()}`
+    );
+  }
 
   render() {
     let alertsDiv = <div />;
@@ -91,32 +61,21 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
       );
     }
     return (
-      <PfContainerNavVertical>
-        <PfHeader>
-          <h2>
-            Services Graph for namespace:
-            <DropdownButton
-              id="namespace-selector"
-              title={this.state.graphNamespace}
-              onSelect={this.namespaceSelected}
-              style={{ marginLeft: 20 }}
-              bsSize="large"
-            >
-              {this.state.availableNamespaces.map(ns => (
-                <MenuItem key={ns.name} active={ns.name === this.state.graphNamespace} eventKey={ns.name}>
-                  {ns.name}
-                </MenuItem>
-              ))}
-            </DropdownButton>
-          </h2>
-          {alertsDiv}
-        </PfHeader>
+      <div className="container-fluid container-pf-nav-pf-vertical">
+        <h2>Service Graph</h2>
+        {alertsDiv}
+        <div>
+          <GraphFilter onFilterChange={this.filterChange} onError={this.handleError} />
+        </div>
         <div style={{ position: 'relative' }}>
           <SummaryPanel />
-          <CytoscapeToolbar graphType={this.clickGraphType} />
-          <CytoscapeLayout namespace={this.state.graphNamespace} layout={this.state.layout} />
+          <CytoscapeLayout
+            namespace={GraphFilters.getGraphNamespace()}
+            layout={GraphFilters.getGraphLayout()}
+            interval={GraphFilters.getGraphInterval()}
+          />
         </div>
-      </PfContainerNavVertical>
+      </div>
     );
   }
 }

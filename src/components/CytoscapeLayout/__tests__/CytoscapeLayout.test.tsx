@@ -14,7 +14,9 @@ const testNamespace = 'ISTIO_SYSTEM';
 
 describe('CytographLayout component test', () => {
   it('should set correct elements data', async () => {
-    const wrapper = await shallow(<CytoscapeLayout namespace={testNamespace} layout={ColaGraph.getLayout()} />);
+    const wrapper = await shallow(
+      <CytoscapeLayout namespace={testNamespace} layout={ColaGraph.getLayout()} interval="30s" />
+    );
     wrapper.update();
     expect(wrapper.instance().state.elements.nodes).toEqual(GRAPH_DATA[testNamespace].elements.nodes);
     expect(wrapper.instance().state.elements.edges).toEqual(GRAPH_DATA[testNamespace].elements.edges);
@@ -25,7 +27,7 @@ describe('CytographLayout component test', () => {
     // see https://github.com/airbnb/enzyme/issues/944
     const spyUpdateGraphElements = jest.spyOn(CytoscapeLayout.prototype, 'updateGraphElements');
 
-    shallow(<CytoscapeLayout namespace={testNamespace} layout={ColaGraph.getLayout()} />);
+    shallow(<CytoscapeLayout namespace={testNamespace} layout={ColaGraph.getLayout()} interval="30s" />);
     expect(spyUpdateGraphElements).toHaveBeenCalledTimes(1);
 
     jest.runTimersToTime(refreshSettings.interval + 1000);

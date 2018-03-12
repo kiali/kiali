@@ -13,6 +13,7 @@ type CytoscapeLayoutState = {
 type CytoscapeLayoutProps = {
   namespace: string;
   layout: any;
+  interval: string;
 };
 
 export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, CytoscapeLayoutState> {
@@ -47,14 +48,14 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     window.addEventListener('resize', this.resizeWindow);
     this.resizeWindow();
     if (this.props.namespace.length !== 0) {
-      this.updateGraphElements(this.props.namespace);
+      this.updateGraphElements(this.props);
       this.timerID = setInterval(() => this.updateGraphElements(this.props.namespace), refreshSettings.interval);
     }
   }
 
   componentWillReceiveProps(nextProps: CytoscapeLayoutProps) {
-    if (nextProps.namespace !== this.props.namespace) {
-      this.updateGraphElements(nextProps.namespace);
+    if (nextProps.namespace !== this.props.namespace || nextProps.interval !== this.props.interval) {
+      this.updateGraphElements(nextProps);
     }
   }
 
@@ -142,12 +143,12 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     );
   }
 
-  updateGraphElements(newNamespace: string) {
-    API.GetGraphElements(newNamespace, null)
+  updateGraphElements(props: any) {
+    let params = { interval: props.interval };
+    API.GetGraphElements(props.namespace, params)
       .then(response => {
         const elements =
           response['data'] && response['data'].elements ? response['data'].elements : { nodes: [], edges: [] };
-        console.log(`New graph data for ${newNamespace}`, elements);
         this.setState({ elements: elements });
       })
       .catch(error => {
