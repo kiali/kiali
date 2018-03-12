@@ -34,9 +34,8 @@ describe('#getGrafanaInfo using Promises', () => {
 
 describe('#GetGraphElements using Promises', () => {
   it('should load service detail data', () => {
-    return API.GetGraphElements('istio-system', null).then(data => {
+    return API.GetGraphElements('ISTIO_SYSTEM', null).then(({ data }) => {
       expect(data).toBeDefined();
-      expect(data.elements).toBeDefined();
       expect(data.elements.nodes).toBeDefined();
       expect(data.elements.nodes).toBeInstanceOf(Array);
       expect(data.elements.edges).toBeDefined();
