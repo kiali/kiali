@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"k8s.io/api/apps/v1beta1"
+	autoscalingV1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/core/v1"
 )
 
@@ -17,6 +18,11 @@ type endpointsResponse struct {
 
 type deploymentsResponse struct {
 	deployments *v1beta1.DeploymentList
+	err         error
+}
+
+type autoscalersResponse struct {
+	autoscalers *autoscalingV1.HorizontalPodAutoscalerList
 	err         error
 }
 
@@ -55,6 +61,7 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	serviceChan := make(chan serviceResponse)
 	endpointsChan := make(chan endpointsResponse)
 	deploymentsChan := make(chan deploymentsResponse)
+	autoscalersChan := make(chan autoscalersResponse)
 
 	go func() {
 		service, err := in.k8s.CoreV1().Services(namespace).Get(serviceName, emptyGetOptions)
@@ -68,7 +75,14 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 
 	go func() {
 		deployments, err := in.k8s.AppsV1beta1().Deployments(namespace).List(emptyListOptions)
-		deploymentsChan <- deploymentsResponse{deployments: filterByService(serviceName, deployments), err: err}
+		deployments = filterDeploymentsByService(serviceName, deployments)
+		deploymentsChan <- deploymentsResponse{deployments: deployments, err: err}
+
+	}()
+
+	go func() {
+		autoscalers, err := in.k8s.AutoscalingV1().HorizontalPodAutoscalers(namespace).List(emptyListOptions)
+		autoscalersChan <- autoscalersResponse{autoscalers: autoscalers, err: err}
 	}()
 
 	serviceDetails := ServiceDetails{}
@@ -91,11 +105,17 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	}
 	serviceDetails.Deployments = deploymentsResponse.deployments
 
+	autoscalersResponse := <-autoscalersChan
+	if autoscalersResponse.err != nil {
+		return nil, autoscalersResponse.err
+	}
+	serviceDetails.Autoscalers = filterAutoscalersByDeployments(getDeploymentNames(serviceDetails.Deployments), autoscalersResponse.autoscalers)
+
 	return &serviceDetails, nil
 }
 
-func filterByService(serviceName string, dl *v1beta1.DeploymentList) *v1beta1.DeploymentList {
-	var deployments []v1beta1.Deployment
+func filterDeploymentsByService(serviceName string, dl *v1beta1.DeploymentList) *v1beta1.DeploymentList {
+	deployments := make([]v1beta1.Deployment, 0, len(dl.Items))
 
 	for _, deployment := range dl.Items {
 		if deployment.ObjectMeta.Labels != nil && deployment.ObjectMeta.Labels["app"] == serviceName {
@@ -105,4 +125,28 @@ func filterByService(serviceName string, dl *v1beta1.DeploymentList) *v1beta1.De
 
 	dl.Items = deployments
 	return dl
+}
+
+func filterAutoscalersByDeployments(deploymentNames []string, al *autoscalingV1.HorizontalPodAutoscalerList) *autoscalingV1.HorizontalPodAutoscalerList {
+	autoscalers := make([]autoscalingV1.HorizontalPodAutoscaler, 0, len(al.Items))
+
+	for _, autoscaler := range al.Items {
+		for _, deploymentName := range deploymentNames {
+			if deploymentName == autoscaler.Spec.ScaleTargetRef.Name {
+				autoscalers = append(autoscalers, autoscaler)
+			}
+		}
+	}
+
+	al.Items = autoscalers
+	return al
+}
+
+func getDeploymentNames(deployments *v1beta1.DeploymentList) []string {
+	deploymentNames := make([]string, len(deployments.Items))
+	for _, deployment := range deployments.Items {
+		deploymentNames = append(deploymentNames, deployment.Name)
+	}
+
+	return deploymentNames
 }

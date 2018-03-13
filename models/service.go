@@ -27,6 +27,7 @@ type Service struct {
 	DestinationPolicies DestinationPolicies `json:"destination_policies"`
 	Dependencies        map[string][]string `json:"dependencies"`
 	Deployments         Deployments         `json:"deployments"`
+	Autoscalers         Autoscalers         `json:"autoscalers"`
 }
 
 func GetServicesByNamespace(namespaceName string) ([]ServiceOverview, error) {
@@ -76,6 +77,7 @@ func (s *Service) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails
 
 	(&s.Endpoints).Parse(serviceDetails.Endpoints)
 	(&s.Deployments).Parse(serviceDetails.Deployments)
+	(&s.Autoscalers).Parse(serviceDetails.Autoscalers)
 }
 
 func (s *Service) setIstioDetails(istioDetails *kubernetes.IstioDetails) {
