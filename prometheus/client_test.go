@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/mock"
 	"github.com/kiali/swscore/config"
 	"github.com/kiali/swscore/prometheus/prometheustest"
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/mock"
 )
 
 func setupMocked() (*Client, *prometheustest.PromAPIMock, error) {

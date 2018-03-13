@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"github.com/kiali/swscore/prometheus"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestServiceMetricsDefault is unit test (testing request handling, not the prometheus client behaviour)
