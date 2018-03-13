@@ -60,6 +60,7 @@ echo "If installing on OpenShift, your cluster user must have the admin role."
 # defaults
 RELEASE_TAG_NAME=""
 CLUSTER_FLAVOUR="ocp"
+DELETE_RESOURCES="true"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -73,11 +74,16 @@ while [[ $# -gt 0 ]]; do
       CLUSTER_FLAVOUR="$2"
       shift;shift
       ;;
+    -k)
+      DELETE_RESOURCES="false"
+      shift
+      ;;
     -h)
       cat <<HELPMSG
 Valid command line arguments:
   -v : Istio version to install, do not specify this for the latest version
   -c : Cluster type where istio is to be installed - valid values are "k8s" or "ocp" (the default)
+  -k : Keep old Istio resources that might already exist. The default is to attempt to delete existing resources.
   -h : this message
 HELPMSG
       exit 1
@@ -94,7 +100,7 @@ ISTIO_INSTALLER_ENV=$(cat <<EOF
   "cluster_flavour": "$CLUSTER_FLAVOUR",
   "istio": {
     "release_tag_name": "$RELEASE_TAG_NAME",
-    "delete_resources": true,
+    "delete_resources": $DELETE_RESOURCES,
     "dest": "$ISTIO_INSTALL_DIR",
     "addon": ["grafana","prometheus","jaeger","servicegraph"],
     "samples": ["bookinfo"]
