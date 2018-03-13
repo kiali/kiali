@@ -10,9 +10,9 @@ import { IntervalButtonGroup } from './IntervalButtonGroup';
 import { LayoutButtonGroup } from './LayoutButtonGroup';
 
 export namespace GraphFilters {
-  let graphInterval: string;
-  let graphLayout: any;
-  let graphNamespace: string;
+  let graphInterval: string = '30s';
+  let graphLayout: any = DagreGraph.getLayout();
+  let graphNamespace: string = 'istio-system';
 
   export const getGraphInterval = () => {
     return graphInterval;
@@ -66,7 +66,7 @@ export class GraphFilter extends React.Component<GraphFilterProps, GraphFilterSt
     };
   }
 
-  componentWillMount() {
+  componentDidMount() {
     API.GetNamespaces().then(this.setNamespaces);
   }
 
@@ -105,8 +105,8 @@ export class GraphFilter extends React.Component<GraphFilterProps, GraphFilterSt
               ))}
             </DropdownButton>
           </ButtonGroup>
-          <IntervalButtonGroup onClick={this.updateInterval} initialInterval="30s" />
-          <LayoutButtonGroup onClick={this.updateLayout} initialLayout="dagre" />
+          <IntervalButtonGroup onClick={this.updateInterval} initialInterval={GraphFilters.getGraphInterval()} />
+          <LayoutButtonGroup onClick={this.updateLayout} initialLayout={GraphFilters.getGraphLayoutName()} />
         </ButtonToolbar>
         <Toolbar />
       </div>

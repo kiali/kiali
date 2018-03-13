@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-import PropTypes from 'prop-types';
+import { PropTypes } from 'prop-types';
 import NamespaceId from '../../types/NamespaceId';
 import { Alert } from 'patternfly-react';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
 import SummaryPanel from './SummaryPanel';
 import { GraphFilter, GraphFilters } from '../../components/GraphFilter/GraphFilter';
+
+const URLSearchParams = require('url-search-params');
 
 type ServiceGraphPageProps = {
   alertVisible: boolean;
@@ -27,10 +29,14 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
     this.filterChange = this.filterChange.bind(this);
     this.handleError = this.handleError.bind(this);
 
+    const search = routeProps.location.search;
+    const params = new URLSearchParams(search);
+    let graphInterval = params.get('interval');
+    let graphLayout = params.get('layout');
+
     GraphFilters.setGraphNamespace(routeProps.match.params.namespace);
-    // TODO: These should be query params
-    GraphFilters.setGraphInterval('30s');
-    GraphFilters.setGraphLayout('dagre');
+    GraphFilters.setGraphInterval(graphInterval ? graphInterval : '30s');
+    GraphFilters.setGraphLayout(graphLayout ? graphLayout : 'dagre');
   }
 
   componentDidMount() {

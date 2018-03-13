@@ -49,7 +49,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     this.resizeWindow();
     if (this.props.namespace.length !== 0) {
       this.updateGraphElements(this.props);
-      this.timerID = setInterval(() => this.updateGraphElements(this.props.namespace), refreshSettings.interval);
+      this.timerID = setInterval(() => this.updateGraphElements(this.props), refreshSettings.interval);
     }
   }
 

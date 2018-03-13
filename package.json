@@ -14,7 +14,8 @@
     "react-cytoscape": "^1.0.6",
     "react-dom": "~16.2.0",
     "react-router-dom": "^4.2.2",
-    "react-scripts-ts": "2.13.0"
+    "react-scripts-ts": "2.13.0",
+    "url-search-params": "^0.10.0"
   },
   "scripts": {
     "copy-fonts": "cp -r node_modules/patternfly/dist/fonts src/",
@@ -43,6 +44,7 @@
     "@types/react": "~16.0.36",
     "@types/react-dom": "~16.0.3",
     "@types/react-router-dom": "^4.2.4",
+    "@types/url-search-params": "^0.10.1",
     "axios-mock-adapter": "^1.14.1",
     "babel-core": "^6.26.0",
     "coveralls": "^3.0.0",
