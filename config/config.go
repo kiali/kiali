@@ -35,6 +35,8 @@ const (
 	EnvGrafanaDashboard        = "GRAFANA_DASHBOARD"
 	EnvGrafanaVarServiceSource = "GRAFANA_VAR_SERVICE_SOURCE"
 	EnvGrafanaVarServiceDest   = "GRAFANA_VAR_SERVICE_DEST"
+
+	EnvServiceFilterLabelName = "SERVICE_FILTER_LABEL_NAME"
 )
 
 // Global configuration for the application.
@@ -62,11 +64,12 @@ type GrafanaConfig struct {
 
 // Config defines full YAML configuration.
 type Config struct {
-	Identity             security.Identity `yaml:",omitempty"`
-	Server               Server            `yaml:",omitempty"`
-	PrometheusServiceURL string            `yaml:"prometheus_service_url,omitempty"`
-	IstioIdentityDomain  string            `yaml:"istio_identity_domain,omitempty"`
-	Grafana              GrafanaConfig     `yaml:"grafana,omitempty"`
+	Identity               security.Identity `yaml:",omitempty"`
+	Server                 Server            `yaml:",omitempty"`
+	PrometheusServiceURL   string            `yaml:"prometheus_service_url,omitempty"`
+	IstioIdentityDomain    string            `yaml:"istio_identity_domain,omitempty"`
+	Grafana                GrafanaConfig     `yaml:"grafana,omitempty"`
+	ServiceFilterLabelName string            `yaml:"service_filter_label_name,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -94,6 +97,8 @@ func NewConfig() (c *Config) {
 	c.Grafana.Dashboard = strings.TrimSpace(getDefaultString(EnvGrafanaDashboard, "istio-dashboard"))
 	c.Grafana.VarServiceSource = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceSource, "var-source"))
 	c.Grafana.VarServiceDest = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceDest, "var-http_destination"))
+
+	c.ServiceFilterLabelName = strings.TrimSpace(getDefaultString(EnvServiceFilterLabelName, "app"))
 	return
 }
 
