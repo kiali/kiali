@@ -44,7 +44,10 @@ clean:
 	@rm -f sws
 	@rm -rf ${GOPATH}/bin/sws
 	@rm -rf ${GOPATH}/pkg/*
-	@rm -rf _output/*
+	@rm -rf _output/docker
+
+clean-all: clean
+	@rm -rf _output
 
 git-init:
 	@echo Setting Git Hooks
