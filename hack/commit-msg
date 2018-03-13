@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# Automatically adds branch name at the begining of every commit message.
+NAME=$(git branch | grep '*' | sed 's/* //')
+
+if [[ "$NAME" == SWS* ]]
+then
+  echo "$NAME"': '$(cat "$1") > "$1"
+fi
