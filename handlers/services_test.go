@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/swift-sunshine/swscore/prometheus/prometheustest"
+	"github.com/kiali/swscore/prometheus/prometheustest"
 
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/gorilla/mux"
+	"github.com/kiali/swscore/prometheus"
 	"github.com/stretchr/testify/assert"
-	"github.com/swift-sunshine/swscore/prometheus"
 )
 
 // TestServiceMetricsDefault is unit test (testing request handling, not the prometheus client behaviour)

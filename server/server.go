@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/swift-sunshine/swscore/config"
-	"github.com/swift-sunshine/swscore/config/security"
-	"github.com/swift-sunshine/swscore/log"
-	"github.com/swift-sunshine/swscore/routing"
+	"github.com/kiali/swscore/config"
+	"github.com/kiali/swscore/config/security"
+	"github.com/kiali/swscore/log"
+	"github.com/kiali/swscore/routing"
 )
 
 type Server struct {

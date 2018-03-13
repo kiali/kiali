@@ -1,4 +1,4 @@
-= SWS image:https://travis-ci.org/swift-sunshine/swscore.svg["Build Status", link="https://travis-ci.org/swift-sunshine/swscore"]
+= SWS image:https://travis-ci.org/kiali/swscore.svg["Build Status", link="https://travis-ci.org/kiali/swscore"]
 :toc: macro
 :toc-title:
 
@@ -23,16 +23,16 @@ These build instructions assume you have the following installed on your system:
 
 To build SWS:
 
-* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/go/swift-sunshine/swscore" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH.
+* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/go/kiali/swscore" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH.
 
 [source,shell]
 ----
-export GOPATH=/source/go/swift-sunshine/swscore
+export GOPATH=/source/go/kiali/swscore
 mkdir -p $GOPATH
 cd $GOPATH
-mkdir -p src/github.com/swift-sunshine
-cd src/github.com/swift-sunshine
-git clone git@github.com:swift-sunshine/swscore
+mkdir -p src/github.com/kiali
+cd src/github.com/kiali
+git clone git@github.com:kiali/swscore
 export PATH=${PATH}:${GOPATH}/bin
 ----
 
@@ -40,7 +40,7 @@ export PATH=${PATH}:${GOPATH}/bin
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/swift-sunshine/swscore
+cd ${GOPATH}/src/github.com/kiali/swscore
 make dep-install
 ----
 
@@ -50,7 +50,7 @@ You should only run this command if you add, remove, or modify a dependency. If 
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/swift-sunshine/swscore
+cd ${GOPATH}/src/github.com/kiali/swscore
 make dep-update
 ----
 
@@ -58,7 +58,7 @@ make dep-update
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/swift-sunshine/swscore
+cd ${GOPATH}/src/github.com/kiali/swscore
 make build
 ----
 
@@ -66,7 +66,7 @@ make build
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/swift-sunshine/swscore
+cd ${GOPATH}/src/github.com/kiali/swscore
 make test
 ----
 
@@ -88,7 +88,7 @@ Create the SWS docker image through the "docker" make target:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/swift-sunshine/swscore
+cd ${GOPATH}/src/github.com/kiali/swscore
 make docker
 ----
 
@@ -135,7 +135,7 @@ Create the SWS docker image through the "docker" make target:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/swift-sunshine/swscore
+cd ${GOPATH}/src/github.com/kiali/swscore
 make docker
 ----
 
@@ -143,7 +143,7 @@ Note that if you are using minikube, you can build the docker image and push it 
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/swift-sunshine/swscore
+cd ${GOPATH}/src/github.com/kiali/swscore
 make minikube-docker
 ----
 
@@ -187,7 +187,7 @@ Sometimes you may want to run SWS outside of any container environment, perhaps 
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/swift-sunshine/swscore
+cd ${GOPATH}/src/github.com/kiali/swscore
 make install
 make run
 ----
@@ -196,7 +196,7 @@ The "install" target installs the SWS executable in your GOPATH /bin directory s
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/swift-sunshine/swscore
+cd ${GOPATH}/src/github.com/kiali/swscore
 make install
 ${GOPATH}/bin/sws -config <your-config-file>
 ----
@@ -344,13 +344,13 @@ grafana:
 
 === Running the UI Outside the Core
 
-When developing the http://github.com/swift-sunshine/swsui[SWS UI] you will find it useful to run it outside of the core to make it easier to update the UI code and see the changes without having to recompile. The prefered approach for this is to use a proxy on the UI to mount the core. The process is described https://github.com/swift-sunshine/swsui#developing[here].
+When developing the http://github.com/kiali/swsui[SWS UI] you will find it useful to run it outside of the core to make it easier to update the UI code and see the changes without having to recompile. The prefered approach for this is to use a proxy on the UI to mount the core. The process is described https://github.com/kiali/swsui#developing[here].
 
 === Running A Locally Built UI Inside the Core
 
 If you are developing the UI on your local machine but you want to see it deployed and running inside of the core server, you can do so by setting the environment variable CONSOLE_VERSION to the value "local" when building the docker image via the `docker` target. By default, your UI's build/ directory is assumed to be in a directory called `swsui` that is a peer directory of the GOPATH root directory for the core server. If it is not, you can set the environment variable CONSOLE_LOCAL_DIR to the value of the path of the root directory for the UI such that `$CONSOLE_LOCAL_DIR/build` contains the generated build files for the UI.
 
-For example, if your GOPATH directory for the swscore project is `/source/swift-sunshine/swscore` and you have git cloned the swsui repository in `/source/swift-sunshine/swsui` then you do not need to set CONSOLE_LOCAL_DIR. You can embed your locally built console into the core docker image via:
+For example, if your GOPATH directory for the swscore project is `/source/kiali/swscore` and you have git cloned the swsui repository in `/source/kiali/swsui` then you do not need to set CONSOLE_LOCAL_DIR. You can embed your locally built console into the core docker image via:
 
 [source,shell]
 ----

@@ -17,8 +17,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/swift-sunshine/swscore/config"
-	"github.com/swift-sunshine/swscore/config/security"
+	"github.com/kiali/swscore/config"
+	"github.com/kiali/swscore/config/security"
 )
 
 const (

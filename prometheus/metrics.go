@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
-	"github.com/swift-sunshine/swscore/config"
+	"github.com/kiali/swscore/config"
 )
 
 var (

@@ -7,10 +7,10 @@ import (
 
 	"k8s.io/api/core/v1"
 
-	"github.com/swift-sunshine/swscore/config"
-	"github.com/swift-sunshine/swscore/kubernetes"
-	"github.com/swift-sunshine/swscore/log"
-	"github.com/swift-sunshine/swscore/models"
+	"github.com/kiali/swscore/config"
+	"github.com/kiali/swscore/kubernetes"
+	"github.com/kiali/swscore/log"
+	"github.com/kiali/swscore/models"
 )
 
 type osRouteSupplier func(string, string) (string, error)

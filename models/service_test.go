@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/swift-sunshine/swscore/kubernetes"
+	"github.com/kiali/swscore/kubernetes"
 
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"

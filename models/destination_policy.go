@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/swift-sunshine/swscore/kubernetes"
+	"github.com/kiali/swscore/kubernetes"
 )
 
 type DestinationPolicies []DestinationPolicy

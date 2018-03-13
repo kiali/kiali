@@ -47,12 +47,12 @@ import (
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
-	"github.com/swift-sunshine/swscore/graph/cytoscape"
-	"github.com/swift-sunshine/swscore/graph/options"
-	"github.com/swift-sunshine/swscore/graph/tree"
-	"github.com/swift-sunshine/swscore/graph/vizceral"
-	"github.com/swift-sunshine/swscore/log"
-	"github.com/swift-sunshine/swscore/prometheus"
+	"github.com/kiali/swscore/graph/cytoscape"
+	"github.com/kiali/swscore/graph/options"
+	"github.com/kiali/swscore/graph/tree"
+	"github.com/kiali/swscore/graph/vizceral"
+	"github.com/kiali/swscore/log"
+	"github.com/kiali/swscore/prometheus"
 )
 
 // GraphNamespace is a REST http.HandlerFunc handling namespace-wide servicegraph

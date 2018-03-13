@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/swift-sunshine/swscore/log"
-	"github.com/swift-sunshine/swscore/models"
+	"github.com/kiali/swscore/log"
+	"github.com/kiali/swscore/models"
 )
 
 func NamespaceList(w http.ResponseWriter, r *http.Request) {
