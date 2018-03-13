@@ -69,8 +69,6 @@ Use `npm run build` which will bundle the build artifacts using webpack into the
 * `src` : Source and test code
 * `src/assets` : Images and other assets
 * `src/components` : Stateless components (pure functions)
-* `src/containers` : Stateful (smart) components
-* `src/hoc` : High order Components
 * `src/pages` : Top level pages and nested components
 * `stories`: Storybook files
 * `build`: Production build output
@@ -83,6 +81,19 @@ PatternFly React Sass extensions. Once Sass compiles, the resulting CSS can be f
 
 Note:
 Only static assets which are `import` 'ed into your application will be included in your resulting build output.
+
+== Testing
+To run the tests:
+[source,shell]
+----
+npm test
+----
+
+Note: for OS/X users testing requires watchman to be installed
+[source,shell]
+----
+brew install watchman
+----
 
 == For Storybook Components
 [source,shell]
