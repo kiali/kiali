@@ -9,8 +9,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/swift-sunshine/swscore/config/security"
-	"github.com/swift-sunshine/swscore/log"
+	"github.com/kiali/swscore/config/security"
+	"github.com/kiali/swscore/log"
 )
 
 // Environment vars can define some default values.

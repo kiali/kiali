@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/swift-sunshine/swscore/graph/tree"
+	"github.com/kiali/swscore/graph/tree"
 )
 
 type Metadata struct {

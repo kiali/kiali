@@ -3,7 +3,7 @@ package routing
 import (
 	"net/http"
 
-	"github.com/swift-sunshine/swscore/handlers"
+	"github.com/kiali/swscore/handlers"
 )
 
 // Route describes a single route

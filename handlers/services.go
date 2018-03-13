@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/swift-sunshine/swscore/kubernetes"
-	"github.com/swift-sunshine/swscore/log"
-	"github.com/swift-sunshine/swscore/models"
-	"github.com/swift-sunshine/swscore/prometheus"
+	"github.com/kiali/swscore/kubernetes"
+	"github.com/kiali/swscore/log"
+	"github.com/kiali/swscore/models"
+	"github.com/kiali/swscore/prometheus"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 )

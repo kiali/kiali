@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/swift-sunshine/swscore/status"
+	"github.com/kiali/swscore/status"
 )
 
 func Root(w http.ResponseWriter, r *http.Request) {

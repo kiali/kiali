@@ -18,9 +18,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/swift-sunshine/swscore/graph/options"
-	"github.com/swift-sunshine/swscore/graph/tree"
-	"github.com/swift-sunshine/swscore/log"
+	"github.com/kiali/swscore/graph/options"
+	"github.com/kiali/swscore/graph/tree"
+	"github.com/kiali/swscore/log"
 )
 
 type NodeData struct {

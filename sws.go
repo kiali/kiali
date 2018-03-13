@@ -10,10 +10,10 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/swift-sunshine/swscore/config"
-	"github.com/swift-sunshine/swscore/log"
-	"github.com/swift-sunshine/swscore/server"
-	"github.com/swift-sunshine/swscore/status"
+	"github.com/kiali/swscore/config"
+	"github.com/kiali/swscore/log"
+	"github.com/kiali/swscore/server"
+	"github.com/kiali/swscore/status"
 )
 
 // Identifies the build. These are set via ldflags during the build (see Makefile).

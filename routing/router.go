@@ -5,7 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/swift-sunshine/swscore/config"
+	"github.com/kiali/swscore/config"
 )
 
 // NewRouter creates the router with all API routes and the static files handler
