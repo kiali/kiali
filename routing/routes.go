@@ -82,7 +82,7 @@ func NewRoutes() (r *Routes) {
 
 			"GraphNamespace",
 			"GET",
-			"/api/namespaces/{namespace}/graphs",
+			"/api/namespaces/{namespace}/graph",
 			handlers.GraphNamespace,
 		},
 		{
@@ -95,7 +95,7 @@ func NewRoutes() (r *Routes) {
 
 			"GraphService",
 			"GET",
-			"/api/namespaces/{namespace}/services/{service}/graphs",
+			"/api/namespaces/{namespace}/services/{service}/graph",
 			handlers.GraphService,
 		},
 		{
