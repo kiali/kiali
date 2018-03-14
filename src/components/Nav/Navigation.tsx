@@ -14,7 +14,7 @@ const servicesPath = '/services';
 const servicesTitle = 'Services';
 
 const pfLogo = require('../../img/logo-alt.svg');
-const pfBrand = require('../../img/brand-alt.svg');
+const pfBrand = require('../../assets/img/kiali-title.svg');
 
 class Navigation extends React.Component {
   static contextTypes = {
