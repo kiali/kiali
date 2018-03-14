@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { ReactCytoscape } from 'react-cytoscape';
+import { Spinner } from 'patternfly-react';
 import PropTypes from 'prop-types';
 
 import * as API from '../../services/Api';
@@ -9,6 +10,7 @@ import { refreshSettings } from '../../model/RefreshSettings';
 
 type CytoscapeLayoutState = {
   elements?: any;
+  isLoading: boolean;
 };
 
 type CytoscapeLayoutProps = {
@@ -32,7 +34,8 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     console.log('Starting ServiceGraphPage for namespace ' + this.props.namespace);
 
     this.state = {
-      elements: {}
+      elements: [],
+      isLoading: false
     };
     this.updateGraphElements = this.updateGraphElements.bind(this);
   }
@@ -86,30 +89,36 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   render() {
     return (
       <div id="cytoscape-container" style={{ marginRight: '25em' }}>
-        <ReactCytoscape
-          containerID="cy"
-          cyRef={cy => {
-            this.cyRef(cy);
-          }}
-          elements={this.state.elements}
-          style={GraphStyles.styles()}
-          cytoscapeOptions={GraphStyles.options()}
-          layout={this.props.layout}
-        />
+        <Spinner loading={this.state.isLoading}>
+          <ReactCytoscape
+            containerID="cy"
+            cyRef={cy => {
+              this.cyRef(cy);
+            }}
+            elements={this.state.elements}
+            style={GraphStyles.styles()}
+            cytoscapeOptions={GraphStyles.options()}
+            layout={this.props.layout}
+          />
+        </Spinner>
       </div>
     );
   }
 
   updateGraphElements(props: any) {
     let params = { interval: props.interval };
+    this.setState({ isLoading: true });
     API.GetGraphElements(props.namespace, params)
       .then(response => {
         const elements =
           response['data'] && response['data'].elements ? response['data'].elements : { nodes: [], edges: [] };
-        this.setState({ elements: elements });
+        this.setState({ elements: elements, isLoading: false });
       })
       .catch(error => {
-        this.setState({});
+        this.setState({
+          elements: [],
+          isLoading: false
+        });
         console.error(error);
       });
   }
