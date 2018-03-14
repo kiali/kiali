@@ -47,7 +47,7 @@ func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector)
 }
 
 func TestNamespaceGraph(t *testing.T) {
-	q0 := "sum(rate(istio_request_count{source_service=\"unknown\",source_version=\"unknown\",destination_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [30s])) by (source_service)"
+	q0 := "sum(rate(istio_request_count{source_service!~\".*\\\\.istio-system\\\\..*\",destination_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [30s])) by (source_service)"
 	q0m0 := model.Metric{
 		"source_service": "unknown"}
 	q0m1 := model.Metric{

@@ -14,7 +14,7 @@ package handlers
 //               constructs the vendor-specific output.
 //
 // The current Handlers:
-//   GraphNamespace:  Generate a graph for all services in a namespace
+//   GraphNamespace:  Generate a graph for all services in a namespace (whether source or destination)
 //   GraphService:    Generate a graph centered on versions of a specified service, limited to
 //                    requesting and requested services.
 //
@@ -94,18 +94,16 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []
 	// avoid circularities by keeping track of all seen nodes
 	seenNodes := make(map[string]*tree.ServiceNode)
 
-	// The logic below was written for multiple root nodes but as of istio 0.6
-	// there should only be a single root, and the query should return only one. I'll
-	// leave the logic in place, in case Istio changes it's mind...
-
-	// Query for root nodes. Root nodes for the namespace graph represent external
-	// requests (basically the internet) to destination services in the namespace.
-	query := fmt.Sprintf("sum(rate(%v{source_service=\"unknown\",source_version=\"unknown\",destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
+	// Query for root nodes. Root nodes must originate outside of the requested
+	// namespace (typically "unknown").  Destination nodes must be in the namespace.
+	namespacePattern := fmt.Sprintf(".*\\\\.%v\\\\..*", o.Namespace)
+	query := fmt.Sprintf("sum(rate(%v{source_service!~\"%v\",destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
 		o.Metric,
-		fmt.Sprintf(".*\\\\.%v\\\\..*", o.Namespace), // regex for namespace-constrained destination service
-		"[2345][0-9][0-9]",                           // regex for valid response_codes
-		o.Interval.Seconds(),                         // rate for the entire query period
-		"source_service")                             // group by
+		namespacePattern,     // regex for namespace-constrained service
+		namespacePattern,     // regex for namespace-constrained service
+		"[2345][0-9][0-9]",   // regex for valid response_codes
+		o.Interval.Seconds(), // rate for the entire query period
+		"source_service")     // group by
 
 	// fetch the root time series
 	vector := promQuery(query, queryTime, client.API())
