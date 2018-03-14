@@ -7,7 +7,7 @@ import * as API from '../../../services/Api';
 window['SVGPathElement'] = a => a;
 let mounted: ReactWrapper<any, any> | null;
 
-function mockAPIToPromise(func: keyof typeof API, obj: any): Promise<void> {
+const mockAPIToPromise = (func: keyof typeof API, obj: any): Promise<void> => {
   return new Promise((resolve, reject) => {
     jest.spyOn(API, func).mockImplementation(() => {
       return new Promise(r => {
@@ -22,15 +22,63 @@ function mockAPIToPromise(func: keyof typeof API, obj: any): Promise<void> {
       });
     });
   });
-}
+};
 
-function mockMetrics(metrics: any): Promise<void> {
+const mockMetrics = (metrics: any): Promise<void> => {
   return mockAPIToPromise('getServiceMetrics', metrics);
-}
+};
 
-function mockGrafanaInfo(info: any): Promise<any> {
+const mockGrafanaInfo = (info: any): Promise<any> => {
   return mockAPIToPromise('getGrafanaInfo', info);
-}
+};
+
+const createMetric = (name: string) => {
+  return {
+    matrix: [
+      {
+        metric: { __name__: name },
+        values: [[1111, 5], [2222, 10]]
+      }
+    ]
+  };
+};
+
+const createHistogram = (name: string) => {
+  return {
+    average: {
+      matrix: [
+        {
+          metric: { __name__: name },
+          values: [[1111, 10], [2222, 11]]
+        }
+      ]
+    },
+    median: {
+      matrix: [
+        {
+          metric: { __name__: name },
+          values: [[1111, 20], [2222, 21]]
+        }
+      ]
+    },
+    percentile95: {
+      matrix: [
+        {
+          metric: { __name__: name },
+          values: [[1111, 30], [2222, 31]]
+        }
+      ]
+    },
+    percentile99: {
+      matrix: [
+        {
+          metric: { __name__: name },
+          values: [[1111, 40], [2222, 41]]
+        }
+      ]
+    }
+  };
+};
 
 describe('ServiceMetrics', () => {
   beforeEach(() => {
@@ -111,51 +159,3 @@ describe('ServiceMetrics', () => {
     mounted = mount(<ServiceMetrics namespace="ns" service="svc" />);
   });
 });
-
-function createMetric(name: string) {
-  return {
-    matrix: [
-      {
-        metric: { __name__: name },
-        values: [[1111, 5], [2222, 10]]
-      }
-    ]
-  };
-}
-
-function createHistogram(name: string) {
-  return {
-    average: {
-      matrix: [
-        {
-          metric: { __name__: name },
-          values: [[1111, 10], [2222, 11]]
-        }
-      ]
-    },
-    median: {
-      matrix: [
-        {
-          metric: { __name__: name },
-          values: [[1111, 20], [2222, 21]]
-        }
-      ]
-    },
-    percentile95: {
-      matrix: [
-        {
-          metric: { __name__: name },
-          values: [[1111, 30], [2222, 31]]
-        }
-      ]
-    },
-    percentile99: {
-      matrix: [
-        {
-          metric: { __name__: name },
-          values: [[1111, 40], [2222, 41]]
-        }
-      ]
-    }
-  };
-}

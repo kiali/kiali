@@ -90,7 +90,7 @@ export class GraphHighlighter {
     this.cy
       .elements()
       .difference(toHighlight)
-      .filter(function(ele: any) {
+      .filter((ele: any) => {
         return !ele.isParent();
       })
       .addClass(DIM_CLASS);

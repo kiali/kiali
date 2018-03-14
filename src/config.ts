@@ -1,4 +1,4 @@
-export function config() {
+export const config = () => {
   return {
     version: '0.1',
     backend: {
@@ -6,4 +6,4 @@ export function config() {
       password: 'password'
     }
   };
-}
+};
