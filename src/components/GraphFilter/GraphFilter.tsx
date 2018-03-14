@@ -67,7 +67,11 @@ export class GraphFilter extends React.Component<GraphFilterProps, GraphFilterSt
   }
 
   componentDidMount() {
-    API.GetNamespaces().then(this.setNamespaces);
+    API.GetNamespaces()
+      .then(this.setNamespaces)
+      .catch(error => {
+        this.props.onError(error);
+      });
   }
 
   setNamespaces(response: any) {
