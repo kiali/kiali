@@ -1,11 +1,14 @@
 package kubernetes
 
 import (
+	"strings"
+
 	"github.com/kiali/swscore/config"
 
 	"k8s.io/api/apps/v1beta1"
 	autoscalingV1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -80,10 +83,8 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	}()
 
 	go func() {
-		deployments, err := in.k8s.AppsV1beta1().Deployments(namespace).List(emptyListOptions)
-		deployments = filterDeploymentsByService(serviceName, deployments)
+		deployments, err := in.k8s.AppsV1beta1().Deployments(namespace).List(*getDeploymentFilterListOptions(serviceName))
 		deploymentsChan <- deploymentsResponse{deployments: deployments, err: err}
-
 	}()
 
 	go func() {
@@ -120,19 +121,6 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	return &serviceDetails, nil
 }
 
-func filterDeploymentsByService(serviceName string, dl *v1beta1.DeploymentList) *v1beta1.DeploymentList {
-	deployments := make([]v1beta1.Deployment, 0, len(dl.Items))
-
-	for _, deployment := range dl.Items {
-		if deployment.ObjectMeta.Labels != nil && deployment.ObjectMeta.Labels[config.Get().ServiceFilterLabelName] == serviceName {
-			deployments = append(deployments, deployment)
-		}
-	}
-
-	dl.Items = deployments
-	return dl
-}
-
 func filterAutoscalersByDeployments(deploymentNames []string, al *autoscalingV1.HorizontalPodAutoscalerList) *autoscalingV1.HorizontalPodAutoscalerList {
 	autoscalers := make([]autoscalingV1.HorizontalPodAutoscaler, 0, len(al.Items))
 
@@ -155,4 +143,9 @@ func getDeploymentNames(deployments *v1beta1.DeploymentList) []string {
 	}
 
 	return deploymentNames
+}
+
+func getDeploymentFilterListOptions(serviceName string) *meta_v1.ListOptions {
+	filterLabelName := config.Get().ServiceFilterLabelName
+	return GetLabeledListOptions(strings.Join([]string{filterLabelName, serviceName}, "="))
 }

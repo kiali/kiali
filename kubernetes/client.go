@@ -91,3 +91,8 @@ func NewClient() (*IstioClient, error) {
 	}
 	return &client, nil
 }
+
+func GetLabeledListOptions(labelSelector string) *meta_v1.ListOptions {
+	return &meta_v1.ListOptions{
+		LabelSelector: labelSelector}
+}
