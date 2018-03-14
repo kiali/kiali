@@ -2,6 +2,9 @@ import * as React from 'react';
 import ServiceId from '../../types/ServiceId';
 import * as M from '../../types/Metrics';
 import * as API from '../../services/Api';
+import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
+import { MetricsOptions } from '../../types/MetricsOptions';
+import { Spinner, LineChart, DonutChart } from 'patternfly-react';
 
 interface GrafanaInfo {
   url: string;
@@ -12,9 +15,7 @@ interface GrafanaInfo {
 }
 
 type ServiceMetricsState = {
-  rateInterval: string;
   loading: boolean;
-  delayedLoading: boolean;
   requestCountIn?: M.MetricGroup;
   requestCountOut?: M.MetricGroup;
   requestSizeIn?: M.Histogram;
@@ -28,128 +29,38 @@ type ServiceMetricsState = {
 };
 
 class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
+  // "Constants"
+  healthDonutSize = {
+    width: '200',
+    height: '200'
+  };
+  healthDonutColors = {
+    // From Patternfly status palette
+    Healthy: '#3f9c35',
+    Failure: '#cc0000'
+  };
+
   constructor(props: ServiceId) {
     super(props);
     this.state = {
-      rateInterval: '5m',
-      loading: false,
-      delayedLoading: false
+      loading: false
     };
-    this.onRateIntervalChanged = this.onRateIntervalChanged.bind(this);
+    this.onOptionsChanged = this.onOptionsChanged.bind(this);
   }
 
   componentDidMount() {
-    this.fetchMetrics();
     this.getGrafanaInfo();
   }
 
-  onRateIntervalChanged(event: React.FormEvent<HTMLSelectElement>) {
-    this.setState({ rateInterval: event.currentTarget.value }, () => {
-      this.fetchMetrics();
-    });
+  onOptionsChanged(options: MetricsOptions) {
+    this.fetchMetrics(options);
   }
 
-  render() {
-    return (
-      <div>
-        {this.renderRateInterval()}
-        {this.renderMetrics()}
-      </div>
-    );
-  }
-
-  renderRateInterval() {
-    return (
-      <div>
-        Rate interval:
-        <select value={this.state.rateInterval} onChange={this.onRateIntervalChanged}>
-          <option value="1m">1 minute</option>
-          <option value="5m">5 minutes</option>
-          <option value="10m">10 minutes</option>
-          <option value="30m">30 minutes</option>
-          <option value="1h">1 hour</option>
-          <option value="3h">3 hours</option>
-          <option value="6h">6 hours</option>
-          <option value="12h">12 hours</option>
-          <option value="1d">1 day</option>
-        </select>
-      </div>
-    );
-  }
-
-  renderMetrics() {
-    if (this.state.loading && this.state.delayedLoading) {
-      return <div className="spinner spinner-sm left-spinner" />;
-    } else {
-      return (
-        <div className="card-pf">
-          <div className="row row-cards-pf">
-            <div className="col-xs-4">
-              <div className="card-pf-accented card-pf-aggregate-status">
-                <div className="card-pf-title">
-                  <span className="fa fa-heart" />
-                  Health
-                </div>
-                <div className="card-pf-body">{this.health()}</div>
-              </div>
-            </div>
-            <div className="col-xs-4">
-              <div className="card-pf-accented card-pf-aggregate-status">
-                <h3 className="card-pf-title">
-                  <span className="fa fa-bar-chart" />
-                  Input
-                </h3>
-                <ul className="card-pf-body">
-                  <li>Request count rate: {this.metricToString(this.state.requestCountIn)}</li>
-                  <li>Request size: {this.histogramToString(this.state.requestSizeIn)}</li>
-                  <li>Request duration: {this.histogramToString(this.state.requestDurationIn)}</li>
-                  <li>Response size: {this.histogramToString(this.state.responseSizeIn)}</li>
-                </ul>
-                {this.renderGrafanaLink(false)}
-              </div>
-            </div>
-            <div className="col-xs-4">
-              <div className="card-pf-accented card-pf-aggregate-status">
-                <h3 className="card-pf-title">
-                  <span className="fa fa-bar-chart" />
-                  Output
-                </h3>
-                <ul className="card-pf-body">
-                  <li>Request count rate: {this.metricToString(this.state.requestCountOut)}</li>
-                  <li>Request size: {this.histogramToString(this.state.requestSizeOut)}</li>
-                  <li>Request duration: {this.histogramToString(this.state.requestDurationOut)}</li>
-                  <li>Response size: {this.histogramToString(this.state.responseSizeOut)}</li>
-                </ul>
-                {this.renderGrafanaLink(true)}
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-  }
-
-  renderGrafanaLink(isSource: boolean) {
-    if (this.state.grafanaInfo) {
-      const varName = isSource ? this.state.grafanaInfo.varServiceSource : this.state.grafanaInfo.varServiceDest;
-      const link = `${this.state.grafanaInfo.url}/dashboard/db/${this.state.grafanaInfo.dashboard}?${varName}=${
-        this.props.service
-      }.${this.props.namespace}.${this.state.grafanaInfo.variablesSuffix}`;
-      return <a href={link}>View in Grafana</a>;
-    }
-    return null;
-  }
-
-  fetchMetrics() {
-    this.setState({ loading: true, delayedLoading: false });
-    setTimeout(() => {
-      // This will show spinner only after 0.1s of loading to avoid blinking effect on fast response
-      this.setState({ delayedLoading: true });
-    }, 100);
-    API.getServiceMetrics(this.props.namespace, this.props.service, { rateInterval: this.state.rateInterval })
+  fetchMetrics(options: MetricsOptions) {
+    this.setState({ loading: true });
+    API.getServiceMetrics(this.props.namespace, this.props.service, options)
       .then(response => {
-        const metrics: M.Metrics = response['data']['metrics'];
-        const health: M.Health = response['data']['health'];
+        const metrics: M.Metrics = response['data'];
         this.setState({
           loading: false,
           requestCountIn: metrics.metrics['request_count_in'],
@@ -160,10 +71,11 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
           requestDurationOut: metrics.histograms['request_duration_out'],
           responseSizeIn: metrics.histograms['response_size_in'],
           responseSizeOut: metrics.histograms['response_size_out'],
-          health: health
+          health: metrics.health
         });
       })
       .catch(error => {
+        // TODO: show error alert
         this.setState({ loading: false });
         console.error(error);
       });
@@ -186,9 +98,16 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
 
   health() {
     if (this.state.health) {
-      return this.round(100 * this.state.health.healthyReplicas / this.state.health.totalReplicas) + ' %';
+      return {
+        colors: this.healthDonutColors,
+        columns: [
+          ['Healthy', this.state.health.healthyReplicas],
+          ['Failure', this.state.health.totalReplicas - this.state.health.healthyReplicas]
+        ],
+        type: 'donut'
+      };
     }
-    return 'n/a';
+    return null;
   }
 
   metricToString(group?: M.MetricGroup): string {
@@ -210,6 +129,155 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   round(val: number): number {
     // 2 decimal digits
     return Math.round(val * 100) / 100;
+  }
+
+  render() {
+    return (
+      <div>
+        <MetricsOptionsBar onOptionsChanged={this.onOptionsChanged} />
+        {this.renderMetrics()}
+      </div>
+    );
+  }
+
+  renderMetrics() {
+    if (this.state.loading) {
+      return <Spinner loading={true} />;
+    }
+    return (
+      <div className="card-pf">
+        <div className="row row-cards-pf">
+          <div className="col-xs-12">
+            <div className="card-pf-accented card-pf-aggregate-status">
+              <div className="card-pf-title">
+                <span className="fa fa-heart" />
+                Health
+                {this.renderHealth()}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="row row-cards-pf">
+          <div className="col-xs-6">
+            <div className="card-pf-accented card-pf-aggregate-status">
+              <h3 className="card-pf-title">
+                <span className="fa fa-bar-chart" />
+                Input
+              </h3>
+              <div className="card-pf-body">
+                {this.renderMetric('requestCountIn', 'Request count rate', this.state.requestCountIn)}
+                {this.renderHistogram('requestSizeIn', 'Request size', this.state.requestSizeIn)}
+                {this.renderHistogram('requestDurationIn', 'Request duration', this.state.requestDurationIn)}
+                {this.renderHistogram('responseSizeIn', 'Response size', this.state.responseSizeIn)}
+              </div>
+              {this.renderGrafanaLink(false)}
+            </div>
+          </div>
+          <div className="col-xs-6">
+            <div className="card-pf-accented card-pf-aggregate-status">
+              <h3 className="card-pf-title">
+                <span className="fa fa-bar-chart" />
+                Output
+              </h3>
+              <ul className="card-pf-body">
+                {this.renderMetric('requestCountOut', 'Request count rate', this.state.requestCountOut)}
+                {this.renderHistogram('requestSizeOut', 'Request size', this.state.requestSizeOut)}
+                {this.renderHistogram('requestDurationOut', 'Request duration', this.state.requestDurationOut)}
+                {this.renderHistogram('responseSizeOut', 'Response size', this.state.responseSizeOut)}
+              </ul>
+              {this.renderGrafanaLink(true)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  renderHealth() {
+    const health = this.health();
+    if (health) {
+      return (
+        <DonutChart
+          id={'health-donut'}
+          size={this.healthDonutSize}
+          data={health}
+          title={{ type: 'percent' }}
+          legend={{ show: false }}
+        />
+      );
+    }
+    // const data = {
+    //   colors: { 'N/A': '#707070' },
+    //   columns: [['N/A', 1]],
+    //   type: 'donut'
+    // };
+    return <div />;
+  }
+
+  renderMetric(id: string, title: string, metric?: M.MetricGroup) {
+    if (metric) {
+      return this.renderChart(id, title, this.toC3Columns(metric.matrix, title));
+    }
+    return <div />;
+  }
+
+  renderHistogram(id: string, title: string, histo?: M.Histogram) {
+    if (histo) {
+      const columns = this.toC3Columns(histo.average.matrix, title + ' [avg]')
+        .concat(this.toC3Columns(histo.median.matrix, title + ' [med]'))
+        .concat(this.toC3Columns(histo.percentile95.matrix, title + ' [p95]'))
+        .concat(this.toC3Columns(histo.percentile99.matrix, title + ' [p99]'));
+      return this.renderChart(id, title, columns);
+    }
+    return <div />;
+  }
+
+  renderChart(id: string, title: string, columns: [string, number][]) {
+    const data = {
+      x: 'x',
+      columns: columns
+    };
+    const axis = {
+      x: {
+        type: 'timeseries',
+        tick: {
+          fit: true,
+          count: 15,
+          multiline: false,
+          format: '%H:%M:%S'
+        }
+      }
+    };
+    return <LineChart id={id} title={{ text: title }} data={data} axis={axis} point={{ show: false }} />;
+  }
+
+  toC3Columns(matrix: M.TimeSeries[], title: string): [string, number][] {
+    return matrix
+      .map(mat => {
+        let xseries: any = ['x'];
+        return xseries.concat(mat.values.map(dp => dp[0] * 1000));
+      })
+      .concat(
+        matrix.map(mat => {
+          let yseries: any = [title];
+          return yseries.concat(mat.values.map(dp => dp[1]));
+        })
+      );
+  }
+
+  renderGrafanaLink(isSource: boolean) {
+    if (this.state.grafanaInfo) {
+      const varName = isSource ? this.state.grafanaInfo.varServiceSource : this.state.grafanaInfo.varServiceDest;
+      const link = `${this.state.grafanaInfo.url}/dashboard/db/${this.state.grafanaInfo.dashboard}?${varName}=${
+        this.props.service
+      }.${this.props.namespace}.${this.state.grafanaInfo.variablesSuffix}`;
+      return (
+        <span id={'grafana-' + (isSource ? 'source' : 'destination') + '-link'}>
+          <a href={link}>View in Grafana</a>
+        </span>
+      );
+    }
+    return null;
   }
 }
 
