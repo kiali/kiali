@@ -75,7 +75,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         });
       })
       .catch(error => {
-        // TODO: show error
+        // TODO: show error alert
         this.setState({ loading: false });
         console.error(error);
       });
@@ -271,7 +271,11 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       const link = `${this.state.grafanaInfo.url}/dashboard/db/${this.state.grafanaInfo.dashboard}?${varName}=${
         this.props.service
       }.${this.props.namespace}.${this.state.grafanaInfo.variablesSuffix}`;
-      return <a href={link}>View in Grafana</a>;
+      return (
+        <span id={'grafana-' + (isSource ? 'source' : 'destination') + '-link'}>
+          <a href={link}>View in Grafana</a>
+        </span>
+      );
     }
     return null;
   }
