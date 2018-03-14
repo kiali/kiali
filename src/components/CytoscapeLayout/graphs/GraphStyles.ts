@@ -16,8 +16,9 @@ export class GraphStyles {
           'border-width': '1px',
           'border-color': '#000',
           'font-size': '10px',
-          'text-valign': 'center',
-          'text-halign': 'right'
+          'text-valign': 'bottom',
+          'text-halign': 'right',
+          'text-outline-color': '#77828C'
         }
       },
       {
@@ -51,6 +52,7 @@ export class GraphStyles {
           width: 3,
           color: '#434343',
           'font-size': '8px',
+          'text-margin-x': '25px',
           content: 'data(text)',
           'target-arrow-shape': 'vee',
           'line-color': 'data(color)',
