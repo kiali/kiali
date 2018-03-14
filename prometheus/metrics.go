@@ -79,7 +79,7 @@ func getServiceHealthAsync(api v1.API, namespace string, servicename string, hea
 }
 
 func getServiceMetricsAsync(api v1.API, namespace string, servicename string, duration time.Duration, step time.Duration,
-	rateInterval string, metricsChan chan Metrics) {
+	rateInterval string, byLabelsIn []string, byLabelsOut []string, metricsChan chan Metrics) {
 
 	clustername := config.Get().IstioIdentityDomain
 	now := time.Now()
@@ -90,20 +90,22 @@ func getServiceMetricsAsync(api v1.API, namespace string, servicename string, du
 
 	labelsIn := fmt.Sprintf("{destination_service=\"%s.%s.%s\"}", servicename, namespace, clustername)
 	labelsOut := fmt.Sprintf("{source_service=\"%s.%s.%s\"}", servicename, namespace, clustername)
+	groupingIn := joinLabels(byLabelsIn)
+	groupingOut := joinLabels(byLabelsOut)
 
 	fetchRateAsync := func(metricName string) (chan Metric, chan Metric) {
 		chin := make(chan Metric)
 		chout := make(chan Metric)
-		go fetchRateRange(api, metricName, labelsIn, bounds, rateInterval, chin)
-		go fetchRateRange(api, metricName, labelsOut, bounds, rateInterval, chout)
+		go fetchRateRange(api, metricName, labelsIn, groupingIn, bounds, rateInterval, chin)
+		go fetchRateRange(api, metricName, labelsOut, groupingOut, bounds, rateInterval, chout)
 		return chin, chout
 	}
 
 	fetchHistoAsync := func(metricName string) (chan Histogram, chan Histogram) {
 		chin := make(chan Histogram)
 		chout := make(chan Histogram)
-		go fetchHistogramRange(api, metricName, labelsIn, bounds, rateInterval, chin)
-		go fetchHistogramRange(api, metricName, labelsOut, bounds, rateInterval, chout)
+		go fetchHistogramRange(api, metricName, labelsIn, groupingIn, bounds, rateInterval, chin)
+		go fetchHistogramRange(api, metricName, labelsOut, groupingOut, bounds, rateInterval, chout)
 		return chin, chout
 	}
 
@@ -129,40 +131,67 @@ func getServiceMetricsAsync(api v1.API, namespace string, servicename string, du
 		Histograms: histograms}
 }
 
-func fetchRateRange(api v1.API, metricName string, labels string, bounds v1.Range, rateInterval string, ch chan Metric) {
-	query := fmt.Sprintf("rate(%s%s[%s])", metricName, labels, rateInterval)
+func joinLabels(labels []string) string {
+	str := ""
+	if len(labels) > 0 {
+		sep := ""
+		for _, lbl := range labels {
+			str = str + sep + lbl
+			sep = ","
+		}
+	}
+	return str
+}
+
+func fetchRateRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string, ch chan Metric) {
+	var query string
+	if grouping == "" {
+		query = fmt.Sprintf("round(sum(irate(%s%s[%s])), 0.001)", metricName, labels, rateInterval)
+	} else {
+		query = fmt.Sprintf("round(sum(irate(%s%s[%s])) by (%s), 0.001)", metricName, labels, rateInterval, grouping)
+	}
 	fetchRange(api, query, bounds, ch)
 }
 
-func fetchHistogramRange(api v1.API, metricName string, labels string, bounds v1.Range, rateInterval string, ch chan Histogram) {
+func fetchHistogramRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string, ch chan Histogram) {
 	// Note: we may want to make returned stats configurable in the future
 	avgChan, medChan, p95Chan, p99Chan := make(chan Metric), make(chan Metric), make(chan Metric), make(chan Metric)
 
+	groupingAvg := ""
+	groupingQuantile := ""
+	if grouping != "" {
+		groupingAvg = fmt.Sprintf(" by (%s)", grouping)
+		groupingQuantile = fmt.Sprintf(",%s", grouping)
+	}
+
 	// Average
 	go func() {
+		// Example: sum(rate(my_histogram_sum{foo=bar}[5m])) by (baz) / sum(rate(my_histogram_count{foo=bar}[5m])) by (baz)
 		query := fmt.Sprintf(
-			"sum(rate(%s_sum%s[%s])) / sum(rate(%s_count%s[%s]))", metricName, labels, rateInterval, metricName, labels, rateInterval)
+			"sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s", metricName, labels, rateInterval, groupingAvg,
+			metricName, labels, rateInterval, groupingAvg)
 		fetchRange(api, query, bounds, avgChan)
 	}()
 
 	// Median
 	go func() {
+		// Example: histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz))
 		query := fmt.Sprintf(
-			"histogram_quantile(0.5, sum(rate(%s_bucket%s[%s])) by (le))", metricName, labels, rateInterval)
+			"histogram_quantile(0.5, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
 		fetchRange(api, query, bounds, medChan)
 	}()
 
 	// Quantile 95
 	go func() {
 		query := fmt.Sprintf(
-			"histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le))", metricName, labels, rateInterval)
+			"histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
 		fetchRange(api, query, bounds, p95Chan)
 	}()
 
 	// Quantile 99
 	go func() {
 		query := fmt.Sprintf(
-			"histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le))", metricName, labels, rateInterval)
+			"histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
 		fetchRange(api, query, bounds, p99Chan)
 	}()
 

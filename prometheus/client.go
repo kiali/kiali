@@ -86,11 +86,11 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 // GetServiceMetrics returns the Health and Metrics related to the provided service identified by its namespace and service name.
 // Health might be nil when unavailable
 func (in *Client) GetServiceMetrics(namespace string, servicename string, duration time.Duration, step time.Duration,
-	rateInterval string) Metrics {
+	rateInterval string, byLabelsIn []string, byLabelsOut []string) Metrics {
 
 	healthChan, metricsChan := make(chan *Health), make(chan Metrics)
 	go getServiceHealthAsync(in.api, namespace, servicename, healthChan)
-	go getServiceMetricsAsync(in.api, namespace, servicename, duration, step, rateInterval, metricsChan)
+	go getServiceMetricsAsync(in.api, namespace, servicename, duration, step, rateInterval, byLabelsIn, byLabelsOut, metricsChan)
 
 	// Merge health in metrics
 	metrics := <-metricsChan
