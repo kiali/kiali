@@ -179,65 +179,66 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 }
 
 func fakeIstioDetails() *kubernetes.IstioDetails {
-	routes := []*kubernetes.RouteRule{
-		{
-			Spec: map[string]interface{}{
-				"destination": map[string]string{
-					"name":      "reviews",
-					"namespace": "tutorial"},
-				"precedence": 1,
-				"route": map[string]map[string]string{
-					"labels": map[string]string{
-						"name":      "version",
-						"namespace": "v1"}}}},
-		{
-			Spec: map[string]interface{}{
-				"destination": map[string]string{
-					"name":      "reviews",
-					"namespace": "tutorial"},
-				"precedence": 1,
-				"route": map[string]map[string]string{
-					"labels": map[string]string{
-						"name":      "version",
-						"namespace": "v3"}}}}}
-	policies := []*kubernetes.DestinationPolicy{
-		{
-			Spec: map[string]interface{}{
-				"source": map[string]string{
-					"name": "recommendation",
-				},
-				"destination": map[string]string{
-					"name":      "reviews",
-					"namespace": "tutorial",
-				},
-				"loadBalancing": map[string]string{
-					"name": "RANDOM",
-				},
+	route1 := kubernetes.MockIstioObject{
+		Spec: map[string]interface{}{
+			"destination": map[string]string{
+				"name":      "reviews",
+				"namespace": "tutorial"},
+			"precedence": 1,
+			"route": map[string]map[string]string{
+				"labels": map[string]string{
+					"name":      "version",
+					"namespace": "v1"}}},
+	}
+	route2 := kubernetes.MockIstioObject{
+		Spec: map[string]interface{}{
+			"destination": map[string]string{
+				"name":      "reviews",
+				"namespace": "tutorial"},
+			"precedence": 1,
+			"route": map[string]map[string]string{
+				"labels": map[string]string{
+					"name":      "version",
+					"namespace": "v3"}}},
+	}
+	routes := []kubernetes.IstioObject{&route1, &route2}
+	policy1 := kubernetes.MockIstioObject{
+		Spec: map[string]interface{}{
+			"source": map[string]string{
+				"name": "recommendation",
+			},
+			"destination": map[string]string{
+				"name":      "reviews",
+				"namespace": "tutorial",
+			},
+			"loadBalancing": map[string]string{
+				"name": "RANDOM",
 			},
 		},
-		{
-			Spec: map[string]interface{}{
-				"destination": map[string]interface{}{
-					"name":      "reviews",
-					"namespace": "tutorial",
-					"labels": map[string]string{
-						"version": "v2",
-					},
+	}
+	policy2 := kubernetes.MockIstioObject{
+		Spec: map[string]interface{}{
+			"destination": map[string]interface{}{
+				"name":      "reviews",
+				"namespace": "tutorial",
+				"labels": map[string]string{
+					"version": "v2",
 				},
-				"circuitBreaker": map[string]interface{}{
-					"simpleCb": map[string]interface{}{
-						"maxConnections":               1,
-						"httpMaxPendingRequests":       1,
-						"sleepWindow":                  "2m",
-						"httpDetectionInterval":        "1s",
-						"httpMaxEjectionPercent":       100,
-						"httpConsecutiveErrors":        1,
-						"httpMaxRequestsPerConnection": 1,
-					},
+			},
+			"circuitBreaker": map[string]interface{}{
+				"simpleCb": map[string]interface{}{
+					"maxConnections":               1,
+					"httpMaxPendingRequests":       1,
+					"sleepWindow":                  "2m",
+					"httpDetectionInterval":        "1s",
+					"httpMaxEjectionPercent":       100,
+					"httpConsecutiveErrors":        1,
+					"httpMaxRequestsPerConnection": 1,
 				},
 			},
 		},
 	}
+	policies := []kubernetes.IstioObject{&policy1, &policy2}
 	return &kubernetes.IstioDetails{routes, policies}
 }
 

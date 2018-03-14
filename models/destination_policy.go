@@ -13,7 +13,7 @@ type DestinationPolicy struct {
 	CircuitBreaker interface{} `json:"route"`
 }
 
-func (policies *DestinationPolicies) Parse(destinationPolicies []*kubernetes.DestinationPolicy) {
+func (policies *DestinationPolicies) Parse(destinationPolicies []kubernetes.IstioObject) {
 	for _, dp := range destinationPolicies {
 		destinationPolicy := DestinationPolicy{}
 		destinationPolicy.Parse(dp)
@@ -21,10 +21,10 @@ func (policies *DestinationPolicies) Parse(destinationPolicies []*kubernetes.Des
 	}
 }
 
-func (policy *DestinationPolicy) Parse(destinationPolicy *kubernetes.DestinationPolicy) {
-	policy.Name = destinationPolicy.ObjectMeta.Name
-	policy.Source = destinationPolicy.Spec["source"]
-	policy.Destination = destinationPolicy.Spec["destination"]
-	policy.LoadBalancing = destinationPolicy.Spec["loadBalancing"]
-	policy.CircuitBreaker = destinationPolicy.Spec["circuitBreaker"]
+func (policy *DestinationPolicy) Parse(destinationPolicy kubernetes.IstioObject) {
+	policy.Name = destinationPolicy.GetObjectMeta().Name
+	policy.Source = destinationPolicy.GetSpec()["source"]
+	policy.Destination = destinationPolicy.GetSpec()["destination"]
+	policy.LoadBalancing = destinationPolicy.GetSpec()["loadBalancing"]
+	policy.CircuitBreaker = destinationPolicy.GetSpec()["circuitBreaker"]
 }

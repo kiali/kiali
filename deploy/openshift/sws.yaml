@@ -109,6 +109,11 @@ rules:
   resources:
   - routerules
   - destinationpolicies
+  - rules
+  - listcheckers
+  - listentries
+  - deniers
+  - checknothings
   verbs:
   - get
   - list

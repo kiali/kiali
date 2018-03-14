@@ -37,6 +37,18 @@ func NewRoutes() (r *Routes) {
 			handlers.Root,
 		},
 		{
+			"IstioRuleList",
+			"GET",
+			"/api/namespaces/{namespace}/rules",
+			handlers.IstioRuleList,
+		},
+		{
+			"IstioRuleDetails",
+			"GET",
+			"/api/namespaces/{namespace}/rules/{rule}",
+			handlers.IstioRuleDetails,
+		},
+		{
 			"ServiceList",
 			"GET",
 			"/api/namespaces/{namespace}/services",

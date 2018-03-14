@@ -13,7 +13,7 @@ type RouteRule struct {
 	Match       interface{} `json:"match"`
 }
 
-func (rules *RouteRules) Parse(routeRules []*kubernetes.RouteRule) {
+func (rules *RouteRules) Parse(routeRules []kubernetes.IstioObject) {
 	for _, rr := range routeRules {
 		routeRule := RouteRule{}
 		routeRule.Parse(rr)
@@ -21,10 +21,10 @@ func (rules *RouteRules) Parse(routeRules []*kubernetes.RouteRule) {
 	}
 }
 
-func (rule *RouteRule) Parse(routeRule *kubernetes.RouteRule) {
-	rule.Name = routeRule.ObjectMeta.Name
-	rule.Destination = routeRule.Spec["destination"]
-	rule.Precedence = routeRule.Spec["precedence"]
-	rule.Route = routeRule.Spec["route"]
-	rule.Match = routeRule.Spec["match"]
+func (rule *RouteRule) Parse(routeRule kubernetes.IstioObject) {
+	rule.Name = routeRule.GetObjectMeta().Name
+	rule.Destination = routeRule.GetSpec()["destination"]
+	rule.Precedence = routeRule.GetSpec()["precedence"]
+	rule.Route = routeRule.GetSpec()["route"]
+	rule.Match = routeRule.GetSpec()["match"]
 }
