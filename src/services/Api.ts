@@ -48,7 +48,7 @@ export const getGrafanaInfo = () => {
 };
 
 export const GetGraphElements = (namespace: String, params: any) => {
-  return newRequest('get', `/api/namespaces/${namespace}/graphs`, params, {});
+  return newRequest('get', `/api/namespaces/${namespace}/graph`, params, {});
 };
 
 export const GetServiceDetail = (namespace: String, service: String) => {
