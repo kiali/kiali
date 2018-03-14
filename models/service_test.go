@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/swscore/kubernetes"
 
 	"k8s.io/api/apps/v1beta1"
+	autoscalingV1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -55,6 +56,32 @@ func TestServiceDetailParsing(t *testing.T) {
 			Replicas:            3,
 			AvailableReplicas:   3,
 			UnavailableReplicas: 0}})
+
+	assert.Equal(service.Autoscalers, Autoscalers{
+		Autoscaler{
+			Name:                            "reviews-v1",
+			Labels:                          map[string]string{"apps": "reviews", "version": "v1"},
+			CreatedAt:                       "2018-03-08T17:44:00+03:00",
+			MinReplicas:                     1,
+			MaxReplicas:                     10,
+			TargetCPUUtilizationPercentage:  50,
+			CurrentReplicas:                 3,
+			DesiredReplicas:                 4,
+			ObservedGeneration:              50,
+			CurrentCPUUtilizationPercentage: 70,
+		},
+		Autoscaler{
+			Name:                            "reviews-v2",
+			Labels:                          map[string]string{"apps": "reviews", "version": "v2"},
+			CreatedAt:                       "2018-03-08T17:45:00+03:00",
+			MinReplicas:                     1,
+			MaxReplicas:                     10,
+			TargetCPUUtilizationPercentage:  50,
+			CurrentReplicas:                 3,
+			DesiredReplicas:                 2,
+			ObservedGeneration:              50,
+			CurrentCPUUtilizationPercentage: 30,
+		}})
 
 	// Istio Details
 	assert.Equal(service.RouteRules, RouteRules{
@@ -175,7 +202,38 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					AvailableReplicas:   3,
 					UnavailableReplicas: 0}}}}
 
-	return &kubernetes.ServiceDetails{service, endpoints, deployments}
+	autoscalers := &autoscalingV1.HorizontalPodAutoscalerList{
+		Items: []autoscalingV1.HorizontalPodAutoscaler{
+			autoscalingV1.HorizontalPodAutoscaler{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:              "reviews-v1",
+					Labels:            map[string]string{"apps": "reviews", "version": "v1"},
+					CreationTimestamp: meta_v1.NewTime(t1)},
+				Spec: autoscalingV1.HorizontalPodAutoscalerSpec{
+					MinReplicas:                    &[]int32{1}[0],
+					MaxReplicas:                    10,
+					TargetCPUUtilizationPercentage: &[]int32{50}[0]},
+				Status: autoscalingV1.HorizontalPodAutoscalerStatus{
+					ObservedGeneration:              &[]int64{50}[0],
+					CurrentReplicas:                 3,
+					DesiredReplicas:                 4,
+					CurrentCPUUtilizationPercentage: &[]int32{70}[0]}},
+			autoscalingV1.HorizontalPodAutoscaler{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:              "reviews-v2",
+					Labels:            map[string]string{"apps": "reviews", "version": "v2"},
+					CreationTimestamp: meta_v1.NewTime(t2)},
+				Spec: autoscalingV1.HorizontalPodAutoscalerSpec{
+					MinReplicas:                    &[]int32{1}[0],
+					MaxReplicas:                    10,
+					TargetCPUUtilizationPercentage: &[]int32{50}[0]},
+				Status: autoscalingV1.HorizontalPodAutoscalerStatus{
+					ObservedGeneration:              &[]int64{50}[0],
+					CurrentReplicas:                 3,
+					DesiredReplicas:                 2,
+					CurrentCPUUtilizationPercentage: &[]int32{30}[0]}}}}
+
+	return &kubernetes.ServiceDetails{service, endpoints, deployments, autoscalers}
 }
 
 func fakeIstioDetails() *kubernetes.IstioDetails {

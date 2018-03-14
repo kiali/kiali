@@ -83,7 +83,7 @@ metadata:
   labels:
     app: sws
 rules:
-- apiGroups: ["", "apps"]
+- apiGroups: ["", "apps", "autoscaling"]
   attributeRestrictions: null
   resources:
   - configmaps
@@ -94,6 +94,7 @@ rules:
   - services
   - endpoints
   - deployments
+  - horizontalpodautoscalers
   verbs:
   - get
   - list
