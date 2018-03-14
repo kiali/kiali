@@ -130,7 +130,7 @@ endif
 	@cp -r deploy/docker/* _output/docker
 	@cp ${GOPATH}/bin/sws _output/docker
 
-docker: .prepare-docker-image-files
+docker-build: .prepare-docker-image-files
 	@echo Building docker image into local docker daemon...
 	docker build -t ${DOCKER_TAG} _output/docker
 
