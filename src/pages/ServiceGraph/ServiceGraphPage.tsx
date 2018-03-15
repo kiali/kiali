@@ -6,6 +6,8 @@ import { Alert } from 'patternfly-react';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
 import SummaryPanel from '../../components/SummaryPanel/SummaryPanel';
 import { GraphFilter, GraphFilters } from '../../components/GraphFilter/GraphFilter';
+import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
+import PfHeader from '../../components/Pf/PfHeader';
 
 const URLSearchParams = require('url-search-params');
 
@@ -67,12 +69,12 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
       );
     }
     return (
-      <div className="container-fluid container-pf-nav-pf-vertical">
-        <h2>Service Graph</h2>
-        {alertsDiv}
-        <div>
+      <PfContainerNavVertical>
+        <PfHeader>
+          <h2>Service Graph</h2>
+          {alertsDiv}
           <GraphFilter onFilterChange={this.filterChange} onError={this.handleError} />
-        </div>
+        </PfHeader>
         <div style={{ position: 'relative' }}>
           <SummaryPanel namespace={'istio-system'} service={'productpage'} data={undefined} />
           <CytoscapeLayout
@@ -81,7 +83,7 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
             interval={GraphFilters.getGraphInterval()}
           />
         </div>
-      </div>
+      </PfContainerNavVertical>
     );
   }
 }
