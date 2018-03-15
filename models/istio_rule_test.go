@@ -70,6 +70,16 @@ func TestIstioRuleDetailsParsing(t *testing.T) {
 	assert.Equal("source.labels[\"app\"]", value)
 }
 
+func TestIstioRuleWithNotSupportedHandlersOrInstances(t *testing.T) {
+	assert := assert.New(t)
+	istioDetails := CastIstioRuleDetails(fakeRuleNotSupportedHandlersDetails())
+	assert.Equal(1, len(istioDetails.Actions))
+	assert.Nil(istioDetails.Actions[0].Handler)
+	instances := istioDetails.Actions[0].Instances
+	assert.Equal(1, len(instances))
+	assert.Nil(instances[0])
+}
+
 func fakeCheckFromCustomerRule() kubernetes.IstioObject {
 	checkfromcustomerRule := kubernetes.MockIstioObject{}
 	checkfromcustomerRule.Name = "checkfromcustomer"
@@ -145,4 +155,37 @@ func fakeCheckFromCustomerDetails() *kubernetes.IstioRuleDetails {
 	istioRulesDetails.Rule = fakeCheckFromCustomerRule()
 	istioRulesDetails.Actions = fakeCheckFromCustomerActions()
 	return &istioRulesDetails
+}
+
+func fakeStdioRule() kubernetes.IstioObject {
+	stdioRule := kubernetes.MockIstioObject{}
+	stdioRule.Name = "stdio"
+	stdioRule.Spec = map[string]interface{}{
+		"match": "true",
+		"actions": []map[string]interface{}{
+			{
+				"handler": "handler.stdio",
+				"instances": []string{
+					"accesslog.logentry",
+				},
+			},
+		},
+	}
+	return &stdioRule
+}
+
+func fakeSdtioUnsupportedHandlersInstances() []*kubernetes.IstioRuleAction {
+	actions := make([]*kubernetes.IstioRuleAction, 0)
+	actions = append(actions, &kubernetes.IstioRuleAction{
+		Handler:   nil,
+		Instances: []kubernetes.IstioObject{nil},
+	})
+	return actions
+}
+
+func fakeRuleNotSupportedHandlersDetails() *kubernetes.IstioRuleDetails {
+	istioRuleDetails := kubernetes.IstioRuleDetails{}
+	istioRuleDetails.Rule = fakeStdioRule()
+	istioRuleDetails.Actions = fakeSdtioUnsupportedHandlersInstances()
+	return &istioRuleDetails
 }
