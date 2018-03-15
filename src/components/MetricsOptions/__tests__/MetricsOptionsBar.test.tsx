@@ -11,21 +11,17 @@ const lastOptionsChanged = () => {
 describe('MetricsOptionsBar', () => {
   it('renders initial layout', () => {
     const wrapper = shallow(<MetricsOptionsBar onOptionsChanged={jest.fn()} />);
-    const eltDuration = wrapper.find('#duration');
-    expect(eltDuration.length).toBe(1);
-    const eltStep = wrapper.find('#step');
-    expect(eltStep.length).toBe(1);
-    const eltRateInterval = wrapper.find('#rateInterval');
-    expect(eltRateInterval.length).toBe(1);
+    expect(wrapper).toMatchSnapshot();
   });
 
   it('changes trigger parent callback', () => {
     const wrapper = mount(<MetricsOptionsBar onOptionsChanged={optionsChanged} />);
     expect(optionsChanged).toHaveBeenCalledTimes(1);
     const opts = lastOptionsChanged();
-    expect(opts).toHaveProperty('duration', '600');
-    expect(opts).toHaveProperty('step', '15');
-    expect(opts).toHaveProperty('rateInterval', '1m');
+    // Step = duration / ticks
+    expect(opts).toHaveProperty('duration', MetricsOptionsBar.DefaultDuration);
+    expect(opts).toHaveProperty('step', MetricsOptionsBar.DefaultDuration / MetricsOptionsBar.DefaultTicks);
+    expect(opts).toHaveProperty('rateInterval', MetricsOptionsBar.DefaultRateInterval);
 
     let elt = wrapper
       .find('#duration')
@@ -33,15 +29,17 @@ describe('MetricsOptionsBar', () => {
       .first();
     elt.simulate('click');
     expect(optionsChanged).toHaveBeenCalledTimes(2);
-    expect(lastOptionsChanged()).toHaveProperty('duration', '300');
+    const expectedDuration = MetricsOptionsBar.Durations[0][0];
+    expect(lastOptionsChanged()).toHaveProperty('duration', expectedDuration);
+    expect(lastOptionsChanged()).toHaveProperty('step', expectedDuration / MetricsOptionsBar.DefaultTicks);
 
     elt = wrapper
-      .find('#step')
+      .find('#ticks')
       .find('SafeAnchor')
       .first();
     elt.simulate('click');
     expect(optionsChanged).toHaveBeenCalledTimes(3);
-    expect(lastOptionsChanged()).toHaveProperty('step', '1');
+    expect(lastOptionsChanged()).toHaveProperty('step', expectedDuration / MetricsOptionsBar.Ticks[0]);
 
     elt = wrapper
       .find('#rateInterval')
@@ -49,6 +47,9 @@ describe('MetricsOptionsBar', () => {
       .last();
     elt.simulate('click');
     expect(optionsChanged).toHaveBeenCalledTimes(4);
-    expect(lastOptionsChanged()).toHaveProperty('rateInterval', '30m');
+    expect(lastOptionsChanged()).toHaveProperty(
+      'rateInterval',
+      MetricsOptionsBar.RateIntervals[MetricsOptionsBar.RateIntervals.length - 1][0]
+    );
   });
 });

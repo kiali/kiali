@@ -20,11 +20,13 @@ interface ByLabel {
 }
 
 export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsState> {
-  rateIntervals = [['1m', '1 minute'], ['5m', '5 minutes'], ['10m', '10 minutes'], ['30m', '30 minutes']];
+  static RateIntervals = [['1m', '1 minute'], ['5m', '5 minutes'], ['10m', '10 minutes'], ['30m', '30 minutes']];
+  static DefaultRateInterval = MetricsOptionsBar.RateIntervals[0][0];
 
-  ticks = [10, 20, 30, 50, 100, 200];
+  static Ticks = [10, 20, 30, 50, 100, 200];
+  static DefaultTicks = MetricsOptionsBar.Ticks[2];
 
-  durations: [number, string][] = [
+  static Durations: [number, string][] = [
     [300, 'Last 5 minutes'],
     [600, 'Last 10 minutes'],
     [1800, 'Last 30 minutes'],
@@ -34,8 +36,9 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     [43200, 'Last 12 hours'],
     [86400, 'Last day']
   ];
+  static DefaultDuration = MetricsOptionsBar.Durations[1][0];
 
-  byLabelOptions: { [key: string]: ByLabel } = {
+  static ByLabelOptions: { [key: string]: ByLabel } = {
     'local version': {
       labelIn: 'destination_version',
       labelOut: 'source_version'
@@ -54,7 +57,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     }
   };
 
-  byLabelNames = Object.keys(this.byLabelOptions);
+  static ByLabelNames = Object.keys(MetricsOptionsBar.ByLabelOptions);
 
   constructor(props: Props) {
     super(props);
@@ -66,9 +69,9 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     this.removeByLabel = this.removeByLabel.bind(this);
 
     this.state = {
-      rateInterval: this.rateIntervals[0][0],
-      duration: this.durations[1][0],
-      ticks: this.ticks[2],
+      rateInterval: MetricsOptionsBar.DefaultRateInterval,
+      duration: MetricsOptionsBar.DefaultDuration,
+      ticks: MetricsOptionsBar.DefaultTicks,
       filterLabels: [],
       byLabels: []
     };
@@ -99,8 +102,8 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
 
   reportOptions() {
     // State-to-options converter (removes unnecessary properties)
-    const labelsIn = this.state.byLabels.map(lbl => this.byLabelOptions[lbl].labelIn);
-    const labelsOut = this.state.byLabels.map(lbl => this.byLabelOptions[lbl].labelOut);
+    const labelsIn = this.state.byLabels.map(lbl => MetricsOptionsBar.ByLabelOptions[lbl].labelIn);
+    const labelsOut = this.state.byLabels.map(lbl => MetricsOptionsBar.ByLabelOptions[lbl].labelOut);
     this.props.onOptionsChanged({
       rateInterval: this.state.rateInterval,
       duration: this.state.duration,
@@ -112,7 +115,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
   }
 
   addByLabel(key: string) {
-    if (!this.byLabelOptions.hasOwnProperty(key)) {
+    if (!MetricsOptionsBar.ByLabelOptions.hasOwnProperty(key)) {
       // Probably placeholder click
       return;
     }
@@ -150,21 +153,21 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
       <Toolbar>
         <div className="form-group">
           <DropdownButton id="duration" title="Duration" onSelect={this.onDurationChanged}>
-            {this.durations.map(r => (
+            {MetricsOptionsBar.Durations.map(r => (
               <MenuItem key={r[0]} active={r[0] === this.state.duration} eventKey={r[0]}>
                 {r[1]}
               </MenuItem>
             ))}
           </DropdownButton>
           <DropdownButton id="ticks" title="Ticks" onSelect={this.onTicksChanged}>
-            {this.ticks.map(r => (
+            {MetricsOptionsBar.Ticks.map(r => (
               <MenuItem key={r} active={r === this.state.ticks} eventKey={r}>
                 {r}
               </MenuItem>
             ))}
           </DropdownButton>
           <DropdownButton id="rateInterval" title="Rate interval" onSelect={this.onRateIntervalChanged}>
-            {this.rateIntervals.map(r => (
+            {MetricsOptionsBar.RateIntervals.map(r => (
               <MenuItem key={r[0]} active={r[0] === this.state.rateInterval} eventKey={r[0]}>
                 {r[1]}
               </MenuItem>
@@ -174,7 +177,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
         <div className="form-group">
           <Filter>
             <Filter.ValueSelector
-              filterValues={this.byLabelNames}
+              filterValues={MetricsOptionsBar.ByLabelNames}
               placeholder="Group by"
               onFilterValueSelected={this.addByLabel}
             />
