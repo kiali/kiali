@@ -33,6 +33,10 @@ ShallowWrapper {
                     <Col
                               bsClass="col"
                               componentClass="div"
+                              lg={12}
+                              md={12}
+                              sm={12}
+                              xs={12}
                     >
                               <ServiceInfoDescription
                                         endpoints={undefined}
@@ -43,6 +47,12 @@ ShallowWrapper {
                                         type=""
                               />
                     </Col>
+          </Row>
+          <Row
+                    bsClass="row"
+                    className="row-cards-pf"
+                    componentClass="div"
+          >
                     <Col
                               bsClass="col"
                               componentClass="div"
@@ -51,8 +61,8 @@ ShallowWrapper {
                               sm={6}
                               xs={12}
                     >
-                              <ServiceInfoPods
-                                        pods={Array []}
+                              <ServiceInfoDeployments
+                                        deployments={Array []}
                               />
                     </Col>
                     <Col
@@ -91,334 +101,8 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "host",
         "props": Object {
-          "children": <Row
-            bsClass="row"
-            className="row-cards-pf"
-            componentClass="div"
->
-            <Col
-                        bsClass="col"
-                        componentClass="div"
-            >
-                        <ServiceInfoDescription
-                                    endpoints={undefined}
-                                    ip=""
-                                    labels={Map {}}
-                                    name=""
-                                    ports={Array []}
-                                    type=""
-                        />
-            </Col>
-            <Col
-                        bsClass="col"
-                        componentClass="div"
-                        lg={4}
-                        md={4}
-                        sm={6}
-                        xs={12}
-            >
-                        <ServiceInfoPods
-                                    pods={Array []}
-                        />
-            </Col>
-            <Col
-                        bsClass="col"
-                        componentClass="div"
-                        lg={4}
-                        md={4}
-                        sm={6}
-                        xs={12}
-            >
-                        <ServiceInfoRoutes
-                                    dependencies={Map {}}
-                        />
-            </Col>
-            <Col
-                        bsClass="col"
-                        componentClass="div"
-                        lg={4}
-                        md={4}
-                        sm={6}
-                        xs={12}
-            >
-                        <ServiceInfoRules
-                                    rules={Array []}
-                        />
-            </Col>
-</Row>,
-          "className": "container-fluid container-cards-pf",
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "bsClass": "row",
-            "children": Array [
-              <Col
-                bsClass="col"
-                componentClass="div"
->
-                <ServiceInfoDescription
-                                endpoints={undefined}
-                                ip=""
-                                labels={Map {}}
-                                name=""
-                                ports={Array []}
-                                type=""
-                />
-</Col>,
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={4}
-                md={4}
-                sm={6}
-                xs={12}
->
-                <ServiceInfoPods
-                                pods={Array []}
-                />
-</Col>,
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={4}
-                md={4}
-                sm={6}
-                xs={12}
->
-                <ServiceInfoRoutes
-                                dependencies={Map {}}
-                />
-</Col>,
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={4}
-                md={4}
-                sm={6}
-                xs={12}
->
-                <ServiceInfoRules
-                                rules={Array []}
-                />
-</Col>,
-            ],
-            "className": "row-cards-pf",
-            "componentClass": "div",
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "class",
-              "props": Object {
-                "bsClass": "col",
-                "children": <ServiceInfoDescription
-                  endpoints={undefined}
-                  ip=""
-                  labels={Map {}}
-                  name=""
-                  ports={Array []}
-                  type=""
-/>,
-                "componentClass": "div",
-              },
-              "ref": null,
-              "rendered": Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "class",
-                "props": Object {
-                  "endpoints": undefined,
-                  "ip": "",
-                  "labels": Map {},
-                  "name": "",
-                  "ports": Array [],
-                  "type": "",
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "class",
-              "props": Object {
-                "bsClass": "col",
-                "children": <ServiceInfoPods
-                  pods={Array []}
-/>,
-                "componentClass": "div",
-                "lg": 4,
-                "md": 4,
-                "sm": 6,
-                "xs": 12,
-              },
-              "ref": null,
-              "rendered": Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "class",
-                "props": Object {
-                  "pods": Array [],
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "class",
-              "props": Object {
-                "bsClass": "col",
-                "children": <ServiceInfoRoutes
-                  dependencies={Map {}}
-/>,
-                "componentClass": "div",
-                "lg": 4,
-                "md": 4,
-                "sm": 6,
-                "xs": 12,
-              },
-              "ref": null,
-              "rendered": Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "class",
-                "props": Object {
-                  "dependencies": Map {},
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "class",
-              "props": Object {
-                "bsClass": "col",
-                "children": <ServiceInfoRules
-                  rules={Array []}
-/>,
-                "componentClass": "div",
-                "lg": 4,
-                "md": 4,
-                "sm": 6,
-                "xs": 12,
-              },
-              "ref": null,
-              "rendered": Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "class",
-                "props": Object {
-                  "rules": Array [],
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-              "type": [Function],
-            },
-          ],
-          "type": [Function],
-        },
-        "type": "div",
-      },
-    ],
-    "type": "div",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": Array [
-          null,
-          <div
-            className="container-fluid container-cards-pf"
->
+          "children": Array [
             <Row
-                        bsClass="row"
-                        className="row-cards-pf"
-                        componentClass="div"
-            >
-                        <Col
-                                    bsClass="col"
-                                    componentClass="div"
-                        >
-                                    <ServiceInfoDescription
-                                                endpoints={undefined}
-                                                ip=""
-                                                labels={Map {}}
-                                                name=""
-                                                ports={Array []}
-                                                type=""
-                                    />
-                        </Col>
-                        <Col
-                                    bsClass="col"
-                                    componentClass="div"
-                                    lg={4}
-                                    md={4}
-                                    sm={6}
-                                    xs={12}
-                        >
-                                    <ServiceInfoPods
-                                                pods={Array []}
-                                    />
-                        </Col>
-                        <Col
-                                    bsClass="col"
-                                    componentClass="div"
-                                    lg={4}
-                                    md={4}
-                                    sm={6}
-                                    xs={12}
-                        >
-                                    <ServiceInfoRoutes
-                                                dependencies={Map {}}
-                                    />
-                        </Col>
-                        <Col
-                                    bsClass="col"
-                                    componentClass="div"
-                                    lg={4}
-                                    md={4}
-                                    sm={6}
-                                    xs={12}
-                        >
-                                    <ServiceInfoRules
-                                                rules={Array []}
-                                    />
-                        </Col>
-            </Row>
-</div>,
-        ],
-      },
-      "ref": null,
-      "rendered": Array [
-        null,
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": <Row
               bsClass="row"
               className="row-cards-pf"
               componentClass="div"
@@ -426,6 +110,10 @@ ShallowWrapper {
               <Col
                             bsClass="col"
                             componentClass="div"
+                            lg={12}
+                            md={12}
+                            sm={12}
+                            xs={12}
               >
                             <ServiceInfoDescription
                                           endpoints={undefined}
@@ -436,6 +124,12 @@ ShallowWrapper {
                                           type=""
                             />
               </Col>
+</Row>,
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
+>
               <Col
                             bsClass="col"
                             componentClass="div"
@@ -444,8 +138,8 @@ ShallowWrapper {
                             sm={6}
                             xs={12}
               >
-                            <ServiceInfoPods
-                                          pods={Array []}
+                            <ServiceInfoDeployments
+                                          deployments={Array []}
                             />
               </Col>
               <Col
@@ -473,10 +167,80 @@ ShallowWrapper {
                             />
               </Col>
 </Row>,
-            "className": "container-fluid container-cards-pf",
+          ],
+          "className": "container-fluid container-cards-pf",
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "row",
+              "children": <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+>
+                <ServiceInfoDescription
+                                endpoints={undefined}
+                                ip=""
+                                labels={Map {}}
+                                name=""
+                                ports={Array []}
+                                type=""
+                />
+</Col>,
+              "className": "row-cards-pf",
+              "componentClass": "div",
+            },
+            "ref": null,
+            "rendered": Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "col",
+                "children": <ServiceInfoDescription
+                  endpoints={undefined}
+                  ip=""
+                  labels={Map {}}
+                  name=""
+                  ports={Array []}
+                  type=""
+/>,
+                "componentClass": "div",
+                "lg": 12,
+                "md": 12,
+                "sm": 12,
+                "xs": 12,
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "endpoints": undefined,
+                  "ip": "",
+                  "labels": Map {},
+                  "name": "",
+                  "ports": Array [],
+                  "type": "",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+              "type": [Function],
+            },
+            "type": [Function],
           },
-          "ref": null,
-          "rendered": Object {
+          Object {
             "instance": null,
             "key": undefined,
             "nodeType": "class",
@@ -486,26 +250,13 @@ ShallowWrapper {
                 <Col
                   bsClass="col"
                   componentClass="div"
->
-                  <ServiceInfoDescription
-                                    endpoints={undefined}
-                                    ip=""
-                                    labels={Map {}}
-                                    name=""
-                                    ports={Array []}
-                                    type=""
-                  />
-</Col>,
-                <Col
-                  bsClass="col"
-                  componentClass="div"
                   lg={4}
                   md={4}
                   sm={6}
                   xs={12}
 >
-                  <ServiceInfoPods
-                                    pods={Array []}
+                  <ServiceInfoDeployments
+                                    deployments={Array []}
                   />
 </Col>,
                 <Col
@@ -544,43 +295,8 @@ ShallowWrapper {
                 "nodeType": "class",
                 "props": Object {
                   "bsClass": "col",
-                  "children": <ServiceInfoDescription
-                    endpoints={undefined}
-                    ip=""
-                    labels={Map {}}
-                    name=""
-                    ports={Array []}
-                    type=""
-/>,
-                  "componentClass": "div",
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "class",
-                  "props": Object {
-                    "endpoints": undefined,
-                    "ip": "",
-                    "labels": Map {},
-                    "name": "",
-                    "ports": Array [],
-                    "type": "",
-                  },
-                  "ref": null,
-                  "rendered": null,
-                  "type": [Function],
-                },
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "class",
-                "props": Object {
-                  "bsClass": "col",
-                  "children": <ServiceInfoPods
-                    pods={Array []}
+                  "children": <ServiceInfoDeployments
+                    deployments={Array []}
 />,
                   "componentClass": "div",
                   "lg": 4,
@@ -594,7 +310,7 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "class",
                   "props": Object {
-                    "pods": Array [],
+                    "deployments": Array [],
                   },
                   "ref": null,
                   "rendered": null,
@@ -663,6 +379,378 @@ ShallowWrapper {
             ],
             "type": [Function],
           },
+        ],
+        "type": "div",
+      },
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          null,
+          <div
+            className="container-fluid container-cards-pf"
+>
+            <Row
+                        bsClass="row"
+                        className="row-cards-pf"
+                        componentClass="div"
+            >
+                        <Col
+                                    bsClass="col"
+                                    componentClass="div"
+                                    lg={12}
+                                    md={12}
+                                    sm={12}
+                                    xs={12}
+                        >
+                                    <ServiceInfoDescription
+                                                endpoints={undefined}
+                                                ip=""
+                                                labels={Map {}}
+                                                name=""
+                                                ports={Array []}
+                                                type=""
+                                    />
+                        </Col>
+            </Row>
+            <Row
+                        bsClass="row"
+                        className="row-cards-pf"
+                        componentClass="div"
+            >
+                        <Col
+                                    bsClass="col"
+                                    componentClass="div"
+                                    lg={4}
+                                    md={4}
+                                    sm={6}
+                                    xs={12}
+                        >
+                                    <ServiceInfoDeployments
+                                                deployments={Array []}
+                                    />
+                        </Col>
+                        <Col
+                                    bsClass="col"
+                                    componentClass="div"
+                                    lg={4}
+                                    md={4}
+                                    sm={6}
+                                    xs={12}
+                        >
+                                    <ServiceInfoRoutes
+                                                dependencies={Map {}}
+                                    />
+                        </Col>
+                        <Col
+                                    bsClass="col"
+                                    componentClass="div"
+                                    lg={4}
+                                    md={4}
+                                    sm={6}
+                                    xs={12}
+                        >
+                                    <ServiceInfoRules
+                                                rules={Array []}
+                                    />
+                        </Col>
+            </Row>
+</div>,
+        ],
+      },
+      "ref": null,
+      "rendered": Array [
+        null,
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              <Row
+                bsClass="row"
+                className="row-cards-pf"
+                componentClass="div"
+>
+                <Col
+                                bsClass="col"
+                                componentClass="div"
+                                lg={12}
+                                md={12}
+                                sm={12}
+                                xs={12}
+                >
+                                <ServiceInfoDescription
+                                                endpoints={undefined}
+                                                ip=""
+                                                labels={Map {}}
+                                                name=""
+                                                ports={Array []}
+                                                type=""
+                                />
+                </Col>
+</Row>,
+              <Row
+                bsClass="row"
+                className="row-cards-pf"
+                componentClass="div"
+>
+                <Col
+                                bsClass="col"
+                                componentClass="div"
+                                lg={4}
+                                md={4}
+                                sm={6}
+                                xs={12}
+                >
+                                <ServiceInfoDeployments
+                                                deployments={Array []}
+                                />
+                </Col>
+                <Col
+                                bsClass="col"
+                                componentClass="div"
+                                lg={4}
+                                md={4}
+                                sm={6}
+                                xs={12}
+                >
+                                <ServiceInfoRoutes
+                                                dependencies={Map {}}
+                                />
+                </Col>
+                <Col
+                                bsClass="col"
+                                componentClass="div"
+                                lg={4}
+                                md={4}
+                                sm={6}
+                                xs={12}
+                >
+                                <ServiceInfoRules
+                                                rules={Array []}
+                                />
+                </Col>
+</Row>,
+            ],
+            "className": "container-fluid container-cards-pf",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "row",
+                "children": <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={12}
+                  md={12}
+                  sm={12}
+                  xs={12}
+>
+                  <ServiceInfoDescription
+                                    endpoints={undefined}
+                                    ip=""
+                                    labels={Map {}}
+                                    name=""
+                                    ports={Array []}
+                                    type=""
+                  />
+</Col>,
+                "className": "row-cards-pf",
+                "componentClass": "div",
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": <ServiceInfoDescription
+                    endpoints={undefined}
+                    ip=""
+                    labels={Map {}}
+                    name=""
+                    ports={Array []}
+                    type=""
+/>,
+                  "componentClass": "div",
+                  "lg": 12,
+                  "md": 12,
+                  "sm": 12,
+                  "xs": 12,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "endpoints": undefined,
+                    "ip": "",
+                    "labels": Map {},
+                    "name": "",
+                    "ports": Array [],
+                    "type": "",
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+                "type": [Function],
+              },
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "row",
+                "children": Array [
+                  <Col
+                    bsClass="col"
+                    componentClass="div"
+                    lg={4}
+                    md={4}
+                    sm={6}
+                    xs={12}
+>
+                    <ServiceInfoDeployments
+                                        deployments={Array []}
+                    />
+</Col>,
+                  <Col
+                    bsClass="col"
+                    componentClass="div"
+                    lg={4}
+                    md={4}
+                    sm={6}
+                    xs={12}
+>
+                    <ServiceInfoRoutes
+                                        dependencies={Map {}}
+                    />
+</Col>,
+                  <Col
+                    bsClass="col"
+                    componentClass="div"
+                    lg={4}
+                    md={4}
+                    sm={6}
+                    xs={12}
+>
+                    <ServiceInfoRules
+                                        rules={Array []}
+                    />
+</Col>,
+                ],
+                "className": "row-cards-pf",
+                "componentClass": "div",
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": <ServiceInfoDeployments
+                      deployments={Array []}
+/>,
+                    "componentClass": "div",
+                    "lg": 4,
+                    "md": 4,
+                    "sm": 6,
+                    "xs": 12,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "deployments": Array [],
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                  "type": [Function],
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": <ServiceInfoRoutes
+                      dependencies={Map {}}
+/>,
+                    "componentClass": "div",
+                    "lg": 4,
+                    "md": 4,
+                    "sm": 6,
+                    "xs": 12,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "dependencies": Map {},
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                  "type": [Function],
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": <ServiceInfoRules
+                      rules={Array []}
+/>,
+                    "componentClass": "div",
+                    "lg": 4,
+                    "md": 4,
+                    "sm": 6,
+                    "xs": 12,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "rules": Array [],
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                  "type": [Function],
+                },
+              ],
+              "type": [Function],
+            },
+          ],
           "type": "div",
         },
       ],
