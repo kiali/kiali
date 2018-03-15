@@ -7,7 +7,7 @@ import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-reac
 import { ServiceFilterSelected } from '../../components/ServiceFilter/ServiceFilter';
 import { ActiveFilter } from '../../types/ServiceFilter';
 
-export default function ServiceDetails(routeProps: RouteComponentProps<ServiceId>) {
+const ServiceDetails = (routeProps: RouteComponentProps<ServiceId>) => {
   let updateFilter = () => {
     let activeFilter: ActiveFilter = {
       label: 'Namespace: ' + routeProps.match.params.namespace,
@@ -50,4 +50,6 @@ export default function ServiceDetails(routeProps: RouteComponentProps<ServiceId
       </TabContainer>
     </div>
   );
-}
+};
+
+export default ServiceDetails;

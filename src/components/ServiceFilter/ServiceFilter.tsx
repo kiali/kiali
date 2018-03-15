@@ -21,13 +21,13 @@ const serviceNameFilter: FilterType = {
 export namespace ServiceFilterSelected {
   let selectedFilters: ActiveFilter[] = [];
 
-  export function setSelected(activeFilters: ActiveFilter[]) {
+  export const setSelected = (activeFilters: ActiveFilter[]) => {
     selectedFilters = activeFilters;
-  }
+  };
 
-  export function getSelected(): ActiveFilter[] {
+  export const getSelected = (): ActiveFilter[] => {
     return selectedFilters;
-  }
+  };
 }
 
 export class ServiceFilter extends React.Component<ServiceFilterProps, ServiceFilterState> {
