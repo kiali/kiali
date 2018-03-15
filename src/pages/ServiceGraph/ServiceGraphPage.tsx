@@ -4,14 +4,18 @@ import { PropTypes } from 'prop-types';
 import NamespaceId from '../../types/NamespaceId';
 import { Alert } from 'patternfly-react';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
-import SummaryPanel from '../../components/SummaryPanel/SummaryPanel';
+import SummaryPanelBase from './SummaryPanelBase';
 import { GraphFilter, GraphFilters } from '../../components/GraphFilter/GraphFilter';
 
 const URLSearchParams = require('url-search-params');
 
+// summaryData will have two fields:
+//   summaryTarget: The cytoscape element
+//   summaryType  : one of 'graph', 'node', 'edge', 'group'
 type ServiceGraphPageProps = {
   alertVisible: boolean;
   alertDetails: string;
+  summaryData: any;
 };
 
 export default class ServiceGraphPage extends React.Component<RouteComponentProps<NamespaceId>, ServiceGraphPageProps> {
@@ -23,10 +27,12 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
     super(routeProps);
     this.state = {
       alertVisible: false,
-      alertDetails: ''
+      alertDetails: '',
+      summaryData: { summaryType: 'graph' }
     };
 
     this.filterChange = this.filterChange.bind(this);
+    this.handleGraphClick = this.handleGraphClick.bind(this);
     this.handleError = this.handleError.bind(this);
 
     const search = routeProps.location.search;
@@ -57,6 +63,10 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
     );
   }
 
+  handleGraphClick = (data: any) => {
+    this.setState({ summaryData: data });
+  };
+
   render() {
     let alertsDiv = <div />;
     if (this.state.alertVisible) {
@@ -74,11 +84,12 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
           <GraphFilter onFilterChange={this.filterChange} onError={this.handleError} />
         </div>
         <div style={{ position: 'relative' }}>
-          <SummaryPanel namespace={'istio-system'} service={'productpage'} data={undefined} />
+          <SummaryPanelBase data={this.state.summaryData} />
           <CytoscapeLayout
             namespace={GraphFilters.getGraphNamespace()}
             layout={GraphFilters.getGraphLayout()}
             interval={GraphFilters.getGraphInterval()}
+            onClick={this.handleGraphClick}
           />
         </div>
       </div>

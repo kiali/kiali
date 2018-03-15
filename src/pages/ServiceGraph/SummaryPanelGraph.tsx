@@ -1,16 +1,14 @@
 import * as React from 'react';
 
 import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
-import { ErrorRatePieChart } from './ErrorRatePieChart';
-import { RpsChart } from './RpsChart';
+import { ErrorRatePieChart } from '../../components/SummaryPanel/ErrorRatePieChart';
+import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 
 type SummaryPanelPropType = {
-  namespace: string;
-  service: string;
   data: any;
 };
 
-export default class SummaryPanel extends React.Component<SummaryPanelPropType, {}> {
+export default class SummaryPanelGraph extends React.Component<SummaryPanelPropType, {}> {
   static readonly panelStyle = {
     position: 'absolute' as 'absolute',
     width: '25em',
@@ -20,13 +18,9 @@ export default class SummaryPanel extends React.Component<SummaryPanelPropType, 
   };
 
   render() {
-    const serviceHotLink = (
-      <a href={`../namespaces/${this.props.namespace}/services/${this.props.service}`}>{this.props.service}</a>
-    );
-
     return (
-      <div className="panel panel-default" style={SummaryPanel.panelStyle}>
-        <div className="panel-heading">Service: {serviceHotLink} (v5)</div>
+      <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
+        <div className="panel-heading">TBD</div>
         <div className="panel-body">
           <p>
             <strong>Labels:</strong>

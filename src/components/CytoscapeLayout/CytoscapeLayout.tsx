@@ -8,15 +8,16 @@ import { GraphStyles } from './graphs/GraphStyles';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import { refreshSettings } from '../../model/RefreshSettings';
 
-type CytoscapeLayoutState = {
-  elements?: any;
-  isLoading: boolean;
-};
-
 type CytoscapeLayoutProps = {
   namespace: string;
   layout: any;
   interval: string;
+  onClick: PropTypes.func;
+};
+
+type CytoscapeLayoutState = {
+  elements?: any;
+  isLoading: boolean;
 };
 
 export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, CytoscapeLayoutState> {
@@ -72,16 +73,24 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     this.cy = cy;
     this.graphHighlighter = new GraphHighlighter(cy);
 
-    cy.on('tap', 'node', (evt: any) => {
+    cy.on('tap', (evt: any) => {
       const target = evt.target;
-      const targetNode = cy.$id(target.id());
-      const svc = targetNode.data('service');
-      const service = svc.split('.')[0];
-
-      // Avoid redirecting when clicking on a service group box as we are
-      // highlighting its connection and nodes
-      if (!targetNode.isParent() && service !== 'unknown') {
-        this.context.router.history.push('/namespaces/' + this.props.namespace + '/services/' + service);
+      if (target === cy) {
+        console.log('TAP Background');
+        this.props.onClick({ summaryType: 'graph', summaryTarget: cy });
+      } else if (target.isNode()) {
+        if (target.data('groupBy') === 'version') {
+          console.log('TAP Group');
+          this.props.onClick({ summaryType: 'group', summaryTarget: target });
+        } else {
+          console.log('TAP node');
+          this.props.onClick({ summaryType: 'node', summaryTarget: target });
+        }
+      } else if (target.isEdge()) {
+        console.log('TAP edge');
+        this.props.onClick({ summaryType: 'edge', summaryTarget: target });
+      } else {
+        console.log('TAP UNHANDLED');
       }
     });
   }
