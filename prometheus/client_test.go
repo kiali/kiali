@@ -168,7 +168,7 @@ func TestGetServiceMetricsHealthUnavailable(t *testing.T) {
 	metrics := client.GetServiceMetrics("istio-system", "productpage", 1000, 10, "5m", []string{}, []string{})
 
 	// Check health unavailable
-	assert.Nil(t, metrics.Health)
+	assert.Equal(t, 0, metrics.Health.TotalReplicas)
 
 	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")

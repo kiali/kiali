@@ -88,13 +88,9 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 func (in *Client) GetServiceMetrics(namespace string, servicename string, duration time.Duration, step time.Duration,
 	rateInterval string, byLabelsIn []string, byLabelsOut []string) Metrics {
 
-	healthChan, metricsChan := make(chan *Health), make(chan Metrics)
-	go getServiceHealthAsync(in.api, namespace, servicename, healthChan)
-	go getServiceMetricsAsync(in.api, namespace, servicename, duration, step, rateInterval, byLabelsIn, byLabelsOut, metricsChan)
-
-	// Merge health in metrics
-	metrics := <-metricsChan
-	metrics.Health = <-healthChan
+	metrics := getServiceMetrics(in.api, namespace, servicename, duration, step, rateInterval, byLabelsIn, byLabelsOut)
+	health := getServiceHealth(in.api, namespace, servicename)
+	metrics.Health = health
 
 	return metrics
 }
