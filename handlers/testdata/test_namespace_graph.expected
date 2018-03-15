@@ -7,7 +7,11 @@
           "text": "details (v1)",
           "service": "details.istio-system.svc.cluster.local",
           "version": "v1",
-          "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22details.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D"
+          "rate": "80.00",
+          "rate3XX": "20.00",
+          "rate4XX": "20.00",
+          "rate5XX": "20.00",
+          "rateErr": "60.00"
         }
       },
       {
@@ -15,8 +19,7 @@
           "id": "n7",
           "text": "ingress",
           "service": "ingress.istio-system.svc.cluster.local",
-          "version": "unknown",
-          "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bsource_service%3D%22ingress.istio-system.svc.cluster.local%22%2Csource_version%3D%22unknown%22%7D"
+          "version": "unknown"
         }
       },
       {
@@ -25,7 +28,7 @@
           "text": "productpage (v1) \u003c20.00pm\u003e",
           "service": "productpage.istio-system.svc.cluster.local",
           "version": "v1",
-          "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22productpage.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D"
+          "rate": "150.00"
         }
       },
       {
@@ -34,14 +37,15 @@
           "text": "ratings (v1)",
           "service": "ratings.istio-system.svc.cluster.local",
           "version": "v1",
-          "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22ratings.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D"
+          "rate": "40.00"
         }
       },
       {
         "data": {
           "id": "n8",
           "text": "reviews",
-          "service": "reviews.istio-system.svc.cluster.local"
+          "service": "reviews.istio-system.svc.cluster.local",
+          "groupBy": "version"
         }
       },
       {
@@ -51,7 +55,7 @@
           "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v1",
-          "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D"
+          "rate": "20.00"
         }
       },
       {
@@ -61,7 +65,7 @@
           "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v2",
-          "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v2%22%7D"
+          "rate": "20.00"
         }
       },
       {
@@ -71,7 +75,7 @@
           "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v3",
-          "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v3%22%7D"
+          "rate": "20.00"
         }
       },
       {
@@ -79,8 +83,7 @@
           "id": "n0",
           "text": "unknown",
           "service": "unknown",
-          "version": "unknown",
-          "link_prom_graph": "http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bsource_service%3D%22unknown%22%2Csource_version%3D%22unknown%22%7D"
+          "version": "unknown"
         }
       }
     ],
@@ -91,7 +94,8 @@
           "source": "n0",
           "target": "n1",
           "text": "50.00ps",
-          "color": "green"
+          "color": "green",
+          "rate": "50.00"
         }
       },
       {
@@ -99,8 +103,13 @@
           "id": "e1",
           "source": "n1",
           "target": "n2",
-          "text": "20.00ps",
-          "color": "green"
+          "text": "80.00ps (err=75.00%)",
+          "color": "red",
+          "rate": "80.00",
+          "rate3XX": "20.00",
+          "rate4XX": "20.00",
+          "rate5XX": "20.00",
+          "rateErr": "60.00"
         }
       },
       {
@@ -109,7 +118,8 @@
           "source": "n1",
           "target": "n3",
           "text": "20.00ps",
-          "color": "green"
+          "color": "green",
+          "rate": "20.00"
         }
       },
       {
@@ -118,7 +128,8 @@
           "source": "n1",
           "target": "n4",
           "text": "20.00ps",
-          "color": "green"
+          "color": "green",
+          "rate": "20.00"
         }
       },
       {
@@ -127,7 +138,8 @@
           "source": "n1",
           "target": "n6",
           "text": "20.00ps",
-          "color": "green"
+          "color": "green",
+          "rate": "20.00"
         }
       },
       {
@@ -136,7 +148,8 @@
           "source": "n4",
           "target": "n5",
           "text": "20.00ps",
-          "color": "green"
+          "color": "green",
+          "rate": "20.00"
         }
       },
       {
@@ -145,7 +158,8 @@
           "source": "n6",
           "target": "n5",
           "text": "20.00ps",
-          "color": "green"
+          "color": "green",
+          "rate": "20.00"
         }
       },
       {
@@ -154,7 +168,8 @@
           "source": "n7",
           "target": "n1",
           "text": "100.00ps",
-          "color": "green"
+          "color": "green",
+          "rate": "100.00"
         }
       }
     ]

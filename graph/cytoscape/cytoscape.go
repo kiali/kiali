@@ -16,6 +16,7 @@ package cytoscape
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/kiali/swscore/graph/options"
@@ -27,11 +28,20 @@ type NodeData struct {
 	// Cytoscape Fields
 	Id     string `json:"id"`               // unique internal node ID (n0, n1...)
 	Text   string `json:"text"`             // display text for the node
-	Parent string `json:"parent,omitempty"` // Compund Node parent ID
+	Parent string `json:"parent,omitempty"` // Compound Node parent ID
+
 	// App Fields (not required by Cytoscape)
-	Service       string `json:"service"`
-	Version       string `json:"version,omitempty"`
-	LinkPromGraph string `json:"link_prom_graph,omitempty"`
+	Service string `json:"service"`
+	Version string `json:"version,omitempty"`
+	GroupBy string `json:"groupBy,omitempty"` // compound nodes set to one of: [ 'version' ]
+	Rate    string `json:"rate,omitempty"`    // edge aggregate
+	Rate3xx string `json:"rate3XX,omitempty"` // edge aggregate
+	Rate4xx string `json:"rate4XX,omitempty"` // edge aggregate
+	Rate5xx string `json:"rate5XX,omitempty"` // edge aggregate
+	RateErr string `json:"rateErr,omitempty"` // edge aggregate (sum of 3,4,5xx)
+
+	// reserved for future
+	// LinkPromGraph string `json:"link_prom_graph,omitempty"`
 }
 
 type EdgeData struct {
@@ -41,20 +51,21 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 	Text   string `json:"text"`   // display text
 	Color  string `json:"color"`  // link color
+
 	// App Fields (not required by Cytoscape)
 	Rate    string `json:"rate,omitempty"`
-	Rate2xx string `json:"rate_2XX,omitempty"`
-	Rate3xx string `json:"rate_3XX,omitempty"`
-	Rate4xx string `json:"rate_4XX,omitempty"`
-	Rate5xx string `json:"rate_5XX,omitempty"`
+	Rate3xx string `json:"rate3XX,omitempty"`
+	Rate4xx string `json:"rate4XX,omitempty"`
+	Rate5xx string `json:"rate5XX,omitempty"`
+	RateErr string `json:"rateErr,omitempty"` // (sum of 3,4,5xx)
 }
 
 type NodeWrapper struct {
-	Data NodeData `json:"data"`
+	Data *NodeData `json:"data"`
 }
 
 type EdgeWrapper struct {
-	Data EdgeData `json:"data"`
+	Data *EdgeData `json:"data"`
 }
 
 type Elements struct {
@@ -121,14 +132,14 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		}
 		*nodeIdSequence++
 		nd = &NodeData{
-			Id:            nodeId,
-			Service:       name,
-			Version:       sn.Version,
-			Text:          text,
-			LinkPromGraph: sn.Metadata["link_prom_graph"].(string),
+			Id:      nodeId,
+			Service: name,
+			Version: sn.Version,
+			Text:    text,
+			// LinkPromGraph: sn.Metadata["link_prom_graph"].(string),
 		}
 		nw := NodeWrapper{
-			Data: *nd,
+			Data: nd,
 		}
 		*nodes = append(*nodes, &nw)
 	}
@@ -146,10 +157,10 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 				Source: parentNodeId,
 				Target: nd.Id,
 			}
-			addRate(&ed, sn, o)
+			addRate(&ed, sn, nd, o)
 			// TODO: Add in the response code breakdowns and/or other metric info
 			ew := EdgeWrapper{
-				Data: ed,
+				Data: &ed,
 			}
 			*edges = append(*edges, &ew)
 		}
@@ -163,24 +174,47 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 func findNode(nodes *[]*NodeWrapper, service, version string) (*NodeData, bool) {
 	for _, nw := range *nodes {
 		if nw.Data.Service == service && nw.Data.Version == version {
-			return &nw.Data, true
+			return nw.Data, true
 		}
 	}
 	return nil, false
 }
 
-func addRate(ed *EdgeData, sn *tree.ServiceNode, o options.VendorOptions) {
+func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorOptions) {
 	rate := sn.Metadata["rate"].(float64)
 	if rate > 0.0 {
-		successRate := sn.Metadata["rate_2xx"].(float64)
-		errorPercent := (rate - successRate) / rate * 100.0
+		rate3xx := sn.Metadata["rate_3xx"].(float64)
+		rate4xx := sn.Metadata["rate_4xx"].(float64)
+		rate5xx := sn.Metadata["rate_5xx"].(float64)
+		rateErr := rate3xx + rate4xx + rate5xx
+		percentErr := rateErr / rate * 100.0
+
+		ed.Rate = fmt.Sprintf("%.2f", rate)
+		nd.Rate = add(nd.Rate, rate)
+		if rate3xx > 0.0 {
+			ed.Rate3xx = fmt.Sprintf("%.2f", rate3xx)
+			nd.Rate3xx = add(nd.Rate3xx, rate3xx)
+		}
+		if rate4xx > 0.0 {
+			ed.Rate4xx = fmt.Sprintf("%.2f", rate4xx)
+			nd.Rate4xx = add(nd.Rate4xx, rate4xx)
+		}
+		if rate5xx > 0.0 {
+			ed.Rate5xx = fmt.Sprintf("%.2f", rate5xx)
+			nd.Rate5xx = add(nd.Rate5xx, rate5xx)
+		}
+		if rateErr > 0.0 {
+			ed.RateErr = fmt.Sprintf("%.2f", rateErr)
+			nd.RateErr = add(nd.RateErr, rateErr)
+		}
+
 		switch {
-		case errorPercent > o.ThresholdError:
+		case percentErr > o.ThresholdError:
 			ed.Color = o.ColorError
-			ed.Text = fmt.Sprintf("%.2fps (err=%.2f%%)", rate, errorPercent)
-		case errorPercent > o.ThresholdWarn:
+			ed.Text = fmt.Sprintf("%.2fps (err=%.2f%%)", rate, percentErr)
+		case percentErr > o.ThresholdWarn:
 			ed.Color = o.ColorWarn
-			ed.Text = fmt.Sprintf("%.2fps (err=%.2f%%)", rate, errorPercent)
+			ed.Text = fmt.Sprintf("%.2fps (err=%.2f%%)", rate, percentErr)
 		default:
 			ed.Color = o.ColorNormal
 			ed.Text = fmt.Sprintf("%.2fps", rate)
@@ -189,6 +223,15 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, o options.VendorOptions) {
 		ed.Color = o.ColorDead
 		ed.Text = "0ps"
 	}
+}
+
+func add(current string, val float64) string {
+	sum := val
+	f, err := strconv.ParseFloat(current, 64)
+	if err == nil {
+		sum += f
+	}
+	return fmt.Sprintf("%.2f", sum)
 }
 
 func addRpmField(rpmField *string, sn *tree.ServiceNode, key string) {
@@ -214,9 +257,10 @@ func addCompositeNodes(nodes *[]*NodeWrapper, nodeIdSequence *int) {
 				Id:      nodeId,
 				Service: k,
 				Text:    strings.Split(k, ".")[0],
+				GroupBy: "version",
 			}
 			nw := NodeWrapper{
-				Data: nd,
+				Data: &nd,
 			}
 
 			// assign each service version node to the composite parent
