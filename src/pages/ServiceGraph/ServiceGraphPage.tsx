@@ -4,7 +4,7 @@ import { PropTypes } from 'prop-types';
 import NamespaceId from '../../types/NamespaceId';
 import { Alert } from 'patternfly-react';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
-import SummaryPanel from './SummaryPanel';
+import SummaryPanel from '../../components/SummaryPanel/SummaryPanel';
 import { GraphFilter, GraphFilters } from '../../components/GraphFilter/GraphFilter';
 
 const URLSearchParams = require('url-search-params');
@@ -74,7 +74,7 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
           <GraphFilter onFilterChange={this.filterChange} onError={this.handleError} />
         </div>
         <div style={{ position: 'relative' }}>
-          <SummaryPanel />
+          <SummaryPanel namespace={'istio-system'} service={'productpage'} data={undefined} />
           <CytoscapeLayout
             namespace={GraphFilters.getGraphNamespace()}
             layout={GraphFilters.getGraphLayout()}
