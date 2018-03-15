@@ -39,7 +39,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -121,7 +120,7 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []
 
 		rootService := string(sourceSvc)
 		md := make(map[string]interface{})
-		md["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, rootService, tree.UnknownVersion)
+		// md["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, rootService, tree.UnknownVersion)
 
 		root := tree.NewServiceNode(rootService, tree.UnknownVersion)
 		root.Parent = nil
@@ -164,7 +163,7 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 		i := 0
 		for k, d := range destinations {
 			s := strings.Split(k, " ")
-			d["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, s[0], s[1])
+			// d["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, s[0], s[1])
 			child := tree.NewServiceNode(s[0], s[1])
 			child.Parent = sn
 			child.Metadata = d
@@ -256,7 +255,7 @@ func buildServiceTrees(o options.Options, client *prometheus.Client) (trees []tr
 		rootService := string(sourceSvc)
 		rootVersion := string(sourceVer)
 		md := make(map[string]interface{})
-		md["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, rootService, rootVersion)
+		// md["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, rootService, rootVersion)
 
 		root := tree.NewServiceNode(rootService, rootVersion)
 		root.Parent = nil
@@ -301,7 +300,7 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, start time
 		i := 0
 		for k, d := range destinations {
 			s := strings.Split(k, " ")
-			d["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, s[0], s[1])
+			// d["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, s[0], s[1])
 			child := tree.NewServiceNode(s[0], s[1])
 			child.Parent = sn
 			child.Metadata = d
@@ -399,16 +398,16 @@ func toDestinations(sourceSvc, sourceVer string, vector model.Vector) (destinati
 	return destinations
 }
 
-func linkPromGraph(server, ts, name, version string) (link string) {
-	var promExpr string
-	if tree.UnknownVersion == version {
-		promExpr = fmt.Sprintf("%v{source_service=\"%v\",source_version=\"%v\"}", ts, name, version)
-	} else {
-		promExpr = fmt.Sprintf("%v{destination_service=\"%v\",destination_version=\"%v\"}", ts, name, version)
-	}
-	link = fmt.Sprintf("%v/graph?g0.range_input=1h&g0.tab=0&g0.expr=%v", server, url.QueryEscape(promExpr))
-	return link
-}
+//func linkPromGraph(server, ts, name, version string) (link string) {
+//	var promExpr string
+//	if tree.UnknownVersion == version {
+//		promExpr = fmt.Sprintf("%v{source_service=\"%v\",source_version=\"%v\"}", ts, name, version)
+//	} else {
+//		promExpr = fmt.Sprintf("%v{destination_service=\"%v\",destination_version=\"%v\"}", ts, name, version)
+//	}
+//	link = fmt.Sprintf("%v/graph?g0.range_input=1h&g0.tab=0&g0.expr=%v", server, url.QueryEscape(promExpr))
+//	return link
+//}
 
 // TF is the TimeFormat for printing timestamp
 const TF = "2006-01-02 15:04:05"

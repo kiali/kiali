@@ -96,8 +96,21 @@ func TestNamespaceGraph(t *testing.T) {
 	q3m3 := model.Metric{
 		"destination_service": "details.istio-system.svc.cluster.local",
 		"destination_version": "v1",
-		"response_code":       "200"}
+		"response_code":       "300"}
 	q3m4 := model.Metric{
+		"destination_service": "details.istio-system.svc.cluster.local",
+		"destination_version": "v1",
+		"response_code":       "400"}
+	q3m5 := model.Metric{
+		"destination_service": "details.istio-system.svc.cluster.local",
+		"destination_version": "v1",
+		"response_code":       "500"}
+	q3m6 := model.Metric{
+		"destination_service": "details.istio-system.svc.cluster.local",
+		"destination_version": "v1",
+		"response_code":       "200"}
+
+	q3m7 := model.Metric{
 		"destination_service": "productpage.istio-system.svc.cluster.local",
 		"destination_version": "v1",
 		"response_code":       "200"}
@@ -116,6 +129,15 @@ func TestNamespaceGraph(t *testing.T) {
 			Value:  20},
 		&model.Sample{
 			Metric: q3m4,
+			Value:  20},
+		&model.Sample{
+			Metric: q3m5,
+			Value:  20},
+		&model.Sample{
+			Metric: q3m6,
+			Value:  20},
+		&model.Sample{
+			Metric: q3m7,
 			Value:  20}}
 
 	q4 := "sum(rate(istio_request_count{source_service=\"reviews.istio-system.svc.cluster.local\",source_version=\"v1\",response_code=~\"[2345][0-9][0-9]\"} [30s])) by (destination_service,destination_version,response_code)"
