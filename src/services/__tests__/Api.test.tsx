@@ -59,3 +59,26 @@ describe('#GetServiceDetail using Promises', () => {
     });
   });
 });
+
+describe('#GetIstioRules using Promises', () => {
+  it('should load istio rules of namespace', () => {
+    return API.GetIstioRules('tutorial').then(data => {
+      expect(data).toBeDefined();
+      expect(data.namespace.name).toEqual('tutorial');
+      expect(data.rules).toBeDefined();
+      expect(data.rules).toBeInstanceOf(Array);
+    });
+  });
+});
+
+describe('#GetIstioRuleDetail using Promises', () => {
+  it('should load istio rule detail data', () => {
+    return API.GetIstioRuleDetail('tutorial', 'checkfromcustomer').then(data => {
+      expect(data).toBeDefined();
+      expect(data.name).toEqual('checkfromcustomer');
+      expect(data.namespace.name).toEqual('tutorial');
+      expect(data.match).toEqual('destination.labels["app"] == "preference"');
+      expect(data.actions).toBeInstanceOf(Array);
+    });
+  });
+});

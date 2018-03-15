@@ -1,7 +1,7 @@
 import * as React from 'react';
 import ServiceInfoBadge from './ServiceInfoBadge';
-import ServiceInfoCard from './ServiceInfoCard';
 import { Rule } from '../../../types/ServiceInfo';
+import PfInfoCard from '../../../components/Pf/PfInfoCard';
 
 interface ServiceInfoRulesProps {
   rules?: Rule[];
@@ -14,7 +14,7 @@ class ServiceInfoRules extends React.Component<ServiceInfoRulesProps> {
 
   render() {
     return (
-      <ServiceInfoCard
+      <PfInfoCard
         iconType="pf"
         iconName="settings"
         title="Istio Route Rules"
@@ -48,9 +48,11 @@ class ServiceInfoRules extends React.Component<ServiceInfoRulesProps> {
               {!rule.match ? null : (
                 <div>
                   <strong>Match</strong>:
-                  <textarea className="form-control textarea-resize" readOnly={true}>
-                    {JSON.stringify(rule.match, null, 2)}
-                  </textarea>
+                  <textarea
+                    className="form-control textarea-resize"
+                    readOnly={true}
+                    value={JSON.stringify(rule.match, null, 2)}
+                  />
                 </div>
               )}
             </div>

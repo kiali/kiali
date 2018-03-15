@@ -1,10 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`#ServiceInfoCard render correctly with data should render service card 1`] = `
+exports[`#PfInfoCard render correctly with data should render service card 1`] = `
 ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <ServiceInfoCard
+  Symbol(enzyme.__unrendered__): <PfInfoCard
     iconName="cube"
     iconType="fa"
     items={

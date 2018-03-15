@@ -1,0 +1,28 @@
+{
+  "name": "checkfromcustomer",
+  "namespace": {
+    "name": "tutorial"
+  },
+  "match": "destination.labels[\"app\"] == \"preference\"",
+  "actions": [
+    {
+      "handler": {
+        "name": "preferencewhitelist",
+        "adapter": "listchecker",
+        "spec": {
+          "blacklist": false,
+          "overrides": ["recommendation"]
+        }
+      },
+      "instances": [
+        {
+          "name": "preferencesource",
+          "template": "listentry",
+          "spec": {
+            "value": "source.labels[\"app\"]"
+          }
+        }
+      ]
+    }
+  ]
+}

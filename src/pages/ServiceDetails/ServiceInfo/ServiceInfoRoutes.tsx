@@ -1,6 +1,6 @@
 import * as React from 'react';
-import ServiceInfoCard from './ServiceInfoCard';
 import { Link } from 'react-router-dom';
+import PfInfoCard from '../../../components/Pf/PfInfoCard';
 
 interface ServiceInfoRoutesProps {
   dependencies?: Map<string, string[]>;
@@ -13,7 +13,7 @@ class ServiceInfoRoutes extends React.Component<ServiceInfoRoutesProps> {
 
   render() {
     return (
-      <ServiceInfoCard
+      <PfInfoCard
         iconType="pf"
         iconName="route"
         title="Source Services"

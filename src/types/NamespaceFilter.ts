@@ -19,12 +19,13 @@ export interface ActiveFilter {
   value: string;
 }
 
-export interface ServiceFilterProps {
+export interface NamespaceFilterProps {
   onFilterChange: PropTypes.func;
   onError: PropTypes.func;
+  initialFilters: FilterType[];
 }
 
-export interface ServiceFilterState {
+export interface NamespaceFilterState {
   filterTypeList: FilterType[];
   currentFilterType: FilterType;
   activeFilters: ActiveFilter[];

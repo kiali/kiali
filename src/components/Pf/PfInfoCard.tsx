@@ -8,7 +8,7 @@ interface CardProps {
   items?: any;
 }
 
-class ServiceInfoCard extends React.Component<CardProps> {
+class PfInfoCard extends React.Component<CardProps> {
   constructor(props: CardProps) {
     super(props);
   }
@@ -28,4 +28,4 @@ class ServiceInfoCard extends React.Component<CardProps> {
   }
 }
 
-export default ServiceInfoCard;
+export default PfInfoCard;
