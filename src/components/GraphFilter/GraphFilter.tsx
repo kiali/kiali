@@ -5,9 +5,11 @@ import { GraphFilterProps, GraphFilterState } from '../../types/GraphFilter';
 import * as API from '../../services/Api';
 import { DagreGraph } from '../../components/CytoscapeLayout/graphs/DagreGraph';
 import { ColaGraph } from '../../components/CytoscapeLayout/graphs/ColaGraph';
+import { CoseGraph } from '../../components/CytoscapeLayout/graphs/CoseGraph';
 import { BreadthFirstGraph } from '../../components/CytoscapeLayout/graphs/BreadthFirstGraph';
 import { IntervalButtonGroup } from './IntervalButtonGroup';
 import { LayoutButtonGroup } from './LayoutButtonGroup';
+import { KlayGraph } from '../CytoscapeLayout/graphs/KlayGraph';
 
 export namespace GraphFilters {
   let graphInterval: string = '30s';
@@ -39,8 +41,14 @@ export namespace GraphFilters {
       graphLayout = BreadthFirstGraph.getLayout();
     } else if (value === 'cola') {
       graphLayout = ColaGraph.getLayout();
-    } else {
+    } else if (value === 'dagre') {
       graphLayout = DagreGraph.getLayout();
+    } else if (value === 'cose-bilkent') {
+      graphLayout = CoseGraph.getLayout();
+    } else if (value === 'klay') {
+      graphLayout = KlayGraph.getLayout();
+    } else {
+      console.error('invalid graphLayout: ' + value);
     }
   };
 
