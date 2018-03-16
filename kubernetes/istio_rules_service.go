@@ -114,7 +114,9 @@ func (in *IstioClient) getActionHandler(namespace string, handlerType string, ha
 	istioObject, ok := result.(IstioObject)
 	if !ok {
 		istioObject = nil
-		err = fmt.Errorf("%s/%s doesn't return a valid IstioObject", handlerType, handlerName)
+		if err == nil {
+			err = fmt.Errorf("%s/%s doesn't return a valid IstioObject", handlerType, handlerName)
+		}
 	}
 	if istioObject != nil {
 		if istioObject.GetSpec() != nil {
@@ -144,7 +146,9 @@ func (in *IstioClient) getActionInstance(namespace string, istiorule string, ins
 	istioObject, ok := result.(IstioObject)
 	if !ok {
 		istioObject = nil
-		err = fmt.Errorf("%s/%s doesn't return a valid IstioObject", instanceType, instanceName)
+		if err == nil {
+			err = fmt.Errorf("%s/%s doesn't return a valid IstioObject", instanceType, instanceName)
+		}
 	}
 	if istioObject != nil {
 		if istioObject.GetSpec() != nil {

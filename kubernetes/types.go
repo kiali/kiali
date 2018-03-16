@@ -48,23 +48,15 @@ var (
 			},
 			collection: &ruleList{},
 		},
-		listcheckerLabel: {
-			object: &listchecker{
+		// Adapters
+		circonusLabel: {
+			object: &circonus{
 				TypeMeta: meta_v1.TypeMeta{
-					Kind:       listcheckerType,
+					Kind:       circonusType,
 					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
 				},
 			},
-			collection: &listcheckerList{},
-		},
-		listEntryLabel: {
-			object: &listentry{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       listEntryType,
-					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
-				},
-			},
-			collection: &listentryList{},
+			collection: &circonusList{},
 		},
 		denierLabel: {
 			object: &denier{
@@ -75,6 +67,133 @@ var (
 			},
 			collection: &denierList{},
 		},
+		fluentdLabel: {
+			object: &fluentd{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       fluentdType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &fluentdList{},
+		},
+		kubernetesenvLabel: {
+			object: &kubernetesenv{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       kubernetesenvType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &kubernetesenvList{},
+		},
+		listcheckerLabel: {
+			object: &listchecker{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       listcheckerType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &listcheckerList{},
+		},
+		memquotaLabel: {
+			object: &memquota{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       memquotaType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &memquotaList{},
+		},
+		opaLabel: {
+			object: &opa{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       opaType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &opaList{},
+		},
+		prometheusLabel: {
+			object: &prometheus{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       prometheusType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &prometheusList{},
+		},
+		rbacLabel: {
+			object: &rbac{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       rbacType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &rbacList{},
+		},
+		servicecontrolLabel: {
+			object: &servicecontrol{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       servicecontrolType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &servicecontrolList{},
+		},
+		solarwindsLabel: {
+			object: &solarwinds{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       solarwindsType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &solarwindsList{},
+		},
+		stackdriverLabel: {
+			object: &stackdriver{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       stackdriverType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &stackdriverList{},
+		},
+		statsdLabel: {
+			object: &statsd{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       statsdType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &statsdList{},
+		},
+		stdioLabel: {
+			object: &stdio{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       stdioType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &stdioList{},
+		},
+		// Templates
+		apikeyLabel: {
+			object: &apikey{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       apikeyType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &apikeyList{},
+		},
+		authorizationLabel: {
+			object: &authorization{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       authorizationType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &authorizationList{},
+		},
 		checknothingLabel: {
 			object: &checknothing{
 				TypeMeta: meta_v1.TypeMeta{
@@ -84,14 +203,99 @@ var (
 			},
 			collection: &checknothingList{},
 		},
+		kubernetesLabel: {
+			object: &kubernetes{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       kubernetesType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &kubernetesList{},
+		},
+		listEntryLabel: {
+			object: &listentry{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       listEntryType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &listentryList{},
+		},
+		logentryLabel: {
+			object: &logentry{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       logentryType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &logentryList{},
+		},
+		metricLabel: {
+			object: &metric{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       metricType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &metricList{},
+		},
+		quotaLabel: {
+			object: &quota{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       quotaType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &quotaList{},
+		},
+		reportnothingLabel: {
+			object: &reportnothing{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       reportnothingType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &reportnothingList{},
+		},
+		servicecontrolreportLabel: {
+			object: &servicecontrolreport{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       servicecontrolreportType,
+					APIVersion: istioGroupVersion.Group + "/" + istioGroupVersion.Version,
+				},
+			},
+			collection: &servicecontrolreportList{},
+		},
 	}
 	// A map to get the plural for a Istio type using the singlar type
-	// Used for fetch istio actions details, so only applied to handlers and instances types
+	// Used for fetch istio actions details, so only applied to handlers (adapters) and instances (templates) types
 	istioTypePlurals = map[string]string{
-		listcheckerType:  listcheckers,
-		listEntryType:    listEntries,
-		denierType:       deniers,
-		checknothingType: checknothings,
+		// Adapters
+		circonusType:       circonuses,
+		denierType:         deniers,
+		fluentdType:        fluentds,
+		kubernetesenvType:  kubernetesenvs,
+		listcheckerType:    listcheckers,
+		memquotaType:       memquotas,
+		opaType:            opas,
+		prometheusType:     prometheuses,
+		rbacType:           rbacs,
+		servicecontrolType: servicecontrols,
+		solarwindsType:     solarwindses,
+		stackdriverType:    stackdrivers,
+		statsdType:         statsds,
+		stdioType:          stdios,
+		// Templates
+		apikeyType:               apikeys,
+		authorizationType:        authorizations,
+		checknothingType:         checknothings,
+		kubernetesType:           kuberneteses,
+		listEntryType:            listEntries,
+		logentryType:             logentries,
+		metricType:               metrics,
+		quotaType:                quotas,
+		reportnothingType:        reportnothings,
+		servicecontrolreportType: servicecontrolreports,
 	}
 	osRouteGroupVersion = schema.GroupVersion{
 		Group:   "route.openshift.io",
