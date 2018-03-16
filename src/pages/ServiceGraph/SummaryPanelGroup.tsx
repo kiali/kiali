@@ -114,10 +114,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               </thead>
               <tbody>
                 <tr>
-                  <td>{incoming.rate}</td>
-                  <td>{incoming.rate3xx}</td>
-                  <td>{incoming.rate4xx}</td>
-                  <td>{incoming.rate5xx}</td>
+                  <td>{incoming.rate.toFixed(2)}</td>
+                  <td>{incoming.rate3xx.toFixed(2)}</td>
+                  <td>{incoming.rate4xx.toFixed(2)}</td>
+                  <td>{incoming.rate5xx.toFixed(2)}</td>
                   <td>{incoming.percentErr.toFixed(2)}</td>
                 </tr>
               </tbody>
@@ -138,10 +138,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               </thead>
               <tbody>
                 <tr>
-                  <td>{outgoing.rate}</td>
-                  <td>{outgoing.rate3xx}</td>
-                  <td>{outgoing.rate4xx}</td>
-                  <td>{outgoing.rate5xx}</td>
+                  <td>{outgoing.rate.toFixed(2)}</td>
+                  <td>{outgoing.rate3xx.toFixed(2)}</td>
+                  <td>{outgoing.rate4xx.toFixed(2)}</td>
+                  <td>{outgoing.rate5xx.toFixed(2)}</td>
                   <td>{outgoing.percentErr.toFixed(2)}</td>
                 </tr>
               </tbody>
