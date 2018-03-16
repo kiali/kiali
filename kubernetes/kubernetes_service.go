@@ -116,7 +116,7 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	if autoscalersResponse.err != nil {
 		return nil, autoscalersResponse.err
 	}
-	serviceDetails.Autoscalers = filterAutoscalersByDeployments(getDeploymentNames(serviceDetails.Deployments), autoscalersResponse.autoscalers)
+	serviceDetails.Autoscalers = autoscalersResponse.autoscalers
 
 	return &serviceDetails, nil
 }

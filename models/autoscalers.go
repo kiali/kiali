@@ -1,11 +1,11 @@
 package models
 
 import (
-	"k8s.io/api/autoscaling/v1"
 	"time"
+
+	"k8s.io/api/autoscaling/v1"
 )
 
-type Autoscalers []Autoscaler
 type Autoscaler struct {
 	Name      string            `json:"name"`
 	Labels    map[string]string `json:"labels"`
@@ -20,18 +20,6 @@ type Autoscaler struct {
 	CurrentReplicas                 int32  `json:"current_replicas"`
 	DesiredReplicas                 int32  `json:"desired_replicas"`
 	CurrentCPUUtilizationPercentage int32  `json:"current_CPU_utilization_percentage,omitempty"`
-}
-
-func (autoscalers *Autoscalers) Parse(ds *v1.HorizontalPodAutoscalerList) {
-	if ds == nil {
-		return
-	}
-
-	for _, autoscaler := range ds.Items {
-		casted := Autoscaler{}
-		casted.Parse(&autoscaler)
-		*autoscalers = append(*autoscalers, casted)
-	}
 }
 
 func (autoscaler *Autoscaler) Parse(d *v1.HorizontalPodAutoscaler) {

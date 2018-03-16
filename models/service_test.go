@@ -41,24 +41,15 @@ func TestServiceDetailParsing(t *testing.T) {
 				Port{Name: "http", Protocol: "TCP", Port: 3001},
 				Port{Name: "http", Protocol: "TCP", Port: 3000},
 			}}})
-	assert.Equal(service.Deployments, Deployments{
-		Deployment{
-			Name:                "reviews-v1",
-			Labels:              map[string]string{"apps": "reviews", "version": "v1"},
-			CreatedAt:           "2018-03-08T17:44:00+03:00",
-			Replicas:            3,
-			AvailableReplicas:   1,
-			UnavailableReplicas: 2},
-		Deployment{
-			Name:                "reviews-v2",
-			Labels:              map[string]string{"apps": "reviews", "version": "v2"},
-			CreatedAt:           "2018-03-08T17:45:00+03:00",
-			Replicas:            3,
-			AvailableReplicas:   3,
-			UnavailableReplicas: 0}})
 
-	assert.Equal(service.Autoscalers, Autoscalers{
-		Autoscaler{
+	assert.Equal(*service.Deployments[0], Deployment{
+		Name:                "reviews-v1",
+		Labels:              map[string]string{"apps": "reviews", "version": "v1"},
+		CreatedAt:           "2018-03-08T17:44:00+03:00",
+		Replicas:            3,
+		AvailableReplicas:   1,
+		UnavailableReplicas: 2,
+		Autoscaler: Autoscaler{
 			Name:                            "reviews-v1",
 			Labels:                          map[string]string{"apps": "reviews", "version": "v1"},
 			CreatedAt:                       "2018-03-08T17:44:00+03:00",
@@ -68,9 +59,16 @@ func TestServiceDetailParsing(t *testing.T) {
 			CurrentReplicas:                 3,
 			DesiredReplicas:                 4,
 			ObservedGeneration:              50,
-			CurrentCPUUtilizationPercentage: 70,
-		},
-		Autoscaler{
+			CurrentCPUUtilizationPercentage: 70}})
+
+	assert.Equal(*service.Deployments[1], Deployment{
+		Name:                "reviews-v2",
+		Labels:              map[string]string{"apps": "reviews", "version": "v2"},
+		CreatedAt:           "2018-03-08T17:45:00+03:00",
+		Replicas:            3,
+		AvailableReplicas:   3,
+		UnavailableReplicas: 0,
+		Autoscaler: Autoscaler{
 			Name:                            "reviews-v2",
 			Labels:                          map[string]string{"apps": "reviews", "version": "v2"},
 			CreatedAt:                       "2018-03-08T17:45:00+03:00",
@@ -80,8 +78,7 @@ func TestServiceDetailParsing(t *testing.T) {
 			CurrentReplicas:                 3,
 			DesiredReplicas:                 2,
 			ObservedGeneration:              50,
-			CurrentCPUUtilizationPercentage: 30,
-		}})
+			CurrentCPUUtilizationPercentage: 30}})
 
 	// Istio Details
 	assert.Equal(service.RouteRules, RouteRules{
@@ -210,6 +207,8 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					Labels:            map[string]string{"apps": "reviews", "version": "v1"},
 					CreationTimestamp: meta_v1.NewTime(t1)},
 				Spec: autoscalingV1.HorizontalPodAutoscalerSpec{
+					ScaleTargetRef: autoscalingV1.CrossVersionObjectReference{
+						Name: "reviews-v1"},
 					MinReplicas:                    &[]int32{1}[0],
 					MaxReplicas:                    10,
 					TargetCPUUtilizationPercentage: &[]int32{50}[0]},
@@ -224,6 +223,8 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					Labels:            map[string]string{"apps": "reviews", "version": "v2"},
 					CreationTimestamp: meta_v1.NewTime(t2)},
 				Spec: autoscalingV1.HorizontalPodAutoscalerSpec{
+					ScaleTargetRef: autoscalingV1.CrossVersionObjectReference{
+						Name: "reviews-v2"},
 					MinReplicas:                    &[]int32{1}[0],
 					MaxReplicas:                    10,
 					TargetCPUUtilizationPercentage: &[]int32{50}[0]},
