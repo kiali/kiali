@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/api/prometheus/v1"
@@ -19,9 +20,9 @@ var (
 
 // Metrics contains health, all simple metrics and histograms data
 type Metrics struct {
-	Metrics    map[string]Metric    `json:"metrics"`
+	Metrics    map[string]*Metric   `json:"metrics"`
 	Histograms map[string]Histogram `json:"histograms"`
-	Health     *Health              `json:"health"`
+	Health     Health               `json:"health"`
 }
 
 // Health contains information about healthy replicas for a service
@@ -39,47 +40,48 @@ type Metric struct {
 
 // Histogram contains Metric objects for several histogram-kind statistics
 type Histogram struct {
-	Average      Metric `json:"average"`
-	Median       Metric `json:"median"`
-	Percentile95 Metric `json:"percentile95"`
-	Percentile99 Metric `json:"percentile99"`
+	Average      *Metric `json:"average"`
+	Median       *Metric `json:"median"`
+	Percentile95 *Metric `json:"percentile95"`
+	Percentile99 *Metric `json:"percentile99"`
 }
 
-type vectorResult struct {
-	v   model.Vector
-	err error
-}
-
-func getServiceHealthAsync(api v1.API, namespace string, servicename string, healthCh chan *Health) {
+func getServiceHealth(api v1.API, namespace string, servicename string) Health {
 	envoyClustername := strings.Replace(config.Get().IstioIdentityDomain, ".", "_", -1)
 	queryPart := replaceInvalidCharacters(fmt.Sprintf("%s_%s_%s", servicename, namespace, envoyClustername))
 	now := time.Now()
 
-	healthyCh := make(chan vectorResult)
-	go fetchTimestamp(api, fmt.Sprintf("envoy_cluster_out_%s_http_membership_healthy", queryPart), now, healthyCh)
+	var healthyVect, totalVect model.Vector
+	var healthyErr, totalErr error
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		healthyVect, healthyErr = fetchTimestamp(api, fmt.Sprintf("envoy_cluster_out_%s_http_membership_healthy", queryPart), now)
+	}()
 
-	totalCh := make(chan vectorResult)
-	go fetchTimestamp(api, fmt.Sprintf("envoy_cluster_out_%s_http_membership_total", queryPart), now, totalCh)
+	go func() {
+		defer wg.Done()
+		totalVect, totalErr = fetchTimestamp(api, fmt.Sprintf("envoy_cluster_out_%s_http_membership_total", queryPart), now)
+	}()
 
-	healthyVect := <-healthyCh
-	totalVect := <-totalCh
+	wg.Wait()
 
-	if healthyVect.err != nil {
-		healthCh <- &Health{err: healthyVect.err}
-	} else if totalVect.err != nil {
-		healthCh <- &Health{err: totalVect.err}
-	} else if len(healthyVect.v) == 0 || len(totalVect.v) == 0 {
+	if healthyErr != nil {
+		return Health{err: healthyErr}
+	} else if totalErr != nil {
+		return Health{err: totalErr}
+	} else if len(healthyVect) == 0 || len(totalVect) == 0 {
 		// Missing metrics
-		healthCh <- nil
-	} else {
-		healthCh <- &Health{
-			HealthyReplicas: int(healthyVect.v[0].Value),
-			TotalReplicas:   int(totalVect.v[0].Value)}
+		return Health{}
 	}
+	return Health{
+		HealthyReplicas: int(healthyVect[0].Value),
+		TotalReplicas:   int(totalVect[0].Value)}
 }
 
-func getServiceMetricsAsync(api v1.API, namespace string, servicename string, duration time.Duration, step time.Duration,
-	rateInterval string, byLabelsIn []string, byLabelsOut []string, metricsChan chan Metrics) {
+func getServiceMetrics(api v1.API, namespace string, servicename string, duration time.Duration, step time.Duration,
+	rateInterval string, byLabelsIn []string, byLabelsOut []string) Metrics {
 
 	clustername := config.Get().IstioIdentityDomain
 	now := time.Now()
@@ -93,40 +95,48 @@ func getServiceMetricsAsync(api v1.API, namespace string, servicename string, du
 	groupingIn := joinLabels(byLabelsIn)
 	groupingOut := joinLabels(byLabelsOut)
 
-	fetchRateAsync := func(metricName string) (chan Metric, chan Metric) {
-		chin := make(chan Metric)
-		chout := make(chan Metric)
-		go fetchRateRange(api, metricName, labelsIn, groupingIn, bounds, rateInterval, chin)
-		go fetchRateRange(api, metricName, labelsOut, groupingOut, bounds, rateInterval, chout)
-		return chin, chout
+	var wg sync.WaitGroup
+
+	var requestCountIn, requestCountOut *Metric
+	var requestSizeIn, requestSizeOut, requestDurationIn, requestDurationOut, responseSizeIn, responseSizeOut Histogram
+
+	fetchRateInOut := func(p8sFamilyName string, metricIn **Metric, metricOut **Metric) {
+		defer wg.Done()
+		m := fetchRateRange(api, p8sFamilyName, labelsIn, groupingIn, bounds, rateInterval)
+		*metricIn = m
+		m = fetchRateRange(api, p8sFamilyName, labelsOut, groupingOut, bounds, rateInterval)
+		*metricOut = m
 	}
 
-	fetchHistoAsync := func(metricName string) (chan Histogram, chan Histogram) {
-		chin := make(chan Histogram)
-		chout := make(chan Histogram)
-		go fetchHistogramRange(api, metricName, labelsIn, groupingIn, bounds, rateInterval, chin)
-		go fetchHistogramRange(api, metricName, labelsOut, groupingOut, bounds, rateInterval, chout)
-		return chin, chout
+	fetchHistoInOut := func(p8sFamilyName string, hIn *Histogram, hOut *Histogram) {
+		defer wg.Done()
+		h := fetchHistogramRange(api, p8sFamilyName, labelsIn, groupingIn, bounds, rateInterval)
+		*hIn = h
+		h = fetchHistogramRange(api, p8sFamilyName, labelsOut, groupingOut, bounds, rateInterval)
+		*hOut = h
 	}
 
-	rqcountinCh, rqcountoutCh := fetchRateAsync("istio_request_count")
-	rqsizeinCh, rqsizeoutCh := fetchHistoAsync("istio_request_size")
-	rqdurinCh, rqduroutCh := fetchHistoAsync("istio_request_duration")
-	rssizeinCh, rssizeoutCh := fetchHistoAsync("istio_response_size")
+	// Prepare 4 calls
+	wg.Add(4)
+	go fetchRateInOut("istio_request_count", &requestCountIn, &requestCountOut)
+	go fetchHistoInOut("istio_request_size", &requestSizeIn, &requestSizeOut)
+	go fetchHistoInOut("istio_request_duration", &requestDurationIn, &requestDurationOut)
+	go fetchHistoInOut("istio_response_size", &responseSizeIn, &responseSizeOut)
 
-	metrics := make(map[string]Metric)
+	wg.Wait()
+
+	metrics := make(map[string]*Metric)
 	histograms := make(map[string]Histogram)
+	metrics["request_count_in"] = requestCountIn
+	metrics["request_count_out"] = requestCountOut
+	histograms["request_size_in"] = requestSizeIn
+	histograms["request_size_out"] = requestSizeOut
+	histograms["request_duration_in"] = requestDurationIn
+	histograms["request_duration_out"] = requestDurationOut
+	histograms["response_size_in"] = responseSizeIn
+	histograms["response_size_out"] = responseSizeOut
 
-	metrics["request_count_in"] = <-rqcountinCh
-	metrics["request_count_out"] = <-rqcountoutCh
-	histograms["request_size_in"] = <-rqsizeinCh
-	histograms["request_size_out"] = <-rqsizeoutCh
-	histograms["request_duration_in"] = <-rqdurinCh
-	histograms["request_duration_out"] = <-rqduroutCh
-	histograms["response_size_in"] = <-rssizeinCh
-	histograms["response_size_out"] = <-rssizeoutCh
-
-	metricsChan <- Metrics{
+	return Metrics{
 		Metrics:    metrics,
 		Histograms: histograms}
 }
@@ -143,19 +153,20 @@ func joinLabels(labels []string) string {
 	return str
 }
 
-func fetchRateRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string, ch chan Metric) {
+func fetchRateRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string) *Metric {
 	var query string
 	if grouping == "" {
 		query = fmt.Sprintf("round(sum(irate(%s%s[%s])), 0.001)", metricName, labels, rateInterval)
 	} else {
 		query = fmt.Sprintf("round(sum(irate(%s%s[%s])) by (%s), 0.001)", metricName, labels, rateInterval, grouping)
 	}
-	fetchRange(api, query, bounds, ch)
+	return fetchRange(api, query, bounds)
 }
 
-func fetchHistogramRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string, ch chan Histogram) {
+func fetchHistogramRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string) Histogram {
 	// Note: we may want to make returned stats configurable in the future
-	avgChan, medChan, p95Chan, p99Chan := make(chan Metric), make(chan Metric), make(chan Metric), make(chan Metric)
+	// Note 2: the p8s queries are not run in parallel here, but they are at the caller's place.
+	//	This is because we may not want to create too many threads in the lowest layer
 
 	groupingAvg := ""
 	groupingQuantile := ""
@@ -165,69 +176,57 @@ func fetchHistogramRange(api v1.API, metricName string, labels string, grouping 
 	}
 
 	// Average
-	go func() {
-		// Example: sum(rate(my_histogram_sum{foo=bar}[5m])) by (baz) / sum(rate(my_histogram_count{foo=bar}[5m])) by (baz)
-		query := fmt.Sprintf(
-			"sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s", metricName, labels, rateInterval, groupingAvg,
-			metricName, labels, rateInterval, groupingAvg)
-		fetchRange(api, query, bounds, avgChan)
-	}()
+	// Example: sum(rate(my_histogram_sum{foo=bar}[5m])) by (baz) / sum(rate(my_histogram_count{foo=bar}[5m])) by (baz)
+	query := fmt.Sprintf(
+		"sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s", metricName, labels, rateInterval, groupingAvg,
+		metricName, labels, rateInterval, groupingAvg)
+	avg := fetchRange(api, query, bounds)
 
 	// Median
-	go func() {
-		// Example: histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz))
-		query := fmt.Sprintf(
-			"histogram_quantile(0.5, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
-		fetchRange(api, query, bounds, medChan)
-	}()
+	// Example: histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz))
+	query = fmt.Sprintf(
+		"histogram_quantile(0.5, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
+	med := fetchRange(api, query, bounds)
 
 	// Quantile 95
-	go func() {
-		query := fmt.Sprintf(
-			"histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
-		fetchRange(api, query, bounds, p95Chan)
-	}()
+	query = fmt.Sprintf(
+		"histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
+	p95 := fetchRange(api, query, bounds)
 
 	// Quantile 99
-	go func() {
-		query := fmt.Sprintf(
-			"histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
-		fetchRange(api, query, bounds, p99Chan)
-	}()
+	query = fmt.Sprintf(
+		"histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
+	p99 := fetchRange(api, query, bounds)
 
-	ch <- Histogram{
-		Average:      <-avgChan,
-		Median:       <-medChan,
-		Percentile95: <-p95Chan,
-		Percentile99: <-p99Chan}
+	return Histogram{
+		Average:      avg,
+		Median:       med,
+		Percentile95: p95,
+		Percentile99: p99}
 }
 
-func fetchTimestamp(api v1.API, query string, t time.Time, ch chan vectorResult) {
+func fetchTimestamp(api v1.API, query string, t time.Time) (model.Vector, error) {
 	result, err := api.Query(context.Background(), query, t)
 	if err != nil {
-		ch <- vectorResult{err: err}
-		return
+		return nil, err
 	}
 	switch result.Type() {
 	case model.ValVector:
-		ch <- vectorResult{v: result.(model.Vector)}
-		return
+		return result.(model.Vector), nil
 	}
-	ch <- vectorResult{err: fmt.Errorf("Invalid query, vector expected: %s", query)}
+	return nil, fmt.Errorf("Invalid query, vector expected: %s", query)
 }
 
-func fetchRange(api v1.API, query string, bounds v1.Range, ch chan Metric) {
+func fetchRange(api v1.API, query string, bounds v1.Range) *Metric {
 	result, err := api.QueryRange(context.Background(), query, bounds)
 	if err != nil {
-		ch <- Metric{err: err}
-		return
+		return &Metric{err: err}
 	}
 	switch result.Type() {
 	case model.ValMatrix:
-		ch <- Metric{Matrix: result.(model.Matrix)}
-		return
+		return &Metric{Matrix: result.(model.Matrix)}
 	}
-	ch <- Metric{err: fmt.Errorf("Invalid query, matrix expected: %s", query)}
+	return &Metric{err: fmt.Errorf("Invalid query, matrix expected: %s", query)}
 }
 
 func replaceInvalidCharacters(metricName string) string {
