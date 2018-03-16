@@ -117,6 +117,9 @@ func CastIstioRuleAction(action *kubernetes.IstioRuleAction) *IstioRuleAction {
 
 func CastIstioHandler(handler kubernetes.IstioObject) *IstioHandler {
 	istioHandler := IstioHandler{}
+	if handler == nil {
+		return nil
+	}
 	istioHandler.Name = handler.GetObjectMeta().Name
 	istioHandler.Adapter = handler.GetSpec()["adapter"].(string)
 	delete(handler.GetSpec(), "adapter")
@@ -126,6 +129,9 @@ func CastIstioHandler(handler kubernetes.IstioObject) *IstioHandler {
 
 func CastIstioInstance(instance kubernetes.IstioObject) *IstioInstance {
 	istioInstance := IstioInstance{}
+	if instance == nil {
+		return nil
+	}
 	istioInstance.Name = instance.GetObjectMeta().Name
 	istioInstance.Template = instance.GetSpec()["template"].(string)
 	delete(instance.GetSpec(), "template")

@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"github.com/kiali/swscore/log"
 	"strings"
 )
 
@@ -103,7 +104,13 @@ func (in *IstioClient) getActionDetails(namespace string, istiorule string, acti
 }
 
 func (in *IstioClient) getActionHandler(namespace string, handlerType string, handlerName string, handlerChan chan<- istioResponse) {
-	result, err := in.istio.Get().Namespace(namespace).Resource(istioTypePlurals[handlerType]).SubResource(handlerName).Do().Get()
+	handlerTypePlural, ok := istioTypePlurals[handlerType]
+	if !ok {
+		log.Warningf("Handler type %s is not supported", handlerType)
+		handlerChan <- istioResponse{}
+		return
+	}
+	result, err := in.istio.Get().Namespace(namespace).Resource(handlerTypePlural).SubResource(handlerName).Do().Get()
 	istioObject, ok := result.(IstioObject)
 	if !ok {
 		istioObject = nil
@@ -127,7 +134,13 @@ func (in *IstioClient) getActionInstance(namespace string, istiorule string, ins
 		instancesChan <- istioResponse{err: err}
 		return
 	}
-	result, err := in.istio.Get().Namespace(namespace).Resource(istioTypePlurals[instanceType]).SubResource(instanceName).Do().Get()
+	istioTypePlural, ok := istioTypePlurals[instanceType]
+	if !ok {
+		log.Warningf("Instance type %s is not supported", instanceType)
+		instancesChan <- istioResponse{}
+		return
+	}
+	result, err := in.istio.Get().Namespace(namespace).Resource(istioTypePlural).SubResource(instanceName).Do().Get()
 	istioObject, ok := result.(IstioObject)
 	if !ok {
 		istioObject = nil
