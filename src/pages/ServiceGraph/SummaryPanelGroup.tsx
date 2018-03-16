@@ -18,37 +18,160 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   };
 
   render() {
-    const namespace = 'TBD';
-    const service = 'TBD';
+    const namespace = this.props.data.summaryTarget.data('service').split('.')[1];
+    const service = this.props.data.summaryTarget.data('service').split('.')[0];
     const serviceHotLink = <a href={`../namespaces/${namespace}/services/${service}`}>{service}</a>;
+
+    const RATE = 'rate';
+    const RATE3XX = 'rate3XX';
+    const RATE4XX = 'rate4xx';
+    const RATE5XX = 'rate5xx';
+
+    let incoming = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0, rateErr: 0, percentErr: 0 };
+    let outgoing = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0, rateErr: 0, percentErr: 0 };
+
+    // aggregate all incoming rates
+    this.props.data.summaryTarget
+      .children()
+      .toArray()
+      .forEach(c => {
+        if (c.data(RATE) !== undefined) {
+          incoming.rate += +c.data(RATE);
+        }
+        if (c.data(RATE3XX) !== undefined) {
+          incoming.rate3xx += +c.data(RATE3XX);
+          incoming.rateErr += +c.data(RATE3XX);
+        }
+        if (c.data(RATE4XX) !== undefined) {
+          incoming.rate4xx += +c.data(RATE4XX);
+          incoming.rateErr += +c.data(RATE4XX);
+        }
+        if (c.data(RATE5XX) !== undefined) {
+          incoming.rate5xx += +c.data(RATE5XX);
+          incoming.rateErr += +c.data(RATE5XX);
+        }
+      });
+    if (incoming.rateErr !== 0) {
+      incoming.percentErr = incoming.rateErr / incoming.rate * 100.0;
+    }
+    console.log('Aggregate incoming [' + namespace + '.' + service + ': ' + JSON.stringify(incoming));
+
+    // aggregate all outgoing rates
+    this.props.data.summaryTarget
+      .children()
+      .edgesTo('*')
+      .forEach(c => {
+        if (c.data(RATE) !== undefined) {
+          outgoing.rate += +c.data(RATE);
+        }
+        if (c.data(RATE3XX) !== undefined) {
+          outgoing.rate3xx += +c.data(RATE3XX);
+          outgoing.rateErr += +c.data(RATE3XX);
+        }
+        if (c.data(RATE4XX) !== undefined) {
+          outgoing.rate4xx += +c.data(RATE4XX);
+          outgoing.rateErr += +c.data(RATE4XX);
+        }
+        if (c.data(RATE5XX) !== undefined) {
+          outgoing.rate5xx += +c.data(RATE5XX);
+          outgoing.rateErr += +c.data(RATE5XX);
+        }
+      });
+    if (outgoing.rateErr !== 0) {
+      outgoing.percentErr = outgoing.rateErr / outgoing.rate * 100.0;
+    }
+    console.log('Aggregate outgoing [' + namespace + '.' + service + ': ' + JSON.stringify(outgoing));
 
     return (
       <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
-        <div className="panel-heading">Group: {serviceHotLink} (v5)</div>
+        <div className="panel-heading">Versioned Group: {serviceHotLink}</div>
         <div className="panel-body">
           <p>
             <strong>Labels:</strong>
             <br />
-            {this.renderLabels()}
+            <ServiceInfoBadge
+              scale={0.8}
+              style="plastic"
+              leftText="namespace"
+              rightText={namespace}
+              key={namespace}
+              color="green"
+            />
+            {this.renderVersionBadges()}
           </p>
           <hr />
+          <div>
+            <strong>Incoming Traffic (requests per second): </strong>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Total</th>
+                  <th>3xx</th>
+                  <th>4xx</th>
+                  <th>5xx</th>
+                  <th>% Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{incoming.rate}</td>
+                  <td>{incoming.rate3xx}</td>
+                  <td>{incoming.rate4xx}</td>
+                  <td>{incoming.rate5xx}</td>
+                  <td>{incoming.percentErr.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+            <ErrorRatePieChart percentError={incoming.percentErr} />
+          </div>
+          <div>
+            <strong>Outgoing Traffic (requests per second): </strong>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Total</th>
+                  <th>3xx</th>
+                  <th>4xx</th>
+                  <th>5xx</th>
+                  <th>% Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{outgoing.rate}</td>
+                  <td>{outgoing.rate3xx}</td>
+                  <td>{outgoing.rate4xx}</td>
+                  <td>{outgoing.rate5xx}</td>
+                  <td>{outgoing.percentErr.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+            <ErrorRatePieChart percentError={outgoing.percentErr} />
+          </div>
           <div style={{ fontSize: '1.2em' }}>
             {this.renderIncomingRpsChart()}
             {this.renderOutgoingRpsChart()}
-            <ErrorRatePieChart percentError={10} />
           </div>
         </div>
       </div>
     );
   }
 
-  renderLabels = () => (
-    <>
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="app" rightText="bookinfo" color="green" />
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="app" rightText="product" color="green" />
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="version" rightText="v5" color="navy" />
-    </>
-  );
+  renderVersionBadges = () => {
+    return this.props.data.summaryTarget
+      .children()
+      .toArray()
+      .map((c, i) => (
+        <ServiceInfoBadge
+          scale={0.8}
+          style="plastic"
+          leftText="version"
+          rightText={c.data('version')}
+          key={c.data('version')}
+          color="green"
+        />
+      ));
+  };
 
   renderIncomingRpsChart = () => {
     return (
