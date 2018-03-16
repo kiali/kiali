@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { ReactCytoscape } from 'react-cytoscape';
 import { Spinner } from 'patternfly-react';
 import PropTypes from 'prop-types';
 
@@ -7,6 +6,7 @@ import * as API from '../../services/Api';
 import { GraphStyles } from './graphs/GraphStyles';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import { refreshSettings } from '../../model/RefreshSettings';
+import ReactCytoscape from './ReactCytoscape';
 
 type CytoscapeLayoutState = {
   elements?: any;
@@ -31,7 +31,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   constructor(props: CytoscapeLayoutProps) {
     super(props);
 
-    console.log('Starting ServiceGraphPage for namespace ' + this.props.namespace);
+    console.log(`Starting ServiceGraphPage for namespace: ${this.props.namespace}`);
 
     this.state = {
       elements: [],
@@ -52,6 +52,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   componentDidMount() {
     window.addEventListener('resize', this.resizeWindow);
     this.resizeWindow();
+
     if (this.props.namespace.length !== 0) {
       this.updateGraphElements(this.props);
       this.timerID = setInterval(() => this.updateGraphElements(this.props), refreshSettings.interval);
@@ -106,12 +107,13 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   }
 
   updateGraphElements(props: any) {
-    let params = { interval: props.interval };
+    const params = { interval: props.interval };
     this.setState({ isLoading: true });
+
     API.GetGraphElements(props.namespace, params)
       .then(response => {
-        const elements =
-          response['data'] && response['data'].elements ? response['data'].elements : { nodes: [], edges: [] };
+        const responseData = response['data'];
+        const elements = responseData && responseData.elements ? responseData.elements : { nodes: [], edges: [] };
         this.setState({ elements: elements, isLoading: false });
       })
       .catch(error => {
