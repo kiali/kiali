@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 
-	"k8s.io/client-go/kubernetes"
+	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
@@ -26,7 +26,7 @@ var (
 // IstioClient is the client struct for Kubernetes and Istio APIs
 // It hides the way it queries each API
 type IstioClient struct {
-	k8s   *kubernetes.Clientset
+	k8s   *kube.Clientset
 	istio *rest.RESTClient
 }
 
@@ -45,7 +45,7 @@ func NewClient() (*IstioClient, error) {
 	config.QPS = k8sQPS
 	config.Burst = k8sBurst
 
-	k8s, err := kubernetes.NewForConfig(config)
+	k8s, err := kube.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
