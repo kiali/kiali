@@ -8,7 +8,7 @@ type SummaryPanelPropType = {
   data: any;
 };
 
-export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, {}> {
+export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, {}> {
   static readonly panelStyle = {
     position: 'absolute' as 'absolute',
     width: '25em',
@@ -23,7 +23,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const serviceHotLink = <a href={`../namespaces/${namespace}/services/${service}`}>{service}</a>;
 
     return (
-      <div className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
+      <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
         <div className="panel-heading">Group: {serviceHotLink} (v5)</div>
         <div className="panel-body">
           <p>
