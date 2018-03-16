@@ -20,6 +20,20 @@ ShallowWrapper {
     "nodeType": "class",
     "props": Object {
       "children": Array [
+        <getContext(Filter)>
+          <FilterValueSelector
+                    filterValues={
+                              Array [
+                                        "local version",
+                                        "remote service",
+                                        "remote version",
+                                        "response code",
+                                      ]
+                    }
+                    onFilterValueSelected={[Function]}
+                    placeholder="Group by"
+          />
+</getContext(Filter)>,
         <div
           className="form-group"
 >
@@ -222,28 +236,50 @@ ShallowWrapper {
                     </MenuItem>
           </DropdownButton>
 </div>,
-        <div
-          className="form-group"
->
-          <getContext(Filter)>
-                    <FilterValueSelector
-                              filterValues={
-                                        Array [
-                                                  "local version",
-                                                  "remote service",
-                                                  "remote version",
-                                                  "response code",
-                                                ]
-                              }
-                              onFilterValueSelected={[Function]}
-                              placeholder="Group by"
-                    />
-          </getContext(Filter)>
-</div>,
+        false,
       ],
     },
     "ref": null,
     "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "children": <FilterValueSelector
+            filterValues={
+                        Array [
+                                    "local version",
+                                    "remote service",
+                                    "remote version",
+                                    "response code",
+                                  ]
+            }
+            onFilterValueSelected={[Function]}
+            placeholder="Group by"
+/>,
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "filterValues": Array [
+              "local version",
+              "remote service",
+              "remote version",
+              "response code",
+            ],
+            "onFilterValueSelected": [Function],
+            "placeholder": "Group by",
+          },
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
+        },
+        "type": [Function],
+      },
       Object {
         "instance": null,
         "key": undefined,
@@ -990,75 +1026,7 @@ ShallowWrapper {
         ],
         "type": "div",
       },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": Array [
-            <getContext(Filter)>
-              <FilterValueSelector
-                            filterValues={
-                                          Array [
-                                                        "local version",
-                                                        "remote service",
-                                                        "remote version",
-                                                        "response code",
-                                                      ]
-                            }
-                            onFilterValueSelected={[Function]}
-                            placeholder="Group by"
-              />
-</getContext(Filter)>,
-            false,
-          ],
-          "className": "form-group",
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "children": <FilterValueSelector
-                filterValues={
-                                Array [
-                                                "local version",
-                                                "remote service",
-                                                "remote version",
-                                                "response code",
-                                              ]
-                }
-                onFilterValueSelected={[Function]}
-                placeholder="Group by"
-/>,
-            },
-            "ref": null,
-            "rendered": Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "function",
-              "props": Object {
-                "filterValues": Array [
-                  "local version",
-                  "remote service",
-                  "remote version",
-                  "response code",
-                ],
-                "onFilterValueSelected": [Function],
-                "placeholder": "Group by",
-              },
-              "ref": null,
-              "rendered": null,
-              "type": [Function],
-            },
-            "type": [Function],
-          },
-          false,
-        ],
-        "type": "div",
-      },
+      false,
     ],
     "type": [Function],
   },
@@ -1069,6 +1037,20 @@ ShallowWrapper {
       "nodeType": "class",
       "props": Object {
         "children": Array [
+          <getContext(Filter)>
+            <FilterValueSelector
+                        filterValues={
+                                    Array [
+                                                "local version",
+                                                "remote service",
+                                                "remote version",
+                                                "response code",
+                                              ]
+                        }
+                        onFilterValueSelected={[Function]}
+                        placeholder="Group by"
+            />
+</getContext(Filter)>,
           <div
             className="form-group"
 >
@@ -1271,28 +1253,50 @@ ShallowWrapper {
                         </MenuItem>
             </DropdownButton>
 </div>,
-          <div
-            className="form-group"
->
-            <getContext(Filter)>
-                        <FilterValueSelector
-                                    filterValues={
-                                                Array [
-                                                            "local version",
-                                                            "remote service",
-                                                            "remote version",
-                                                            "response code",
-                                                          ]
-                                    }
-                                    onFilterValueSelected={[Function]}
-                                    placeholder="Group by"
-                        />
-            </getContext(Filter)>
-</div>,
+          false,
         ],
       },
       "ref": null,
       "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "children": <FilterValueSelector
+              filterValues={
+                            Array [
+                                          "local version",
+                                          "remote service",
+                                          "remote version",
+                                          "response code",
+                                        ]
+              }
+              onFilterValueSelected={[Function]}
+              placeholder="Group by"
+/>,
+          },
+          "ref": null,
+          "rendered": Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "function",
+            "props": Object {
+              "filterValues": Array [
+                "local version",
+                "remote service",
+                "remote version",
+                "response code",
+              ],
+              "onFilterValueSelected": [Function],
+              "placeholder": "Group by",
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          "type": [Function],
+        },
         Object {
           "instance": null,
           "key": undefined,
@@ -2039,75 +2043,7 @@ ShallowWrapper {
           ],
           "type": "div",
         },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": Array [
-              <getContext(Filter)>
-                <FilterValueSelector
-                                filterValues={
-                                                Array [
-                                                                "local version",
-                                                                "remote service",
-                                                                "remote version",
-                                                                "response code",
-                                                              ]
-                                }
-                                onFilterValueSelected={[Function]}
-                                placeholder="Group by"
-                />
-</getContext(Filter)>,
-              false,
-            ],
-            "className": "form-group",
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "function",
-              "props": Object {
-                "children": <FilterValueSelector
-                  filterValues={
-                                    Array [
-                                                      "local version",
-                                                      "remote service",
-                                                      "remote version",
-                                                      "response code",
-                                                    ]
-                  }
-                  onFilterValueSelected={[Function]}
-                  placeholder="Group by"
-/>,
-              },
-              "ref": null,
-              "rendered": Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "function",
-                "props": Object {
-                  "filterValues": Array [
-                    "local version",
-                    "remote service",
-                    "remote version",
-                    "response code",
-                  ],
-                  "onFilterValueSelected": [Function],
-                  "placeholder": "Group by",
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-              "type": [Function],
-            },
-            false,
-          ],
-          "type": "div",
-        },
+        false,
       ],
       "type": [Function],
     },

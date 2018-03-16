@@ -1,4 +1,4 @@
-export interface MetricsOptions {
+interface MetricsOptions {
   rateInterval: string;
   duration: number;
   step: number;
@@ -6,3 +6,5 @@ export interface MetricsOptions {
   byLabelsIn: string[];
   byLabelsOut: string[];
 }
+
+export default MetricsOptions;

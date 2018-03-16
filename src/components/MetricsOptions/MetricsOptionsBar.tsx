@@ -1,6 +1,8 @@
 import * as React from 'react';
-import { Toolbar, DropdownButton, MenuItem, Filter } from 'patternfly-react';
-import { MetricsOptions } from '../../types/MetricsOptions';
+import { Toolbar, DropdownButton, MenuItem } from 'patternfly-react';
+
+import ValueSelectHelper from './ValueSelectHelper';
+import MetricsOptions from '../../types/MetricsOptions';
 
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
@@ -11,10 +13,10 @@ interface MetricsOptionsState {
   duration: number;
   ticks: number;
   filterLabels: [string, string][];
-  byLabels: string[];
+  groupByLabels: string[];
 }
 
-interface ByLabel {
+interface GroupByLabel {
   labelIn: string;
   labelOut: string;
 }
@@ -38,7 +40,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
   ];
   static DefaultDuration = MetricsOptionsBar.Durations[1][0];
 
-  static ByLabelOptions: { [key: string]: ByLabel } = {
+  static GroupByLabelOptions: { [key: string]: GroupByLabel } = {
     'local version': {
       labelIn: 'destination_version',
       labelOut: 'source_version'
@@ -57,7 +59,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     }
   };
 
-  static ByLabelNames = Object.keys(MetricsOptionsBar.ByLabelOptions);
+  groupByLabelsHelper: ValueSelectHelper;
 
   constructor(props: Props) {
     super(props);
@@ -65,15 +67,21 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     this.onRateIntervalChanged = this.onRateIntervalChanged.bind(this);
     this.onDurationChanged = this.onDurationChanged.bind(this);
     this.onTicksChanged = this.onTicksChanged.bind(this);
-    this.addByLabel = this.addByLabel.bind(this);
-    this.removeByLabel = this.removeByLabel.bind(this);
+    this.changedGroupByLabel = this.changedGroupByLabel.bind(this);
+
+    this.groupByLabelsHelper = new ValueSelectHelper({
+      items: Object.keys(MetricsOptionsBar.GroupByLabelOptions),
+      onChange: this.changedGroupByLabel,
+      dropdownTitle: 'Group by',
+      resultsTitle: 'Grouping by:'
+    });
 
     this.state = {
       rateInterval: MetricsOptionsBar.DefaultRateInterval,
       duration: MetricsOptionsBar.DefaultDuration,
       ticks: MetricsOptionsBar.DefaultTicks,
       filterLabels: [],
-      byLabels: []
+      groupByLabels: []
     };
   }
 
@@ -102,8 +110,8 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
 
   reportOptions() {
     // State-to-options converter (removes unnecessary properties)
-    const labelsIn = this.state.byLabels.map(lbl => MetricsOptionsBar.ByLabelOptions[lbl].labelIn);
-    const labelsOut = this.state.byLabels.map(lbl => MetricsOptionsBar.ByLabelOptions[lbl].labelOut);
+    const labelsIn = this.state.groupByLabels.map(lbl => MetricsOptionsBar.GroupByLabelOptions[lbl].labelIn);
+    const labelsOut = this.state.groupByLabels.map(lbl => MetricsOptionsBar.GroupByLabelOptions[lbl].labelOut);
     this.props.onOptionsChanged({
       rateInterval: this.state.rateInterval,
       duration: this.state.duration,
@@ -114,36 +122,8 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     });
   }
 
-  addByLabel(key: string) {
-    if (!MetricsOptionsBar.ByLabelOptions.hasOwnProperty(key)) {
-      // Probably placeholder click
-      return;
-    }
-    const labels = this.state.byLabels.slice();
-    const idx = labels.indexOf(key);
-    if (idx < 0) {
-      // Added
-      labels.push(key);
-    }
-    this.setState({ byLabels: labels }, () => {
-      this.reportOptions();
-    });
-  }
-
-  removeByLabel(key: string) {
-    const labels = this.state.byLabels.slice();
-    const idx = labels.indexOf(key);
-    if (idx >= 0) {
-      // Removed
-      labels.splice(idx, 1);
-    }
-    this.setState({ byLabels: labels }, () => {
-      this.reportOptions();
-    });
-  }
-
-  clearFilters() {
-    this.setState({ byLabels: [] }, () => {
+  changedGroupByLabel(labels: string[]) {
+    this.setState({ groupByLabels: labels }, () => {
       this.reportOptions();
     });
   }
@@ -151,6 +131,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
   render() {
     return (
       <Toolbar>
+        {this.groupByLabelsHelper.renderDropdown()}
         <div className="form-group">
           <DropdownButton id="duration" title="Duration" onSelect={this.onDurationChanged}>
             {MetricsOptionsBar.Durations.map(r => (
@@ -174,38 +155,9 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
             ))}
           </DropdownButton>
         </div>
-        <div className="form-group">
-          <Filter>
-            <Filter.ValueSelector
-              filterValues={MetricsOptionsBar.ByLabelNames}
-              placeholder="Group by"
-              onFilterValueSelected={this.addByLabel}
-            />
-          </Filter>
-          {this.state.byLabels.length > 0 && (
-            <Toolbar.Results>
-              <Filter.ActiveLabel>{'Grouping by:'}</Filter.ActiveLabel>
-              <Filter.List>
-                {this.state.byLabels.map(label => {
-                  return (
-                    <Filter.Item key={label} onRemove={this.removeByLabel} filterData={label}>
-                      {label}
-                    </Filter.Item>
-                  );
-                })}
-              </Filter.List>
-              <a
-                href="#"
-                onClick={e => {
-                  e.preventDefault();
-                  this.clearFilters();
-                }}
-              >
-                Clear all
-              </a>
-            </Toolbar.Results>
-          )}
-        </div>
+        {this.groupByLabelsHelper.hasResults() && (
+          <Toolbar.Results>{this.groupByLabelsHelper.renderResults()}</Toolbar.Results>
+        )}
       </Toolbar>
     );
   }

@@ -3,7 +3,7 @@ import ServiceId from '../../types/ServiceId';
 import * as M from '../../types/Metrics';
 import * as API from '../../services/Api';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
-import { MetricsOptions } from '../../types/MetricsOptions';
+import MetricsOptions from '../../types/MetricsOptions';
 import { Spinner, LineChart, DonutChart } from 'patternfly-react';
 
 interface GrafanaInfo {
