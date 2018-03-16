@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
-import { ErrorRatePieChart } from '../../components/SummaryPanel/ErrorRatePieChart';
+import { RateTable } from '../../components/SummaryPanel/RateTable';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 
 type SummaryPanelPropType = {
@@ -100,54 +100,20 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
             {this.renderVersionBadges()}
           </p>
           <hr />
-          <div>
-            <strong>Incoming Traffic (requests per second): </strong>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Total</th>
-                  <th>3xx</th>
-                  <th>4xx</th>
-                  <th>5xx</th>
-                  <th>% Error</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{incoming.rate.toFixed(2)}</td>
-                  <td>{incoming.rate3xx.toFixed(2)}</td>
-                  <td>{incoming.rate4xx.toFixed(2)}</td>
-                  <td>{incoming.rate5xx.toFixed(2)}</td>
-                  <td>{incoming.percentErr.toFixed(2)}</td>
-                </tr>
-              </tbody>
-            </table>
-            <ErrorRatePieChart percentError={incoming.percentErr} />
-          </div>
-          <div>
-            <strong>Outgoing Traffic (requests per second): </strong>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Total</th>
-                  <th>3xx</th>
-                  <th>4xx</th>
-                  <th>5xx</th>
-                  <th>% Error</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{outgoing.rate.toFixed(2)}</td>
-                  <td>{outgoing.rate3xx.toFixed(2)}</td>
-                  <td>{outgoing.rate4xx.toFixed(2)}</td>
-                  <td>{outgoing.rate5xx.toFixed(2)}</td>
-                  <td>{outgoing.percentErr.toFixed(2)}</td>
-                </tr>
-              </tbody>
-            </table>
-            <ErrorRatePieChart percentError={outgoing.percentErr} />
-          </div>
+          <RateTable
+            title="Incoming Traffic (requests per second):"
+            rate={incoming.rate}
+            rate3xx={incoming.rate3xx}
+            rate4xx={incoming.rate4xx}
+            rate5xx={incoming.rate5xx}
+          />
+          <RateTable
+            title="Outgoing Traffic (requests per second):"
+            rate={outgoing.rate}
+            rate3xx={outgoing.rate3xx}
+            rate4xx={outgoing.rate4xx}
+            rate5xx={outgoing.rate5xx}
+          />
           <div style={{ fontSize: '1.2em' }}>
             {this.renderIncomingRpsChart()}
             {this.renderOutgoingRpsChart()}
