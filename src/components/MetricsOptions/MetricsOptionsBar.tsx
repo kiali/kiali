@@ -1,102 +1,163 @@
 import * as React from 'react';
 import { Toolbar, DropdownButton, MenuItem } from 'patternfly-react';
-import { MetricsOptions } from '../../types/MetricsOptions';
+
+import ValueSelectHelper from './ValueSelectHelper';
+import MetricsOptions from '../../types/MetricsOptions';
 
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
 }
 
-interface MetricsOptionsState extends MetricsOptions {}
+interface MetricsOptionsState {
+  rateInterval: string;
+  duration: number;
+  ticks: number;
+  filterLabels: [string, string][];
+  groupByLabels: string[];
+}
+
+interface GroupByLabel {
+  labelIn: string;
+  labelOut: string;
+}
 
 export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsState> {
-  rateIntervals = [['1m', '1 minute'], ['5m', '5 minutes'], ['10m', '10 minutes'], ['30m', '30 minutes']];
+  static RateIntervals = [['1m', '1 minute'], ['5m', '5 minutes'], ['10m', '10 minutes'], ['30m', '30 minutes']];
+  static DefaultRateInterval = MetricsOptionsBar.RateIntervals[0][0];
 
-  steps = [
-    ['1', '1 second'],
-    ['5', '5 seconds'],
-    ['15', '15 seconds'],
-    ['30', '30 seconds'],
-    ['60', '1 minute'],
-    ['1800', '30 minutes'],
-    ['3600', '1 hour']
-  ];
+  static Ticks = [10, 20, 30, 50, 100, 200];
+  static DefaultTicks = MetricsOptionsBar.Ticks[2];
 
-  durations = [
-    ['300', 'Last 5 minutes'],
-    ['600', 'Last 10 minutes'],
-    ['1800', 'Last 30 minutes'],
-    ['3600', 'Last hour'],
-    ['10800', 'Last 3 hours'],
-    ['21600', 'Last 6 hours'],
-    ['43200', 'Last 12 hours'],
-    ['86400', 'Last day']
+  static Durations: [number, string][] = [
+    [300, 'Last 5 minutes'],
+    [600, 'Last 10 minutes'],
+    [1800, 'Last 30 minutes'],
+    [3600, 'Last hour'],
+    [10800, 'Last 3 hours'],
+    [21600, 'Last 6 hours'],
+    [43200, 'Last 12 hours'],
+    [86400, 'Last day']
   ];
+  static DefaultDuration = MetricsOptionsBar.Durations[1][0];
+
+  static GroupByLabelOptions: { [key: string]: GroupByLabel } = {
+    'local version': {
+      labelIn: 'destination_version',
+      labelOut: 'source_version'
+    },
+    'remote service': {
+      labelIn: 'source_service',
+      labelOut: 'destination_service'
+    },
+    'remote version': {
+      labelIn: 'source_version',
+      labelOut: 'destination_version'
+    },
+    'response code': {
+      labelIn: 'response_code',
+      labelOut: 'response_code'
+    }
+  };
+
+  groupByLabelsHelper: ValueSelectHelper;
 
   constructor(props: Props) {
     super(props);
 
     this.onRateIntervalChanged = this.onRateIntervalChanged.bind(this);
     this.onDurationChanged = this.onDurationChanged.bind(this);
-    this.onStepChanged = this.onStepChanged.bind(this);
+    this.onTicksChanged = this.onTicksChanged.bind(this);
+    this.changedGroupByLabel = this.changedGroupByLabel.bind(this);
+
+    this.groupByLabelsHelper = new ValueSelectHelper({
+      items: Object.keys(MetricsOptionsBar.GroupByLabelOptions),
+      onChange: this.changedGroupByLabel,
+      dropdownTitle: 'Group by',
+      resultsTitle: 'Grouping by:'
+    });
 
     this.state = {
-      rateInterval: this.rateIntervals[0][0],
-      duration: this.durations[1][0],
-      step: this.steps[2][0],
-      filterLabels: new Map(),
-      byLabels: []
+      rateInterval: MetricsOptionsBar.DefaultRateInterval,
+      duration: MetricsOptionsBar.DefaultDuration,
+      ticks: MetricsOptionsBar.DefaultTicks,
+      filterLabels: [],
+      groupByLabels: []
     };
   }
 
   componentWillMount() {
     // Init state upstream
-    this.props.onOptionsChanged(this.state);
+    this.reportOptions();
   }
 
   onRateIntervalChanged(key: string) {
     this.setState({ rateInterval: key }, () => {
-      this.props.onOptionsChanged(this.state);
+      this.reportOptions();
     });
   }
 
-  onDurationChanged(key: string) {
+  onDurationChanged(key: number) {
     this.setState({ duration: key }, () => {
-      this.props.onOptionsChanged(this.state);
+      this.reportOptions();
     });
   }
 
-  onStepChanged(key: string) {
-    this.setState({ step: key }, () => {
-      this.props.onOptionsChanged(this.state);
+  onTicksChanged(key: number) {
+    this.setState({ ticks: key }, () => {
+      this.reportOptions();
+    });
+  }
+
+  reportOptions() {
+    // State-to-options converter (removes unnecessary properties)
+    const labelsIn = this.state.groupByLabels.map(lbl => MetricsOptionsBar.GroupByLabelOptions[lbl].labelIn);
+    const labelsOut = this.state.groupByLabels.map(lbl => MetricsOptionsBar.GroupByLabelOptions[lbl].labelOut);
+    this.props.onOptionsChanged({
+      rateInterval: this.state.rateInterval,
+      duration: this.state.duration,
+      step: this.state.duration / this.state.ticks,
+      filterLabels: this.state.filterLabels,
+      byLabelsIn: labelsIn,
+      byLabelsOut: labelsOut
+    });
+  }
+
+  changedGroupByLabel(labels: string[]) {
+    this.setState({ groupByLabels: labels }, () => {
+      this.reportOptions();
     });
   }
 
   render() {
     return (
       <Toolbar>
+        {this.groupByLabelsHelper.renderDropdown()}
         <div className="form-group">
           <DropdownButton id="duration" title="Duration" onSelect={this.onDurationChanged}>
-            {this.durations.map(r => (
+            {MetricsOptionsBar.Durations.map(r => (
               <MenuItem key={r[0]} active={r[0] === this.state.duration} eventKey={r[0]}>
                 {r[1]}
               </MenuItem>
             ))}
           </DropdownButton>
-          <DropdownButton id="step" title="Step" onSelect={this.onStepChanged}>
-            {this.steps.map(r => (
-              <MenuItem key={r[0]} active={r[0] === this.state.step} eventKey={r[0]}>
-                {r[1]}
+          <DropdownButton id="ticks" title="Ticks" onSelect={this.onTicksChanged}>
+            {MetricsOptionsBar.Ticks.map(r => (
+              <MenuItem key={r} active={r === this.state.ticks} eventKey={r}>
+                {r}
               </MenuItem>
             ))}
           </DropdownButton>
           <DropdownButton id="rateInterval" title="Rate interval" onSelect={this.onRateIntervalChanged}>
-            {this.rateIntervals.map(r => (
+            {MetricsOptionsBar.RateIntervals.map(r => (
               <MenuItem key={r[0]} active={r[0] === this.state.rateInterval} eventKey={r[0]}>
                 {r[1]}
               </MenuItem>
             ))}
           </DropdownButton>
         </div>
+        {this.groupByLabelsHelper.hasResults() && (
+          <Toolbar.Results>{this.groupByLabelsHelper.renderResults()}</Toolbar.Results>
+        )}
       </Toolbar>
     );
   }

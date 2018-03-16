@@ -14,15 +14,18 @@ export interface Histogram {
   median: MetricGroup;
   percentile95: MetricGroup;
   percentile99: MetricGroup;
+  familyName: string;
 }
 
 export interface MetricGroup {
   matrix: TimeSeries[];
+  familyName: string;
 }
 
 export interface TimeSeries {
   metric: Map<String, String>;
   values: Datapoint[];
+  name: string;
 }
 
 // First is timestamp, second is value
