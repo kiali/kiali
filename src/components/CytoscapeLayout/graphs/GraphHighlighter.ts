@@ -2,7 +2,7 @@ const DIM_CLASS: string = 'mousedim';
 
 export class GraphHighlighter {
   cy: any;
-  service: any;
+  groupBox: any;
   nodeOrEdge: any;
 
   constructor(cy: any) {
@@ -18,33 +18,23 @@ export class GraphHighlighter {
   onTapEvent = (event: any) => {
     const target = event.target;
     if (target === this.cy) {
-      if (this.service == null) {
+      // the background was clicked
+      if (this.groupBox == null) {
         return;
       }
-      // Remove the selection when clicking the background
-      this.service
-        .selectify()
-        .unselect()
-        .unselectify();
-      this.service = null;
+      this.groupBox.unselect();
+      this.groupBox = null;
       this.refresh();
     } else if (target.isParent()) {
-      console.log(target.data());
-      // Use it as switch, click once to select, click again to deselect
-      // Remove *selection* when clicking the second time.
-      if (this.service === target) {
-        target
-          .selectify()
-          .unselect()
-          .unselectify();
-      } else {
-        target
-          .selectify()
-          .select()
-          .unselectify();
-      }
-      this.service = this.service === target ? null : target;
+      // A group box was clicked
+      this.groupBox = target;
       this.refresh();
+    } else {
+      // a node or edge was clicked
+      if (this.groupBox != null) {
+        this.groupBox.unselect();
+        this.groupBox = null;
+      }
     }
   };
 
@@ -100,10 +90,10 @@ export class GraphHighlighter {
   // and related nodes to children (including edges)
   // else returns null
   getServiceCollection() {
-    if (this.service == null) {
+    if (this.groupBox == null) {
       return null;
     }
-    return this.service.children().reduce((prev, child) => {
+    return this.groupBox.children().reduce((prev, child) => {
       if (prev === undefined) {
         prev = this.cy.collection();
       }
