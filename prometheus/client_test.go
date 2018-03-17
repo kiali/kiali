@@ -104,23 +104,29 @@ func TestGetServiceMetrics(t *testing.T) {
 	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", 1)
 	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 1.5)
 	mockRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
+	mockRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
 	mockHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_duration", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.6)
 	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetServiceMetrics("istio-system", "productpage", 1000, 10, "5m", []string{}, []string{})
+	metrics := client.GetServiceMetrics("istio-system", "productpage", "", 1000, 10, "5m", []string{}, []string{})
 
 	// Check health
 	assert.Equal(t, 0, metrics.Health.HealthyReplicas)
 	assert.Equal(t, 1, metrics.Health.TotalReplicas)
 
-	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
+	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
 	rqCountIn := metrics.Metrics["request_count_in"]
 	assert.NotNil(t, rqCountIn)
 	rqCountOut := metrics.Metrics["request_count_out"]
+	assert.NotNil(t, rqCountOut)
+	rqErrorCountIn := metrics.Metrics["request_error_count_in"]
+	assert.NotNil(t, rqCountIn)
+	rqErrorCountOut := metrics.Metrics["request_error_count_out"]
 	assert.NotNil(t, rqCountOut)
 	rqSizeIn := metrics.Histograms["request_size_in"]
 	assert.NotNil(t, rqSizeIn)
@@ -137,6 +143,8 @@ func TestGetServiceMetrics(t *testing.T) {
 
 	assert.Equal(t, 2.5, float64(rqCountIn.Matrix[0].Values[0].Value))
 	assert.Equal(t, 1.5, float64(rqCountOut.Matrix[0].Values[0].Value))
+	assert.Equal(t, 4.5, float64(rqErrorCountIn.Matrix[0].Values[0].Value))
+	assert.Equal(t, 3.5, float64(rqErrorCountOut.Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.35, float64(rqSizeOut.Average.Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.2, float64(rqSizeOut.Median.Matrix[0].Values[0].Value))
 	assert.Equal(t, 0.3, float64(rqSizeOut.Percentile95.Matrix[0].Values[0].Value))
@@ -159,18 +167,20 @@ func TestGetServiceMetricsHealthUnavailable(t *testing.T) {
 	mockQuery(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", &model.Vector{})
 	mockEmptyRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
 	mockEmptyRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
 	mockEmptyHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_request_duration", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_response_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
-	metrics := client.GetServiceMetrics("istio-system", "productpage", 1000, 10, "5m", []string{}, []string{})
+	metrics := client.GetServiceMetrics("istio-system", "productpage", "", 1000, 10, "5m", []string{}, []string{})
 
 	// Check health unavailable
 	assert.Equal(t, 0, metrics.Health.TotalReplicas)
 
-	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
+	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
 	rqCountIn := metrics.Metrics["request_count_in"]
 	assert.NotNil(t, rqCountIn)
@@ -294,6 +304,6 @@ func TestAgainstLiveGetServiceMetrics(t *testing.T) {
 		return
 	}
 	fmt.Printf("Metrics: \n")
-	metrics := client.GetServiceMetrics("tutorial", "preference", 1000*time.Second, 10*time.Second, "5m", []string{}, []string{})
+	metrics := client.GetServiceMetrics("tutorial", "preference", "", 1000*time.Second, 10*time.Second, "5m", []string{}, []string{})
 	fmt.Printf("TestAgainstLive / GetServiceMetrics: %v\n", metrics)
 }

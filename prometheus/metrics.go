@@ -80,7 +80,7 @@ func getServiceHealth(api v1.API, namespace string, servicename string) Health {
 		TotalReplicas:   int(totalVect[0].Value)}
 }
 
-func getServiceMetrics(api v1.API, namespace string, servicename string, duration time.Duration, step time.Duration,
+func getServiceMetrics(api v1.API, namespace string, servicename string, version string, duration time.Duration, step time.Duration,
 	rateInterval string, byLabelsIn []string, byLabelsOut []string) Metrics {
 
 	clustername := config.Get().IstioIdentityDomain
@@ -90,22 +90,35 @@ func getServiceMetrics(api v1.API, namespace string, servicename string, duratio
 		End:   now,
 		Step:  step}
 
-	labelsIn := fmt.Sprintf("{destination_service=\"%s.%s.%s\"}", servicename, namespace, clustername)
-	labelsOut := fmt.Sprintf("{source_service=\"%s.%s.%s\"}", servicename, namespace, clustername)
+	versionLabelIn := ""
+	versionLabelOut := ""
+	if len(version) > 0 {
+		versionLabelIn = fmt.Sprintf(",destination_version=\"%s\"", version)
+		versionLabelOut = fmt.Sprintf(",source_version=\"%s\"", version)
+	}
+
+	labelsIn := fmt.Sprintf("{destination_service=\"%s.%s.%s\"%s}", servicename, namespace, clustername, versionLabelIn)
+	labelsOut := fmt.Sprintf("{source_service=\"%s.%s.%s\"%s}", servicename, namespace, clustername, versionLabelOut)
+	labelsErrorIn := fmt.Sprintf("{destination_service=\"%s.%s.%s\",response_code=~\"[5|4].*\"%s}", servicename, namespace, clustername, versionLabelIn)
+	labelsErrorOut := fmt.Sprintf("{source_service=\"%s.%s.%s\",response_code=~\"[5|4].*\"%s}", servicename, namespace, clustername, versionLabelOut)
 	groupingIn := joinLabels(byLabelsIn)
 	groupingOut := joinLabels(byLabelsOut)
 
 	var wg sync.WaitGroup
 
-	var requestCountIn, requestCountOut *Metric
+	var requestCountIn, requestCountOut, requestErrorCountIn, requestErrorCountOut *Metric
 	var requestSizeIn, requestSizeOut, requestDurationIn, requestDurationOut, responseSizeIn, responseSizeOut Histogram
 
-	fetchRateInOut := func(p8sFamilyName string, metricIn **Metric, metricOut **Metric) {
+	fetchRateInOut := func(p8sFamilyName string, metricIn **Metric, metricOut **Metric, metricErrorIn **Metric, metricErrorOut **Metric) {
 		defer wg.Done()
 		m := fetchRateRange(api, p8sFamilyName, labelsIn, groupingIn, bounds, rateInterval)
 		*metricIn = m
 		m = fetchRateRange(api, p8sFamilyName, labelsOut, groupingOut, bounds, rateInterval)
 		*metricOut = m
+		m = fetchRateRange(api, p8sFamilyName, labelsErrorIn, groupingIn, bounds, rateInterval)
+		*metricErrorIn = m
+		m = fetchRateRange(api, p8sFamilyName, labelsErrorOut, groupingOut, bounds, rateInterval)
+		*metricErrorOut = m
 	}
 
 	fetchHistoInOut := func(p8sFamilyName string, hIn *Histogram, hOut *Histogram) {
@@ -118,7 +131,7 @@ func getServiceMetrics(api v1.API, namespace string, servicename string, duratio
 
 	// Prepare 4 calls
 	wg.Add(4)
-	go fetchRateInOut("istio_request_count", &requestCountIn, &requestCountOut)
+	go fetchRateInOut("istio_request_count", &requestCountIn, &requestCountOut, &requestErrorCountIn, &requestErrorCountOut)
 	go fetchHistoInOut("istio_request_size", &requestSizeIn, &requestSizeOut)
 	go fetchHistoInOut("istio_request_duration", &requestDurationIn, &requestDurationOut)
 	go fetchHistoInOut("istio_response_size", &responseSizeIn, &responseSizeOut)
@@ -129,6 +142,8 @@ func getServiceMetrics(api v1.API, namespace string, servicename string, duratio
 	histograms := make(map[string]Histogram)
 	metrics["request_count_in"] = requestCountIn
 	metrics["request_count_out"] = requestCountOut
+	metrics["request_error_count_in"] = requestErrorCountIn
+	metrics["request_error_count_out"] = requestErrorCountOut
 	histograms["request_size_in"] = requestSizeIn
 	histograms["request_size_out"] = requestSizeOut
 	histograms["request_duration_in"] = requestDurationIn
