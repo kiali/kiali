@@ -3,12 +3,23 @@ import * as React from 'react';
 import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
 import { RateTable } from '../../components/SummaryPanel/RateTable';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
+import * as API from '../../services/Api';
+import * as M from '../../types/Metrics';
+import MetricsOptions from '../../types/MetricsOptions';
 
 type SummaryPanelPropType = {
   data: any;
 };
 
-export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, {}> {
+type SummaryPanelState = {
+  loading: boolean;
+  requestCountIn?: M.MetricGroup;
+  requestCountOut?: M.MetricGroup;
+  requestErrorCountIn?: M.MetricGroup;
+  requestErrorCountOut?: M.MetricGroup;
+};
+
+export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelState> {
   static readonly panelStyle = {
     position: 'absolute' as 'absolute',
     width: '25em',
@@ -16,6 +27,36 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     top: 0,
     right: 0
   };
+
+  constructor(props: SummaryPanelPropType) {
+    super(props);
+    this.state = {
+      loading: false
+    };
+  }
+
+  fetchMetrics(options: MetricsOptions) {
+    const namespace = this.props.data.summaryTarget.data('service').split('.')[1];
+    const service = this.props.data.summaryTarget.data('service').split('.')[0];
+
+    this.setState({ loading: true });
+    API.getServiceMetrics(namespace, service, options)
+      .then(response => {
+        const metrics: M.Metrics = response['data'];
+        this.setState({
+          loading: false,
+          requestCountIn: metrics.metrics['request_count_in'],
+          requestCountOut: metrics.metrics['request_count_out'],
+          requestErrorCountIn: metrics.metrics['request_error_count_in'],
+          requestErrorCountOut: metrics.metrics['request_error_count_out']
+        });
+      })
+      .catch(error => {
+        // TODO: show error alert
+        this.setState({ loading: false });
+        console.error(error);
+      });
+  }
 
   render() {
     const namespace = this.props.data.summaryTarget.data('service').split('.')[1];
@@ -140,12 +181,34 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   };
 
   renderIncomingRpsChart = () => {
-    return (
-      <RpsChart label="Incoming" dataRps={[350, 400, 150, 850, 50, 220]} dataErrors={[140, 100, 50, 700, 10, 110]} />
-    );
+    if (this.state.requestCountIn != null && this.state.requestErrorCountIn != null) {
+      let requestData: M.TimeSeries[] = this.state.requestCountIn.matrix;
+      let errorData: M.TimeSeries[] = this.state.requestErrorCountIn.matrix;
+      console.log('in-req=>' + JSON.stringify(requestData));
+      console.log('in-err=>' + JSON.stringify(errorData));
+
+      // TODO: how/what to populate these with?
+      let requestDataArray: number[] = new Array();
+      let requestDataErrorArray: number[] = new Array();
+      return <RpsChart label="Incoming" dataRps={requestDataArray} dataErrors={requestDataErrorArray} />;
+    } else {
+      return;
+    }
   };
 
   renderOutgoingRpsChart = () => {
-    return <RpsChart label="Outgoing" dataRps={[350, 400, 150]} dataErrors={[140, 100, 130]} />;
+    if (this.state.requestCountIn != null && this.state.requestErrorCountIn != null) {
+      let requestData: M.TimeSeries[] = this.state.requestCountOut!.matrix;
+      let errorData: M.TimeSeries[] = this.state.requestErrorCountOut!.matrix;
+      console.log('out-req=>' + JSON.stringify(requestData));
+      console.log('out-err=>' + JSON.stringify(errorData));
+
+      // TODO: how/what to populate these with?
+      let requestDataArray: number[] = new Array();
+      let requestDataErrorArray: number[] = new Array();
+      return <RpsChart label="Outgoing" dataRps={requestDataArray} dataErrors={requestDataErrorArray} />;
+    } else {
+      return;
+    }
   };
 }
