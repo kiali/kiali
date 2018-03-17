@@ -11,71 +11,54 @@ export class GraphStyles {
           content: (ele: any) => {
             return ele.data('text') || ele.data('id');
           },
-          color: 'black',
-          'background-color': '#bbb',
+          color: '#030303', // pf-black
+          'background-color': '#f9d67a', // pf-gold-200
           'border-width': '1px',
-          'border-color': '#000',
+          'border-color': '#030303', // pf-black
           'font-size': '10px',
           'text-valign': 'bottom',
-          'text-halign': 'right',
-          'text-outline-color': '#77828C'
+          'text-halign': 'right'
         }
       },
       {
         selector: 'node:selected',
         style: {
           'border-width': '3px',
-          'border-color': '#116CD6',
-          'border-opacity': '0.7',
-          'background-color': '#77828C',
-          'text-outline-color': '#77828C'
+          'border-color': '#0088ce' // pf-blue
         }
       },
       {
+        // version group boxes
         selector: '$node > node',
         css: {
           'padding-top': '10px',
           'padding-left': '20px',
           'padding-bottom': '10px',
           'padding-right': '20px',
-          'text-outline-width': 1,
-          'text-outline-color': '#cfcfcf',
-          color: '#8d7f6c',
           'text-valign': 'top',
           'text-halign': 'center',
-          'background-color': '#f5f1d8'
+          'background-color': '#fbeabc' // pf-gold-100
         }
       },
       {
         selector: 'edge',
         css: {
           width: 3,
-          color: '#434343',
           'font-size': '8px',
           'text-margin-x': '25px',
           content: 'data(text)',
           'target-arrow-shape': 'vee',
           'line-color': 'data(color)',
-          'target-arrow-color': 'black',
+          'target-arrow-color': '#030303', // pf-black
           'curve-style': 'bezier'
         }
       },
       {
-        selector: ':selected',
+        selector: 'edge:selected',
         css: {
-          'background-color': '#116CD6',
-          'line-color': '#84B5EA',
-          'target-arrow-color': '#84B5EA',
-          'source-arrow-color': '#84B5EA'
-        }
-      },
-      // TODO: is this needed anywhere?
-      {
-        selector: 'edge.highlighted',
-        style: {
-          'line-color': '#116CD6',
-          opacity: '0.95',
-          width: '25px'
+          'line-color': '#0088ce', // pf-blue
+          'target-arrow-color': '#0088ce', // pf-blue
+          'source-arrow-color': '#0088ce' // pf-blue
         }
       },
       // When you mouse over a node, all nodes other than the moused over node
@@ -83,13 +66,13 @@ export class GraphStyles {
       {
         selector: 'node.mousedim',
         style: {
-          opacity: '0.4'
+          opacity: '0.3'
         }
       },
       {
         selector: 'edge.mousedim',
         style: {
-          opacity: '0.4'
+          opacity: '0.3'
         }
       }
     ];
