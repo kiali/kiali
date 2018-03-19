@@ -67,10 +67,24 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceList,
 		},
 		{
+			// Supported query parameters:
+			// version:				When provided, filters metrics for a specific version of this service
+			// step:				  Duration indicating desired step between two datapoints, in seconds (default 15)
+			// duration:      Duration indicating desired query period, in seconds (default 1800 = 30 minutes)
+			// rateInterval:  Interval used for rate and histogram calculation (default 1m)
+			// byLabelsIn[]:  List of labels to use for grouping input metrics (empty by default). Example: response_code,source_version
+			// byLabelsOut[]: List of labels to use for grouping output metrics (empty by default). Example: response_code,destination_version
+
 			"ServiceMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/metrics",
 			handlers.ServiceMetrics,
+		},
+		{
+			"ServiceHealth",
+			"GET",
+			"/api/namespaces/{namespace}/services/{service}/health",
+			handlers.ServiceHealth,
 		},
 		{
 			// Supported query parameters:

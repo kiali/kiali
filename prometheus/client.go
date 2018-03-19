@@ -83,16 +83,17 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 	return routes, nil
 }
 
-// GetServiceMetrics returns the Health and Metrics related to the provided service identified by its namespace and service name.
-// Health might be nil when unavailable
+// GetServiceMetrics returns the Metrics related to the provided service identified by its namespace and service name.
 func (in *Client) GetServiceMetrics(namespace string, servicename string, version string, duration time.Duration, step time.Duration,
 	rateInterval string, byLabelsIn []string, byLabelsOut []string) Metrics {
+	return getServiceMetrics(in.api, namespace, servicename, version, duration, step, rateInterval, byLabelsIn, byLabelsOut)
+}
 
-	metrics := getServiceMetrics(in.api, namespace, servicename, version, duration, step, rateInterval, byLabelsIn, byLabelsOut)
-	health := getServiceHealth(in.api, namespace, servicename)
-	metrics.Health = health
-
-	return metrics
+// GetServiceHealth returns the Health related to the provided service identified by its namespace and service name.
+// Health is based on number of healthy replicas versus total number of replicas (using Envoy metrics).
+// When the health is unavailable, total number of replicas will be 0.
+func (in *Client) GetServiceHealth(namespace string, servicename string) Health {
+	return getServiceHealth(in.api, namespace, servicename)
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client

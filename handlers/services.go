@@ -94,6 +94,27 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplie
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
+// ServiceHealth is the API handler to get health of a single service
+func ServiceHealth(w http.ResponseWriter, r *http.Request) {
+	getServiceHealth(w, r, prometheus.NewClient)
+}
+
+// getServiceHealth (mock-friendly version)
+func getServiceHealth(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error)) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	service := vars["service"]
+	prometheusClient, err := promClientSupplier()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
+		return
+	}
+
+	health := prometheusClient.GetServiceHealth(namespace, service)
+	RespondWithJSON(w, http.StatusOK, health)
+}
+
 // ServiceDetails is the API handler to fetch full details of an specific service
 func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)

@@ -22,7 +22,6 @@ var (
 type Metrics struct {
 	Metrics    map[string]*Metric   `json:"metrics"`
 	Histograms map[string]Histogram `json:"histograms"`
-	Health     Health               `json:"health"`
 }
 
 // Health contains information about healthy replicas for a service
