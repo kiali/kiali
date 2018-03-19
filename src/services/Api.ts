@@ -43,6 +43,10 @@ export const getServiceMetrics = (namespace: String, service: String, params: an
   return newRequest('get', `/api/namespaces/${namespace}/services/${service}/metrics`, params, {});
 };
 
+export const getServiceHealth = (namespace: String, service: String) => {
+  return newRequest('get', `/api/namespaces/${namespace}/services/${service}/health`, {}, {});
+};
+
 export const getGrafanaInfo = () => {
   return newRequest('get', `/api/grafana`, {}, {});
 };
