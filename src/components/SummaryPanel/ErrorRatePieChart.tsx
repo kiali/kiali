@@ -12,7 +12,7 @@ export class ErrorRatePieChart extends React.Component<ErrorRatePieChartPropType
     return (
       <PieChart
         className="pie-chart-pf"
-        size={{ width: 240, height: 100 }}
+        size={{ width: 200, height: 80 }}
         data={{
           colors: { '% Success': '#0088ce', '% Fail': '#c00' },
           columns: [['% Success', successRate], ['% Fail', this.props.percentError]],
