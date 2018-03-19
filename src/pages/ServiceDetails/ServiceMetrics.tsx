@@ -1,10 +1,12 @@
 import * as React from 'react';
+import { Spinner, LineChart, DonutChart } from 'patternfly-react';
+
 import ServiceId from '../../types/ServiceId';
 import * as M from '../../types/Metrics';
+import Health from '../../types/Health';
 import * as API from '../../services/Api';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import MetricsOptions from '../../types/MetricsOptions';
-import { Spinner, LineChart, DonutChart } from 'patternfly-react';
 
 interface GrafanaInfo {
   url: string;
@@ -24,7 +26,7 @@ type ServiceMetricsState = {
   requestDurationOut?: M.Histogram;
   responseSizeIn?: M.Histogram;
   responseSizeOut?: M.Histogram;
-  health?: M.Health;
+  health?: Health;
   grafanaLinkIn?: string;
   grafanaLinkOut?: string;
 };
@@ -51,6 +53,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
 
   componentDidMount() {
     this.getGrafanaInfo();
+    this.fetchHealth();
   }
 
   onOptionsChanged(options: MetricsOptions) {
@@ -103,13 +106,25 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
             metrics.histograms['response_size_out'],
             'Response size (bytes)',
             options.byLabelsOut
-          ),
-          health: metrics.health
+          )
         });
       })
       .catch(error => {
         // TODO: show error alert
         this.setState({ loading: false });
+        console.error(error);
+      });
+  }
+
+  fetchHealth() {
+    API.getServiceHealth(this.props.namespace, this.props.service)
+      .then(response => {
+        this.setState({
+          health: response['data']
+        });
+      })
+      .catch(error => {
+        // TODO: show error alert
         console.error(error);
       });
   }

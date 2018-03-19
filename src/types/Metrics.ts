@@ -1,12 +1,6 @@
 export interface Metrics {
   metrics: Map<String, MetricGroup>;
   histograms: Map<String, Histogram>;
-  health: Health;
-}
-
-export interface Health {
-  healthyReplicas: number;
-  totalReplicas: number;
 }
 
 export interface Histogram {
