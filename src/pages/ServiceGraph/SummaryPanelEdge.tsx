@@ -1,14 +1,10 @@
 import * as React from 'react';
-
 import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
-import { ErrorRatePieChart } from '../../components/SummaryPanel/ErrorRatePieChart';
+import { RateTable } from '../../components/SummaryPanel/RateTable';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
+import { SummaryPanelPropType } from '../../types/Graph';
 
-type SummaryPanelPropType = {
-  data: any;
-};
-
-export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, {}> {
+export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType> {
   static readonly panelStyle = {
     position: 'absolute' as 'absolute',
     width: '25em',
@@ -18,45 +14,62 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   };
 
   render() {
-    const namespace = 'TBD';
-    const service = 'TBD';
-    const serviceHotLink = <a href={`../namespaces/${namespace}/services/${service}`}>{service}</a>;
+    const edge = this.props.data.summaryTarget;
+    const source = edge.source();
+    const sourceSplit = source.data('service').split('.');
+    const sourceService = sourceSplit[0];
+    const sourceNamespace = sourceSplit.length < 2 ? 'unknown' : sourceSplit[1];
+    const sourceVersion = source.data('version');
+    const dest = edge.target();
+    const destSplit = dest.data('service').split('.');
+    const destService = destSplit[0];
+    const destNamespace = destSplit[1];
+    const destVersion = dest.data('version');
+    const rate = this.safeRate(edge.data('rate'));
+    const rate3xx = this.safeRate(edge.data('rate3XX'));
+    const rate4xx = this.safeRate(edge.data('rate4XX'));
+    const rate5xx = this.safeRate(edge.data('rate5XX'));
+    const sourceLink = <a href={`../namespaces/${sourceNamespace}/services/${sourceService}`}>{sourceService}</a>;
+    const destLink = <a href={`../namespaces/${destNamespace}/services/${destService}`}>{destService}</a>;
 
     return (
       <div className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
-        <div className="panel-heading">Edge: {serviceHotLink} (v5)</div>
+        <div className="panel-heading">Edge Source: {sourceLink}</div>
         <div className="panel-body">
-          <p>
-            <strong>Labels:</strong>
-            <br />
-            {this.renderLabels()}
-          </p>
+          <p>{this.renderLabels(sourceNamespace, sourceVersion)}</p>
+        </div>
+        <div className="panel-heading">Edge Dest: {destLink}</div>
+        <div className="panel-body">
+          <p>{this.renderLabels(destNamespace, destVersion)}</p>
           <hr />
+          <RateTable
+            title="Traffic (requests per second):"
+            rate={rate}
+            rate3xx={rate3xx}
+            rate4xx={rate4xx}
+            rate5xx={rate5xx}
+          />
           <div style={{ fontSize: '1.2em' }}>
-            {this.renderIncomingRpsChart()}
-            {this.renderOutgoingRpsChart()}
-            <ErrorRatePieChart percentError={10} />
+            <hr />
+            {this.renderRpsChart()}
           </div>
         </div>
       </div>
     );
   }
 
-  renderLabels = () => (
+  safeRate = (s: string) => {
+    return s === undefined ? 0.0 : parseFloat(s);
+  };
+
+  renderLabels = (ns: string, ver: string) => (
     <>
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="app" rightText="bookinfo" color="green" />
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="app" rightText="product" color="green" />
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="version" rightText="v5" color="navy" />
+      <ServiceInfoBadge scale={0.8} style="plastic" leftText="namespace" rightText={ns} color="green" />
+      <ServiceInfoBadge scale={0.8} style="plastic" leftText="version" rightText={ver} color="green" />
     </>
   );
 
-  renderIncomingRpsChart = () => {
-    return (
-      <RpsChart label="Incoming" dataRps={[350, 400, 150, 850, 50, 220]} dataErrors={[140, 100, 50, 700, 10, 110]} />
-    );
-  };
-
-  renderOutgoingRpsChart = () => {
-    return <RpsChart label="Outgoing" dataRps={[350, 400, 150]} dataErrors={[140, 100, 130]} />;
+  renderRpsChart = () => {
+    return <RpsChart label="MOCK" dataRps={[350, 400, 150, 850, 50, 220]} dataErrors={[140, 100, 50, 700, 10, 110]} />;
   };
 }

@@ -4,7 +4,7 @@ import { PropTypes } from 'prop-types';
 import NamespaceId from '../../types/NamespaceId';
 import { Alert } from 'patternfly-react';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
-import SummaryPanelBase from './SummaryPanelBase';
+import SummaryPanel from './SummaryPanel';
 import { GraphFilter, GraphFilters } from '../../components/GraphFilter/GraphFilter';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
 import PfHeader from '../../components/Pf/PfHeader';
@@ -86,7 +86,7 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
           <GraphFilter onFilterChange={this.filterChange} onError={this.handleError} />
         </PfHeader>
         <div style={{ position: 'relative' }}>
-          <SummaryPanelBase data={this.state.summaryData} />
+          <SummaryPanel data={this.state.summaryData} />
           <CytoscapeLayout
             namespace={GraphFilters.getGraphNamespace()}
             layout={GraphFilters.getGraphLayout()}

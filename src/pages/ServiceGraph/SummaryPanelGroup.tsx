@@ -3,13 +3,10 @@ import * as React from 'react';
 import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
 import { RateTable } from '../../components/SummaryPanel/RateTable';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
+import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import MetricsOptions from '../../types/MetricsOptions';
-
-type SummaryPanelPropType = {
-  data: any;
-};
 
 type SummaryPanelState = {
   loading: boolean;
