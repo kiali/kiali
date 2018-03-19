@@ -1,10 +1,9 @@
 import * as React from 'react';
 import ServiceInfoCard from './ServiceInfoCard';
 import { Link } from 'react-router-dom';
-import { Source } from '../../../types/ServiceInfo';
 
 interface ServiceInfoRoutesProps {
-  dependencies?: Source[];
+  dependencies?: Map<string, string[]>;
 }
 
 class ServiceInfoRoutes extends React.Component<ServiceInfoRoutesProps> {

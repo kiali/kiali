@@ -1,0 +1,334 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`#ServiceInfoDescription render correctly with data should render service description 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <ServiceInfoDescription
+    endpoints={
+        Array [
+            Object {
+              "addresses": Array [
+                Object {
+                  "ip": "172.17.0.11",
+                  "kind": "Pod",
+                  "name": "reviews-v2-4140793682-qrpm9",
+                },
+                Object {
+                  "ip": "172.17.0.14",
+                  "kind": "Pod",
+                  "name": "reviews-v3-3651831602-zn9g6",
+                },
+                Object {
+                  "ip": "172.17.0.16",
+                  "kind": "Pod",
+                  "name": "reviews-v1-401049526-tfstp",
+                },
+              ],
+              "ports": Array [
+                Object {
+                  "name": "http",
+                  "port": 9080,
+                  "protocol": "TCP",
+                },
+              ],
+            },
+          ]
+    }
+    ip="172.30.78.33"
+    labels={
+        Map {
+            "app" => "reviews",
+          }
+    }
+    name="reviews"
+    type="ClusterIP"
+/>,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "class",
+    "props": Object {
+      "iconName": "service",
+      "iconType": "pf",
+      "items": <Row
+        bsClass="row"
+        componentClass="div"
+>
+        <Col
+                bsClass="col"
+                componentClass="div"
+                lg={2}
+                md={2}
+                sm={6}
+                xs={12}
+        >
+                <div
+                        className="progress-description"
+                >
+                        <strong>
+                                Labels
+                        </strong>
+                </div>
+                <div>
+                        <strong>
+                                Type
+                        </strong>
+                         
+                        ClusterIP
+                </div>
+                <div>
+                        <strong>
+                                 Ip
+                        </strong>
+                         
+                        172.30.78.33
+                </div>
+        </Col>
+        <Col
+                bsClass="col"
+                componentClass="div"
+                lg={4}
+                md={4}
+                sm={6}
+                xs={12}
+        >
+                <div
+                        className="progress-description"
+                >
+                        <strong>
+                                Ports
+                        </strong>
+                </div>
+                <ul
+                        style={
+                                Object {
+                                        "listStyleType": "none",
+                                      }
+                        }
+                >
+                        
+                </ul>
+        </Col>
+        <Col
+                bsClass="col"
+                componentClass="div"
+                lg={6}
+                md={6}
+                sm={6}
+                xs={12}
+        >
+                <div
+                        className="progress-description"
+                >
+                        <strong>
+                                Endpoints
+                        </strong>
+                </div>
+                <Row
+                        bsClass="row"
+                        componentClass="div"
+                >
+                        <Col
+                                bsClass="col"
+                                componentClass="div"
+                                lg={12}
+                                md={12}
+                                sm={12}
+                                xs={12}
+                        >
+                                <ul
+                                        style={
+                                                Object {
+                                                        "listStyleType": "none",
+                                                      }
+                                        }
+                                >
+                                        <li>
+                                                <strong>
+                                                        172.17.0.11
+                                                         
+                                                </strong>
+                                                : 
+                                                reviews-v2-4140793682-qrpm9
+                                        </li>
+                                        <li>
+                                                <strong>
+                                                        172.17.0.14
+                                                         
+                                                </strong>
+                                                : 
+                                                reviews-v3-3651831602-zn9g6
+                                        </li>
+                                        <li>
+                                                <strong>
+                                                        172.17.0.16
+                                                         
+                                                </strong>
+                                                : 
+                                                reviews-v1-401049526-tfstp
+                                        </li>
+                                </ul>
+                        </Col>
+                </Row>
+        </Col>
+</Row>,
+      "title": "reviews",
+    },
+    "ref": null,
+    "rendered": null,
+    "type": [Function],
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "iconName": "service",
+        "iconType": "pf",
+        "items": <Row
+          bsClass="row"
+          componentClass="div"
+>
+          <Col
+                    bsClass="col"
+                    componentClass="div"
+                    lg={2}
+                    md={2}
+                    sm={6}
+                    xs={12}
+          >
+                    <div
+                              className="progress-description"
+                    >
+                              <strong>
+                                        Labels
+                              </strong>
+                    </div>
+                    <div>
+                              <strong>
+                                        Type
+                              </strong>
+                               
+                              ClusterIP
+                    </div>
+                    <div>
+                              <strong>
+                                         Ip
+                              </strong>
+                               
+                              172.30.78.33
+                    </div>
+          </Col>
+          <Col
+                    bsClass="col"
+                    componentClass="div"
+                    lg={4}
+                    md={4}
+                    sm={6}
+                    xs={12}
+          >
+                    <div
+                              className="progress-description"
+                    >
+                              <strong>
+                                        Ports
+                              </strong>
+                    </div>
+                    <ul
+                              style={
+                                        Object {
+                                                  "listStyleType": "none",
+                                                }
+                              }
+                    >
+                              
+                    </ul>
+          </Col>
+          <Col
+                    bsClass="col"
+                    componentClass="div"
+                    lg={6}
+                    md={6}
+                    sm={6}
+                    xs={12}
+          >
+                    <div
+                              className="progress-description"
+                    >
+                              <strong>
+                                        Endpoints
+                              </strong>
+                    </div>
+                    <Row
+                              bsClass="row"
+                              componentClass="div"
+                    >
+                              <Col
+                                        bsClass="col"
+                                        componentClass="div"
+                                        lg={12}
+                                        md={12}
+                                        sm={12}
+                                        xs={12}
+                              >
+                                        <ul
+                                                  style={
+                                                            Object {
+                                                                      "listStyleType": "none",
+                                                                    }
+                                                  }
+                                        >
+                                                  <li>
+                                                            <strong>
+                                                                      172.17.0.11
+                                                                       
+                                                            </strong>
+                                                            : 
+                                                            reviews-v2-4140793682-qrpm9
+                                                  </li>
+                                                  <li>
+                                                            <strong>
+                                                                      172.17.0.14
+                                                                       
+                                                            </strong>
+                                                            : 
+                                                            reviews-v3-3651831602-zn9g6
+                                                  </li>
+                                                  <li>
+                                                            <strong>
+                                                                      172.17.0.16
+                                                                       
+                                                            </strong>
+                                                            : 
+                                                            reviews-v1-401049526-tfstp
+                                                  </li>
+                                        </ul>
+                              </Col>
+                    </Row>
+          </Col>
+</Row>,
+        "title": "reviews",
+      },
+      "ref": null,
+      "rendered": null,
+      "type": [Function],
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;

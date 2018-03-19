@@ -1,0 +1,222 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`#ServiceInfoRules render correctly with data should render service rules 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <ServiceInfoRules
+    rules={
+        Array [
+            Object {
+              "destination": Map {
+                "name" => "reviews",
+              },
+              "match": undefined,
+              "name": "reviews-default",
+              "precedence": 1,
+              "route": Array [
+                Object {
+                  "labels": Map {
+                    "version" => "v1",
+                  },
+                },
+              ],
+            },
+            Object {
+              "destination": Map {
+                "name" => "reviews",
+              },
+              "match": undefined,
+              "name": "reviews-test-v2",
+              "precedence": 2,
+              "route": Array [
+                Object {
+                  "labels": Map {
+                    "version" => "v2",
+                  },
+                },
+              ],
+            },
+          ]
+    }
+/>,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "class",
+    "props": Object {
+      "iconName": "settings",
+      "iconType": "pf",
+      "items": Array [
+        <div>
+          <div>
+                    <strong>
+                              Name
+                    </strong>
+                     : 
+                    reviews-default
+          </div>
+          <div>
+                    <strong>
+                              Precendence
+                    </strong>
+                     : 
+                    1
+          </div>
+          <div>
+                    <strong>
+                              Route
+                    </strong>
+                    :
+                    <ul
+                              style={
+                                        Object {
+                                                  "listStyleType": "none",
+                                                }
+                              }
+                    >
+                              
+                    </ul>
+          </div>
+          <div />
+          <hr />
+</div>,
+        <div>
+          <div>
+                    <strong>
+                              Name
+                    </strong>
+                     : 
+                    reviews-test-v2
+          </div>
+          <div>
+                    <strong>
+                              Precendence
+                    </strong>
+                     : 
+                    2
+          </div>
+          <div>
+                    <strong>
+                              Route
+                    </strong>
+                    :
+                    <ul
+                              style={
+                                        Object {
+                                                  "listStyleType": "none",
+                                                }
+                              }
+                    >
+                              
+                    </ul>
+          </div>
+          <div />
+          <hr />
+</div>,
+      ],
+      "title": "Istio Route Rules",
+    },
+    "ref": null,
+    "rendered": null,
+    "type": [Function],
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "iconName": "settings",
+        "iconType": "pf",
+        "items": Array [
+          <div>
+            <div>
+                        <strong>
+                                    Name
+                        </strong>
+                         : 
+                        reviews-default
+            </div>
+            <div>
+                        <strong>
+                                    Precendence
+                        </strong>
+                         : 
+                        1
+            </div>
+            <div>
+                        <strong>
+                                    Route
+                        </strong>
+                        :
+                        <ul
+                                    style={
+                                                Object {
+                                                            "listStyleType": "none",
+                                                          }
+                                    }
+                        >
+                                    
+                        </ul>
+            </div>
+            <div />
+            <hr />
+</div>,
+          <div>
+            <div>
+                        <strong>
+                                    Name
+                        </strong>
+                         : 
+                        reviews-test-v2
+            </div>
+            <div>
+                        <strong>
+                                    Precendence
+                        </strong>
+                         : 
+                        2
+            </div>
+            <div>
+                        <strong>
+                                    Route
+                        </strong>
+                        :
+                        <ul
+                                    style={
+                                                Object {
+                                                            "listStyleType": "none",
+                                                          }
+                                    }
+                        >
+                                    
+                        </ul>
+            </div>
+            <div />
+            <hr />
+</div>,
+        ],
+        "title": "Istio Route Rules",
+      },
+      "ref": null,
+      "rendered": null,
+      "type": [Function],
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
