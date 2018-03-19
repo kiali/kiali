@@ -6,7 +6,7 @@ import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
-import MetricsOptions from '../../types/MetricsOptions';
+// import MetricsOptions from '../../types/MetricsOptions';
 
 type SummaryPanelState = {
   loading: boolean;
@@ -32,12 +32,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     };
   }
 
-  fetchMetrics(options: MetricsOptions) {
+  componentDidMount() {
     const namespace = this.props.data.summaryTarget.data('service').split('.')[1];
     const service = this.props.data.summaryTarget.data('service').split('.')[0];
-
-    this.setState({ loading: true });
-    API.getServiceMetrics(namespace, service, options)
+    API.getServiceMetrics(namespace, service, null)
       .then(response => {
         const metrics: M.Metrics = response['data'];
         this.setState({
@@ -47,6 +45,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           requestErrorCountIn: metrics.metrics['request_error_count_in'],
           requestErrorCountOut: metrics.metrics['request_error_count_out']
         });
+        // console.log('Group metrics:' + JSON.stringify(this.state));
       })
       .catch(error => {
         // TODO: show error alert
@@ -181,12 +180,19 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     if (this.state.requestCountIn != null && this.state.requestErrorCountIn != null) {
       let requestData: M.TimeSeries[] = this.state.requestCountIn.matrix;
       let errorData: M.TimeSeries[] = this.state.requestErrorCountIn.matrix;
-      console.log('in-req=>' + JSON.stringify(requestData));
-      console.log('in-err=>' + JSON.stringify(errorData));
 
-      // TODO: how/what to populate these with?
       let requestDataArray: number[] = new Array();
       let requestDataErrorArray: number[] = new Array();
+
+      requestData[0].values.forEach((element, i) => {
+        requestDataArray[i] = +element[1];
+      });
+      if (errorData.length > 0 && errorData[0].values !== undefined) {
+        errorData[0].values.forEach((element, i) => {
+          requestDataErrorArray[i] = +element[1];
+        });
+      }
+
       return <RpsChart label="Incoming" dataRps={requestDataArray} dataErrors={requestDataErrorArray} />;
     } else {
       return;
@@ -197,12 +203,19 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     if (this.state.requestCountIn != null && this.state.requestErrorCountIn != null) {
       let requestData: M.TimeSeries[] = this.state.requestCountOut!.matrix;
       let errorData: M.TimeSeries[] = this.state.requestErrorCountOut!.matrix;
-      console.log('out-req=>' + JSON.stringify(requestData));
-      console.log('out-err=>' + JSON.stringify(errorData));
 
-      // TODO: how/what to populate these with?
       let requestDataArray: number[] = new Array();
       let requestDataErrorArray: number[] = new Array();
+
+      requestData[0].values.forEach((element, i) => {
+        requestDataArray[i] = +element[1];
+      });
+      if (errorData.length > 0 && errorData[0].values !== undefined) {
+        errorData[0].values.forEach((element, i) => {
+          requestDataErrorArray[i] = +element[1];
+        });
+      }
+
       return <RpsChart label="Outgoing" dataRps={requestDataArray} dataErrors={requestDataErrorArray} />;
     } else {
       return;
