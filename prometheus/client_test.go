@@ -100,8 +100,6 @@ func TestGetServiceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_healthy", 0)
-	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", 1)
 	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 1.5)
 	mockRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
 	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
@@ -113,10 +111,6 @@ func TestGetServiceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.9)
 	metrics := client.GetServiceMetrics("istio-system", "productpage", "", 1000, 10, "5m", []string{}, []string{})
-
-	// Check health
-	assert.Equal(t, 0, metrics.Health.HealthyReplicas)
-	assert.Equal(t, 1, metrics.Health.TotalReplicas)
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
@@ -156,15 +150,28 @@ func TestGetServiceMetrics(t *testing.T) {
 	assert.Equal(t, 0.9, float64(rsSizeIn.Percentile99.Matrix[0].Values[0].Value))
 }
 
-func TestGetServiceMetricsHealthUnavailable(t *testing.T) {
+func TestGetServiceHealth(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_healthy", 0)
+	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", 1)
+	health := client.GetServiceHealth("istio-system", "productpage")
+
+	// Check health
+	assert.Equal(t, 0, health.HealthyReplicas)
+	assert.Equal(t, 1, health.TotalReplicas)
+}
+
+func TestGetServiceMetricsUnavailable(t *testing.T) {
 	client, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	// Mock everything to return empty data
-	mockQuery(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_healthy", &model.Vector{})
-	mockQuery(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", &model.Vector{})
 	mockEmptyRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
 	mockEmptyRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
 	mockEmptyRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
@@ -176,9 +183,6 @@ func TestGetServiceMetricsHealthUnavailable(t *testing.T) {
 	mockEmptyHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	metrics := client.GetServiceMetrics("istio-system", "productpage", "", 1000, 10, "5m", []string{}, []string{})
-
-	// Check health unavailable
-	assert.Equal(t, 0, metrics.Health.TotalReplicas)
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
@@ -200,6 +204,21 @@ func TestGetServiceMetricsHealthUnavailable(t *testing.T) {
 	assert.Empty(t, rqSizeIn.Median.Matrix[0].Values)
 	assert.Empty(t, rqSizeIn.Percentile95.Matrix[0].Values)
 	assert.Empty(t, rqSizeIn.Percentile99.Matrix[0].Values)
+}
+
+func TestGetServiceHealthUnavailable(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	// Mock everything to return empty data
+	mockQuery(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_healthy", &model.Vector{})
+	mockQuery(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", &model.Vector{})
+	health := client.GetServiceHealth("istio-system", "productpage")
+
+	// Check health unavailable
+	assert.Equal(t, 0, health.TotalReplicas)
 }
 
 func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector) {
