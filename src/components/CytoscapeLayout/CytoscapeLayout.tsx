@@ -1,11 +1,10 @@
 import * as React from 'react';
-import { Spinner } from 'patternfly-react';
+import { Spinner, Button } from 'patternfly-react';
 import PropTypes from 'prop-types';
 
 import * as API from '../../services/Api';
 import { GraphStyles } from './graphs/GraphStyles';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
-import { refreshSettings } from '../../model/RefreshSettings';
 import ReactCytoscape from './ReactCytoscape';
 
 type CytoscapeLayoutProps = {
@@ -26,7 +25,6 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   };
 
   cy: any;
-  timerID: any;
   graphHighlighter: GraphHighlighter;
 
   constructor(props: CytoscapeLayoutProps) {
@@ -56,7 +54,6 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
     if (this.props.namespace.length !== 0) {
       this.updateGraphElements(this.props);
-      this.timerID = setInterval(() => this.updateGraphElements(this.props), refreshSettings.interval);
     }
   }
 
@@ -64,10 +61,6 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     if (nextProps.namespace !== this.props.namespace || nextProps.interval !== this.props.interval) {
       this.updateGraphElements(nextProps);
     }
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.timerID);
   }
 
   cyRef(cy: any) {
@@ -100,6 +93,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     return (
       <div id="cytoscape-container" style={{ marginRight: '25em' }}>
         <Spinner loading={this.state.isLoading}>
+          <Button onClick={this.onRefreshButtonClick}>Refresh</Button>
           <ReactCytoscape
             containerID="cy"
             cyRef={cy => {
@@ -133,4 +127,8 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
         console.error(error);
       });
   }
+
+  onRefreshButtonClick = event => {
+    this.updateGraphElements(this.props);
+  };
 }
