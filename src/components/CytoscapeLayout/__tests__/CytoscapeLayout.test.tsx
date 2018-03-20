@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
+import { Button } from 'patternfly-react';
 
 import { ColaGraph } from '../graphs/ColaGraph';
 import CytoscapeLayout from '../CytoscapeLayout';
-import { refreshSettings } from '../../../model/RefreshSettings';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
 
 jest.mock('../../../services/Api');
@@ -25,17 +25,17 @@ describe('CytographLayout component test', () => {
     expect(wrapper.instance().state.elements.edges).toEqual(GRAPH_DATA[testNamespace].elements.edges);
   });
 
-  it('should auto-refresh after an interval', () => {
+  it('should refresh data on click', () => {
     // for spy to work updateGraphElements() must be regular function, not fat arrow =>
     // see https://github.com/airbnb/enzyme/issues/944
     const spyUpdateGraphElements = jest.spyOn(CytoscapeLayout.prototype, 'updateGraphElements');
 
-    shallow(
+    const wrapper = shallow(
       <CytoscapeLayout namespace={testNamespace} layout={ColaGraph.getLayout()} interval="30s" onClick={testHandler} />
     );
     expect(spyUpdateGraphElements).toHaveBeenCalledTimes(1);
-
-    jest.runTimersToTime(refreshSettings.interval + 1000);
+    const buttonWrapper = wrapper.find(Button);
+    buttonWrapper.simulate('click');
     expect(spyUpdateGraphElements).toHaveBeenCalledTimes(2);
   });
 });
