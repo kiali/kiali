@@ -10,7 +10,7 @@ type DestinationPolicy struct {
 	Source         interface{} `json:"source"`
 	Destination    interface{} `json:"destination"`
 	LoadBalancing  interface{} `json:"loadbalancing"`
-	CircuitBreaker interface{} `json:"route"`
+	CircuitBreaker interface{} `json:"circuitBreaker"`
 }
 
 func (policies *DestinationPolicies) Parse(destinationPolicies []kubernetes.IstioObject) {
