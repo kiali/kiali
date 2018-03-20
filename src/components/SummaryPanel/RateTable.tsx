@@ -39,7 +39,6 @@ export class RateTable extends React.Component<RateTablePropType, {}> {
             </tr>
           </tbody>
         </table>
-        <hr />
         <ErrorRatePieChart percentError={percentErr} />
       </div>
     );
