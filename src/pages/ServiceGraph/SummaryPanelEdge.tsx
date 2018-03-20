@@ -8,12 +8,13 @@ import * as M from '../../types/Metrics';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
-  source: string;
   sourceService: string;
+  sourceServiceName: string;
   sourceNamespace: string;
   sourceVersion: string;
   dest: string;
   destService: string;
+  destServiceName: string;
   destNamespace: string;
   destVersion: string;
   reqRates: number[];
@@ -34,18 +35,21 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
     const edge = this.props.data.summaryTarget;
     const source = edge.source();
-    const sourceSplit = source.data('service').split('.');
+    const sourceService = source.data('service');
+    const sourceSplit = sourceService.split('.');
     const dest = edge.target();
+    const destService = dest.data('service');
     const destSplit = dest.data('service').split('.');
 
     this.state = {
       loading: true,
-      source: source.data('service'),
-      sourceService: sourceSplit[0],
+      sourceService: sourceService,
+      sourceServiceName: sourceSplit[0],
       sourceNamespace: sourceSplit.length < 2 ? 'unknown' : sourceSplit[1],
       sourceVersion: source.data('version'),
       dest: dest.data('service'),
-      destService: destSplit[0],
+      destService: destService,
+      destServiceName: destSplit[0],
       destNamespace: destSplit[1],
       destVersion: dest.data('version'),
       reqRates: [],
@@ -58,34 +62,18 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       version: this.state.destVersion,
       'byLabelsIn[]': 'source_service,source_version'
     };
-    API.getServiceMetrics(this.state.destNamespace, this.state.destService, options)
+    API.getServiceMetrics(this.state.destNamespace, this.state.destServiceName, options)
       .then(response => {
         const data: M.Metrics = response['data'];
         const metrics: Map<String, M.MetricGroup> = data.metrics;
-        const mg: M.MetricGroup = metrics['request_count_in'];
-        const tsa: M.TimeSeries[] = mg.matrix;
-        let reqRates: number[] = [];
-        let errRates: number[] = [];
-        for (let i = 0; i < tsa.length; ++i) {
-          const ts = tsa[i];
-          if (
-            ts.metric['source_service'] === this.state.source &&
-            ts.metric['source_version'] === this.state.sourceVersion
-          ) {
-            const vals: M.Datapoint[] = ts.values;
-            for (let j = 0; j < vals.length; ++j) {
-              reqRates.push(vals[j][1]);
-              errRates.push(vals[j][1] / 2);
-            }
-          }
-        }
+        const reqRates: number[] = this.getRates(metrics['request_count_in']);
+        const errRates: number[] = this.getRates(metrics['request_error_count_in']);
 
         this.setState({
           loading: false,
           reqRates: reqRates,
           errRates: errRates
         });
-        // console.log('Group metrics:' + JSON.stringify(this.state));
       })
       .catch(error => {
         this.setState({ loading: false });
@@ -137,18 +125,40 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     );
   }
 
-  safeRate = (s: string) => {
+  private safeRate = (s: string) => {
     return s === undefined ? 0.0 : parseFloat(s);
   };
 
-  renderLabels = (ns: string, ver: string) => (
+  private renderLabels = (ns: string, ver: string) => (
     <>
       <ServiceInfoBadge scale={0.8} style="plastic" leftText="namespace" rightText={ns} color="green" />
       <ServiceInfoBadge scale={0.8} style="plastic" leftText="version" rightText={ver} color="green" />
     </>
   );
 
-  renderRpsChart = () => {
-    return <RpsChart label="Request Rates" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />;
+  private renderRpsChart = () => {
+    if (this.state.loading) {
+      return <h3>loading chart...</h3>;
+    }
+
+    return <RpsChart label="Request Average" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />;
+  };
+
+  private getRates = (mg: M.MetricGroup): number[] => {
+    const rates: number[] = [];
+    const tsa: M.TimeSeries[] = mg.matrix;
+    for (let i = 0; i < tsa.length; ++i) {
+      const ts = tsa[i];
+      if (
+        ts.metric['source_service'] === this.state.sourceService &&
+        ts.metric['source_version'] === this.state.sourceVersion
+      ) {
+        const vals: M.Datapoint[] = ts.values;
+        for (let j = 0; j < vals.length; ++j) {
+          rates.push(vals[j][1]);
+        }
+      }
+    }
+    return rates;
   };
 }

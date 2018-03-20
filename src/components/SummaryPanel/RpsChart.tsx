@@ -14,9 +14,20 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
   }
 
   render() {
-    const lastRps = this.props.dataRps.slice(-1)[0];
-    const lastErrors = this.props.dataErrors.slice(-1)[0];
-    const lastErrorPercent = Math.round(1000 * lastErrors / lastRps) / 10;
+    let len = this.props.dataRps.length;
+    let sum = 0;
+    for (let i = 0; i < len; ++i) {
+      sum += +this.props.dataRps[i];
+    }
+    const avgRps = len === 0 ? 0 : sum / len;
+
+    len = this.props.dataErrors.length;
+    sum = 0;
+    for (let i = 0; i < len; ++i) {
+      sum += +this.props.dataErrors[i];
+    }
+    const avgErr = len === 0 ? 0 : sum / len;
+    const pctErr = avgRps === 0 ? 0 : avgErr / avgRps * 100;
 
     let rpsColumn: Array<any> = ['RPS'];
     let errorsColumn: Array<any> = ['Errors'];
@@ -28,7 +39,7 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
       <>
         <div>
           <strong>{this.props.label}: </strong>
-          {lastRps} RPS / {lastErrorPercent}% Error
+          {avgRps.toFixed(2)}rps / {pctErr.toFixed(2)}%Err
         </div>
         <AreaChart
           size={{ height: 45 }}
