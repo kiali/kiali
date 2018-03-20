@@ -6,14 +6,14 @@ import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
-import MetricsOptions from '../../types/MetricsOptions';
+// import MetricsOptions from '../../types/MetricsOptions';
 
 type SummaryPanelState = {
   loading: boolean;
-  requestCountIn?: M.MetricGroup;
-  requestCountOut?: M.MetricGroup;
-  requestErrorCountIn?: M.MetricGroup;
-  requestErrorCountOut?: M.MetricGroup;
+  requestCountIn: number[];
+  requestCountOut: number[];
+  errorCountIn: number[];
+  errorCountOut: number[];
 };
 
 export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelState> {
@@ -28,24 +28,37 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   constructor(props: SummaryPanelPropType) {
     super(props);
     this.state = {
-      loading: false
+      loading: false,
+      requestCountIn: [],
+      requestCountOut: [],
+      errorCountIn: [],
+      errorCountOut: []
     };
   }
 
-  fetchMetrics(options: MetricsOptions) {
+  componentDidMount() {
     const namespace = this.props.data.summaryTarget.data('service').split('.')[1];
     const service = this.props.data.summaryTarget.data('service').split('.')[0];
+    const options = {
+      rateInterval: '5m'
+    };
 
-    this.setState({ loading: true });
     API.getServiceMetrics(namespace, service, options)
       .then(response => {
-        const metrics: M.Metrics = response['data'];
+        const data: M.Metrics = response['data'];
+        const metrics: Map<String, M.MetricGroup> = data.metrics;
+
+        const reqCountIn: M.MetricGroup = metrics['request_count_in'];
+        const reqCountOut: M.MetricGroup = metrics['request_count_out'];
+        const errCountIn: M.MetricGroup = metrics['request_error_count_in'];
+        const errCountOut: M.MetricGroup = metrics['request_error_count_out'];
+
         this.setState({
           loading: false,
-          requestCountIn: metrics.metrics['request_count_in'],
-          requestCountOut: metrics.metrics['request_count_out'],
-          requestErrorCountIn: metrics.metrics['request_error_count_in'],
-          requestErrorCountOut: metrics.metrics['request_error_count_out']
+          requestCountIn: this.pushRateDataToArray(reqCountIn.matrix),
+          requestCountOut: this.pushRateDataToArray(reqCountOut.matrix),
+          errorCountIn: this.pushRateDataToArray(errCountIn.matrix),
+          errorCountOut: this.pushRateDataToArray(errCountOut.matrix)
         });
       })
       .catch(error => {
@@ -53,6 +66,25 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         this.setState({ loading: false });
         console.error(error);
       });
+  }
+
+  // Given a timeseries, extracts the data points into an array and returns array.
+  // It is assumed the timeseries will only have at most 1 series (since we are aggregating
+  // the group data, our metrics query should only have ever returned at most 1 timeseries).
+  pushRateDataToArray(matrix: M.TimeSeries[]) {
+    let ratesArray: number[] = [];
+    if (matrix.length === 1) {
+      const ts: M.TimeSeries = matrix[0];
+      const vals: M.Datapoint[] = ts.values;
+      for (let j = 0; j < vals.length; j++) {
+        ratesArray.push(vals[j][1]);
+      }
+    } else {
+      if (matrix.length !== 0) {
+        console.error('matrix has unexpected length: ' + matrix.length);
+      }
+    }
+    return ratesArray;
   }
 
   render() {
@@ -133,7 +165,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               leftText="namespace"
               rightText={namespace}
               key={namespace}
-              color="green"
+              color="#2d7623" // pf-green-500
             />
             {this.renderVersionBadges()}
           </p>
@@ -172,40 +204,16 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           leftText="version"
           rightText={c.data('version')}
           key={c.data('version')}
-          color="green"
+          color="#2d7623" // pf-green-500
         />
       ));
   };
 
   renderIncomingRpsChart = () => {
-    if (this.state.requestCountIn != null && this.state.requestErrorCountIn != null) {
-      let requestData: M.TimeSeries[] = this.state.requestCountIn.matrix;
-      let errorData: M.TimeSeries[] = this.state.requestErrorCountIn.matrix;
-      console.log('in-req=>' + JSON.stringify(requestData));
-      console.log('in-err=>' + JSON.stringify(errorData));
-
-      // TODO: how/what to populate these with?
-      let requestDataArray: number[] = new Array();
-      let requestDataErrorArray: number[] = new Array();
-      return <RpsChart label="Incoming" dataRps={requestDataArray} dataErrors={requestDataErrorArray} />;
-    } else {
-      return;
-    }
+    return <RpsChart label="Incoming" dataRps={this.state.requestCountIn} dataErrors={this.state.errorCountIn} />;
   };
 
   renderOutgoingRpsChart = () => {
-    if (this.state.requestCountIn != null && this.state.requestErrorCountIn != null) {
-      let requestData: M.TimeSeries[] = this.state.requestCountOut!.matrix;
-      let errorData: M.TimeSeries[] = this.state.requestErrorCountOut!.matrix;
-      console.log('out-req=>' + JSON.stringify(requestData));
-      console.log('out-err=>' + JSON.stringify(errorData));
-
-      // TODO: how/what to populate these with?
-      let requestDataArray: number[] = new Array();
-      let requestDataErrorArray: number[] = new Array();
-      return <RpsChart label="Outgoing" dataRps={requestDataArray} dataErrors={requestDataErrorArray} />;
-    } else {
-      return;
-    }
+    return <RpsChart label="Outgoing" dataRps={this.state.requestCountOut} dataErrors={this.state.errorCountOut} />;
   };
 }
