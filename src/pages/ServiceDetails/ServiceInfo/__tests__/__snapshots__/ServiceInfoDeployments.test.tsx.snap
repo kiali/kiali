@@ -1,0 +1,399 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`#ServiceInfoDeployments render correctly with data should render service pods 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <ServiceInfoDeployments
+    deployments={
+        Array [
+            Object {
+              "autoscaler": Object {
+                "max_replicas": 10,
+                "min_replicas": 2,
+                "name": "reviews-v2-autoscaler",
+                "target_cpu_utilization_percentage": 50,
+              },
+              "available_replicas": 3,
+              "created_at": "2018-03-14T10:17:52Z",
+              "labels": Map {
+                "app" => "reviews",
+                "version" => "v2",
+              },
+              "name": "reviews-v2",
+              "replicas": 5,
+              "unavailable_replicas": 2,
+            },
+            Object {
+              "autoscaler": Object {
+                "max_replicas": 10,
+                "min_replicas": 2,
+                "name": "reviews-v2-autoscaler",
+                "target_cpu_utilization_percentage": 50,
+              },
+              "available_replicas": 2,
+              "created_at": "2018-03-14T10:17:52Z",
+              "labels": Map {
+                "app" => "reviews",
+                "version" => "v3",
+              },
+              "name": "reviews-v3",
+              "replicas": 2,
+              "unavailable_replicas": 0,
+            },
+            Object {
+              "autoscaler": Object {
+                "max_replicas": 10,
+                "min_replicas": 2,
+                "name": "reviews-v2-autoscaler",
+                "target_cpu_utilization_percentage": 50,
+              },
+              "available_replicas": 1,
+              "created_at": "2018-03-14T10:17:52Z",
+              "labels": Map {
+                "app" => "reviews",
+                "version" => "v1",
+              },
+              "name": "reviews-v1",
+              "replicas": 1,
+              "unavailable_replicas": 0,
+            },
+          ]
+    }
+/>,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "class",
+    "props": Object {
+      "iconName": "cube",
+      "iconType": "fa",
+      "items": Array [
+        <Row
+          bsClass="row"
+          componentClass="div"
+>
+          <Col
+                    bsClass="col"
+                    componentClass="div"
+                    xs={12}
+          >
+                    <div>
+                              <p>
+                                        <strong>
+                                                  reviews-v2
+                                        </strong>
+                              </p>
+                              <div>
+                                        
+                              </div>
+                              <div>
+                                        <strong>
+                                                  Pod status: 
+                                        </strong>
+                                         
+                                        3
+                                         / 
+                                        5
+                                         
+                                        <Icon
+                                                  name="warning-triangle-o"
+                                                  type="pf"
+                                        />
+                              </div>
+                              <div>
+                                        <strong>
+                                                  Autoscaler: 
+                                        </strong>
+                                        from 
+                                        2
+                                         to 
+                                        10
+                                         pods (
+                                        50
+                                        % CPU)
+                              </div>
+                    </div>
+                    <hr />
+          </Col>
+</Row>,
+        <Row
+          bsClass="row"
+          componentClass="div"
+>
+          <Col
+                    bsClass="col"
+                    componentClass="div"
+                    xs={12}
+          >
+                    <div>
+                              <p>
+                                        <strong>
+                                                  reviews-v3
+                                        </strong>
+                              </p>
+                              <div>
+                                        
+                              </div>
+                              <div>
+                                        <strong>
+                                                  Pod status: 
+                                        </strong>
+                                         
+                                        2
+                                         / 
+                                        2
+                                         
+                                        <Icon
+                                                  name="ok"
+                                                  type="pf"
+                                        />
+                              </div>
+                              <div>
+                                        <strong>
+                                                  Autoscaler: 
+                                        </strong>
+                                        from 
+                                        2
+                                         to 
+                                        10
+                                         pods (
+                                        50
+                                        % CPU)
+                              </div>
+                    </div>
+                    <hr />
+          </Col>
+</Row>,
+        <Row
+          bsClass="row"
+          componentClass="div"
+>
+          <Col
+                    bsClass="col"
+                    componentClass="div"
+                    xs={12}
+          >
+                    <div>
+                              <p>
+                                        <strong>
+                                                  reviews-v1
+                                        </strong>
+                              </p>
+                              <div>
+                                        
+                              </div>
+                              <div>
+                                        <strong>
+                                                  Pod status: 
+                                        </strong>
+                                         
+                                        1
+                                         / 
+                                        1
+                                         
+                                        <Icon
+                                                  name="ok"
+                                                  type="pf"
+                                        />
+                              </div>
+                              <div>
+                                        <strong>
+                                                  Autoscaler: 
+                                        </strong>
+                                        from 
+                                        2
+                                         to 
+                                        10
+                                         pods (
+                                        50
+                                        % CPU)
+                              </div>
+                    </div>
+                    <hr />
+          </Col>
+</Row>,
+      ],
+      "title": "Deployments",
+    },
+    "ref": null,
+    "rendered": null,
+    "type": [Function],
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "iconName": "cube",
+        "iconType": "fa",
+        "items": Array [
+          <Row
+            bsClass="row"
+            componentClass="div"
+>
+            <Col
+                        bsClass="col"
+                        componentClass="div"
+                        xs={12}
+            >
+                        <div>
+                                    <p>
+                                                <strong>
+                                                            reviews-v2
+                                                </strong>
+                                    </p>
+                                    <div>
+                                                
+                                    </div>
+                                    <div>
+                                                <strong>
+                                                            Pod status: 
+                                                </strong>
+                                                 
+                                                3
+                                                 / 
+                                                5
+                                                 
+                                                <Icon
+                                                            name="warning-triangle-o"
+                                                            type="pf"
+                                                />
+                                    </div>
+                                    <div>
+                                                <strong>
+                                                            Autoscaler: 
+                                                </strong>
+                                                from 
+                                                2
+                                                 to 
+                                                10
+                                                 pods (
+                                                50
+                                                % CPU)
+                                    </div>
+                        </div>
+                        <hr />
+            </Col>
+</Row>,
+          <Row
+            bsClass="row"
+            componentClass="div"
+>
+            <Col
+                        bsClass="col"
+                        componentClass="div"
+                        xs={12}
+            >
+                        <div>
+                                    <p>
+                                                <strong>
+                                                            reviews-v3
+                                                </strong>
+                                    </p>
+                                    <div>
+                                                
+                                    </div>
+                                    <div>
+                                                <strong>
+                                                            Pod status: 
+                                                </strong>
+                                                 
+                                                2
+                                                 / 
+                                                2
+                                                 
+                                                <Icon
+                                                            name="ok"
+                                                            type="pf"
+                                                />
+                                    </div>
+                                    <div>
+                                                <strong>
+                                                            Autoscaler: 
+                                                </strong>
+                                                from 
+                                                2
+                                                 to 
+                                                10
+                                                 pods (
+                                                50
+                                                % CPU)
+                                    </div>
+                        </div>
+                        <hr />
+            </Col>
+</Row>,
+          <Row
+            bsClass="row"
+            componentClass="div"
+>
+            <Col
+                        bsClass="col"
+                        componentClass="div"
+                        xs={12}
+            >
+                        <div>
+                                    <p>
+                                                <strong>
+                                                            reviews-v1
+                                                </strong>
+                                    </p>
+                                    <div>
+                                                
+                                    </div>
+                                    <div>
+                                                <strong>
+                                                            Pod status: 
+                                                </strong>
+                                                 
+                                                1
+                                                 / 
+                                                1
+                                                 
+                                                <Icon
+                                                            name="ok"
+                                                            type="pf"
+                                                />
+                                    </div>
+                                    <div>
+                                                <strong>
+                                                            Autoscaler: 
+                                                </strong>
+                                                from 
+                                                2
+                                                 to 
+                                                10
+                                                 pods (
+                                                50
+                                                % CPU)
+                                    </div>
+                        </div>
+                        <hr />
+            </Col>
+</Row>,
+        ],
+        "title": "Deployments",
+      },
+      "ref": null,
+      "rendered": null,
+      "type": [Function],
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import ServiceId from '../../types/ServiceId';
-import { ServiceInfoPods, ServiceInfoRules, ServiceInfoRoutes, ServiceInfoDescription } from './ServiceInfo/';
-import { Endpoints, Pod, Port, Rule } from '../../types/ServiceInfo';
+import { ServiceInfoDeployments, ServiceInfoRules, ServiceInfoRoutes, ServiceInfoDescription } from './ServiceInfo/';
+import { Endpoints, Deployment, Port, Rule } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { ToastNotification, ToastNotificationList, Col, Row } from 'patternfly-react';
 
@@ -12,7 +12,7 @@ type ServiceInfoState = {
   ip: string;
   ports?: Port[];
   endpoints?: Endpoints[];
-  pods?: Pod[];
+  deployments?: Deployment[];
   rules?: Rule[];
   dependencies?: Map<string, string[]>;
   error: boolean;
@@ -28,7 +28,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
       type: '',
       ip: '',
       ports: [],
-      pods: [],
+      deployments: [],
       rules: [],
       dependencies: new Map(),
       error: false,
@@ -55,7 +55,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
           type: data.type,
           ports: data.ports,
           endpoints: data.endpoints,
-          pods: data.pods,
+          deployments: data.deployments,
           dependencies: data.dependencies,
           rules: data.route_rules,
           ip: data.ip
@@ -85,7 +85,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
         ) : null}
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">
-            <Col>
+            <Col xs={12} sm={12} md={12} lg={12}>
               <ServiceInfoDescription
                 name={this.state.name}
                 labels={this.state.labels}
@@ -95,8 +95,10 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                 endpoints={this.state.endpoints}
               />
             </Col>
+          </Row>
+          <Row className="row-cards-pf">
             <Col xs={12} sm={6} md={4} lg={4}>
-              <ServiceInfoPods pods={this.state.pods} />
+              <ServiceInfoDeployments deployments={this.state.deployments} />
             </Col>
             <Col xs={12} sm={6} md={4} lg={4}>
               <ServiceInfoRoutes dependencies={this.state.dependencies} />

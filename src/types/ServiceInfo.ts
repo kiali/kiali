@@ -19,9 +19,24 @@ export interface Port {
   name: string;
 }
 
-export interface Pod {
+export interface Deployment {
   name: string;
   labels?: Map<string, string>;
+  created_at: string;
+  replicas: number;
+  available_replicas: number;
+  unavailable_replicas: number;
+  autoscaler: Autoscaler;
+}
+
+export interface Autoscaler {
+  name: string;
+  labels?: Map<string, string>;
+  min_replicas: number;
+  max_replicas: number;
+  target_cpu_utilization_percentage: number;
+  current_replicas?: number;
+  desired_replicas?: number;
 }
 
 export interface StringMatch {
