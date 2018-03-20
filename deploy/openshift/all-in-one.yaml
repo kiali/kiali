@@ -1,0 +1,188 @@
+id: kiali
+kind: Template
+apiVersion: v1
+name: Kiali Template
+description: Deploys Kiali
+metadata:
+  name: kiali
+parameters:
+- name: IMAGE_NAME
+  description: Image Name
+  required: true
+
+- name: IMAGE_VERSION
+  description: Image Version
+  required: true
+
+- name: VERBOSE_MODE
+  description: VERBOSE_MODE (<4=INFO 4=DEBUG 5=TRACE)
+  required: true
+
+- name: NAMESPACE
+  description: NAMESPACE
+  required: true
+
+objects:
+- kind: ServiceAccount
+  metadata:
+    name: kiali
+    labels:
+      app: kiali
+
+- kind: Service
+  metadata:
+    name: kiali
+    labels:
+      app: kiali
+  spec:
+    type: NodePort
+    ports:
+    - name: tcp
+      protocol: TCP
+      port: 20001
+    selector:
+      app: kiali
+
+- kind: Route
+  metadata:
+    name: kiali
+    labels:
+      app: kiali
+  spec:
+    to:
+      kind: Service
+      name: kiali
+
+- kind: Deployment
+  apiVersion: extensions/v1beta1
+  metadata:
+    name: kiali
+    labels:
+      app: kiali
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: kiali
+    template:
+      metadata:
+        name: kiali
+        labels:
+          app: kiali
+      strategy:
+        rollingUpdate:
+          maxSurge: 1
+          maxAvailable: 1
+        type: RollingUpdate
+      spec:
+        serviceAccount: kiali
+        containers:
+        - image: ${IMAGE_NAME}:${IMAGE_VERSION}
+          name: sws
+          command:
+          - "/opt/kiali/kiali"
+          - "-config"
+          - "/kiali-configuration/config.yaml"
+          - "-v"
+          - "${VERBOSE_MODE}"
+          env:
+          - name: ACTIVE_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          volumeMounts:
+          - name: kiali-configuration
+            mountPath: "/kiali-configuration"
+        volumes:
+        - name: kiali-configuration
+          configMap:
+            name: kiali
+
+- kind: ClusterRole
+  metadata:
+    name: kiali
+    labels:
+      app: kiali
+  rules:
+  - apiGroups: ["", "apps", "autoscaling"]
+    attributeRestrictions: null
+    resources:
+    - configmaps
+    - namespaces
+    - nodes
+    - pods
+    - projects
+    - services
+    - endpoints
+    - deployments
+    - horizontalpodautoscalers
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups: ["route.openshift.io"]
+    attributeRestrictions: null
+    resources:
+    - routes
+    verbs:
+    - get
+  - apiGroups: ["config.istio.io"]
+    attributeRestrictions: null
+    resources:
+    - routerules
+    - destinationpolicies
+    - rules
+    - circonuses
+    - deniers
+    - fluentds
+    - kubernetesenvs
+    - listcheckers
+    - memquotas
+    - opas
+    - prometheuses
+    - rbacs
+    - servicecontrols
+    - solarwindses
+    - stackdrivers
+    - statsds
+    - stdios
+    - apikeys
+    - authorizations
+    - checknothings
+    - kuberneteses
+    - listentries
+    - logentries
+    - metrics
+    - quotas
+    - reportnothings
+    - servicecontrolreports
+    verbs:
+    - get
+    - list
+    - watch
+
+- kind: ClusterRoleBinding
+  metadata:
+    name: kiali
+    labels:
+      app: kiali
+  roleRef:
+    name: kiali
+  subjects:
+  - kind: ServiceAccount
+    name: kiali
+    namespace: ${NAMESPACE}
+
+- kind: ConfigMap
+  metadata:
+    name: kiali
+    labels:
+      app: kiali
+  data:
+    config.yaml: |
+      server:
+        port: 20001
+        static_content_root_directory: /opt/kiali/console
+        credentials:
+          username: jdoe
+          password: password
