@@ -6,7 +6,6 @@ import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
-// import MetricsOptions from '../../types/MetricsOptions';
 
 type SummaryPanelState = {
   loading: boolean;
@@ -40,9 +39,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const namespace = this.props.data.summaryTarget.data('service').split('.')[1];
     const service = this.props.data.summaryTarget.data('service').split('.')[0];
     const options = {
-      rateInterval: '5m'
+      rateInterval: this.props.rateInterval
     };
-
     API.getServiceMetrics(namespace, service, options)
       .then(response => {
         const data: M.Metrics = response['data'];

@@ -60,7 +60,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   componentDidMount() {
     const options = {
       version: this.state.destVersion,
-      'byLabelsIn[]': 'source_service,source_version'
+      'byLabelsIn[]': 'source_service,source_version',
+      rateInterval: this.props.rateInterval
     };
     API.getServiceMetrics(this.state.destNamespace, this.state.destServiceName, options)
       .then(response => {

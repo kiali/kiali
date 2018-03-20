@@ -3,10 +3,7 @@ import * as React from 'react';
 import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
 import { ErrorRatePieChart } from '../../components/SummaryPanel/ErrorRatePieChart';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
-
-type SummaryPanelPropType = {
-  data: any;
-};
+import { SummaryPanelPropType } from '../../types/Graph';
 
 export default class SummaryPanelNode extends React.Component<SummaryPanelPropType, {}> {
   static readonly panelStyle = {

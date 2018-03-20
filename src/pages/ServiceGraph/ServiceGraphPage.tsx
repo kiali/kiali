@@ -86,7 +86,7 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
           <GraphFilter onFilterChange={this.filterChange} onError={this.handleError} />
         </PfHeader>
         <div style={{ position: 'relative' }}>
-          <SummaryPanel data={this.state.summaryData} />
+          <SummaryPanel data={this.state.summaryData} rateInterval={GraphFilters.getGraphInterval()} />
           <CytoscapeLayout
             namespace={GraphFilters.getGraphNamespace()}
             layout={GraphFilters.getGraphLayout()}
