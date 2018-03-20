@@ -40,6 +40,7 @@ ShallowWrapper {
                     >
                               <ServiceInfoDescription
                                         endpoints={undefined}
+                                        health={undefined}
                                         ip=""
                                         labels={Map {}}
                                         name=""
@@ -120,6 +121,7 @@ ShallowWrapper {
               >
                             <ServiceInfoDescription
                                           endpoints={undefined}
+                                          health={undefined}
                                           ip=""
                                           labels={Map {}}
                                           name=""
@@ -194,6 +196,7 @@ ShallowWrapper {
 >
                 <ServiceInfoDescription
                                 endpoints={undefined}
+                                health={undefined}
                                 ip=""
                                 labels={Map {}}
                                 name=""
@@ -213,6 +216,7 @@ ShallowWrapper {
                 "bsClass": "col",
                 "children": <ServiceInfoDescription
                   endpoints={undefined}
+                  health={undefined}
                   ip=""
                   labels={Map {}}
                   name=""
@@ -232,6 +236,7 @@ ShallowWrapper {
                 "nodeType": "class",
                 "props": Object {
                   "endpoints": undefined,
+                  "health": undefined,
                   "ip": "",
                   "labels": Map {},
                   "name": "",
@@ -438,6 +443,7 @@ ShallowWrapper {
                         >
                                     <ServiceInfoDescription
                                                 endpoints={undefined}
+                                                health={undefined}
                                                 ip=""
                                                 labels={Map {}}
                                                 name=""
@@ -518,6 +524,7 @@ ShallowWrapper {
                 >
                                 <ServiceInfoDescription
                                                 endpoints={undefined}
+                                                health={undefined}
                                                 ip=""
                                                 labels={Map {}}
                                                 name=""
@@ -592,6 +599,7 @@ ShallowWrapper {
 >
                   <ServiceInfoDescription
                                     endpoints={undefined}
+                                    health={undefined}
                                     ip=""
                                     labels={Map {}}
                                     name=""
@@ -611,6 +619,7 @@ ShallowWrapper {
                   "bsClass": "col",
                   "children": <ServiceInfoDescription
                     endpoints={undefined}
+                    health={undefined}
                     ip=""
                     labels={Map {}}
                     name=""
@@ -630,6 +639,7 @@ ShallowWrapper {
                   "nodeType": "class",
                   "props": Object {
                     "endpoints": undefined,
+                    "health": undefined,
                     "ip": "",
                     "labels": Map {},
                     "name": "",

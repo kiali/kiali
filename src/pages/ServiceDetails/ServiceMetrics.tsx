@@ -1,9 +1,8 @@
 import * as React from 'react';
-import { Spinner, LineChart, DonutChart } from 'patternfly-react';
+import { Spinner, LineChart } from 'patternfly-react';
 
 import ServiceId from '../../types/ServiceId';
 import * as M from '../../types/Metrics';
-import Health from '../../types/Health';
 import * as API from '../../services/Api';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import MetricsOptions from '../../types/MetricsOptions';
@@ -26,23 +25,11 @@ type ServiceMetricsState = {
   requestDurationOut?: M.Histogram;
   responseSizeIn?: M.Histogram;
   responseSizeOut?: M.Histogram;
-  health?: Health;
   grafanaLinkIn?: string;
   grafanaLinkOut?: string;
 };
 
 class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
-  // "Constants"
-  healthDonutSize = {
-    width: '200',
-    height: '200'
-  };
-  healthDonutColors = {
-    // From Patternfly status palette
-    Healthy: '#3f9c35',
-    Failure: '#cc0000'
-  };
-
   constructor(props: ServiceId) {
     super(props);
     this.state = {
@@ -53,7 +40,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
 
   componentDidMount() {
     this.getGrafanaInfo();
-    this.fetchHealth();
   }
 
   onOptionsChanged(options: MetricsOptions) {
@@ -116,19 +102,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       });
   }
 
-  fetchHealth() {
-    API.getServiceHealth(this.props.namespace, this.props.service)
-      .then(response => {
-        this.setState({
-          health: response['data']
-        });
-      })
-      .catch(error => {
-        // TODO: show error alert
-        console.error(error);
-      });
-  }
-
   nameMetric(metric: M.MetricGroup, familyName: string, labels: string[]): M.MetricGroup {
     if (metric) {
       metric.familyName = familyName;
@@ -181,20 +154,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     }`;
   }
 
-  health() {
-    if (this.state.health) {
-      return {
-        colors: this.healthDonutColors,
-        columns: [
-          ['Healthy', this.state.health.healthyReplicas],
-          ['Failure', this.state.health.totalReplicas - this.state.health.healthyReplicas]
-        ],
-        type: 'donut'
-      };
-    }
-    return null;
-  }
-
   round(val: number): number {
     // 2 decimal digits
     return Math.round(val * 100) / 100;
@@ -215,17 +174,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     }
     return (
       <div className="card-pf">
-        <div className="row row-cards-pf">
-          <div className="col-xs-12">
-            <div className="card-pf-accented card-pf-aggregate-status">
-              <div className="card-pf-title">
-                <span className="fa fa-heart" />
-                Health
-                {this.renderHealth()}
-              </div>
-            </div>
-          </div>
-        </div>
         <div className="row row-cards-pf">
           <div className="col-xs-6">
             <div className="card-pf-accented card-pf-aggregate-status">
@@ -268,27 +216,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         </div>
       </div>
     );
-  }
-
-  renderHealth() {
-    const health = this.health();
-    if (health) {
-      return (
-        <DonutChart
-          id={'health-donut'}
-          size={this.healthDonutSize}
-          data={health}
-          title={{ type: 'percent' }}
-          legend={{ show: false }}
-        />
-      );
-    }
-    // const data = {
-    //   colors: { 'N/A': '#707070' },
-    //   columns: [['N/A', 1]],
-    //   type: 'donut'
-    // };
-    return <div />;
   }
 
   renderMetric(id: string, metric?: M.MetricGroup) {

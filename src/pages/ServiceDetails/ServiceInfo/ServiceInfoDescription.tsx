@@ -1,8 +1,13 @@
 import * as React from 'react';
-import ServiceInfoBadge from './ServiceInfoBadge';
 import { Col, Row } from 'patternfly-react';
+
+import ServiceInfoBadge from './ServiceInfoBadge';
+import ServiceHealth from '../../../components/ServiceHealth/ServiceHealth';
+import Health from '../../../types/Health';
 import { Endpoints, Port } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
+
+import './ServiceInfoDescription.css';
 
 interface ServiceInfoDescriptionProps {
   name?: string;
@@ -11,6 +16,7 @@ interface ServiceInfoDescriptionProps {
   ip?: any;
   ports?: Port[];
   endpoints?: Endpoints[];
+  health?: Health;
 }
 
 class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps> {
@@ -48,7 +54,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 <strong> Ip</strong> {this.props.ip ? this.props.ip : ''}
               </div>
             </Col>
-            <Col xs={12} sm={6} md={4} lg={4}>
+            <Col xs={12} sm={6} md={3} lg={3}>
               <div className="progress-description">
                 <strong>Ports</strong>
               </div>
@@ -60,7 +66,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 ))}
               </ul>
             </Col>
-            <Col xs={12} sm={6} md={6} lg={6}>
+            <Col xs={12} sm={6} md={5} lg={5}>
               <div className="progress-description">
                 <strong>Endpoints</strong>
               </div>
@@ -77,6 +83,14 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                   </Col>
                 </Row>
               ))}
+            </Col>
+            <Col xs={12} sm={6} md={2} lg={2}>
+              <div className="progress-description">
+                <strong>Health</strong>
+              </div>
+              <div className="small-text-donut">
+                <ServiceHealth size={80} thickness={6} health={this.props.health} />
+              </div>
             </Col>
           </Row>
         }
