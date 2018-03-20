@@ -21,9 +21,9 @@ deploy:
     secure: X0tQXL0stFL2cE+PHM6ZoqDHSgHQEQPJ/uD5FZJanueZ/w9Q2QxVYg9fYj3ITBKZX6DEd95Qsnfx8rwnMf8LJG+snDPhv0oCUWuZAgtaz3W59teAA195nNTkWWrEnIiR1eWZo/apxImSHfdJmjdvhcMYHDAidalNVMOwcTNgDvwmAC55S3CI9mhVqE/7zTJHTWyz4p+tWYlHJTzMTNQMfKrcbYzT9pyWUpKcgRtFDOBdq5Vp/AJahT3NajU4G+UoVOIzq8iDB+q81fnIF8TbV/RrUFB5fLHkYGBo4bw0UOoM2kH7og9Xe6T0GOgBT84bCYQ+V+xkCJIPs/d8/w1dm5fBtzJKsHjFHMDEan2oDNEAN1B1o7sZ0mpVpbBc1/caYLYXJ6GO8L2VpnXFHBOPzOEWi7HPLL5ydn0KQHUR9YeX2jyFZmlhXd7+xlRSHqZIPC0zGQ8JStvz9z5lx02/Oq/1fmRLPf1i8dWmAJkIgTzFa2FRCVhzQZ/uHD64paF81mcOeVq6y/swcoYvj+G+CNyBnAMn1Cgu6eelsHtnr3TzwROHCLz3pFhp2IL32O+Awt/f8F3OaOa+SNzWtHn6XW8rtsVrgWj8yki6AqntRs3fuOBTyUReJRLuyPjCfbVjGNKNljX7lf53WUWD/eAlQa6pAOjtz97DGi1VkTAQer4=
   on:
     branch: master
-    repo: swift-sunshine/swsui
+    repo: kiali/swsui
 after_deploy:
-- 'curl -s -X POST -H "Content-Type: application/json" -H "Accept: application/json" -H "Travis-API-Version: 3" -H "Authorization: token $TRAVIS_TOKEN" -d "{\"request\":{\"message\": \"Triggered by swsui change: $TRAVIS_COMMIT\", \"branch\":\"master\"}}" https://api.travis-ci.org/repo/swift-sunshine%2Fswscore/requests'
+- 'curl -s -X POST -H "Content-Type: application/json" -H "Accept: application/json" -H "Travis-API-Version: 3" -H "Authorization: token $TRAVIS_TOKEN" -d "{\"request\":{\"message\": \"Triggered by swsui change: $TRAVIS_COMMIT\", \"branch\":\"master\"}}" https://api.travis-ci.org/repo/kiali%2Fswscore/requests'
 env:
   global:
     secure: aI1uMj0h6xjzp2Xl8VeG4Eibnmz77OaTs8vYyOwgf4L5eN59Rz21oJE4j4AFkDBELUJvYHJix/EKWoIGszDFN/XCoOcB39h9MFyrHT74dwmjH1CHDg97e8KZU8oKpvpJ6D5c1tYUrbuzeK+pxqGptMi3zi9Cx8UpN9CavVa1QkcfEf0VfVdGpHIf+EbP9imEnArfPkUMfx0Schp761gySOvgtzzjIUwFLrrszSWM5s5KA8Z2BWMKN4877uey2HCYqfju9TrjWv396QxWxdnzqGvTQCO5jabcxSuK3N5IC76mlkuT/w0rxHVwULDU9JyBQo6gYGkHavKq5vvTOrWzEZwhL5mY6RvCwPg4GJma+O6DWZQRLEbF18Ubu2pm8BbLp+EUdgQMN+rBhTcbhX/om+tZkyODoVmxSEibSo6LcDJ3ZiS8pzlFVQiUbQ3wiQqcIPoDwlhhahwUutd35zt26HJvSs4HuRZ1R6TU3xtsHFVQULbIOMWcWd5dFnzTdBJW3aNu45vkWOE7wtANiAKmpkFowq0lRoKj6GdHgDEk9L0xy/QmoiCmCnrqtSsIill0GjmPpXWzIBQmS4uPUkjGveIqIGfrRqnSyRa6+f0wY4GQ0vkbF4DFbCTvRVcfvvph2R3MS/Tjhvt5L5Bhw52lg/DiWib2Synle1WyIjhXTLk=
