@@ -117,6 +117,11 @@ type IstioObjectList interface {
 	GetItems() []IstioObject
 }
 
+type ServiceList struct {
+	Services    *v1.ServiceList
+	Deployments *v1beta1.DeploymentList
+}
+
 // ServiceDetails is a wrapper to group full Service description, Endpoints and Pods.
 // Used to fetch all details in a single operation instead to invoke individual APIs per each group.
 type ServiceDetails struct {

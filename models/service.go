@@ -1,18 +1,23 @@
 package models
 
 import (
+	"github.com/kiali/swscore/config"
 	"github.com/kiali/swscore/kubernetes"
 
+	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 )
 
 type ServiceOverview struct {
-	Name string `json:"name"`
+	Name                string `json:"name"`
+	Replicas            int32  `json:"replicas"`
+	AvailableReplicas   int32  `json:"available_replicas"`
+	UnavailableReplicas int32  `json:"unavailable_replicas"`
 }
 
 type ServiceList struct {
 	Namespace Namespace         `json:"namespace"`
-	Service   []ServiceOverview `json:"services"`
+	Services  []ServiceOverview `json:"services"`
 }
 
 type Service struct {
@@ -30,34 +35,48 @@ type Service struct {
 	Autoscalers         Autoscalers         `json:"autoscalers"`
 }
 
-func GetServicesByNamespace(namespaceName string) ([]ServiceOverview, error) {
-	istioClient, err := kubernetes.NewClient()
-	if err != nil {
-		return nil, err
-	}
-
-	services, err := istioClient.GetServices(namespaceName)
-	if err != nil {
-		return nil, err
-	}
-
-	return CastServiceOverviewCollection(services), nil
+func (s *ServiceList) SetServiceList(serviceList *kubernetes.ServiceList) {
+	s.Services = CastServiceOverviewCollection(serviceList)
 }
 
-func CastServiceOverviewCollection(sl *v1.ServiceList) []ServiceOverview {
-	services := make([]ServiceOverview, len(sl.Items))
-	for i, item := range sl.Items {
-		services[i] = CastServiceOverview(item)
+func CastServiceOverviewCollection(sl *kubernetes.ServiceList) []ServiceOverview {
+	if sl.Services == nil {
+		return nil
+	}
+
+	services := make([]ServiceOverview, len(sl.Services.Items))
+
+	for i, item := range sl.Services.Items {
+		services[i] = CastServiceOverview(&item, sl.Deployments)
 	}
 
 	return services
 }
 
-func CastServiceOverview(s v1.Service) ServiceOverview {
+func CastServiceOverview(s *v1.Service, deployments *v1beta1.DeploymentList) ServiceOverview {
 	service := ServiceOverview{}
 	service.Name = s.Name
 
+	replicas, availableReplicas, unavailableReplicas := getPodStatusForService(s.Labels[config.Get().ServiceFilterLabelName], deployments)
+	service.Replicas = replicas
+	service.AvailableReplicas = availableReplicas
+	service.UnavailableReplicas = unavailableReplicas
+
 	return service
+}
+
+func getPodStatusForService(serviceName string, deployments *v1beta1.DeploymentList) (int32, int32, int32) {
+	replicas, availableReplicas, unavailableReplicas := int32(0), int32(0), int32(0)
+
+	for _, deployment := range deployments.Items {
+		if deployment.ObjectMeta.Labels != nil && deployment.ObjectMeta.Labels[config.Get().ServiceFilterLabelName] == serviceName {
+			replicas = replicas + deployment.Status.Replicas
+			availableReplicas = availableReplicas + deployment.Status.AvailableReplicas
+			unavailableReplicas = unavailableReplicas + deployment.Status.UnavailableReplicas
+		}
+	}
+
+	return replicas, availableReplicas, unavailableReplicas
 }
 
 func (s *Service) SetServiceDetails(serviceDetails *kubernetes.ServiceDetails, istioDetails *kubernetes.IstioDetails, prometheusDetails map[string][]string) {
