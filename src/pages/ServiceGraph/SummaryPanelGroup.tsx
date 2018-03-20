@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
-import { RateTable } from '../../components/SummaryPanel/RateTable';
+import { InOutRateTable } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
@@ -168,20 +168,18 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
             {this.renderVersionBadges()}
           </p>
           <hr />
-          <RateTable
-            title="Incoming Traffic (requests per second):"
-            rate={incoming.rate}
-            rate3xx={incoming.rate3xx}
-            rate4xx={incoming.rate4xx}
-            rate5xx={incoming.rate5xx}
+          <InOutRateTable
+            title="Request Traffic (requests per second):"
+            inRate={incoming.rate}
+            inRate3xx={incoming.rate3xx}
+            inRate4xx={incoming.rate4xx}
+            inRate5xx={incoming.rate5xx}
+            outRate={outgoing.rate}
+            outRate3xx={outgoing.rate3xx}
+            outRate4xx={outgoing.rate4xx}
+            outRate5xx={outgoing.rate5xx}
           />
-          <RateTable
-            title="Outgoing Traffic (requests per second):"
-            rate={outgoing.rate}
-            rate3xx={outgoing.rate3xx}
-            rate4xx={outgoing.rate4xx}
-            rate5xx={outgoing.rate5xx}
-          />
+          <hr />
           <div style={{ fontSize: '1.2em' }}>
             {this.renderIncomingRpsChart()}
             {this.renderOutgoingRpsChart()}
