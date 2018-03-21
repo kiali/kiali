@@ -11,6 +11,7 @@ interface EndpointAddress {
 
 interface Label {
   labels: Map<string, string>;
+  weight?: number;
 }
 
 export interface Port {
