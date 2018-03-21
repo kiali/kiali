@@ -8,6 +8,7 @@ import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 
 type SummaryPanelStateType = {
+  loading: boolean;
   requestCountIn: [string, number][];
   requestCountOut: [string, number][];
   errorCountIn: [string, number][];
@@ -32,6 +33,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     this.showRequestCountMetrics = this.showRequestCountMetrics.bind(this);
 
     this.state = {
+      loading: true,
       requestCountIn: [],
       requestCountOut: [],
       errorCountIn: [],
@@ -48,6 +50,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     API.getServiceMetrics(namespace, service, options)
       .then(this.showRequestCountMetrics)
       .catch(error => {
+        this.setState({ loading: false });
         console.error(error);
       });
   }
@@ -56,6 +59,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const metrics = xhrRequest.data.metrics;
 
     this.setState({
+      loading: false,
       requestCountOut: graphUtils.toC3Columns(metrics.request_count_out.matrix, 'RPS'),
       requestCountIn: graphUtils.toC3Columns(metrics.request_count_in.matrix, 'RPS'),
       errorCountIn: graphUtils.toC3Columns(metrics.request_error_count_in.matrix, 'Error'),
@@ -116,20 +120,21 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
             outRate4xx={outgoing.rate4xx}
             outRate5xx={outgoing.rate5xx}
           />
-          <div style={{ fontSize: '1.2em' }}>
-            {this.renderIncomingRpsChart()}
-            {this.renderOutgoingRpsChart()}
-          </div>
+          <div>{this.renderRpsCharts()}</div>
         </div>
       </div>
     );
   }
 
-  renderIncomingRpsChart = () => {
-    return <RpsChart label="Incoming" dataRps={this.state.requestCountIn} dataErrors={this.state.errorCountIn} />;
-  };
-
-  renderOutgoingRpsChart = () => {
-    return <RpsChart label="Outgoing" dataRps={this.state.requestCountOut} dataErrors={this.state.errorCountOut} />;
+  renderRpsCharts = () => {
+    if (this.state.loading) {
+      return <strong>loading charts...</strong>;
+    }
+    return (
+      <>
+        <RpsChart label="Incoming" dataRps={this.state.requestCountIn} dataErrors={this.state.errorCountIn} />
+        <RpsChart label="Outgoing" dataRps={this.state.requestCountOut} dataErrors={this.state.errorCountOut} />
+      </>
+    );
   };
 }

@@ -117,7 +117,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
             rate4xx={rate4xx}
             rate5xx={rate5xx}
           />
-          <div style={{ fontSize: '1.2em' }}>
+          <div>
             <hr />
             {this.renderRpsChart()}
           </div>
@@ -139,7 +139,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
   private renderRpsChart = () => {
     if (this.state.loading) {
-      return <h3>loading chart...</h3>;
+      return <strong>loading chart...</strong>;
     }
 
     return <RpsChart label="Request Average" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />;
