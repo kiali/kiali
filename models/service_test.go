@@ -91,7 +91,13 @@ func TestServiceDetailParsing(t *testing.T) {
 			Route: map[string]map[string]string{
 				"labels": {
 					"name":      "version",
-					"namespace": "v1"}}},
+					"namespace": "v1"}},
+			HttpFault: map[string]map[string]string{
+				"abort": {
+					"percent":    "50",
+					"httpStatus": "503",
+				},
+			}},
 		RouteRule{
 			Destination: map[string]string{
 				"name":      "reviews",
@@ -248,7 +254,12 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 			"route": map[string]map[string]string{
 				"labels": map[string]string{
 					"name":      "version",
-					"namespace": "v1"}}},
+					"namespace": "v1"}},
+			"httpFault": map[string]map[string]string{
+				"abort": map[string]string{
+					"percent":    "50",
+					"httpStatus": "503",
+				}}},
 	}
 	route2 := kubernetes.MockIstioObject{
 		Spec: map[string]interface{}{
