@@ -11,12 +11,17 @@ type CytoscapeLayoutProps = {
   namespace: string;
   layout: any;
   interval: string;
-  onClick: PropTypes.func;
+  onClick: (event: CytoscapeClickEvent) => void;
 };
 
 type CytoscapeLayoutState = {
   elements?: any;
-  isLoading: boolean;
+  loading: boolean;
+};
+
+export type CytoscapeClickEvent = {
+  summaryType: string;
+  summaryTarget: any;
 };
 
 export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, CytoscapeLayoutState> {
@@ -34,9 +39,10 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
     this.state = {
       elements: [],
-      isLoading: false
+      loading: false
     };
     this.updateGraphElements = this.updateGraphElements.bind(this);
+    this.handleTap = this.handleTap.bind(this);
   }
 
   resizeWindow() {
@@ -63,6 +69,10 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     }
   }
 
+  shouldComponentUpdate(nextProps: any, nextState: any) {
+    return this.state.loading !== nextState.loading;
+  }
+
   cyRef(cy: any) {
     this.cy = cy;
     this.graphHighlighter = new GraphHighlighter(cy);
@@ -71,18 +81,18 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
       const target = evt.target;
       if (target === cy) {
         console.log('TAP Background');
-        this.props.onClick({ summaryType: 'graph', summaryTarget: cy });
+        this.handleTap({ summaryType: 'graph', summaryTarget: cy });
       } else if (target.isNode()) {
         if (target.data('groupBy') === 'version') {
           console.log('TAP Group');
-          this.props.onClick({ summaryType: 'group', summaryTarget: target });
+          this.handleTap({ summaryType: 'group', summaryTarget: target });
         } else {
           console.log('TAP node');
-          this.props.onClick({ summaryType: 'node', summaryTarget: target });
+          this.handleTap({ summaryType: 'node', summaryTarget: target });
         }
       } else if (target.isEdge()) {
         console.log('TAP edge');
-        this.props.onClick({ summaryType: 'edge', summaryTarget: target });
+        this.handleTap({ summaryType: 'edge', summaryTarget: target });
       } else {
         console.log('TAP UNHANDLED');
       }
@@ -92,7 +102,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   render() {
     return (
       <div id="cytoscape-container" style={{ marginRight: '25em' }}>
-        <Spinner loading={this.state.isLoading}>
+        <Spinner loading={this.state.loading}>
           <Button onClick={this.onRefreshButtonClick}>Refresh</Button>
           <ReactCytoscape
             containerID="cy"
@@ -111,21 +121,26 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
   updateGraphElements(props: any) {
     const params = { interval: props.interval };
-    this.setState({ isLoading: true });
+    this.setState({ loading: true });
 
     API.GetGraphElements(props.namespace, params)
       .then(response => {
         const responseData = response['data'];
         const elements = responseData && responseData.elements ? responseData.elements : { nodes: [], edges: [] };
-        this.setState({ elements: elements, isLoading: false });
+        this.setState({ elements: elements, loading: false });
       })
       .catch(error => {
         this.setState({
           elements: [],
-          isLoading: false
+          loading: false
         });
         console.error(error);
       });
+  }
+
+  handleTap(event: CytoscapeClickEvent) {
+    this.props.onClick(event);
+    this.graphHighlighter.onClick(event);
   }
 
   onRefreshButtonClick = event => {
