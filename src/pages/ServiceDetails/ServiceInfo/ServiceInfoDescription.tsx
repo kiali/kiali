@@ -1,8 +1,8 @@
 import * as React from 'react';
 import ServiceInfoBadge from './ServiceInfoBadge';
-import ServiceInfoCard from './ServiceInfoCard';
 import { Col, Row } from 'patternfly-react';
 import { Endpoints, Port } from '../../../types/ServiceInfo';
+import PfInfoCard from '../../../components/Pf/PfInfoCard';
 
 interface ServiceInfoDescriptionProps {
   name?: string;
@@ -20,7 +20,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
 
   render() {
     return (
-      <ServiceInfoCard
+      <PfInfoCard
         iconType="pf"
         iconName="service"
         title={this.props.name}

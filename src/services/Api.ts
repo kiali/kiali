@@ -35,6 +35,10 @@ export const GetNamespaces = () => {
   return newRequest('get', `/api/namespaces`, {}, {});
 };
 
+export const GetIstioRules = (namespace: String) => {
+  return newRequest('get', `/api/namespaces/${namespace}/rules`, {}, {});
+};
+
 export const GetServices = (namespace: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/services`, {}, {});
 };
@@ -57,4 +61,8 @@ export const GetGraphElements = (namespace: String, params: any) => {
 
 export const GetServiceDetail = (namespace: String, service: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/services/${service}`, {}, {});
+};
+
+export const GetIstioRuleDetail = (namespace: String, rule: String) => {
+  return newRequest('get', `/api/namespaces/${namespace}/rules/${rule}`, {}, {});
 };

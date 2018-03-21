@@ -3,11 +3,15 @@ import { VerticalNav } from 'patternfly-react';
 import PropTypes from 'prop-types';
 import { Route, Switch, Redirect } from 'react-router-dom';
 
+import IstioRulesPage from '../../pages/IstioRulesList/IstioRuleListPage';
+import IstioRuleDetailsPage from '../../pages/IstioRuleDetails/IstioRuleDetailsPage';
 import HelpDropdown from './HelpDropdown';
 import ServiceDetailsPage from '../../pages/ServiceDetails/ServiceDetailsPage';
 import ServiceGraphPage from '../../pages/ServiceGraph/ServiceGraphPage';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 
+const istioRulesPath = '/rules';
+const istioRulesTitle = 'Istio Rules';
 const serviceGraphPath = '/service-graph/istio-system';
 const serviceGraphTitle = 'Graph';
 const servicesPath = '/services';
@@ -29,6 +33,8 @@ class Navigation extends React.Component {
   navigateTo(e: any) {
     if (e.title === servicesTitle) {
       this.context.router.history.push(servicesPath);
+    } else if (e.title === istioRulesTitle) {
+      this.context.router.history.push(istioRulesPath);
     } else {
       this.context.router.history.push(serviceGraphPath);
     }
@@ -51,11 +57,14 @@ class Navigation extends React.Component {
             initialActive={true}
           />
           <VerticalNav.Item title={servicesTitle} iconClass="fa pficon-service" onClick={this.navigateTo} />
+          <VerticalNav.Item title={istioRulesTitle} iconClass="fa pficon-migration" onClick={this.navigateTo} />
         </VerticalNav>
         <Switch>
           <Route path="/service-graph/:namespace" component={ServiceGraphPage} />
           <Route path={servicesPath} component={ServiceListPage} />
           <Route path="/namespaces/:namespace/services/:service" component={ServiceDetailsPage} />
+          <Route path={istioRulesPath} component={IstioRulesPage} />
+          <Route path="/namespaces/:namespace/rules/:rule" component={IstioRuleDetailsPage} />
           <Redirect to={serviceGraphPath} />
         </Switch>
       </div>

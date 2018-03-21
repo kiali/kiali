@@ -4,8 +4,8 @@ import ServiceInfo from './ServiceInfo';
 import ServiceMetrics from './ServiceMetrics';
 import ServiceId from '../../types/ServiceId';
 import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
-import { ServiceFilterSelected } from '../../components/ServiceFilter/ServiceFilter';
-import { ActiveFilter } from '../../types/ServiceFilter';
+import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
+import { ActiveFilter } from '../../types/NamespaceFilter';
 
 const ServiceDetails = (routeProps: RouteComponentProps<ServiceId>) => {
   let updateFilter = () => {
@@ -14,7 +14,7 @@ const ServiceDetails = (routeProps: RouteComponentProps<ServiceId>) => {
       category: 'Namespace',
       value: routeProps.match.params.namespace.toString()
     };
-    ServiceFilterSelected.setSelected([activeFilter]);
+    NamespaceFilterSelected.setSelected([activeFilter]);
   };
 
   return (

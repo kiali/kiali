@@ -1,8 +1,8 @@
 import * as React from 'react';
 import ServiceInfoBadge from './ServiceInfoBadge';
-import ServiceInfoCard from './ServiceInfoCard';
 import { Deployment } from '../../../types/ServiceInfo';
 import { Col, Row, Icon } from 'patternfly-react';
+import PfInfoCard from '../../../components/Pf/PfInfoCard';
 
 interface ServiceInfoDeploymentsProps {
   deployments?: Deployment[];
@@ -15,7 +15,7 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
 
   render() {
     return (
-      <ServiceInfoCard
+      <PfInfoCard
         iconType="fa"
         iconName="cube"
         title="Deployments"

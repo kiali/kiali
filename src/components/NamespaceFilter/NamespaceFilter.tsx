@@ -4,21 +4,13 @@ import {
   ActiveFilter,
   FilterType,
   FilterValue,
-  ServiceFilterProps,
-  ServiceFilterState
-} from '../../types/ServiceFilter';
+  NamespaceFilterProps,
+  NamespaceFilterState
+} from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import { Namespace } from '../../types/Namespace';
 
-const serviceNameFilter: FilterType = {
-  id: 'servicename',
-  title: 'Service Name',
-  placeholder: 'Filter by Service Name',
-  filterType: 'text',
-  filterValues: []
-};
-
-export namespace ServiceFilterSelected {
+export namespace NamespaceFilterSelected {
   let selectedFilters: ActiveFilter[] = [];
 
   export const setSelected = (activeFilters: ActiveFilter[]) => {
@@ -30,8 +22,8 @@ export namespace ServiceFilterSelected {
   };
 }
 
-export class ServiceFilter extends React.Component<ServiceFilterProps, ServiceFilterState> {
-  constructor(props: ServiceFilterProps) {
+export class NamespaceFilter extends React.Component<NamespaceFilterProps, NamespaceFilterState> {
+  constructor(props: NamespaceFilterProps) {
     super(props);
 
     this.updateCurrentValue = this.updateCurrentValue.bind(this);
@@ -49,12 +41,18 @@ export class ServiceFilter extends React.Component<ServiceFilterProps, ServiceFi
       filterValues: []
     };
 
+    let initialFilters = this.initialFilterList(namespaceFilter);
+
     this.state = {
-      currentFilterType: serviceNameFilter,
-      filterTypeList: [serviceNameFilter, namespaceFilter],
-      activeFilters: ServiceFilterSelected.getSelected(),
+      currentFilterType: initialFilters[0],
+      filterTypeList: initialFilters,
+      activeFilters: NamespaceFilterSelected.getSelected(),
       currentValue: ''
     };
+  }
+
+  initialFilterList(namespaceFilter: FilterType) {
+    return this.props.initialFilters.slice().concat(namespaceFilter);
   }
 
   componentWillMount() {
@@ -74,7 +72,8 @@ export class ServiceFilter extends React.Component<ServiceFilterProps, ServiceFi
             return { title: namespace.name, id: namespace.name };
           })
         };
-        this.setState({ filterTypeList: [serviceNameFilter, namespaceFilter] });
+        let initialFilters = this.initialFilterList(namespaceFilter);
+        this.setState({ filterTypeList: initialFilters });
       })
       .catch(error => {
         console.error(error);
@@ -104,7 +103,7 @@ export class ServiceFilter extends React.Component<ServiceFilterProps, ServiceFi
     activeFilter.label = filterText;
     activeFilters.push(activeFilter);
     this.setState({ activeFilters: activeFilters });
-    ServiceFilterSelected.setSelected(activeFilters);
+    NamespaceFilterSelected.setSelected(activeFilters);
     this.props.onFilterChange(activeFilters);
   }
 
@@ -148,14 +147,14 @@ export class ServiceFilter extends React.Component<ServiceFilterProps, ServiceFi
     if (index > -1) {
       let updated = [...activeFilters.slice(0, index), ...activeFilters.slice(index + 1)];
       this.setState({ activeFilters: updated });
-      ServiceFilterSelected.setSelected(updated);
+      NamespaceFilterSelected.setSelected(updated);
       this.props.onFilterChange(updated);
     }
   }
 
   clearFilters() {
     this.setState({ activeFilters: [] });
-    ServiceFilterSelected.setSelected([]);
+    NamespaceFilterSelected.setSelected([]);
     this.props.onFilterChange([]);
   }
 
@@ -232,4 +231,4 @@ export class ServiceFilter extends React.Component<ServiceFilterProps, ServiceFi
   }
 }
 
-export default ServiceFilter;
+export default NamespaceFilter;

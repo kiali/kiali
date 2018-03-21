@@ -7,7 +7,7 @@ import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import { Namespace } from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
-import { ServiceItem, ServiceList } from '../../types/ServiceListComponent';
+import { RuleItem, RuleList } from '../../types/IstioRuleListComponent';
 import PropTypes from 'prop-types';
 
 type SortField = {
@@ -23,36 +23,36 @@ const sortFields: SortField[] = [
     isNumeric: false
   },
   {
-    id: 'servicename',
-    title: 'Service Name',
+    id: 'rulename',
+    title: 'Rule Name',
     isNumeric: false
   }
 ];
 
-const serviceNameFilter: FilterType = {
-  id: 'servicename',
-  title: 'Service Name',
-  placeholder: 'Filter by Service Name',
+const ruleNameFilter: FilterType = {
+  id: 'rulename',
+  title: 'Rule Name',
+  placeholder: 'Filter by Rule Name',
   filterType: 'text',
   filterValues: []
 };
 
-type ServiceListComponentState = {
+type IstioRuleListComponentState = {
   loading: boolean;
-  services: ServiceItem[];
+  rules: RuleItem[];
   pagination: Pagination;
   currentSortField: SortField;
   isSortAscending: boolean;
 };
 
-type ServiceListComponentProps = {
+type IstioRuleListComponentProps = {
   onError: PropTypes.func;
 };
 
 const perPageOptions: number[] = [5, 10, 15];
 
-class ServiceListComponent extends React.Component<ServiceListComponentProps, ServiceListComponentState> {
-  constructor(props: ServiceListComponentProps) {
+class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps, IstioRuleListComponentState> {
+  constructor(props: IstioRuleListComponentProps) {
     super(props);
     this.filterChange = this.filterChange.bind(this);
     this.handleError = this.handleError.bind(this);
@@ -62,7 +62,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.updateSortDirection = this.updateSortDirection.bind(this);
     this.state = {
       loading: true,
-      services: [],
+      rules: [],
       pagination: { page: 1, perPage: 10, perPageOptions: perPageOptions },
       currentSortField: sortFields[0],
       isSortAscending: true
@@ -71,12 +71,12 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
 
   componentWillMount() {
     this.setState({ loading: true });
-    this.updateServices();
+    this.updateRules();
   }
 
   filterChange() {
     this.setState({ loading: true });
-    this.updateServices();
+    this.updateRules();
   }
 
   handleError(error: string) {
@@ -88,7 +88,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.setState(prevState => {
       return {
         loading: prevState.loading,
-        services: prevState.services,
+        rules: prevState.rules,
         pagination: {
           page: page,
           perPage: prevState.pagination.perPage,
@@ -102,7 +102,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.setState(prevState => {
       return {
         loading: prevState.loading,
-        services: prevState.services,
+        rules: prevState.rules,
         pagination: {
           page: 1,
           perPage: perPage,
@@ -116,7 +116,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.setState(prevState => {
       return {
         currentSortField: sortField,
-        services: this.sortServices(prevState.services, sortField, prevState.isSortAscending)
+        rules: this.sortRules(prevState.rules, sortField, prevState.isSortAscending)
       };
     });
   }
@@ -125,59 +125,56 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.setState(prevState => {
       return {
         isSortAscending: !prevState.isSortAscending,
-        services: this.sortServices(prevState.services, prevState.currentSortField, !prevState.isSortAscending)
+        rules: this.sortRules(prevState.rules, prevState.currentSortField, !prevState.isSortAscending)
       };
     });
   }
 
-  updateServices() {
+  updateRules() {
     const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
       .map(activeFilter => activeFilter.value);
-    let servicenameFilters: string[] = activeFilters
-      .filter(activeFilter => activeFilter.category === 'Service Name')
+    let rulenameFilters: string[] = activeFilters
+      .filter(activeFilter => activeFilter.category === 'Rule Name')
       .map(activeFilter => activeFilter.value);
 
     if (namespacesSelected.length === 0) {
       API.GetNamespaces()
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
-          this.fetchServices(namespaces.map(namespace => namespace.name), servicenameFilters);
+          this.fetchRules(namespaces.map(namespace => namespace.name), rulenameFilters);
         })
         .catch(namespacesError => {
           console.error(JSON.stringify(namespacesError));
           this.handleError('Error fetching namespace list.');
         });
     } else {
-      this.fetchServices(namespacesSelected, servicenameFilters);
+      this.fetchRules(namespacesSelected, rulenameFilters);
     }
   }
 
-  fetchServices(namespaces: string[], servicenameFilters: string[]) {
-    const promises = namespaces.map(ns => API.GetServices(ns));
+  fetchRules(namespaces: string[], rulenameFilters: string[]) {
+    const promises = namespaces.map(ns => API.GetIstioRules(ns));
     Promise.all(promises)
-      .then(servicesResponse => {
-        let updatedServices: ServiceItem[] = [];
-        servicesResponse.forEach(serviceResponse => {
-          const serviceList: ServiceList = serviceResponse['data'];
-          const namespace = serviceList.namespace;
-          serviceList.services.forEach(serviceName => {
-            let serviceItem: ServiceItem = {
-              namespace: namespace.name,
-              servicename: serviceName.name
-            };
-            updatedServices.push(serviceItem);
+      .then(rulesResponse => {
+        let updatedRules: RuleItem[] = [];
+        rulesResponse.forEach(ruleResponse => {
+          const ruleList: RuleList = ruleResponse['data'];
+          const namespace = ruleList.namespace;
+          ruleList.rules.forEach(ruleItem => {
+            ruleItem.namespace = namespace.name;
+            updatedRules.push(ruleItem);
           });
         });
-        if (servicenameFilters.length > 0) {
-          updatedServices = this.filterServices(updatedServices, servicenameFilters);
+        if (rulenameFilters.length > 0) {
+          updatedRules = this.filterRules(updatedRules, rulenameFilters);
         }
-        updatedServices = this.sortServices(updatedServices, this.state.currentSortField, this.state.isSortAscending);
+        updatedRules = this.sortRules(updatedRules, this.state.currentSortField, this.state.isSortAscending);
         this.setState(prevState => {
           return {
             loading: false,
-            services: updatedServices,
+            rules: updatedRules,
             pagination: {
               page: 1,
               perPage: prevState.pagination.perPage,
@@ -192,30 +189,30 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       });
   }
 
-  isFiltered(service: ServiceItem, servicenameFilters: string[]) {
-    for (let i = 0; i < servicenameFilters.length; i++) {
-      if (service.servicename.includes(servicenameFilters[i])) {
+  isFiltered(rule: RuleItem, rulenameFilters: string[]) {
+    for (let i = 0; i < rulenameFilters.length; i++) {
+      if (rule.name.includes(rulenameFilters[i])) {
         return true;
       }
     }
     return false;
   }
 
-  filterServices(services: ServiceItem[], servicenameFilters: string[]) {
-    let filteredServices: ServiceItem[] = services.filter(service => this.isFiltered(service, servicenameFilters));
-    return filteredServices;
+  filterRules(rules: RuleItem[], rulenameFilters: string[]) {
+    let filteredRules: RuleItem[] = rules.filter(service => this.isFiltered(service, rulenameFilters));
+    return filteredRules;
   }
 
-  sortServices(services: ServiceItem[], sortField: SortField, isAscending: boolean): ServiceItem[] {
-    let sorted: ServiceItem[] = services.sort((a: ServiceItem, b: ServiceItem) => {
+  sortRules(services: RuleItem[], sortField: SortField, isAscending: boolean): RuleItem[] {
+    let sorted: RuleItem[] = services.sort((a: RuleItem, b: RuleItem) => {
       let sortValue = -1;
       if (sortField.id === 'namespace') {
         sortValue = a.namespace.localeCompare(b.namespace);
         if (sortValue === 0) {
-          sortValue = a.servicename.localeCompare(b.servicename);
+          sortValue = a.name.localeCompare(b.name);
         }
       } else {
-        sortValue = a.servicename.localeCompare(b.servicename);
+        sortValue = a.name.localeCompare(b.name);
       }
       return isAscending ? sortValue : sortValue * -1;
     });
@@ -223,38 +220,56 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   }
 
   render() {
-    let serviceList: any = [];
+    let ruleList: any = [];
     let pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
     let pageEnd = pageStart + this.state.pagination.perPage;
-    pageEnd = pageEnd < this.state.services.length ? pageEnd : this.state.services.length;
+    pageEnd = pageEnd < this.state.rules.length ? pageEnd : this.state.rules.length;
 
     for (let i = pageStart; i < pageEnd; i++) {
-      let serviceItem = this.state.services[i];
-      let to = '/namespaces/' + serviceItem.namespace + '/services/' + serviceItem.servicename;
-      serviceList.push(
+      let ruleItem = this.state.rules[i];
+      let to = '/namespaces/' + ruleItem.namespace + '/rules/' + ruleItem.name;
+      let ruleActions: any = [];
+      for (let j = 0; j < ruleItem.actions.length; j++) {
+        let ruleAction = ruleItem.actions[j];
+        ruleActions.push(
+          <div key={'rule' + j}>
+            <div>
+              <strong>Handler</strong>
+              {': '}
+              {ruleAction.handler}
+            </div>
+            <div>
+              <strong>Instances</strong>
+              {': '}
+              {ruleAction.instances.join(', ')}
+            </div>
+          </div>
+        );
+      }
+      ruleList.push(
         <Link key={to} to={to} style={{ color: 'black' }}>
           <ListViewItem
-            leftContent={<ListViewIcon type="pf" name="service" />}
+            leftContent={<ListViewIcon type="pf" name="migration" />}
             heading={
               <span>
-                {serviceItem.servicename}
-                <small>{serviceItem.namespace}</small>
+                {ruleItem.name}
+                <small>{ruleItem.namespace}</small>
               </span>
             }
-            description={<span />}
+            description={<div>{ruleActions}</div>}
           />
         </Link>
       );
     }
 
-    let serviceListComponent;
+    let ruleListComponent;
     if (this.state.loading) {
-      serviceListComponent = <div className="spinner spinner-sm left-spinner" />;
+      ruleListComponent = <div className="spinner spinner-sm left-spinner" />;
     } else {
-      serviceListComponent = (
+      ruleListComponent = (
         <div>
           <NamespaceFilter
-            initialFilters={[serviceNameFilter]}
+            initialFilters={[ruleNameFilter]}
             onFilterChange={this.filterChange}
             onError={this.handleError}
           >
@@ -271,19 +286,19 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
               />
             </Sort>
           </NamespaceFilter>
-          <ListView>{serviceList}</ListView>
+          <ListView>{ruleList}</ListView>
           <Paginator
             viewType="list"
             pagination={this.state.pagination}
-            itemCount={this.state.services.length}
+            itemCount={this.state.rules.length}
             onPageSet={this.pageSet}
             onPerPageSelect={this.pageSelect}
           />
         </div>
       );
     }
-    return <div>{serviceListComponent}</div>;
+    return <div>{ruleListComponent}</div>;
   }
 }
 
-export default ServiceListComponent;
+export default IstioRuleListComponent;

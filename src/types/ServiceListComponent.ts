@@ -13,9 +13,3 @@ export interface ServiceItem {
   servicename: string;
   namespace: string;
 }
-
-export interface Pagination {
-  page: number;
-  perPage: number;
-  perPageOptions: number[];
-}

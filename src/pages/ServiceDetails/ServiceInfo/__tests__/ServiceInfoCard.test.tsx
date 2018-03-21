@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { ServiceInfoCard, ServiceInfoBadge } from '../index';
+import { ServiceInfoBadge } from '../index';
+import PfInfoCard from '../../../../components/Pf/PfInfoCard';
 
 const CardContent = (
   <div key="pod">
@@ -15,9 +16,9 @@ const CardContent = (
   </div>
 );
 
-describe('#ServiceInfoCard render correctly with data', () => {
+describe('#PfInfoCard render correctly with data', () => {
   it('should render service card', () => {
-    const wrapper = shallow(<ServiceInfoCard iconType="fa" iconName="cube" title="Pods" items={CardContent} />);
+    const wrapper = shallow(<PfInfoCard iconType="fa" iconName="cube" title="Pods" items={CardContent} />);
     expect(wrapper).toBeDefined();
     expect(wrapper).toMatchSnapshot();
   });
