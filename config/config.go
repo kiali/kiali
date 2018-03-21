@@ -9,64 +9,105 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/swift-sunshine/swscore/config/security"
-	"github.com/swift-sunshine/swscore/log"
+	"github.com/kiali/swscore/config/security"
+	"github.com/kiali/swscore/log"
 )
 
 // Environment vars can define some default values.
 const (
-	ENV_IDENTITY_CERT_FILE        = "IDENTITY_CERT_FILE"
-	ENV_IDENTITY_PRIVATE_KEY_FILE = "IDENTITY_PRIVATE_KEY_FILE"
+	EnvIdentityCertFile       = "IDENTITY_CERT_FILE"
+	EnvIdentityPrivateKeyFile = "IDENTITY_PRIVATE_KEY_FILE"
 
-	ENV_PROMETHEUS_SERVICE_URL = "PROMETHEUS_SERVICE_URL"
+	EnvPrometheusServiceURL = "PROMETHEUS_SERVICE_URL"
+	EnvIstioIdentityDomain  = "ISTIO_IDENTITY_DOMAIN"
 
-	ENV_SERVER_ADDRESS                       = "SERVER_ADDRESS"
-	ENV_SERVER_PORT                          = "SERVER_PORT"
-	ENV_SERVER_CREDENTIALS_USERNAME          = "SERVER_CREDENTIALS_USERNAME"
-	ENV_SERVER_CREDENTIALS_PASSWORD          = "SERVER_CREDENTIALS_PASSWORD"
-	ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
+	EnvServerAddress                    = "SERVER_ADDRESS"
+	EnvServerPort                       = "SERVER_PORT"
+	EnvServerCredentialsUsername        = "SERVER_CREDENTIALS_USERNAME"
+	EnvServerCredentialsPassword        = "SERVER_CREDENTIALS_PASSWORD"
+	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
+	EnvServerCORSAllowAll               = "SERVER_CORS_ALLOW_ALL"
+
+	EnvGrafanaDisplayLink      = "GRAFANA_DISPLAY_LINK"
+	EnvGrafanaURL              = "GRAFANA_URL"
+	EnvGrafanaServiceNamespace = "GRAFANA_SERVICE_NAMESPACE"
+	EnvGrafanaService          = "GRAFANA_SERVICE"
+	EnvGrafanaDashboard        = "GRAFANA_DASHBOARD"
+	EnvGrafanaVarServiceSource = "GRAFANA_VAR_SERVICE_SOURCE"
+	EnvGrafanaVarServiceDest   = "GRAFANA_VAR_SERVICE_DEST"
+
+	EnvServiceFilterLabelName = "SERVICE_FILTER_LABEL_NAME"
 )
 
 // Global configuration for the application.
 var configuration *Config
 
-// USED FOR YAML
+// Server configuration
 type Server struct {
-	Address                       string               ",omitempty"
-	Port                          int                  ",omitempty"
-	Credentials                   security.Credentials ",omitempty"
-	Static_Content_Root_Directory string               ",omitempty"
+	Address                    string               `yaml:",omitempty"`
+	Port                       int                  `yaml:",omitempty"`
+	Credentials                security.Credentials `yaml:",omitempty"`
+	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
+	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
+}
+
+// GrafanaConfig describes configuration used for Grafana links
+type GrafanaConfig struct {
+	DisplayLink      bool   `yaml:"display_link"`
+	URL              string `yaml:"url"`
+	ServiceNamespace string `yaml:"service_namespace"`
+	Service          string `yaml:"service"`
+	Dashboard        string `yaml:"dashboard"`
+	VarServiceSource string `yaml:"var_service_source"`
+	VarServiceDest   string `yaml:"var_service_dest"`
 }
 
 // Config defines full YAML configuration.
-// USED FOR YAML
 type Config struct {
-	Identity               security.Identity ",omitempty"
-	Server                 Server            ",omitempty"
-	Prometheus_Service_Url string            ",omitempty"
+	Identity               security.Identity `yaml:",omitempty"`
+	Server                 Server            `yaml:",omitempty"`
+	PrometheusServiceURL   string            `yaml:"prometheus_service_url,omitempty"`
+	IstioIdentityDomain    string            `yaml:"istio_identity_domain,omitempty"`
+	Grafana                GrafanaConfig     `yaml:"grafana,omitempty"`
+	ServiceFilterLabelName string            `yaml:"service_filter_label_name,omitempty"`
 }
 
+// NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = new(Config)
 
-	c.Identity.Cert_File = getDefaultString(ENV_IDENTITY_CERT_FILE, "")
-	c.Identity.Private_Key_File = getDefaultString(ENV_IDENTITY_PRIVATE_KEY_FILE, "")
+	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
+	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")
 
-	c.Server.Address = strings.TrimSpace(getDefaultString(ENV_SERVER_ADDRESS, ""))
-	c.Server.Port = getDefaultInt(ENV_SERVER_PORT, 20000)
+	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
+	c.Server.Port = getDefaultInt(EnvServerPort, 20000)
 	c.Server.Credentials = security.Credentials{
-		Username: getDefaultString(ENV_SERVER_CREDENTIALS_USERNAME, ""),
-		Password: getDefaultString(ENV_SERVER_CREDENTIALS_PASSWORD, ""),
+		Username: getDefaultString(EnvServerCredentialsUsername, ""),
+		Password: getDefaultString(EnvServerCredentialsPassword, ""),
 	}
-	c.Server.Static_Content_Root_Directory = strings.TrimSpace(getDefaultString(ENV_SERVER_STATIC_CONTENT_ROOT_DIRECTORY, "/static-files"))
-	c.Prometheus_Service_Url = strings.TrimSpace(getDefaultString(ENV_PROMETHEUS_SERVICE_URL, "http://prometheus:9090"))
+	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/static-files"))
+	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
+	c.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
+	c.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
+
+	c.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
+	c.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
+	c.Grafana.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaServiceNamespace, "istio-system"))
+	c.Grafana.Service = strings.TrimSpace(getDefaultString(EnvGrafanaService, "grafana"))
+	c.Grafana.Dashboard = strings.TrimSpace(getDefaultString(EnvGrafanaDashboard, "istio-dashboard"))
+	c.Grafana.VarServiceSource = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceSource, "var-source"))
+	c.Grafana.VarServiceDest = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceDest, "var-http_destination"))
+
+	c.ServiceFilterLabelName = strings.TrimSpace(getDefaultString(EnvServiceFilterLabelName, "app"))
 	return
 }
 
+// Get the global Config
 func Get() (conf *Config) {
 	return configuration
 }
 
+// Set the global Config
 func Set(conf *Config) {
 	configuration = conf
 }
@@ -89,6 +130,21 @@ func getDefaultInt(envvar string, defaultValue int) (retVal int) {
 			retVal = defaultValue
 		} else {
 			retVal = num
+		}
+	}
+	return
+}
+
+func getDefaultBool(envvar string, defaultValue bool) (retVal bool) {
+	retValString := os.Getenv(envvar)
+	if retValString == "" {
+		retVal = defaultValue
+	} else {
+		if b, err := strconv.ParseBool(retValString); err != nil {
+			log.Warningf("Invalid boolean for envvar [%v]. err=%v", envvar, err)
+			retVal = defaultValue
+		} else {
+			retVal = b
 		}
 	}
 	return

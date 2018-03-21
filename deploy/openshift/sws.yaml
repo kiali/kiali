@@ -1,129 +1,154 @@
-id: sws
-kind: Template
 apiVersion: v1
-name: SWS Template
+kind: ServiceAccount
 metadata:
   name: sws
-  app: sws
-parameters:
-- description: The name of the image to use
-  name: IMAGE_NAME
-  value: jmazzitelli/sws
-- description: The version of the image to use
-  name: IMAGE_VERSION
-  value: dev
-- description: The namespace to use
-  name: NAMESPACE
-  value: istio-system
-objects:
-- apiVersion: v1
-  kind: ServiceAccount
-  metadata:
+  labels:
+    app: sws
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sws
+  labels:
+    app: sws
+spec:
+  type: NodePort
+  ports:
+  - name: tcp
+    protocol: TCP
+    port: 20001
+  selector:
+    app: sws
+---
+apiVersion: v1
+kind: Route
+metadata:
+  name: sws
+  labels:
+    app: sws
+spec:
+  to:
+    kind: Service
     name: sws
-    labels:
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sws
+  labels:
+    app: sws
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
       app: sws
-- apiVersion: v1
-  kind: Service
-  metadata:
-    name: sws
-    labels:
-      app: sws
-  parameters:
-  spec:
-    ports:
-      - protocol: TCP
-        port: 20001
-    selector:
-      app: sws
-- apiVersion: v1
-  kind: Route
-  metadata:
-    name: sws
-    labels:
-      app: sws
-  spec:
-    to:
-      kind: Service
+  template:
+    metadata:
       name: sws
-- apiVersion: extensions/v1beta1
-  kind: DaemonSet
-  metadata:
-    name: sws
-    labels:
-      name: sws
-      app: sws
-  spec:
-    selector:
-      matchLabels:
+      labels:
+        app: sws
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxAvailable: 1
+      type: RollingUpdate
+    spec:
+      serviceAccount: sws
+      containers:
+      - image: ${IMAGE_NAME}:${IMAGE_VERSION}
         name: sws
-    template:
-      metadata:
-        labels:
-          name: sws
-          app: sws
-      spec:
-        serviceAccount: sws
-        containers:
-        - image: ${IMAGE_NAME}:${IMAGE_VERSION}
-          name: sws
-          command:
-            - "/opt/sws/sws"
-            - "-config"
-            - "/sws-configuration/config.yaml"
-            - "-v"
-            - "5"
-          env:
-          - name: FOO_STRING
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          volumeMounts:
-          - name: sws-configuration
-            mountPath: "/sws-configuration"
-        volumes:
+        command:
+        - "/opt/sws/sws"
+        - "-config"
+        - "/sws-configuration/config.yaml"
+        - "-v"
+        - "${VERBOSE_MODE}"
+        env:
+        - name: ACTIVE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        volumeMounts:
         - name: sws-configuration
-          configMap:
-            name: sws-configuration
-- apiVersion: v1
-  kind: ClusterRole
-  metadata:
-    name: sws
-    labels:
-      name: sws
-      app: sws
-  rules:
-  - apiGroups: [""]
-    attributeRestrictions: null
-    resources:
-    - configmaps
-    - namespaces
-    - nodes
-    - pods
-    - projects
-    - services
-    - endpoints
-    verbs:
-    - get
-    - list
-    - watch
-  - apiGroups: ["config.istio.io"]
-    attributeRestrictions: null
-    resources:
-    - routerules
-    verbs:
-    - get
-    - list
-    - watch
-- apiVersion: v1
-  kind: ClusterRoleBinding
-  metadata:
-    name: sws
-    labels:
-      name: sws
-      app: sws
-  roleRef:
-    name: sws
-  subjects:
-  - kind: ServiceAccount
-    name: sws
-    namespace: ${NAMESPACE}
+          mountPath: "/sws-configuration"
+      volumes:
+      - name: sws-configuration
+        configMap:
+          name: sws
+---
+apiVersion: v1
+kind: ClusterRole
+metadata:
+  name: sws
+  labels:
+    app: sws
+rules:
+- apiGroups: ["", "apps", "autoscaling"]
+  attributeRestrictions: null
+  resources:
+  - configmaps
+  - namespaces
+  - nodes
+  - pods
+  - projects
+  - services
+  - endpoints
+  - deployments
+  - horizontalpodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["route.openshift.io"]
+  attributeRestrictions: null
+  resources:
+  - routes
+  verbs:
+  - get
+- apiGroups: ["config.istio.io"]
+  attributeRestrictions: null
+  resources:
+  - routerules
+  - destinationpolicies
+  - rules
+  - circonuses
+  - deniers
+  - fluentds
+  - kubernetesenvs
+  - listcheckers
+  - memquotas
+  - opas
+  - prometheuses
+  - rbacs
+  - servicecontrols
+  - solarwindses
+  - stackdrivers
+  - statsds
+  - stdios
+  - apikeys
+  - authorizations
+  - checknothings
+  - kuberneteses
+  - listentries
+  - logentries
+  - metrics
+  - quotas
+  - reportnothings
+  - servicecontrolreports
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: v1
+kind: ClusterRoleBinding
+metadata:
+  name: sws
+  labels:
+    app: sws
+roleRef:
+  name: sws
+subjects:
+- kind: ServiceAccount
+  name: sws
+  namespace: ${NAMESPACE}

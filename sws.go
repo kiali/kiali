@@ -3,15 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
 
 	"github.com/golang/glog"
 
-	"github.com/swift-sunshine/swscore/config"
-	"github.com/swift-sunshine/swscore/log"
-	"github.com/swift-sunshine/swscore/server"
+	"github.com/kiali/swscore/config"
+	"github.com/kiali/swscore/log"
+	"github.com/kiali/swscore/server"
+	"github.com/kiali/swscore/status"
 )
 
 // Identifies the build. These are set via ldflags during the build (see Makefile).
@@ -59,6 +61,13 @@ func main() {
 		glog.Fatal(err)
 	}
 
+	consoleVersion := determineConsoleVersion()
+	log.Infof("SWS: Console version: %v", consoleVersion)
+
+	status.Put(status.ConsoleVersion, consoleVersion)
+	status.Put(status.CoreVersion, version)
+	status.Put(status.CoreCommitHash, commitHash)
+
 	// Start listening to requests
 	server := server.NewServer()
 	server.Start()
@@ -79,7 +88,7 @@ func waitForTermination() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
 	go func() {
-		for _ = range signalChan {
+		for range signalChan {
 			log.Info("Termination Signal Received")
 			doneChan <- true
 		}
@@ -96,11 +105,11 @@ func validateConfig() error {
 	if err := config.Get().Server.Credentials.ValidateCredentials(); err != nil {
 		return fmt.Errorf("server credentials are invalid: %v", err)
 	}
-	if strings.Contains(config.Get().Server.Static_Content_Root_Directory, "..") {
-		return fmt.Errorf("server static content root directory must not contain '..': %v", config.Get().Server.Static_Content_Root_Directory)
+	if strings.Contains(config.Get().Server.StaticContentRootDirectory, "..") {
+		return fmt.Errorf("server static content root directory must not contain '..': %v", config.Get().Server.StaticContentRootDirectory)
 	}
-	if _, err := os.Stat(config.Get().Server.Static_Content_Root_Directory); os.IsNotExist(err) {
-		return fmt.Errorf("server static content root directory does not exist: %v", config.Get().Server.Static_Content_Root_Directory)
+	if _, err := os.Stat(config.Get().Server.StaticContentRootDirectory); os.IsNotExist(err) {
+		return fmt.Errorf("server static content root directory does not exist: %v", config.Get().Server.StaticContentRootDirectory)
 	}
 
 	return nil
@@ -114,4 +123,19 @@ func validateFlags() {
 			}
 		}
 	}
+}
+
+// determineConsoleVersion will return the version of the UI console the server will serve to clients.
+// Note this method requires the configuration to be loaded and available via config.Get()
+func determineConsoleVersion() string {
+	consoleVersion := "unknown"
+	filename := config.Get().Server.StaticContentRootDirectory + "/version.txt"
+	fileContent, err := ioutil.ReadFile(filename)
+	if err == nil {
+		consoleVersion = string(fileContent)
+		consoleVersion = strings.TrimSpace(consoleVersion) // also seems to kill off EOF
+	} else {
+		log.Errorf("Failed to determine console version from file [%v]. error=%v", filename, err)
+	}
+	return consoleVersion
 }

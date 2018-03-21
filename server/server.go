@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/swift-sunshine/swscore/config"
-	"github.com/swift-sunshine/swscore/config/security"
-	"github.com/swift-sunshine/swscore/log"
-	"github.com/swift-sunshine/swscore/routing"
+	"github.com/kiali/swscore/config"
+	"github.com/kiali/swscore/config/security"
+	"github.com/kiali/swscore/log"
+	"github.com/kiali/swscore/routing"
 )
 
 type Server struct {
-	httpServer    *http.Server
+	httpServer *http.Server
 }
 
 // NewServer creates a new server configured with the given settings.
@@ -20,6 +20,10 @@ func NewServer() *Server {
 	conf := config.Get()
 	// create a router that will route all incoming API server requests to different handlers
 	router := routing.NewRouter(conf)
+
+	if conf.Server.CORSAllowAll {
+		router.Use(corsAllowed)
+	}
 
 	// put our proxy handler in front to handle auth
 	proxyHandler := serverAuthProxyHandler{
@@ -38,19 +42,20 @@ func NewServer() *Server {
 
 	// return our new Server
 	return &Server{
-		httpServer:    httpServer,
+		httpServer: httpServer,
 	}
 }
 
+// Start HTTP server asynchronously. TLS may be active depending on the global configuration.
 func (s *Server) Start() {
 	log.Infof("Server endpoint will start at [%v]", s.httpServer.Addr)
-	log.Infof("Server endpoint will serve static content from [%v]", config.Get().Server.Static_Content_Root_Directory)
+	log.Infof("Server endpoint will serve static content from [%v]", config.Get().Server.StaticContentRootDirectory)
 	go func() {
 		var err error
-		secure := config.Get().Identity.Cert_File != "" && config.Get().Identity.Private_Key_File != ""
+		secure := config.Get().Identity.CertFile != "" && config.Get().Identity.PrivateKeyFile != ""
 		if secure {
 			log.Infof("Server endpoint will require https")
-			err = s.httpServer.ListenAndServeTLS(config.Get().Identity.Cert_File, config.Get().Identity.Private_Key_File)
+			err = s.httpServer.ListenAndServeTLS(config.Get().Identity.CertFile, config.Get().Identity.PrivateKeyFile)
 		} else {
 			err = s.httpServer.ListenAndServe()
 		}
@@ -58,6 +63,7 @@ func (s *Server) Start() {
 	}()
 }
 
+// Stop the HTTP server
 func (s *Server) Stop() {
 	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
 	s.httpServer.Close()
@@ -74,10 +80,8 @@ func (h *serverAuthProxyHandler) handler(w http.ResponseWriter, r *http.Request)
 	// before we handle any requests, make sure the user is authenticated
 	if h.credentials.Username != "" || h.credentials.Password != "" {
 		u, p, ok := r.BasicAuth()
-		if !ok {
+		if !ok || h.credentials.Username != u || h.credentials.Password != p {
 			statusCode = http.StatusUnauthorized
-		} else if h.credentials.Username != u || h.credentials.Password != p {
-			statusCode = http.StatusForbidden
 		}
 	} else {
 		log.Trace("Access to the server endpoint is not secured with credentials - letting request come in")
@@ -93,4 +97,12 @@ func (h *serverAuthProxyHandler) handler(w http.ResponseWriter, r *http.Request)
 		http.Error(w, http.StatusText(statusCode), statusCode)
 		log.Errorf("Cannot send response to unauthorized user: %v", statusCode)
 	}
+}
+
+func corsAllowed(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+		next.ServeHTTP(w, r)
+	})
 }

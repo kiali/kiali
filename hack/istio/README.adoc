@@ -1,0 +1,19 @@
+== Installing Istio and BookInfo Demo
+
+[NOTE]
+Before attempting to install Istio, make sure you have a running cluster (either OpenShift or Kubernetes). You also must ensure your user is currently authenticated with the cluster and, if on OpenShift, must have the admin role associated with it.
+
+[NOTE]
+Use of this provided hack script is not required. It is provided only as a convenience. You can decide to install Istio in whatever way you choose. This script only illustrates one way to do this.
+
+This link:./istio-install.sh[install script] is used to deploy http://istio.io[Istio] and its https://istio.io/docs/guides/bookinfo.html[BookInfo] demo on either OpenShift or Kubernetes.
+
+Simply run the script on a command line with no arguments to install the latest version of Istio on OpenShift.
+
+If you want to install a specific version of Istio, pass the argument `-v #.#.#` where `#.#.#` is the version you want to install (e.g. `-v 0.6.0`).
+
+If you want to install Istio on Kubernetes, pass the argument `-c k8s` to the script.
+
+Edit the install script if you wish to change any other settings.
+
+Under the covers, Istio is installed using the Istio Ansible Installer. Read more about the Istio Ansible Installer on github at https://github.com/istio/istio/tree/master/install/ansible

@@ -6,10 +6,12 @@ import (
 )
 
 func TestEnvVar(t *testing.T) {
-	defer os.Setenv(ENV_SERVER_ADDRESS, os.Getenv(ENV_SERVER_ADDRESS))
-	defer os.Setenv(ENV_SERVER_PORT, os.Getenv(ENV_SERVER_PORT))
-	os.Setenv(ENV_SERVER_ADDRESS, "test-address")
-	os.Setenv(ENV_SERVER_PORT, "12345")
+	defer os.Setenv(EnvServerAddress, os.Getenv(EnvServerAddress))
+	defer os.Setenv(EnvServerPort, os.Getenv(EnvServerPort))
+	defer os.Setenv(EnvServerCORSAllowAll, os.Getenv(EnvServerCORSAllowAll))
+	os.Setenv(EnvServerAddress, "test-address")
+	os.Setenv(EnvServerPort, "12345")
+	os.Setenv(EnvServerCORSAllowAll, "true")
 
 	conf := NewConfig()
 
@@ -18,6 +20,9 @@ func TestEnvVar(t *testing.T) {
 	}
 	if conf.Server.Port != 12345 {
 		t.Error("server port is wrong")
+	}
+	if !conf.Server.CORSAllowAll {
+		t.Error("server CORS setting is wrong")
 	}
 }
 
@@ -31,6 +36,33 @@ func TestDefaults(t *testing.T) {
 	if conf.Server.Port != 20000 {
 		t.Error("server port default is wrong")
 	}
+
+	if conf.Server.CORSAllowAll {
+		t.Error("server CORS default setting is wrong")
+	}
+}
+
+func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {
+	testConf := Config{
+		Server: Server{
+			StaticContentRootDirectory: "/tmp",
+		},
+	}
+
+	yamlString, err := Marshal(&testConf)
+	if err != nil {
+		t.Errorf("Failed to marshal: %v", err)
+	}
+	if yamlString != "server:\n  static_content_root_directory: /tmp\n" {
+		t.Errorf("Failed to marshal - StaticContentRootDirectory to static_content_root_directory: [%v]", yamlString)
+	}
+	conf, err := Unmarshal(yamlString)
+	if err != nil {
+		t.Errorf("Failed to unmarshal: %v", err)
+	}
+	if conf.Server.StaticContentRootDirectory != "/tmp" {
+		t.Errorf("Failed to unmarshal static content root directory:\n%v", conf)
+	}
 }
 
 func TestMarshalUnmarshal(t *testing.T) {
@@ -38,6 +70,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		Server: Server{
 			Address: "foo-test",
 			Port:    321,
+			StaticContentRootDirectory: "/tmp",
 		},
 	}
 
@@ -59,6 +92,9 @@ func TestMarshalUnmarshal(t *testing.T) {
 	}
 	if conf.Server.Port != 321 {
 		t.Errorf("Failed to unmarshal server port:\n%v", conf)
+	}
+	if conf.Server.StaticContentRootDirectory != "/tmp" {
+		t.Errorf("Failed to unmarshal static content root directory:\n%v", conf)
 	}
 }
 

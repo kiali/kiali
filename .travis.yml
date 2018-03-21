@@ -6,12 +6,15 @@ services:
 language: go
 
 go:
-- 1.8.3
+- 1.9.4
 
 notifications:
   irc:
     channels:
     - chat.freenode.net#BOGUS_DOES_NOT_EXIST
+
+before_script:
+  - GO_FILES=$(find . -iname '*.go' -type f | grep -v /vendor/) # All the .go files, excluding vendor/
 
 env:
   global:
@@ -27,7 +30,9 @@ env:
 #- make dep-install
 #- make dep-update
 
-script: make test
+script:
+  - if [ ! -z "$(gofmt -l ${GO_FILES})" ]; then echo "These files need to be formatted:" "$(gofmt -l ${GO_FILES})";echo "Diff files:"; gofmt -d ${GO_FILES}; exit 1; fi # Gofmt Linter
+  - make clean build test
 
 # Push the docker images to docker hub
 # If a tag build, use the tag as docker version; otherwise, use branch name as docker version (where master==latest)
@@ -37,9 +42,8 @@ after_success:
 - export DOCKER_USER=$(if [ "$DOCKER_USER" == "" ]; then echo "unknown"; else echo $DOCKER_USER ; fi)
 - export DOCKER_PASS=$(if [ "$DOCKER_PASS" == "" ]; then echo "unknown"; else echo $DOCKER_PASS ; fi)
 - echo DOCKER_VERSION=$DOCKER_VERSION
-- make build
 - docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-- make docker
+- make docker-build
 - docker push jmazzitelli/sws
 
 # Build only the master branch (for "latest" release) and version tags (e.g. "1.2.3" or "1.1.2.RC2" or "2.1.5.Final")

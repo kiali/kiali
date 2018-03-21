@@ -1,0 +1,177 @@
+{
+  "elements": {
+    "nodes": [
+      {
+        "data": {
+          "id": "n2",
+          "text": "details (v1)",
+          "service": "details.istio-system.svc.cluster.local",
+          "version": "v1",
+          "rate": "80.00",
+          "rate3XX": "20.00",
+          "rate4XX": "20.00",
+          "rate5XX": "20.00",
+          "rateErr": "60.00"
+        }
+      },
+      {
+        "data": {
+          "id": "n7",
+          "text": "ingress",
+          "service": "ingress.istio-system.svc.cluster.local",
+          "version": "unknown"
+        }
+      },
+      {
+        "data": {
+          "id": "n1",
+          "text": "productpage (v1) \u003c20.00pm\u003e",
+          "service": "productpage.istio-system.svc.cluster.local",
+          "version": "v1",
+          "rate": "150.00"
+        }
+      },
+      {
+        "data": {
+          "id": "n5",
+          "text": "ratings (v1)",
+          "service": "ratings.istio-system.svc.cluster.local",
+          "version": "v1",
+          "rate": "40.00"
+        }
+      },
+      {
+        "data": {
+          "id": "n8",
+          "text": "reviews",
+          "service": "reviews.istio-system.svc.cluster.local",
+          "groupBy": "version"
+        }
+      },
+      {
+        "data": {
+          "id": "n3",
+          "text": "reviews (v1)",
+          "parent": "n8",
+          "service": "reviews.istio-system.svc.cluster.local",
+          "version": "v1",
+          "rate": "20.00"
+        }
+      },
+      {
+        "data": {
+          "id": "n4",
+          "text": "reviews (v2) \u003c20.00pm\u003e",
+          "parent": "n8",
+          "service": "reviews.istio-system.svc.cluster.local",
+          "version": "v2",
+          "rate": "20.00"
+        }
+      },
+      {
+        "data": {
+          "id": "n6",
+          "text": "reviews (v3) \u003c20.00pm\u003e",
+          "parent": "n8",
+          "service": "reviews.istio-system.svc.cluster.local",
+          "version": "v3",
+          "rate": "20.00"
+        }
+      },
+      {
+        "data": {
+          "id": "n0",
+          "text": "unknown",
+          "service": "unknown",
+          "version": "unknown"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "data": {
+          "id": "e0",
+          "source": "n0",
+          "target": "n1",
+          "text": "50.00ps",
+          "color": "green",
+          "rate": "50.00"
+        }
+      },
+      {
+        "data": {
+          "id": "e1",
+          "source": "n1",
+          "target": "n2",
+          "text": "80.00ps (err=75.00%)",
+          "color": "red",
+          "rate": "80.00",
+          "rate3XX": "20.00",
+          "rate4XX": "20.00",
+          "rate5XX": "20.00",
+          "rateErr": "60.00"
+        }
+      },
+      {
+        "data": {
+          "id": "e2",
+          "source": "n1",
+          "target": "n3",
+          "text": "20.00ps",
+          "color": "green",
+          "rate": "20.00"
+        }
+      },
+      {
+        "data": {
+          "id": "e3",
+          "source": "n1",
+          "target": "n4",
+          "text": "20.00ps",
+          "color": "green",
+          "rate": "20.00"
+        }
+      },
+      {
+        "data": {
+          "id": "e5",
+          "source": "n1",
+          "target": "n6",
+          "text": "20.00ps",
+          "color": "green",
+          "rate": "20.00"
+        }
+      },
+      {
+        "data": {
+          "id": "e4",
+          "source": "n4",
+          "target": "n5",
+          "text": "20.00ps",
+          "color": "green",
+          "rate": "20.00"
+        }
+      },
+      {
+        "data": {
+          "id": "e6",
+          "source": "n6",
+          "target": "n5",
+          "text": "20.00ps",
+          "color": "green",
+          "rate": "20.00"
+        }
+      },
+      {
+        "data": {
+          "id": "e7",
+          "source": "n7",
+          "target": "n1",
+          "text": "100.00ps",
+          "color": "green",
+          "rate": "100.00"
+        }
+      }
+    ]
+  }
+}

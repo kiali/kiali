@@ -45,6 +45,8 @@ fi
 
 # Software prerequisites have been met so we can continue.
 
+# Change to the directory where this script is and set our env
+cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./env-openshift.sh
 
 echo Will build OpenShift here: ${OPENSHIFT_GITHUB_SOURCE_DIR}
@@ -73,10 +75,32 @@ fi
 # Build OpenShift Origin.
 
 cd ${OPENSHIFT_GITHUB_SOURCE_DIR}
-git pull
+git fetch origin
+
+if [ ! -z "${OPENSHIFT_BRANCH_NAME}" ]; then
+  if [ "${OPENSHIFT_BRANCH_NAME}" == "latest" ]; then
+    echo "Switching to the master branch to build the latest version"
+    git checkout origin/master
+  else
+    echo "Switching to the origin/${OPENSHIFT_BRANCH_NAME} branch"
+    git checkout origin/${OPENSHIFT_BRANCH_NAME}
+    if [ "$?" != "0" ]; then
+      echo "Cannot build - there is no branch for the version you want: ${OPENSHIFT_BRANCH_NAME}"
+      exit 1
+    fi
+  fi
+else
+  # pull whatever branch we are on
+  git pull
+fi
 
 export GOPATH=${OPENSHIFT_GOPATH}
-make clean build
+
+echo Building OpenShift Origin binaries ...
+hack/env make clean build
+
+echo Building OpenShift Origin images...
+hack/build-local-images.py
 
 if [ "$?" = "0" ]; then
   echo OpenShift Origin build is complete!
