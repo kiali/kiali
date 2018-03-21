@@ -8,8 +8,8 @@ ShallowWrapper {
     routeRules={
         Array [
             Object {
-              "destination": Map {
-                "name" => "reviews",
+              "destination": Object {
+                "name": "reviews",
               },
               "match": undefined,
               "name": "reviews-default",
@@ -23,8 +23,8 @@ ShallowWrapper {
               ],
             },
             Object {
-              "destination": Map {
-                "name" => "reviews",
+              "destination": Object {
+                "name": "reviews",
               },
               "match": undefined,
               "name": "reviews-test-v2",
@@ -60,32 +60,27 @@ ShallowWrapper {
                     <strong>
                               Name
                     </strong>
-                     : 
+                    : 
                     reviews-default
           </div>
           <div>
                     <strong>
-                              Precendence
+                              Precedence
                     </strong>
-                     : 
+                    : 
                     1
           </div>
-          <div>
-                    <strong>
-                              Route
-                    </strong>
-                    :
-                    <ul
-                              style={
+          <RouteRuleRoute
+                    route={
+                              Array [
                                         Object {
-                                                  "listStyleType": "none",
-                                                }
-                              }
-                    >
-                              
-                    </ul>
-          </div>
-          <div />
+                                          "labels": Map {
+                                            "version" => "v1",
+                                          },
+                                        },
+                                      ]
+                    }
+          />
           <hr />
 </div>,
         <div>
@@ -93,32 +88,27 @@ ShallowWrapper {
                     <strong>
                               Name
                     </strong>
-                     : 
+                    : 
                     reviews-test-v2
           </div>
           <div>
                     <strong>
-                              Precendence
+                              Precedence
                     </strong>
-                     : 
+                    : 
                     2
           </div>
-          <div>
-                    <strong>
-                              Route
-                    </strong>
-                    :
-                    <ul
-                              style={
+          <RouteRuleRoute
+                    route={
+                              Array [
                                         Object {
-                                                  "listStyleType": "none",
-                                                }
-                              }
-                    >
-                              
-                    </ul>
-          </div>
-          <div />
+                                          "labels": Map {
+                                            "version" => "v2",
+                                          },
+                                        },
+                                      ]
+                    }
+          />
           <hr />
 </div>,
       ],
@@ -142,32 +132,27 @@ ShallowWrapper {
                         <strong>
                                     Name
                         </strong>
-                         : 
+                        : 
                         reviews-default
             </div>
             <div>
                         <strong>
-                                    Precendence
+                                    Precedence
                         </strong>
-                         : 
+                        : 
                         1
             </div>
-            <div>
-                        <strong>
-                                    Route
-                        </strong>
-                        :
-                        <ul
-                                    style={
+            <RouteRuleRoute
+                        route={
+                                    Array [
                                                 Object {
-                                                            "listStyleType": "none",
-                                                          }
-                                    }
-                        >
-                                    
-                        </ul>
-            </div>
-            <div />
+                                                  "labels": Map {
+                                                    "version" => "v1",
+                                                  },
+                                                },
+                                              ]
+                        }
+            />
             <hr />
 </div>,
           <div>
@@ -175,32 +160,27 @@ ShallowWrapper {
                         <strong>
                                     Name
                         </strong>
-                         : 
+                        : 
                         reviews-test-v2
             </div>
             <div>
                         <strong>
-                                    Precendence
+                                    Precedence
                         </strong>
-                         : 
+                        : 
                         2
             </div>
-            <div>
-                        <strong>
-                                    Route
-                        </strong>
-                        :
-                        <ul
-                                    style={
+            <RouteRuleRoute
+                        route={
+                                    Array [
                                                 Object {
-                                                            "listStyleType": "none",
-                                                          }
-                                    }
-                        >
-                                    
-                        </ul>
-            </div>
-            <div />
+                                                  "labels": Map {
+                                                    "version" => "v2",
+                                                  },
+                                                },
+                                              ]
+                        }
+            />
             <hr />
 </div>,
         ],

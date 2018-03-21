@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { DestinationPolicy } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
-import ServiceInfoBadge from './ServiceInfoBadge';
+import RouteRuleIstioService from './ServiceInfoRouteRules/RouteRuleIstioService';
 
 interface ServiceInfoDestinationPoliciesProps {
   destinationPolicies?: DestinationPolicy[];
@@ -19,36 +19,6 @@ class ServiceInfoDestinationPolicies extends React.Component<ServiceInfoDestinat
         iconName="settings"
         title="Istio Destination Policies"
         items={(this.props.destinationPolicies || []).map((dPolicy, i) => {
-          let dPolicySource;
-          if (dPolicy.source) {
-            dPolicySource = (
-              <div>
-                <strong>Source</strong>
-                {': '}
-                {dPolicy.source.name}
-              </div>
-            );
-          }
-          let destinationLabels;
-          if (dPolicy.destination && dPolicy.destination.labels) {
-            let labels = Object.keys(dPolicy.destination.labels).map((key, n) => (
-              <li key={'_label_' + key + '_n_' + n}>
-                <ServiceInfoBadge
-                  scale={0.8}
-                  style="plastic"
-                  color="green"
-                  leftText={key}
-                  rightText={dPolicy.destination.labels ? dPolicy.destination.labels[key] : ''}
-                />
-              </li>
-            ));
-            destinationLabels = (
-              <div>
-                <strong>Destination</strong>:
-                <ul style={{ listStyleType: 'none' }}>{labels}</ul>
-              </div>
-            );
-          }
           let loadBalancing;
           if (dPolicy.loadbalancing) {
             loadBalancing = (
@@ -64,37 +34,45 @@ class ServiceInfoDestinationPolicies extends React.Component<ServiceInfoDestinat
             circuitBreaker = (
               <div>
                 <strong>CircuitBreaker</strong>
-                {': simpleCb'}
                 <ul style={{ listStyleType: 'none' }}>
-                  {!dPolicy.circuitBreaker.simpleCb.maxConnections ? null : (
-                    <li>maxConnections: {dPolicy.circuitBreaker.simpleCb.maxConnections}</li>
-                  )}
-                  {!dPolicy.circuitBreaker.simpleCb.httpMaxPendingRequests ? null : (
-                    <li>httpMaxPendingRequests: {dPolicy.circuitBreaker.simpleCb.httpMaxPendingRequests}</li>
-                  )}
-                  {!dPolicy.circuitBreaker.simpleCb.httpMaxRequests ? null : (
-                    <li>httpMaxRequests: {dPolicy.circuitBreaker.simpleCb.httpMaxRequests}</li>
-                  )}
-                  {!dPolicy.circuitBreaker.simpleCb.sleepWindow ? null : (
-                    <li>sleepWindow: {dPolicy.circuitBreaker.simpleCb.sleepWindow}</li>
-                  )}
-                  {!dPolicy.circuitBreaker.simpleCb.httpConsecutiveErrors ? null : (
-                    <li>httpConsecutiveErrors: {dPolicy.circuitBreaker.simpleCb.httpConsecutiveErrors}</li>
-                  )}
-                  {!dPolicy.circuitBreaker.simpleCb.httpDetectionInterval ? null : (
-                    <li>httpDetectionInterval: {dPolicy.circuitBreaker.simpleCb.httpDetectionInterval}</li>
-                  )}
-                  {!dPolicy.circuitBreaker.simpleCb.httpMaxRequestsPerConnection ? null : (
+                  {dPolicy.circuitBreaker.simpleCb ? (
                     <li>
-                      httpMaxRequestsPerConnection: {dPolicy.circuitBreaker.simpleCb.httpMaxRequestsPerConnection}
+                      <strong>simpleCb</strong>
+                      <ul style={{ listStyleType: 'none' }}>
+                        {dPolicy.circuitBreaker.simpleCb.maxConnections ? (
+                          <li>[maxConnections] {dPolicy.circuitBreaker.simpleCb.maxConnections}</li>
+                        ) : null}
+                        {dPolicy.circuitBreaker.simpleCb.httpMaxPendingRequests ? (
+                          <li>[httpMaxPendingRequests] {dPolicy.circuitBreaker.simpleCb.httpMaxPendingRequests}</li>
+                        ) : null}
+                        {dPolicy.circuitBreaker.simpleCb.httpMaxRequests ? (
+                          <li>[httpMaxRequests] {dPolicy.circuitBreaker.simpleCb.httpMaxRequests}</li>
+                        ) : null}
+                        {dPolicy.circuitBreaker.simpleCb.sleepWindow ? (
+                          <li>[sleepWindow] {dPolicy.circuitBreaker.simpleCb.sleepWindow}</li>
+                        ) : null}
+                        {dPolicy.circuitBreaker.simpleCb.httpConsecutiveErrors ? (
+                          <li>[httpConsecutiveErrors] {dPolicy.circuitBreaker.simpleCb.httpConsecutiveErrors}</li>
+                        ) : null}
+                        {dPolicy.circuitBreaker.simpleCb.httpDetectionInterval ? (
+                          <li>[httpDetectionInterval] {dPolicy.circuitBreaker.simpleCb.httpDetectionInterval}</li>
+                        ) : null}
+                        {dPolicy.circuitBreaker.simpleCb.httpMaxRequestsPerConnection ? (
+                          <li>
+                            [httpMaxRequestsPerConnection]{' '}
+                            {dPolicy.circuitBreaker.simpleCb.httpMaxRequestsPerConnection}
+                          </li>
+                        ) : null}
+                        {dPolicy.circuitBreaker.simpleCb.httpMaxEjectionPercent ? (
+                          <li>[httpMaxEjectionPercent] {dPolicy.circuitBreaker.simpleCb.httpMaxEjectionPercent}</li>
+                        ) : null}
+                        {dPolicy.circuitBreaker.simpleCb.httpMaxRetries ? (
+                          <li>[httpMaxRetries] {dPolicy.circuitBreaker.simpleCb.httpMaxRetries}</li>
+                        ) : null}
+                      </ul>
                     </li>
-                  )}
-                  {!dPolicy.circuitBreaker.simpleCb.httpMaxEjectionPercent ? null : (
-                    <li>httpMaxEjectionPercent: {dPolicy.circuitBreaker.simpleCb.httpMaxEjectionPercent}</li>
-                  )}
-                  {!dPolicy.circuitBreaker.simpleCb.httpMaxRetries ? null : (
-                    <li>httpMaxRetries: {dPolicy.circuitBreaker.simpleCb.httpMaxRetries}</li>
-                  )}
+                  ) : null}
+                  {dPolicy.circuitBreaker.custom ? <li>[custom] {dPolicy.circuitBreaker.custom}</li> : null}
                 </ul>
               </div>
             );
@@ -106,8 +84,9 @@ class ServiceInfoDestinationPolicies extends React.Component<ServiceInfoDestinat
                 {': '}
                 {dPolicy.name}
               </div>
-              {dPolicySource}
-              {destinationLabels}
+              {dPolicy.destination ? <RouteRuleIstioService name="Destination" service={dPolicy.destination} /> : null}
+              {dPolicy.source ? <RouteRuleIstioService name="Source" service={dPolicy.source} /> : null}
+
               {loadBalancing}
               {circuitBreaker}
               <hr />
