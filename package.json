@@ -2,7 +2,7 @@
   "name": "swsui",
   "version": "0.2.10",
   "bugs": {
-    "url": "https://issues.jboss.org/projects/SWS/issues/"
+    "url": "https://issues.jboss.org/projects/KIALI/issues/"
   },
   "dependencies": {
     "axios": "~0.17.1",
@@ -68,14 +68,14 @@
     "bootstrap": "--include-path node_modules/patternfly/node_modules/bootstrap-sass/assets/stylesheets",
     "fontAwesome": "--include-path node_modules/patternfly/node_modules/font-awesome-sass/assets/stylesheets"
   },
-  "description": "React UI for [Swift Sunshine](https://github.com/swift-sunshine/swscore).",
+  "description": "React UI for [Kiali](https://github.com/kiali/swscore).",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/swift-sunshine/swsui.git"
+    "url": "git+https://github.com/kiali/swsui.git"
   },
   "keywords": [
-    "hawkular",
+    "mesh",
     "istio",
     "openshift",
     "observability",
