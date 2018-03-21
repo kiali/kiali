@@ -189,18 +189,18 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 		rateErr := rate3xx + rate4xx + rate5xx
 		percentErr := rateErr / rate * 100.0
 
-		ed.Rate = fmt.Sprintf("%.2f", rate)
+		ed.Rate = fmt.Sprintf("%.4f", rate)
 		nd.Rate = add(nd.Rate, rate)
 		if rate3xx > 0.0 {
-			ed.Rate3xx = fmt.Sprintf("%.2f", rate3xx)
+			ed.Rate3xx = fmt.Sprintf("%.4f", rate3xx)
 			nd.Rate3xx = add(nd.Rate3xx, rate3xx)
 		}
 		if rate4xx > 0.0 {
-			ed.Rate4xx = fmt.Sprintf("%.2f", rate4xx)
+			ed.Rate4xx = fmt.Sprintf("%.4f", rate4xx)
 			nd.Rate4xx = add(nd.Rate4xx, rate4xx)
 		}
 		if rate5xx > 0.0 {
-			ed.Rate5xx = fmt.Sprintf("%.2f", rate5xx)
+			ed.Rate5xx = fmt.Sprintf("%.4f", rate5xx)
 			nd.Rate5xx = add(nd.Rate5xx, rate5xx)
 		}
 		if rateErr > 0.0 {
@@ -231,14 +231,7 @@ func add(current string, val float64) string {
 	if err == nil {
 		sum += f
 	}
-	return fmt.Sprintf("%.2f", sum)
-}
-
-func addRpmField(rpmField *string, sn *tree.ServiceNode, key string) {
-	rpm := sn.Metadata[key].(float64)
-	if rpm > 0.0 {
-		*rpmField = fmt.Sprintf("%.2f", rpm)
-	}
+	return fmt.Sprintf("%.4f", sum)
 }
 
 // addCompositeNodes generates additional nodes to group multiple versions of the
