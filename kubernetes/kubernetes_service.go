@@ -15,6 +15,11 @@ const (
 	DeploymentFilterLabelName = "app"
 )
 
+type servicesResponse struct {
+	services *v1.ServiceList
+	err      error
+}
+
 type serviceResponse struct {
 	service *v1.Service
 	err     error
@@ -54,13 +59,27 @@ func (in *IstioClient) GetNamespaces() (*v1.NamespaceList, error) {
 
 // GetServices returns a list of services for a given namespace.
 // It returns an error on any problem.
-func (in *IstioClient) GetServices(namespaceName string) (*v1.ServiceList, error) {
-	services, err := in.k8s.CoreV1().Services(namespaceName).List(emptyListOptions)
-	if err != nil {
-		return nil, err
+func (in *IstioClient) GetServices(namespaceName string) (*ServiceList, error) {
+	var err error = nil
+	servicesChan, deploymentsChan := make(chan servicesResponse), make(chan deploymentsResponse)
+
+	go in.getServiceList(namespaceName, servicesChan)
+	go in.getDeployments(namespaceName, deploymentsChan)
+
+	servicesResponse := <-servicesChan
+	deploymentsResponse := <-deploymentsChan
+
+	services := &ServiceList{}
+	services.Services = servicesResponse.services
+	services.Deployments = deploymentsResponse.deployments
+
+	if servicesResponse.err != nil {
+		err = servicesResponse.err
+	} else {
+		err = deploymentsResponse.err
 	}
 
-	return services, nil
+	return services, err
 }
 
 // GetServiceDetails returns full details for a given service, consisting on service description, endpoints and pods.
@@ -148,4 +167,14 @@ func getDeploymentNames(deployments *v1beta1.DeploymentList) []string {
 func getDeploymentFilterListOptions(serviceName string) *meta_v1.ListOptions {
 	filterLabelName := config.Get().ServiceFilterLabelName
 	return GetLabeledListOptions(strings.Join([]string{filterLabelName, serviceName}, "="))
+}
+
+func (in *IstioClient) getServiceList(namespaceName string, servicesChan chan servicesResponse) {
+	services, err := in.k8s.CoreV1().Services(namespaceName).List(emptyListOptions)
+	servicesChan <- servicesResponse{services: services, err: err}
+}
+
+func (in *IstioClient) getDeployments(namespaceName string, deploymentsChan chan deploymentsResponse) {
+	deployments, err := in.k8s.AppsV1beta1().Deployments(namespaceName).List(emptyListOptions)
+	deploymentsChan <- deploymentsResponse{deployments: deployments, err: err}
 }

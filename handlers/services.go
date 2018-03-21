@@ -23,16 +23,24 @@ const (
 // ServiceList is the API handler to fetch the list of services in a given namespace
 func ServiceList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	namespace := models.Namespace{Name: params["namespace"]}
 
-	services, err := models.GetServicesByNamespace(namespace.Name)
+	client, err := kubernetes.NewClient()
 	if err != nil {
-		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	RespondWithJSON(w, http.StatusOK, models.ServiceList{Namespace: namespace, Service: services})
+	serviceList := models.ServiceList{}
+	serviceList.Namespace = models.Namespace{Name: params["namespace"]}
+
+	kubernetesServices, err := client.GetServices(serviceList.Namespace.Name)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	serviceList.SetServiceList(kubernetesServices)
+	RespondWithJSON(w, http.StatusOK, serviceList)
 }
 
 // ServiceMetrics is the API handler to fetch metrics to be displayed, related to a single service

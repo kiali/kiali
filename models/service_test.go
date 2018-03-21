@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/swscore/config"
 	"github.com/kiali/swscore/kubernetes"
 
 	"k8s.io/api/apps/v1beta1"
@@ -305,4 +306,108 @@ func fakePrometheusDetails() map[string][]string {
 	return map[string][]string{
 		"v1": []string{"unknown", "/products", "/reviews"},
 		"v2": []string{"/catalog", "/shares"}}
+}
+
+func TestServiceListParsing(t *testing.T) {
+	assert := assert.New(t)
+
+	fakeConfig()
+	serviceList := ServiceList{}
+	serviceList.Namespace = Namespace{"namespace"}
+	serviceList.SetServiceList(fakeServiceList())
+
+	assert.Equal("namespace", serviceList.Namespace.Name)
+	assert.Equal(serviceList.Services, []ServiceOverview{
+		ServiceOverview{
+			Name:                "reviews",
+			Replicas:            int32(5),
+			AvailableReplicas:   int32(3),
+			UnavailableReplicas: int32(2)},
+		ServiceOverview{
+			Name:                "httpbin",
+			Replicas:            int32(1),
+			AvailableReplicas:   int32(1),
+			UnavailableReplicas: int32(0)}})
+}
+
+func fakeConfig() {
+	conf := config.NewConfig()
+	config.Set(conf)
+}
+
+func fakeServiceList() *kubernetes.ServiceList {
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:45 +0300")
+
+	return &kubernetes.ServiceList{
+		Services: &v1.ServiceList{
+			Items: []v1.Service{
+				v1.Service{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "reviews",
+						Namespace: "tutorial",
+						Labels: map[string]string{
+							"app":     "reviews",
+							"version": "v1"}},
+					Spec: v1.ServiceSpec{
+						ClusterIP: "fromservice",
+						Type:      "ClusterIP",
+						Ports: []v1.ServicePort{
+							{
+								Name:     "http",
+								Protocol: "TCP",
+								Port:     3001},
+							{
+								Name:     "http",
+								Protocol: "TCP",
+								Port:     3000}}}},
+				v1.Service{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "httpbin",
+						Namespace: "tutorial",
+						Labels: map[string]string{
+							"app":     "httpbin",
+							"version": "v1"}},
+					Spec: v1.ServiceSpec{
+						ClusterIP: "fromservice",
+						Type:      "ClusterIP",
+						Ports: []v1.ServicePort{
+							{
+								Name:     "http",
+								Protocol: "TCP",
+								Port:     3001},
+							{
+								Name:     "http",
+								Protocol: "TCP",
+								Port:     3000}}}},
+			}},
+		Deployments: &v1beta1.DeploymentList{
+			Items: []v1beta1.Deployment{
+				v1beta1.Deployment{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:              "reviews-v1",
+						CreationTimestamp: meta_v1.NewTime(t1),
+						Labels:            map[string]string{"app": "reviews", "version": "v1"}},
+					Status: v1beta1.DeploymentStatus{
+						Replicas:            3,
+						AvailableReplicas:   2,
+						UnavailableReplicas: 1}},
+				v1beta1.Deployment{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:              "reviews-v2",
+						CreationTimestamp: meta_v1.NewTime(t1),
+						Labels:            map[string]string{"app": "reviews", "version": "v2"}},
+					Status: v1beta1.DeploymentStatus{
+						Replicas:            2,
+						AvailableReplicas:   1,
+						UnavailableReplicas: 1}},
+				v1beta1.Deployment{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:              "httpbin-v1",
+						CreationTimestamp: meta_v1.NewTime(t2),
+						Labels:            map[string]string{"app": "httpbin", "version": "v1"}},
+					Status: v1beta1.DeploymentStatus{
+						Replicas:            1,
+						AvailableReplicas:   1,
+						UnavailableReplicas: 0}}}}}
 }
