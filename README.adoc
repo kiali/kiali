@@ -1,4 +1,5 @@
-= SWS image:https://travis-ci.org/kiali/swscore.svg["Build Status", link="https://travis-ci.org/kiali/swscore"]
+= SWS image:https://travis-ci.org/kiali/swscore.svg["Build Status", link="https://travis-ci.org/kiali/swscore"] image:https://goreportcard.com/badge/github.com/swift-sunshine/swscore["Go Report Card", link="https://goreportcard.com/report/github.com/swift-sunshine/swscore"]
+
 :toc: macro
 :toc-title:
 
