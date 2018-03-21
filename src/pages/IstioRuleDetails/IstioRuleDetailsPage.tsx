@@ -19,7 +19,7 @@ const IstioRuleDetailsPage = (routeProps: RouteComponentProps<RuleId>) => {
     <div className="container-fluid container-pf-nav-pf-vertical">
       <div className="page-header">
         <h2>
-          Istio Rule{' '}
+          Istio Mixer Rule{' '}
           <Link to="/rules" onClick={updateFilter}>
             {routeProps.match.params.namespace}
           </Link>{' '}

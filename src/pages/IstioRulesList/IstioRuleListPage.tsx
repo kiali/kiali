@@ -43,7 +43,7 @@ class IstioRuleListPage extends React.Component<IstioRuleListProps, IstioRuleLis
     }
     return (
       <div className="container-fluid container-pf-nav-pf-vertical">
-        <h2>Istio Rules</h2>
+        <h2>Istio Mixer Rules</h2>
         {alertsDiv}
         <IstioRuleListComponent onError={this.handleError} />
       </div>

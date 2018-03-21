@@ -11,7 +11,7 @@ import ServiceGraphPage from '../../pages/ServiceGraph/ServiceGraphPage';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 
 const istioRulesPath = '/rules';
-const istioRulesTitle = 'Istio Rules';
+const istioRulesTitle = 'Istio Mixer';
 const serviceGraphPath = '/service-graph/istio-system';
 const serviceGraphTitle = 'Graph';
 const servicesPath = '/services';
