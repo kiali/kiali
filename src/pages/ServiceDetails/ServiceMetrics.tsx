@@ -6,6 +6,7 @@ import * as M from '../../types/Metrics';
 import * as API from '../../services/Api';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import MetricsOptions from '../../types/MetricsOptions';
+import graphUtils from '../../utils/graphing';
 
 interface GrafanaInfo {
   url: string;
@@ -220,17 +221,18 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
 
   renderMetric(id: string, metric?: M.MetricGroup) {
     if (metric) {
-      return this.renderChart(id, metric.familyName, this.toC3Columns(metric.matrix));
+      return this.renderChart(id, metric.familyName, graphUtils.toC3Columns(metric.matrix));
     }
     return <div />;
   }
 
   renderHistogram(id: string, histo?: M.Histogram) {
     if (histo) {
-      const columns = this.toC3Columns(histo.average.matrix)
-        .concat(this.toC3Columns(histo.median.matrix))
-        .concat(this.toC3Columns(histo.percentile95.matrix))
-        .concat(this.toC3Columns(histo.percentile99.matrix));
+      const columns = graphUtils
+        .toC3Columns(histo.average.matrix)
+        .concat(graphUtils.toC3Columns(histo.median.matrix))
+        .concat(graphUtils.toC3Columns(histo.percentile95.matrix))
+        .concat(graphUtils.toC3Columns(histo.percentile99.matrix));
       return this.renderChart(id, histo.familyName, columns);
     }
     return <div />;
@@ -253,20 +255,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       }
     };
     return <LineChart id={id} title={{ text: title }} data={data} axis={axis} point={{ show: false }} />;
-  }
-
-  toC3Columns(matrix: M.TimeSeries[]): [string, number][] {
-    return matrix
-      .map(mat => {
-        let xseries: any = ['x'];
-        return xseries.concat(mat.values.map(dp => dp[0] * 1000));
-      })
-      .concat(
-        matrix.map(mat => {
-          let yseries: any = [mat.name];
-          return yseries.concat(mat.values.map(dp => dp[1]));
-        })
-      );
   }
 }
 
