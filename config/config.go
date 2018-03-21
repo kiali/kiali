@@ -19,6 +19,7 @@ const (
 	EnvIdentityPrivateKeyFile = "IDENTITY_PRIVATE_KEY_FILE"
 
 	EnvPrometheusServiceURL = "PROMETHEUS_SERVICE_URL"
+	EnvJaegerServiceURL     = "JAEGER_SERVICE_URL"
 	EnvIstioIdentityDomain  = "ISTIO_IDENTITY_DOMAIN"
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
@@ -67,6 +68,7 @@ type Config struct {
 	Identity               security.Identity `yaml:",omitempty"`
 	Server                 Server            `yaml:",omitempty"`
 	PrometheusServiceURL   string            `yaml:"prometheus_service_url,omitempty"`
+	JaegerServiceURL       string            `yaml:"jaeger_service_url,omitempty"`
 	IstioIdentityDomain    string            `yaml:"istio_identity_domain,omitempty"`
 	Grafana                GrafanaConfig     `yaml:"grafana,omitempty"`
 	ServiceFilterLabelName string            `yaml:"service_filter_label_name,omitempty"`
@@ -88,6 +90,7 @@ func NewConfig() (c *Config) {
 	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/static-files"))
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
 	c.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
+	c.JaegerServiceURL = strings.TrimSpace(getDefaultString(EnvJaegerServiceURL, "http://jaeger-query"))
 	c.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
 
 	c.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
