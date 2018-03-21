@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ListView, ListViewItem, ListViewIcon, Sort } from 'patternfly-react';
+import { Col, Icon, ListView, ListViewItem, ListViewIcon, Sort } from 'patternfly-react';
 import { Link } from 'react-router-dom';
 import { NamespaceFilter, NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { Paginator } from 'patternfly-react';
@@ -165,7 +165,10 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
           serviceList.services.forEach(serviceName => {
             let serviceItem: ServiceItem = {
               namespace: namespace.name,
-              servicename: serviceName.name
+              servicename: serviceName.name,
+              replicas: serviceName.replicas,
+              available_replicas: serviceName.available_replicas,
+              unavailable_replicas: serviceName.unavailable_replicas
             };
             updatedServices.push(serviceItem);
           });
@@ -231,6 +234,13 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     for (let i = pageStart; i < pageEnd; i++) {
       let serviceItem = this.state.services[i];
       let to = '/namespaces/' + serviceItem.namespace + '/services/' + serviceItem.servicename;
+      let serviceDescriptor = (
+        <Col>
+          <strong>Pod status: </strong> {serviceItem.available_replicas} / {serviceItem.replicas}{' '}
+          <Icon type="pf" name={serviceItem.available_replicas < serviceItem.replicas ? 'warning-triangle-o' : 'ok'} />
+        </Col>
+      );
+
       serviceList.push(
         <Link key={to} to={to} style={{ color: 'black' }}>
           <ListViewItem
@@ -241,7 +251,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
                 <small>{serviceItem.namespace}</small>
               </span>
             }
-            description={<span />}
+            description={serviceDescriptor}
           />
         </Link>
       );
