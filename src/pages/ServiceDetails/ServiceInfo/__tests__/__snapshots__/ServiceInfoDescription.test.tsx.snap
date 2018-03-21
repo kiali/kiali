@@ -95,8 +95,8 @@ ShallowWrapper {
         <Col
                 bsClass="col"
                 componentClass="div"
-                lg={4}
-                md={4}
+                lg={3}
+                md={3}
                 sm={6}
                 xs={12}
         >
@@ -120,8 +120,8 @@ ShallowWrapper {
         <Col
                 bsClass="col"
                 componentClass="div"
-                lg={6}
-                md={6}
+                lg={5}
+                md={5}
                 sm={6}
                 xs={12}
         >
@@ -179,6 +179,31 @@ ShallowWrapper {
                         </Col>
                 </Row>
         </Col>
+        <Col
+                bsClass="col"
+                componentClass="div"
+                lg={2}
+                md={2}
+                sm={6}
+                xs={12}
+        >
+                <div
+                        className="progress-description"
+                >
+                        <strong>
+                                Health
+                        </strong>
+                </div>
+                <div
+                        className="small-text-donut"
+                >
+                        <ServiceHealth
+                                health={undefined}
+                                size={80}
+                                thickness={6}
+                        />
+                </div>
+        </Col>
 </Row>,
       "title": "reviews",
     },
@@ -231,8 +256,8 @@ ShallowWrapper {
           <Col
                     bsClass="col"
                     componentClass="div"
-                    lg={4}
-                    md={4}
+                    lg={3}
+                    md={3}
                     sm={6}
                     xs={12}
           >
@@ -256,8 +281,8 @@ ShallowWrapper {
           <Col
                     bsClass="col"
                     componentClass="div"
-                    lg={6}
-                    md={6}
+                    lg={5}
+                    md={5}
                     sm={6}
                     xs={12}
           >
@@ -314,6 +339,31 @@ ShallowWrapper {
                                         </ul>
                               </Col>
                     </Row>
+          </Col>
+          <Col
+                    bsClass="col"
+                    componentClass="div"
+                    lg={2}
+                    md={2}
+                    sm={6}
+                    xs={12}
+          >
+                    <div
+                              className="progress-description"
+                    >
+                              <strong>
+                                        Health
+                              </strong>
+                    </div>
+                    <div
+                              className="small-text-donut"
+                    >
+                              <ServiceHealth
+                                        health={undefined}
+                                        size={80}
+                                        thickness={6}
+                              />
+                    </div>
           </Col>
 </Row>,
         "title": "reviews",

@@ -93,7 +93,7 @@ describe('ServiceMetrics', () => {
   it('renders initial layout', () => {
     mockGrafanaInfo({});
     const wrapper = shallow(<ServiceMetrics namespace="ns" service="svc" />);
-    expect(wrapper.find('.card-pf-title').map(div => div.text())).toEqual(['Health', 'Input', 'Output']);
+    expect(wrapper.find('.card-pf-title').map(div => div.text())).toEqual(['Input', 'Output']);
   });
 
   it('mounts and loads empty metrics', done => {
