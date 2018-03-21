@@ -221,6 +221,62 @@ func TestGetServiceHealthUnavailable(t *testing.T) {
 	assert.Equal(t, 0, health.TotalReplicas)
 }
 
+func TestGetNamespaceMetrics(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mockRange(api, "round(sum(irate(istio_request_count{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(irate(istio_request_count{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(irate(istio_request_count{source_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
+	mockRange(api, "round(sum(irate(istio_request_count{destination_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockHistogram(api, "istio_request_size", "{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_duration", "{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	mockHistogram(api, "istio_response_size", "{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.6)
+	mockHistogram(api, "istio_request_size", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_size", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	metrics := client.GetNamespaceMetrics("istio-system", "", "", 1000, 10, "5m", []string{}, []string{})
+
+	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
+	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
+	rqCountIn := metrics.Metrics["request_count_in"]
+	assert.NotNil(t, rqCountIn)
+	rqCountOut := metrics.Metrics["request_count_out"]
+	assert.NotNil(t, rqCountOut)
+	rqErrorCountIn := metrics.Metrics["request_error_count_in"]
+	assert.NotNil(t, rqCountIn)
+	rqErrorCountOut := metrics.Metrics["request_error_count_out"]
+	assert.NotNil(t, rqCountOut)
+	rqSizeIn := metrics.Histograms["request_size_in"]
+	assert.NotNil(t, rqSizeIn)
+	rqSizeOut := metrics.Histograms["request_size_out"]
+	assert.NotNil(t, rqSizeOut)
+	rqDurationIn := metrics.Histograms["request_duration_in"]
+	assert.NotNil(t, rqDurationIn)
+	rqDurationOut := metrics.Histograms["request_duration_out"]
+	assert.NotNil(t, rqDurationOut)
+	rsSizeIn := metrics.Histograms["response_size_in"]
+	assert.NotNil(t, rsSizeIn)
+	rsSizeOut := metrics.Histograms["response_size_out"]
+	assert.NotNil(t, rsSizeOut)
+
+	assert.Equal(t, 2.5, float64(rqCountIn.Matrix[0].Values[0].Value))
+	assert.Equal(t, 1.5, float64(rqCountOut.Matrix[0].Values[0].Value))
+	assert.Equal(t, 4.5, float64(rqErrorCountIn.Matrix[0].Values[0].Value))
+	assert.Equal(t, 3.5, float64(rqErrorCountOut.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.35, float64(rqSizeOut.Average.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.2, float64(rqSizeOut.Median.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.3, float64(rqSizeOut.Percentile95.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.4, float64(rqSizeOut.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.5, float64(rqDurationOut.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.6, float64(rsSizeOut.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.7, float64(rqSizeIn.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.8, float64(rqDurationIn.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.9, float64(rsSizeIn.Percentile99.Matrix[0].Values[0].Value))
+}
+
 func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector) {
 	api.On(
 		"Query",
