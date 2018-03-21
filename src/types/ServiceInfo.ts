@@ -58,10 +58,38 @@ export interface MatchRequest {
   request?: Map<string, StringMatch>;
 }
 
-export interface Rule {
+export interface RouteRule {
   name: string;
   destination?: Map<string, string>;
   precedence?: number;
   route?: Label[];
   match?: MatchRequest;
+}
+
+export interface LoadBalancing {
+  name: string;
+}
+
+export interface CircuitBreakerPolicy {
+  maxConnections?: number;
+  httpMaxPendingRequests?: number;
+  httpMaxRequests?: number;
+  sleepWindow?: string;
+  httpConsecutiveErrors?: string;
+  httpDetectionInterval?: string;
+  httpMaxRequestsPerConnection?: number;
+  httpMaxEjectionPercent?: number;
+  httpMaxRetries?: number;
+}
+
+export interface CircuitBreaker {
+  simpleCb: CircuitBreakerPolicy;
+}
+
+export interface DestinationPolicy {
+  name: string;
+  destination: MatchSource;
+  source: MatchSource;
+  loadbalancing: LoadBalancing;
+  circuitBreaker: CircuitBreaker;
 }

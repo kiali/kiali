@@ -1,11 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`#ServiceInfoRules render correctly with data should render service rules 1`] = `
+exports[`#ServiceInfoRouteRules render correctly with data should render service rules 1`] = `
 ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <ServiceInfoRules
-    rules={
+  Symbol(enzyme.__unrendered__): <ServiceInfoRouteRules
+    routeRules={
         Array [
             Object {
               "destination": Map {

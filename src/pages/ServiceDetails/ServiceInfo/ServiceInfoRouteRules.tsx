@@ -1,14 +1,14 @@
 import * as React from 'react';
 import ServiceInfoBadge from './ServiceInfoBadge';
-import { Rule } from '../../../types/ServiceInfo';
+import { RouteRule } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
 
-interface ServiceInfoRulesProps {
-  rules?: Rule[];
+interface ServiceInfoRouteRulesProps {
+  routeRules?: RouteRule[];
 }
 
-class ServiceInfoRules extends React.Component<ServiceInfoRulesProps> {
-  constructor(props: ServiceInfoRulesProps) {
+class ServiceInfoRouteRules extends React.Component<ServiceInfoRouteRulesProps> {
+  constructor(props: ServiceInfoRouteRulesProps) {
     super(props);
   }
 
@@ -18,7 +18,7 @@ class ServiceInfoRules extends React.Component<ServiceInfoRulesProps> {
         iconType="pf"
         iconName="settings"
         title="Istio Route Rules"
-        items={(this.props.rules || []).map((rule, i) => (
+        items={(this.props.routeRules || []).map((rule, i) => (
           <div key={'rule' + i}>
             <div>
               <strong>Name</strong> : {rule.name}
@@ -64,4 +64,4 @@ class ServiceInfoRules extends React.Component<ServiceInfoRulesProps> {
   }
 }
 
-export default ServiceInfoRules;
+export default ServiceInfoRouteRules;
