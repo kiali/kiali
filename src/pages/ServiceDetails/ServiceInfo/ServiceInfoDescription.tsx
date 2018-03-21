@@ -51,7 +51,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 <strong>Type</strong> {this.props.type ? this.props.type : ''}
               </div>
               <div>
-                <strong> Ip</strong> {this.props.ip ? this.props.ip : ''}
+                <strong>IP</strong> {this.props.ip ? this.props.ip : ''}
               </div>
             </Col>
             <Col xs={12} sm={6} md={3} lg={3}>
