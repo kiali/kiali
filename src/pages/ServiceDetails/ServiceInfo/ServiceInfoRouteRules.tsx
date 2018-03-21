@@ -30,17 +30,29 @@ class ServiceInfoRouteRules extends React.Component<ServiceInfoRouteRulesProps> 
               <strong>Route</strong>:
               <ul style={{ listStyleType: 'none' }}>
                 {(rule.route || []).map((label, u) =>
-                  Object.keys(label.labels || new Map()).map((key, n) => (
-                    <li key={'rule_' + i + '_label_' + u + '_n_' + n}>
-                      <ServiceInfoBadge
-                        scale={0.8}
-                        style="plastic"
-                        color="green"
-                        leftText={key}
-                        rightText={label.labels ? label.labels[key] : ''}
-                      />
-                    </li>
-                  ))
+                  Object.keys(label.labels || new Map()).map((key, n) => {
+                    let weight;
+                    if (label.weight) {
+                      weight = (
+                        <div>
+                          <strong>weight</strong>
+                          {': ' + label.weight + ' %'}
+                        </div>
+                      );
+                    }
+                    return (
+                      <li key={'rule_' + i + '_label_' + u + '_n_' + n}>
+                        {weight}
+                        <ServiceInfoBadge
+                          scale={0.8}
+                          style="plastic"
+                          color="green"
+                          leftText={key}
+                          rightText={label.labels ? label.labels[key] : ''}
+                        />
+                      </li>
+                    );
+                  })
                 )}
               </ul>
             </div>
