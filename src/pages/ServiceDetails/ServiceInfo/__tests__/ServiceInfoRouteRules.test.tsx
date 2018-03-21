@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { ServiceInfoRules } from '../index';
-import { Rule } from '../../../../types/ServiceInfo';
+import { ServiceInfoRouteRules } from '../index';
+import { RouteRule } from '../../../../types/ServiceInfo';
 
-const rules: Rule[] = [
+const rules: RouteRule[] = [
   {
     name: 'reviews-default',
     destination: new Map([['name', 'reviews']]),
@@ -28,9 +28,9 @@ const rules: Rule[] = [
   }
 ];
 
-describe('#ServiceInfoRules render correctly with data', () => {
+describe('#ServiceInfoRouteRules render correctly with data', () => {
   it('should render service rules', () => {
-    const wrapper = shallow(<ServiceInfoRules rules={rules} />);
+    const wrapper = shallow(<ServiceInfoRouteRules routeRules={rules} />);
     expect(wrapper).toBeDefined();
     expect(wrapper).toMatchSnapshot();
   });

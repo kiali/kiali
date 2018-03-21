@@ -12,6 +12,7 @@ describe('#ServiceInfo render correctly with data', () => {
     expect(wrapper.find('ServiceInfoDescription').length === 1).toBeTruthy();
     expect(wrapper.find('ServiceInfoDeployments').length === 1).toBeTruthy();
     expect(wrapper.find('ServiceInfoRoutes').length === 1).toBeTruthy();
-    expect(wrapper.find('ServiceInfoRules').length === 1).toBeTruthy();
+    expect(wrapper.find('ServiceInfoRouteRules').length === 1).toBeTruthy();
+    expect(wrapper.find('ServiceInfoDestinationPolicies').length === 1).toBeTruthy();
   });
 });

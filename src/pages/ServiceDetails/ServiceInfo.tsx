@@ -1,9 +1,15 @@
 import * as React from 'react';
 import ServiceId from '../../types/ServiceId';
-import { ServiceInfoDeployments, ServiceInfoRules, ServiceInfoRoutes, ServiceInfoDescription } from './ServiceInfo/';
-import { Endpoints, Deployment, Port, Rule } from '../../types/ServiceInfo';
+import {
+  ServiceInfoDeployments,
+  ServiceInfoRouteRules,
+  ServiceInfoRoutes,
+  ServiceInfoDescription
+} from './ServiceInfo/';
+import { Endpoints, Deployment, Port, RouteRule, DestinationPolicy } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { ToastNotification, ToastNotificationList, Col, Row } from 'patternfly-react';
+import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
 
 type ServiceInfoState = {
   labels?: Map<string, string>;
@@ -13,7 +19,8 @@ type ServiceInfoState = {
   ports?: Port[];
   endpoints?: Endpoints[];
   deployments?: Deployment[];
-  rules?: Rule[];
+  routeRules?: RouteRule[];
+  destinationPolicies?: DestinationPolicy[];
   dependencies?: Map<string, string[]>;
   error: boolean;
   errorMessage: string;
@@ -29,7 +36,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
       ip: '',
       ports: [],
       deployments: [],
-      rules: [],
+      routeRules: [],
       dependencies: new Map(),
       error: false,
       errorMessage: ''
@@ -57,7 +64,8 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
           endpoints: data.endpoints,
           deployments: data.deployments,
           dependencies: data.dependencies,
-          rules: data.route_rules,
+          routeRules: data.route_rules,
+          destinationPolicies: data.destination_policies,
           ip: data.ip
         });
       })
@@ -104,7 +112,8 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
               <ServiceInfoRoutes dependencies={this.state.dependencies} />
             </Col>
             <Col xs={12} sm={6} md={4} lg={4}>
-              <ServiceInfoRules rules={this.state.rules} />
+              <ServiceInfoRouteRules routeRules={this.state.routeRules} />
+              <ServiceInfoDestinationPolicies destinationPolicies={this.state.destinationPolicies} />
             </Col>
           </Row>
         </div>
