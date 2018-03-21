@@ -27,7 +27,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   constructor(props: SummaryPanelPropType) {
     super(props);
     this.state = {
-      loading: false,
+      loading: true,
       requestCountIn: [],
       requestCountOut: [],
       errorCountIn: [],
@@ -180,10 +180,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
             outRate5xx={outgoing.rate5xx}
           />
           <hr />
-          <div style={{ fontSize: '1.2em' }}>
-            {this.renderIncomingRpsChart()}
-            {this.renderOutgoingRpsChart()}
-          </div>
+          <div>{this.renderRpsCharts()}</div>
         </div>
       </div>
     );
@@ -205,11 +202,15 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       ));
   };
 
-  renderIncomingRpsChart = () => {
-    return <RpsChart label="Incoming" dataRps={this.state.requestCountIn} dataErrors={this.state.errorCountIn} />;
-  };
-
-  renderOutgoingRpsChart = () => {
-    return <RpsChart label="Outgoing" dataRps={this.state.requestCountOut} dataErrors={this.state.errorCountOut} />;
+  renderRpsCharts = () => {
+    if (this.state.loading) {
+      return <strong>loading charts...</strong>;
+    }
+    return (
+      <>
+        <RpsChart label="Incoming" dataRps={this.state.requestCountIn} dataErrors={this.state.errorCountIn} />
+        <RpsChart label="Outgoing" dataRps={this.state.requestCountOut} dataErrors={this.state.errorCountOut} />
+      </>
+    );
   };
 }
