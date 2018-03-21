@@ -19,10 +19,14 @@ type CytoscapeLayoutState = {
   loading: boolean;
 };
 
-export type CytoscapeClickEvent = {
+interface CytoscapeBaseEvent {
   summaryType: string;
   summaryTarget: any;
-};
+}
+
+export interface CytoscapeClickEvent extends CytoscapeBaseEvent {}
+export interface CytoscapeMouseInEvent extends CytoscapeBaseEvent {}
+export interface CytoscapeMouseOutEvent extends CytoscapeBaseEvent {}
 
 export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, CytoscapeLayoutState> {
   static contextTypes = {
@@ -43,6 +47,8 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     };
     this.updateGraphElements = this.updateGraphElements.bind(this);
     this.handleTap = this.handleTap.bind(this);
+    this.handleMouseIn = this.handleMouseIn.bind(this);
+    this.handleMouseOut = this.handleMouseOut.bind(this);
   }
 
   resizeWindow() {
@@ -77,24 +83,45 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     this.cy = cy;
     this.graphHighlighter = new GraphHighlighter(cy);
 
-    cy.on('tap', (evt: any) => {
-      const target = evt.target;
+    const getCytoscapeBaseEvent = (event: any): CytoscapeBaseEvent | null => {
+      const target = event.target;
       if (target === cy) {
-        console.log('TAP Background');
-        this.handleTap({ summaryType: 'graph', summaryTarget: cy });
+        console.log(`${event.type} in Background`);
+        return { summaryType: 'graph', summaryTarget: cy };
       } else if (target.isNode()) {
         if (target.data('groupBy') === 'version') {
-          console.log('TAP Group');
-          this.handleTap({ summaryType: 'group', summaryTarget: target });
+          console.log(`${event.type} Group`);
+          return { summaryType: 'group', summaryTarget: target };
         } else {
-          console.log('TAP node');
-          this.handleTap({ summaryType: 'node', summaryTarget: target });
+          console.log(`${event.type} node`);
+          return { summaryType: 'node', summaryTarget: target };
         }
       } else if (target.isEdge()) {
-        console.log('TAP edge');
-        this.handleTap({ summaryType: 'edge', summaryTarget: target });
+        console.log(`${event.type} edge`);
+        return { summaryType: 'edge', summaryTarget: target };
       } else {
-        console.log('TAP UNHANDLED');
+        console.log(`${event.type} UNHANDLED`);
+        return null;
+      }
+    };
+
+    cy.on('tap', (evt: any) => {
+      const cytoscapeEvent = getCytoscapeBaseEvent(evt);
+      if (cytoscapeEvent !== null) {
+        this.handleTap(cytoscapeEvent);
+      }
+    });
+
+    this.cy.on('mouseover', 'node,edge', (evt: any) => {
+      const cytoscapeEvent = getCytoscapeBaseEvent(evt);
+      if (cytoscapeEvent !== null) {
+        this.handleMouseIn(cytoscapeEvent);
+      }
+    });
+    this.cy.on('mouseout', 'node,edge', (evt: any) => {
+      const cytoscapeEvent = getCytoscapeBaseEvent(evt);
+      if (cytoscapeEvent !== null) {
+        this.handleMouseOut(cytoscapeEvent);
       }
     });
   }
@@ -141,6 +168,14 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   handleTap(event: CytoscapeClickEvent) {
     this.props.onClick(event);
     this.graphHighlighter.onClick(event);
+  }
+
+  handleMouseIn(event: CytoscapeMouseInEvent) {
+    this.graphHighlighter.onMouseIn(event);
+  }
+
+  handleMouseOut(event: CytoscapeMouseOutEvent) {
+    this.graphHighlighter.onMouseOut(event);
   }
 
   onRefreshButtonClick = event => {

@@ -1,13 +1,18 @@
-import { CytoscapeClickEvent } from './../CytoscapeLayout';
+import { CytoscapeClickEvent, CytoscapeMouseInEvent, CytoscapeMouseOutEvent } from './../CytoscapeLayout';
 
 const DIM_CLASS: string = 'mousedim';
 
 export class GraphHighlighter {
   cy: any;
   selected: CytoscapeClickEvent;
+  hovered?: CytoscapeMouseInEvent;
 
   constructor(cy: any) {
     this.cy = cy;
+    this.selected = {
+      summaryType: 'graph',
+      summaryTarget: this.cy
+    };
   }
 
   // Need to define these methods using the "public class fields syntax", to be able to keep
@@ -16,6 +21,20 @@ export class GraphHighlighter {
   onClick = (event: CytoscapeClickEvent) => {
     this.selected = event;
     this.refresh();
+  };
+
+  onMouseIn = (event: CytoscapeMouseInEvent) => {
+    if (this.selected.summaryType === 'graph' && ['node', 'edge', 'group'].indexOf(event.summaryType) !== -1) {
+      this.hovered = event;
+      this.refresh();
+    }
+  };
+
+  onMouseOut = (event: CytoscapeMouseOutEvent) => {
+    if (this.hovered !== undefined && this.hovered.summaryTarget === event.summaryTarget) {
+      this.hovered = undefined;
+      this.refresh();
+    }
   };
 
   // When you click a service node, that node and the nodes it connects (including the edges)
@@ -45,16 +64,28 @@ export class GraphHighlighter {
       .addClass(DIM_CLASS);
   }
 
+  // Returns the nodes to highlight depending the selected or hovered summaryType
+  // If current selected is 'graph' (e.g. no selection):
+  //  Check if we are hovering on a node or edge and hover those relations
+  // If current selected is something else, highlight that node (group, node or edge)
   getHighlighted() {
-    if (this.selected === null || this.selected.summaryType === 'graph') {
-      return this.cy.elements();
-    } else if (this.selected.summaryType === 'group') {
-      return this.getGroupHighlight(this.selected.summaryTarget);
-    } else if (this.selected.summaryType === 'node') {
-      return this.getNodeHighlight(this.selected.summaryTarget);
-    } else if (this.selected.summaryType === 'edge') {
-      return this.getEdgeHighlight(this.selected.summaryTarget);
+    if (this.selected.summaryType === 'graph') {
+      return this.getHighlightedByEvent(this.hovered);
     }
+    return this.getHighlightedByEvent(this.selected);
+  }
+
+  getHighlightedByEvent(event: CytoscapeClickEvent | CytoscapeMouseInEvent | undefined) {
+    if (event !== undefined) {
+      if (event.summaryType === 'node') {
+        return this.getNodeHighlight(event.summaryTarget);
+      } else if (event.summaryType === 'edge') {
+        return this.getEdgeHighlight(event.summaryTarget);
+      } else if (event.summaryType === 'group') {
+        return this.getGroupHighlight(event.summaryTarget);
+      }
+    }
+    return this.cy.elements();
   }
 
   // return their children
