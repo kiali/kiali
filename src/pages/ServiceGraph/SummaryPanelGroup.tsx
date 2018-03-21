@@ -6,20 +6,20 @@ import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
+import graphUtils from '../../utils/graphing';
 
 type SummaryPanelState = {
   loading: boolean;
-  requestCountIn: number[];
-  requestCountOut: number[];
-  errorCountIn: number[];
-  errorCountOut: number[];
+  requestCountIn: [string, number][];
+  requestCountOut: [string, number][];
+  errorCountIn: [string, number][];
+  errorCountOut: [string, number][];
 };
 
 export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelState> {
   static readonly panelStyle = {
     position: 'absolute' as 'absolute',
     width: '25em',
-    bottom: 0,
     top: 0,
     right: 0
   };
@@ -53,10 +53,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
         this.setState({
           loading: false,
-          requestCountIn: this.pushRateDataToArray(reqCountIn.matrix),
-          requestCountOut: this.pushRateDataToArray(reqCountOut.matrix),
-          errorCountIn: this.pushRateDataToArray(errCountIn.matrix),
-          errorCountOut: this.pushRateDataToArray(errCountOut.matrix)
+          requestCountIn: graphUtils.toC3Columns(reqCountIn.matrix, 'RPS'),
+          requestCountOut: graphUtils.toC3Columns(reqCountOut.matrix, 'RPS'),
+          errorCountIn: graphUtils.toC3Columns(errCountIn.matrix, 'Error'),
+          errorCountOut: graphUtils.toC3Columns(errCountOut.matrix, 'Error')
         });
       })
       .catch(error => {
@@ -64,25 +64,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         this.setState({ loading: false });
         console.error(error);
       });
-  }
-
-  // Given a timeseries, extracts the data points into an array and returns array.
-  // It is assumed the timeseries will only have at most 1 series (since we are aggregating
-  // the group data, our metrics query should only have ever returned at most 1 timeseries).
-  pushRateDataToArray(matrix: M.TimeSeries[]) {
-    let ratesArray: number[] = [];
-    if (matrix.length === 1) {
-      const ts: M.TimeSeries = matrix[0];
-      const vals: M.Datapoint[] = ts.values;
-      for (let j = 0; j < vals.length; j++) {
-        ratesArray.push(vals[j][1]);
-      }
-    } else {
-      if (matrix.length !== 0) {
-        console.error('matrix has unexpected length: ' + matrix.length);
-      }
-    }
-    return ratesArray;
   }
 
   render() {

@@ -5,6 +5,7 @@ import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
+import graphUtils from '../../utils/graphing';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -17,15 +18,14 @@ type SummaryPanelEdgeState = {
   destServiceName: string;
   destNamespace: string;
   destVersion: string;
-  reqRates: number[];
-  errRates: number[];
+  reqRates: [string, number][];
+  errRates: [string, number][];
 };
 
 export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
   static readonly panelStyle = {
     position: 'absolute' as 'absolute',
     width: '25em',
-    bottom: 0,
     top: 0,
     right: 0
   };
@@ -67,8 +67,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       .then(response => {
         const data: M.Metrics = response['data'];
         const metrics: Map<String, M.MetricGroup> = data.metrics;
-        const reqRates: number[] = this.getRates(metrics['request_count_in']);
-        const errRates: number[] = this.getRates(metrics['request_error_count_in']);
+        const reqRates = this.getRates(metrics['request_count_in'], 'RPS');
+        const errRates = this.getRates(metrics['request_error_count_in'], 'Error');
 
         this.setState({
           loading: false,
@@ -145,21 +145,19 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     return <RpsChart label="Request Average" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />;
   };
 
-  private getRates = (mg: M.MetricGroup): number[] => {
-    const rates: number[] = [];
+  private getRates = (mg: M.MetricGroup, title: string): [string, number][] => {
     const tsa: M.TimeSeries[] = mg.matrix;
+    let series: M.TimeSeries[] = [];
+
     for (let i = 0; i < tsa.length; ++i) {
       const ts = tsa[i];
       if (
         ts.metric['source_service'] === this.state.sourceService &&
         ts.metric['source_version'] === this.state.sourceVersion
       ) {
-        const vals: M.Datapoint[] = ts.values;
-        for (let j = 0; j < vals.length; ++j) {
-          rates.push(vals[j][1]);
-        }
+        series.push(ts);
       }
     }
-    return rates;
+    return graphUtils.toC3Columns(series, title);
   };
 }

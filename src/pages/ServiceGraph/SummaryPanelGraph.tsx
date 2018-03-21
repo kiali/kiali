@@ -25,7 +25,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
             {this.renderLabels()}
           </p>
           <hr />
-          <div style={{ fontSize: '1.2em' }}>
+          <div>
             {this.renderIncomingRpsChart()}
             {this.renderOutgoingRpsChart()}
             <ErrorRatePieChart percentError={10} />
@@ -44,12 +44,16 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   );
 
   renderIncomingRpsChart = () => {
-    return (
-      <RpsChart label="Incoming" dataRps={[350, 400, 150, 850, 50, 220]} dataErrors={[140, 100, 50, 700, 10, 110]} />
-    );
+    const dataRps: any = [['x', 1500, 3500, 5500, 7500, 9500, 10500], ['RPS', 350, 400, 150, 850, 50, 220]];
+    const dataErrors: any = [['x', 1500, 3500, 5500, 7500, 9500, 10500], ['Error', 140, 100, 50, 700, 10, 110]];
+
+    return <RpsChart label="Incoming" dataRps={dataRps} dataErrors={dataErrors} />;
   };
 
   renderOutgoingRpsChart = () => {
-    return <RpsChart label="Outgoing" dataRps={[350, 400, 150]} dataErrors={[140, 100, 130]} />;
+    const dataRps: any = [['x', 1500, 3500, 5500], ['RPS', 350, 400, 150]];
+    const dataErrors: any = [['x', 1500, 3500, 5500], ['Error', 140, 100, 130]];
+
+    return <RpsChart label="Outgoing" dataRps={dataRps} dataErrors={dataErrors} />;
   };
 }

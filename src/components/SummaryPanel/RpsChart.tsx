@@ -4,8 +4,8 @@ import { AreaChart } from 'patternfly-react';
 
 type RpsChartTypeProp = {
   label: string;
-  dataRps: number[] | [string, number][];
-  dataErrors: number[] | [string, number][];
+  dataRps: [string, number][];
+  dataErrors: [string, number][];
 };
 
 export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
@@ -14,23 +14,8 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
   }
 
   render() {
-    let dataRps: any[] = [],
-      dataErrors: any[] = [],
-      firstDataIdx = 0;
-    let chartData = {};
-    let axis: any = { x: { show: false }, y: { show: false } };
-
-    if (Array.isArray(this.props.dataRps[0])) {
-      dataRps = (this.props.dataRps as [string, number][])[1];
-      dataErrors = (this.props.dataErrors as [string, number][])[1];
-      firstDataIdx = 1;
-
-      chartData = {
-        x: 'x',
-        columns: (this.props.dataRps as [string, number][]).concat(this.props.dataErrors as [string, number][]),
-        type: 'area-spline'
-      };
-      axis.x = {
+    const axis: any = {
+      x: {
         show: false,
         type: 'timeseries',
         tick: {
@@ -39,33 +24,33 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
           multiline: false,
           format: '%H:%M:%S'
         }
-      };
-    } else {
-      dataRps = this.props.dataRps;
-      dataErrors = this.props.dataErrors;
+      },
+      y: { show: false }
+    };
 
-      let rpsColumn: Array<any> = ['RPS'];
-      let errorsColumn: Array<any> = ['Errors'];
+    const chartData = {
+      x: 'x',
+      columns: (this.props.dataRps as [string, number][]).concat(this.props.dataErrors as [string, number][]),
+      type: 'area-spline'
+    };
 
-      rpsColumn = rpsColumn.concat(this.props.dataRps);
-      errorsColumn = errorsColumn.concat(this.props.dataErrors);
-
-      chartData = {
-        columns: [rpsColumn, errorsColumn],
-        type: 'area-spline'
-      };
+    let dataRps: any = [],
+      dataErrors: any = [];
+    if (this.props.dataRps.length > 0) {
+      dataRps = (this.props.dataRps as [string, number][])[1];
+      dataErrors = (this.props.dataErrors as [string, number][])[1];
     }
 
-    let len = dataRps.length;
+    let len: number = dataRps.length;
     let sum = 0;
-    for (let i = firstDataIdx; i < len; ++i) {
+    for (let i = 1; i < len; ++i) {
       sum += +dataRps[i];
     }
     const avgRps = len === 0 ? 0 : sum / len;
 
     len = dataErrors.length;
     sum = 0;
-    for (let i = firstDataIdx; i < len; ++i) {
+    for (let i = 1; i < len; ++i) {
       sum += +dataErrors[i];
     }
     const avgErr = len === 0 ? 0 : sum / len;
@@ -75,7 +60,7 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
       <>
         <div>
           <strong>{this.props.label}: </strong>
-          {avgRps.toFixed(2)}rps / {pctErr.toFixed(2)}%Err
+          {avgRps.toFixed(2)} rps / {pctErr.toFixed(2)}% Err
         </div>
         {this.props.dataRps.length > 0 && (
           <AreaChart
