@@ -68,9 +68,9 @@ class AboutUIModal extends React.Component<Object, AboutUIModalState> {
       <AboutModal
         show={this.state.showModal}
         onHide={this.close}
-        productTitle="Swift Sunshine"
+        productTitle="Kiali"
         logo={pfLogo}
-        altLogo="Swift Sunshine Logo"
+        altLogo="Kiali Logo"
         trademarkText="Trademark Text"
       >
         <AboutModal.Versions>
