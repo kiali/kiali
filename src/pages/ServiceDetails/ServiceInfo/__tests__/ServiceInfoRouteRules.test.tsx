@@ -6,7 +6,9 @@ import { RouteRule } from '../../../../types/ServiceInfo';
 const rules: RouteRule[] = [
   {
     name: 'reviews-default',
-    destination: new Map([['name', 'reviews']]),
+    destination: {
+      name: 'reviews'
+    },
     precedence: 1,
     route: [
       {
@@ -17,7 +19,9 @@ const rules: RouteRule[] = [
   },
   {
     name: 'reviews-test-v2',
-    destination: new Map([['name', 'reviews']]),
+    destination: {
+      name: 'reviews'
+    },
     precedence: 2,
     route: [
       {

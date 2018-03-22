@@ -1,7 +1,15 @@
 import * as React from 'react';
-import ServiceInfoBadge from './ServiceInfoBadge';
 import { RouteRule } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
+import RouteRuleMatch from './ServiceInfoRouteRules/RouteRuleMatch';
+import RouteRuleRoute from './ServiceInfoRouteRules/RouteRuleRoute';
+import RouteRuleRedirect from './ServiceInfoRouteRules/RouteRuleRedirect';
+import RouteRuleHTTPTimeout from './ServiceInfoRouteRules/RouteRuleHTTPTimeout';
+import RouteRuleHTTPRetry from './ServiceInfoRouteRules/RouteRuleHTTPRetry';
+import RouteRuleHTTPFaultInjection from './ServiceInfoRouteRules/RouteRuleHTTPFaultInjection';
+import RouteRuleL4FaultInjection from './ServiceInfoRouteRules/RouteRuleL4FaultInjection';
+import RouteRuleIstioService from './ServiceInfoRouteRules/RouteRuleIstioService';
+import RouteRuleCorsPolicy from './ServiceInfoRouteRules/RouteRuleCorsPolicy';
 
 interface ServiceInfoRouteRulesProps {
   routeRules?: RouteRule[];
@@ -21,53 +29,25 @@ class ServiceInfoRouteRules extends React.Component<ServiceInfoRouteRulesProps> 
         items={(this.props.routeRules || []).map((rule, i) => (
           <div key={'rule' + i}>
             <div>
-              <strong>Name</strong> : {rule.name}
+              <strong>Name</strong>: {rule.name}
             </div>
             <div>
-              <strong>Precendence</strong> : {rule.precedence}
+              <strong>Precedence</strong>: {rule.precedence}
             </div>
-            <div>
-              <strong>Route</strong>:
-              <ul style={{ listStyleType: 'none' }}>
-                {(rule.route || []).map((label, u) =>
-                  Object.keys(label.labels || new Map()).map((key, n) => {
-                    let weight;
-                    if (label.weight) {
-                      weight = (
-                        <div>
-                          <strong>weight</strong>
-                          {': ' + label.weight + ' %'}
-                        </div>
-                      );
-                    }
-                    return (
-                      <li key={'rule_' + i + '_label_' + u + '_n_' + n}>
-                        {weight}
-                        <ServiceInfoBadge
-                          scale={0.8}
-                          style="plastic"
-                          color="green"
-                          leftText={key}
-                          rightText={label.labels ? label.labels[key] : ''}
-                        />
-                      </li>
-                    );
-                  })
-                )}
-              </ul>
-            </div>
-            <div>
-              {!rule.match ? null : (
-                <div>
-                  <strong>Match</strong>:
-                  <textarea
-                    className="form-control textarea-resize"
-                    readOnly={true}
-                    value={JSON.stringify(rule.match, null, 2)}
-                  />
-                </div>
-              )}
-            </div>
+            {rule.match ? <RouteRuleMatch match={rule.match} /> : null}
+            {rule.route ? <RouteRuleRoute route={rule.route} /> : null}
+            {rule.redirect ? <RouteRuleRedirect redirect={rule.redirect} /> : null}
+            {rule.websocketUpgrade ? (
+              <div>
+                <strong>WebSocket</strong>: {rule.websocketUpgrade}
+              </div>
+            ) : null}
+            {rule.httpReqTimeout ? <RouteRuleHTTPTimeout timeout={rule.httpReqTimeout} /> : null}
+            {rule.httpReqRetries ? <RouteRuleHTTPRetry httpReqRetries={rule.httpReqRetries} /> : null}
+            {rule.httpFault ? <RouteRuleHTTPFaultInjection httpFault={rule.httpFault} /> : null}
+            {rule.l4Fault ? <RouteRuleL4FaultInjection l4Fault={rule.l4Fault} /> : null}
+            {rule.mirror ? <RouteRuleIstioService name="Mirror" service={rule.mirror} /> : null}
+            {rule.corsPolicy ? <RouteRuleCorsPolicy corsPolicy={rule.corsPolicy} /> : null}
             <hr />
           </div>
         ))}

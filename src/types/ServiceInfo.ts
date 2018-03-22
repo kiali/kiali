@@ -9,11 +9,6 @@ interface EndpointAddress {
   name?: string;
 }
 
-interface Label {
-  labels: Map<string, string>;
-  weight?: number;
-}
-
 export interface Port {
   protocol: string;
   port: number;
@@ -40,13 +35,27 @@ export interface Autoscaler {
   desired_replicas?: number;
 }
 
-export interface StringMatch {
-  exact?: string;
-  prefix?: string;
-  regex?: string;
+// RouteRule type
+
+export interface RouteRule {
+  name: string;
+  destination?: IstioService;
+  precedence?: number;
+  match?: MatchCondition;
+  route?: DestinationWeight[];
+  redirect?: HTTPRedirect;
+  rewrite?: HTTPRewrite;
+  websocketUpgrade?: string;
+  httpReqTimeout?: HTTPTimeout;
+  httpReqRetries?: HTTPRetry;
+  httpFault?: HTTPFaultInjection;
+  l4Fault?: L4FaultInjection;
+  mirror?: IstioService;
+  corsPolicy?: CorsPolicy;
+  appendHeaders?: Map<String, String>;
 }
 
-export interface MatchSource {
+export interface IstioService {
   name?: string;
   namespace?: string;
   domain?: string;
@@ -54,18 +63,113 @@ export interface MatchSource {
   labels?: Map<String, String>;
 }
 
-export interface MatchRequest {
-  source?: MatchSource;
-  request?: Map<string, StringMatch>;
+export interface MatchCondition {
+  source?: IstioService;
+  tcp?: L4MatchAttributes;
+  udp?: L4MatchAttributes;
+  request?: MatchRequest;
 }
 
-export interface RouteRule {
-  name: string;
-  destination?: Map<string, string>;
-  precedence?: number;
-  route?: Label[];
-  match?: MatchRequest;
+export interface L4MatchAttributes {
+  sourceSubnet: string[];
+  destinationSubnet: string[];
 }
+
+export interface MatchRequest {
+  headers: Map<string, StringMatch>;
+}
+
+export interface StringMatch {
+  exact?: string;
+  prefix?: string;
+  regex?: string;
+}
+
+export interface DestinationWeight {
+  labels: Map<string, string>;
+  weight?: number;
+}
+
+export interface HTTPRedirect {
+  uri: string;
+  authority: string;
+}
+
+export interface HTTPRewrite {
+  uri: string;
+  authority: string;
+}
+
+export interface HTTPTimeout {
+  simpleTimeout: SimpleTimeoutPolicy;
+  custom: string;
+}
+
+export interface SimpleTimeoutPolicy {
+  timeout: string;
+  overrideHeaderName: string;
+}
+
+export interface HTTPRetry {
+  simpleRetry: SimpleRetryPolicy;
+  custom: string;
+}
+
+export interface SimpleRetryPolicy {
+  attempts: number;
+  perTryTimeout: string;
+  overrideHeaderName: string;
+}
+
+export interface HTTPFaultInjection {
+  delay: Delay;
+  abort: Abort;
+}
+
+export interface Delay {
+  percent: number;
+  fixedDelay: string;
+  exponentialDelay: string;
+  overrideHeaderName: string;
+}
+
+export interface Abort {
+  percent: number;
+  grpcStatus: string;
+  http2Error: string;
+  httpStatus: string;
+  overrideHeaderName: string;
+}
+
+export interface L4FaultInjection {
+  throttle: Throttle;
+  terminate: Terminate;
+}
+
+export interface Throttle {
+  percent: number;
+  downstreamLimitBps: number;
+  upstreamLimitBps: number;
+  throttleAfterPeriod: string;
+  throttleAfterBytes: number;
+  throttleForPeriod: string;
+}
+
+export interface Terminate {
+  percent: number;
+  terminateAfterPeriod: string;
+}
+
+export interface CorsPolicy {
+  allowOrigin: string[];
+  allowMethods: string[];
+  allowHeaders: string[];
+  exposeHeaders: string[];
+  maxAge: string;
+  allowCredentials: string;
+}
+
+// Destination Policy
 
 export interface LoadBalancing {
   name: string;
@@ -85,12 +189,13 @@ export interface CircuitBreakerPolicy {
 
 export interface CircuitBreaker {
   simpleCb: CircuitBreakerPolicy;
+  custom: string;
 }
 
 export interface DestinationPolicy {
   name: string;
-  destination: MatchSource;
-  source: MatchSource;
+  destination: IstioService;
+  source: IstioService;
   loadbalancing: LoadBalancing;
   circuitBreaker: CircuitBreaker;
 }
