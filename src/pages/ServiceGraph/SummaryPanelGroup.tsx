@@ -1,5 +1,4 @@
 import * as React from 'react';
-
 import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
 import { InOutRateTable } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
@@ -8,7 +7,7 @@ import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/graphing';
 
-type SummaryPanelState = {
+type SummaryPanelGroupState = {
   loading: boolean;
   requestCountIn: [string, number][];
   requestCountOut: [string, number][];
@@ -16,7 +15,7 @@ type SummaryPanelState = {
   errorCountOut: [string, number][];
 };
 
-export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelState> {
+export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelGroupState> {
   static readonly panelStyle = {
     position: 'absolute' as 'absolute',
     width: '25em',
@@ -36,34 +35,13 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   }
 
   componentDidMount() {
-    const namespace = this.props.data.summaryTarget.data('service').split('.')[1];
-    const service = this.props.data.summaryTarget.data('service').split('.')[0];
-    const options = {
-      rateInterval: this.props.rateInterval
-    };
-    API.getServiceMetrics(namespace, service, options)
-      .then(response => {
-        const data: M.Metrics = response['data'];
-        const metrics: Map<String, M.MetricGroup> = data.metrics;
+    this.updateRpsCharts(this.props);
+  }
 
-        const reqCountIn: M.MetricGroup = metrics['request_count_in'];
-        const reqCountOut: M.MetricGroup = metrics['request_count_out'];
-        const errCountIn: M.MetricGroup = metrics['request_error_count_in'];
-        const errCountOut: M.MetricGroup = metrics['request_error_count_out'];
-
-        this.setState({
-          loading: false,
-          requestCountIn: graphUtils.toC3Columns(reqCountIn.matrix, 'RPS'),
-          requestCountOut: graphUtils.toC3Columns(reqCountOut.matrix, 'RPS'),
-          errorCountIn: graphUtils.toC3Columns(errCountIn.matrix, 'Error'),
-          errorCountOut: graphUtils.toC3Columns(errCountOut.matrix, 'Error')
-        });
-      })
-      .catch(error => {
-        // TODO: show error alert
-        this.setState({ loading: false });
-        console.error(error);
-      });
+  componentWillReceiveProps(nextProps: SummaryPanelPropType) {
+    if (nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
+      this.updateRpsCharts(nextProps);
+    }
   }
 
   render() {
@@ -73,8 +51,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
     const RATE = 'rate';
     const RATE3XX = 'rate3XX';
-    const RATE4XX = 'rate4xx';
-    const RATE5XX = 'rate5xx';
+    const RATE4XX = 'rate4XX';
+    const RATE5XX = 'rate5XX';
 
     let incoming = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 };
     let outgoing = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 };
@@ -155,7 +133,38 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     );
   }
 
-  renderVersionBadges = () => {
+  private updateRpsCharts = (props: SummaryPanelPropType) => {
+    const namespace = props.data.summaryTarget.data('service').split('.')[1];
+    const service = props.data.summaryTarget.data('service').split('.')[0];
+    const options = {
+      rateInterval: props.rateInterval
+    };
+    API.getServiceMetrics(namespace, service, options)
+      .then(response => {
+        const data: M.Metrics = response['data'];
+        const metrics: Map<String, M.MetricGroup> = data.metrics;
+
+        const reqCountIn: M.MetricGroup = metrics['request_count_in'];
+        const reqCountOut: M.MetricGroup = metrics['request_count_out'];
+        const errCountIn: M.MetricGroup = metrics['request_error_count_in'];
+        const errCountOut: M.MetricGroup = metrics['request_error_count_out'];
+
+        this.setState({
+          loading: false,
+          requestCountIn: graphUtils.toC3Columns(reqCountIn.matrix, 'RPS'),
+          requestCountOut: graphUtils.toC3Columns(reqCountOut.matrix, 'RPS'),
+          errorCountIn: graphUtils.toC3Columns(errCountIn.matrix, 'Error'),
+          errorCountOut: graphUtils.toC3Columns(errCountOut.matrix, 'Error')
+        });
+      })
+      .catch(error => {
+        // TODO: show error alert
+        this.setState({ loading: false });
+        console.error(error);
+      });
+  };
+
+  private renderVersionBadges = () => {
     return this.props.data.summaryTarget
       .children()
       .toArray()
@@ -171,7 +180,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       ));
   };
 
-  renderRpsCharts = () => {
+  private renderRpsCharts = () => {
     if (this.state.loading) {
       return <strong>loading charts...</strong>;
     }
