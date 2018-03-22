@@ -107,7 +107,9 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   private updateRpsChart = (props: SummaryPanelPropType) => {
     console.log('updateRps');
     const options = {
-      duration: props.duration
+      duration: props.duration,
+      step: props.step,
+      rateInterval: props.rateInterval
     };
     console.log('updateRps get');
     API.getNamespaceMetrics(props.namespace, options)

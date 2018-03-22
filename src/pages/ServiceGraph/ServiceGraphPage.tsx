@@ -94,6 +94,8 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
             data={this.state.summaryData}
             namespace={GraphFilters.getGraphNamespace()}
             duration={GraphFilters.getGraphDuration()}
+            step={GraphFilters.getGraphStep()}
+            rateInterval={GraphFilters.getGraphRateInterval()}
           />
           <CytoscapeLayout
             namespace={GraphFilters.getGraphNamespace()}
