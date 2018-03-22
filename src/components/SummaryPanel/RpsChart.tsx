@@ -65,7 +65,7 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
         {this.props.dataRps.length > 0 && (
           <AreaChart
             size={{ height: 45 }}
-            color={{ pattern: ['#0088ce', '#c00'] }}
+            color={{ pattern: ['#0088ce', '#cc0000'] }} // pf-blue, pf-red-100
             legend={{ show: false }}
             grid={{ y: { show: false } }}
             axis={axis}

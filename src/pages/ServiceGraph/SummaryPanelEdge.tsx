@@ -91,12 +91,12 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const rate5xx = this.safeRate(edge.data('rate5XX'));
     const sourceLink = (
       <a href={`../namespaces/${this.state.sourceNamespace}/services/${this.state.sourceService}`}>
-        {this.state.sourceService}
+        {this.state.sourceServiceName}
       </a>
     );
     const destLink = (
       <a href={`../namespaces/${this.state.destNamespace}/services/${this.state.destService}`}>
-        {this.state.destService}
+        {this.state.destServiceName}
       </a>
     );
 
@@ -131,9 +131,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   };
 
   private renderLabels = (ns: string, ver: string) => (
+    // color="#2d7623" is pf-green-500
     <>
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="namespace" rightText={ns} color="green" />
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="version" rightText={ver} color="green" />
+      <ServiceInfoBadge scale={0.8} style="plastic" leftText="namespace" rightText={ns} color="#2d7623" />
+      <ServiceInfoBadge scale={0.8} style="plastic" leftText="version" rightText={ver} color="#2d7623" />
     </>
   );
 

@@ -15,8 +15,8 @@ type InOutRateTablePropType = {
 
 export class InOutRateTable extends React.Component<InOutRateTablePropType, {}> {
   render() {
-    const inErrRate: number = this.props.inRate3xx + this.props.inRate4xx + this.props.inRate5xx;
-    const outErrRate: number = this.props.outRate3xx + this.props.outRate4xx + this.props.outRate5xx;
+    const inErrRate: number = this.props.inRate4xx + this.props.inRate5xx;
+    const outErrRate: number = this.props.outRate4xx + this.props.outRate5xx;
     let percentInErr: number = 0;
     let percentOutErr: number = 0;
     if (this.props.inRate !== 0) {
@@ -36,7 +36,7 @@ export class InOutRateTable extends React.Component<InOutRateTablePropType, {}> 
               <th>3xx</th>
               <th>4xx</th>
               <th>5xx</th>
-              <th>Err%</th>
+              <th>% Error</th>
             </tr>
           </thead>
           <tbody>

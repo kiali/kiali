@@ -45,7 +45,10 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const namespace = this.props.data.summaryTarget.data('service').split('.')[1];
     const service = this.props.data.summaryTarget.data('service').split('.')[0];
     const version = this.props.data.summaryTarget.data('version');
-    const options = { rateInterval: '5m', version: version };
+    const options = {
+      version: version,
+      rateInterval: this.props.rateInterval
+    };
 
     API.getServiceMetrics(namespace, service, options)
       .then(this.showRequestCountMetrics)
