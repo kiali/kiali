@@ -12,7 +12,14 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/swscore/config"
+	"github.com/kiali/swscore/log"
 )
+
+type Operator string
+
+const EQUALS Operator = "="
+const REGEX Operator = "=~"
+const REGEX_NOT Operator = "!~"
 
 var (
 	invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
@@ -79,8 +86,8 @@ func getServiceHealth(api v1.API, namespace string, servicename string) Health {
 		TotalReplicas:   int(totalVect[0].Value)}
 }
 
-func getServiceMetrics(api v1.API, namespace string, servicename string, version string, duration time.Duration, step time.Duration,
-	rateInterval string, byLabelsIn []string, byLabelsOut []string) Metrics {
+func getServiceMetrics(api v1.API, namespace, servicename, version string, duration, step time.Duration,
+	rateInterval string, byLabelsIn, byLabelsOut []string, op Operator) Metrics {
 
 	clustername := config.Get().IstioIdentityDomain
 	now := time.Now()
@@ -96,10 +103,22 @@ func getServiceMetrics(api v1.API, namespace string, servicename string, version
 		versionLabelOut = fmt.Sprintf(",source_version=\"%s\"", version)
 	}
 
-	labelsIn := fmt.Sprintf("{destination_service=\"%s.%s.%s\"%s}", servicename, namespace, clustername, versionLabelIn)
-	labelsOut := fmt.Sprintf("{source_service=\"%s.%s.%s\"%s}", servicename, namespace, clustername, versionLabelOut)
-	labelsErrorIn := fmt.Sprintf("{destination_service=\"%s.%s.%s\",response_code=~\"[5|4].*\"%s}", servicename, namespace, clustername, versionLabelIn)
-	labelsErrorOut := fmt.Sprintf("{source_service=\"%s.%s.%s\",response_code=~\"[5|4].*\"%s}", servicename, namespace, clustername, versionLabelOut)
+	var labelsIn, labelsOut, labelsErrorIn, labelsErrorOut string
+	if op == "" || op == EQUALS {
+		labelsIn = fmt.Sprintf("{destination_service=\"%s.%s.%s\"%s}", servicename, namespace, clustername, versionLabelIn)
+		labelsOut = fmt.Sprintf("{source_service=\"%s.%s.%s\"%s}", servicename, namespace, clustername, versionLabelOut)
+		labelsErrorIn = fmt.Sprintf("{destination_service=\"%s.%s.%s\",response_code=~\"[5|4].*\"%s}", servicename, namespace, clustername, versionLabelIn)
+		labelsErrorOut = fmt.Sprintf("{source_service=\"%s.%s.%s\",response_code=~\"[5|4].*\"%s}", servicename, namespace, clustername, versionLabelOut)
+	} else {
+		svc := servicename
+		if "" == svc {
+			svc = ".*"
+		}
+		labelsIn = fmt.Sprintf("{destination_service%s\"%s\\\\.%s\\\\..*\"%s}", op, svc, namespace, versionLabelIn)
+		labelsOut = fmt.Sprintf("{source_service%s\"%s\\\\.%s\\\\..*\"%s}", op, svc, namespace, versionLabelOut)
+		labelsErrorIn = fmt.Sprintf("{destination_service%s\"%s\\\\.%s\\\\..*\",response_code=~\"[5|4].*\"%s}", op, svc, namespace, versionLabelIn)
+		labelsErrorOut = fmt.Sprintf("{source_service%s\"%v\\\\.%v\\\\..*\",response_code=~\"[5|4].*\"%s}", op, svc, namespace, versionLabelOut)
+	}
 	groupingIn := joinLabels(byLabelsIn)
 	groupingOut := joinLabels(byLabelsOut)
 
@@ -174,6 +193,7 @@ func fetchRateRange(api v1.API, metricName string, labels string, grouping strin
 	} else {
 		query = fmt.Sprintf("round(sum(irate(%s%s[%s])) by (%s), 0.001)", metricName, labels, rateInterval, grouping)
 	}
+	log.Infof("QUERY: %v", query)
 	return fetchRange(api, query, bounds)
 }
 

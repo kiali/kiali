@@ -53,6 +53,10 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplie
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	service := vars["service"]
+	getMetrics(w, r, prometheus.NewClient, namespace, service)
+}
+
+func getMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error), namespace, service string) {
 	queryParams := r.URL.Query()
 	rateInterval := metricsDefaultRateInterval
 	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
@@ -98,7 +102,12 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplie
 		return
 	}
 
-	metrics := prometheusClient.GetServiceMetrics(namespace, service, version, duration, step, rateInterval, byLabelsIn, byLabelsOut)
+	var metrics prometheus.Metrics
+	if "" != service {
+		metrics = prometheusClient.GetServiceMetrics(namespace, service, version, duration, step, rateInterval, byLabelsIn, byLabelsOut)
+	} else {
+		metrics = prometheusClient.GetNamespaceMetrics(namespace, service, version, duration, step, rateInterval, byLabelsIn, byLabelsOut)
+	}
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 

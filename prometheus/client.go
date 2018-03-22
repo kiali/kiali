@@ -86,7 +86,7 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 // GetServiceMetrics returns the Metrics related to the provided service identified by its namespace and service name.
 func (in *Client) GetServiceMetrics(namespace string, servicename string, version string, duration time.Duration, step time.Duration,
 	rateInterval string, byLabelsIn []string, byLabelsOut []string) Metrics {
-	return getServiceMetrics(in.api, namespace, servicename, version, duration, step, rateInterval, byLabelsIn, byLabelsOut)
+	return getServiceMetrics(in.api, namespace, servicename, version, duration, step, rateInterval, byLabelsIn, byLabelsOut, EQUALS)
 }
 
 // GetServiceHealth returns the Health related to the provided service identified by its namespace and service name.
@@ -94,6 +94,15 @@ func (in *Client) GetServiceMetrics(namespace string, servicename string, versio
 // When the health is unavailable, total number of replicas will be 0.
 func (in *Client) GetServiceHealth(namespace string, servicename string) Health {
 	return getServiceHealth(in.api, namespace, servicename)
+}
+
+// GetNamespaceMetrics returns the Metrics described by the optional service pattern ("" for all), and optional
+// version, for the given namespace. Use GetServiceMetrics if you don't need pattern matching.
+func (in *Client) GetNamespaceMetrics(namespace, servicePattern, version string, duration, step time.Duration,
+	rateInterval string, byLabelsIn, byLabelsOut []string) Metrics {
+
+	metrics := getServiceMetrics(in.api, namespace, servicePattern, version, duration, step, rateInterval, byLabelsIn, byLabelsOut, REGEX)
+	return metrics
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client

@@ -87,6 +87,12 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceHealth,
 		},
 		{
+			"NamespaceMetrics",
+			"GET",
+			"/api/namespaces/{namespace}/metrics",
+			handlers.NamespaceMetrics,
+		},
+		{
 			// Supported query parameters:
 			// vendor:         cytoscape (default) | vizceral
 			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
