@@ -6,16 +6,19 @@ interface Props {
   health?: Health;
   size: number;
   thickness?: number;
+  showTitle?: boolean;
 }
 
-class ServiceHealth extends React.Component<Props, {}> {
-  static DonutColors = {
-    // From Patternfly status palette
-    Healthy: '#3f9c35',
-    Failure: '#cc0000',
-    'N/A': '#707070'
-  };
+const KEY_HEALTHY = 'Healthy';
+const KEY_FAILURE = 'Failure';
+const KEY_NA = 'N/A';
+const DONUT_COLORS: { [key: string]: string } = {};
+// From Patternfly status palette
+DONUT_COLORS[KEY_HEALTHY] = '#3f9c35';
+DONUT_COLORS[KEY_FAILURE] = '#cc0000';
+DONUT_COLORS[KEY_NA] = '#707070';
 
+class ServiceHealth extends React.Component<Props, {}> {
   donutData: any;
   donutSize: any;
   donutTitle: string;
@@ -37,17 +40,20 @@ class ServiceHealth extends React.Component<Props, {}> {
     let columns: [string, number][] = [];
     if (props.health && props.health.totalReplicas > 0) {
       columns = [
-        ['N/A', 0],
-        ['Healthy', props.health.healthyReplicas],
-        ['Failure', props.health.totalReplicas - props.health.healthyReplicas]
+        [KEY_NA, 0],
+        [KEY_HEALTHY, props.health.healthyReplicas],
+        [KEY_FAILURE, props.health.totalReplicas - props.health.healthyReplicas]
       ];
       this.donutTitle = Math.round(100 * props.health.healthyReplicas / props.health.totalReplicas) + '%';
     } else {
-      columns = [['N/A', 1], ['Healthy', 0], ['Failure', 0]];
+      columns = [[KEY_NA, 1], [KEY_HEALTHY, 0], [KEY_FAILURE, 0]];
       this.donutTitle = 'n/a';
     }
+    if (props.showTitle !== undefined && !props.showTitle) {
+      this.donutTitle = ' ';
+    }
     this.donutData = {
-      colors: ServiceHealth.DonutColors,
+      colors: DONUT_COLORS,
       columns: columns,
       type: 'donut'
     };
@@ -57,7 +63,6 @@ class ServiceHealth extends React.Component<Props, {}> {
     if (this.props.health) {
       return (
         <DonutChart
-          id={'health-donut'}
           size={this.donutSize}
           data={this.donutData}
           title={{ type: '', primary: this.donutTitle, secondary: ' ' }}
