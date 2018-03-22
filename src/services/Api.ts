@@ -35,6 +35,10 @@ export const GetNamespaces = () => {
   return newRequest('get', `/api/namespaces`, {}, {});
 };
 
+export const getNamespaceMetrics = (namespace: String, params: any) => {
+  return newRequest('get', `/api/namespaces/${namespace}/metrics`, params, {});
+};
+
 export const GetIstioRules = (namespace: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/rules`, {}, {});
 };

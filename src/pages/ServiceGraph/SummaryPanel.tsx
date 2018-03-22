@@ -14,16 +14,32 @@ export default class SummaryPanel extends React.Component<SummaryPanelPropType, 
     return (
       <div>
         {this.props.data.summaryType === 'edge' ? (
-          <SummaryPanelEdge data={this.props.data} rateInterval={this.props.rateInterval} />
+          <SummaryPanelEdge
+            data={this.props.data}
+            namespace={this.props.namespace}
+            rateInterval={this.props.rateInterval}
+          />
         ) : null}
         {this.props.data.summaryType === 'graph' ? (
-          <SummaryPanelGraph data={this.props.data} rateInterval={this.props.rateInterval} />
+          <SummaryPanelGraph
+            data={this.props.data}
+            namespace={this.props.namespace}
+            rateInterval={this.props.rateInterval}
+          />
         ) : null}
         {this.props.data.summaryType === 'group' ? (
-          <SummaryPanelGroup data={this.props.data} rateInterval={this.props.rateInterval} />
+          <SummaryPanelGroup
+            data={this.props.data}
+            namespace={this.props.namespace}
+            rateInterval={this.props.rateInterval}
+          />
         ) : null}
         {this.props.data.summaryType === 'node' ? (
-          <SummaryPanelNode data={this.props.data} rateInterval={this.props.rateInterval} />
+          <SummaryPanelNode
+            data={this.props.data}
+            namespace={this.props.namespace}
+            rateInterval={this.props.rateInterval}
+          />
         ) : null}
       </div>
     );

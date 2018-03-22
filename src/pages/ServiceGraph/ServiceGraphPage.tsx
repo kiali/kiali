@@ -18,6 +18,7 @@ type ServiceGraphPageProps = {
   alertVisible: boolean;
   alertDetails: string;
   summaryData: any;
+  updateTime: string;
 };
 
 export default class ServiceGraphPage extends React.Component<RouteComponentProps<NamespaceId>, ServiceGraphPageProps> {
@@ -30,7 +31,8 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
     this.state = {
       alertVisible: false,
       alertDetails: '',
-      summaryData: { summaryType: 'graph' }
+      summaryData: { summaryType: 'graph' },
+      updateTime: new Date().toLocaleString()
     };
 
     this.filterChange = this.filterChange.bind(this);
@@ -66,7 +68,9 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
   }
 
   handleGraphClick = (data: any) => {
-    this.setState({ summaryData: data });
+    if (data !== undefined) {
+      this.setState({ summaryData: data, updateTime: new Date().toLocaleString() });
+    }
   };
 
   render() {
@@ -86,7 +90,11 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
           <GraphFilter onFilterChange={this.filterChange} onError={this.handleError} />
         </PfHeader>
         <div style={{ position: 'relative' }}>
-          <SummaryPanel data={this.state.summaryData} rateInterval={GraphFilters.getGraphInterval()} />
+          <SummaryPanel
+            data={this.state.summaryData}
+            namespace={GraphFilters.getGraphNamespace()}
+            rateInterval={GraphFilters.getGraphInterval()}
+          />
           <CytoscapeLayout
             namespace={GraphFilters.getGraphNamespace()}
             layout={GraphFilters.getGraphLayout()}
