@@ -20,15 +20,16 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
         iconName="cube"
         title="Deployments"
         items={(this.props.deployments || []).map((deployment, u) => (
-          <Row>
+          <Row key={'deployments_' + u}>
             <Col xs={12}>
-              <div key={'deployments_' + u}>
+              <div>
                 <p>
                   <strong>{deployment.name}</strong>
                 </p>
                 <div key="labels">
                   {Object.keys(deployment.labels || new Map()).map((key, i) => (
                     <ServiceInfoBadge
+                      key={'deployment_' + i}
                       scale={0.8}
                       style="plastic"
                       color="green"
