@@ -10,23 +10,6 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-func TestGetJaegerInfoDisabled(t *testing.T) {
-	conf := config.NewConfig()
-	conf.Jaeger.DisplayLink = false
-	config.Set(conf)
-	info, code, err := getJaegerInfo(func(_, _ string) (string, error) {
-		return "http://fromopenshift", nil
-	}, func(_, _ string) (*v1.ServiceSpec, error) {
-		return &v1.ServiceSpec{
-			ClusterIP: "fromservice",
-			Ports: []v1.ServicePort{
-				v1.ServicePort{Port: 3000}}}, nil
-	})
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusNoContent, code)
-	assert.Nil(t, info)
-}
-
 func TestGetJaegerInfoFromOpenshift(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

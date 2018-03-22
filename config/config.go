@@ -36,7 +36,6 @@ const (
 	EnvGrafanaVarServiceSource = "GRAFANA_VAR_SERVICE_SOURCE"
 	EnvGrafanaVarServiceDest   = "GRAFANA_VAR_SERVICE_DEST"
 
-	EnvJaegerDisplayLink      = "JAEGER_DISPLAY_LINK"
 	EnvJaegerURL              = "JAEGER_URL"
 	EnvJaegerServiceNamespace = "JAEGER_SERVICE_NAMESPACE"
 	EnvJaegerService          = "JAEGER_SERVICE"
@@ -69,7 +68,6 @@ type GrafanaConfig struct {
 
 // JaegerConfig describes configuration used for jaeger links
 type JaegerConfig struct {
-	DisplayLink      bool   `yaml:"display_link"`
 	URL              string `yaml:"url"`
 	ServiceNamespace string `yaml:"service_namespace"`
 	Service          string `yaml:"service"`
@@ -112,7 +110,6 @@ func NewConfig() (c *Config) {
 	c.Grafana.VarServiceSource = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceSource, "var-source"))
 	c.Grafana.VarServiceDest = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceDest, "var-http_destination"))
 
-	c.Jaeger.DisplayLink = getDefaultBool(EnvJaegerDisplayLink, true)
 	c.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
 	c.Jaeger.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvJaegerServiceNamespace, "istio-system"))
 	c.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))

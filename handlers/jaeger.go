@@ -24,9 +24,6 @@ func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
 // getJaegerInfo returns the Jaeger URL, the HTTP status code (int) and eventually an error
 func getJaegerInfo(osRouteSupplier osRouteSupplier, serviceSupplier serviceSupplier) (*models.JaegerInfo, int, error) {
 	jaegerConfig := config.Get().Jaeger
-	if !jaegerConfig.DisplayLink {
-		return nil, http.StatusNoContent, nil
-	}
 	jaegerInfo := models.JaegerInfo{
 		URL: jaegerConfig.URL}
 	if jaegerInfo.URL != "" {
