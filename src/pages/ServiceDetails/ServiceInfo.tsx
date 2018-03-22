@@ -68,7 +68,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
           endpoints: data.endpoints,
           deployments: data.deployments,
           dependencies: data.dependencies,
-          routeRules: data.route_rules,
+          routeRules: this.sortRouteRulesByPrecedence(data.route_rules),
           destinationPolicies: data.destination_policies,
           ip: data.ip
         });
@@ -80,6 +80,19 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
         });
         console.log(error);
       });
+  }
+
+  sortRouteRulesByPrecedence(routeRules: RouteRule[]) {
+    let sorted: RouteRule[] = [];
+    if (routeRules) {
+      sorted = routeRules.sort((a: RouteRule, b: RouteRule) => {
+        if (a.precedence && b.precedence) {
+          return a.precedence < b.precedence ? 1 : -1;
+        }
+        return -1;
+      });
+    }
+    return sorted;
   }
 
   fetchHealth(props: ServiceId) {
