@@ -25,8 +25,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   static readonly RATE = 'rate';
   static readonly RATE3XX = 'rate3XX';
-  static readonly RATE4XX = 'rate4xx';
-  static readonly RATE5XX = 'rate5xx';
+  static readonly RATE4XX = 'rate4XX';
+  static readonly RATE5XX = 'rate5XX';
 
   constructor(props: SummaryPanelPropType) {
     super(props);
@@ -42,12 +42,22 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   componentDidMount() {
-    const namespace = this.props.data.summaryTarget.data('service').split('.')[1];
-    const service = this.props.data.summaryTarget.data('service').split('.')[0];
-    const version = this.props.data.summaryTarget.data('version');
+    this.fetchRequestCountMetrics(this.props);
+  }
+
+  componentWillReceiveProps(nextProps: SummaryPanelPropType) {
+    if (nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
+      this.fetchRequestCountMetrics(nextProps);
+    }
+  }
+
+  fetchRequestCountMetrics(props: SummaryPanelPropType) {
+    const namespace = props.data.summaryTarget.data('service').split('.')[1];
+    const service = props.data.summaryTarget.data('service').split('.')[0];
+    const version = props.data.summaryTarget.data('version');
     const options = {
       version: version,
-      rateInterval: this.props.rateInterval
+      rateInterval: props.rateInterval
     };
 
     API.getServiceMetrics(namespace, service, options)
@@ -56,6 +66,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         this.setState({ loading: false });
         console.error(error);
       });
+
+    this.setState({ loading: true });
   }
 
   showRequestCountMetrics(xhrRequest: any) {
