@@ -6,7 +6,7 @@ export interface GraphFilterProps {
 }
 
 export interface GraphFilterState {
-  graphInterval: string;
+  graphDuration: string;
   graphLayout: any;
   graphNamespace: string;
   availableNamespaces: { name: string }[];

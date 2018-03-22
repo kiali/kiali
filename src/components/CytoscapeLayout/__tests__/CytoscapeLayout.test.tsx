@@ -18,7 +18,7 @@ const testHandler = () => {
 describe('CytographLayout component test', () => {
   it('should set correct elements data', async () => {
     const wrapper = await shallow(
-      <CytoscapeLayout namespace={testNamespace} layout={ColaGraph.getLayout()} interval="30s" onClick={testHandler} />
+      <CytoscapeLayout namespace={testNamespace} layout={ColaGraph.getLayout()} duration="600" onClick={testHandler} />
     );
     wrapper.update();
     expect(wrapper.instance().state.elements.nodes).toEqual(GRAPH_DATA[testNamespace].elements.nodes);
@@ -31,7 +31,7 @@ describe('CytographLayout component test', () => {
     const spyUpdateGraphElements = jest.spyOn(CytoscapeLayout.prototype, 'updateGraphElements');
 
     const wrapper = shallow(
-      <CytoscapeLayout namespace={testNamespace} layout={ColaGraph.getLayout()} interval="30s" onClick={testHandler} />
+      <CytoscapeLayout namespace={testNamespace} layout={ColaGraph.getLayout()} duration="600" onClick={testHandler} />
     );
     expect(spyUpdateGraphElements).toHaveBeenCalledTimes(1);
     const buttonWrapper = wrapper.find(Button);

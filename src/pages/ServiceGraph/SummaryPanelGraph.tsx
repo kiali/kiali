@@ -63,7 +63,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     this.initState(cy);
 
     const options = {
-      rateInterval: this.props.rateInterval
+      duration: this.props.duration
     };
     API.getNamespaceMetrics(this.props.namespace, options)
       .then(response => {

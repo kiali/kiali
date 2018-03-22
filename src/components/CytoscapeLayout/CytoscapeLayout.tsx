@@ -10,7 +10,7 @@ import ReactCytoscape from './ReactCytoscape';
 type CytoscapeLayoutProps = {
   namespace: string;
   layout: any;
-  interval: string;
+  duration: string;
   onClick: (event: CytoscapeClickEvent) => void;
 };
 
@@ -70,7 +70,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   }
 
   componentWillReceiveProps(nextProps: CytoscapeLayoutProps) {
-    if (nextProps.namespace !== this.props.namespace || nextProps.interval !== this.props.interval) {
+    if (nextProps.namespace !== this.props.namespace || nextProps.duration !== this.props.duration) {
       this.updateGraphElements(nextProps);
     }
   }
@@ -86,18 +86,14 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     const getCytoscapeBaseEvent = (event: any): CytoscapeBaseEvent | null => {
       const target = event.target;
       if (target === cy) {
-        console.log(`${event.type} in Background`);
         return { summaryType: 'graph', summaryTarget: cy };
       } else if (target.isNode()) {
         if (target.data('groupBy') === 'version') {
-          console.log(`${event.type} Group`);
           return { summaryType: 'group', summaryTarget: target };
         } else {
-          console.log(`${event.type} node`);
           return { summaryType: 'node', summaryTarget: target };
         }
       } else if (target.isEdge()) {
-        console.log(`${event.type} edge`);
         return { summaryType: 'edge', summaryTarget: target };
       } else {
         console.log(`${event.type} UNHANDLED`);
@@ -147,7 +143,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   }
 
   updateGraphElements(props: any) {
-    const params = { interval: props.interval };
+    const params = { interval: props.duration };
     this.setState({ loading: true });
 
     API.GetGraphElements(props.namespace, params)

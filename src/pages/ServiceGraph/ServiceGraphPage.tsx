@@ -41,11 +41,11 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
 
     const search = routeProps.location.search;
     const params = new URLSearchParams(search);
-    let graphInterval = params.get('interval');
+    let graphDuration = params.get('interval');
     let graphLayout = params.get('layout');
 
     GraphFilters.setGraphNamespace(routeProps.match.params.namespace);
-    GraphFilters.setGraphInterval(graphInterval ? graphInterval : '30s');
+    GraphFilters.setGraphDuration(graphDuration ? graphDuration : '600');
     GraphFilters.setGraphLayout(graphLayout ? graphLayout : 'dagre');
   }
 
@@ -63,7 +63,7 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
 
   filterChange() {
     this.context.router.history.push(
-      `/service-graph/${GraphFilters.getGraphNamespace()}?layout=${GraphFilters.getGraphLayoutName()}&interval=${GraphFilters.getGraphInterval()}`
+      `/service-graph/${GraphFilters.getGraphNamespace()}?layout=${GraphFilters.getGraphLayoutName()}&interval=${GraphFilters.getGraphDuration()}`
     );
   }
 
@@ -93,12 +93,12 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
           <SummaryPanel
             data={this.state.summaryData}
             namespace={GraphFilters.getGraphNamespace()}
-            rateInterval={GraphFilters.getGraphInterval()}
+            duration={GraphFilters.getGraphDuration()}
           />
           <CytoscapeLayout
             namespace={GraphFilters.getGraphNamespace()}
             layout={GraphFilters.getGraphLayout()}
-            interval={GraphFilters.getGraphInterval()}
+            duration={GraphFilters.getGraphDuration()}
             onClick={this.handleGraphClick}
           />
         </div>

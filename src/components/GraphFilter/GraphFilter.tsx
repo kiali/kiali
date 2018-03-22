@@ -7,17 +7,17 @@ import { DagreGraph } from '../../components/CytoscapeLayout/graphs/DagreGraph';
 import { ColaGraph } from '../../components/CytoscapeLayout/graphs/ColaGraph';
 import { CoseGraph } from '../../components/CytoscapeLayout/graphs/CoseGraph';
 import { BreadthFirstGraph } from '../../components/CytoscapeLayout/graphs/BreadthFirstGraph';
-import { IntervalButtonGroup } from './IntervalButtonGroup';
+import { DurationButtonGroup } from './DurationButtonGroup';
 import { LayoutButtonGroup } from './LayoutButtonGroup';
 import { KlayGraph } from '../CytoscapeLayout/graphs/KlayGraph';
 
 export namespace GraphFilters {
-  let graphInterval: string = '30s';
+  let graphDuration: string = '600';
   let graphLayout: any = DagreGraph.getLayout();
   let graphNamespace: string = 'istio-system';
 
-  export const getGraphInterval = () => {
-    return graphInterval;
+  export const getGraphDuration = () => {
+    return graphDuration;
   };
 
   export const getGraphLayout = () => {
@@ -32,8 +32,8 @@ export namespace GraphFilters {
     return graphNamespace;
   };
 
-  export const setGraphInterval = (value: string) => {
-    graphInterval = value;
+  export const setGraphDuration = (value: string) => {
+    graphDuration = value;
   };
 
   export const setGraphLayout = (value: string) => {
@@ -62,12 +62,12 @@ export class GraphFilter extends React.Component<GraphFilterProps, GraphFilterSt
     super(props);
 
     this.setNamespaces = this.setNamespaces.bind(this);
-    this.updateInterval = this.updateInterval.bind(this);
+    this.updateDuration = this.updateDuration.bind(this);
     this.updateLayout = this.updateLayout.bind(this);
     this.updateNamespace = this.updateNamespace.bind(this);
 
     this.state = {
-      graphInterval: GraphFilters.getGraphInterval(),
+      graphDuration: GraphFilters.getGraphDuration(),
       graphLayout: GraphFilters.getGraphLayout(),
       graphNamespace: GraphFilters.getGraphNamespace(),
       availableNamespaces: []
@@ -86,9 +86,9 @@ export class GraphFilter extends React.Component<GraphFilterProps, GraphFilterSt
     this.setState({ availableNamespaces: response['data'] });
   }
 
-  updateInterval(value: string) {
-    GraphFilters.setGraphInterval(value);
-    this.setState({ graphInterval: GraphFilters.getGraphInterval() });
+  updateDuration(value: string) {
+    GraphFilters.setGraphDuration(value);
+    this.setState({ graphDuration: GraphFilters.getGraphDuration() });
     this.props.onFilterChange();
   }
 
@@ -117,7 +117,7 @@ export class GraphFilter extends React.Component<GraphFilterProps, GraphFilterSt
               ))}
             </DropdownButton>
           </ButtonGroup>
-          <IntervalButtonGroup onClick={this.updateInterval} initialInterval={GraphFilters.getGraphInterval()} />
+          <DurationButtonGroup onClick={this.updateDuration} initialDuration={GraphFilters.getGraphDuration()} />
           <LayoutButtonGroup onClick={this.updateLayout} initialLayout={GraphFilters.getGraphLayoutName()} />
         </ButtonToolbar>
         <Toolbar />
