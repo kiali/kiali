@@ -38,7 +38,6 @@ type NodeData struct {
 	Rate3xx string `json:"rate3XX,omitempty"` // edge aggregate
 	Rate4xx string `json:"rate4XX,omitempty"` // edge aggregate
 	Rate5xx string `json:"rate5XX,omitempty"` // edge aggregate
-	RateErr string `json:"rateErr,omitempty"` // edge aggregate (sum of 3,4,5xx)
 
 	// reserved for future
 	// LinkPromGraph string `json:"link_prom_graph,omitempty"`
@@ -57,7 +56,6 @@ type EdgeData struct {
 	Rate3xx string `json:"rate3XX,omitempty"`
 	Rate4xx string `json:"rate4XX,omitempty"`
 	Rate5xx string `json:"rate5XX,omitempty"`
-	RateErr string `json:"rateErr,omitempty"` // (sum of 3,4,5xx)
 }
 
 type NodeWrapper struct {
@@ -186,7 +184,7 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 		rate3xx := sn.Metadata["rate_3xx"].(float64)
 		rate4xx := sn.Metadata["rate_4xx"].(float64)
 		rate5xx := sn.Metadata["rate_5xx"].(float64)
-		rateErr := rate3xx + rate4xx + rate5xx
+		rateErr := rate4xx + rate5xx
 		percentErr := rateErr / rate * 100.0
 
 		ed.Rate = fmt.Sprintf("%.4f", rate)
@@ -202,10 +200,6 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 		if rate5xx > 0.0 {
 			ed.Rate5xx = fmt.Sprintf("%.4f", rate5xx)
 			nd.Rate5xx = add(nd.Rate5xx, rate5xx)
-		}
-		if rateErr > 0.0 {
-			ed.RateErr = fmt.Sprintf("%.2f", rateErr)
-			nd.RateErr = add(nd.RateErr, rateErr)
 		}
 
 		switch {
