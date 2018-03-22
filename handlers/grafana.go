@@ -8,7 +8,6 @@ import (
 	"k8s.io/api/core/v1"
 
 	"github.com/kiali/swscore/config"
-	"github.com/kiali/swscore/kubernetes"
 	"github.com/kiali/swscore/log"
 	"github.com/kiali/swscore/models"
 )
@@ -19,33 +18,13 @@ type serviceSupplier func(string, string) (*v1.ServiceSpec, error)
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
 func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
-	info, code, err := getGrafanaInfo(getOpenshiftRouteURL, getGrafanaService)
+	info, code, err := getGrafanaInfo(getOpenshiftRouteURL, getService)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, code, err.Error())
 		return
 	}
 	RespondWithJSON(w, code, info)
-}
-
-func getOpenshiftRouteURL(namespace string, name string) (string, error) {
-	client, err := kubernetes.NewOSRouteClient()
-	if err != nil {
-		return "", err
-	}
-	return client.GetRoute(namespace, name)
-}
-
-func getGrafanaService(namespace string, service string) (*v1.ServiceSpec, error) {
-	client, err := kubernetes.NewClient()
-	if err != nil {
-		return nil, err
-	}
-	details, err := client.GetServiceDetails(namespace, service)
-	if err != nil {
-		return nil, err
-	}
-	return &details.Service.Spec, nil
 }
 
 // getGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error

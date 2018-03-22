@@ -124,6 +124,12 @@ func NewRoutes() (r *Routes) {
 			"/api/grafana",
 			handlers.GetGrafanaInfo,
 		},
+		{
+			"JaegerURL",
+			"GET",
+			"/api/jaeger",
+			handlers.GetJaegerInfo,
+		},
 	}
 
 	return
