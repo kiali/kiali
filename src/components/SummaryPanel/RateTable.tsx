@@ -11,7 +11,7 @@ type RateTablePropType = {
 
 export class RateTable extends React.Component<RateTablePropType, {}> {
   render() {
-    const errRate: number = this.props.rate3xx + this.props.rate4xx + this.props.rate5xx;
+    const errRate: number = this.props.rate4xx + this.props.rate5xx;
     let percentErr: number = 0;
     if (this.props.rate !== 0) {
       percentErr = errRate / this.props.rate * 100;

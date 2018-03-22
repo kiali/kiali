@@ -76,8 +76,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const RATE4XX = 'rate4xx';
     const RATE5XX = 'rate5xx';
 
-    let incoming = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0, rateErr: 0, percentErr: 0 };
-    let outgoing = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0, rateErr: 0, percentErr: 0 };
+    let incoming = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 };
+    let outgoing = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 };
 
     // aggregate all incoming rates
     this.props.data.summaryTarget
@@ -89,20 +89,14 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         }
         if (c.data(RATE3XX) !== undefined) {
           incoming.rate3xx += +c.data(RATE3XX);
-          incoming.rateErr += +c.data(RATE3XX);
         }
         if (c.data(RATE4XX) !== undefined) {
           incoming.rate4xx += +c.data(RATE4XX);
-          incoming.rateErr += +c.data(RATE4XX);
         }
         if (c.data(RATE5XX) !== undefined) {
           incoming.rate5xx += +c.data(RATE5XX);
-          incoming.rateErr += +c.data(RATE5XX);
         }
       });
-    if (incoming.rateErr !== 0) {
-      incoming.percentErr = incoming.rateErr / incoming.rate * 100.0;
-    }
     console.log('Aggregate incoming [' + namespace + '.' + service + ': ' + JSON.stringify(incoming));
 
     // aggregate all outgoing rates
@@ -115,20 +109,14 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         }
         if (c.data(RATE3XX) !== undefined) {
           outgoing.rate3xx += +c.data(RATE3XX);
-          outgoing.rateErr += +c.data(RATE3XX);
         }
         if (c.data(RATE4XX) !== undefined) {
           outgoing.rate4xx += +c.data(RATE4XX);
-          outgoing.rateErr += +c.data(RATE4XX);
         }
         if (c.data(RATE5XX) !== undefined) {
           outgoing.rate5xx += +c.data(RATE5XX);
-          outgoing.rateErr += +c.data(RATE5XX);
         }
       });
-    if (outgoing.rateErr !== 0) {
-      outgoing.percentErr = outgoing.rateErr / outgoing.rate * 100.0;
-    }
     console.log('Aggregate outgoing [' + namespace + '.' + service + ': ' + JSON.stringify(outgoing));
 
     return (

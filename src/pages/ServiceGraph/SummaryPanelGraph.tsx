@@ -148,9 +148,10 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   };
 
   private renderLabels = (numNodes: string, numEdges: string) => (
+    // color="#2d7623" is pf-green-500
     <>
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="services" rightText={numNodes} color="green" />
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="edges" rightText={numEdges} color="green" />
+      <ServiceInfoBadge scale={0.8} style="plastic" leftText="services" rightText={numNodes} color="#2d7623" />
+      <ServiceInfoBadge scale={0.8} style="plastic" leftText="edges" rightText={numEdges} color="#2d7623" />
     </>
   );
 
