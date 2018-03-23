@@ -22,8 +22,8 @@ package handlers
 //   vendor:         cytoscape | vizceral (default cytoscape)
 //   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
 //   groupByVersion: If supported by vendor, visually group versions of the same service (default true)
-//   offset:         Duration indicating desired query offset (default 0m)
-//   interval:       Duration indicating desired query period (default 30s)
+//   offset:         time.Duration indicating desired query range offset (default 0m)
+//   duration:       time.Duration indicating desired query range duration, (default 10m)
 //   colorDead       Color for inactive edge (no traffic) (default black)
 //   colorError      Color for active edge with error% > thresholderror (default red)
 //   colorNormal     Color for active edge with error% below thresholdWarn (default green)
@@ -101,7 +101,7 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []
 		namespacePattern,     // regex for namespace-constrained service
 		namespacePattern,     // regex for namespace-constrained service
 		"[2345][0-9][0-9]",   // regex for valid response_codes
-		o.Interval.Seconds(), // rate for the entire query period
+		o.Duration.Seconds(), // range duration for the query
 		"source_service")     // group by
 
 	// fetch the root time series
@@ -150,7 +150,7 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 		sn.Version,                                              // parent service version
 		destinationSvcFilter,                                    // regex for namespace-constrained destination service
 		"[2345][0-9][0-9]",                                      // regex for valid response_codes
-		o.Interval.Seconds(),                                    // rate over the entire query period
+		o.Duration.Seconds(),                                    // range duration for the query
 		"destination_service,destination_version,response_code") // group by
 
 	vector := promQuery(query, start, client.API())
@@ -227,7 +227,7 @@ func buildServiceTrees(o options.Options, client *prometheus.Client) (trees []tr
 		o.Metric,
 		fmt.Sprintf("%v\\\\.%v\\\\..*", o.Service, o.Namespace), // regex for namespace-constrained destination service
 		"[2345][0-9][0-9]",                                      // regex for valid response_codes
-		o.Interval.Seconds(),                                    // rate for the entire query period
+		o.Duration.Seconds(),                                    // range duration for the query
 		"source_service, source_version")                        // group by
 
 	// avoid circularities by keeping track of seen nodes
@@ -286,7 +286,7 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, start time
 		sn.Version,
 		destinationSvcFilter,                                    // regex for destination service
 		"[2345][0-9][0-9]",                                      // regex for valid response_codes
-		o.Interval.Seconds(),                                    // rate over the entire query period
+		o.Duration.Seconds(),                                    // range duration for the query
 		"destination_service,destination_version,response_code") // group by
 
 	// fetch the root time series
