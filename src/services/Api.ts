@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { config } from '../config';
+import Namespace from '../types/Namespace';
 
 const auth = (user: string, pass: string) => {
   return {
@@ -63,8 +64,8 @@ export const getJaegerInfo = () => {
   return newRequest('get', `/api/jaeger`, {}, {});
 };
 
-export const GetGraphElements = (namespace: String, params: any) => {
-  return newRequest('get', `/api/namespaces/${namespace}/graph`, params, {});
+export const GetGraphElements = (namespace: Namespace, params: any) => {
+  return newRequest('get', `/api/namespaces/${namespace.name}/graph`, params, {});
 };
 
 export const GetServiceDetail = (namespace: String, service: String) => {

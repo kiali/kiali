@@ -1,23 +1,22 @@
 import * as React from 'react';
-import { Spinner, Button } from 'patternfly-react';
+import { Spinner } from 'patternfly-react';
 import PropTypes from 'prop-types';
 
-import * as API from '../../services/Api';
 import { GraphStyles } from './graphs/GraphStyles';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import ReactCytoscape from './ReactCytoscape';
+import { GraphParamsType } from '../../types/Graph';
+import * as LayoutDictionary from './graphs/LayoutDictionary';
 
-type CytoscapeLayoutProps = {
-  namespace: string;
-  layout: any;
-  duration: string;
+type CytoscapeLayoutType = {
+  elements: any;
   onClick: (event: CytoscapeClickEvent) => void;
+  isLoading?: boolean;
 };
 
-type CytoscapeLayoutState = {
-  elements?: any;
-  loading: boolean;
-};
+type CytoscapeLayoutProps = CytoscapeLayoutType & GraphParamsType;
+
+type CytoscapeLayoutState = {};
 
 interface CytoscapeBaseEvent {
   summaryType: string;
@@ -39,13 +38,11 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   constructor(props: CytoscapeLayoutProps) {
     super(props);
 
-    console.log(`Starting ServiceGraphPage for namespace: ${this.props.namespace}`);
+    console.log(`Starting ServiceGraphPage for namespace: ${this.props.namespace.name}`);
 
     this.state = {
-      elements: [],
-      loading: false
+      isLoading: false
     };
-    this.updateGraphElements = this.updateGraphElements.bind(this);
     this.handleTap = this.handleTap.bind(this);
     this.handleMouseIn = this.handleMouseIn.bind(this);
     this.handleMouseOut = this.handleMouseOut.bind(this);
@@ -63,20 +60,6 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   componentDidMount() {
     window.addEventListener('resize', this.resizeWindow);
     this.resizeWindow();
-
-    if (this.props.namespace.length !== 0) {
-      this.updateGraphElements(this.props);
-    }
-  }
-
-  componentWillReceiveProps(nextProps: CytoscapeLayoutProps) {
-    if (nextProps.namespace !== this.props.namespace || nextProps.duration !== this.props.duration) {
-      this.updateGraphElements(nextProps);
-    }
-  }
-
-  shouldComponentUpdate(nextProps: CytoscapeLayoutProps, nextState: CytoscapeLayoutState) {
-    return this.state.loading !== nextState.loading || this.props.layout !== nextProps.layout;
   }
 
   cyRef(cy: any) {
@@ -123,42 +106,23 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   }
 
   render() {
+    const layout = LayoutDictionary.getLayout(this.props.graphLayout);
     return (
       <div id="cytoscape-container" style={{ marginRight: '25em' }}>
-        <Spinner loading={this.state.loading}>
-          <Button onClick={this.onRefreshButtonClick}>Refresh</Button>
+        <Spinner loading={this.props.isLoading}>
           <ReactCytoscape
             containerID="cy"
             cyRef={cy => {
               this.cyRef(cy);
             }}
-            elements={this.state.elements}
+            elements={this.props.elements}
             style={GraphStyles.styles()}
             cytoscapeOptions={GraphStyles.options()}
-            layout={this.props.layout}
+            layout={layout}
           />
         </Spinner>
       </div>
     );
-  }
-
-  updateGraphElements(props: any) {
-    const params = { duration: props.duration + 's' };
-    this.setState({ loading: true });
-
-    API.GetGraphElements(props.namespace, params)
-      .then(response => {
-        const responseData = response['data'];
-        const elements = responseData && responseData.elements ? responseData.elements : { nodes: [], edges: [] };
-        this.setState({ elements: elements, loading: false });
-      })
-      .catch(error => {
-        this.setState({
-          elements: [],
-          loading: false
-        });
-        console.error(error);
-      });
   }
 
   handleTap(event: CytoscapeClickEvent) {
@@ -173,8 +137,4 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   handleMouseOut(event: CytoscapeMouseOutEvent) {
     this.graphHighlighter.onMouseOut(event);
   }
-
-  onRefreshButtonClick = event => {
-    this.updateGraphElements(this.props);
-  };
 }
