@@ -75,8 +75,8 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     }
   }
 
-  shouldComponentUpdate(nextProps: any, nextState: any) {
-    return this.state.loading !== nextState.loading;
+  shouldComponentUpdate(nextProps: CytoscapeLayoutProps, nextState: CytoscapeLayoutState) {
+    return this.state.loading !== nextState.loading || this.props.layout !== nextProps.layout;
   }
 
   cyRef(cy: any) {
