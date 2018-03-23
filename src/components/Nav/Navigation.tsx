@@ -11,16 +11,24 @@ import ServiceGraphPage from '../../pages/ServiceGraph/ServiceGraphPage';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 
 const istioRulesPath = '/rules';
-const istioRulesTitle = 'Istio Mixer';
+export const istioRulesTitle = 'Istio Mixer';
 const serviceGraphPath = '/service-graph/istio-system';
-const serviceGraphTitle = 'Graph';
+export const serviceGraphTitle = 'Graph';
 const servicesPath = '/services';
-const servicesTitle = 'Services';
+export const servicesTitle = 'Services';
 
 const pfLogo = require('../../img/logo-alt.svg');
 const pfBrand = require('../../assets/img/kiali-title.svg');
 
-class Navigation extends React.Component {
+type PropsType = {
+  location: any;
+};
+
+type StateType = {
+  selectedItem: string;
+};
+
+class Navigation extends React.Component<PropsType, StateType> {
   static contextTypes = {
     router: PropTypes.object
   };
@@ -28,7 +36,34 @@ class Navigation extends React.Component {
   constructor(props: any) {
     super(props);
     this.navigateTo = this.navigateTo.bind(this);
+
+    // handle initial path from the browser
+    const selected = this.parseInitialPath(props.location.pathname);
+    this.state = {
+      selectedItem: `/${selected}/`
+    };
   }
+
+  parseInitialPath = (pathname: string) => {
+    let selected = '';
+    if (pathname.startsWith('/namespaces') || pathname.startsWith('/services')) {
+      selected = servicesTitle;
+    } else if (pathname.startsWith('/service-graph')) {
+      selected = serviceGraphTitle;
+    } else if (pathname.startsWith('/rules')) {
+      selected = istioRulesTitle;
+    } else {
+      selected = serviceGraphTitle;
+    }
+    return selected;
+  };
+
+  setControlledState = event => {
+    if (event.activePath) {
+      // keep track of path as user clicks on nav bar
+      this.setState({ selectedItem: event.activePath });
+    }
+  };
 
   navigateTo(e: any) {
     if (e.title === servicesTitle) {
@@ -43,19 +78,14 @@ class Navigation extends React.Component {
   render() {
     return (
       <div>
-        <VerticalNav>
+        <VerticalNav setControlledState={this.setControlledState} activePath={this.state.selectedItem}>
           <VerticalNav.Masthead title="Swift Sunshine">
             <VerticalNav.Brand iconImg={pfLogo} titleImg={pfBrand} />
             <VerticalNav.IconBar>
               <HelpDropdown />
             </VerticalNav.IconBar>
           </VerticalNav.Masthead>
-          <VerticalNav.Item
-            title={serviceGraphTitle}
-            iconClass="fa pficon-topology"
-            onClick={this.navigateTo}
-            initialActive={true}
-          />
+          <VerticalNav.Item title={serviceGraphTitle} iconClass="fa pficon-topology" onClick={this.navigateTo} />
           <VerticalNav.Item title={servicesTitle} iconClass="fa pficon-service" onClick={this.navigateTo} />
           <VerticalNav.Item title={istioRulesTitle} iconClass="fa pficon-migration" onClick={this.navigateTo} />
         </VerticalNav>
