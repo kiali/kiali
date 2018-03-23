@@ -237,7 +237,14 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       let serviceDescriptor = (
         <Col>
           <strong>Pod status: </strong> {serviceItem.available_replicas} / {serviceItem.replicas}{' '}
-          <Icon type="pf" name={serviceItem.available_replicas < serviceItem.replicas ? 'warning-triangle-o' : 'ok'} />
+          <Icon
+            type="pf"
+            name={
+              serviceItem.available_replicas < serviceItem.replicas || serviceItem.replicas === 0
+                ? 'warning-triangle-o'
+                : 'ok'
+            }
+          />
         </Col>
       );
 
