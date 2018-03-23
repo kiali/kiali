@@ -28,7 +28,7 @@ type Options struct {
 	Vendor    string
 	Metric    string
 	Offset    time.Duration
-	Interval  time.Duration
+	Duration  time.Duration
 	VendorOptions
 }
 
@@ -45,7 +45,7 @@ func NewOptions(r *http.Request) Options {
 	colorNormal := params.Get("colorNormal")
 	colorWarn := params.Get("colorWarn")
 	groupByVersion, groupByVersionErr := strconv.ParseBool(params.Get("groupByVersion"))
-	interval, intervalErr := time.ParseDuration(params.Get("interval"))
+	duration, durationErr := time.ParseDuration(params.Get("duration"))
 	metric := params.Get("metric")
 	offset, offsetErr := time.ParseDuration(params.Get("offset"))
 	vendor := params.Get("vendor")
@@ -67,8 +67,8 @@ func NewOptions(r *http.Request) Options {
 	if groupByVersionErr != nil {
 		groupByVersion = true
 	}
-	if intervalErr != nil {
-		interval, _ = time.ParseDuration("30s")
+	if durationErr != nil {
+		duration, _ = time.ParseDuration("10m")
 	}
 	if "" == metric {
 		metric = "istio_request_count"
@@ -90,7 +90,7 @@ func NewOptions(r *http.Request) Options {
 		Namespace: namespace,
 		Service:   service,
 		Vendor:    vendor,
-		Interval:  interval,
+		Duration:  duration,
 		Metric:    metric,
 		Offset:    offset,
 		VendorOptions: VendorOptions{
