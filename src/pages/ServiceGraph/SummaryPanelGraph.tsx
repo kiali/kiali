@@ -1,10 +1,13 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
 import { RateTable } from '../../components/SummaryPanel/RateTable';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/graphing';
 import * as API from '../../services/Api';
+import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
+import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as M from '../../types/Metrics';
 
 type SummaryPanelGraphState = {
@@ -74,8 +77,11 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         rate5xx += +safeRate(edge.data('rate5XX'));
       });
     }
-    // TODO, the query param is not currently supported, but this is maybe what will be used...
-    const servicesLink = <a href={`../services?namespace=${this.props.namespace}`}>{this.props.namespace}</a>;
+    const servicesLink = (
+      <Link to="../services" onClick={this.updateServicesFilter}>
+        {this.props.namespace}
+      </Link>
+    );
 
     return (
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
@@ -159,5 +165,14 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       series.push(ts);
     }
     return graphUtils.toC3Columns(series, title);
+  };
+
+  private updateServicesFilter = () => {
+    let activeFilter: ActiveFilter = {
+      label: 'Namespace: ' + this.props.namespace,
+      category: 'Namespace',
+      value: this.props.namespace.toString()
+    };
+    NamespaceFilterSelected.setSelected([activeFilter]);
   };
 }
