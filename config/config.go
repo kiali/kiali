@@ -36,6 +36,10 @@ const (
 	EnvGrafanaVarServiceSource = "GRAFANA_VAR_SERVICE_SOURCE"
 	EnvGrafanaVarServiceDest   = "GRAFANA_VAR_SERVICE_DEST"
 
+	EnvJaegerURL              = "JAEGER_URL"
+	EnvJaegerServiceNamespace = "JAEGER_SERVICE_NAMESPACE"
+	EnvJaegerService          = "JAEGER_SERVICE"
+
 	EnvServiceFilterLabelName = "SERVICE_FILTER_LABEL_NAME"
 )
 
@@ -62,6 +66,13 @@ type GrafanaConfig struct {
 	VarServiceDest   string `yaml:"var_service_dest"`
 }
 
+// JaegerConfig describes configuration used for jaeger links
+type JaegerConfig struct {
+	URL              string `yaml:"url"`
+	ServiceNamespace string `yaml:"service_namespace"`
+	Service          string `yaml:"service"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	Identity               security.Identity `yaml:",omitempty"`
@@ -69,6 +80,7 @@ type Config struct {
 	PrometheusServiceURL   string            `yaml:"prometheus_service_url,omitempty"`
 	IstioIdentityDomain    string            `yaml:"istio_identity_domain,omitempty"`
 	Grafana                GrafanaConfig     `yaml:"grafana,omitempty"`
+	Jaeger                 JaegerConfig      `yaml:"jaeger,omitempty"`
 	ServiceFilterLabelName string            `yaml:"service_filter_label_name,omitempty"`
 }
 
@@ -97,6 +109,10 @@ func NewConfig() (c *Config) {
 	c.Grafana.Dashboard = strings.TrimSpace(getDefaultString(EnvGrafanaDashboard, "istio-dashboard"))
 	c.Grafana.VarServiceSource = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceSource, "var-source"))
 	c.Grafana.VarServiceDest = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceDest, "var-http_destination"))
+
+	c.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
+	c.Jaeger.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvJaegerServiceNamespace, "istio-system"))
+	c.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
 
 	c.ServiceFilterLabelName = strings.TrimSpace(getDefaultString(EnvServiceFilterLabelName, "app"))
 	return

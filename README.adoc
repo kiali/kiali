@@ -345,6 +345,29 @@ grafana:
   var_service_dest: VALUE
 ----
 
+|`JAEGER_URL`
+|The URL to the Jaeger server. When not set, the URL may be automatically detected from OpenShift or Kubernetes API.
+[source,yaml]
+----
+jaeger:
+  url: VALUE
+----
+
+|`JAEGER_SERVICE_NAMESPACE`
+|The Kubernetes namespace that holds the Jaeger service. This configuration is ignored if `JAEGER_URL` is set. Default is `istio-system`.
+[source,yaml]
+----
+jaeger:
+  service_namespace: VALUE
+----
+
+|`JAEGER_SERVICE`
+|The OpenShift route name or the Kubernetes service name for Jaeger. This configuration is ignored if `JAEGER_URL` is set. Default is `jaeger-query`.
+[source,yaml]
+----
+jaeger:
+  service: VALUE
+----
 |===
 
 == Additional Notes

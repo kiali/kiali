@@ -1,0 +1,26 @@
+package handlers
+
+import (
+	"github.com/kiali/swscore/kubernetes"
+	"k8s.io/api/core/v1"
+)
+
+func getOpenshiftRouteURL(namespace string, name string) (string, error) {
+	client, err := kubernetes.NewOSRouteClient()
+	if err != nil {
+		return "", err
+	}
+	return client.GetRoute(namespace, name)
+}
+
+func getService(namespace string, service string) (*v1.ServiceSpec, error) {
+	client, err := kubernetes.NewClient()
+	if err != nil {
+		return nil, err
+	}
+	details, err := client.GetServiceDetails(namespace, service)
+	if err != nil {
+		return nil, err
+	}
+	return &details.Service.Spec, nil
+}
