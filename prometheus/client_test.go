@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/kiali/swscore/config"
-	"github.com/kiali/swscore/prometheus/prometheustest"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
 func setupMocked() (*Client, *prometheustest.PromAPIMock, error) {

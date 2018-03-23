@@ -3,7 +3,7 @@ package routing
 import (
 	"net/http"
 
-	"github.com/kiali/swscore/handlers"
+	"github.com/kiali/kiali/handlers"
 )
 
 // Route describes a single route

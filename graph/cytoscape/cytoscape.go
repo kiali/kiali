@@ -19,9 +19,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kiali/swscore/graph/options"
-	"github.com/kiali/swscore/graph/tree"
-	"github.com/kiali/swscore/log"
+	"github.com/kiali/kiali/graph/options"
+	"github.com/kiali/kiali/graph/tree"
+	"github.com/kiali/kiali/log"
 )
 
 type NodeData struct {

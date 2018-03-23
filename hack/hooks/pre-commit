@@ -1,4 +1,4 @@
-gofiles=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$')
+gofiles=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$' | grep -v '^vendor\/')
 [ -z "$gofiles" ] && exit 0
 
 unformatted=$(gofmt -l $gofiles)

@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/kiali/swscore/kubernetes"
+	"github.com/kiali/kiali/kubernetes"
 )
 
 type RouteRules []RouteRule

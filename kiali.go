@@ -10,10 +10,10 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/kiali/swscore/config"
-	"github.com/kiali/swscore/log"
-	"github.com/kiali/swscore/server"
-	"github.com/kiali/swscore/status"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/server"
+	"github.com/kiali/kiali/status"
 )
 
 // Identifies the build. These are set via ldflags during the build (see Makefile).
@@ -41,8 +41,8 @@ func main() {
 	validateFlags()
 
 	// log startup information
-	log.Infof("SWS: Version: %v, Commit: %v\n", version, commitHash)
-	log.Debugf("SWS: Command line: [%v]", strings.Join(os.Args, " "))
+	log.Infof("Kiali: Version: %v, Commit: %v\n", version, commitHash)
+	log.Debugf("Kiali: Command line: [%v]", strings.Join(os.Args, " "))
 
 	// load config file if specified, otherwise, rely on environment variables to configure us
 	if *argConfigFile != "" {
@@ -55,14 +55,14 @@ func main() {
 		log.Infof("No configuration file specified. Will rely on environment for configuration.")
 		config.Set(config.NewConfig())
 	}
-	log.Tracef("SWS Configuration:\n%s", config.Get())
+	log.Tracef("Kiali Configuration:\n%s", config.Get())
 
 	if err := validateConfig(); err != nil {
 		glog.Fatal(err)
 	}
 
 	consoleVersion := determineConsoleVersion()
-	log.Infof("SWS: Console version: %v", consoleVersion)
+	log.Infof("Kiali: Console version: %v", consoleVersion)
 
 	status.Put(status.ConsoleVersion, consoleVersion)
 	status.Put(status.CoreVersion, version)

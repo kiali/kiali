@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 spec:
   type: NodePort
   ports:
@@ -18,30 +18,30 @@ spec:
     protocol: TCP
     port: 20001
   selector:
-    app: sws
+    app: kiali
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 spec:
   backend:
-    serviceName: sws
+    serviceName: kiali
     servicePort: 20001
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sws
+      app: kiali
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -49,18 +49,18 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      name: sws
+      name: kiali
       labels:
-        app: sws
+        app: kiali
     spec:
-      serviceAccount: sws
+      serviceAccount: kiali
       containers:
       - image: ${IMAGE_NAME}:${IMAGE_VERSION}
-        name: sws
+        name: kiali
         command:
-        - "/opt/sws/sws"
+        - "/opt/kiali/kiali"
         - "-config"
-        - "/sws-configuration/config.yaml"
+        - "/kiali-configuration/config.yaml"
         - "-v"
         - "${VERBOSE_MODE}"
         env:
@@ -69,19 +69,19 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         volumeMounts:
-        - name: sws-configuration
-          mountPath: "/sws-configuration"
+        - name: kiali-configuration
+          mountPath: "/kiali-configuration"
       volumes:
-      - name: sws-configuration
+      - name: kiali-configuration
         configMap:
-          name: sws
+          name: kiali
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 rules:
 - apiGroups: [""]
   attributeRestrictions: null
@@ -109,14 +109,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 roleRef:
   kind: ClusterRole
-  name: sws
+  name: kiali
   apiGroup: rbac.authorization.k8s.io
 subjects:
 - kind: ServiceAccount
-  name: sws
+  name: kiali
   namespace: ${NAMESPACE}

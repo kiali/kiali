@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/swscore/config"
+	"github.com/kiali/kiali/config"
 )
 
 // Client for Prometheus API.

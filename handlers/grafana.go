@@ -7,9 +7,9 @@ import (
 
 	"k8s.io/api/core/v1"
 
-	"github.com/kiali/swscore/config"
-	"github.com/kiali/swscore/log"
-	"github.com/kiali/swscore/models"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 )
 
 type osRouteSupplier func(string, string) (string, error)

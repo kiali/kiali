@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 spec:
   type: NodePort
   ports:
@@ -18,49 +18,49 @@ spec:
     protocol: TCP
     port: 20001
   selector:
-    app: sws
+    app: kiali
 ---
 apiVersion: v1
 kind: Route
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 spec:
   to:
     kind: Service
-    name: sws
+    name: kiali
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sws
+      app: kiali
   template:
     metadata:
-      name: sws
+      name: kiali
       labels:
-        app: sws
+        app: kiali
     strategy:
       rollingUpdate:
         maxSurge: 1
         maxAvailable: 1
       type: RollingUpdate
     spec:
-      serviceAccount: sws
+      serviceAccount: kiali
       containers:
       - image: ${IMAGE_NAME}:${IMAGE_VERSION}
-        name: sws
+        name: kiali
         command:
-        - "/opt/sws/sws"
+        - "/opt/kiali/kiali"
         - "-config"
-        - "/sws-configuration/config.yaml"
+        - "/kiali-configuration/config.yaml"
         - "-v"
         - "${VERBOSE_MODE}"
         env:
@@ -69,19 +69,19 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         volumeMounts:
-        - name: sws-configuration
-          mountPath: "/sws-configuration"
+        - name: kiali-configuration
+          mountPath: "/kiali-configuration"
       volumes:
-      - name: sws-configuration
+      - name: kiali-configuration
         configMap:
-          name: sws
+          name: kiali
 ---
 apiVersion: v1
 kind: ClusterRole
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 rules:
 - apiGroups: ["", "apps", "autoscaling"]
   attributeRestrictions: null
@@ -143,12 +143,12 @@ rules:
 apiVersion: v1
 kind: ClusterRoleBinding
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 roleRef:
-  name: sws
+  name: kiali
 subjects:
 - kind: ServiceAccount
-  name: sws
+  name: kiali
   namespace: ${NAMESPACE}

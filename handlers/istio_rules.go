@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/kiali/swscore/log"
-	"github.com/kiali/swscore/models"
-
 	"k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 )
 
 func IstioRuleList(w http.ResponseWriter, r *http.Request) {

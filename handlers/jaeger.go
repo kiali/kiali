@@ -3,10 +3,11 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"github.com/kiali/swscore/config"
-	"github.com/kiali/swscore/log"
-	"github.com/kiali/swscore/models"
 	"net/http"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 )
 
 // GetjaegerInfo provides the jaeger URLo, first by checking if a config exists

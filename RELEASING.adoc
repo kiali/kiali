@@ -1,11 +1,11 @@
-= Releasing SWS
+= Releasing Kiali
 
-This document gives the steps required to perform a release of SWS. This document is only useful to SWS release managers.
+This document gives the steps required to perform a release of Kiali. This document is only useful to Kiali release managers.
 
 == Steps
 
 The steps to perform a release are very simple and easy to execute thanks to the way link:.travis.yml[Travis] is setup.
-Before running these steps, it is assumed the link:https://github.com/kiali/swscore/tree/master[master] branch is all up to date and includes all code that is to be released.
+Before running these steps, it is assumed the link:https://github.com/kiali/kiali/tree/master[master] branch is all up to date and includes all code that is to be released.
 
 1) Update the link:Makefile[] so the VERSION variable is set to the new version number of the upcoming release. For example,
 
@@ -21,7 +21,7 @@ $ git commit -m "New release"
 $ git push origin master
 ```
 
-NOTE: At this point, Travis will run the test suite, build the binary, and push the "latest" docker images to link:https://hub.docker.com/r/jmazzitelli/sws[DockerHub].
+NOTE: At this point, Travis will run the test suite, build the binary, and push the "latest" docker images to link:https://hub.docker.com/r/kiali/kiali[DockerHub].
 
 3) Once Travis is "green" (which confirms all tests have passed and the latest images have been pushed to DockerHub), you can now tag the release. For example,
 
@@ -42,9 +42,9 @@ Now that the release is done, you will want to bump up the version with a new ve
 Once the above steps have been performed, the release is complete.
 There is now a git tag that marks the code that produced the release and there are DockerHub images for that release.
 
-* link:https://github.com/kiali/swscore/tags[Git Tags]
+* link:https://github.com/kiali/kiali/tags[Git Tags]
 * DockerHub images:
-** link:https://hub.docker.com/r/jmazzitelli/sws/tags/[SWS]
+** link:https://hub.docker.com/r/kiali/kiali/tags/[Kiali]
 
 == How It Works
 

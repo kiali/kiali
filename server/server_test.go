@@ -17,8 +17,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kiali/swscore/config"
-	"github.com/kiali/swscore/config/security"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/config/security"
 )
 
 const (

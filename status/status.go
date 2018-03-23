@@ -1,8 +1,8 @@
-// status is a simple package for offering up various status information from SWS.
+// status is a simple package for offering up various status information from Kiali.
 package status
 
 const (
-	name           = "SWS"
+	name           = "Kiali"
 	ConsoleVersion = name + " console version"
 	CoreVersion    = name + " core version"
 	CoreCommitHash = name + " core commit hash"

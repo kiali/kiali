@@ -46,12 +46,12 @@ import (
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/swscore/graph/cytoscape"
-	"github.com/kiali/swscore/graph/options"
-	"github.com/kiali/swscore/graph/tree"
-	"github.com/kiali/swscore/graph/vizceral"
-	"github.com/kiali/swscore/log"
-	"github.com/kiali/swscore/prometheus"
+	"github.com/kiali/kiali/graph/cytoscape"
+	"github.com/kiali/kiali/graph/options"
+	"github.com/kiali/kiali/graph/tree"
+	"github.com/kiali/kiali/graph/vizceral"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus"
 )
 
 // GraphNamespace is a REST http.HandlerFunc handling namespace-wide servicegraph

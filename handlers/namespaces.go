@@ -4,9 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/kiali/swscore/log"
-	"github.com/kiali/swscore/models"
-	"github.com/kiali/swscore/prometheus"
+
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus"
 )
 
 func NamespaceList(w http.ResponseWriter, r *http.Request) {

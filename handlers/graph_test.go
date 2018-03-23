@@ -7,15 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kiali/swscore/prometheus/prometheustest"
-
 	"github.com/gorilla/mux"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/kiali/swscore/config"
-	"github.com/kiali/swscore/prometheus"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
 // Setup mock

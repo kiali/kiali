@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/kiali/swscore/kubernetes"
-	"github.com/kiali/swscore/log"
-	"github.com/kiali/swscore/models"
-	"github.com/kiali/swscore/prometheus"
-
 	"k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus"
 )
 
 const (
