@@ -17,14 +17,8 @@ export class InOutRateTable extends React.Component<InOutRateTablePropType, {}> 
   render() {
     const inErrRate: number = this.props.inRate4xx + this.props.inRate5xx;
     const outErrRate: number = this.props.outRate4xx + this.props.outRate5xx;
-    let percentInErr: number = 0;
-    let percentOutErr: number = 0;
-    if (this.props.inRate !== 0) {
-      percentInErr = inErrRate / this.props.inRate * 100;
-    }
-    if (this.props.outRate !== 0) {
-      percentOutErr = outErrRate / this.props.outRate * 100;
-    }
+    const percentInErr = this.props.inRate === 0 ? 0 : inErrRate / this.props.inRate * 100;
+    const percentOutErr = this.props.outRate === 0 ? 0 : outErrRate / this.props.outRate * 100;
     return (
       <div>
         <strong>{this.props.title}</strong>
@@ -36,7 +30,7 @@ export class InOutRateTable extends React.Component<InOutRateTablePropType, {}> 
               <th>3xx</th>
               <th>4xx</th>
               <th>5xx</th>
-              <th>% Error</th>
+              <th>%Error</th>
             </tr>
           </thead>
           <tbody>
@@ -46,7 +40,7 @@ export class InOutRateTable extends React.Component<InOutRateTablePropType, {}> 
               <td>{this.props.inRate3xx.toFixed(2)}</td>
               <td>{this.props.inRate4xx.toFixed(2)}</td>
               <td>{this.props.inRate5xx.toFixed(2)}</td>
-              <td>{inErrRate.toFixed(2)}</td>
+              <td>{percentInErr.toFixed(2)}</td>
             </tr>
             <tr>
               <td>Out</td>
@@ -54,7 +48,7 @@ export class InOutRateTable extends React.Component<InOutRateTablePropType, {}> 
               <td>{this.props.outRate3xx.toFixed(2)}</td>
               <td>{this.props.outRate4xx.toFixed(2)}</td>
               <td>{this.props.outRate5xx.toFixed(2)}</td>
-              <td>{outErrRate.toFixed(2)}</td>
+              <td>{percentOutErr.toFixed(2)}</td>
             </tr>
             <tr>
               <td>In</td>
