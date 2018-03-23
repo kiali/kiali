@@ -59,6 +59,10 @@ export const getGrafanaInfo = () => {
   return newRequest('get', `/api/grafana`, {}, {});
 };
 
+export const getJaegerInfo = () => {
+  return newRequest('get', `/api/jaeger`, {}, {});
+};
+
 export const GetGraphElements = (namespace: String, params: any) => {
   return newRequest('get', `/api/namespaces/${namespace}/graph`, params, {});
 };

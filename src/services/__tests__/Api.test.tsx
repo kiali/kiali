@@ -32,6 +32,15 @@ describe('#getGrafanaInfo using Promises', () => {
   });
 });
 
+describe('#getJaegerInfo using Promises', () => {
+  it('should load the information about jaeger', () => {
+    return API.getGrafanaInfo().then(data => {
+      expect(data).toBeDefined();
+      expect(data.url).toBeDefined();
+    });
+  });
+});
+
 describe('#GetGraphElements using Promises', () => {
   it('should load service detail data', () => {
     return API.GetGraphElements('ISTIO_SYSTEM', null).then(({ data }) => {

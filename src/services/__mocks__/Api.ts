@@ -41,6 +41,19 @@ export const getGrafanaInfo = () => {
   });
 };
 
+export const getJaegerInfo = () => {
+  return new Promise((resolve, reject) => {
+    fs.readFile(`./src/services/__mockData__/getJaegerInfo.json`, 'utf8', (err, data) => {
+      if (err) {
+        reject(err);
+      } else {
+        // Parse the data as JSON and put in the key entity (just like the request library does)
+        resolve(JSON.parse(data));
+      }
+    });
+  });
+};
+
 export const GetGraphElements = (namespace: string, params: any) => {
   if (GraphData.hasOwnProperty(namespace)) {
     return Promise.resolve({ data: GraphData[namespace] });
