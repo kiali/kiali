@@ -16,8 +16,13 @@ export class GraphStyles {
           'border-width': '1px',
           'border-color': '#030303', // pf-black
           'font-size': '10px',
-          'text-valign': 'bottom',
-          'text-halign': 'right'
+          'text-valign': 'center',
+          'text-halign': 'center',
+          'text-outline-color': '#f9d67a',
+          'text-outline-width': '2px',
+          'text-wrap': 'wrap',
+          'overlay-padding': '6px',
+          'z-index': '10'
         }
       },
       {
@@ -44,8 +49,9 @@ export class GraphStyles {
         selector: 'edge',
         css: {
           width: 3,
-          'font-size': '8px',
-          'text-margin-x': '25px',
+          'font-size': '9px',
+          'text-margin-x': '10px',
+          'text-rotation': 'autorotate',
           content: 'data(text)',
           'target-arrow-shape': 'vee',
           'line-color': 'data(color)',
