@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Spinner, LineChart } from 'patternfly-react';
+import { Alert, Spinner, LineChart } from 'patternfly-react';
 
 import ServiceId from '../../types/ServiceId';
 import * as M from '../../types/Metrics';
@@ -18,6 +18,7 @@ interface GrafanaInfo {
 
 type ServiceMetricsState = {
   loading: boolean;
+  alertDetails?: string;
   requestCountIn?: M.MetricGroup;
   requestCountOut?: M.MetricGroup;
   requestSizeIn?: M.Histogram;
@@ -37,6 +38,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       loading: false
     };
     this.onOptionsChanged = this.onOptionsChanged.bind(this);
+    this.dismissAlert = this.dismissAlert.bind(this);
   }
 
   componentDidMount() {
@@ -97,8 +99,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         });
       })
       .catch(error => {
-        // TODO: show error alert
-        this.setState({ loading: false });
+        this.setState({ loading: false, alertDetails: 'Cannot fetch metrics' });
         console.error(error);
       });
   }
@@ -143,7 +144,11 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         }
       })
       .catch(error => {
-        this.setState({ grafanaLinkIn: undefined, grafanaLinkOut: undefined });
+        this.setState({
+          grafanaLinkIn: undefined,
+          grafanaLinkOut: undefined,
+          alertDetails: 'Cannot retrieve Grafana info'
+        });
         console.error(error);
       });
   }
@@ -160,9 +165,14 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     return Math.round(val * 100) / 100;
   }
 
+  dismissAlert() {
+    this.setState({ alertDetails: undefined });
+  }
+
   render() {
     return (
       <div>
+        {this.state.alertDetails && <Alert onDismiss={this.dismissAlert}>{this.state.alertDetails}</Alert>}
         <MetricsOptionsBar onOptionsChanged={this.onOptionsChanged} />
         {this.renderMetrics()}
       </div>
