@@ -1,5 +1,5 @@
 import * as React from 'react';
-import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
+import Badge from '../../components/Badge/Badge';
 import { InOutRateTable } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
@@ -104,7 +104,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           <p>
             <strong>Labels:</strong>
             <br />
-            <ServiceInfoBadge
+            <Badge
               scale={0.8}
               style="plastic"
               leftText="namespace"
@@ -171,7 +171,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       .children()
       .toArray()
       .map((c, i) => (
-        <ServiceInfoBadge
+        <Badge
           scale={0.8}
           style="plastic"
           leftText="version"

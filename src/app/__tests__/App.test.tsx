@@ -28,7 +28,7 @@ process.env.REACT_APP_VERSION = '1.0.1';
 process.env.REACT_APP_GIT_HASH = '89323';
 
 // TODO: properly handle SVG and D3 in the following 2 components
-jest.mock('../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge');
+jest.mock('../../components/Badge/Badge');
 jest.mock('../../components/SummaryPanel/RpsChart');
 jest.mock('../../components/SummaryPanel/ErrorRatePieChart');
 

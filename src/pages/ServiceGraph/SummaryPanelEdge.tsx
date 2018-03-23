@@ -1,5 +1,5 @@
 import * as React from 'react';
-import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
+import Badge from '../../components/Badge/Badge';
 import { RateTable } from '../../components/SummaryPanel/RateTable';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
@@ -134,8 +134,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   private renderLabels = (ns: string, ver: string) => (
     // color="#2d7623" is pf-green-500
     <>
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="namespace" rightText={ns} color="#2d7623" />
-      <ServiceInfoBadge scale={0.8} style="plastic" leftText="version" rightText={ver} color="#2d7623" />
+      <Badge scale={0.8} style="plastic" leftText="namespace" rightText={ns} color="#2d7623" />
+      <Badge scale={0.8} style="plastic" leftText="version" rightText={ver} color="#2d7623" />
     </>
   );
 

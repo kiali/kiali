@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { ServiceInfoBadge } from '../index';
+import Badge from '../../../../components/Badge/Badge';
 import PfInfoCard from '../../../../components/Pf/PfInfoCard';
 
 const CardContent = (
@@ -10,7 +10,7 @@ const CardContent = (
     </div>
     <ul style={{ listStyleType: 'none' }}>
       <li key="pod_labels_badge_">
-        <ServiceInfoBadge scale={0.8} style="plastic" color="green" leftText="my_key" rightText="my_value" />
+        <Badge scale={0.8} style="plastic" color="green" leftText="my_key" rightText="my_value" />
       </li>
     </ul>
   </div>

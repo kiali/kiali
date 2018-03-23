@@ -1,5 +1,5 @@
 import * as React from 'react';
-import ServiceInfoBadge from './ServiceInfoBadge';
+import Badge from '../../../components/Badge/Badge';
 import { Deployment } from '../../../types/ServiceInfo';
 import { Col, Row, Icon } from 'patternfly-react';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
@@ -28,7 +28,7 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
                 </p>
                 <div key="labels">
                   {Object.keys(deployment.labels || new Map()).map((key, i) => (
-                    <ServiceInfoBadge
+                    <Badge
                       key={'deployment_' + i}
                       scale={0.8}
                       style="plastic"
