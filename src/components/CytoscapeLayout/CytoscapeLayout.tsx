@@ -143,7 +143,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   }
 
   updateGraphElements(props: any) {
-    const params = { interval: props.duration };
+    const params = { interval: props.duration + 's' };
     this.setState({ loading: true });
 
     API.GetGraphElements(props.namespace, params)
