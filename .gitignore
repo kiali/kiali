@@ -14,7 +14,7 @@
 .glide/
 
 # The compliled binary
-sws
+kiali
 
 # Files specific to our build process
 _output

@@ -2,8 +2,9 @@ package kubernetes
 
 import (
 	"fmt"
-	"github.com/kiali/swscore/log"
 	"strings"
+
+	"github.com/kiali/kiali/log"
 )
 
 // GetIstioRules returns a list of mixer rules for a given namespace.

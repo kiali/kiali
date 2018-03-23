@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: sws
+  name: kiali
   labels:
-    app: sws
+    app: kiali
 data:
   config.yaml: |
     server:
       port: 20001
-      static_content_root_directory: /opt/sws/console
+      static_content_root_directory: /opt/kiali/console
       credentials:
         username: jdoe
         password: password

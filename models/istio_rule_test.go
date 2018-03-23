@@ -3,8 +3,9 @@ package models
 import (
 	"testing"
 
-	"github.com/kiali/swscore/kubernetes"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 func TestIstioRulesParsing(t *testing.T) {

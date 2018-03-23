@@ -3,12 +3,12 @@ package kubernetes
 import (
 	"strings"
 
-	"github.com/kiali/swscore/config"
-
 	"k8s.io/api/apps/v1beta1"
 	autoscalingV1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/config"
 )
 
 const (

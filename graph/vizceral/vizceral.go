@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kiali/swscore/graph/tree"
+	"github.com/kiali/kiali/graph/tree"
 )
 
 type Metadata struct {

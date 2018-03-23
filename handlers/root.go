@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/kiali/swscore/status"
+	"github.com/kiali/kiali/status"
 )
 
 func Root(w http.ResponseWriter, r *http.Request) {

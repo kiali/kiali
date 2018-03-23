@@ -5,7 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/kiali/swscore/config"
+	"github.com/kiali/kiali/config"
 )
 
 func TestDrawPathProperly(t *testing.T) {

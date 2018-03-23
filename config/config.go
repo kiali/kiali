@@ -9,8 +9,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/kiali/swscore/config/security"
-	"github.com/kiali/swscore/log"
+	"github.com/kiali/kiali/config/security"
+	"github.com/kiali/kiali/log"
 )
 
 // Environment vars can define some default values.

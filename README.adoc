@@ -1,4 +1,4 @@
-= SWS image:https://travis-ci.org/kiali/swscore.svg["Build Status", link="https://travis-ci.org/kiali/swscore"]
+= Kiali image:https://travis-ci.org/kiali/kiali.svg["Build Status", link="https://travis-ci.org/kiali/kiali"]
 :toc: macro
 :toc-title:
 
@@ -6,11 +6,11 @@ toc::[]
 
 == Introduction
 
-An SWS application implemented in the Go Programming Language.
+The Kiali server-side application implemented in the Go Programming Language.
 
 === Docker Image
 
-SWS is published as a docker image on https://hub.docker.com/r/jmazzitelli/sws[Docker hub at jmazzitelli/sws]
+Kiali is published as a docker image on https://hub.docker.com/r/kiali/kiali[Docker hub at kiali/kiali]
 
 === License and Copyright
 
@@ -19,54 +19,54 @@ See the link:./LICENSE[LICENSE file].
 == Building
 
 [NOTE]
-These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language] which must be at least version 1.8.3, (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker], and (4) make. To run SWS on OpenShift after you build it, it is assumed you have a running OpenShift environment available to you. If you do not, you can find a set of link:#setting-up-openshift[instructions on how to set up OpenShift below]. To run SWS on Kubernetes after you built it, it is assumed you have a running Kubernetes environment available to you.
+These build instructions assume you have the following installed on your system: (1) link:http://golang.org/doc/install[Go Programming Language] which must be at least version 1.8.3, (2) link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git], (3) link:https://docs.docker.com/installation/[Docker], and (4) make. To run Kiali on OpenShift after you build it, it is assumed you have a running OpenShift environment available to you. If you do not, you can find a set of link:#setting-up-openshift[instructions on how to set up OpenShift below]. To run Kiali on Kubernetes after you built it, it is assumed you have a running Kubernetes environment available to you.
 
-To build SWS:
+To build Kiali:
 
-* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/go/kiali/swscore" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH.
+* Clone this repository inside a GOPATH. These instructions will use the example GOPATH of "/source/kiali/kiali" but you can use whatever you want. Just change the first line of the below instructions to use your GOPATH.
 
 [source,shell]
 ----
-export GOPATH=/source/go/kiali/swscore
+export GOPATH=/source/kiali/kiali
 mkdir -p $GOPATH
 cd $GOPATH
 mkdir -p src/github.com/kiali
 cd src/github.com/kiali
-git clone git@github.com:kiali/swscore
+git clone git@github.com:kiali/kiali
 export PATH=${PATH}:${GOPATH}/bin
 ----
 
-* Install Glide - the Go dependency management tool that SWS uses to build itself
+* Install Glide - the Go dependency management tool that Kiali uses to build itself
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/swscore
+cd ${GOPATH}/src/github.com/kiali/kiali
 make dep-install
 ----
 
-* Tell the dependency manager tool to update the SWS dependencies
+* Tell the dependency manager tool to update the Kiali dependencies
 [NOTE]
 You should only run this command if you add, remove, or modify a dependency. If you are simply git cloning and building from source, you should skip this step.
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/swscore
+cd ${GOPATH}/src/github.com/kiali/kiali
 make dep-update
 ----
 
-* Build SWS
+* Build Kiali
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/swscore
+cd ${GOPATH}/src/github.com/kiali/kiali
 make build
 ----
 
-* At this point you can run the SWS tests
+* At this point you can run the Kiali tests
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/swscore
+cd ${GOPATH}/src/github.com/kiali/kiali
 make test
 ----
 
@@ -84,39 +84,39 @@ You can alternatively build OpenShift Origin from source and run that. See link:
 
 ==== Building the Docker Image
 
-Create the SWS docker image through the "docker-build" make target:
+Create the Kiali docker image through the "docker-build" make target:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/swscore
+cd ${GOPATH}/src/github.com/kiali/kiali
 make docker-build
 ----
 
-==== Deploying SWS to OpenShift
+==== Deploying Kiali to OpenShift
 
 [NOTE]
-Before deploying and running SWS, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 0.6.0+*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio[convienence script] provided to you to help quickly get Istio installed.
+Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 0.6.0+*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio[convienence script] provided to you to help quickly get Istio installed.
 
 [NOTE]
 The following commands assume that the `oc` command is available in the user's path and that the user is logged in.
 
-The deploy and undeploy commands are automated in the Makefile. The following will undeploy an old installation of SWS, if available, and deploy a new one:
+The deploy and undeploy commands are automated in the Makefile. The following will undeploy an old installation of Kiali, if available, and deploy a new one:
 ----
 make openshift-deploy
 ----
 
-==== Undeploying SWS from OpenShift
+==== Undeploying Kiali from OpenShift
 
-If you want to remove SWS from your OpenShift environment, you can do so by running the following command:
+If you want to remove Kiali from your OpenShift environment, you can do so by running the following command:
 
 [source,shell]
 ----
 make openshift-undeploy
 ----
 
-==== Reloading SWS image in OpenShift
+==== Reloading Kiali image in OpenShift
 
-If you already have SWS installed but you want to recreate the pod with a new docker image, you can run the following command:
+If you already have Kiali installed but you want to recreate the pod with a new docker image, you can run the following command:
 
 [source,shell]
 ----
@@ -131,11 +131,11 @@ The following section assumes that the user has link:https://github.com/kubernet
 
 ==== Building the Docker Image
 
-Create the SWS docker image through the "docker-build" make target:
+Create the Kiali docker image through the "docker-build" make target:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/swscore
+cd ${GOPATH}/src/github.com/kiali/kiali
 make docker-build
 ----
 
@@ -143,38 +143,38 @@ Note that if you are using minikube, you can build the docker image and push it 
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/swscore
+cd ${GOPATH}/src/github.com/kiali/kiali
 make minikube-docker
 ----
 
-==== Deploying SWS to Kubernetes
+==== Deploying Kiali to Kubernetes
 
 [NOTE]
-Before deploying and running SWS, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 0.6.0+*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio[convienence script] provided to you to help quickly get Istio installed.
+Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 0.6.0+*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio[convienence script] provided to you to help quickly get Istio installed.
 
 [NOTE]
 The following commands assume that the `kubectl` command is available in the user's path and that the user is logged in.
 
 [NOTE]
-In order to deploy on Kubernetes and to be able to access the deployed service, you must ensure you have Ingress support. If you are using minikube, you need to run `minikube addons enable ingress` and add `sws` as a hostname in your `/etc/hosts` via something like this command: `echo "$(minikube ip) sws" | sudo tee -a /etc/hosts`
+In order to deploy on Kubernetes and to be able to access the deployed service, you must ensure you have Ingress support. If you are using minikube, you need to run `minikube addons enable ingress` and add `kiali` as a hostname in your `/etc/hosts` via something like this command: `echo "$(minikube ip) kiali" | sudo tee -a /etc/hosts`
 
-The deploy and undeploy commands are automated in the Makefile. The following will undeploy an old installation of SWS, if available, and deploy a new one:
+The deploy and undeploy commands are automated in the Makefile. The following will undeploy an old installation of Kiali, if available, and deploy a new one:
 ----
 make k8s-deploy
 ----
 
-==== Undeploying SWS from Kubernetes
+==== Undeploying Kiali from Kubernetes
 
-If you want to remove SWS from your Kubernetes environment, you can do so by running the following command:
+If you want to remove Kiali from your Kubernetes environment, you can do so by running the following command:
 
 [source,shell]
 ----
 make k8s-undeploy
 ----
 
-==== Reloading SWS image in Kubernetes
+==== Reloading Kiali image in Kubernetes
 
-If you already have SWS installed but you want to recreate the pod with a new docker image, you can run the following command:
+If you already have Kiali installed but you want to recreate the pod with a new docker image, you can run the following command:
 
 [source,shell]
 ----
@@ -183,22 +183,22 @@ make k8s-reload-image
 
 === Running Standalone
 
-Sometimes you may want to run SWS outside of any container environment, perhaps for debugging purposes. To do this, run:
+Sometimes you may want to run Kiali outside of any container environment, perhaps for debugging purposes. To do this, run:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/swscore
+cd ${GOPATH}/src/github.com/kiali/kiali
 make install
 make run
 ----
 
-The "install" target installs the SWS executable in your GOPATH /bin directory so you can run it outside of the Makefile:
+The "install" target installs the Kiali executable in your GOPATH /bin directory so you can run it outside of the Makefile:
 
 [source,shell]
 ----
-cd ${GOPATH}/src/github.com/kiali/swscore
+cd ${GOPATH}/src/github.com/kiali/kiali
 make install
-${GOPATH}/bin/sws -config <your-config-file>
+${GOPATH}/bin/kiali -config <your-config-file>
 ----
 
 == Environment Variables
@@ -374,20 +374,20 @@ jaeger:
 
 === Running the UI Outside the Core
 
-When developing the http://github.com/kiali/swsui[SWS UI] you will find it useful to run it outside of the core to make it easier to update the UI code and see the changes without having to recompile. The prefered approach for this is to use a proxy on the UI to mount the core. The process is described https://github.com/kiali/swsui#developing[here].
+When developing the http://github.com/kiali/kiali-ui[Kiali UI] you will find it useful to run it outside of the core to make it easier to update the UI code and see the changes without having to recompile. The prefered approach for this is to use a proxy on the UI to mount the core. The process is described https://github.com/kiali/kiali-ui#developing[here].
 
 === Running A Locally Built UI Inside the Core
 
-If you are developing the UI on your local machine but you want to see it deployed and running inside of the core server, you can do so by setting the environment variable CONSOLE_VERSION to the value "local" when building the docker image via the `docker-build` target. By default, your UI's build/ directory is assumed to be in a directory called `swsui` that is a peer directory of the GOPATH root directory for the core server. If it is not, you can set the environment variable CONSOLE_LOCAL_DIR to the value of the path of the root directory for the UI such that `$CONSOLE_LOCAL_DIR/build` contains the generated build files for the UI.
+If you are developing the UI on your local machine but you want to see it deployed and running inside of the core server, you can do so by setting the environment variable CONSOLE_VERSION to the value "local" when building the docker image via the `docker-build` target. By default, your UI's build/ directory is assumed to be in a directory called `kiali-ui` that is a peer directory of the GOPATH root directory for the core server. If it is not, you can set the environment variable CONSOLE_LOCAL_DIR to the value of the path of the root directory for the UI such that `$CONSOLE_LOCAL_DIR/build` contains the generated build files for the UI.
 
-For example, if your GOPATH directory for the swscore project is `/source/kiali/swscore` and you have git cloned the swsui repository in `/source/kiali/swsui` then you do not need to set CONSOLE_LOCAL_DIR. You can embed your locally built console into the core docker image via:
+For example, if your GOPATH directory for the Kiali project is `/source/kiali/kiali` and you have git cloned the Kiali UI repository in `/source/kiali/kiali-ui` then you do not need to set CONSOLE_LOCAL_DIR. You can embed your locally built console into the core docker image via:
 
 [source,shell]
 ----
 CONSOLE_VERSION=local make docker-build
 ----
 
-If you git cloned the swsui repository in directory `/my/git/repo` and have built the UI there (such that the build files are located at `/my/git/repo/build`) then you can embed that locally built console into the core docker image via:
+If you git cloned the Kiali UI repository in directory `/my/git/repo` and have built the UI there (such that the build files are located at `/my/git/repo/build`) then you can embed that locally built console into the core docker image via:
 
 [source,shell]
 ----

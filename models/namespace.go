@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/kiali/swscore/kubernetes"
 	"k8s.io/api/core/v1"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 type Namespace struct {

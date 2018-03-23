@@ -2,11 +2,11 @@ FROM centos:centos7
 
 LABEL maintainer="TODO <TODO-dev@lists.jboss.org>"
 
-ENV SWS_HOME=/opt/sws \
-    PATH=$SWS_HOME:$PATH
+ENV KIALI_HOME=/opt/kiali \
+    PATH=$KIALI_HOME:$PATH
 
-COPY sws $SWS_HOME/
+COPY kiali $KIALI_HOME/
 
-ADD console $SWS_HOME/console/
+ADD console $KIALI_HOME/console/
 
-ENTRYPOINT ["/opt/sws/sws"]
+ENTRYPOINT ["/opt/kiali/kiali"]

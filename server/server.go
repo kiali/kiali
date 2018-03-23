@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/kiali/swscore/config"
-	"github.com/kiali/swscore/config/security"
-	"github.com/kiali/swscore/log"
-	"github.com/kiali/swscore/routing"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/config/security"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/routing"
 )
 
 type Server struct {

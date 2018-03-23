@@ -4,10 +4,10 @@ VERSION ?= 0.0.1.Final-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # The minimum Go version that must be used to build the app.
-GO_VERSION_SWS = 1.8.3
+GO_VERSION_KIALI = 1.8.3
 
 # Identifies the docker image that will be built and deployed.
-DOCKER_NAME ?= jmazzitelli/sws
+DOCKER_NAME ?= kiali/kiali
 DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
 
@@ -19,7 +19,7 @@ DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
 # later want to change the CONSOLE_VERSION then you must run
 # the 'clean' target first before re-running the 'docker' target.
 CONSOLE_VERSION ?= latest
-CONSOLE_LOCAL_DIR ?= ../../../../../swsui
+CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 
 # Indicates the log level the app will use when started.
 # <4=INFO
@@ -41,8 +41,8 @@ all: build
 
 clean:
 	@echo Cleaning...
-	@rm -f sws
-	@rm -rf ${GOPATH}/bin/sws
+	@rm -f kiali
+	@rm -rf ${GOPATH}/bin/kiali
 	@rm -rf ${GOPATH}/pkg/*
 	@rm -rf _output/docker
 
@@ -54,12 +54,12 @@ git-init:
 	cp hack/hooks/* .git/hooks
 
 go-check:
-	@hack/check_go_version.sh "${GO_VERSION_SWS}"
+	@hack/check_go_version.sh "${GO_VERSION_KIALI}"
 
 build: go-check
 	@echo Building...
 	${GO_BUILD_ENVVARS} go build \
-		-o ${GOPATH}/bin/sws -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
+		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
 install:
 	@echo Installing...
@@ -85,7 +85,7 @@ test-debug:
 
 run:
 	@echo Running...
-	@${GOPATH}/bin/sws -v ${VERBOSE_MODE} -config config.yaml
+	@${GOPATH}/bin/kiali -v ${VERBOSE_MODE} -config config.yaml
 
 #
 # dep targets - dependency management
@@ -128,7 +128,7 @@ endif
 	@echo Preparing docker image files...
 	@mkdir -p _output/docker
 	@cp -r deploy/docker/* _output/docker
-	@cp ${GOPATH}/bin/sws _output/docker
+	@cp ${GOPATH}/bin/kiali _output/docker
 
 docker-build: .prepare-docker-image-files
 	@echo Building docker image into local docker daemon...
@@ -140,9 +140,9 @@ docker-build: .prepare-docker-image-files
 		echo "Enabling ingress support to minikube" ; \
 		minikube addons enable ingress ; \
 	fi
-	@grep -q sws /etc/hosts ; \
+	@grep -q kiali /etc/hosts ; \
 	if [ "$$?" != "0" ]; then \
-		echo "/etc/hosts should have SWS so you can access the ingress"; \
+		echo "/etc/hosts should have kiali so you can access the ingress"; \
 	fi
 
 minikube-docker: .prepare-minikube .prepare-docker-image-files
@@ -160,16 +160,16 @@ docker-push:
 openshift-deploy: openshift-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to OpenShift project ${NAMESPACE}
-	oc create -f deploy/openshift/sws-configmap.yaml -n ${NAMESPACE}
-	cat deploy/openshift/sws.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERBOSE_MODE=${VERBOSE_MODE} envsubst | oc create -n ${NAMESPACE} -f -
+	oc create -f deploy/openshift/kiali-configmap.yaml -n ${NAMESPACE}
+	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERBOSE_MODE=${VERBOSE_MODE} envsubst | oc create -n ${NAMESPACE} -f -
 
 openshift-undeploy: .openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
-	oc delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings --selector=app=sws -n ${NAMESPACE}
+	oc delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings --selector=app=kiali -n ${NAMESPACE}
 
 openshift-reload-image: .openshift-validate
 	@echo Refreshing image in OpenShift project ${NAMESPACE}
-	oc delete pod --selector=app=sws -n ${NAMESPACE}
+	oc delete pod --selector=app=kiali -n ${NAMESPACE}
 
 .k8s-validate:
 	@kubectl get namespace ${NAMESPACE} > /dev/null
@@ -177,13 +177,13 @@ openshift-reload-image: .openshift-validate
 k8s-deploy: k8s-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
-	kubectl create -f deploy/kubernetes/sws-configmap.yaml -n ${NAMESPACE}
-	cat deploy/kubernetes/sws.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERBOSE_MODE=${VERBOSE_MODE} envsubst | kubectl create -n ${NAMESPACE} -f -
+	kubectl create -f deploy/kubernetes/kiali-configmap.yaml -n ${NAMESPACE}
+	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERBOSE_MODE=${VERBOSE_MODE} envsubst | kubectl create -n ${NAMESPACE} -f -
 
 k8s-undeploy:
 	@echo Undeploying from Kubernetes namespace ${NAMESPACE}
-	kubectl delete all,secrets,sa,configmaps,deployments,ingresses,clusterroles,clusterrolebindings --selector=app=sws -n ${NAMESPACE}
+	kubectl delete all,secrets,sa,configmaps,deployments,ingresses,clusterroles,clusterrolebindings --selector=app=kiali -n ${NAMESPACE}
 
 k8s-reload-image: .k8s-validate
 	@echo Refreshing image in Kubernetes namespace ${NAMESPACE}
-	kubectl delete pod --selector=app=sws -n ${NAMESPACE}
+	kubectl delete pod --selector=app=kiali -n ${NAMESPACE}
