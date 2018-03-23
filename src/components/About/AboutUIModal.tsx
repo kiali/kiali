@@ -3,8 +3,8 @@ import { AboutModal, Spinner } from 'patternfly-react';
 import * as API from '../../services/Api';
 
 const pfLogo = require('../../img/logo-alt.svg');
-const SWS_CORE_COMMIT_HASH = 'SWS core commit hash';
-const SWS_CORE_VERSION = 'SWS core version';
+const KIALI_CORE_COMMIT_HASH = 'Kiali core commit hash';
+const KIALI_CORE_VERSION = 'Kiali core version';
 
 type AboutUIModalState = {
   showModal: boolean;
@@ -22,8 +22,8 @@ const getStatus = () => {
     const rawStatus = response['data'];
     return [
       {
-        name: 'swscore',
-        version: `${rawStatus[SWS_CORE_VERSION]} (${rawStatus[SWS_CORE_COMMIT_HASH]})`
+        name: 'kiali',
+        version: `${rawStatus[KIALI_CORE_VERSION]} (${rawStatus[KIALI_CORE_COMMIT_HASH]})`
       }
     ];
   });

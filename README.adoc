@@ -2,8 +2,8 @@
 :toc-title:
 
 toc::[]
-= SWS UI
-image:https://coveralls.io/repos/github/swift-sunshine/swsui/badge.svg?branch=master[Coverage Status, link=https://coveralls.io/github/swift-sunshine/swsui?branch=master]
+= Kiali UI
+image:https://coveralls.io/repos/github/kiali/kiali-ui/badge.svg?branch=master[Coverage Status, link=https://coveralls.io/github/kiali/kiali-ui?branch=master]
 
 == Introduction
 
@@ -29,17 +29,17 @@ reloads any changes to the browser for rapid development.
 
 == Developing
 
-When developing, is usual to run this application outside of https://github.com/swift-sunshine/swscore[swscore].
+When developing, is usual to run this application outside of https://github.com/kiali/kiali[kiali].
 
-Is possible to proxy the API requests without having to push the changes to swscore.
+Is possible to proxy the API requests without having to push the changes to kiali.
 Add the https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#proxying-api-requests-in-development[proxy]
-property to `package.json` with the url of the swscore.
+property to `package.json` with the url of kiali.
 [source, json]
 ----
 {
-  "name": "swsui",
+  "name": "kiali-ui",
   "version": "0.2.1",
-  "proxy": "http://sws-istio-system.127.0.0.1.nip.io",
+  "proxy": "http://kiali-istio-system.127.0.0.1.nip.io",
   "bugs": {
 ...
 ----

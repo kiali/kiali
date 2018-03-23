@@ -1,6 +1,6 @@
 {
-  "short_name": "SWSUI",
-  "name": "Swift Sunshine UI",
+  "short_name": "Kiali-ui",
+  "name": "Kiali UI",
   "icons": [
     {
       "src": "favicon.ico",

@@ -34,7 +34,7 @@
       "name": "servicegraph"
     },
     {
-      "name": "sws"
+      "name": "kiali"
     },
     {
       "name": "zipkin"

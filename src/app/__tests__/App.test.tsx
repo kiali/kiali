@@ -23,7 +23,7 @@ window.getComputedStyle = jest.fn().mockImplementation(element => {
 const mock = new MockAdapter(axios);
 mock.onAny().reply(200);
 
-process.env.REACT_APP_NAME = 'swsui-test';
+process.env.REACT_APP_NAME = 'kiali-ui-test';
 process.env.REACT_APP_VERSION = '1.0.1';
 process.env.REACT_APP_GIT_HASH = '89323';
 
