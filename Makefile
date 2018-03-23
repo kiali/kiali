@@ -117,9 +117,9 @@ else
 	@if [ ! -d "_output/docker/console" ]; then \
 		echo "Downloading console (${CONSOLE_VERSION})..." ; \
 		mkdir _output/docker/console ; \
-		curl $$(npm view swsui@${CONSOLE_VERSION} dist.tarball) \
+		curl $$(npm view @kiali/kiali-ui@${CONSOLE_VERSION} dist.tarball) \
 		| tar zxf - --strip-components=2 --directory _output/docker/console package/build ; \
-		echo "$$(npm view swsui@${CONSOLE_VERSION} version)" > _output/docker/console/version.txt ; \
+		echo "$$(npm view @kiali/kiali-ui@${CONSOLE_VERSION} version)" > _output/docker/console/version.txt ; \
 	fi
 endif
 	@echo "Console version being packaged: $$(cat _output/docker/console/version.txt)"
