@@ -41,7 +41,7 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
 
     const search = routeProps.location.search;
     const params = new URLSearchParams(search);
-    let graphDuration = params.get('interval');
+    let graphDuration = params.get('duration');
     let graphLayout = params.get('layout');
 
     GraphFilters.setGraphNamespace(routeProps.match.params.namespace);
@@ -63,7 +63,7 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
 
   filterChange() {
     this.context.router.history.push(
-      `/service-graph/${GraphFilters.getGraphNamespace()}?layout=${GraphFilters.getGraphLayoutName()}&interval=${GraphFilters.getGraphDuration()}`
+      `/service-graph/${GraphFilters.getGraphNamespace()}?layout=${GraphFilters.getGraphLayoutName()}&duration=${GraphFilters.getGraphDuration()}`
     );
   }
 
