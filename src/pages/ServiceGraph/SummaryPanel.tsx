@@ -14,16 +14,40 @@ export default class SummaryPanel extends React.Component<SummaryPanelPropType, 
     return (
       <div>
         {this.props.data.summaryType === 'edge' ? (
-          <SummaryPanelEdge data={this.props.data} namespace={this.props.namespace} duration={this.props.duration} />
+          <SummaryPanelEdge
+            data={this.props.data}
+            namespace={this.props.namespace}
+            duration={this.props.duration}
+            step={this.props.step}
+            rateInterval={this.props.rateInterval}
+          />
         ) : null}
         {this.props.data.summaryType === 'graph' ? (
-          <SummaryPanelGraph data={this.props.data} namespace={this.props.namespace} duration={this.props.duration} />
+          <SummaryPanelGraph
+            data={this.props.data}
+            namespace={this.props.namespace}
+            duration={this.props.duration}
+            step={this.props.step}
+            rateInterval={this.props.rateInterval}
+          />
         ) : null}
         {this.props.data.summaryType === 'group' ? (
-          <SummaryPanelGroup data={this.props.data} namespace={this.props.namespace} duration={this.props.duration} />
+          <SummaryPanelGroup
+            data={this.props.data}
+            namespace={this.props.namespace}
+            duration={this.props.duration}
+            step={this.props.step}
+            rateInterval={this.props.rateInterval}
+          />
         ) : null}
         {this.props.data.summaryType === 'node' ? (
-          <SummaryPanelNode data={this.props.data} namespace={this.props.namespace} duration={this.props.duration} />
+          <SummaryPanelNode
+            data={this.props.data}
+            namespace={this.props.namespace}
+            duration={this.props.duration}
+            step={this.props.step}
+            rateInterval={this.props.rateInterval}
+          />
         ) : null}
       </div>
     );

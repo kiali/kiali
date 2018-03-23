@@ -137,7 +137,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const namespace = props.data.summaryTarget.data('service').split('.')[1];
     const service = props.data.summaryTarget.data('service').split('.')[0];
     const options = {
-      duration: props.duration
+      duration: props.duration,
+      step: props.step,
+      rateInterval: props.rateInterval
     };
     API.getServiceMetrics(namespace, service, options)
       .then(response => {

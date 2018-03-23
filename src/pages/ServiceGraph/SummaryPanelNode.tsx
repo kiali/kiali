@@ -57,7 +57,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const version = props.data.summaryTarget.data('version');
     const options = {
       version: version,
-      duration: props.duration
+      duration: props.duration,
+      step: props.step,
+      rateInterval: props.rateInterval
     };
 
     API.getServiceMetrics(namespace, service, options)
