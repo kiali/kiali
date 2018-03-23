@@ -62,18 +62,14 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const sourceLink = <a href={`../namespaces/${sourceNamespace}/services/${sourceService}`}>{sourceServiceName}</a>;
     const destLink = <a href={`../namespaces/${destNamespace}/services/${destService}`}>{destServiceName}</a>;
 
+    const isUnknown = sourceServiceName === 'unknown';
     return (
       <div className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
-        <div hidden={sourceServiceName === 'unknown'} className="panel-heading">
-          Edge Source: {sourceLink}
-        </div>
-        <div hidden={sourceServiceName !== 'unknown'} className="panel-heading">
-          Edge Source: unknown
-        </div>
+        <div className="panel-heading">Source: {isUnknown ? 'unknown' : sourceLink}</div>
         <div className="panel-body">
           <p>{this.renderLabels(sourceNamespace, sourceVersion)}</p>
         </div>
-        <div className="panel-heading">Edge Dest: {destLink}</div>
+        <div className="panel-heading">Destination: {destLink}</div>
         <div className="panel-body">
           <p>{this.renderLabels(destNamespace, destVersion)}</p>
           <hr />
@@ -107,7 +103,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const options = {
       version: destVersion,
       'byLabelsIn[]': 'source_service,source_version',
-      duration: this.props.duration
+      duration: props.duration
     };
     API.getServiceMetrics(destNamespace, destServiceName, options)
       .then(response => {

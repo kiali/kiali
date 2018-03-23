@@ -99,9 +99,10 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       outgoing.rate5xx += parseFloat(c.data(SummaryPanelNode.RATE5XX)) || 0;
     });
 
+    const isUnknown = service === 'unknown';
     return (
       <div className="panel panel-default" style={SummaryPanelNode.panelStyle}>
-        <div className="panel-heading">Microservice: {serviceHotLink}</div>
+        <div className="panel-heading">Microservice: {isUnknown ? 'unknown' : serviceHotLink}</div>
         <div className="panel-body">
           <p>
             <strong>Labels:</strong>
