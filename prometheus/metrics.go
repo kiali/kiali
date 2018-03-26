@@ -15,15 +15,43 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-type Operator string
-
-const EQUALS Operator = "="
-const REGEX Operator = "=~"
-const REGEX_NOT Operator = "!~"
-
 var (
 	invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 )
+
+// MetricsQuery is a common struct for ServiceMetricsQuery and NamespaceMetricsQuery
+type MetricsQuery struct {
+	Version      string
+	Duration     time.Duration
+	Step         time.Duration
+	RateInterval string
+	RateFunc     string
+	Filters      []string
+	ByLabelsIn   []string
+	ByLabelsOut  []string
+}
+
+// FillDefaults fills the struct with default parameters
+func (q *MetricsQuery) FillDefaults() {
+	q.Duration = 30 * time.Minute
+	q.Step = 15 * time.Second
+	q.RateInterval = "1m"
+	q.RateFunc = "rate"
+}
+
+// ServiceMetricsQuery contains fields used for querying a service metrics
+type ServiceMetricsQuery struct {
+	MetricsQuery
+	Namespace string
+	Service   string
+}
+
+// NamespaceMetricsQuery contains fields used for querying namespace metrics
+type NamespaceMetricsQuery struct {
+	MetricsQuery
+	Namespace      string
+	ServicePattern string
+}
 
 // Metrics contains health, all simple metrics and histograms data
 type Metrics struct {
@@ -86,16 +114,32 @@ func getServiceHealth(api v1.API, namespace string, servicename string) Health {
 		TotalReplicas:   int(totalVect[0].Value)}
 }
 
-func getServiceMetrics(api v1.API, namespace, servicename, version string, duration, step time.Duration,
-	rateInterval string, byLabelsIn, byLabelsOut []string, op Operator) Metrics {
-
+func getServiceMetrics(api v1.API, q *ServiceMetricsQuery) Metrics {
 	clustername := config.Get().IstioIdentityDomain
-	now := time.Now()
-	bounds := v1.Range{
-		Start: now.Add(-duration),
-		End:   now,
-		Step:  step}
+	destService := fmt.Sprintf("destination_service=\"%s.%s.%s\"", q.Service, q.Namespace, clustername)
+	srcService := fmt.Sprintf("source_service=\"%s.%s.%s\"", q.Service, q.Namespace, clustername)
+	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version)
+	groupingIn := joinLabels(q.ByLabelsIn)
+	groupingOut := joinLabels(q.ByLabelsOut)
 
+	return fetchAllMetrics(api, &q.MetricsQuery, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut)
+}
+
+func getNamespaceMetrics(api v1.API, q *NamespaceMetricsQuery) Metrics {
+	svc := q.ServicePattern
+	if "" == svc {
+		svc = ".*"
+	}
+	destService := fmt.Sprintf("destination_service=~\"%s\\\\.%s\\\\..*\"", svc, q.Namespace)
+	srcService := fmt.Sprintf("source_service=~\"%s\\\\.%s\\\\..*\"", svc, q.Namespace)
+	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version)
+	groupingIn := joinLabels(q.ByLabelsIn)
+	groupingOut := joinLabels(q.ByLabelsOut)
+
+	return fetchAllMetrics(api, &q.MetricsQuery, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut)
+}
+
+func buildLabelStrings(destServiceLabel, srcServiceLabel, version string) (string, string, string, string) {
 	versionLabelIn := ""
 	versionLabelOut := ""
 	if len(version) > 0 {
@@ -103,75 +147,12 @@ func getServiceMetrics(api v1.API, namespace, servicename, version string, durat
 		versionLabelOut = fmt.Sprintf(",source_version=\"%s\"", version)
 	}
 
-	var labelsIn, labelsOut, labelsErrorIn, labelsErrorOut string
-	if op == "" || op == EQUALS {
-		labelsIn = fmt.Sprintf("{destination_service=\"%s.%s.%s\"%s}", servicename, namespace, clustername, versionLabelIn)
-		labelsOut = fmt.Sprintf("{source_service=\"%s.%s.%s\"%s}", servicename, namespace, clustername, versionLabelOut)
-		labelsErrorIn = fmt.Sprintf("{destination_service=\"%s.%s.%s\",response_code=~\"[5|4].*\"%s}", servicename, namespace, clustername, versionLabelIn)
-		labelsErrorOut = fmt.Sprintf("{source_service=\"%s.%s.%s\",response_code=~\"[5|4].*\"%s}", servicename, namespace, clustername, versionLabelOut)
-	} else {
-		svc := servicename
-		if "" == svc {
-			svc = ".*"
-		}
-		labelsIn = fmt.Sprintf("{destination_service%s\"%s\\\\.%s\\\\..*\"%s}", op, svc, namespace, versionLabelIn)
-		labelsOut = fmt.Sprintf("{source_service%s\"%s\\\\.%s\\\\..*\"%s}", op, svc, namespace, versionLabelOut)
-		labelsErrorIn = fmt.Sprintf("{destination_service%s\"%s\\\\.%s\\\\..*\",response_code=~\"[5|4].*\"%s}", op, svc, namespace, versionLabelIn)
-		labelsErrorOut = fmt.Sprintf("{source_service%s\"%v\\\\.%v\\\\..*\",response_code=~\"[5|4].*\"%s}", op, svc, namespace, versionLabelOut)
-	}
-	groupingIn := joinLabels(byLabelsIn)
-	groupingOut := joinLabels(byLabelsOut)
+	labelsIn := fmt.Sprintf("{%s%s}", destServiceLabel, versionLabelIn)
+	labelsOut := fmt.Sprintf("{%s%s}", srcServiceLabel, versionLabelOut)
+	labelsErrorIn := fmt.Sprintf("{%s%s,response_code=~\"[5|4].*\"}", destServiceLabel, versionLabelIn)
+	labelsErrorOut := fmt.Sprintf("{%s%s,response_code=~\"[5|4].*\"}", srcServiceLabel, versionLabelOut)
 
-	var wg sync.WaitGroup
-
-	var requestCountIn, requestCountOut, requestErrorCountIn, requestErrorCountOut *Metric
-	var requestSizeIn, requestSizeOut, requestDurationIn, requestDurationOut, responseSizeIn, responseSizeOut Histogram
-
-	fetchRateInOut := func(p8sFamilyName string, metricIn **Metric, metricOut **Metric, metricErrorIn **Metric, metricErrorOut **Metric) {
-		defer wg.Done()
-		m := fetchRateRange(api, p8sFamilyName, labelsIn, groupingIn, bounds, rateInterval)
-		*metricIn = m
-		m = fetchRateRange(api, p8sFamilyName, labelsOut, groupingOut, bounds, rateInterval)
-		*metricOut = m
-		m = fetchRateRange(api, p8sFamilyName, labelsErrorIn, groupingIn, bounds, rateInterval)
-		*metricErrorIn = m
-		m = fetchRateRange(api, p8sFamilyName, labelsErrorOut, groupingOut, bounds, rateInterval)
-		*metricErrorOut = m
-	}
-
-	fetchHistoInOut := func(p8sFamilyName string, hIn *Histogram, hOut *Histogram) {
-		defer wg.Done()
-		h := fetchHistogramRange(api, p8sFamilyName, labelsIn, groupingIn, bounds, rateInterval)
-		*hIn = h
-		h = fetchHistogramRange(api, p8sFamilyName, labelsOut, groupingOut, bounds, rateInterval)
-		*hOut = h
-	}
-
-	// Prepare 4 calls
-	wg.Add(4)
-	go fetchRateInOut("istio_request_count", &requestCountIn, &requestCountOut, &requestErrorCountIn, &requestErrorCountOut)
-	go fetchHistoInOut("istio_request_size", &requestSizeIn, &requestSizeOut)
-	go fetchHistoInOut("istio_request_duration", &requestDurationIn, &requestDurationOut)
-	go fetchHistoInOut("istio_response_size", &responseSizeIn, &responseSizeOut)
-
-	wg.Wait()
-
-	metrics := make(map[string]*Metric)
-	histograms := make(map[string]Histogram)
-	metrics["request_count_in"] = requestCountIn
-	metrics["request_count_out"] = requestCountOut
-	metrics["request_error_count_in"] = requestErrorCountIn
-	metrics["request_error_count_out"] = requestErrorCountOut
-	histograms["request_size_in"] = requestSizeIn
-	histograms["request_size_out"] = requestSizeOut
-	histograms["request_duration_in"] = requestDurationIn
-	histograms["request_duration_out"] = requestDurationOut
-	histograms["response_size_in"] = responseSizeIn
-	histograms["response_size_out"] = responseSizeOut
-
-	return Metrics{
-		Metrics:    metrics,
-		Histograms: histograms}
+	return labelsIn, labelsOut, labelsErrorIn, labelsErrorOut
 }
 
 func joinLabels(labels []string) string {
@@ -186,12 +167,91 @@ func joinLabels(labels []string) string {
 	return str
 }
 
-func fetchRateRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string) *Metric {
+func fetchAllMetrics(api v1.API, q *MetricsQuery, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut string) Metrics {
+	now := time.Now()
+	bounds := v1.Range{
+		Start: now.Add(-q.Duration),
+		End:   now,
+		Step:  q.Step}
+
+	var wg sync.WaitGroup
+	fetchRateInOut := func(p8sFamilyName string, metricIn **Metric, metricOut **Metric, lblIn string, lblOut string) {
+		defer wg.Done()
+		m := fetchRateRange(api, p8sFamilyName, lblIn, groupingIn, bounds, q.RateInterval, q.RateFunc)
+		*metricIn = m
+		m = fetchRateRange(api, p8sFamilyName, lblOut, groupingOut, bounds, q.RateInterval, q.RateFunc)
+		*metricOut = m
+	}
+
+	fetchHistoInOut := func(p8sFamilyName string, hIn *Histogram, hOut *Histogram) {
+		defer wg.Done()
+		h := fetchHistogramRange(api, p8sFamilyName, labelsIn, groupingIn, bounds, q.RateInterval)
+		*hIn = h
+		h = fetchHistogramRange(api, p8sFamilyName, labelsOut, groupingOut, bounds, q.RateInterval)
+		*hOut = h
+	}
+
+	type resultHolder struct {
+		metricIn   *Metric
+		metricOut  *Metric
+		histoIn    Histogram
+		histoOut   Histogram
+		definition kialiMetric
+	}
+	maxResults := len(kialiMetrics)
+	results := make([]*resultHolder, maxResults, maxResults)
+
+	for i, metric := range kialiMetrics {
+		// if filters is empty, fetch all anyway
+		doFetch := len(q.Filters) == 0
+		if !doFetch {
+			for _, filter := range q.Filters {
+				if filter == metric.name {
+					doFetch = true
+					break
+				}
+			}
+		}
+		if doFetch {
+			wg.Add(1)
+			result := resultHolder{definition: metric}
+			results[i] = &result
+			if metric.isHisto {
+				go fetchHistoInOut(metric.istioName, &result.histoIn, &result.histoOut)
+			} else {
+				labelsInToUse, labelsOutToUse := metric.labelsToUse(labelsIn, labelsOut, labelsErrorIn, labelsErrorOut)
+				go fetchRateInOut(metric.istioName, &result.metricIn, &result.metricOut, labelsInToUse, labelsOutToUse)
+			}
+		}
+	}
+	wg.Wait()
+
+	// Return results as two maps
+	metrics := make(map[string]*Metric)
+	histograms := make(map[string]Histogram)
+	for _, result := range results {
+		if result != nil {
+			if result.definition.isHisto {
+				histograms[result.definition.name+"_in"] = result.histoIn
+				histograms[result.definition.name+"_out"] = result.histoOut
+			} else {
+				metrics[result.definition.name+"_in"] = result.metricIn
+				metrics[result.definition.name+"_out"] = result.metricOut
+			}
+		}
+	}
+	return Metrics{
+		Metrics:    metrics,
+		Histograms: histograms}
+}
+
+func fetchRateRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string, rateFunc string) *Metric {
 	var query string
+	// Example: round(sum(rate(my_counter{foo=bar}[5m])) by (baz), 0.001)
 	if grouping == "" {
-		query = fmt.Sprintf("round(sum(irate(%s%s[%s])), 0.001)", metricName, labels, rateInterval)
+		query = fmt.Sprintf("round(sum(%s(%s%s[%s])), 0.001)", rateFunc, metricName, labels, rateInterval)
 	} else {
-		query = fmt.Sprintf("round(sum(irate(%s%s[%s])) by (%s), 0.001)", metricName, labels, rateInterval, grouping)
+		query = fmt.Sprintf("round(sum(%s(%s%s[%s])) by (%s), 0.001)", rateFunc, metricName, labels, rateInterval, grouping)
 	}
 	log.Infof("QUERY: %v", query)
 	return fetchRange(api, query, bounds)
@@ -201,7 +261,6 @@ func fetchHistogramRange(api v1.API, metricName string, labels string, grouping 
 	// Note: we may want to make returned stats configurable in the future
 	// Note 2: the p8s queries are not run in parallel here, but they are at the caller's place.
 	//	This is because we may not want to create too many threads in the lowest layer
-
 	groupingAvg := ""
 	groupingQuantile := ""
 	if grouping != "" {

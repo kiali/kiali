@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -12,12 +10,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-)
-
-const (
-	metricsDefaultRateInterval = "1m"
-	metricsDefaultStepSec      = 15
-	metricsDefaultDurationMin  = 30
 )
 
 // ServiceList is the API handler to fetch the list of services in a given namespace
@@ -53,47 +45,11 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplie
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	service := vars["service"]
-	getMetrics(w, r, prometheus.NewClient, namespace, service)
-}
 
-func getMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error), namespace, service string) {
-	queryParams := r.URL.Query()
-	rateInterval := metricsDefaultRateInterval
-	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
-		// Only first is taken into consideration
-		rateInterval = rateIntervals[0]
-	}
-	duration := metricsDefaultDurationMin * time.Minute
-	if durations, ok := queryParams["duration"]; ok && len(durations) > 0 {
-		if num, err := strconv.Atoi(durations[0]); err == nil {
-			duration = time.Duration(num) * time.Second
-		} else {
-			// Bad request
-			RespondWithError(w, http.StatusBadRequest, "Bad request, cannot parse query parameter 'duration'")
-			return
-		}
-	}
-	step := metricsDefaultStepSec * time.Second
-	if steps, ok := queryParams["step"]; ok && len(steps) > 0 {
-		if num, err := strconv.Atoi(steps[0]); err == nil {
-			step = time.Duration(num) * time.Second
-		} else {
-			// Bad request
-			RespondWithError(w, http.StatusBadRequest, "Bad request, cannot parse query parameter 'step'")
-			return
-		}
-	}
-	version := ""
-	if versions, ok := queryParams["version"]; ok && len(versions) > 0 {
-		version = versions[0]
-	}
-	var byLabelsIn []string
-	var byLabelsOut []string
-	if lblsin, ok := queryParams["byLabelsIn[]"]; ok && len(lblsin) > 0 {
-		byLabelsIn = lblsin
-	}
-	if lblsout, ok := queryParams["byLabelsOut[]"]; ok && len(lblsout) > 0 {
-		byLabelsOut = lblsout
+	params, err := extractServiceMetricsQuery(r, namespace, service)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 	prometheusClient, err := promClientSupplier()
 	if err != nil {
@@ -101,13 +57,7 @@ func getMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func(
 		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
 		return
 	}
-
-	var metrics prometheus.Metrics
-	if "" != service {
-		metrics = prometheusClient.GetServiceMetrics(namespace, service, version, duration, step, rateInterval, byLabelsIn, byLabelsOut)
-	} else {
-		metrics = prometheusClient.GetNamespaceMetrics(namespace, service, version, duration, step, rateInterval, byLabelsIn, byLabelsOut)
-	}
+	metrics := prometheusClient.GetServiceMetrics(params)
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
