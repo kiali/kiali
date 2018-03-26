@@ -1,56 +1,106 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
+import { Alert, Button } from 'patternfly-react';
 import { PropTypes } from 'prop-types';
-import NamespaceId from '../../types/NamespaceId';
-import { Alert } from 'patternfly-react';
-import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
+
+import Namespace from '../../types/Namespace';
+import { GraphParamsType } from '../../types/Graph';
+import { Interval, Layout } from '../../types/GraphFilter';
+
 import SummaryPanel from './SummaryPanel';
-import { GraphFilter, GraphFilters } from '../../components/GraphFilter/GraphFilter';
+import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
+import * as LayoutDictionary from '../../components/CytoscapeLayout/graphs/LayoutDictionary';
+import { GraphFilter } from '../../components/GraphFilter/GraphFilter';
+import * as QueryOptions from '../../components/GraphFilter/QueryOptions';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
 import PfHeader from '../../components/Pf/PfHeader';
+import * as API from '../../services/Api';
 
 const URLSearchParams = require('url-search-params');
 
 // summaryData will have two fields:
 //   summaryTarget: The cytoscape element
 //   summaryType  : one of 'graph', 'node', 'edge', 'group'
-type ServiceGraphPageProps = {
+type ServiceGraphPageState = {
   alertVisible: boolean;
   alertDetails: string;
   summaryData: any;
   updateTime: string;
+  graphData: any;
+  isLoading: boolean;
+  params: GraphParamsType;
 };
 
-export default class ServiceGraphPage extends React.Component<RouteComponentProps<NamespaceId>, ServiceGraphPageProps> {
+type ServiceGraphPageProps = {
+  interval: string;
+  namespace: string;
+  layout: string;
+};
+const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
+
+export default class ServiceGraphPage extends React.Component<
+  RouteComponentProps<ServiceGraphPageProps>,
+  ServiceGraphPageState
+> {
   static contextTypes = {
     router: PropTypes.object
   };
 
-  constructor(routeProps: RouteComponentProps<NamespaceId>) {
+  constructor(routeProps: RouteComponentProps<ServiceGraphPageProps>) {
     super(routeProps);
+    const { graphInterval, graphLayout } = this.parseProps(routeProps.location.search);
+    console.log('constructor', graphInterval);
     this.state = {
+      isLoading: false,
       alertVisible: false,
       alertDetails: '',
       summaryData: { summaryType: 'graph' },
-      updateTime: new Date().toLocaleString()
+      updateTime: new Date().toLocaleString(),
+      graphData: EMPTY_GRAPH_DATA,
+      params: {
+        namespace: { name: routeProps.match.params.namespace },
+        graphInterval: graphInterval,
+        graphLayout: graphLayout
+      }
     };
-
-    this.filterChange = this.filterChange.bind(this);
-    this.handleGraphClick = this.handleGraphClick.bind(this);
-    this.handleError = this.handleError.bind(this);
-
-    const search = routeProps.location.search;
-    const params = new URLSearchParams(search);
-    let graphDuration = params.get('duration');
-    let graphLayout = params.get('layout');
-
-    GraphFilters.setGraphNamespace(routeProps.match.params.namespace);
-    GraphFilters.setGraphDuration(graphDuration ? graphDuration : '600');
-    GraphFilters.setGraphLayout(graphLayout ? graphLayout : 'dagre');
   }
 
+  parseProps = (queryString: string) => {
+    const urlParams = new URLSearchParams(queryString);
+    // TODO: [KIALI-357] validate `interval`
+    const interval = urlParams.get('interval');
+    return {
+      graphInterval: interval ? { value: interval } : { value: QueryOptions.DEFAULT.key },
+      graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') })
+    };
+  };
+
   componentDidMount() {
-    // nothing to do yet
+    this.loadGraphDataFromBackend();
+  }
+
+  componentWillReceiveProps(nextProps: RouteComponentProps<ServiceGraphPageProps>) {
+    const nextNamespace = { name: nextProps.match.params.namespace };
+    const { graphInterval: nextInterval, graphLayout: nextLayout } = this.parseProps(nextProps.location.search);
+
+    const layoutHasChanged = nextLayout.name !== this.state.params.graphLayout.name;
+    const namespaceHasChanged = nextNamespace.name !== this.state.params.namespace.name;
+    const intervalHasChanged = nextInterval.value !== this.state.params.graphInterval.value;
+
+    if (layoutHasChanged || namespaceHasChanged || intervalHasChanged) {
+      const newParams = {
+        namespace: nextNamespace,
+        graphInterval: nextInterval,
+        graphLayout: nextLayout
+      };
+      this.setState({ params: newParams });
+
+      if (!layoutHasChanged) {
+        // we need to explicitly provide namespace and interval because
+        // the above setState() is async.
+        this.loadGraphDataFromBackend(nextNamespace, nextInterval);
+      }
+    }
   }
 
   handleError = (error: string) => {
@@ -60,12 +110,6 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
   dismissAlert = () => {
     this.setState({ alertVisible: false });
   };
-
-  filterChange() {
-    this.context.router.history.push(
-      `/service-graph/${GraphFilters.getGraphNamespace()}?layout=${GraphFilters.getGraphLayoutName()}&duration=${GraphFilters.getGraphDuration()}`
-    );
-  }
 
   handleGraphClick = (data: any) => {
     if (data !== undefined) {
@@ -87,24 +131,79 @@ export default class ServiceGraphPage extends React.Component<RouteComponentProp
         <PfHeader>
           <h2>Service Graph</h2>
           {alertsDiv}
-          <GraphFilter onFilterChange={this.filterChange} onError={this.handleError} />
+          <GraphFilter
+            onLayoutChange={this.handleLayoutChange}
+            onFilterChange={this.handleFilterChange}
+            onNamespaceChange={this.handleNamespaceChange}
+            onError={this.handleError}
+            activeNamespace={this.state.params.namespace}
+            activeLayout={this.state.params.graphLayout}
+            activeInterval={this.state.params.graphInterval}
+          />
+          <Button onClick={this.onRefreshButtonClick}>Refresh</Button>
         </PfHeader>
         <div style={{ position: 'relative' }}>
           <SummaryPanel
             data={this.state.summaryData}
-            namespace={GraphFilters.getGraphNamespace()}
-            duration={GraphFilters.getGraphDuration()}
-            step={GraphFilters.getGraphStep()}
-            rateInterval={GraphFilters.getGraphRateInterval()}
+            namespace={this.state.params.namespace.name}
+            duration={this.state.params.graphInterval.value}
+            {...QueryOptions.getOption(this.state.params.graphInterval.value)}
           />
           <CytoscapeLayout
-            namespace={GraphFilters.getGraphNamespace()}
-            layout={GraphFilters.getGraphLayout()}
-            duration={GraphFilters.getGraphDuration()}
+            {...this.state.params}
+            elements={this.state.graphData}
+            isLoading={this.state.isLoading}
             onClick={this.handleGraphClick}
           />
         </div>
       </PfContainerNavVertical>
     );
   }
+
+  handleLayoutChange = (newLayout: Layout) => {
+    console.log(`ServiceGraphpage.handleLayoutChange(), ${this.state.params.graphLayout} --> ${newLayout}`);
+    this.navigate(this.makeUrlFrom(this.state.params.namespace, newLayout, this.state.params.graphInterval));
+  };
+
+  handleFilterChange = (newInterval: Interval) => {
+    console.log(`ServiceGraphpage.handleFilterChange(), ${this.state.params.graphInterval} --> ${newInterval}`);
+    this.navigate(this.makeUrlFrom(this.state.params.namespace, this.state.params.graphLayout, newInterval));
+  };
+
+  handleNamespaceChange = (newNS: Namespace) => {
+    console.log(`ServiceGraphpage.handleNamespaceChange(), ${this.state.params.namespace} --> ${newNS}`);
+    this.navigate(this.makeUrlFrom(newNS, this.state.params.graphLayout, this.state.params.graphInterval));
+  };
+
+  makeUrlFrom = (_namespace: Namespace, _layout: Layout, _interval: Interval) =>
+    `/service-graph/${_namespace.name}?layout=${_layout.name}&interval=${_interval.value}`;
+
+  /** Update browser address bar  */
+  navigate = newUrl => this.context.router.history.push(newUrl);
+
+  onRefreshButtonClick = event => {
+    this.loadGraphDataFromBackend();
+  };
+
+  /** Fetch graph data */
+  loadGraphDataFromBackend = (namespace?: Namespace, graphInterval?: Interval) => {
+    this.setState({ isLoading: true });
+    namespace = namespace ? namespace : this.state.params.namespace;
+    const duration = graphInterval ? graphInterval.value : this.state.params.graphInterval.value;
+    const restParams = { duration: duration + 's' };
+    console.log('loadGraphDataFromBackend()', namespace, restParams);
+    API.GetGraphElements(namespace, restParams)
+      .then(response => {
+        const responseData = response['data'];
+        const elements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
+        this.setState({ graphData: elements, isLoading: false });
+      })
+      .catch(error => {
+        this.setState({
+          graphData: EMPTY_GRAPH_DATA,
+          isLoading: false
+        });
+        console.error(error);
+      });
+  };
 }

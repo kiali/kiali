@@ -1,4 +1,4 @@
-import { Namespace } from './Namespace';
+import Namespace from './Namespace';
 
 export interface RuleList {
   namespace: Namespace;

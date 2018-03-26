@@ -1,41 +1,35 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { Button } from 'patternfly-react';
 
-import { ColaGraph } from '../graphs/ColaGraph';
+import ReactCytoscape from '../ReactCytoscape';
 import CytoscapeLayout from '../CytoscapeLayout';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
+import { Interval, Layout } from '../../../types/GraphFilter';
 
 jest.mock('../../../services/Api');
 
-jest.useFakeTimers();
-
 const testNamespace = 'ISTIO_SYSTEM';
+
 const testHandler = () => {
   console.log('click');
 };
 
 describe('CytographLayout component test', () => {
-  it('should set correct elements data', async () => {
-    const wrapper = await shallow(
-      <CytoscapeLayout namespace={testNamespace} layout={ColaGraph.getLayout()} duration="600" onClick={testHandler} />
-    );
-    wrapper.update();
-    expect(wrapper.instance().state.elements.nodes).toEqual(GRAPH_DATA[testNamespace].elements.nodes);
-    expect(wrapper.instance().state.elements.edges).toEqual(GRAPH_DATA[testNamespace].elements.edges);
-  });
-
-  it('should refresh data on click', () => {
-    // for spy to work updateGraphElements() must be regular function, not fat arrow =>
-    // see https://github.com/airbnb/enzyme/issues/944
-    const spyUpdateGraphElements = jest.spyOn(CytoscapeLayout.prototype, 'updateGraphElements');
+  it('should set correct elements data', () => {
+    const myLayout: Layout = { name: 'breadthfirst' };
+    const myInterval: Interval = { value: '5m' };
 
     const wrapper = shallow(
-      <CytoscapeLayout namespace={testNamespace} layout={ColaGraph.getLayout()} duration="600" onClick={testHandler} />
+      <CytoscapeLayout
+        namespace={{ name: testNamespace }}
+        elements={GRAPH_DATA[testNamespace]}
+        graphLayout={myLayout}
+        graphInterval={myInterval}
+        onClick={testHandler}
+      />
     );
-    expect(spyUpdateGraphElements).toHaveBeenCalledTimes(1);
-    const buttonWrapper = wrapper.find(Button);
-    buttonWrapper.simulate('click');
-    expect(spyUpdateGraphElements).toHaveBeenCalledTimes(2);
+    const cytoscapeWrapper = wrapper.find(ReactCytoscape);
+    expect(cytoscapeWrapper.prop('elements').elements.nodes).toEqual(GRAPH_DATA[testNamespace].elements.nodes);
+    expect(cytoscapeWrapper.prop('elements').elements.edges).toEqual(GRAPH_DATA[testNamespace].elements.edges);
   });
 });

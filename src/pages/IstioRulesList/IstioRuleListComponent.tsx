@@ -5,7 +5,7 @@ import { NamespaceFilter, NamespaceFilterSelected } from '../../components/Names
 import { Paginator } from 'patternfly-react';
 import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
-import { Namespace } from '../../types/Namespace';
+import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
 import { RuleItem, RuleList } from '../../types/IstioRuleListComponent';
 import PropTypes from 'prop-types';
