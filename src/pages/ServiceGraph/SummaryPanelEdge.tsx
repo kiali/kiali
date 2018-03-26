@@ -6,6 +6,7 @@ import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/graphing';
+import MetricsOptions from '../../types/MetricsOptions';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -100,12 +101,13 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const destServiceName = destSplit[0];
     const destNamespace = destSplit[1];
 
-    const options = {
+    const options: MetricsOptions = {
       version: destVersion,
-      'byLabelsIn[]': 'source_service,source_version',
-      duration: props.duration,
+      byLabelsIn: ['source_service', 'source_version'],
+      duration: +props.duration,
       step: props.step,
-      rateInterval: props.rateInterval
+      rateInterval: props.rateInterval,
+      filters: ['request_count', 'request_error_count']
     };
     API.getServiceMetrics(destNamespace, destServiceName, options)
       .then(response => {

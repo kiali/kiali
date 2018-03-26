@@ -12,7 +12,6 @@ interface MetricsOptionsState {
   rateInterval: string;
   duration: number;
   ticks: number;
-  filterLabels: [string, string][];
   groupByLabels: string[];
 }
 
@@ -80,7 +79,6 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
       rateInterval: MetricsOptionsBar.DefaultRateInterval,
       duration: MetricsOptionsBar.DefaultDuration,
       ticks: MetricsOptionsBar.DefaultTicks,
-      filterLabels: [],
       groupByLabels: []
     };
   }
@@ -114,9 +112,9 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     const labelsOut = this.state.groupByLabels.map(lbl => MetricsOptionsBar.GroupByLabelOptions[lbl].labelOut);
     this.props.onOptionsChanged({
       rateInterval: this.state.rateInterval,
+      rateFunc: 'irate',
       duration: this.state.duration,
       step: this.state.duration / this.state.ticks,
-      filterLabels: this.state.filterLabels,
       byLabelsIn: labelsIn,
       byLabelsOut: labelsOut
     });
