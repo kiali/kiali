@@ -6,6 +6,7 @@ import Badge from '../../components/Badge/Badge';
 import { InOutRateTable } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
+import MetricsOptions from '../../types/MetricsOptions';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -55,11 +56,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const namespace = props.data.summaryTarget.data('service').split('.')[1];
     const service = props.data.summaryTarget.data('service').split('.')[0];
     const version = props.data.summaryTarget.data('version');
-    const options = {
+    const options: MetricsOptions = {
       version: version,
-      duration: props.duration,
+      duration: +props.duration,
       step: props.step,
-      rateInterval: props.rateInterval
+      rateInterval: props.rateInterval,
+      filters: ['request_count', 'request_error_count']
     };
 
     API.getServiceMetrics(namespace, service, options)

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { config } from '../config';
 import Namespace from '../types/Namespace';
+import MetricsOptions from '../types/MetricsOptions';
 
 const auth = (user: string, pass: string) => {
   return {
@@ -48,7 +49,7 @@ export const GetServices = (namespace: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/services`, {}, {});
 };
 
-export const getServiceMetrics = (namespace: String, service: String, params: any) => {
+export const getServiceMetrics = (namespace: String, service: String, params: MetricsOptions) => {
   return newRequest('get', `/api/namespaces/${namespace}/services/${service}/metrics`, params, {});
 };
 

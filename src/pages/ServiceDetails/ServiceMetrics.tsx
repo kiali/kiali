@@ -37,19 +37,16 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     this.state = {
       loading: false
     };
-    this.onOptionsChanged = this.onOptionsChanged.bind(this);
-    this.dismissAlert = this.dismissAlert.bind(this);
   }
 
   componentDidMount() {
     this.getGrafanaInfo();
   }
 
-  onOptionsChanged(options: MetricsOptions) {
-    this.fetchMetrics(options);
-  }
+  onOptionsChanged = (options: MetricsOptions) => this.fetchMetrics(options);
 
   fetchMetrics(options: MetricsOptions) {
+    options.filters = ['request_count', 'request_size', 'request_duration', 'response_size'];
     this.setState({ loading: true });
     API.getServiceMetrics(this.props.namespace, this.props.service, options)
       .then(response => {
@@ -104,11 +101,11 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       });
   }
 
-  nameMetric(metric: M.MetricGroup, familyName: string, labels: string[]): M.MetricGroup {
+  nameMetric(metric: M.MetricGroup, familyName: string, labels?: string[]): M.MetricGroup {
     if (metric) {
       metric.familyName = familyName;
       metric.matrix.forEach(ts => {
-        if (labels.length === 0) {
+        if (labels === undefined || labels.length === 0) {
           ts.name = familyName;
         } else {
           const strLabels = labels.map(lbl => ts.metric[lbl]).join(',');
@@ -119,7 +116,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     return metric;
   }
 
-  nameHistogram(histo: M.Histogram, familyName: string, labels: string[]): M.Histogram {
+  nameHistogram(histo: M.Histogram, familyName: string, labels?: string[]): M.Histogram {
     if (histo) {
       histo.familyName = familyName;
       histo.average = this.nameMetric(histo.average, familyName + '[avg]', labels);
@@ -165,9 +162,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     return Math.round(val * 100) / 100;
   }
 
-  dismissAlert() {
-    this.setState({ alertDetails: undefined });
-  }
+  dismissAlert = () => this.setState({ alertDetails: undefined });
 
   render() {
     return (
