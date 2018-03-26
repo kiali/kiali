@@ -8,11 +8,11 @@ interface BadgeProps {
   rightText: string;
 }
 
-interface ServiceBadgeState {
+interface BadgeState {
   leftWidth: number;
   rightWidth: number;
 }
-class ServiceInfoBadge extends React.Component<BadgeProps, ServiceBadgeState> {
+class Badge extends React.Component<BadgeProps, BadgeState> {
   private textLeftText: SVGTextContentElement | null;
   private textRightText: SVGTextContentElement | null;
 
@@ -102,4 +102,4 @@ class ServiceInfoBadge extends React.Component<BadgeProps, ServiceBadgeState> {
   }
 }
 
-export default ServiceInfoBadge;
+export default Badge;

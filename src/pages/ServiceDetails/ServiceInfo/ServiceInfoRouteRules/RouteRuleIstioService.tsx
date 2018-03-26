@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { IstioService } from '../../../../types/ServiceInfo';
-import ServiceInfoBadge from '../ServiceInfoBadge';
+import Badge from '../../../../components/Badge/Badge';
 
 interface RouteRuleIstioServiceProps {
   name: string;
@@ -40,7 +40,7 @@ class RouteRuleIstioService extends React.Component<RouteRuleIstioServiceProps> 
           <ul style={{ listStyleType: 'none' }}>
             {Object.keys(this.props.service.labels || new Map()).map((key, n) => (
               <li key={'route_label_' + this.props.name + '_n_' + n}>
-                <ServiceInfoBadge
+                <Badge
                   scale={0.8}
                   style="plastic"
                   color="green"

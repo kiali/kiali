@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Col, Row } from 'patternfly-react';
 
-import ServiceInfoBadge from './ServiceInfoBadge';
+import Badge from '../../../components/Badge/Badge';
 import ServiceHealth from '../../../components/ServiceHealth/ServiceHealth';
 import Health from '../../../types/Health';
 import { Endpoints, Port } from '../../../types/ServiceInfo';
@@ -38,7 +38,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               </div>
               {Object.keys(this.props.labels || new Map()).map((key, i) => (
                 <div key={'label_' + i}>
-                  <ServiceInfoBadge
+                  <Badge
                     scale={0.8}
                     style="plastic"
                     color="#0088ce"

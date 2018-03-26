@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as API from '../../services/Api';
 
 import graphUtils from '../../utils/graphing';
-import ServiceInfoBadge from '../../pages/ServiceDetails/ServiceInfo/ServiceInfoBadge';
+import Badge from '../../components/Badge/Badge';
 import { InOutRateTable } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
@@ -109,7 +109,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           <p>
             <strong>Labels:</strong>
             <br />
-            <ServiceInfoBadge
+            <Badge
               scale={0.8}
               style="plastic"
               leftText="namespace"
@@ -117,7 +117,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               key={namespace}
               color="#2d7623" // pf-green-500
             />
-            <ServiceInfoBadge
+            <Badge
               scale={0.8}
               style="plastic"
               leftText="version"

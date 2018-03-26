@@ -1,10 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`#ServiceInfoBadge render correctly with data should render service badge 1`] = `
+exports[`#Badge render correctly with data should render badge 1`] = `
 ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <ServiceInfoBadge
+  Symbol(enzyme.__unrendered__): <Badge
     color="green"
     leftText="my_key"
     rightText="my_value"

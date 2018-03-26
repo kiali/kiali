@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { DestinationWeight } from '../../../../types/ServiceInfo';
-import ServiceInfoBadge from '../ServiceInfoBadge';
+import Badge from '../../../../components/Badge/Badge';
 
 interface RouteRuleRouteProps {
   route: DestinationWeight[];
@@ -30,7 +30,7 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
               return (
                 <li key={'route_label_' + u + '_n_' + n}>
                   {weight}
-                  <ServiceInfoBadge
+                  <Badge
                     scale={0.8}
                     style="plastic"
                     color="green"

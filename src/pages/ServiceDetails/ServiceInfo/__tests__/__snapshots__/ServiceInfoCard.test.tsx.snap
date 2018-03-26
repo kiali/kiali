@@ -22,7 +22,7 @@ ShallowWrapper {
                 }
             >
                 <li>
-                    <ServiceInfoBadge
+                    <Badge
                         color="green"
                         leftText="my_key"
                         rightText="my_value"
@@ -83,7 +83,7 @@ ShallowWrapper {
                               }
                     >
                               <li>
-                                        <ServiceInfoBadge
+                                        <Badge
                                                   color="green"
                                                   leftText="my_key"
                                                   rightText="my_value"
@@ -182,7 +182,7 @@ ShallowWrapper {
                         }
             >
                         <li>
-                                    <ServiceInfoBadge
+                                    <Badge
                                                 color="green"
                                                 leftText="my_key"
                                                 rightText="my_value"
@@ -214,7 +214,7 @@ ShallowWrapper {
                 }
 >
                 <li>
-                                <ServiceInfoBadge
+                                <Badge
                                                 color="green"
                                                 leftText="my_key"
                                                 rightText="my_value"
@@ -256,7 +256,7 @@ ShallowWrapper {
               "nodeType": "host",
               "props": Object {
                 "children": <li>
-                  <ServiceInfoBadge
+                  <Badge
                                     color="green"
                                     leftText="my_key"
                                     rightText="my_value"
@@ -274,7 +274,7 @@ ShallowWrapper {
                 "key": "pod_labels_badge_",
                 "nodeType": "host",
                 "props": Object {
-                  "children": <ServiceInfoBadge
+                  "children": <Badge
                     color="green"
                     leftText="my_key"
                     rightText="my_value"
@@ -352,7 +352,7 @@ ShallowWrapper {
                                     }
                         >
                                     <li>
-                                                <ServiceInfoBadge
+                                                <Badge
                                                             color="green"
                                                             leftText="my_key"
                                                             rightText="my_value"
@@ -451,7 +451,7 @@ ShallowWrapper {
                             }
               >
                             <li>
-                                          <ServiceInfoBadge
+                                          <Badge
                                                         color="green"
                                                         leftText="my_key"
                                                         rightText="my_value"
@@ -483,7 +483,7 @@ ShallowWrapper {
                   }
 >
                   <li>
-                                    <ServiceInfoBadge
+                                    <Badge
                                                       color="green"
                                                       leftText="my_key"
                                                       rightText="my_value"
@@ -525,7 +525,7 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": <li>
-                    <ServiceInfoBadge
+                    <Badge
                                         color="green"
                                         leftText="my_key"
                                         rightText="my_value"
@@ -543,7 +543,7 @@ ShallowWrapper {
                   "key": "pod_labels_badge_",
                   "nodeType": "host",
                   "props": Object {
-                    "children": <ServiceInfoBadge
+                    "children": <Badge
                       color="green"
                       leftText="my_key"
                       rightText="my_value"
