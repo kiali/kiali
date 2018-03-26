@@ -25,6 +25,7 @@ type MetricsQuery struct {
 	Duration     time.Duration
 	Step         time.Duration
 	RateInterval string
+	RateFunc     string
 	Filters      []string
 	ByLabelsIn   []string
 	ByLabelsOut  []string
@@ -35,6 +36,7 @@ func (q *MetricsQuery) FillDefaults() {
 	q.Duration = 30 * time.Minute
 	q.Step = 15 * time.Second
 	q.RateInterval = "1m"
+	q.RateFunc = "rate"
 }
 
 // ServiceMetricsQuery contains fields used for querying a service metrics
@@ -175,9 +177,9 @@ func fetchAllMetrics(api v1.API, q *MetricsQuery, labelsIn, labelsOut, labelsErr
 	var wg sync.WaitGroup
 	fetchRateInOut := func(p8sFamilyName string, metricIn **Metric, metricOut **Metric, lblIn string, lblOut string) {
 		defer wg.Done()
-		m := fetchRateRange(api, p8sFamilyName, lblIn, groupingIn, bounds, q.RateInterval)
+		m := fetchRateRange(api, p8sFamilyName, lblIn, groupingIn, bounds, q.RateInterval, q.RateFunc)
 		*metricIn = m
-		m = fetchRateRange(api, p8sFamilyName, lblOut, groupingOut, bounds, q.RateInterval)
+		m = fetchRateRange(api, p8sFamilyName, lblOut, groupingOut, bounds, q.RateInterval, q.RateFunc)
 		*metricOut = m
 	}
 
@@ -243,12 +245,13 @@ func fetchAllMetrics(api v1.API, q *MetricsQuery, labelsIn, labelsOut, labelsErr
 		Histograms: histograms}
 }
 
-func fetchRateRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string) *Metric {
+func fetchRateRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string, rateFunc string) *Metric {
 	var query string
+	// Example: round(sum(rate(my_counter{foo=bar}[5m])) by (baz), 0.001)
 	if grouping == "" {
-		query = fmt.Sprintf("round(sum(irate(%s%s[%s])), 0.001)", metricName, labels, rateInterval)
+		query = fmt.Sprintf("round(sum(%s(%s%s[%s])), 0.001)", rateFunc, metricName, labels, rateInterval)
 	} else {
-		query = fmt.Sprintf("round(sum(irate(%s%s[%s])) by (%s), 0.001)", metricName, labels, rateInterval, grouping)
+		query = fmt.Sprintf("round(sum(%s(%s%s[%s])) by (%s), 0.001)", rateFunc, metricName, labels, rateInterval, grouping)
 	}
 	log.Infof("QUERY: %v", query)
 	return fetchRange(api, query, bounds)

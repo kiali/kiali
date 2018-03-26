@@ -100,10 +100,10 @@ func TestGetServiceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
-	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
-	mockRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
+	mockRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
 	mockHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_duration", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.6)
@@ -118,6 +118,7 @@ func TestGetServiceMetrics(t *testing.T) {
 			Duration:     1000,
 			Step:         10,
 			RateInterval: "5m",
+			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
 			ByLabelsOut:  []string{},
 			Filters:      []string{}}})
@@ -166,8 +167,8 @@ func TestGetFilteredServiceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
 	mockHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	metrics := client.GetServiceMetrics(&ServiceMetricsQuery{
@@ -178,6 +179,7 @@ func TestGetFilteredServiceMetrics(t *testing.T) {
 			Duration:     1000,
 			Step:         10,
 			RateInterval: "5m",
+			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
 			ByLabelsOut:  []string{},
 			Filters:      []string{"request_count", "request_size"}}})
@@ -192,6 +194,35 @@ func TestGetFilteredServiceMetrics(t *testing.T) {
 	assert.NotNil(t, rqSizeIn)
 	rqSizeOut := metrics.Histograms["request_size_out"]
 	assert.NotNil(t, rqSizeOut)
+}
+
+func TestGetServiceMetricsInstantRates(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[1m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[1m])), 0.001)", 2.5)
+	metrics := client.GetServiceMetrics(&ServiceMetricsQuery{
+		Namespace: "istio-system",
+		Service:   "productpage",
+		MetricsQuery: MetricsQuery{
+			Version:      "",
+			Duration:     1000,
+			Step:         10,
+			RateInterval: "1m",
+			RateFunc:     "irate",
+			ByLabelsIn:   []string{},
+			ByLabelsOut:  []string{},
+			Filters:      []string{"request_count"}}})
+
+	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
+	assert.Equal(t, 0, len(metrics.Histograms), "Should have no histogram")
+	rqCountIn := metrics.Metrics["request_count_in"]
+	assert.NotNil(t, rqCountIn)
+	rqCountOut := metrics.Metrics["request_count_out"]
+	assert.NotNil(t, rqCountOut)
 }
 
 func TestGetServiceHealth(t *testing.T) {
@@ -216,10 +247,10 @@ func TestGetServiceMetricsUnavailable(t *testing.T) {
 		return
 	}
 	// Mock everything to return empty data
-	mockEmptyRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
-	mockEmptyRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
-	mockEmptyRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
-	mockEmptyRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
 	mockEmptyHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_request_duration", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_response_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
@@ -234,6 +265,7 @@ func TestGetServiceMetricsUnavailable(t *testing.T) {
 			Duration:     1000,
 			Step:         10,
 			RateInterval: "5m",
+			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
 			ByLabelsOut:  []string{},
 			Filters:      []string{}}})
@@ -281,10 +313,10 @@ func TestGetNamespaceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(irate(istio_request_count{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(irate(istio_request_count{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m])), 0.001)", 2.5)
-	mockRange(api, "round(sum(irate(istio_request_count{source_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
-	mockRange(api, "round(sum(irate(istio_request_count{destination_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockRange(api, "round(sum(rate(istio_request_count{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_request_count{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_request_count{source_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
+	mockRange(api, "round(sum(rate(istio_request_count{destination_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
 	mockHistogram(api, "istio_request_size", "{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_duration", "{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_size", "{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.6)
@@ -299,6 +331,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 			Duration:     1000,
 			Step:         10,
 			RateInterval: "5m",
+			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
 			ByLabelsOut:  []string{},
 			Filters:      []string{}}})
@@ -451,6 +484,7 @@ func TestAgainstLiveGetServiceMetrics(t *testing.T) {
 			Duration:     1000 * time.Second,
 			Step:         10 * time.Second,
 			RateInterval: "5m",
+			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
 			ByLabelsOut:  []string{},
 			Filters:      []string{}}})

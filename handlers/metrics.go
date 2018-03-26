@@ -32,6 +32,14 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) erro
 		// Only first is taken into consideration
 		q.RateInterval = rateIntervals[0]
 	}
+	if rateFuncs, ok := queryParams["rateFunc"]; ok && len(rateFuncs) > 0 {
+		// Only first is taken into consideration
+		if rateFuncs[0] != "rate" && rateFuncs[0] != "irate" {
+			// Bad request
+			return errors.New("Bad request, query parameter 'rateFunc' must be either 'rate' or 'irate'")
+		}
+		q.RateFunc = rateFuncs[0]
+	}
 	if durations, ok := queryParams["duration"]; ok && len(durations) > 0 {
 		if num, err := strconv.Atoi(durations[0]); err == nil {
 			q.Duration = time.Duration(num) * time.Second

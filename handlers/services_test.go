@@ -68,6 +68,7 @@ func TestServiceMetricsWithParams(t *testing.T) {
 	}
 	q := req.URL.Query()
 	q.Add("rateInterval", "5h")
+	q.Add("rateFunc", "rate")
 	q.Add("step", "99")
 	q.Add("duration", "1000")
 	q.Add("byLabelsIn[]", "response_code")
@@ -84,6 +85,7 @@ func TestServiceMetricsWithParams(t *testing.T) {
 		query := args[1].(string)
 		assert.IsType(t, v1.Range{}, args[2])
 		r := args[2].(v1.Range)
+		assert.Contains(t, query, "rate(")
 		assert.Contains(t, query, "[5h]")
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
@@ -170,6 +172,35 @@ func TestServiceMetricsBadStep(t *testing.T) {
 
 	assert.Equal(t, 400, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'step'")
+}
+
+func TestServiceMetricsBadRateFunc(t *testing.T) {
+	ts, api := setupServiceMetricsEndpoint(t)
+	defer ts.Close()
+
+	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := req.URL.Query()
+	q.Add("rateInterval", "5h")
+	q.Add("rateFunc", "invalid rate func")
+	req.URL.RawQuery = q.Encode()
+
+	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
+		// Make sure there's no client call and we fail fast
+		t.Error("Unexpected call to client while having bad request")
+	})
+
+	httpclient := &http.Client{}
+	resp, err := httpclient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, _ := ioutil.ReadAll(resp.Body)
+
+	assert.Equal(t, 400, resp.StatusCode)
+	assert.Contains(t, string(actual), "query parameter 'rateFunc' must be either 'rate' or 'irate'")
 }
 
 func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
