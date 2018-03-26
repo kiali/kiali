@@ -29,8 +29,8 @@ export class GraphFilter extends React.Component<GraphFilterProps, GraphFilterSt
     this.setState({ availableNamespaces: response['data'] });
   };
 
-  updateInterval = (value: string) => {
-    if (this.props.activeInterval.value !== value) {
+  updateDuration = (value: string) => {
+    if (this.props.activeDuration.value !== value) {
       // notify callback
       this.props.onFilterChange({ value: value });
     }
@@ -67,7 +67,7 @@ export class GraphFilter extends React.Component<GraphFilterProps, GraphFilterSt
               ))}
             </DropdownButton>
           </ButtonGroup>
-          <DurationButtonGroup onClick={this.updateInterval} initialDuration={this.props.activeInterval.value} />
+          <DurationButtonGroup onClick={this.updateDuration} initialDuration={this.props.activeDuration.value} />
           <LayoutButtonGroup onClick={this.updateLayout} initialLayout={this.props.activeLayout.name} />
         </ButtonToolbar>
         <Toolbar />

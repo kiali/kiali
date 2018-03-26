@@ -4,7 +4,7 @@ import { shallow } from 'enzyme';
 import ReactCytoscape from '../ReactCytoscape';
 import CytoscapeLayout from '../CytoscapeLayout';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
-import { Interval, Layout } from '../../../types/GraphFilter';
+import { Duration, Layout } from '../../../types/GraphFilter';
 
 jest.mock('../../../services/Api');
 
@@ -17,14 +17,14 @@ const testHandler = () => {
 describe('CytographLayout component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
-    const myInterval: Interval = { value: '5m' };
+    const myDuration: Duration = { value: '5m' };
 
     const wrapper = shallow(
       <CytoscapeLayout
         namespace={{ name: testNamespace }}
         elements={GRAPH_DATA[testNamespace]}
         graphLayout={myLayout}
-        graphInterval={myInterval}
+        graphDuration={myDuration}
         onClick={testHandler}
       />
     );
