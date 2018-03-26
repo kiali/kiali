@@ -19,6 +19,7 @@
     "react-dom": "~16.2.0",
     "react-router-dom": "^4.2.2",
     "react-scripts-ts": "2.13.0",
+    "ssri": "5.2.2",
     "url-search-params": "^0.10.0"
   },
   "scripts": {
