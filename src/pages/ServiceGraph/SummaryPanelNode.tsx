@@ -132,9 +132,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           <InOutRateTable
             title="Request Traffic (requests per second):"
             inRate={parseFloat(node.data('rate')) || 0}
-            inRate3xx={parseFloat(node.data('rate3xx')) || 0}
-            inRate4xx={parseFloat(node.data('rate4xx')) || 0}
-            inRate5xx={parseFloat(node.data('rate5xx')) || 0}
+            inRate3xx={parseFloat(node.data('rate3XX')) || 0}
+            inRate4xx={parseFloat(node.data('rate4XX')) || 0}
+            inRate5xx={parseFloat(node.data('rate5XX')) || 0}
             outRate={outgoing.rate}
             outRate3xx={outgoing.rate3xx}
             outRate4xx={outgoing.rate4xx}
