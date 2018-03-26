@@ -3,12 +3,12 @@ import Namespace from './Namespace';
 
 export interface GraphFilterProps {
   onLayoutChange: (newLayout: Layout) => void;
-  onFilterChange: (newInterval: Interval) => void;
+  onFilterChange: (newDuration: Duration) => void;
   onNamespaceChange: (newValue: Namespace) => void;
   onError: PropTypes.func;
   activeNamespace: Namespace;
   activeLayout: Layout;
-  activeInterval: Interval;
+  activeDuration: Duration;
 }
 
 export interface GraphFilterState {
@@ -19,6 +19,6 @@ export interface Layout {
   name: string;
 }
 
-export interface Interval {
+export interface Duration {
   value: string;
 }

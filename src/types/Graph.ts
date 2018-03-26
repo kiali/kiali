@@ -1,4 +1,4 @@
-import { Interval, Layout } from './GraphFilter';
+import { Duration, Layout } from './GraphFilter';
 import Namespace from './Namespace';
 
 export interface SummaryPanelPropType {
@@ -11,6 +11,6 @@ export interface SummaryPanelPropType {
 
 export interface GraphParamsType {
   namespace: Namespace;
-  graphInterval: Interval;
+  graphDuration: Duration;
   graphLayout: Layout;
 }
