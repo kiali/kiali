@@ -110,7 +110,17 @@ func TestGetServiceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetServiceMetrics("istio-system", "productpage", "", 1000, 10, "5m", []string{}, []string{})
+	metrics := client.GetServiceMetrics(&ServiceMetricsQuery{
+		Namespace: "istio-system",
+		Service:   "productpage",
+		MetricsQuery: MetricsQuery{
+			Version:      "",
+			Duration:     1000,
+			Step:         10,
+			RateInterval: "5m",
+			ByLabelsIn:   []string{},
+			ByLabelsOut:  []string{},
+			Filters:      []string{}}})
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
@@ -150,6 +160,40 @@ func TestGetServiceMetrics(t *testing.T) {
 	assert.Equal(t, 0.9, float64(rsSizeIn.Percentile99.Matrix[0].Values[0].Value))
 }
 
+func TestGetFilteredServiceMetrics(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
+	mockHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	metrics := client.GetServiceMetrics(&ServiceMetricsQuery{
+		Namespace: "istio-system",
+		Service:   "productpage",
+		MetricsQuery: MetricsQuery{
+			Version:      "",
+			Duration:     1000,
+			Step:         10,
+			RateInterval: "5m",
+			ByLabelsIn:   []string{},
+			ByLabelsOut:  []string{},
+			Filters:      []string{"request_count", "request_size"}}})
+
+	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
+	assert.Equal(t, 2, len(metrics.Histograms), "Should have 2 histograms")
+	rqCountIn := metrics.Metrics["request_count_in"]
+	assert.NotNil(t, rqCountIn)
+	rqCountOut := metrics.Metrics["request_count_out"]
+	assert.NotNil(t, rqCountOut)
+	rqSizeIn := metrics.Histograms["request_size_in"]
+	assert.NotNil(t, rqSizeIn)
+	rqSizeOut := metrics.Histograms["request_size_out"]
+	assert.NotNil(t, rqSizeOut)
+}
+
 func TestGetServiceHealth(t *testing.T) {
 	client, api, err := setupMocked()
 	if err != nil {
@@ -182,7 +226,17 @@ func TestGetServiceMetricsUnavailable(t *testing.T) {
 	mockEmptyHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
-	metrics := client.GetServiceMetrics("istio-system", "productpage", "", 1000, 10, "5m", []string{}, []string{})
+	metrics := client.GetServiceMetrics(&ServiceMetricsQuery{
+		Namespace: "istio-system",
+		Service:   "productpage",
+		MetricsQuery: MetricsQuery{
+			Version:      "",
+			Duration:     1000,
+			Step:         10,
+			RateInterval: "5m",
+			ByLabelsIn:   []string{},
+			ByLabelsOut:  []string{},
+			Filters:      []string{}}})
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
@@ -237,7 +291,17 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_size", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_size", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetNamespaceMetrics("istio-system", "", "", 1000, 10, "5m", []string{}, []string{})
+	metrics := client.GetNamespaceMetrics(&NamespaceMetricsQuery{
+		Namespace:      "istio-system",
+		ServicePattern: "",
+		MetricsQuery: MetricsQuery{
+			Version:      "",
+			Duration:     1000,
+			Step:         10,
+			RateInterval: "5m",
+			ByLabelsIn:   []string{},
+			ByLabelsOut:  []string{},
+			Filters:      []string{}}})
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
@@ -379,6 +443,16 @@ func TestAgainstLiveGetServiceMetrics(t *testing.T) {
 		return
 	}
 	fmt.Printf("Metrics: \n")
-	metrics := client.GetServiceMetrics("tutorial", "preference", "", 1000*time.Second, 10*time.Second, "5m", []string{}, []string{})
+	metrics := client.GetServiceMetrics(&ServiceMetricsQuery{
+		Namespace: "tutorial",
+		Service:   "preference",
+		MetricsQuery: MetricsQuery{
+			Version:      "",
+			Duration:     1000 * time.Second,
+			Step:         10 * time.Second,
+			RateInterval: "5m",
+			ByLabelsIn:   []string{},
+			ByLabelsOut:  []string{},
+			Filters:      []string{}}})
 	fmt.Printf("TestAgainstLive / GetServiceMetrics: %v\n", metrics)
 }

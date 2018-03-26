@@ -72,6 +72,7 @@ func NewRoutes() (r *Routes) {
 			// step:				  Duration indicating desired step between two datapoints, in seconds (default 15)
 			// duration:      Duration indicating desired query period, in seconds (default 1800 = 30 minutes)
 			// rateInterval:  Interval used for rate and histogram calculation (default 1m)
+			// filters[]:			List of metrics to fetch (empty by default). When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
 			// byLabelsIn[]:  List of labels to use for grouping input metrics (empty by default). Example: response_code,source_version
 			// byLabelsOut[]: List of labels to use for grouping output metrics (empty by default). Example: response_code,destination_version
 

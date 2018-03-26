@@ -25,22 +25,25 @@ func TestServiceMetricsDefault(t *testing.T) {
 	url := ts.URL + "/api/namespaces/ns/services/svc/metrics"
 	now := time.Now()
 	delta := 2 * time.Second
+	coveredPath := 0
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
 		assert.IsType(t, v1.Range{}, args[2])
 		r := args[2].(v1.Range)
 		assert.Contains(t, query, "svc.ns.svc.cluster.local")
-		assert.Contains(t, query, "["+metricsDefaultRateInterval+"]")
+		assert.Contains(t, query, "[1m]")
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
 			assert.Contains(t, query, " by (le)")
+			coveredPath |= 1
 		} else {
 			assert.NotContains(t, query, " by ")
+			coveredPath |= 2
 		}
-		assert.Equal(t, metricsDefaultStepSec*time.Second, r.Step)
+		assert.Equal(t, 15*time.Second, r.Step)
 		assert.WithinDuration(t, now, r.End, delta)
-		assert.WithinDuration(t, now.Add(-metricsDefaultDurationMin*time.Minute), r.Start, delta)
+		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
 	})
 
 	resp, err := http.Get(url)
@@ -51,6 +54,8 @@ func TestServiceMetricsDefault(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
+	// Assert branch coverage
+	assert.Equal(t, coveredPath, 3)
 }
 
 func TestServiceMetricsWithParams(t *testing.T) {
@@ -67,10 +72,13 @@ func TestServiceMetricsWithParams(t *testing.T) {
 	q.Add("duration", "1000")
 	q.Add("byLabelsIn[]", "response_code")
 	q.Add("byLabelsOut[]", "response_code")
+	q.Add("filters[]", "request_count")
+	q.Add("filters[]", "request_size")
 	req.URL.RawQuery = q.Encode()
 
 	now := time.Now()
 	delta := 2 * time.Second
+	coveredPath := 0
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
@@ -80,8 +88,11 @@ func TestServiceMetricsWithParams(t *testing.T) {
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
 			assert.Contains(t, query, " by (le,response_code)")
+			assert.Contains(t, query, "istio_request_size")
+			coveredPath |= 1
 		} else {
 			assert.Contains(t, query, " by (response_code)")
+			coveredPath |= 2
 		}
 		assert.Equal(t, 99*time.Second, r.Step)
 		assert.WithinDuration(t, now, r.End, delta)
@@ -97,6 +108,8 @@ func TestServiceMetricsWithParams(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
+	// Assert branch coverage
+	assert.Equal(t, coveredPath, 3)
 }
 
 func TestServiceMetricsBadDuration(t *testing.T) {

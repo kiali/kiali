@@ -31,5 +31,17 @@ func NamespaceMetrics(w http.ResponseWriter, r *http.Request) {
 func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error)) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
-	getMetrics(w, r, prometheus.NewClient, namespace, "")
+	params, err := extractNamespaceMetricsQuery(r, namespace, "")
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	prometheusClient, err := promClientSupplier()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
+		return
+	}
+	metrics := prometheusClient.GetNamespaceMetrics(params)
+	RespondWithJSON(w, http.StatusOK, metrics)
 }
