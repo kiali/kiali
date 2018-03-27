@@ -10,7 +10,7 @@ ShallowWrapper {
     rightText="my_value"
     scale={0.8}
     style="plastic"
-/>,
+  />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
     "getNode": [Function],
@@ -28,76 +28,76 @@ ShallowWrapper {
           id="a"
           x2="0"
           y2="100%"
->
+        >
           <stop
-                    offset="0"
-                    stopColor="#bbb"
-                    stopOpacity=".1"
+            offset="0"
+            stopColor="#bbb"
+            stopOpacity=".1"
           />
           <stop
-                    offset="1"
-                    stopOpacity=".1"
+            offset="1"
+            stopOpacity=".1"
           />
-</linearGradient>,
+        </linearGradient>,
         <rect
           fill="#555"
           height={16}
           rx={2.4000000000000004}
           width={19.2}
-/>,
+        />,
         <rect
           fill="green"
           height={16}
           rx={2.4000000000000004}
           width={9.6}
           x={9.6}
-/>,
+        />,
         <rect
           fill="green"
           height={16}
           width="13"
           x={9.6}
-/>,
+        />,
         <rect
           fill="url(#a)"
           height={16}
           rx={2.4000000000000004}
           width={19.2}
-/>,
+        />,
         <g
           fill="#fff"
           fontFamily="DejaVu Sans,Verdana,Geneva,sans-serif"
           fontSize={8.8}
->
+        >
           <text
-                    fill="#010101"
-                    fillOpacity=".3"
-                    x={4.8}
-                    y={12}
+            fill="#010101"
+            fillOpacity=".3"
+            x={4.8}
+            y={12}
           >
-                    my_key
+            my_key
           </text>
           <text
-                    x={4.8}
-                    y={11.2}
+            x={4.8}
+            y={11.2}
           >
-                    my_key
+            my_key
           </text>
           <text
-                    fill="#010101"
-                    fillOpacity=".3"
-                    x={14.399999999999999}
-                    y={12}
+            fill="#010101"
+            fillOpacity=".3"
+            x={14.399999999999999}
+            y={12}
           >
-                    my_value
+            my_value
           </text>
           <text
-                    x={14.399999999999999}
-                    y={11.2}
+            x={14.399999999999999}
+            y={11.2}
           >
-                    my_value
+            my_value
           </text>
-</g>,
+        </g>,
       ],
       "height": 16,
       "preserveAspectRatio": "xMidYMid meet",
@@ -121,11 +121,11 @@ ShallowWrapper {
               offset="0"
               stopColor="#bbb"
               stopOpacity=".1"
-/>,
+            />,
             <stop
               offset="1"
               stopOpacity=".1"
-/>,
+            />,
           ],
           "id": "a",
           "x2": "0",
@@ -229,29 +229,29 @@ ShallowWrapper {
               fillOpacity=".3"
               x={4.8}
               y={12}
->
+            >
               my_key
-</text>,
+            </text>,
             <text
               x={4.8}
               y={11.2}
->
+            >
               my_key
-</text>,
+            </text>,
             <text
               fill="#010101"
               fillOpacity=".3"
               x={14.399999999999999}
               y={12}
->
+            >
               my_value
-</text>,
+            </text>,
             <text
               x={14.399999999999999}
               y={11.2}
->
+            >
               my_value
-</text>,
+            </text>,
           ],
           "fill": "#fff",
           "fontFamily": "DejaVu Sans,Verdana,Geneva,sans-serif",
@@ -332,76 +332,76 @@ ShallowWrapper {
             id="a"
             x2="0"
             y2="100%"
->
+          >
             <stop
-                        offset="0"
-                        stopColor="#bbb"
-                        stopOpacity=".1"
+              offset="0"
+              stopColor="#bbb"
+              stopOpacity=".1"
             />
             <stop
-                        offset="1"
-                        stopOpacity=".1"
+              offset="1"
+              stopOpacity=".1"
             />
-</linearGradient>,
+          </linearGradient>,
           <rect
             fill="#555"
             height={16}
             rx={2.4000000000000004}
             width={19.2}
-/>,
+          />,
           <rect
             fill="green"
             height={16}
             rx={2.4000000000000004}
             width={9.6}
             x={9.6}
-/>,
+          />,
           <rect
             fill="green"
             height={16}
             width="13"
             x={9.6}
-/>,
+          />,
           <rect
             fill="url(#a)"
             height={16}
             rx={2.4000000000000004}
             width={19.2}
-/>,
+          />,
           <g
             fill="#fff"
             fontFamily="DejaVu Sans,Verdana,Geneva,sans-serif"
             fontSize={8.8}
->
+          >
             <text
-                        fill="#010101"
-                        fillOpacity=".3"
-                        x={4.8}
-                        y={12}
+              fill="#010101"
+              fillOpacity=".3"
+              x={4.8}
+              y={12}
             >
-                        my_key
+              my_key
             </text>
             <text
-                        x={4.8}
-                        y={11.2}
+              x={4.8}
+              y={11.2}
             >
-                        my_key
+              my_key
             </text>
             <text
-                        fill="#010101"
-                        fillOpacity=".3"
-                        x={14.399999999999999}
-                        y={12}
+              fill="#010101"
+              fillOpacity=".3"
+              x={14.399999999999999}
+              y={12}
             >
-                        my_value
+              my_value
             </text>
             <text
-                        x={14.399999999999999}
-                        y={11.2}
+              x={14.399999999999999}
+              y={11.2}
             >
-                        my_value
+              my_value
             </text>
-</g>,
+          </g>,
         ],
         "height": 16,
         "preserveAspectRatio": "xMidYMid meet",
@@ -425,11 +425,11 @@ ShallowWrapper {
                 offset="0"
                 stopColor="#bbb"
                 stopOpacity=".1"
-/>,
+              />,
               <stop
                 offset="1"
                 stopOpacity=".1"
-/>,
+              />,
             ],
             "id": "a",
             "x2": "0",
@@ -533,29 +533,29 @@ ShallowWrapper {
                 fillOpacity=".3"
                 x={4.8}
                 y={12}
->
+              >
                 my_key
-</text>,
+              </text>,
               <text
                 x={4.8}
                 y={11.2}
->
+              >
                 my_key
-</text>,
+              </text>,
               <text
                 fill="#010101"
                 fillOpacity=".3"
                 x={14.399999999999999}
                 y={12}
->
+              >
                 my_value
-</text>,
+              </text>,
               <text
                 x={14.399999999999999}
                 y={11.2}
->
+              >
                 my_value
-</text>,
+              </text>,
             ],
             "fill": "#fff",
             "fontFamily": "DejaVu Sans,Verdana,Geneva,sans-serif",

@@ -6,40 +6,40 @@ ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <ServiceInfoRouteRules
     routeRules={
-        Array [
+      Array [
+        Object {
+          "destination": Object {
+            "name": "reviews",
+          },
+          "match": undefined,
+          "name": "reviews-default",
+          "precedence": 1,
+          "route": Array [
             Object {
-              "destination": Object {
-                "name": "reviews",
+              "labels": Map {
+                "version" => "v1",
               },
-              "match": undefined,
-              "name": "reviews-default",
-              "precedence": 1,
-              "route": Array [
-                Object {
-                  "labels": Map {
-                    "version" => "v1",
-                  },
-                },
-              ],
             },
+          ],
+        },
+        Object {
+          "destination": Object {
+            "name": "reviews",
+          },
+          "match": undefined,
+          "name": "reviews-test-v2",
+          "precedence": 2,
+          "route": Array [
             Object {
-              "destination": Object {
-                "name": "reviews",
+              "labels": Map {
+                "version" => "v2",
               },
-              "match": undefined,
-              "name": "reviews-test-v2",
-              "precedence": 2,
-              "route": Array [
-                Object {
-                  "labels": Map {
-                    "version" => "v2",
-                  },
-                },
-              ],
             },
-          ]
+          ],
+        },
+      ]
     }
-/>,
+  />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
     "getNode": [Function],
@@ -57,60 +57,60 @@ ShallowWrapper {
       "items": Array [
         <div>
           <div>
-                    <strong>
-                              Name
-                    </strong>
-                    : 
-                    reviews-default
+            <strong>
+              Name
+            </strong>
+            : 
+            reviews-default
           </div>
           <div>
-                    <strong>
-                              Precedence
-                    </strong>
-                    : 
-                    1
+            <strong>
+              Precedence
+            </strong>
+            : 
+            1
           </div>
           <RouteRuleRoute
-                    route={
-                              Array [
-                                        Object {
-                                          "labels": Map {
-                                            "version" => "v1",
-                                          },
-                                        },
-                                      ]
-                    }
+            route={
+              Array [
+                Object {
+                  "labels": Map {
+                    "version" => "v1",
+                  },
+                },
+              ]
+            }
           />
           <hr />
-</div>,
+        </div>,
         <div>
           <div>
-                    <strong>
-                              Name
-                    </strong>
-                    : 
-                    reviews-test-v2
+            <strong>
+              Name
+            </strong>
+            : 
+            reviews-test-v2
           </div>
           <div>
-                    <strong>
-                              Precedence
-                    </strong>
-                    : 
-                    2
+            <strong>
+              Precedence
+            </strong>
+            : 
+            2
           </div>
           <RouteRuleRoute
-                    route={
-                              Array [
-                                        Object {
-                                          "labels": Map {
-                                            "version" => "v2",
-                                          },
-                                        },
-                                      ]
-                    }
+            route={
+              Array [
+                Object {
+                  "labels": Map {
+                    "version" => "v2",
+                  },
+                },
+              ]
+            }
           />
           <hr />
-</div>,
+        </div>,
       ],
       "title": "Istio Route Rules",
     },
@@ -129,60 +129,60 @@ ShallowWrapper {
         "items": Array [
           <div>
             <div>
-                        <strong>
-                                    Name
-                        </strong>
-                        : 
-                        reviews-default
+              <strong>
+                Name
+              </strong>
+              : 
+              reviews-default
             </div>
             <div>
-                        <strong>
-                                    Precedence
-                        </strong>
-                        : 
-                        1
+              <strong>
+                Precedence
+              </strong>
+              : 
+              1
             </div>
             <RouteRuleRoute
-                        route={
-                                    Array [
-                                                Object {
-                                                  "labels": Map {
-                                                    "version" => "v1",
-                                                  },
-                                                },
-                                              ]
-                        }
+              route={
+                Array [
+                  Object {
+                    "labels": Map {
+                      "version" => "v1",
+                    },
+                  },
+                ]
+              }
             />
             <hr />
-</div>,
+          </div>,
           <div>
             <div>
-                        <strong>
-                                    Name
-                        </strong>
-                        : 
-                        reviews-test-v2
+              <strong>
+                Name
+              </strong>
+              : 
+              reviews-test-v2
             </div>
             <div>
-                        <strong>
-                                    Precedence
-                        </strong>
-                        : 
-                        2
+              <strong>
+                Precedence
+              </strong>
+              : 
+              2
             </div>
             <RouteRuleRoute
-                        route={
-                                    Array [
-                                                Object {
-                                                  "labels": Map {
-                                                    "version" => "v2",
-                                                  },
-                                                },
-                                              ]
-                        }
+              route={
+                Array [
+                  Object {
+                    "labels": Map {
+                      "version" => "v2",
+                    },
+                  },
+                ]
+              }
             />
             <hr />
-</div>,
+          </div>,
         ],
         "title": "Istio Route Rules",
       },

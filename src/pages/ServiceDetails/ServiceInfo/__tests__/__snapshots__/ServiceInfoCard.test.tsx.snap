@@ -8,33 +8,33 @@ ShallowWrapper {
     iconName="cube"
     iconType="fa"
     items={
+      <div>
         <div>
-            <div>
-                <strong>
-                    Pod:
-                </strong>
-            </div>
-            <ul
-                style={
-                    Object {
-                        "listStyleType": "none",
-                      }
-                }
-            >
-                <li>
-                    <Badge
-                        color="green"
-                        leftText="my_key"
-                        rightText="my_value"
-                        scale={0.8}
-                        style="plastic"
-                    />
-                </li>
-            </ul>
+          <strong>
+            Pod:
+          </strong>
         </div>
+        <ul
+          style={
+            Object {
+              "listStyleType": "none",
+            }
+          }
+        >
+          <li>
+            <Badge
+              color="green"
+              leftText="my_key"
+              rightText="my_value"
+              scale={0.8}
+              style="plastic"
+            />
+          </li>
+        </ul>
+      </div>
     }
     title="Pods"
-/>,
+  />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
     "getNode": [Function],
@@ -50,50 +50,50 @@ ShallowWrapper {
       "children": Array [
         <div
           className="card-pf-heading"
->
+        >
           <h2
-                    className="card-pf-title"
+            className="card-pf-title"
           >
-                    <Icon
-                              name="cube"
-                              style={
-                                        Object {
-                                                  "marginRight": "10px",
-                                                }
-                              }
-                              type="fa"
-                    />
-                    Pods
+            <Icon
+              name="cube"
+              style={
+                Object {
+                  "marginRight": "10px",
+                }
+              }
+              type="fa"
+            />
+            Pods
           </h2>
-</div>,
+        </div>,
         <div
           className="card-pf-body"
->
+        >
           <div>
-                    <div>
-                              <strong>
-                                        Pod:
-                              </strong>
-                    </div>
-                    <ul
-                              style={
-                                        Object {
-                                                  "listStyleType": "none",
-                                                }
-                              }
-                    >
-                              <li>
-                                        <Badge
-                                                  color="green"
-                                                  leftText="my_key"
-                                                  rightText="my_value"
-                                                  scale={0.8}
-                                                  style="plastic"
-                                        />
-                              </li>
-                    </ul>
+            <div>
+              <strong>
+                Pod:
+              </strong>
+            </div>
+            <ul
+              style={
+                Object {
+                  "listStyleType": "none",
+                }
+              }
+            >
+              <li>
+                <Badge
+                  color="green"
+                  leftText="my_key"
+                  rightText="my_value"
+                  scale={0.8}
+                  style="plastic"
+                />
+              </li>
+            </ul>
           </div>
-</div>,
+        </div>,
       ],
       "className": "card-pf",
     },
@@ -106,18 +106,18 @@ ShallowWrapper {
         "props": Object {
           "children": <h2
             className="card-pf-title"
->
+          >
             <Icon
-                        name="cube"
-                        style={
-                                    Object {
-                                                "marginRight": "10px",
-                                              }
-                        }
-                        type="fa"
+              name="cube"
+              style={
+                Object {
+                  "marginRight": "10px",
+                }
+              }
+              type="fa"
             />
             Pods
-</h2>,
+          </h2>,
           "className": "card-pf-heading",
         },
         "ref": null,
@@ -130,12 +130,12 @@ ShallowWrapper {
               <Icon
                 name="cube"
                 style={
-                                Object {
-                                                "marginRight": "10px",
-                                              }
+                  Object {
+                    "marginRight": "10px",
+                  }
                 }
                 type="fa"
-/>,
+              />,
               "Pods",
             ],
             "className": "card-pf-title",
@@ -170,28 +170,28 @@ ShallowWrapper {
         "props": Object {
           "children": <div>
             <div>
-                        <strong>
-                                    Pod:
-                        </strong>
+              <strong>
+                Pod:
+              </strong>
             </div>
             <ul
-                        style={
-                                    Object {
-                                                "listStyleType": "none",
-                                              }
-                        }
+              style={
+                Object {
+                  "listStyleType": "none",
+                }
+              }
             >
-                        <li>
-                                    <Badge
-                                                color="green"
-                                                leftText="my_key"
-                                                rightText="my_value"
-                                                scale={0.8}
-                                                style="plastic"
-                                    />
-                        </li>
+              <li>
+                <Badge
+                  color="green"
+                  leftText="my_key"
+                  rightText="my_value"
+                  scale={0.8}
+                  style="plastic"
+                />
+              </li>
             </ul>
-</div>,
+          </div>,
           "className": "card-pf-body",
         },
         "ref": null,
@@ -203,26 +203,26 @@ ShallowWrapper {
             "children": Array [
               <div>
                 <strong>
-                                Pod:
+                  Pod:
                 </strong>
-</div>,
+              </div>,
               <ul
                 style={
-                                Object {
-                                                "listStyleType": "none",
-                                              }
+                  Object {
+                    "listStyleType": "none",
+                  }
                 }
->
+              >
                 <li>
-                                <Badge
-                                                color="green"
-                                                leftText="my_key"
-                                                rightText="my_value"
-                                                scale={0.8}
-                                                style="plastic"
-                                />
+                  <Badge
+                    color="green"
+                    leftText="my_key"
+                    rightText="my_value"
+                    scale={0.8}
+                    style="plastic"
+                  />
                 </li>
-</ul>,
+              </ul>,
             ],
           },
           "ref": null,
@@ -234,7 +234,7 @@ ShallowWrapper {
               "props": Object {
                 "children": <strong>
                   Pod:
-</strong>,
+                </strong>,
               },
               "ref": null,
               "rendered": Object {
@@ -257,13 +257,13 @@ ShallowWrapper {
               "props": Object {
                 "children": <li>
                   <Badge
-                                    color="green"
-                                    leftText="my_key"
-                                    rightText="my_value"
-                                    scale={0.8}
-                                    style="plastic"
+                    color="green"
+                    leftText="my_key"
+                    rightText="my_value"
+                    scale={0.8}
+                    style="plastic"
                   />
-</li>,
+                </li>,
                 "style": Object {
                   "listStyleType": "none",
                 },
@@ -280,7 +280,7 @@ ShallowWrapper {
                     rightText="my_value"
                     scale={0.8}
                     style="plastic"
-/>,
+                  />,
                 },
                 "ref": null,
                 "rendered": Object {
@@ -319,50 +319,50 @@ ShallowWrapper {
         "children": Array [
           <div
             className="card-pf-heading"
->
+          >
             <h2
-                        className="card-pf-title"
+              className="card-pf-title"
             >
-                        <Icon
-                                    name="cube"
-                                    style={
-                                                Object {
-                                                            "marginRight": "10px",
-                                                          }
-                                    }
-                                    type="fa"
-                        />
-                        Pods
+              <Icon
+                name="cube"
+                style={
+                  Object {
+                    "marginRight": "10px",
+                  }
+                }
+                type="fa"
+              />
+              Pods
             </h2>
-</div>,
+          </div>,
           <div
             className="card-pf-body"
->
+          >
             <div>
-                        <div>
-                                    <strong>
-                                                Pod:
-                                    </strong>
-                        </div>
-                        <ul
-                                    style={
-                                                Object {
-                                                            "listStyleType": "none",
-                                                          }
-                                    }
-                        >
-                                    <li>
-                                                <Badge
-                                                            color="green"
-                                                            leftText="my_key"
-                                                            rightText="my_value"
-                                                            scale={0.8}
-                                                            style="plastic"
-                                                />
-                                    </li>
-                        </ul>
+              <div>
+                <strong>
+                  Pod:
+                </strong>
+              </div>
+              <ul
+                style={
+                  Object {
+                    "listStyleType": "none",
+                  }
+                }
+              >
+                <li>
+                  <Badge
+                    color="green"
+                    leftText="my_key"
+                    rightText="my_value"
+                    scale={0.8}
+                    style="plastic"
+                  />
+                </li>
+              </ul>
             </div>
-</div>,
+          </div>,
         ],
         "className": "card-pf",
       },
@@ -375,18 +375,18 @@ ShallowWrapper {
           "props": Object {
             "children": <h2
               className="card-pf-title"
->
+            >
               <Icon
-                            name="cube"
-                            style={
-                                          Object {
-                                                        "marginRight": "10px",
-                                                      }
-                            }
-                            type="fa"
+                name="cube"
+                style={
+                  Object {
+                    "marginRight": "10px",
+                  }
+                }
+                type="fa"
               />
               Pods
-</h2>,
+            </h2>,
             "className": "card-pf-heading",
           },
           "ref": null,
@@ -399,12 +399,12 @@ ShallowWrapper {
                 <Icon
                   name="cube"
                   style={
-                                    Object {
-                                                      "marginRight": "10px",
-                                                    }
+                    Object {
+                      "marginRight": "10px",
+                    }
                   }
                   type="fa"
-/>,
+                />,
                 "Pods",
               ],
               "className": "card-pf-title",
@@ -439,28 +439,28 @@ ShallowWrapper {
           "props": Object {
             "children": <div>
               <div>
-                            <strong>
-                                          Pod:
-                            </strong>
+                <strong>
+                  Pod:
+                </strong>
               </div>
               <ul
-                            style={
-                                          Object {
-                                                        "listStyleType": "none",
-                                                      }
-                            }
+                style={
+                  Object {
+                    "listStyleType": "none",
+                  }
+                }
               >
-                            <li>
-                                          <Badge
-                                                        color="green"
-                                                        leftText="my_key"
-                                                        rightText="my_value"
-                                                        scale={0.8}
-                                                        style="plastic"
-                                          />
-                            </li>
+                <li>
+                  <Badge
+                    color="green"
+                    leftText="my_key"
+                    rightText="my_value"
+                    scale={0.8}
+                    style="plastic"
+                  />
+                </li>
               </ul>
-</div>,
+            </div>,
             "className": "card-pf-body",
           },
           "ref": null,
@@ -472,26 +472,26 @@ ShallowWrapper {
               "children": Array [
                 <div>
                   <strong>
-                                    Pod:
+                    Pod:
                   </strong>
-</div>,
+                </div>,
                 <ul
                   style={
-                                    Object {
-                                                      "listStyleType": "none",
-                                                    }
+                    Object {
+                      "listStyleType": "none",
+                    }
                   }
->
+                >
                   <li>
-                                    <Badge
-                                                      color="green"
-                                                      leftText="my_key"
-                                                      rightText="my_value"
-                                                      scale={0.8}
-                                                      style="plastic"
-                                    />
+                    <Badge
+                      color="green"
+                      leftText="my_key"
+                      rightText="my_value"
+                      scale={0.8}
+                      style="plastic"
+                    />
                   </li>
-</ul>,
+                </ul>,
               ],
             },
             "ref": null,
@@ -503,7 +503,7 @@ ShallowWrapper {
                 "props": Object {
                   "children": <strong>
                     Pod:
-</strong>,
+                  </strong>,
                 },
                 "ref": null,
                 "rendered": Object {
@@ -526,13 +526,13 @@ ShallowWrapper {
                 "props": Object {
                   "children": <li>
                     <Badge
-                                        color="green"
-                                        leftText="my_key"
-                                        rightText="my_value"
-                                        scale={0.8}
-                                        style="plastic"
+                      color="green"
+                      leftText="my_key"
+                      rightText="my_value"
+                      scale={0.8}
+                      style="plastic"
                     />
-</li>,
+                  </li>,
                   "style": Object {
                     "listStyleType": "none",
                   },
@@ -549,7 +549,7 @@ ShallowWrapper {
                       rightText="my_value"
                       scale={0.8}
                       style="plastic"
-/>,
+                    />,
                   },
                   "ref": null,
                   "rendered": Object {

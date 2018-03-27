@@ -1,16 +1,15 @@
 import * as React from 'react';
 import ServiceId from '../../types/ServiceId';
-import {
-  ServiceInfoDeployments,
-  ServiceInfoRouteRules,
-  ServiceInfoRoutes,
-  ServiceInfoDescription
-} from './ServiceInfo/';
+import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
+import ServiceInfoDeployments from './ServiceInfo/ServiceInfoDeployments';
+import ServiceInfoRouteRules from './ServiceInfo/ServiceInfoRouteRules';
+import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
+import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
+
 import { Endpoints, Deployment, Port, RouteRule, DestinationPolicy } from '../../types/ServiceInfo';
 import Health from '../../types/Health';
 import * as API from '../../services/Api';
 import { ToastNotification, ToastNotificationList, Col, Row } from 'patternfly-react';
-import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
 
 type ServiceInfoState = {
   labels?: Map<string, string>;

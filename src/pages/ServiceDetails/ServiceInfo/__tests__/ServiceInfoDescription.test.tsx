@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { ServiceInfoDescription } from '../index';
+import ServiceInfoDescription from '../ServiceInfoDescription';
 
 const labels: Map<string, string> = new Map([['app', 'reviews']]);
 

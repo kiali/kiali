@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { ServiceInfoRoutes } from '../index';
+import ServiceInfoRoutes from '../ServiceInfoRoutes';
 
 const dependencies: Map<string, string[]> = new Map([['v1', ['productpage.istio-system/v1']]]);
 
