@@ -14,6 +14,7 @@ import (
 )
 
 // Environment vars can define some default values.
+// NOTE: If you add a new variable, don't forget to update README.adoc
 const (
 	EnvIdentityCertFile       = "IDENTITY_CERT_FILE"
 	EnvIdentityPrivateKeyFile = "IDENTITY_PRIVATE_KEY_FILE"
@@ -80,7 +81,7 @@ type Config struct {
 	Server                 Server            `yaml:",omitempty"`
 	PrometheusServiceURL   string            `yaml:"prometheus_service_url,omitempty"`
 	IstioIdentityDomain    string            `yaml:"istio_identity_domain,omitempty"`
-	IstioSidecarAnnotation string            `yaml:"istio_sidecar,omitempty"`
+	IstioSidecarAnnotation string            `yaml:"istio_sidecar_annotation,omitempty"`
 	Grafana                GrafanaConfig     `yaml:"grafana,omitempty"`
 	Jaeger                 JaegerConfig      `yaml:"jaeger,omitempty"`
 	ServiceFilterLabelName string            `yaml:"service_filter_label_name,omitempty"`
