@@ -7,7 +7,7 @@ ShallowWrapper {
   Symbol(enzyme.__unrendered__): <ServiceInfo
     namespace="istio-system"
     service="reviews"
-/>,
+  />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
     "getNode": [Function],
@@ -24,77 +24,77 @@ ShallowWrapper {
         null,
         <div
           className="container-fluid container-cards-pf"
->
+        >
           <Row
-                    bsClass="row"
-                    className="row-cards-pf"
-                    componentClass="div"
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
           >
-                    <Col
-                              bsClass="col"
-                              componentClass="div"
-                              lg={12}
-                              md={12}
-                              sm={12}
-                              xs={12}
-                    >
-                              <ServiceInfoDescription
-                                        endpoints={undefined}
-                                        health={undefined}
-                                        ip=""
-                                        labels={Map {}}
-                                        name=""
-                                        ports={Array []}
-                                        type=""
-                              />
-                    </Col>
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={12}
+              md={12}
+              sm={12}
+              xs={12}
+            >
+              <ServiceInfoDescription
+                endpoints={undefined}
+                health={undefined}
+                ip=""
+                labels={Map {}}
+                name=""
+                ports={Array []}
+                type=""
+              />
+            </Col>
           </Row>
           <Row
-                    bsClass="row"
-                    className="row-cards-pf"
-                    componentClass="div"
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
           >
-                    <Col
-                              bsClass="col"
-                              componentClass="div"
-                              lg={4}
-                              md={4}
-                              sm={6}
-                              xs={12}
-                    >
-                              <ServiceInfoDeployments
-                                        deployments={Array []}
-                              />
-                    </Col>
-                    <Col
-                              bsClass="col"
-                              componentClass="div"
-                              lg={4}
-                              md={4}
-                              sm={6}
-                              xs={12}
-                    >
-                              <ServiceInfoRoutes
-                                        dependencies={Map {}}
-                              />
-                    </Col>
-                    <Col
-                              bsClass="col"
-                              componentClass="div"
-                              lg={4}
-                              md={4}
-                              sm={6}
-                              xs={12}
-                    >
-                              <ServiceInfoRouteRules
-                                        routeRules={Array []}
-                              />
-                              <ServiceInfoDestinationPolicies
-                                        destinationPolicies={undefined}
-                              />
-                    </Col>
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={4}
+              md={4}
+              sm={6}
+              xs={12}
+            >
+              <ServiceInfoDeployments
+                deployments={Array []}
+              />
+            </Col>
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={4}
+              md={4}
+              sm={6}
+              xs={12}
+            >
+              <ServiceInfoRoutes
+                dependencies={Map {}}
+              />
+            </Col>
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={4}
+              md={4}
+              sm={6}
+              xs={12}
+            >
+              <ServiceInfoRouteRules
+                routeRules={Array []}
+              />
+              <ServiceInfoDestinationPolicies
+                destinationPolicies={undefined}
+              />
+            </Col>
           </Row>
-</div>,
+        </div>,
       ],
     },
     "ref": null,
@@ -110,71 +110,71 @@ ShallowWrapper {
               bsClass="row"
               className="row-cards-pf"
               componentClass="div"
->
+            >
               <Col
-                            bsClass="col"
-                            componentClass="div"
-                            lg={12}
-                            md={12}
-                            sm={12}
-                            xs={12}
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
               >
-                            <ServiceInfoDescription
-                                          endpoints={undefined}
-                                          health={undefined}
-                                          ip=""
-                                          labels={Map {}}
-                                          name=""
-                                          ports={Array []}
-                                          type=""
-                            />
+                <ServiceInfoDescription
+                  endpoints={undefined}
+                  health={undefined}
+                  ip=""
+                  labels={Map {}}
+                  name=""
+                  ports={Array []}
+                  type=""
+                />
               </Col>
-</Row>,
+            </Row>,
             <Row
               bsClass="row"
               className="row-cards-pf"
               componentClass="div"
->
+            >
               <Col
-                            bsClass="col"
-                            componentClass="div"
-                            lg={4}
-                            md={4}
-                            sm={6}
-                            xs={12}
+                bsClass="col"
+                componentClass="div"
+                lg={4}
+                md={4}
+                sm={6}
+                xs={12}
               >
-                            <ServiceInfoDeployments
-                                          deployments={Array []}
-                            />
+                <ServiceInfoDeployments
+                  deployments={Array []}
+                />
               </Col>
               <Col
-                            bsClass="col"
-                            componentClass="div"
-                            lg={4}
-                            md={4}
-                            sm={6}
-                            xs={12}
+                bsClass="col"
+                componentClass="div"
+                lg={4}
+                md={4}
+                sm={6}
+                xs={12}
               >
-                            <ServiceInfoRoutes
-                                          dependencies={Map {}}
-                            />
+                <ServiceInfoRoutes
+                  dependencies={Map {}}
+                />
               </Col>
               <Col
-                            bsClass="col"
-                            componentClass="div"
-                            lg={4}
-                            md={4}
-                            sm={6}
-                            xs={12}
+                bsClass="col"
+                componentClass="div"
+                lg={4}
+                md={4}
+                sm={6}
+                xs={12}
               >
-                            <ServiceInfoRouteRules
-                                          routeRules={Array []}
-                            />
-                            <ServiceInfoDestinationPolicies
-                                          destinationPolicies={undefined}
-                            />
+                <ServiceInfoRouteRules
+                  routeRules={Array []}
+                />
+                <ServiceInfoDestinationPolicies
+                  destinationPolicies={undefined}
+                />
               </Col>
-</Row>,
+            </Row>,
           ],
           "className": "container-fluid container-cards-pf",
         },
@@ -193,17 +193,17 @@ ShallowWrapper {
                 md={12}
                 sm={12}
                 xs={12}
->
+              >
                 <ServiceInfoDescription
-                                endpoints={undefined}
-                                health={undefined}
-                                ip=""
-                                labels={Map {}}
-                                name=""
-                                ports={Array []}
-                                type=""
+                  endpoints={undefined}
+                  health={undefined}
+                  ip=""
+                  labels={Map {}}
+                  name=""
+                  ports={Array []}
+                  type=""
                 />
-</Col>,
+              </Col>,
               "className": "row-cards-pf",
               "componentClass": "div",
             },
@@ -222,7 +222,7 @@ ShallowWrapper {
                   name=""
                   ports={Array []}
                   type=""
-/>,
+                />,
                 "componentClass": "div",
                 "lg": 12,
                 "md": 12,
@@ -265,11 +265,11 @@ ShallowWrapper {
                   md={4}
                   sm={6}
                   xs={12}
->
+                >
                   <ServiceInfoDeployments
-                                    deployments={Array []}
+                    deployments={Array []}
                   />
-</Col>,
+                </Col>,
                 <Col
                   bsClass="col"
                   componentClass="div"
@@ -277,11 +277,11 @@ ShallowWrapper {
                   md={4}
                   sm={6}
                   xs={12}
->
+                >
                   <ServiceInfoRoutes
-                                    dependencies={Map {}}
+                    dependencies={Map {}}
                   />
-</Col>,
+                </Col>,
                 <Col
                   bsClass="col"
                   componentClass="div"
@@ -289,14 +289,14 @@ ShallowWrapper {
                   md={4}
                   sm={6}
                   xs={12}
->
+                >
                   <ServiceInfoRouteRules
-                                    routeRules={Array []}
+                    routeRules={Array []}
                   />
                   <ServiceInfoDestinationPolicies
-                                    destinationPolicies={undefined}
+                    destinationPolicies={undefined}
                   />
-</Col>,
+                </Col>,
               ],
               "className": "row-cards-pf",
               "componentClass": "div",
@@ -311,7 +311,7 @@ ShallowWrapper {
                   "bsClass": "col",
                   "children": <ServiceInfoDeployments
                     deployments={Array []}
-/>,
+                  />,
                   "componentClass": "div",
                   "lg": 4,
                   "md": 4,
@@ -340,7 +340,7 @@ ShallowWrapper {
                   "bsClass": "col",
                   "children": <ServiceInfoRoutes
                     dependencies={Map {}}
-/>,
+                  />,
                   "componentClass": "div",
                   "lg": 4,
                   "md": 4,
@@ -370,10 +370,10 @@ ShallowWrapper {
                   "children": Array [
                     <ServiceInfoRouteRules
                       routeRules={Array []}
-/>,
+                    />,
                     <ServiceInfoDestinationPolicies
                       destinationPolicies={undefined}
-/>,
+                    />,
                   ],
                   "componentClass": "div",
                   "lg": 4,
@@ -427,77 +427,77 @@ ShallowWrapper {
           null,
           <div
             className="container-fluid container-cards-pf"
->
+          >
             <Row
-                        bsClass="row"
-                        className="row-cards-pf"
-                        componentClass="div"
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
             >
-                        <Col
-                                    bsClass="col"
-                                    componentClass="div"
-                                    lg={12}
-                                    md={12}
-                                    sm={12}
-                                    xs={12}
-                        >
-                                    <ServiceInfoDescription
-                                                endpoints={undefined}
-                                                health={undefined}
-                                                ip=""
-                                                labels={Map {}}
-                                                name=""
-                                                ports={Array []}
-                                                type=""
-                                    />
-                        </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+              >
+                <ServiceInfoDescription
+                  endpoints={undefined}
+                  health={undefined}
+                  ip=""
+                  labels={Map {}}
+                  name=""
+                  ports={Array []}
+                  type=""
+                />
+              </Col>
             </Row>
             <Row
-                        bsClass="row"
-                        className="row-cards-pf"
-                        componentClass="div"
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
             >
-                        <Col
-                                    bsClass="col"
-                                    componentClass="div"
-                                    lg={4}
-                                    md={4}
-                                    sm={6}
-                                    xs={12}
-                        >
-                                    <ServiceInfoDeployments
-                                                deployments={Array []}
-                                    />
-                        </Col>
-                        <Col
-                                    bsClass="col"
-                                    componentClass="div"
-                                    lg={4}
-                                    md={4}
-                                    sm={6}
-                                    xs={12}
-                        >
-                                    <ServiceInfoRoutes
-                                                dependencies={Map {}}
-                                    />
-                        </Col>
-                        <Col
-                                    bsClass="col"
-                                    componentClass="div"
-                                    lg={4}
-                                    md={4}
-                                    sm={6}
-                                    xs={12}
-                        >
-                                    <ServiceInfoRouteRules
-                                                routeRules={Array []}
-                                    />
-                                    <ServiceInfoDestinationPolicies
-                                                destinationPolicies={undefined}
-                                    />
-                        </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={4}
+                md={4}
+                sm={6}
+                xs={12}
+              >
+                <ServiceInfoDeployments
+                  deployments={Array []}
+                />
+              </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={4}
+                md={4}
+                sm={6}
+                xs={12}
+              >
+                <ServiceInfoRoutes
+                  dependencies={Map {}}
+                />
+              </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={4}
+                md={4}
+                sm={6}
+                xs={12}
+              >
+                <ServiceInfoRouteRules
+                  routeRules={Array []}
+                />
+                <ServiceInfoDestinationPolicies
+                  destinationPolicies={undefined}
+                />
+              </Col>
             </Row>
-</div>,
+          </div>,
         ],
       },
       "ref": null,
@@ -513,71 +513,71 @@ ShallowWrapper {
                 bsClass="row"
                 className="row-cards-pf"
                 componentClass="div"
->
+              >
                 <Col
-                                bsClass="col"
-                                componentClass="div"
-                                lg={12}
-                                md={12}
-                                sm={12}
-                                xs={12}
+                  bsClass="col"
+                  componentClass="div"
+                  lg={12}
+                  md={12}
+                  sm={12}
+                  xs={12}
                 >
-                                <ServiceInfoDescription
-                                                endpoints={undefined}
-                                                health={undefined}
-                                                ip=""
-                                                labels={Map {}}
-                                                name=""
-                                                ports={Array []}
-                                                type=""
-                                />
+                  <ServiceInfoDescription
+                    endpoints={undefined}
+                    health={undefined}
+                    ip=""
+                    labels={Map {}}
+                    name=""
+                    ports={Array []}
+                    type=""
+                  />
                 </Col>
-</Row>,
+              </Row>,
               <Row
                 bsClass="row"
                 className="row-cards-pf"
                 componentClass="div"
->
+              >
                 <Col
-                                bsClass="col"
-                                componentClass="div"
-                                lg={4}
-                                md={4}
-                                sm={6}
-                                xs={12}
+                  bsClass="col"
+                  componentClass="div"
+                  lg={4}
+                  md={4}
+                  sm={6}
+                  xs={12}
                 >
-                                <ServiceInfoDeployments
-                                                deployments={Array []}
-                                />
+                  <ServiceInfoDeployments
+                    deployments={Array []}
+                  />
                 </Col>
                 <Col
-                                bsClass="col"
-                                componentClass="div"
-                                lg={4}
-                                md={4}
-                                sm={6}
-                                xs={12}
+                  bsClass="col"
+                  componentClass="div"
+                  lg={4}
+                  md={4}
+                  sm={6}
+                  xs={12}
                 >
-                                <ServiceInfoRoutes
-                                                dependencies={Map {}}
-                                />
+                  <ServiceInfoRoutes
+                    dependencies={Map {}}
+                  />
                 </Col>
                 <Col
-                                bsClass="col"
-                                componentClass="div"
-                                lg={4}
-                                md={4}
-                                sm={6}
-                                xs={12}
+                  bsClass="col"
+                  componentClass="div"
+                  lg={4}
+                  md={4}
+                  sm={6}
+                  xs={12}
                 >
-                                <ServiceInfoRouteRules
-                                                routeRules={Array []}
-                                />
-                                <ServiceInfoDestinationPolicies
-                                                destinationPolicies={undefined}
-                                />
+                  <ServiceInfoRouteRules
+                    routeRules={Array []}
+                  />
+                  <ServiceInfoDestinationPolicies
+                    destinationPolicies={undefined}
+                  />
                 </Col>
-</Row>,
+              </Row>,
             ],
             "className": "container-fluid container-cards-pf",
           },
@@ -596,17 +596,17 @@ ShallowWrapper {
                   md={12}
                   sm={12}
                   xs={12}
->
+                >
                   <ServiceInfoDescription
-                                    endpoints={undefined}
-                                    health={undefined}
-                                    ip=""
-                                    labels={Map {}}
-                                    name=""
-                                    ports={Array []}
-                                    type=""
+                    endpoints={undefined}
+                    health={undefined}
+                    ip=""
+                    labels={Map {}}
+                    name=""
+                    ports={Array []}
+                    type=""
                   />
-</Col>,
+                </Col>,
                 "className": "row-cards-pf",
                 "componentClass": "div",
               },
@@ -625,7 +625,7 @@ ShallowWrapper {
                     name=""
                     ports={Array []}
                     type=""
-/>,
+                  />,
                   "componentClass": "div",
                   "lg": 12,
                   "md": 12,
@@ -668,11 +668,11 @@ ShallowWrapper {
                     md={4}
                     sm={6}
                     xs={12}
->
+                  >
                     <ServiceInfoDeployments
-                                        deployments={Array []}
+                      deployments={Array []}
                     />
-</Col>,
+                  </Col>,
                   <Col
                     bsClass="col"
                     componentClass="div"
@@ -680,11 +680,11 @@ ShallowWrapper {
                     md={4}
                     sm={6}
                     xs={12}
->
+                  >
                     <ServiceInfoRoutes
-                                        dependencies={Map {}}
+                      dependencies={Map {}}
                     />
-</Col>,
+                  </Col>,
                   <Col
                     bsClass="col"
                     componentClass="div"
@@ -692,14 +692,14 @@ ShallowWrapper {
                     md={4}
                     sm={6}
                     xs={12}
->
+                  >
                     <ServiceInfoRouteRules
-                                        routeRules={Array []}
+                      routeRules={Array []}
                     />
                     <ServiceInfoDestinationPolicies
-                                        destinationPolicies={undefined}
+                      destinationPolicies={undefined}
                     />
-</Col>,
+                  </Col>,
                 ],
                 "className": "row-cards-pf",
                 "componentClass": "div",
@@ -714,7 +714,7 @@ ShallowWrapper {
                     "bsClass": "col",
                     "children": <ServiceInfoDeployments
                       deployments={Array []}
-/>,
+                    />,
                     "componentClass": "div",
                     "lg": 4,
                     "md": 4,
@@ -743,7 +743,7 @@ ShallowWrapper {
                     "bsClass": "col",
                     "children": <ServiceInfoRoutes
                       dependencies={Map {}}
-/>,
+                    />,
                     "componentClass": "div",
                     "lg": 4,
                     "md": 4,
@@ -773,10 +773,10 @@ ShallowWrapper {
                     "children": Array [
                       <ServiceInfoRouteRules
                         routeRules={Array []}
-/>,
+                      />,
                       <ServiceInfoDestinationPolicies
                         destinationPolicies={undefined}
-/>,
+                      />,
                     ],
                     "componentClass": "div",
                     "lg": 4,

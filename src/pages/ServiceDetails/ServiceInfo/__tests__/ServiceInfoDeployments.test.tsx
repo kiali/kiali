@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { ServiceInfoDeployments } from '../index';
+import ServiceInfoDeployments from '../ServiceInfoDeployments';
 import { Deployment } from '../../../../types/ServiceInfo';
 
 const deployments: Deployment[] = [
