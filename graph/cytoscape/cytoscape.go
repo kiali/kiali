@@ -126,7 +126,7 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		nodeId := fmt.Sprintf("n%v", *nodeIdSequence)
 		text := strings.Split(name, ".")[0]
 		if tree.UnknownVersion != sn.Version {
-			text = fmt.Sprintf("%v (%v)", text, sn.Version)
+			text = fmt.Sprintf("%v %v", text, sn.Version)
 		}
 		*nodeIdSequence++
 		nd = &NodeData{
@@ -205,17 +205,17 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 		switch {
 		case percentErr > o.ThresholdError:
 			ed.Color = o.ColorError
-			ed.Text = fmt.Sprintf("%.2fps (err=%.2f%%)", rate, percentErr)
+			ed.Text = fmt.Sprintf("%.1fps %.1f%%", rate, percentErr)
 		case percentErr > o.ThresholdWarn:
 			ed.Color = o.ColorWarn
-			ed.Text = fmt.Sprintf("%.2fps (err=%.2f%%)", rate, percentErr)
+			ed.Text = fmt.Sprintf("%.1fps %.1f%%", rate, percentErr)
 		default:
 			ed.Color = o.ColorNormal
-			ed.Text = fmt.Sprintf("%.2fps", rate)
+			ed.Text = fmt.Sprintf("%.1fps", rate)
 		}
 	} else {
 		ed.Color = o.ColorDead
-		ed.Text = "0ps"
+		ed.Text = ""
 	}
 }
 
