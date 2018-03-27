@@ -36,19 +36,18 @@ export class GraphStyles {
         // version group boxes
         selector: '$node > node',
         css: {
-          'padding-top': '10px',
-          'padding-left': '20px',
-          'padding-bottom': '10px',
-          'padding-right': '20px',
           'text-valign': 'top',
-          'text-halign': 'center',
+          'text-halign': 'right',
+          'text-margin-x': '2px',
+          'text-margin-y': '8px',
+          'text-rotation': '90deg',
           'background-color': '#fbeabc' // pf-gold-100
         }
       },
       {
         selector: 'edge',
         css: {
-          width: 3,
+          width: 2,
           'font-size': '9px',
           'text-margin-x': '10px',
           'text-rotation': 'autorotate',
