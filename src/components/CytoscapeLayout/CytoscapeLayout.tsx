@@ -40,9 +40,6 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
     console.log(`Starting ServiceGraphPage for namespace: ${this.props.namespace.name}`);
 
-    this.state = {
-      isLoading: false
-    };
     this.handleTap = this.handleTap.bind(this);
     this.handleMouseIn = this.handleMouseIn.bind(this);
     this.handleMouseOut = this.handleMouseOut.bind(this);
@@ -60,6 +57,10 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   componentDidMount() {
     window.addEventListener('resize', this.resizeWindow);
     this.resizeWindow();
+  }
+
+  shouldComponentUpdate(nextProps: any, nextState: any) {
+    return this.props.isLoading !== nextProps.isLoading || this.props.graphLayout !== nextProps.graphLayout;
   }
 
   cyRef(cy: any) {

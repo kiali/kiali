@@ -48,8 +48,8 @@ export default class ServiceGraphPage extends React.Component<
 
   constructor(routeProps: RouteComponentProps<ServiceGraphPageProps>) {
     super(routeProps);
+
     const { graphDuration, graphLayout } = this.parseProps(routeProps.location.search);
-    console.log('constructor', graphDuration);
     this.state = {
       isLoading: false,
       alertVisible: false,

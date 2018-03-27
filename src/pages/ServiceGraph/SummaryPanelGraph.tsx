@@ -27,7 +27,6 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
   constructor(props: SummaryPanelPropType) {
     super(props);
-    console.log('construct');
 
     this.state = {
       loading: true,
@@ -37,23 +36,18 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   }
 
   componentDidMount() {
-    console.log('didMount');
     if (this.props.data.summaryTarget) {
-      console.log('didMount update');
       this.updateRpsChart(this.props);
     }
   }
 
   componentWillReceiveProps(nextProps: SummaryPanelPropType) {
-    console.log('willRecive');
     if (nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
-      console.log('willRecive request update');
       this.updateRpsChart(nextProps);
     }
   }
 
   render() {
-    console.log('render');
     const cy = this.props.data.summaryTarget;
     let numNodes = cy
       ? cy
@@ -111,22 +105,18 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   }
 
   private updateRpsChart = (props: SummaryPanelPropType) => {
-    console.log('updateRps');
     const options = {
       duration: props.duration,
       step: props.step,
       rateInterval: props.rateInterval
     };
-    console.log('updateRps get');
     API.getNamespaceMetrics(props.namespace, options)
       .then(response => {
-        console.log('updateRps then');
         const data: M.Metrics = response['data'];
         const metrics: Map<String, M.MetricGroup> = data.metrics;
         const reqRates = this.getRates(metrics['request_count_in'], 'RPS');
         const errRates = this.getRates(metrics['request_error_count_in'], 'Error');
 
-        console.log('updateRps set');
         this.setState({
           loading: false,
           reqRates: reqRates,
