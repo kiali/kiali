@@ -13,6 +13,7 @@ type ServiceOverview struct {
 	Replicas            int32  `json:"replicas"`
 	AvailableReplicas   int32  `json:"available_replicas"`
 	UnavailableReplicas int32  `json:"unavailable_replicas"`
+	IstioSidecar        bool   `json:"istio_sidecar"`
 }
 
 type ServiceList struct {
@@ -56,18 +57,23 @@ func CastServiceOverview(s *v1.Service, deployments *v1beta1.DeploymentList) Ser
 	service := ServiceOverview{}
 	service.Name = s.Name
 
-	replicas, availableReplicas, unavailableReplicas := getPodStatusForService(s.Labels[config.Get().ServiceFilterLabelName], deployments)
+	replicas, availableReplicas, unavailableReplicas, istioSidecar := getPodStatusForService(s.Labels[config.Get().ServiceFilterLabelName], deployments)
 	service.Replicas = replicas
 	service.AvailableReplicas = availableReplicas
 	service.UnavailableReplicas = unavailableReplicas
+	service.IstioSidecar = istioSidecar
 
 	return service
 }
 
-func getPodStatusForService(serviceName string, deployments *v1beta1.DeploymentList) (int32, int32, int32) {
+func getPodStatusForService(serviceName string, deployments *v1beta1.DeploymentList) (int32, int32, int32, bool) {
 	replicas, availableReplicas, unavailableReplicas := int32(0), int32(0), int32(0)
+	istioSidecar := false
 
 	for _, deployment := range deployments.Items {
+		if deployment.Spec.Template.Annotations != nil && !istioSidecar {
+			_, istioSidecar = deployment.Spec.Template.Annotations[config.Get().IstioSidecarAnnotation]
+		}
 		if deployment.ObjectMeta.Labels != nil && deployment.ObjectMeta.Labels[config.Get().ServiceFilterLabelName] == serviceName {
 			replicas = replicas + deployment.Status.Replicas
 			availableReplicas = availableReplicas + deployment.Status.AvailableReplicas
@@ -75,7 +81,7 @@ func getPodStatusForService(serviceName string, deployments *v1beta1.DeploymentL
 		}
 	}
 
-	return replicas, availableReplicas, unavailableReplicas
+	return replicas, availableReplicas, unavailableReplicas, istioSidecar
 }
 
 func (s *Service) SetServiceDetails(serviceDetails *kubernetes.ServiceDetails, istioDetails *kubernetes.IstioDetails, prometheusDetails map[string][]string) {

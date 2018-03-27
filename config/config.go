@@ -14,12 +14,14 @@ import (
 )
 
 // Environment vars can define some default values.
+// NOTE: If you add a new variable, don't forget to update README.adoc
 const (
 	EnvIdentityCertFile       = "IDENTITY_CERT_FILE"
 	EnvIdentityPrivateKeyFile = "IDENTITY_PRIVATE_KEY_FILE"
 
-	EnvPrometheusServiceURL = "PROMETHEUS_SERVICE_URL"
-	EnvIstioIdentityDomain  = "ISTIO_IDENTITY_DOMAIN"
+	EnvPrometheusServiceURL   = "PROMETHEUS_SERVICE_URL"
+	EnvIstioIdentityDomain    = "ISTIO_IDENTITY_DOMAIN"
+	EnvIstioSidecarAnnotation = "ISTIO_SIDECAR_ANNOTATION"
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
@@ -79,6 +81,7 @@ type Config struct {
 	Server                 Server            `yaml:",omitempty"`
 	PrometheusServiceURL   string            `yaml:"prometheus_service_url,omitempty"`
 	IstioIdentityDomain    string            `yaml:"istio_identity_domain,omitempty"`
+	IstioSidecarAnnotation string            `yaml:"istio_sidecar_annotation,omitempty"`
 	Grafana                GrafanaConfig     `yaml:"grafana,omitempty"`
 	Jaeger                 JaegerConfig      `yaml:"jaeger,omitempty"`
 	ServiceFilterLabelName string            `yaml:"service_filter_label_name,omitempty"`
@@ -101,6 +104,7 @@ func NewConfig() (c *Config) {
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
 	c.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
 	c.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
+	c.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
 
 	c.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
 	c.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
