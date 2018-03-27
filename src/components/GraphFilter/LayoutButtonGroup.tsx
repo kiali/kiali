@@ -33,7 +33,7 @@ export class LayoutButtonGroup extends React.Component<LayoutButtonGroupProps, L
         <Button onClick={this.layout} active={this.state.current === 'cola'} id="cola">
           Cola
         </Button>
-        <Button onClick={this.layout} active={this.state.current === 'cose-bilkent'} id="cose-bilkent">
+        <Button onClick={this.layout} active={this.state.current === 'cose'} id="cose">
           Cose
         </Button>
         <Button onClick={this.layout} active={this.state.current === 'dagre'} id="dagre">
