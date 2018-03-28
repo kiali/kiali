@@ -98,11 +98,11 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []
 	namespacePattern := fmt.Sprintf(".*\\\\.%v\\\\..*", o.Namespace)
 	query := fmt.Sprintf("sum(rate(%v{source_service!~\"%v\",destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
 		o.Metric,
-		namespacePattern,     // regex for namespace-constrained service
-		namespacePattern,     // regex for namespace-constrained service
-		"[2345][0-9][0-9]",   // regex for valid response_codes
-		o.Duration.Seconds(), // range duration for the query
-		"source_service")     // group by
+		namespacePattern,          // regex for namespace-constrained service
+		namespacePattern,          // regex for namespace-constrained service
+		"[2345][0-9][0-9]",        // regex for valid response_codes
+		int(o.Duration.Seconds()), // range duration for the query
+		"source_service")          // group by
 
 	// fetch the root time series
 	vector := promQuery(query, queryTime, client.API())
@@ -150,7 +150,7 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 		sn.Version,                                              // parent service version
 		destinationSvcFilter,                                    // regex for namespace-constrained destination service
 		"[2345][0-9][0-9]",                                      // regex for valid response_codes
-		o.Duration.Seconds(),                                    // range duration for the query
+		int(o.Duration.Seconds()),                               // range duration for the query
 		"destination_service,destination_version,response_code") // group by
 
 	vector := promQuery(query, start, client.API())
@@ -227,7 +227,7 @@ func buildServiceTrees(o options.Options, client *prometheus.Client) (trees []tr
 		o.Metric,
 		fmt.Sprintf("%v\\\\.%v\\\\..*", o.Service, o.Namespace), // regex for namespace-constrained destination service
 		"[2345][0-9][0-9]",                                      // regex for valid response_codes
-		o.Duration.Seconds(),                                    // range duration for the query
+		int(o.Duration.Seconds()),                               // range duration for the query
 		"source_service, source_version")                        // group by
 
 	// avoid circularities by keeping track of seen nodes
@@ -286,7 +286,7 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, start time
 		sn.Version,
 		destinationSvcFilter,                                    // regex for destination service
 		"[2345][0-9][0-9]",                                      // regex for valid response_codes
-		o.Duration.Seconds(),                                    // range duration for the query
+		int(o.Duration.Seconds()),                               // range duration for the query
 		"destination_service,destination_version,response_code") // group by
 
 	// fetch the root time series
