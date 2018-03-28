@@ -91,7 +91,7 @@ Only static assets which are `import` 'ed into your application will be included
 
 === Testing
 To run the tests, the standard command `npm test` is valid,
-but since some tests are using snapshots the preferred command is to update them in the same time:
+but since some tests are using link:https://facebook.github.io/jest/docs/en/snapshot-testing.html[snapshots] the preferred command is to update them in the same time:
 [source,shell]
 ----
 npm test -- -u
