@@ -7,7 +7,7 @@ image:https://coveralls.io/repos/github/kiali/kiali-ui/badge.svg?branch=master[C
 
 == Introduction
 
-A UI for the Swift-Sunshine Istio Observability Project
+A UI for the Kiali Istio Observability Project
 
 == Technologies
 * React.js
@@ -26,6 +26,17 @@ But, if it doesn't then use:
 
 This launches a development environment that instantly
 reloads any changes to the browser for rapid development.
+
+== Directory Structure
+* `build`: Production build output
+* `public`: Home of index.html
+* `src`: Source and test code
+* `src/app`: React top level component
+* `src/assets`: Images and other assets
+* `src/components`: Stateless components (pure functions)
+* `src/pages`: Top level pages and nested components
+* `src/types`: Shared model
+* `stories`: Storybook files
 
 == Developing
 
@@ -62,32 +73,35 @@ Type: ClusterIP
 WARNING: The proxy will only serve requests without the text/html accept header,
 using the browser directly won't work.
 
-== Production Builds
-Use `npm run build` which will bundle the build artifacts using webpack into the `build` directory.
-
-== Directory Structure
-* `src` : Source and test code
-* `src/assets` : Images and other assets
-* `src/components` : Stateless components (pure functions)
-* `src/pages` : Top level pages and nested components
-* `stories`: Storybook files
-* `build`: Production build output
-* `public`: home of index.html
-
-== Styling
+=== Styling
 PatternFly is the main UI components framework. It defines style based on SASS preprocessor.
-All Patternfly build assets are copied to `src`. The `App.scss` file will include all PatternFly Sass along with
-PatternFly React Sass extensions. Once Sass compiles, the resulting CSS can be found in `src/css/App.css`.
+All Patternfly build assets are copied to `src`.
+Any React component may have its related SCSS file (such as `App.scss` - this one includes all PatternFly Sass along with
+PatternFly React Sass extensions).
+Once Sass compiles, the resulting CSS can be found next to its SCSS counterpart (ex: `src/app/App.css`).
+
+To compile CSS, run:
+[source,shell]
+----
+npm run build-css
+----
 
 Note:
 Only static assets which are `import` 'ed into your application will be included in your resulting build output.
 
-== Testing
-To run the tests:
+=== Testing
+To run the tests, the standard command `npm test` is valid,
+but since some tests are using link:https://facebook.github.io/jest/docs/en/snapshot-testing.html[snapshots] the preferred command is to update them in the same time:
 [source,shell]
 ----
-npm test
+npm test -- -u
 ----
+
+Then hit `a` to run all tests.
+
+After running the tests, if any snapshot has been modified (check git status),
+the diff should be reviewed to make sure it's an intentional or trivial change.
+Modified snapshots must be part of the commit so that they're reviewed collectively and won't make CI build fail.
 
 Note: for OS/X users testing requires watchman to be installed
 [source,shell]
@@ -95,12 +109,15 @@ Note: for OS/X users testing requires watchman to be installed
 brew install watchman
 ----
 
-== For Storybook Components
+=== For Storybook Components
 [source,shell]
 ----
 npm run storybook
 http://localhost:6006
 ----
+
+== Production Builds
+Use `npm run build` which will bundle the build artifacts using webpack into the `build` directory.
 
 == General
 
