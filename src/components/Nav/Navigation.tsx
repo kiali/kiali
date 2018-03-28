@@ -9,13 +9,16 @@ import HelpDropdown from './HelpDropdown';
 import ServiceDetailsPage from '../../pages/ServiceDetails/ServiceDetailsPage';
 import ServiceGraphPage from '../../pages/ServiceGraph/ServiceGraphPage';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
+import ServiceJaegerPage from '../../pages/ServiceJaeger/ServiceJaegerPage';
 
 const istioRulesPath = '/rules';
 export const istioRulesTitle = 'Istio Mixer';
 const serviceGraphPath = '/service-graph/istio-system';
 export const serviceGraphTitle = 'Graph';
 const servicesPath = '/services';
+const servicesJaegerPath = '/jaeger';
 export const servicesTitle = 'Services';
+export const servicesJaeger = 'Distributed Tracing';
 
 const pfLogo = require('../../img/logo-alt.svg');
 const pfBrand = require('../../assets/img/kiali-title.svg');
@@ -52,6 +55,8 @@ class Navigation extends React.Component<PropsType, StateType> {
       selected = serviceGraphTitle;
     } else if (pathname.startsWith('/rules')) {
       selected = istioRulesTitle;
+    } else if (pathname.startsWith('/jaeger')) {
+      selected = servicesJaeger;
     } else {
       selected = serviceGraphTitle;
     }
@@ -70,6 +75,8 @@ class Navigation extends React.Component<PropsType, StateType> {
       this.context.router.history.push(servicesPath);
     } else if (e.title === istioRulesTitle) {
       this.context.router.history.push(istioRulesPath);
+    } else if (e.title === servicesJaeger) {
+      this.context.router.history.push(servicesJaegerPath);
     } else {
       this.context.router.history.push(serviceGraphPath);
     }
@@ -88,10 +95,12 @@ class Navigation extends React.Component<PropsType, StateType> {
           <VerticalNav.Item title={serviceGraphTitle} iconClass="fa pficon-topology" onClick={this.navigateTo} />
           <VerticalNav.Item title={servicesTitle} iconClass="fa pficon-service" onClick={this.navigateTo} />
           <VerticalNav.Item title={istioRulesTitle} iconClass="fa pficon-migration" onClick={this.navigateTo} />
+          <VerticalNav.Item title={servicesJaeger} iconClass="fa fa-paw" onClick={this.navigateTo} />
         </VerticalNav>
         <Switch>
           <Route path="/service-graph/:namespace" component={ServiceGraphPage} />
           <Route path={servicesPath} component={ServiceListPage} />
+          <Route path={servicesJaegerPath} component={ServiceJaegerPage} />
           <Route path="/namespaces/:namespace/services/:service" component={ServiceDetailsPage} />
           <Route path={istioRulesPath} component={IstioRulesPage} />
           <Route path="/namespaces/:namespace/rules/:rule" component={IstioRuleDetailsPage} />
