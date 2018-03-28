@@ -79,7 +79,7 @@ class Navigation extends React.Component<PropsType, StateType> {
     return (
       <div>
         <VerticalNav setControlledState={this.setControlledState} activePath={this.state.selectedItem}>
-          <VerticalNav.Masthead title="Swift Sunshine">
+          <VerticalNav.Masthead title="Kiali">
             <VerticalNav.Brand iconImg={pfLogo} titleImg={pfBrand} />
             <VerticalNav.IconBar>
               <HelpDropdown />
