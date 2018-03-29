@@ -89,8 +89,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   render() {
     const node = this.props.data.summaryTarget;
 
-    const namespace = node.data('service').split('.')[1];
-    const service = node.data('service').split('.')[0];
+    const serviceSplit = node.data('service').split('.');
+    const namespace = serviceSplit.length < 2 ? 'unknown' : serviceSplit[1];
+    const service = serviceSplit[0];
     const serviceHotLink = <a href={`../namespaces/${namespace}/services/${service}`}>{service}</a>;
 
     let outgoing = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 };
@@ -114,7 +115,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               style="plastic"
               leftText="namespace"
               rightText={namespace}
-              key={namespace}
               color="#2d7623" // pf-green-500
             />
             <Badge
@@ -122,7 +122,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               style="plastic"
               leftText="version"
               rightText={this.props.data.summaryTarget.data('version')}
-              key={this.props.data.summaryTarget.data('version')}
               color="#2d7623" // pf-green-500
             />
           </div>
