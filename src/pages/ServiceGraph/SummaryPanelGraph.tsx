@@ -79,25 +79,26 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
     return (
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
-        <div className="panel-heading">Namespace: {servicesLink}</div>
+        <div className="panel-heading">
+          Namespace: {servicesLink}
+          <div hidden={!cy}>{this.renderLabels(numNodes.toString(), numEdges.toString())}</div>
+        </div>
         <div className="panel-body" hidden={cy}>
           <h3>Click graph for details...</h3>
         </div>
-        <div hidden={!cy}>
-          <div className="panel-body">
-            <p>{this.renderLabels(numNodes.toString(), numEdges.toString())}</p>
-          </div>
-          <hr />
-          <RateTable
-            title="Traffic (requests per second):"
-            rate={rate}
-            rate3xx={rate3xx}
-            rate4xx={rate4xx}
-            rate5xx={rate5xx}
-          />
+        <div className="panel-body" hidden={!cy}>
           <div>
-            <hr />
-            {this.renderRpsChart()}
+            <RateTable
+              title="Traffic (requests per second):"
+              rate={rate}
+              rate3xx={rate3xx}
+              rate4xx={rate4xx}
+              rate5xx={rate5xx}
+            />
+            <div>
+              <hr />
+              {this.renderRpsChart()}
+            </div>
           </div>
         </div>
       </div>
@@ -132,10 +133,10 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
   private renderLabels = (numNodes: string, numEdges: string) => (
     // color="#2d7623" is pf-green-500
-    <>
-      <Badge scale={0.8} style="plastic" leftText="services" rightText={numNodes} color="#2d7623" />
-      <Badge scale={0.8} style="plastic" leftText="edges" rightText={numEdges} color="#2d7623" />
-    </>
+    <div style={{ paddingTop: '3px' }}>
+      <Badge scale={0.9} style="plastic" leftText="services" rightText={numNodes} color="#2d7623" />
+      <Badge scale={0.9} style="plastic" leftText="edges" rightText={numEdges} color="#2d7623" />
+    </div>
   );
 
   private renderRpsChart = () => {

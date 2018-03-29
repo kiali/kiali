@@ -66,14 +66,15 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const isUnknown = sourceServiceName === 'unknown';
     return (
       <div className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
-        <div className="panel-heading">Source: {isUnknown ? 'unknown' : sourceLink}</div>
-        <div className="panel-body">
-          <p>{this.renderLabels(sourceNamespace, sourceVersion)}</p>
+        <div className="panel-heading">
+          Source: {isUnknown ? 'unknown' : sourceLink}
+          {this.renderLabels(sourceNamespace, sourceVersion)}
         </div>
-        <div className="panel-heading">Destination: {destLink}</div>
+        <div className="panel-heading">
+          Destination: {destLink}
+          {this.renderLabels(destNamespace, destVersion)}
+        </div>
         <div className="panel-body">
-          <p>{this.renderLabels(destNamespace, destVersion)}</p>
-          <hr />
           <RateTable
             title="Traffic (requests per second):"
             rate={rate}
@@ -135,10 +136,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
   private renderLabels = (ns: string, ver: string) => (
     // color="#2d7623" is pf-green-500
-    <>
-      <Badge scale={0.8} style="plastic" leftText="namespace" rightText={ns} color="#2d7623" />
-      <Badge scale={0.8} style="plastic" leftText="version" rightText={ver} color="#2d7623" />
-    </>
+    <div style={{ paddingTop: '3px' }}>
+      <Badge scale={0.9} style="plastic" leftText="namespace" rightText={ns} color="#2d7623" />
+      <Badge scale={0.9} style="plastic" leftText="version" rightText={ver} color="#2d7623" />
+    </div>
   );
 
   private renderRpsChart = () => {

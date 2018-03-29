@@ -100,13 +100,11 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
     return (
       <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
-        <div className="panel-heading">Versioned Group: {serviceHotLink}</div>
-        <div className="panel-body">
-          <p>
-            <strong>Labels:</strong>
-            <br />
+        <div className="panel-heading">
+          Versioned Group: {serviceHotLink}
+          <div style={{ paddingTop: '3px' }}>
             <Badge
-              scale={0.8}
+              scale={0.9}
               style="plastic"
               leftText="namespace"
               rightText={namespace}
@@ -114,8 +112,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               color="#2d7623" // pf-green-500
             />
             {this.renderVersionBadges()}
-          </p>
-          <hr />
+          </div>
+        </div>
+        <div className="panel-body">
           <InOutRateTable
             title="Request Traffic (requests per second):"
             inRate={incoming.rate}
@@ -174,7 +173,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       .toArray()
       .map((c, i) => (
         <Badge
-          scale={0.8}
+          scale={0.9}
           style="plastic"
           leftText="version"
           rightText={c.data('version')}
