@@ -106,13 +106,11 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const isUnknown = service === 'unknown';
     return (
       <div className="panel panel-default" style={SummaryPanelNode.panelStyle}>
-        <div className="panel-heading">Microservice: {isUnknown ? 'unknown' : serviceHotLink}</div>
-        <div className="panel-body">
-          <p>
-            <strong>Labels:</strong>
-            <br />
+        <div className="panel-heading">
+          Microservice: {isUnknown ? 'unknown' : serviceHotLink}
+          <div style={{ paddingTop: '3px' }}>
             <Badge
-              scale={0.8}
+              scale={0.9}
               style="plastic"
               leftText="namespace"
               rightText={namespace}
@@ -120,15 +118,16 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               color="#2d7623" // pf-green-500
             />
             <Badge
-              scale={0.8}
+              scale={0.9}
               style="plastic"
               leftText="version"
               rightText={this.props.data.summaryTarget.data('version')}
               key={this.props.data.summaryTarget.data('version')}
               color="#2d7623" // pf-green-500
             />
-          </p>
-          <hr />
+          </div>
+        </div>
+        <div className="panel-body">
           <InOutRateTable
             title="Request Traffic (requests per second):"
             inRate={parseFloat(node.data('rate')) || 0}
