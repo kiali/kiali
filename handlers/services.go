@@ -16,22 +16,40 @@ import (
 func ServiceList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
+	// Create clients
 	client, err := kubernetes.NewClient()
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, "Kubernetes client error: "+err.Error())
+		return
+	}
+	prometheusClient, err := prometheus.NewClient()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Prometheus client error: "+err.Error())
 		return
 	}
 
+	// Create response object
 	serviceList := models.ServiceList{}
 	serviceList.Namespace = models.Namespace{Name: params["namespace"]}
 
+	// Fetch services list
 	kubernetesServices, err := client.GetServices(serviceList.Namespace.Name)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
+	// Fetch services requests counters
+	queryParams := r.URL.Query()
+	ratesInterval := "1m"
+	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
+		ratesInterval = rateIntervals[0]
+	}
+	requestCounters := prometheusClient.GetNamespaceServicesRequestCounters(params["namespace"], ratesInterval)
+
+	// Build response
 	serviceList.SetServiceList(kubernetesServices)
+	serviceList.ProcessRequestCounters(requestCounters)
 	RespondWithJSON(w, http.StatusOK, serviceList)
 }
 

@@ -6,14 +6,20 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/prometheus/common/model"
+	"strings"
 )
 
 type ServiceOverview struct {
-	Name                string `json:"name"`
-	Replicas            int32  `json:"replicas"`
-	AvailableReplicas   int32  `json:"available_replicas"`
-	UnavailableReplicas int32  `json:"unavailable_replicas"`
-	IstioSidecar        bool   `json:"istio_sidecar"`
+	Name                string            `json:"name"`
+	Replicas            int32             `json:"replicas"`
+	AvailableReplicas   int32             `json:"available_replicas"`
+	UnavailableReplicas int32             `json:"unavailable_replicas"`
+	IstioSidecar        bool              `json:"istio_sidecar"`
+	RequestCount        model.SampleValue `json:"request_count"`
+	RequestErrorCount   model.SampleValue `json:"request_error_count"`
+	ErrorRate           model.SampleValue `json:"error_rate"`
 }
 
 type ServiceList struct {
@@ -39,6 +45,44 @@ func (s *ServiceList) SetServiceList(serviceList *kubernetes.ServiceList) {
 	s.Services = CastServiceOverviewCollection(serviceList)
 }
 
+// Aggregates requests counts from metrics fetched from Prometheus,
+// calculates error rates for each service and stores the result in the service list.
+func (s *ServiceList) ProcessRequestCounters(requestCounters prometheus.MetricsVector) {
+	// First, aggregate request counters (both in and out)
+	for _, sample := range requestCounters.Vector {
+		serviceDst := strings.SplitN(string(sample.Metric["destination_service"]), ".", 2)[0]
+		serviceSrc := strings.SplitN(string(sample.Metric["source_service"]), ".", 2)[0]
+		servicesFound := 0
+
+		for idx := range s.Services {
+			service := &s.Services[idx]
+			if service.Name == serviceDst || service.Name == serviceSrc {
+				servicesFound += 1
+				responseCode := sample.Metric["response_code"][0]
+
+				service.RequestCount += sample.Value
+				if responseCode == '5' || responseCode == '4' {
+					service.RequestErrorCount += sample.Value
+				}
+
+				if servicesFound >= 2 {
+					break
+				}
+			}
+		}
+	}
+
+	// Then, calculate error rates
+	for idx := range s.Services {
+		service := &s.Services[idx]
+		if service.RequestCount != 0 {
+			service.ErrorRate = service.RequestErrorCount / service.RequestCount
+		} else {
+			service.ErrorRate = 0
+		}
+	}
+}
+
 func CastServiceOverviewCollection(sl *kubernetes.ServiceList) []ServiceOverview {
 	if sl.Services == nil {
 		return nil
@@ -62,6 +106,9 @@ func CastServiceOverview(s *v1.Service, deployments *v1beta1.DeploymentList) Ser
 	service.AvailableReplicas = availableReplicas
 	service.UnavailableReplicas = unavailableReplicas
 	service.IstioSidecar = istioSidecar
+	service.RequestCount = 0
+	service.RequestErrorCount = 0
+	service.ErrorRate = 0
 
 	return service
 }

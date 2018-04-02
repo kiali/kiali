@@ -12,6 +12,8 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/prometheus/common/model"
 )
 
 func TestServiceDetailParsing(t *testing.T) {
@@ -340,6 +342,25 @@ func TestServiceListParsing(t *testing.T) {
 			UnavailableReplicas: int32(0)}})
 }
 
+func TestRequestCountersProcessing(t *testing.T) {
+	assert := assert.New(t)
+
+	serviceList := ServiceList{}
+	serviceList.Namespace = Namespace{"namespace"}
+	serviceList.SetServiceList(fakeServiceList())
+	serviceList.ProcessRequestCounters(*fakeRequestCounters())
+
+	reviewsOverview := serviceList.Services[0]
+	assert.Equal(model.SampleValue(6.5), reviewsOverview.RequestCount)
+	assert.Equal(model.SampleValue(1.5), reviewsOverview.RequestErrorCount)
+	assert.Equal(model.SampleValue(1.5/6.5), reviewsOverview.ErrorRate)
+
+	httpbinOverview := serviceList.Services[1]
+	assert.Equal(model.SampleValue(20.5), httpbinOverview.RequestCount)
+	assert.Equal(model.SampleValue(1.5), httpbinOverview.RequestErrorCount)
+	assert.Equal(model.SampleValue(1.5/20.5), httpbinOverview.ErrorRate)
+}
+
 func fakeConfig() {
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -420,4 +441,49 @@ func fakeServiceList() *kubernetes.ServiceList {
 						Replicas:            1,
 						AvailableReplicas:   1,
 						UnavailableReplicas: 0}}}}}
+}
+
+func fakeRequestCounters() *prometheus.MetricsVector {
+	t1 := model.Now()
+
+	return &prometheus.MetricsVector{
+		Vector: model.Vector{
+			&model.Sample{
+				Metric: model.Metric{
+					"destination_service": "reviews.tutorial.svc.cluster.local",
+					"source_service":      "httpbin.tutorial.svc.cluster.local",
+					"response_code":       "200",
+				},
+				Value:     model.SampleValue(5),
+				Timestamp: t1,
+			},
+			&model.Sample{
+				Metric: model.Metric{
+					"destination_service": "httpbin.tutorial.svc.cluster.local",
+					"source_service":      "unknown",
+					"response_code":       "200",
+				},
+				Value:     model.SampleValue(14),
+				Timestamp: t1,
+			},
+			&model.Sample{
+				Metric: model.Metric{
+					"source_service":      "httpbin.tutorial.svc.cluster.local",
+					"destination_service": "unknown",
+					"response_code":       "400",
+				},
+				Value:     model.SampleValue(1.5),
+				Timestamp: t1,
+			},
+			&model.Sample{
+				Metric: model.Metric{
+					"source_service":      "reviews.tutorial.svc.cluster.local",
+					"destination_service": "unknown",
+					"response_code":       "500",
+				},
+				Value:     model.SampleValue(1.5),
+				Timestamp: t1,
+			},
+		},
+	}
 }
