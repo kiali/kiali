@@ -29,6 +29,7 @@ type PropsType = {
 
 type StateType = {
   selectedItem: string;
+  navCollapsed: boolean;
 };
 
 class Navigation extends React.Component<PropsType, StateType> {
@@ -43,7 +44,8 @@ class Navigation extends React.Component<PropsType, StateType> {
     // handle initial path from the browser
     const selected = this.parseInitialPath(props.location.pathname);
     this.state = {
-      selectedItem: `/${selected}/`
+      selectedItem: `/${selected}/`,
+      navCollapsed: false
     };
   }
 
@@ -67,6 +69,8 @@ class Navigation extends React.Component<PropsType, StateType> {
     if (event.activePath) {
       // keep track of path as user clicks on nav bar
       this.setState({ selectedItem: event.activePath });
+    } else if ('navCollapsed' in event) {
+      this.setState({ navCollapsed: event.navCollapsed });
     }
   };
 
@@ -85,7 +89,11 @@ class Navigation extends React.Component<PropsType, StateType> {
   render() {
     return (
       <div>
-        <VerticalNav setControlledState={this.setControlledState} activePath={this.state.selectedItem}>
+        <VerticalNav
+          setControlledState={this.setControlledState}
+          activePath={this.state.selectedItem}
+          navCollapsed={this.state.navCollapsed}
+        >
           <VerticalNav.Masthead title="Kiali">
             <VerticalNav.Brand iconImg={pfLogo} titleImg={pfBrand} />
             <VerticalNav.IconBar>
