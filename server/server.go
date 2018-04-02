@@ -91,7 +91,7 @@ func (h *serverAuthProxyHandler) handler(w http.ResponseWriter, r *http.Request)
 	case http.StatusOK:
 		h.trueHandler.ServeHTTP(w, r)
 	case http.StatusUnauthorized:
-		w.Header().Set("WWW-Authenticate", "Basic realm=\"Swift-Sunshine\"")
+		w.Header().Set("WWW-Authenticate", "Basic realm=\"Kiali\"")
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 	default:
 		http.Error(w, http.StatusText(statusCode), statusCode)
