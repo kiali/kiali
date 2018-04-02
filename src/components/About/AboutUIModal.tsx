@@ -75,7 +75,7 @@ class AboutUIModal extends React.Component<Object, AboutUIModalState> {
       >
         <AboutModal.Versions>
           <AboutModal.VersionItem
-            label={process.env.REACT_APP_NAME}
+            label="kiali-ui"
             versionText={`${process.env.REACT_APP_VERSION} (${process.env.REACT_APP_GIT_HASH})`}
           />
           <Spinner style={{ marginTop: '15px' }} loading={this.state.loadingVersions} size="lg" inverse={true}>
