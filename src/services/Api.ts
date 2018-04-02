@@ -2,6 +2,7 @@ import axios from 'axios';
 import { config } from '../config';
 import Namespace from '../types/Namespace';
 import MetricsOptions from '../types/MetricsOptions';
+import ServiceListOptions from '../types/ServiceListOptions';
 
 const auth = (user: string, pass: string) => {
   return {
@@ -45,8 +46,8 @@ export const GetIstioRules = (namespace: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/rules`, {}, {});
 };
 
-export const GetServices = (namespace: String) => {
-  return newRequest('get', `/api/namespaces/${namespace}/services`, {}, {});
+export const GetServices = (namespace: String, params?: ServiceListOptions) => {
+  return newRequest('get', `/api/namespaces/${namespace}/services`, params, {});
 };
 
 export const getServiceMetrics = (namespace: String, service: String, params: MetricsOptions) => {
