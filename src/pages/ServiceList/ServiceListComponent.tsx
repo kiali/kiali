@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { Col, Icon, ListView, ListViewItem, ListViewIcon, Sort } from 'patternfly-react';
+import {
+  Icon,
+  ListView,
+  ListViewItem,
+  ListViewIcon,
+  Sort
+} from 'patternfly-react';
 import { Link } from 'react-router-dom';
 import { NamespaceFilter, NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { Paginator } from 'patternfly-react';
@@ -50,6 +56,8 @@ type ServiceListComponentProps = {
 };
 
 const perPageOptions: number[] = [5, 10, 15];
+const WARNING_THRESHOLD = 0.0;
+const ERROR_THRESHOLD = 0.2;
 
 class ServiceListComponent extends React.Component<ServiceListComponentProps, ServiceListComponentState> {
   constructor(props: ServiceListComponentProps) {
@@ -168,7 +176,10 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
               servicename: serviceName.name,
               replicas: serviceName.replicas,
               available_replicas: serviceName.available_replicas,
-              unavailable_replicas: serviceName.unavailable_replicas
+              unavailable_replicas: serviceName.unavailable_replicas,
+              request_count: serviceName.request_count,
+              request_error_count: serviceName.request_error_count,
+              error_rate: serviceName.error_rate
             };
             updatedServices.push(serviceItem);
           });
@@ -235,17 +246,32 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       let serviceItem = this.state.services[i];
       let to = '/namespaces/' + serviceItem.namespace + '/services/' + serviceItem.servicename;
       let serviceDescriptor = (
-        <Col>
-          <strong>Pod status: </strong> {serviceItem.available_replicas} / {serviceItem.replicas}{' '}
-          <Icon
-            type="pf"
-            name={
-              serviceItem.available_replicas < serviceItem.replicas || serviceItem.replicas === 0
-                ? 'warning-triangle-o'
-                : 'ok'
-            }
-          />
-        </Col>
+        <table style={{width: '30em', tableLayout: 'fixed'}}>
+          <tr><td>
+            <strong>Pod status: </strong> {serviceItem.available_replicas} / {serviceItem.replicas}{' '}
+            <Icon
+              type="pf"
+              name={
+                serviceItem.available_replicas < serviceItem.replicas || serviceItem.replicas === 0
+                  ? 'warning-triangle-o'
+                  : 'ok'
+              }
+            />
+          </td><td>
+            <strong>Error rate: </strong>
+            {serviceItem.request_count > 0 ? (
+              (serviceItem.error_rate * 100).toFixed(2) + '%'
+            ) : '(No requests)'}&nbsp;
+            <Icon
+              type="pf"
+              name={
+                serviceItem.error_rate > ERROR_THRESHOLD
+                  ? 'error-circle-o'
+                  : serviceItem.error_rate > WARNING_THRESHOLD ? 'warning-triangle-o' : 'ok'
+              }
+            />
+          </td></tr>
+        </table>
       );
 
       serviceList.push(
@@ -282,7 +308,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
                 onSortTypeSelected={this.updateSortField}
               />
               <Sort.DirectionSelector
-                isNumeric={false}
+                isNumeric={this.state.currentSortField.isNumeric}
                 isAscending={this.state.isSortAscending}
                 onClick={this.updateSortDirection}
               />

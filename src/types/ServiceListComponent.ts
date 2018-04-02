@@ -5,6 +5,9 @@ export interface ServiceName {
   replicas: number;
   available_replicas: number;
   unavailable_replicas: number;
+  request_count: number;
+  request_error_count: number;
+  error_rate: number;
 }
 
 export interface ServiceList {
@@ -18,4 +21,7 @@ export interface ServiceItem {
   replicas: number;
   available_replicas: number;
   unavailable_replicas: number;
+  request_count: number;
+  request_error_count: number;
+  error_rate: number;
 }
