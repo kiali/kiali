@@ -374,6 +374,37 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	assert.Equal(t, 0.9, float64(rsSizeIn.Percentile99.Matrix[0].Values[0].Value))
 }
 
+func TestGetNamespaceServicesRequestCounters(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	vectorQ1 := model.Vector{
+		&model.Sample{
+			Timestamp: model.Now(),
+			Value:     model.SampleValue(1),
+			Metric:    model.Metric{"source_service": "a.istio-system.svc.cluster.local"}},
+	}
+	mockQuery(api, `rate(istio_request_count{source_service=~".*\\.istio-system\\..*"}[5m])`, &vectorQ1)
+
+	vectorQ2 := model.Vector{
+		&model.Sample{
+			Timestamp: model.Now(),
+			Value:     model.SampleValue(1),
+			Metric:    model.Metric{"source_service": "a.istio-system.svc.cluster.local"}},
+	}
+	mockQuery(api, `rate(istio_request_count{destination_service=~".*\\.istio-system\\..*"}[5m])`, &vectorQ2)
+
+	counters := client.GetNamespaceServicesRequestCounters("istio-system", "5m")
+	assert.NotNil(t, counters)
+	assert.NotNil(t, counters.Vector)
+	assert.Equal(t, 2, counters.Vector.Len())
+	assert.Equal(t, append(vectorQ1, vectorQ2...), counters.Vector)
+
+}
+
 func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector) {
 	api.On(
 		"Query",

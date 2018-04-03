@@ -72,6 +72,12 @@ type Metric struct {
 	err    error
 }
 
+// MetricVector holds the Prometheus Vector model, which contains a sample from one or more time series
+type MetricsVector struct {
+	Vector model.Vector `json:"vector"`
+	err    error
+}
+
 // Histogram contains Metric objects for several histogram-kind statistics
 type Histogram struct {
 	Average      *Metric `json:"average"`
@@ -325,4 +331,26 @@ func fetchRange(api v1.API, query string, bounds v1.Range) *Metric {
 func replaceInvalidCharacters(metricName string) string {
 	// See https://github.com/prometheus/prometheus/blob/master/util/strutil/strconv.go#L43
 	return invalidLabelCharRE.ReplaceAllString(metricName, "_")
+}
+
+func getNamespaceServicesRequestCounters(api v1.API, namespace string, ratesInterval string) MetricsVector {
+	time := time.Now()
+	labelsQuery := []string{
+		fmt.Sprintf(`destination_service=~".*\\.%s\\..*"`, namespace),
+		fmt.Sprintf(`source_service=~".*\\.%s\\..*"`, namespace),
+	}
+
+	var results model.Vector
+	for _, labels := range labelsQuery {
+		query := fmt.Sprintf("rate(istio_request_count{%s}[%s])", labels, ratesInterval)
+		log.Infof("Request rate query: %v", query)
+
+		result, err := api.Query(context.Background(), query, time)
+		if err != nil {
+			return MetricsVector{err: err}
+		}
+		results = append(results, result.(model.Vector)...)
+	}
+
+	return MetricsVector{Vector: results}
 }

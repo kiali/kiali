@@ -101,6 +101,12 @@ func (in *Client) GetNamespaceMetrics(query *NamespaceMetricsQuery) Metrics {
 	return getNamespaceMetrics(in.api, query)
 }
 
+// GetNamespaceServicesRequestRates queries Prometheus to fetch request counters
+// for each service, both in and out counters.
+func (in *Client) GetNamespaceServicesRequestCounters(namespace string, ratesInterval string) MetricsVector {
+	return getNamespaceServicesRequestCounters(in.api, namespace, ratesInterval)
+}
+
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client
 func (in *Client) API() v1.API {
 	return in.api
