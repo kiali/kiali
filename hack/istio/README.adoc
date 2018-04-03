@@ -10,7 +10,7 @@ This link:./istio-install.sh[install script] is used to deploy http://istio.io[I
 
 Simply run the script on a command line with no arguments to install the latest version of Istio on OpenShift.
 
-If you want to install a specific version of Istio, pass the argument `-v #.#.#` where `#.#.#` is the version you want to install (e.g. `-v 0.6.0`).
+If you want to install a specific version of Istio, pass the argument `-v #.#.#` where `#.#.#` is the version you want to install (e.g. `-v 0.7.1`).
 
 If you want to install Istio on Kubernetes, pass the argument `-c k8s` to the script.
 
