@@ -23,9 +23,12 @@
     "node_modules",
     "build",
     "scripts",
+    "storybook",
     "acceptance-tests",
+    "coverage",
     "webpack",
     "jest",
-    "src/setupTests.ts"
+    "src/setupTests.ts",
+    "**/*.stories.tsx"
   ]
 }
