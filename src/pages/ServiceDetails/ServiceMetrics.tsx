@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Alert, Spinner, LineChart } from 'patternfly-react';
+import { Alert, LineChart } from 'patternfly-react';
 
 import ServiceId from '../../types/ServiceId';
 import * as M from '../../types/Metrics';
@@ -29,6 +29,7 @@ type ServiceMetricsState = {
   responseSizeOut?: M.Histogram;
   grafanaLinkIn?: string;
   grafanaLinkOut?: string;
+  pollMetrics?: any;
 };
 
 class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
@@ -43,9 +44,17 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     this.getGrafanaInfo();
   }
 
-  onOptionsChanged = (options: MetricsOptions) => this.fetchMetrics(options);
+  onOptionsChanged = (options: MetricsOptions, pollInterval: number) => {
+    clearInterval(this.state.pollMetrics);
+    this.fetchMetrics(options);
+    if (pollInterval !== undefined) {
+      if (pollInterval > 0) {
+        this.setState({ pollMetrics: setInterval(this.fetchMetrics, pollInterval, options) });
+      }
+    }
+  };
 
-  fetchMetrics(options: MetricsOptions) {
+  fetchMetrics = (options: MetricsOptions) => {
     options.filters = ['request_count', 'request_size', 'request_duration', 'response_size'];
     this.setState({ loading: true });
     API.getServiceMetrics(this.props.namespace, this.props.service, options)
@@ -99,7 +108,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         this.setState({ loading: false, alertDetails: 'Cannot fetch metrics' });
         console.error(error);
       });
-  }
+  };
 
   nameMetric(metric: M.MetricGroup, familyName: string, labels?: string[]): M.MetricGroup {
     if (metric) {
@@ -168,16 +177,13 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     return (
       <div>
         {this.state.alertDetails && <Alert onDismiss={this.dismissAlert}>{this.state.alertDetails}</Alert>}
-        <MetricsOptionsBar onOptionsChanged={this.onOptionsChanged} />
+        <MetricsOptionsBar onOptionsChanged={this.onOptionsChanged} loading={this.state.loading} />
         {this.renderMetrics()}
       </div>
     );
   }
 
   renderMetrics() {
-    if (this.state.loading) {
-      return <Spinner loading={true} />;
-    }
     return (
       <div className="card-pf">
         <div className="row row-cards-pf">

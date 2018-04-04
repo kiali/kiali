@@ -135,7 +135,6 @@ describe('ServiceMetrics', () => {
     ];
     Promise.all(allMocksDone).then(() => done());
     mounted = mount(<ServiceMetrics namespace="ns" service="svc" />);
-    expect(mounted.find('Spinner').map(div => div.getElement().props.loading)).toEqual([true]);
   });
 
   it('mounts and loads full metrics', done => {

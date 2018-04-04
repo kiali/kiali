@@ -1,15 +1,17 @@
 import * as React from 'react';
-import { Toolbar, DropdownButton, MenuItem } from 'patternfly-react';
+import { Toolbar, ToolbarRightContent, DropdownButton, MenuItem, Icon } from 'patternfly-react';
 
 import ValueSelectHelper from './ValueSelectHelper';
 import MetricsOptions from '../../types/MetricsOptions';
 
 interface Props {
-  onOptionsChanged: (opts: MetricsOptions) => void;
+  onOptionsChanged: (opts: MetricsOptions, interval: number) => void;
+  loading?: boolean;
 }
 
 interface MetricsOptionsState {
   rateInterval: string;
+  pollInterval: number;
   duration: number;
   ticks: number;
   groupByLabels: string[];
@@ -23,6 +25,16 @@ interface GroupByLabel {
 export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsState> {
   static RateIntervals = [['1m', '1 minute'], ['5m', '5 minutes'], ['10m', '10 minutes'], ['30m', '30 minutes']];
   static DefaultRateInterval = MetricsOptionsBar.RateIntervals[0][0];
+
+  static PollIntervals = [
+    [0, 'Pause'],
+    [5000, '5 seconds'],
+    [10000, '10 seconds'],
+    [30000, '30 seconds'],
+    [60000, '1 minute'],
+    [300000, '5 minutes']
+  ];
+  static DefaultPollInterval = 5000;
 
   static Ticks = [10, 20, 30, 50, 100, 200];
   static DefaultTicks = MetricsOptionsBar.Ticks[2];
@@ -64,6 +76,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     super(props);
 
     this.onRateIntervalChanged = this.onRateIntervalChanged.bind(this);
+    this.onPollIntervalChanged = this.onPollIntervalChanged.bind(this);
     this.onDurationChanged = this.onDurationChanged.bind(this);
     this.onTicksChanged = this.onTicksChanged.bind(this);
     this.changedGroupByLabel = this.changedGroupByLabel.bind(this);
@@ -77,6 +90,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
 
     this.state = {
       rateInterval: MetricsOptionsBar.DefaultRateInterval,
+      pollInterval: MetricsOptionsBar.DefaultPollInterval,
       duration: MetricsOptionsBar.DefaultDuration,
       ticks: MetricsOptionsBar.DefaultTicks,
       groupByLabels: []
@@ -90,6 +104,12 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
 
   onRateIntervalChanged(key: string) {
     this.setState({ rateInterval: key }, () => {
+      this.reportOptions();
+    });
+  }
+
+  onPollIntervalChanged(key: number) {
+    this.setState({ pollInterval: key }, () => {
       this.reportOptions();
     });
   }
@@ -110,14 +130,17 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     // State-to-options converter (removes unnecessary properties)
     const labelsIn = this.state.groupByLabels.map(lbl => MetricsOptionsBar.GroupByLabelOptions[lbl].labelIn);
     const labelsOut = this.state.groupByLabels.map(lbl => MetricsOptionsBar.GroupByLabelOptions[lbl].labelOut);
-    this.props.onOptionsChanged({
-      rateInterval: this.state.rateInterval,
-      rateFunc: 'irate',
-      duration: this.state.duration,
-      step: this.state.duration / this.state.ticks,
-      byLabelsIn: labelsIn,
-      byLabelsOut: labelsOut
-    });
+    this.props.onOptionsChanged(
+      {
+        rateInterval: this.state.rateInterval,
+        rateFunc: 'irate',
+        duration: this.state.duration,
+        step: this.state.duration / this.state.ticks,
+        byLabelsIn: labelsIn,
+        byLabelsOut: labelsOut
+      },
+      this.state.pollInterval
+    );
   }
 
   changedGroupByLabel(labels: string[]) {
@@ -152,7 +175,21 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
               </MenuItem>
             ))}
           </DropdownButton>
+          <DropdownButton id="pollInterval" title="Polling interval" onSelect={this.onPollIntervalChanged}>
+            {MetricsOptionsBar.PollIntervals.map(r => (
+              <MenuItem key={r[0]} active={r[0] === this.state.pollInterval} eventKey={r[0]}>
+                {r[1]}
+              </MenuItem>
+            ))}
+          </DropdownButton>
         </div>
+        <ToolbarRightContent>
+          {this.props.loading && (
+            <span>
+              <Icon name="spinner" spin={true} size="lg" /> Loading
+            </span>
+          )}
+        </ToolbarRightContent>
         {this.groupByLabelsHelper.hasResults() && (
           <Toolbar.Results>{this.groupByLabelsHelper.renderResults()}</Toolbar.Results>
         )}
