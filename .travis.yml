@@ -4,6 +4,9 @@ node_js:
 cache:
   directories:
     - node_modules
+before_script:
+  # Fail if our package-lock.json is different after npm install to ensure we are in sync with package.json
+  - "git diff --exit-code package-lock.json || (echo 'Error: package-lock.json is not in sync with package.json' && false)"
 script:
   - npm run prettier -- --list-different &&
     npm run build-css &&
