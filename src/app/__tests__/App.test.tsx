@@ -3,9 +3,6 @@ import * as ReactDOM from 'react-dom';
 import App from '../App';
 import 'jest-canvas-mock';
 
-const axios = require('axios');
-const MockAdapter = require('axios-mock-adapter');
-
 // Mock getComputedStyle: Cytoscape relies on the result of this to have a valid paddingXXX
 // Current implementation returns '' which is parsed to float as NAN, breaking cytoscape.
 // Uses the default implementation and ensures we are returning a valid paddingXXX
@@ -20,8 +17,7 @@ window.getComputedStyle = jest.fn().mockImplementation(element => {
   return computedStyle;
 });
 
-const mock = new MockAdapter(axios);
-mock.onAny().reply(200);
+jest.mock('../../services/Api');
 
 process.env.REACT_APP_NAME = 'kiali-ui-test';
 process.env.REACT_APP_VERSION = '1.0.1';
