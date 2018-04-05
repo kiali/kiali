@@ -69,7 +69,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     };
   }
 
-  componentWillMount() {
+  componentDidMount() {
     this.setState({ loading: true });
     this.updateServices();
   }

@@ -97,7 +97,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     };
   }
 
-  componentWillMount() {
+  componentDidMount() {
     // Init state upstream
     this.reportOptions();
   }

@@ -26,7 +26,7 @@ class IstioRuleInfo extends React.Component<RuleId, RuleInfoState> {
     };
   }
 
-  componentWillMount() {
+  componentDidMount() {
     this.fetchIstioRuleDetails(this.props);
   }
 

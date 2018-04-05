@@ -69,7 +69,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
     };
   }
 
-  componentWillMount() {
+  componentDidMount() {
     this.setState({ loading: true });
     this.updateRules();
   }
