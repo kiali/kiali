@@ -13,8 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/kiali/kiali/services/business"
 )
 
 // TestServiceMetricsDefault is unit test (testing request handling, not the prometheus client behaviour)
@@ -223,21 +226,20 @@ func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustes
 
 // TestServiceHealth is unit test (testing request handling, not the prometheus client behaviour)
 func TestServiceHealth(t *testing.T) {
-	ts, api := setupServiceHealthEndpoint(t)
+	ts, k8s, prom := setupServiceHealthEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/services/svc/health"
-	now := time.Now()
-	delta := 2 * time.Second
 
-	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
-		query := args[1].(string)
-		assert.IsType(t, time.Time{}, args[2])
-		timestamp := args[2].(time.Time)
-		// Health = envoy metrics
-		assert.Contains(t, query, "svc_ns_svc_cluster_local")
-		assert.WithinDuration(t, now, timestamp, delta)
-	})
+	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+		assert.Equal(t, "svc", args[1])
+	}).Return((*kubernetes.ServiceDetails)(nil), nil)
+
+	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+		assert.Equal(t, "svc", args[1])
+	}).Return(1, 1, nil)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -247,22 +249,18 @@ func TestServiceHealth(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
+	k8s.AssertNumberOfCalls(t, "GetServiceDetails", 1)
+	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
 }
 
-func setupServiceHealthEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
-	client, api, err := setupMocked()
-	if err != nil {
-		t.Fatal(err)
-	}
+func setupServiceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
+	k8s := new(kubetest.K8SClientMock)
+	prom := new(prometheustest.PromClientMock)
+	business.SetWithBackends(k8s, prom)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/health", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			getServiceHealth(w, r, func() (*prometheus.Client, error) {
-				return client, nil
-			})
-		}))
+	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/health", ServiceHealth)
 
 	ts := httptest.NewServer(mr)
-	return ts, api
+	return ts, k8s, prom
 }
