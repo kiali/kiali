@@ -43,6 +43,7 @@ const (
 	EnvJaegerService          = "JAEGER_SERVICE"
 
 	EnvServiceFilterLabelName = "SERVICE_FILTER_LABEL_NAME"
+	EnvVersionFilterLabelName = "VERSION_FILTER_LABEL_NAME"
 )
 
 // Global configuration for the application.
@@ -85,6 +86,7 @@ type Config struct {
 	Grafana                GrafanaConfig     `yaml:"grafana,omitempty"`
 	Jaeger                 JaegerConfig      `yaml:"jaeger,omitempty"`
 	ServiceFilterLabelName string            `yaml:"service_filter_label_name,omitempty"`
+	VersionFilterLabelName string            `yaml:"version_filter_label_name,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -119,6 +121,7 @@ func NewConfig() (c *Config) {
 	c.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
 
 	c.ServiceFilterLabelName = strings.TrimSpace(getDefaultString(EnvServiceFilterLabelName, "app"))
+	c.VersionFilterLabelName = strings.TrimSpace(getDefaultString(EnvVersionFilterLabelName, "version"))
 	return
 }
 

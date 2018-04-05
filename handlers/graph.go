@@ -50,6 +50,7 @@ import (
 	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/graph/tree"
 	"github.com/kiali/kiali/graph/vizceral"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -62,11 +63,14 @@ func GraphNamespace(w http.ResponseWriter, r *http.Request) {
 	client, err := prometheus.NewClient()
 	checkError(err)
 
-	graphNamespace(w, r, client)
+	istioClient, err := kubernetes.NewClient()
+	checkError(err)
+
+	graphNamespace(w, r, client, istioClient)
 }
 
 // graphNamespace provides a testing hook that can supply a mock client
-func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
+func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.Client, istioClient *kubernetes.IstioClient) {
 	o := options.NewOptions(r)
 
 	switch o.Vendor {
@@ -79,6 +83,13 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 	log.Debugf("Build roots (root destination services nodes) for [%v] namespace graph with options [%+v]", o.Vendor, o)
 
 	trees := buildNamespaceTrees(o, client)
+
+	if istioClient != nil {
+		deployments, err := istioClient.GetDeployments(o.Namespace)
+		checkError(err)
+
+		addNonTrafficNodes(&trees, o.Namespace, deployments)
+	}
 
 	generateGraph(&trees, w, o)
 }

@@ -82,6 +82,12 @@ func (in *IstioClient) GetServices(namespaceName string) (*ServiceList, error) {
 	return services, err
 }
 
+// GetDeployments returns a list of deployments for a given namespace.
+// It returns an error on any problem.
+func (in *IstioClient) GetDeployments(namespaceName string) (*v1beta1.DeploymentList, error) {
+	return in.k8s.AppsV1beta1().Deployments(namespaceName).List(emptyListOptions)
+}
+
 // GetServiceDetails returns full details for a given service, consisting on service description, endpoints and pods.
 // A service is defined by the namespace and the service name.
 // It returns an error on any problem.

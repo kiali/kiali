@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
@@ -197,12 +198,12 @@ func TestNamespaceGraph(t *testing.T) {
 	mockQuery(api, q7, &v7)
 	mockQuery(api, q8, &v8)
 
-	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
+	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client, ic *kubernetes.IstioClient)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/graphs", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fut(w, r, client)
+			fut(w, r, client, nil)
 		}))
 
 	ts := httptest.NewServer(mr)
