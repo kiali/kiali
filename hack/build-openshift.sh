@@ -97,10 +97,10 @@ fi
 export GOPATH=${OPENSHIFT_GOPATH}
 
 echo Building OpenShift Origin binaries ...
-hack/env make clean build
+python2 hack/env make clean build
 
 echo Building OpenShift Origin images...
-hack/build-local-images.py
+python2 hack/build-local-images.py
 
 if [ "$?" = "0" ]; then
   echo OpenShift Origin build is complete!
