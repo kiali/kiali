@@ -101,7 +101,7 @@ func CastServiceOverview(s *v1.Service, deployments *v1beta1.DeploymentList) Ser
 	service := ServiceOverview{}
 	service.Name = s.Name
 
-	replicas, availableReplicas, unavailableReplicas, istioSidecar := getPodStatusForService(s.Labels[config.Get().ServiceFilterLabelName], deployments)
+	replicas, availableReplicas, unavailableReplicas, istioSidecar := getPodStatusForService(s, deployments)
 	service.Replicas = replicas
 	service.AvailableReplicas = availableReplicas
 	service.UnavailableReplicas = unavailableReplicas
@@ -113,7 +113,7 @@ func CastServiceOverview(s *v1.Service, deployments *v1beta1.DeploymentList) Ser
 	return service
 }
 
-func getPodStatusForService(serviceName string, deployments *v1beta1.DeploymentList) (int32, int32, int32, bool) {
+func getPodStatusForService(service *v1.Service, deployments *v1beta1.DeploymentList) (int32, int32, int32, bool) {
 	replicas, availableReplicas, unavailableReplicas := int32(0), int32(0), int32(0)
 	istioSidecar := false
 
@@ -121,7 +121,7 @@ func getPodStatusForService(serviceName string, deployments *v1beta1.DeploymentL
 		if deployment.Spec.Template.Annotations != nil && !istioSidecar {
 			_, istioSidecar = deployment.Spec.Template.Annotations[config.Get().IstioSidecarAnnotation]
 		}
-		if deployment.ObjectMeta.Labels != nil && deployment.ObjectMeta.Labels[config.Get().ServiceFilterLabelName] == serviceName {
+		if kubernetes.LabelsMatch(deployment.ObjectMeta.Labels, service.Spec.Selector) {
 			replicas = replicas + deployment.Status.Replicas
 			availableReplicas = availableReplicas + deployment.Status.AvailableReplicas
 			unavailableReplicas = unavailableReplicas + deployment.Status.UnavailableReplicas
