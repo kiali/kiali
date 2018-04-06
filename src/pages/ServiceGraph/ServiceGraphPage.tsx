@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-import { Alert, Button } from 'patternfly-react';
+import { Button } from 'patternfly-react';
 import { PropTypes } from 'prop-types';
 
 import Namespace from '../../types/Namespace';
@@ -14,6 +14,7 @@ import { GraphFilter } from '../../components/GraphFilter/GraphFilter';
 import * as QueryOptions from '../../components/GraphFilter/QueryOptions';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
 import PfHeader from '../../components/Pf/PfHeader';
+import PfAlerts from '../../components/Pf/PfAlerts';
 import * as API from '../../services/Api';
 
 const URLSearchParams = require('url-search-params');
@@ -23,7 +24,10 @@ const URLSearchParams = require('url-search-params');
 //   summaryType  : one of 'graph', 'node', 'edge', 'group'
 type ServiceGraphPageState = {
   alertVisible: boolean;
-  alertDetails: string;
+  alertDetails: {
+    namespaceAlert?: any;
+    graphLoadAlert?: any;
+  };
   summaryData: any;
   graphTimestamp: string;
   graphData: any;
@@ -53,7 +57,7 @@ export default class ServiceGraphPage extends React.Component<
     this.state = {
       isLoading: false,
       alertVisible: false,
-      alertDetails: '',
+      alertDetails: {},
       summaryData: { summaryType: 'graph' },
       graphTimestamp: new Date().toLocaleString(),
       graphData: EMPTY_GRAPH_DATA,
@@ -104,11 +108,14 @@ export default class ServiceGraphPage extends React.Component<
   }
 
   handleError = (error: string) => {
-    this.setState({ alertVisible: true, alertDetails: error });
+    this.setState({
+      alertVisible: true,
+      alertDetails: { ...this.state.alertDetails, namespaceAlert: error }
+    });
   };
 
   dismissAlert = () => {
-    this.setState({ alertVisible: false });
+    this.setState({ alertVisible: false, alertDetails: {} });
   };
 
   handleGraphClick = (data: any) => {
@@ -118,19 +125,15 @@ export default class ServiceGraphPage extends React.Component<
   };
 
   render() {
-    let alertsDiv = <div />;
-    if (this.state.alertVisible) {
-      alertsDiv = (
-        <div>
-          <Alert onDismiss={this.dismissAlert}>{this.state.alertDetails.toString()}</Alert>
-        </div>
-      );
-    }
     return (
       <PfContainerNavVertical>
         <PfHeader>
           <h2>Service Graph</h2>
-          {alertsDiv}
+          <PfAlerts
+            alerts={this.buildAlertsArray()}
+            isVisible={this.state.alertVisible}
+            onDismiss={this.dismissAlert}
+          />
           <GraphFilter
             onLayoutChange={this.handleLayoutChange}
             onFilterChange={this.handleFilterChange}
@@ -211,9 +214,29 @@ export default class ServiceGraphPage extends React.Component<
           graphData: EMPTY_GRAPH_DATA,
           graphTimestamp: new Date().toLocaleString(),
           summaryData: { summaryType: 'graph', summaryTarget: null },
-          isLoading: false
+          isLoading: false,
+          alertVisible: true,
+          alertDetails: { ...this.state.alertDetails, graphLoadAlert: error }
         });
-        console.error(error);
       });
+  };
+
+  private buildAlertsArray = () => {
+    let alerts: string[] = [];
+
+    if (this.state.alertDetails.namespaceAlert) {
+      alerts.push('Cannot load namespace list: ' + this.state.alertDetails.namespaceAlert.toString());
+    }
+
+    let graphAlert = this.state.alertDetails.graphLoadAlert;
+    if (graphAlert) {
+      if (graphAlert.response && graphAlert.response.data && graphAlert.response.data.error) {
+        alerts.push('Cannot load the graph: ' + graphAlert.response.data.error);
+      } else {
+        alerts.push('Cannot load the graph: ' + graphAlert.toString());
+      }
+    }
+
+    return alerts;
   };
 }
