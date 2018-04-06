@@ -8,7 +8,15 @@ Use of this provided hack script is not required. It is provided only as a conve
 
 This link:./istio-install.sh[install script] is used to deploy http://istio.io[Istio] and its https://istio.io/docs/guides/bookinfo.html[BookInfo] demo on either OpenShift or Kubernetes.
 
-Simply run the script on a command line with no arguments to install the latest version of Istio on OpenShift.
+You will need to be logged in as an user that has admin permissions. If you do not have one set up (the case with just running `oc cluster up`), you can give the developer user cluster admin permissions:
+
+```bash
+oc login -u system:admin
+oc adm policy add-cluster-role-to-user cluster-admin -z default admin
+oc login -u admin -p admin
+```
+
+Then, simply run the script on a command line with no arguments to install the latest version of Istio on OpenShift.
 
 If you want to install a specific version of Istio, pass the argument `-v #.#.#` where `#.#.#` is the version you want to install (e.g. `-v 0.7.1`).
 
@@ -17,3 +25,15 @@ If you want to install Istio on Kubernetes, pass the argument `-c k8s` to the sc
 Edit the install script if you wish to change any other settings.
 
 Under the covers, Istio is installed using the Istio Ansible Installer. Read more about the Istio Ansible Installer on github at https://github.com/istio/istio/tree/master/install/ansible
+
+=== Troubleshooting
+
+* *When I run the script, the containers are being created, but after some time they get the `Evicted` status, and do not run anymore.*
+  This usually happens when disk usage on the partition hosting `/var/lib/docker` is more than 80%. Cleaning up the partition will fix the problem. Running `docker system prune -a` might help free some space.
+
+* *When I run the script I'm getting errors on Ansible, such as missing 'jinja2' dependency.*
+  This happens if ansible was installed using python3, and then is run with python2. You can install the dependencies manually as such:
+
+  ```bash
+  sudo pip2 install jinja2 PyYAML
+  ```
