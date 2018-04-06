@@ -8,9 +8,7 @@ class App extends React.Component {
     const Sidebar = withRouter(Navigation);
     return (
       <BrowserRouter basename="/console">
-        <div>
-          <Sidebar />
-        </div>
+        <Sidebar />
       </BrowserRouter>
     );
   }
