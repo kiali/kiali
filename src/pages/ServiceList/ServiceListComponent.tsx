@@ -10,6 +10,7 @@ import { Pagination } from '../../types/Pagination';
 import { ServiceItem, ServiceList } from '../../types/ServiceListComponent';
 import PropTypes from 'prop-types';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
+import { ServiceHealth, DisplayMode } from '../../components/ServiceHealth/ServiceHealth';
 
 type SortField = {
   id: string;
@@ -176,9 +177,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             let serviceItem: ServiceItem = {
               namespace: namespace.name,
               servicename: serviceName.name,
-              replicas: serviceName.replicas,
-              available_replicas: serviceName.available_replicas,
-              unavailable_replicas: serviceName.unavailable_replicas,
+              health: serviceName.health,
               request_count: serviceName.request_count,
               request_error_count: serviceName.request_error_count,
               error_rate: serviceName.error_rate
@@ -262,15 +261,8 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         <table style={{ width: '30em', tableLayout: 'fixed' }}>
           <tr>
             <td>
-              <strong>Pod status: </strong> {serviceItem.available_replicas} / {serviceItem.replicas}{' '}
-              <Icon
-                type="pf"
-                name={
-                  serviceItem.available_replicas < serviceItem.replicas || serviceItem.replicas === 0
-                    ? 'warning-triangle-o'
-                    : 'ok'
-                }
-              />
+              <strong>Health: </strong>
+              <ServiceHealth health={serviceItem.health} mode={DisplayMode.SMALL} />
             </td>
             <td>
               <strong>Error rate: </strong>

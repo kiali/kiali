@@ -2,8 +2,8 @@ import * as React from 'react';
 import { Col, Row } from 'patternfly-react';
 
 import Badge from '../../../components/Badge/Badge';
-import ServiceHealth from '../../../components/ServiceHealth/ServiceHealth';
-import Health from '../../../types/Health';
+import { ServiceHealth, DisplayMode } from '../../../components/ServiceHealth/ServiceHealth';
+import { Health } from '../../../types/Health';
 import { Endpoints, Port } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
 
@@ -88,9 +88,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               <div className="progress-description">
                 <strong>Health</strong>
               </div>
-              <div className="small-text-donut">
-                <ServiceHealth size={80} thickness={6} health={this.props.health} />
-              </div>
+              <ServiceHealth health={this.props.health} mode={DisplayMode.LARGE} />
             </Col>
           </Row>
         }

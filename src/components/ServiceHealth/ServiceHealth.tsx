@@ -1,78 +1,138 @@
 import * as React from 'react';
-import { DonutChart } from 'patternfly-react';
-import Health from '../../types/Health';
+import { Icon } from 'patternfly-react';
 
-interface Props {
-  health?: Health;
-  size: number;
-  thickness?: number;
-  showTitle?: boolean;
+import * as H from '../../types/Health';
+
+export enum DisplayMode {
+  LARGE,
+  SMALL
 }
 
-const KEY_HEALTHY = 'Healthy';
-const KEY_FAILURE = 'Failure';
-const KEY_NA = 'N/A';
-const DONUT_COLORS: { [key: string]: string } = {};
-// From Patternfly status palette
-DONUT_COLORS[KEY_HEALTHY] = '#3f9c35';
-DONUT_COLORS[KEY_FAILURE] = '#cc0000';
-DONUT_COLORS[KEY_NA] = '#707070';
+interface Props {
+  health?: H.Health;
+  mode: DisplayMode;
+}
 
-class ServiceHealth extends React.Component<Props, {}> {
-  donutData: any;
-  donutSize: any;
-  donutTitle: string;
+interface Status {
+  name: string;
+  color: string;
+  priority: number;
+  jsx: (size?: string) => JSX.Element;
+}
+
+// Colors from Patternfly status palette https://www.patternfly.org/styles/color-palette/
+const FAILURE: Status = {
+  name: 'Failure',
+  color: '#cc0000',
+  priority: 3,
+  jsx: size => <Icon type="pf" name="error-circle-o" style={{ fontSize: size }} />
+};
+const DEGRADED: Status = {
+  name: 'Degraded',
+  color: '#ec7a08',
+  priority: 2,
+  jsx: size => <Icon type="pf" name="warning-triangle-o" style={{ fontSize: size }} />
+};
+const HEALTHY: Status = {
+  name: 'Healthy',
+  color: '#3f9c35',
+  priority: 1,
+  jsx: size => <Icon type="pf" name="ok" style={{ fontSize: size }} />
+};
+const NA: Status = {
+  name: 'No health information',
+  color: '#707070',
+  priority: 0,
+  jsx: size => <span style={{ color: '#707070', fontSize: size ? '24px' : undefined }}>N/A</span>
+};
+
+export class ServiceHealth extends React.Component<Props, {}> {
+  globalStatus: Status;
+  info: string[];
 
   constructor(props: Props) {
     super(props);
-    this.onGetProps(props);
+    this.updateHealth(props.health);
   }
 
   componentWillReceiveProps(nextProps: Props) {
-    this.onGetProps(nextProps);
+    this.updateHealth(nextProps.health);
   }
 
-  onGetProps(props: Props) {
-    this.donutSize = {
-      width: props.size,
-      height: props.size
-    };
-    let columns: [string, number][] = [];
-    if (props.health && props.health.totalReplicas > 0) {
-      columns = [
-        [KEY_NA, 0],
-        [KEY_HEALTHY, props.health.healthyReplicas],
-        [KEY_FAILURE, props.health.totalReplicas - props.health.healthyReplicas]
-      ];
-      this.donutTitle = Math.round(100 * props.health.healthyReplicas / props.health.totalReplicas) + '%';
+  ratioCheck(valid: number, total: number, errorMsg: string): Status {
+    if (total === 0) {
+      return NA;
+    } else if (valid === 0) {
+      this.info.push(errorMsg + 'failure');
+      return FAILURE;
+    } else if (valid === total) {
+      return HEALTHY;
+    }
+    this.info.push(errorMsg + 'degraded');
+    return DEGRADED;
+  }
+
+  mergeStatus(s1: Status, s2: Status): Status {
+    return s1.priority > s2.priority ? s1 : s2;
+  }
+
+  updateHealth(health?: H.Health) {
+    this.info = [];
+    let countInactiveDeployments = 0;
+    if (health) {
+      const envoyStatus = this.ratioCheck(health.envoy.healthy, health.envoy.total, 'Envoy health ');
+      this.globalStatus = health.deploymentStatuses.reduce((prev, cur) => {
+        const status = this.ratioCheck(cur.available, cur.replicas, 'Pod deployment ');
+        if (status === NA) {
+          countInactiveDeployments++;
+        }
+        return this.mergeStatus(prev, status);
+      }, envoyStatus);
     } else {
-      columns = [[KEY_NA, 1], [KEY_HEALTHY, 0], [KEY_FAILURE, 0]];
-      this.donutTitle = 'n/a';
+      this.globalStatus = NA;
     }
-    if (props.showTitle !== undefined && !props.showTitle) {
-      this.donutTitle = ' ';
+    if (health && countInactiveDeployments > 0 && countInactiveDeployments === health.deploymentStatuses.length) {
+      // No active deployment => special case for failure
+      this.globalStatus = FAILURE;
+      this.info.push('No active deployment!');
+    } else if (countInactiveDeployments === 1) {
+      this.info.push('One inactive deployment');
+    } else if (countInactiveDeployments > 1) {
+      this.info.push(`${countInactiveDeployments} inactive deployments`);
     }
-    this.donutData = {
-      colors: DONUT_COLORS,
-      columns: columns,
-      type: 'donut'
-    };
   }
 
   render() {
     if (this.props.health) {
-      return (
-        <DonutChart
-          size={this.donutSize}
-          data={this.donutData}
-          title={{ type: '', primary: this.donutTitle, secondary: ' ' }}
-          legend={{ show: false }}
-          donut={this.props.thickness ? { width: this.props.thickness } : {}}
-        />
-      );
+      if (this.props.mode === DisplayMode.SMALL) {
+        return this.renderSmall(this.props.health);
+      } else {
+        return this.renderLarge(this.props.health);
+      }
     }
-    return <div />;
+    return <span />;
+  }
+
+  renderSmall(health: H.Health) {
+    const tooltip = this.info.length === 1 ? this.info[0] : this.info.map(str => '- ' + str).join('&#13;');
+    return (
+      <span>
+        {this.globalStatus.jsx()}&nbsp;
+        {tooltip && <Icon type="pf" name="info" title={tooltip} />}
+      </span>
+    );
+  }
+
+  renderLarge(health: H.Health) {
+    return (
+      <div>
+        {this.globalStatus.jsx('35px')}
+        <div style={{ color: this.globalStatus.color }}>{this.globalStatus.name}</div>
+        {this.info.length === 1 && this.info[0]}
+        {this.info.length > 1 && (
+          <ul style={{ padding: 0 }}>{this.info.map((line, idx) => <li key={idx}>{line}</li>)}</ul>
+        )}
+      </div>
+    );
   }
 }
-
-export default ServiceHealth;

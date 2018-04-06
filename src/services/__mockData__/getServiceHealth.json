@@ -1,4 +1,1 @@
-{
-  "healthyReplicas": 1,
-  "totalReplicas": 1
-}
+{ "envoy": { "healthy": 1, "total": 1 }, "deploymentStatuses": [{ "replicas": 1, "available": 1 }] }
