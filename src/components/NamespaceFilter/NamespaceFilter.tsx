@@ -55,7 +55,7 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
     return this.props.initialFilters.slice().concat(namespaceFilter);
   }
 
-  componentWillMount() {
+  componentDidMount() {
     this.updateNamespaces();
   }
 

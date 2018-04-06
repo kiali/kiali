@@ -18,7 +18,10 @@ class ServiceJaegerPage extends React.Component<{}, ServiceJaegerState> {
     this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
   }
 
-  componentWillMount() {
+  componentDidMount() {
+    this.updateWindowDimensions();
+    window.addEventListener('resize', this.updateWindowDimensions);
+
     API.getJaegerInfo()
       .then(response => {
         let data = response['data'];
@@ -33,11 +36,6 @@ class ServiceJaegerPage extends React.Component<{}, ServiceJaegerState> {
         });
         console.log(error);
       });
-  }
-
-  componentDidMount() {
-    this.updateWindowDimensions();
-    window.addEventListener('resize', this.updateWindowDimensions);
   }
 
   componentWillUnmount() {

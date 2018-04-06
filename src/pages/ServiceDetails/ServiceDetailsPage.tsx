@@ -39,7 +39,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     };
     NamespaceFilterSelected.setSelected([activeFilter]);
   };
-  componentWillMount() {
+  componentDidMount() {
     API.getJaegerInfo()
       .then(response => {
         this.setState({
