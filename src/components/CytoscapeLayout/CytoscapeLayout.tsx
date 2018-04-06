@@ -5,6 +5,8 @@ import PropTypes from 'prop-types';
 import { GraphStyles } from './graphs/GraphStyles';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import ReactCytoscape from './ReactCytoscape';
+import EmptyGraphLayout from './EmptyGraphLayout';
+
 import { GraphParamsType } from '../../types/Graph';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
 
@@ -12,6 +14,7 @@ type CytoscapeLayoutType = {
   elements: any;
   onClick: (event: CytoscapeClickEvent) => void;
   isLoading?: boolean;
+  refresh: any;
 };
 
 type CytoscapeLayoutProps = CytoscapeLayoutType & GraphParamsType;
@@ -111,16 +114,22 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     return (
       <div id="cytoscape-container" style={{ marginRight: '25em' }}>
         <Spinner loading={this.props.isLoading}>
-          <ReactCytoscape
-            containerID="cy"
-            cyRef={cy => {
-              this.cyRef(cy);
-            }}
+          <EmptyGraphLayout
             elements={this.props.elements}
-            style={GraphStyles.styles()}
-            cytoscapeOptions={GraphStyles.options()}
-            layout={layout}
-          />
+            namespace={this.props.namespace.name}
+            action={this.props.refresh}
+          >
+            <ReactCytoscape
+              containerID="cy"
+              cyRef={cy => {
+                this.cyRef(cy);
+              }}
+              elements={this.props.elements}
+              style={GraphStyles.styles()}
+              cytoscapeOptions={GraphStyles.options()}
+              layout={layout}
+            />
+          </EmptyGraphLayout>
         </Spinner>
       </div>
     );

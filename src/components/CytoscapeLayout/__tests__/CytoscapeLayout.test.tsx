@@ -26,6 +26,7 @@ describe('CytographLayout component test', () => {
         graphLayout={myLayout}
         graphDuration={myDuration}
         onClick={testHandler}
+        refresh={testHandler}
       />
     );
     const cytoscapeWrapper = wrapper.find(ReactCytoscape);
