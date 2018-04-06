@@ -17,7 +17,7 @@ if [ "$?" != 0 ]; then
     cd $OUTPUT_DIR && git clone git://github.com/ansible/ansible.git --recursive
     echo "Ansible has been downloaded here: ${ANSIBLE_DIR}"
     echo "Will now attempt to pip install required dependencies."
-    pip install -r ${ANSIBLE_DIR}/requirements.txt > /dev/null 2>&1
+    pip2 install -r ${ANSIBLE_DIR}/requirements.txt > /dev/null 2>&1
     if [ "$?" != 0 ]; then
       echo "==========================================================="
       echo "Looks like some Python dependencies might not be installed."
