@@ -308,6 +308,10 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     if (this.state.loading) {
       serviceListComponent = <div className="spinner spinner-sm left-spinner" />;
     } else {
+      let rateIntervalSelected = MetricsOptionsBar.RateIntervals.find(el => {
+        return el[0] === this.state.rateInterval;
+      });
+
       serviceListComponent = (
         <div>
           <NamespaceFilter
@@ -328,8 +332,9 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
               />
             </Sort>
             <div className="form-group">
+              <label>Rate Interval:&nbsp;</label>
               <DropdownButton
-                title="Rate Interval"
+                title={'Last ' + rateIntervalSelected![1]}
                 onSelect={this.rateIntervalChangedHandler}
                 id="rateIntervalDropDown"
               >
