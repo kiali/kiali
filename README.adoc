@@ -297,6 +297,20 @@ in_cluster: (true\|false)
 istio_sidecar_annotation: VALUE
 ----
 
+|`ISTIO_SERVICE_NAMESPACE`
+|The Kubernetes namespace that holds the Istio service
+[source,yaml]
+----
+istio_service_namespace: VALUE
+----
+
+|`ISTIO_SERVICE`
+|The Service of Istio to check version. ( Default: istio-pilot)
+[source,yaml]
+----
+istio_service: VALUE
+----
+
 |`SERVICE_FILTER_LABEL_NAME`
 |Label name which all resources of a service are group by. Default is `app`.
 [source,yaml]

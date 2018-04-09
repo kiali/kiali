@@ -14,20 +14,19 @@ server:
   # Uncomment cors_allow_all to allow serving front-end from a different host (mainly for development)
   # Default is false
   # cors_allow_all: true
+products:
+  prometheus_service_url: http://prometheus-istio-system.127.0.0.1.nip.io
+  # Uncomment istio_identity_domain to set a different value. This value must match the Istio configuration.
+  # Default is "svc.cluster.local" (which matches Istio's default)
+  # istio_identity_domain: svc.cluster.local
 
-prometheus_service_url: http://prometheus-istio-system.127.0.0.1.nip.io
+  # Uncomment grafana_service_url, used to generate links to Grafana
+  # If unset, the Grafana service URL will be looked up from Kubernetes Grafana service. It may not always be available.
+  # grafana_service_url: http://grafana-istio-system.127.0.0.1.nip.io
 
 # Uncomment in_cluster to set a different value.
 # Default is true (which matches Kiali default configuration to run inside a pod running on kubernetes)
 # in_cluster: true
-
-# Uncomment istio_identity_domain to set a different value. This value must match the Istio configuration.
-# Default is "svc.cluster.local" (which matches Istio's default)
-# istio_identity_domain: svc.cluster.local
-
-# Uncomment grafana_service_url, used to generate links to Grafana
-# If unset, the Grafana service URL will be looked up from Kubernetes Grafana service. It may not always be available.
-# grafana_service_url: http://grafana-istio-system.127.0.0.1.nip.io
 
 # Uncomment service_filter_label_name to set up a different lable name for grouping all resources of a service.
 # Default is "app"

@@ -23,6 +23,8 @@ const (
 	EnvInCluster              = "IN_CLUSTER"
 	EnvIstioIdentityDomain    = "ISTIO_IDENTITY_DOMAIN"
 	EnvIstioSidecarAnnotation = "ISTIO_SIDECAR_ANNOTATION"
+	EnvIstioServiceNamespace  = "ISTIO_SERVICE_NAMESPACE"
+	EnvIstioServiceVersion    = "ISTIO_SERVICE"
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
@@ -77,18 +79,29 @@ type JaegerConfig struct {
 	Service          string `yaml:"service"`
 }
 
+// IstioConfig describes configuration used for istio links
+type IstioConfig struct {
+	ServiceNamespace       string `yaml:"service_namespace"`
+	ServiceVersion         string `yaml:"service_version"`
+	IstioIdentityDomain    string `yaml:"istio_identity_domain,omitempty"`
+	IstioSidecarAnnotation string `yaml:"istio_sidecar_annotation,omitempty"`
+}
+
+type Products struct {
+	Istio                IstioConfig   `yaml:"istio,omitempty"`
+	PrometheusServiceURL string        `yaml:"prometheus_service_url,omitempty"`
+	Grafana              GrafanaConfig `yaml:"grafana,omitempty"`
+	Jaeger               JaegerConfig  `yaml:"jaeger,omitempty"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	Identity               security.Identity `yaml:",omitempty"`
 	Server                 Server            `yaml:",omitempty"`
-	PrometheusServiceURL   string            `yaml:"prometheus_service_url,omitempty"`
 	InCluster              bool              `yaml:"in_cluster,omitempty"`
-	IstioIdentityDomain    string            `yaml:"istio_identity_domain,omitempty"`
-	IstioSidecarAnnotation string            `yaml:"istio_sidecar_annotation,omitempty"`
-	Grafana                GrafanaConfig     `yaml:"grafana,omitempty"`
-	Jaeger                 JaegerConfig      `yaml:"jaeger,omitempty"`
 	ServiceFilterLabelName string            `yaml:"service_filter_label_name,omitempty"`
 	VersionFilterLabelName string            `yaml:"version_filter_label_name,omitempty"`
+	Products               Products          `yaml:"products,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -97,7 +110,11 @@ func NewConfig() (c *Config) {
 
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
 	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")
+	c.InCluster = getDefaultBool(EnvInCluster, true)
+	c.ServiceFilterLabelName = strings.TrimSpace(getDefaultString(EnvServiceFilterLabelName, "app"))
+	c.VersionFilterLabelName = strings.TrimSpace(getDefaultString(EnvVersionFilterLabelName, "version"))
 
+	// Server configuration
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
 	c.Server.Port = getDefaultInt(EnvServerPort, 20000)
 	c.Server.Credentials = security.Credentials{
@@ -106,26 +123,30 @@ func NewConfig() (c *Config) {
 	}
 	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/static-files"))
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
-	c.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
 
-	c.InCluster = getDefaultBool(EnvInCluster, true)
-	c.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
-	c.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
+	// Prometheus configuration
+	c.Products.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
 
-	c.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
-	c.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
-	c.Grafana.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaServiceNamespace, "istio-system"))
-	c.Grafana.Service = strings.TrimSpace(getDefaultString(EnvGrafanaService, "grafana"))
-	c.Grafana.Dashboard = strings.TrimSpace(getDefaultString(EnvGrafanaDashboard, "istio-dashboard"))
-	c.Grafana.VarServiceSource = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceSource, "var-source"))
-	c.Grafana.VarServiceDest = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceDest, "var-http_destination"))
+	// Grafana Configuration
+	c.Products.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
+	c.Products.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
+	c.Products.Grafana.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaServiceNamespace, "istio-system"))
+	c.Products.Grafana.Service = strings.TrimSpace(getDefaultString(EnvGrafanaService, "grafana"))
+	c.Products.Grafana.Dashboard = strings.TrimSpace(getDefaultString(EnvGrafanaDashboard, "istio-dashboard"))
+	c.Products.Grafana.VarServiceSource = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceSource, "var-source"))
+	c.Products.Grafana.VarServiceDest = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceDest, "var-http_destination"))
 
-	c.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
-	c.Jaeger.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvJaegerServiceNamespace, "istio-system"))
-	c.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
+	// Jaeger Configuration
+	c.Products.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
+	c.Products.Jaeger.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvJaegerServiceNamespace, "istio-system"))
+	c.Products.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
 
-	c.ServiceFilterLabelName = strings.TrimSpace(getDefaultString(EnvServiceFilterLabelName, "app"))
-	c.VersionFilterLabelName = strings.TrimSpace(getDefaultString(EnvVersionFilterLabelName, "version"))
+	// Istio Configuration
+	c.Products.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
+	c.Products.Istio.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
+	c.Products.Istio.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvIstioServiceNamespace, "istio-system"))
+	c.Products.Istio.ServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioServiceVersion, "istio-pilot"))
+
 	return
 }
 
