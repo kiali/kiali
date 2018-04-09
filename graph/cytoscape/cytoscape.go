@@ -50,6 +50,7 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 	Text   string `json:"text"`   // display text
 	Color  string `json:"color"`  // link color
+	Style  string `json:"style"`  // line style
 
 	// App Fields (not required by Cytoscape)
 	Rate    string `json:"rate,omitempty"`
@@ -180,6 +181,7 @@ func findNode(nodes *[]*NodeWrapper, service, version string) (*NodeData, bool) 
 
 func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorOptions) {
 	rate := sn.Metadata["rate"].(float64)
+	ed.Style = "solid"
 	if rate > 0.0 {
 		rate3xx := sn.Metadata["rate_3xx"].(float64)
 		rate4xx := sn.Metadata["rate_4xx"].(float64)
@@ -216,6 +218,10 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 	} else {
 		ed.Color = o.ColorDead
 		ed.Text = ""
+		// A negative rate means that node information comes from the static representation as it is marked as unused
+		if rate < 0 {
+			ed.Style = "dotted"
+		}
 	}
 }
 

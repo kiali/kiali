@@ -65,6 +65,7 @@
           "target": "n1",
           "text": "20.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "20.0000"
         }
       },
@@ -75,6 +76,7 @@
           "target": "n2",
           "text": "20.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "20.0000"
         }
       },
@@ -85,6 +87,7 @@
           "target": "n4",
           "text": "20.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "20.0000"
         }
       },
@@ -95,6 +98,7 @@
           "target": "n3",
           "text": "20.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "20.0000"
         }
       },
@@ -105,6 +109,7 @@
           "target": "n3",
           "text": "20.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "20.0000"
         }
       }
