@@ -3,12 +3,12 @@ package handlers
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"k8s.io/api/apps/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/tree"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNonTrafficScenario(t *testing.T) {

@@ -3,10 +3,11 @@ package handlers
 import (
 	"fmt"
 
+	"k8s.io/api/apps/v1beta1"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/tree"
 	"github.com/kiali/kiali/log"
-	"k8s.io/api/apps/v1beta1"
 )
 
 func addUnusedNodes(trees *[]tree.ServiceNode, namespaceName string, deployments *v1beta1.DeploymentList) {
