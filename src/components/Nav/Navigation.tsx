@@ -88,7 +88,7 @@ class Navigation extends React.Component<PropsType, StateType> {
 
   render() {
     return (
-      <div>
+      <>
         <VerticalNav
           setControlledState={this.setControlledState}
           activePath={this.state.selectedItem}
@@ -114,7 +114,7 @@ class Navigation extends React.Component<PropsType, StateType> {
           <Route path="/namespaces/:namespace/rules/:rule" component={IstioRuleDetailsPage} />
           <Redirect to={serviceGraphPath} />
         </Switch>
-      </div>
+      </>
     );
   }
 }
