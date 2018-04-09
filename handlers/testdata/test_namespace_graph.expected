@@ -92,7 +92,7 @@
           "id": "e0",
           "source": "n0",
           "target": "n1",
-          "text": "50.0ps",
+          "text": "50.00",
           "color": "green",
           "style": "solid",
           "rate": "50.0000"
@@ -103,7 +103,7 @@
           "id": "e1",
           "source": "n1",
           "target": "n2",
-          "text": "80.0ps 50.0%",
+          "text": "80.00 50.00%",
           "color": "red",
           "style": "solid",
           "rate": "80.0000",
@@ -117,7 +117,7 @@
           "id": "e2",
           "source": "n1",
           "target": "n3",
-          "text": "20.0ps",
+          "text": "20.00",
           "color": "green",
           "style": "solid",
           "rate": "20.0000"
@@ -128,7 +128,7 @@
           "id": "e3",
           "source": "n1",
           "target": "n4",
-          "text": "20.0ps",
+          "text": "20.00",
           "color": "green",
           "style": "solid",
           "rate": "20.0000"
@@ -139,7 +139,7 @@
           "id": "e5",
           "source": "n1",
           "target": "n6",
-          "text": "20.0ps",
+          "text": "20.00",
           "color": "green",
           "style": "solid",
           "rate": "20.0000"
@@ -150,7 +150,7 @@
           "id": "e4",
           "source": "n4",
           "target": "n5",
-          "text": "20.0ps",
+          "text": "20.00",
           "color": "green",
           "style": "solid",
           "rate": "20.0000"
@@ -161,7 +161,7 @@
           "id": "e6",
           "source": "n6",
           "target": "n5",
-          "text": "20.0ps",
+          "text": "20.00",
           "color": "green",
           "style": "solid",
           "rate": "20.0000"
@@ -172,7 +172,7 @@
           "id": "e7",
           "source": "n7",
           "target": "n1",
-          "text": "100.0ps",
+          "text": "100.00",
           "color": "green",
           "style": "solid",
           "rate": "100.0000"

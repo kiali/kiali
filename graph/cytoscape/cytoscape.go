@@ -207,13 +207,13 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 		switch {
 		case percentErr > o.ThresholdError:
 			ed.Color = o.ColorError
-			ed.Text = fmt.Sprintf("%.1fps %.1f%%", rate, percentErr)
+			ed.Text = fmt.Sprintf("%.2f %.2f%%", rate, percentErr)
 		case percentErr > o.ThresholdWarn:
 			ed.Color = o.ColorWarn
-			ed.Text = fmt.Sprintf("%.1fps %.1f%%", rate, percentErr)
+			ed.Text = fmt.Sprintf("%.2f %.2f%%", rate, percentErr)
 		default:
 			ed.Color = o.ColorNormal
-			ed.Text = fmt.Sprintf("%.1fps", rate)
+			ed.Text = fmt.Sprintf("%.2f", rate)
 		}
 	} else {
 		ed.Color = o.ColorDead
