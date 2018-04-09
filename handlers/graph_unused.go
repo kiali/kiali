@@ -9,7 +9,7 @@ import (
 	"k8s.io/api/apps/v1beta1"
 )
 
-func addNonTrafficNodes(trees *[]tree.ServiceNode, namespaceName string, deployments *v1beta1.DeploymentList) {
+func addUnusedNodes(trees *[]tree.ServiceNode, namespaceName string, deployments *v1beta1.DeploymentList) {
 	staticNodeList := buildStaticNodeList(namespaceName, deployments)
 	currentNodeSet := make(map[string]struct{})
 	for _, tree := range *trees {
@@ -48,7 +48,7 @@ func buildStaticNodeList(namespaceName string, deployments *v1beta1.DeploymentLi
 			continue
 		}
 		staticNode := tree.NewServiceNode(fmt.Sprintf("%s.%s.%s", app, namespaceName, identityDomain), version)
-		staticNode.Metadata = map[string]interface{}{"rate": 0.0}
+		staticNode.Metadata = map[string]interface{}{"rate": -1.0}
 		nonTrafficList = append(nonTrafficList, staticNode)
 	}
 	return nonTrafficList

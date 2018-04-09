@@ -94,6 +94,7 @@
           "target": "n1",
           "text": "50.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "50.0000"
         }
       },
@@ -104,6 +105,7 @@
           "target": "n2",
           "text": "80.0ps 50.0%",
           "color": "red",
+          "style": "solid",
           "rate": "80.0000",
           "rate3XX": "20.0000",
           "rate4XX": "20.0000",
@@ -117,6 +119,7 @@
           "target": "n3",
           "text": "20.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "20.0000"
         }
       },
@@ -127,6 +130,7 @@
           "target": "n4",
           "text": "20.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "20.0000"
         }
       },
@@ -137,6 +141,7 @@
           "target": "n6",
           "text": "20.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "20.0000"
         }
       },
@@ -147,6 +152,7 @@
           "target": "n5",
           "text": "20.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "20.0000"
         }
       },
@@ -157,6 +163,7 @@
           "target": "n5",
           "text": "20.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "20.0000"
         }
       },
@@ -167,6 +174,7 @@
           "target": "n1",
           "text": "100.0ps",
           "color": "green",
+          "style": "solid",
           "rate": "100.0000"
         }
       }

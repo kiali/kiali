@@ -88,7 +88,7 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 		deployments, err := istioClient.GetDeployments(o.Namespace)
 		checkError(err)
 
-		addNonTrafficNodes(&trees, o.Namespace, deployments)
+		addUnusedNodes(&trees, o.Namespace, deployments)
 	}
 
 	generateGraph(&trees, w, o)
