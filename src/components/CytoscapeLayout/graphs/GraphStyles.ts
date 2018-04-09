@@ -54,6 +54,7 @@ export class GraphStyles {
           content: 'data(text)',
           'target-arrow-shape': 'vee',
           'line-color': 'data(color)',
+          'line-style': 'data(style)',
           'target-arrow-color': '#030303', // pf-black
           'curve-style': 'bezier'
         }
