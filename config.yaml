@@ -17,6 +17,10 @@ server:
 
 prometheus_service_url: http://prometheus-istio-system.127.0.0.1.nip.io
 
+# Uncomment in_cluster to set a different value.
+# Default is true (which matches Kiali default configuration to run inside a pod running on kubernetes)
+# in_cluster: true
+
 # Uncomment istio_identity_domain to set a different value. This value must match the Istio configuration.
 # Default is "svc.cluster.local" (which matches Istio's default)
 # istio_identity_domain: svc.cluster.local

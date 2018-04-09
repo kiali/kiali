@@ -20,6 +20,7 @@ const (
 	EnvIdentityPrivateKeyFile = "IDENTITY_PRIVATE_KEY_FILE"
 
 	EnvPrometheusServiceURL   = "PROMETHEUS_SERVICE_URL"
+	EnvInCluster              = "IN_CLUSTER"
 	EnvIstioIdentityDomain    = "ISTIO_IDENTITY_DOMAIN"
 	EnvIstioSidecarAnnotation = "ISTIO_SIDECAR_ANNOTATION"
 
@@ -80,6 +81,7 @@ type Config struct {
 	Identity               security.Identity `yaml:",omitempty"`
 	Server                 Server            `yaml:",omitempty"`
 	PrometheusServiceURL   string            `yaml:"prometheus_service_url,omitempty"`
+	InCluster              bool              `yaml:"in_cluster,omitempty"`
 	IstioIdentityDomain    string            `yaml:"istio_identity_domain,omitempty"`
 	IstioSidecarAnnotation string            `yaml:"istio_sidecar_annotation,omitempty"`
 	Grafana                GrafanaConfig     `yaml:"grafana,omitempty"`
@@ -103,6 +105,8 @@ func NewConfig() (c *Config) {
 	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/static-files"))
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
 	c.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus:9090"))
+
+	c.InCluster = getDefaultBool(EnvInCluster, true)
 	c.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
 	c.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
 

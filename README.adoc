@@ -282,6 +282,14 @@ server:
 prometheus_service_url: VALUE
 ----
 
+|`IN_CLUSTER`
+|The annotation used by Istio in a Deployment template.If in_cluster: false you need to set environments: `KUBERNETES_SERVICE_HOST`, `KUBERNETES_SERVICE_PORT` (Local development mode : oc proxy --port KUBERNETES_SERVICE_PORT )
+|Default: true
+[source,yaml]
+----
+in_cluster: (true\|false)
+----
+
 |`ISTIO_SIDECAR_ANNOTATION`
 |The annotation used by Istio in a Deployment template.
 [source,yaml]
