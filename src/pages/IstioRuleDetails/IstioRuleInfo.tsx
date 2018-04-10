@@ -46,13 +46,9 @@ class IstioRuleInfo extends React.Component<RuleId, RuleInfoState> {
         });
       })
       .catch(error => {
-        let errorMessage = 'Could not fetch IstioRule details.';
-        if (error['response']['data'] && error['response']['data']['error']) {
-          errorMessage = errorMessage + ' Error: [ ' + error['response']['data']['error'] + ' ]';
-        }
         this.setState({
           error: true,
-          errorMessage: errorMessage
+          errorMessage: API.GetErrorMsg('Could not fetch IstioRule details.', error)
         });
       });
   }

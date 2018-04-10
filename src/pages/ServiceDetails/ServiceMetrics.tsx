@@ -105,11 +105,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         });
       })
       .catch(error => {
-        let errorMessage = 'Cannot fetch metrics.';
-        if (error['response']['data'] && error['response']['data']['error']) {
-          errorMessage = errorMessage + ' Error: [ ' + error['response']['data']['error'] + ' ]';
-        }
-        this.setState({ loading: false, alertDetails: errorMessage });
+        this.setState({ loading: false, alertDetails: API.GetErrorMsg('Cannot fetch metrics.', error) });
         console.error(error);
       });
   };
@@ -154,14 +150,10 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         }
       })
       .catch(error => {
-        let errorMessage = 'Cannot retrieve Grafana info. ';
-        if (error['response']['data'] && error['response']['data']['error']) {
-          errorMessage = errorMessage + ' Error: [ ' + error['response']['data']['error'] + ' ]';
-        }
         this.setState({
           grafanaLinkIn: undefined,
           grafanaLinkOut: undefined,
-          alertDetails: errorMessage
+          alertDetails: API.GetErrorMsg('Cannot retrieve Grafana info.', error)
         });
         console.error(error);
       });

@@ -30,13 +30,9 @@ class ServiceJaegerPage extends React.Component<{}, ServiceJaegerState> {
         });
       })
       .catch(error => {
-        let errorMessage = 'Could not fetch Jaeger info.';
-        if (error['response']['data'] && error['response']['data']['error']) {
-          errorMessage = errorMessage + ' Error: [ ' + error['response']['data']['error'] + ' ]';
-        }
         this.setState({
           error: true,
-          errorMsg: errorMessage
+          errorMsg: API.GetErrorMsg('Could not fetch Jaeger info.', error)
         });
         console.log(error);
       });
