@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { VerticalNav } from 'patternfly-react';
 import PropTypes from 'prop-types';
-import { Route, Switch, Redirect } from 'react-router-dom';
+import { Route, Redirect } from 'react-router-dom';
+
+import SwitchErrorBoundary from '../SwitchErrorBoundary/SwitchErrorBoundary';
 
 import IstioRulesPage from '../../pages/IstioRulesList/IstioRuleListPage';
 import IstioRuleDetailsPage from '../../pages/IstioRuleDetails/IstioRuleDetailsPage';
@@ -105,7 +107,13 @@ class Navigation extends React.Component<PropsType, StateType> {
           <VerticalNav.Item title={istioRulesTitle} iconClass="fa pficon-migration" onClick={this.navigateTo} />
           <VerticalNav.Item title={servicesJaeger} iconClass="fa fa-paw" onClick={this.navigateTo} />
         </VerticalNav>
-        <Switch>
+        <SwitchErrorBoundary
+          fallBackComponent={() => (
+            <div className="container-fluid container-pf-nav-pf-vertical">
+              <h2>Something wrong happened, try refreshing or navigate to other section</h2>
+            </div>
+          )}
+        >
           <Route path="/service-graph/:namespace" component={ServiceGraphPage} />
           <Route path={servicesPath} component={ServiceListPage} />
           <Route path={servicesJaegerPath} component={ServiceJaegerPage} />
@@ -113,7 +121,7 @@ class Navigation extends React.Component<PropsType, StateType> {
           <Route path={istioRulesPath} component={IstioRulesPage} />
           <Route path="/namespaces/:namespace/rules/:rule" component={IstioRuleDetailsPage} />
           <Redirect to={serviceGraphPath} />
-        </Switch>
+        </SwitchErrorBoundary>
       </>
     );
   }
