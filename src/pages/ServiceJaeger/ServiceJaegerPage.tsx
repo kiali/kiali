@@ -32,7 +32,7 @@ class ServiceJaegerPage extends React.Component<{}, ServiceJaegerState> {
       .catch(error => {
         this.setState({
           error: true,
-          errorMsg: 'Could not connect to server'
+          errorMsg: API.GetErrorMsg('Could not fetch Jaeger info.', error)
         });
         console.log(error);
       });

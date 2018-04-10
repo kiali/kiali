@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { config } from '../config';
 import Namespace from '../types/Namespace';
 import MetricsOptions from '../types/MetricsOptions';
@@ -76,4 +76,12 @@ export const GetServiceDetail = (namespace: String, service: String) => {
 
 export const GetIstioRuleDetail = (namespace: String, rule: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/rules/${rule}`, {}, {});
+};
+
+export const GetErrorMsg = (msg: string, error: AxiosError) => {
+  let errorMessage = msg;
+  if (error && error.response && error.response.data && error.response.data['error']) {
+    errorMessage = `${msg} Error: [ ${error.response.data['error']} ]`;
+  }
+  return errorMessage;
 };

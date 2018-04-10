@@ -147,7 +147,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
         })
         .catch(namespacesError => {
           console.error(JSON.stringify(namespacesError));
-          this.handleError('Error fetching namespace list.');
+          this.handleError(API.GetErrorMsg('Could not fetch namespace list.', namespacesError));
         });
     } else {
       this.fetchRules(namespacesSelected, rulenameFilters);
@@ -185,7 +185,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
       })
       .catch(servicesError => {
         console.error(JSON.stringify(servicesError));
-        this.handleError(' Error fetching service list.');
+        this.handleError(API.GetErrorMsg('Could not fetch rule list.', servicesError));
       });
   }
 

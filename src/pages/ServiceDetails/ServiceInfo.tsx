@@ -75,7 +75,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
       .catch(error => {
         this.setState({
           error: true,
-          errorMessage: 'Could not connect to server'
+          errorMessage: API.GetErrorMsg('Could not fetch Service Details.', error)
         });
         console.log(error);
       });
@@ -106,7 +106,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
         this.setState({
           health: undefined,
           error: true,
-          errorMessage: 'Could not fetch service health'
+          errorMessage: API.GetErrorMsg('Could not fetch service health.', error)
         });
         console.error(error);
       });

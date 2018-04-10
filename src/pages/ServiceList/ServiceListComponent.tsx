@@ -157,7 +157,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         })
         .catch(namespacesError => {
           console.error(JSON.stringify(namespacesError));
-          this.handleError('Error fetching namespace list.');
+          this.handleError(API.GetErrorMsg('Could not fetch namespace list.', namespacesError));
         });
     } else {
       this.fetchServices(namespacesSelected, servicenameFilters);
@@ -204,7 +204,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       })
       .catch(servicesError => {
         console.error(JSON.stringify(servicesError));
-        this.handleError(' Error fetching service list.');
+        this.handleError(API.GetErrorMsg('Could not fetch service list.', servicesError));
       });
   }
 
