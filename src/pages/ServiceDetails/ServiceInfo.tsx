@@ -73,9 +73,13 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
         });
       })
       .catch(error => {
+        let errorMessage = 'Could not fetch Service Details.';
+        if (error['response']['data'] && error['response']['data']['error']) {
+          errorMessage = errorMessage + ' Error: [ ' + error['response']['data']['error'] + ' ]';
+        }
         this.setState({
           error: true,
-          errorMessage: 'Could not connect to server'
+          errorMessage: errorMessage
         });
         console.log(error);
       });
@@ -103,10 +107,14 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
         });
       })
       .catch(error => {
+        let errorMessage = 'Could not fetch service health.';
+        if (error['response']['data'] && error['response']['data']['error']) {
+          errorMessage = errorMessage + ' Error: [ ' + error['response']['data']['error'] + ' ]';
+        }
         this.setState({
           health: undefined,
           error: true,
-          errorMessage: 'Could not fetch service health'
+          errorMessage: errorMessage
         });
         console.error(error);
       });

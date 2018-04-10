@@ -47,9 +47,13 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         });
       })
       .catch(error => {
+        let errorMessage = 'Cannot fetch Jaeger info.';
+        if (error['response']['data'] && error['response']['data']['error']) {
+          errorMessage = errorMessage + ' Error: [ ' + error['response']['data']['error'] + ' ]';
+        }
         this.setState({
           error: true,
-          errorMessage: 'Could not connect to server'
+          errorMessage: errorMessage
         });
         console.log(error);
       });

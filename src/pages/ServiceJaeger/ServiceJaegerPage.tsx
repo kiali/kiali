@@ -30,9 +30,13 @@ class ServiceJaegerPage extends React.Component<{}, ServiceJaegerState> {
         });
       })
       .catch(error => {
+        let errorMessage = 'Could not fetch Jaeger info.';
+        if (error['response']['data'] && error['response']['data']['error']) {
+          errorMessage = errorMessage + ' Error: [ ' + error['response']['data']['error'] + ' ]';
+        }
         this.setState({
           error: true,
-          errorMsg: 'Could not connect to server'
+          errorMsg: errorMessage
         });
         console.log(error);
       });
