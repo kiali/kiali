@@ -40,6 +40,14 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) erro
 		}
 		q.RateFunc = rateFuncs[0]
 	}
+	if queryTimes, ok := queryParams["queryTime"]; ok && len(queryTimes) > 0 {
+		if num, err := strconv.ParseInt(queryTimes[0], 10, 64); err == nil {
+			q.QueryTime = time.Unix(num, 0)
+		} else {
+			// Bad request
+			return errors.New("Bad request, cannot parse query parameter 'queryTime'")
+		}
+	}
 	if durations, ok := queryParams["duration"]; ok && len(durations) > 0 {
 		if num, err := strconv.Atoi(durations[0]); err == nil {
 			q.Duration = time.Duration(num) * time.Second

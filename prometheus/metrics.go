@@ -22,6 +22,7 @@ var (
 // MetricsQuery is a common struct for ServiceMetricsQuery and NamespaceMetricsQuery
 type MetricsQuery struct {
 	Version      string
+	QueryTime    time.Time
 	Duration     time.Duration
 	Step         time.Duration
 	RateInterval string
@@ -33,6 +34,7 @@ type MetricsQuery struct {
 
 // FillDefaults fills the struct with default parameters
 func (q *MetricsQuery) FillDefaults() {
+	q.QueryTime = time.Now()
 	q.Duration = 30 * time.Minute
 	q.Step = 15 * time.Second
 	q.RateInterval = "1m"
@@ -174,10 +176,9 @@ func joinLabels(labels []string) string {
 }
 
 func fetchAllMetrics(api v1.API, q *MetricsQuery, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut string) Metrics {
-	now := time.Now()
 	bounds := v1.Range{
-		Start: now.Add(-q.Duration),
-		End:   now,
+		Start: q.QueryTime.Add(-q.Duration),
+		End:   q.QueryTime,
 		Step:  q.Step}
 
 	var wg sync.WaitGroup
