@@ -1,6 +1,7 @@
 interface MetricsOptions {
   rateInterval?: string;
   rateFunc?: string;
+  queryTime?: string;
   duration?: number;
   step?: number;
   version?: string;

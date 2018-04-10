@@ -41,26 +41,36 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
       dataErrors = (this.props.dataErrors as [string, number][])[1];
     }
 
-    let len: number = dataRps.length;
-    let sum = 0;
-    for (let i = 1; i < len; ++i) {
-      sum += +dataRps[i];
+    let len = dataRps.length;
+    let minRps: number = len > 1 ? +dataRps[1] : 0;
+    let maxRps: number = len > 1 ? +dataRps[1] : 0;
+    let sumRps: number = 0;
+    for (let i = 2; i < len; ++i) {
+      let sample: number = +dataRps[i];
+      minRps = sample < minRps ? sample : minRps;
+      maxRps = sample > maxRps ? sample : maxRps;
+      sumRps += +sample;
     }
-    const avgRps = len === 0 ? 0 : sum / len;
+    const avgRps = len === 0 ? 0 : sumRps / (len - 1);
 
     len = dataErrors.length;
-    sum = 0;
-    for (let i = 1; i < len; ++i) {
-      sum += +dataErrors[i];
+    let minErr: number = len > 1 ? +dataErrors[1] : 0;
+    let maxErr: number = len > 1 ? +dataErrors[1] : 0;
+    for (let i = 2; i < len; ++i) {
+      let sample: number = +dataErrors[i];
+      minErr = sample < minErr ? sample : minErr;
+      maxErr = sample > maxErr ? sample : maxErr;
     }
-    const avgErr = len === 0 ? 0 : sum / len;
-    const pctErr = avgRps === 0 ? 0 : avgErr / avgRps * 100;
+    const pctMinErr = avgRps === 0 ? 0 : minErr / avgRps * 100;
+    const pctMaxErr = avgRps === 0 ? 0 : maxErr / avgRps * 100;
 
     return (
       <>
         <div>
-          <strong>{this.props.label}: </strong>
-          {avgRps.toFixed(2)} rps / {pctErr.toFixed(2)}% Err
+          <strong>{this.props.label} min / max:</strong>
+        </div>
+        <div>
+          RPS: {minRps.toFixed(2)} / {maxRps.toFixed(2)} , %Error {pctMinErr.toFixed(2)} / {pctMaxErr.toFixed(2)}
         </div>
         {this.props.dataRps.length > 0 && (
           <AreaChart

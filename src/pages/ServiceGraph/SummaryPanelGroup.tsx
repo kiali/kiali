@@ -137,6 +137,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const namespace = props.data.summaryTarget.data('service').split('.')[1];
     const service = props.data.summaryTarget.data('service').split('.')[0];
     const options: MetricsOptions = {
+      queryTime: props.queryTime,
       duration: +props.duration,
       step: props.step,
       rateInterval: props.rateInterval,
@@ -189,8 +190,16 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     }
     return (
       <>
-        <RpsChart label="Incoming" dataRps={this.state.requestCountIn} dataErrors={this.state.errorCountIn} />
-        <RpsChart label="Outgoing" dataRps={this.state.requestCountOut} dataErrors={this.state.errorCountOut} />
+        <RpsChart
+          label="Incoming Request Traffic"
+          dataRps={this.state.requestCountIn}
+          dataErrors={this.state.errorCountIn}
+        />
+        <RpsChart
+          label="Outgoing Request Traffic"
+          dataRps={this.state.requestCountOut}
+          dataErrors={this.state.errorCountOut}
+        />
       </>
     );
   };

@@ -4,6 +4,7 @@ import Namespace from './Namespace';
 export interface SummaryPanelPropType {
   data: any;
   namespace: string;
+  queryTime: string;
   duration: string;
   step: number;
   rateInterval: string;

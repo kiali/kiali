@@ -25,7 +25,7 @@ type ServiceGraphPageState = {
   alertVisible: boolean;
   alertDetails: string;
   summaryData: any;
-  updateTime: string;
+  graphTimestamp: string;
   graphData: any;
   isLoading: boolean;
   params: GraphParamsType;
@@ -55,7 +55,7 @@ export default class ServiceGraphPage extends React.Component<
       alertVisible: false,
       alertDetails: '',
       summaryData: { summaryType: 'graph' },
-      updateTime: new Date().toLocaleString(),
+      graphTimestamp: new Date().toLocaleString(),
       graphData: EMPTY_GRAPH_DATA,
       params: {
         namespace: { name: routeProps.match.params.namespace },
@@ -113,7 +113,7 @@ export default class ServiceGraphPage extends React.Component<
 
   handleGraphClick = (data: any) => {
     if (data !== undefined) {
-      this.setState({ summaryData: data, updateTime: new Date().toLocaleString() });
+      this.setState({ summaryData: data });
     }
   };
 
@@ -146,6 +146,7 @@ export default class ServiceGraphPage extends React.Component<
           <SummaryPanel
             data={this.state.summaryData}
             namespace={this.state.params.namespace.name}
+            queryTime={this.state.graphTimestamp}
             duration={this.state.params.graphDuration.value}
             {...QueryOptions.getOption(this.state.params.graphDuration.value)}
           />
@@ -197,11 +198,13 @@ export default class ServiceGraphPage extends React.Component<
       .then(response => {
         const responseData = response['data'];
         const elements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
-        this.setState({ graphData: elements, isLoading: false });
+        const timestamp = responseData && responseData.timestamp ? responseData.timestamp : '';
+        this.setState({ graphData: elements, graphTimestamp: timestamp, isLoading: false });
       })
       .catch(error => {
         this.setState({
           graphData: EMPTY_GRAPH_DATA,
+          graphTimestamp: new Date().toLocaleString(),
           isLoading: false
         });
         console.error(error);
