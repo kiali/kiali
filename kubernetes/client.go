@@ -1,11 +1,15 @@
 package kubernetes
 
 import (
+	"fmt"
+	kialiConfig "github.com/kiali/kiali/config"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"net"
+	"os"
 )
 
 const (
@@ -29,6 +33,25 @@ type IstioClient struct {
 	istio *rest.RESTClient
 }
 
+// ConfigClient return a client with the correct configuration
+// Returns configuration if Kiali is in Cluster when InCluster is true
+// Returns configuration if Kiali is not int Cluster when InCluster is false
+// It returns an error on any problem
+func ConfigClient() (*rest.Config, error) {
+	if kialiConfig.Get().InCluster {
+		return rest.InClusterConfig()
+	}
+	host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
+	if len(host) == 0 || len(port) == 0 {
+		return nil, fmt.Errorf("unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined")
+	}
+
+	return &rest.Config{
+		// TODO: switch to using cluster DNS.
+		Host: "http://" + net.JoinHostPort(host, port),
+	}, nil
+}
+
 // NewClient creates a new client to the Kubernetes and Istio APIs.
 // It takes the assumption that Istio is deployed into the cluster.
 // It hides the access to Kubernetes/Openshift credentials.
@@ -36,7 +59,8 @@ type IstioClient struct {
 // It returns an error on any problem.
 func NewClient() (*IstioClient, error) {
 	client := IstioClient{}
-	config, err := rest.InClusterConfig()
+	config, err := ConfigClient()
+
 	if err != nil {
 		return nil, err
 	}
