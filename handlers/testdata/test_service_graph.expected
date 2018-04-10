@@ -63,7 +63,7 @@
           "id": "e0",
           "source": "n0",
           "target": "n1",
-          "text": "20.0ps",
+          "text": "20.00",
           "color": "green",
           "style": "solid",
           "rate": "20.0000"
@@ -74,7 +74,7 @@
           "id": "e1",
           "source": "n0",
           "target": "n2",
-          "text": "20.0ps",
+          "text": "20.00",
           "color": "green",
           "style": "solid",
           "rate": "20.0000"
@@ -85,7 +85,7 @@
           "id": "e3",
           "source": "n0",
           "target": "n4",
-          "text": "20.0ps",
+          "text": "20.00",
           "color": "green",
           "style": "solid",
           "rate": "20.0000"
@@ -96,7 +96,7 @@
           "id": "e2",
           "source": "n2",
           "target": "n3",
-          "text": "20.0ps",
+          "text": "20.00",
           "color": "green",
           "style": "solid",
           "rate": "20.0000"
@@ -107,7 +107,7 @@
           "id": "e4",
           "source": "n4",
           "target": "n3",
-          "text": "20.0ps",
+          "text": "20.00",
           "color": "green",
           "style": "solid",
           "rate": "20.0000"
