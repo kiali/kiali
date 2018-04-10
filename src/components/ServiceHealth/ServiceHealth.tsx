@@ -17,7 +17,7 @@ interface Status {
   name: string;
   color: string;
   priority: number;
-  jsx: (size?: string) => JSX.Element;
+  jsx: (size: number, title: string) => JSX.Element;
 }
 
 // Colors from Patternfly status palette https://www.patternfly.org/styles/color-palette/
@@ -25,25 +25,27 @@ const FAILURE: Status = {
   name: 'Failure',
   color: '#cc0000',
   priority: 3,
-  jsx: size => <Icon type="pf" name="error-circle-o" style={{ fontSize: size }} />
+  jsx: (size, title) => <Icon type="pf" name="error-circle-o" style={{ fontSize: String(size) + 'px' }} title={title} />
 };
 const DEGRADED: Status = {
   name: 'Degraded',
   color: '#ec7a08',
   priority: 2,
-  jsx: size => <Icon type="pf" name="warning-triangle-o" style={{ fontSize: size }} />
+  jsx: (size, title) => (
+    <Icon type="pf" name="warning-triangle-o" style={{ fontSize: String(size) + 'px' }} title={title} />
+  )
 };
 const HEALTHY: Status = {
   name: 'Healthy',
   color: '#3f9c35',
   priority: 1,
-  jsx: size => <Icon type="pf" name="ok" style={{ fontSize: size }} />
+  jsx: (size, title) => <Icon type="pf" name="ok" style={{ fontSize: String(size) + 'px' }} title={title} />
 };
 const NA: Status = {
   name: 'No health information',
   color: '#707070',
   priority: 0,
-  jsx: size => <span style={{ color: '#707070', fontSize: size ? '24px' : undefined }}>N/A</span>
+  jsx: (size, title) => <span style={{ color: '#707070', fontSize: String(Math.floor(size * 2 / 3)) + 'px' }}>N/A</span>
 };
 
 export class ServiceHealth extends React.Component<Props, {}> {
@@ -114,20 +116,20 @@ export class ServiceHealth extends React.Component<Props, {}> {
   }
 
   renderSmall(health: H.Health) {
-    const tooltip = this.info.length === 1 ? this.info[0] : this.info.map(str => '- ' + str).join('&#13;');
-    return (
-      <span>
-        {this.globalStatus.jsx()}&nbsp;
-        {tooltip && <Icon type="pf" name="info" title={tooltip} />}
-      </span>
-    );
+    let tooltip = this.globalStatus.name;
+    if (this.info.length === 1) {
+      tooltip += '\n' + this.info[0];
+    } else if (this.info.length > 1) {
+      tooltip += '\n' + this.info.map(str => '- ' + str).join('\n');
+    }
+    return <span>{this.globalStatus.jsx(18, tooltip)}&nbsp;</span>;
   }
 
   renderLarge(health: H.Health) {
     return (
-      <div>
-        {this.globalStatus.jsx('35px')}
-        <div style={{ color: this.globalStatus.color }}>{this.globalStatus.name}</div>
+      <div style={{ color: this.globalStatus.color }}>
+        {this.globalStatus.jsx(35, this.globalStatus.name)}
+        <br />
         {this.info.length === 1 && this.info[0]}
         {this.info.length > 1 && (
           <ul style={{ padding: 0 }}>{this.info.map((line, idx) => <li key={idx}>{line}</li>)}</ul>

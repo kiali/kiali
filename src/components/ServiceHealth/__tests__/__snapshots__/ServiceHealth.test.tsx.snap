@@ -42,17 +42,14 @@ ShallowWrapper {
           name="error-circle-o"
           style={
             Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             }
           }
+          title="Failure
+No active deployment!"
           type="pf"
         />,
         " ",
-        <Icon
-          name="info"
-          title="No active deployment!"
-          type="pf"
-        />,
       ],
     },
     "ref": null,
@@ -64,8 +61,10 @@ ShallowWrapper {
         "props": Object {
           "name": "error-circle-o",
           "style": Object {
-            "fontSize": undefined,
+            "fontSize": "18px",
           },
+          "title": "Failure
+No active deployment!",
           "type": "pf",
         },
         "ref": null,
@@ -73,19 +72,6 @@ ShallowWrapper {
         "type": [Function],
       },
       " ",
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "name": "info",
-          "title": "No active deployment!",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
     ],
     "type": "span",
   },
@@ -100,17 +86,14 @@ ShallowWrapper {
             name="error-circle-o"
             style={
               Object {
-                "fontSize": undefined,
+                "fontSize": "18px",
               }
             }
+            title="Failure
+No active deployment!"
             type="pf"
           />,
           " ",
-          <Icon
-            name="info"
-            title="No active deployment!"
-            type="pf"
-          />,
         ],
       },
       "ref": null,
@@ -122,8 +105,10 @@ ShallowWrapper {
           "props": Object {
             "name": "error-circle-o",
             "style": Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             },
+            "title": "Failure
+No active deployment!",
             "type": "pf",
           },
           "ref": null,
@@ -131,19 +116,6 @@ ShallowWrapper {
           "type": [Function],
         },
         " ",
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "name": "info",
-            "title": "No active deployment!",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
       ],
       "type": "span",
     },
@@ -203,20 +175,16 @@ ShallowWrapper {
               "fontSize": "35px",
             }
           }
+          title="Failure"
           type="pf"
         />,
-        <div
-          style={
-            Object {
-              "color": "#cc0000",
-            }
-          }
-        >
-          Failure
-        </div>,
+        <br />,
         "No active deployment!",
         false,
       ],
+      "style": Object {
+        "color": "#cc0000",
+      },
     },
     "ref": null,
     "rendered": Array [
@@ -229,6 +197,7 @@ ShallowWrapper {
           "style": Object {
             "fontSize": "35px",
           },
+          "title": "Failure",
           "type": "pf",
         },
         "ref": null,
@@ -239,15 +208,10 @@ ShallowWrapper {
         "instance": null,
         "key": undefined,
         "nodeType": "host",
-        "props": Object {
-          "children": "Failure",
-          "style": Object {
-            "color": "#cc0000",
-          },
-        },
+        "props": Object {},
         "ref": null,
-        "rendered": "Failure",
-        "type": "div",
+        "rendered": null,
+        "type": "br",
       },
       "No active deployment!",
       false,
@@ -268,20 +232,16 @@ ShallowWrapper {
                 "fontSize": "35px",
               }
             }
+            title="Failure"
             type="pf"
           />,
-          <div
-            style={
-              Object {
-                "color": "#cc0000",
-              }
-            }
-          >
-            Failure
-          </div>,
+          <br />,
           "No active deployment!",
           false,
         ],
+        "style": Object {
+          "color": "#cc0000",
+        },
       },
       "ref": null,
       "rendered": Array [
@@ -294,6 +254,7 @@ ShallowWrapper {
             "style": Object {
               "fontSize": "35px",
             },
+            "title": "Failure",
             "type": "pf",
           },
           "ref": null,
@@ -304,15 +265,10 @@ ShallowWrapper {
           "instance": null,
           "key": undefined,
           "nodeType": "host",
-          "props": Object {
-            "children": "Failure",
-            "style": Object {
-              "color": "#cc0000",
-            },
-          },
+          "props": Object {},
           "ref": null,
-          "rendered": "Failure",
-          "type": "div",
+          "rendered": null,
+          "type": "br",
         },
         "No active deployment!",
         false,
@@ -372,17 +328,16 @@ ShallowWrapper {
           name="warning-triangle-o"
           style={
             Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             }
           }
+          title="Degraded
+- Envoy health degraded
+- Pod deployment degraded
+- Pod deployment degraded"
           type="pf"
         />,
         " ",
-        <Icon
-          name="info"
-          title="- Envoy health degraded&#13;- Pod deployment degraded&#13;- Pod deployment degraded"
-          type="pf"
-        />,
       ],
     },
     "ref": null,
@@ -394,8 +349,12 @@ ShallowWrapper {
         "props": Object {
           "name": "warning-triangle-o",
           "style": Object {
-            "fontSize": undefined,
+            "fontSize": "18px",
           },
+          "title": "Degraded
+- Envoy health degraded
+- Pod deployment degraded
+- Pod deployment degraded",
           "type": "pf",
         },
         "ref": null,
@@ -403,19 +362,6 @@ ShallowWrapper {
         "type": [Function],
       },
       " ",
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "name": "info",
-          "title": "- Envoy health degraded&#13;- Pod deployment degraded&#13;- Pod deployment degraded",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
     ],
     "type": "span",
   },
@@ -430,17 +376,16 @@ ShallowWrapper {
             name="warning-triangle-o"
             style={
               Object {
-                "fontSize": undefined,
+                "fontSize": "18px",
               }
             }
+            title="Degraded
+- Envoy health degraded
+- Pod deployment degraded
+- Pod deployment degraded"
             type="pf"
           />,
           " ",
-          <Icon
-            name="info"
-            title="- Envoy health degraded&#13;- Pod deployment degraded&#13;- Pod deployment degraded"
-            type="pf"
-          />,
         ],
       },
       "ref": null,
@@ -452,8 +397,12 @@ ShallowWrapper {
           "props": Object {
             "name": "warning-triangle-o",
             "style": Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             },
+            "title": "Degraded
+- Envoy health degraded
+- Pod deployment degraded
+- Pod deployment degraded",
             "type": "pf",
           },
           "ref": null,
@@ -461,19 +410,6 @@ ShallowWrapper {
           "type": [Function],
         },
         " ",
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "name": "info",
-            "title": "- Envoy health degraded&#13;- Pod deployment degraded&#13;- Pod deployment degraded",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
       ],
       "type": "span",
     },
@@ -533,17 +469,10 @@ ShallowWrapper {
               "fontSize": "35px",
             }
           }
+          title="Degraded"
           type="pf"
         />,
-        <div
-          style={
-            Object {
-              "color": "#ec7a08",
-            }
-          }
-        >
-          Degraded
-        </div>,
+        <br />,
         false,
         <ul
           style={
@@ -563,6 +492,9 @@ ShallowWrapper {
           </li>
         </ul>,
       ],
+      "style": Object {
+        "color": "#ec7a08",
+      },
     },
     "ref": null,
     "rendered": Array [
@@ -575,6 +507,7 @@ ShallowWrapper {
           "style": Object {
             "fontSize": "35px",
           },
+          "title": "Degraded",
           "type": "pf",
         },
         "ref": null,
@@ -585,15 +518,10 @@ ShallowWrapper {
         "instance": null,
         "key": undefined,
         "nodeType": "host",
-        "props": Object {
-          "children": "Degraded",
-          "style": Object {
-            "color": "#ec7a08",
-          },
-        },
+        "props": Object {},
         "ref": null,
-        "rendered": "Degraded",
-        "type": "div",
+        "rendered": null,
+        "type": "br",
       },
       false,
       Object {
@@ -671,17 +599,10 @@ ShallowWrapper {
                 "fontSize": "35px",
               }
             }
+            title="Degraded"
             type="pf"
           />,
-          <div
-            style={
-              Object {
-                "color": "#ec7a08",
-              }
-            }
-          >
-            Degraded
-          </div>,
+          <br />,
           false,
           <ul
             style={
@@ -701,6 +622,9 @@ ShallowWrapper {
             </li>
           </ul>,
         ],
+        "style": Object {
+          "color": "#ec7a08",
+        },
       },
       "ref": null,
       "rendered": Array [
@@ -713,6 +637,7 @@ ShallowWrapper {
             "style": Object {
               "fontSize": "35px",
             },
+            "title": "Degraded",
             "type": "pf",
           },
           "ref": null,
@@ -723,15 +648,10 @@ ShallowWrapper {
           "instance": null,
           "key": undefined,
           "nodeType": "host",
-          "props": Object {
-            "children": "Degraded",
-            "style": Object {
-              "color": "#ec7a08",
-            },
-          },
+          "props": Object {},
           "ref": null,
-          "rendered": "Degraded",
-          "type": "div",
+          "rendered": null,
+          "type": "br",
         },
         false,
         Object {
@@ -848,17 +768,14 @@ ShallowWrapper {
           name="warning-triangle-o"
           style={
             Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             }
           }
+          title="Degraded
+Pod deployment degraded"
           type="pf"
         />,
         " ",
-        <Icon
-          name="info"
-          title="Pod deployment degraded"
-          type="pf"
-        />,
       ],
     },
     "ref": null,
@@ -870,8 +787,10 @@ ShallowWrapper {
         "props": Object {
           "name": "warning-triangle-o",
           "style": Object {
-            "fontSize": undefined,
+            "fontSize": "18px",
           },
+          "title": "Degraded
+Pod deployment degraded",
           "type": "pf",
         },
         "ref": null,
@@ -879,19 +798,6 @@ ShallowWrapper {
         "type": [Function],
       },
       " ",
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "name": "info",
-          "title": "Pod deployment degraded",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
     ],
     "type": "span",
   },
@@ -906,17 +812,14 @@ ShallowWrapper {
             name="warning-triangle-o"
             style={
               Object {
-                "fontSize": undefined,
+                "fontSize": "18px",
               }
             }
+            title="Degraded
+Pod deployment degraded"
             type="pf"
           />,
           " ",
-          <Icon
-            name="info"
-            title="Pod deployment degraded"
-            type="pf"
-          />,
         ],
       },
       "ref": null,
@@ -928,8 +831,10 @@ ShallowWrapper {
           "props": Object {
             "name": "warning-triangle-o",
             "style": Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             },
+            "title": "Degraded
+Pod deployment degraded",
             "type": "pf",
           },
           "ref": null,
@@ -937,19 +842,6 @@ ShallowWrapper {
           "type": [Function],
         },
         " ",
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "name": "info",
-            "title": "Pod deployment degraded",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
       ],
       "type": "span",
     },
@@ -1009,20 +901,16 @@ ShallowWrapper {
               "fontSize": "35px",
             }
           }
+          title="Degraded"
           type="pf"
         />,
-        <div
-          style={
-            Object {
-              "color": "#ec7a08",
-            }
-          }
-        >
-          Degraded
-        </div>,
+        <br />,
         "Pod deployment degraded",
         false,
       ],
+      "style": Object {
+        "color": "#ec7a08",
+      },
     },
     "ref": null,
     "rendered": Array [
@@ -1035,6 +923,7 @@ ShallowWrapper {
           "style": Object {
             "fontSize": "35px",
           },
+          "title": "Degraded",
           "type": "pf",
         },
         "ref": null,
@@ -1045,15 +934,10 @@ ShallowWrapper {
         "instance": null,
         "key": undefined,
         "nodeType": "host",
-        "props": Object {
-          "children": "Degraded",
-          "style": Object {
-            "color": "#ec7a08",
-          },
-        },
+        "props": Object {},
         "ref": null,
-        "rendered": "Degraded",
-        "type": "div",
+        "rendered": null,
+        "type": "br",
       },
       "Pod deployment degraded",
       false,
@@ -1074,20 +958,16 @@ ShallowWrapper {
                 "fontSize": "35px",
               }
             }
+            title="Degraded"
             type="pf"
           />,
-          <div
-            style={
-              Object {
-                "color": "#ec7a08",
-              }
-            }
-          >
-            Degraded
-          </div>,
+          <br />,
           "Pod deployment degraded",
           false,
         ],
+        "style": Object {
+          "color": "#ec7a08",
+        },
       },
       "ref": null,
       "rendered": Array [
@@ -1100,6 +980,7 @@ ShallowWrapper {
             "style": Object {
               "fontSize": "35px",
             },
+            "title": "Degraded",
             "type": "pf",
           },
           "ref": null,
@@ -1110,15 +991,10 @@ ShallowWrapper {
           "instance": null,
           "key": undefined,
           "nodeType": "host",
-          "props": Object {
-            "children": "Degraded",
-            "style": Object {
-              "color": "#ec7a08",
-            },
-          },
+          "props": Object {},
           "ref": null,
-          "rendered": "Degraded",
-          "type": "div",
+          "rendered": null,
+          "type": "br",
         },
         "Pod deployment degraded",
         false,
@@ -1178,17 +1054,15 @@ ShallowWrapper {
           name="error-circle-o"
           style={
             Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             }
           }
+          title="Failure
+- Envoy health degraded
+- Pod deployment failure"
           type="pf"
         />,
         " ",
-        <Icon
-          name="info"
-          title="- Envoy health degraded&#13;- Pod deployment failure"
-          type="pf"
-        />,
       ],
     },
     "ref": null,
@@ -1200,8 +1074,11 @@ ShallowWrapper {
         "props": Object {
           "name": "error-circle-o",
           "style": Object {
-            "fontSize": undefined,
+            "fontSize": "18px",
           },
+          "title": "Failure
+- Envoy health degraded
+- Pod deployment failure",
           "type": "pf",
         },
         "ref": null,
@@ -1209,19 +1086,6 @@ ShallowWrapper {
         "type": [Function],
       },
       " ",
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "name": "info",
-          "title": "- Envoy health degraded&#13;- Pod deployment failure",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
     ],
     "type": "span",
   },
@@ -1236,17 +1100,15 @@ ShallowWrapper {
             name="error-circle-o"
             style={
               Object {
-                "fontSize": undefined,
+                "fontSize": "18px",
               }
             }
+            title="Failure
+- Envoy health degraded
+- Pod deployment failure"
             type="pf"
           />,
           " ",
-          <Icon
-            name="info"
-            title="- Envoy health degraded&#13;- Pod deployment failure"
-            type="pf"
-          />,
         ],
       },
       "ref": null,
@@ -1258,8 +1120,11 @@ ShallowWrapper {
           "props": Object {
             "name": "error-circle-o",
             "style": Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             },
+            "title": "Failure
+- Envoy health degraded
+- Pod deployment failure",
             "type": "pf",
           },
           "ref": null,
@@ -1267,19 +1132,6 @@ ShallowWrapper {
           "type": [Function],
         },
         " ",
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "name": "info",
-            "title": "- Envoy health degraded&#13;- Pod deployment failure",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
       ],
       "type": "span",
     },
@@ -1339,17 +1191,10 @@ ShallowWrapper {
               "fontSize": "35px",
             }
           }
+          title="Failure"
           type="pf"
         />,
-        <div
-          style={
-            Object {
-              "color": "#cc0000",
-            }
-          }
-        >
-          Failure
-        </div>,
+        <br />,
         false,
         <ul
           style={
@@ -1366,6 +1211,9 @@ ShallowWrapper {
           </li>
         </ul>,
       ],
+      "style": Object {
+        "color": "#cc0000",
+      },
     },
     "ref": null,
     "rendered": Array [
@@ -1378,6 +1226,7 @@ ShallowWrapper {
           "style": Object {
             "fontSize": "35px",
           },
+          "title": "Failure",
           "type": "pf",
         },
         "ref": null,
@@ -1388,15 +1237,10 @@ ShallowWrapper {
         "instance": null,
         "key": undefined,
         "nodeType": "host",
-        "props": Object {
-          "children": "Failure",
-          "style": Object {
-            "color": "#cc0000",
-          },
-        },
+        "props": Object {},
         "ref": null,
-        "rendered": "Failure",
-        "type": "div",
+        "rendered": null,
+        "type": "br",
       },
       false,
       Object {
@@ -1460,17 +1304,10 @@ ShallowWrapper {
                 "fontSize": "35px",
               }
             }
+            title="Failure"
             type="pf"
           />,
-          <div
-            style={
-              Object {
-                "color": "#cc0000",
-              }
-            }
-          >
-            Failure
-          </div>,
+          <br />,
           false,
           <ul
             style={
@@ -1487,6 +1324,9 @@ ShallowWrapper {
             </li>
           </ul>,
         ],
+        "style": Object {
+          "color": "#cc0000",
+        },
       },
       "ref": null,
       "rendered": Array [
@@ -1499,6 +1339,7 @@ ShallowWrapper {
             "style": Object {
               "fontSize": "35px",
             },
+            "title": "Failure",
             "type": "pf",
           },
           "ref": null,
@@ -1509,15 +1350,10 @@ ShallowWrapper {
           "instance": null,
           "key": undefined,
           "nodeType": "host",
-          "props": Object {
-            "children": "Failure",
-            "style": Object {
-              "color": "#cc0000",
-            },
-          },
+          "props": Object {},
           "ref": null,
-          "rendered": "Failure",
-          "type": "div",
+          "rendered": null,
+          "type": "br",
         },
         false,
         Object {
@@ -1620,17 +1456,14 @@ ShallowWrapper {
           name="warning-triangle-o"
           style={
             Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             }
           }
+          title="Degraded
+Envoy health degraded"
           type="pf"
         />,
         " ",
-        <Icon
-          name="info"
-          title="Envoy health degraded"
-          type="pf"
-        />,
       ],
     },
     "ref": null,
@@ -1642,8 +1475,10 @@ ShallowWrapper {
         "props": Object {
           "name": "warning-triangle-o",
           "style": Object {
-            "fontSize": undefined,
+            "fontSize": "18px",
           },
+          "title": "Degraded
+Envoy health degraded",
           "type": "pf",
         },
         "ref": null,
@@ -1651,19 +1486,6 @@ ShallowWrapper {
         "type": [Function],
       },
       " ",
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "name": "info",
-          "title": "Envoy health degraded",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
     ],
     "type": "span",
   },
@@ -1678,17 +1500,14 @@ ShallowWrapper {
             name="warning-triangle-o"
             style={
               Object {
-                "fontSize": undefined,
+                "fontSize": "18px",
               }
             }
+            title="Degraded
+Envoy health degraded"
             type="pf"
           />,
           " ",
-          <Icon
-            name="info"
-            title="Envoy health degraded"
-            type="pf"
-          />,
         ],
       },
       "ref": null,
@@ -1700,8 +1519,10 @@ ShallowWrapper {
           "props": Object {
             "name": "warning-triangle-o",
             "style": Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             },
+            "title": "Degraded
+Envoy health degraded",
             "type": "pf",
           },
           "ref": null,
@@ -1709,19 +1530,6 @@ ShallowWrapper {
           "type": [Function],
         },
         " ",
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "name": "info",
-            "title": "Envoy health degraded",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
       ],
       "type": "span",
     },
@@ -1781,20 +1589,16 @@ ShallowWrapper {
               "fontSize": "35px",
             }
           }
+          title="Degraded"
           type="pf"
         />,
-        <div
-          style={
-            Object {
-              "color": "#ec7a08",
-            }
-          }
-        >
-          Degraded
-        </div>,
+        <br />,
         "Envoy health degraded",
         false,
       ],
+      "style": Object {
+        "color": "#ec7a08",
+      },
     },
     "ref": null,
     "rendered": Array [
@@ -1807,6 +1611,7 @@ ShallowWrapper {
           "style": Object {
             "fontSize": "35px",
           },
+          "title": "Degraded",
           "type": "pf",
         },
         "ref": null,
@@ -1817,15 +1622,10 @@ ShallowWrapper {
         "instance": null,
         "key": undefined,
         "nodeType": "host",
-        "props": Object {
-          "children": "Degraded",
-          "style": Object {
-            "color": "#ec7a08",
-          },
-        },
+        "props": Object {},
         "ref": null,
-        "rendered": "Degraded",
-        "type": "div",
+        "rendered": null,
+        "type": "br",
       },
       "Envoy health degraded",
       false,
@@ -1846,20 +1646,16 @@ ShallowWrapper {
                 "fontSize": "35px",
               }
             }
+            title="Degraded"
             type="pf"
           />,
-          <div
-            style={
-              Object {
-                "color": "#ec7a08",
-              }
-            }
-          >
-            Degraded
-          </div>,
+          <br />,
           "Envoy health degraded",
           false,
         ],
+        "style": Object {
+          "color": "#ec7a08",
+        },
       },
       "ref": null,
       "rendered": Array [
@@ -1872,6 +1668,7 @@ ShallowWrapper {
             "style": Object {
               "fontSize": "35px",
             },
+            "title": "Degraded",
             "type": "pf",
           },
           "ref": null,
@@ -1882,15 +1679,10 @@ ShallowWrapper {
           "instance": null,
           "key": undefined,
           "nodeType": "host",
-          "props": Object {
-            "children": "Degraded",
-            "style": Object {
-              "color": "#ec7a08",
-            },
-          },
+          "props": Object {},
           "ref": null,
-          "rendered": "Degraded",
-          "type": "div",
+          "rendered": null,
+          "type": "br",
         },
         "Envoy health degraded",
         false,
@@ -1950,17 +1742,15 @@ ShallowWrapper {
           name="error-circle-o"
           style={
             Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             }
           }
+          title="Failure
+- Envoy health failure
+- Pod deployment degraded"
           type="pf"
         />,
         " ",
-        <Icon
-          name="info"
-          title="- Envoy health failure&#13;- Pod deployment degraded"
-          type="pf"
-        />,
       ],
     },
     "ref": null,
@@ -1972,8 +1762,11 @@ ShallowWrapper {
         "props": Object {
           "name": "error-circle-o",
           "style": Object {
-            "fontSize": undefined,
+            "fontSize": "18px",
           },
+          "title": "Failure
+- Envoy health failure
+- Pod deployment degraded",
           "type": "pf",
         },
         "ref": null,
@@ -1981,19 +1774,6 @@ ShallowWrapper {
         "type": [Function],
       },
       " ",
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "name": "info",
-          "title": "- Envoy health failure&#13;- Pod deployment degraded",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
     ],
     "type": "span",
   },
@@ -2008,17 +1788,15 @@ ShallowWrapper {
             name="error-circle-o"
             style={
               Object {
-                "fontSize": undefined,
+                "fontSize": "18px",
               }
             }
+            title="Failure
+- Envoy health failure
+- Pod deployment degraded"
             type="pf"
           />,
           " ",
-          <Icon
-            name="info"
-            title="- Envoy health failure&#13;- Pod deployment degraded"
-            type="pf"
-          />,
         ],
       },
       "ref": null,
@@ -2030,8 +1808,11 @@ ShallowWrapper {
           "props": Object {
             "name": "error-circle-o",
             "style": Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             },
+            "title": "Failure
+- Envoy health failure
+- Pod deployment degraded",
             "type": "pf",
           },
           "ref": null,
@@ -2039,19 +1820,6 @@ ShallowWrapper {
           "type": [Function],
         },
         " ",
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "name": "info",
-            "title": "- Envoy health failure&#13;- Pod deployment degraded",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
       ],
       "type": "span",
     },
@@ -2111,17 +1879,10 @@ ShallowWrapper {
               "fontSize": "35px",
             }
           }
+          title="Failure"
           type="pf"
         />,
-        <div
-          style={
-            Object {
-              "color": "#cc0000",
-            }
-          }
-        >
-          Failure
-        </div>,
+        <br />,
         false,
         <ul
           style={
@@ -2138,6 +1899,9 @@ ShallowWrapper {
           </li>
         </ul>,
       ],
+      "style": Object {
+        "color": "#cc0000",
+      },
     },
     "ref": null,
     "rendered": Array [
@@ -2150,6 +1914,7 @@ ShallowWrapper {
           "style": Object {
             "fontSize": "35px",
           },
+          "title": "Failure",
           "type": "pf",
         },
         "ref": null,
@@ -2160,15 +1925,10 @@ ShallowWrapper {
         "instance": null,
         "key": undefined,
         "nodeType": "host",
-        "props": Object {
-          "children": "Failure",
-          "style": Object {
-            "color": "#cc0000",
-          },
-        },
+        "props": Object {},
         "ref": null,
-        "rendered": "Failure",
-        "type": "div",
+        "rendered": null,
+        "type": "br",
       },
       false,
       Object {
@@ -2232,17 +1992,10 @@ ShallowWrapper {
                 "fontSize": "35px",
               }
             }
+            title="Failure"
             type="pf"
           />,
-          <div
-            style={
-              Object {
-                "color": "#cc0000",
-              }
-            }
-          >
-            Failure
-          </div>,
+          <br />,
           false,
           <ul
             style={
@@ -2259,6 +2012,9 @@ ShallowWrapper {
             </li>
           </ul>,
         ],
+        "style": Object {
+          "color": "#cc0000",
+        },
       },
       "ref": null,
       "rendered": Array [
@@ -2271,6 +2027,7 @@ ShallowWrapper {
             "style": Object {
               "fontSize": "35px",
             },
+            "title": "Failure",
             "type": "pf",
           },
           "ref": null,
@@ -2281,15 +2038,10 @@ ShallowWrapper {
           "instance": null,
           "key": undefined,
           "nodeType": "host",
-          "props": Object {
-            "children": "Failure",
-            "style": Object {
-              "color": "#cc0000",
-            },
-          },
+          "props": Object {},
           "ref": null,
-          "rendered": "Failure",
-          "type": "div",
+          "rendered": null,
+          "type": "br",
         },
         false,
         Object {
@@ -2392,13 +2144,13 @@ ShallowWrapper {
           name="ok"
           style={
             Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             }
           }
+          title="Healthy"
           type="pf"
         />,
         " ",
-        "",
       ],
     },
     "ref": null,
@@ -2410,8 +2162,9 @@ ShallowWrapper {
         "props": Object {
           "name": "ok",
           "style": Object {
-            "fontSize": undefined,
+            "fontSize": "18px",
           },
+          "title": "Healthy",
           "type": "pf",
         },
         "ref": null,
@@ -2419,7 +2172,6 @@ ShallowWrapper {
         "type": [Function],
       },
       " ",
-      "",
     ],
     "type": "span",
   },
@@ -2434,13 +2186,13 @@ ShallowWrapper {
             name="ok"
             style={
               Object {
-                "fontSize": undefined,
+                "fontSize": "18px",
               }
             }
+            title="Healthy"
             type="pf"
           />,
           " ",
-          "",
         ],
       },
       "ref": null,
@@ -2452,8 +2204,9 @@ ShallowWrapper {
           "props": Object {
             "name": "ok",
             "style": Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             },
+            "title": "Healthy",
             "type": "pf",
           },
           "ref": null,
@@ -2461,7 +2214,6 @@ ShallowWrapper {
           "type": [Function],
         },
         " ",
-        "",
       ],
       "type": "span",
     },
@@ -2521,20 +2273,16 @@ ShallowWrapper {
               "fontSize": "35px",
             }
           }
+          title="Healthy"
           type="pf"
         />,
-        <div
-          style={
-            Object {
-              "color": "#3f9c35",
-            }
-          }
-        >
-          Healthy
-        </div>,
+        <br />,
         false,
         false,
       ],
+      "style": Object {
+        "color": "#3f9c35",
+      },
     },
     "ref": null,
     "rendered": Array [
@@ -2547,6 +2295,7 @@ ShallowWrapper {
           "style": Object {
             "fontSize": "35px",
           },
+          "title": "Healthy",
           "type": "pf",
         },
         "ref": null,
@@ -2557,15 +2306,10 @@ ShallowWrapper {
         "instance": null,
         "key": undefined,
         "nodeType": "host",
-        "props": Object {
-          "children": "Healthy",
-          "style": Object {
-            "color": "#3f9c35",
-          },
-        },
+        "props": Object {},
         "ref": null,
-        "rendered": "Healthy",
-        "type": "div",
+        "rendered": null,
+        "type": "br",
       },
       false,
       false,
@@ -2586,20 +2330,16 @@ ShallowWrapper {
                 "fontSize": "35px",
               }
             }
+            title="Healthy"
             type="pf"
           />,
-          <div
-            style={
-              Object {
-                "color": "#3f9c35",
-              }
-            }
-          >
-            Healthy
-          </div>,
+          <br />,
           false,
           false,
         ],
+        "style": Object {
+          "color": "#3f9c35",
+        },
       },
       "ref": null,
       "rendered": Array [
@@ -2612,6 +2352,7 @@ ShallowWrapper {
             "style": Object {
               "fontSize": "35px",
             },
+            "title": "Healthy",
             "type": "pf",
           },
           "ref": null,
@@ -2622,15 +2363,10 @@ ShallowWrapper {
           "instance": null,
           "key": undefined,
           "nodeType": "host",
-          "props": Object {
-            "children": "Healthy",
-            "style": Object {
-              "color": "#3f9c35",
-            },
-          },
+          "props": Object {},
           "ref": null,
-          "rendered": "Healthy",
-          "type": "div",
+          "rendered": null,
+          "type": "br",
         },
         false,
         false,
@@ -2690,17 +2426,14 @@ ShallowWrapper {
           name="ok"
           style={
             Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             }
           }
+          title="Healthy
+One inactive deployment"
           type="pf"
         />,
         " ",
-        <Icon
-          name="info"
-          title="One inactive deployment"
-          type="pf"
-        />,
       ],
     },
     "ref": null,
@@ -2712,8 +2445,10 @@ ShallowWrapper {
         "props": Object {
           "name": "ok",
           "style": Object {
-            "fontSize": undefined,
+            "fontSize": "18px",
           },
+          "title": "Healthy
+One inactive deployment",
           "type": "pf",
         },
         "ref": null,
@@ -2721,19 +2456,6 @@ ShallowWrapper {
         "type": [Function],
       },
       " ",
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "name": "info",
-          "title": "One inactive deployment",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
     ],
     "type": "span",
   },
@@ -2748,17 +2470,14 @@ ShallowWrapper {
             name="ok"
             style={
               Object {
-                "fontSize": undefined,
+                "fontSize": "18px",
               }
             }
+            title="Healthy
+One inactive deployment"
             type="pf"
           />,
           " ",
-          <Icon
-            name="info"
-            title="One inactive deployment"
-            type="pf"
-          />,
         ],
       },
       "ref": null,
@@ -2770,8 +2489,10 @@ ShallowWrapper {
           "props": Object {
             "name": "ok",
             "style": Object {
-              "fontSize": undefined,
+              "fontSize": "18px",
             },
+            "title": "Healthy
+One inactive deployment",
             "type": "pf",
           },
           "ref": null,
@@ -2779,19 +2500,6 @@ ShallowWrapper {
           "type": [Function],
         },
         " ",
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "name": "info",
-            "title": "One inactive deployment",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
       ],
       "type": "span",
     },
@@ -2851,20 +2559,16 @@ ShallowWrapper {
               "fontSize": "35px",
             }
           }
+          title="Healthy"
           type="pf"
         />,
-        <div
-          style={
-            Object {
-              "color": "#3f9c35",
-            }
-          }
-        >
-          Healthy
-        </div>,
+        <br />,
         "One inactive deployment",
         false,
       ],
+      "style": Object {
+        "color": "#3f9c35",
+      },
     },
     "ref": null,
     "rendered": Array [
@@ -2877,6 +2581,7 @@ ShallowWrapper {
           "style": Object {
             "fontSize": "35px",
           },
+          "title": "Healthy",
           "type": "pf",
         },
         "ref": null,
@@ -2887,15 +2592,10 @@ ShallowWrapper {
         "instance": null,
         "key": undefined,
         "nodeType": "host",
-        "props": Object {
-          "children": "Healthy",
-          "style": Object {
-            "color": "#3f9c35",
-          },
-        },
+        "props": Object {},
         "ref": null,
-        "rendered": "Healthy",
-        "type": "div",
+        "rendered": null,
+        "type": "br",
       },
       "One inactive deployment",
       false,
@@ -2916,20 +2616,16 @@ ShallowWrapper {
                 "fontSize": "35px",
               }
             }
+            title="Healthy"
             type="pf"
           />,
-          <div
-            style={
-              Object {
-                "color": "#3f9c35",
-              }
-            }
-          >
-            Healthy
-          </div>,
+          <br />,
           "One inactive deployment",
           false,
         ],
+        "style": Object {
+          "color": "#3f9c35",
+        },
       },
       "ref": null,
       "rendered": Array [
@@ -2942,6 +2638,7 @@ ShallowWrapper {
             "style": Object {
               "fontSize": "35px",
             },
+            "title": "Healthy",
             "type": "pf",
           },
           "ref": null,
@@ -2952,15 +2649,10 @@ ShallowWrapper {
           "instance": null,
           "key": undefined,
           "nodeType": "host",
-          "props": Object {
-            "children": "Healthy",
-            "style": Object {
-              "color": "#3f9c35",
-            },
-          },
+          "props": Object {},
           "ref": null,
-          "rendered": "Healthy",
-          "type": "div",
+          "rendered": null,
+          "type": "br",
         },
         "One inactive deployment",
         false,

@@ -255,9 +255,9 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     pageEnd = pageEnd < this.state.services.length ? pageEnd : this.state.services.length;
 
     for (let i = pageStart; i < pageEnd; i++) {
-      let serviceItem = this.state.services[i];
-      let to = '/namespaces/' + serviceItem.namespace + '/services/' + serviceItem.servicename;
-      let serviceDescriptor = (
+      const serviceItem = this.state.services[i];
+      const to = '/namespaces/' + serviceItem.namespace + '/services/' + serviceItem.servicename;
+      const serviceDescriptor = (
         <table style={{ width: '30em', tableLayout: 'fixed' }}>
           <tr>
             <td>

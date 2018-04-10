@@ -26,7 +26,7 @@ describe('ServiceHealth', () => {
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-ok');
-    expect(html).not.toContain('Healthy');
+    expect(html).toContain('Healthy');
 
     // LARGE
     wrapper = shallow(<ServiceHealth health={health} mode={DisplayMode.LARGE} />);
@@ -47,7 +47,7 @@ describe('ServiceHealth', () => {
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-warning');
-    expect(html).not.toContain('Degraded');
+    expect(html).toContain('Degraded');
     expect(html).toContain('Pod deployment degraded');
 
     // LARGE
@@ -70,7 +70,7 @@ describe('ServiceHealth', () => {
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-warning');
-    expect(html).not.toContain('Degraded');
+    expect(html).toContain('Degraded');
     expect(html).toContain('Envoy health degraded');
 
     // LARGE
@@ -93,7 +93,7 @@ describe('ServiceHealth', () => {
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-warning');
-    expect(html).not.toContain('Degraded');
+    expect(html).toContain('Degraded');
     expect(html).toContain('Pod deployment degraded');
     expect(html).toContain('Envoy health degraded');
 
@@ -118,7 +118,7 @@ describe('ServiceHealth', () => {
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-error');
-    expect(html).not.toContain('Failure');
+    expect(html).toContain('Failure');
     expect(html).toContain('Pod deployment failure');
     expect(html).toContain('Envoy health degraded');
 
@@ -143,7 +143,7 @@ describe('ServiceHealth', () => {
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-error');
-    expect(html).not.toContain('Failure');
+    expect(html).toContain('Failure');
     expect(html).toContain('Pod deployment degraded');
     expect(html).toContain('Envoy health failure');
 
@@ -168,7 +168,7 @@ describe('ServiceHealth', () => {
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-ok');
-    expect(html).not.toContain('Healthy');
+    expect(html).toContain('Healthy');
     expect(html).toContain('inactive deployment');
 
     // LARGE
@@ -191,7 +191,7 @@ describe('ServiceHealth', () => {
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-error');
-    expect(html).not.toContain('Failure');
+    expect(html).toContain('Failure');
     expect(html).toContain('No active deployment');
 
     // LARGE
