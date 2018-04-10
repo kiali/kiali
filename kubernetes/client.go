@@ -115,6 +115,19 @@ func NewClient() (*IstioClient, error) {
 	return &client, nil
 }
 
+func LabelsMatch(serviceLabels, filterLabels map[string]string) bool {
+	labelMatch := true
+
+	for key, value := range filterLabels {
+		if serviceLabels[key] != value {
+			labelMatch = false
+			break
+		}
+	}
+
+	return labelMatch
+}
+
 func GetLabeledListOptions(labelSelector string) *meta_v1.ListOptions {
 	return &meta_v1.ListOptions{
 		LabelSelector: labelSelector}

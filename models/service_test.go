@@ -383,6 +383,7 @@ func fakeServiceList() *kubernetes.ServiceList {
 					Spec: v1.ServiceSpec{
 						ClusterIP: "fromservice",
 						Type:      "ClusterIP",
+						Selector:  map[string]string{"app": "reviews"},
 						Ports: []v1.ServicePort{
 							{
 								Name:     "http",
@@ -402,6 +403,7 @@ func fakeServiceList() *kubernetes.ServiceList {
 					Spec: v1.ServiceSpec{
 						ClusterIP: "fromservice",
 						Type:      "ClusterIP",
+						Selector:  map[string]string{"app": "httpbin"},
 						Ports: []v1.ServicePort{
 							{
 								Name:     "http",
