@@ -105,6 +105,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const options: MetricsOptions = {
       version: destVersion,
       byLabelsIn: ['source_service', 'source_version'],
+      queryTime: props.queryTime,
       duration: +props.duration,
       step: props.step,
       rateInterval: props.rateInterval,
@@ -147,7 +148,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       return <strong>loading chart...</strong>;
     }
 
-    return <RpsChart label="Request Average" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />;
+    return <RpsChart label="Request Traffic" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />;
   };
 
   private getRates = (

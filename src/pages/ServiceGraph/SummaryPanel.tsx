@@ -17,6 +17,7 @@ export default class SummaryPanel extends React.Component<SummaryPanelPropType, 
           <SummaryPanelEdge
             data={this.props.data}
             namespace={this.props.namespace}
+            queryTime={this.props.queryTime}
             duration={this.props.duration}
             step={this.props.step}
             rateInterval={this.props.rateInterval}
@@ -26,6 +27,7 @@ export default class SummaryPanel extends React.Component<SummaryPanelPropType, 
           <SummaryPanelGraph
             data={this.props.data}
             namespace={this.props.namespace}
+            queryTime={this.props.queryTime}
             duration={this.props.duration}
             step={this.props.step}
             rateInterval={this.props.rateInterval}
@@ -35,6 +37,7 @@ export default class SummaryPanel extends React.Component<SummaryPanelPropType, 
           <SummaryPanelGroup
             data={this.props.data}
             namespace={this.props.namespace}
+            queryTime={this.props.queryTime}
             duration={this.props.duration}
             step={this.props.step}
             rateInterval={this.props.rateInterval}
@@ -43,6 +46,7 @@ export default class SummaryPanel extends React.Component<SummaryPanelPropType, 
         {this.props.data.summaryType === 'node' ? (
           <SummaryPanelNode
             data={this.props.data}
+            queryTime={this.props.queryTime}
             namespace={this.props.namespace}
             duration={this.props.duration}
             step={this.props.step}

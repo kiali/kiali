@@ -58,6 +58,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const version = props.data.summaryTarget.data('version');
     const options: MetricsOptions = {
       version: version,
+      queryTime: props.queryTime,
       duration: +props.duration,
       step: props.step,
       rateInterval: props.rateInterval,
@@ -150,8 +151,16 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     }
     return (
       <>
-        <RpsChart label="Incoming" dataRps={this.state.requestCountIn} dataErrors={this.state.errorCountIn} />
-        <RpsChart label="Outgoing" dataRps={this.state.requestCountOut} dataErrors={this.state.errorCountOut} />
+        <RpsChart
+          label="Incoming Request Traffic"
+          dataRps={this.state.requestCountIn}
+          dataErrors={this.state.errorCountIn}
+        />
+        <RpsChart
+          label="Outgoing Request Traffic"
+          dataRps={this.state.requestCountOut}
+          dataErrors={this.state.errorCountOut}
+        />
       </>
     );
   };

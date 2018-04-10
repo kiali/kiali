@@ -107,6 +107,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
   private updateRpsChart = (props: SummaryPanelPropType) => {
     const options = {
+      queryTime: props.queryTime,
       duration: props.duration,
       step: props.step,
       rateInterval: props.rateInterval
@@ -144,7 +145,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       return <strong>loading chart...</strong>;
     }
 
-    return <RpsChart label="Request Average" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />;
+    return <RpsChart label="Total Request Traffic" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />;
   };
 
   private getRates = (mg: M.MetricGroup, title: string): [string, number][] => {
