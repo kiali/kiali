@@ -154,6 +154,7 @@ export default class ServiceGraphPage extends React.Component<
             elements={this.state.graphData}
             isLoading={this.state.isLoading}
             onClick={this.handleGraphClick}
+            refresh={this.onRefreshButtonClick}
           />
         </div>
       </PfContainerNavVertical>
