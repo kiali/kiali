@@ -13,7 +13,7 @@ interface Props {
   mode: DisplayMode;
 }
 
-interface Status {
+export interface Status {
   name: string;
   color: string;
   priority: number;
@@ -21,13 +21,13 @@ interface Status {
 }
 
 // Colors from Patternfly status palette https://www.patternfly.org/styles/color-palette/
-const FAILURE: Status = {
+export const FAILURE: Status = {
   name: 'Failure',
   color: '#cc0000',
   priority: 3,
   jsx: (size, title) => <Icon type="pf" name="error-circle-o" style={{ fontSize: String(size) + 'px' }} title={title} />
 };
-const DEGRADED: Status = {
+export const DEGRADED: Status = {
   name: 'Degraded',
   color: '#ec7a08',
   priority: 2,
@@ -35,17 +35,34 @@ const DEGRADED: Status = {
     <Icon type="pf" name="warning-triangle-o" style={{ fontSize: String(size) + 'px' }} title={title} />
   )
 };
-const HEALTHY: Status = {
+export const HEALTHY: Status = {
   name: 'Healthy',
   color: '#3f9c35',
   priority: 1,
   jsx: (size, title) => <Icon type="pf" name="ok" style={{ fontSize: String(size) + 'px' }} title={title} />
 };
-const NA: Status = {
+export const NA: Status = {
   name: 'No health information',
   color: '#707070',
   priority: 0,
   jsx: (size, title) => <span style={{ color: '#707070', fontSize: String(Math.floor(size * 2 / 3)) + 'px' }}>N/A</span>
+};
+
+export const ratioCheck = (valid: number, total: number, reporter?: (severity: string) => void): Status => {
+  if (total === 0) {
+    return NA;
+  } else if (valid === 0) {
+    if (reporter) {
+      reporter('failure');
+    }
+    return FAILURE;
+  } else if (valid === total) {
+    return HEALTHY;
+  }
+  if (reporter) {
+    reporter('degraded');
+  }
+  return DEGRADED;
 };
 
 export class ServiceHealth extends React.Component<Props, {}> {
@@ -61,19 +78,6 @@ export class ServiceHealth extends React.Component<Props, {}> {
     this.updateHealth(nextProps.health);
   }
 
-  ratioCheck(valid: number, total: number, errorMsg: string): Status {
-    if (total === 0) {
-      return NA;
-    } else if (valid === 0) {
-      this.info.push(errorMsg + 'failure');
-      return FAILURE;
-    } else if (valid === total) {
-      return HEALTHY;
-    }
-    this.info.push(errorMsg + 'degraded');
-    return DEGRADED;
-  }
-
   mergeStatus(s1: Status, s2: Status): Status {
     return s1.priority > s2.priority ? s1 : s2;
   }
@@ -82,9 +86,13 @@ export class ServiceHealth extends React.Component<Props, {}> {
     this.info = [];
     let countInactiveDeployments = 0;
     if (health) {
-      const envoyStatus = this.ratioCheck(health.envoy.healthy, health.envoy.total, 'Envoy health ');
+      const envoyStatus = ratioCheck(health.envoy.healthy, health.envoy.total, severity =>
+        this.info.push('Envoy health ' + severity)
+      );
       this.globalStatus = health.deploymentStatuses.reduce((prev, cur) => {
-        const status = this.ratioCheck(cur.available, cur.replicas, 'Pod deployment ');
+        const status = ratioCheck(cur.available, cur.replicas, severity =>
+          this.info.push('Pod deployment ' + severity)
+        );
         if (status === NA) {
           countInactiveDeployments++;
         }

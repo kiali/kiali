@@ -1,8 +1,9 @@
 import * as React from 'react';
+import { Col, Row } from 'patternfly-react';
 import Badge from '../../../components/Badge/Badge';
 import { Deployment } from '../../../types/ServiceInfo';
-import { Col, Row, Icon } from 'patternfly-react';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
+import { ratioCheck } from '../../../components/ServiceHealth/ServiceHealth';
 
 interface ServiceInfoDeploymentsProps {
   deployments?: Deployment[];
@@ -40,10 +41,7 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
                 </div>
                 <div>
                   <strong>Pod status: </strong> {deployment.available_replicas} / {deployment.replicas}{' '}
-                  <Icon
-                    type="pf"
-                    name={deployment.available_replicas < deployment.replicas ? 'warning-triangle-o' : 'ok'}
-                  />
+                  {ratioCheck(deployment.available_replicas, deployment.replicas).jsx(12, '')}
                 </div>
                 {deployment.autoscaler.name !== '' && (
                   <div>
