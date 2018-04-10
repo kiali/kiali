@@ -19,17 +19,17 @@ package handlers
 //                    requesting and requested services.
 //
 // The handlers accept the following query parameters:
-//   vendor:         cytoscape | vizceral (default cytoscape)
-//   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
-//   groupByVersion: If supported by vendor, visually group versions of the same service (default true)
-//   offset:         time.Duration indicating desired query range offset (default 0m)
 //   duration:       time.Duration indicating desired query range duration, (default 10m)
-//   colorDead       Color for inactive edge (no traffic) (default black)
+//   colorNoTraffic  Color for inactive edge (no traffic) (default black)
 //   colorError      Color for active edge with error% > thresholderror (default red)
 //   colorNormal     Color for active edge with error% below thresholdWarn (default green)
 //   colorWarn       Color for active edge with thresholdWarn < error% <= thresholderror (default red)
+//   groupByVersion: If supported by vendor, visually group versions of the same service (default true)
+//   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
+//   queryTime:      Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
 //   thresholdError  Error% indicating error (default 2.0)
 //   thresholdWarn   Error% indicating warn  (default 0.0)
+//   vendor:         cytoscape | vizceral (default cytoscape)
 //
 // * Error% is the percentage of requests with response code != 2XX
 // * See the vendor-specific config generators for more details about the specific vendor.
@@ -96,11 +96,6 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 
 // buildNamespaceTrees returns trees routed at all destination services with "Internet" parents
 func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []tree.ServiceNode) {
-	queryTime := time.Now()
-	if o.Offset.Seconds() > 0 {
-		queryTime = queryTime.Add(-o.Offset)
-	}
-
 	// avoid circularities by keeping track of all seen nodes
 	seenNodes := make(map[string]*tree.ServiceNode)
 
@@ -116,7 +111,7 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []
 		"source_service")          // group by
 
 	// fetch the root time series
-	vector := promQuery(query, queryTime, client.API())
+	vector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
 	// generate a tree rooted at each source node
 	trees = []tree.ServiceNode{}
@@ -140,7 +135,7 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []
 		seenNodes[root.ID] = &root
 
 		log.Debugf("Building namespace tree for Root ServiceNode: %v\n", root.ID)
-		buildNamespaceTree(&root, queryTime, seenNodes, o, client)
+		buildNamespaceTree(&root, time.Unix(o.QueryTime, 0), seenNodes, o, client)
 
 		trees = append(trees, root)
 	}
@@ -227,11 +222,6 @@ func graphService(w http.ResponseWriter, r *http.Request, client *prometheus.Cli
 
 // buildServiceTrees returns trees routed at source services for versions of the service of interest
 func buildServiceTrees(o options.Options, client *prometheus.Client) (trees []tree.ServiceNode) {
-	queryTime := time.Now()
-	if o.Offset.Seconds() > 0 {
-		queryTime = queryTime.Add(-o.Offset)
-	}
-
 	// Query for root nodes. Root nodes for the service graph represent
 	// services requesting the specified destination services in the namespace.
 	query := fmt.Sprintf("sum(rate(%v{destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
@@ -245,7 +235,7 @@ func buildServiceTrees(o options.Options, client *prometheus.Client) (trees []tr
 	seenNodes := make(map[string]*tree.ServiceNode)
 
 	// fetch the root time series
-	vector := promQuery(query, queryTime, client.API())
+	vector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
 	// generate a tree rooted at each top-level destination
 	trees = []tree.ServiceNode{}
@@ -275,14 +265,14 @@ func buildServiceTrees(o options.Options, client *prometheus.Client) (trees []tr
 		seenNodes[root.ID] = &root
 
 		log.Debugf("Building service tree for Root ServiceNode: %v\n", root.ID)
-		buildServiceSubtree(&root, o.Service, queryTime, seenNodes, o, client)
+		buildServiceSubtree(&root, o.Service, time.Unix(o.QueryTime, 0), seenNodes, o, client)
 		trees = append(trees, root)
 	}
 
 	return trees
 }
 
-func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, start time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client) {
+func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, queryTime time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client) {
 	log.Debugf("Adding children for ServiceNode: %v\n", sn.ID)
 
 	var destinationSvcFilter string
@@ -301,7 +291,7 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, start time
 		"destination_service,destination_version,response_code") // group by
 
 	// fetch the root time series
-	vector := promQuery(query, start, client.API())
+	vector := promQuery(query, queryTime, client.API())
 
 	// identify the unique destination services
 	destinations := toDestinations(sn.Name, sn.Version, vector)
@@ -328,7 +318,7 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, start time
 			if _, seen := seenNodes[child.ID]; !seen {
 				seenNodes[child.ID] = child
 				if "" != destinationSvc {
-					buildServiceSubtree(child, "", start, seenNodes, o, client)
+					buildServiceSubtree(child, "", queryTime, seenNodes, o, client)
 				}
 			} else {
 				log.Debugf("Not recursing on seen child service: %v(%v)\n", child.Name, child.Version)
@@ -427,6 +417,8 @@ func promQuery(query string, queryTime time.Time, api v1.API) model.Vector {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// wrap with a round() to be in line with metrics api
+	query = fmt.Sprintf("round(%s,0.001)", query)
 	log.Debugf("Executing query %s&time=%v (now=%v, %v)\n", query, queryTime.Format(TF), time.Now().Format(TF), queryTime.Unix())
 
 	value, err := api.Query(ctx, query, queryTime)
