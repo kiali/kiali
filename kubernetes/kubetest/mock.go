@@ -1,8 +1,9 @@
 package kubetest
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 type K8SClientMock struct {

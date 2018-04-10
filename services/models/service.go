@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/prometheus/common/model"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 type ServiceOverview struct {

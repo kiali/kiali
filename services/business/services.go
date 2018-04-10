@@ -3,12 +3,13 @@ package business
 import (
 	"strings"
 
+	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/core/v1"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/services/models"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/core/v1"
 )
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
