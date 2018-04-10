@@ -73,7 +73,8 @@ type Elements struct {
 }
 
 type Config struct {
-	Elements Elements `json:"elements"`
+	Timestamp int64    `json:"timestamp"`
+	Elements  Elements `json:"elements"`
 }
 
 // NewConfig currently ignores namespace arg
@@ -111,7 +112,10 @@ func NewConfig(namespace string, sn *[]tree.ServiceNode, o options.VendorOptions
 	})
 
 	elements := Elements{nodes, edges}
-	result = Config{elements}
+	result = Config{
+		Timestamp: o.Timestamp,
+		Elements:  elements,
+	}
 	return result
 }
 
@@ -189,18 +193,18 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 		rateErr := rate4xx + rate5xx
 		percentErr := rateErr / rate * 100.0
 
-		ed.Rate = fmt.Sprintf("%.4f", rate)
+		ed.Rate = fmt.Sprintf("%.3f", rate)
 		nd.Rate = add(nd.Rate, rate)
 		if rate3xx > 0.0 {
-			ed.Rate3xx = fmt.Sprintf("%.4f", rate3xx)
+			ed.Rate3xx = fmt.Sprintf("%.3f", rate3xx)
 			nd.Rate3xx = add(nd.Rate3xx, rate3xx)
 		}
 		if rate4xx > 0.0 {
-			ed.Rate4xx = fmt.Sprintf("%.4f", rate4xx)
+			ed.Rate4xx = fmt.Sprintf("%.3f", rate4xx)
 			nd.Rate4xx = add(nd.Rate4xx, rate4xx)
 		}
 		if rate5xx > 0.0 {
-			ed.Rate5xx = fmt.Sprintf("%.4f", rate5xx)
+			ed.Rate5xx = fmt.Sprintf("%.3f", rate5xx)
 			nd.Rate5xx = add(nd.Rate5xx, rate5xx)
 		}
 
@@ -216,7 +220,7 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 			ed.Text = fmt.Sprintf("%.2f", rate)
 		}
 	} else {
-		ed.Color = o.ColorDead
+		ed.Color = o.ColorNoTraffic
 		ed.Text = ""
 		// A negative rate means that node information comes from the static representation as it is marked as unused
 		if rate < 0 {
@@ -231,7 +235,7 @@ func add(current string, val float64) string {
 	if err == nil {
 		sum += f
 	}
-	return fmt.Sprintf("%.4f", sum)
+	return fmt.Sprintf("%.3f", sum)
 }
 
 // addCompositeNodes generates additional nodes to group multiple versions of the
