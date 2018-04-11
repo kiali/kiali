@@ -7,7 +7,7 @@ import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
 import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
 
 import { Endpoints, Deployment, Port, RouteRule, DestinationPolicy } from '../../types/ServiceInfo';
-import Health from '../../types/Health';
+import { Health } from '../../types/Health';
 import * as API from '../../services/Api';
 import { ToastNotification, ToastNotificationList, Col, Row } from 'patternfly-react';
 
@@ -46,12 +46,10 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
 
   componentDidMount() {
     this.fetchServiceDetails(this.props);
-    this.fetchHealth(this.props);
   }
 
   componentWillReceiveProps(nextProps: ServiceId) {
     this.fetchServiceDetails(nextProps);
-    this.fetchHealth(nextProps);
   }
 
   fetchServiceDetails(props: ServiceId) {
@@ -69,7 +67,8 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
           dependencies: data.dependencies,
           routeRules: this.sortRouteRulesByPrecedence(data.route_rules),
           destinationPolicies: data.destination_policies,
-          ip: data.ip
+          ip: data.ip,
+          health: data.health
         });
       })
       .catch(error => {
@@ -92,24 +91,6 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
       });
     }
     return sorted;
-  }
-
-  fetchHealth(props: ServiceId) {
-    // Health
-    API.getServiceHealth(props.namespace, props.service)
-      .then(response => {
-        this.setState({
-          health: response['data']
-        });
-      })
-      .catch(error => {
-        this.setState({
-          health: undefined,
-          error: true,
-          errorMessage: API.GetErrorMsg('Could not fetch service health.', error)
-        });
-        console.error(error);
-      });
   }
 
   render() {

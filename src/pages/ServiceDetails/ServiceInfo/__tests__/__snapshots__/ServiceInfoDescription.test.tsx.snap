@@ -192,15 +192,10 @@ ShallowWrapper {
               Health
             </strong>
           </div>
-          <div
-            className="small-text-donut"
-          >
-            <ServiceHealth
-              health={undefined}
-              size={80}
-              thickness={6}
-            />
-          </div>
+          <ServiceHealth
+            health={undefined}
+            mode={0}
+          />
         </Col>
       </Row>,
       "title": "reviews",
@@ -351,15 +346,10 @@ ShallowWrapper {
                 Health
               </strong>
             </div>
-            <div
-              className="small-text-donut"
-            >
-              <ServiceHealth
-                health={undefined}
-                size={80}
-                thickness={6}
-              />
-            </div>
+            <ServiceHealth
+              health={undefined}
+              mode={0}
+            />
           </Col>
         </Row>,
         "title": "reviews",
