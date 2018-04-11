@@ -32,6 +32,7 @@ type ServiceGraphPageState = {
   graphTimestamp: string;
   graphData: any;
   isLoading: boolean;
+  isReady: boolean;
   params: GraphParamsType;
 };
 
@@ -56,6 +57,7 @@ export default class ServiceGraphPage extends React.Component<
     const { graphDuration, graphLayout } = this.parseProps(routeProps.location.search);
     this.state = {
       isLoading: false,
+      isReady: false,
       alertVisible: false,
       alertDetails: {},
       summaryData: { summaryType: 'graph' },
@@ -124,6 +126,12 @@ export default class ServiceGraphPage extends React.Component<
     }
   };
 
+  handleReady = (cy: any) => {
+    if (cy !== undefined) {
+      this.setState({ summaryData: { summaryType: 'graph', summaryTarget: cy } });
+    }
+  };
+
   render() {
     return (
       <PfContainerNavVertical>
@@ -146,19 +154,21 @@ export default class ServiceGraphPage extends React.Component<
           <Button onClick={this.onRefreshButtonClick}>Refresh</Button>
         </PfHeader>
         <div style={{ position: 'relative' }}>
+          <CytoscapeLayout
+            {...this.state.params}
+            isLoading={this.state.isLoading}
+            isReady={this.state.isReady}
+            elements={this.state.graphData}
+            onClick={this.handleGraphClick}
+            onReady={this.handleReady}
+            refresh={this.onRefreshButtonClick}
+          />
           <SummaryPanel
             data={this.state.summaryData}
             namespace={this.state.params.namespace.name}
             queryTime={this.state.graphTimestamp}
             duration={this.state.params.graphDuration.value}
             {...QueryOptions.getOption(this.state.params.graphDuration.value)}
-          />
-          <CytoscapeLayout
-            {...this.state.params}
-            elements={this.state.graphData}
-            isLoading={this.state.isLoading}
-            onClick={this.handleGraphClick}
-            refresh={this.onRefreshButtonClick}
           />
         </div>
       </PfContainerNavVertical>
@@ -192,7 +202,7 @@ export default class ServiceGraphPage extends React.Component<
 
   /** Fetch graph data */
   loadGraphDataFromBackend = (namespace?: Namespace, graphDuration?: Duration) => {
-    this.setState({ isLoading: true });
+    this.setState({ isLoading: true, isReady: false });
     namespace = namespace ? namespace : this.state.params.namespace;
     const duration = graphDuration ? graphDuration.value : this.state.params.graphDuration.value;
     const restParams = { duration: duration + 's' };

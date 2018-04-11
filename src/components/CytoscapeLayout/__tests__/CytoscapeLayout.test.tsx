@@ -10,8 +10,12 @@ jest.mock('../../../services/Api');
 
 const testNamespace = 'ISTIO_SYSTEM';
 
-const testHandler = () => {
+const testClickHandler = () => {
   console.log('click');
+};
+
+const testReadyHandler = () => {
+  console.log('ready');
 };
 
 describe('CytographLayout component test', () => {
@@ -25,8 +29,9 @@ describe('CytographLayout component test', () => {
         elements={GRAPH_DATA[testNamespace]}
         graphLayout={myLayout}
         graphDuration={myDuration}
-        onClick={testHandler}
-        refresh={testHandler}
+        onClick={testClickHandler}
+        onReady={testReadyHandler}
+        refresh={testClickHandler}
       />
     );
     const cytoscapeWrapper = wrapper.find(ReactCytoscape);

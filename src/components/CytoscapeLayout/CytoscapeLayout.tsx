@@ -13,7 +13,9 @@ import * as LayoutDictionary from './graphs/LayoutDictionary';
 type CytoscapeLayoutType = {
   elements: any;
   onClick: (event: CytoscapeClickEvent) => void;
+  onReady: (event: CytoscapeBaseEvent) => void;
   isLoading?: boolean;
+  isReady?: boolean;
   refresh: any;
 };
 
@@ -94,7 +96,6 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
         this.handleTap(cytoscapeEvent);
       }
     });
-
     this.cy.on('mouseover', 'node,edge', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
       if (cytoscapeEvent !== null) {
@@ -105,6 +106,11 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
       if (cytoscapeEvent !== null) {
         this.handleMouseOut(cytoscapeEvent);
+      }
+    });
+    this.cy.ready((evt: any) => {
+      if (!this.props.isReady) {
+        this.props.onReady(evt.cy);
       }
     });
   }
