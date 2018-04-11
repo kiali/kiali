@@ -1,4 +1,4 @@
-package prometheus
+package prometheustest
 
 import (
 	"fmt"
@@ -10,13 +10,13 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/kiali/kiali/prometheus"
 )
 
-func setupMocked() (*Client, *prometheustest.PromAPIMock, error) {
+func setupMocked() (*prometheus.Client, *PromAPIMock, error) {
 	config.Set(config.NewConfig())
-	api := new(prometheustest.PromAPIMock)
-	client, err := NewClient()
+	api := new(PromAPIMock)
+	client, err := prometheus.NewClient()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -110,10 +110,10 @@ func TestGetServiceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetServiceMetrics(&ServiceMetricsQuery{
+	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
 		Namespace: "istio-system",
 		Service:   "productpage",
-		MetricsQuery: MetricsQuery{
+		MetricsQuery: prometheus.MetricsQuery{
 			Version:      "",
 			Duration:     1000,
 			Step:         10,
@@ -171,10 +171,10 @@ func TestGetFilteredServiceMetrics(t *testing.T) {
 	mockRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
 	mockHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	metrics := client.GetServiceMetrics(&ServiceMetricsQuery{
+	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
 		Namespace: "istio-system",
 		Service:   "productpage",
-		MetricsQuery: MetricsQuery{
+		MetricsQuery: prometheus.MetricsQuery{
 			Version:      "",
 			Duration:     1000,
 			Step:         10,
@@ -204,10 +204,10 @@ func TestGetServiceMetricsInstantRates(t *testing.T) {
 	}
 	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[1m])), 0.001)", 1.5)
 	mockRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[1m])), 0.001)", 2.5)
-	metrics := client.GetServiceMetrics(&ServiceMetricsQuery{
+	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
 		Namespace: "istio-system",
 		Service:   "productpage",
-		MetricsQuery: MetricsQuery{
+		MetricsQuery: prometheus.MetricsQuery{
 			Version:      "",
 			Duration:     1000,
 			Step:         10,
@@ -233,11 +233,11 @@ func TestGetServiceHealth(t *testing.T) {
 	}
 	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_healthy", 0)
 	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", 1)
-	health := client.GetServiceHealth("istio-system", "productpage")
+	healthy, total, _ := client.GetServiceHealth("istio-system", "productpage")
 
 	// Check health
-	assert.Equal(t, 0, health.HealthyReplicas)
-	assert.Equal(t, 1, health.TotalReplicas)
+	assert.Equal(t, 0, healthy)
+	assert.Equal(t, 1, total)
 }
 
 func TestGetServiceMetricsUnavailable(t *testing.T) {
@@ -257,10 +257,10 @@ func TestGetServiceMetricsUnavailable(t *testing.T) {
 	mockEmptyHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
 	mockEmptyHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
-	metrics := client.GetServiceMetrics(&ServiceMetricsQuery{
+	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
 		Namespace: "istio-system",
 		Service:   "productpage",
-		MetricsQuery: MetricsQuery{
+		MetricsQuery: prometheus.MetricsQuery{
 			Version:      "",
 			Duration:     1000,
 			Step:         10,
@@ -276,13 +276,6 @@ func TestGetServiceMetricsUnavailable(t *testing.T) {
 	assert.NotNil(t, rqCountIn)
 	rqSizeIn := metrics.Histograms["request_size_in"]
 	assert.NotNil(t, rqSizeIn)
-
-	// No error
-	assert.Nil(t, rqCountIn.err)
-	assert.Nil(t, rqSizeIn.Average.err)
-	assert.Nil(t, rqSizeIn.Median.err)
-	assert.Nil(t, rqSizeIn.Percentile95.err)
-	assert.Nil(t, rqSizeIn.Percentile99.err)
 
 	// Simple metric & histogram are empty
 	assert.Empty(t, rqCountIn.Matrix[0].Values)
@@ -301,10 +294,11 @@ func TestGetServiceHealthUnavailable(t *testing.T) {
 	// Mock everything to return empty data
 	mockQuery(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_healthy", &model.Vector{})
 	mockQuery(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", &model.Vector{})
-	health := client.GetServiceHealth("istio-system", "productpage")
+	_, total, err := client.GetServiceHealth("istio-system", "productpage")
 
 	// Check health unavailable
-	assert.Equal(t, 0, health.TotalReplicas)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, total)
 }
 
 func TestGetNamespaceMetrics(t *testing.T) {
@@ -323,10 +317,10 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_size", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_size", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetNamespaceMetrics(&NamespaceMetricsQuery{
+	metrics := client.GetNamespaceMetrics(&prometheus.NamespaceMetricsQuery{
 		Namespace:      "istio-system",
 		ServicePattern: "",
-		MetricsQuery: MetricsQuery{
+		MetricsQuery: prometheus.MetricsQuery{
 			Version:      "",
 			Duration:     1000,
 			Step:         10,
@@ -405,7 +399,7 @@ func TestGetNamespaceServicesRequestCounters(t *testing.T) {
 
 }
 
-func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector) {
+func mockQuery(api *PromAPIMock, query string, ret *model.Vector) {
 	api.On(
 		"Query",
 		mock.AnythingOfType("*context.emptyCtx"),
@@ -414,7 +408,7 @@ func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector)
 		Return(*ret, nil)
 }
 
-func mockSingle(api *prometheustest.PromAPIMock, query string, ret model.SampleValue) {
+func mockSingle(api *PromAPIMock, query string, ret model.SampleValue) {
 	metric := model.Metric{
 		"__name__": "whatever",
 		"instance": "whatever",
@@ -426,7 +420,7 @@ func mockSingle(api *prometheustest.PromAPIMock, query string, ret model.SampleV
 	mockQuery(api, query, &vector)
 }
 
-func mockQueryRange(api *prometheustest.PromAPIMock, query string, ret *model.Matrix) {
+func mockQueryRange(api *PromAPIMock, query string, ret *model.Matrix) {
 	api.On(
 		"QueryRange",
 		mock.AnythingOfType("*context.emptyCtx"),
@@ -435,7 +429,7 @@ func mockQueryRange(api *prometheustest.PromAPIMock, query string, ret *model.Ma
 		Return(*ret, nil)
 }
 
-func mockRange(api *prometheustest.PromAPIMock, query string, ret model.SampleValue) {
+func mockRange(api *PromAPIMock, query string, ret model.SampleValue) {
 	metric := model.Metric{
 		"__name__": "whatever",
 		"instance": "whatever",
@@ -447,7 +441,7 @@ func mockRange(api *prometheustest.PromAPIMock, query string, ret model.SampleVa
 	mockQueryRange(api, query, &matrix)
 }
 
-func mockEmptyRange(api *prometheustest.PromAPIMock, query string) {
+func mockEmptyRange(api *PromAPIMock, query string) {
 	metric := model.Metric{
 		"__name__": "whatever",
 		"instance": "whatever",
@@ -459,7 +453,7 @@ func mockEmptyRange(api *prometheustest.PromAPIMock, query string) {
 	mockQueryRange(api, query, &matrix)
 }
 
-func mockHistogram(api *prometheustest.PromAPIMock, baseName string, suffix string, retAvg model.SampleValue, retMed model.SampleValue, ret95 model.SampleValue, ret99 model.SampleValue) {
+func mockHistogram(api *PromAPIMock, baseName string, suffix string, retAvg model.SampleValue, retMed model.SampleValue, ret95 model.SampleValue, ret99 model.SampleValue) {
 	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
 	mockRange(api, "histogram_quantile(0.5, "+histMetric, retMed)
 	mockRange(api, "histogram_quantile(0.95, "+histMetric, ret95)
@@ -467,7 +461,7 @@ func mockHistogram(api *prometheustest.PromAPIMock, baseName string, suffix stri
 	mockRange(api, "sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))", retAvg)
 }
 
-func mockEmptyHistogram(api *prometheustest.PromAPIMock, baseName string, suffix string) {
+func mockEmptyHistogram(api *PromAPIMock, baseName string, suffix string) {
 	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
 	mockEmptyRange(api, "histogram_quantile(0.5, "+histMetric)
 	mockEmptyRange(api, "histogram_quantile(0.95, "+histMetric)
@@ -475,11 +469,11 @@ func mockEmptyHistogram(api *prometheustest.PromAPIMock, baseName string, suffix
 	mockEmptyRange(api, "sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))")
 }
 
-func setupExternal() (*Client, error) {
+func setupExternal() (*prometheus.Client, error) {
 	conf := config.NewConfig()
 	conf.PrometheusServiceURL = "http://prometheus-istio-system.127.0.0.1.nip.io"
 	config.Set(conf)
-	return NewClient()
+	return prometheus.NewClient()
 }
 
 // Fake test / runnable function for manual test against actual server.
@@ -507,10 +501,10 @@ func TestAgainstLiveGetServiceMetrics(t *testing.T) {
 		return
 	}
 	fmt.Printf("Metrics: \n")
-	metrics := client.GetServiceMetrics(&ServiceMetricsQuery{
+	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
 		Namespace: "tutorial",
 		Service:   "preference",
-		MetricsQuery: MetricsQuery{
+		MetricsQuery: prometheus.MetricsQuery{
 			Version:      "",
 			Duration:     1000 * time.Second,
 			Step:         10 * time.Second,

@@ -7,7 +7,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/services/models"
 )
 
 // GetjaegerInfo provides the jaeger URLo, first by checking if a config exists

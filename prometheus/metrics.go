@@ -61,20 +61,13 @@ type Metrics struct {
 	Histograms map[string]Histogram `json:"histograms"`
 }
 
-// Health contains information about healthy replicas for a service
-type Health struct {
-	HealthyReplicas int `json:"healthyReplicas"`
-	TotalReplicas   int `json:"totalReplicas"`
-	err             error
-}
-
 // Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)
 type Metric struct {
 	Matrix model.Matrix `json:"matrix"`
 	err    error
 }
 
-// MetricVector holds the Prometheus Vector model, which contains a sample from one or more time series
+// MetricsVector holds the Prometheus Vector model, which contains a sample from one or more time series
 type MetricsVector struct {
 	Vector model.Vector `json:"vector"`
 	err    error
@@ -88,7 +81,8 @@ type Histogram struct {
 	Percentile99 *Metric `json:"percentile99"`
 }
 
-func getServiceHealth(api v1.API, namespace string, servicename string) Health {
+// Returns <healthy, total, error>
+func getServiceHealth(api v1.API, namespace string, servicename string) (int, int, error) {
 	envoyClustername := strings.Replace(config.Get().IstioIdentityDomain, ".", "_", -1)
 	queryPart := replaceInvalidCharacters(fmt.Sprintf("%s_%s_%s", servicename, namespace, envoyClustername))
 	now := time.Now()
@@ -110,16 +104,14 @@ func getServiceHealth(api v1.API, namespace string, servicename string) Health {
 	wg.Wait()
 
 	if healthyErr != nil {
-		return Health{err: healthyErr}
+		return 0, 0, healthyErr
 	} else if totalErr != nil {
-		return Health{err: totalErr}
+		return 0, 0, totalErr
 	} else if len(healthyVect) == 0 || len(totalVect) == 0 {
 		// Missing metrics
-		return Health{}
+		return 0, 0, nil
 	}
-	return Health{
-		HealthyReplicas: int(healthyVect[0].Value),
-		TotalReplicas:   int(totalVect[0].Value)}
+	return int(healthyVect[0].Value), int(totalVect[0].Value), nil
 }
 
 func getServiceMetrics(api v1.API, q *ServiceMetricsQuery) Metrics {

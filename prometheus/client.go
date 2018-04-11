@@ -14,9 +14,17 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
+// ClientInterface for mocks (only mocked function are necessary here)
+type ClientInterface interface {
+	GetServiceHealth(namespace string, servicename string) (int, int, error)
+	GetNamespaceServicesRequestCounters(namespace string, ratesInterval string) MetricsVector
+	GetSourceServices(namespace string, servicename string) (map[string][]string, error)
+}
+
 // Client for Prometheus API.
 // It hides the way we query Prometheus offering a layer with a high level defined API.
 type Client struct {
+	ClientInterface
 	p8s api.Client
 	api v1.API
 }
@@ -89,9 +97,9 @@ func (in *Client) GetServiceMetrics(query *ServiceMetricsQuery) Metrics {
 }
 
 // GetServiceHealth returns the Health related to the provided service identified by its namespace and service name.
-// Health is based on number of healthy replicas versus total number of replicas (using Envoy metrics).
+// Health tuple is [healthy, total, error] (using Envoy metrics).
 // When the health is unavailable, total number of replicas will be 0.
-func (in *Client) GetServiceHealth(namespace string, servicename string) Health {
+func (in *Client) GetServiceHealth(namespace string, servicename string) (int, int, error) {
 	return getServiceHealth(in.api, namespace, servicename)
 }
 
@@ -101,7 +109,7 @@ func (in *Client) GetNamespaceMetrics(query *NamespaceMetricsQuery) Metrics {
 	return getNamespaceMetrics(in.api, query)
 }
 
-// GetNamespaceServicesRequestRates queries Prometheus to fetch request counters
+// GetNamespaceServicesRequestCounters queries Prometheus to fetch request counters
 // for each service, both in and out counters.
 func (in *Client) GetNamespaceServicesRequestCounters(namespace string, ratesInterval string) MetricsVector {
 	return getNamespaceServicesRequestCounters(in.api, namespace, ratesInterval)

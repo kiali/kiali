@@ -26,9 +26,17 @@ var (
 	emptyGetOptions  = meta_v1.GetOptions{}
 )
 
+// IstioClientInterface for mocks (only mocked function are necessary here)
+type IstioClientInterface interface {
+	GetServices(namespaceName string) (*ServiceList, error)
+	GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error)
+	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
+}
+
 // IstioClient is the client struct for Kubernetes and Istio APIs
 // It hides the way it queries each API
 type IstioClient struct {
+	IstioClientInterface
 	k8s   *kube.Clientset
 	istio *rest.RESTClient
 }

@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/services/models"
 )
 
 func IstioRuleList(w http.ResponseWriter, r *http.Request) {
