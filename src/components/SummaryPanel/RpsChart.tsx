@@ -51,7 +51,7 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
       maxRps = sample > maxRps ? sample : maxRps;
       sumRps += +sample;
     }
-    const avgRps = len === 0 ? 0 : sumRps / (len - 1);
+    const avgRps = len < 2 ? 0 : sumRps / (len - 1);
 
     len = dataErrors.length;
     let minErr: number = len > 1 ? +dataErrors[1] : 0;
