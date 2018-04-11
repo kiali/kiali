@@ -12,6 +12,8 @@ import PropTypes from 'prop-types';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import { ServiceHealth, DisplayMode } from '../../components/ServiceHealth/ServiceHealth';
 
+import './ServiceListComponent.css';
+
 type SortField = {
   id: string;
   title: string;
