@@ -3,8 +3,8 @@ import * as API from '../../services/Api';
 
 import graphUtils from '../../utils/graphing';
 import Badge from '../../components/Badge/Badge';
-import { InOutRateTable } from '../../components/SummaryPanel/InOutRateTable';
-import { RpsChart } from '../../components/SummaryPanel/RpsChart';
+import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
+import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import MetricsOptions from '../../types/MetricsOptions';
 

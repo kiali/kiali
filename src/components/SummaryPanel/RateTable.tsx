@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ErrorRatePieChart } from './ErrorRatePieChart';
+import ErrorRatePieChart from './ErrorRatePieChart';
 
 type RateTablePropType = {
   title: string;
@@ -9,7 +9,7 @@ type RateTablePropType = {
   rate5xx: number;
 };
 
-export class RateTable extends React.Component<RateTablePropType, {}> {
+export default class RateTable extends React.Component<RateTablePropType, {}> {
   render() {
     const errRate: number = this.props.rate4xx + this.props.rate5xx;
     const percentErr = this.props.rate === 0 ? 0 : errRate / this.props.rate * 100;

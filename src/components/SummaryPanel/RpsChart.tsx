@@ -1,5 +1,4 @@
 import * as React from 'react';
-
 import { AreaChart } from 'patternfly-react';
 
 type RpsChartTypeProp = {
@@ -8,7 +7,7 @@ type RpsChartTypeProp = {
   dataErrors: [string, number][];
 };
 
-export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
+export default class RpsChart extends React.Component<RpsChartTypeProp, {}> {
   constructor(props: RpsChartTypeProp) {
     super(props);
   }

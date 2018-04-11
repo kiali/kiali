@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Badge from '../../components/Badge/Badge';
-import { RateTable } from '../../components/SummaryPanel/RateTable';
-import { RpsChart } from '../../components/SummaryPanel/RpsChart';
+import RateTable from '../../components/SummaryPanel/RateTable';
+import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/graphing';
 import * as API from '../../services/Api';

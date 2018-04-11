@@ -1,5 +1,4 @@
 import * as React from 'react';
-
 import { PieChart } from 'patternfly-react';
 
 type ErrorRatePieChartPropType = {
@@ -10,7 +9,7 @@ type ErrorRatePieChartPropType = {
   legendPos?: string; // e.g. right, left
 };
 
-export class ErrorRatePieChart extends React.Component<ErrorRatePieChartPropType, {}> {
+export default class ErrorRatePieChart extends React.Component<ErrorRatePieChartPropType> {
   static defaultProps: ErrorRatePieChartPropType = {
     percentError: 0,
     width: 200,
@@ -18,6 +17,10 @@ export class ErrorRatePieChart extends React.Component<ErrorRatePieChartPropType
     showLegend: true,
     legendPos: 'right'
   };
+
+  constructor(props: ErrorRatePieChartPropType) {
+    super(props);
+  }
 
   render() {
     const successRate: number = 100 - this.props.percentError;
