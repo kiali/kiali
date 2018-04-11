@@ -29,10 +29,12 @@ type ServiceMetricsState = {
   responseSizeOut?: M.Histogram;
   grafanaLinkIn?: string;
   grafanaLinkOut?: string;
-  pollMetrics?: any;
+  pollMetrics?: NodeJS.Timer;
 };
 
 class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
+  options: MetricsOptions;
+
   constructor(props: ServiceId) {
     super(props);
     this.state = {
@@ -44,17 +46,25 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     this.getGrafanaInfo();
   }
 
-  onOptionsChanged = (options: MetricsOptions, pollInterval: number) => {
-    clearInterval(this.state.pollMetrics);
-    this.fetchMetrics(options);
-    if (pollInterval !== undefined) {
-      if (pollInterval > 0) {
-        this.setState({ pollMetrics: setInterval(this.fetchMetrics, pollInterval, options) });
-      }
+  componentWillUnmount() {
+    if (this.state.pollMetrics) {
+      clearInterval(this.state.pollMetrics);
     }
+  }
+
+  onPollIntervalChanged = (pollInterval: number) => {
+    let newRefInterval: NodeJS.Timer | undefined = undefined;
+    if (this.state.pollMetrics) {
+      clearInterval(this.state.pollMetrics);
+    }
+    if (pollInterval > 0) {
+      newRefInterval = setInterval(this.fetchMetrics, pollInterval, this.options);
+    }
+    this.setState({ pollMetrics: newRefInterval });
   };
 
   fetchMetrics = (options: MetricsOptions) => {
+    this.options = options;
     options.filters = ['request_count', 'request_size', 'request_duration', 'response_size'];
     this.setState({ loading: true });
     API.getServiceMetrics(this.props.namespace, this.props.service, options)
@@ -177,7 +187,11 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     return (
       <div>
         {this.state.alertDetails && <Alert onDismiss={this.dismissAlert}>{this.state.alertDetails}</Alert>}
-        <MetricsOptionsBar onOptionsChanged={this.onOptionsChanged} loading={this.state.loading} />
+        <MetricsOptionsBar
+          onOptionsChanged={this.fetchMetrics}
+          onPollIntervalChanged={this.onPollIntervalChanged}
+          loading={this.state.loading}
+        />
         {this.renderMetrics()}
       </div>
     );

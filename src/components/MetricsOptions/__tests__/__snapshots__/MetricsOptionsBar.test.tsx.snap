@@ -17,6 +17,14 @@ ShallowWrapper {
               "rateInterval": "1m",
               "step": 20,
             },
+          ],
+        ],
+      }
+    }
+    onPollIntervalChanged={
+      [MockFunction] {
+        "calls": Array [
+          Array [
             5000,
           ],
         ],

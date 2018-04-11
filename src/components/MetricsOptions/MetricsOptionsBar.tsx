@@ -5,7 +5,8 @@ import ValueSelectHelper from './ValueSelectHelper';
 import MetricsOptions from '../../types/MetricsOptions';
 
 interface Props {
-  onOptionsChanged: (opts: MetricsOptions, interval: number) => void;
+  onOptionsChanged: (opts: MetricsOptions) => void;
+  onPollIntervalChanged: (interval: number) => void;
   loading?: boolean;
 }
 
@@ -100,6 +101,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
   componentDidMount() {
     // Init state upstream
     this.reportOptions();
+    this.props.onPollIntervalChanged(this.state.pollInterval);
   }
 
   onRateIntervalChanged(key: string) {
@@ -109,9 +111,10 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
   }
 
   onPollIntervalChanged(key: number) {
-    this.setState({ pollInterval: key }, () => {
-      this.reportOptions();
-    });
+    // We use a specific handler so that changing poll interval doesn't trigger a metrics refresh in parent
+    // Especially useful when pausing
+    this.props.onPollIntervalChanged(key);
+    this.setState({ pollInterval: key });
   }
 
   onDurationChanged(key: number) {
@@ -130,17 +133,14 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     // State-to-options converter (removes unnecessary properties)
     const labelsIn = this.state.groupByLabels.map(lbl => MetricsOptionsBar.GroupByLabelOptions[lbl].labelIn);
     const labelsOut = this.state.groupByLabels.map(lbl => MetricsOptionsBar.GroupByLabelOptions[lbl].labelOut);
-    this.props.onOptionsChanged(
-      {
-        rateInterval: this.state.rateInterval,
-        rateFunc: 'irate',
-        duration: this.state.duration,
-        step: this.state.duration / this.state.ticks,
-        byLabelsIn: labelsIn,
-        byLabelsOut: labelsOut
-      },
-      this.state.pollInterval
-    );
+    this.props.onOptionsChanged({
+      rateInterval: this.state.rateInterval,
+      rateFunc: 'irate',
+      duration: this.state.duration,
+      step: this.state.duration / this.state.ticks,
+      byLabelsIn: labelsIn,
+      byLabelsOut: labelsOut
+    });
   }
 
   changedGroupByLabel(labels: string[]) {

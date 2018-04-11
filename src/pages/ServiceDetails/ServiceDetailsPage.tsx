@@ -96,7 +96,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
               <TabPane eventKey={1}>
                 <ServiceInfo namespace={this.props.match.params.namespace} service={this.props.match.params.service} />
               </TabPane>
-              <TabPane eventKey={2}>
+              <TabPane eventKey={2} mountOnEnter={true} unmountOnExit={true}>
                 <ServiceMetrics
                   namespace={this.props.match.params.namespace}
                   service={this.props.match.params.service}
