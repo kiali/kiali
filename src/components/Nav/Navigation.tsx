@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Route, Redirect } from 'react-router-dom';
 
 import SwitchErrorBoundary from '../SwitchErrorBoundary/SwitchErrorBoundary';
+import PfContainerNavVertical from '../Pf/PfContainerNavVertical';
 
 import IstioRulesPage from '../../pages/IstioRulesList/IstioRuleListPage';
 import IstioRuleDetailsPage from '../../pages/IstioRuleDetails/IstioRuleDetailsPage';
@@ -109,9 +110,9 @@ class Navigation extends React.Component<PropsType, StateType> {
         </VerticalNav>
         <SwitchErrorBoundary
           fallBackComponent={() => (
-            <div className="container-fluid container-pf-nav-pf-vertical">
+            <PfContainerNavVertical>
               <h2>Something wrong happened, try refreshing or navigate to other section</h2>
-            </div>
+            </PfContainerNavVertical>
           )}
         >
           <Route path="/service-graph/:namespace" component={ServiceGraphPage} />
