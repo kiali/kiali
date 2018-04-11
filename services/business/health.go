@@ -41,7 +41,10 @@ func (in *HealthService) getServiceHealthFromDeployments(namespace, service stri
 func castDeploymentsStatuses(deployments []v1beta1.Deployment) []models.DeploymentStatus {
 	statuses := make([]models.DeploymentStatus, len(deployments))
 	for i, deployment := range deployments {
-		statuses[i] = models.DeploymentStatus{Replicas: deployment.Status.Replicas, AvailableReplicas: deployment.Status.AvailableReplicas}
+		statuses[i] = models.DeploymentStatus{
+			Name:              deployment.Name,
+			Replicas:          deployment.Status.Replicas,
+			AvailableReplicas: deployment.Status.AvailableReplicas}
 	}
 	return statuses
 }
