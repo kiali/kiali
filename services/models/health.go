@@ -14,6 +14,7 @@ type EnvoyHealth struct {
 
 // DeploymentStatus gives the available / total replicas in a deployment of a pod
 type DeploymentStatus struct {
-	Replicas          int32 `json:"replicas"`
-	AvailableReplicas int32 `json:"available"`
+	Name              string `json:"name"`
+	Replicas          int32  `json:"replicas"`
+	AvailableReplicas int32  `json:"available"`
 }
