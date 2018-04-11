@@ -10,12 +10,12 @@ const lastOptionsChanged = () => {
 
 describe('MetricsOptionsBar', () => {
   it('renders initial layout', () => {
-    const wrapper = shallow(<MetricsOptionsBar onOptionsChanged={jest.fn()} />);
+    const wrapper = shallow(<MetricsOptionsBar onOptionsChanged={jest.fn()} onPollIntervalChanged={jest.fn()} />);
     expect(wrapper).toMatchSnapshot();
   });
 
   it('changes trigger parent callback', () => {
-    const wrapper = mount(<MetricsOptionsBar onOptionsChanged={optionsChanged} />);
+    const wrapper = mount(<MetricsOptionsBar onOptionsChanged={optionsChanged} onPollIntervalChanged={jest.fn()} />);
     expect(optionsChanged).toHaveBeenCalledTimes(1);
     const opts = lastOptionsChanged();
     // Step = duration / ticks
