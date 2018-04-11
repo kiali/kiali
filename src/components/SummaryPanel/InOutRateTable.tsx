@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ErrorRatePieChart } from './ErrorRatePieChart';
+import ErrorRatePieChart from './ErrorRatePieChart';
 
 type InOutRateTablePropType = {
   title: string;
@@ -13,7 +13,7 @@ type InOutRateTablePropType = {
   outRate5xx: number;
 };
 
-export class InOutRateTable extends React.Component<InOutRateTablePropType, {}> {
+export default class InOutRateTable extends React.Component<InOutRateTablePropType, {}> {
   render() {
     const inErrRate: number = this.props.inRate4xx + this.props.inRate5xx;
     const outErrRate: number = this.props.outRate4xx + this.props.outRate5xx;

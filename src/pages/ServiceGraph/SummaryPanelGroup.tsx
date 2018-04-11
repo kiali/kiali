@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Badge from '../../components/Badge/Badge';
-import { InOutRateTable } from '../../components/SummaryPanel/InOutRateTable';
-import { RpsChart } from '../../components/SummaryPanel/RpsChart';
+import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
+import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
