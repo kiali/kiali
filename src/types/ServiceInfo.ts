@@ -17,6 +17,7 @@ export interface Port {
 
 export interface Deployment {
   name: string;
+  template_annotations?: any;
   labels?: Map<string, string>;
   created_at: string;
   replicas: number;
@@ -199,3 +200,15 @@ export interface DestinationPolicy {
   loadbalancing: LoadBalancing;
   circuitBreaker: CircuitBreaker;
 }
+
+export const HasIstioSidecar = (deployments: Deployment[]) => {
+  if (deployments && deployments.length > 0) {
+    for (let i = 0; i < deployments.length; i++) {
+      let annotations = deployments[i].template_annotations;
+      if (annotations && annotations['sidecar.istio.io/status']) {
+        return true;
+      }
+    }
+  }
+  return false;
+};

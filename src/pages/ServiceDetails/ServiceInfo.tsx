@@ -5,8 +5,7 @@ import ServiceInfoDeployments from './ServiceInfo/ServiceInfoDeployments';
 import ServiceInfoRouteRules from './ServiceInfo/ServiceInfoRouteRules';
 import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
 import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
-
-import { Endpoints, Deployment, Port, RouteRule, DestinationPolicy } from '../../types/ServiceInfo';
+import { Endpoints, Deployment, Port, RouteRule, DestinationPolicy, HasIstioSidecar } from '../../types/ServiceInfo';
 import { Health } from '../../types/Health';
 import * as API from '../../services/Api';
 import { ToastNotification, ToastNotificationList, Col, Row } from 'patternfly-react';
@@ -18,6 +17,7 @@ type ServiceInfoState = {
   ip: string;
   ports?: Port[];
   endpoints?: Endpoints[];
+  istio_sidecar: boolean;
   deployments?: Deployment[];
   routeRules?: RouteRule[];
   destinationPolicies?: DestinationPolicy[];
@@ -36,6 +36,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
       type: '',
       ip: '',
       ports: [],
+      istio_sidecar: false,
       deployments: [],
       routeRules: [],
       dependencies: new Map(),
@@ -63,6 +64,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
           type: data.type,
           ports: data.ports,
           endpoints: data.endpoints,
+          istio_sidecar: HasIstioSidecar(data.deployments),
           deployments: data.deployments,
           dependencies: data.dependencies,
           routeRules: this.sortRouteRulesByPrecedence(data.route_rules),
@@ -111,6 +113,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
             <Col xs={12} sm={12} md={12} lg={12}>
               <ServiceInfoDescription
                 name={this.state.name}
+                istio_sidecar={this.state.istio_sidecar}
                 labels={this.state.labels}
                 ports={this.state.ports}
                 type={this.state.type}
