@@ -103,12 +103,6 @@ ShallowWrapper {
                  
                 <Icon
                   name="warning-triangle-o"
-                  style={
-                    Object {
-                      "fontSize": "12px",
-                    }
-                  }
-                  title=""
                   type="pf"
                 />
               </div>
@@ -155,12 +149,6 @@ ShallowWrapper {
                  
                 <Icon
                   name="ok"
-                  style={
-                    Object {
-                      "fontSize": "12px",
-                    }
-                  }
-                  title=""
                   type="pf"
                 />
               </div>
@@ -207,12 +195,6 @@ ShallowWrapper {
                  
                 <Icon
                   name="ok"
-                  style={
-                    Object {
-                      "fontSize": "12px",
-                    }
-                  }
-                  title=""
                   type="pf"
                 />
               </div>
@@ -275,12 +257,6 @@ ShallowWrapper {
                    
                   <Icon
                     name="warning-triangle-o"
-                    style={
-                      Object {
-                        "fontSize": "12px",
-                      }
-                    }
-                    title=""
                     type="pf"
                   />
                 </div>
@@ -327,12 +303,6 @@ ShallowWrapper {
                    
                   <Icon
                     name="ok"
-                    style={
-                      Object {
-                        "fontSize": "12px",
-                      }
-                    }
-                    title=""
                     type="pf"
                   />
                 </div>
@@ -379,12 +349,6 @@ ShallowWrapper {
                    
                   <Icon
                     name="ok"
-                    style={
-                      Object {
-                        "fontSize": "12px",
-                      }
-                    }
-                    title=""
                     type="pf"
                   />
                 </div>
