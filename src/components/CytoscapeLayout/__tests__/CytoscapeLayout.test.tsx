@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 
 import ReactCytoscape from '../ReactCytoscape';
-import CytoscapeLayout from '../CytoscapeLayout';
+import { CytoscapeLayout } from '../CytoscapeLayout';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
 import { Duration, Layout, BadgeStatus } from '../../../types/GraphFilter';
 
@@ -18,7 +18,7 @@ const testReadyHandler = () => {
   console.log('ready');
 };
 
-describe('CytographLayout component test', () => {
+describe('CytoscapeLayout component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
     const myDuration: Duration = { value: 300 };
@@ -34,6 +34,8 @@ describe('CytographLayout component test', () => {
         onReady={testReadyHandler}
         refresh={testClickHandler}
         badgeStatus={badgeStatus}
+        showEdgeLabels={false}
+        showNodeLabels={true}
       />
     );
     const cytoscapeWrapper = wrapper.find(ReactCytoscape);

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import { Spinner } from 'patternfly-react';
 import PropTypes from 'prop-types';
 
@@ -9,6 +10,7 @@ import EmptyGraphLayout from './EmptyGraphLayout';
 
 import { GraphParamsType } from '../../types/Graph';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
+import { KialiAppState } from '../../store/Store';
 import * as GraphBadge from './graphs/GraphBadge';
 
 type CytoscapeLayoutType = {
@@ -16,6 +18,8 @@ type CytoscapeLayoutType = {
   onClick: (event: CytoscapeClickEvent) => void;
   onReady: (event: CytoscapeBaseEvent) => void;
   isLoading?: boolean;
+  showEdgeLabels: boolean;
+  showNodeLabels: boolean;
   isReady?: boolean;
   refresh: any;
 };
@@ -33,7 +37,9 @@ export interface CytoscapeClickEvent extends CytoscapeBaseEvent {}
 export interface CytoscapeMouseInEvent extends CytoscapeBaseEvent {}
 export interface CytoscapeMouseOutEvent extends CytoscapeBaseEvent {}
 
-export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, CytoscapeLayoutState> {
+// @todo: Move this class to 'containers' folder -- but it effects many other things
+// exporting this class for testing
+export class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, CytoscapeLayoutState> {
   static contextTypes = {
     router: PropTypes.object
   };
@@ -51,9 +57,31 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     return (
       this.props.isLoading !== nextProps.isLoading ||
       this.props.graphLayout !== nextProps.graphLayout ||
-      this.props.badgeStatus !== nextProps.badgeStatus
+      this.props.badgeStatus !== nextProps.badgeStatus ||
+      this.props.showEdgeLabels !== nextProps.showEdgeLabels ||
+      this.props.showNodeLabels !== nextProps.showNodeLabels
     );
   }
+
+  turnEdgeLabelsTo = (value: boolean) => {
+    let elements = this.props.elements;
+    if (elements && elements.edges) {
+      // Mutate the edges inplace
+      elements.edges.forEach(edge => {
+        edge.data.showEdgeLabels = value;
+      });
+    }
+  };
+
+  turnNodeLabelsTo = (value: boolean) => {
+    let elements = this.props.elements;
+    if (elements && elements.nodes) {
+      // Mutate the nodes inplace
+      elements.nodes.forEach(node => {
+        node.data.showNodeLabels = value;
+      });
+    }
+  };
 
   cyRef(cy: any) {
     this.cy = cy;
@@ -127,6 +155,10 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
   render() {
     const layout = LayoutDictionary.getLayout(this.props.graphLayout);
+
+    this.turnEdgeLabelsTo(this.props.showEdgeLabels);
+    this.turnNodeLabelsTo(this.props.showNodeLabels);
+
     return (
       <div id="cytoscape-container" style={{ marginRight: '25em', height: '100%' }}>
         <Spinner loading={this.props.isLoading}>
@@ -164,3 +196,11 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     this.graphHighlighter.onMouseOut(event);
   };
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  showEdgeLabels: state.serviceGraphState.showEdgeLabels,
+  showNodeLabels: state.serviceGraphState.showNodeLabels
+});
+
+const CytoscapeLayoutConnected = connect(mapStateToProps, null)(CytoscapeLayout);
+export default CytoscapeLayoutConnected;
