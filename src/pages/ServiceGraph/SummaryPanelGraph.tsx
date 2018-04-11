@@ -49,13 +49,15 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
   render() {
     const cy = this.props.data.summaryTarget;
+    if (!cy) {
+      return null;
+    }
+
     let numNodes = cy
-      ? cy
-          .nodes()
-          .filter('[!groupBy]')
-          .size()
-      : 0;
-    let numEdges = cy ? cy.edges().size() : 0;
+      .nodes()
+      .filter('[!groupBy]')
+      .size();
+    let numEdges = cy.edges().size();
     let rate = 0;
     let rate3xx = 0;
     let rate4xx = 0;
@@ -63,14 +65,12 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     let safeRate = (s: string) => {
       return s === undefined ? 0.0 : parseFloat(s);
     };
-    if (cy) {
-      cy.edges().forEach(edge => {
-        rate += +safeRate(edge.data('rate'));
-        rate3xx += +safeRate(edge.data('rate3XX'));
-        rate4xx += +safeRate(edge.data('rate4XX'));
-        rate5xx += +safeRate(edge.data('rate5XX'));
-      });
-    }
+    cy.edges().forEach(edge => {
+      rate += +safeRate(edge.data('rate'));
+      rate3xx += +safeRate(edge.data('rate3XX'));
+      rate4xx += +safeRate(edge.data('rate4XX'));
+      rate5xx += +safeRate(edge.data('rate5XX'));
+    });
     const servicesLink = (
       <Link to="../services" onClick={this.updateServicesFilter}>
         {this.props.namespace}
@@ -81,12 +81,9 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
         <div className="panel-heading">
           Namespace: {servicesLink}
-          <div hidden={!cy}>{this.renderLabels(numNodes.toString(), numEdges.toString())}</div>
+          <div>{this.renderLabels(numNodes.toString(), numEdges.toString())}</div>
         </div>
-        <div className="panel-body" hidden={cy}>
-          <h3>Click graph for details...</h3>
-        </div>
-        <div className="panel-body" hidden={!cy}>
+        <div className="panel-body">
           <div>
             <RateTable
               title="Traffic (requests per second):"
