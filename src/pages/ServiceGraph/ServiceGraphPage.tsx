@@ -199,12 +199,18 @@ export default class ServiceGraphPage extends React.Component<
         const responseData = response['data'];
         const elements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
         const timestamp = responseData && responseData.timestamp ? responseData.timestamp : '';
-        this.setState({ graphData: elements, graphTimestamp: timestamp, isLoading: false });
+        this.setState({
+          graphData: elements,
+          graphTimestamp: timestamp,
+          summaryData: { summaryType: 'graph', summaryTarget: null },
+          isLoading: false
+        });
       })
       .catch(error => {
         this.setState({
           graphData: EMPTY_GRAPH_DATA,
           graphTimestamp: new Date().toLocaleString(),
+          summaryData: { summaryType: 'graph', summaryTarget: null },
           isLoading: false
         });
         console.error(error);
