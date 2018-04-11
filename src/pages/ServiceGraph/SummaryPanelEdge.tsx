@@ -53,15 +53,17 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const dest = edge.target();
     const destService = dest.data('service');
     const destVersion = dest.data('version');
-    const destSplit = dest.data('service').split('.');
+    const destSplit = destService.split('.');
     const destServiceName = destSplit[0];
     const destNamespace = destSplit[1];
     const rate = this.safeRate(edge.data('rate'));
     const rate3xx = this.safeRate(edge.data('rate3XX'));
     const rate4xx = this.safeRate(edge.data('rate4XX'));
     const rate5xx = this.safeRate(edge.data('rate5XX'));
-    const sourceLink = <a href={`../namespaces/${sourceNamespace}/services/${sourceService}`}>{sourceServiceName}</a>;
-    const destLink = <a href={`../namespaces/${destNamespace}/services/${destService}`}>{destServiceName}</a>;
+    const sourceLink = (
+      <a href={`../namespaces/${sourceNamespace}/services/${sourceServiceName}`}>{sourceServiceName}</a>
+    );
+    const destLink = <a href={`../namespaces/${destNamespace}/services/${destServiceName}`}>{destServiceName}</a>;
 
     const isUnknown = sourceServiceName === 'unknown';
     return (
