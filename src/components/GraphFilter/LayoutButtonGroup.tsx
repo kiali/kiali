@@ -3,6 +3,7 @@ import { ButtonGroup, Button } from 'patternfly-react';
 import PropTypes from 'prop-types';
 
 type LayoutButtonGroupProps = {
+  disabled: boolean;
   initialLayout: string;
   onClick: PropTypes.func;
 };
@@ -27,19 +28,24 @@ export class LayoutButtonGroup extends React.Component<LayoutButtonGroupProps, L
   render() {
     return (
       <ButtonGroup>
-        <Button onClick={this.layout} active={this.state.current === 'breadthfirst'} id="breadthfirst">
+        <Button
+          disabled={this.props.disabled}
+          onClick={this.layout}
+          active={this.state.current === 'breadthfirst'}
+          id="breadthfirst"
+        >
           Breadthfirst
         </Button>
-        <Button onClick={this.layout} active={this.state.current === 'cola'} id="cola">
+        <Button disabled={this.props.disabled} onClick={this.layout} active={this.state.current === 'cola'} id="cola">
           Cola
         </Button>
-        <Button onClick={this.layout} active={this.state.current === 'cose'} id="cose">
+        <Button disabled={this.props.disabled} onClick={this.layout} active={this.state.current === 'cose'} id="cose">
           Cose
         </Button>
-        <Button onClick={this.layout} active={this.state.current === 'dagre'} id="dagre">
+        <Button disabled={this.props.disabled} onClick={this.layout} active={this.state.current === 'dagre'} id="dagre">
           Dagre
         </Button>
-        <Button onClick={this.layout} active={this.state.current === 'klay'} id="klay">
+        <Button disabled={this.props.disabled} onClick={this.layout} active={this.state.current === 'klay'} id="klay">
           Klay
         </Button>
       </ButtonGroup>
