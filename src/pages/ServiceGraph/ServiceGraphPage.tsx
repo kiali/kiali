@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-import { Button } from 'patternfly-react';
 import { PropTypes } from 'prop-types';
 
 import Namespace from '../../types/Namespace';
@@ -10,7 +9,7 @@ import { Duration, Layout } from '../../types/GraphFilter';
 import SummaryPanel from './SummaryPanel';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
 import * as LayoutDictionary from '../../components/CytoscapeLayout/graphs/LayoutDictionary';
-import { GraphFilter } from '../../components/GraphFilter/GraphFilter';
+import GraphFilter from '../../components/GraphFilter/GraphFilter';
 import * as QueryOptions from '../../components/GraphFilter/QueryOptions';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
 import PfHeader from '../../components/Pf/PfHeader';
@@ -132,6 +131,10 @@ export default class ServiceGraphPage extends React.Component<
     }
   };
 
+  handleRefreshClick = () => {
+    this.loadGraphDataFromBackend();
+  };
+
   render() {
     return (
       <PfContainerNavVertical>
@@ -143,15 +146,16 @@ export default class ServiceGraphPage extends React.Component<
             onDismiss={this.dismissAlert}
           />
           <GraphFilter
+            disabled={this.state.isLoading}
             onLayoutChange={this.handleLayoutChange}
             onFilterChange={this.handleFilterChange}
             onNamespaceChange={this.handleNamespaceChange}
+            onRefresh={this.handleRefreshClick}
             onError={this.handleError}
             activeNamespace={this.state.params.namespace}
             activeLayout={this.state.params.graphLayout}
             activeDuration={this.state.params.graphDuration}
           />
-          <Button onClick={this.onRefreshButtonClick}>Refresh</Button>
         </PfHeader>
         <div style={{ position: 'relative' }}>
           <CytoscapeLayout
@@ -161,7 +165,7 @@ export default class ServiceGraphPage extends React.Component<
             elements={this.state.graphData}
             onClick={this.handleGraphClick}
             onReady={this.handleReady}
-            refresh={this.onRefreshButtonClick}
+            refresh={this.handleRefreshClick}
           />
           <SummaryPanel
             data={this.state.summaryData}
@@ -195,10 +199,6 @@ export default class ServiceGraphPage extends React.Component<
 
   /** Update browser address bar  */
   navigate = newUrl => this.context.router.history.push(newUrl);
-
-  onRefreshButtonClick = event => {
-    this.loadGraphDataFromBackend();
-  };
 
   /** Fetch graph data */
   loadGraphDataFromBackend = (namespace?: Namespace, graphDuration?: Duration) => {
