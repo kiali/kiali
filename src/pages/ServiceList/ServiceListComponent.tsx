@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Icon, ListView, ListViewItem, ListViewIcon, Sort, DropdownButton, MenuItem } from 'patternfly-react';
+import { ListView, ListViewItem, ListViewIcon, Sort } from 'patternfly-react';
 import { Link } from 'react-router-dom';
 import { NamespaceFilter, NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { Paginator } from 'patternfly-react';
@@ -7,18 +7,15 @@ import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
-import { IstioLogo, ServiceItem, ServiceList } from '../../types/ServiceListComponent';
+import { IstioLogo, ServiceItem, ServiceList, SortField } from '../../types/ServiceListComponent';
 import PropTypes from 'prop-types';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
+import ServiceErrorRate from './ServiceErrorRate';
+import ServiceItemComparer from './ServiceItemComparer';
+import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 
 import './ServiceListComponent.css';
-
-type SortField = {
-  id: string;
-  title: string;
-  isNumeric: boolean;
-};
 
 const sortFields: SortField[] = [
   {
@@ -73,8 +70,6 @@ type ServiceListComponentProps = {
 };
 
 const perPageOptions: number[] = [5, 10, 15];
-const WARNING_THRESHOLD = 0.0;
-const ERROR_THRESHOLD = 0.2;
 
 class ServiceListComponent extends React.Component<ServiceListComponentProps, ServiceListComponentState> {
   constructor(props: ServiceListComponentProps) {
@@ -281,39 +276,8 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   }
 
   sortServices(services: ServiceItem[], sortField: SortField, isAscending: boolean): ServiceItem[] {
-    let sorted: ServiceItem[] = services.sort((a: ServiceItem, b: ServiceItem) => {
-      let sortValue = -1;
-      if (sortField.id === 'namespace') {
-        sortValue = a.namespace.localeCompare(b.namespace);
-        if (sortValue === 0) {
-          sortValue = a.servicename.localeCompare(b.servicename);
-        }
-      } else if (sortField.id === 'istio_sidecar') {
-        // Special boolean value, Deployed values first
-        if (a.istio_sidecar && !b.istio_sidecar) {
-          sortValue = -1;
-        } else if (!a.istio_sidecar && b.istio_sidecar) {
-          sortValue = 1;
-        } else {
-          sortValue = a.servicename.localeCompare(b.servicename);
-        }
-      } else {
-        if (sortField.isNumeric) {
-          // Right now, "Error Rate" is the only numeric filter.
-          if (a[sortField.id] > b[sortField.id]) {
-            sortValue = 1;
-          } else if (a[sortField.id] < b[sortField.id]) {
-            sortValue = -1;
-          } else {
-            sortValue = 0;
-          }
-        } else {
-          sortValue = a[sortField.id].localeCompare(b[sortField.id]);
-        }
-      }
-      return isAscending ? sortValue : sortValue * -1;
-    });
-    return sorted;
+    const comparer = new ServiceItemComparer(sortField, isAscending);
+    return services.sort(comparer.compareFunction);
   }
 
   render() {
@@ -333,16 +297,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
               <HealthIndicator health={serviceItem.health} mode={DisplayMode.SMALL} />
             </td>
             <td>
-              <strong>Error rate: </strong>
-              {serviceItem.request_count > 0 ? (serviceItem.error_rate * 100).toFixed(2) + '%' : '(No requests)'}&nbsp;
-              <Icon
-                type="pf"
-                name={
-                  serviceItem.error_rate > ERROR_THRESHOLD
-                    ? 'error-circle-o'
-                    : serviceItem.error_rate > WARNING_THRESHOLD ? 'warning-triangle-o' : 'ok'
-                }
-              />
+              <ServiceErrorRate service={serviceItem} />
             </td>
           </tr>
         </table>
@@ -377,10 +332,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     if (this.state.loading) {
       serviceListComponent = <div className="spinner spinner-sm left-spinner" />;
     } else {
-      let rateIntervalSelected = MetricsOptionsBar.RateIntervals.find(el => {
-        return el[0] === this.state.rateInterval;
-      });
-
       serviceListComponent = (
         <div>
           <NamespaceFilter
@@ -400,20 +351,10 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
                 onClick={this.updateSortDirection}
               />
             </Sort>
-            <div className="form-group">
-              <label>Rate Interval:&nbsp;</label>
-              <DropdownButton
-                title={'Last ' + rateIntervalSelected![1]}
-                onSelect={this.rateIntervalChangedHandler}
-                id="rateIntervalDropDown"
-              >
-                {MetricsOptionsBar.RateIntervals.map(r => (
-                  <MenuItem key={r[0]} active={r[0] === this.state.rateInterval} eventKey={r[0]}>
-                    Last {r[1]}
-                  </MenuItem>
-                ))}
-              </DropdownButton>
-            </div>
+            <RateIntervalToolbarItem
+              rateIntervalSelected={this.state.rateInterval}
+              onRateIntervalChanged={this.rateIntervalChangedHandler}
+            />
           </NamespaceFilter>
           <ListView>{serviceList}</ListView>
           <Paginator
