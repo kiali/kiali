@@ -15,6 +15,7 @@ export class GraphStyles {
           'background-color': '#f9d67a', // pf-gold-200
           'border-width': '1px',
           'border-color': '#030303', // pf-black
+          'border-style': 'data(style)',
           'font-size': '10px',
           'text-valign': 'center',
           'text-halign': 'center',
