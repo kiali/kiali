@@ -34,11 +34,12 @@ type NodeData struct {
 	// App Fields (not required by Cytoscape)
 	Service string `json:"service"`
 	Version string `json:"version,omitempty"`
-	GroupBy string `json:"groupBy,omitempty"` // compound nodes set to one of: [ 'version' ]
-	Rate    string `json:"rate,omitempty"`    // edge aggregate
-	Rate3xx string `json:"rate3XX,omitempty"` // edge aggregate
-	Rate4xx string `json:"rate4XX,omitempty"` // edge aggregate
-	Rate5xx string `json:"rate5XX,omitempty"` // edge aggregate
+	GroupBy string `json:"groupBy,omitempty"`           // compound nodes set to one of: [ 'version' ]
+	Rate    string `json:"rate,omitempty"`              // edge aggregate
+	Rate3xx string `json:"rate3XX,omitempty"`           // edge aggregate
+	Rate4xx string `json:"rate4XX,omitempty"`           // edge aggregate
+	Rate5xx string `json:"rate5XX,omitempty"`           // edge aggregate
+	HasCB   string `json:"hasCircuitBreaker,omitempty"` // true if a CB is in front of the service
 
 	// reserved for future
 	// LinkPromGraph string `json:"link_prom_graph,omitempty"`
@@ -150,6 +151,12 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 			Style:   style,
 			// LinkPromGraph: sn.Metadata["link_prom_graph"].(string),
 		}
+
+		// node may have a circuit breaker
+		if cb, ok := sn.Metadata["hasCircuitBreaker"]; ok {
+			nd.HasCB = cb.(string)
+		}
+
 		nw := NodeWrapper{
 			Data: nd,
 		}
