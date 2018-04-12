@@ -10,6 +10,7 @@ type AboutUIModalState = {
   showModal: boolean;
   loadingVersions: boolean;
   versions: Array<AboutUIModalService>;
+  products: Array<AboutUIModalProduct>;
 };
 
 type AboutUIModalService = {
@@ -17,22 +18,31 @@ type AboutUIModalService = {
   version: string;
 };
 
+type AboutUIModalProduct = {
+  name: string;
+  version: string;
+  full_version: string;
+};
+
 const getStatus = () => {
   return API.GetStatus().then(response => {
     const rawStatus = response['data'];
-    return [
-      {
-        name: 'kiali',
-        version: `${rawStatus[KIALI_CORE_VERSION]} (${rawStatus[KIALI_CORE_COMMIT_HASH]})`
-      }
-    ];
+    return {
+      kiali: [
+        {
+          name: 'kiali',
+          version: `${rawStatus['status'][KIALI_CORE_VERSION]} (${rawStatus['status'][KIALI_CORE_COMMIT_HASH]})`
+        }
+      ],
+      products: rawStatus['products']
+    };
   });
 };
 
 class AboutUIModal extends React.Component<Object, AboutUIModalState> {
   constructor(props: any) {
     super(props);
-    this.state = { showModal: false, loadingVersions: false, versions: [] };
+    this.state = { showModal: false, loadingVersions: false, versions: [], products: [] };
   }
 
   open = () => {
@@ -42,18 +52,20 @@ class AboutUIModal extends React.Component<Object, AboutUIModalState> {
           status => {
             this.setState({
               loadingVersions: false,
-              versions: status
+              versions: status['kiali'],
+              products: status['products']
             });
           },
           error => {
             console.log(error);
             this.setState({
               loadingVersions: false,
-              versions: []
+              versions: [],
+              products: []
             });
           }
         );
-        return { showModal: true, loadingVersions: true, versions: [] };
+        return { showModal: true, loadingVersions: true, versions: [], products: [] };
       }
       return state;
     });
@@ -81,6 +93,10 @@ class AboutUIModal extends React.Component<Object, AboutUIModalState> {
           <Spinner style={{ marginTop: '15px' }} loading={this.state.loadingVersions} size="lg" inverse={true}>
             {this.state.versions.map(service => (
               <AboutModal.VersionItem key={service.name} label={service.name} versionText={service.version} />
+            ))}
+            <h3>Products </h3>
+            {this.state.products.map(product => (
+              <AboutModal.VersionItem key={product.name} label={product.name} versionText={product.version} />
             ))}
           </Spinner>
         </AboutModal.Versions>
