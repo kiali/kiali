@@ -1,0 +1,505 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RateIntervalToolbarItem renders correctly 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <RateIntervalToolbarItem
+    rateIntervalSelected="10m"
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <label
+          style={
+            Object {
+              "paddingRight": "0.5em",
+            }
+          }
+        >
+          Rate Interval:
+        </label>,
+        <DropdownButton
+          id="rateIntervalDropDown"
+          onSelect={undefined}
+          title="Last 10 minutes"
+        >
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="1m"
+            header={false}
+          >
+            Last 
+            1 minute
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="5m"
+            header={false}
+          >
+            Last 
+            5 minutes
+          </MenuItem>
+          <MenuItem
+            active={true}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="10m"
+            header={false}
+          >
+            Last 
+            10 minutes
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="30m"
+            header={false}
+          >
+            Last 
+            30 minutes
+          </MenuItem>
+        </DropdownButton>,
+      ],
+      "className": "form-group",
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": "Rate Interval:",
+          "style": Object {
+            "paddingRight": "0.5em",
+          },
+        },
+        "ref": null,
+        "rendered": "Rate Interval:",
+        "type": "label",
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "children": Array [
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="1m"
+              header={false}
+            >
+              Last 
+              1 minute
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="5m"
+              header={false}
+            >
+              Last 
+              5 minutes
+            </MenuItem>,
+            <MenuItem
+              active={true}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="10m"
+              header={false}
+            >
+              Last 
+              10 minutes
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="30m"
+              header={false}
+            >
+              Last 
+              30 minutes
+            </MenuItem>,
+          ],
+          "id": "rateIntervalDropDown",
+          "onSelect": undefined,
+          "title": "Last 10 minutes",
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": "1m",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": Array [
+                "Last ",
+                "1 minute",
+              ],
+              "disabled": false,
+              "divider": false,
+              "eventKey": "1m",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": Array [
+              "Last ",
+              "1 minute",
+            ],
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "5m",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": Array [
+                "Last ",
+                "5 minutes",
+              ],
+              "disabled": false,
+              "divider": false,
+              "eventKey": "5m",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": Array [
+              "Last ",
+              "5 minutes",
+            ],
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "10m",
+            "nodeType": "class",
+            "props": Object {
+              "active": true,
+              "bsClass": "dropdown",
+              "children": Array [
+                "Last ",
+                "10 minutes",
+              ],
+              "disabled": false,
+              "divider": false,
+              "eventKey": "10m",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": Array [
+              "Last ",
+              "10 minutes",
+            ],
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "30m",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": Array [
+                "Last ",
+                "30 minutes",
+              ],
+              "disabled": false,
+              "divider": false,
+              "eventKey": "30m",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": Array [
+              "Last ",
+              "30 minutes",
+            ],
+            "type": [Function],
+          },
+        ],
+        "type": [Function],
+      },
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <label
+            style={
+              Object {
+                "paddingRight": "0.5em",
+              }
+            }
+          >
+            Rate Interval:
+          </label>,
+          <DropdownButton
+            id="rateIntervalDropDown"
+            onSelect={undefined}
+            title="Last 10 minutes"
+          >
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="1m"
+              header={false}
+            >
+              Last 
+              1 minute
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="5m"
+              header={false}
+            >
+              Last 
+              5 minutes
+            </MenuItem>
+            <MenuItem
+              active={true}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="10m"
+              header={false}
+            >
+              Last 
+              10 minutes
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="30m"
+              header={false}
+            >
+              Last 
+              30 minutes
+            </MenuItem>
+          </DropdownButton>,
+        ],
+        "className": "form-group",
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": "Rate Interval:",
+            "style": Object {
+              "paddingRight": "0.5em",
+            },
+          },
+          "ref": null,
+          "rendered": "Rate Interval:",
+          "type": "label",
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "children": Array [
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="1m"
+                header={false}
+              >
+                Last 
+                1 minute
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="5m"
+                header={false}
+              >
+                Last 
+                5 minutes
+              </MenuItem>,
+              <MenuItem
+                active={true}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="10m"
+                header={false}
+              >
+                Last 
+                10 minutes
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="30m"
+                header={false}
+              >
+                Last 
+                30 minutes
+              </MenuItem>,
+            ],
+            "id": "rateIntervalDropDown",
+            "onSelect": undefined,
+            "title": "Last 10 minutes",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": "1m",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": Array [
+                  "Last ",
+                  "1 minute",
+                ],
+                "disabled": false,
+                "divider": false,
+                "eventKey": "1m",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": Array [
+                "Last ",
+                "1 minute",
+              ],
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "5m",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": Array [
+                  "Last ",
+                  "5 minutes",
+                ],
+                "disabled": false,
+                "divider": false,
+                "eventKey": "5m",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": Array [
+                "Last ",
+                "5 minutes",
+              ],
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "10m",
+              "nodeType": "class",
+              "props": Object {
+                "active": true,
+                "bsClass": "dropdown",
+                "children": Array [
+                  "Last ",
+                  "10 minutes",
+                ],
+                "disabled": false,
+                "divider": false,
+                "eventKey": "10m",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": Array [
+                "Last ",
+                "10 minutes",
+              ],
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "30m",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": Array [
+                  "Last ",
+                  "30 minutes",
+                ],
+                "disabled": false,
+                "divider": false,
+                "eventKey": "30m",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": Array [
+                "Last ",
+                "30 minutes",
+              ],
+              "type": [Function],
+            },
+          ],
+          "type": [Function],
+        },
+      ],
+      "type": "div",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;

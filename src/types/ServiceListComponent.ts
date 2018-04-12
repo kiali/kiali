@@ -26,3 +26,9 @@ export interface ServiceItem {
 }
 
 export const IstioLogo = require('../assets/img/istio-logo.svg');
+
+export interface SortField {
+  id: string;
+  title: string;
+  isNumeric: boolean;
+}
