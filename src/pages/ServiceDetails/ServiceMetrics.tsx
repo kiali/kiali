@@ -52,22 +52,26 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     }
   }
 
+  onOptionsChanged = (options: MetricsOptions) => {
+    this.options = options;
+    options.filters = ['request_count', 'request_size', 'request_duration', 'response_size'];
+    this.fetchMetrics();
+  };
+
   onPollIntervalChanged = (pollInterval: number) => {
     let newRefInterval: NodeJS.Timer | undefined = undefined;
     if (this.state.pollMetrics) {
       clearInterval(this.state.pollMetrics);
     }
     if (pollInterval > 0) {
-      newRefInterval = setInterval(this.fetchMetrics, pollInterval, this.options);
+      newRefInterval = setInterval(this.fetchMetrics, pollInterval);
     }
     this.setState({ pollMetrics: newRefInterval });
   };
 
-  fetchMetrics = (options: MetricsOptions) => {
-    this.options = options;
-    options.filters = ['request_count', 'request_size', 'request_duration', 'response_size'];
+  fetchMetrics = () => {
     this.setState({ loading: true });
-    API.getServiceMetrics(this.props.namespace, this.props.service, options)
+    API.getServiceMetrics(this.props.namespace, this.props.service, this.options)
       .then(response => {
         const metrics: M.Metrics = response['data'];
         this.setState({
@@ -75,42 +79,42 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
           requestCountIn: this.nameMetric(
             metrics.metrics['request_count_in'],
             'Request volume (ops)',
-            options.byLabelsIn
+            this.options.byLabelsIn
           ),
           requestCountOut: this.nameMetric(
             metrics.metrics['request_count_out'],
             'Request volume (ops)',
-            options.byLabelsOut
+            this.options.byLabelsOut
           ),
           requestSizeIn: this.nameHistogram(
             metrics.histograms['request_size_in'],
             'Request size (bytes)',
-            options.byLabelsIn
+            this.options.byLabelsIn
           ),
           requestSizeOut: this.nameHistogram(
             metrics.histograms['request_size_out'],
             'Request size (bytes)',
-            options.byLabelsOut
+            this.options.byLabelsOut
           ),
           requestDurationIn: this.nameHistogram(
             metrics.histograms['request_duration_in'],
             'Request duration (seconds)',
-            options.byLabelsIn
+            this.options.byLabelsIn
           ),
           requestDurationOut: this.nameHistogram(
             metrics.histograms['request_duration_out'],
             'Request duration (seconds)',
-            options.byLabelsOut
+            this.options.byLabelsOut
           ),
           responseSizeIn: this.nameHistogram(
             metrics.histograms['response_size_in'],
             'Response size (bytes)',
-            options.byLabelsIn
+            this.options.byLabelsIn
           ),
           responseSizeOut: this.nameHistogram(
             metrics.histograms['response_size_out'],
             'Response size (bytes)',
-            options.byLabelsOut
+            this.options.byLabelsOut
           )
         });
       })
@@ -188,7 +192,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       <div>
         {this.state.alertDetails && <Alert onDismiss={this.dismissAlert}>{this.state.alertDetails}</Alert>}
         <MetricsOptionsBar
-          onOptionsChanged={this.fetchMetrics}
+          onOptionsChanged={this.onOptionsChanged}
           onPollIntervalChanged={this.onPollIntervalChanged}
           loading={this.state.loading}
         />
