@@ -13,6 +13,10 @@ import (
 
 type serviceProduct func() (*ProductInfo, error)
 
+var (
+	expVersion = regexp.MustCompile("[0-9]\\.[0-9]\\.[0-9]")
+)
+
 func getVersions() {
 	products := []serviceProduct{
 		istioVersion,
@@ -34,19 +38,17 @@ func getVersionProduct(serviceProduct serviceProduct) {
 func istioVersion() (*ProductInfo, error) {
 	product := ProductInfo{}
 	istioConfig := config.Get().Products.Istio
-	serviceInfo, err := getService(istioConfig.ServiceNamespace, istioConfig.ServiceVersion)
+	resp, err := http.Get(istioConfig.UrlServiceVersion)
 	if err == nil {
-		resp, err := http.Get("http://" + serviceInfo.ClusterIP + ":9093/version")
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
-			defer resp.Body.Close()
-			body, err := ioutil.ReadAll(resp.Body)
-			if err == nil {
-				product.Name = "Istio"
-				product.FullVersion = string(body)
-				re := regexp.MustCompile("[0-9]\\.[0-9]\\.[0-9]")
-				product.Version = re.FindStringSubmatch(string(body))[0]
-				return &product, nil
+			product.Name = "Istio"
+			version := expVersion.FindStringSubmatch(string(body))
+			if product.Version = "Unknown"; version != nil {
+				product.Version = version[0]
 			}
+			return &product, nil
 		}
 	}
 	return nil, err
@@ -67,7 +69,6 @@ func prometheusVersion() (*ProductInfo, error) {
 		err = json.NewDecoder(resp.Body).Decode(&prometheusV)
 		if err == nil {
 			product.Name = "Prometheus"
-			product.FullVersion = prometheusV.Revision
 			product.Version = prometheusV.Version
 			return &product, nil
 		}
@@ -95,7 +96,6 @@ func kubernetesVersion() (*ProductInfo, error) {
 			serverVersion, err := k8s.Discovery().ServerVersion()
 			if err == nil {
 				product.Name = "Kubernetes"
-				product.FullVersion = serverVersion.GitCommit
 				product.Version = serverVersion.GitVersion
 				return &product, nil
 			}

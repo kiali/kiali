@@ -23,8 +23,7 @@ const (
 	EnvInCluster              = "IN_CLUSTER"
 	EnvIstioIdentityDomain    = "ISTIO_IDENTITY_DOMAIN"
 	EnvIstioSidecarAnnotation = "ISTIO_SIDECAR_ANNOTATION"
-	EnvIstioServiceNamespace  = "ISTIO_SERVICE_NAMESPACE"
-	EnvIstioServiceVersion    = "ISTIO_SERVICE"
+	EnvIstioUrlServiceVersion = "ISTIO_URL_SERVICE_VERSION"
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
@@ -81,8 +80,7 @@ type JaegerConfig struct {
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
-	ServiceNamespace       string `yaml:"service_namespace"`
-	ServiceVersion         string `yaml:"service_version"`
+	UrlServiceVersion      string `yaml:"url_service_version"`
 	IstioIdentityDomain    string `yaml:"istio_identity_domain,omitempty"`
 	IstioSidecarAnnotation string `yaml:"istio_sidecar_annotation,omitempty"`
 }
@@ -144,8 +142,7 @@ func NewConfig() (c *Config) {
 	// Istio Configuration
 	c.Products.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
 	c.Products.Istio.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
-	c.Products.Istio.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvIstioServiceNamespace, "istio-system"))
-	c.Products.Istio.ServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioServiceVersion, "istio-pilot"))
+	c.Products.Istio.UrlServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioUrlServiceVersion, "http://istio-pilot:9093/version"))
 
 	return
 }

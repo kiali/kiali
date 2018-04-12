@@ -18,9 +18,8 @@ type StatusInfo struct {
 var info StatusInfo
 
 type ProductInfo struct {
-	Name        string `json:"name"`
-	Version     string `json:"version"`
-	FullVersion string `json:"full_version"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 
 func init() {
