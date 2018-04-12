@@ -66,15 +66,9 @@ func buildDefaultTrees(trees *[]tree.ServiceNode, staticNodeList *[]tree.Service
 	if len(*staticNodeList) == 0 {
 		return
 	}
-	// A static picture of services without traffic will not infer the sources,
-	// so we need an ephemeral representation of static services until we have traffic and this can properly fetched
-	// from prometheus
-	rootNode := tree.NewServiceNode(tree.UnknownService, tree.UnknownVersion)
-	rootNode.Children = make([]*tree.ServiceNode, len(*staticNodeList))
 	for i := 0; i < len(*staticNodeList); i++ {
-		rootNode.Children[i] = &(*staticNodeList)[i]
+		*trees = append(*trees, (*staticNodeList)[i])
 	}
-	*trees = append(*trees, rootNode)
 }
 
 func addNodeToTrees(trees *[]tree.ServiceNode, node *tree.ServiceNode) {
@@ -87,9 +81,9 @@ func addNodeToTrees(trees *[]tree.ServiceNode, node *tree.ServiceNode) {
 			break
 		}
 	}
-	// Second, if not founded, we create a unknown root to add them as parent
+	// Second, if not founded, we add them as root tree level
 	if !added {
-		addUnderUnknownTree(trees, node)
+		*trees = append(*trees, *node)
 	}
 }
 
@@ -124,22 +118,4 @@ func findAndAddSibling(tree *tree.ServiceNode, node *tree.ServiceNode) bool {
 		}
 	}
 	return added
-}
-
-func addUnderUnknownTree(trees *[]tree.ServiceNode, node *tree.ServiceNode) {
-	// Find and add as child under unknown
-	added := false
-	for i := 0; i < len(*trees); i++ {
-		if (*trees)[i].Name == tree.UnknownService {
-			(*trees)[i].Children = append((*trees)[i].Children, node)
-			added = true
-		}
-	}
-	// If not added, create a new "unknown" tree
-	if !added {
-		rootNode := tree.NewServiceNode(tree.UnknownService, tree.UnknownVersion)
-		rootNode.Children = make([]*tree.ServiceNode, 1)
-		rootNode.Children[0] = node
-		*trees = append(*trees, rootNode)
-	}
 }

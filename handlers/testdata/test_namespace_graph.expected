@@ -6,6 +6,7 @@
         "data": {
           "id": "n2",
           "text": "details v1",
+          "style": "solid",
           "service": "details.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "80.000",
@@ -18,6 +19,7 @@
         "data": {
           "id": "n7",
           "text": "ingress",
+          "style": "solid",
           "service": "ingress.istio-system.svc.cluster.local",
           "version": "unknown"
         }
@@ -26,6 +28,7 @@
         "data": {
           "id": "n1",
           "text": "productpage v1 \u003c20.00pm\u003e",
+          "style": "solid",
           "service": "productpage.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "150.000"
@@ -35,6 +38,7 @@
         "data": {
           "id": "n5",
           "text": "ratings v1",
+          "style": "solid",
           "service": "ratings.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "40.000"
@@ -44,6 +48,7 @@
         "data": {
           "id": "n8",
           "text": "reviews",
+          "style": "solid",
           "service": "reviews.istio-system.svc.cluster.local",
           "groupBy": "version"
         }
@@ -52,6 +57,7 @@
         "data": {
           "id": "n3",
           "text": "reviews v1",
+          "style": "solid",
           "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v1",
@@ -62,6 +68,7 @@
         "data": {
           "id": "n4",
           "text": "reviews v2 \u003c20.00pm\u003e",
+          "style": "solid",
           "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v2",
@@ -72,6 +79,7 @@
         "data": {
           "id": "n6",
           "text": "reviews v3 \u003c20.00pm\u003e",
+          "style": "solid",
           "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v3",
@@ -82,6 +90,7 @@
         "data": {
           "id": "n0",
           "text": "unknown",
+          "style": "solid",
           "service": "unknown",
           "version": "unknown"
         }

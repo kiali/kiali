@@ -28,6 +28,7 @@ type NodeData struct {
 	// Cytoscape Fields
 	Id     string `json:"id"`               // unique internal node ID (n0, n1...)
 	Text   string `json:"text"`             // display text for the node
+	Style  string `json:"style"`            // line style
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
@@ -133,12 +134,20 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		if tree.UnknownVersion != sn.Version {
 			text = fmt.Sprintf("%v %v", text, sn.Version)
 		}
+		style := "solid"
+		if valRate, ok := sn.Metadata["rate"]; ok {
+			rate, ok := valRate.(float64)
+			if ok && rate < 0 {
+				style = "dotted"
+			}
+		}
 		*nodeIdSequence++
 		nd = &NodeData{
 			Id:      nodeId,
 			Service: name,
 			Version: sn.Version,
 			Text:    text,
+			Style:   style,
 			// LinkPromGraph: sn.Metadata["link_prom_graph"].(string),
 		}
 		nw := NodeWrapper{
@@ -254,6 +263,7 @@ func addCompositeNodes(nodes *[]*NodeWrapper, nodeIdSequence *int) {
 				Id:      nodeId,
 				Service: k,
 				Text:    strings.Split(k, ".")[0],
+				Style:   "solid",
 				GroupBy: "version",
 			}
 			nw := NodeWrapper{

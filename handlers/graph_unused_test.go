@@ -22,23 +22,21 @@ func TestNonTrafficScenario(t *testing.T) {
 
 	addUnusedNodes(&trees, "testNamespace", deployments)
 
-	assert.Equal(1, len(trees))
-	assert.Equal(tree.UnknownService, trees[0].Name)
-	assert.Equal(4, len(trees[0].Children))
+	assert.Equal(4, len(trees))
 
-	assert.Equal("customer.testNamespace.svc.cluster.local", trees[0].Children[0].Name)
-	assert.Equal(float64(-1), trees[0].Children[0].Metadata["rate"])
+	assert.Equal("customer.testNamespace.svc.cluster.local", trees[0].Name)
+	assert.Equal(float64(-1), trees[0].Metadata["rate"])
 
-	assert.Equal("preference.testNamespace.svc.cluster.local", trees[0].Children[1].Name)
-	assert.Equal(float64(-1), trees[0].Children[1].Metadata["rate"])
+	assert.Equal("preference.testNamespace.svc.cluster.local", trees[1].Name)
+	assert.Equal(float64(-1), trees[1].Metadata["rate"])
 
-	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[0].Children[2].Name)
-	assert.Equal("v1", trees[0].Children[2].Version)
-	assert.Equal(float64(-1), trees[0].Children[2].Metadata["rate"])
+	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[2].Name)
+	assert.Equal("v1", trees[2].Version)
+	assert.Equal(float64(-1), trees[2].Metadata["rate"])
 
-	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[0].Children[3].Name)
-	assert.Equal("v2", trees[0].Children[3].Version)
-	assert.Equal(float64(-1), trees[0].Children[3].Metadata["rate"])
+	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[3].Name)
+	assert.Equal("v2", trees[3].Version)
+	assert.Equal(float64(-1), trees[3].Metadata["rate"])
 }
 
 func TestOneNodeTrafficScenario(t *testing.T) {
@@ -51,23 +49,23 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 
 	addUnusedNodes(&trees, "testNamespace", deployments)
 
-	assert.Equal(1, len(trees))
+	assert.Equal(4, len(trees))
 	assert.Equal(tree.UnknownService, trees[0].Name)
-	assert.Equal(4, len(trees[0].Children))
+	assert.Equal(1, len(trees[0].Children))
 
 	assert.Equal("customer.testNamespace.svc.cluster.local", trees[0].Children[0].Name)
 	assert.Equal(float64(0.8), trees[0].Children[0].Metadata["rate"])
 
-	assert.Equal("preference.testNamespace.svc.cluster.local", trees[0].Children[1].Name)
-	assert.Equal(float64(-1), trees[0].Children[1].Metadata["rate"])
+	assert.Equal("preference.testNamespace.svc.cluster.local", trees[1].Name)
+	assert.Equal(float64(-1), trees[1].Metadata["rate"])
 
-	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[0].Children[2].Name)
-	assert.Equal("v1", trees[0].Children[2].Version)
-	assert.Equal(float64(-1), trees[0].Children[2].Metadata["rate"])
+	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[2].Name)
+	assert.Equal("v1", trees[2].Version)
+	assert.Equal(float64(-1), trees[2].Metadata["rate"])
 
-	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[0].Children[3].Name)
-	assert.Equal("v2", trees[0].Children[3].Version)
-	assert.Equal(float64(-1), trees[0].Children[3].Metadata["rate"])
+	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[3].Name)
+	assert.Equal("v2", trees[3].Version)
+	assert.Equal(float64(-1), trees[3].Metadata["rate"])
 }
 
 func TestVersionWithNoTrafficScenario(t *testing.T) {
