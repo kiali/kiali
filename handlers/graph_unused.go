@@ -36,7 +36,7 @@ func buildStaticNodeList(namespaceName string, deployments *v1beta1.DeploymentLi
 	nonTrafficList := make([]tree.ServiceNode, 0)
 	appLabel := config.Get().ServiceFilterLabelName
 	versionLabel := config.Get().VersionFilterLabelName
-	identityDomain := config.Get().IstioIdentityDomain
+	identityDomain := config.Get().Products.Istio.IstioIdentityDomain
 	for _, deployment := range deployments.Items {
 		app, ok := deployment.GetObjectMeta().GetLabels()[appLabel]
 		if !ok {

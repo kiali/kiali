@@ -83,7 +83,7 @@ type Histogram struct {
 
 // Returns <healthy, total, error>
 func getServiceHealth(api v1.API, namespace string, servicename string) (int, int, error) {
-	envoyClustername := strings.Replace(config.Get().IstioIdentityDomain, ".", "_", -1)
+	envoyClustername := strings.Replace(config.Get().Products.Istio.IstioIdentityDomain, ".", "_", -1)
 	queryPart := replaceInvalidCharacters(fmt.Sprintf("%s_%s_%s", servicename, namespace, envoyClustername))
 	now := time.Now()
 
@@ -115,7 +115,7 @@ func getServiceHealth(api v1.API, namespace string, servicename string) (int, in
 }
 
 func getServiceMetrics(api v1.API, q *ServiceMetricsQuery) Metrics {
-	clustername := config.Get().IstioIdentityDomain
+	clustername := config.Get().Products.Istio.IstioIdentityDomain
 	destService := fmt.Sprintf("destination_service=\"%s.%s.%s\"", q.Service, q.Namespace, clustername)
 	srcService := fmt.Sprintf("source_service=\"%s.%s.%s\"", q.Service, q.Namespace, clustername)
 	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version)

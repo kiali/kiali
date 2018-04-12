@@ -45,7 +45,7 @@ func TestGetJaegerInfoFromService(t *testing.T) {
 
 func TestGetJaegerInfoFromConfig(t *testing.T) {
 	conf := config.NewConfig()
-	conf.Jaeger.URL = "http://fromconfig:3001"
+	conf.Products.Jaeger.URL = "http://fromconfig:3001"
 	config.Set(conf)
 	info, code, err := getJaegerInfo(func(_, _ string) (string, error) {
 		return "http://fromopenshift", nil

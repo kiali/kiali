@@ -70,7 +70,7 @@ func (in *SvcService) castServiceOverview(s *v1.Service, deployments []v1beta1.D
 func hasIstioSideCar(deployments []v1beta1.Deployment) bool {
 	for _, deployment := range deployments {
 		if deployment.Spec.Template.Annotations != nil {
-			if _, exists := deployment.Spec.Template.Annotations[config.Get().IstioSidecarAnnotation]; exists {
+			if _, exists := deployment.Spec.Template.Annotations[config.Get().Products.Istio.IstioSidecarAnnotation]; exists {
 				return true
 			}
 		}

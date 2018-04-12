@@ -275,26 +275,12 @@ server:
   static_content_root_directory: VALUE
 ----
 
-|`PROMETHEUS_SERVICE_URL`
-|The URL used to access and query the Prometheus Server.
-[source,yaml]
-----
-prometheus_service_url: VALUE
-----
-
 |`IN_CLUSTER`
 |The annotation used by Istio in a Deployment template.If in_cluster: false you need to set environments: `KUBERNETES_SERVICE_HOST`, `KUBERNETES_SERVICE_PORT` (Local development mode : oc proxy --port KUBERNETES_SERVICE_PORT )
 |Default: true
 [source,yaml]
 ----
 in_cluster: (true\|false)
-----
-
-|`ISTIO_SIDECAR_ANNOTATION`
-|The annotation used by Istio in a Deployment template.
-[source,yaml]
-----
-istio_sidecar_annotation: VALUE
 ----
 
 |`SERVICE_FILTER_LABEL_NAME`
@@ -304,84 +290,130 @@ istio_sidecar_annotation: VALUE
 service_filter_label_name: VALUE
 ----
 
+|`PROMETHEUS_SERVICE_URL`
+|The URL used to access and query the Prometheus Server.
+[source,yaml]
+----
+products:
+  prometheus_service_url: VALUE
+----
+
+|`ISTIO_SIDECAR_ANNOTATION`
+|The annotation used by Istio in a Deployment template.
+[source,yaml]
+----
+products:
+  istio:
+    istio_sidecar_annotation: VALUE
+----
+
+|`ISTIO_IDENTITY_DOMAIN`
+|The annotation used by Istio how Identity Domain. (Default: svc.cluster.local)
+[source,yaml]
+----
+products:
+  istio:
+    istio_identity_domain: VALUE
+----
+
+|`ISTIO_URL_SERVICE_VERSION`
+|The Service of Istio to check version. ( Default: http://istio-pilot:9093/version)
+[source,yaml]
+----
+products:
+  istio:
+    istio_url_service_version: VALUE
+----
+
+
 |`GRAFANA_DISPLAY_LINK`
 |When true, a link to Grafana will be displayed for more metrics.
 [source,yaml]
 ----
-grafana:
-  display_link: (true\|false)
+products:
+  grafana:
+    display_link: (true\|false)
 ----
 
 |`GRAFANA_URL`
 |The URL to the Grafana server. When not set, the URL may be automatically detected from OpenShift or Kubernetes API.
 [source,yaml]
 ----
-grafana:
-  url: VALUE
+products:
+  grafana:
+    url: VALUE
 ----
 
 |`GRAFANA_SERVICE_NAMESPACE`
 |The Kubernetes namespace that holds the Grafana service. This configuration is ignored if `GRAFANA_URL` is set. Default is `istio-system`.
 [source,yaml]
 ----
-grafana:
-  service_namespace: VALUE
+products:
+  grafana:
+    service_namespace: VALUE
 ----
 
 |`GRAFANA_SERVICE`
 |The OpenShift route name or the Kubernetes service name for Grafana. This configuration is ignored if `GRAFANA_URL` is set. Default is `grafana`.
 [source,yaml]
 ----
-grafana:
-  service: VALUE
+products:
+  grafana:
+    service: VALUE
 ----
 
 |`GRAFANA_DASHBOARD`
 |The name of the Grafana dashboard used as a landing page. Default is `istio-dashboard`.
 [source,yaml]
 ----
-grafana:
-  dashboard: VALUE
+products:
+  grafana:
+    dashboard: VALUE
 ----
 
 |`GRAFANA_VAR_SERVICE_SOURCE`
 |The name of the Grafana variable that controls service sources, as defined in the configured `GRAFANA_DASHBOARD`. Default is `var-source`.
 [source,yaml]
 ----
-grafana:
-  var_service_source: VALUE
+products:
+  grafana:
+    var_service_source: VALUE
 ----
 
 |`GRAFANA_VAR_SERVICE_DEST`
 |The name of the Grafana variable that controls service destinations, as defined in the configured `GRAFANA_DASHBOARD`. Default is `var-http_destination`.
 [source,yaml]
 ----
-grafana:
-  var_service_dest: VALUE
+products:
+  grafana:
+    var_service_dest: VALUE
 ----
 
 |`JAEGER_URL`
 |The URL to the Jaeger server. When not set, the URL may be automatically detected from OpenShift or Kubernetes API.
 [source,yaml]
 ----
-jaeger:
-  url: VALUE
+products:
+  jaeger:
+    url: VALUE
 ----
 
 |`JAEGER_SERVICE_NAMESPACE`
 |The Kubernetes namespace that holds the Jaeger service. This configuration is ignored if `JAEGER_URL` is set. Default is `istio-system`.
 [source,yaml]
 ----
-jaeger:
-  service_namespace: VALUE
+products:
+  jaeger:
+    service_namespace: VALUE
 ----
 
 |`JAEGER_SERVICE`
 |The OpenShift route name or the Kubernetes service name for Jaeger. This configuration is ignored if `JAEGER_URL` is set. Default is `jaeger-query`.
 [source,yaml]
 ----
-jaeger:
-  service: VALUE
+products:
+  jaeger:
+    service: VALUE
 ----
 |===
 
