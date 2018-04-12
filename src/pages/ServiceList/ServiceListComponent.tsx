@@ -7,10 +7,12 @@ import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
-import { ServiceItem, ServiceList } from '../../types/ServiceListComponent';
+import { IstioLogo, ServiceItem, ServiceList } from '../../types/ServiceListComponent';
 import PropTypes from 'prop-types';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import { ServiceHealth, DisplayMode } from '../../components/ServiceHealth/ServiceHealth';
+
+import './ServiceListComponent.css';
 
 type SortField = {
   id: string;
@@ -30,6 +32,11 @@ const sortFields: SortField[] = [
     isNumeric: false
   },
   {
+    id: 'istio_sidecar',
+    title: 'Istio Sidecar',
+    isNumeric: false
+  },
+  {
     id: 'error_rate',
     title: 'Error Rate',
     isNumeric: true
@@ -42,6 +49,14 @@ const serviceNameFilter: FilterType = {
   placeholder: 'Filter by Service Name',
   filterType: 'text',
   filterValues: []
+};
+
+const istioFilter: FilterType = {
+  id: 'istio',
+  title: 'Istio Sidecar',
+  placeholder: 'Filter by Istio Sidecar',
+  filterType: 'select',
+  filterValues: [{ id: 'deployed', title: 'Deployed' }, { id: 'undeployed', title: 'Undeployed' }]
 };
 
 type ServiceListComponentState = {
@@ -149,23 +164,32 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     let servicenameFilters: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Service Name')
       .map(activeFilter => activeFilter.value);
+    let istioFilters: string[] = activeFilters
+      .filter(activeFilter => activeFilter.category === 'Istio Sidecar')
+      .map(activeFilter => activeFilter.value);
+    istioFilters = this.cleanIstioFilters(istioFilters);
 
     if (namespacesSelected.length === 0) {
       API.GetNamespaces()
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
-          this.fetchServices(namespaces.map(namespace => namespace.name), servicenameFilters, rateInterval);
+          this.fetchServices(
+            namespaces.map(namespace => namespace.name),
+            servicenameFilters,
+            istioFilters,
+            rateInterval
+          );
         })
         .catch(namespacesError => {
           console.error(JSON.stringify(namespacesError));
           this.handleError(API.GetErrorMsg('Could not fetch namespace list.', namespacesError));
         });
     } else {
-      this.fetchServices(namespacesSelected, servicenameFilters);
+      this.fetchServices(namespacesSelected, servicenameFilters, istioFilters);
     }
   }
 
-  fetchServices(namespaces: string[], servicenameFilters: string[], rateInterval?: string) {
+  fetchServices(namespaces: string[], servicenameFilters: string[], istioFilters: string[], rateInterval?: string) {
     const promises = namespaces.map(ns => API.GetServices(ns, { rateInterval: rateInterval }));
     Promise.all(promises)
       .then(servicesResponse => {
@@ -178,6 +202,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
               namespace: namespace.name,
               servicename: serviceName.name,
               health: serviceName.health,
+              istio_sidecar: serviceName.istio_sidecar,
               request_count: serviceName.request_count,
               request_error_count: serviceName.request_error_count,
               error_rate: serviceName.error_rate
@@ -185,8 +210,8 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             updatedServices.push(serviceItem);
           });
         });
-        if (servicenameFilters.length > 0) {
-          updatedServices = this.filterServices(updatedServices, servicenameFilters);
+        if (servicenameFilters.length > 0 || istioFilters.length > 0) {
+          updatedServices = this.filterServices(updatedServices, servicenameFilters, istioFilters);
         }
         updatedServices = this.sortServices(updatedServices, this.state.currentSortField, this.state.isSortAscending);
         this.setState(prevState => {
@@ -207,17 +232,51 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       });
   }
 
-  isFiltered(service: ServiceItem, servicenameFilters: string[]) {
-    for (let i = 0; i < servicenameFilters.length; i++) {
-      if (service.servicename.includes(servicenameFilters[i])) {
-        return true;
-      }
+  // Patternfly-react Filter has not a boolean / checkbox filter option, so as we want to use the same component
+  // this function is used to optimize potential duplications on 'Deployed', 'Undeployed' values selected.
+  cleanIstioFilters(istioFilters: string[]) {
+    if (istioFilters.length === 0) {
+      return [];
     }
-    return false;
+    let cleanArray = istioFilters.filter((iFilter, i) => {
+      return istioFilters.indexOf(iFilter) === i;
+    });
+
+    if (cleanArray.length === 2) {
+      return [];
+    }
+    return cleanArray;
   }
 
-  filterServices(services: ServiceItem[], servicenameFilters: string[]) {
-    let filteredServices: ServiceItem[] = services.filter(service => this.isFiltered(service, servicenameFilters));
+  isFiltered(service: ServiceItem, servicenameFilters: string[], istioFilters: string[]) {
+    let serviceNameFiltered = true;
+    if (servicenameFilters.length > 0) {
+      serviceNameFiltered = false;
+      for (let i = 0; i < servicenameFilters.length; i++) {
+        if (service.servicename.includes(servicenameFilters[i])) {
+          serviceNameFiltered = true;
+          break;
+        }
+      }
+    }
+
+    let istioFiltered = true;
+    if (istioFilters.length === 1) {
+      if (istioFilters[0] === 'Deployed') {
+        istioFiltered = service.istio_sidecar;
+      }
+      if (istioFilters[0] === 'Undeployed') {
+        istioFiltered = !service.istio_sidecar;
+      }
+    }
+
+    return serviceNameFiltered && istioFiltered;
+  }
+
+  filterServices(services: ServiceItem[], servicenameFilters: string[], istioFilters: string[]) {
+    let filteredServices: ServiceItem[] = services.filter(service =>
+      this.isFiltered(service, servicenameFilters, istioFilters)
+    );
     return filteredServices;
   }
 
@@ -227,6 +286,15 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       if (sortField.id === 'namespace') {
         sortValue = a.namespace.localeCompare(b.namespace);
         if (sortValue === 0) {
+          sortValue = a.servicename.localeCompare(b.servicename);
+        }
+      } else if (sortField.id === 'istio_sidecar') {
+        // Special boolean value, Deployed values first
+        if (a.istio_sidecar && !b.istio_sidecar) {
+          sortValue = -1;
+        } else if (!a.istio_sidecar && b.istio_sidecar) {
+          sortValue = 1;
+        } else {
           sortValue = a.servicename.localeCompare(b.servicename);
         }
       } else {
@@ -285,10 +353,19 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
           <ListViewItem
             leftContent={<ListViewIcon type="pf" name="service" />}
             heading={
-              <span>
-                {serviceItem.servicename}
-                <small>{serviceItem.namespace}</small>
-              </span>
+              <div className="ServiceList-Heading">
+                <div className="ServiceList-IstioLogo">
+                  {serviceItem.istio_sidecar ? (
+                    <img className="IstioLogo" src={IstioLogo} alt="Istio sidecar" />
+                  ) : (
+                    undefined
+                  )}
+                </div>
+                <div className="ServiceList-Title">
+                  {serviceItem.servicename}
+                  <small>{serviceItem.namespace}</small>
+                </div>
+              </div>
             }
             description={serviceDescriptor}
           />
@@ -307,7 +384,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       serviceListComponent = (
         <div>
           <NamespaceFilter
-            initialFilters={[serviceNameFilter]}
+            initialFilters={[serviceNameFilter, istioFilter]}
             onFilterChange={this.filterChange}
             onError={this.handleError}
           >

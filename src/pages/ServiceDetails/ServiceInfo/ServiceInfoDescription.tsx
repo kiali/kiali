@@ -8,9 +8,11 @@ import { Endpoints, Port } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
 
 import './ServiceInfoDescription.css';
+import { IstioLogo } from '../../../types/ServiceListComponent';
 
 interface ServiceInfoDescriptionProps {
   name?: string;
+  istio_sidecar?: boolean;
   labels?: Map<string, string>;
   type?: string;
   ip?: any;
@@ -52,6 +54,17 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               </div>
               <div>
                 <strong>IP</strong> {this.props.ip ? this.props.ip : ''}
+              </div>
+              <div>
+                <strong>Istio Sidecar</strong>
+                {this.props.istio_sidecar ? (
+                  <span>
+                    {' Deployed'}
+                    <img className="IstioLogo" src={IstioLogo} alt="Istio sidecar" />
+                  </span>
+                ) : (
+                  ' Undeployed'
+                )}
               </div>
             </Col>
             <Col xs={12} sm={6} md={3} lg={3}>

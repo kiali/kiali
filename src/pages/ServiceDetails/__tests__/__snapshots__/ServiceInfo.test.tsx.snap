@@ -42,6 +42,7 @@ ShallowWrapper {
                 endpoints={undefined}
                 health={undefined}
                 ip=""
+                istio_sidecar={false}
                 labels={Map {}}
                 name=""
                 ports={Array []}
@@ -123,6 +124,7 @@ ShallowWrapper {
                   endpoints={undefined}
                   health={undefined}
                   ip=""
+                  istio_sidecar={false}
                   labels={Map {}}
                   name=""
                   ports={Array []}
@@ -198,6 +200,7 @@ ShallowWrapper {
                   endpoints={undefined}
                   health={undefined}
                   ip=""
+                  istio_sidecar={false}
                   labels={Map {}}
                   name=""
                   ports={Array []}
@@ -218,6 +221,7 @@ ShallowWrapper {
                   endpoints={undefined}
                   health={undefined}
                   ip=""
+                  istio_sidecar={false}
                   labels={Map {}}
                   name=""
                   ports={Array []}
@@ -238,6 +242,7 @@ ShallowWrapper {
                   "endpoints": undefined,
                   "health": undefined,
                   "ip": "",
+                  "istio_sidecar": false,
                   "labels": Map {},
                   "name": "",
                   "ports": Array [],
@@ -445,6 +450,7 @@ ShallowWrapper {
                   endpoints={undefined}
                   health={undefined}
                   ip=""
+                  istio_sidecar={false}
                   labels={Map {}}
                   name=""
                   ports={Array []}
@@ -526,6 +532,7 @@ ShallowWrapper {
                     endpoints={undefined}
                     health={undefined}
                     ip=""
+                    istio_sidecar={false}
                     labels={Map {}}
                     name=""
                     ports={Array []}
@@ -601,6 +608,7 @@ ShallowWrapper {
                     endpoints={undefined}
                     health={undefined}
                     ip=""
+                    istio_sidecar={false}
                     labels={Map {}}
                     name=""
                     ports={Array []}
@@ -621,6 +629,7 @@ ShallowWrapper {
                     endpoints={undefined}
                     health={undefined}
                     ip=""
+                    istio_sidecar={false}
                     labels={Map {}}
                     name=""
                     ports={Array []}
@@ -641,6 +650,7 @@ ShallowWrapper {
                     "endpoints": undefined,
                     "health": undefined,
                     "ip": "",
+                    "istio_sidecar": false,
                     "labels": Map {},
                     "name": "",
                     "ports": Array [],

@@ -74,7 +74,6 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
           })
         };
         let initialFilters = this.initialFilterList(namespaceFilter);
-        console.log(initialFilters);
         this.setState({ filterTypeList: initialFilters });
       })
       .catch(error => {

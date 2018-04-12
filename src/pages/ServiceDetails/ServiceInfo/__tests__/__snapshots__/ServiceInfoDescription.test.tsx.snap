@@ -91,6 +91,12 @@ ShallowWrapper {
              
             172.30.78.33
           </div>
+          <div>
+            <strong>
+              Istio Sidecar
+            </strong>
+             Undeployed
+          </div>
         </Col>
         <Col
           bsClass="col"
@@ -244,6 +250,12 @@ ShallowWrapper {
               </strong>
                
               172.30.78.33
+            </div>
+            <div>
+              <strong>
+                Istio Sidecar
+              </strong>
+               Undeployed
             </div>
           </Col>
           <Col
