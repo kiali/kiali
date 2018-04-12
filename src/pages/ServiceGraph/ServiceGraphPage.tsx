@@ -121,13 +121,13 @@ export default class ServiceGraphPage extends React.Component<
   };
 
   handleGraphClick = (data: any) => {
-    if (data !== undefined) {
+    if (data) {
       this.setState({ summaryData: data });
     }
   };
 
   handleReady = (cy: any) => {
-    if (cy !== undefined) {
+    if (cy) {
       this.setState({ summaryData: { summaryType: 'graph', summaryTarget: cy } });
     }
   };

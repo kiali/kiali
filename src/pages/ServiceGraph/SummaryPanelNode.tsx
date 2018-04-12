@@ -24,11 +24,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     right: 0
   };
 
-  static readonly RATE = 'rate';
-  static readonly RATE3XX = 'rate3XX';
-  static readonly RATE4XX = 'rate4XX';
-  static readonly RATE5XX = 'rate5XX';
-
   constructor(props: SummaryPanelPropType) {
     super(props);
     this.showRequestCountMetrics = this.showRequestCountMetrics.bind(this);
@@ -88,6 +83,11 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   render() {
+    const RATE = 'rate';
+    const RATE3XX = 'rate3XX';
+    const RATE4XX = 'rate4XX';
+    const RATE5XX = 'rate5XX';
+
     const node = this.props.data.summaryTarget;
 
     const serviceSplit = node.data('service').split('.');
@@ -98,12 +98,14 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     let outgoing = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 };
 
     // aggregate all outgoing rates
-    this.props.data.summaryTarget.edgesTo('*').forEach(c => {
-      outgoing.rate += parseFloat(c.data(SummaryPanelNode.RATE)) || 0;
-      outgoing.rate3xx += parseFloat(c.data(SummaryPanelNode.RATE3XX)) || 0;
-      outgoing.rate4xx += parseFloat(c.data(SummaryPanelNode.RATE4XX)) || 0;
-      outgoing.rate5xx += parseFloat(c.data(SummaryPanelNode.RATE5XX)) || 0;
-    });
+    const safeRate = (s: string) => {
+      return s ? parseFloat(s) : 0.0;
+    };
+    const edges = this.props.data.summaryTarget.edgesTo('*');
+    outgoing.rate = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE)));
+    outgoing.rate3xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE3XX)));
+    outgoing.rate4xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE4XX)));
+    outgoing.rate5xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE5XX)));
 
     const isUnknown = service === 'unknown';
     return (
@@ -130,10 +132,10 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         <div className="panel-body">
           <InOutRateTable
             title="Request Traffic (requests per second):"
-            inRate={parseFloat(node.data('rate')) || 0}
-            inRate3xx={parseFloat(node.data('rate3XX')) || 0}
-            inRate4xx={parseFloat(node.data('rate4XX')) || 0}
-            inRate5xx={parseFloat(node.data('rate5XX')) || 0}
+            inRate={parseFloat(node.data(RATE)) || 0}
+            inRate3xx={parseFloat(node.data(RATE3XX)) || 0}
+            inRate4xx={parseFloat(node.data(RATE4XX)) || 0}
+            inRate5xx={parseFloat(node.data(RATE5XX)) || 0}
             outRate={outgoing.rate}
             outRate3xx={outgoing.rate3xx}
             outRate4xx={outgoing.rate4xx}

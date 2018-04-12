@@ -59,44 +59,21 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     let outgoing = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 };
 
     // aggregate all incoming rates
-    this.props.data.summaryTarget
-      .children()
-      .toArray()
-      .forEach(c => {
-        if (c.data(RATE) !== undefined) {
-          incoming.rate += +c.data(RATE);
-        }
-        if (c.data(RATE3XX) !== undefined) {
-          incoming.rate3xx += +c.data(RATE3XX);
-        }
-        if (c.data(RATE4XX) !== undefined) {
-          incoming.rate4xx += +c.data(RATE4XX);
-        }
-        if (c.data(RATE5XX) !== undefined) {
-          incoming.rate5xx += +c.data(RATE5XX);
-        }
-      });
-    console.log('Aggregate incoming [' + namespace + '.' + service + ': ' + JSON.stringify(incoming));
+    const safeRate = (s: string) => {
+      return s ? parseFloat(s) : 0.0;
+    };
+    const nodes = this.props.data.summaryTarget.children();
+    incoming.rate = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE)));
+    incoming.rate3xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE3XX)));
+    incoming.rate4xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE4XX)));
+    incoming.rate5xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE5XX)));
 
     // aggregate all outgoing rates
-    this.props.data.summaryTarget
-      .children()
-      .edgesTo('*')
-      .forEach(c => {
-        if (c.data(RATE) !== undefined) {
-          outgoing.rate += +c.data(RATE);
-        }
-        if (c.data(RATE3XX) !== undefined) {
-          outgoing.rate3xx += +c.data(RATE3XX);
-        }
-        if (c.data(RATE4XX) !== undefined) {
-          outgoing.rate4xx += +c.data(RATE4XX);
-        }
-        if (c.data(RATE5XX) !== undefined) {
-          outgoing.rate5xx += +c.data(RATE5XX);
-        }
-      });
-    console.log('Aggregate outgoing [' + namespace + '.' + service + ': ' + JSON.stringify(outgoing));
+    const edges = this.props.data.summaryTarget.children().edgesTo('*');
+    outgoing.rate = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE)));
+    outgoing.rate3xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE3XX)));
+    outgoing.rate4xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE4XX)));
+    outgoing.rate5xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE5XX)));
 
     return (
       <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>

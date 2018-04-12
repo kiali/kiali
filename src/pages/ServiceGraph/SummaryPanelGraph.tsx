@@ -53,24 +53,18 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       return null;
     }
 
-    let numNodes = cy
+    const numNodes = cy
       .nodes()
       .filter('[!groupBy]')
       .size();
-    let numEdges = cy.edges().size();
-    let rate = 0;
-    let rate3xx = 0;
-    let rate4xx = 0;
-    let rate5xx = 0;
-    let safeRate = (s: string) => {
-      return s === undefined ? 0.0 : parseFloat(s);
+    const numEdges = cy.edges().size();
+    const safeRate = (s: string) => {
+      return s ? parseFloat(s) : 0.0;
     };
-    cy.edges().forEach(edge => {
-      rate += +safeRate(edge.data('rate'));
-      rate3xx += +safeRate(edge.data('rate3XX'));
-      rate4xx += +safeRate(edge.data('rate4XX'));
-      rate5xx += +safeRate(edge.data('rate5XX'));
-    });
+    const rate = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate')));
+    const rate3xx = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate3XX')));
+    const rate4xx = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate4XX')));
+    const rate5xx = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate5XX')));
     const servicesLink = (
       <Link to="../services" onClick={this.updateServicesFilter}>
         {this.props.namespace}

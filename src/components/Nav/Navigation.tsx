@@ -111,7 +111,7 @@ class Navigation extends React.Component<PropsType, StateType> {
         <SwitchErrorBoundary
           fallBackComponent={() => (
             <PfContainerNavVertical>
-              <h2>Something wrong happened, try refreshing or navigate to other section</h2>
+              <h2>Sorry, there was a problem. Try a refresh or navigate to a different page.</h2>
             </PfContainerNavVertical>
           )}
         >
