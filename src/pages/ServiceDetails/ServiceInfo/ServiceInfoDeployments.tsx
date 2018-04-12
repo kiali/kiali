@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { Col, Row } from 'patternfly-react';
+import { Col, Row, Icon } from 'patternfly-react';
 import Badge from '../../../components/Badge/Badge';
 import { Deployment } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
-import { ratioCheck } from '../../../components/ServiceHealth/ServiceHealth';
+import { ratioCheck, Status } from '../../../components/ServiceHealth/HealthHelper';
 
 interface ServiceInfoDeploymentsProps {
   deployments?: Deployment[];
@@ -41,7 +41,7 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
                 </div>
                 <div>
                   <strong>Pod status: </strong> {deployment.available_replicas} / {deployment.replicas}{' '}
-                  {ratioCheck(deployment.available_replicas, deployment.replicas).jsx(12, '')}
+                  {this.renderStatus(ratioCheck(deployment.available_replicas, deployment.replicas))}
                 </div>
                 {deployment.autoscaler.name !== '' && (
                   <div>
@@ -58,6 +58,14 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
         ))}
       />
     );
+  }
+
+  renderStatus(status: Status) {
+    if (status.icon) {
+      return <Icon type="pf" name={status.icon} />;
+    } else {
+      return <span style={{ color: status.color }}>{status.text}</span>;
+    }
   }
 }
 

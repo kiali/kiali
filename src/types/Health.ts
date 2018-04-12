@@ -9,6 +9,7 @@ export interface EnvoyHealth {
 }
 
 export interface DeploymentStatus {
+  name: string;
   replicas: number;
   available: number;
 }

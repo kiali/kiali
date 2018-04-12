@@ -10,7 +10,7 @@ import { Pagination } from '../../types/Pagination';
 import { IstioLogo, ServiceItem, ServiceList } from '../../types/ServiceListComponent';
 import PropTypes from 'prop-types';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
-import { ServiceHealth, DisplayMode } from '../../components/ServiceHealth/ServiceHealth';
+import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
 
 import './ServiceListComponent.css';
 
@@ -330,7 +330,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
           <tr>
             <td>
               <strong>Health: </strong>
-              <ServiceHealth health={serviceItem.health} mode={DisplayMode.SMALL} />
+              <HealthIndicator health={serviceItem.health} mode={DisplayMode.SMALL} />
             </td>
             <td>
               <strong>Error rate: </strong>

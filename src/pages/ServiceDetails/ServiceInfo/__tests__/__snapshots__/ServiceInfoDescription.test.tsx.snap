@@ -198,9 +198,10 @@ ShallowWrapper {
               Health
             </strong>
           </div>
-          <ServiceHealth
+          <HealthIndicator
             health={undefined}
             mode={0}
+            tooltipPlacement="left"
           />
         </Col>
       </Row>,
@@ -358,9 +359,10 @@ ShallowWrapper {
                 Health
               </strong>
             </div>
-            <ServiceHealth
+            <HealthIndicator
               health={undefined}
               mode={0}
+              tooltipPlacement="left"
             />
           </Col>
         </Row>,
