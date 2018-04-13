@@ -8,4 +8,9 @@ import MetricsOptionsBar from './MetricsOptionsBar';
 
 const stories = storiesOf('MetricsOptions', module);
 
-stories.add('MetricsOptionsBar', () => <MetricsOptionsBar onOptionsChanged={action('onOptionsChanged')} />);
+stories.add('MetricsOptionsBar', () => (
+  <MetricsOptionsBar
+    onPollIntervalChanged={action('onPollIntervalChanged')}
+    onOptionsChanged={action('onOptionsChanged')}
+  />
+));

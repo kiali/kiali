@@ -4,6 +4,7 @@
       "data": {
         "id": "n2",
         "text": "details v1",
+        "style": "solid",
         "service": "details.bookinfo.svc.cluster.local",
         "version": "v1"
       }
@@ -12,14 +13,18 @@
       "data": {
         "id": "n1",
         "text": "productpage v1",
+        "style": "solid",
         "service": "productpage.bookinfo.svc.cluster.local",
-        "version": "v1"
+        "version": "v1",
+        "rate": "36.327",
+        "rate4XX": "36.308"
       }
     },
     {
       "data": {
         "id": "n4",
         "text": "ratings v1",
+        "style": "solid",
         "service": "ratings.bookinfo.svc.cluster.local",
         "version": "v1"
       }
@@ -28,6 +33,7 @@
       "data": {
         "id": "n7",
         "text": "reviews",
+        "style": "solid",
         "service": "reviews.bookinfo.svc.cluster.local",
         "groupBy": "version"
       }
@@ -36,6 +42,7 @@
       "data": {
         "id": "n5",
         "text": "reviews v1",
+        "style": "dotted",
         "parent": "n7",
         "service": "reviews.bookinfo.svc.cluster.local",
         "version": "v1"
@@ -45,6 +52,7 @@
       "data": {
         "id": "n6",
         "text": "reviews v2",
+        "style": "dotted",
         "parent": "n7",
         "service": "reviews.bookinfo.svc.cluster.local",
         "version": "v2"
@@ -54,6 +62,7 @@
       "data": {
         "id": "n3",
         "text": "reviews v3",
+        "style": "solid",
         "parent": "n7",
         "service": "reviews.bookinfo.svc.cluster.local",
         "version": "v3"
@@ -63,6 +72,7 @@
       "data": {
         "id": "n0",
         "text": "unknown",
+        "style": "solid",
         "service": "unknown",
         "version": "unknown"
       }
@@ -74,9 +84,11 @@
         "id": "e0",
         "source": "n0",
         "target": "n1",
-        "text": "",
-        "color": "black",
-        "style": "solid"
+        "text": "36.33 99.95%",
+        "color": "red",
+        "style": "solid",
+        "rate": "36.327",
+        "rate4XX": "36.308"
       }
     },
     {
