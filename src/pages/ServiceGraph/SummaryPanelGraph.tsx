@@ -5,6 +5,7 @@ import RateTable from '../../components/SummaryPanel/RateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/graphing';
+import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
 import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { ActiveFilter } from '../../types/NamespaceFilter';
@@ -58,13 +59,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       .filter('[!groupBy]')
       .size();
     const numEdges = cy.edges().size();
-    const safeRate = (s: string) => {
-      return s ? parseFloat(s) : 0.0;
-    };
-    const rate = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate')), 0);
-    const rate3xx = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate3XX')), 0);
-    const rate4xx = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate4XX')), 0);
-    const rate5xx = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate5XX')), 0);
+    const trafficRate = getAccumulatedTrafficRate(cy.edges());
     const servicesLink = (
       <Link to="../services" onClick={this.updateServicesFilter}>
         {this.props.namespace}
@@ -81,10 +76,10 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
           <div>
             <RateTable
               title="Traffic (requests per second):"
-              rate={rate}
-              rate3xx={rate3xx}
-              rate4xx={rate4xx}
-              rate5xx={rate5xx}
+              rate={trafficRate.rate}
+              rate3xx={trafficRate.rate3xx}
+              rate4xx={trafficRate.rate4xx}
+              rate5xx={trafficRate.rate5xx}
             />
             <div>
               <hr />

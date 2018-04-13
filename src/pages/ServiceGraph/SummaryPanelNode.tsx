@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as API from '../../services/Api';
 
 import graphUtils from '../../utils/graphing';
+import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import Badge from '../../components/Badge/Badge';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
@@ -83,11 +84,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   render() {
-    const RATE = 'rate';
-    const RATE3XX = 'rate3XX';
-    const RATE4XX = 'rate4XX';
-    const RATE5XX = 'rate5XX';
-
     const node = this.props.data.summaryTarget;
 
     const serviceSplit = node.data('service').split('.');
@@ -95,17 +91,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const service = serviceSplit[0];
     const serviceHotLink = <a href={`../namespaces/${namespace}/services/${service}`}>{service}</a>;
 
-    let outgoing = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 };
-
-    // aggregate all outgoing rates
-    const safeRate = (s: string) => {
-      return s ? parseFloat(s) : 0.0;
-    };
-    const edges = this.props.data.summaryTarget.edgesTo('*');
-    outgoing.rate = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE)), 0);
-    outgoing.rate3xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE3XX)), 0);
-    outgoing.rate4xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE4XX)), 0);
-    outgoing.rate5xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE5XX)), 0);
+    const incoming = getTrafficRate(node);
+    const outgoing = getAccumulatedTrafficRate(this.props.data.summaryTarget.edgesTo('*'));
 
     const isUnknown = service === 'unknown';
     return (
@@ -132,10 +119,10 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         <div className="panel-body">
           <InOutRateTable
             title="Request Traffic (requests per second):"
-            inRate={parseFloat(node.data(RATE)) || 0}
-            inRate3xx={parseFloat(node.data(RATE3XX)) || 0}
-            inRate4xx={parseFloat(node.data(RATE4XX)) || 0}
-            inRate5xx={parseFloat(node.data(RATE5XX)) || 0}
+            inRate={incoming.rate}
+            inRate3xx={incoming.rate3xx}
+            inRate4xx={incoming.rate4xx}
+            inRate5xx={incoming.rate5xx}
             outRate={outgoing.rate}
             outRate3xx={outgoing.rate3xx}
             outRate4xx={outgoing.rate4xx}
