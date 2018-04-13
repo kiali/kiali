@@ -144,16 +144,6 @@ func FilterDeploymentsForService(s *v1.Service, deployments *v1beta1.DeploymentL
 	return &shrinked
 }
 
-func selectorToString(selector map[string]string) string {
-	str := ""
-	if len(selector) > 0 {
-		for key, value := range selector {
-			str += key + "=" + value
-		}
-	}
-	return str
-}
-
 func labelsMatch(serviceLabels, filterLabels map[string]string) bool {
 	labelMatch := true
 
@@ -165,4 +155,16 @@ func labelsMatch(serviceLabels, filterLabels map[string]string) bool {
 	}
 
 	return labelMatch
+}
+
+func selectorToString(selector map[string]string) string {
+	str := ""
+	sep := ""
+	if len(selector) > 0 {
+		for key, value := range selector {
+			str += sep + key + "=" + value
+			sep = ","
+		}
+	}
+	return str
 }
