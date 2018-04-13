@@ -220,6 +220,20 @@ func graphService(w http.ResponseWriter, r *http.Request, client *prometheus.Cli
 	generateGraph(&trees, w, o)
 }
 
+// Helper to get a service graph for other internal callers
+func TreesService(ns string, svcName string) (trees []tree.ServiceNode) {
+	client, err := prometheus.NewClient()
+	checkError(err)
+
+	o:= options.Options{Duration:time.Hour,
+						Service:svcName,
+						Metric: "istio_request_count",
+						QueryTime: time.Now().Unix(),
+						Namespace:ns}
+
+	return buildNamespaceTrees(o,client)
+}
+
 // buildServiceTrees returns trees routed at source services for versions of the service of interest
 func buildServiceTrees(o options.Options, client *prometheus.Client) (trees []tree.ServiceNode) {
 	// Query for root nodes. Root nodes for the service graph represent
