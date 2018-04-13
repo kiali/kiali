@@ -38,7 +38,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernete
 	services := make([]models.ServiceOverview, len(sl.Services.Items))
 
 	for i, item := range sl.Services.Items {
-		depls := getDeploymentsMatchingService(&item, sl.Deployments)
+		depls := kubernetes.FilterDeploymentsForService(&item, sl.Deployments)
 		services[i] = in.castServiceOverview(&item, depls)
 	}
 	processRequestCounters(services, requestCounters)
@@ -46,19 +46,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernete
 	return &models.ServiceList{Namespace: namespace, Services: services}
 }
 
-func getDeploymentsMatchingService(s *v1.Service, deployments *v1beta1.DeploymentList) []v1beta1.Deployment {
-	depls := make([]v1beta1.Deployment, len(deployments.Items))
-	i := 0
-	for _, depl := range deployments.Items {
-		if kubernetes.LabelsMatch(depl.ObjectMeta.Labels, s.Spec.Selector) {
-			depls[i] = depl
-			i++
-		}
-	}
-	return depls[:i]
-}
-
-func (in *SvcService) castServiceOverview(s *v1.Service, deployments []v1beta1.Deployment) models.ServiceOverview {
+func (in *SvcService) castServiceOverview(s *v1.Service, deployments *[]v1beta1.Deployment) models.ServiceOverview {
 	hasSideCar := hasIstioSideCar(deployments)
 	health := in.health.getServiceHealthFromDeployments(s.Namespace, s.Name, deployments)
 	return models.ServiceOverview{
@@ -67,8 +55,8 @@ func (in *SvcService) castServiceOverview(s *v1.Service, deployments []v1beta1.D
 		Health:       health}
 }
 
-func hasIstioSideCar(deployments []v1beta1.Deployment) bool {
-	for _, deployment := range deployments {
+func hasIstioSideCar(deployments *[]v1beta1.Deployment) bool {
+	for _, deployment := range *deployments {
 		if deployment.Spec.Template.Annotations != nil {
 			if _, exists := deployment.Spec.Template.Annotations[config.Get().Products.Istio.IstioSidecarAnnotation]; exists {
 				return true
@@ -133,7 +121,7 @@ func (in *SvcService) GetService(namespace, service string) (*models.Service, er
 		return nil, err
 	}
 
-	health := in.health.getServiceHealthFromDeployments(namespace, service, serviceDetails.Deployments.Items)
+	health := in.health.getServiceHealthFromDeployments(namespace, service, &serviceDetails.Deployments.Items)
 
 	s := models.Service{
 		Namespace: models.Namespace{Name: namespace},
