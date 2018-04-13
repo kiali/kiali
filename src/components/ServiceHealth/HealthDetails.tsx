@@ -35,7 +35,7 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
     const allInactive = deplsStatuses.length > 0 && !deplsStatuses.some(st => st !== H.NA);
     const globalDeplStatus: H.Status = allInactive
       ? H.FAILURE
-      : deplsStatuses.reduce((prev, cur) => H.mergeStatus(prev, cur)) || H.NA;
+      : deplsStatuses.reduce((prev, cur) => H.mergeStatus(prev, cur), H.NA);
     return (
       <Tooltip id={this.props.id + '-health-tooltip'}>
         <div style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 10 }}>
