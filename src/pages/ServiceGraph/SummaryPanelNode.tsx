@@ -102,10 +102,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       return s ? parseFloat(s) : 0.0;
     };
     const edges = this.props.data.summaryTarget.edgesTo('*');
-    outgoing.rate = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE)));
-    outgoing.rate3xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE3XX)));
-    outgoing.rate4xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE4XX)));
-    outgoing.rate5xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE5XX)));
+    if (edges.size() > 0) {
+      outgoing.rate = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE)));
+      outgoing.rate3xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE3XX)));
+      outgoing.rate4xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE4XX)));
+      outgoing.rate5xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE5XX)));
+    }
 
     const isUnknown = service === 'unknown';
     return (
