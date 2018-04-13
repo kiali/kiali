@@ -113,3 +113,14 @@ export const getServiceHealth = () => {
     });
   });
 };
+
+export const getNamespaceMetrics = (namespace: String, params: any) => {
+  return Promise.resolve({
+    data: {
+      metrics: {
+        request_count_in: { matrix: [] },
+        request_error_count_in: { matrix: [] }
+      }
+    }
+  });
+};

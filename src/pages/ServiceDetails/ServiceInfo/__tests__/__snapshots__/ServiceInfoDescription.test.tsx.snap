@@ -200,6 +200,7 @@ ShallowWrapper {
           </div>
           <HealthIndicator
             health={undefined}
+            id="reviews"
             mode={0}
             tooltipPlacement="left"
           />
@@ -361,6 +362,7 @@ ShallowWrapper {
             </div>
             <HealthIndicator
               health={undefined}
+              id="reviews"
               mode={0}
               tooltipPlacement="left"
             />

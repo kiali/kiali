@@ -11,6 +11,7 @@ export enum DisplayMode {
 }
 
 interface Props {
+  id: string;
   health?: Health;
   mode: DisplayMode;
   tooltipPlacement?: string;
@@ -91,7 +92,7 @@ export class HealthIndicator extends React.PureComponent<Props, {}> {
   renderIndicator(health: Health, iconSize: string, textSize: string, title: string) {
     if (this.globalStatus.icon) {
       return (
-        <HealthDetails health={health} headline={title} placement={this.props.tooltipPlacement}>
+        <HealthDetails id={this.props.id} health={health} headline={title} placement={this.props.tooltipPlacement}>
           <Icon type="pf" name={this.globalStatus.icon} style={{ fontSize: iconSize }} />
         </HealthDetails>
       );

@@ -25,6 +25,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={1}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -61,6 +62,7 @@ ShallowWrapper {
             },
           }
         }
+        id="svc"
         placement={undefined}
       >
         <Icon
@@ -108,6 +110,7 @@ ShallowWrapper {
             "total": 1,
           },
         },
+        "id": "svc",
         "placement": undefined,
       },
       "ref": null,
@@ -158,6 +161,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -205,6 +209,7 @@ ShallowWrapper {
               "total": 1,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -263,6 +268,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={0}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -300,6 +306,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -355,6 +362,7 @@ ShallowWrapper {
               "total": 1,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -418,6 +426,7 @@ ShallowWrapper {
                 },
               }
             }
+            id="svc"
             placement={undefined}
           >
             <Icon
@@ -473,6 +482,7 @@ ShallowWrapper {
                 "total": 1,
               },
             },
+            "id": "svc",
             "placement": undefined,
           },
           "ref": null,
@@ -543,6 +553,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={1}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -579,6 +590,7 @@ ShallowWrapper {
             },
           }
         }
+        id="svc"
         placement={undefined}
       >
         <Icon
@@ -626,6 +638,7 @@ ShallowWrapper {
             "total": 10,
           },
         },
+        "id": "svc",
         "placement": undefined,
       },
       "ref": null,
@@ -676,6 +689,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -723,6 +737,7 @@ ShallowWrapper {
               "total": 10,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -781,6 +796,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={0}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -818,6 +834,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -889,6 +906,7 @@ ShallowWrapper {
               "total": 10,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -1009,6 +1027,7 @@ ShallowWrapper {
                 },
               }
             }
+            id="svc"
             placement={undefined}
           >
             <Icon
@@ -1080,6 +1099,7 @@ ShallowWrapper {
                 "total": 10,
               },
             },
+            "id": "svc",
             "placement": undefined,
           },
           "ref": null,
@@ -1207,6 +1227,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={1}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -1243,6 +1264,7 @@ ShallowWrapper {
             },
           }
         }
+        id="svc"
         placement={undefined}
       >
         <Icon
@@ -1290,6 +1312,7 @@ ShallowWrapper {
             "total": 1,
           },
         },
+        "id": "svc",
         "placement": undefined,
       },
       "ref": null,
@@ -1340,6 +1363,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -1387,6 +1411,7 @@ ShallowWrapper {
               "total": 1,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -1445,6 +1470,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={0}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -1482,6 +1508,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -1537,6 +1564,7 @@ ShallowWrapper {
               "total": 1,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -1600,6 +1628,7 @@ ShallowWrapper {
                 },
               }
             }
+            id="svc"
             placement={undefined}
           >
             <Icon
@@ -1655,6 +1684,7 @@ ShallowWrapper {
                 "total": 1,
               },
             },
+            "id": "svc",
             "placement": undefined,
           },
           "ref": null,
@@ -1725,6 +1755,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={1}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -1761,6 +1792,7 @@ ShallowWrapper {
             },
           }
         }
+        id="svc"
         placement={undefined}
       >
         <Icon
@@ -1808,6 +1840,7 @@ ShallowWrapper {
             "total": 10,
           },
         },
+        "id": "svc",
         "placement": undefined,
       },
       "ref": null,
@@ -1858,6 +1891,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -1905,6 +1939,7 @@ ShallowWrapper {
               "total": 10,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -1963,6 +1998,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={0}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -2000,6 +2036,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -2068,6 +2105,7 @@ ShallowWrapper {
               "total": 10,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -2174,6 +2212,7 @@ ShallowWrapper {
                 },
               }
             }
+            id="svc"
             placement={undefined}
           >
             <Icon
@@ -2242,6 +2281,7 @@ ShallowWrapper {
                 "total": 10,
               },
             },
+            "id": "svc",
             "placement": undefined,
           },
           "ref": null,
@@ -2355,6 +2395,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={1}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -2391,6 +2432,7 @@ ShallowWrapper {
             },
           }
         }
+        id="svc"
         placement={undefined}
       >
         <Icon
@@ -2438,6 +2480,7 @@ ShallowWrapper {
             "total": 10,
           },
         },
+        "id": "svc",
         "placement": undefined,
       },
       "ref": null,
@@ -2488,6 +2531,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -2535,6 +2579,7 @@ ShallowWrapper {
               "total": 10,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -2593,6 +2638,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={0}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -2630,6 +2676,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -2685,6 +2732,7 @@ ShallowWrapper {
               "total": 10,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -2748,6 +2796,7 @@ ShallowWrapper {
                 },
               }
             }
+            id="svc"
             placement={undefined}
           >
             <Icon
@@ -2803,6 +2852,7 @@ ShallowWrapper {
                 "total": 10,
               },
             },
+            "id": "svc",
             "placement": undefined,
           },
           "ref": null,
@@ -2873,6 +2923,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={1}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -2909,6 +2960,7 @@ ShallowWrapper {
             },
           }
         }
+        id="svc"
         placement={undefined}
       >
         <Icon
@@ -2956,6 +3008,7 @@ ShallowWrapper {
             "total": 10,
           },
         },
+        "id": "svc",
         "placement": undefined,
       },
       "ref": null,
@@ -3006,6 +3059,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -3053,6 +3107,7 @@ ShallowWrapper {
               "total": 10,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -3111,6 +3166,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={0}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -3148,6 +3204,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -3216,6 +3273,7 @@ ShallowWrapper {
               "total": 10,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -3322,6 +3380,7 @@ ShallowWrapper {
                 },
               }
             }
+            id="svc"
             placement={undefined}
           >
             <Icon
@@ -3390,6 +3449,7 @@ ShallowWrapper {
                 "total": 10,
               },
             },
+            "id": "svc",
             "placement": undefined,
           },
           "ref": null,
@@ -3503,6 +3563,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={1}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -3539,6 +3600,7 @@ ShallowWrapper {
             },
           }
         }
+        id="svc"
         placement={undefined}
       >
         <Icon
@@ -3586,6 +3648,7 @@ ShallowWrapper {
             "total": 1,
           },
         },
+        "id": "svc",
         "placement": undefined,
       },
       "ref": null,
@@ -3636,6 +3699,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -3683,6 +3747,7 @@ ShallowWrapper {
               "total": 1,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -3741,6 +3806,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={0}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -3778,6 +3844,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -3833,6 +3900,7 @@ ShallowWrapper {
               "total": 1,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -3896,6 +3964,7 @@ ShallowWrapper {
                 },
               }
             }
+            id="svc"
             placement={undefined}
           >
             <Icon
@@ -3951,6 +4020,7 @@ ShallowWrapper {
                 "total": 1,
               },
             },
+            "id": "svc",
             "placement": undefined,
           },
           "ref": null,
@@ -4021,6 +4091,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={1}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -4057,6 +4128,7 @@ ShallowWrapper {
             },
           }
         }
+        id="svc"
         placement={undefined}
       >
         <Icon
@@ -4104,6 +4176,7 @@ ShallowWrapper {
             "total": 1,
           },
         },
+        "id": "svc",
         "placement": undefined,
       },
       "ref": null,
@@ -4154,6 +4227,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -4201,6 +4275,7 @@ ShallowWrapper {
               "total": 1,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -4259,6 +4334,7 @@ ShallowWrapper {
         },
       }
     }
+    id="svc"
     mode={0}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -4296,6 +4372,7 @@ ShallowWrapper {
               },
             }
           }
+          id="svc"
           placement={undefined}
         >
           <Icon
@@ -4351,6 +4428,7 @@ ShallowWrapper {
               "total": 1,
             },
           },
+          "id": "svc",
           "placement": undefined,
         },
         "ref": null,
@@ -4414,6 +4492,7 @@ ShallowWrapper {
                 },
               }
             }
+            id="svc"
             placement={undefined}
           >
             <Icon
@@ -4469,6 +4548,7 @@ ShallowWrapper {
                 "total": 1,
               },
             },
+            "id": "svc",
             "placement": undefined,
           },
           "ref": null,

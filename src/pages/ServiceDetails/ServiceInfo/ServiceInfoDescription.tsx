@@ -11,7 +11,7 @@ import './ServiceInfoDescription.css';
 import { IstioLogo } from '../../../types/ServiceListComponent';
 
 interface ServiceInfoDescriptionProps {
-  name?: string;
+  name: string;
   istio_sidecar?: boolean;
   labels?: Map<string, string>;
   type?: string;
@@ -101,7 +101,12 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               <div className="progress-description">
                 <strong>Health</strong>
               </div>
-              <HealthIndicator health={this.props.health} mode={DisplayMode.LARGE} tooltipPlacement="left" />
+              <HealthIndicator
+                id={this.props.name}
+                health={this.props.health}
+                mode={DisplayMode.LARGE}
+                tooltipPlacement="left"
+              />
             </Col>
           </Row>
         }
