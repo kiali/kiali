@@ -35,6 +35,7 @@ const BookInfoCytoscapeLayout = graphLayout => (
     elements={bookinfoData}
     onClick={action('OnClick')}
     isLoading={false}
+    refresh={action('refresh')}
   />
 );
 
@@ -54,6 +55,7 @@ storiesOf('CytoscapeLayout', module)
       elements={EMPTY_GRAPH}
       onClick={action('OnClick')}
       isLoading={false}
+      refresh={action('refresh')}
     />
   ))
   .add('Loading', () => (
@@ -64,5 +66,6 @@ storiesOf('CytoscapeLayout', module)
       elements={EMPTY_GRAPH}
       onClick={action('OnClick')}
       isLoading={true}
+      refresh={action('refresh')}
     />
   ));

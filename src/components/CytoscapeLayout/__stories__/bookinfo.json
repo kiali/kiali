@@ -3,7 +3,7 @@
     {
       "data": {
         "id": "n2",
-        "text": "details (v1)",
+        "text": "details v1",
         "service": "details.bookinfo.svc.cluster.local",
         "version": "v1"
       }
@@ -11,15 +11,15 @@
     {
       "data": {
         "id": "n1",
-        "text": "productpage (v1)",
+        "text": "productpage v1",
         "service": "productpage.bookinfo.svc.cluster.local",
         "version": "v1"
       }
     },
     {
       "data": {
-        "id": "n5",
-        "text": "ratings (v1)",
+        "id": "n4",
+        "text": "ratings v1",
         "service": "ratings.bookinfo.svc.cluster.local",
         "version": "v1"
       }
@@ -34,8 +34,8 @@
     },
     {
       "data": {
-        "id": "n3",
-        "text": "reviews (v1)",
+        "id": "n5",
+        "text": "reviews v1",
         "parent": "n7",
         "service": "reviews.bookinfo.svc.cluster.local",
         "version": "v1"
@@ -43,8 +43,8 @@
     },
     {
       "data": {
-        "id": "n4",
-        "text": "reviews (v2)",
+        "id": "n6",
+        "text": "reviews v2",
         "parent": "n7",
         "service": "reviews.bookinfo.svc.cluster.local",
         "version": "v2"
@@ -52,8 +52,8 @@
     },
     {
       "data": {
-        "id": "n6",
-        "text": "reviews (v3)",
+        "id": "n3",
+        "text": "reviews v3",
         "parent": "n7",
         "service": "reviews.bookinfo.svc.cluster.local",
         "version": "v3"
@@ -74,8 +74,9 @@
         "id": "e0",
         "source": "n0",
         "target": "n1",
-        "text": "0ps",
-        "color": "black"
+        "text": "",
+        "color": "black",
+        "style": "solid"
       }
     },
     {
@@ -83,8 +84,9 @@
         "id": "e1",
         "source": "n1",
         "target": "n2",
-        "text": "0ps",
-        "color": "black"
+        "text": "",
+        "color": "black",
+        "style": "solid"
       }
     },
     {
@@ -92,17 +94,19 @@
         "id": "e2",
         "source": "n1",
         "target": "n3",
-        "text": "0ps",
-        "color": "black"
+        "text": "",
+        "color": "black",
+        "style": "solid"
       }
     },
     {
       "data": {
-        "id": "e3",
+        "id": "e4",
         "source": "n1",
-        "target": "n4",
-        "text": "0ps",
-        "color": "black"
+        "target": "n5",
+        "text": "",
+        "color": "black",
+        "style": "dotted"
       }
     },
     {
@@ -110,26 +114,19 @@
         "id": "e5",
         "source": "n1",
         "target": "n6",
-        "text": "0ps",
-        "color": "black"
+        "text": "",
+        "color": "black",
+        "style": "dotted"
       }
     },
     {
       "data": {
-        "id": "e4",
-        "source": "n4",
-        "target": "n5",
-        "text": "0ps",
-        "color": "black"
-      }
-    },
-    {
-      "data": {
-        "id": "e6",
-        "source": "n6",
-        "target": "n5",
-        "text": "0ps",
-        "color": "black"
+        "id": "e3",
+        "source": "n3",
+        "target": "n4",
+        "text": "",
+        "color": "black",
+        "style": "solid"
       }
     }
   ]
