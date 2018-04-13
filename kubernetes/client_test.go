@@ -1,15 +1,11 @@
 package kubernetes
 
-import (
-	"testing"
+// func TestGetList(t *testing.T) {
+// 	assert := assert.New(t)
 
-	"github.com/stretchr/testify/assert"
-)
+// 	listOptions := GetLabeledListOptions("app=helloworld")
 
-func TestGetList(t *testing.T) {
-	assert := assert.New(t)
+// 	assert.Equal(listOptions.LabelSelector, "app=helloworld")
+// }
 
-	listOptions := GetLabeledListOptions("app=helloworld")
-
-	assert.Equal(listOptions.LabelSelector, "app=helloworld")
-}
+// TODO: add LabelsMatch tests

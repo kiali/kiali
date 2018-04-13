@@ -21,7 +21,7 @@ func (in *HealthService) GetServiceHealth(namespace, service string) models.Heal
 	// Pod status
 	details, _ := in.k8s.GetServiceDetails(namespace, service)
 	if details != nil {
-		health.DeploymentStatuses = castDeploymentsStatuses(details.Deployments.Items)
+		health.DeploymentStatuses = castDeploymentsStatuses(&details.Deployments.Items)
 	}
 
 	// Envoy health
@@ -30,7 +30,7 @@ func (in *HealthService) GetServiceHealth(namespace, service string) models.Heal
 	return health
 }
 
-func (in *HealthService) getServiceHealthFromDeployments(namespace, service string, deployments []v1beta1.Deployment) models.Health {
+func (in *HealthService) getServiceHealthFromDeployments(namespace, service string, deployments *[]v1beta1.Deployment) models.Health {
 	statuses := castDeploymentsStatuses(deployments)
 	healthy, total, _ := in.prom.GetServiceHealth(namespace, service)
 	return models.Health{
@@ -38,9 +38,9 @@ func (in *HealthService) getServiceHealthFromDeployments(namespace, service stri
 		DeploymentStatuses: statuses}
 }
 
-func castDeploymentsStatuses(deployments []v1beta1.Deployment) []models.DeploymentStatus {
-	statuses := make([]models.DeploymentStatus, len(deployments))
-	for i, deployment := range deployments {
+func castDeploymentsStatuses(deployments *[]v1beta1.Deployment) []models.DeploymentStatus {
+	statuses := make([]models.DeploymentStatus, len(*deployments))
+	for i, deployment := range *deployments {
 		statuses[i] = models.DeploymentStatus{
 			Name:              deployment.Name,
 			Replicas:          deployment.Status.Replicas,

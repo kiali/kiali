@@ -2,14 +2,18 @@ package kubernetes
 
 import (
 	"fmt"
-	kialiConfig "github.com/kiali/kiali/config"
+	"net"
+	"os"
+
+	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"net"
-	"os"
+
+	kialiConfig "github.com/kiali/kiali/config"
 )
 
 const (
@@ -123,7 +127,34 @@ func NewClient() (*IstioClient, error) {
 	return &client, nil
 }
 
-func LabelsMatch(serviceLabels, filterLabels map[string]string) bool {
+// FilterDeploymentsForService returns a subpart of deployments list where labels match the ones of the given service
+func FilterDeploymentsForService(s *v1.Service, deployments *v1beta1.DeploymentList) *[]v1beta1.Deployment {
+	if s == nil || deployments == nil {
+		return nil
+	}
+	depls := make([]v1beta1.Deployment, len(deployments.Items))
+	i := 0
+	for _, depl := range deployments.Items {
+		if labelsMatch(depl.ObjectMeta.Labels, s.Spec.Selector) {
+			depls[i] = depl
+			i++
+		}
+	}
+	shrinked := depls[:i]
+	return &shrinked
+}
+
+func selectorToString(selector map[string]string) string {
+	str := ""
+	if len(selector) > 0 {
+		for key, value := range selector {
+			str += key + "=" + value
+		}
+	}
+	return str
+}
+
+func labelsMatch(serviceLabels, filterLabels map[string]string) bool {
 	labelMatch := true
 
 	for key, value := range filterLabels {
@@ -134,9 +165,4 @@ func LabelsMatch(serviceLabels, filterLabels map[string]string) bool {
 	}
 
 	return labelMatch
-}
-
-func GetLabeledListOptions(labelSelector string) *meta_v1.ListOptions {
-	return &meta_v1.ListOptions{
-		LabelSelector: labelSelector}
 }

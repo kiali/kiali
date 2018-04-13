@@ -1,14 +1,10 @@
 package kubernetes
 
 import (
-	"strings"
-
 	"k8s.io/api/apps/v1beta1"
 	autoscalingV1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/kiali/kiali/config"
 )
 
 const (
@@ -94,7 +90,6 @@ func (in *IstioClient) GetDeployments(namespaceName string) (*v1beta1.Deployment
 func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error) {
 	serviceChan := make(chan serviceResponse)
 	endpointsChan := make(chan endpointsResponse)
-	deploymentsChan := make(chan deploymentsResponse)
 	autoscalersChan := make(chan autoscalersResponse)
 
 	go func() {
@@ -105,11 +100,6 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	go func() {
 		endpoints, err := in.k8s.CoreV1().Endpoints(namespace).Get(serviceName, emptyGetOptions)
 		endpointsChan <- endpointsResponse{endpoints: endpoints, err: err}
-	}()
-
-	go func() {
-		deployments, err := in.k8s.AppsV1beta1().Deployments(namespace).List(*getDeploymentFilterListOptions(serviceName))
-		deploymentsChan <- deploymentsResponse{deployments: deployments, err: err}
 	}()
 
 	go func() {
@@ -131,11 +121,13 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	}
 	serviceDetails.Endpoints = endpointsResponse.endpoints
 
-	deploymentsResponse := <-deploymentsChan
-	if deploymentsResponse.err != nil {
-		return nil, deploymentsResponse.err
+	// Fetch deployments synchronously after we get service since we rely on its selector
+	selector := selectorToString(serviceDetails.Service.Spec.Selector)
+	deployments, err := in.k8s.AppsV1beta1().Deployments(namespace).List(meta_v1.ListOptions{LabelSelector: selector})
+	if err != nil {
+		return nil, err
 	}
-	serviceDetails.Deployments = deploymentsResponse.deployments
+	serviceDetails.Deployments = deployments
 
 	autoscalersResponse := <-autoscalersChan
 	if autoscalersResponse.err != nil {
@@ -168,11 +160,6 @@ func getDeploymentNames(deployments *v1beta1.DeploymentList) []string {
 	}
 
 	return deploymentNames
-}
-
-func getDeploymentFilterListOptions(serviceName string) *meta_v1.ListOptions {
-	filterLabelName := config.Get().ServiceFilterLabelName
-	return GetLabeledListOptions(strings.Join([]string{filterLabelName, serviceName}, "="))
 }
 
 func (in *IstioClient) getServiceList(namespaceName string, servicesChan chan servicesResponse) {
