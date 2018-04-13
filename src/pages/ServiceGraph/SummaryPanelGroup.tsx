@@ -63,17 +63,21 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       return s ? parseFloat(s) : 0.0;
     };
     const nodes = this.props.data.summaryTarget.children();
-    incoming.rate = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE)));
-    incoming.rate3xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE3XX)));
-    incoming.rate4xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE4XX)));
-    incoming.rate5xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE5XX)));
+    if (nodes.size() > 0) {
+      incoming.rate = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE)));
+      incoming.rate3xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE3XX)));
+      incoming.rate4xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE4XX)));
+      incoming.rate5xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE5XX)));
+    }
 
     // aggregate all outgoing rates
     const edges = this.props.data.summaryTarget.children().edgesTo('*');
-    outgoing.rate = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE)));
-    outgoing.rate3xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE3XX)));
-    outgoing.rate4xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE4XX)));
-    outgoing.rate5xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE5XX)));
+    if (edges.size() > 0) {
+      outgoing.rate = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE)));
+      outgoing.rate3xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE3XX)));
+      outgoing.rate4xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE4XX)));
+      outgoing.rate5xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE5XX)));
+    }
 
     return (
       <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
