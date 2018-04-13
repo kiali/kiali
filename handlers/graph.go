@@ -53,6 +53,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/services/models"
 )
 
 // GraphNamespace is a REST http.HandlerFunc handling namespace-wide servicegraph
@@ -82,7 +83,7 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 
 	log.Debugf("Build roots (root destination services nodes) for [%v] namespace graph with options [%+v]", o.Vendor, o)
 
-	trees := buildNamespaceTrees(o, client)
+	trees := buildNamespaceTrees(o, client, istioClient)
 
 	if istioClient != nil {
 		deployments, err := istioClient.GetDeployments(o.Namespace)
@@ -95,7 +96,7 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 }
 
 // buildNamespaceTrees returns trees routed at all destination services with "Internet" parents
-func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []tree.ServiceNode) {
+func buildNamespaceTrees(o options.Options, client *prometheus.Client, istioClient *kubernetes.IstioClient) (trees []tree.ServiceNode) {
 	// avoid circularities by keeping track of all seen nodes
 	seenNodes := make(map[string]*tree.ServiceNode)
 
@@ -135,7 +136,7 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []
 		seenNodes[root.ID] = &root
 
 		log.Debugf("Building namespace tree for Root ServiceNode: %v\n", root.ID)
-		buildNamespaceTree(&root, time.Unix(o.QueryTime, 0), seenNodes, o, client)
+		buildNamespaceTree(&root, time.Unix(o.QueryTime, 0), seenNodes, o, client, istioClient)
 
 		trees = append(trees, root)
 	}
@@ -143,7 +144,7 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []
 	return trees
 }
 
-func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client) {
+func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client, istioClient *kubernetes.IstioClient) {
 	log.Debugf("Adding children for ServiceNode: %v\n", sn.ID)
 
 	var destinationSvcFilter string
@@ -163,6 +164,30 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 
 	// identify the unique destination services
 	destinations := toDestinations(sn.Name, sn.Version, vector)
+
+	// determine if there is a circuit breaker on this node
+	if istioClient != nil {
+		istioDetails, err := istioClient.GetIstioDetails(o.Namespace, strings.Split(sn.Name, ".")[0])
+		if err == nil {
+			if istioDetails.DestinationPolicies != nil {
+				dps := make(models.DestinationPolicies, 0)
+				dps.Parse(istioDetails.DestinationPolicies)
+				for _, dp := range dps {
+					if dp.CircuitBreaker != nil {
+						if d, ok := dp.Destination.(map[string]interface{}); ok {
+							if d["labels"].(map[string]interface{})["version"] == sn.Version {
+								sn.Metadata["hasCircuitBreaker"] = "true"
+								break // no need to keep going, we know it has at least one CB policy
+							}
+						}
+					}
+				}
+			}
+		} else {
+			log.Warningf("Cannot determine if service [%v:%v] has circuit breakers: %v", o.Namespace, sn.Name, err)
+			sn.Metadata["hasCircuitBreaker"] = "unknown"
+		}
+	}
 
 	if len(destinations) > 0 {
 		sn.Children = make([]*tree.ServiceNode, len(destinations))
@@ -185,7 +210,7 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 		for _, child := range sn.Children {
 			if _, seen := seenNodes[child.ID]; !seen {
 				seenNodes[child.ID] = child
-				buildNamespaceTree(child, start, seenNodes, o, client)
+				buildNamespaceTree(child, start, seenNodes, o, client, istioClient)
 			} else {
 				log.Debugf("Not recursing on seen child service: %v(%v)\n", child.Name, child.Version)
 			}
