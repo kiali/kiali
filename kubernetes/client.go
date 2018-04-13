@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
@@ -158,13 +159,9 @@ func labelsMatch(serviceLabels, filterLabels map[string]string) bool {
 }
 
 func selectorToString(selector map[string]string) string {
-	str := ""
-	sep := ""
-	if len(selector) > 0 {
-		for key, value := range selector {
-			str += sep + key + "=" + value
-			sep = ","
-		}
+	querySelector := make([]string, 0, len(selector))
+	for label, name := range selector {
+		querySelector = append(querySelector, label+"="+name)
 	}
-	return str
+	return strings.Join(querySelector, ",")
 }
