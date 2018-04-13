@@ -4,11 +4,13 @@ import cycola from 'cytoscape-cola';
 import dagre from 'cytoscape-dagre';
 import coseBilkent from 'cytoscape-cose-bilkent';
 import klay from 'cytoscape-klay';
+import popper from 'cytoscape-popper';
 
 cytoscape.use(cycola);
 cytoscape.use(dagre);
 cytoscape.use(coseBilkent);
 cytoscape.use(klay);
+cytoscape.use(popper);
 
 /**
  * A React Cytoscape wrapper.

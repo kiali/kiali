@@ -9,6 +9,7 @@ import EmptyGraphLayout from './EmptyGraphLayout';
 
 import { GraphParamsType } from '../../types/Graph';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
+import * as GraphBadge from './graphs/GraphBadge';
 
 type CytoscapeLayoutType = {
   elements: any;
@@ -90,12 +91,28 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
       }
     };
 
-    cy.on('tap', (evt: any) => {
+    this.cy.on('tap', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
       if (cytoscapeEvent !== null) {
         this.handleTap(cytoscapeEvent);
       }
     });
+
+    // when the graph is fully populated and ready, we need to add appropriate badges to the nodes
+    this.cy.ready((evt: any) => {
+      evt.cy
+        .nodes()
+        .filter((ele: any) => {
+          if (ele.isParent()) {
+            return false; // we never need the group box elements, filter them out
+          }
+          return ele.data('hasCircuitBreaker') === 'true';
+        })
+        .forEach(ele => {
+          new GraphBadge.CircuitBreakerBadge(ele).buildBadge();
+        });
+    });
+
     this.cy.on('mouseover', 'node,edge', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
       if (cytoscapeEvent !== null) {
