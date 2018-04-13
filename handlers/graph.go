@@ -166,25 +166,27 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 	destinations := toDestinations(sn.Name, sn.Version, vector)
 
 	// determine if there is a circuit breaker on this node
-	istioDetails, err := istioClient.GetIstioDetails(o.Namespace, strings.Split(sn.Name, ".")[0])
-	if err == nil {
-		if istioDetails.DestinationPolicies != nil {
-			dps := make(models.DestinationPolicies, 0)
-			dps.Parse(istioDetails.DestinationPolicies)
-			for _, dp := range dps {
-				if dp.CircuitBreaker != nil {
-					if d, ok := dp.Destination.(map[string]interface{}); ok {
-						if d["labels"].(map[string]interface{})["version"] == sn.Version {
-							sn.Metadata["hasCircuitBreaker"] = "true"
-							break // no need to keep going, we know it has at least one CB policy
+	if istioClient != nil {
+		istioDetails, err := istioClient.GetIstioDetails(o.Namespace, strings.Split(sn.Name, ".")[0])
+		if err == nil {
+			if istioDetails.DestinationPolicies != nil {
+				dps := make(models.DestinationPolicies, 0)
+				dps.Parse(istioDetails.DestinationPolicies)
+				for _, dp := range dps {
+					if dp.CircuitBreaker != nil {
+						if d, ok := dp.Destination.(map[string]interface{}); ok {
+							if d["labels"].(map[string]interface{})["version"] == sn.Version {
+								sn.Metadata["hasCircuitBreaker"] = "true"
+								break // no need to keep going, we know it has at least one CB policy
+							}
 						}
 					}
 				}
 			}
+		} else {
+			log.Warningf("Cannot determine if service [%v:%v] has circuit breakers: %v", o.Namespace, sn.Name, err)
+			sn.Metadata["hasCircuitBreaker"] = "unknown"
 		}
-	} else {
-		log.Warningf("Cannot determine if service [%v:%v] has circuit breakers: %v", o.Namespace, sn.Name, err)
-		sn.Metadata["hasCircuitBreaker"] = "unknown"
 	}
 
 	if len(destinations) > 0 {
