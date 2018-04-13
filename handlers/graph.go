@@ -173,8 +173,12 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 			dps.Parse(istioDetails.DestinationPolicies)
 			for _, dp := range dps {
 				if dp.CircuitBreaker != nil {
-					sn.Metadata["hasCircuitBreaker"] = "true"
-					break // no need to keep going, we know it has at least one CB policy
+					if d, ok := dp.Destination.(map[string]interface{}); ok {
+						if d["labels"].(map[string]interface{})["version"] == sn.Version {
+							sn.Metadata["hasCircuitBreaker"] = "true"
+							break // no need to keep going, we know it has at least one CB policy
+						}
+					}
 				}
 			}
 		}
