@@ -24,6 +24,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     right: 0
   };
 
+  // avoid state changes after component is unmounted
+  _isMounted: boolean = false;
+
   constructor(props: SummaryPanelPropType) {
     super(props);
     this.showRequestCountMetrics = this.showRequestCountMetrics.bind(this);
@@ -38,13 +41,18 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   componentDidMount() {
+    this._isMounted = true;
     this.fetchRequestCountMetrics(this.props);
   }
 
   componentWillReceiveProps(nextProps: SummaryPanelPropType) {
-    if (nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
+    if (nextProps.data.summaryTarget && nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
       this.fetchRequestCountMetrics(nextProps);
     }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   fetchRequestCountMetrics(props: SummaryPanelPropType) {
@@ -59,10 +67,20 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       rateInterval: props.rateInterval,
       filters: ['request_count', 'request_error_count']
     };
-
+    // console.log('loadServiceMetrics SummaryNode');
     API.getServiceMetrics(namespace, service, options)
-      .then(this.showRequestCountMetrics)
+      .then(response => {
+        if (!this._isMounted) {
+          console.log('SummaryPanelNode: Ignore fetch, component not mounted.');
+          return;
+        }
+        this.showRequestCountMetrics(response);
+      })
       .catch(error => {
+        if (!this._isMounted) {
+          console.log('SummaryPanelNode: Ignore fetch error, component not mounted.');
+          return;
+        }
         this.setState({ loading: false });
         console.error(error);
       });

@@ -25,6 +25,9 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     right: 0
   };
 
+  // avoid state changes after component is unmounted
+  _isMounted: boolean = false;
+
   constructor(props: SummaryPanelPropType) {
     super(props);
 
@@ -36,15 +39,18 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   }
 
   componentDidMount() {
-    if (this.props.data.summaryTarget) {
-      this.updateRpsChart(this.props);
-    }
+    // don't load data here, wit until props are updated after the graph is loaded
+    this._isMounted = true;
   }
 
   componentWillReceiveProps(nextProps: SummaryPanelPropType) {
-    if (nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
+    if (nextProps.data.summaryTarget && nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
       this.updateRpsChart(nextProps);
     }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   render() {
@@ -103,8 +109,14 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       step: props.step,
       rateInterval: props.rateInterval
     };
+    // console.log('loadNamespaceMetrics SummaryGraph');
     API.getNamespaceMetrics(props.namespace, options)
       .then(response => {
+        if (!this._isMounted) {
+          console.log('SummaryPanelGraph: Ignore fetch, component not mounted.');
+          return;
+        }
+
         const data: M.Metrics = response['data'];
         const metrics: Map<String, M.MetricGroup> = data.metrics;
         const reqRates = this.getRates(metrics['request_count_in'], 'RPS');
@@ -117,6 +129,11 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         });
       })
       .catch(error => {
+        if (!this._isMounted) {
+          console.log('SummaryPanelGraph: Ignore fetch error, component not mounted.');
+          return;
+        }
+
         this.setState({ loading: false });
         console.error(error);
         // this.props.onError(error);
