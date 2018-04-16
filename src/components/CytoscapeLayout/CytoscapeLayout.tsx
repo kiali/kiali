@@ -54,7 +54,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   resizeWindow() {
     let canvasWrapper = document.getElementById('cytoscape-container')!;
 
-    if (canvasWrapper != null) {
+    if (canvasWrapper) {
       let dimensions = canvasWrapper.getBoundingClientRect();
       canvasWrapper.style.height = `${document.documentElement.scrollHeight - dimensions.top}px`;
     }
@@ -93,7 +93,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
     this.cy.on('tap', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
-      if (cytoscapeEvent !== null) {
+      if (cytoscapeEvent) {
         this.handleTap(cytoscapeEvent);
       }
     });
@@ -115,13 +115,13 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
     this.cy.on('mouseover', 'node,edge', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
-      if (cytoscapeEvent !== null) {
+      if (cytoscapeEvent) {
         this.handleMouseIn(cytoscapeEvent);
       }
     });
     this.cy.on('mouseout', 'node,edge', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
-      if (cytoscapeEvent !== null) {
+      if (cytoscapeEvent) {
         this.handleMouseOut(cytoscapeEvent);
       }
     });
