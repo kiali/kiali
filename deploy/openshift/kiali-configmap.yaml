@@ -4,6 +4,7 @@ metadata:
   name: kiali
   labels:
     app: kiali
+    version: ${VERSION_LABEL}
 data:
   config.yaml: |
     server:

@@ -1,0 +1,20 @@
+# Route requests identified in the URI
+apiVersion: config.istio.io/v1alpha2
+kind: RouteRule
+metadata:
+  name: kiali-route-rule-${VERSION_LABEL}
+  labels:
+    app: kiali
+    version: ${VERSION_LABEL}
+spec:
+  destination:
+    name: kiali
+  match:
+    request:
+      headers:
+        uri:
+          regex: "^(.*)_version=${VERSION_LABEL}(.*)$"
+  route:
+  - labels:
+      version: ${VERSION_LABEL}
+  precedence: 2

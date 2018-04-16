@@ -1,0 +1,15 @@
+# Route all unidentified requests
+apiVersion: config.istio.io/v1alpha2
+kind: RouteRule
+metadata:
+  name: kiali-route-rule-default
+  labels:
+    app: kiali
+    version: ${VERSION_LABEL}
+spec:
+  destination:
+    name: kiali
+  route:
+  - labels:
+      version: ${VERSION_LABEL}
+  precedence: 1
