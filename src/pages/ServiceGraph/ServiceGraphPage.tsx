@@ -50,6 +50,9 @@ export default class ServiceGraphPage extends React.Component<
     router: PropTypes.object
   };
 
+  // avoid state changes after component is unmounted
+  _isMounted: boolean = false;
+
   constructor(routeProps: RouteComponentProps<ServiceGraphPageProps>) {
     super(routeProps);
 
@@ -81,6 +84,7 @@ export default class ServiceGraphPage extends React.Component<
   };
 
   componentDidMount() {
+    this._isMounted = true;
     this.loadGraphDataFromBackend();
   }
 
@@ -106,6 +110,10 @@ export default class ServiceGraphPage extends React.Component<
         this.loadGraphDataFromBackend(nextNamespace, nextDuration);
       }
     }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   handleError = (error: string) => {
@@ -180,17 +188,14 @@ export default class ServiceGraphPage extends React.Component<
   }
 
   handleLayoutChange = (newLayout: Layout) => {
-    console.log(`ServiceGraphpage.handleLayoutChange(), ${this.state.params.graphLayout} --> ${newLayout}`);
     this.navigate(this.makeUrlFrom(this.state.params.namespace, newLayout, this.state.params.graphDuration));
   };
 
   handleFilterChange = (newDuration: Duration) => {
-    console.log(`ServiceGraphpage.handleFilterChange(), ${this.state.params.graphDuration} --> ${newDuration}`);
     this.navigate(this.makeUrlFrom(this.state.params.namespace, this.state.params.graphLayout, newDuration));
   };
 
   handleNamespaceChange = (newNS: Namespace) => {
-    console.log(`ServiceGraphpage.handleNamespaceChange(), ${this.state.params.namespace} --> ${newNS}`);
     this.navigate(this.makeUrlFrom(newNS, this.state.params.graphLayout, this.state.params.graphDuration));
   };
 
@@ -206,9 +211,13 @@ export default class ServiceGraphPage extends React.Component<
     namespace = namespace ? namespace : this.state.params.namespace;
     const duration = graphDuration ? graphDuration.value : this.state.params.graphDuration.value;
     const restParams = { duration: duration + 's' };
-    console.log('loadGraphDataFromBackend()', namespace, restParams);
+    // console.log('loadGraphDataFromBackend()', namespace, restParams);
     API.GetGraphElements(namespace, restParams)
       .then(response => {
+        if (!this._isMounted) {
+          console.log('ServiceGraphPage: Ignore fetch, component not mounted.');
+          return;
+        }
         const responseData = response['data'];
         const elements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
         const timestamp = responseData && responseData.timestamp ? responseData.timestamp : '';
@@ -220,6 +229,10 @@ export default class ServiceGraphPage extends React.Component<
         });
       })
       .catch(error => {
+        if (!this._isMounted) {
+          console.log('ServiceGraphPage: Ignore fetch error, component not mounted.');
+          return;
+        }
         this.setState({
           graphData: EMPTY_GRAPH_DATA,
           graphTimestamp: new Date().toLocaleString(),
