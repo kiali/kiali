@@ -9,6 +9,9 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/services/business"
+	"github.com/kiali/kiali/services/models"
+	"github.com/kiali/kiali/graph/tree"
+	"strings"
 )
 
 // ServiceList is the API handler to fetch the list of services in a given namespace
@@ -92,7 +95,9 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := mux.Vars(r)
-	service, err := business.Svc.GetService(params["namespace"], params["service"])
+	svcName := params["service"]
+	nSpace := params["namespace"]
+	service, err := business.Svc.GetService(nSpace, svcName)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			RespondWithError(w, http.StatusNotFound, err.Error())
@@ -104,5 +109,84 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If we don't have an explicit RR, create them on the fly
+	if service.RouteRules == nil {
+
+		// read the graph to see where we are talking to
+		trees := TreesService(nSpace,svcName)
+		svcNamePfix := svcName + "." + nSpace
+		for _, tree := range trees {
+			result := findNode(&tree, svcNamePfix)
+			if result != nil {
+				populateRule(service,result, svcNamePfix)
+			}
+		}
+	}
+
 	RespondWithJSON(w, http.StatusOK, service)
+}
+func populateRule(service *models.Service, node *tree.ServiceNode, sname string) {
+	// 1st find different destinations
+	tmp := make(map[string]int, len(node.Children))
+	log.Debugf("Found %d children", len(node.Children))
+	for _, n := range node.Children {
+		_, ok := tmp[n.Name]
+		if ok {
+			tmp[n.Name]++
+		} else {
+			tmp[n.Name] = 1
+		}
+	}
+
+	// now loop over destinations and find services
+	for k := range tmp {
+
+		count := tmp[k]
+		rule := models.RouteRule{}
+
+		t := k
+		t = strings.TrimSuffix(t,".svc.cluster.local")
+		destMap := make(map[string]string,1)
+		destMap["name"] = t
+		rule.Destination = destMap
+
+		rule.Precedence = 1
+
+		var weightList  []interface{}
+
+		for _,n := range node.Children {
+			if n.Name == k {
+				weightMap := make(map[string]interface{}, 2)
+				weightMap["weight"] = 100/count
+				labelContent := make(map[string]string, 1)
+				labelContent["version"] = n.Version
+				weightMap["labels"] = labelContent
+				weightList = append(weightList, weightMap)
+			}
+		}
+
+		rule.Route = weightList
+
+		rule.Name = sname + "_" + t +"_synth"
+		log.Debugf("New rule: %s", rule)
+		service.RouteRules = append(service.RouteRules, rule)
+	}
+}
+
+func findNode(node *tree.ServiceNode, svcNamePfix string) (result *tree.ServiceNode) {
+
+	log.Debug(node)
+	if strings.HasPrefix(node.Name, svcNamePfix) {
+		//div := len(node.Children)
+		//synthRR.Destination := make(map[],div)
+		log.Debugf("Found %s " , node)
+		return node
+	}
+	if node.Children != nil {
+		for _, c := range node.Children {
+			return findNode(c, svcNamePfix)
+		}
+	}
+	return nil
+
 }
