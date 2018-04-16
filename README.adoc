@@ -276,15 +276,14 @@ server:
 ----
 
 |`IN_CLUSTER`
-|The annotation used by Istio in a Deployment template.If in_cluster: false you need to set environments: `KUBERNETES_SERVICE_HOST`, `KUBERNETES_SERVICE_PORT` (Local development mode : oc proxy --port KUBERNETES_SERVICE_PORT )
-|Default: true
+|The annotation used by Istio in a Deployment template. If in_cluster is false then you need to set environments: `KUBERNETES_SERVICE_HOST`, `KUBERNETES_SERVICE_PORT` (Local development mode : oc proxy --port KUBERNETES_SERVICE_PORT ). (default is `true`)
 [source,yaml]
 ----
 in_cluster: (true\|false)
 ----
 
 |`SERVICE_FILTER_LABEL_NAME`
-|Label name which all resources of a service are group by. Default is `app`.
+|Label name which all resources of a service are group by. (default is `app`)
 [source,yaml]
 ----
 service_filter_label_name: VALUE
@@ -308,7 +307,7 @@ products:
 ----
 
 |`ISTIO_IDENTITY_DOMAIN`
-|The annotation used by Istio how Identity Domain. (Default: svc.cluster.local)
+|The annotation used by Istio how Identity Domain. (default is `svc.cluster.local`)
 [source,yaml]
 ----
 products:
@@ -317,7 +316,7 @@ products:
 ----
 
 |`ISTIO_URL_SERVICE_VERSION`
-|The Service of Istio to check version. ( Default: http://istio-pilot:9093/version)
+|The Service of Istio to check version. (default is `http://istio-pilot:9093/version`)
 [source,yaml]
 ----
 products:
@@ -345,7 +344,7 @@ products:
 ----
 
 |`GRAFANA_SERVICE_NAMESPACE`
-|The Kubernetes namespace that holds the Grafana service. This configuration is ignored if `GRAFANA_URL` is set. Default is `istio-system`.
+|The Kubernetes namespace that holds the Grafana service. This configuration is ignored if `GRAFANA_URL` is set. (default is `istio-system`)
 [source,yaml]
 ----
 products:
@@ -354,7 +353,7 @@ products:
 ----
 
 |`GRAFANA_SERVICE`
-|The OpenShift route name or the Kubernetes service name for Grafana. This configuration is ignored if `GRAFANA_URL` is set. Default is `grafana`.
+|The OpenShift route name or the Kubernetes service name for Grafana. This configuration is ignored if `GRAFANA_URL` is set. (default is `grafana`)
 [source,yaml]
 ----
 products:
@@ -363,7 +362,7 @@ products:
 ----
 
 |`GRAFANA_DASHBOARD`
-|The name of the Grafana dashboard used as a landing page. Default is `istio-dashboard`.
+|The name of the Grafana dashboard used as a landing page. (default is `istio-dashboard`)
 [source,yaml]
 ----
 products:
@@ -372,7 +371,7 @@ products:
 ----
 
 |`GRAFANA_VAR_SERVICE_SOURCE`
-|The name of the Grafana variable that controls service sources, as defined in the configured `GRAFANA_DASHBOARD`. Default is `var-source`.
+|The name of the Grafana variable that controls service sources, as defined in the configured `GRAFANA_DASHBOARD`. (default is `var-source`)
 [source,yaml]
 ----
 products:
@@ -381,7 +380,7 @@ products:
 ----
 
 |`GRAFANA_VAR_SERVICE_DEST`
-|The name of the Grafana variable that controls service destinations, as defined in the configured `GRAFANA_DASHBOARD`. Default is `var-http_destination`.
+|The name of the Grafana variable that controls service destinations, as defined in the configured `GRAFANA_DASHBOARD`. (default is `var-http_destination`)
 [source,yaml]
 ----
 products:
@@ -399,7 +398,7 @@ products:
 ----
 
 |`JAEGER_SERVICE_NAMESPACE`
-|The Kubernetes namespace that holds the Jaeger service. This configuration is ignored if `JAEGER_URL` is set. Default is `istio-system`.
+|The Kubernetes namespace that holds the Jaeger service. This configuration is ignored if `JAEGER_URL` is set. (default is `istio-system`)
 [source,yaml]
 ----
 products:
@@ -408,7 +407,7 @@ products:
 ----
 
 |`JAEGER_SERVICE`
-|The OpenShift route name or the Kubernetes service name for Jaeger. This configuration is ignored if `JAEGER_URL` is set. Default is `jaeger-query`.
+|The OpenShift route name or the Kubernetes service name for Jaeger. This configuration is ignored if `JAEGER_URL` is set. (default is `jaeger-query`)
 [source,yaml]
 ----
 products:
