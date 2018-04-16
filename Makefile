@@ -11,7 +11,14 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
 # at the same time which is useful for debugging and testing.
 # Due to restrictions on allowed characters, we convert
 # uppercase characters to lowercase characters.
+# If we are deploying from a branch, we must ensure all the OS/k8s names to be created
+# are unique - the NAME_SUFFIX will be appended to all names so they are unique.
 VERSION_LABEL ?= $(shell git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]')
+ifeq  ("${VERSION_LABEL}","master")
+  NAME_SUFFIX ?=
+else
+  NAME_SUFFIX ?= -${VERSION_LABEL}
+endif
 
 # The minimum Go version that must be used to build the app.
 GO_VERSION_KIALI = 1.8.3
@@ -177,9 +184,9 @@ docker-push:
 .deploy-istio-route-rule: .istioctl-validate
 	@echo "Deploying the Istio route rule"
 ifeq ("${VERSION_LABEL}","master")
-	@cat deploy/istio/kiali-route-rule-default.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | istioctl create -n ${NAMESPACE} -f -
+	@cat deploy/istio/kiali-route-rule-default.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | istioctl create -n ${NAMESPACE} -f -
 else
-	@cat deploy/istio/kiali-route-rule-specific.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | istioctl create -n ${NAMESPACE} -f -
+	@cat deploy/istio/kiali-route-rule-specific.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | istioctl create -n ${NAMESPACE} -f -
 endif
 
 .openshift-validate:
@@ -188,9 +195,9 @@ endif
 openshift-deploy: openshift-undeploy .deploy-istio-route-rule
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to OpenShift project ${NAMESPACE}
-	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | oc create -n ${NAMESPACE} -f -
-	#cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | istioctl kube-inject -n ${NAMESPACE} -f - | oc create -n ${NAMESPACE} -f -
-	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | oc create -n ${NAMESPACE} -f -
+	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | oc create -n ${NAMESPACE} -f -
+	#cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | istioctl kube-inject -n ${NAMESPACE} -f - | oc create -n ${NAMESPACE} -f -
+	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | oc create -n ${NAMESPACE} -f -
 
 openshift-undeploy: .openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
@@ -206,9 +213,9 @@ openshift-reload-image: .openshift-validate
 k8s-deploy: k8s-undeploy .deploy-istio-route-rule
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
-	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | kubectl create -n ${NAMESPACE} -f -
-	#cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | istioctl kube-inject -n ${NAMESPACE} -f - | kubectl create -n ${NAMESPACE} -f -
-	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | kubectl create -n ${NAMESPACE} -f -
+	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | kubectl create -n ${NAMESPACE} -f -
+	#cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | istioctl kube-inject -n ${NAMESPACE} -f - | kubectl create -n ${NAMESPACE} -f -
+	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | kubectl create -n ${NAMESPACE} -f -
 
 k8s-undeploy:
 	@echo Undeploying from Kubernetes namespace ${NAMESPACE}
