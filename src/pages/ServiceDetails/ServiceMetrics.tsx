@@ -29,7 +29,7 @@ type ServiceMetricsState = {
   responseSizeOut?: M.Histogram;
   grafanaLinkIn?: string;
   grafanaLinkOut?: string;
-  pollMetrics?: NodeJS.Timer;
+  pollMetrics?: number;
 };
 
 class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
@@ -59,12 +59,12 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   };
 
   onPollIntervalChanged = (pollInterval: number) => {
-    let newRefInterval: NodeJS.Timer | undefined = undefined;
+    let newRefInterval: number | undefined = undefined;
     if (this.state.pollMetrics) {
       clearInterval(this.state.pollMetrics);
     }
     if (pollInterval > 0) {
-      newRefInterval = setInterval(this.fetchMetrics, pollInterval);
+      newRefInterval = window.setInterval(this.fetchMetrics, pollInterval);
     }
     this.setState({ pollMetrics: newRefInterval });
   };
