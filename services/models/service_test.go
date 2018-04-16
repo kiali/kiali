@@ -82,6 +82,7 @@ func TestServiceDetailParsing(t *testing.T) {
 	// Istio Details
 	assert.Equal(service.RouteRules, RouteRules{
 		RouteRule{
+			CreatedAt: "2018-03-08T17:46:00+03:00",
 			Destination: map[string]string{
 				"name":      "reviews",
 				"namespace": "tutorial"},
@@ -97,6 +98,7 @@ func TestServiceDetailParsing(t *testing.T) {
 				},
 			}},
 		RouteRule{
+			CreatedAt: "2018-03-08T17:46:00+03:00",
 			Destination: map[string]string{
 				"name":      "reviews",
 				"namespace": "tutorial"},
@@ -108,6 +110,7 @@ func TestServiceDetailParsing(t *testing.T) {
 
 	assert.Equal(service.DestinationPolicies, DestinationPolicies{
 		DestinationPolicy{
+			CreatedAt: "2018-03-08T17:47:00+03:00",
 			Source: map[string]string{
 				"name": "recommendation"},
 			Destination: map[string]string{
@@ -117,6 +120,7 @@ func TestServiceDetailParsing(t *testing.T) {
 				"name": "RANDOM"},
 		},
 		DestinationPolicy{
+			CreatedAt: "2018-03-08T17:47:00+03:00",
 			Destination: map[string]interface{}{
 				"name":      "reviews",
 				"namespace": "tutorial",
@@ -243,7 +247,12 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 }
 
 func fakeIstioDetails() *kubernetes.IstioDetails {
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:46 +0300")
+	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:47 +0300")
+
 	route1 := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			CreationTimestamp: meta_v1.NewTime(t1)},
 		Spec: map[string]interface{}{
 			"destination": map[string]string{
 				"name":      "reviews",
@@ -260,6 +269,8 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 				}}},
 	}
 	route2 := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			CreationTimestamp: meta_v1.NewTime(t1)},
 		Spec: map[string]interface{}{
 			"destination": map[string]string{
 				"name":      "reviews",
@@ -272,6 +283,8 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	}
 	routes := []kubernetes.IstioObject{&route1, &route2}
 	policy1 := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			CreationTimestamp: meta_v1.NewTime(t2)},
 		Spec: map[string]interface{}{
 			"source": map[string]string{
 				"name": "recommendation",
@@ -286,6 +299,8 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 		},
 	}
 	policy2 := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			CreationTimestamp: meta_v1.NewTime(t2)},
 		Spec: map[string]interface{}{
 			"destination": map[string]interface{}{
 				"name":      "reviews",
