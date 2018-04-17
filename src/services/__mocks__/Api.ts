@@ -1,4 +1,5 @@
 import * as GraphData from '../__mockData__/getGraphElements';
+import { AxiosError } from 'axios';
 
 const fs = require('fs');
 
@@ -123,4 +124,12 @@ export const getNamespaceMetrics = (namespace: String, params: any) => {
       }
     }
   });
+};
+
+export const GetErrorMsg = (msg: string, error: AxiosError) => {
+  let errorMessage = msg;
+  if (error && error.response && error.response.data && error.response.data['error']) {
+    errorMessage = `${msg} Error: [ ${error.response.data['error']} ]`;
+  }
+  return errorMessage;
 };

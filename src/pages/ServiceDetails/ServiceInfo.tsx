@@ -95,7 +95,23 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
     return sorted;
   }
 
+  calculateColumns(items: boolean[]) {
+    let cells = 0;
+    items.forEach(v => (v ? cells++ : v));
+    let candidate = Number(12 / cells);
+    return candidate * cells > 12 ? candidate - 1 : candidate;
+  }
+
   render() {
+    let deployments = this.state.deployments || [];
+    let dependencies = this.state.dependencies || new Map();
+    let routeRules = this.state.routeRules || [];
+    let destinationPolicies = this.state.destinationPolicies || [];
+    let cWidth = this.calculateColumns([
+      deployments.length > 0,
+      dependencies.size > 0,
+      routeRules.length > 0 || destinationPolicies.length > 0
+    ]);
     return (
       <div>
         {this.state.error ? (
@@ -124,16 +140,26 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
             </Col>
           </Row>
           <Row className="row-cards-pf">
-            <Col xs={12} sm={6} md={4} lg={4}>
-              <ServiceInfoDeployments deployments={this.state.deployments} />
-            </Col>
-            <Col xs={12} sm={6} md={4} lg={4}>
-              <ServiceInfoRoutes dependencies={this.state.dependencies} />
-            </Col>
-            <Col xs={12} sm={6} md={4} lg={4}>
-              <ServiceInfoRouteRules routeRules={this.state.routeRules} />
-              <ServiceInfoDestinationPolicies destinationPolicies={this.state.destinationPolicies} />
-            </Col>
+            {(deployments.length > 0 || this.state.istio_sidecar) && (
+              <Col xs={12} sm={12} md={cWidth} lg={cWidth}>
+                <ServiceInfoDeployments deployments={deployments} />
+              </Col>
+            )}
+            {(dependencies.size > 0 || this.state.istio_sidecar) && (
+              <Col xs={12} sm={6} md={cWidth} lg={cWidth}>
+                <ServiceInfoRoutes dependencies={dependencies} />
+              </Col>
+            )}
+            {(routeRules.length > 0 || destinationPolicies.length > 0 || this.state.istio_sidecar) && (
+              <Col xs={12} sm={6} md={cWidth} lg={cWidth}>
+                {(routeRules.length > 0 || this.state.istio_sidecar) && (
+                  <ServiceInfoRouteRules routeRules={routeRules} />
+                )}
+                {(destinationPolicies.length > 0 || this.state.istio_sidecar) && (
+                  <ServiceInfoDestinationPolicies destinationPolicies={destinationPolicies} />
+                )}
+              </Col>
+            )}
           </Row>
         </div>
       </div>
