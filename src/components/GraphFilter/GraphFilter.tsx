@@ -4,7 +4,7 @@ import { ButtonToolbar, Glyphicon } from 'react-bootstrap';
 
 import { GraphFilterProps, GraphFilterState } from '../../types/GraphFilter';
 import * as API from '../../services/Api';
-import { DurationButtonGroup } from './DurationButtonGroup';
+import { DurationDropdown } from './DurationDropdown';
 import { LayoutButtonGroup } from './LayoutButtonGroup';
 
 export default class GraphFilter extends React.Component<GraphFilterProps, GraphFilterState> {
@@ -72,7 +72,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
               ))}
             </DropdownButton>
           </ButtonGroup>
-          <DurationButtonGroup
+          <DurationDropdown
             disabled={this.props.disabled}
             onClick={this.updateDuration}
             initialDuration={this.props.activeDuration.value}
