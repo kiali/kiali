@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -22,6 +24,7 @@ type ServiceList struct {
 
 type Service struct {
 	Name                string              `json:"name"`
+	CreatedAt           string              `json:"created_at"`
 	Namespace           Namespace           `json:"namespace"`
 	Labels              map[string]string   `json:"labels"`
 	Type                string              `json:"type"`
@@ -46,6 +49,7 @@ func (s *Service) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails
 		s.Labels = serviceDetails.Service.Labels
 		s.Type = string(serviceDetails.Service.Spec.Type)
 		s.Ip = serviceDetails.Service.Spec.ClusterIP
+		s.CreatedAt = serviceDetails.Service.CreationTimestamp.Time.Format(time.RFC3339)
 		(&s.Ports).Parse(serviceDetails.Service.Spec.Ports)
 	}
 

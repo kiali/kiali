@@ -24,6 +24,7 @@ func TestServiceDetailParsing(t *testing.T) {
 	// Kubernetes Details
 	assert.Equal(service.Name, "service")
 	assert.Equal(service.Namespace.Name, "namespace")
+	assert.Equal(service.CreatedAt, "2018-03-08T17:44:00+03:00")
 	assert.Equal(service.Type, "ClusterIP")
 	assert.Equal(service.Ip, "fromservice")
 	assert.Equal(service.Labels, map[string]string{"label1": "labelName1", "label2": "labelName2"})
@@ -145,10 +146,14 @@ func TestServiceDetailParsing(t *testing.T) {
 }
 
 func fakeServiceDetails() *kubernetes.ServiceDetails {
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:45 +0300")
+
 	service := &v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "Name",
-			Namespace: "Namespace",
+			Name:              "Name",
+			Namespace:         "Namespace",
+			CreationTimestamp: meta_v1.NewTime(t1),
 			Labels: map[string]string{
 				"label1": "labelName1",
 				"label2": "labelName2"}},
@@ -185,8 +190,6 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					{Name: "http", Protocol: "TCP", Port: 3000},
 				}}}}
 
-	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:45 +0300")
 	deployments := &v1beta1.DeploymentList{
 		Items: []v1beta1.Deployment{
 			v1beta1.Deployment{
