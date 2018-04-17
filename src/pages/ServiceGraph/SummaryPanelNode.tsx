@@ -129,7 +129,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     return (
       <div className="panel panel-default" style={SummaryPanelNode.panelStyle}>
         <div className="panel-heading">
-          Microservice: {isUnknown ? 'unknown' : serviceHotLink}
+          Service: {isUnknown ? 'unknown' : serviceHotLink}
           <div style={{ paddingTop: '3px' }}>
             <Badge
               scale={0.9}

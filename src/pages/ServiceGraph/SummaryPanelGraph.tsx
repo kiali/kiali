@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Badge from '../../components/Badge/Badge';
 import RateTable from '../../components/SummaryPanel/RateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
@@ -9,6 +8,7 @@ import * as API from '../../services/Api';
 import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as M from '../../types/Metrics';
+import { Icon } from 'patternfly-react';
 
 type SummaryPanelGraphState = {
   loading: boolean;
@@ -62,6 +62,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     const numNodes = cy
       .nodes()
       .filter('[!groupBy]')
+      .filter('[service!="unknown"]')
       .size();
     const numEdges = cy.edges().size();
     const safeRate = (s: string) => {
@@ -81,7 +82,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
         <div className="panel-heading">
           Namespace: {servicesLink}
-          <div>{this.renderLabels(numNodes.toString(), numEdges.toString())}</div>
+          {this.renderTopologySummary(numNodes, numEdges)}
         </div>
         <div className="panel-body">
           <div>
@@ -140,11 +141,12 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       });
   };
 
-  private renderLabels = (numNodes: string, numEdges: string) => (
-    // color="#2d7623" is pf-green-500
-    <div style={{ paddingTop: '3px' }}>
-      <Badge scale={0.9} style="plastic" leftText="services" rightText={numNodes} color="#2d7623" />
-      <Badge scale={0.9} style="plastic" leftText="edges" rightText={numEdges} color="#2d7623" />
+  private renderTopologySummary = (numNodes: number, numEdges: number) => (
+    <div>
+      <Icon name="service" type="pf" style={{ padding: '0 1em' }} />
+      {numNodes.toString()} {numNodes === 1 ? 'service' : 'services'}
+      <Icon name="topology" type="pf" style={{ padding: '0 1em' }} />
+      {numEdges.toString()} {numEdges === 1 ? 'link' : 'links'}
     </div>
   );
 
