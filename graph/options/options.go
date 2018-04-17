@@ -4,10 +4,14 @@ package options
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
+
+	"github.com/kiali/kiali/graph/appender"
 )
 
 // VendorOptions are those that are supplied to the vendor-specific generators.
@@ -24,6 +28,7 @@ type VendorOptions struct {
 
 // Options are all supported graph generation options.
 type Options struct {
+	Appenders []appender.Appender
 	Duration  time.Duration
 	Metric    string
 	Namespace string
@@ -41,6 +46,7 @@ func NewOptions(r *http.Request) Options {
 
 	// query params
 	params := r.URL.Query()
+	appenders := parseAppenders(params)
 	colorNoTraffic := params.Get("colorNoTraffic")
 	colorError := params.Get("colorError")
 	colorNormal := params.Get("colorNormal")
@@ -88,6 +94,7 @@ func NewOptions(r *http.Request) Options {
 	}
 
 	return Options{
+		Appenders: appenders,
 		Duration:  duration,
 		Metric:    metric,
 		Namespace: namespace,
@@ -105,4 +112,22 @@ func NewOptions(r *http.Request) Options {
 			Timestamp:      queryTime,
 		},
 	}
+}
+
+func parseAppenders(params url.Values) []appender.Appender {
+	var appenders []appender.Appender
+	const all = "_all_"
+	csl := all
+	_, ok := params["appenders"]
+	if ok {
+		csl = strings.ToLower(params.Get("appenders"))
+	}
+
+	if csl == all || strings.Contains(csl, "unused_service") {
+		appenders = append(appenders, appender.UnusedServiceAppender{})
+	}
+	if csl == all || strings.Contains(csl, "circuit_breaker") {
+		appenders = append(appenders, appender.CircuitBreakerAppender{})
+	}
+	return appenders
 }

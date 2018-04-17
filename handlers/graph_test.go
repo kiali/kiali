@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
@@ -198,19 +197,19 @@ func TestNamespaceGraph(t *testing.T) {
 	mockQuery(api, q7, &v7)
 	mockQuery(api, q8, &v8)
 
-	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client, ic *kubernetes.IstioClient)
+	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/graphs", http.HandlerFunc(
+	mr.HandleFunc("/api/namespaces/{namespace}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fut(w, r, client, nil)
+			fut(w, r, client)
 		}))
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
 	fut = graphNamespace
-	url := ts.URL + "/api/namespaces/istio-system/graphs?queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/istio-system/graph?appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -322,7 +321,7 @@ func TestServiceGraph(t *testing.T) {
 	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/graphs", http.HandlerFunc(
+	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			fut(w, r, client)
 		}))
@@ -331,7 +330,7 @@ func TestServiceGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphService
-	url := ts.URL + "/api/namespaces/istio-system/services/reviews/graphs?queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/istio-system/services/reviews/graph?appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)

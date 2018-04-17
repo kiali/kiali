@@ -4,13 +4,15 @@ package handlers
 // for a specified vendor (default cytoscape).  The configuration format is vendor-specific, typically
 // JSON, and provides what is necessary to allow the vendor's graphing tool to render the service graph.
 //
-// The algorithm is two-pass:
+// The algorithm is three-pass:
 //   First Pass: Query Prometheus (istio-request-count metric) to retrieve the source-destination
 //               service dependencies. Build trees rooted at request entry points that together
 //               provide a full representation of nodes and edges.  The trees avoid circularities
 //               and redundancies.
 //
-//   Second Pass: Supply the trees to a vendor-specific config generator that walks the trees and
+//   Second Pass: Apply any requested appenders to append information to the graph.
+//
+//   Third Pass: Supply the trees to a vendor-specific config generator that walks the trees and
 //               constructs the vendor-specific output.
 //
 // The current Handlers:
@@ -24,6 +26,7 @@ package handlers
 //   colorError      Color for active edge with error% > thresholderror (default red)
 //   colorNormal     Color for active edge with error% below thresholdWarn (default green)
 //   colorWarn       Color for active edge with thresholdWarn < error% <= thresholderror (default red)
+//   appenders       Comma-separated list of appenders to run from [circuit_breaker, unused_service] (default all)
 //   groupByVersion: If supported by vendor, visually group versions of the same service (default true)
 //   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
 //   queryTime:      Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
@@ -50,10 +53,8 @@ import (
 	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/graph/tree"
 	"github.com/kiali/kiali/graph/vizceral"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/services/models"
 )
 
 // GraphNamespace is a REST http.HandlerFunc handling namespace-wide servicegraph
@@ -64,14 +65,11 @@ func GraphNamespace(w http.ResponseWriter, r *http.Request) {
 	client, err := prometheus.NewClient()
 	checkError(err)
 
-	istioClient, err := kubernetes.NewClient()
-	checkError(err)
-
-	graphNamespace(w, r, client, istioClient)
+	graphNamespace(w, r, client)
 }
 
 // graphNamespace provides a testing hook that can supply a mock client
-func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.Client, istioClient *kubernetes.IstioClient) {
+func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
 	o := options.NewOptions(r)
 
 	switch o.Vendor {
@@ -83,20 +81,17 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 
 	log.Debugf("Build roots (root destination services nodes) for [%v] namespace graph with options [%+v]", o.Vendor, o)
 
-	trees := buildNamespaceTrees(o, client, istioClient)
+	trees := buildNamespaceTrees(o, client)
 
-	if istioClient != nil {
-		deployments, err := istioClient.GetDeployments(o.Namespace)
-		checkError(err)
-
-		addUnusedNodes(&trees, o.Namespace, deployments)
+	for _, a := range o.Appenders {
+		a.AppendGraph(&trees, o.Namespace)
 	}
 
 	generateGraph(&trees, w, o)
 }
 
 // buildNamespaceTrees returns trees routed at all destination services with "Internet" parents
-func buildNamespaceTrees(o options.Options, client *prometheus.Client, istioClient *kubernetes.IstioClient) (trees []tree.ServiceNode) {
+func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []tree.ServiceNode) {
 	// avoid circularities by keeping track of all seen nodes
 	seenNodes := make(map[string]*tree.ServiceNode)
 
@@ -136,7 +131,7 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client, istioClie
 		seenNodes[root.ID] = &root
 
 		log.Debugf("Building namespace tree for Root ServiceNode: %v\n", root.ID)
-		buildNamespaceTree(&root, time.Unix(o.QueryTime, 0), seenNodes, o, client, istioClient)
+		buildNamespaceTree(&root, time.Unix(o.QueryTime, 0), seenNodes, o, client)
 
 		trees = append(trees, root)
 	}
@@ -144,7 +139,7 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client, istioClie
 	return trees
 }
 
-func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client, istioClient *kubernetes.IstioClient) {
+func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client) {
 	log.Debugf("Adding children for ServiceNode: %v\n", sn.ID)
 
 	var destinationSvcFilter string
@@ -164,30 +159,6 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 
 	// identify the unique destination services
 	destinations := toDestinations(sn.Name, sn.Version, vector)
-
-	// determine if there is a circuit breaker on this node
-	if istioClient != nil {
-		istioDetails, err := istioClient.GetIstioDetails(o.Namespace, strings.Split(sn.Name, ".")[0])
-		if err == nil {
-			if istioDetails.DestinationPolicies != nil {
-				dps := make(models.DestinationPolicies, 0)
-				dps.Parse(istioDetails.DestinationPolicies)
-				for _, dp := range dps {
-					if dp.CircuitBreaker != nil {
-						if d, ok := dp.Destination.(map[string]interface{}); ok {
-							if d["labels"].(map[string]interface{})["version"] == sn.Version {
-								sn.Metadata["hasCircuitBreaker"] = "true"
-								break // no need to keep going, we know it has at least one CB policy
-							}
-						}
-					}
-				}
-			}
-		} else {
-			log.Warningf("Cannot determine if service [%v:%v] has circuit breakers: %v", o.Namespace, sn.Name, err)
-			sn.Metadata["hasCircuitBreaker"] = "unknown"
-		}
-	}
 
 	if len(destinations) > 0 {
 		sn.Children = make([]*tree.ServiceNode, len(destinations))
@@ -210,7 +181,7 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 		for _, child := range sn.Children {
 			if _, seen := seenNodes[child.ID]; !seen {
 				seenNodes[child.ID] = child
-				buildNamespaceTree(child, start, seenNodes, o, client, istioClient)
+				buildNamespaceTree(child, start, seenNodes, o, client)
 			} else {
 				log.Debugf("Not recursing on seen child service: %v(%v)\n", child.Name, child.Version)
 			}

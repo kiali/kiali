@@ -99,8 +99,9 @@ func NewRoutes() (r *Routes) {
 			// vendor:         cytoscape (default) | vizceral
 			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
 			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
-			// offset:         Duration indicating desired query offset (default 0m)
-			// interval:       Duration indicating desired query period (default 10m)
+			// queryTime:      Unix timestamp in seconds is query range end time (default now)
+			// duration:       Duration indicating desired query period (default 10m)
+			// appenders:      comma-separated list of desired appenders (default all)
 
 			"GraphNamespace",
 			"GET",
@@ -112,8 +113,9 @@ func NewRoutes() (r *Routes) {
 			// vendor:         cytoscape (default)
 			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
 			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
-			// offset:         Duration indicating desired query offset (default 0m)
-			// interval:       Duration indicating desired query period (default 10m)
+			// queryTime:      Unix timestamp in seconds is query range end time (default now)
+			// duration:       Duration indicating desired query period (default 10m)
+			// appenders:      comma-separated list of desired appenders (default all)
 
 			"GraphService",
 			"GET",
