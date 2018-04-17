@@ -6,11 +6,13 @@ export interface GraphFilterProps {
   onLayoutChange: (newLayout: Layout) => void;
   onFilterChange: (newDuration: Duration) => void;
   onNamespaceChange: (newValue: Namespace) => void;
+  onBadgeStatusChange: (newValue: BadgeStatus) => void;
   onRefresh: () => void;
   onError: PropTypes.func;
   activeNamespace: Namespace;
   activeLayout: Layout;
   activeDuration: Duration;
+  activeBadgeStatus: BadgeStatus;
 }
 
 export interface GraphFilterState {
@@ -23,4 +25,8 @@ export interface Layout {
 
 export interface Duration {
   value: string;
+}
+
+export interface BadgeStatus {
+  showCBs: boolean;
 }

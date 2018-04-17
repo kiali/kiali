@@ -54,6 +54,10 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
     this.props.onRefresh();
   };
 
+  handleToggleCBs = () => {
+    this.props.onBadgeStatusChange({ showCBs: !this.props.activeBadgeStatus.showCBs });
+  };
+
   render() {
     return (
       <div>
@@ -83,6 +87,9 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             initialLayout={this.props.activeLayout.name}
           />
           <ButtonGroup className="pull-right">
+            <Button disabled={this.props.disabled} onClick={this.handleToggleCBs}>
+              Toggle Circuit Breakers
+            </Button>
             <Button disabled={this.props.disabled} onClick={this.handleRefresh}>
               <Glyphicon glyph="refresh" />
             </Button>
