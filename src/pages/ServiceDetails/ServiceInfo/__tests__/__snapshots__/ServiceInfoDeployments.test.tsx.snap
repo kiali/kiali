@@ -118,6 +118,14 @@ ShallowWrapper {
                 50
                 % CPU)
               </div>
+              <p>
+                <strong>
+                  Created at: 
+                </strong>
+                <LocalTime
+                  time="2018-03-14T10:17:52Z"
+                />
+              </p>
             </div>
             <hr />
           </Col>
@@ -164,6 +172,14 @@ ShallowWrapper {
                 50
                 % CPU)
               </div>
+              <p>
+                <strong>
+                  Created at: 
+                </strong>
+                <LocalTime
+                  time="2018-03-14T10:17:52Z"
+                />
+              </p>
             </div>
             <hr />
           </Col>
@@ -210,6 +226,14 @@ ShallowWrapper {
                 50
                 % CPU)
               </div>
+              <p>
+                <strong>
+                  Created at: 
+                </strong>
+                <LocalTime
+                  time="2018-03-14T10:17:52Z"
+                />
+              </p>
             </div>
             <hr />
           </Col>
@@ -272,6 +296,14 @@ ShallowWrapper {
                   50
                   % CPU)
                 </div>
+                <p>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </p>
               </div>
               <hr />
             </Col>
@@ -318,6 +350,14 @@ ShallowWrapper {
                   50
                   % CPU)
                 </div>
+                <p>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </p>
               </div>
               <hr />
             </Col>
@@ -364,6 +404,14 @@ ShallowWrapper {
                   50
                   % CPU)
                 </div>
+                <p>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </p>
               </div>
               <hr />
             </Col>

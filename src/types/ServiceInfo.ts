@@ -40,6 +40,7 @@ export interface Autoscaler {
 
 export interface RouteRule {
   name: string;
+  created_at: string;
   destination?: IstioService;
   precedence?: number;
   match?: MatchCondition;
@@ -195,6 +196,7 @@ export interface CircuitBreaker {
 
 export interface DestinationPolicy {
   name: string;
+  created_at: string;
   destination: IstioService;
   source: IstioService;
   loadbalancing: LoadBalancing;

@@ -8,6 +8,7 @@ ShallowWrapper {
     routeRules={
       Array [
         Object {
+          "created_at": "2018-03-14T10:17:52Z",
           "destination": Object {
             "name": "reviews",
           },
@@ -23,6 +24,7 @@ ShallowWrapper {
           ],
         },
         Object {
+          "created_at": "2018-03-14T10:17:52Z",
           "destination": Object {
             "name": "reviews",
           },
@@ -65,6 +67,15 @@ ShallowWrapper {
           </div>
           <div>
             <strong>
+              Created at
+            </strong>
+            : 
+            <LocalTime
+              time="2018-03-14T10:17:52Z"
+            />
+          </div>
+          <div>
+            <strong>
               Precedence
             </strong>
             : 
@@ -90,6 +101,15 @@ ShallowWrapper {
             </strong>
             : 
             reviews-test-v2
+          </div>
+          <div>
+            <strong>
+              Created at
+            </strong>
+            : 
+            <LocalTime
+              time="2018-03-14T10:17:52Z"
+            />
           </div>
           <div>
             <strong>
@@ -137,6 +157,15 @@ ShallowWrapper {
             </div>
             <div>
               <strong>
+                Created at
+              </strong>
+              : 
+              <LocalTime
+                time="2018-03-14T10:17:52Z"
+              />
+            </div>
+            <div>
+              <strong>
                 Precedence
               </strong>
               : 
@@ -162,6 +191,15 @@ ShallowWrapper {
               </strong>
               : 
               reviews-test-v2
+            </div>
+            <div>
+              <strong>
+                Created at
+              </strong>
+              : 
+              <LocalTime
+                time="2018-03-14T10:17:52Z"
+              />
             </div>
             <div>
               <strong>
