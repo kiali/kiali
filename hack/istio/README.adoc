@@ -18,7 +18,7 @@ oc login -u admin -p admin
 
 Then, simply run the script on a command line with no arguments to install the latest version of Istio on OpenShift.
 
-If you want to install a specific version of Istio, pass the argument `-v #.#.#` where `#.#.#` is the version you want to install (e.g. `-v 0.7.1`).
+If you want to install a specific version of Istio, pass the argument `-v x.y.z` where `x.y.z` is the version you want to install (e.g. `-v 0.7.1`).
 
 If you want to install Istio on Kubernetes, pass the argument `-c k8s` to the script.
 
@@ -34,6 +34,6 @@ Under the covers, Istio is installed using the Istio Ansible Installer. Read mor
 * *When I run the script I'm getting errors on Ansible, such as missing 'jinja2' dependency.*
   This happens if ansible was installed using python3, and then is run with python2. You can install the dependencies manually as such:
 
-  ```bash
-  sudo pip2 install jinja2 PyYAML
-  ```
+```bash
+sudo pip2 install jinja2 PyYAML
+```
