@@ -139,6 +139,121 @@ func TestServiceDetailParsing(t *testing.T) {
 				}},
 		}})
 
+	assert.Equal(service.VirtualServices, VirtualServices{
+		VirtualService{
+			Name: "reviews",
+			Hosts: []interface{}{
+				"reviews",
+			},
+			Http: []interface{}{
+				map[string]interface{}{
+					"route": []interface{}{
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"name":   "reviews",
+								"subset": "v2",
+							},
+							"weight": 50,
+						},
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"name":   "reviews",
+								"subset": "v3",
+							},
+							"weight": 50,
+						},
+					},
+				},
+			},
+		},
+		VirtualService{
+			Name: "ratings",
+			Hosts: []interface{}{
+				"reviews",
+			},
+			Http: []interface{}{
+				map[string]interface{}{
+					"match": []interface{}{
+						map[string]interface{}{
+							"headers": map[string]interface{}{
+								"cookie": map[string]interface{}{
+									"regex": "^(.*?;)?(user=jason)(;.*)?$",
+								},
+							},
+						},
+					},
+					"fault": map[string]interface{}{
+						"delay": map[string]interface{}{
+							"percent":    100,
+							"fixedDelay": "7s",
+						},
+					},
+					"route": []interface{}{
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"name":   "ratings",
+								"subset": "v1",
+							},
+						},
+					},
+				},
+				map[string]interface{}{
+					"route": []interface{}{
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"name":   "ratings",
+								"subset": "v1",
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	assert.Equal(service.DestinationRules, DestinationRules{
+		DestinationRule{
+			Name:            "reviews-destination",
+			DestinationName: "reviews",
+			Subsets: []interface{}{
+				map[string]interface{}{
+					"name": "v1",
+					"labels": map[string]interface{}{
+						"version": "v1",
+					},
+				},
+				map[string]interface{}{
+					"name": "v2",
+					"labels": map[string]interface{}{
+						"version": "v2",
+					},
+				},
+			},
+		},
+		DestinationRule{
+			Name:            "bookinfo-ratings",
+			DestinationName: "ratings",
+			TrafficPolicy: map[string]interface{}{
+				"loadBalancer": map[string]interface{}{
+					"simple": "LEAST_CONN",
+				},
+			},
+			Subsets: []interface{}{
+				map[string]interface{}{
+					"name": "testversion",
+					"labels": map[string]interface{}{
+						"version": "v3",
+					},
+					"trafficPolicy": map[string]interface{}{
+						"loadBalancer": map[string]interface{}{
+							"simple": "ROUND_ROBIN",
+						},
+					},
+				},
+			},
+		},
+	})
+
 	// Prometheus Client
 	assert.Equal(service.Dependencies, map[string][]string{
 		"v1": {"unknown", "/products", "/reviews"},
@@ -325,8 +440,139 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 			},
 		},
 	}
+
 	policies := []kubernetes.IstioObject{&policy1, &policy2}
-	return &kubernetes.IstioDetails{routes, policies}
+
+	virtualService1 := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "reviews",
+		},
+		Spec: map[string]interface{}{
+			"hosts": []interface{}{
+				"reviews",
+			},
+			"http": []interface{}{
+				map[string]interface{}{
+					"route": []interface{}{
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"name":   "reviews",
+								"subset": "v2",
+							},
+							"weight": 50,
+						},
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"name":   "reviews",
+								"subset": "v3",
+							},
+							"weight": 50,
+						},
+					},
+				},
+			},
+		},
+	}
+	virtualService2 := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "ratings",
+		},
+		Spec: map[string]interface{}{
+			"hosts": []interface{}{
+				"reviews",
+			},
+			"http": []interface{}{
+				map[string]interface{}{
+					"match": []interface{}{
+						map[string]interface{}{
+							"headers": map[string]interface{}{
+								"cookie": map[string]interface{}{
+									"regex": "^(.*?;)?(user=jason)(;.*)?$",
+								},
+							},
+						},
+					},
+					"fault": map[string]interface{}{
+						"delay": map[string]interface{}{
+							"percent":    100,
+							"fixedDelay": "7s",
+						},
+					},
+					"route": []interface{}{
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"name":   "ratings",
+								"subset": "v1",
+							},
+						},
+					},
+				},
+				map[string]interface{}{
+					"route": []interface{}{
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"name":   "ratings",
+								"subset": "v1",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	virtualServices := []kubernetes.IstioObject{&virtualService1, &virtualService2}
+
+	destinationRule1 := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "reviews-destination",
+		},
+		Spec: map[string]interface{}{
+			"name": "reviews",
+			"subsets": []interface{}{
+				map[string]interface{}{
+					"name": "v1",
+					"labels": map[string]interface{}{
+						"version": "v1",
+					},
+				},
+				map[string]interface{}{
+					"name": "v2",
+					"labels": map[string]interface{}{
+						"version": "v2",
+					},
+				},
+			},
+		},
+	}
+	destinationRule2 := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "bookinfo-ratings",
+		},
+		Spec: map[string]interface{}{
+			"name": "ratings",
+			"trafficPolicy": map[string]interface{}{
+				"loadBalancer": map[string]interface{}{
+					"simple": "LEAST_CONN",
+				},
+			},
+			"subsets": []interface{}{
+				map[string]interface{}{
+					"name": "testversion",
+					"labels": map[string]interface{}{
+						"version": "v3",
+					},
+					"trafficPolicy": map[string]interface{}{
+						"loadBalancer": map[string]interface{}{
+							"simple": "ROUND_ROBIN",
+						},
+					},
+				},
+			},
+		},
+	}
+	destinationRules := []kubernetes.IstioObject{&destinationRule1, &destinationRule2}
+
+	return &kubernetes.IstioDetails{routes, policies, virtualServices, destinationRules}
 }
 
 func fakePrometheusDetails() map[string][]string {

@@ -33,6 +33,8 @@ type Service struct {
 	Endpoints           Endpoints           `json:"endpoints"`
 	RouteRules          RouteRules          `json:"route_rules"`
 	DestinationPolicies DestinationPolicies `json:"destination_policies"`
+	VirtualServices     VirtualServices     `json:"virtual_services"`
+	DestinationRules    DestinationRules    `json:"destination_rules"`
 	Dependencies        map[string][]string `json:"dependencies"`
 	Deployments         Deployments         `json:"deployments"`
 	Health              Health              `json:"health"`
@@ -61,6 +63,8 @@ func (s *Service) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails
 func (s *Service) setIstioDetails(istioDetails *kubernetes.IstioDetails) {
 	(&s.RouteRules).Parse(istioDetails.RouteRules)
 	(&s.DestinationPolicies).Parse(istioDetails.DestinationPolicies)
+	(&s.VirtualServices).Parse(istioDetails.VirtualServices)
+	(&s.DestinationRules).Parse(istioDetails.DestinationRules)
 }
 
 func (s *Service) setPrometheusDetails(prometheusDetails map[string][]string) {

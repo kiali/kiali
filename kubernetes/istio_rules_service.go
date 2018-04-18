@@ -9,7 +9,7 @@ import (
 
 // GetIstioRules returns a list of mixer rules for a given namespace.
 func (in *IstioClient) GetIstioRules(namespace string) (*IstioRules, error) {
-	result, err := in.istio.Get().Namespace(namespace).Resource(rules).Do().Get()
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(rules).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (in *IstioClient) GetIstioRules(namespace string) (*IstioRules, error) {
 //		- denier
 // 		- checknothing
 func (in *IstioClient) GetIstioRuleDetails(namespace string, istiorule string) (*IstioRuleDetails, error) {
-	result, err := in.istio.Get().Namespace(namespace).Resource(rules).SubResource(istiorule).Do().Get()
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(rules).SubResource(istiorule).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (in *IstioClient) getActionHandler(namespace string, handlerType string, ha
 		handlerChan <- istioResponse{}
 		return
 	}
-	result, err := in.istio.Get().Namespace(namespace).Resource(handlerTypePlural).SubResource(handlerName).Do().Get()
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(handlerTypePlural).SubResource(handlerName).Do().Get()
 	istioObject, ok := result.(IstioObject)
 	if !ok {
 		istioObject = nil
@@ -143,7 +143,7 @@ func (in *IstioClient) getActionInstance(namespace string, istiorule string, ins
 		instancesChan <- istioResponse{}
 		return
 	}
-	result, err := in.istio.Get().Namespace(namespace).Resource(istioTypePlural).SubResource(instanceName).Do().Get()
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(istioTypePlural).SubResource(instanceName).Do().Get()
 	istioObject, ok := result.(IstioObject)
 	if !ok {
 		istioObject = nil
