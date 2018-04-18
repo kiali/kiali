@@ -1,4 +1,4 @@
-package handlers
+package appender
 
 import (
 	"testing"

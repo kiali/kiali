@@ -1,4 +1,4 @@
-package handlers
+package appender
 
 import (
 	"fmt"
@@ -7,8 +7,22 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/tree"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
+
+type UnusedServiceAppender struct {
+}
+
+func (a UnusedServiceAppender) AppendGraph(trees *[]tree.ServiceNode, namespaceName string) {
+	istioClient, err := kubernetes.NewClient()
+	checkError(err)
+
+	deployments, err := istioClient.GetDeployments(namespaceName)
+	checkError(err)
+
+	addUnusedNodes(trees, namespaceName, deployments)
+}
 
 func addUnusedNodes(trees *[]tree.ServiceNode, namespaceName string, deployments *v1beta1.DeploymentList) {
 	staticNodeList := buildStaticNodeList(namespaceName, deployments)
