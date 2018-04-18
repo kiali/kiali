@@ -63,7 +63,8 @@ func buildStaticNodeList(namespaceName string, deployments *v1beta1.DeploymentLi
 			continue
 		}
 		staticNode := tree.NewServiceNode(fmt.Sprintf("%s.%s.%s", app, namespaceName, identityDomain), version)
-		staticNode.Metadata = map[string]interface{}{"rate": -1.0}
+		// TODO kiali-582 part 2: set rate to 0
+		staticNode.Metadata = map[string]interface{}{"rate": -1.0, "flagUnused": "true"}
 		nonTrafficList = append(nonTrafficList, staticNode)
 	}
 	return nonTrafficList

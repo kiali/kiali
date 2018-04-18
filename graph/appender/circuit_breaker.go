@@ -31,7 +31,8 @@ func applyCircuitBreakers(n *tree.ServiceNode, namespaceName string, istioClient
 				if dp.CircuitBreaker != nil {
 					if d, ok := dp.Destination.(map[string]interface{}); ok {
 						if d["labels"].(map[string]interface{})["version"] == n.Version {
-							n.Metadata["hasCircuitBreaker"] = "true"
+							n.Metadata["hasCircuitBreaker"] = "true" // TODO kiali-582 part 2: remove
+							n.Metadata["flagCircuitBreaker"] = "true"
 							break // no need to keep going, we know it has at least one CB policy
 						}
 					}
@@ -40,7 +41,8 @@ func applyCircuitBreakers(n *tree.ServiceNode, namespaceName string, istioClient
 		}
 	} else {
 		log.Warningf("Cannot determine if service [%v:%v] has circuit breakers: %v", namespaceName, n.Name, err)
-		n.Metadata["hasCircuitBreaker"] = "unknown"
+		n.Metadata["hasCircuitBreaker"] = "unknown" // TODO kiali-582 part 2: remove
+		n.Metadata["flagCircuitBreaker"] = "unknown"
 	}
 
 	for _, child := range n.Children {

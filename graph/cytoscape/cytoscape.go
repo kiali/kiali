@@ -26,20 +26,27 @@ import (
 
 type NodeData struct {
 	// Cytoscape Fields
-	Id     string `json:"id"`               // unique internal node ID (n0, n1...)
-	Text   string `json:"text"`             // display text for the node
+	Id string `json:"id"` // unique internal node ID (n0, n1...)
+	// TODO kiali-582 part 2: remove text
+	Text string `json:"text"` // display text for the node
+	// TODO kiali-582 part 2: remove style
 	Style  string `json:"style"`            // line style
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
 	Service string `json:"service"`
 	Version string `json:"version,omitempty"`
-	GroupBy string `json:"groupBy,omitempty"`           // compound nodes set to one of: [ 'version' ]
-	Rate    string `json:"rate,omitempty"`              // edge aggregate
-	Rate3xx string `json:"rate3XX,omitempty"`           // edge aggregate
-	Rate4xx string `json:"rate4XX,omitempty"`           // edge aggregate
-	Rate5xx string `json:"rate5XX,omitempty"`           // edge aggregate
-	HasCB   string `json:"hasCircuitBreaker,omitempty"` // true if a CB is in front of the service
+	// TODO kiali-582 part 2: remove GroupBy
+	GroupBy string `json:"groupBy,omitempty"` // compound nodes set to one of: [ 'version' ]
+	Rate    string `json:"rate,omitempty"`    // edge aggregate
+	Rate3xx string `json:"rate3XX,omitempty"` // edge aggregate
+	Rate4xx string `json:"rate4XX,omitempty"` // edge aggregate
+	Rate5xx string `json:"rate5XX,omitempty"` // edge aggregate
+	// TODO kiali-582 part 2: remove HasCB
+	HasCB              string `json:"hasCircuitBreaker,omitempty"`  // true if a CB is in front of the service
+	FlagCircuitBreaker string `json:"flagCircuitBreaker,omitempty"` // true | false | unknown
+	FlagGroup          string `json:"flagGroup,omitempty"`          // set to the grouping type, current values: [ 'version' ]
+	FlagUnused         string `json:"flagUnused,omitempty"`         // true | false
 
 	// reserved for future
 	// LinkPromGraph string `json:"link_prom_graph,omitempty"`
@@ -50,15 +57,20 @@ type EdgeData struct {
 	Id     string `json:"id"`     // unique internal edge ID (e0, e1...)
 	Source string `json:"source"` // parent node ID
 	Target string `json:"target"` // child node ID
-	Text   string `json:"text"`   // display text
-	Color  string `json:"color"`  // link color
-	Style  string `json:"style"`  // line style
+	// TODO kiali-582 part 2: remove text
+	Text string `json:"text"` // display text
+	// TODO kiali-582 part 2: remove color
+	Color string `json:"color"` // link color
+	// TODO kiali-582 part 2: style
+	Style string `json:"style"` // line style
 
 	// App Fields (not required by Cytoscape)
-	Rate    string `json:"rate,omitempty"`
-	Rate3xx string `json:"rate3XX,omitempty"`
-	Rate4xx string `json:"rate4XX,omitempty"`
-	Rate5xx string `json:"rate5XX,omitempty"`
+	Rate       string `json:"rate,omitempty"`
+	Rate3xx    string `json:"rate3XX,omitempty"`
+	Rate4xx    string `json:"rate4XX,omitempty"`
+	Rate5xx    string `json:"rate5XX,omitempty"`
+	PercentErr string `json:"percentErr,omitempty"`
+	FlagUnused string `json:"flagUnused,omitempty"` // true | false
 }
 
 type NodeWrapper struct {
@@ -152,9 +164,15 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 			// LinkPromGraph: sn.Metadata["link_prom_graph"].(string),
 		}
 
+		// node may be unused
+		if unused, ok := sn.Metadata["flagUnused"]; ok {
+			nd.FlagUnused = unused.(string)
+		}
+
 		// node may have a circuit breaker
 		if cb, ok := sn.Metadata["hasCircuitBreaker"]; ok {
 			nd.HasCB = cb.(string)
+			nd.FlagCircuitBreaker = cb.(string)
 		}
 
 		nw := NodeWrapper{
@@ -202,6 +220,7 @@ func findNode(nodes *[]*NodeWrapper, service, version string) (*NodeData, bool) 
 func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorOptions) {
 	rate := sn.Metadata["rate"].(float64)
 	ed.Style = "solid"
+	ed.Rate = fmt.Sprintf("%.3f", rate)
 	if rate > 0.0 {
 		rate3xx := sn.Metadata["rate_3xx"].(float64)
 		rate4xx := sn.Metadata["rate_4xx"].(float64)
@@ -209,7 +228,6 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 		rateErr := rate4xx + rate5xx
 		percentErr := rateErr / rate * 100.0
 
-		ed.Rate = fmt.Sprintf("%.3f", rate)
 		nd.Rate = add(nd.Rate, rate)
 		if rate3xx > 0.0 {
 			ed.Rate3xx = fmt.Sprintf("%.3f", rate3xx)
@@ -222,6 +240,9 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 		if rate5xx > 0.0 {
 			ed.Rate5xx = fmt.Sprintf("%.3f", rate5xx)
 			nd.Rate5xx = add(nd.Rate5xx, rate5xx)
+		}
+		if percentErr > 0.0 {
+			ed.PercentErr = fmt.Sprintf("%.3f", percentErr)
 		}
 
 		switch {
@@ -241,6 +262,7 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 		// A negative rate means that node information comes from the static representation as it is marked as unused
 		if rate < 0 {
 			ed.Style = "dotted"
+			ed.FlagUnused = "true"
 		}
 	}
 }
@@ -267,11 +289,12 @@ func addCompositeNodes(nodes *[]*NodeWrapper, nodeIdSequence *int) {
 			nodeId := fmt.Sprintf("n%v", *nodeIdSequence)
 			*nodeIdSequence++
 			nd := NodeData{
-				Id:      nodeId,
-				Service: k,
-				Text:    strings.Split(k, ".")[0],
-				Style:   "solid",
-				GroupBy: "version",
+				Id:        nodeId,
+				Service:   k,
+				Text:      strings.Split(k, ".")[0],
+				Style:     "solid",
+				GroupBy:   "version",
+				FlagGroup: "version",
 			}
 			nw := NodeWrapper{
 				Data: &nd,
