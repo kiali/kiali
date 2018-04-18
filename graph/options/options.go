@@ -16,13 +16,7 @@ import (
 
 // VendorOptions are those that are supplied to the vendor-specific generators.
 type VendorOptions struct {
-	ColorError     string
-	ColorNormal    string
-	ColorNoTraffic string
-	ColorWarn      string
 	GroupByVersion bool
-	ThresholdError float64
-	ThresholdWarn  float64
 	Timestamp      int64
 }
 
@@ -47,30 +41,12 @@ func NewOptions(r *http.Request) Options {
 	// query params
 	params := r.URL.Query()
 	appenders := parseAppenders(params)
-	colorNoTraffic := params.Get("colorNoTraffic")
-	colorError := params.Get("colorError")
-	colorNormal := params.Get("colorNormal")
-	colorWarn := params.Get("colorWarn")
 	groupByVersion, groupByVersionErr := strconv.ParseBool(params.Get("groupByVersion"))
 	duration, durationErr := time.ParseDuration(params.Get("duration"))
 	metric := params.Get("metric")
 	vendor := params.Get("vendor")
-	thresholdError, thresholdErrorErr := strconv.ParseFloat(params.Get("thresholdError"), 64)
-	thresholdWarn, thresholdWarnErr := strconv.ParseFloat(params.Get("thresholdWarn"), 64)
 	queryTime, queryTimeErr := strconv.ParseInt(params.Get("queryTime"), 10, 64)
 
-	if "" == colorNoTraffic {
-		colorNoTraffic = "black"
-	}
-	if "" == colorError {
-		colorError = "red"
-	}
-	if "" == colorNormal {
-		colorNormal = "green"
-	}
-	if "" == colorWarn {
-		colorWarn = "orange"
-	}
 	if groupByVersionErr != nil {
 		groupByVersion = true
 	}
@@ -86,12 +62,6 @@ func NewOptions(r *http.Request) Options {
 	if "" == vendor {
 		vendor = "cytoscape"
 	}
-	if thresholdErrorErr != nil {
-		thresholdError = 0.2
-	}
-	if thresholdWarnErr != nil {
-		thresholdError = 0.0
-	}
 
 	return Options{
 		Appenders: appenders,
@@ -102,13 +72,7 @@ func NewOptions(r *http.Request) Options {
 		Service:   service,
 		Vendor:    vendor,
 		VendorOptions: VendorOptions{
-			ColorNoTraffic: colorNoTraffic,
-			ColorError:     colorError,
-			ColorNormal:    colorNormal,
-			ColorWarn:      colorWarn,
 			GroupByVersion: groupByVersion,
-			ThresholdError: thresholdError,
-			ThresholdWarn:  thresholdWarn,
 			Timestamp:      queryTime,
 		},
 	}
