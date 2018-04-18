@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"sync"
 )
 
 // GetIstioDetails returns Istio details for a given service,
@@ -9,37 +10,60 @@ import (
 // A service is defined by the namespace and the service name.
 // It returns an error on any problem.
 func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error) {
-	routerRulesChan, destinationPoliciesChan := make(chan istioResponse), make(chan istioResponse)
+	var routeRules, destinationPolicies, virtualServices, destinationRules []IstioObject
+	var routeRulesErr, destinationPoliciesErr, virtualServicesErr, destinationRulesErr error
+	var wg sync.WaitGroup
+	wg.Add(4)
 
 	go func() {
-		routerRules, err := in.getRouteRules(namespace, serviceName)
-		routerRulesChan <- istioResponse{results: routerRules, err: err}
+		defer wg.Done()
+		routeRules, routeRulesErr = in.getRouteRules(namespace, serviceName)
 	}()
 
 	go func() {
-		destinationPolicies, err := in.getDestinationPolicies(namespace, serviceName)
-		destinationPoliciesChan <- istioResponse{results: destinationPolicies, err: err}
+		defer wg.Done()
+		destinationPolicies, destinationPoliciesErr = in.getDestinationPolicies(namespace, serviceName)
 	}()
+
+	go func() {
+		defer wg.Done()
+		virtualServices, virtualServicesErr = in.getVirtualServices(namespace, serviceName)
+	}()
+
+	go func() {
+		defer wg.Done()
+		destinationRules, destinationRulesErr = in.getDestinationRules(namespace, serviceName)
+	}()
+
+	wg.Wait()
 
 	var istioDetails = IstioDetails{}
 
-	routeRuleResponse := <-routerRulesChan
-	if routeRuleResponse.err != nil {
-		return nil, routeRuleResponse.err
+	istioDetails.RouteRules = routeRules
+	if routeRulesErr != nil {
+		return nil, routeRulesErr
 	}
-	istioDetails.RouteRules = routeRuleResponse.results
 
-	destinationPoliciesResponse := <-destinationPoliciesChan
-	if destinationPoliciesResponse.err != nil {
-		return nil, destinationPoliciesResponse.err
+	istioDetails.DestinationPolicies = destinationPolicies
+	if destinationPoliciesErr != nil {
+		return nil, destinationPoliciesErr
 	}
-	istioDetails.DestinationPolicies = destinationPoliciesResponse.results
+
+	istioDetails.VirtualServices = virtualServices
+	if virtualServicesErr != nil {
+		return nil, virtualServicesErr
+	}
+
+	istioDetails.DestinationRules = destinationRules
+	if destinationRulesErr != nil {
+		return nil, destinationRulesErr
+	}
 
 	return &istioDetails, nil
 }
 
 func (in *IstioClient) getRouteRules(namespace string, serviceName string) ([]IstioObject, error) {
-	result, err := in.istio.Get().Namespace(namespace).Resource(routeRules).Do().Get()
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(routeRules).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +87,7 @@ func (in *IstioClient) getRouteRules(namespace string, serviceName string) ([]Is
 }
 
 func (in *IstioClient) getDestinationPolicies(namespace string, serviceName string) ([]IstioObject, error) {
-	result, err := in.istio.Get().Namespace(namespace).Resource(destinationPolicies).Do().Get()
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(destinationPolicies).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -84,4 +108,55 @@ func (in *IstioClient) getDestinationPolicies(namespace string, serviceName stri
 		}
 	}
 	return destinationPolicies, nil
+}
+
+func (in *IstioClient) getVirtualServices(namespace string, serviceName string) ([]IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(virtualServices).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	virtualServiceList, ok := result.(*VirtualServiceList)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService list", namespace, serviceName)
+	}
+	// VirtualServices have its own names non related to the service which are defined.
+	// So, to fetch the rules per a specific service we need to filter by hosts.
+	// Probably in future iterations we might change this if it's not enough.
+	virtualServices := make([]IstioObject, 0)
+	for _, virtualService := range virtualServiceList.GetItems() {
+		if hosts, ok := virtualService.GetSpec()["hosts"]; ok {
+			if hostsArray, ok := hosts.([]interface{}); ok {
+				for _, host := range hostsArray {
+					if host == serviceName {
+						virtualServices = append(virtualServices, virtualService.DeepCopyIstioObject())
+						break
+					}
+				}
+			}
+		}
+	}
+	return virtualServices, nil
+}
+
+func (in *IstioClient) getDestinationRules(namespace string, serviceName string) ([]IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(destinationRules).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	destinationRuleList, ok := result.(*DestinationRuleList)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a DestinationRule list", namespace, serviceName)
+	}
+	// DestinationRules have its own names non related to the service which are defined.
+	// So, to fetch the rules per a specific service we need to filter by name.
+	// Probably in future iterations we might change this if it's not enough.
+	destinationRules := make([]IstioObject, 0)
+	for _, destinationRule := range destinationRuleList.Items {
+		if name, ok := destinationRule.Spec["name"]; ok {
+			if name == serviceName {
+				destinationRules = append(destinationRules, destinationRule.DeepCopyIstioObject())
+			}
+		}
+	}
+	return destinationRules, nil
 }

@@ -42,8 +42,9 @@ type IstioClientInterface interface {
 // It hides the way it queries each API
 type IstioClient struct {
 	IstioClientInterface
-	k8s   *kube.Clientset
-	istio *rest.RESTClient
+	k8s                *kube.Clientset
+	istioConfigApi     *rest.RESTClient
+	istioNetworkingApi *rest.RESTClient
 }
 
 // ConfigClient return a client with the correct configuration
@@ -93,9 +94,10 @@ func NewClient() (*IstioClient, error) {
 	schemeBuilder := runtime.NewSchemeBuilder(
 		func(scheme *runtime.Scheme) error {
 			for _, kind := range istioKnownTypes {
-				scheme.AddKnownTypes(istioGroupVersion, kind.object, kind.collection)
+				scheme.AddKnownTypes(*kind.groupVersion, kind.object, kind.collection)
 			}
-			meta_v1.AddToGroupVersion(scheme, istioGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, istioConfigGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, istioNetworkingGroupVersion)
 			return nil
 		})
 
@@ -109,7 +111,7 @@ func NewClient() (*IstioClient, error) {
 		Host:    config.Host,
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{
-			GroupVersion:         &istioGroupVersion,
+			GroupVersion:         &istioConfigGroupVersion,
 			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)},
 			ContentType:          runtime.ContentTypeJSON,
 		},
@@ -119,12 +121,32 @@ func NewClient() (*IstioClient, error) {
 		Burst:           config.Burst,
 	}
 
-	istio, err := rest.RESTClientFor(&istioConfig)
-
-	client.istio = istio
+	istioConfigApi, err := rest.RESTClientFor(&istioConfig)
+	client.istioConfigApi = istioConfigApi
 	if err != nil {
 		return nil, err
 	}
+
+	istioNetworking := rest.Config{
+		Host:    config.Host,
+		APIPath: "/apis",
+		ContentConfig: rest.ContentConfig{
+			GroupVersion:         &istioNetworkingGroupVersion,
+			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)},
+			ContentType:          runtime.ContentTypeJSON,
+		},
+		BearerToken:     config.BearerToken,
+		TLSClientConfig: config.TLSClientConfig,
+		QPS:             config.QPS,
+		Burst:           config.Burst,
+	}
+
+	istioNetworkingApi, err := rest.RESTClientFor(&istioNetworking)
+	client.istioNetworkingApi = istioNetworkingApi
+	if err != nil {
+		return nil, err
+	}
+
 	return &client, nil
 }
 

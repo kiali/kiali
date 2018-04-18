@@ -139,6 +139,15 @@ rules:
   - get
   - list
   - watch
+- apiGroups: ["networking.istio.io"]
+  attributeRestrictions: null
+  resources:
+  - virtualservices
+  - destinationrules
+  verbs:
+  - get
+  - list
+  - watch
 ---
 apiVersion: v1
 kind: ClusterRoleBinding
