@@ -39,6 +39,7 @@ ShallowWrapper {
               xs={12}
             >
               <ServiceInfoDescription
+                created_at=""
                 endpoints={undefined}
                 health={undefined}
                 ip=""
@@ -81,6 +82,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <ServiceInfoDescription
+                  created_at=""
                   endpoints={undefined}
                   health={undefined}
                   ip=""
@@ -117,6 +119,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <ServiceInfoDescription
+                  created_at=""
                   endpoints={undefined}
                   health={undefined}
                   ip=""
@@ -138,6 +141,7 @@ ShallowWrapper {
               "props": Object {
                 "bsClass": "col",
                 "children": <ServiceInfoDescription
+                  created_at=""
                   endpoints={undefined}
                   health={undefined}
                   ip=""
@@ -159,6 +163,7 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "class",
                 "props": Object {
+                  "created_at": "",
                   "endpoints": undefined,
                   "health": undefined,
                   "ip": "",
@@ -229,6 +234,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <ServiceInfoDescription
+                  created_at=""
                   endpoints={undefined}
                   health={undefined}
                   ip=""
@@ -271,6 +277,7 @@ ShallowWrapper {
                   xs={12}
                 >
                   <ServiceInfoDescription
+                    created_at=""
                     endpoints={undefined}
                     health={undefined}
                     ip=""
@@ -307,6 +314,7 @@ ShallowWrapper {
                   xs={12}
                 >
                   <ServiceInfoDescription
+                    created_at=""
                     endpoints={undefined}
                     health={undefined}
                     ip=""
@@ -328,6 +336,7 @@ ShallowWrapper {
                 "props": Object {
                   "bsClass": "col",
                   "children": <ServiceInfoDescription
+                    created_at=""
                     endpoints={undefined}
                     health={undefined}
                     ip=""
@@ -349,6 +358,7 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "class",
                   "props": Object {
+                    "created_at": "",
                     "endpoints": undefined,
                     "health": undefined,
                     "ip": "",
@@ -444,6 +454,7 @@ ShallowWrapper {
               xs={12}
             >
               <ServiceInfoDescription
+                created_at=""
                 endpoints={
                   Array [
                     Object {
@@ -581,6 +592,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <ServiceInfoDescription
+                  created_at=""
                   endpoints={
                     Array [
                       Object {
@@ -712,6 +724,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <ServiceInfoDescription
+                  created_at=""
                   endpoints={
                     Array [
                       Object {
@@ -774,6 +787,7 @@ ShallowWrapper {
               "props": Object {
                 "bsClass": "col",
                 "children": <ServiceInfoDescription
+                  created_at=""
                   endpoints={
                     Array [
                       Object {
@@ -836,6 +850,7 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "class",
                 "props": Object {
+                  "created_at": "",
                   "endpoints": Array [
                     Object {
                       "addresses": Array [
@@ -1107,6 +1122,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <ServiceInfoDescription
+                  created_at=""
                   endpoints={
                     Array [
                       Object {
@@ -1244,6 +1260,7 @@ ShallowWrapper {
                   xs={12}
                 >
                   <ServiceInfoDescription
+                    created_at=""
                     endpoints={
                       Array [
                         Object {
@@ -1375,6 +1392,7 @@ ShallowWrapper {
                   xs={12}
                 >
                   <ServiceInfoDescription
+                    created_at=""
                     endpoints={
                       Array [
                         Object {
@@ -1437,6 +1455,7 @@ ShallowWrapper {
                 "props": Object {
                   "bsClass": "col",
                   "children": <ServiceInfoDescription
+                    created_at=""
                     endpoints={
                       Array [
                         Object {
@@ -1499,6 +1518,7 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "class",
                   "props": Object {
+                    "created_at": "",
                     "endpoints": Array [
                       Object {
                         "addresses": Array [

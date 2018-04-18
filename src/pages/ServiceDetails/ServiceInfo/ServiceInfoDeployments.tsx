@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Col, Row, Icon } from 'patternfly-react';
+import LocalTime from '../../../components/Time/LocalTime';
 import Badge from '../../../components/Badge/Badge';
 import { Deployment } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
@@ -51,6 +52,10 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
                     }% CPU)
                   </div>
                 )}
+                <p>
+                  <strong>Created at: </strong>
+                  <LocalTime time={deployment.created_at} />
+                </p>
               </div>
               <hr />
             </Col>

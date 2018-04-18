@@ -14,6 +14,7 @@ type ServiceInfoState = {
   labels?: Map<string, string>;
   type: string;
   name: string;
+  created_at: string;
   ip: string;
   ports?: Port[];
   endpoints?: Endpoints[];
@@ -33,6 +34,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
     this.state = {
       labels: new Map(),
       name: '',
+      created_at: '',
       type: '',
       ip: '',
       ports: [],
@@ -61,6 +63,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
         this.setState({
           labels: data.labels,
           name: data.name,
+          created_at: data.created_at,
           type: data.type,
           ports: data.ports,
           endpoints: data.endpoints,
@@ -129,6 +132,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
             <Col xs={12} sm={12} md={12} lg={12}>
               <ServiceInfoDescription
                 name={this.state.name}
+                created_at={this.state.created_at}
                 istio_sidecar={this.state.istio_sidecar}
                 labels={this.state.labels}
                 ports={this.state.ports}
