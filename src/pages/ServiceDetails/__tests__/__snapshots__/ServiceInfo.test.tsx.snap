@@ -54,47 +54,7 @@ ShallowWrapper {
             bsClass="row"
             className="row-cards-pf"
             componentClass="div"
-          >
-            <Col
-              bsClass="col"
-              componentClass="div"
-              lg={4}
-              md={4}
-              sm={6}
-              xs={12}
-            >
-              <ServiceInfoDeployments
-                deployments={Array []}
-              />
-            </Col>
-            <Col
-              bsClass="col"
-              componentClass="div"
-              lg={4}
-              md={4}
-              sm={6}
-              xs={12}
-            >
-              <ServiceInfoRoutes
-                dependencies={Map {}}
-              />
-            </Col>
-            <Col
-              bsClass="col"
-              componentClass="div"
-              lg={4}
-              md={4}
-              sm={6}
-              xs={12}
-            >
-              <ServiceInfoRouteRules
-                routeRules={Array []}
-              />
-              <ServiceInfoDestinationPolicies
-                destinationPolicies={undefined}
-              />
-            </Col>
-          </Row>
+          />
         </div>,
       ],
     },
@@ -136,47 +96,7 @@ ShallowWrapper {
               bsClass="row"
               className="row-cards-pf"
               componentClass="div"
-            >
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={4}
-                md={4}
-                sm={6}
-                xs={12}
-              >
-                <ServiceInfoDeployments
-                  deployments={Array []}
-                />
-              </Col>
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={4}
-                md={4}
-                sm={6}
-                xs={12}
-              >
-                <ServiceInfoRoutes
-                  dependencies={Map {}}
-                />
-              </Col>
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={4}
-                md={4}
-                sm={6}
-                xs={12}
-              >
-                <ServiceInfoRouteRules
-                  routeRules={Array []}
-                />
-                <ServiceInfoDestinationPolicies
-                  destinationPolicies={undefined}
-                />
-              </Col>
-            </Row>,
+            />,
           ],
           "className": "container-fluid container-cards-pf",
         },
@@ -263,156 +183,18 @@ ShallowWrapper {
             "props": Object {
               "bsClass": "row",
               "children": Array [
-                <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={4}
-                  md={4}
-                  sm={6}
-                  xs={12}
-                >
-                  <ServiceInfoDeployments
-                    deployments={Array []}
-                  />
-                </Col>,
-                <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={4}
-                  md={4}
-                  sm={6}
-                  xs={12}
-                >
-                  <ServiceInfoRoutes
-                    dependencies={Map {}}
-                  />
-                </Col>,
-                <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={4}
-                  md={4}
-                  sm={6}
-                  xs={12}
-                >
-                  <ServiceInfoRouteRules
-                    routeRules={Array []}
-                  />
-                  <ServiceInfoDestinationPolicies
-                    destinationPolicies={undefined}
-                  />
-                </Col>,
+                false,
+                false,
+                false,
               ],
               "className": "row-cards-pf",
               "componentClass": "div",
             },
             "ref": null,
             "rendered": Array [
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "class",
-                "props": Object {
-                  "bsClass": "col",
-                  "children": <ServiceInfoDeployments
-                    deployments={Array []}
-                  />,
-                  "componentClass": "div",
-                  "lg": 4,
-                  "md": 4,
-                  "sm": 6,
-                  "xs": 12,
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "class",
-                  "props": Object {
-                    "deployments": Array [],
-                  },
-                  "ref": null,
-                  "rendered": null,
-                  "type": [Function],
-                },
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "class",
-                "props": Object {
-                  "bsClass": "col",
-                  "children": <ServiceInfoRoutes
-                    dependencies={Map {}}
-                  />,
-                  "componentClass": "div",
-                  "lg": 4,
-                  "md": 4,
-                  "sm": 6,
-                  "xs": 12,
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "class",
-                  "props": Object {
-                    "dependencies": Map {},
-                  },
-                  "ref": null,
-                  "rendered": null,
-                  "type": [Function],
-                },
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "class",
-                "props": Object {
-                  "bsClass": "col",
-                  "children": Array [
-                    <ServiceInfoRouteRules
-                      routeRules={Array []}
-                    />,
-                    <ServiceInfoDestinationPolicies
-                      destinationPolicies={undefined}
-                    />,
-                  ],
-                  "componentClass": "div",
-                  "lg": 4,
-                  "md": 4,
-                  "sm": 6,
-                  "xs": 12,
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "routeRules": Array [],
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "destinationPolicies": undefined,
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                ],
-                "type": [Function],
-              },
+              false,
+              false,
+              false,
             ],
             "type": [Function],
           },
@@ -462,47 +244,7 @@ ShallowWrapper {
               bsClass="row"
               className="row-cards-pf"
               componentClass="div"
-            >
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={4}
-                md={4}
-                sm={6}
-                xs={12}
-              >
-                <ServiceInfoDeployments
-                  deployments={Array []}
-                />
-              </Col>
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={4}
-                md={4}
-                sm={6}
-                xs={12}
-              >
-                <ServiceInfoRoutes
-                  dependencies={Map {}}
-                />
-              </Col>
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={4}
-                md={4}
-                sm={6}
-                xs={12}
-              >
-                <ServiceInfoRouteRules
-                  routeRules={Array []}
-                />
-                <ServiceInfoDestinationPolicies
-                  destinationPolicies={undefined}
-                />
-              </Col>
-            </Row>
+            />
           </div>,
         ],
       },
@@ -544,47 +286,7 @@ ShallowWrapper {
                 bsClass="row"
                 className="row-cards-pf"
                 componentClass="div"
-              >
-                <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={4}
-                  md={4}
-                  sm={6}
-                  xs={12}
-                >
-                  <ServiceInfoDeployments
-                    deployments={Array []}
-                  />
-                </Col>
-                <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={4}
-                  md={4}
-                  sm={6}
-                  xs={12}
-                >
-                  <ServiceInfoRoutes
-                    dependencies={Map {}}
-                  />
-                </Col>
-                <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={4}
-                  md={4}
-                  sm={6}
-                  xs={12}
-                >
-                  <ServiceInfoRouteRules
-                    routeRules={Array []}
-                  />
-                  <ServiceInfoDestinationPolicies
-                    destinationPolicies={undefined}
-                  />
-                </Col>
-              </Row>,
+              />,
             ],
             "className": "container-fluid container-cards-pf",
           },
@@ -671,43 +373,1244 @@ ShallowWrapper {
               "props": Object {
                 "bsClass": "row",
                 "children": Array [
+                  false,
+                  false,
+                  false,
+                ],
+                "className": "row-cards-pf",
+                "componentClass": "div",
+              },
+              "ref": null,
+              "rendered": Array [
+                false,
+                false,
+                false,
+              ],
+              "type": [Function],
+            },
+          ],
+          "type": "div",
+        },
+      ],
+      "type": "div",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
+
+exports[`#ServiceInfo render correctly with data should render serviceInfo with data 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <ServiceInfo
+    namespace="istio-system"
+    service="reviews"
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        null,
+        <div
+          className="container-fluid container-cards-pf"
+        >
+          <Row
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
+          >
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={12}
+              md={12}
+              sm={12}
+              xs={12}
+            >
+              <ServiceInfoDescription
+                endpoints={
+                  Array [
+                    Object {
+                      "addresses": Array [
+                        Object {
+                          "ip": "172.17.0.11",
+                          "kind": "Pod",
+                          "name": "reviews-v2-4140793682-qrpm9",
+                        },
+                        Object {
+                          "ip": "172.17.0.14",
+                          "kind": "Pod",
+                          "name": "reviews-v3-3651831602-zn9g6",
+                        },
+                        Object {
+                          "ip": "172.17.0.16",
+                          "kind": "Pod",
+                          "name": "reviews-v1-401049526-tfstp",
+                        },
+                      ],
+                      "ports": Array [
+                        Object {
+                          "name": "http",
+                          "port": 9080,
+                          "protocol": "TCP",
+                        },
+                      ],
+                    },
+                  ]
+                }
+                health={undefined}
+                ip="172.30.78.33"
+                istio_sidecar={false}
+                labels={
+                  Object {
+                    "app": "reviews",
+                  }
+                }
+                name="reviews"
+                ports={
+                  Array [
+                    Object {
+                      "name": "http",
+                      "port": 9080,
+                      "protocol": "TCP",
+                    },
+                  ]
+                }
+                type="ClusterIP"
+              />
+            </Col>
+          </Row>
+          <Row
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
+          >
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={12}
+              md={12}
+              sm={6}
+              xs={12}
+            >
+              <ServiceInfoRouteRules
+                routeRules={
+                  Array [
+                    Object {
+                      "destination": Object {
+                        "name": "reviews",
+                      },
+                      "match": null,
+                      "name": "reviews-default",
+                      "precedence": 1,
+                      "route": Array [
+                        Object {
+                          "labels": Object {
+                            "version": "v1",
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "destination": Object {
+                        "name": "reviews",
+                      },
+                      "match": Object {
+                        "request": Object {
+                          "headers": Object {
+                            "cookie": Object {
+                              "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                            },
+                          },
+                        },
+                      },
+                      "name": "reviews-test-v2",
+                      "precedence": 2,
+                      "route": Array [
+                        Object {
+                          "labels": Object {
+                            "version": "v2",
+                          },
+                        },
+                      ],
+                    },
+                  ]
+                }
+              />
+            </Col>
+          </Row>
+        </div>,
+      ],
+    },
+    "ref": null,
+    "rendered": Array [
+      null,
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+              >
+                <ServiceInfoDescription
+                  endpoints={
+                    Array [
+                      Object {
+                        "addresses": Array [
+                          Object {
+                            "ip": "172.17.0.11",
+                            "kind": "Pod",
+                            "name": "reviews-v2-4140793682-qrpm9",
+                          },
+                          Object {
+                            "ip": "172.17.0.14",
+                            "kind": "Pod",
+                            "name": "reviews-v3-3651831602-zn9g6",
+                          },
+                          Object {
+                            "ip": "172.17.0.16",
+                            "kind": "Pod",
+                            "name": "reviews-v1-401049526-tfstp",
+                          },
+                        ],
+                        "ports": Array [
+                          Object {
+                            "name": "http",
+                            "port": 9080,
+                            "protocol": "TCP",
+                          },
+                        ],
+                      },
+                    ]
+                  }
+                  health={undefined}
+                  ip="172.30.78.33"
+                  istio_sidecar={false}
+                  labels={
+                    Object {
+                      "app": "reviews",
+                    }
+                  }
+                  name="reviews"
+                  ports={
+                    Array [
+                      Object {
+                        "name": "http",
+                        "port": 9080,
+                        "protocol": "TCP",
+                      },
+                    ]
+                  }
+                  type="ClusterIP"
+                />
+              </Col>
+            </Row>,
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={6}
+                xs={12}
+              >
+                <ServiceInfoRouteRules
+                  routeRules={
+                    Array [
+                      Object {
+                        "destination": Object {
+                          "name": "reviews",
+                        },
+                        "match": null,
+                        "name": "reviews-default",
+                        "precedence": 1,
+                        "route": Array [
+                          Object {
+                            "labels": Object {
+                              "version": "v1",
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "destination": Object {
+                          "name": "reviews",
+                        },
+                        "match": Object {
+                          "request": Object {
+                            "headers": Object {
+                              "cookie": Object {
+                                "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                              },
+                            },
+                          },
+                        },
+                        "name": "reviews-test-v2",
+                        "precedence": 2,
+                        "route": Array [
+                          Object {
+                            "labels": Object {
+                              "version": "v2",
+                            },
+                          },
+                        ],
+                      },
+                    ]
+                  }
+                />
+              </Col>
+            </Row>,
+          ],
+          "className": "container-fluid container-cards-pf",
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "row",
+              "children": <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+              >
+                <ServiceInfoDescription
+                  endpoints={
+                    Array [
+                      Object {
+                        "addresses": Array [
+                          Object {
+                            "ip": "172.17.0.11",
+                            "kind": "Pod",
+                            "name": "reviews-v2-4140793682-qrpm9",
+                          },
+                          Object {
+                            "ip": "172.17.0.14",
+                            "kind": "Pod",
+                            "name": "reviews-v3-3651831602-zn9g6",
+                          },
+                          Object {
+                            "ip": "172.17.0.16",
+                            "kind": "Pod",
+                            "name": "reviews-v1-401049526-tfstp",
+                          },
+                        ],
+                        "ports": Array [
+                          Object {
+                            "name": "http",
+                            "port": 9080,
+                            "protocol": "TCP",
+                          },
+                        ],
+                      },
+                    ]
+                  }
+                  health={undefined}
+                  ip="172.30.78.33"
+                  istio_sidecar={false}
+                  labels={
+                    Object {
+                      "app": "reviews",
+                    }
+                  }
+                  name="reviews"
+                  ports={
+                    Array [
+                      Object {
+                        "name": "http",
+                        "port": 9080,
+                        "protocol": "TCP",
+                      },
+                    ]
+                  }
+                  type="ClusterIP"
+                />
+              </Col>,
+              "className": "row-cards-pf",
+              "componentClass": "div",
+            },
+            "ref": null,
+            "rendered": Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "col",
+                "children": <ServiceInfoDescription
+                  endpoints={
+                    Array [
+                      Object {
+                        "addresses": Array [
+                          Object {
+                            "ip": "172.17.0.11",
+                            "kind": "Pod",
+                            "name": "reviews-v2-4140793682-qrpm9",
+                          },
+                          Object {
+                            "ip": "172.17.0.14",
+                            "kind": "Pod",
+                            "name": "reviews-v3-3651831602-zn9g6",
+                          },
+                          Object {
+                            "ip": "172.17.0.16",
+                            "kind": "Pod",
+                            "name": "reviews-v1-401049526-tfstp",
+                          },
+                        ],
+                        "ports": Array [
+                          Object {
+                            "name": "http",
+                            "port": 9080,
+                            "protocol": "TCP",
+                          },
+                        ],
+                      },
+                    ]
+                  }
+                  health={undefined}
+                  ip="172.30.78.33"
+                  istio_sidecar={false}
+                  labels={
+                    Object {
+                      "app": "reviews",
+                    }
+                  }
+                  name="reviews"
+                  ports={
+                    Array [
+                      Object {
+                        "name": "http",
+                        "port": 9080,
+                        "protocol": "TCP",
+                      },
+                    ]
+                  }
+                  type="ClusterIP"
+                />,
+                "componentClass": "div",
+                "lg": 12,
+                "md": 12,
+                "sm": 12,
+                "xs": 12,
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "endpoints": Array [
+                    Object {
+                      "addresses": Array [
+                        Object {
+                          "ip": "172.17.0.11",
+                          "kind": "Pod",
+                          "name": "reviews-v2-4140793682-qrpm9",
+                        },
+                        Object {
+                          "ip": "172.17.0.14",
+                          "kind": "Pod",
+                          "name": "reviews-v3-3651831602-zn9g6",
+                        },
+                        Object {
+                          "ip": "172.17.0.16",
+                          "kind": "Pod",
+                          "name": "reviews-v1-401049526-tfstp",
+                        },
+                      ],
+                      "ports": Array [
+                        Object {
+                          "name": "http",
+                          "port": 9080,
+                          "protocol": "TCP",
+                        },
+                      ],
+                    },
+                  ],
+                  "health": undefined,
+                  "ip": "172.30.78.33",
+                  "istio_sidecar": false,
+                  "labels": Object {
+                    "app": "reviews",
+                  },
+                  "name": "reviews",
+                  "ports": Array [
+                    Object {
+                      "name": "http",
+                      "port": 9080,
+                      "protocol": "TCP",
+                    },
+                  ],
+                  "type": "ClusterIP",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+              "type": [Function],
+            },
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "row",
+              "children": Array [
+                false,
+                false,
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={12}
+                  md={12}
+                  sm={6}
+                  xs={12}
+                >
+                  <ServiceInfoRouteRules
+                    routeRules={
+                      Array [
+                        Object {
+                          "destination": Object {
+                            "name": "reviews",
+                          },
+                          "match": null,
+                          "name": "reviews-default",
+                          "precedence": 1,
+                          "route": Array [
+                            Object {
+                              "labels": Object {
+                                "version": "v1",
+                              },
+                            },
+                          ],
+                        },
+                        Object {
+                          "destination": Object {
+                            "name": "reviews",
+                          },
+                          "match": Object {
+                            "request": Object {
+                              "headers": Object {
+                                "cookie": Object {
+                                  "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                },
+                              },
+                            },
+                          },
+                          "name": "reviews-test-v2",
+                          "precedence": 2,
+                          "route": Array [
+                            Object {
+                              "labels": Object {
+                                "version": "v2",
+                              },
+                            },
+                          ],
+                        },
+                      ]
+                    }
+                  />
+                </Col>,
+              ],
+              "className": "row-cards-pf",
+              "componentClass": "div",
+            },
+            "ref": null,
+            "rendered": Array [
+              false,
+              false,
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": Array [
+                    <ServiceInfoRouteRules
+                      routeRules={
+                        Array [
+                          Object {
+                            "destination": Object {
+                              "name": "reviews",
+                            },
+                            "match": null,
+                            "name": "reviews-default",
+                            "precedence": 1,
+                            "route": Array [
+                              Object {
+                                "labels": Object {
+                                  "version": "v1",
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "destination": Object {
+                              "name": "reviews",
+                            },
+                            "match": Object {
+                              "request": Object {
+                                "headers": Object {
+                                  "cookie": Object {
+                                    "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                  },
+                                },
+                              },
+                            },
+                            "name": "reviews-test-v2",
+                            "precedence": 2,
+                            "route": Array [
+                              Object {
+                                "labels": Object {
+                                  "version": "v2",
+                                },
+                              },
+                            ],
+                          },
+                        ]
+                      }
+                    />,
+                    false,
+                  ],
+                  "componentClass": "div",
+                  "lg": 12,
+                  "md": 12,
+                  "sm": 6,
+                  "xs": 12,
+                },
+                "ref": null,
+                "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "routeRules": Array [
+                        Object {
+                          "destination": Object {
+                            "name": "reviews",
+                          },
+                          "match": null,
+                          "name": "reviews-default",
+                          "precedence": 1,
+                          "route": Array [
+                            Object {
+                              "labels": Object {
+                                "version": "v1",
+                              },
+                            },
+                          ],
+                        },
+                        Object {
+                          "destination": Object {
+                            "name": "reviews",
+                          },
+                          "match": Object {
+                            "request": Object {
+                              "headers": Object {
+                                "cookie": Object {
+                                  "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                },
+                              },
+                            },
+                          },
+                          "name": "reviews-test-v2",
+                          "precedence": 2,
+                          "route": Array [
+                            Object {
+                              "labels": Object {
+                                "version": "v2",
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                  false,
+                ],
+                "type": [Function],
+              },
+            ],
+            "type": [Function],
+          },
+        ],
+        "type": "div",
+      },
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          null,
+          <div
+            className="container-fluid container-cards-pf"
+          >
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+              >
+                <ServiceInfoDescription
+                  endpoints={
+                    Array [
+                      Object {
+                        "addresses": Array [
+                          Object {
+                            "ip": "172.17.0.11",
+                            "kind": "Pod",
+                            "name": "reviews-v2-4140793682-qrpm9",
+                          },
+                          Object {
+                            "ip": "172.17.0.14",
+                            "kind": "Pod",
+                            "name": "reviews-v3-3651831602-zn9g6",
+                          },
+                          Object {
+                            "ip": "172.17.0.16",
+                            "kind": "Pod",
+                            "name": "reviews-v1-401049526-tfstp",
+                          },
+                        ],
+                        "ports": Array [
+                          Object {
+                            "name": "http",
+                            "port": 9080,
+                            "protocol": "TCP",
+                          },
+                        ],
+                      },
+                    ]
+                  }
+                  health={undefined}
+                  ip="172.30.78.33"
+                  istio_sidecar={false}
+                  labels={
+                    Object {
+                      "app": "reviews",
+                    }
+                  }
+                  name="reviews"
+                  ports={
+                    Array [
+                      Object {
+                        "name": "http",
+                        "port": 9080,
+                        "protocol": "TCP",
+                      },
+                    ]
+                  }
+                  type="ClusterIP"
+                />
+              </Col>
+            </Row>
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={6}
+                xs={12}
+              >
+                <ServiceInfoRouteRules
+                  routeRules={
+                    Array [
+                      Object {
+                        "destination": Object {
+                          "name": "reviews",
+                        },
+                        "match": null,
+                        "name": "reviews-default",
+                        "precedence": 1,
+                        "route": Array [
+                          Object {
+                            "labels": Object {
+                              "version": "v1",
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "destination": Object {
+                          "name": "reviews",
+                        },
+                        "match": Object {
+                          "request": Object {
+                            "headers": Object {
+                              "cookie": Object {
+                                "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                              },
+                            },
+                          },
+                        },
+                        "name": "reviews-test-v2",
+                        "precedence": 2,
+                        "route": Array [
+                          Object {
+                            "labels": Object {
+                              "version": "v2",
+                            },
+                          },
+                        ],
+                      },
+                    ]
+                  }
+                />
+              </Col>
+            </Row>
+          </div>,
+        ],
+      },
+      "ref": null,
+      "rendered": Array [
+        null,
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              <Row
+                bsClass="row"
+                className="row-cards-pf"
+                componentClass="div"
+              >
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={12}
+                  md={12}
+                  sm={12}
+                  xs={12}
+                >
+                  <ServiceInfoDescription
+                    endpoints={
+                      Array [
+                        Object {
+                          "addresses": Array [
+                            Object {
+                              "ip": "172.17.0.11",
+                              "kind": "Pod",
+                              "name": "reviews-v2-4140793682-qrpm9",
+                            },
+                            Object {
+                              "ip": "172.17.0.14",
+                              "kind": "Pod",
+                              "name": "reviews-v3-3651831602-zn9g6",
+                            },
+                            Object {
+                              "ip": "172.17.0.16",
+                              "kind": "Pod",
+                              "name": "reviews-v1-401049526-tfstp",
+                            },
+                          ],
+                          "ports": Array [
+                            Object {
+                              "name": "http",
+                              "port": 9080,
+                              "protocol": "TCP",
+                            },
+                          ],
+                        },
+                      ]
+                    }
+                    health={undefined}
+                    ip="172.30.78.33"
+                    istio_sidecar={false}
+                    labels={
+                      Object {
+                        "app": "reviews",
+                      }
+                    }
+                    name="reviews"
+                    ports={
+                      Array [
+                        Object {
+                          "name": "http",
+                          "port": 9080,
+                          "protocol": "TCP",
+                        },
+                      ]
+                    }
+                    type="ClusterIP"
+                  />
+                </Col>
+              </Row>,
+              <Row
+                bsClass="row"
+                className="row-cards-pf"
+                componentClass="div"
+              >
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={12}
+                  md={12}
+                  sm={6}
+                  xs={12}
+                >
+                  <ServiceInfoRouteRules
+                    routeRules={
+                      Array [
+                        Object {
+                          "destination": Object {
+                            "name": "reviews",
+                          },
+                          "match": null,
+                          "name": "reviews-default",
+                          "precedence": 1,
+                          "route": Array [
+                            Object {
+                              "labels": Object {
+                                "version": "v1",
+                              },
+                            },
+                          ],
+                        },
+                        Object {
+                          "destination": Object {
+                            "name": "reviews",
+                          },
+                          "match": Object {
+                            "request": Object {
+                              "headers": Object {
+                                "cookie": Object {
+                                  "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                },
+                              },
+                            },
+                          },
+                          "name": "reviews-test-v2",
+                          "precedence": 2,
+                          "route": Array [
+                            Object {
+                              "labels": Object {
+                                "version": "v2",
+                              },
+                            },
+                          ],
+                        },
+                      ]
+                    }
+                  />
+                </Col>
+              </Row>,
+            ],
+            "className": "container-fluid container-cards-pf",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "row",
+                "children": <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={12}
+                  md={12}
+                  sm={12}
+                  xs={12}
+                >
+                  <ServiceInfoDescription
+                    endpoints={
+                      Array [
+                        Object {
+                          "addresses": Array [
+                            Object {
+                              "ip": "172.17.0.11",
+                              "kind": "Pod",
+                              "name": "reviews-v2-4140793682-qrpm9",
+                            },
+                            Object {
+                              "ip": "172.17.0.14",
+                              "kind": "Pod",
+                              "name": "reviews-v3-3651831602-zn9g6",
+                            },
+                            Object {
+                              "ip": "172.17.0.16",
+                              "kind": "Pod",
+                              "name": "reviews-v1-401049526-tfstp",
+                            },
+                          ],
+                          "ports": Array [
+                            Object {
+                              "name": "http",
+                              "port": 9080,
+                              "protocol": "TCP",
+                            },
+                          ],
+                        },
+                      ]
+                    }
+                    health={undefined}
+                    ip="172.30.78.33"
+                    istio_sidecar={false}
+                    labels={
+                      Object {
+                        "app": "reviews",
+                      }
+                    }
+                    name="reviews"
+                    ports={
+                      Array [
+                        Object {
+                          "name": "http",
+                          "port": 9080,
+                          "protocol": "TCP",
+                        },
+                      ]
+                    }
+                    type="ClusterIP"
+                  />
+                </Col>,
+                "className": "row-cards-pf",
+                "componentClass": "div",
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": <ServiceInfoDescription
+                    endpoints={
+                      Array [
+                        Object {
+                          "addresses": Array [
+                            Object {
+                              "ip": "172.17.0.11",
+                              "kind": "Pod",
+                              "name": "reviews-v2-4140793682-qrpm9",
+                            },
+                            Object {
+                              "ip": "172.17.0.14",
+                              "kind": "Pod",
+                              "name": "reviews-v3-3651831602-zn9g6",
+                            },
+                            Object {
+                              "ip": "172.17.0.16",
+                              "kind": "Pod",
+                              "name": "reviews-v1-401049526-tfstp",
+                            },
+                          ],
+                          "ports": Array [
+                            Object {
+                              "name": "http",
+                              "port": 9080,
+                              "protocol": "TCP",
+                            },
+                          ],
+                        },
+                      ]
+                    }
+                    health={undefined}
+                    ip="172.30.78.33"
+                    istio_sidecar={false}
+                    labels={
+                      Object {
+                        "app": "reviews",
+                      }
+                    }
+                    name="reviews"
+                    ports={
+                      Array [
+                        Object {
+                          "name": "http",
+                          "port": 9080,
+                          "protocol": "TCP",
+                        },
+                      ]
+                    }
+                    type="ClusterIP"
+                  />,
+                  "componentClass": "div",
+                  "lg": 12,
+                  "md": 12,
+                  "sm": 12,
+                  "xs": 12,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "endpoints": Array [
+                      Object {
+                        "addresses": Array [
+                          Object {
+                            "ip": "172.17.0.11",
+                            "kind": "Pod",
+                            "name": "reviews-v2-4140793682-qrpm9",
+                          },
+                          Object {
+                            "ip": "172.17.0.14",
+                            "kind": "Pod",
+                            "name": "reviews-v3-3651831602-zn9g6",
+                          },
+                          Object {
+                            "ip": "172.17.0.16",
+                            "kind": "Pod",
+                            "name": "reviews-v1-401049526-tfstp",
+                          },
+                        ],
+                        "ports": Array [
+                          Object {
+                            "name": "http",
+                            "port": 9080,
+                            "protocol": "TCP",
+                          },
+                        ],
+                      },
+                    ],
+                    "health": undefined,
+                    "ip": "172.30.78.33",
+                    "istio_sidecar": false,
+                    "labels": Object {
+                      "app": "reviews",
+                    },
+                    "name": "reviews",
+                    "ports": Array [
+                      Object {
+                        "name": "http",
+                        "port": 9080,
+                        "protocol": "TCP",
+                      },
+                    ],
+                    "type": "ClusterIP",
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+                "type": [Function],
+              },
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "row",
+                "children": Array [
+                  false,
+                  false,
                   <Col
                     bsClass="col"
                     componentClass="div"
-                    lg={4}
-                    md={4}
-                    sm={6}
-                    xs={12}
-                  >
-                    <ServiceInfoDeployments
-                      deployments={Array []}
-                    />
-                  </Col>,
-                  <Col
-                    bsClass="col"
-                    componentClass="div"
-                    lg={4}
-                    md={4}
-                    sm={6}
-                    xs={12}
-                  >
-                    <ServiceInfoRoutes
-                      dependencies={Map {}}
-                    />
-                  </Col>,
-                  <Col
-                    bsClass="col"
-                    componentClass="div"
-                    lg={4}
-                    md={4}
+                    lg={12}
+                    md={12}
                     sm={6}
                     xs={12}
                   >
                     <ServiceInfoRouteRules
-                      routeRules={Array []}
-                    />
-                    <ServiceInfoDestinationPolicies
-                      destinationPolicies={undefined}
+                      routeRules={
+                        Array [
+                          Object {
+                            "destination": Object {
+                              "name": "reviews",
+                            },
+                            "match": null,
+                            "name": "reviews-default",
+                            "precedence": 1,
+                            "route": Array [
+                              Object {
+                                "labels": Object {
+                                  "version": "v1",
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "destination": Object {
+                              "name": "reviews",
+                            },
+                            "match": Object {
+                              "request": Object {
+                                "headers": Object {
+                                  "cookie": Object {
+                                    "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                  },
+                                },
+                              },
+                            },
+                            "name": "reviews-test-v2",
+                            "precedence": 2,
+                            "route": Array [
+                              Object {
+                                "labels": Object {
+                                  "version": "v2",
+                                },
+                              },
+                            ],
+                          },
+                        ]
+                      }
                     />
                   </Col>,
                 ],
@@ -716,64 +1619,8 @@ ShallowWrapper {
               },
               "ref": null,
               "rendered": Array [
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "class",
-                  "props": Object {
-                    "bsClass": "col",
-                    "children": <ServiceInfoDeployments
-                      deployments={Array []}
-                    />,
-                    "componentClass": "div",
-                    "lg": 4,
-                    "md": 4,
-                    "sm": 6,
-                    "xs": 12,
-                  },
-                  "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "deployments": Array [],
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "class",
-                  "props": Object {
-                    "bsClass": "col",
-                    "children": <ServiceInfoRoutes
-                      dependencies={Map {}}
-                    />,
-                    "componentClass": "div",
-                    "lg": 4,
-                    "md": 4,
-                    "sm": 6,
-                    "xs": 12,
-                  },
-                  "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "dependencies": Map {},
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                  "type": [Function],
-                },
+                false,
+                false,
                 Object {
                   "instance": null,
                   "key": undefined,
@@ -782,15 +1629,54 @@ ShallowWrapper {
                     "bsClass": "col",
                     "children": Array [
                       <ServiceInfoRouteRules
-                        routeRules={Array []}
+                        routeRules={
+                          Array [
+                            Object {
+                              "destination": Object {
+                                "name": "reviews",
+                              },
+                              "match": null,
+                              "name": "reviews-default",
+                              "precedence": 1,
+                              "route": Array [
+                                Object {
+                                  "labels": Object {
+                                    "version": "v1",
+                                  },
+                                },
+                              ],
+                            },
+                            Object {
+                              "destination": Object {
+                                "name": "reviews",
+                              },
+                              "match": Object {
+                                "request": Object {
+                                  "headers": Object {
+                                    "cookie": Object {
+                                      "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                    },
+                                  },
+                                },
+                              },
+                              "name": "reviews-test-v2",
+                              "precedence": 2,
+                              "route": Array [
+                                Object {
+                                  "labels": Object {
+                                    "version": "v2",
+                                  },
+                                },
+                              ],
+                            },
+                          ]
+                        }
                       />,
-                      <ServiceInfoDestinationPolicies
-                        destinationPolicies={undefined}
-                      />,
+                      false,
                     ],
                     "componentClass": "div",
-                    "lg": 4,
-                    "md": 4,
+                    "lg": 12,
+                    "md": 12,
                     "sm": 6,
                     "xs": 12,
                   },
@@ -801,23 +1687,52 @@ ShallowWrapper {
                       "key": undefined,
                       "nodeType": "class",
                       "props": Object {
-                        "routeRules": Array [],
+                        "routeRules": Array [
+                          Object {
+                            "destination": Object {
+                              "name": "reviews",
+                            },
+                            "match": null,
+                            "name": "reviews-default",
+                            "precedence": 1,
+                            "route": Array [
+                              Object {
+                                "labels": Object {
+                                  "version": "v1",
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "destination": Object {
+                              "name": "reviews",
+                            },
+                            "match": Object {
+                              "request": Object {
+                                "headers": Object {
+                                  "cookie": Object {
+                                    "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                  },
+                                },
+                              },
+                            },
+                            "name": "reviews-test-v2",
+                            "precedence": 2,
+                            "route": Array [
+                              Object {
+                                "labels": Object {
+                                  "version": "v2",
+                                },
+                              },
+                            ],
+                          },
+                        ],
                       },
                       "ref": null,
                       "rendered": null,
                       "type": [Function],
                     },
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "class",
-                      "props": Object {
-                        "destinationPolicies": undefined,
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
+                    false,
                   ],
                   "type": [Function],
                 },
