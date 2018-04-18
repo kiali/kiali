@@ -50,7 +50,8 @@
           "text": "reviews",
           "style": "solid",
           "service": "reviews.istio-system.svc.cluster.local",
-          "groupBy": "version"
+          "groupBy": "version",
+          "flagGroup": "version"
         }
       },
       {
@@ -119,7 +120,8 @@
           "rate": "80.000",
           "rate3XX": "20.000",
           "rate4XX": "20.000",
-          "rate5XX": "20.000"
+          "rate5XX": "20.000",
+          "percentErr": "50.000"
         }
       },
       {

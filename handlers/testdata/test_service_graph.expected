@@ -27,7 +27,8 @@
           "text": "reviews",
           "style": "solid",
           "service": "reviews.istio-system.svc.cluster.local",
-          "groupBy": "version"
+          "groupBy": "version",
+          "flagGroup": "version"
         }
       },
       {
