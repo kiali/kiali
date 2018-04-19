@@ -63,7 +63,7 @@ func buildStaticNodeList(namespaceName string, deployments *v1beta1.DeploymentLi
 			continue
 		}
 		staticNode := tree.NewServiceNode(fmt.Sprintf("%s.%s.%s", app, namespaceName, identityDomain), version)
-		staticNode.Metadata = map[string]interface{}{"rate": 0.0, "flagUnused": "true"}
+		staticNode.Metadata = map[string]interface{}{"rate": 0.0, "isUnused": "true"}
 		nonTrafficList = append(nonTrafficList, staticNode)
 	}
 	return nonTrafficList

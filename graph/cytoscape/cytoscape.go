@@ -30,12 +30,18 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	Service            string `json:"service"`
-	Version            string `json:"version,omitempty"`
-	Rate               string `json:"rate,omitempty"`               // edge aggregate
-	Rate3xx            string `json:"rate3XX,omitempty"`            // edge aggregate
-	Rate4xx            string `json:"rate4XX,omitempty"`            // edge aggregate
-	Rate5xx            string `json:"rate5XX,omitempty"`            // edge aggregate
+	Service          string `json:"service"`
+	Version          string `json:"version,omitempty"`
+	Rate             string `json:"rate,omitempty"`             // edge aggregate
+	Rate3xx          string `json:"rate3XX,omitempty"`          // edge aggregate
+	Rate4xx          string `json:"rate4XX,omitempty"`          // edge aggregate
+	Rate5xx          string `json:"rate5XX,omitempty"`          // edge aggregate
+	IsCircuitBreaker string `json:"isCircuitBreaker,omitempty"` // true | false | unknown
+	IsGroup          string `json:"isGroup,omitempty"`          // set to the grouping type, current values: [ 'version' ]
+	IsRoot           string `json:"isRoot,omitempty"`           // true | false
+	IsSelfInvoke     string `json:"isSelfInvoke,omitempty"`     // rate of selfInvoke
+	IsUnused         string `json:"isUnused,omitempty"`         // true | false
+	// TODO: remove Flag after UI is updated to Is
 	FlagCircuitBreaker string `json:"flagCircuitBreaker,omitempty"` // true | false | unknown
 	FlagGroup          string `json:"flagGroup,omitempty"`          // set to the grouping type, current values: [ 'version' ]
 	FlagSelfInvoke     string `json:"flagSelfInvoke,omitempty"`     // rate of selfInvoke
@@ -54,6 +60,8 @@ type EdgeData struct {
 	Rate4xx    string `json:"rate4XX,omitempty"`
 	Rate5xx    string `json:"rate5XX,omitempty"`
 	PercentErr string `json:"percentErr,omitempty"`
+	IsUnused   string `json:"isUnused,omitempty"` // true | false
+	// TODO: remove Flag after UI is updated to Is
 	FlagUnused string `json:"flagUnused,omitempty"` // true | false
 }
 
@@ -145,13 +153,20 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 			Version: sn.Version,
 		}
 
+		// node may be a root
+		if root, ok := sn.Metadata["isRoot"]; ok {
+			nd.IsRoot = root.(string)
+		}
+
 		// node may be an unused service
-		if unused, ok := sn.Metadata["flagUnused"]; ok {
+		if unused, ok := sn.Metadata["isUnused"]; ok {
+			nd.IsUnused = unused.(string)
 			nd.FlagUnused = unused.(string)
 		}
 
 		// node may have a circuit breaker
-		if cb, ok := sn.Metadata["flagCircuitBreaker"]; ok {
+		if cb, ok := sn.Metadata["isCircuitBreaker"]; ok {
+			nd.IsCircuitBreaker = cb.(string)
 			nd.FlagCircuitBreaker = cb.(string)
 		}
 
@@ -165,6 +180,7 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		//TODO If we can find a graph layout that handles loop edges well then
 		// we can go back to allowing these but for now, flag the node text
 		if parentNodeId == nd.Id {
+			nd.IsSelfInvoke = fmt.Sprintf("%.3f", sn.Metadata["rate"].(float64))
 			nd.FlagSelfInvoke = fmt.Sprintf("%.3f", sn.Metadata["rate"].(float64))
 		} else {
 			edgeId := fmt.Sprintf("e%v", *edgeIdSequence)
@@ -225,7 +241,8 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 			ed.PercentErr = fmt.Sprintf("%.3f", percentErr)
 		}
 	} else {
-		if val, ok := sn.Metadata["flagUnused"]; ok {
+		if val, ok := sn.Metadata["isUnused"]; ok {
+			ed.IsUnused = val.(string)
 			ed.FlagUnused = val.(string)
 		}
 	}
@@ -255,6 +272,7 @@ func addCompositeNodes(nodes *[]*NodeWrapper, nodeIdSequence *int) {
 			nd := NodeData{
 				Id:        nodeId,
 				Service:   k,
+				IsGroup:   "version",
 				FlagGroup: "version",
 			}
 			nw := NodeWrapper{

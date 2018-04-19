@@ -84,7 +84,7 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 	generateGraph(&trees, w, o)
 }
 
-// buildNamespaceTrees returns trees routed at all destination services with "Internet" parents
+// buildNamespaceTrees returns trees rooted at services receiving requests from outside the namespace
 func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []tree.ServiceNode) {
 	// avoid circularities by keeping track of all seen nodes
 	seenNodes := make(map[string]*tree.ServiceNode)
@@ -116,7 +116,7 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []
 
 		rootService := string(sourceSvc)
 		md := make(map[string]interface{})
-		// md["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, rootService, tree.UnknownVersion)
+		md["isRoot"] = "true"
 
 		root := tree.NewServiceNode(rootService, tree.UnknownVersion)
 		root.Parent = nil
@@ -388,17 +388,6 @@ func toDestinations(sourceSvc, sourceVer string, vector model.Vector) (destinati
 	}
 	return destinations
 }
-
-//func linkPromGraph(server, ts, name, version string) (link string) {
-//	var promExpr string
-//	if tree.UnknownVersion == version {
-//		promExpr = fmt.Sprintf("%v{source_service=\"%v\",source_version=\"%v\"}", ts, name, version)
-//	} else {
-//		promExpr = fmt.Sprintf("%v{destination_service=\"%v\",destination_version=\"%v\"}", ts, name, version)
-//	}
-//	link = fmt.Sprintf("%v/graph?g0.range_input=1h&g0.tab=0&g0.expr=%v", server, url.QueryEscape(promExpr))
-//	return link
-//}
 
 // TF is the TimeFormat for printing timestamp
 const TF = "2006-01-02 15:04:05"
