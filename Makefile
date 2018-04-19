@@ -178,25 +178,13 @@ docker-push:
 	@echo Pushing current docker image to ${DOCKER_TAG}
 	docker push ${DOCKER_TAG}
 
-.istioctl-validate:
-	@if ! which istioctl > /dev/null 2>&1; then echo "You are missing 'istioctl' from PATH. Please install it and retry."; exit 1; fi
-
-.deploy-istio-route-rule: .istioctl-validate
-	@echo "Deploying the Istio route rule"
-ifeq ("${VERSION_LABEL}","master")
-	@cat deploy/istio/kiali-route-rule-default.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | istioctl create -n ${NAMESPACE} -f -
-else
-	@cat deploy/istio/kiali-route-rule-specific.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | istioctl create -n ${NAMESPACE} -f -
-endif
-
 .openshift-validate:
 	@oc get project ${NAMESPACE} > /dev/null
 
-openshift-deploy: openshift-undeploy .deploy-istio-route-rule
+openshift-deploy: openshift-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to OpenShift project ${NAMESPACE}
 	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | oc create -n ${NAMESPACE} -f -
-	#cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | istioctl kube-inject -n ${NAMESPACE} -f - | oc create -n ${NAMESPACE} -f -
 	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | oc create -n ${NAMESPACE} -f -
 
 openshift-undeploy: .openshift-validate
@@ -210,11 +198,10 @@ openshift-reload-image: .openshift-validate
 .k8s-validate:
 	@kubectl get namespace ${NAMESPACE} > /dev/null
 
-k8s-deploy: k8s-undeploy .deploy-istio-route-rule
+k8s-deploy: k8s-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
 	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | kubectl create -n ${NAMESPACE} -f -
-	#cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | istioctl kube-inject -n ${NAMESPACE} -f - | kubectl create -n ${NAMESPACE} -f -
 	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | kubectl create -n ${NAMESPACE} -f -
 
 k8s-undeploy:
