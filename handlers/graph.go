@@ -20,20 +20,12 @@ package handlers
 //   GraphService:    Generate a graph centered on versions of a specified service, limited to
 //                    requesting and requested services.
 //
-// TODO kiali-582 part 2: remove the presentation-oriented queryParams when the UI is handling all presentation concern.
-//
 // The handlers accept the following query parameters:
 //   duration:       time.Duration indicating desired query range duration, (default 10m)
-//   colorNoTraffic  Color for inactive edge (no traffic) (default black)
-//   colorError      Color for active edge with error% > thresholderror (default red)
-//   colorNormal     Color for active edge with error% below thresholdWarn (default green)
-//   colorWarn       Color for active edge with thresholdWarn < error% <= thresholderror (default red)
 //   appenders       Comma-separated list of appenders to run from [circuit_breaker, unused_service] (default all)
 //   groupByVersion: If supported by vendor, visually group versions of the same service (default true)
 //   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
 //   queryTime:      Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
-//   thresholdError  Error% indicating error (default 2.0)
-//   thresholdWarn   Error% indicating warn  (default 0.0)
 //   vendor:         cytoscape | vizceral (default cytoscape)
 //
 // * Error% is the percentage of requests with response code != 2XX

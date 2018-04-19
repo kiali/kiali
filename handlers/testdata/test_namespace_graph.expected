@@ -5,8 +5,6 @@
       {
         "data": {
           "id": "n2",
-          "text": "details v1",
-          "style": "solid",
           "service": "details.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "80.000",
@@ -18,8 +16,6 @@
       {
         "data": {
           "id": "n7",
-          "text": "ingress",
-          "style": "solid",
           "service": "ingress.istio-system.svc.cluster.local",
           "version": "unknown"
         }
@@ -27,18 +23,15 @@
       {
         "data": {
           "id": "n1",
-          "text": "productpage v1 \u003c20.00pm\u003e",
-          "style": "solid",
           "service": "productpage.istio-system.svc.cluster.local",
           "version": "v1",
-          "rate": "150.000"
+          "rate": "150.000",
+          "flagSelfInvoke": "20.000"
         }
       },
       {
         "data": {
           "id": "n5",
-          "text": "ratings v1",
-          "style": "solid",
           "service": "ratings.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "40.000"
@@ -47,18 +40,13 @@
       {
         "data": {
           "id": "n8",
-          "text": "reviews",
-          "style": "solid",
           "service": "reviews.istio-system.svc.cluster.local",
-          "groupBy": "version",
           "flagGroup": "version"
         }
       },
       {
         "data": {
           "id": "n3",
-          "text": "reviews v1",
-          "style": "solid",
           "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v1",
@@ -68,30 +56,26 @@
       {
         "data": {
           "id": "n4",
-          "text": "reviews v2 \u003c20.00pm\u003e",
-          "style": "solid",
           "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v2",
-          "rate": "20.000"
+          "rate": "20.000",
+          "flagSelfInvoke": "20.000"
         }
       },
       {
         "data": {
           "id": "n6",
-          "text": "reviews v3 \u003c20.00pm\u003e",
-          "style": "solid",
           "parent": "n8",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v3",
-          "rate": "20.000"
+          "rate": "20.000",
+          "flagSelfInvoke": "20.000"
         }
       },
       {
         "data": {
           "id": "n0",
-          "text": "unknown",
-          "style": "solid",
           "service": "unknown",
           "version": "unknown"
         }
@@ -103,9 +87,6 @@
           "id": "e0",
           "source": "n0",
           "target": "n1",
-          "text": "50.00",
-          "color": "green",
-          "style": "solid",
           "rate": "50.000"
         }
       },
@@ -114,9 +95,6 @@
           "id": "e1",
           "source": "n1",
           "target": "n2",
-          "text": "80.00 50.00%",
-          "color": "red",
-          "style": "solid",
           "rate": "80.000",
           "rate3XX": "20.000",
           "rate4XX": "20.000",
@@ -129,9 +107,6 @@
           "id": "e2",
           "source": "n1",
           "target": "n3",
-          "text": "20.00",
-          "color": "green",
-          "style": "solid",
           "rate": "20.000"
         }
       },
@@ -140,9 +115,6 @@
           "id": "e3",
           "source": "n1",
           "target": "n4",
-          "text": "20.00",
-          "color": "green",
-          "style": "solid",
           "rate": "20.000"
         }
       },
@@ -151,9 +123,6 @@
           "id": "e5",
           "source": "n1",
           "target": "n6",
-          "text": "20.00",
-          "color": "green",
-          "style": "solid",
           "rate": "20.000"
         }
       },
@@ -162,9 +131,6 @@
           "id": "e4",
           "source": "n4",
           "target": "n5",
-          "text": "20.00",
-          "color": "green",
-          "style": "solid",
           "rate": "20.000"
         }
       },
@@ -173,9 +139,6 @@
           "id": "e6",
           "source": "n6",
           "target": "n5",
-          "text": "20.00",
-          "color": "green",
-          "style": "solid",
           "rate": "20.000"
         }
       },
@@ -184,9 +147,6 @@
           "id": "e7",
           "source": "n7",
           "target": "n1",
-          "text": "100.00",
-          "color": "green",
-          "style": "solid",
           "rate": "100.000"
         }
       }
