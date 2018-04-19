@@ -8,21 +8,29 @@ export class GraphStyles {
       {
         selector: 'node',
         css: {
-          content: (ele: any) => {
-            return ele.data('text') || ele.data('id');
-          },
           color: '#030303', // pf-black
+          content: (ele: any) => {
+            const version = ele.data('version');
+            if (ele.data('parent')) {
+              return version;
+            }
+            const name = ele.data('service') || ele.data('id');
+            const service = name.split('.')[0];
+            return version && version !== 'unknown' ? service + '\n' + version : service;
+          },
           'background-color': '#f9d67a', // pf-gold-200
-          'border-width': '1px',
           'border-color': '#030303', // pf-black
-          'border-style': 'data(style)',
+          'border-style': (ele: any) => {
+            return ele.data('flagUnused') ? 'dotted' : 'solid';
+          },
+          'border-width': '1px',
           'font-size': '10px',
-          'text-valign': 'center',
+          'overlay-padding': '6px',
           'text-halign': 'center',
           'text-outline-color': '#f9d67a',
           'text-outline-width': '2px',
+          'text-valign': 'center',
           'text-wrap': 'wrap',
-          'overlay-padding': '6px',
           'z-index': '10'
         }
       },
@@ -48,16 +56,39 @@ export class GraphStyles {
       {
         selector: 'edge',
         css: {
-          width: 2,
-          'font-size': '9px',
-          'text-margin-x': '10px',
-          'text-rotation': 'autorotate',
-          content: 'data(text)',
+          content: (ele: any) => {
+            const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
+            const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
+            if (rate > 0) {
+              return pErr > 0 ? rate.toFixed(2) + ', ' + pErr.toFixed(1) + '%' : rate.toFixed(2);
+            }
+            return '';
+          },
+          'curve-style': 'bezier',
+          'font-size': '7px',
+          'line-color': (ele: any) => {
+            const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
+            if (rate === 0 || ele.data('flagUnused')) {
+              return 'black';
+            }
+            const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
+            // todo: these thresholds should come from somewhere global
+            if (pErr > 2.0) {
+              return 'red';
+            }
+            if (pErr > 0.1) {
+              return 'orange';
+            }
+            return 'green';
+          },
+          'line-style': (ele: any) => {
+            return ele.data('flagUnused') ? 'dotted' : 'solid';
+          },
           'target-arrow-shape': 'vee',
-          'line-color': 'data(color)',
-          'line-style': 'data(style)',
+          'text-margin-x': '6px',
+          'text-rotation': 'autorotate',
           'target-arrow-color': '#030303', // pf-black
-          'curve-style': 'bezier'
+          width: 2
         }
       },
       {
