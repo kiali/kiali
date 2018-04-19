@@ -4,7 +4,7 @@ import { shallow } from 'enzyme';
 import ReactCytoscape from '../ReactCytoscape';
 import CytoscapeLayout from '../CytoscapeLayout';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
-import { Duration, Layout } from '../../../types/GraphFilter';
+import { Duration, Layout, BadgeStatus } from '../../../types/GraphFilter';
 
 jest.mock('../../../services/Api');
 
@@ -22,6 +22,7 @@ describe('CytographLayout component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
     const myDuration: Duration = { value: '5m' };
+    const badgeStatus: BadgeStatus = { showCBs: false };
 
     const wrapper = shallow(
       <CytoscapeLayout
@@ -32,6 +33,7 @@ describe('CytographLayout component test', () => {
         onClick={testClickHandler}
         onReady={testReadyHandler}
         refresh={testClickHandler}
+        badgeStatus={badgeStatus}
       />
     );
     const cytoscapeWrapper = wrapper.find(ReactCytoscape);
