@@ -1,3 +1,6 @@
+# Needed for Travis - it won't like the version regex check otherwise
+SHELL=/bin/bash
+
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
 VERSION ?= 0.0.1.Final-SNAPSHOT
@@ -9,12 +12,17 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
 # environment, setting the label names equal to the branch names
 # allows developers to build and deploy multiple Kiali instances
 # at the same time which is useful for debugging and testing.
-# Due to restrictions on allowed characters, we convert
-# uppercase characters to lowercase characters.
-# If we are deploying from a branch, we must ensure all the OS/k8s names to be created
-# are unique - the NAME_SUFFIX will be appended to all names so they are unique.
-VERSION_LABEL ?= $(shell git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]')
-ifeq  ("${VERSION_LABEL}","master")
+# Due to restrictions on allowed characters, we convert uppercase
+# characters to lowercase characters and underscores to dashes.
+# If we are deploying from a branch, we must ensure all the OS/k8s
+# names to be created are unique - the NAME_SUFFIX will be appended
+# to all names so they are unique.
+# We finally ensure the version label results in a valid label.
+VERSION_LABEL ?= $(shell git rev-parse --abbrev-ref HEAD | tr '[:upper:]_' '[:lower:]-')
+ifneq ($(shell [[ ${VERSION_LABEL} =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$$ ]] && echo valid),valid)
+  $(error Your version label '${VERSION_LABEL}' is invalid and cannot be used.)
+endif
+ifeq (${VERSION_LABEL},master)
   NAME_SUFFIX ?=
 else
   NAME_SUFFIX ?= -${VERSION_LABEL}
