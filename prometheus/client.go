@@ -17,7 +17,8 @@ import (
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
 	GetServiceHealth(namespace string, servicename string) (int, int, error)
-	GetNamespaceServicesRequestCounters(namespace string, ratesInterval string) MetricsVector
+	GetNamespaceServicesRequestRates(namespace string, ratesInterval string) (model.Vector, model.Vector, error)
+	GetServiceRequestRates(namespace, service string, ratesInterval string) (model.Vector, model.Vector, error)
 	GetSourceServices(namespace string, servicename string) (map[string][]string, error)
 }
 
@@ -109,10 +110,18 @@ func (in *Client) GetNamespaceMetrics(query *NamespaceMetricsQuery) Metrics {
 	return getNamespaceMetrics(in.api, query)
 }
 
-// GetNamespaceServicesRequestCounters queries Prometheus to fetch request counters
-// for each service, both in and out counters.
-func (in *Client) GetNamespaceServicesRequestCounters(namespace string, ratesInterval string) MetricsVector {
-	return getNamespaceServicesRequestCounters(in.api, namespace, ratesInterval)
+// GetNamespaceServicesRequestRates queries Prometheus to fetch request counters rates over a time interval
+// for each service, both in and out.
+// Returns (in, out, error)
+func (in *Client) GetNamespaceServicesRequestRates(namespace string, ratesInterval string) (model.Vector, model.Vector, error) {
+	return getNamespaceServicesRequestRates(in.api, namespace, ratesInterval)
+}
+
+// GetServiceRequestRates queries Prometheus to fetch request counters rates over a time interval
+// for a given service, both in and out.
+// Returns (in, out, error)
+func (in *Client) GetServiceRequestRates(namespace, service string, ratesInterval string) (model.Vector, model.Vector, error) {
+	return getServiceRequestRates(in.api, namespace, service, ratesInterval)
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client

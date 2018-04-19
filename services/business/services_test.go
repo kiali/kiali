@@ -14,7 +14,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
@@ -26,7 +25,7 @@ func TestServiceListParsing(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 	k8s.On("GetServices", mock.AnythingOfType("string")).Return(fakeServiceList(), nil)
 	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(1, 1, nil)
-	prom.On("GetNamespaceServicesRequestCounters", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeRequestCounters(), nil)
+	prom.On("GetNamespaceServicesRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeRequestCounters())
 	svc := setupServices(k8s, prom)
 
 	serviceList, _ := svc.GetServiceList("namespace", "1m")
@@ -43,18 +42,41 @@ func TestServiceListParsing(t *testing.T) {
 	assert.Equal(int32(3), reviewsOverview.Health.DeploymentStatuses[0].Replicas)
 	assert.Equal(int32(1), reviewsOverview.Health.DeploymentStatuses[1].AvailableReplicas)
 	assert.Equal(int32(2), reviewsOverview.Health.DeploymentStatuses[1].Replicas)
-	assert.Equal(model.SampleValue(6.5), reviewsOverview.RequestCount)
-	assert.Equal(model.SampleValue(1.5), reviewsOverview.RequestErrorCount)
-	assert.Equal(model.SampleValue(1.5/6.5), reviewsOverview.ErrorRate)
+	assert.Equal(float64(6.6), reviewsOverview.Health.Requests.RequestCount)
+	assert.Equal(float64(1.6), reviewsOverview.Health.Requests.RequestErrorCount)
 
 	assert.Equal("httpbin", httpbinOverview.Name)
 	assert.Equal(1, httpbinOverview.Health.Envoy.Total)
 	assert.Equal(1, httpbinOverview.Health.Envoy.Healthy)
 	assert.Equal(int32(1), httpbinOverview.Health.DeploymentStatuses[0].AvailableReplicas)
 	assert.Equal(int32(1), httpbinOverview.Health.DeploymentStatuses[0].Replicas)
-	assert.Equal(model.SampleValue(20.5), httpbinOverview.RequestCount)
-	assert.Equal(model.SampleValue(1.5), httpbinOverview.RequestErrorCount)
-	assert.Equal(model.SampleValue(1.5/20.5), httpbinOverview.ErrorRate)
+	assert.Equal(float64(20.4), httpbinOverview.Health.Requests.RequestCount)
+	assert.Equal(float64(1.4), httpbinOverview.Health.Requests.RequestErrorCount)
+}
+
+func TestSingleServiceHealthParsing(t *testing.T) {
+	assert := assert.New(t)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	prom := new(prometheustest.PromClientMock)
+	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeServiceDetails(), nil)
+	k8s.On("GetIstioDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeIstioDetails(), nil)
+	prom.On("GetSourceServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(make(map[string][]string), nil)
+	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(1, 1, nil)
+	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeServiceRequestCounters())
+	svc := setupServices(k8s, prom)
+
+	service, _ := svc.GetService("namespace", "httpbin", "1m")
+
+	assert.Equal("namespace", service.Namespace.Name)
+	assert.Equal("httpbin", service.Name)
+	assert.Equal(1, service.Health.Envoy.Total)
+	assert.Equal(1, service.Health.Envoy.Healthy)
+	assert.Equal(int32(1), service.Health.DeploymentStatuses[0].AvailableReplicas)
+	assert.Equal(int32(1), service.Health.DeploymentStatuses[0].Replicas)
+	assert.Equal(float64(20.4), service.Health.Requests.RequestCount)
+	assert.Equal(float64(1.4), service.Health.Requests.RequestErrorCount)
 }
 
 func setupServices(k8s *kubetest.K8SClientMock, prom *prometheustest.PromClientMock) SvcService {
@@ -63,6 +85,47 @@ func setupServices(k8s *kubetest.K8SClientMock, prom *prometheustest.PromClientM
 	health := HealthService{k8s: k8s, prom: prom}
 	svc := SvcService{k8s: k8s, prom: prom, health: &health}
 	return svc
+}
+
+func fakeIstioDetails() *kubernetes.IstioDetails {
+	return &kubernetes.IstioDetails{}
+}
+
+func fakeServiceDetails() *kubernetes.ServiceDetails {
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+
+	return &kubernetes.ServiceDetails{
+		Service: &v1.Service{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "httpbin",
+				Namespace: "tutorial",
+				Labels: map[string]string{
+					"app":     "httpbin",
+					"version": "v1"}},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "fromservice",
+				Type:      "ClusterIP",
+				Selector:  map[string]string{"app": "httpbin"},
+				Ports: []v1.ServicePort{
+					{
+						Name:     "http",
+						Protocol: "TCP",
+						Port:     3001},
+					{
+						Name:     "http",
+						Protocol: "TCP",
+						Port:     3000}}}},
+		Deployments: &v1beta1.DeploymentList{
+			Items: []v1beta1.Deployment{
+				v1beta1.Deployment{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:              "httpbin-v1",
+						CreationTimestamp: meta_v1.NewTime(t1),
+						Labels:            map[string]string{"app": "httpbin", "version": "v1"}},
+					Status: v1beta1.DeploymentStatus{
+						Replicas:            1,
+						AvailableReplicas:   1,
+						UnavailableReplicas: 0}}}}}
 }
 
 func fakeServiceList() *kubernetes.ServiceList {
@@ -144,47 +207,64 @@ func fakeServiceList() *kubernetes.ServiceList {
 						UnavailableReplicas: 0}}}}}
 }
 
-func fakeRequestCounters() prometheus.MetricsVector {
-	t1 := model.Now()
+var t1 = model.Now()
+var sampleHttpbinToReviews200 = model.Sample{
+	Metric: model.Metric{
+		"destination_service": "reviews.tutorial.svc.cluster.local",
+		"source_service":      "httpbin.tutorial.svc.cluster.local",
+		"response_code":       "200",
+	},
+	Value:     model.SampleValue(5),
+	Timestamp: t1,
+}
+var sampleUnknownToHttpbin200 = model.Sample{
+	Metric: model.Metric{
+		"destination_service": "httpbin.tutorial.svc.cluster.local",
+		"source_service":      "unknown",
+		"response_code":       "200",
+	},
+	Value:     model.SampleValue(14),
+	Timestamp: t1,
+}
+var sampleUnknownToHttpbin404 = model.Sample{
+	Metric: model.Metric{
+		"destination_service": "httpbin.tutorial.svc.cluster.local",
+		"source_service":      "unknown",
+		"response_code":       "404",
+	},
+	Value:     model.SampleValue(1.4),
+	Timestamp: t1,
+}
+var sampleUnknownToReviews500 = model.Sample{
+	Metric: model.Metric{
+		"destination_service": "reviews.tutorial.svc.cluster.local",
+		"source_service":      "unknown",
+		"response_code":       "500",
+	},
+	Value:     model.SampleValue(1.6),
+	Timestamp: t1,
+}
 
-	return prometheus.MetricsVector{
-		Vector: model.Vector{
-			&model.Sample{
-				Metric: model.Metric{
-					"destination_service": "reviews.tutorial.svc.cluster.local",
-					"source_service":      "httpbin.tutorial.svc.cluster.local",
-					"response_code":       "200",
-				},
-				Value:     model.SampleValue(5),
-				Timestamp: t1,
-			},
-			&model.Sample{
-				Metric: model.Metric{
-					"destination_service": "httpbin.tutorial.svc.cluster.local",
-					"source_service":      "unknown",
-					"response_code":       "200",
-				},
-				Value:     model.SampleValue(14),
-				Timestamp: t1,
-			},
-			&model.Sample{
-				Metric: model.Metric{
-					"source_service":      "httpbin.tutorial.svc.cluster.local",
-					"destination_service": "unknown",
-					"response_code":       "400",
-				},
-				Value:     model.SampleValue(1.5),
-				Timestamp: t1,
-			},
-			&model.Sample{
-				Metric: model.Metric{
-					"source_service":      "reviews.tutorial.svc.cluster.local",
-					"destination_service": "unknown",
-					"response_code":       "500",
-				},
-				Value:     model.SampleValue(1.5),
-				Timestamp: t1,
-			},
-		},
+func fakeRequestCounters() (model.Vector, model.Vector, error) {
+	in := model.Vector{
+		&sampleHttpbinToReviews200,
+		&sampleUnknownToHttpbin200,
+		&sampleUnknownToHttpbin404,
+		&sampleUnknownToReviews500,
 	}
+	out := model.Vector{
+		&sampleHttpbinToReviews200,
+	}
+	return in, out, nil
+}
+
+func fakeServiceRequestCounters() (model.Vector, model.Vector, error) {
+	in := model.Vector{
+		&sampleUnknownToHttpbin200,
+		&sampleUnknownToHttpbin404,
+	}
+	out := model.Vector{
+		&sampleHttpbinToReviews200,
+	}
+	return in, out, nil
 }

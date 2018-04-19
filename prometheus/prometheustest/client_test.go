@@ -368,7 +368,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	assert.Equal(t, 0.9, float64(rsSizeIn.Percentile99.Matrix[0].Values[0].Value))
 }
 
-func TestGetNamespaceServicesRequestCounters(t *testing.T) {
+func TestGetNamespaceServicesRequestRates(t *testing.T) {
 	client, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
@@ -391,12 +391,11 @@ func TestGetNamespaceServicesRequestCounters(t *testing.T) {
 	}
 	mockQuery(api, `rate(istio_request_count{destination_service=~".*\\.istio-system\\..*"}[5m])`, &vectorQ2)
 
-	counters := client.GetNamespaceServicesRequestCounters("istio-system", "5m")
-	assert.NotNil(t, counters)
-	assert.NotNil(t, counters.Vector)
-	assert.Equal(t, 2, counters.Vector.Len())
-	assert.Equal(t, append(vectorQ1, vectorQ2...), counters.Vector)
-
+	in, out, err := client.GetNamespaceServicesRequestRates("istio-system", "5m")
+	assert.Equal(t, 1, in.Len())
+	assert.Equal(t, 1, out.Len())
+	assert.Equal(t, vectorQ1, in)
+	assert.Equal(t, vectorQ2, out)
 }
 
 func mockQuery(api *PromAPIMock, query string, ret *model.Vector) {

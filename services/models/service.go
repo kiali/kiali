@@ -3,18 +3,13 @@ package models
 import (
 	"time"
 
-	"github.com/prometheus/common/model"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
 type ServiceOverview struct {
-	Name              string            `json:"name"`
-	Health            Health            `json:"health"`
-	IstioSidecar      bool              `json:"istio_sidecar"`
-	RequestCount      model.SampleValue `json:"request_count"`
-	RequestErrorCount model.SampleValue `json:"request_error_count"`
-	ErrorRate         model.SampleValue `json:"error_rate"`
+	Name         string `json:"name"`
+	Health       Health `json:"health"`
+	IstioSidecar bool   `json:"istio_sidecar"`
 }
 
 type ServiceList struct {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
@@ -272,6 +273,8 @@ func TestServiceHealth(t *testing.T) {
 		assert.Equal(t, "ns", args[0])
 		assert.Equal(t, "svc", args[1])
 	}).Return(1, 1, nil)
+
+	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(model.Vector{}, model.Vector{}, nil)
 
 	resp, err := http.Get(url)
 	if err != nil {

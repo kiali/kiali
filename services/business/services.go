@@ -3,6 +3,7 @@ package business
 import (
 	"strings"
 
+	"github.com/prometheus/common/model"
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 
@@ -27,28 +28,45 @@ func (in *SvcService) GetServiceList(namespace, rateInterval string) (*models.Se
 		return nil, err
 	}
 
-	// Fetch services requests counters
-	requestCounters := in.prom.GetNamespaceServicesRequestCounters(namespace, rateInterval)
+	// Fetch services requests rates
+	inRates, outRates, _ := in.prom.GetNamespaceServicesRequestRates(namespace, rateInterval)
 
 	// Convert to Kiali model
-	return in.buildServiceList(models.Namespace{Name: namespace}, kubernetesServices, &requestCounters), nil
+	return in.buildServiceList(models.Namespace{Name: namespace}, kubernetesServices, inRates, outRates), nil
 }
 
-func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernetes.ServiceList, requestCounters *prometheus.MetricsVector) *models.ServiceList {
+func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernetes.ServiceList, inRates, outRates model.Vector) *models.ServiceList {
 	services := make([]models.ServiceOverview, len(sl.Services.Items))
 
+	// Convert each k8s service into our model
 	for i, item := range sl.Services.Items {
 		depls := kubernetes.FilterDeploymentsForService(&item, sl.Deployments)
 		services[i] = in.castServiceOverview(&item, depls)
 	}
-	processRequestCounters(services, requestCounters)
+
+	// Fill with collected request rates
+	// Note: we must match each service with inRates and outRates separately, else we would generate duplicates
+	processRequestRates(services, inRates, "destination_service")
+	processRequestRates(services, outRates, "source_service")
+
+	// Finally complete missing health information
+	for idx := range services {
+		s := &services[idx]
+		// rateinterval not necessary here since we already fetched the request rates
+		// mark request health as fetched
+		s.Health.Requests.Fetched = true
+		in.health.fillMissingParts(namespace.Name, s.Name, "", &s.Health)
+	}
 
 	return &models.ServiceList{Namespace: namespace, Services: services}
 }
 
 func (in *SvcService) castServiceOverview(s *v1.Service, deployments *[]v1beta1.Deployment) models.ServiceOverview {
 	hasSideCar := hasIstioSideCar(deployments)
-	health := in.health.getServiceHealthFromDeployments(s.Namespace, s.Name, deployments)
+	statuses := castDeploymentsStatuses(deployments)
+	health := models.Health{
+		DeploymentStatuses: statuses,
+		DeploymentsFetched: true}
 	return models.ServiceOverview{
 		Name:         s.Name,
 		IstioSidecar: hasSideCar,
@@ -66,46 +84,23 @@ func hasIstioSideCar(deployments *[]v1beta1.Deployment) bool {
 	return false
 }
 
-// processRequestCounters aggregates requests counts from metrics fetched from Prometheus,
-// calculates error rates for each service and stores the result in the service list.
-func processRequestCounters(services []models.ServiceOverview, requestCounters *prometheus.MetricsVector) {
-	// First, aggregate request counters (both in and out)
-	for _, sample := range requestCounters.Vector {
-		serviceDst := strings.SplitN(string(sample.Metric["destination_service"]), ".", 2)[0]
-		serviceSrc := strings.SplitN(string(sample.Metric["source_service"]), ".", 2)[0]
-		servicesFound := 0
-
+// processRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the service list.
+func processRequestRates(services []models.ServiceOverview, rates model.Vector, matchLabel model.LabelName) {
+	// Sum rates per service
+	for _, sample := range rates {
+		serviceName := strings.SplitN(string(sample.Metric[matchLabel]), ".", 2)[0]
 		for idx := range services {
 			service := &services[idx]
-			if service.Name == serviceDst || service.Name == serviceSrc {
-				servicesFound++
-				responseCode := sample.Metric["response_code"][0]
-
-				service.RequestCount += sample.Value
-				if responseCode == '5' || responseCode == '4' {
-					service.RequestErrorCount += sample.Value
-				}
-
-				if servicesFound >= 2 {
-					break
-				}
+			if service.Name == serviceName {
+				sumRequestCounters(service.Name, &service.Health.Requests, sample)
+				break
 			}
-		}
-	}
-
-	// Then, calculate error rates
-	for idx := range services {
-		service := &services[idx]
-		if service.RequestCount != 0 {
-			service.ErrorRate = service.RequestErrorCount / service.RequestCount
-		} else {
-			service.ErrorRate = 0
 		}
 	}
 }
 
 // GetService returns a single service
-func (in *SvcService) GetService(namespace, service string) (*models.Service, error) {
+func (in *SvcService) GetService(namespace, service, interval string) (*models.Service, error) {
 	serviceDetails, err := in.k8s.GetServiceDetails(namespace, service)
 	if err != nil {
 		return nil, err
@@ -121,7 +116,11 @@ func (in *SvcService) GetService(namespace, service string) (*models.Service, er
 		return nil, err
 	}
 
-	health := in.health.getServiceHealthFromDeployments(namespace, service, &serviceDetails.Deployments.Items)
+	statuses := castDeploymentsStatuses(&serviceDetails.Deployments.Items)
+	health := models.Health{
+		DeploymentStatuses: statuses,
+		DeploymentsFetched: true}
+	in.health.fillMissingParts(namespace, service, interval, &health)
 
 	s := models.Service{
 		Namespace: models.Namespace{Name: namespace},
