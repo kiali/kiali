@@ -26,21 +26,21 @@ func TestNonTrafficScenario(t *testing.T) {
 
 	assert.Equal("customer.testNamespace.svc.cluster.local", trees[0].Name)
 	assert.Equal(float64(0), trees[0].Metadata["rate"])
-	assert.Equal("true", trees[0].Metadata["flagUnused"])
+	assert.Equal("true", trees[0].Metadata["isUnused"])
 
 	assert.Equal("preference.testNamespace.svc.cluster.local", trees[1].Name)
 	assert.Equal(float64(0), trees[1].Metadata["rate"])
-	assert.Equal("true", trees[1].Metadata["flagUnused"])
+	assert.Equal("true", trees[1].Metadata["isUnused"])
 
 	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[2].Name)
 	assert.Equal("v1", trees[2].Version)
 	assert.Equal(float64(0), trees[2].Metadata["rate"])
-	assert.Equal("true", trees[2].Metadata["flagUnused"])
+	assert.Equal("true", trees[2].Metadata["isUnused"])
 
 	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[3].Name)
 	assert.Equal("v2", trees[3].Version)
 	assert.Equal(float64(0), trees[3].Metadata["rate"])
-	assert.Equal("true", trees[3].Metadata["flagUnused"])
+	assert.Equal("true", trees[3].Metadata["isUnused"])
 }
 
 func TestOneNodeTrafficScenario(t *testing.T) {
@@ -59,11 +59,11 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 
 	assert.Equal("customer.testNamespace.svc.cluster.local", trees[0].Children[0].Name)
 	assert.Equal(float64(0.8), trees[0].Children[0].Metadata["rate"])
-	assert.Equal(nil, trees[0].Metadata["flagUnused"])
+	assert.Equal(nil, trees[0].Metadata["isUnused"])
 
 	assert.Equal("preference.testNamespace.svc.cluster.local", trees[1].Name)
 	assert.Equal(float64(0), trees[1].Metadata["rate"])
-	assert.Equal("true", trees[1].Metadata["flagUnused"])
+	assert.Equal("true", trees[1].Metadata["isUnused"])
 
 	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[2].Name)
 	assert.Equal("v1", trees[2].Version)
@@ -91,26 +91,26 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	customer := trees[0].Children[0]
 	assert.Equal("customer.testNamespace.svc.cluster.local", customer.Name)
 	assert.Equal(float64(0.8), customer.Metadata["rate"])
-	assert.Equal(nil, customer.Metadata["flagUnused"])
+	assert.Equal(nil, customer.Metadata["isUnused"])
 	assert.Equal(1, len(customer.Children))
 
 	preference := customer.Children[0]
 	assert.Equal("preference.testNamespace.svc.cluster.local", preference.Name)
 	assert.Equal(float64(0.8), preference.Metadata["rate"])
-	assert.Equal(nil, preference.Metadata["flagUnused"])
+	assert.Equal(nil, preference.Metadata["isUnused"])
 
 	assert.Equal(2, len(preference.Children))
 	recommendationV1 := preference.Children[0]
 	assert.Equal("recommendation.testNamespace.svc.cluster.local", recommendationV1.Name)
 	assert.Equal("v1", recommendationV1.Version)
 	assert.Equal(float64(0.8), recommendationV1.Metadata["rate"])
-	assert.Equal(nil, recommendationV1.Metadata["flagUnused"])
+	assert.Equal(nil, recommendationV1.Metadata["isUnused"])
 
 	recommendationV2 := preference.Children[1]
 	assert.Equal("recommendation.testNamespace.svc.cluster.local", recommendationV2.Name)
 	assert.Equal("v2", recommendationV2.Version)
 	assert.Equal(float64(0), recommendationV2.Metadata["rate"])
-	assert.Equal("true", recommendationV2.Metadata["flagUnused"])
+	assert.Equal("true", recommendationV2.Metadata["isUnused"])
 }
 
 func mockDeploments() *v1beta1.DeploymentList {

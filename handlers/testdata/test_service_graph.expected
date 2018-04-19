@@ -21,6 +21,7 @@
         "data": {
           "id": "n5",
           "service": "reviews.istio-system.svc.cluster.local",
+          "isGroup": "version",
           "flagGroup": "version"
         }
       },
@@ -40,6 +41,7 @@
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v2",
           "rate": "20.000",
+          "isSelfInvoke": "20.000",
           "flagSelfInvoke": "20.000"
         }
       },
@@ -50,6 +52,7 @@
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v3",
           "rate": "20.000",
+          "isSelfInvoke": "20.000",
           "flagSelfInvoke": "20.000"
         }
       }
