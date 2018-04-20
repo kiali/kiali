@@ -17,7 +17,9 @@ func TestSelectorToString(t *testing.T) {
 
 	str := selectorToString(selector)
 
-	assert.Equal("a=1,b=2", str)
+	if "a=1,b=2" != str && "b=2,a=1" != str {
+		assert.Fail("selectorToString returned invalid value: " + str)
+	}
 }
 
 func TestFilterDeploymentsForService(t *testing.T) {
