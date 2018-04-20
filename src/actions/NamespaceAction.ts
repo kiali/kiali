@@ -29,7 +29,7 @@ export const apiReceiveList = newList => {
 export const asyncFetchNamespaces = () => {
   return dispatch => {
     dispatch(apiInitiateRequest());
-    return Api.GetNamespaces()
+    return Api.getNamespaces()
       .then(response => response['data'])
       .then(data => dispatch(apiReceiveList(data)));
   };
