@@ -1,9 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kiali
+  name: kiali${NAME_SUFFIX}
   labels:
     app: kiali
+    version: ${VERSION_LABEL}
 data:
   config.yaml: |
     server:

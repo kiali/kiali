@@ -1,6 +1,6 @@
 FROM centos:centos7
 
-LABEL maintainer="TODO <TODO-dev@lists.jboss.org>"
+LABEL maintainer="kiali-dev@googlegroups.com"
 
 ENV KIALI_HOME=/opt/kiali \
     PATH=$KIALI_HOME:$PATH
