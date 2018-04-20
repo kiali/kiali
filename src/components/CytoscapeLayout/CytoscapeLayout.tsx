@@ -78,7 +78,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
       if (target === cy) {
         return { summaryType: 'graph', summaryTarget: cy };
       } else if (target.isNode()) {
-        if (target.data('groupBy') === 'version') {
+        if (target.data('isGroup') === 'version') {
           return { summaryType: 'group', summaryTarget: target };
         } else {
           return { summaryType: 'node', summaryTarget: target };
