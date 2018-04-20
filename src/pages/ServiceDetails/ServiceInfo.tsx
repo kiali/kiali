@@ -47,10 +47,6 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
     };
   }
 
-  componentDidMount() {
-    this.fetchServiceDetails(this.props);
-  }
-
   componentWillReceiveProps(nextProps: ServiceId) {
     this.fetchServiceDetails(nextProps);
   }
