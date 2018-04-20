@@ -1,16 +1,20 @@
 package models
 
 import (
+	"time"
+
 	"github.com/kiali/kiali/kubernetes"
 )
 
 type VirtualServices []VirtualService
 type VirtualService struct {
-	Name     string      `json:"name"`
-	Hosts    interface{} `json:"hosts"`
-	Gateways interface{} `json:"gateways"`
-	Http     interface{} `json:"http"`
-	Tcp      interface{} `json:"tcp"`
+	Name            string      `json:"name"`
+	CreatedAt       string      `json:"created_at"`
+	ResourceVersion string      `json:"resource_version"`
+	Hosts           interface{} `json:"hosts"`
+	Gateways        interface{} `json:"gateways"`
+	Http            interface{} `json:"http"`
+	Tcp             interface{} `json:"tcp"`
 }
 
 func (vServices *VirtualServices) Parse(virtualServices []kubernetes.IstioObject) {
@@ -23,6 +27,8 @@ func (vServices *VirtualServices) Parse(virtualServices []kubernetes.IstioObject
 
 func (vService *VirtualService) Parse(virtualService kubernetes.IstioObject) {
 	vService.Name = virtualService.GetObjectMeta().Name
+	vService.CreatedAt = virtualService.GetObjectMeta().CreationTimestamp.Time.Format(time.RFC3339)
+	vService.ResourceVersion = virtualService.GetObjectMeta().ResourceVersion
 	vService.Hosts = virtualService.GetSpec()["hosts"]
 	vService.Gateways = virtualService.GetSpec()["gateways"]
 	vService.Http = virtualService.GetSpec()["http"]

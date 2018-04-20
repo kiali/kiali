@@ -10,6 +10,7 @@ type RouteRules []RouteRule
 type RouteRule struct {
 	Name             string      `json:"name"`
 	CreatedAt        string      `json:"created_at"`
+	ResourceVersion  string      `json:"resource_version"`
 	Destination      interface{} `json:"destination"`
 	Precedence       interface{} `json:"precedence"`
 	Match            interface{} `json:"match"`
@@ -37,6 +38,7 @@ func (rules *RouteRules) Parse(routeRules []kubernetes.IstioObject) {
 func (rule *RouteRule) Parse(routeRule kubernetes.IstioObject) {
 	rule.Name = routeRule.GetObjectMeta().Name
 	rule.CreatedAt = routeRule.GetObjectMeta().CreationTimestamp.Time.Format(time.RFC3339)
+	rule.ResourceVersion = routeRule.GetObjectMeta().ResourceVersion
 	rule.Destination = routeRule.GetSpec()["destination"]
 	rule.Precedence = routeRule.GetSpec()["precedence"]
 	rule.Match = routeRule.GetSpec()["match"]

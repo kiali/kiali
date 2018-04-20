@@ -25,6 +25,7 @@ func TestServiceDetailParsing(t *testing.T) {
 	assert.Equal(service.Name, "service")
 	assert.Equal(service.Namespace.Name, "namespace")
 	assert.Equal(service.CreatedAt, "2018-03-08T17:44:00+03:00")
+	assert.Equal(service.ResourceVersion, "1234")
 	assert.Equal(service.Type, "ClusterIP")
 	assert.Equal(service.Ip, "fromservice")
 	assert.Equal(service.Labels, map[string]string{"label1": "labelName1", "label2": "labelName2"})
@@ -46,6 +47,7 @@ func TestServiceDetailParsing(t *testing.T) {
 		Name:                "reviews-v1",
 		Labels:              map[string]string{"apps": "reviews", "version": "v1"},
 		CreatedAt:           "2018-03-08T17:44:00+03:00",
+		ResourceVersion:     "1234",
 		Replicas:            3,
 		AvailableReplicas:   1,
 		UnavailableReplicas: 2,
@@ -65,6 +67,7 @@ func TestServiceDetailParsing(t *testing.T) {
 		Name:                "reviews-v2",
 		Labels:              map[string]string{"apps": "reviews", "version": "v2"},
 		CreatedAt:           "2018-03-08T17:45:00+03:00",
+		ResourceVersion:     "1234",
 		Replicas:            3,
 		AvailableReplicas:   3,
 		UnavailableReplicas: 0,
@@ -83,7 +86,8 @@ func TestServiceDetailParsing(t *testing.T) {
 	// Istio Details
 	assert.Equal(service.RouteRules, RouteRules{
 		RouteRule{
-			CreatedAt: "2018-03-08T17:46:00+03:00",
+			CreatedAt:       "2018-03-08T17:46:00+03:00",
+			ResourceVersion: "1234",
 			Destination: map[string]string{
 				"name":      "reviews",
 				"namespace": "tutorial"},
@@ -99,7 +103,8 @@ func TestServiceDetailParsing(t *testing.T) {
 				},
 			}},
 		RouteRule{
-			CreatedAt: "2018-03-08T17:46:00+03:00",
+			CreatedAt:       "2018-03-08T17:46:00+03:00",
+			ResourceVersion: "1234",
 			Destination: map[string]string{
 				"name":      "reviews",
 				"namespace": "tutorial"},
@@ -111,7 +116,8 @@ func TestServiceDetailParsing(t *testing.T) {
 
 	assert.Equal(service.DestinationPolicies, DestinationPolicies{
 		DestinationPolicy{
-			CreatedAt: "2018-03-08T17:47:00+03:00",
+			CreatedAt:       "2018-03-08T17:47:00+03:00",
+			ResourceVersion: "1234",
 			Source: map[string]string{
 				"name": "recommendation"},
 			Destination: map[string]string{
@@ -121,7 +127,8 @@ func TestServiceDetailParsing(t *testing.T) {
 				"name": "RANDOM"},
 		},
 		DestinationPolicy{
-			CreatedAt: "2018-03-08T17:47:00+03:00",
+			CreatedAt:       "2018-03-08T17:47:00+03:00",
+			ResourceVersion: "1234",
 			Destination: map[string]interface{}{
 				"name":      "reviews",
 				"namespace": "tutorial",
@@ -141,7 +148,9 @@ func TestServiceDetailParsing(t *testing.T) {
 
 	assert.Equal(service.VirtualServices, VirtualServices{
 		VirtualService{
-			Name: "reviews",
+			Name:            "reviews",
+			CreatedAt:       "2018-03-08T17:47:00+03:00",
+			ResourceVersion: "1234",
 			Hosts: []interface{}{
 				"reviews",
 			},
@@ -167,7 +176,9 @@ func TestServiceDetailParsing(t *testing.T) {
 			},
 		},
 		VirtualService{
-			Name: "ratings",
+			Name:            "ratings",
+			CreatedAt:       "2018-03-08T17:47:00+03:00",
+			ResourceVersion: "1234",
 			Hosts: []interface{}{
 				"reviews",
 			},
@@ -214,6 +225,8 @@ func TestServiceDetailParsing(t *testing.T) {
 	assert.Equal(service.DestinationRules, DestinationRules{
 		DestinationRule{
 			Name:            "reviews-destination",
+			CreatedAt:       "2018-03-08T17:47:00+03:00",
+			ResourceVersion: "1234",
 			DestinationName: "reviews",
 			Subsets: []interface{}{
 				map[string]interface{}{
@@ -232,6 +245,8 @@ func TestServiceDetailParsing(t *testing.T) {
 		},
 		DestinationRule{
 			Name:            "bookinfo-ratings",
+			CreatedAt:       "2018-03-08T17:47:00+03:00",
+			ResourceVersion: "1234",
 			DestinationName: "ratings",
 			TrafficPolicy: map[string]interface{}{
 				"loadBalancer": map[string]interface{}{
@@ -269,6 +284,7 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 			Name:              "Name",
 			Namespace:         "Namespace",
 			CreationTimestamp: meta_v1.NewTime(t1),
+			ResourceVersion:   "1234",
 			Labels: map[string]string{
 				"label1": "labelName1",
 				"label2": "labelName2"}},
@@ -311,6 +327,7 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:              "reviews-v1",
 					CreationTimestamp: meta_v1.NewTime(t1),
+					ResourceVersion:   "1234",
 					Labels:            map[string]string{"apps": "reviews", "version": "v1"}},
 				Status: v1beta1.DeploymentStatus{
 					Replicas:            3,
@@ -320,6 +337,7 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:              "reviews-v2",
 					CreationTimestamp: meta_v1.NewTime(t2),
+					ResourceVersion:   "1234",
 					Labels:            map[string]string{"apps": "reviews", "version": "v2"}},
 				Status: v1beta1.DeploymentStatus{
 					Replicas:            3,
@@ -370,7 +388,9 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 
 	route1 := kubernetes.MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
-			CreationTimestamp: meta_v1.NewTime(t1)},
+			CreationTimestamp: meta_v1.NewTime(t1),
+			ResourceVersion:   "1234",
+		},
 		Spec: map[string]interface{}{
 			"destination": map[string]string{
 				"name":      "reviews",
@@ -388,7 +408,9 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	}
 	route2 := kubernetes.MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
-			CreationTimestamp: meta_v1.NewTime(t1)},
+			CreationTimestamp: meta_v1.NewTime(t1),
+			ResourceVersion:   "1234",
+		},
 		Spec: map[string]interface{}{
 			"destination": map[string]string{
 				"name":      "reviews",
@@ -402,7 +424,9 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	routes := []kubernetes.IstioObject{&route1, &route2}
 	policy1 := kubernetes.MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
-			CreationTimestamp: meta_v1.NewTime(t2)},
+			CreationTimestamp: meta_v1.NewTime(t2),
+			ResourceVersion:   "1234",
+		},
 		Spec: map[string]interface{}{
 			"source": map[string]string{
 				"name": "recommendation",
@@ -418,7 +442,9 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	}
 	policy2 := kubernetes.MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
-			CreationTimestamp: meta_v1.NewTime(t2)},
+			CreationTimestamp: meta_v1.NewTime(t2),
+			ResourceVersion:   "1234",
+		},
 		Spec: map[string]interface{}{
 			"destination": map[string]interface{}{
 				"name":      "reviews",
@@ -445,7 +471,9 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 
 	virtualService1 := kubernetes.MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "reviews",
+			Name:              "reviews",
+			CreationTimestamp: meta_v1.NewTime(t2),
+			ResourceVersion:   "1234",
 		},
 		Spec: map[string]interface{}{
 			"hosts": []interface{}{
@@ -475,7 +503,9 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	}
 	virtualService2 := kubernetes.MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "ratings",
+			Name:              "ratings",
+			CreationTimestamp: meta_v1.NewTime(t2),
+			ResourceVersion:   "1234",
 		},
 		Spec: map[string]interface{}{
 			"hosts": []interface{}{
@@ -524,7 +554,9 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 
 	destinationRule1 := kubernetes.MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "reviews-destination",
+			Name:              "reviews-destination",
+			CreationTimestamp: meta_v1.NewTime(t2),
+			ResourceVersion:   "1234",
 		},
 		Spec: map[string]interface{}{
 			"name": "reviews",
@@ -546,7 +578,9 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	}
 	destinationRule2 := kubernetes.MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "bookinfo-ratings",
+			Name:              "bookinfo-ratings",
+			CreationTimestamp: meta_v1.NewTime(t2),
+			ResourceVersion:   "1234",
 		},
 		Spec: map[string]interface{}{
 			"name": "ratings",

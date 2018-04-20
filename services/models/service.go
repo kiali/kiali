@@ -20,6 +20,7 @@ type ServiceList struct {
 type Service struct {
 	Name                string              `json:"name"`
 	CreatedAt           string              `json:"created_at"`
+	ResourceVersion     string              `json:"resource_version"`
 	Namespace           Namespace           `json:"namespace"`
 	Labels              map[string]string   `json:"labels"`
 	Type                string              `json:"type"`
@@ -47,6 +48,7 @@ func (s *Service) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails
 		s.Type = string(serviceDetails.Service.Spec.Type)
 		s.Ip = serviceDetails.Service.Spec.ClusterIP
 		s.CreatedAt = serviceDetails.Service.CreationTimestamp.Time.Format(time.RFC3339)
+		s.ResourceVersion = serviceDetails.Service.ResourceVersion
 		(&s.Ports).Parse(serviceDetails.Service.Spec.Ports)
 	}
 
