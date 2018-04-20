@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import ServiceInfo from '../ServiceInfo';
-import { HasIstioSidecar } from '../../../types/ServiceInfo';
+import { hasIstioSidecar } from '../../../types/ServiceInfo';
 
 jest.mock('../../../services/Api');
 
@@ -20,7 +20,7 @@ describe('#ServiceInfo render correctly with data', () => {
   });
 
   it('should render serviceInfo with data', () => {
-    return API.GetServiceDetail('istio-system', 'reviews').then(response => {
+    return API.getServiceDetail('istio-system', 'reviews').then(response => {
       let data = response;
       const wrapper = shallow(<ServiceInfo namespace="istio-system" service="reviews" />).setState({
         labels: data.labels,
@@ -28,7 +28,7 @@ describe('#ServiceInfo render correctly with data', () => {
         type: data.type,
         ports: data.ports,
         endpoints: data.endpoints,
-        istio_sidecar: HasIstioSidecar(data.deployments),
+        istio_sidecar: hasIstioSidecar(data.deployments),
         deployments: data.deployments,
         dependencies: data.dependencies,
         routeRules: data.route_rules,

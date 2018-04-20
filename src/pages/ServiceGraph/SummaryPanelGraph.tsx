@@ -105,7 +105,6 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       step: props.step,
       rateInterval: props.rateInterval
     };
-    // console.log('loadNamespaceMetrics SummaryGraph');
     API.getNamespaceMetrics(props.namespace, options)
       .then(response => {
         if (!this._isMounted) {

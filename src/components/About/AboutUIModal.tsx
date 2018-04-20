@@ -25,7 +25,7 @@ type AboutUIModalProduct = {
 };
 
 const getStatus = () => {
-  return API.GetStatus().then(response => {
+  return API.getStatus().then(response => {
     const rawStatus = response['data'];
     return {
       kiali: [

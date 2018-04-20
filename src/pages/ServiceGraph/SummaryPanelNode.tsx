@@ -68,7 +68,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       rateInterval: props.rateInterval,
       filters: ['request_count', 'request_error_count']
     };
-    // console.log('loadServiceMetrics SummaryNode');
     API.getServiceMetrics(namespace, service, options)
       .then(response => {
         if (!this._isMounted) {

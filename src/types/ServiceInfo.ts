@@ -203,7 +203,7 @@ export interface DestinationPolicy {
   circuitBreaker: CircuitBreaker;
 }
 
-export const HasIstioSidecar = (deployments: Deployment[]) => {
+export const hasIstioSidecar = (deployments: Deployment[]) => {
   if (deployments && deployments.length > 0) {
     for (let i = 0; i < deployments.length; i++) {
       let annotations = deployments[i].template_annotations;
