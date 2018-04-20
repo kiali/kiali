@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 )
 
 var (
@@ -64,12 +63,6 @@ type Metrics struct {
 // Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)
 type Metric struct {
 	Matrix model.Matrix `json:"matrix"`
-	err    error
-}
-
-// MetricsVector holds the Prometheus Vector model, which contains a sample from one or more time series
-type MetricsVector struct {
-	Vector model.Vector `json:"vector"`
 	err    error
 }
 
@@ -252,7 +245,6 @@ func fetchRateRange(api v1.API, metricName string, labels string, grouping strin
 	} else {
 		query = fmt.Sprintf("round(sum(%s(%s%s[%s])) by (%s), 0.001)", rateFunc, metricName, labels, rateInterval, grouping)
 	}
-	log.Infof("QUERY: %v", query)
 	return fetchRange(api, query, bounds)
 }
 
@@ -326,24 +318,39 @@ func replaceInvalidCharacters(metricName string) string {
 	return invalidLabelCharRE.ReplaceAllString(metricName, "_")
 }
 
-func getNamespaceServicesRequestCounters(api v1.API, namespace string, ratesInterval string) MetricsVector {
-	time := time.Now()
-	labelsQuery := []string{
-		fmt.Sprintf(`destination_service=~".*\\.%s\\..*"`, namespace),
-		fmt.Sprintf(`source_service=~".*\\.%s\\..*"`, namespace),
+func getNamespaceServicesRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, model.Vector, error) {
+	lblIn := fmt.Sprintf(`destination_service=~".*\\.%s\\..*"`, namespace)
+	in, err := getRequestRatesForLabel(api, time.Now(), lblIn, ratesInterval)
+	if err != nil {
+		return model.Vector{}, model.Vector{}, err
 	}
-
-	var results model.Vector
-	for _, labels := range labelsQuery {
-		query := fmt.Sprintf("rate(istio_request_count{%s}[%s])", labels, ratesInterval)
-		log.Infof("Request rate query: %v", query)
-
-		result, err := api.Query(context.Background(), query, time)
-		if err != nil {
-			return MetricsVector{err: err}
-		}
-		results = append(results, result.(model.Vector)...)
+	lblOut := fmt.Sprintf(`source_service=~".*\\.%s\\..*"`, namespace)
+	out, err := getRequestRatesForLabel(api, time.Now(), lblOut, ratesInterval)
+	if err != nil {
+		return model.Vector{}, model.Vector{}, err
 	}
+	return in, out, nil
+}
 
-	return MetricsVector{Vector: results}
+func getServiceRequestRates(api v1.API, namespace, service string, ratesInterval string) (model.Vector, model.Vector, error) {
+	lblIn := fmt.Sprintf(`destination_service=~"%s\\.%s\\..*"`, service, namespace)
+	in, err := getRequestRatesForLabel(api, time.Now(), lblIn, ratesInterval)
+	if err != nil {
+		return model.Vector{}, model.Vector{}, err
+	}
+	lblOut := fmt.Sprintf(`source_service=~"%s\\.%s\\..*"`, service, namespace)
+	out, err := getRequestRatesForLabel(api, time.Now(), lblOut, ratesInterval)
+	if err != nil {
+		return model.Vector{}, model.Vector{}, err
+	}
+	return in, out, nil
+}
+
+func getRequestRatesForLabel(api v1.API, time time.Time, labels, ratesInterval string) (model.Vector, error) {
+	query := fmt.Sprintf("rate(istio_request_count{%s}[%s])", labels, ratesInterval)
+	result, err := api.Query(context.Background(), query, time)
+	if err != nil {
+		return model.Vector{}, err
+	}
+	return result.(model.Vector), nil
 }

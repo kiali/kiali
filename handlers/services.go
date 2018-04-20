@@ -11,6 +11,8 @@ import (
 	"github.com/kiali/kiali/services/business"
 )
 
+const defaultHealthRateInterval = "10m"
+
 // ServiceList is the API handler to fetch the list of services in a given namespace
 func ServiceList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -24,7 +26,7 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 
 	namespace := params["namespace"]
 	queryParams := r.URL.Query()
-	ratesInterval := "1m"
+	ratesInterval := defaultHealthRateInterval
 	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
 		ratesInterval = rateIntervals[0]
 	}
@@ -78,7 +80,14 @@ func ServiceHealth(w http.ResponseWriter, r *http.Request) {
 	namespace := vars["namespace"]
 	service := vars["service"]
 
-	health := business.Health.GetServiceHealth(namespace, service)
+	// Rate interval is needed to fetch request rates based health
+	rateInterval := defaultHealthRateInterval
+	queryParams := r.URL.Query()
+	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
+		rateInterval = rateIntervals[0]
+	}
+
+	health := business.Health.GetServiceHealth(namespace, service, rateInterval)
 	RespondWithJSON(w, http.StatusOK, health)
 }
 
@@ -91,8 +100,15 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Rate interval is needed to fetch request rates based health
+	rateInterval := defaultHealthRateInterval
+	queryParams := r.URL.Query()
+	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
+		rateInterval = rateIntervals[0]
+	}
+
 	params := mux.Vars(r)
-	service, err := business.Svc.GetService(params["namespace"], params["service"])
+	service, err := business.Svc.GetService(params["namespace"], params["service"], rateInterval)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			RespondWithError(w, http.StatusNotFound, err.Error())

@@ -7,8 +7,6 @@ import (
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
-
-	"github.com/kiali/kiali/prometheus"
 )
 
 // PromAPIMock for mocking Prometheus API
@@ -89,17 +87,22 @@ type PromClientMock struct {
 	mock.Mock
 }
 
-func (o *PromClientMock) GetServiceHealth(namespace string, servicename string) (int, int, error) {
+func (o *PromClientMock) GetServiceHealth(namespace, servicename string) (int, int, error) {
 	args := o.Called(namespace, servicename)
 	return args.Int(0), args.Int(1), args.Error(2)
 }
 
-func (o *PromClientMock) GetNamespaceServicesRequestCounters(namespace string, ratesInterval string) prometheus.MetricsVector {
+func (o *PromClientMock) GetNamespaceServicesRequestRates(namespace, ratesInterval string) (model.Vector, model.Vector, error) {
 	args := o.Called(namespace, ratesInterval)
-	return args.Get(0).(prometheus.MetricsVector)
+	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) GetSourceServices(namespace string, servicename string) (map[string][]string, error) {
+func (o *PromClientMock) GetServiceRequestRates(namespace, service, ratesInterval string) (model.Vector, model.Vector, error) {
+	args := o.Called(namespace, ratesInterval)
+	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
+}
+
+func (o *PromClientMock) GetSourceServices(namespace, servicename string) (map[string][]string, error) {
 	args := o.Called(namespace, servicename)
 	return args.Get(0).(map[string][]string), args.Error(1)
 }
