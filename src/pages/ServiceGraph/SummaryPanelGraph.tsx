@@ -62,8 +62,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
     const numNodes = cy
       .nodes()
-      .filter('[!groupBy]')
-      .filter('[service!="unknown"]')
+      .filter('[!isGroup]')
+      .filter('[!isRoot]')
       .size();
     const numEdges = cy.edges().size();
     const trafficRate = getAccumulatedTrafficRate(cy.edges());

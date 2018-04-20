@@ -110,7 +110,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
           if (ele.isParent()) {
             return false; // we never need the group box elements, filter them out
           }
-          return ele.data('flagCircuitBreaker') === 'true';
+          return ele.data('isCircuitBreaker') === 'true';
         })
         .forEach(ele => {
           new GraphBadge.CircuitBreakerBadge(ele).buildBadge();

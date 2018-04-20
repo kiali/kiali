@@ -21,7 +21,7 @@ export class GraphStyles {
           'background-color': '#f9d67a', // pf-gold-200
           'border-color': '#030303', // pf-black
           'border-style': (ele: any) => {
-            return ele.data('flagUnused') ? 'dotted' : 'solid';
+            return ele.data('isUnused') ? 'dotted' : 'solid';
           },
           'border-width': '1px',
           'font-size': '10px',
@@ -39,6 +39,12 @@ export class GraphStyles {
         style: {
           'border-width': '3px',
           'border-color': '#0088ce' // pf-blue
+        }
+      },
+      {
+        selector: 'node[isRoot]',
+        style: {
+          shape: 'diamond'
         }
       },
       {
@@ -68,7 +74,7 @@ export class GraphStyles {
           'font-size': '7px',
           'line-color': (ele: any) => {
             const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
-            if (rate === 0 || ele.data('flagUnused')) {
+            if (rate === 0 || ele.data('isUnused')) {
               return 'black';
             }
             const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
@@ -82,7 +88,7 @@ export class GraphStyles {
             return 'green';
           },
           'line-style': (ele: any) => {
-            return ele.data('flagUnused') ? 'dotted' : 'solid';
+            return ele.data('isUnused') ? 'dotted' : 'solid';
           },
           'target-arrow-shape': 'vee',
           'text-margin-x': '6px',
