@@ -26,7 +26,6 @@ process.env.REACT_APP_GIT_HASH = '89323';
 // TODO: properly handle SVG and D3 in the following 2 components
 jest.mock('../../components/Badge/Badge');
 jest.mock('../../components/SummaryPanel/RpsChart');
-jest.mock('../../components/SummaryPanel/ErrorRatePieChart');
 
 it('renders full App without crashing', () => {
   const div = document.createElement('div');
