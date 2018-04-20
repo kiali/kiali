@@ -256,8 +256,7 @@ export default class ServiceGraphPage extends React.Component<
     namespace = namespace ? namespace : this.state.params.namespace;
     const duration = graphDuration ? graphDuration.value : this.state.params.graphDuration.value;
     const restParams = { duration: duration + 's' };
-    // console.log('loadGraphDataFromBackend()', namespace, restParams);
-    API.GetGraphElements(namespace, restParams)
+    API.getGraphElements(namespace, restParams)
       .then(response => {
         if (!this._isMounted) {
           console.log('ServiceGraphPage: Ignore fetch, component not mounted.');

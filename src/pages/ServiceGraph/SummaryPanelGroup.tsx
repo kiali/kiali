@@ -107,7 +107,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       rateInterval: props.rateInterval,
       filters: ['request_count', 'request_error_count']
     };
-    // console.log('loadServiceMetrics SummaryGroup');
     API.getServiceMetrics(namespace, service, options)
       .then(response => {
         if (!this._isMounted) {

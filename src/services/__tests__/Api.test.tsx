@@ -4,7 +4,7 @@ const API = require('../Api');
 
 describe('#GetNamespaces using Promises', () => {
   it('should load namespaces', () => {
-    return API.GetNamespaces().then(data => {
+    return API.getNamespaces().then(data => {
       expect(data).toBeDefined();
       expect(data).toBeInstanceOf(Array);
     });
@@ -13,7 +13,7 @@ describe('#GetNamespaces using Promises', () => {
 
 describe('#GetServices using Promises', () => {
   it('should load services of namespace', () => {
-    return API.GetServices('istio-system').then(data => {
+    return API.getServices('istio-system').then(data => {
       expect(data).toBeDefined();
       expect(data.namespace.name).toEqual('istio-system');
       expect(data.services).toBeDefined();
@@ -43,7 +43,7 @@ describe('#getJaegerInfo using Promises', () => {
 
 describe('#GetGraphElements using Promises', () => {
   it('should load service detail data', () => {
-    return API.GetGraphElements('ISTIO_SYSTEM', null).then(({ data }) => {
+    return API.getGraphElements('ISTIO_SYSTEM', null).then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.elements.nodes).toBeDefined();
       expect(data.elements.nodes).toBeInstanceOf(Array);
@@ -55,7 +55,7 @@ describe('#GetGraphElements using Promises', () => {
 
 describe('#GetServiceDetail using Promises', () => {
   it('should load service detail data', () => {
-    return API.GetServiceDetail('istio-system', 'reviews').then(data => {
+    return API.getServiceDetail('istio-system', 'reviews').then(data => {
       expect(data).toBeDefined();
       expect(data.name).toEqual('reviews');
       expect(data.namespace.name).toEqual('istio-system');
@@ -71,7 +71,7 @@ describe('#GetServiceDetail using Promises', () => {
 
 describe('#GetIstioRules using Promises', () => {
   it('should load istio rules of namespace', () => {
-    return API.GetIstioRules('tutorial').then(data => {
+    return API.getIstioRules('tutorial').then(data => {
       expect(data).toBeDefined();
       expect(data.namespace.name).toEqual('tutorial');
       expect(data.rules).toBeDefined();
@@ -82,7 +82,7 @@ describe('#GetIstioRules using Promises', () => {
 
 describe('#GetIstioRuleDetail using Promises', () => {
   it('should load istio rule detail data', () => {
-    return API.GetIstioRuleDetail('tutorial', 'checkfromcustomer').then(data => {
+    return API.getIstioRuleDetail('tutorial', 'checkfromcustomer').then(data => {
       expect(data).toBeDefined();
       expect(data.name).toEqual('checkfromcustomer');
       expect(data.namespace.name).toEqual('tutorial');

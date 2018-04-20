@@ -60,8 +60,7 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
   }
 
   updateNamespaces() {
-    console.log('update namespaces');
-    API.GetNamespaces()
+    API.getNamespaces()
       .then(response => {
         const namespaces: Namespace[] = response['data'];
         let namespaceFilter: FilterType = {

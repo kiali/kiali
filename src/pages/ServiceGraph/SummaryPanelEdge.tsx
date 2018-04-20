@@ -121,7 +121,6 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       rateInterval: props.rateInterval,
       filters: ['request_count', 'request_error_count']
     };
-    // console.log('loadNamespaceMetrics SummarEdge');
     API.getServiceMetrics(destNamespace, destServiceName, options)
       .then(response => {
         if (!this._isMounted) {

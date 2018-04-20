@@ -35,8 +35,7 @@ class IstioRuleInfo extends React.Component<RuleId, RuleInfoState> {
   }
 
   fetchIstioRuleDetails(props: RuleId) {
-    console.log('Fetching info of a service...');
-    API.GetIstioRuleDetail(props.namespace, props.rule)
+    API.getIstioRuleDetail(props.namespace, props.rule)
       .then(response => {
         let data = response['data'];
         this.setState({
@@ -48,7 +47,7 @@ class IstioRuleInfo extends React.Component<RuleId, RuleInfoState> {
       .catch(error => {
         this.setState({
           error: true,
-          errorMessage: API.GetErrorMsg('Could not fetch IstioRule details.', error)
+          errorMessage: API.getErrorMsg('Could not fetch IstioRule details.', error)
         });
       });
   }

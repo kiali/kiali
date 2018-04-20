@@ -16,9 +16,9 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
   }
 
   componentDidMount() {
-    // TODO: [KIALI-436] API.GetNamespaces() is also called in Services component.
+    // TODO: [KIALI-436] API.getNamespaces() is also called in Services component.
     // We should consolidate them into one.
-    API.GetNamespaces()
+    API.getNamespaces()
       .then(this.setNamespaces)
       .catch(error => {
         this.props.onError(error);

@@ -5,7 +5,7 @@ import ServiceInfoDeployments from './ServiceInfo/ServiceInfoDeployments';
 import ServiceInfoRouteRules from './ServiceInfo/ServiceInfoRouteRules';
 import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
 import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
-import { Endpoints, Deployment, Port, RouteRule, DestinationPolicy, HasIstioSidecar } from '../../types/ServiceInfo';
+import { Endpoints, Deployment, Port, RouteRule, DestinationPolicy, hasIstioSidecar } from '../../types/ServiceInfo';
 import { Health } from '../../types/Health';
 import * as API from '../../services/Api';
 import { ToastNotification, ToastNotificationList, Col, Row } from 'patternfly-react';
@@ -52,8 +52,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
   }
 
   fetchServiceDetails(props: ServiceId) {
-    console.log('Fetching info of a service...');
-    API.GetServiceDetail(props.namespace, props.service)
+    API.getServiceDetail(props.namespace, props.service)
       .then(response => {
         let data = response['data'];
         this.setState({
@@ -63,7 +62,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
           type: data.type,
           ports: data.ports,
           endpoints: data.endpoints,
-          istio_sidecar: HasIstioSidecar(data.deployments),
+          istio_sidecar: hasIstioSidecar(data.deployments),
           deployments: data.deployments,
           dependencies: data.dependencies,
           routeRules: this.sortRouteRulesByPrecedence(data.route_rules),
@@ -75,7 +74,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
       .catch(error => {
         this.setState({
           error: true,
-          errorMessage: API.GetErrorMsg('Could not fetch Service Details.', error)
+          errorMessage: API.getErrorMsg('Could not fetch Service Details.', error)
         });
         console.log(error);
       });

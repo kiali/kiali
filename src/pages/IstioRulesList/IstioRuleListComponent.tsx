@@ -140,14 +140,14 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
       .map(activeFilter => activeFilter.value);
 
     if (namespacesSelected.length === 0) {
-      API.GetNamespaces()
+      API.getNamespaces()
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchRules(namespaces.map(namespace => namespace.name), rulenameFilters);
         })
         .catch(namespacesError => {
           console.error(JSON.stringify(namespacesError));
-          this.handleError(API.GetErrorMsg('Could not fetch namespace list.', namespacesError));
+          this.handleError(API.getErrorMsg('Could not fetch namespace list.', namespacesError));
         });
     } else {
       this.fetchRules(namespacesSelected, rulenameFilters);
@@ -155,7 +155,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
   }
 
   fetchRules(namespaces: string[], rulenameFilters: string[]) {
-    const promises = namespaces.map(ns => API.GetIstioRules(ns));
+    const promises = namespaces.map(ns => API.getIstioRules(ns));
     Promise.all(promises)
       .then(rulesResponse => {
         let updatedRules: RuleItem[] = [];
@@ -185,7 +185,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
       })
       .catch(servicesError => {
         console.error(JSON.stringify(servicesError));
-        this.handleError(API.GetErrorMsg('Could not fetch rule list.', servicesError));
+        this.handleError(API.getErrorMsg('Could not fetch rule list.', servicesError));
       });
   }
 
