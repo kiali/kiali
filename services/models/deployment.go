@@ -13,6 +13,7 @@ type Deployment struct {
 	TemplateAnnotations map[string]string `json:"template_annotations"`
 	Labels              map[string]string `json:"labels"`
 	CreatedAt           string            `json:"created_at"`
+	ResourceVersion     string            `json:"resource_version"`
 	Replicas            int32             `json:"replicas"`
 	AvailableReplicas   int32             `json:"available_replicas"`
 	UnavailableReplicas int32             `json:"unavailable_replicas"`
@@ -36,6 +37,7 @@ func (deployment *Deployment) Parse(d *v1beta1.Deployment) {
 	deployment.TemplateAnnotations = d.Spec.Template.Annotations
 	deployment.Labels = d.Labels
 	deployment.CreatedAt = d.CreationTimestamp.Time.Format(time.RFC3339)
+	deployment.ResourceVersion = d.ResourceVersion
 	deployment.Replicas = d.Status.Replicas
 	deployment.AvailableReplicas = d.Status.AvailableReplicas
 	deployment.UnavailableReplicas = d.Status.UnavailableReplicas
