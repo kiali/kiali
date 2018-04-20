@@ -41,11 +41,6 @@ type NodeData struct {
 	IsRoot           string `json:"isRoot,omitempty"`           // true | false
 	IsSelfInvoke     string `json:"isSelfInvoke,omitempty"`     // rate of selfInvoke
 	IsUnused         string `json:"isUnused,omitempty"`         // true | false
-	// TODO: remove Flag after UI is updated to Is
-	FlagCircuitBreaker string `json:"flagCircuitBreaker,omitempty"` // true | false | unknown
-	FlagGroup          string `json:"flagGroup,omitempty"`          // set to the grouping type, current values: [ 'version' ]
-	FlagSelfInvoke     string `json:"flagSelfInvoke,omitempty"`     // rate of selfInvoke
-	FlagUnused         string `json:"flagUnused,omitempty"`         // true | false
 }
 
 type EdgeData struct {
@@ -61,8 +56,6 @@ type EdgeData struct {
 	Rate5xx    string `json:"rate5XX,omitempty"`
 	PercentErr string `json:"percentErr,omitempty"`
 	IsUnused   string `json:"isUnused,omitempty"` // true | false
-	// TODO: remove Flag after UI is updated to Is
-	FlagUnused string `json:"flagUnused,omitempty"` // true | false
 }
 
 type NodeWrapper struct {
@@ -161,13 +154,11 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		// node may be an unused service
 		if unused, ok := sn.Metadata["isUnused"]; ok {
 			nd.IsUnused = unused.(string)
-			nd.FlagUnused = unused.(string)
 		}
 
 		// node may have a circuit breaker
 		if cb, ok := sn.Metadata["isCircuitBreaker"]; ok {
 			nd.IsCircuitBreaker = cb.(string)
-			nd.FlagCircuitBreaker = cb.(string)
 		}
 
 		nw := NodeWrapper{
@@ -181,7 +172,6 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		// we can go back to allowing these but for now, flag the node text
 		if parentNodeId == nd.Id {
 			nd.IsSelfInvoke = fmt.Sprintf("%.3f", sn.Metadata["rate"].(float64))
-			nd.FlagSelfInvoke = fmt.Sprintf("%.3f", sn.Metadata["rate"].(float64))
 		} else {
 			edgeId := fmt.Sprintf("e%v", *edgeIdSequence)
 			*edgeIdSequence++
@@ -243,7 +233,6 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 	} else {
 		if val, ok := sn.Metadata["isUnused"]; ok {
 			ed.IsUnused = val.(string)
-			ed.FlagUnused = val.(string)
 		}
 	}
 }
@@ -270,10 +259,9 @@ func addCompositeNodes(nodes *[]*NodeWrapper, nodeIdSequence *int) {
 			nodeId := fmt.Sprintf("n%v", *nodeIdSequence)
 			*nodeIdSequence++
 			nd := NodeData{
-				Id:        nodeId,
-				Service:   k,
-				IsGroup:   "version",
-				FlagGroup: "version",
+				Id:      nodeId,
+				Service: k,
+				IsGroup: "version",
 			}
 			nw := NodeWrapper{
 				Data: &nd,
