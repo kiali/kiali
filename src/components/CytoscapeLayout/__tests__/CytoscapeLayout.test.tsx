@@ -22,7 +22,7 @@ describe('CytographLayout component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
     const myDuration: Duration = { value: '5m' };
-    const badgeStatus: BadgeStatus = { showCBs: false };
+    const badgeStatus: BadgeStatus = { hideCBs: false };
 
     const wrapper = shallow(
       <CytoscapeLayout

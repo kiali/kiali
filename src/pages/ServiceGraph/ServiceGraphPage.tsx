@@ -39,7 +39,7 @@ type ServiceGraphPageProps = {
   duration: string;
   namespace: string;
   layout: string;
-  showCBs: string;
+  hideCBs: string;
 };
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 
@@ -79,12 +79,12 @@ export default class ServiceGraphPage extends React.Component<
     const urlParams = new URLSearchParams(queryString);
     // TODO: [KIALI-357] validate `duration`
     const duration = urlParams.get('duration');
-    const showCBs = urlParams.get('showCBs') === 'true';
+    const hideCBs = urlParams.get('hideCBs') === 'true';
 
     return {
       graphDuration: duration ? { value: duration } : { value: QueryOptions.DEFAULT.key },
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
-      badgeStatus: { showCBs: showCBs }
+      badgeStatus: { hideCBs: hideCBs }
     };
   };
 
@@ -243,8 +243,8 @@ export default class ServiceGraphPage extends React.Component<
   };
 
   makeUrlFrom = (_namespace: Namespace, _layout: Layout, _duration: Duration, _badgeStatus: BadgeStatus) =>
-    `/service-graph/${_namespace.name}?layout=${_layout.name}&duration=${_duration.value}&showCBs=${
-      _badgeStatus.showCBs
+    `/service-graph/${_namespace.name}?layout=${_layout.name}&duration=${_duration.value}&hideCBs=${
+      _badgeStatus.hideCBs
     }`;
 
   /** Update browser address bar  */

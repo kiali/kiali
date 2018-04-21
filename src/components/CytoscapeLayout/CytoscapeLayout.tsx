@@ -100,7 +100,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
     // when the graph is fully populated and ready, we need to add appropriate badges to the nodes
     this.cy.ready((evt: any) => {
-      if (!this.props.badgeStatus.showCBs) {
+      if (this.props.badgeStatus.hideCBs) {
         return;
       }
 

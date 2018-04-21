@@ -55,7 +55,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
   };
 
   handleToggleCBs = () => {
-    this.props.onBadgeStatusChange({ showCBs: !this.props.activeBadgeStatus.showCBs });
+    this.props.onBadgeStatusChange({ hideCBs: !this.props.activeBadgeStatus.hideCBs });
   };
 
   render() {
