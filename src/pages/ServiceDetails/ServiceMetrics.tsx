@@ -4,6 +4,7 @@ import { Alert, LineChart } from 'patternfly-react';
 import ServiceId from '../../types/ServiceId';
 import * as M from '../../types/Metrics';
 import * as API from '../../services/Api';
+import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import MetricsOptions from '../../types/MetricsOptions';
 import graphUtils from '../../utils/graphing';
@@ -19,17 +20,32 @@ interface GrafanaInfo {
 type ServiceMetricsState = {
   loading: boolean;
   alertDetails?: string;
-  requestCountIn?: M.MetricGroup;
-  requestCountOut?: M.MetricGroup;
-  requestSizeIn?: M.Histogram;
-  requestSizeOut?: M.Histogram;
-  requestDurationIn?: M.Histogram;
-  requestDurationOut?: M.Histogram;
-  responseSizeIn?: M.Histogram;
-  responseSizeOut?: M.Histogram;
+  requestCountIn?: NamedMetric;
+  requestCountOut?: NamedMetric;
+  requestSizeIn?: NamedHistogram;
+  requestSizeOut?: NamedHistogram;
+  requestDurationIn?: NamedHistogram;
+  requestDurationOut?: NamedHistogram;
+  responseSizeIn?: NamedHistogram;
+  responseSizeOut?: NamedHistogram;
   grafanaLinkIn?: string;
   grafanaLinkOut?: string;
   pollMetrics?: number;
+};
+
+type NamedMetric = {
+  id: string;
+  familyName: string;
+  matrix: M.TimeSeries[];
+};
+
+type NamedHistogram = {
+  id: string;
+  familyName: string;
+  average: NamedMetric;
+  median: NamedMetric;
+  percentile95: NamedMetric;
+  percentile99: NamedMetric;
 };
 
 class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
@@ -55,6 +71,9 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   onOptionsChanged = (options: MetricsOptions) => {
     this.options = options;
     options.filters = ['request_count', 'request_size', 'request_duration', 'response_size'];
+    const intervalOpts = computePrometheusQueryInterval(options.duration!);
+    options.step = intervalOpts.step;
+    options.rateInterval = intervalOpts.rateInterval;
     this.fetchMetrics();
   };
 
@@ -124,9 +143,12 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       });
   };
 
-  nameMetric(metric: M.MetricGroup, familyName: string, labels?: string[]): M.MetricGroup {
+  nameMetric(metric: M.MetricGroup, familyName: string, labels?: string[]): NamedMetric | undefined {
     if (metric) {
-      metric.familyName = familyName;
+      let id = familyName;
+      if (labels && labels.length > 0) {
+        id += '-' + labels.join('-');
+      }
       metric.matrix.forEach(ts => {
         if (labels === undefined || labels.length === 0) {
           ts.name = familyName;
@@ -135,19 +157,35 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
           ts.name = `${familyName}{${strLabels}}`;
         }
       });
+      return {
+        id: id,
+        familyName: familyName,
+        matrix: metric.matrix
+      };
     }
-    return metric;
+    return undefined;
   }
 
-  nameHistogram(histo: M.Histogram, familyName: string, labels?: string[]): M.Histogram {
+  nameHistogram(histo: M.Histogram, familyName: string, labels?: string[]): NamedHistogram | undefined {
     if (histo) {
-      histo.familyName = familyName;
-      histo.average = this.nameMetric(histo.average, familyName + '[avg]', labels);
-      histo.median = this.nameMetric(histo.median, familyName + '[med]', labels);
-      histo.percentile95 = this.nameMetric(histo.percentile95, familyName + '[p95]', labels);
-      histo.percentile99 = this.nameMetric(histo.percentile99, familyName + '[p99]', labels);
+      let id = familyName;
+      if (labels) {
+        id += '-' + labels.join('-');
+      }
+      const average = this.nameMetric(histo.average, familyName + '[avg]', labels);
+      const median = this.nameMetric(histo.median, familyName + '[med]', labels);
+      const percentile95 = this.nameMetric(histo.percentile95, familyName + '[p95]', labels);
+      const percentile99 = this.nameMetric(histo.percentile99, familyName + '[p99]', labels);
+      return {
+        id: id,
+        familyName: familyName,
+        average: average!,
+        median: median!,
+        percentile95: percentile95!,
+        percentile99: percentile99!
+      };
     }
-    return histo;
+    return undefined;
   }
 
   getGrafanaInfo() {
@@ -212,10 +250,10 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
                 Input
               </h3>
               <div className="card-pf-body">
-                {this.renderMetric('requestCountIn', this.state.requestCountIn)}
-                {this.renderHistogram('requestSizeIn', this.state.requestSizeIn)}
-                {this.renderHistogram('requestDurationIn', this.state.requestDurationIn)}
-                {this.renderHistogram('responseSizeIn', this.state.responseSizeIn)}
+                {this.renderMetric(this.state.requestCountIn)}
+                {this.renderHistogram(this.state.requestDurationIn)}
+                {this.renderHistogram(this.state.requestSizeIn)}
+                {this.renderHistogram(this.state.responseSizeIn)}
               </div>
               {this.state.grafanaLinkIn && (
                 <span id="grafana-in-link">
@@ -231,10 +269,10 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
                 Output
               </h3>
               <ul className="card-pf-body">
-                {this.renderMetric('requestCountOut', this.state.requestCountOut)}
-                {this.renderHistogram('requestSizeOut', this.state.requestSizeOut)}
-                {this.renderHistogram('requestDurationOut', this.state.requestDurationOut)}
-                {this.renderHistogram('responseSizeOut', this.state.responseSizeOut)}
+                {this.renderMetric(this.state.requestCountOut)}
+                {this.renderHistogram(this.state.requestDurationOut)}
+                {this.renderHistogram(this.state.requestSizeOut)}
+                {this.renderHistogram(this.state.responseSizeOut)}
               </ul>
               {this.state.grafanaLinkOut && (
                 <span id="grafana-out-link">
@@ -248,21 +286,21 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     );
   }
 
-  renderMetric(id: string, metric?: M.MetricGroup) {
+  renderMetric(metric?: NamedMetric) {
     if (metric) {
-      return this.renderChart(id, metric.familyName, graphUtils.toC3Columns(metric.matrix));
+      return this.renderChart(metric.id, metric.familyName, graphUtils.toC3Columns(metric.matrix));
     }
     return <div />;
   }
 
-  renderHistogram(id: string, histo?: M.Histogram) {
+  renderHistogram(histo?: NamedHistogram) {
     if (histo) {
       const columns = graphUtils
         .toC3Columns(histo.average.matrix)
         .concat(graphUtils.toC3Columns(histo.median.matrix))
         .concat(graphUtils.toC3Columns(histo.percentile95.matrix))
         .concat(graphUtils.toC3Columns(histo.percentile99.matrix));
-      return this.renderChart(id, histo.familyName, columns);
+      return this.renderChart(histo.id, histo.familyName, columns);
     }
     return <div />;
   }
@@ -291,7 +329,11 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         }
       }
     };
-    return <LineChart id={id} title={{ text: title }} data={data} axis={axis} point={{ show: false }} />;
+    return (
+      <span key={id}>
+        <LineChart id={id} title={{ text: title }} data={data} axis={axis} point={{ show: false }} />
+      </span>
+    );
   }
 }
 

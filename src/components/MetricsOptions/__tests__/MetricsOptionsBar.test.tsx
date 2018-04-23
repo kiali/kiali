@@ -2,7 +2,6 @@ import * as React from 'react';
 import { mount, shallow } from 'enzyme';
 
 import MetricsOptionsBar from '../MetricsOptionsBar';
-import RateIntervals from '../../../types/RateIntervals';
 
 const optionsChanged = jest.fn();
 const lastOptionsChanged = () => {
@@ -21,8 +20,6 @@ describe('MetricsOptionsBar', () => {
     const opts = lastOptionsChanged();
     // Step = duration / ticks
     expect(opts).toHaveProperty('duration', MetricsOptionsBar.DefaultDuration);
-    expect(opts).toHaveProperty('step', MetricsOptionsBar.DefaultDuration / MetricsOptionsBar.DefaultTicks);
-    expect(opts).toHaveProperty('rateInterval', MetricsOptionsBar.DefaultRateInterval);
 
     let elt = wrapper
       .find('#duration')
@@ -32,22 +29,5 @@ describe('MetricsOptionsBar', () => {
     expect(optionsChanged).toHaveBeenCalledTimes(2);
     const expectedDuration = MetricsOptionsBar.Durations[0][0];
     expect(lastOptionsChanged()).toHaveProperty('duration', expectedDuration);
-    expect(lastOptionsChanged()).toHaveProperty('step', expectedDuration / MetricsOptionsBar.DefaultTicks);
-
-    elt = wrapper
-      .find('#ticks')
-      .find('SafeAnchor')
-      .first();
-    elt.simulate('click');
-    expect(optionsChanged).toHaveBeenCalledTimes(3);
-    expect(lastOptionsChanged()).toHaveProperty('step', expectedDuration / MetricsOptionsBar.Ticks[0]);
-
-    elt = wrapper
-      .find('#rateInterval')
-      .find('SafeAnchor')
-      .last();
-    elt.simulate('click');
-    expect(optionsChanged).toHaveBeenCalledTimes(4);
-    expect(lastOptionsChanged()).toHaveProperty('rateInterval', RateIntervals[RateIntervals.length - 1][0]);
   });
 });

@@ -1,10 +1,9 @@
-import * as M from '../types/Metrics';
+import { TimeSeries } from '../types/Metrics';
 
 export default {
-  toC3Columns(matrix: M.TimeSeries[], title?: string): [string, number][] {
+  toC3Columns(matrix: TimeSeries[], title?: string) {
     if (matrix.length === 0) {
-      let ret: any = [['x'], [title]];
-      return ret;
+      return [['x'], [title || '']];
     }
 
     return matrix
