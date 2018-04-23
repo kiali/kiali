@@ -31,7 +31,7 @@ export class GraphHighlighter {
   };
 
   onMouseOut = (event: CytoscapeMouseOutEvent) => {
-    if (this.hovered !== undefined && this.hovered.summaryTarget === event.summaryTarget) {
+    if (this.hovered && this.hovered.summaryTarget === event.summaryTarget) {
       this.hovered = undefined;
       this.refresh();
     }
@@ -51,7 +51,7 @@ export class GraphHighlighter {
   refresh() {
     this.cy.elements('.' + DIM_CLASS).removeClass(DIM_CLASS);
     let toHighlight = this.getHighlighted();
-    if (toHighlight === null) {
+    if (!toHighlight) {
       toHighlight = this.cy.elements();
     }
 
@@ -76,7 +76,7 @@ export class GraphHighlighter {
   }
 
   getHighlightedByEvent(event: CytoscapeClickEvent | CytoscapeMouseInEvent | undefined) {
-    if (event !== undefined) {
+    if (event) {
       if (event.summaryType === 'node') {
         return this.getNodeHighlight(event.summaryTarget);
       } else if (event.summaryType === 'edge') {
@@ -92,7 +92,7 @@ export class GraphHighlighter {
   // and related nodes to children (including edges)
   getGroupHighlight(groupBox: any) {
     return groupBox.children().reduce((prev, child) => {
-      if (prev === undefined) {
+      if (!prev) {
         prev = this.cy.collection();
       }
       return prev.add(child.closedNeighborhood());

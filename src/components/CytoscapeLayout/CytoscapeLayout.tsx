@@ -54,7 +54,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   resizeWindow() {
     let canvasWrapper = document.getElementById('cytoscape-container')!;
 
-    if (canvasWrapper != null) {
+    if (canvasWrapper) {
       let dimensions = canvasWrapper.getBoundingClientRect();
       canvasWrapper.style.height = `${document.documentElement.scrollHeight - dimensions.top}px`;
     }
@@ -78,7 +78,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
       if (target === cy) {
         return { summaryType: 'graph', summaryTarget: cy };
       } else if (target.isNode()) {
-        if (target.data('groupBy') === 'version') {
+        if (target.data('isGroup') === 'version') {
           return { summaryType: 'group', summaryTarget: target };
         } else {
           return { summaryType: 'node', summaryTarget: target };
@@ -93,20 +93,24 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
     this.cy.on('tap', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
-      if (cytoscapeEvent !== null) {
+      if (cytoscapeEvent) {
         this.handleTap(cytoscapeEvent);
       }
     });
 
     // when the graph is fully populated and ready, we need to add appropriate badges to the nodes
     this.cy.ready((evt: any) => {
+      if (this.props.badgeStatus.hideCBs) {
+        return;
+      }
+
       evt.cy
         .nodes()
         .filter((ele: any) => {
           if (ele.isParent()) {
             return false; // we never need the group box elements, filter them out
           }
-          return ele.data('hasCircuitBreaker') === 'true';
+          return ele.data('isCircuitBreaker') === 'true';
         })
         .forEach(ele => {
           new GraphBadge.CircuitBreakerBadge(ele).buildBadge();
@@ -115,13 +119,13 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
     this.cy.on('mouseover', 'node,edge', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
-      if (cytoscapeEvent !== null) {
+      if (cytoscapeEvent) {
         this.handleMouseIn(cytoscapeEvent);
       }
     });
     this.cy.on('mouseout', 'node,edge', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
-      if (cytoscapeEvent !== null) {
+      if (cytoscapeEvent) {
         this.handleMouseOut(cytoscapeEvent);
       }
     });

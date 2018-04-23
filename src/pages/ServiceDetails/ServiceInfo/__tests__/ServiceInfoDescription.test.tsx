@@ -36,7 +36,14 @@ const endpoints = [
 describe('#ServiceInfoDescription render correctly with data', () => {
   it('should render service description', () => {
     const wrapper = shallow(
-      <ServiceInfoDescription name="reviews" labels={labels} type="ClusterIP" ip="172.30.78.33" endpoints={endpoints} />
+      <ServiceInfoDescription
+        name="reviews"
+        labels={labels}
+        type="ClusterIP"
+        ip="172.30.78.33"
+        endpoints={endpoints}
+        created_at="2018-04-04T15:11:46Z"
+      />
     );
     expect(wrapper).toBeDefined();
     expect(wrapper).toMatchSnapshot();

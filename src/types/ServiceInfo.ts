@@ -40,6 +40,7 @@ export interface Autoscaler {
 
 export interface RouteRule {
   name: string;
+  created_at: string;
   destination?: IstioService;
   precedence?: number;
   match?: MatchCondition;
@@ -195,13 +196,14 @@ export interface CircuitBreaker {
 
 export interface DestinationPolicy {
   name: string;
+  created_at: string;
   destination: IstioService;
   source: IstioService;
   loadbalancing: LoadBalancing;
   circuitBreaker: CircuitBreaker;
 }
 
-export const HasIstioSidecar = (deployments: Deployment[]) => {
+export const hasIstioSidecar = (deployments: Deployment[]) => {
   if (deployments && deployments.length > 0) {
     for (let i = 0; i < deployments.length; i++) {
       let annotations = deployments[i].template_annotations;

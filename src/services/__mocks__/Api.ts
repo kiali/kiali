@@ -1,8 +1,9 @@
 import * as GraphData from '../__mockData__/getGraphElements';
+import { AxiosError } from 'axios';
 
 const fs = require('fs');
 
-export const GetNamespaces = () => {
+export const getNamespaces = () => {
   return new Promise((resolve, reject) => {
     fs.readFile(`./src/services/__mockData__/getNamespaces.json`, 'utf8', (err, data) => {
       if (err) {
@@ -15,7 +16,7 @@ export const GetNamespaces = () => {
   });
 };
 
-export const GetServices = (namespace: String) => {
+export const getServices = (namespace: String) => {
   return new Promise((resolve, reject) => {
     fs.readFile(`./src/services/__mockData__/getServices.json`, 'utf8', (err, data) => {
       if (err) {
@@ -54,7 +55,7 @@ export const getJaegerInfo = () => {
   });
 };
 
-export const GetGraphElements = (namespace: string, params: any) => {
+export const getGraphElements = (namespace: string, params: any) => {
   if (GraphData.hasOwnProperty(namespace)) {
     return Promise.resolve({ data: GraphData[namespace] });
   } else {
@@ -62,7 +63,7 @@ export const GetGraphElements = (namespace: string, params: any) => {
   }
 };
 
-export const GetServiceDetail = (namespace: String, service: String) => {
+export const getServiceDetail = (namespace: String, service: String) => {
   return new Promise((resolve, reject) => {
     fs.readFile(`./src/services/__mockData__/getServiceDetail.json`, 'utf8', (err, data) => {
       if (err) {
@@ -75,7 +76,7 @@ export const GetServiceDetail = (namespace: String, service: String) => {
   });
 };
 
-export const GetIstioRules = (namespace: String) => {
+export const getIstioRules = (namespace: String) => {
   return new Promise((resolve, reject) => {
     fs.readFile(`./src/services/__mockData__/getIstioRules.json`, 'utf8', (err, data) => {
       if (err) {
@@ -88,7 +89,7 @@ export const GetIstioRules = (namespace: String) => {
   });
 };
 
-export const GetIstioRuleDetail = (namespace: String, rule: String) => {
+export const getIstioRuleDetail = (namespace: String, rule: String) => {
   return new Promise((resolve, reject) => {
     fs.readFile(`./src/services/__mockData__/getIstioRuleDetail.json`, 'utf8', (err, data) => {
       if (err) {
@@ -123,4 +124,12 @@ export const getNamespaceMetrics = (namespace: String, params: any) => {
       }
     }
   });
+};
+
+export const getErrorMsg = (msg: string, error: AxiosError) => {
+  let errorMessage = msg;
+  if (error && error.response && error.response.data && error.response.data['error']) {
+    errorMessage = `${msg} Error: [ ${error.response.data['error']} ]`;
+  }
+  return errorMessage;
 };

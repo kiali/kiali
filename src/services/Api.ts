@@ -30,11 +30,11 @@ let newRequest = (method: string, url: string, queryParams: any, data: any) => {
   });
 };
 
-export const GetStatus = () => {
+export const getStatus = () => {
   return newRequest('get', '/api/status', {}, {});
 };
 
-export const GetNamespaces = () => {
+export const getNamespaces = () => {
   return newRequest('get', `/api/namespaces`, {}, {});
 };
 
@@ -42,11 +42,11 @@ export const getNamespaceMetrics = (namespace: String, params: any) => {
   return newRequest('get', `/api/namespaces/${namespace}/metrics`, params, {});
 };
 
-export const GetIstioRules = (namespace: String) => {
+export const getIstioRules = (namespace: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/rules`, {}, {});
 };
 
-export const GetServices = (namespace: String, params?: ServiceListOptions) => {
+export const getServices = (namespace: String, params?: ServiceListOptions) => {
   return newRequest('get', `/api/namespaces/${namespace}/services`, params, {});
 };
 
@@ -66,19 +66,19 @@ export const getJaegerInfo = () => {
   return newRequest('get', `/api/jaeger`, {}, {});
 };
 
-export const GetGraphElements = (namespace: Namespace, params: any) => {
+export const getGraphElements = (namespace: Namespace, params: any) => {
   return newRequest('get', `/api/namespaces/${namespace.name}/graph`, params, {});
 };
 
-export const GetServiceDetail = (namespace: String, service: String) => {
+export const getServiceDetail = (namespace: String, service: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/services/${service}`, {}, {});
 };
 
-export const GetIstioRuleDetail = (namespace: String, rule: String) => {
+export const getIstioRuleDetail = (namespace: String, rule: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/rules/${rule}`, {}, {});
 };
 
-export const GetErrorMsg = (msg: string, error: AxiosError) => {
+export const getErrorMsg = (msg: string, error: AxiosError) => {
   let errorMessage = msg;
   if (error && error.response && error.response.data && error.response.data['error']) {
     errorMessage = `${msg} Error: [ ${error.response.data['error']} ]`;

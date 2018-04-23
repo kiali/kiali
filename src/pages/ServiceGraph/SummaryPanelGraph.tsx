@@ -1,14 +1,15 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import Badge from '../../components/Badge/Badge';
 import RateTable from '../../components/SummaryPanel/RateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/graphing';
+import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
 import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as M from '../../types/Metrics';
+import { Icon } from 'patternfly-react';
 
 type SummaryPanelGraphState = {
   loading: boolean;
@@ -25,6 +26,9 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     right: 0
   };
 
+  // avoid state changes after component is unmounted
+  _isMounted: boolean = false;
+
   constructor(props: SummaryPanelPropType) {
     super(props);
 
@@ -36,15 +40,18 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   }
 
   componentDidMount() {
-    if (this.props.data.summaryTarget) {
-      this.updateRpsChart(this.props);
-    }
+    // don't load data here, wit until props are updated after the graph is loaded
+    this._isMounted = true;
   }
 
   componentWillReceiveProps(nextProps: SummaryPanelPropType) {
-    if (nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
+    if (nextProps.data.summaryTarget && nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
       this.updateRpsChart(nextProps);
     }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   render() {
@@ -55,16 +62,11 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
     const numNodes = cy
       .nodes()
-      .filter('[!groupBy]')
+      .filter('[!isGroup]')
+      .filter('[!isRoot]')
       .size();
     const numEdges = cy.edges().size();
-    const safeRate = (s: string) => {
-      return s ? parseFloat(s) : 0.0;
-    };
-    const rate = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate')));
-    const rate3xx = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate3XX')));
-    const rate4xx = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate4XX')));
-    const rate5xx = cy.edges().reduce((r = 0, edge) => r + safeRate(edge.data('rate5XX')));
+    const trafficRate = getAccumulatedTrafficRate(cy.edges());
     const servicesLink = (
       <Link to="../services" onClick={this.updateServicesFilter}>
         {this.props.namespace}
@@ -75,16 +77,16 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
         <div className="panel-heading">
           Namespace: {servicesLink}
-          <div>{this.renderLabels(numNodes.toString(), numEdges.toString())}</div>
+          {this.renderTopologySummary(numNodes, numEdges)}
         </div>
         <div className="panel-body">
           <div>
             <RateTable
               title="Traffic (requests per second):"
-              rate={rate}
-              rate3xx={rate3xx}
-              rate4xx={rate4xx}
-              rate5xx={rate5xx}
+              rate={trafficRate.rate}
+              rate3xx={trafficRate.rate3xx}
+              rate4xx={trafficRate.rate4xx}
+              rate5xx={trafficRate.rate5xx}
             />
             <div>
               <hr />
@@ -105,6 +107,11 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     };
     API.getNamespaceMetrics(props.namespace, options)
       .then(response => {
+        if (!this._isMounted) {
+          console.log('SummaryPanelGraph: Ignore fetch, component not mounted.');
+          return;
+        }
+
         const data: M.Metrics = response['data'];
         const metrics: Map<String, M.MetricGroup> = data.metrics;
         const reqRates = this.getRates(metrics['request_count_in'], 'RPS');
@@ -117,17 +124,23 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         });
       })
       .catch(error => {
+        if (!this._isMounted) {
+          console.log('SummaryPanelGraph: Ignore fetch error, component not mounted.');
+          return;
+        }
+
         this.setState({ loading: false });
         console.error(error);
         // this.props.onError(error);
       });
   };
 
-  private renderLabels = (numNodes: string, numEdges: string) => (
-    // color="#2d7623" is pf-green-500
-    <div style={{ paddingTop: '3px' }}>
-      <Badge scale={0.9} style="plastic" leftText="services" rightText={numNodes} color="#2d7623" />
-      <Badge scale={0.9} style="plastic" leftText="edges" rightText={numEdges} color="#2d7623" />
+  private renderTopologySummary = (numNodes: number, numEdges: number) => (
+    <div>
+      <Icon name="service" type="pf" style={{ padding: '0 1em' }} />
+      {numNodes.toString()} {numNodes === 1 ? 'service' : 'services'}
+      <Icon name="topology" type="pf" style={{ padding: '0 1em' }} />
+      {numEdges.toString()} {numEdges === 1 ? 'link' : 'links'}
     </div>
   );
 

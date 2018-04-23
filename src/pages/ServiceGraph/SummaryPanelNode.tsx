@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as API from '../../services/Api';
 
 import graphUtils from '../../utils/graphing';
+import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import Badge from '../../components/Badge/Badge';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
@@ -24,6 +25,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     right: 0
   };
 
+  // avoid state changes after component is unmounted
+  _isMounted: boolean = false;
+
   constructor(props: SummaryPanelPropType) {
     super(props);
     this.showRequestCountMetrics = this.showRequestCountMetrics.bind(this);
@@ -38,13 +42,18 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   componentDidMount() {
+    this._isMounted = true;
     this.fetchRequestCountMetrics(this.props);
   }
 
   componentWillReceiveProps(nextProps: SummaryPanelPropType) {
-    if (nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
+    if (nextProps.data.summaryTarget && nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
       this.fetchRequestCountMetrics(nextProps);
     }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   fetchRequestCountMetrics(props: SummaryPanelPropType) {
@@ -59,10 +68,19 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       rateInterval: props.rateInterval,
       filters: ['request_count', 'request_error_count']
     };
-
     API.getServiceMetrics(namespace, service, options)
-      .then(this.showRequestCountMetrics)
+      .then(response => {
+        if (!this._isMounted) {
+          console.log('SummaryPanelNode: Ignore fetch, component not mounted.');
+          return;
+        }
+        this.showRequestCountMetrics(response);
+      })
       .catch(error => {
+        if (!this._isMounted) {
+          console.log('SummaryPanelNode: Ignore fetch error, component not mounted.');
+          return;
+        }
         this.setState({ loading: false });
         console.error(error);
       });
@@ -83,11 +101,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   render() {
-    const RATE = 'rate';
-    const RATE3XX = 'rate3XX';
-    const RATE4XX = 'rate4XX';
-    const RATE5XX = 'rate5XX';
-
     const node = this.props.data.summaryTarget;
 
     const serviceSplit = node.data('service').split('.');
@@ -95,25 +108,14 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const service = serviceSplit[0];
     const serviceHotLink = <a href={`../namespaces/${namespace}/services/${service}`}>{service}</a>;
 
-    let outgoing = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 };
-
-    // aggregate all outgoing rates
-    const safeRate = (s: string) => {
-      return s ? parseFloat(s) : 0.0;
-    };
-    const edges = this.props.data.summaryTarget.edgesTo('*');
-    if (edges.size() > 0) {
-      outgoing.rate = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE)));
-      outgoing.rate3xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE3XX)));
-      outgoing.rate4xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE4XX)));
-      outgoing.rate5xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE5XX)));
-    }
+    const incoming = getTrafficRate(node);
+    const outgoing = getAccumulatedTrafficRate(this.props.data.summaryTarget.edgesTo('*'));
 
     const isUnknown = service === 'unknown';
     return (
       <div className="panel panel-default" style={SummaryPanelNode.panelStyle}>
         <div className="panel-heading">
-          Microservice: {isUnknown ? 'unknown' : serviceHotLink}
+          Service: {isUnknown ? 'unknown' : serviceHotLink}
           <div style={{ paddingTop: '3px' }}>
             <Badge
               scale={0.9}
@@ -134,10 +136,10 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         <div className="panel-body">
           <InOutRateTable
             title="Request Traffic (requests per second):"
-            inRate={parseFloat(node.data(RATE)) || 0}
-            inRate3xx={parseFloat(node.data(RATE3XX)) || 0}
-            inRate4xx={parseFloat(node.data(RATE4XX)) || 0}
-            inRate5xx={parseFloat(node.data(RATE5XX)) || 0}
+            inRate={incoming.rate}
+            inRate3xx={incoming.rate3xx}
+            inRate4xx={incoming.rate4xx}
+            inRate5xx={incoming.rate5xx}
             outRate={outgoing.rate}
             outRate3xx={outgoing.rate3xx}
             outRate4xx={outgoing.rate4xx}

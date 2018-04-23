@@ -1,4 +1,4 @@
-import { Duration, Layout } from './GraphFilter';
+import { Duration, Layout, BadgeStatus } from './GraphFilter';
 import Namespace from './Namespace';
 
 export interface SummaryPanelPropType {
@@ -14,4 +14,5 @@ export interface GraphParamsType {
   namespace: Namespace;
   graphDuration: Duration;
   graphLayout: Layout;
+  badgeStatus: BadgeStatus;
 }

@@ -165,7 +165,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     istioFilters = this.cleanIstioFilters(istioFilters);
 
     if (namespacesSelected.length === 0) {
-      API.GetNamespaces()
+      API.getNamespaces()
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchServices(
@@ -177,7 +177,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         })
         .catch(namespacesError => {
           console.error(JSON.stringify(namespacesError));
-          this.handleError(API.GetErrorMsg('Could not fetch namespace list.', namespacesError));
+          this.handleError(API.getErrorMsg('Could not fetch namespace list.', namespacesError));
         });
     } else {
       this.fetchServices(namespacesSelected, servicenameFilters, istioFilters);
@@ -185,7 +185,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   }
 
   fetchServices(namespaces: string[], servicenameFilters: string[], istioFilters: string[], rateInterval?: string) {
-    const promises = namespaces.map(ns => API.GetServices(ns, { rateInterval: rateInterval }));
+    const promises = namespaces.map(ns => API.getServices(ns, { rateInterval: rateInterval }));
     Promise.all(promises)
       .then(servicesResponse => {
         let updatedServices: ServiceItem[] = [];
@@ -223,7 +223,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       })
       .catch(servicesError => {
         console.error(JSON.stringify(servicesError));
-        this.handleError(API.GetErrorMsg('Could not fetch service list.', servicesError));
+        this.handleError(API.getErrorMsg('Could not fetch service list.', servicesError));
       });
   }
 

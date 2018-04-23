@@ -29,6 +29,7 @@ class CytoscapeLayoutStorybook extends CytoscapeLayout {
 
 const BookInfoCytoscapeLayout = graphLayout => (
   <CytoscapeLayoutStorybook
+    onReady={action('onReady')}
     graphLayout={graphLayout.getLayout()}
     namespace={{ name: 'test' }}
     graphDuration={{ value: QueryOptions.DEFAULT.key }}
@@ -49,6 +50,7 @@ storiesOf('CytoscapeLayout/Bookinfo with layout', module)
 storiesOf('CytoscapeLayout', module)
   .add('Empty layout', () => (
     <CytoscapeLayoutStorybook
+      onReady={action('onReady')}
       graphLayout={DagreGraph.getLayout()}
       namespace={{ name: 'test' }}
       graphDuration={{ value: QueryOptions.DEFAULT.key }}
@@ -60,6 +62,7 @@ storiesOf('CytoscapeLayout', module)
   ))
   .add('Loading', () => (
     <CytoscapeLayoutStorybook
+      onReady={action('onReady')}
       graphLayout={DagreGraph.getLayout()}
       namespace={{ name: 'test' }}
       graphDuration={{ value: QueryOptions.DEFAULT.key }}

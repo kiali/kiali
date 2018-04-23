@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { RouteRule } from '../../../types/ServiceInfo';
+import LocalTime from '../../../components/Time/LocalTime';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
 import RouteRuleMatch from './ServiceInfoRouteRules/RouteRuleMatch';
 import RouteRuleRoute from './ServiceInfoRouteRules/RouteRuleRoute';
@@ -30,6 +31,9 @@ class ServiceInfoRouteRules extends React.Component<ServiceInfoRouteRulesProps> 
           <div key={'rule' + i}>
             <div>
               <strong>Name</strong>: {rule.name}
+            </div>
+            <div>
+              <strong>Created at</strong>: <LocalTime time={rule.created_at} />
             </div>
             <div>
               <strong>Precedence</strong>: {rule.precedence}

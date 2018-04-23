@@ -6,6 +6,7 @@ import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/graphing';
+import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import MetricsOptions from '../../types/MetricsOptions';
 
 type SummaryPanelGroupState = {
@@ -24,6 +25,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     right: 0
   };
 
+  // avoid state changes after component is unmounted
+  _isMounted: boolean = false;
+
   constructor(props: SummaryPanelPropType) {
     super(props);
     this.state = {
@@ -36,13 +40,18 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   }
 
   componentDidMount() {
+    this._isMounted = true;
     this.updateRpsCharts(this.props);
   }
 
   componentWillReceiveProps(nextProps: SummaryPanelPropType) {
-    if (nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
+    if (nextProps.data.summaryTarget && nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
       this.updateRpsCharts(nextProps);
     }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   render() {
@@ -50,34 +59,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const service = this.props.data.summaryTarget.data('service').split('.')[0];
     const serviceHotLink = <a href={`../namespaces/${namespace}/services/${service}`}>{service}</a>;
 
-    const RATE = 'rate';
-    const RATE3XX = 'rate3XX';
-    const RATE4XX = 'rate4XX';
-    const RATE5XX = 'rate5XX';
-
-    let incoming = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 };
-    let outgoing = { rate: 0, rate3xx: 0, rate4xx: 0, rate5xx: 0 };
-
-    // aggregate all incoming rates
-    const safeRate = (s: string) => {
-      return s ? parseFloat(s) : 0.0;
-    };
-    const nodes = this.props.data.summaryTarget.children();
-    if (nodes.size() > 0) {
-      incoming.rate = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE)));
-      incoming.rate3xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE3XX)));
-      incoming.rate4xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE4XX)));
-      incoming.rate5xx = nodes.reduce((r = 0, node) => r + safeRate(node.data(RATE5XX)));
-    }
-
-    // aggregate all outgoing rates
-    const edges = this.props.data.summaryTarget.children().edgesTo('*');
-    if (edges.size() > 0) {
-      outgoing.rate = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE)));
-      outgoing.rate3xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE3XX)));
-      outgoing.rate4xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE4XX)));
-      outgoing.rate5xx = edges.reduce((r = 0, edge) => r + safeRate(edge.data(RATE5XX)));
-    }
+    const incoming = getAccumulatedTrafficRate(this.props.data.summaryTarget.children());
+    const outgoing = getAccumulatedTrafficRate(this.props.data.summaryTarget.children().edgesTo('*'));
 
     return (
       <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
@@ -126,6 +109,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     };
     API.getServiceMetrics(namespace, service, options)
       .then(response => {
+        if (!this._isMounted) {
+          console.log('SummaryPanelGroup: Ignore fetch, component not mounted.');
+          return;
+        }
         const data: M.Metrics = response['data'];
         const metrics: Map<String, M.MetricGroup> = data.metrics;
 
@@ -143,6 +130,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         });
       })
       .catch(error => {
+        if (!this._isMounted) {
+          console.log('SummaryPanelGroup: Ignore fetch error, component not mounted.');
+          return;
+        }
         // TODO: show error alert
         this.setState({ loading: false });
         console.error(error);

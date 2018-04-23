@@ -5,7 +5,7 @@ import ServiceInfoDeployments from './ServiceInfo/ServiceInfoDeployments';
 import ServiceInfoRouteRules from './ServiceInfo/ServiceInfoRouteRules';
 import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
 import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
-import { Endpoints, Deployment, Port, RouteRule, DestinationPolicy, HasIstioSidecar } from '../../types/ServiceInfo';
+import { Endpoints, Deployment, Port, RouteRule, DestinationPolicy, hasIstioSidecar } from '../../types/ServiceInfo';
 import { Health } from '../../types/Health';
 import * as API from '../../services/Api';
 import { ToastNotification, ToastNotificationList, Col, Row } from 'patternfly-react';
@@ -14,6 +14,7 @@ type ServiceInfoState = {
   labels?: Map<string, string>;
   type: string;
   name: string;
+  created_at: string;
   ip: string;
   ports?: Port[];
   endpoints?: Endpoints[];
@@ -33,6 +34,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
     this.state = {
       labels: new Map(),
       name: '',
+      created_at: '',
       type: '',
       ip: '',
       ports: [],
@@ -45,26 +47,22 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
     };
   }
 
-  componentDidMount() {
-    this.fetchServiceDetails(this.props);
-  }
-
   componentWillReceiveProps(nextProps: ServiceId) {
     this.fetchServiceDetails(nextProps);
   }
 
   fetchServiceDetails(props: ServiceId) {
-    console.log('Fetching info of a service...');
-    API.GetServiceDetail(props.namespace, props.service)
+    API.getServiceDetail(props.namespace, props.service)
       .then(response => {
         let data = response['data'];
         this.setState({
           labels: data.labels,
           name: data.name,
+          created_at: data.created_at,
           type: data.type,
           ports: data.ports,
           endpoints: data.endpoints,
-          istio_sidecar: HasIstioSidecar(data.deployments),
+          istio_sidecar: hasIstioSidecar(data.deployments),
           deployments: data.deployments,
           dependencies: data.dependencies,
           routeRules: this.sortRouteRulesByPrecedence(data.route_rules),
@@ -76,7 +74,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
       .catch(error => {
         this.setState({
           error: true,
-          errorMessage: API.GetErrorMsg('Could not fetch Service Details.', error)
+          errorMessage: API.getErrorMsg('Could not fetch Service Details.', error)
         });
         console.log(error);
       });
@@ -95,7 +93,23 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
     return sorted;
   }
 
+  calculateColumns(items: boolean[]) {
+    let cells = 0;
+    items.forEach(v => (v ? cells++ : v));
+    let candidate = Number(12 / cells);
+    return candidate * cells > 12 ? candidate - 1 : candidate;
+  }
+
   render() {
+    let deployments = this.state.deployments || [];
+    let dependencies = this.state.dependencies || new Map();
+    let routeRules = this.state.routeRules || [];
+    let destinationPolicies = this.state.destinationPolicies || [];
+    let cWidth = this.calculateColumns([
+      deployments.length > 0,
+      dependencies.size > 0,
+      routeRules.length > 0 || destinationPolicies.length > 0
+    ]);
     return (
       <div>
         {this.state.error ? (
@@ -113,6 +127,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
             <Col xs={12} sm={12} md={12} lg={12}>
               <ServiceInfoDescription
                 name={this.state.name}
+                created_at={this.state.created_at}
                 istio_sidecar={this.state.istio_sidecar}
                 labels={this.state.labels}
                 ports={this.state.ports}
@@ -124,16 +139,26 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
             </Col>
           </Row>
           <Row className="row-cards-pf">
-            <Col xs={12} sm={6} md={4} lg={4}>
-              <ServiceInfoDeployments deployments={this.state.deployments} />
-            </Col>
-            <Col xs={12} sm={6} md={4} lg={4}>
-              <ServiceInfoRoutes dependencies={this.state.dependencies} />
-            </Col>
-            <Col xs={12} sm={6} md={4} lg={4}>
-              <ServiceInfoRouteRules routeRules={this.state.routeRules} />
-              <ServiceInfoDestinationPolicies destinationPolicies={this.state.destinationPolicies} />
-            </Col>
+            {(deployments.length > 0 || this.state.istio_sidecar) && (
+              <Col xs={12} sm={12} md={cWidth} lg={cWidth}>
+                <ServiceInfoDeployments deployments={deployments} />
+              </Col>
+            )}
+            {(dependencies.size > 0 || this.state.istio_sidecar) && (
+              <Col xs={12} sm={6} md={cWidth} lg={cWidth}>
+                <ServiceInfoRoutes dependencies={dependencies} />
+              </Col>
+            )}
+            {(routeRules.length > 0 || destinationPolicies.length > 0 || this.state.istio_sidecar) && (
+              <Col xs={12} sm={6} md={cWidth} lg={cWidth}>
+                {(routeRules.length > 0 || this.state.istio_sidecar) && (
+                  <ServiceInfoRouteRules routeRules={routeRules} />
+                )}
+                {(destinationPolicies.length > 0 || this.state.istio_sidecar) && (
+                  <ServiceInfoDestinationPolicies destinationPolicies={destinationPolicies} />
+                )}
+              </Col>
+            )}
           </Row>
         </div>
       </div>

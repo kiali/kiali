@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, ButtonGroup, DropdownButton, MenuItem } from 'patternfly-react';
+import { Button, ButtonGroup, DropdownButton, MenuItem, Switch } from 'patternfly-react';
 import { ButtonToolbar, Glyphicon } from 'react-bootstrap';
 
 import { GraphFilterProps, GraphFilterState } from '../../types/GraphFilter';
@@ -16,9 +16,9 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
   }
 
   componentDidMount() {
-    // TODO: [KIALI-436] API.GetNamespaces() is also called in Services component.
+    // TODO: [KIALI-436] API.getNamespaces() is also called in Services component.
     // We should consolidate them into one.
-    API.GetNamespaces()
+    API.getNamespaces()
       .then(this.setNamespaces)
       .catch(error => {
         this.props.onError(error);
@@ -54,6 +54,10 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
     this.props.onRefresh();
   };
 
+  handleToggleCBs = () => {
+    this.props.onBadgeStatusChange({ hideCBs: !this.props.activeBadgeStatus.hideCBs });
+  };
+
   render() {
     return (
       <div>
@@ -82,12 +86,19 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             onClick={this.updateLayout}
             initialLayout={this.props.activeLayout.name}
           />
+
           <ButtonGroup className="pull-right">
             <Button disabled={this.props.disabled} onClick={this.handleRefresh}>
               <Glyphicon glyph="refresh" />
             </Button>
           </ButtonGroup>
         </ButtonToolbar>
+
+        <div style={{ paddingTop: '10px' }}>
+          <ButtonGroup>
+            <Switch labelText="Show Circuit Breakers" disabled={this.props.disabled} onChange={this.handleToggleCBs} />
+          </ButtonGroup>
+        </div>
       </div>
     );
   }

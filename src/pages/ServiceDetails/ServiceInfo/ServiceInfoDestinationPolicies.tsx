@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { DestinationPolicy } from '../../../types/ServiceInfo';
+import LocalTime from '../../../components/Time/LocalTime';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
 import RouteRuleIstioService from './ServiceInfoRouteRules/RouteRuleIstioService';
 
@@ -83,6 +84,11 @@ class ServiceInfoDestinationPolicies extends React.Component<ServiceInfoDestinat
                 <strong>Name</strong>
                 {': '}
                 {dPolicy.name}
+              </div>
+              <div>
+                <strong>Created at</strong>
+                {': '}
+                <LocalTime time={dPolicy.created_at} />
               </div>
               {dPolicy.destination ? <RouteRuleIstioService name="Destination" service={dPolicy.destination} /> : null}
               {dPolicy.source ? <RouteRuleIstioService name="Source" service={dPolicy.source} /> : null}

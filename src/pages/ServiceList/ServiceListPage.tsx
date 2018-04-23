@@ -14,7 +14,6 @@ type ServiceListProps = {
 class ServiceListPage extends React.Component<ServiceListProps, ServiceListState> {
   constructor(props: ServiceListProps) {
     super(props);
-    console.log('Starting ServiceListPage');
 
     this.dismissAlert = this.dismissAlert.bind(this);
     this.handleError = this.handleError.bind(this);
