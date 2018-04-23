@@ -29,7 +29,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
     this.setState({ availableNamespaces: response['data'] });
   };
 
-  updateDuration = (value: string) => {
+  updateDuration = (value: number) => {
     if (this.props.activeDuration.value !== value) {
       // notify callback
       this.props.onFilterChange({ value: value });

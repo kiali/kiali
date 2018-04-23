@@ -21,7 +21,7 @@ const testReadyHandler = () => {
 describe('CytographLayout component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
-    const myDuration: Duration = { value: '5m' };
+    const myDuration: Duration = { value: 300 };
 
     const wrapper = shallow(
       <CytoscapeLayout
