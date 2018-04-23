@@ -24,6 +24,7 @@ type RouteRule struct {
 	Mirror           interface{} `json:"mirror"`
 	CorsPolicy       interface{} `json:"corsPolicy"`
 	AppendHeaders    interface{} `json:"appendHeaders"`
+	RouteWarning     string      `json:"routeWarning"`
 }
 
 func (rules *RouteRules) Parse(routeRules []kubernetes.IstioObject) {

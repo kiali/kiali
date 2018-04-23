@@ -89,6 +89,12 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceHealth,
 		},
 		{
+			"ServiceValidations",
+			"GET",
+			"/api/namespaces/{namespace}/services/{service}/istio_validations",
+			handlers.ServiceIstioValidations,
+		},
+		{
 			"NamespaceMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/metrics",

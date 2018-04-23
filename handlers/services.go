@@ -91,6 +91,27 @@ func ServiceHealth(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, health)
 }
 
+// ServiceIstioValidations is the API handler to get istio validations of a single service
+func ServiceIstioValidations(w http.ResponseWriter, r *http.Request) {
+	// Get business layer
+	business, err := business.Get()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	service := vars["service"]
+
+	istioValidations, err := business.Validations.GetServiceValidations(namespace, service)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Error checking istio object consistency: "+err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, istioValidations)
+}
+
 // ServiceDetails is the API handler to fetch full details of an specific service
 func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	// Get business layer
