@@ -31,9 +31,9 @@ export class DurationDropdown extends React.Component<DurationDropdownProps, Dur
     };
   }
 
-  onDurationChanged = (key: number) => {
-    this.setState({ currentDuration: key });
-    this.props.onClick(key);
+  onDurationChanged = (duration: number) => {
+    this.setState({ currentDuration: duration });
+    this.props.onClick(duration);
   };
 
   render() {
