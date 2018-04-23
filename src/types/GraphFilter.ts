@@ -24,7 +24,7 @@ export interface Layout {
 }
 
 export interface Duration {
-  value: string;
+  value: number;
 }
 
 export interface BadgeStatus {
