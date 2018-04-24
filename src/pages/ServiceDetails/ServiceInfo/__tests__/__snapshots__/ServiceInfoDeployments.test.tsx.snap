@@ -22,6 +22,7 @@ ShallowWrapper {
           },
           "name": "reviews-v2",
           "replicas": 5,
+          "resource_version": "1234",
           "unavailable_replicas": 2,
         },
         Object {
@@ -39,6 +40,7 @@ ShallowWrapper {
           },
           "name": "reviews-v3",
           "replicas": 2,
+          "resource_version": "1234",
           "unavailable_replicas": 0,
         },
         Object {
@@ -56,6 +58,7 @@ ShallowWrapper {
           },
           "name": "reviews-v1",
           "replicas": 1,
+          "resource_version": "1234",
           "unavailable_replicas": 0,
         },
       ]
@@ -71,21 +74,385 @@ ShallowWrapper {
   Symbol(enzyme.__node__): Object {
     "instance": null,
     "key": undefined,
-    "nodeType": "class",
+    "nodeType": "host",
     "props": Object {
-      "iconName": "cube",
-      "iconType": "fa",
-      "items": Array [
-        <Row
-          bsClass="row"
+      "children": <Row
+        bsClass="row"
+        className="row-cards-pf"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
           componentClass="div"
+          lg={12}
+          md={12}
+          sm={12}
+          xs={12}
         >
-          <Col
-            bsClass="col"
-            componentClass="div"
-            xs={12}
+          <div
+            className="card-pf-body"
           >
+            <p>
+              <strong>
+                reviews-v2
+              </strong>
+            </p>
+            <div />
             <div>
+              <strong>
+                Pod status: 
+              </strong>
+               
+              3
+               / 
+              5
+               
+              <Icon
+                name="warning-triangle-o"
+                type="pf"
+              />
+            </div>
+            <div>
+              <strong>
+                Autoscaler: 
+              </strong>
+              from 
+              2
+               to 
+              10
+               pods (
+              50
+              % CPU)
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Created at: 
+                </strong>
+                <LocalTime
+                  time="2018-03-14T10:17:52Z"
+                />
+              </span>
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Resource Version: 
+                </strong>
+                1234
+              </span>
+            </div>
+            <hr />
+          </div>
+          <div
+            className="card-pf-body"
+          >
+            <p>
+              <strong>
+                reviews-v3
+              </strong>
+            </p>
+            <div />
+            <div>
+              <strong>
+                Pod status: 
+              </strong>
+               
+              2
+               / 
+              2
+               
+              <Icon
+                name="ok"
+                type="pf"
+              />
+            </div>
+            <div>
+              <strong>
+                Autoscaler: 
+              </strong>
+              from 
+              2
+               to 
+              10
+               pods (
+              50
+              % CPU)
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Created at: 
+                </strong>
+                <LocalTime
+                  time="2018-03-14T10:17:52Z"
+                />
+              </span>
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Resource Version: 
+                </strong>
+                1234
+              </span>
+            </div>
+            <hr />
+          </div>
+          <div
+            className="card-pf-body"
+          >
+            <p>
+              <strong>
+                reviews-v1
+              </strong>
+            </p>
+            <div />
+            <div>
+              <strong>
+                Pod status: 
+              </strong>
+               
+              1
+               / 
+              1
+               
+              <Icon
+                name="ok"
+                type="pf"
+              />
+            </div>
+            <div>
+              <strong>
+                Autoscaler: 
+              </strong>
+              from 
+              2
+               to 
+              10
+               pods (
+              50
+              % CPU)
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Created at: 
+                </strong>
+                <LocalTime
+                  time="2018-03-14T10:17:52Z"
+                />
+              </span>
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Resource Version: 
+                </strong>
+                1234
+              </span>
+            </div>
+            <hr />
+          </div>
+        </Col>
+      </Row>,
+      "className": "card-pf",
+    },
+    "ref": null,
+    "rendered": Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "bsClass": "row",
+        "children": <Col
+          bsClass="col"
+          componentClass="div"
+          lg={12}
+          md={12}
+          sm={12}
+          xs={12}
+        >
+          <div
+            className="card-pf-body"
+          >
+            <p>
+              <strong>
+                reviews-v2
+              </strong>
+            </p>
+            <div />
+            <div>
+              <strong>
+                Pod status: 
+              </strong>
+               
+              3
+               / 
+              5
+               
+              <Icon
+                name="warning-triangle-o"
+                type="pf"
+              />
+            </div>
+            <div>
+              <strong>
+                Autoscaler: 
+              </strong>
+              from 
+              2
+               to 
+              10
+               pods (
+              50
+              % CPU)
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Created at: 
+                </strong>
+                <LocalTime
+                  time="2018-03-14T10:17:52Z"
+                />
+              </span>
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Resource Version: 
+                </strong>
+                1234
+              </span>
+            </div>
+            <hr />
+          </div>
+          <div
+            className="card-pf-body"
+          >
+            <p>
+              <strong>
+                reviews-v3
+              </strong>
+            </p>
+            <div />
+            <div>
+              <strong>
+                Pod status: 
+              </strong>
+               
+              2
+               / 
+              2
+               
+              <Icon
+                name="ok"
+                type="pf"
+              />
+            </div>
+            <div>
+              <strong>
+                Autoscaler: 
+              </strong>
+              from 
+              2
+               to 
+              10
+               pods (
+              50
+              % CPU)
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Created at: 
+                </strong>
+                <LocalTime
+                  time="2018-03-14T10:17:52Z"
+                />
+              </span>
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Resource Version: 
+                </strong>
+                1234
+              </span>
+            </div>
+            <hr />
+          </div>
+          <div
+            className="card-pf-body"
+          >
+            <p>
+              <strong>
+                reviews-v1
+              </strong>
+            </p>
+            <div />
+            <div>
+              <strong>
+                Pod status: 
+              </strong>
+               
+              1
+               / 
+              1
+               
+              <Icon
+                name="ok"
+                type="pf"
+              />
+            </div>
+            <div>
+              <strong>
+                Autoscaler: 
+              </strong>
+              from 
+              2
+               to 
+              10
+               pods (
+              50
+              % CPU)
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Created at: 
+                </strong>
+                <LocalTime
+                  time="2018-03-14T10:17:52Z"
+                />
+              </span>
+            </div>
+            <div>
+              <span>
+                <strong>
+                  Resource Version: 
+                </strong>
+                1234
+              </span>
+            </div>
+            <hr />
+          </div>
+        </Col>,
+        "className": "row-cards-pf",
+        "componentClass": "div",
+      },
+      "ref": null,
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "bsClass": "col",
+          "children": Array [
+            <div
+              className="card-pf-body"
+            >
               <p>
                 <strong>
                   reviews-v2
@@ -118,28 +485,29 @@ ShallowWrapper {
                 50
                 % CPU)
               </div>
-              <p>
-                <strong>
-                  Created at: 
-                </strong>
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </p>
-            </div>
-            <hr />
-          </Col>
-        </Row>,
-        <Row
-          bsClass="row"
-          componentClass="div"
-        >
-          <Col
-            bsClass="col"
-            componentClass="div"
-            xs={12}
-          >
-            <div>
+              <div>
+                <span>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </span>
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Resource Version: 
+                  </strong>
+                  1234
+                </span>
+              </div>
+              <hr />
+            </div>,
+            <div
+              className="card-pf-body"
+            >
               <p>
                 <strong>
                   reviews-v3
@@ -172,28 +540,29 @@ ShallowWrapper {
                 50
                 % CPU)
               </div>
-              <p>
-                <strong>
-                  Created at: 
-                </strong>
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </p>
-            </div>
-            <hr />
-          </Col>
-        </Row>,
-        <Row
-          bsClass="row"
-          componentClass="div"
-        >
-          <Col
-            bsClass="col"
-            componentClass="div"
-            xs={12}
-          >
-            <div>
+              <div>
+                <span>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </span>
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Resource Version: 
+                  </strong>
+                  1234
+                </span>
+              </div>
+              <hr />
+            </div>,
+            <div
+              className="card-pf-body"
+            >
               <p>
                 <strong>
                   reviews-v1
@@ -226,44 +595,1337 @@ ShallowWrapper {
                 50
                 % CPU)
               </div>
-              <p>
-                <strong>
-                  Created at: 
-                </strong>
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </p>
-            </div>
-            <hr />
-          </Col>
-        </Row>,
-      ],
-      "title": "Deployments",
+              <div>
+                <span>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </span>
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Resource Version: 
+                  </strong>
+                  1234
+                </span>
+              </div>
+              <hr />
+            </div>,
+          ],
+          "componentClass": "div",
+          "lg": 12,
+          "md": 12,
+          "sm": 12,
+          "xs": 12,
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": "deployments_0",
+            "nodeType": "host",
+            "props": Object {
+              "children": Array [
+                <p>
+                  <strong>
+                    reviews-v2
+                  </strong>
+                </p>,
+                <div />,
+                <div>
+                  <strong>
+                    Pod status: 
+                  </strong>
+                   
+                  3
+                   / 
+                  5
+                   
+                  <Icon
+                    name="warning-triangle-o"
+                    type="pf"
+                  />
+                </div>,
+                <div>
+                  <strong>
+                    Autoscaler: 
+                  </strong>
+                  from 
+                  2
+                   to 
+                  10
+                   pods (
+                  50
+                  % CPU)
+                </div>,
+                <div>
+                  <span>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </span>
+                </div>,
+                <div>
+                  <span>
+                    <strong>
+                      Resource Version: 
+                    </strong>
+                    1234
+                  </span>
+                </div>,
+                <hr />,
+              ],
+              "className": "card-pf-body",
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <strong>
+                    reviews-v2
+                  </strong>,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": "reviews-v2",
+                  },
+                  "ref": null,
+                  "rendered": "reviews-v2",
+                  "type": "strong",
+                },
+                "type": "p",
+              },
+              Object {
+                "instance": null,
+                "key": "labels",
+                "nodeType": "host",
+                "props": Object {
+                  "children": Array [],
+                },
+                "ref": null,
+                "rendered": Array [],
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": Array [
+                    <strong>
+                      Pod status: 
+                    </strong>,
+                    " ",
+                    3,
+                    " / ",
+                    5,
+                    " ",
+                    <Icon
+                      name="warning-triangle-o"
+                      type="pf"
+                    />,
+                  ],
+                },
+                "ref": null,
+                "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": "Pod status: ",
+                    },
+                    "ref": null,
+                    "rendered": "Pod status: ",
+                    "type": "strong",
+                  },
+                  " ",
+                  3,
+                  " / ",
+                  5,
+                  " ",
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "function",
+                    "props": Object {
+                      "name": "warning-triangle-o",
+                      "type": "pf",
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                ],
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": Array [
+                    <strong>
+                      Autoscaler: 
+                    </strong>,
+                    "from ",
+                    2,
+                    " to ",
+                    10,
+                    " pods (",
+                    50,
+                    "% CPU)",
+                  ],
+                },
+                "ref": null,
+                "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": "Autoscaler: ",
+                    },
+                    "ref": null,
+                    "rendered": "Autoscaler: ",
+                    "type": "strong",
+                  },
+                  "from ",
+                  2,
+                  " to ",
+                  10,
+                  " pods (",
+                  50,
+                  "% CPU)",
+                ],
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <span>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </span>,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Created at: 
+                      </strong>,
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />,
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Created at: ",
+                      },
+                      "ref": null,
+                      "rendered": "Created at: ",
+                      "type": "strong",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "time": "2018-03-14T10:17:52Z",
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                  ],
+                  "type": "span",
+                },
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <span>
+                    <strong>
+                      Resource Version: 
+                    </strong>
+                    1234
+                  </span>,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Resource Version: 
+                      </strong>,
+                      "1234",
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Resource Version: ",
+                      },
+                      "ref": null,
+                      "rendered": "Resource Version: ",
+                      "type": "strong",
+                    },
+                    "1234",
+                  ],
+                  "type": "span",
+                },
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {},
+                "ref": null,
+                "rendered": null,
+                "type": "hr",
+              },
+            ],
+            "type": "div",
+          },
+          Object {
+            "instance": null,
+            "key": "deployments_1",
+            "nodeType": "host",
+            "props": Object {
+              "children": Array [
+                <p>
+                  <strong>
+                    reviews-v3
+                  </strong>
+                </p>,
+                <div />,
+                <div>
+                  <strong>
+                    Pod status: 
+                  </strong>
+                   
+                  2
+                   / 
+                  2
+                   
+                  <Icon
+                    name="ok"
+                    type="pf"
+                  />
+                </div>,
+                <div>
+                  <strong>
+                    Autoscaler: 
+                  </strong>
+                  from 
+                  2
+                   to 
+                  10
+                   pods (
+                  50
+                  % CPU)
+                </div>,
+                <div>
+                  <span>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </span>
+                </div>,
+                <div>
+                  <span>
+                    <strong>
+                      Resource Version: 
+                    </strong>
+                    1234
+                  </span>
+                </div>,
+                <hr />,
+              ],
+              "className": "card-pf-body",
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <strong>
+                    reviews-v3
+                  </strong>,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": "reviews-v3",
+                  },
+                  "ref": null,
+                  "rendered": "reviews-v3",
+                  "type": "strong",
+                },
+                "type": "p",
+              },
+              Object {
+                "instance": null,
+                "key": "labels",
+                "nodeType": "host",
+                "props": Object {
+                  "children": Array [],
+                },
+                "ref": null,
+                "rendered": Array [],
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": Array [
+                    <strong>
+                      Pod status: 
+                    </strong>,
+                    " ",
+                    2,
+                    " / ",
+                    2,
+                    " ",
+                    <Icon
+                      name="ok"
+                      type="pf"
+                    />,
+                  ],
+                },
+                "ref": null,
+                "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": "Pod status: ",
+                    },
+                    "ref": null,
+                    "rendered": "Pod status: ",
+                    "type": "strong",
+                  },
+                  " ",
+                  2,
+                  " / ",
+                  2,
+                  " ",
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "function",
+                    "props": Object {
+                      "name": "ok",
+                      "type": "pf",
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                ],
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": Array [
+                    <strong>
+                      Autoscaler: 
+                    </strong>,
+                    "from ",
+                    2,
+                    " to ",
+                    10,
+                    " pods (",
+                    50,
+                    "% CPU)",
+                  ],
+                },
+                "ref": null,
+                "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": "Autoscaler: ",
+                    },
+                    "ref": null,
+                    "rendered": "Autoscaler: ",
+                    "type": "strong",
+                  },
+                  "from ",
+                  2,
+                  " to ",
+                  10,
+                  " pods (",
+                  50,
+                  "% CPU)",
+                ],
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <span>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </span>,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Created at: 
+                      </strong>,
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />,
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Created at: ",
+                      },
+                      "ref": null,
+                      "rendered": "Created at: ",
+                      "type": "strong",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "time": "2018-03-14T10:17:52Z",
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                  ],
+                  "type": "span",
+                },
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <span>
+                    <strong>
+                      Resource Version: 
+                    </strong>
+                    1234
+                  </span>,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Resource Version: 
+                      </strong>,
+                      "1234",
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Resource Version: ",
+                      },
+                      "ref": null,
+                      "rendered": "Resource Version: ",
+                      "type": "strong",
+                    },
+                    "1234",
+                  ],
+                  "type": "span",
+                },
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {},
+                "ref": null,
+                "rendered": null,
+                "type": "hr",
+              },
+            ],
+            "type": "div",
+          },
+          Object {
+            "instance": null,
+            "key": "deployments_2",
+            "nodeType": "host",
+            "props": Object {
+              "children": Array [
+                <p>
+                  <strong>
+                    reviews-v1
+                  </strong>
+                </p>,
+                <div />,
+                <div>
+                  <strong>
+                    Pod status: 
+                  </strong>
+                   
+                  1
+                   / 
+                  1
+                   
+                  <Icon
+                    name="ok"
+                    type="pf"
+                  />
+                </div>,
+                <div>
+                  <strong>
+                    Autoscaler: 
+                  </strong>
+                  from 
+                  2
+                   to 
+                  10
+                   pods (
+                  50
+                  % CPU)
+                </div>,
+                <div>
+                  <span>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </span>
+                </div>,
+                <div>
+                  <span>
+                    <strong>
+                      Resource Version: 
+                    </strong>
+                    1234
+                  </span>
+                </div>,
+                <hr />,
+              ],
+              "className": "card-pf-body",
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <strong>
+                    reviews-v1
+                  </strong>,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": "reviews-v1",
+                  },
+                  "ref": null,
+                  "rendered": "reviews-v1",
+                  "type": "strong",
+                },
+                "type": "p",
+              },
+              Object {
+                "instance": null,
+                "key": "labels",
+                "nodeType": "host",
+                "props": Object {
+                  "children": Array [],
+                },
+                "ref": null,
+                "rendered": Array [],
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": Array [
+                    <strong>
+                      Pod status: 
+                    </strong>,
+                    " ",
+                    1,
+                    " / ",
+                    1,
+                    " ",
+                    <Icon
+                      name="ok"
+                      type="pf"
+                    />,
+                  ],
+                },
+                "ref": null,
+                "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": "Pod status: ",
+                    },
+                    "ref": null,
+                    "rendered": "Pod status: ",
+                    "type": "strong",
+                  },
+                  " ",
+                  1,
+                  " / ",
+                  1,
+                  " ",
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "function",
+                    "props": Object {
+                      "name": "ok",
+                      "type": "pf",
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                ],
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": Array [
+                    <strong>
+                      Autoscaler: 
+                    </strong>,
+                    "from ",
+                    2,
+                    " to ",
+                    10,
+                    " pods (",
+                    50,
+                    "% CPU)",
+                  ],
+                },
+                "ref": null,
+                "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": "Autoscaler: ",
+                    },
+                    "ref": null,
+                    "rendered": "Autoscaler: ",
+                    "type": "strong",
+                  },
+                  "from ",
+                  2,
+                  " to ",
+                  10,
+                  " pods (",
+                  50,
+                  "% CPU)",
+                ],
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <span>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </span>,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Created at: 
+                      </strong>,
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />,
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Created at: ",
+                      },
+                      "ref": null,
+                      "rendered": "Created at: ",
+                      "type": "strong",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "time": "2018-03-14T10:17:52Z",
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                  ],
+                  "type": "span",
+                },
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <span>
+                    <strong>
+                      Resource Version: 
+                    </strong>
+                    1234
+                  </span>,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Resource Version: 
+                      </strong>,
+                      "1234",
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Resource Version: ",
+                      },
+                      "ref": null,
+                      "rendered": "Resource Version: ",
+                      "type": "strong",
+                    },
+                    "1234",
+                  ],
+                  "type": "span",
+                },
+                "type": "div",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {},
+                "ref": null,
+                "rendered": null,
+                "type": "hr",
+              },
+            ],
+            "type": "div",
+          },
+        ],
+        "type": [Function],
+      },
+      "type": [Function],
     },
-    "ref": null,
-    "rendered": null,
-    "type": [Function],
+    "type": "div",
   },
   Symbol(enzyme.__nodes__): Array [
     Object {
       "instance": null,
       "key": undefined,
-      "nodeType": "class",
+      "nodeType": "host",
       "props": Object {
-        "iconName": "cube",
-        "iconType": "fa",
-        "items": Array [
-          <Row
-            bsClass="row"
+        "children": <Row
+          bsClass="row"
+          className="row-cards-pf"
+          componentClass="div"
+        >
+          <Col
+            bsClass="col"
             componentClass="div"
+            lg={12}
+            md={12}
+            sm={12}
+            xs={12}
           >
-            <Col
-              bsClass="col"
-              componentClass="div"
-              xs={12}
+            <div
+              className="card-pf-body"
             >
+              <p>
+                <strong>
+                  reviews-v2
+                </strong>
+              </p>
+              <div />
               <div>
+                <strong>
+                  Pod status: 
+                </strong>
+                 
+                3
+                 / 
+                5
+                 
+                <Icon
+                  name="warning-triangle-o"
+                  type="pf"
+                />
+              </div>
+              <div>
+                <strong>
+                  Autoscaler: 
+                </strong>
+                from 
+                2
+                 to 
+                10
+                 pods (
+                50
+                % CPU)
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </span>
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Resource Version: 
+                  </strong>
+                  1234
+                </span>
+              </div>
+              <hr />
+            </div>
+            <div
+              className="card-pf-body"
+            >
+              <p>
+                <strong>
+                  reviews-v3
+                </strong>
+              </p>
+              <div />
+              <div>
+                <strong>
+                  Pod status: 
+                </strong>
+                 
+                2
+                 / 
+                2
+                 
+                <Icon
+                  name="ok"
+                  type="pf"
+                />
+              </div>
+              <div>
+                <strong>
+                  Autoscaler: 
+                </strong>
+                from 
+                2
+                 to 
+                10
+                 pods (
+                50
+                % CPU)
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </span>
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Resource Version: 
+                  </strong>
+                  1234
+                </span>
+              </div>
+              <hr />
+            </div>
+            <div
+              className="card-pf-body"
+            >
+              <p>
+                <strong>
+                  reviews-v1
+                </strong>
+              </p>
+              <div />
+              <div>
+                <strong>
+                  Pod status: 
+                </strong>
+                 
+                1
+                 / 
+                1
+                 
+                <Icon
+                  name="ok"
+                  type="pf"
+                />
+              </div>
+              <div>
+                <strong>
+                  Autoscaler: 
+                </strong>
+                from 
+                2
+                 to 
+                10
+                 pods (
+                50
+                % CPU)
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </span>
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Resource Version: 
+                  </strong>
+                  1234
+                </span>
+              </div>
+              <hr />
+            </div>
+          </Col>
+        </Row>,
+        "className": "card-pf",
+      },
+      "ref": null,
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "bsClass": "row",
+          "children": <Col
+            bsClass="col"
+            componentClass="div"
+            lg={12}
+            md={12}
+            sm={12}
+            xs={12}
+          >
+            <div
+              className="card-pf-body"
+            >
+              <p>
+                <strong>
+                  reviews-v2
+                </strong>
+              </p>
+              <div />
+              <div>
+                <strong>
+                  Pod status: 
+                </strong>
+                 
+                3
+                 / 
+                5
+                 
+                <Icon
+                  name="warning-triangle-o"
+                  type="pf"
+                />
+              </div>
+              <div>
+                <strong>
+                  Autoscaler: 
+                </strong>
+                from 
+                2
+                 to 
+                10
+                 pods (
+                50
+                % CPU)
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </span>
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Resource Version: 
+                  </strong>
+                  1234
+                </span>
+              </div>
+              <hr />
+            </div>
+            <div
+              className="card-pf-body"
+            >
+              <p>
+                <strong>
+                  reviews-v3
+                </strong>
+              </p>
+              <div />
+              <div>
+                <strong>
+                  Pod status: 
+                </strong>
+                 
+                2
+                 / 
+                2
+                 
+                <Icon
+                  name="ok"
+                  type="pf"
+                />
+              </div>
+              <div>
+                <strong>
+                  Autoscaler: 
+                </strong>
+                from 
+                2
+                 to 
+                10
+                 pods (
+                50
+                % CPU)
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </span>
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Resource Version: 
+                  </strong>
+                  1234
+                </span>
+              </div>
+              <hr />
+            </div>
+            <div
+              className="card-pf-body"
+            >
+              <p>
+                <strong>
+                  reviews-v1
+                </strong>
+              </p>
+              <div />
+              <div>
+                <strong>
+                  Pod status: 
+                </strong>
+                 
+                1
+                 / 
+                1
+                 
+                <Icon
+                  name="ok"
+                  type="pf"
+                />
+              </div>
+              <div>
+                <strong>
+                  Autoscaler: 
+                </strong>
+                from 
+                2
+                 to 
+                10
+                 pods (
+                50
+                % CPU)
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </span>
+              </div>
+              <div>
+                <span>
+                  <strong>
+                    Resource Version: 
+                  </strong>
+                  1234
+                </span>
+              </div>
+              <hr />
+            </div>
+          </Col>,
+          "className": "row-cards-pf",
+          "componentClass": "div",
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "bsClass": "col",
+            "children": Array [
+              <div
+                className="card-pf-body"
+              >
                 <p>
                   <strong>
                     reviews-v2
@@ -296,28 +1958,29 @@ ShallowWrapper {
                   50
                   % CPU)
                 </div>
-                <p>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </p>
-              </div>
-              <hr />
-            </Col>
-          </Row>,
-          <Row
-            bsClass="row"
-            componentClass="div"
-          >
-            <Col
-              bsClass="col"
-              componentClass="div"
-              xs={12}
-            >
-              <div>
+                <div>
+                  <span>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </span>
+                </div>
+                <div>
+                  <span>
+                    <strong>
+                      Resource Version: 
+                    </strong>
+                    1234
+                  </span>
+                </div>
+                <hr />
+              </div>,
+              <div
+                className="card-pf-body"
+              >
                 <p>
                   <strong>
                     reviews-v3
@@ -350,28 +2013,29 @@ ShallowWrapper {
                   50
                   % CPU)
                 </div>
-                <p>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </p>
-              </div>
-              <hr />
-            </Col>
-          </Row>,
-          <Row
-            bsClass="row"
-            componentClass="div"
-          >
-            <Col
-              bsClass="col"
-              componentClass="div"
-              xs={12}
-            >
-              <div>
+                <div>
+                  <span>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </span>
+                </div>
+                <div>
+                  <span>
+                    <strong>
+                      Resource Version: 
+                    </strong>
+                    1234
+                  </span>
+                </div>
+                <hr />
+              </div>,
+              <div
+                className="card-pf-body"
+              >
                 <p>
                   <strong>
                     reviews-v1
@@ -404,24 +2068,953 @@ ShallowWrapper {
                   50
                   % CPU)
                 </div>
-                <p>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </p>
-              </div>
-              <hr />
-            </Col>
-          </Row>,
-        ],
-        "title": "Deployments",
+                <div>
+                  <span>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </span>
+                </div>
+                <div>
+                  <span>
+                    <strong>
+                      Resource Version: 
+                    </strong>
+                    1234
+                  </span>
+                </div>
+                <hr />
+              </div>,
+            ],
+            "componentClass": "div",
+            "lg": 12,
+            "md": 12,
+            "sm": 12,
+            "xs": 12,
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": "deployments_0",
+              "nodeType": "host",
+              "props": Object {
+                "children": Array [
+                  <p>
+                    <strong>
+                      reviews-v2
+                    </strong>
+                  </p>,
+                  <div />,
+                  <div>
+                    <strong>
+                      Pod status: 
+                    </strong>
+                     
+                    3
+                     / 
+                    5
+                     
+                    <Icon
+                      name="warning-triangle-o"
+                      type="pf"
+                    />
+                  </div>,
+                  <div>
+                    <strong>
+                      Autoscaler: 
+                    </strong>
+                    from 
+                    2
+                     to 
+                    10
+                     pods (
+                    50
+                    % CPU)
+                  </div>,
+                  <div>
+                    <span>
+                      <strong>
+                        Created at: 
+                      </strong>
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </span>
+                  </div>,
+                  <div>
+                    <span>
+                      <strong>
+                        Resource Version: 
+                      </strong>
+                      1234
+                    </span>
+                  </div>,
+                  <hr />,
+                ],
+                "className": "card-pf-body",
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": <strong>
+                      reviews-v2
+                    </strong>,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": "reviews-v2",
+                    },
+                    "ref": null,
+                    "rendered": "reviews-v2",
+                    "type": "strong",
+                  },
+                  "type": "p",
+                },
+                Object {
+                  "instance": null,
+                  "key": "labels",
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [],
+                  },
+                  "ref": null,
+                  "rendered": Array [],
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Pod status: 
+                      </strong>,
+                      " ",
+                      3,
+                      " / ",
+                      5,
+                      " ",
+                      <Icon
+                        name="warning-triangle-o"
+                        type="pf"
+                      />,
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Pod status: ",
+                      },
+                      "ref": null,
+                      "rendered": "Pod status: ",
+                      "type": "strong",
+                    },
+                    " ",
+                    3,
+                    " / ",
+                    5,
+                    " ",
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "function",
+                      "props": Object {
+                        "name": "warning-triangle-o",
+                        "type": "pf",
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                  ],
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Autoscaler: 
+                      </strong>,
+                      "from ",
+                      2,
+                      " to ",
+                      10,
+                      " pods (",
+                      50,
+                      "% CPU)",
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Autoscaler: ",
+                      },
+                      "ref": null,
+                      "rendered": "Autoscaler: ",
+                      "type": "strong",
+                    },
+                    "from ",
+                    2,
+                    " to ",
+                    10,
+                    " pods (",
+                    50,
+                    "% CPU)",
+                  ],
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": <span>
+                      <strong>
+                        Created at: 
+                      </strong>
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </span>,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <strong>
+                          Created at: 
+                        </strong>,
+                        <LocalTime
+                          time="2018-03-14T10:17:52Z"
+                        />,
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": "Created at: ",
+                        },
+                        "ref": null,
+                        "rendered": "Created at: ",
+                        "type": "strong",
+                      },
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "time": "2018-03-14T10:17:52Z",
+                        },
+                        "ref": null,
+                        "rendered": null,
+                        "type": [Function],
+                      },
+                    ],
+                    "type": "span",
+                  },
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": <span>
+                      <strong>
+                        Resource Version: 
+                      </strong>
+                      1234
+                    </span>,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <strong>
+                          Resource Version: 
+                        </strong>,
+                        "1234",
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": "Resource Version: ",
+                        },
+                        "ref": null,
+                        "rendered": "Resource Version: ",
+                        "type": "strong",
+                      },
+                      "1234",
+                    ],
+                    "type": "span",
+                  },
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {},
+                  "ref": null,
+                  "rendered": null,
+                  "type": "hr",
+                },
+              ],
+              "type": "div",
+            },
+            Object {
+              "instance": null,
+              "key": "deployments_1",
+              "nodeType": "host",
+              "props": Object {
+                "children": Array [
+                  <p>
+                    <strong>
+                      reviews-v3
+                    </strong>
+                  </p>,
+                  <div />,
+                  <div>
+                    <strong>
+                      Pod status: 
+                    </strong>
+                     
+                    2
+                     / 
+                    2
+                     
+                    <Icon
+                      name="ok"
+                      type="pf"
+                    />
+                  </div>,
+                  <div>
+                    <strong>
+                      Autoscaler: 
+                    </strong>
+                    from 
+                    2
+                     to 
+                    10
+                     pods (
+                    50
+                    % CPU)
+                  </div>,
+                  <div>
+                    <span>
+                      <strong>
+                        Created at: 
+                      </strong>
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </span>
+                  </div>,
+                  <div>
+                    <span>
+                      <strong>
+                        Resource Version: 
+                      </strong>
+                      1234
+                    </span>
+                  </div>,
+                  <hr />,
+                ],
+                "className": "card-pf-body",
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": <strong>
+                      reviews-v3
+                    </strong>,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": "reviews-v3",
+                    },
+                    "ref": null,
+                    "rendered": "reviews-v3",
+                    "type": "strong",
+                  },
+                  "type": "p",
+                },
+                Object {
+                  "instance": null,
+                  "key": "labels",
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [],
+                  },
+                  "ref": null,
+                  "rendered": Array [],
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Pod status: 
+                      </strong>,
+                      " ",
+                      2,
+                      " / ",
+                      2,
+                      " ",
+                      <Icon
+                        name="ok"
+                        type="pf"
+                      />,
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Pod status: ",
+                      },
+                      "ref": null,
+                      "rendered": "Pod status: ",
+                      "type": "strong",
+                    },
+                    " ",
+                    2,
+                    " / ",
+                    2,
+                    " ",
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "function",
+                      "props": Object {
+                        "name": "ok",
+                        "type": "pf",
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                  ],
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Autoscaler: 
+                      </strong>,
+                      "from ",
+                      2,
+                      " to ",
+                      10,
+                      " pods (",
+                      50,
+                      "% CPU)",
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Autoscaler: ",
+                      },
+                      "ref": null,
+                      "rendered": "Autoscaler: ",
+                      "type": "strong",
+                    },
+                    "from ",
+                    2,
+                    " to ",
+                    10,
+                    " pods (",
+                    50,
+                    "% CPU)",
+                  ],
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": <span>
+                      <strong>
+                        Created at: 
+                      </strong>
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </span>,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <strong>
+                          Created at: 
+                        </strong>,
+                        <LocalTime
+                          time="2018-03-14T10:17:52Z"
+                        />,
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": "Created at: ",
+                        },
+                        "ref": null,
+                        "rendered": "Created at: ",
+                        "type": "strong",
+                      },
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "time": "2018-03-14T10:17:52Z",
+                        },
+                        "ref": null,
+                        "rendered": null,
+                        "type": [Function],
+                      },
+                    ],
+                    "type": "span",
+                  },
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": <span>
+                      <strong>
+                        Resource Version: 
+                      </strong>
+                      1234
+                    </span>,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <strong>
+                          Resource Version: 
+                        </strong>,
+                        "1234",
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": "Resource Version: ",
+                        },
+                        "ref": null,
+                        "rendered": "Resource Version: ",
+                        "type": "strong",
+                      },
+                      "1234",
+                    ],
+                    "type": "span",
+                  },
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {},
+                  "ref": null,
+                  "rendered": null,
+                  "type": "hr",
+                },
+              ],
+              "type": "div",
+            },
+            Object {
+              "instance": null,
+              "key": "deployments_2",
+              "nodeType": "host",
+              "props": Object {
+                "children": Array [
+                  <p>
+                    <strong>
+                      reviews-v1
+                    </strong>
+                  </p>,
+                  <div />,
+                  <div>
+                    <strong>
+                      Pod status: 
+                    </strong>
+                     
+                    1
+                     / 
+                    1
+                     
+                    <Icon
+                      name="ok"
+                      type="pf"
+                    />
+                  </div>,
+                  <div>
+                    <strong>
+                      Autoscaler: 
+                    </strong>
+                    from 
+                    2
+                     to 
+                    10
+                     pods (
+                    50
+                    % CPU)
+                  </div>,
+                  <div>
+                    <span>
+                      <strong>
+                        Created at: 
+                      </strong>
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </span>
+                  </div>,
+                  <div>
+                    <span>
+                      <strong>
+                        Resource Version: 
+                      </strong>
+                      1234
+                    </span>
+                  </div>,
+                  <hr />,
+                ],
+                "className": "card-pf-body",
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": <strong>
+                      reviews-v1
+                    </strong>,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": "reviews-v1",
+                    },
+                    "ref": null,
+                    "rendered": "reviews-v1",
+                    "type": "strong",
+                  },
+                  "type": "p",
+                },
+                Object {
+                  "instance": null,
+                  "key": "labels",
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [],
+                  },
+                  "ref": null,
+                  "rendered": Array [],
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Pod status: 
+                      </strong>,
+                      " ",
+                      1,
+                      " / ",
+                      1,
+                      " ",
+                      <Icon
+                        name="ok"
+                        type="pf"
+                      />,
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Pod status: ",
+                      },
+                      "ref": null,
+                      "rendered": "Pod status: ",
+                      "type": "strong",
+                    },
+                    " ",
+                    1,
+                    " / ",
+                    1,
+                    " ",
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "function",
+                      "props": Object {
+                        "name": "ok",
+                        "type": "pf",
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                  ],
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <strong>
+                        Autoscaler: 
+                      </strong>,
+                      "from ",
+                      2,
+                      " to ",
+                      10,
+                      " pods (",
+                      50,
+                      "% CPU)",
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Autoscaler: ",
+                      },
+                      "ref": null,
+                      "rendered": "Autoscaler: ",
+                      "type": "strong",
+                    },
+                    "from ",
+                    2,
+                    " to ",
+                    10,
+                    " pods (",
+                    50,
+                    "% CPU)",
+                  ],
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": <span>
+                      <strong>
+                        Created at: 
+                      </strong>
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </span>,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <strong>
+                          Created at: 
+                        </strong>,
+                        <LocalTime
+                          time="2018-03-14T10:17:52Z"
+                        />,
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": "Created at: ",
+                        },
+                        "ref": null,
+                        "rendered": "Created at: ",
+                        "type": "strong",
+                      },
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "time": "2018-03-14T10:17:52Z",
+                        },
+                        "ref": null,
+                        "rendered": null,
+                        "type": [Function],
+                      },
+                    ],
+                    "type": "span",
+                  },
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": <span>
+                      <strong>
+                        Resource Version: 
+                      </strong>
+                      1234
+                    </span>,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <strong>
+                          Resource Version: 
+                        </strong>,
+                        "1234",
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": "Resource Version: ",
+                        },
+                        "ref": null,
+                        "rendered": "Resource Version: ",
+                        "type": "strong",
+                      },
+                      "1234",
+                    ],
+                    "type": "span",
+                  },
+                  "type": "div",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {},
+                  "ref": null,
+                  "rendered": null,
+                  "type": "hr",
+                },
+              ],
+              "type": "div",
+            },
+          ],
+          "type": [Function],
+        },
+        "type": [Function],
       },
-      "ref": null,
-      "rendered": null,
-      "type": [Function],
+      "type": "div",
     },
   ],
   Symbol(enzyme.__options__): Object {

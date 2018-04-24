@@ -1,16 +1,9 @@
 import * as React from 'react';
+import { Col, Row } from 'patternfly-react';
 import { RouteRule } from '../../../types/ServiceInfo';
 import LocalTime from '../../../components/Time/LocalTime';
-import PfInfoCard from '../../../components/Pf/PfInfoCard';
-import RouteRuleMatch from './ServiceInfoRouteRules/RouteRuleMatch';
 import RouteRuleRoute from './ServiceInfoRouteRules/RouteRuleRoute';
-import RouteRuleRedirect from './ServiceInfoRouteRules/RouteRuleRedirect';
-import RouteRuleHTTPTimeout from './ServiceInfoRouteRules/RouteRuleHTTPTimeout';
-import RouteRuleHTTPRetry from './ServiceInfoRouteRules/RouteRuleHTTPRetry';
-import RouteRuleHTTPFaultInjection from './ServiceInfoRouteRules/RouteRuleHTTPFaultInjection';
-import RouteRuleL4FaultInjection from './ServiceInfoRouteRules/RouteRuleL4FaultInjection';
-import RouteRuleIstioService from './ServiceInfoRouteRules/RouteRuleIstioService';
-import RouteRuleCorsPolicy from './ServiceInfoRouteRules/RouteRuleCorsPolicy';
+import DetailObject from '../../../components/Details/DetailObject';
 
 interface ServiceInfoRouteRulesProps {
   routeRules?: RouteRule[];
@@ -23,39 +16,43 @@ class ServiceInfoRouteRules extends React.Component<ServiceInfoRouteRulesProps> 
 
   render() {
     return (
-      <PfInfoCard
-        iconType="pf"
-        iconName="settings"
-        title="Istio Route Rules"
-        items={(this.props.routeRules || []).map((rule, i) => (
-          <div key={'rule' + i}>
-            <div>
-              <strong>Name</strong>: {rule.name}
-            </div>
-            <div>
-              <strong>Created at</strong>: <LocalTime time={rule.created_at} />
-            </div>
-            <div>
-              <strong>Precedence</strong>: {rule.precedence}
-            </div>
-            {rule.match ? <RouteRuleMatch match={rule.match} /> : null}
-            {rule.route ? <RouteRuleRoute route={rule.route} /> : null}
-            {rule.redirect ? <RouteRuleRedirect redirect={rule.redirect} /> : null}
-            {rule.websocketUpgrade ? (
-              <div>
-                <strong>WebSocket</strong>: {rule.websocketUpgrade}
+      <div className="card-pf">
+        <Row className="row-cards-pf">
+          <Col xs={12} sm={12} md={12} lg={12}>
+            {(this.props.routeRules || []).map((rule, i) => (
+              <div className="card-pf-body" key={'rule' + i}>
+                <div>
+                  <strong>Name</strong>: {rule.name}
+                </div>
+                <div>
+                  <strong>Created at</strong>: <LocalTime time={rule.created_at} />
+                </div>
+                <div>
+                  <strong>Resource Version</strong>: {rule.resource_version}
+                </div>
+                <div>
+                  <strong>Precedence</strong>: {rule.precedence}
+                </div>
+                {rule.match ? <DetailObject name="Match" detail={rule.match} /> : null}
+                {rule.route ? <RouteRuleRoute route={rule.route} /> : null}
+                {rule.redirect ? <DetailObject name="Redirect" detail={rule.redirect} /> : null}
+                {rule.websocketUpgrade ? (
+                  <div>
+                    <strong>WebSocket</strong>: {rule.websocketUpgrade}
+                  </div>
+                ) : null}
+                {rule.httpReqTimeout ? <DetailObject name="Http Timeout" detail={rule.httpReqTimeout} /> : null}
+                {rule.httpReqRetries ? <DetailObject name="Http Retry" detail={rule.httpReqRetries} /> : null}
+                {rule.httpFault ? <DetailObject name="Http Fault" detail={rule.httpFault} /> : null}
+                {rule.l4Fault ? <DetailObject name="L4 Fault" detail={rule.l4Fault} /> : null}
+                {rule.mirror ? <DetailObject name="Mirror" detail={rule.mirror} /> : null}
+                {rule.corsPolicy ? <DetailObject name="Cors Policy" detail={rule.corsPolicy} /> : null}
+                <hr />
               </div>
-            ) : null}
-            {rule.httpReqTimeout ? <RouteRuleHTTPTimeout timeout={rule.httpReqTimeout} /> : null}
-            {rule.httpReqRetries ? <RouteRuleHTTPRetry httpReqRetries={rule.httpReqRetries} /> : null}
-            {rule.httpFault ? <RouteRuleHTTPFaultInjection httpFault={rule.httpFault} /> : null}
-            {rule.l4Fault ? <RouteRuleL4FaultInjection l4Fault={rule.l4Fault} /> : null}
-            {rule.mirror ? <RouteRuleIstioService name="Mirror" service={rule.mirror} /> : null}
-            {rule.corsPolicy ? <RouteRuleCorsPolicy corsPolicy={rule.corsPolicy} /> : null}
-            <hr />
-          </div>
-        ))}
-      />
+            ))}
+          </Col>
+        </Row>
+      </div>
     );
   }
 }

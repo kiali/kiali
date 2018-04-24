@@ -23,31 +23,125 @@ ShallowWrapper {
   Symbol(enzyme.__node__): Object {
     "instance": null,
     "key": undefined,
-    "nodeType": "class",
+    "nodeType": "host",
     "props": Object {
-      "iconName": "route",
-      "iconType": "pf",
-      "items": Array [],
-      "title": "Source Services",
+      "children": <Row
+        bsClass="row"
+        className="row-cards-pf"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          lg={12}
+          md={12}
+          sm={12}
+          xs={12}
+        />
+      </Row>,
+      "className": "card-pf",
     },
     "ref": null,
-    "rendered": null,
-    "type": [Function],
+    "rendered": Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "bsClass": "row",
+        "children": <Col
+          bsClass="col"
+          componentClass="div"
+          lg={12}
+          md={12}
+          sm={12}
+          xs={12}
+        />,
+        "className": "row-cards-pf",
+        "componentClass": "div",
+      },
+      "ref": null,
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "bsClass": "col",
+          "children": Array [],
+          "componentClass": "div",
+          "lg": 12,
+          "md": 12,
+          "sm": 12,
+          "xs": 12,
+        },
+        "ref": null,
+        "rendered": Array [],
+        "type": [Function],
+      },
+      "type": [Function],
+    },
+    "type": "div",
   },
   Symbol(enzyme.__nodes__): Array [
     Object {
       "instance": null,
       "key": undefined,
-      "nodeType": "class",
+      "nodeType": "host",
       "props": Object {
-        "iconName": "route",
-        "iconType": "pf",
-        "items": Array [],
-        "title": "Source Services",
+        "children": <Row
+          bsClass="row"
+          className="row-cards-pf"
+          componentClass="div"
+        >
+          <Col
+            bsClass="col"
+            componentClass="div"
+            lg={12}
+            md={12}
+            sm={12}
+            xs={12}
+          />
+        </Row>,
+        "className": "card-pf",
       },
       "ref": null,
-      "rendered": null,
-      "type": [Function],
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "bsClass": "row",
+          "children": <Col
+            bsClass="col"
+            componentClass="div"
+            lg={12}
+            md={12}
+            sm={12}
+            xs={12}
+          />,
+          "className": "row-cards-pf",
+          "componentClass": "div",
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "bsClass": "col",
+            "children": Array [],
+            "componentClass": "div",
+            "lg": 12,
+            "md": 12,
+            "sm": 12,
+            "xs": 12,
+          },
+          "ref": null,
+          "rendered": Array [],
+          "type": [Function],
+        },
+        "type": [Function],
+      },
+      "type": "div",
     },
   ],
   Symbol(enzyme.__options__): Object {

@@ -20,6 +20,7 @@ export interface Deployment {
   template_annotations?: any;
   labels?: Map<string, string>;
   created_at: string;
+  resource_version: string;
   replicas: number;
   available_replicas: number;
   unavailable_replicas: number;
@@ -41,6 +42,7 @@ export interface Autoscaler {
 export interface RouteRule {
   name: string;
   created_at: string;
+  resource_version: string;
   destination?: IstioService;
   precedence?: number;
   match?: MatchCondition;
@@ -197,11 +199,136 @@ export interface CircuitBreaker {
 export interface DestinationPolicy {
   name: string;
   created_at: string;
+  resource_version: string;
   destination: IstioService;
   source: IstioService;
   loadbalancing: LoadBalancing;
   circuitBreaker: CircuitBreaker;
 }
+
+// Virtual Service
+
+export interface PortSelector {
+  number: number;
+  name: string;
+}
+
+export interface Destination {
+  name: string;
+  subset: string;
+  port: PortSelector;
+}
+
+export interface HTTPMatchRequest {
+  uri: StringMatch;
+  scheme: StringMatch;
+  method: StringMatch;
+  authority: StringMatch;
+  headers: Map<string, StringMatch>;
+  port: PortSelector;
+  sourceLabels: Map<string, string>;
+  gateways: string[];
+}
+
+export interface HTTPRoute {
+  match: HTTPMatchRequest[];
+  route: DestinationWeight[];
+  redirect: HTTPRedirect;
+  rewrite: HTTPRewrite;
+  websocketUpgrade: boolean;
+  timeout: string;
+  retries: HTTPRetry;
+  mirror: Destination;
+  corsPolicy: CorsPolicy;
+  appendHeaders: Map<string, string>;
+}
+
+export interface TCPRoute {
+  match: L4MatchAttributes[];
+  route: DestinationWeight[];
+}
+
+export interface VirtualService {
+  name: string;
+  created_at: string;
+  resource_version: string;
+  hosts: string[];
+  gateways: string[];
+  http: HTTPRoute[];
+  tcp: TCPRoute[];
+}
+
+// Destination Rule
+
+export interface ConsistentHashLB {
+  httpHeader: string;
+  minimumRingSize: number;
+}
+
+export interface LoadBalancerSettings {
+  simple: string;
+  consistentHash: ConsistentHashLB;
+}
+
+export interface ConnectionPoolSettingsTCPSettings {
+  maxConnections: number;
+  connectTimeout: string;
+}
+
+export interface ConnectionPoolSettingsHTTPSettings {
+  http1MaxPendingRequests: number;
+  http2MaxRequests: number;
+  maxRequestsPerConnection: number;
+  maxRetries: number;
+}
+
+export interface ConnectionPoolSettings {
+  tcp: ConnectionPoolSettingsTCPSettings;
+  http: ConnectionPoolSettingsHTTPSettings;
+}
+
+export interface OutlierDetectionHTTPSettings {
+  consecutiveErrors: number;
+  interval: string;
+  baseEjectionTime: string;
+  maxEjectionPercent: number;
+}
+
+export interface OutlierDetection {
+  http: OutlierDetectionHTTPSettings;
+}
+
+export interface TLSSettings {
+  mode: string;
+  clientCertificate: string;
+  privateKey: string;
+  caCertificates: string;
+  subjectAltNames: string[];
+  sni: string;
+}
+
+export interface TrafficPolicy {
+  loadBalancer: LoadBalancerSettings;
+  connectionPool: ConnectionPoolSettings;
+  outlierDetection: OutlierDetection;
+  tls: TLSSettings;
+}
+
+export interface Subset {
+  name: string;
+  labels: Map<string, string>;
+  trafficPolicy: TrafficPolicy;
+}
+
+export interface DestinationRule {
+  name: string;
+  created_at: string;
+  resource_version: string;
+  trafficPolicy: TrafficPolicy;
+  subsets: Subset[];
+}
+
+// Istio Sidecar
 
 export const hasIstioSidecar = (deployments: Deployment[]) => {
   if (deployments && deployments.length > 0) {

@@ -47,6 +47,7 @@ ShallowWrapper {
                 labels={Map {}}
                 name=""
                 ports={Array []}
+                resource_version=""
                 type=""
               />
             </Col>
@@ -55,7 +56,106 @@ ShallowWrapper {
             bsClass="row"
             className="row-cards-pf"
             componentClass="div"
-          />
+          >
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={12}
+              md={12}
+              sm={12}
+              xs={12}
+            >
+              <Uncontrolled(TabContainer)
+                defaultActiveKey={101}
+                id="service-tabs"
+              >
+                <div>
+                  <Nav
+                    bsClass="nav nav-tabs nav-tabs-pf"
+                    justified={false}
+                    pullLeft={false}
+                    pullRight={false}
+                    stacked={false}
+                  >
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={101}
+                    >
+                      Deployments (0)
+                    </NavItem>
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={102}
+                    >
+                      Source Services (0)
+                    </NavItem>
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={103}
+                    >
+                      Route Rules (0)
+                    </NavItem>
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={104}
+                    >
+                      Destination Policies (0)
+                    </NavItem>
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={105}
+                    >
+                      Virtual Services (0)
+                    </NavItem>
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={106}
+                    >
+                      Destination Rules (0)
+                    </NavItem>
+                  </Nav>
+                  <TabContent
+                    animation={true}
+                    bsClass="tab"
+                    componentClass="div"
+                    mountOnEnter={false}
+                    unmountOnExit={false}
+                  >
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={101}
+                    />
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={102}
+                    />
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={103}
+                    />
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={104}
+                    />
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={105}
+                    />
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={106}
+                    />
+                  </TabContent>
+                </div>
+              </Uncontrolled(TabContainer)>
+            </Col>
+          </Row>
         </div>,
       ],
     },
@@ -90,6 +190,7 @@ ShallowWrapper {
                   labels={Map {}}
                   name=""
                   ports={Array []}
+                  resource_version=""
                   type=""
                 />
               </Col>
@@ -98,7 +199,106 @@ ShallowWrapper {
               bsClass="row"
               className="row-cards-pf"
               componentClass="div"
-            />,
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+              >
+                <Uncontrolled(TabContainer)
+                  defaultActiveKey={101}
+                  id="service-tabs"
+                >
+                  <div>
+                    <Nav
+                      bsClass="nav nav-tabs nav-tabs-pf"
+                      justified={false}
+                      pullLeft={false}
+                      pullRight={false}
+                      stacked={false}
+                    >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={101}
+                      >
+                        Deployments (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={102}
+                      >
+                        Source Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={103}
+                      >
+                        Route Rules (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={104}
+                      >
+                        Destination Policies (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={105}
+                      >
+                        Virtual Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={106}
+                      >
+                        Destination Rules (0)
+                      </NavItem>
+                    </Nav>
+                    <TabContent
+                      animation={true}
+                      bsClass="tab"
+                      componentClass="div"
+                      mountOnEnter={false}
+                      unmountOnExit={false}
+                    >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={101}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={102}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={103}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={104}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={105}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={106}
+                      />
+                    </TabContent>
+                  </div>
+                </Uncontrolled(TabContainer)>
+              </Col>
+            </Row>,
           ],
           "className": "container-fluid container-cards-pf",
         },
@@ -127,6 +327,7 @@ ShallowWrapper {
                   labels={Map {}}
                   name=""
                   ports={Array []}
+                  resource_version=""
                   type=""
                 />
               </Col>,
@@ -149,6 +350,7 @@ ShallowWrapper {
                   labels={Map {}}
                   name=""
                   ports={Array []}
+                  resource_version=""
                   type=""
                 />,
                 "componentClass": "div",
@@ -171,6 +373,7 @@ ShallowWrapper {
                   "labels": Map {},
                   "name": "",
                   "ports": Array [],
+                  "resource_version": "",
                   "type": "",
                 },
                 "ref": null,
@@ -187,20 +390,666 @@ ShallowWrapper {
             "nodeType": "class",
             "props": Object {
               "bsClass": "row",
-              "children": Array [
-                false,
-                false,
-                false,
-              ],
+              "children": <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+              >
+                <Uncontrolled(TabContainer)
+                  defaultActiveKey={101}
+                  id="service-tabs"
+                >
+                  <div>
+                    <Nav
+                      bsClass="nav nav-tabs nav-tabs-pf"
+                      justified={false}
+                      pullLeft={false}
+                      pullRight={false}
+                      stacked={false}
+                    >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={101}
+                      >
+                        Deployments (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={102}
+                      >
+                        Source Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={103}
+                      >
+                        Route Rules (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={104}
+                      >
+                        Destination Policies (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={105}
+                      >
+                        Virtual Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={106}
+                      >
+                        Destination Rules (0)
+                      </NavItem>
+                    </Nav>
+                    <TabContent
+                      animation={true}
+                      bsClass="tab"
+                      componentClass="div"
+                      mountOnEnter={false}
+                      unmountOnExit={false}
+                    >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={101}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={102}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={103}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={104}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={105}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={106}
+                      />
+                    </TabContent>
+                  </div>
+                </Uncontrolled(TabContainer)>
+              </Col>,
               "className": "row-cards-pf",
               "componentClass": "div",
             },
             "ref": null,
-            "rendered": Array [
-              false,
-              false,
-              false,
-            ],
+            "rendered": Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "col",
+                "children": <Uncontrolled(TabContainer)
+                  defaultActiveKey={101}
+                  id="service-tabs"
+                >
+                  <div>
+                    <Nav
+                      bsClass="nav nav-tabs nav-tabs-pf"
+                      justified={false}
+                      pullLeft={false}
+                      pullRight={false}
+                      stacked={false}
+                    >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={101}
+                      >
+                        Deployments (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={102}
+                      >
+                        Source Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={103}
+                      >
+                        Route Rules (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={104}
+                      >
+                        Destination Policies (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={105}
+                      >
+                        Virtual Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={106}
+                      >
+                        Destination Rules (0)
+                      </NavItem>
+                    </Nav>
+                    <TabContent
+                      animation={true}
+                      bsClass="tab"
+                      componentClass="div"
+                      mountOnEnter={false}
+                      unmountOnExit={false}
+                    >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={101}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={102}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={103}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={104}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={105}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={106}
+                      />
+                    </TabContent>
+                  </div>
+                </Uncontrolled(TabContainer)>,
+                "componentClass": "div",
+                "lg": 12,
+                "md": 12,
+                "sm": 12,
+                "xs": 12,
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "children": <div>
+                    <Nav
+                      bsClass="nav nav-tabs nav-tabs-pf"
+                      justified={false}
+                      pullLeft={false}
+                      pullRight={false}
+                      stacked={false}
+                    >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={101}
+                      >
+                        Deployments (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={102}
+                      >
+                        Source Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={103}
+                      >
+                        Route Rules (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={104}
+                      >
+                        Destination Policies (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={105}
+                      >
+                        Virtual Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={106}
+                      >
+                        Destination Rules (0)
+                      </NavItem>
+                    </Nav>
+                    <TabContent
+                      animation={true}
+                      bsClass="tab"
+                      componentClass="div"
+                      mountOnEnter={false}
+                      unmountOnExit={false}
+                    >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={101}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={102}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={103}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={104}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={105}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={106}
+                      />
+                    </TabContent>
+                  </div>,
+                  "defaultActiveKey": 101,
+                  "id": "service-tabs",
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <Nav
+                        bsClass="nav nav-tabs nav-tabs-pf"
+                        justified={false}
+                        pullLeft={false}
+                        pullRight={false}
+                        stacked={false}
+                      >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={101}
+                        >
+                          Deployments (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={102}
+                        >
+                          Source Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={103}
+                        >
+                          Route Rules (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={104}
+                        >
+                          Destination Policies (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={105}
+                        >
+                          Virtual Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={106}
+                        >
+                          Destination Rules (0)
+                        </NavItem>
+                      </Nav>,
+                      <TabContent
+                        animation={true}
+                        bsClass="tab"
+                        componentClass="div"
+                        mountOnEnter={false}
+                        unmountOnExit={false}
+                      >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={101}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={102}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={103}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={104}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={105}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={106}
+                        />
+                      </TabContent>,
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "bsClass": "nav nav-tabs nav-tabs-pf",
+                        "children": Array [
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={101}
+                          >
+                            Deployments (0)
+                          </NavItem>,
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={102}
+                          >
+                            Source Services (0)
+                          </NavItem>,
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={103}
+                          >
+                            Route Rules (0)
+                          </NavItem>,
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={104}
+                          >
+                            Destination Policies (0)
+                          </NavItem>,
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={105}
+                          >
+                            Virtual Services (0)
+                          </NavItem>,
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={106}
+                          >
+                            Destination Rules (0)
+                          </NavItem>,
+                        ],
+                        "justified": false,
+                        "pullLeft": false,
+                        "pullRight": false,
+                        "stacked": false,
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Deployments (0)",
+                            "disabled": false,
+                            "eventKey": 101,
+                          },
+                          "ref": null,
+                          "rendered": "Deployments (0)",
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Source Services (0)",
+                            "disabled": false,
+                            "eventKey": 102,
+                          },
+                          "ref": null,
+                          "rendered": "Source Services (0)",
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Route Rules (0)",
+                            "disabled": false,
+                            "eventKey": 103,
+                          },
+                          "ref": null,
+                          "rendered": "Route Rules (0)",
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Destination Policies (0)",
+                            "disabled": false,
+                            "eventKey": 104,
+                          },
+                          "ref": null,
+                          "rendered": "Destination Policies (0)",
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Virtual Services (0)",
+                            "disabled": false,
+                            "eventKey": 105,
+                          },
+                          "ref": null,
+                          "rendered": "Virtual Services (0)",
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Destination Rules (0)",
+                            "disabled": false,
+                            "eventKey": 106,
+                          },
+                          "ref": null,
+                          "rendered": "Destination Rules (0)",
+                          "type": [Function],
+                        },
+                      ],
+                      "type": [Function],
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "animation": true,
+                        "bsClass": "tab",
+                        "children": Array [
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={101}
+                          />,
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={102}
+                          />,
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={103}
+                          />,
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={104}
+                          />,
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={105}
+                          />,
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={106}
+                          />,
+                        ],
+                        "componentClass": "div",
+                        "mountOnEnter": false,
+                        "unmountOnExit": false,
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 101,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 102,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 103,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 104,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 105,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 106,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
+                      ],
+                      "type": [Function],
+                    },
+                  ],
+                  "type": "div",
+                },
+                "type": [Function],
+              },
+              "type": [Function],
+            },
             "type": [Function],
           },
         ],
@@ -242,6 +1091,7 @@ ShallowWrapper {
                   labels={Map {}}
                   name=""
                   ports={Array []}
+                  resource_version=""
                   type=""
                 />
               </Col>
@@ -250,7 +1100,106 @@ ShallowWrapper {
               bsClass="row"
               className="row-cards-pf"
               componentClass="div"
-            />
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+              >
+                <Uncontrolled(TabContainer)
+                  defaultActiveKey={101}
+                  id="service-tabs"
+                >
+                  <div>
+                    <Nav
+                      bsClass="nav nav-tabs nav-tabs-pf"
+                      justified={false}
+                      pullLeft={false}
+                      pullRight={false}
+                      stacked={false}
+                    >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={101}
+                      >
+                        Deployments (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={102}
+                      >
+                        Source Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={103}
+                      >
+                        Route Rules (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={104}
+                      >
+                        Destination Policies (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={105}
+                      >
+                        Virtual Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={106}
+                      >
+                        Destination Rules (0)
+                      </NavItem>
+                    </Nav>
+                    <TabContent
+                      animation={true}
+                      bsClass="tab"
+                      componentClass="div"
+                      mountOnEnter={false}
+                      unmountOnExit={false}
+                    >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={101}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={102}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={103}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={104}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={105}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={106}
+                      />
+                    </TabContent>
+                  </div>
+                </Uncontrolled(TabContainer)>
+              </Col>
+            </Row>
           </div>,
         ],
       },
@@ -285,6 +1234,7 @@ ShallowWrapper {
                     labels={Map {}}
                     name=""
                     ports={Array []}
+                    resource_version=""
                     type=""
                   />
                 </Col>
@@ -293,7 +1243,106 @@ ShallowWrapper {
                 bsClass="row"
                 className="row-cards-pf"
                 componentClass="div"
-              />,
+              >
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={12}
+                  md={12}
+                  sm={12}
+                  xs={12}
+                >
+                  <Uncontrolled(TabContainer)
+                    defaultActiveKey={101}
+                    id="service-tabs"
+                  >
+                    <div>
+                      <Nav
+                        bsClass="nav nav-tabs nav-tabs-pf"
+                        justified={false}
+                        pullLeft={false}
+                        pullRight={false}
+                        stacked={false}
+                      >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={101}
+                        >
+                          Deployments (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={102}
+                        >
+                          Source Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={103}
+                        >
+                          Route Rules (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={104}
+                        >
+                          Destination Policies (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={105}
+                        >
+                          Virtual Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={106}
+                        >
+                          Destination Rules (0)
+                        </NavItem>
+                      </Nav>
+                      <TabContent
+                        animation={true}
+                        bsClass="tab"
+                        componentClass="div"
+                        mountOnEnter={false}
+                        unmountOnExit={false}
+                      >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={101}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={102}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={103}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={104}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={105}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={106}
+                        />
+                      </TabContent>
+                    </div>
+                  </Uncontrolled(TabContainer)>
+                </Col>
+              </Row>,
             ],
             "className": "container-fluid container-cards-pf",
           },
@@ -322,6 +1371,7 @@ ShallowWrapper {
                     labels={Map {}}
                     name=""
                     ports={Array []}
+                    resource_version=""
                     type=""
                   />
                 </Col>,
@@ -344,6 +1394,7 @@ ShallowWrapper {
                     labels={Map {}}
                     name=""
                     ports={Array []}
+                    resource_version=""
                     type=""
                   />,
                   "componentClass": "div",
@@ -366,6 +1417,7 @@ ShallowWrapper {
                     "labels": Map {},
                     "name": "",
                     "ports": Array [],
+                    "resource_version": "",
                     "type": "",
                   },
                   "ref": null,
@@ -382,20 +1434,666 @@ ShallowWrapper {
               "nodeType": "class",
               "props": Object {
                 "bsClass": "row",
-                "children": Array [
-                  false,
-                  false,
-                  false,
-                ],
+                "children": <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={12}
+                  md={12}
+                  sm={12}
+                  xs={12}
+                >
+                  <Uncontrolled(TabContainer)
+                    defaultActiveKey={101}
+                    id="service-tabs"
+                  >
+                    <div>
+                      <Nav
+                        bsClass="nav nav-tabs nav-tabs-pf"
+                        justified={false}
+                        pullLeft={false}
+                        pullRight={false}
+                        stacked={false}
+                      >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={101}
+                        >
+                          Deployments (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={102}
+                        >
+                          Source Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={103}
+                        >
+                          Route Rules (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={104}
+                        >
+                          Destination Policies (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={105}
+                        >
+                          Virtual Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={106}
+                        >
+                          Destination Rules (0)
+                        </NavItem>
+                      </Nav>
+                      <TabContent
+                        animation={true}
+                        bsClass="tab"
+                        componentClass="div"
+                        mountOnEnter={false}
+                        unmountOnExit={false}
+                      >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={101}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={102}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={103}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={104}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={105}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={106}
+                        />
+                      </TabContent>
+                    </div>
+                  </Uncontrolled(TabContainer)>
+                </Col>,
                 "className": "row-cards-pf",
                 "componentClass": "div",
               },
               "ref": null,
-              "rendered": Array [
-                false,
-                false,
-                false,
-              ],
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": <Uncontrolled(TabContainer)
+                    defaultActiveKey={101}
+                    id="service-tabs"
+                  >
+                    <div>
+                      <Nav
+                        bsClass="nav nav-tabs nav-tabs-pf"
+                        justified={false}
+                        pullLeft={false}
+                        pullRight={false}
+                        stacked={false}
+                      >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={101}
+                        >
+                          Deployments (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={102}
+                        >
+                          Source Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={103}
+                        >
+                          Route Rules (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={104}
+                        >
+                          Destination Policies (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={105}
+                        >
+                          Virtual Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={106}
+                        >
+                          Destination Rules (0)
+                        </NavItem>
+                      </Nav>
+                      <TabContent
+                        animation={true}
+                        bsClass="tab"
+                        componentClass="div"
+                        mountOnEnter={false}
+                        unmountOnExit={false}
+                      >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={101}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={102}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={103}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={104}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={105}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={106}
+                        />
+                      </TabContent>
+                    </div>
+                  </Uncontrolled(TabContainer)>,
+                  "componentClass": "div",
+                  "lg": 12,
+                  "md": 12,
+                  "sm": 12,
+                  "xs": 12,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "children": <div>
+                      <Nav
+                        bsClass="nav nav-tabs nav-tabs-pf"
+                        justified={false}
+                        pullLeft={false}
+                        pullRight={false}
+                        stacked={false}
+                      >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={101}
+                        >
+                          Deployments (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={102}
+                        >
+                          Source Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={103}
+                        >
+                          Route Rules (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={104}
+                        >
+                          Destination Policies (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={105}
+                        >
+                          Virtual Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={106}
+                        >
+                          Destination Rules (0)
+                        </NavItem>
+                      </Nav>
+                      <TabContent
+                        animation={true}
+                        bsClass="tab"
+                        componentClass="div"
+                        mountOnEnter={false}
+                        unmountOnExit={false}
+                      >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={101}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={102}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={103}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={104}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={105}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={106}
+                        />
+                      </TabContent>
+                    </div>,
+                    "defaultActiveKey": 101,
+                    "id": "service-tabs",
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <Nav
+                          bsClass="nav nav-tabs nav-tabs-pf"
+                          justified={false}
+                          pullLeft={false}
+                          pullRight={false}
+                          stacked={false}
+                        >
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={101}
+                          >
+                            Deployments (0)
+                          </NavItem>
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={102}
+                          >
+                            Source Services (0)
+                          </NavItem>
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={103}
+                          >
+                            Route Rules (0)
+                          </NavItem>
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={104}
+                          >
+                            Destination Policies (0)
+                          </NavItem>
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={105}
+                          >
+                            Virtual Services (0)
+                          </NavItem>
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={106}
+                          >
+                            Destination Rules (0)
+                          </NavItem>
+                        </Nav>,
+                        <TabContent
+                          animation={true}
+                          bsClass="tab"
+                          componentClass="div"
+                          mountOnEnter={false}
+                          unmountOnExit={false}
+                        >
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={101}
+                          />
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={102}
+                          />
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={103}
+                          />
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={104}
+                          />
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={105}
+                          />
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={106}
+                          />
+                        </TabContent>,
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "bsClass": "nav nav-tabs nav-tabs-pf",
+                          "children": Array [
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={101}
+                            >
+                              Deployments (0)
+                            </NavItem>,
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={102}
+                            >
+                              Source Services (0)
+                            </NavItem>,
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={103}
+                            >
+                              Route Rules (0)
+                            </NavItem>,
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={104}
+                            >
+                              Destination Policies (0)
+                            </NavItem>,
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={105}
+                            >
+                              Virtual Services (0)
+                            </NavItem>,
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={106}
+                            >
+                              Destination Rules (0)
+                            </NavItem>,
+                          ],
+                          "justified": false,
+                          "pullLeft": false,
+                          "pullRight": false,
+                          "stacked": false,
+                        },
+                        "ref": null,
+                        "rendered": Array [
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Deployments (0)",
+                              "disabled": false,
+                              "eventKey": 101,
+                            },
+                            "ref": null,
+                            "rendered": "Deployments (0)",
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Source Services (0)",
+                              "disabled": false,
+                              "eventKey": 102,
+                            },
+                            "ref": null,
+                            "rendered": "Source Services (0)",
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Route Rules (0)",
+                              "disabled": false,
+                              "eventKey": 103,
+                            },
+                            "ref": null,
+                            "rendered": "Route Rules (0)",
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Destination Policies (0)",
+                              "disabled": false,
+                              "eventKey": 104,
+                            },
+                            "ref": null,
+                            "rendered": "Destination Policies (0)",
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Virtual Services (0)",
+                              "disabled": false,
+                              "eventKey": 105,
+                            },
+                            "ref": null,
+                            "rendered": "Virtual Services (0)",
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Destination Rules (0)",
+                              "disabled": false,
+                              "eventKey": 106,
+                            },
+                            "ref": null,
+                            "rendered": "Destination Rules (0)",
+                            "type": [Function],
+                          },
+                        ],
+                        "type": [Function],
+                      },
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "animation": true,
+                          "bsClass": "tab",
+                          "children": Array [
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={101}
+                            />,
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={102}
+                            />,
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={103}
+                            />,
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={104}
+                            />,
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={105}
+                            />,
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={106}
+                            />,
+                          ],
+                          "componentClass": "div",
+                          "mountOnEnter": false,
+                          "unmountOnExit": false,
+                        },
+                        "ref": null,
+                        "rendered": Array [
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 101,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 102,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 103,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 104,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 105,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 106,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
+                        ],
+                        "type": [Function],
+                      },
+                    ],
+                    "type": "div",
+                  },
+                  "type": [Function],
+                },
+                "type": [Function],
+              },
               "type": [Function],
             },
           ],
@@ -503,6 +2201,7 @@ ShallowWrapper {
                     },
                   ]
                 }
+                resource_version=""
                 type="ClusterIP"
               />
             </Col>
@@ -517,53 +2216,143 @@ ShallowWrapper {
               componentClass="div"
               lg={12}
               md={12}
-              sm={6}
+              sm={12}
               xs={12}
             >
-              <ServiceInfoRouteRules
-                routeRules={
-                  Array [
-                    Object {
-                      "destination": Object {
-                        "name": "reviews",
-                      },
-                      "match": null,
-                      "name": "reviews-default",
-                      "precedence": 1,
-                      "route": Array [
-                        Object {
-                          "labels": Object {
-                            "version": "v1",
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "destination": Object {
-                        "name": "reviews",
-                      },
-                      "match": Object {
-                        "request": Object {
-                          "headers": Object {
-                            "cookie": Object {
-                              "regex": "^(.*?;)?(user=jason)(;.*)?$",
+              <Uncontrolled(TabContainer)
+                defaultActiveKey={101}
+                id="service-tabs"
+              >
+                <div>
+                  <Nav
+                    bsClass="nav nav-tabs nav-tabs-pf"
+                    justified={false}
+                    pullLeft={false}
+                    pullRight={false}
+                    stacked={false}
+                  >
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={101}
+                    >
+                      Deployments (0)
+                    </NavItem>
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={102}
+                    >
+                      Source Services (0)
+                    </NavItem>
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={103}
+                    >
+                      Route Rules (2)
+                    </NavItem>
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={104}
+                    >
+                      Destination Policies (0)
+                    </NavItem>
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={105}
+                    >
+                      Virtual Services (0)
+                    </NavItem>
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={106}
+                    >
+                      Destination Rules (0)
+                    </NavItem>
+                  </Nav>
+                  <TabContent
+                    animation={true}
+                    bsClass="tab"
+                    componentClass="div"
+                    mountOnEnter={false}
+                    unmountOnExit={false}
+                  >
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={101}
+                    />
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={102}
+                    />
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={103}
+                    >
+                      <ServiceInfoRouteRules
+                        routeRules={
+                          Array [
+                            Object {
+                              "destination": Object {
+                                "name": "reviews",
+                              },
+                              "match": null,
+                              "name": "reviews-default",
+                              "precedence": 1,
+                              "route": Array [
+                                Object {
+                                  "labels": Object {
+                                    "version": "v1",
+                                  },
+                                },
+                              ],
                             },
-                          },
-                        },
-                      },
-                      "name": "reviews-test-v2",
-                      "precedence": 2,
-                      "route": Array [
-                        Object {
-                          "labels": Object {
-                            "version": "v2",
-                          },
-                        },
-                      ],
-                    },
-                  ]
-                }
-              />
+                            Object {
+                              "destination": Object {
+                                "name": "reviews",
+                              },
+                              "match": Object {
+                                "request": Object {
+                                  "headers": Object {
+                                    "cookie": Object {
+                                      "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                    },
+                                  },
+                                },
+                              },
+                              "name": "reviews-test-v2",
+                              "precedence": 2,
+                              "route": Array [
+                                Object {
+                                  "labels": Object {
+                                    "version": "v2",
+                                  },
+                                },
+                              ],
+                            },
+                          ]
+                        }
+                      />
+                    </TabPane>
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={104}
+                    />
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={105}
+                    />
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={106}
+                    />
+                  </TabContent>
+                </div>
+              </Uncontrolled(TabContainer)>
             </Col>
           </Row>
         </div>,
@@ -641,6 +2430,7 @@ ShallowWrapper {
                       },
                     ]
                   }
+                  resource_version=""
                   type="ClusterIP"
                 />
               </Col>
@@ -655,53 +2445,143 @@ ShallowWrapper {
                 componentClass="div"
                 lg={12}
                 md={12}
-                sm={6}
+                sm={12}
                 xs={12}
               >
-                <ServiceInfoRouteRules
-                  routeRules={
-                    Array [
-                      Object {
-                        "destination": Object {
-                          "name": "reviews",
-                        },
-                        "match": null,
-                        "name": "reviews-default",
-                        "precedence": 1,
-                        "route": Array [
-                          Object {
-                            "labels": Object {
-                              "version": "v1",
-                            },
-                          },
-                        ],
-                      },
-                      Object {
-                        "destination": Object {
-                          "name": "reviews",
-                        },
-                        "match": Object {
-                          "request": Object {
-                            "headers": Object {
-                              "cookie": Object {
-                                "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                <Uncontrolled(TabContainer)
+                  defaultActiveKey={101}
+                  id="service-tabs"
+                >
+                  <div>
+                    <Nav
+                      bsClass="nav nav-tabs nav-tabs-pf"
+                      justified={false}
+                      pullLeft={false}
+                      pullRight={false}
+                      stacked={false}
+                    >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={101}
+                      >
+                        Deployments (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={102}
+                      >
+                        Source Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={103}
+                      >
+                        Route Rules (2)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={104}
+                      >
+                        Destination Policies (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={105}
+                      >
+                        Virtual Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={106}
+                      >
+                        Destination Rules (0)
+                      </NavItem>
+                    </Nav>
+                    <TabContent
+                      animation={true}
+                      bsClass="tab"
+                      componentClass="div"
+                      mountOnEnter={false}
+                      unmountOnExit={false}
+                    >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={101}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={102}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={103}
+                      >
+                        <ServiceInfoRouteRules
+                          routeRules={
+                            Array [
+                              Object {
+                                "destination": Object {
+                                  "name": "reviews",
+                                },
+                                "match": null,
+                                "name": "reviews-default",
+                                "precedence": 1,
+                                "route": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v1",
+                                    },
+                                  },
+                                ],
                               },
-                            },
-                          },
-                        },
-                        "name": "reviews-test-v2",
-                        "precedence": 2,
-                        "route": Array [
-                          Object {
-                            "labels": Object {
-                              "version": "v2",
-                            },
-                          },
-                        ],
-                      },
-                    ]
-                  }
-                />
+                              Object {
+                                "destination": Object {
+                                  "name": "reviews",
+                                },
+                                "match": Object {
+                                  "request": Object {
+                                    "headers": Object {
+                                      "cookie": Object {
+                                        "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                      },
+                                    },
+                                  },
+                                },
+                                "name": "reviews-test-v2",
+                                "precedence": 2,
+                                "route": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v2",
+                                    },
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                        />
+                      </TabPane>
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={104}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={105}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={106}
+                      />
+                    </TabContent>
+                  </div>
+                </Uncontrolled(TabContainer)>
               </Col>
             </Row>,
           ],
@@ -773,6 +2653,7 @@ ShallowWrapper {
                       },
                     ]
                   }
+                  resource_version=""
                   type="ClusterIP"
                 />
               </Col>,
@@ -836,6 +2717,7 @@ ShallowWrapper {
                       },
                     ]
                   }
+                  resource_version=""
                   type="ClusterIP"
                 />,
                 "componentClass": "div",
@@ -893,6 +2775,7 @@ ShallowWrapper {
                       "protocol": "TCP",
                     },
                   ],
+                  "resource_version": "",
                   "type": "ClusterIP",
                 },
                 "ref": null,
@@ -909,186 +2792,983 @@ ShallowWrapper {
             "nodeType": "class",
             "props": Object {
               "bsClass": "row",
-              "children": Array [
-                false,
-                false,
-                <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={12}
-                  md={12}
-                  sm={6}
-                  xs={12}
+              "children": <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+              >
+                <Uncontrolled(TabContainer)
+                  defaultActiveKey={101}
+                  id="service-tabs"
                 >
-                  <ServiceInfoRouteRules
-                    routeRules={
-                      Array [
-                        Object {
-                          "destination": Object {
-                            "name": "reviews",
-                          },
-                          "match": null,
-                          "name": "reviews-default",
-                          "precedence": 1,
-                          "route": Array [
-                            Object {
-                              "labels": Object {
-                                "version": "v1",
-                              },
-                            },
-                          ],
-                        },
-                        Object {
-                          "destination": Object {
-                            "name": "reviews",
-                          },
-                          "match": Object {
-                            "request": Object {
-                              "headers": Object {
-                                "cookie": Object {
-                                  "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                  <div>
+                    <Nav
+                      bsClass="nav nav-tabs nav-tabs-pf"
+                      justified={false}
+                      pullLeft={false}
+                      pullRight={false}
+                      stacked={false}
+                    >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={101}
+                      >
+                        Deployments (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={102}
+                      >
+                        Source Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={103}
+                      >
+                        Route Rules (2)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={104}
+                      >
+                        Destination Policies (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={105}
+                      >
+                        Virtual Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={106}
+                      >
+                        Destination Rules (0)
+                      </NavItem>
+                    </Nav>
+                    <TabContent
+                      animation={true}
+                      bsClass="tab"
+                      componentClass="div"
+                      mountOnEnter={false}
+                      unmountOnExit={false}
+                    >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={101}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={102}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={103}
+                      >
+                        <ServiceInfoRouteRules
+                          routeRules={
+                            Array [
+                              Object {
+                                "destination": Object {
+                                  "name": "reviews",
                                 },
+                                "match": null,
+                                "name": "reviews-default",
+                                "precedence": 1,
+                                "route": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v1",
+                                    },
+                                  },
+                                ],
                               },
-                            },
-                          },
-                          "name": "reviews-test-v2",
-                          "precedence": 2,
-                          "route": Array [
-                            Object {
-                              "labels": Object {
-                                "version": "v2",
+                              Object {
+                                "destination": Object {
+                                  "name": "reviews",
+                                },
+                                "match": Object {
+                                  "request": Object {
+                                    "headers": Object {
+                                      "cookie": Object {
+                                        "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                      },
+                                    },
+                                  },
+                                },
+                                "name": "reviews-test-v2",
+                                "precedence": 2,
+                                "route": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v2",
+                                    },
+                                  },
+                                ],
                               },
-                            },
-                          ],
-                        },
-                      ]
-                    }
-                  />
-                </Col>,
-              ],
+                            ]
+                          }
+                        />
+                      </TabPane>
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={104}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={105}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={106}
+                      />
+                    </TabContent>
+                  </div>
+                </Uncontrolled(TabContainer)>
+              </Col>,
               "className": "row-cards-pf",
               "componentClass": "div",
             },
             "ref": null,
-            "rendered": Array [
-              false,
-              false,
-              Object {
+            "rendered": Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "col",
+                "children": <Uncontrolled(TabContainer)
+                  defaultActiveKey={101}
+                  id="service-tabs"
+                >
+                  <div>
+                    <Nav
+                      bsClass="nav nav-tabs nav-tabs-pf"
+                      justified={false}
+                      pullLeft={false}
+                      pullRight={false}
+                      stacked={false}
+                    >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={101}
+                      >
+                        Deployments (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={102}
+                      >
+                        Source Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={103}
+                      >
+                        Route Rules (2)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={104}
+                      >
+                        Destination Policies (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={105}
+                      >
+                        Virtual Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={106}
+                      >
+                        Destination Rules (0)
+                      </NavItem>
+                    </Nav>
+                    <TabContent
+                      animation={true}
+                      bsClass="tab"
+                      componentClass="div"
+                      mountOnEnter={false}
+                      unmountOnExit={false}
+                    >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={101}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={102}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={103}
+                      >
+                        <ServiceInfoRouteRules
+                          routeRules={
+                            Array [
+                              Object {
+                                "destination": Object {
+                                  "name": "reviews",
+                                },
+                                "match": null,
+                                "name": "reviews-default",
+                                "precedence": 1,
+                                "route": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v1",
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "destination": Object {
+                                  "name": "reviews",
+                                },
+                                "match": Object {
+                                  "request": Object {
+                                    "headers": Object {
+                                      "cookie": Object {
+                                        "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                      },
+                                    },
+                                  },
+                                },
+                                "name": "reviews-test-v2",
+                                "precedence": 2,
+                                "route": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v2",
+                                    },
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                        />
+                      </TabPane>
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={104}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={105}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={106}
+                      />
+                    </TabContent>
+                  </div>
+                </Uncontrolled(TabContainer)>,
+                "componentClass": "div",
+                "lg": 12,
+                "md": 12,
+                "sm": 12,
+                "xs": 12,
+              },
+              "ref": null,
+              "rendered": Object {
                 "instance": null,
                 "key": undefined,
                 "nodeType": "class",
                 "props": Object {
-                  "bsClass": "col",
-                  "children": Array [
-                    <ServiceInfoRouteRules
-                      routeRules={
-                        Array [
-                          Object {
-                            "destination": Object {
-                              "name": "reviews",
-                            },
-                            "match": null,
-                            "name": "reviews-default",
-                            "precedence": 1,
-                            "route": Array [
+                  "children": <div>
+                    <Nav
+                      bsClass="nav nav-tabs nav-tabs-pf"
+                      justified={false}
+                      pullLeft={false}
+                      pullRight={false}
+                      stacked={false}
+                    >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={101}
+                      >
+                        Deployments (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={102}
+                      >
+                        Source Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={103}
+                      >
+                        Route Rules (2)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={104}
+                      >
+                        Destination Policies (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={105}
+                      >
+                        Virtual Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={106}
+                      >
+                        Destination Rules (0)
+                      </NavItem>
+                    </Nav>
+                    <TabContent
+                      animation={true}
+                      bsClass="tab"
+                      componentClass="div"
+                      mountOnEnter={false}
+                      unmountOnExit={false}
+                    >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={101}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={102}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={103}
+                      >
+                        <ServiceInfoRouteRules
+                          routeRules={
+                            Array [
                               Object {
-                                "labels": Object {
-                                  "version": "v1",
+                                "destination": Object {
+                                  "name": "reviews",
                                 },
+                                "match": null,
+                                "name": "reviews-default",
+                                "precedence": 1,
+                                "route": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v1",
+                                    },
+                                  },
+                                ],
                               },
-                            ],
-                          },
-                          Object {
-                            "destination": Object {
-                              "name": "reviews",
-                            },
-                            "match": Object {
-                              "request": Object {
-                                "headers": Object {
-                                  "cookie": Object {
-                                    "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                              Object {
+                                "destination": Object {
+                                  "name": "reviews",
+                                },
+                                "match": Object {
+                                  "request": Object {
+                                    "headers": Object {
+                                      "cookie": Object {
+                                        "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                      },
+                                    },
                                   },
                                 },
+                                "name": "reviews-test-v2",
+                                "precedence": 2,
+                                "route": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v2",
+                                    },
+                                  },
+                                ],
                               },
-                            },
-                            "name": "reviews-test-v2",
-                            "precedence": 2,
-                            "route": Array [
-                              Object {
-                                "labels": Object {
-                                  "version": "v2",
-                                },
-                              },
-                            ],
-                          },
-                        ]
-                      }
-                    />,
-                    false,
-                  ],
-                  "componentClass": "div",
-                  "lg": 12,
-                  "md": 12,
-                  "sm": 6,
-                  "xs": 12,
+                            ]
+                          }
+                        />
+                      </TabPane>
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={104}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={105}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={106}
+                      />
+                    </TabContent>
+                  </div>,
+                  "defaultActiveKey": 101,
+                  "id": "service-tabs",
                 },
                 "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "routeRules": Array [
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <Nav
+                        bsClass="nav nav-tabs nav-tabs-pf"
+                        justified={false}
+                        pullLeft={false}
+                        pullRight={false}
+                        stacked={false}
+                      >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={101}
+                        >
+                          Deployments (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={102}
+                        >
+                          Source Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={103}
+                        >
+                          Route Rules (2)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={104}
+                        >
+                          Destination Policies (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={105}
+                        >
+                          Virtual Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={106}
+                        >
+                          Destination Rules (0)
+                        </NavItem>
+                      </Nav>,
+                      <TabContent
+                        animation={true}
+                        bsClass="tab"
+                        componentClass="div"
+                        mountOnEnter={false}
+                        unmountOnExit={false}
+                      >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={101}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={102}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={103}
+                        >
+                          <ServiceInfoRouteRules
+                            routeRules={
+                              Array [
+                                Object {
+                                  "destination": Object {
+                                    "name": "reviews",
+                                  },
+                                  "match": null,
+                                  "name": "reviews-default",
+                                  "precedence": 1,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v1",
+                                      },
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "name": "reviews",
+                                  },
+                                  "match": Object {
+                                    "request": Object {
+                                      "headers": Object {
+                                        "cookie": Object {
+                                          "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                        },
+                                      },
+                                    },
+                                  },
+                                  "name": "reviews-test-v2",
+                                  "precedence": 2,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v2",
+                                      },
+                                    },
+                                  ],
+                                },
+                              ]
+                            }
+                          />
+                        </TabPane>
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={104}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={105}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={106}
+                        />
+                      </TabContent>,
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "bsClass": "nav nav-tabs nav-tabs-pf",
+                        "children": Array [
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={101}
+                          >
+                            Deployments (0)
+                          </NavItem>,
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={102}
+                          >
+                            Source Services (0)
+                          </NavItem>,
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={103}
+                          >
+                            Route Rules (2)
+                          </NavItem>,
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={104}
+                          >
+                            Destination Policies (0)
+                          </NavItem>,
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={105}
+                          >
+                            Virtual Services (0)
+                          </NavItem>,
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={106}
+                          >
+                            Destination Rules (0)
+                          </NavItem>,
+                        ],
+                        "justified": false,
+                        "pullLeft": false,
+                        "pullRight": false,
+                        "stacked": false,
+                      },
+                      "ref": null,
+                      "rendered": Array [
                         Object {
-                          "destination": Object {
-                            "name": "reviews",
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Deployments (0)",
+                            "disabled": false,
+                            "eventKey": 101,
                           },
-                          "match": null,
-                          "name": "reviews-default",
-                          "precedence": 1,
-                          "route": Array [
-                            Object {
-                              "labels": Object {
-                                "version": "v1",
-                              },
-                            },
-                          ],
+                          "ref": null,
+                          "rendered": "Deployments (0)",
+                          "type": [Function],
                         },
                         Object {
-                          "destination": Object {
-                            "name": "reviews",
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Source Services (0)",
+                            "disabled": false,
+                            "eventKey": 102,
                           },
-                          "match": Object {
-                            "request": Object {
-                              "headers": Object {
-                                "cookie": Object {
-                                  "regex": "^(.*?;)?(user=jason)(;.*)?$",
-                                },
-                              },
-                            },
+                          "ref": null,
+                          "rendered": "Source Services (0)",
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Route Rules (2)",
+                            "disabled": false,
+                            "eventKey": 103,
                           },
-                          "name": "reviews-test-v2",
-                          "precedence": 2,
-                          "route": Array [
-                            Object {
-                              "labels": Object {
-                                "version": "v2",
-                              },
-                            },
-                          ],
+                          "ref": null,
+                          "rendered": "Route Rules (2)",
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Destination Policies (0)",
+                            "disabled": false,
+                            "eventKey": 104,
+                          },
+                          "ref": null,
+                          "rendered": "Destination Policies (0)",
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Virtual Services (0)",
+                            "disabled": false,
+                            "eventKey": 105,
+                          },
+                          "ref": null,
+                          "rendered": "Virtual Services (0)",
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Destination Rules (0)",
+                            "disabled": false,
+                            "eventKey": 106,
+                          },
+                          "ref": null,
+                          "rendered": "Destination Rules (0)",
+                          "type": [Function],
                         },
                       ],
+                      "type": [Function],
                     },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                  false,
-                ],
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "animation": true,
+                        "bsClass": "tab",
+                        "children": Array [
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={101}
+                          />,
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={102}
+                          />,
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={103}
+                          >
+                            <ServiceInfoRouteRules
+                              routeRules={
+                                Array [
+                                  Object {
+                                    "destination": Object {
+                                      "name": "reviews",
+                                    },
+                                    "match": null,
+                                    "name": "reviews-default",
+                                    "precedence": 1,
+                                    "route": Array [
+                                      Object {
+                                        "labels": Object {
+                                          "version": "v1",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "name": "reviews",
+                                    },
+                                    "match": Object {
+                                      "request": Object {
+                                        "headers": Object {
+                                          "cookie": Object {
+                                            "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                          },
+                                        },
+                                      },
+                                    },
+                                    "name": "reviews-test-v2",
+                                    "precedence": 2,
+                                    "route": Array [
+                                      Object {
+                                        "labels": Object {
+                                          "version": "v2",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                ]
+                              }
+                            />
+                          </TabPane>,
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={104}
+                          />,
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={105}
+                          />,
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={106}
+                          />,
+                        ],
+                        "componentClass": "div",
+                        "mountOnEnter": false,
+                        "unmountOnExit": false,
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 101,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 102,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": <ServiceInfoRouteRules
+                              routeRules={
+                                Array [
+                                  Object {
+                                    "destination": Object {
+                                      "name": "reviews",
+                                    },
+                                    "match": null,
+                                    "name": "reviews-default",
+                                    "precedence": 1,
+                                    "route": Array [
+                                      Object {
+                                        "labels": Object {
+                                          "version": "v1",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "name": "reviews",
+                                    },
+                                    "match": Object {
+                                      "request": Object {
+                                        "headers": Object {
+                                          "cookie": Object {
+                                            "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                          },
+                                        },
+                                      },
+                                    },
+                                    "name": "reviews-test-v2",
+                                    "precedence": 2,
+                                    "route": Array [
+                                      Object {
+                                        "labels": Object {
+                                          "version": "v2",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                ]
+                              }
+                            />,
+                            "eventKey": 103,
+                          },
+                          "ref": null,
+                          "rendered": Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "routeRules": Array [
+                                Object {
+                                  "destination": Object {
+                                    "name": "reviews",
+                                  },
+                                  "match": null,
+                                  "name": "reviews-default",
+                                  "precedence": 1,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v1",
+                                      },
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "name": "reviews",
+                                  },
+                                  "match": Object {
+                                    "request": Object {
+                                      "headers": Object {
+                                        "cookie": Object {
+                                          "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                        },
+                                      },
+                                    },
+                                  },
+                                  "name": "reviews-test-v2",
+                                  "precedence": 2,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v2",
+                                      },
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                            "ref": null,
+                            "rendered": null,
+                            "type": [Function],
+                          },
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 104,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 105,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 106,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
+                      ],
+                      "type": [Function],
+                    },
+                  ],
+                  "type": "div",
+                },
                 "type": [Function],
               },
-            ],
+              "type": [Function],
+            },
             "type": [Function],
           },
         ],
@@ -1171,6 +3851,7 @@ ShallowWrapper {
                       },
                     ]
                   }
+                  resource_version=""
                   type="ClusterIP"
                 />
               </Col>
@@ -1185,53 +3866,143 @@ ShallowWrapper {
                 componentClass="div"
                 lg={12}
                 md={12}
-                sm={6}
+                sm={12}
                 xs={12}
               >
-                <ServiceInfoRouteRules
-                  routeRules={
-                    Array [
-                      Object {
-                        "destination": Object {
-                          "name": "reviews",
-                        },
-                        "match": null,
-                        "name": "reviews-default",
-                        "precedence": 1,
-                        "route": Array [
-                          Object {
-                            "labels": Object {
-                              "version": "v1",
-                            },
-                          },
-                        ],
-                      },
-                      Object {
-                        "destination": Object {
-                          "name": "reviews",
-                        },
-                        "match": Object {
-                          "request": Object {
-                            "headers": Object {
-                              "cookie": Object {
-                                "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                <Uncontrolled(TabContainer)
+                  defaultActiveKey={101}
+                  id="service-tabs"
+                >
+                  <div>
+                    <Nav
+                      bsClass="nav nav-tabs nav-tabs-pf"
+                      justified={false}
+                      pullLeft={false}
+                      pullRight={false}
+                      stacked={false}
+                    >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={101}
+                      >
+                        Deployments (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={102}
+                      >
+                        Source Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={103}
+                      >
+                        Route Rules (2)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={104}
+                      >
+                        Destination Policies (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={105}
+                      >
+                        Virtual Services (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={106}
+                      >
+                        Destination Rules (0)
+                      </NavItem>
+                    </Nav>
+                    <TabContent
+                      animation={true}
+                      bsClass="tab"
+                      componentClass="div"
+                      mountOnEnter={false}
+                      unmountOnExit={false}
+                    >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={101}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={102}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={103}
+                      >
+                        <ServiceInfoRouteRules
+                          routeRules={
+                            Array [
+                              Object {
+                                "destination": Object {
+                                  "name": "reviews",
+                                },
+                                "match": null,
+                                "name": "reviews-default",
+                                "precedence": 1,
+                                "route": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v1",
+                                    },
+                                  },
+                                ],
                               },
-                            },
-                          },
-                        },
-                        "name": "reviews-test-v2",
-                        "precedence": 2,
-                        "route": Array [
-                          Object {
-                            "labels": Object {
-                              "version": "v2",
-                            },
-                          },
-                        ],
-                      },
-                    ]
-                  }
-                />
+                              Object {
+                                "destination": Object {
+                                  "name": "reviews",
+                                },
+                                "match": Object {
+                                  "request": Object {
+                                    "headers": Object {
+                                      "cookie": Object {
+                                        "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                      },
+                                    },
+                                  },
+                                },
+                                "name": "reviews-test-v2",
+                                "precedence": 2,
+                                "route": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v2",
+                                    },
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                        />
+                      </TabPane>
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={104}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={105}
+                      />
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={106}
+                      />
+                    </TabContent>
+                  </div>
+                </Uncontrolled(TabContainer)>
               </Col>
             </Row>
           </div>,
@@ -1309,6 +4080,7 @@ ShallowWrapper {
                         },
                       ]
                     }
+                    resource_version=""
                     type="ClusterIP"
                   />
                 </Col>
@@ -1323,53 +4095,143 @@ ShallowWrapper {
                   componentClass="div"
                   lg={12}
                   md={12}
-                  sm={6}
+                  sm={12}
                   xs={12}
                 >
-                  <ServiceInfoRouteRules
-                    routeRules={
-                      Array [
-                        Object {
-                          "destination": Object {
-                            "name": "reviews",
-                          },
-                          "match": null,
-                          "name": "reviews-default",
-                          "precedence": 1,
-                          "route": Array [
-                            Object {
-                              "labels": Object {
-                                "version": "v1",
-                              },
-                            },
-                          ],
-                        },
-                        Object {
-                          "destination": Object {
-                            "name": "reviews",
-                          },
-                          "match": Object {
-                            "request": Object {
-                              "headers": Object {
-                                "cookie": Object {
-                                  "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                  <Uncontrolled(TabContainer)
+                    defaultActiveKey={101}
+                    id="service-tabs"
+                  >
+                    <div>
+                      <Nav
+                        bsClass="nav nav-tabs nav-tabs-pf"
+                        justified={false}
+                        pullLeft={false}
+                        pullRight={false}
+                        stacked={false}
+                      >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={101}
+                        >
+                          Deployments (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={102}
+                        >
+                          Source Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={103}
+                        >
+                          Route Rules (2)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={104}
+                        >
+                          Destination Policies (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={105}
+                        >
+                          Virtual Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={106}
+                        >
+                          Destination Rules (0)
+                        </NavItem>
+                      </Nav>
+                      <TabContent
+                        animation={true}
+                        bsClass="tab"
+                        componentClass="div"
+                        mountOnEnter={false}
+                        unmountOnExit={false}
+                      >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={101}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={102}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={103}
+                        >
+                          <ServiceInfoRouteRules
+                            routeRules={
+                              Array [
+                                Object {
+                                  "destination": Object {
+                                    "name": "reviews",
+                                  },
+                                  "match": null,
+                                  "name": "reviews-default",
+                                  "precedence": 1,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v1",
+                                      },
+                                    },
+                                  ],
                                 },
-                              },
-                            },
-                          },
-                          "name": "reviews-test-v2",
-                          "precedence": 2,
-                          "route": Array [
-                            Object {
-                              "labels": Object {
-                                "version": "v2",
-                              },
-                            },
-                          ],
-                        },
-                      ]
-                    }
-                  />
+                                Object {
+                                  "destination": Object {
+                                    "name": "reviews",
+                                  },
+                                  "match": Object {
+                                    "request": Object {
+                                      "headers": Object {
+                                        "cookie": Object {
+                                          "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                        },
+                                      },
+                                    },
+                                  },
+                                  "name": "reviews-test-v2",
+                                  "precedence": 2,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v2",
+                                      },
+                                    },
+                                  ],
+                                },
+                              ]
+                            }
+                          />
+                        </TabPane>
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={104}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={105}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={106}
+                        />
+                      </TabContent>
+                    </div>
+                  </Uncontrolled(TabContainer)>
                 </Col>
               </Row>,
             ],
@@ -1441,6 +4303,7 @@ ShallowWrapper {
                         },
                       ]
                     }
+                    resource_version=""
                     type="ClusterIP"
                   />
                 </Col>,
@@ -1504,6 +4367,7 @@ ShallowWrapper {
                         },
                       ]
                     }
+                    resource_version=""
                     type="ClusterIP"
                   />,
                   "componentClass": "div",
@@ -1561,6 +4425,7 @@ ShallowWrapper {
                         "protocol": "TCP",
                       },
                     ],
+                    "resource_version": "",
                     "type": "ClusterIP",
                   },
                   "ref": null,
@@ -1577,186 +4442,983 @@ ShallowWrapper {
               "nodeType": "class",
               "props": Object {
                 "bsClass": "row",
-                "children": Array [
-                  false,
-                  false,
-                  <Col
-                    bsClass="col"
-                    componentClass="div"
-                    lg={12}
-                    md={12}
-                    sm={6}
-                    xs={12}
+                "children": <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={12}
+                  md={12}
+                  sm={12}
+                  xs={12}
+                >
+                  <Uncontrolled(TabContainer)
+                    defaultActiveKey={101}
+                    id="service-tabs"
                   >
-                    <ServiceInfoRouteRules
-                      routeRules={
-                        Array [
-                          Object {
-                            "destination": Object {
-                              "name": "reviews",
-                            },
-                            "match": null,
-                            "name": "reviews-default",
-                            "precedence": 1,
-                            "route": Array [
-                              Object {
-                                "labels": Object {
-                                  "version": "v1",
-                                },
-                              },
-                            ],
-                          },
-                          Object {
-                            "destination": Object {
-                              "name": "reviews",
-                            },
-                            "match": Object {
-                              "request": Object {
-                                "headers": Object {
-                                  "cookie": Object {
-                                    "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                    <div>
+                      <Nav
+                        bsClass="nav nav-tabs nav-tabs-pf"
+                        justified={false}
+                        pullLeft={false}
+                        pullRight={false}
+                        stacked={false}
+                      >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={101}
+                        >
+                          Deployments (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={102}
+                        >
+                          Source Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={103}
+                        >
+                          Route Rules (2)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={104}
+                        >
+                          Destination Policies (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={105}
+                        >
+                          Virtual Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={106}
+                        >
+                          Destination Rules (0)
+                        </NavItem>
+                      </Nav>
+                      <TabContent
+                        animation={true}
+                        bsClass="tab"
+                        componentClass="div"
+                        mountOnEnter={false}
+                        unmountOnExit={false}
+                      >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={101}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={102}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={103}
+                        >
+                          <ServiceInfoRouteRules
+                            routeRules={
+                              Array [
+                                Object {
+                                  "destination": Object {
+                                    "name": "reviews",
                                   },
+                                  "match": null,
+                                  "name": "reviews-default",
+                                  "precedence": 1,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v1",
+                                      },
+                                    },
+                                  ],
                                 },
-                              },
-                            },
-                            "name": "reviews-test-v2",
-                            "precedence": 2,
-                            "route": Array [
-                              Object {
-                                "labels": Object {
-                                  "version": "v2",
+                                Object {
+                                  "destination": Object {
+                                    "name": "reviews",
+                                  },
+                                  "match": Object {
+                                    "request": Object {
+                                      "headers": Object {
+                                        "cookie": Object {
+                                          "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                        },
+                                      },
+                                    },
+                                  },
+                                  "name": "reviews-test-v2",
+                                  "precedence": 2,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v2",
+                                      },
+                                    },
+                                  ],
                                 },
-                              },
-                            ],
-                          },
-                        ]
-                      }
-                    />
-                  </Col>,
-                ],
+                              ]
+                            }
+                          />
+                        </TabPane>
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={104}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={105}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={106}
+                        />
+                      </TabContent>
+                    </div>
+                  </Uncontrolled(TabContainer)>
+                </Col>,
                 "className": "row-cards-pf",
                 "componentClass": "div",
               },
               "ref": null,
-              "rendered": Array [
-                false,
-                false,
-                Object {
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": <Uncontrolled(TabContainer)
+                    defaultActiveKey={101}
+                    id="service-tabs"
+                  >
+                    <div>
+                      <Nav
+                        bsClass="nav nav-tabs nav-tabs-pf"
+                        justified={false}
+                        pullLeft={false}
+                        pullRight={false}
+                        stacked={false}
+                      >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={101}
+                        >
+                          Deployments (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={102}
+                        >
+                          Source Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={103}
+                        >
+                          Route Rules (2)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={104}
+                        >
+                          Destination Policies (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={105}
+                        >
+                          Virtual Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={106}
+                        >
+                          Destination Rules (0)
+                        </NavItem>
+                      </Nav>
+                      <TabContent
+                        animation={true}
+                        bsClass="tab"
+                        componentClass="div"
+                        mountOnEnter={false}
+                        unmountOnExit={false}
+                      >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={101}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={102}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={103}
+                        >
+                          <ServiceInfoRouteRules
+                            routeRules={
+                              Array [
+                                Object {
+                                  "destination": Object {
+                                    "name": "reviews",
+                                  },
+                                  "match": null,
+                                  "name": "reviews-default",
+                                  "precedence": 1,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v1",
+                                      },
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "name": "reviews",
+                                  },
+                                  "match": Object {
+                                    "request": Object {
+                                      "headers": Object {
+                                        "cookie": Object {
+                                          "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                        },
+                                      },
+                                    },
+                                  },
+                                  "name": "reviews-test-v2",
+                                  "precedence": 2,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v2",
+                                      },
+                                    },
+                                  ],
+                                },
+                              ]
+                            }
+                          />
+                        </TabPane>
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={104}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={105}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={106}
+                        />
+                      </TabContent>
+                    </div>
+                  </Uncontrolled(TabContainer)>,
+                  "componentClass": "div",
+                  "lg": 12,
+                  "md": 12,
+                  "sm": 12,
+                  "xs": 12,
+                },
+                "ref": null,
+                "rendered": Object {
                   "instance": null,
                   "key": undefined,
                   "nodeType": "class",
                   "props": Object {
-                    "bsClass": "col",
-                    "children": Array [
-                      <ServiceInfoRouteRules
-                        routeRules={
-                          Array [
-                            Object {
-                              "destination": Object {
-                                "name": "reviews",
-                              },
-                              "match": null,
-                              "name": "reviews-default",
-                              "precedence": 1,
-                              "route": Array [
+                    "children": <div>
+                      <Nav
+                        bsClass="nav nav-tabs nav-tabs-pf"
+                        justified={false}
+                        pullLeft={false}
+                        pullRight={false}
+                        stacked={false}
+                      >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={101}
+                        >
+                          Deployments (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={102}
+                        >
+                          Source Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={103}
+                        >
+                          Route Rules (2)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={104}
+                        >
+                          Destination Policies (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={105}
+                        >
+                          Virtual Services (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={106}
+                        >
+                          Destination Rules (0)
+                        </NavItem>
+                      </Nav>
+                      <TabContent
+                        animation={true}
+                        bsClass="tab"
+                        componentClass="div"
+                        mountOnEnter={false}
+                        unmountOnExit={false}
+                      >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={101}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={102}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={103}
+                        >
+                          <ServiceInfoRouteRules
+                            routeRules={
+                              Array [
                                 Object {
-                                  "labels": Object {
-                                    "version": "v1",
+                                  "destination": Object {
+                                    "name": "reviews",
                                   },
+                                  "match": null,
+                                  "name": "reviews-default",
+                                  "precedence": 1,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v1",
+                                      },
+                                    },
+                                  ],
                                 },
-                              ],
-                            },
-                            Object {
-                              "destination": Object {
-                                "name": "reviews",
-                              },
-                              "match": Object {
-                                "request": Object {
-                                  "headers": Object {
-                                    "cookie": Object {
-                                      "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                Object {
+                                  "destination": Object {
+                                    "name": "reviews",
+                                  },
+                                  "match": Object {
+                                    "request": Object {
+                                      "headers": Object {
+                                        "cookie": Object {
+                                          "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                        },
+                                      },
                                     },
                                   },
+                                  "name": "reviews-test-v2",
+                                  "precedence": 2,
+                                  "route": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v2",
+                                      },
+                                    },
+                                  ],
                                 },
-                              },
-                              "name": "reviews-test-v2",
-                              "precedence": 2,
-                              "route": Array [
-                                Object {
-                                  "labels": Object {
-                                    "version": "v2",
-                                  },
-                                },
-                              ],
-                            },
-                          ]
-                        }
-                      />,
-                      false,
-                    ],
-                    "componentClass": "div",
-                    "lg": 12,
-                    "md": 12,
-                    "sm": 6,
-                    "xs": 12,
+                              ]
+                            }
+                          />
+                        </TabPane>
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={104}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={105}
+                        />
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={106}
+                        />
+                      </TabContent>
+                    </div>,
+                    "defaultActiveKey": 101,
+                    "id": "service-tabs",
                   },
                   "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "class",
-                      "props": Object {
-                        "routeRules": Array [
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <Nav
+                          bsClass="nav nav-tabs nav-tabs-pf"
+                          justified={false}
+                          pullLeft={false}
+                          pullRight={false}
+                          stacked={false}
+                        >
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={101}
+                          >
+                            Deployments (0)
+                          </NavItem>
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={102}
+                          >
+                            Source Services (0)
+                          </NavItem>
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={103}
+                          >
+                            Route Rules (2)
+                          </NavItem>
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={104}
+                          >
+                            Destination Policies (0)
+                          </NavItem>
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={105}
+                          >
+                            Virtual Services (0)
+                          </NavItem>
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={106}
+                          >
+                            Destination Rules (0)
+                          </NavItem>
+                        </Nav>,
+                        <TabContent
+                          animation={true}
+                          bsClass="tab"
+                          componentClass="div"
+                          mountOnEnter={false}
+                          unmountOnExit={false}
+                        >
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={101}
+                          />
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={102}
+                          />
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={103}
+                          >
+                            <ServiceInfoRouteRules
+                              routeRules={
+                                Array [
+                                  Object {
+                                    "destination": Object {
+                                      "name": "reviews",
+                                    },
+                                    "match": null,
+                                    "name": "reviews-default",
+                                    "precedence": 1,
+                                    "route": Array [
+                                      Object {
+                                        "labels": Object {
+                                          "version": "v1",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "name": "reviews",
+                                    },
+                                    "match": Object {
+                                      "request": Object {
+                                        "headers": Object {
+                                          "cookie": Object {
+                                            "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                          },
+                                        },
+                                      },
+                                    },
+                                    "name": "reviews-test-v2",
+                                    "precedence": 2,
+                                    "route": Array [
+                                      Object {
+                                        "labels": Object {
+                                          "version": "v2",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                ]
+                              }
+                            />
+                          </TabPane>
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={104}
+                          />
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={105}
+                          />
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={106}
+                          />
+                        </TabContent>,
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "bsClass": "nav nav-tabs nav-tabs-pf",
+                          "children": Array [
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={101}
+                            >
+                              Deployments (0)
+                            </NavItem>,
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={102}
+                            >
+                              Source Services (0)
+                            </NavItem>,
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={103}
+                            >
+                              Route Rules (2)
+                            </NavItem>,
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={104}
+                            >
+                              Destination Policies (0)
+                            </NavItem>,
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={105}
+                            >
+                              Virtual Services (0)
+                            </NavItem>,
+                            <NavItem
+                              active={false}
+                              disabled={false}
+                              eventKey={106}
+                            >
+                              Destination Rules (0)
+                            </NavItem>,
+                          ],
+                          "justified": false,
+                          "pullLeft": false,
+                          "pullRight": false,
+                          "stacked": false,
+                        },
+                        "ref": null,
+                        "rendered": Array [
                           Object {
-                            "destination": Object {
-                              "name": "reviews",
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Deployments (0)",
+                              "disabled": false,
+                              "eventKey": 101,
                             },
-                            "match": null,
-                            "name": "reviews-default",
-                            "precedence": 1,
-                            "route": Array [
-                              Object {
-                                "labels": Object {
-                                  "version": "v1",
-                                },
-                              },
-                            ],
+                            "ref": null,
+                            "rendered": "Deployments (0)",
+                            "type": [Function],
                           },
                           Object {
-                            "destination": Object {
-                              "name": "reviews",
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Source Services (0)",
+                              "disabled": false,
+                              "eventKey": 102,
                             },
-                            "match": Object {
-                              "request": Object {
-                                "headers": Object {
-                                  "cookie": Object {
-                                    "regex": "^(.*?;)?(user=jason)(;.*)?$",
-                                  },
-                                },
-                              },
+                            "ref": null,
+                            "rendered": "Source Services (0)",
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Route Rules (2)",
+                              "disabled": false,
+                              "eventKey": 103,
                             },
-                            "name": "reviews-test-v2",
-                            "precedence": 2,
-                            "route": Array [
-                              Object {
-                                "labels": Object {
-                                  "version": "v2",
-                                },
-                              },
-                            ],
+                            "ref": null,
+                            "rendered": "Route Rules (2)",
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Destination Policies (0)",
+                              "disabled": false,
+                              "eventKey": 104,
+                            },
+                            "ref": null,
+                            "rendered": "Destination Policies (0)",
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Virtual Services (0)",
+                              "disabled": false,
+                              "eventKey": 105,
+                            },
+                            "ref": null,
+                            "rendered": "Virtual Services (0)",
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Destination Rules (0)",
+                              "disabled": false,
+                              "eventKey": 106,
+                            },
+                            "ref": null,
+                            "rendered": "Destination Rules (0)",
+                            "type": [Function],
                           },
                         ],
+                        "type": [Function],
                       },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                    false,
-                  ],
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "animation": true,
+                          "bsClass": "tab",
+                          "children": Array [
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={101}
+                            />,
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={102}
+                            />,
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={103}
+                            >
+                              <ServiceInfoRouteRules
+                                routeRules={
+                                  Array [
+                                    Object {
+                                      "destination": Object {
+                                        "name": "reviews",
+                                      },
+                                      "match": null,
+                                      "name": "reviews-default",
+                                      "precedence": 1,
+                                      "route": Array [
+                                        Object {
+                                          "labels": Object {
+                                            "version": "v1",
+                                          },
+                                        },
+                                      ],
+                                    },
+                                    Object {
+                                      "destination": Object {
+                                        "name": "reviews",
+                                      },
+                                      "match": Object {
+                                        "request": Object {
+                                          "headers": Object {
+                                            "cookie": Object {
+                                              "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                            },
+                                          },
+                                        },
+                                      },
+                                      "name": "reviews-test-v2",
+                                      "precedence": 2,
+                                      "route": Array [
+                                        Object {
+                                          "labels": Object {
+                                            "version": "v2",
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  ]
+                                }
+                              />
+                            </TabPane>,
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={104}
+                            />,
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={105}
+                            />,
+                            <TabPane
+                              bsClass="tab-pane"
+                              eventKey={106}
+                            />,
+                          ],
+                          "componentClass": "div",
+                          "mountOnEnter": false,
+                          "unmountOnExit": false,
+                        },
+                        "ref": null,
+                        "rendered": Array [
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 101,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 102,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": <ServiceInfoRouteRules
+                                routeRules={
+                                  Array [
+                                    Object {
+                                      "destination": Object {
+                                        "name": "reviews",
+                                      },
+                                      "match": null,
+                                      "name": "reviews-default",
+                                      "precedence": 1,
+                                      "route": Array [
+                                        Object {
+                                          "labels": Object {
+                                            "version": "v1",
+                                          },
+                                        },
+                                      ],
+                                    },
+                                    Object {
+                                      "destination": Object {
+                                        "name": "reviews",
+                                      },
+                                      "match": Object {
+                                        "request": Object {
+                                          "headers": Object {
+                                            "cookie": Object {
+                                              "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                            },
+                                          },
+                                        },
+                                      },
+                                      "name": "reviews-test-v2",
+                                      "precedence": 2,
+                                      "route": Array [
+                                        Object {
+                                          "labels": Object {
+                                            "version": "v2",
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  ]
+                                }
+                              />,
+                              "eventKey": 103,
+                            },
+                            "ref": null,
+                            "rendered": Object {
+                              "instance": null,
+                              "key": undefined,
+                              "nodeType": "class",
+                              "props": Object {
+                                "routeRules": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "name": "reviews",
+                                    },
+                                    "match": null,
+                                    "name": "reviews-default",
+                                    "precedence": 1,
+                                    "route": Array [
+                                      Object {
+                                        "labels": Object {
+                                          "version": "v1",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "name": "reviews",
+                                    },
+                                    "match": Object {
+                                      "request": Object {
+                                        "headers": Object {
+                                          "cookie": Object {
+                                            "regex": "^(.*?;)?(user=jason)(;.*)?$",
+                                          },
+                                        },
+                                      },
+                                    },
+                                    "name": "reviews-test-v2",
+                                    "precedence": 2,
+                                    "route": Array [
+                                      Object {
+                                        "labels": Object {
+                                          "version": "v2",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                ],
+                              },
+                              "ref": null,
+                              "rendered": null,
+                              "type": [Function],
+                            },
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 104,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 105,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 106,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
+                        ],
+                        "type": [Function],
+                      },
+                    ],
+                    "type": "div",
+                  },
                   "type": [Function],
                 },
-              ],
+                "type": [Function],
+              },
               "type": [Function],
             },
           ],

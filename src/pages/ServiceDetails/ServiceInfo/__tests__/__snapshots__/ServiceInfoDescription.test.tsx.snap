@@ -43,6 +43,7 @@ ShallowWrapper {
       }
     }
     name="reviews"
+    resource_version="1234"
     type="ClusterIP"
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -106,6 +107,13 @@ ShallowWrapper {
             <LocalTime
               time="2018-04-04T15:11:46Z"
             />
+          </div>
+          <div>
+            <strong>
+              Resource Version
+            </strong>
+             
+            1234
           </div>
         </Col>
         <Col
@@ -277,6 +285,13 @@ ShallowWrapper {
               <LocalTime
                 time="2018-04-04T15:11:46Z"
               />
+            </div>
+            <div>
+              <strong>
+                Resource Version
+              </strong>
+               
+              1234
             </div>
           </Col>
           <Col
