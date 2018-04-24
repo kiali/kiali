@@ -1,11 +1,9 @@
 import * as React from 'react';
-import { Button, ButtonGroup, DropdownButton, MenuItem, Switch } from 'patternfly-react';
-import { ButtonToolbar, Glyphicon } from 'react-bootstrap';
+import { Toolbar, Button, ButtonGroup, DropdownButton, MenuItem, Switch, Icon } from 'patternfly-react';
 
 import { GraphFilterProps, GraphFilterState } from '../../types/GraphFilter';
 import * as API from '../../services/Api';
-import { DurationDropdown } from './DurationDropdown';
-import { LayoutDropdown } from './LayoutDropdown';
+import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 
 export default class GraphFilter extends React.Component<GraphFilterProps, GraphFilterState> {
   constructor(props: GraphFilterProps) {
@@ -59,10 +57,29 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
   };
 
   render() {
+    const intervalDurations = [
+      [60, '1 minute'],
+      [600, '10 minutes'],
+      [1800, '30 minutes'],
+      [3600, '1 hour'],
+      [14400, '4 hours'],
+      [28800, '8 hours'],
+      [86400, '1 day'],
+      [604800, '7 days'],
+      [2592000, '30 days']
+    ];
+    const graphsTypes = [
+      ['breadthfirst', 'Breadthfirst'],
+      ['cola', 'Cola'],
+      ['cose', 'Cose'],
+      ['dagre', 'Dagre'],
+      ['klay', 'Klay']
+    ];
+
     return (
       <div>
-        <ButtonToolbar>
-          <ButtonGroup>
+        <Toolbar>
+          <div className="form-group">
             <DropdownButton
               disabled={this.props.disabled}
               id="namespace-selector"
@@ -75,25 +92,37 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
                 </MenuItem>
               ))}
             </DropdownButton>
-          </ButtonGroup>
-          <DurationDropdown
+          </div>
+          <ToolbarDropdown
             disabled={this.props.disabled}
             onClick={this.updateDuration}
-            initialDuration={this.props.activeDuration.value}
+            nameDropdown={'Duration'}
+            initialValue={this.props.activeDuration.value}
+            initialLabel={String(
+              intervalDurations.filter(elem => {
+                return elem[0] === Number(this.props.activeDuration.value);
+              })[0][1]
+            )}
+            options={intervalDurations}
           />
-          <LayoutDropdown
+          <ToolbarDropdown
             disabled={this.props.disabled}
             onClick={this.updateLayout}
-            initialLayout={this.props.activeLayout.name}
+            nameDropdown={'Graph Type'}
+            initialValue={this.props.activeLayout.name}
+            initialLabel={String(
+              graphsTypes.filter(elem => {
+                return elem[0] === String(this.props.activeLayout.name);
+              })[0][1]
+            )}
+            options={graphsTypes}
           />
-
-          <ButtonGroup className="pull-right">
+          <Toolbar.RightContent>
             <Button disabled={this.props.disabled} onClick={this.handleRefresh}>
-              <Glyphicon glyph="refresh" />
+              <Icon name="refresh" />
             </Button>
-          </ButtonGroup>
-        </ButtonToolbar>
-
+          </Toolbar.RightContent>
+        </Toolbar>
         <div style={{ paddingTop: '10px' }}>
           <ButtonGroup>
             <Switch labelText="Show Circuit Breakers" disabled={this.props.disabled} onChange={this.handleToggleCBs} />
