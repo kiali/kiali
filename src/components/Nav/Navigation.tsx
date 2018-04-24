@@ -10,7 +10,7 @@ import IstioRulesPage from '../../pages/IstioRulesList/IstioRuleListPage';
 import IstioRuleDetailsPage from '../../pages/IstioRuleDetails/IstioRuleDetailsPage';
 import HelpDropdown from './HelpDropdown';
 import ServiceDetailsPage from '../../pages/ServiceDetails/ServiceDetailsPage';
-import ServiceGraphPage from '../../pages/ServiceGraph/ServiceGraphPage';
+import { ServiceGraphRouteHandler } from '../../pages/ServiceGraph';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 import ServiceJaegerPage from '../../pages/ServiceJaeger/ServiceJaegerPage';
 
@@ -115,7 +115,7 @@ class Navigation extends React.Component<PropsType, StateType> {
             </PfContainerNavVertical>
           )}
         >
-          <Route path="/service-graph/:namespace" component={ServiceGraphPage} />
+          <Route path="/service-graph/:namespace" component={ServiceGraphRouteHandler} />
           <Route path={servicesPath} component={ServiceListPage} />
           <Route path={servicesJaegerPath} component={ServiceJaegerPage} />
           <Route path="/namespaces/:namespace/services/:service" component={ServiceDetailsPage} />

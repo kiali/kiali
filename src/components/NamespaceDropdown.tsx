@@ -4,7 +4,7 @@ import { DropdownButton, MenuItem } from 'patternfly-react';
 import Namespace from '../types/Namespace';
 
 interface NamespaceListType {
-  disabled?: boolean;
+  disabled: boolean;
   activeNamespace: Namespace;
   items: Namespace[];
   onSelect: (newValue: Namespace) => void;

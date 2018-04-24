@@ -1,18 +1,13 @@
-import PropTypes from 'prop-types';
 import Namespace from './Namespace';
+import { GraphParamsType } from './Graph';
 
-export interface GraphFilterProps {
+export interface GraphFilterProps extends GraphParamsType {
   disabled: boolean;
   onLayoutChange: (newLayout: Layout) => void;
   onFilterChange: (newDuration: Duration) => void;
   onNamespaceChange: (newValue: Namespace) => void;
   onBadgeStatusChange: (newValue: BadgeStatus) => void;
   onRefresh: () => void;
-  onError: PropTypes.func;
-  activeNamespace: Namespace;
-  activeLayout: Layout;
-  activeDuration: Duration;
-  activeBadgeStatus: BadgeStatus;
 }
 
 export interface GraphFilterState {

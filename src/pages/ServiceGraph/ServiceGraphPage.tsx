@@ -1,6 +1,4 @@
 import * as React from 'react';
-import { RouteComponentProps } from 'react-router-dom';
-import { PropTypes } from 'prop-types';
 
 import Namespace from '../../types/Namespace';
 import { GraphParamsType } from '../../types/Graph';
@@ -8,15 +6,12 @@ import { Duration, Layout, BadgeStatus } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
-import * as LayoutDictionary from '../../components/CytoscapeLayout/graphs/LayoutDictionary';
 import GraphFilter from '../../components/GraphFilter/GraphFilter';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
 // import PfHeader from '../../components/Pf/PfHeader';
 import PfAlerts from '../../components/Pf/PfAlerts';
 import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
-
-const URLSearchParams = require('url-search-params');
 
 // summaryData will have two fields:
 //   summaryTarget: The cytoscape element
@@ -32,34 +27,21 @@ type ServiceGraphPageState = {
   graphData: any;
   isLoading: boolean;
   isReady: boolean;
-  params: GraphParamsType;
 };
 
-type ServiceGraphPageProps = {
-  duration: string;
-  namespace: string;
-  layout: string;
-  hideCBs: string;
+type ServiceGraphPageProps = GraphParamsType & {
+  onParamsChange: (params: GraphParamsType) => void;
 };
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
-const DEFAULT_DURATION = 60;
 const NUMBER_OF_DATAPOINTS = 30;
 
-export default class ServiceGraphPage extends React.Component<
-  RouteComponentProps<ServiceGraphPageProps>,
-  ServiceGraphPageState
-> {
-  static contextTypes = {
-    router: PropTypes.object
-  };
-
+export default class ServiceGraphPage extends React.Component<ServiceGraphPageProps, ServiceGraphPageState> {
   // avoid state changes after component is unmounted
   _isMounted: boolean = false;
 
-  constructor(routeProps: RouteComponentProps<ServiceGraphPageProps>) {
-    super(routeProps);
+  constructor(props: ServiceGraphPageProps) {
+    super(props);
 
-    const { graphDuration, graphLayout, badgeStatus } = this.parseProps(routeProps.location.search);
     this.state = {
       isLoading: false,
       isReady: false,
@@ -67,72 +49,30 @@ export default class ServiceGraphPage extends React.Component<
       alertDetails: {},
       summaryData: { summaryType: 'graph' },
       graphTimestamp: new Date().toLocaleString(),
-      graphData: EMPTY_GRAPH_DATA,
-      params: {
-        namespace: { name: routeProps.match.params.namespace },
-        graphDuration: graphDuration,
-        graphLayout: graphLayout,
-        badgeStatus: badgeStatus
-      }
+      graphData: EMPTY_GRAPH_DATA
     };
   }
-
-  parseProps = (queryString: string) => {
-    const urlParams = new URLSearchParams(queryString);
-    // TODO: [KIALI-357] validate `duration`
-    const duration = urlParams.get('duration');
-    const hideCBs = urlParams.get('hideCBs') === 'true';
-
-    return {
-      graphDuration: duration ? { value: duration } : { value: DEFAULT_DURATION },
-      graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
-      badgeStatus: { hideCBs: hideCBs }
-    };
-  };
 
   componentDidMount() {
     this._isMounted = true;
     this.loadGraphDataFromBackend();
   }
 
-  componentWillReceiveProps(nextProps: RouteComponentProps<ServiceGraphPageProps>) {
-    const nextNamespace = { name: nextProps.match.params.namespace };
-    const { graphDuration: nextDuration, graphLayout: nextLayout, badgeStatus: nextBadgeStatus } = this.parseProps(
-      nextProps.location.search
-    );
+  componentWillReceiveProps(nextProps: ServiceGraphPageProps) {
+    const nextNamespace = nextProps.namespace;
+    const nextDuration = nextProps.graphDuration;
 
-    const layoutHasChanged = nextLayout.name !== this.state.params.graphLayout.name;
-    const namespaceHasChanged = nextNamespace.name !== this.state.params.namespace.name;
-    const durationHasChanged = nextDuration.value !== this.state.params.graphDuration.value;
-    const badgeStatusHasChanged = nextBadgeStatus !== this.state.params.badgeStatus;
+    const namespaceHasChanged = nextNamespace.name !== this.props.namespace.name;
+    const durationHasChanged = nextDuration.value !== this.props.graphDuration.value;
 
-    if (layoutHasChanged || namespaceHasChanged || durationHasChanged || badgeStatusHasChanged) {
-      const newParams = {
-        namespace: nextNamespace,
-        graphDuration: nextDuration,
-        graphLayout: nextLayout,
-        badgeStatus: nextBadgeStatus
-      };
-      this.setState({ params: newParams });
-
-      if (!layoutHasChanged) {
-        // we need to explicitly provide namespace and duration because
-        // the above setState() is async.
-        this.loadGraphDataFromBackend(nextNamespace, nextDuration);
-      }
+    if (namespaceHasChanged || durationHasChanged) {
+      this.loadGraphDataFromBackend(nextNamespace, nextDuration);
     }
   }
 
   componentWillUnmount() {
     this._isMounted = false;
   }
-
-  handleError = (error: string) => {
-    this.setState({
-      alertVisible: true,
-      alertDetails: { ...this.state.alertDetails, namespaceAlert: error }
-    });
-  };
 
   dismissAlert = () => {
     this.setState({ alertVisible: false, alertDetails: {} });
@@ -155,6 +95,12 @@ export default class ServiceGraphPage extends React.Component<
   };
 
   render() {
+    const graphParams: GraphParamsType = {
+      namespace: this.props.namespace,
+      graphLayout: this.props.graphLayout,
+      graphDuration: this.props.graphDuration,
+      badgeStatus: this.props.badgeStatus
+    };
     return (
       <PfContainerNavVertical>
         <h2>Service Graph</h2>
@@ -166,15 +112,11 @@ export default class ServiceGraphPage extends React.Component<
           onNamespaceChange={this.handleNamespaceChange}
           onBadgeStatusChange={this.handleBadgeStatusChange}
           onRefresh={this.handleRefreshClick}
-          onError={this.handleError}
-          activeNamespace={this.state.params.namespace}
-          activeLayout={this.state.params.graphLayout}
-          activeDuration={this.state.params.graphDuration}
-          activeBadgeStatus={this.state.params.badgeStatus}
+          {...graphParams}
         />
         <div style={{ position: 'relative' }}>
           <CytoscapeLayout
-            {...this.state.params}
+            {...graphParams}
             isLoading={this.state.isLoading}
             isReady={this.state.isReady}
             elements={this.state.graphData}
@@ -184,73 +126,61 @@ export default class ServiceGraphPage extends React.Component<
           />
           <SummaryPanel
             data={this.state.summaryData}
-            namespace={this.state.params.namespace.name}
+            namespace={this.props.namespace.name}
             queryTime={this.state.graphTimestamp}
-            duration={this.state.params.graphDuration.value}
-            {...computePrometheusQueryInterval(this.state.params.graphDuration.value, NUMBER_OF_DATAPOINTS)}
+            duration={this.props.graphDuration.value}
+            {...computePrometheusQueryInterval(this.props.graphDuration.value, NUMBER_OF_DATAPOINTS)}
           />
         </div>
       </PfContainerNavVertical>
     );
   }
 
-  handleLayoutChange = (newLayout: Layout) => {
-    this.navigate(
-      this.makeUrlFrom(
-        this.state.params.namespace,
-        newLayout,
-        this.state.params.graphDuration,
-        this.state.params.badgeStatus
-      )
-    );
+  handleLayoutChange = (layout: Layout) => {
+    const newParams: GraphParamsType = {
+      namespace: this.props.namespace,
+      graphDuration: this.props.graphDuration,
+      graphLayout: layout,
+      badgeStatus: this.props.badgeStatus
+    };
+    this.props.onParamsChange(newParams);
   };
 
-  handleFilterChange = (newDuration: Duration) => {
-    this.navigate(
-      this.makeUrlFrom(
-        this.state.params.namespace,
-        this.state.params.graphLayout,
-        newDuration,
-        this.state.params.badgeStatus
-      )
-    );
+  handleFilterChange = (duration: Duration) => {
+    const newParams: GraphParamsType = {
+      namespace: this.props.namespace,
+      graphDuration: duration,
+      graphLayout: this.props.graphLayout,
+      badgeStatus: this.props.badgeStatus
+    };
+    this.props.onParamsChange(newParams);
   };
 
-  handleNamespaceChange = (newNS: Namespace) => {
-    this.navigate(
-      this.makeUrlFrom(
-        newNS,
-        this.state.params.graphLayout,
-        this.state.params.graphDuration,
-        this.state.params.badgeStatus
-      )
-    );
+  handleNamespaceChange = (namespace: Namespace) => {
+    const newParams: GraphParamsType = {
+      namespace: namespace,
+      graphDuration: this.props.graphDuration,
+      graphLayout: this.props.graphLayout,
+      badgeStatus: this.props.badgeStatus
+    };
+    this.props.onParamsChange(newParams);
   };
 
   handleBadgeStatusChange = (newBS: BadgeStatus) => {
-    this.navigate(
-      this.makeUrlFrom(
-        this.state.params.namespace,
-        this.state.params.graphLayout,
-        this.state.params.graphDuration,
-        newBS
-      )
-    );
+    const newParams: GraphParamsType = {
+      namespace: this.props.namespace,
+      graphDuration: this.props.graphDuration,
+      graphLayout: this.props.graphLayout,
+      badgeStatus: newBS
+    };
+    this.props.onParamsChange(newParams);
   };
-
-  makeUrlFrom = (_namespace: Namespace, _layout: Layout, _duration: Duration, _badgeStatus: BadgeStatus) =>
-    `/service-graph/${_namespace.name}?layout=${_layout.name}&duration=${_duration.value}&hideCBs=${
-      _badgeStatus.hideCBs
-    }`;
-
-  /** Update browser address bar  */
-  navigate = newUrl => this.context.router.history.push(newUrl);
 
   /** Fetch graph data */
   loadGraphDataFromBackend = (namespace?: Namespace, graphDuration?: Duration) => {
     this.setState({ isLoading: true, isReady: false });
-    namespace = namespace ? namespace : this.state.params.namespace;
-    const duration = graphDuration ? graphDuration.value : this.state.params.graphDuration.value;
+    namespace = namespace ? namespace : this.props.namespace;
+    const duration = graphDuration ? graphDuration.value : this.props.graphDuration.value;
     const restParams = { duration: duration + 's' };
     API.getGraphElements(namespace, restParams)
       .then(response => {
