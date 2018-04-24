@@ -281,6 +281,14 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
           multiline: false,
           format: '%H:%M:%S'
         }
+      },
+      y: {
+        tick: {
+          format: val => {
+            // parseFloat is used to remove trailing zeros
+            return parseFloat(val.toFixed(5));
+          }
+        }
       }
     };
     return <LineChart id={id} title={{ text: title }} data={data} axis={axis} point={{ show: false }} />;
