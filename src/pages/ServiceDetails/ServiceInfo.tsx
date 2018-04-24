@@ -166,43 +166,43 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
           </Row>
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
-              <TabContainer id="service-tabs" defaultActiveKey={101}>
+              <TabContainer id="service-tabs" defaultActiveKey={1}>
                 <div>
                   <Nav bsClass="nav nav-tabs nav-tabs-pf">
-                    <NavItem eventKey={101}>{'Deployments (' + deployments.length + ')'}</NavItem>
-                    <NavItem eventKey={102}>{'Source Services (' + Object.keys(dependencies).length + ')'}</NavItem>
-                    <NavItem eventKey={103}>{'Route Rules (' + routeRules.length + ')'}</NavItem>
-                    <NavItem eventKey={104}>{'Destination Policies (' + destinationPolicies.length + ')'}</NavItem>
-                    <NavItem eventKey={105}>{'Virtual Services (' + virtualServices.length + ')'}</NavItem>
-                    <NavItem eventKey={106}>{'Destination Rules (' + destinationRules.length + ')'}</NavItem>
+                    <NavItem eventKey={1}>{'Deployments (' + deployments.length + ')'}</NavItem>
+                    <NavItem eventKey={2}>{'Source Services (' + Object.keys(dependencies).length + ')'}</NavItem>
+                    <NavItem eventKey={3}>{'Route Rules (' + routeRules.length + ')'}</NavItem>
+                    <NavItem eventKey={4}>{'Destination Policies (' + destinationPolicies.length + ')'}</NavItem>
+                    <NavItem eventKey={5}>{'Virtual Services (' + virtualServices.length + ')'}</NavItem>
+                    <NavItem eventKey={6}>{'Destination Rules (' + destinationRules.length + ')'}</NavItem>
                   </Nav>
                   <TabContent>
-                    <TabPane eventKey={101}>
+                    <TabPane eventKey={1}>
                       {(deployments.length > 0 || this.state.istio_sidecar) && (
                         <ServiceInfoDeployments deployments={deployments} />
                       )}
                     </TabPane>
-                    <TabPane eventKey={102}>
+                    <TabPane eventKey={2}>
                       {(dependencies.size > 0 || this.state.istio_sidecar) && (
                         <ServiceInfoRoutes dependencies={dependencies} />
                       )}
                     </TabPane>
-                    <TabPane eventKey={103}>
+                    <TabPane eventKey={3}>
                       {(routeRules.length > 0 || this.state.istio_sidecar) && (
                         <ServiceInfoRouteRules routeRules={routeRules} />
                       )}
                     </TabPane>
-                    <TabPane eventKey={104}>
+                    <TabPane eventKey={4}>
                       {(destinationPolicies.length > 0 || this.state.istio_sidecar) && (
                         <ServiceInfoDestinationPolicies destinationPolicies={destinationPolicies} />
                       )}
                     </TabPane>
-                    <TabPane eventKey={105}>
+                    <TabPane eventKey={5}>
                       {(virtualServices.length > 0 || this.state.istio_sidecar) && (
                         <ServiceInfoVirtualServices virtualServices={virtualServices} />
                       )}
                     </TabPane>
-                    <TabPane eventKey={106}>
+                    <TabPane eventKey={6}>
                       {(destinationRules.length > 0 || this.state.istio_sidecar) && (
                         <ServiceInfoDestinationRules destinationRules={destinationRules} />
                       )}
