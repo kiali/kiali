@@ -3,7 +3,7 @@ SHELL=/bin/bash
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= 0.1.0.Alpha
+VERSION ?= 0.1.0.Final-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Version label is used in the OpenShift/K8S resources to identify
