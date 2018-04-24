@@ -11,7 +11,7 @@ import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
 import * as LayoutDictionary from '../../components/CytoscapeLayout/graphs/LayoutDictionary';
 import GraphFilter from '../../components/GraphFilter/GraphFilter';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
-import PfHeader from '../../components/Pf/PfHeader';
+// import PfHeader from '../../components/Pf/PfHeader';
 import PfAlerts from '../../components/Pf/PfAlerts';
 import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
@@ -157,27 +157,21 @@ export default class ServiceGraphPage extends React.Component<
   render() {
     return (
       <PfContainerNavVertical>
-        <PfHeader>
-          <h2>Service Graph</h2>
-          <PfAlerts
-            alerts={this.buildAlertsArray()}
-            isVisible={this.state.alertVisible}
-            onDismiss={this.dismissAlert}
-          />
-          <GraphFilter
-            disabled={this.state.isLoading}
-            onLayoutChange={this.handleLayoutChange}
-            onFilterChange={this.handleFilterChange}
-            onNamespaceChange={this.handleNamespaceChange}
-            onBadgeStatusChange={this.handleBadgeStatusChange}
-            onRefresh={this.handleRefreshClick}
-            onError={this.handleError}
-            activeNamespace={this.state.params.namespace}
-            activeLayout={this.state.params.graphLayout}
-            activeDuration={this.state.params.graphDuration}
-            activeBadgeStatus={this.state.params.badgeStatus}
-          />
-        </PfHeader>
+        <h2>Service Graph</h2>
+        <PfAlerts alerts={this.buildAlertsArray()} isVisible={this.state.alertVisible} onDismiss={this.dismissAlert} />
+        <GraphFilter
+          disabled={this.state.isLoading}
+          onLayoutChange={this.handleLayoutChange}
+          onFilterChange={this.handleFilterChange}
+          onNamespaceChange={this.handleNamespaceChange}
+          onBadgeStatusChange={this.handleBadgeStatusChange}
+          onRefresh={this.handleRefreshClick}
+          onError={this.handleError}
+          activeNamespace={this.state.params.namespace}
+          activeLayout={this.state.params.graphLayout}
+          activeDuration={this.state.params.graphDuration}
+          activeBadgeStatus={this.state.params.badgeStatus}
+        />
         <div style={{ position: 'relative' }}>
           <CytoscapeLayout
             {...this.state.params}

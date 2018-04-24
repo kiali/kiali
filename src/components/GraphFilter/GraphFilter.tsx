@@ -35,7 +35,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
   };
 
   updateLayout = (value: string) => {
-    if (this.props.activeLayout.name !== value) {
+    if ('cose' === value || this.props.activeLayout.name !== value) {
       // notify callback
       this.props.onLayoutChange({ name: value });
     }
@@ -68,7 +68,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
       [604800, '7 days'],
       [2592000, '30 days']
     ];
-    const graphsTypes = [
+    const graphLayouts = [
       ['breadthfirst', 'Breadthfirst'],
       ['cola', 'Cola'],
       ['cose', 'Cose'],
@@ -108,14 +108,14 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
           <ToolbarDropdown
             disabled={this.props.disabled}
             onClick={this.updateLayout}
-            nameDropdown={'Graph Type'}
+            nameDropdown={'Layout'}
             initialValue={this.props.activeLayout.name}
             initialLabel={String(
-              graphsTypes.filter(elem => {
+              graphLayouts.filter(elem => {
                 return elem[0] === String(this.props.activeLayout.name);
               })[0][1]
             )}
-            options={graphsTypes}
+            options={graphLayouts}
           />
           <Toolbar.RightContent>
             <Button disabled={this.props.disabled} onClick={this.handleRefresh}>
