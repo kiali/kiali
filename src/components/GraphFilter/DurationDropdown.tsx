@@ -13,6 +13,7 @@ type DurationDropdownState = {
 };
 
 export class DurationDropdown extends React.Component<DurationDropdownProps, DurationDropdownState> {
+  // TODO: [KIALI-437] use enum for type-safety and to make sure we always initialize this component with a valid value
   static DurationIntervals = [
     [60, '1 minute'],
     [600, '10 minutes'],

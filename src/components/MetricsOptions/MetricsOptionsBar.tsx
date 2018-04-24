@@ -3,7 +3,6 @@ import { Toolbar, ToolbarRightContent, DropdownButton, MenuItem, Icon } from 'pa
 
 import ValueSelectHelper from './ValueSelectHelper';
 import MetricsOptions from '../../types/MetricsOptions';
-import RateIntervals from '../../types/RateIntervals';
 
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
@@ -12,10 +11,8 @@ interface Props {
 }
 
 interface MetricsOptionsState {
-  rateInterval: string;
   pollInterval: number;
   duration: number;
-  ticks: number;
   groupByLabels: string[];
 }
 
@@ -25,8 +22,6 @@ interface GroupByLabel {
 }
 
 export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsState> {
-  static DefaultRateInterval = RateIntervals[0][0];
-
   static PollIntervals = [
     [0, 'Pause'],
     [5000, '5 seconds'],
@@ -36,9 +31,6 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     [300000, '5 minutes']
   ];
   static DefaultPollInterval = 5000;
-
-  static Ticks = [10, 20, 30, 50, 100, 200];
-  static DefaultTicks = MetricsOptionsBar.Ticks[2];
 
   static Durations: [number, string][] = [
     [300, 'Last 5 minutes'],
@@ -76,10 +68,8 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
   constructor(props: Props) {
     super(props);
 
-    this.onRateIntervalChanged = this.onRateIntervalChanged.bind(this);
     this.onPollIntervalChanged = this.onPollIntervalChanged.bind(this);
     this.onDurationChanged = this.onDurationChanged.bind(this);
-    this.onTicksChanged = this.onTicksChanged.bind(this);
     this.changedGroupByLabel = this.changedGroupByLabel.bind(this);
 
     this.groupByLabelsHelper = new ValueSelectHelper({
@@ -90,10 +80,8 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     });
 
     this.state = {
-      rateInterval: MetricsOptionsBar.DefaultRateInterval,
       pollInterval: MetricsOptionsBar.DefaultPollInterval,
       duration: MetricsOptionsBar.DefaultDuration,
-      ticks: MetricsOptionsBar.DefaultTicks,
       groupByLabels: []
     };
   }
@@ -102,12 +90,6 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     // Init state upstream
     this.reportOptions();
     this.props.onPollIntervalChanged(this.state.pollInterval);
-  }
-
-  onRateIntervalChanged(key: string) {
-    this.setState({ rateInterval: key }, () => {
-      this.reportOptions();
-    });
   }
 
   onPollIntervalChanged(key: number) {
@@ -123,21 +105,12 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     });
   }
 
-  onTicksChanged(key: number) {
-    this.setState({ ticks: key }, () => {
-      this.reportOptions();
-    });
-  }
-
   reportOptions() {
     // State-to-options converter (removes unnecessary properties)
     const labelsIn = this.state.groupByLabels.map(lbl => MetricsOptionsBar.GroupByLabelOptions[lbl].labelIn);
     const labelsOut = this.state.groupByLabels.map(lbl => MetricsOptionsBar.GroupByLabelOptions[lbl].labelOut);
     this.props.onOptionsChanged({
-      rateInterval: this.state.rateInterval,
-      rateFunc: 'irate',
       duration: this.state.duration,
-      step: this.state.duration / this.state.ticks,
       byLabelsIn: labelsIn,
       byLabelsOut: labelsOut
     });
@@ -157,20 +130,6 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
           <DropdownButton id="duration" title="Duration" onSelect={this.onDurationChanged}>
             {MetricsOptionsBar.Durations.map(r => (
               <MenuItem key={r[0]} active={r[0] === this.state.duration} eventKey={r[0]}>
-                {r[1]}
-              </MenuItem>
-            ))}
-          </DropdownButton>
-          <DropdownButton id="ticks" title="Ticks" onSelect={this.onTicksChanged}>
-            {MetricsOptionsBar.Ticks.map(r => (
-              <MenuItem key={r} active={r === this.state.ticks} eventKey={r}>
-                {r}
-              </MenuItem>
-            ))}
-          </DropdownButton>
-          <DropdownButton id="rateInterval" title="Rate interval" onSelect={this.onRateIntervalChanged}>
-            {RateIntervals.map(r => (
-              <MenuItem key={r[0]} active={r[0] === this.state.rateInterval} eventKey={r[0]}>
                 {r[1]}
               </MenuItem>
             ))}

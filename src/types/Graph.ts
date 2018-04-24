@@ -5,7 +5,7 @@ export interface SummaryPanelPropType {
   data: any;
   namespace: string;
   queryTime: string;
-  duration: string;
+  duration: number;
   step: number;
   rateInterval: string;
 }

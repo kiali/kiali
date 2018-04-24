@@ -9,7 +9,6 @@ import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
 import { IstioLogo, ServiceItem, ServiceList, SortField, overviewToItem } from '../../types/ServiceListComponent';
 import PropTypes from 'prop-types';
-import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import { getRequestErrorsRatio } from '../../components/ServiceHealth/HealthHelper';
 import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
 import ServiceErrorRate from './ServiceErrorRate';
@@ -94,6 +93,7 @@ type ServiceListComponentProps = {
 };
 
 const perPageOptions: number[] = [5, 10, 15];
+const defaultRateInterval = '10m';
 
 class ServiceListComponent extends React.Component<ServiceListComponentProps, ServiceListComponentState> {
   constructor(props: ServiceListComponentProps) {
@@ -110,7 +110,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       pagination: { page: 1, perPage: 10, perPageOptions: perPageOptions },
       currentSortField: sortFields[0],
       isSortAscending: true,
-      rateInterval: MetricsOptionsBar.DefaultRateInterval
+      rateInterval: defaultRateInterval
     };
   }
 
@@ -175,7 +175,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     });
   }
 
-  updateServices(rateInterval: string = MetricsOptionsBar.DefaultRateInterval) {
+  updateServices(rateInterval: string = defaultRateInterval) {
     const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
