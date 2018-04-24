@@ -23,10 +23,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 1,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={1}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -60,18 +65,25 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           }
         }
         id="svc"
         placement={undefined}
+        rateInterval=""
       >
         <Icon
+          className="health-icon"
           name="error-circle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />
       </HealthDetails>,
@@ -83,12 +95,14 @@ ShallowWrapper {
       "nodeType": "class",
       "props": Object {
         "children": <Icon
+          className="health-icon"
           name="error-circle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />,
         "headline": "Failure",
@@ -109,9 +123,14 @@ ShallowWrapper {
             "healthy": 1,
             "total": 1,
           },
+          "requests": Object {
+            "requestCount": 0,
+            "requestErrorCount": 0,
+          },
         },
         "id": "svc",
         "placement": undefined,
+        "rateInterval": "",
       },
       "ref": null,
       "rendered": Object {
@@ -119,10 +138,12 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "function",
         "props": Object {
+          "className": "health-icon",
           "name": "error-circle-o",
           "style": Object {
             "fontSize": "18px",
           },
+          "tabIndex": "0",
           "type": "pf",
         },
         "ref": null,
@@ -159,18 +180,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -182,12 +210,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Failure",
@@ -208,9 +238,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -218,10 +253,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "error-circle-o",
             "style": Object {
               "fontSize": "18px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -266,10 +303,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 1,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={0}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -304,18 +346,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -335,12 +384,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Failure",
@@ -361,9 +412,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -371,10 +427,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "error-circle-o",
             "style": Object {
               "fontSize": "35px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -424,18 +482,25 @@ ShallowWrapper {
                   "healthy": 1,
                   "total": 1,
                 },
+                "requests": Object {
+                  "requestCount": 0,
+                  "requestErrorCount": 0,
+                },
               }
             }
             id="svc"
             placement={undefined}
+            rateInterval=""
           >
             <Icon
+              className="health-icon"
               name="error-circle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />
           </HealthDetails>,
@@ -455,12 +520,14 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "children": <Icon
+              className="health-icon"
               name="error-circle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />,
             "headline": "Failure",
@@ -481,9 +548,14 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             },
             "id": "svc",
             "placement": undefined,
+            "rateInterval": "",
           },
           "ref": null,
           "rendered": Object {
@@ -491,10 +563,12 @@ ShallowWrapper {
             "key": undefined,
             "nodeType": "function",
             "props": Object {
+              "className": "health-icon",
               "name": "error-circle-o",
               "style": Object {
                 "fontSize": "35px",
               },
+              "tabIndex": "0",
               "type": "pf",
             },
             "ref": null,
@@ -551,10 +625,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 10,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={1}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -588,18 +667,25 @@ ShallowWrapper {
               "healthy": 1,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           }
         }
         id="svc"
         placement={undefined}
+        rateInterval=""
       >
         <Icon
+          className="health-icon"
           name="warning-triangle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />
       </HealthDetails>,
@@ -611,12 +697,14 @@ ShallowWrapper {
       "nodeType": "class",
       "props": Object {
         "children": <Icon
+          className="health-icon"
           name="warning-triangle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />,
         "headline": "Degraded",
@@ -637,9 +725,14 @@ ShallowWrapper {
             "healthy": 1,
             "total": 10,
           },
+          "requests": Object {
+            "requestCount": 0,
+            "requestErrorCount": 0,
+          },
         },
         "id": "svc",
         "placement": undefined,
+        "rateInterval": "",
       },
       "ref": null,
       "rendered": Object {
@@ -647,10 +740,12 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "function",
         "props": Object {
+          "className": "health-icon",
           "name": "warning-triangle-o",
           "style": Object {
             "fontSize": "18px",
           },
+          "tabIndex": "0",
           "type": "pf",
         },
         "ref": null,
@@ -687,18 +782,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -710,12 +812,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Degraded",
@@ -736,9 +840,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -746,10 +855,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "warning-triangle-o",
             "style": Object {
               "fontSize": "18px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -794,10 +905,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 10,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={0}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -832,18 +948,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -879,12 +1002,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Degraded",
@@ -905,9 +1030,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -915,10 +1045,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "warning-triangle-o",
             "style": Object {
               "fontSize": "35px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -1025,18 +1157,25 @@ ShallowWrapper {
                   "healthy": 1,
                   "total": 10,
                 },
+                "requests": Object {
+                  "requestCount": 0,
+                  "requestErrorCount": 0,
+                },
               }
             }
             id="svc"
             placement={undefined}
+            rateInterval=""
           >
             <Icon
+              className="health-icon"
               name="warning-triangle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />
           </HealthDetails>,
@@ -1072,12 +1211,14 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "children": <Icon
+              className="health-icon"
               name="warning-triangle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />,
             "headline": "Degraded",
@@ -1098,9 +1239,14 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             },
             "id": "svc",
             "placement": undefined,
+            "rateInterval": "",
           },
           "ref": null,
           "rendered": Object {
@@ -1108,10 +1254,12 @@ ShallowWrapper {
             "key": undefined,
             "nodeType": "function",
             "props": Object {
+              "className": "health-icon",
               "name": "warning-triangle-o",
               "style": Object {
                 "fontSize": "35px",
               },
+              "tabIndex": "0",
               "type": "pf",
             },
             "ref": null,
@@ -1225,10 +1373,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 1,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={1}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -1262,18 +1415,25 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           }
         }
         id="svc"
         placement={undefined}
+        rateInterval=""
       >
         <Icon
+          className="health-icon"
           name="warning-triangle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />
       </HealthDetails>,
@@ -1285,12 +1445,14 @@ ShallowWrapper {
       "nodeType": "class",
       "props": Object {
         "children": <Icon
+          className="health-icon"
           name="warning-triangle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />,
         "headline": "Degraded",
@@ -1311,9 +1473,14 @@ ShallowWrapper {
             "healthy": 1,
             "total": 1,
           },
+          "requests": Object {
+            "requestCount": 0,
+            "requestErrorCount": 0,
+          },
         },
         "id": "svc",
         "placement": undefined,
+        "rateInterval": "",
       },
       "ref": null,
       "rendered": Object {
@@ -1321,10 +1488,12 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "function",
         "props": Object {
+          "className": "health-icon",
           "name": "warning-triangle-o",
           "style": Object {
             "fontSize": "18px",
           },
+          "tabIndex": "0",
           "type": "pf",
         },
         "ref": null,
@@ -1361,18 +1530,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -1384,12 +1560,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Degraded",
@@ -1410,9 +1588,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -1420,10 +1603,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "warning-triangle-o",
             "style": Object {
               "fontSize": "18px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -1468,10 +1653,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 1,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={0}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -1506,18 +1696,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -1537,12 +1734,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Degraded",
@@ -1563,9 +1762,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -1573,10 +1777,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "warning-triangle-o",
             "style": Object {
               "fontSize": "35px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -1626,18 +1832,25 @@ ShallowWrapper {
                   "healthy": 1,
                   "total": 1,
                 },
+                "requests": Object {
+                  "requestCount": 0,
+                  "requestErrorCount": 0,
+                },
               }
             }
             id="svc"
             placement={undefined}
+            rateInterval=""
           >
             <Icon
+              className="health-icon"
               name="warning-triangle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />
           </HealthDetails>,
@@ -1657,12 +1870,14 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "children": <Icon
+              className="health-icon"
               name="warning-triangle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />,
             "headline": "Degraded",
@@ -1683,9 +1898,14 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             },
             "id": "svc",
             "placement": undefined,
+            "rateInterval": "",
           },
           "ref": null,
           "rendered": Object {
@@ -1693,10 +1913,12 @@ ShallowWrapper {
             "key": undefined,
             "nodeType": "function",
             "props": Object {
+              "className": "health-icon",
               "name": "warning-triangle-o",
               "style": Object {
                 "fontSize": "35px",
               },
+              "tabIndex": "0",
               "type": "pf",
             },
             "ref": null,
@@ -1753,10 +1975,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 10,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={1}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -1790,18 +2017,25 @@ ShallowWrapper {
               "healthy": 1,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           }
         }
         id="svc"
         placement={undefined}
+        rateInterval=""
       >
         <Icon
+          className="health-icon"
           name="error-circle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />
       </HealthDetails>,
@@ -1813,12 +2047,14 @@ ShallowWrapper {
       "nodeType": "class",
       "props": Object {
         "children": <Icon
+          className="health-icon"
           name="error-circle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />,
         "headline": "Failure",
@@ -1839,9 +2075,14 @@ ShallowWrapper {
             "healthy": 1,
             "total": 10,
           },
+          "requests": Object {
+            "requestCount": 0,
+            "requestErrorCount": 0,
+          },
         },
         "id": "svc",
         "placement": undefined,
+        "rateInterval": "",
       },
       "ref": null,
       "rendered": Object {
@@ -1849,10 +2090,12 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "function",
         "props": Object {
+          "className": "health-icon",
           "name": "error-circle-o",
           "style": Object {
             "fontSize": "18px",
           },
+          "tabIndex": "0",
           "type": "pf",
         },
         "ref": null,
@@ -1889,18 +2132,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -1912,12 +2162,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Failure",
@@ -1938,9 +2190,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -1948,10 +2205,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "error-circle-o",
             "style": Object {
               "fontSize": "18px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -1996,10 +2255,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 10,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={0}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -2034,18 +2298,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -2078,12 +2349,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Failure",
@@ -2104,9 +2377,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -2114,10 +2392,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "error-circle-o",
             "style": Object {
               "fontSize": "35px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -2210,18 +2490,25 @@ ShallowWrapper {
                   "healthy": 1,
                   "total": 10,
                 },
+                "requests": Object {
+                  "requestCount": 0,
+                  "requestErrorCount": 0,
+                },
               }
             }
             id="svc"
             placement={undefined}
+            rateInterval=""
           >
             <Icon
+              className="health-icon"
               name="error-circle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />
           </HealthDetails>,
@@ -2254,12 +2541,14 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "children": <Icon
+              className="health-icon"
               name="error-circle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />,
             "headline": "Failure",
@@ -2280,9 +2569,14 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             },
             "id": "svc",
             "placement": undefined,
+            "rateInterval": "",
           },
           "ref": null,
           "rendered": Object {
@@ -2290,10 +2584,12 @@ ShallowWrapper {
             "key": undefined,
             "nodeType": "function",
             "props": Object {
+              "className": "health-icon",
               "name": "error-circle-o",
               "style": Object {
                 "fontSize": "35px",
               },
+              "tabIndex": "0",
               "type": "pf",
             },
             "ref": null,
@@ -2393,10 +2689,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 10,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={1}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -2430,18 +2731,25 @@ ShallowWrapper {
               "healthy": 1,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           }
         }
         id="svc"
         placement={undefined}
+        rateInterval=""
       >
         <Icon
+          className="health-icon"
           name="warning-triangle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />
       </HealthDetails>,
@@ -2453,12 +2761,14 @@ ShallowWrapper {
       "nodeType": "class",
       "props": Object {
         "children": <Icon
+          className="health-icon"
           name="warning-triangle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />,
         "headline": "Degraded",
@@ -2479,9 +2789,14 @@ ShallowWrapper {
             "healthy": 1,
             "total": 10,
           },
+          "requests": Object {
+            "requestCount": 0,
+            "requestErrorCount": 0,
+          },
         },
         "id": "svc",
         "placement": undefined,
+        "rateInterval": "",
       },
       "ref": null,
       "rendered": Object {
@@ -2489,10 +2804,12 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "function",
         "props": Object {
+          "className": "health-icon",
           "name": "warning-triangle-o",
           "style": Object {
             "fontSize": "18px",
           },
+          "tabIndex": "0",
           "type": "pf",
         },
         "ref": null,
@@ -2529,18 +2846,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -2552,12 +2876,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Degraded",
@@ -2578,9 +2904,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -2588,10 +2919,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "warning-triangle-o",
             "style": Object {
               "fontSize": "18px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -2636,10 +2969,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 10,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={0}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -2674,18 +3012,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -2705,12 +3050,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="warning-triangle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Degraded",
@@ -2731,9 +3078,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -2741,10 +3093,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "warning-triangle-o",
             "style": Object {
               "fontSize": "35px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -2794,18 +3148,25 @@ ShallowWrapper {
                   "healthy": 1,
                   "total": 10,
                 },
+                "requests": Object {
+                  "requestCount": 0,
+                  "requestErrorCount": 0,
+                },
               }
             }
             id="svc"
             placement={undefined}
+            rateInterval=""
           >
             <Icon
+              className="health-icon"
               name="warning-triangle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />
           </HealthDetails>,
@@ -2825,12 +3186,14 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "children": <Icon
+              className="health-icon"
               name="warning-triangle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />,
             "headline": "Degraded",
@@ -2851,9 +3214,14 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             },
             "id": "svc",
             "placement": undefined,
+            "rateInterval": "",
           },
           "ref": null,
           "rendered": Object {
@@ -2861,10 +3229,12 @@ ShallowWrapper {
             "key": undefined,
             "nodeType": "function",
             "props": Object {
+              "className": "health-icon",
               "name": "warning-triangle-o",
               "style": Object {
                 "fontSize": "35px",
               },
+              "tabIndex": "0",
               "type": "pf",
             },
             "ref": null,
@@ -2921,10 +3291,15 @@ ShallowWrapper {
           "healthy": 0,
           "total": 10,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={1}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -2958,18 +3333,25 @@ ShallowWrapper {
               "healthy": 0,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           }
         }
         id="svc"
         placement={undefined}
+        rateInterval=""
       >
         <Icon
+          className="health-icon"
           name="error-circle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />
       </HealthDetails>,
@@ -2981,12 +3363,14 @@ ShallowWrapper {
       "nodeType": "class",
       "props": Object {
         "children": <Icon
+          className="health-icon"
           name="error-circle-o"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />,
         "headline": "Failure",
@@ -3007,9 +3391,14 @@ ShallowWrapper {
             "healthy": 0,
             "total": 10,
           },
+          "requests": Object {
+            "requestCount": 0,
+            "requestErrorCount": 0,
+          },
         },
         "id": "svc",
         "placement": undefined,
+        "rateInterval": "",
       },
       "ref": null,
       "rendered": Object {
@@ -3017,10 +3406,12 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "function",
         "props": Object {
+          "className": "health-icon",
           "name": "error-circle-o",
           "style": Object {
             "fontSize": "18px",
           },
+          "tabIndex": "0",
           "type": "pf",
         },
         "ref": null,
@@ -3057,18 +3448,25 @@ ShallowWrapper {
                 "healthy": 0,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -3080,12 +3478,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Failure",
@@ -3106,9 +3506,14 @@ ShallowWrapper {
               "healthy": 0,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -3116,10 +3521,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "error-circle-o",
             "style": Object {
               "fontSize": "18px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -3164,10 +3571,15 @@ ShallowWrapper {
           "healthy": 0,
           "total": 10,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={0}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -3202,18 +3614,25 @@ ShallowWrapper {
                 "healthy": 0,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -3246,12 +3665,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="error-circle-o"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Failure",
@@ -3272,9 +3693,14 @@ ShallowWrapper {
               "healthy": 0,
               "total": 10,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -3282,10 +3708,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "error-circle-o",
             "style": Object {
               "fontSize": "35px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -3378,18 +3806,25 @@ ShallowWrapper {
                   "healthy": 0,
                   "total": 10,
                 },
+                "requests": Object {
+                  "requestCount": 0,
+                  "requestErrorCount": 0,
+                },
               }
             }
             id="svc"
             placement={undefined}
+            rateInterval=""
           >
             <Icon
+              className="health-icon"
               name="error-circle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />
           </HealthDetails>,
@@ -3422,12 +3857,14 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "children": <Icon
+              className="health-icon"
               name="error-circle-o"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />,
             "headline": "Failure",
@@ -3448,9 +3885,14 @@ ShallowWrapper {
                 "healthy": 0,
                 "total": 10,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             },
             "id": "svc",
             "placement": undefined,
+            "rateInterval": "",
           },
           "ref": null,
           "rendered": Object {
@@ -3458,10 +3900,12 @@ ShallowWrapper {
             "key": undefined,
             "nodeType": "function",
             "props": Object {
+              "className": "health-icon",
               "name": "error-circle-o",
               "style": Object {
                 "fontSize": "35px",
               },
+              "tabIndex": "0",
               "type": "pf",
             },
             "ref": null,
@@ -3538,6 +3982,1334 @@ ShallowWrapper {
 }
 `;
 
+exports[`HealthIndicator renders error rate degraded 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <HealthIndicator
+    health={
+      Object {
+        "deploymentStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 1,
+          },
+        ],
+        "envoy": Object {
+          "healthy": 1,
+          "total": 10,
+        },
+        "requests": Object {
+          "requestCount": 1.56,
+          "requestErrorCount": 0.1,
+        },
+      }
+    }
+    id="svc"
+    mode={1}
+    rateInterval=""
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": <HealthDetails
+        headline="Degraded"
+        health={
+          Object {
+            "deploymentStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+            ],
+            "envoy": Object {
+              "healthy": 1,
+              "total": 10,
+            },
+            "requests": Object {
+              "requestCount": 1.56,
+              "requestErrorCount": 0.1,
+            },
+          }
+        }
+        id="svc"
+        placement={undefined}
+        rateInterval=""
+      >
+        <Icon
+          className="health-icon"
+          name="warning-triangle-o"
+          style={
+            Object {
+              "fontSize": "18px",
+            }
+          }
+          tabIndex="0"
+          type="pf"
+        />
+      </HealthDetails>,
+    },
+    "ref": null,
+    "rendered": Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "children": <Icon
+          className="health-icon"
+          name="warning-triangle-o"
+          style={
+            Object {
+              "fontSize": "18px",
+            }
+          }
+          tabIndex="0"
+          type="pf"
+        />,
+        "headline": "Degraded",
+        "health": Object {
+          "deploymentStatuses": Array [
+            Object {
+              "available": 1,
+              "name": "A",
+              "replicas": 1,
+            },
+          ],
+          "envoy": Object {
+            "healthy": 1,
+            "total": 10,
+          },
+          "requests": Object {
+            "requestCount": 1.56,
+            "requestErrorCount": 0.1,
+          },
+        },
+        "id": "svc",
+        "placement": undefined,
+        "rateInterval": "",
+      },
+      "ref": null,
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "className": "health-icon",
+          "name": "warning-triangle-o",
+          "style": Object {
+            "fontSize": "18px",
+          },
+          "tabIndex": "0",
+          "type": "pf",
+        },
+        "ref": null,
+        "rendered": null,
+        "type": [Function],
+      },
+      "type": [Function],
+    },
+    "type": "span",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": <HealthDetails
+          headline="Degraded"
+          health={
+            Object {
+              "deploymentStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+              ],
+              "envoy": Object {
+                "healthy": 1,
+                "total": 10,
+              },
+              "requests": Object {
+                "requestCount": 1.56,
+                "requestErrorCount": 0.1,
+              },
+            }
+          }
+          id="svc"
+          placement={undefined}
+          rateInterval=""
+        >
+          <Icon
+            className="health-icon"
+            name="warning-triangle-o"
+            style={
+              Object {
+                "fontSize": "18px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />
+        </HealthDetails>,
+      },
+      "ref": null,
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "children": <Icon
+            className="health-icon"
+            name="warning-triangle-o"
+            style={
+              Object {
+                "fontSize": "18px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />,
+          "headline": "Degraded",
+          "health": Object {
+            "deploymentStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+            ],
+            "envoy": Object {
+              "healthy": 1,
+              "total": 10,
+            },
+            "requests": Object {
+              "requestCount": 1.56,
+              "requestErrorCount": 0.1,
+            },
+          },
+          "id": "svc",
+          "placement": undefined,
+          "rateInterval": "",
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "className": "health-icon",
+            "name": "warning-triangle-o",
+            "style": Object {
+              "fontSize": "18px",
+            },
+            "tabIndex": "0",
+            "type": "pf",
+          },
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
+        },
+        "type": [Function],
+      },
+      "type": "span",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
+
+exports[`HealthIndicator renders error rate degraded 2`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <HealthIndicator
+    health={
+      Object {
+        "deploymentStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 1,
+          },
+        ],
+        "envoy": Object {
+          "healthy": 1,
+          "total": 10,
+        },
+        "requests": Object {
+          "requestCount": 1.56,
+          "requestErrorCount": 0.1,
+        },
+      }
+    }
+    id="svc"
+    mode={0}
+    rateInterval=""
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <HealthDetails
+          headline="Degraded"
+          health={
+            Object {
+              "deploymentStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+              ],
+              "envoy": Object {
+                "healthy": 1,
+                "total": 10,
+              },
+              "requests": Object {
+                "requestCount": 1.56,
+                "requestErrorCount": 0.1,
+              },
+            }
+          }
+          id="svc"
+          placement={undefined}
+          rateInterval=""
+        >
+          <Icon
+            className="health-icon"
+            name="warning-triangle-o"
+            style={
+              Object {
+                "fontSize": "35px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />
+        </HealthDetails>,
+        <br />,
+        false,
+        <ul
+          style={
+            Object {
+              "padding": 0,
+            }
+          }
+        >
+          <li>
+            Envoy health degraded
+          </li>
+          <li>
+            Error rate degraded: 6.41%&gt;=0.1%
+          </li>
+        </ul>,
+      ],
+      "style": Object {
+        "color": "#ec7a08",
+      },
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "children": <Icon
+            className="health-icon"
+            name="warning-triangle-o"
+            style={
+              Object {
+                "fontSize": "35px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />,
+          "headline": "Degraded",
+          "health": Object {
+            "deploymentStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+            ],
+            "envoy": Object {
+              "healthy": 1,
+              "total": 10,
+            },
+            "requests": Object {
+              "requestCount": 1.56,
+              "requestErrorCount": 0.1,
+            },
+          },
+          "id": "svc",
+          "placement": undefined,
+          "rateInterval": "",
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "className": "health-icon",
+            "name": "warning-triangle-o",
+            "style": Object {
+              "fontSize": "35px",
+            },
+            "tabIndex": "0",
+            "type": "pf",
+          },
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
+        },
+        "type": [Function],
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {},
+        "ref": null,
+        "rendered": null,
+        "type": "br",
+      },
+      false,
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [
+            <li>
+              Envoy health degraded
+            </li>,
+            <li>
+              Error rate degraded: 6.41%&gt;=0.1%
+            </li>,
+          ],
+          "style": Object {
+            "padding": 0,
+          },
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": "0",
+            "nodeType": "host",
+            "props": Object {
+              "children": "Envoy health degraded",
+            },
+            "ref": null,
+            "rendered": "Envoy health degraded",
+            "type": "li",
+          },
+          Object {
+            "instance": null,
+            "key": "1",
+            "nodeType": "host",
+            "props": Object {
+              "children": "Error rate degraded: 6.41%>=0.1%",
+            },
+            "ref": null,
+            "rendered": "Error rate degraded: 6.41%>=0.1%",
+            "type": "li",
+          },
+        ],
+        "type": "ul",
+      },
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <HealthDetails
+            headline="Degraded"
+            health={
+              Object {
+                "deploymentStatuses": Array [
+                  Object {
+                    "available": 1,
+                    "name": "A",
+                    "replicas": 1,
+                  },
+                ],
+                "envoy": Object {
+                  "healthy": 1,
+                  "total": 10,
+                },
+                "requests": Object {
+                  "requestCount": 1.56,
+                  "requestErrorCount": 0.1,
+                },
+              }
+            }
+            id="svc"
+            placement={undefined}
+            rateInterval=""
+          >
+            <Icon
+              className="health-icon"
+              name="warning-triangle-o"
+              style={
+                Object {
+                  "fontSize": "35px",
+                }
+              }
+              tabIndex="0"
+              type="pf"
+            />
+          </HealthDetails>,
+          <br />,
+          false,
+          <ul
+            style={
+              Object {
+                "padding": 0,
+              }
+            }
+          >
+            <li>
+              Envoy health degraded
+            </li>
+            <li>
+              Error rate degraded: 6.41%&gt;=0.1%
+            </li>
+          </ul>,
+        ],
+        "style": Object {
+          "color": "#ec7a08",
+        },
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "children": <Icon
+              className="health-icon"
+              name="warning-triangle-o"
+              style={
+                Object {
+                  "fontSize": "35px",
+                }
+              }
+              tabIndex="0"
+              type="pf"
+            />,
+            "headline": "Degraded",
+            "health": Object {
+              "deploymentStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+              ],
+              "envoy": Object {
+                "healthy": 1,
+                "total": 10,
+              },
+              "requests": Object {
+                "requestCount": 1.56,
+                "requestErrorCount": 0.1,
+              },
+            },
+            "id": "svc",
+            "placement": undefined,
+            "rateInterval": "",
+          },
+          "ref": null,
+          "rendered": Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "function",
+            "props": Object {
+              "className": "health-icon",
+              "name": "warning-triangle-o",
+              "style": Object {
+                "fontSize": "35px",
+              },
+              "tabIndex": "0",
+              "type": "pf",
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          "type": [Function],
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {},
+          "ref": null,
+          "rendered": null,
+          "type": "br",
+        },
+        false,
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              <li>
+                Envoy health degraded
+              </li>,
+              <li>
+                Error rate degraded: 6.41%&gt;=0.1%
+              </li>,
+            ],
+            "style": Object {
+              "padding": 0,
+            },
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": "0",
+              "nodeType": "host",
+              "props": Object {
+                "children": "Envoy health degraded",
+              },
+              "ref": null,
+              "rendered": "Envoy health degraded",
+              "type": "li",
+            },
+            Object {
+              "instance": null,
+              "key": "1",
+              "nodeType": "host",
+              "props": Object {
+                "children": "Error rate degraded: 6.41%>=0.1%",
+              },
+              "ref": null,
+              "rendered": "Error rate degraded: 6.41%>=0.1%",
+              "type": "li",
+            },
+          ],
+          "type": "ul",
+        },
+      ],
+      "type": "div",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
+
+exports[`HealthIndicator renders error rate failure 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <HealthIndicator
+    health={
+      Object {
+        "deploymentStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 1,
+          },
+        ],
+        "envoy": Object {
+          "healthy": 1,
+          "total": 10,
+        },
+        "requests": Object {
+          "requestCount": 1.56,
+          "requestErrorCount": 1.1,
+        },
+      }
+    }
+    id="svc"
+    mode={1}
+    rateInterval=""
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": <HealthDetails
+        headline="Failure"
+        health={
+          Object {
+            "deploymentStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+            ],
+            "envoy": Object {
+              "healthy": 1,
+              "total": 10,
+            },
+            "requests": Object {
+              "requestCount": 1.56,
+              "requestErrorCount": 1.1,
+            },
+          }
+        }
+        id="svc"
+        placement={undefined}
+        rateInterval=""
+      >
+        <Icon
+          className="health-icon"
+          name="error-circle-o"
+          style={
+            Object {
+              "fontSize": "18px",
+            }
+          }
+          tabIndex="0"
+          type="pf"
+        />
+      </HealthDetails>,
+    },
+    "ref": null,
+    "rendered": Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "children": <Icon
+          className="health-icon"
+          name="error-circle-o"
+          style={
+            Object {
+              "fontSize": "18px",
+            }
+          }
+          tabIndex="0"
+          type="pf"
+        />,
+        "headline": "Failure",
+        "health": Object {
+          "deploymentStatuses": Array [
+            Object {
+              "available": 1,
+              "name": "A",
+              "replicas": 1,
+            },
+          ],
+          "envoy": Object {
+            "healthy": 1,
+            "total": 10,
+          },
+          "requests": Object {
+            "requestCount": 1.56,
+            "requestErrorCount": 1.1,
+          },
+        },
+        "id": "svc",
+        "placement": undefined,
+        "rateInterval": "",
+      },
+      "ref": null,
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "className": "health-icon",
+          "name": "error-circle-o",
+          "style": Object {
+            "fontSize": "18px",
+          },
+          "tabIndex": "0",
+          "type": "pf",
+        },
+        "ref": null,
+        "rendered": null,
+        "type": [Function],
+      },
+      "type": [Function],
+    },
+    "type": "span",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": <HealthDetails
+          headline="Failure"
+          health={
+            Object {
+              "deploymentStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+              ],
+              "envoy": Object {
+                "healthy": 1,
+                "total": 10,
+              },
+              "requests": Object {
+                "requestCount": 1.56,
+                "requestErrorCount": 1.1,
+              },
+            }
+          }
+          id="svc"
+          placement={undefined}
+          rateInterval=""
+        >
+          <Icon
+            className="health-icon"
+            name="error-circle-o"
+            style={
+              Object {
+                "fontSize": "18px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />
+        </HealthDetails>,
+      },
+      "ref": null,
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "children": <Icon
+            className="health-icon"
+            name="error-circle-o"
+            style={
+              Object {
+                "fontSize": "18px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />,
+          "headline": "Failure",
+          "health": Object {
+            "deploymentStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+            ],
+            "envoy": Object {
+              "healthy": 1,
+              "total": 10,
+            },
+            "requests": Object {
+              "requestCount": 1.56,
+              "requestErrorCount": 1.1,
+            },
+          },
+          "id": "svc",
+          "placement": undefined,
+          "rateInterval": "",
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "className": "health-icon",
+            "name": "error-circle-o",
+            "style": Object {
+              "fontSize": "18px",
+            },
+            "tabIndex": "0",
+            "type": "pf",
+          },
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
+        },
+        "type": [Function],
+      },
+      "type": "span",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
+
+exports[`HealthIndicator renders error rate failure 2`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <HealthIndicator
+    health={
+      Object {
+        "deploymentStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 1,
+          },
+        ],
+        "envoy": Object {
+          "healthy": 1,
+          "total": 10,
+        },
+        "requests": Object {
+          "requestCount": 1.56,
+          "requestErrorCount": 1.1,
+        },
+      }
+    }
+    id="svc"
+    mode={0}
+    rateInterval=""
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <HealthDetails
+          headline="Failure"
+          health={
+            Object {
+              "deploymentStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+              ],
+              "envoy": Object {
+                "healthy": 1,
+                "total": 10,
+              },
+              "requests": Object {
+                "requestCount": 1.56,
+                "requestErrorCount": 1.1,
+              },
+            }
+          }
+          id="svc"
+          placement={undefined}
+          rateInterval=""
+        >
+          <Icon
+            className="health-icon"
+            name="error-circle-o"
+            style={
+              Object {
+                "fontSize": "35px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />
+        </HealthDetails>,
+        <br />,
+        false,
+        <ul
+          style={
+            Object {
+              "padding": 0,
+            }
+          }
+        >
+          <li>
+            Envoy health degraded
+          </li>
+          <li>
+            Error rate failure: 70.51%&gt;=20%
+          </li>
+        </ul>,
+      ],
+      "style": Object {
+        "color": "#cc0000",
+      },
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "children": <Icon
+            className="health-icon"
+            name="error-circle-o"
+            style={
+              Object {
+                "fontSize": "35px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />,
+          "headline": "Failure",
+          "health": Object {
+            "deploymentStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+            ],
+            "envoy": Object {
+              "healthy": 1,
+              "total": 10,
+            },
+            "requests": Object {
+              "requestCount": 1.56,
+              "requestErrorCount": 1.1,
+            },
+          },
+          "id": "svc",
+          "placement": undefined,
+          "rateInterval": "",
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "className": "health-icon",
+            "name": "error-circle-o",
+            "style": Object {
+              "fontSize": "35px",
+            },
+            "tabIndex": "0",
+            "type": "pf",
+          },
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
+        },
+        "type": [Function],
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {},
+        "ref": null,
+        "rendered": null,
+        "type": "br",
+      },
+      false,
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [
+            <li>
+              Envoy health degraded
+            </li>,
+            <li>
+              Error rate failure: 70.51%&gt;=20%
+            </li>,
+          ],
+          "style": Object {
+            "padding": 0,
+          },
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": "0",
+            "nodeType": "host",
+            "props": Object {
+              "children": "Envoy health degraded",
+            },
+            "ref": null,
+            "rendered": "Envoy health degraded",
+            "type": "li",
+          },
+          Object {
+            "instance": null,
+            "key": "1",
+            "nodeType": "host",
+            "props": Object {
+              "children": "Error rate failure: 70.51%>=20%",
+            },
+            "ref": null,
+            "rendered": "Error rate failure: 70.51%>=20%",
+            "type": "li",
+          },
+        ],
+        "type": "ul",
+      },
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <HealthDetails
+            headline="Failure"
+            health={
+              Object {
+                "deploymentStatuses": Array [
+                  Object {
+                    "available": 1,
+                    "name": "A",
+                    "replicas": 1,
+                  },
+                ],
+                "envoy": Object {
+                  "healthy": 1,
+                  "total": 10,
+                },
+                "requests": Object {
+                  "requestCount": 1.56,
+                  "requestErrorCount": 1.1,
+                },
+              }
+            }
+            id="svc"
+            placement={undefined}
+            rateInterval=""
+          >
+            <Icon
+              className="health-icon"
+              name="error-circle-o"
+              style={
+                Object {
+                  "fontSize": "35px",
+                }
+              }
+              tabIndex="0"
+              type="pf"
+            />
+          </HealthDetails>,
+          <br />,
+          false,
+          <ul
+            style={
+              Object {
+                "padding": 0,
+              }
+            }
+          >
+            <li>
+              Envoy health degraded
+            </li>
+            <li>
+              Error rate failure: 70.51%&gt;=20%
+            </li>
+          </ul>,
+        ],
+        "style": Object {
+          "color": "#cc0000",
+        },
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "children": <Icon
+              className="health-icon"
+              name="error-circle-o"
+              style={
+                Object {
+                  "fontSize": "35px",
+                }
+              }
+              tabIndex="0"
+              type="pf"
+            />,
+            "headline": "Failure",
+            "health": Object {
+              "deploymentStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+              ],
+              "envoy": Object {
+                "healthy": 1,
+                "total": 10,
+              },
+              "requests": Object {
+                "requestCount": 1.56,
+                "requestErrorCount": 1.1,
+              },
+            },
+            "id": "svc",
+            "placement": undefined,
+            "rateInterval": "",
+          },
+          "ref": null,
+          "rendered": Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "function",
+            "props": Object {
+              "className": "health-icon",
+              "name": "error-circle-o",
+              "style": Object {
+                "fontSize": "35px",
+              },
+              "tabIndex": "0",
+              "type": "pf",
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          "type": [Function],
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {},
+          "ref": null,
+          "rendered": null,
+          "type": "br",
+        },
+        false,
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              <li>
+                Envoy health degraded
+              </li>,
+              <li>
+                Error rate failure: 70.51%&gt;=20%
+              </li>,
+            ],
+            "style": Object {
+              "padding": 0,
+            },
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": "0",
+              "nodeType": "host",
+              "props": Object {
+                "children": "Envoy health degraded",
+              },
+              "ref": null,
+              "rendered": "Envoy health degraded",
+              "type": "li",
+            },
+            Object {
+              "instance": null,
+              "key": "1",
+              "nodeType": "host",
+              "props": Object {
+                "children": "Error rate failure: 70.51%>=20%",
+              },
+              "ref": null,
+              "rendered": "Error rate failure: 70.51%>=20%",
+              "type": "li",
+            },
+          ],
+          "type": "ul",
+        },
+      ],
+      "type": "div",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
+
 exports[`HealthIndicator renders healthy 1`] = `
 ShallowWrapper {
   "length": 1,
@@ -3561,10 +5333,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 1,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={1}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -3598,18 +5375,25 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           }
         }
         id="svc"
         placement={undefined}
+        rateInterval=""
       >
         <Icon
+          className="health-icon"
           name="ok"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />
       </HealthDetails>,
@@ -3621,12 +5405,14 @@ ShallowWrapper {
       "nodeType": "class",
       "props": Object {
         "children": <Icon
+          className="health-icon"
           name="ok"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />,
         "headline": "Healthy",
@@ -3647,9 +5433,14 @@ ShallowWrapper {
             "healthy": 1,
             "total": 1,
           },
+          "requests": Object {
+            "requestCount": 0,
+            "requestErrorCount": 0,
+          },
         },
         "id": "svc",
         "placement": undefined,
+        "rateInterval": "",
       },
       "ref": null,
       "rendered": Object {
@@ -3657,10 +5448,12 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "function",
         "props": Object {
+          "className": "health-icon",
           "name": "ok",
           "style": Object {
             "fontSize": "18px",
           },
+          "tabIndex": "0",
           "type": "pf",
         },
         "ref": null,
@@ -3697,18 +5490,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="ok"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -3720,12 +5520,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="ok"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Healthy",
@@ -3746,9 +5548,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -3756,10 +5563,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "ok",
             "style": Object {
               "fontSize": "18px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -3804,10 +5613,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 1,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={0}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -3842,18 +5656,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="ok"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -3873,12 +5694,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="ok"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Healthy",
@@ -3899,9 +5722,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -3909,10 +5737,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "ok",
             "style": Object {
               "fontSize": "35px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -3962,18 +5792,25 @@ ShallowWrapper {
                   "healthy": 1,
                   "total": 1,
                 },
+                "requests": Object {
+                  "requestCount": 0,
+                  "requestErrorCount": 0,
+                },
               }
             }
             id="svc"
             placement={undefined}
+            rateInterval=""
           >
             <Icon
+              className="health-icon"
               name="ok"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />
           </HealthDetails>,
@@ -3993,12 +5830,14 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "children": <Icon
+              className="health-icon"
               name="ok"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />,
             "headline": "Healthy",
@@ -4019,9 +5858,14 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             },
             "id": "svc",
             "placement": undefined,
+            "rateInterval": "",
           },
           "ref": null,
           "rendered": Object {
@@ -4029,10 +5873,12 @@ ShallowWrapper {
             "key": undefined,
             "nodeType": "function",
             "props": Object {
+              "className": "health-icon",
               "name": "ok",
               "style": Object {
                 "fontSize": "35px",
               },
+              "tabIndex": "0",
               "type": "pf",
             },
             "ref": null,
@@ -4089,10 +5935,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 1,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={1}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -4126,18 +5977,25 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           }
         }
         id="svc"
         placement={undefined}
+        rateInterval=""
       >
         <Icon
+          className="health-icon"
           name="ok"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />
       </HealthDetails>,
@@ -4149,12 +6007,14 @@ ShallowWrapper {
       "nodeType": "class",
       "props": Object {
         "children": <Icon
+          className="health-icon"
           name="ok"
           style={
             Object {
               "fontSize": "18px",
             }
           }
+          tabIndex="0"
           type="pf"
         />,
         "headline": "Healthy",
@@ -4175,9 +6035,14 @@ ShallowWrapper {
             "healthy": 1,
             "total": 1,
           },
+          "requests": Object {
+            "requestCount": 0,
+            "requestErrorCount": 0,
+          },
         },
         "id": "svc",
         "placement": undefined,
+        "rateInterval": "",
       },
       "ref": null,
       "rendered": Object {
@@ -4185,10 +6050,12 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "function",
         "props": Object {
+          "className": "health-icon",
           "name": "ok",
           "style": Object {
             "fontSize": "18px",
           },
+          "tabIndex": "0",
           "type": "pf",
         },
         "ref": null,
@@ -4225,18 +6092,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="ok"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -4248,12 +6122,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="ok"
             style={
               Object {
                 "fontSize": "18px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Healthy",
@@ -4274,9 +6150,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -4284,10 +6165,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "ok",
             "style": Object {
               "fontSize": "18px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -4332,10 +6215,15 @@ ShallowWrapper {
           "healthy": 1,
           "total": 1,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
     mode={0}
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -4370,18 +6258,25 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             }
           }
           id="svc"
           placement={undefined}
+          rateInterval=""
         >
           <Icon
+            className="health-icon"
             name="ok"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />
         </HealthDetails>,
@@ -4401,12 +6296,14 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "children": <Icon
+            className="health-icon"
             name="ok"
             style={
               Object {
                 "fontSize": "35px",
               }
             }
+            tabIndex="0"
             type="pf"
           />,
           "headline": "Healthy",
@@ -4427,9 +6324,14 @@ ShallowWrapper {
               "healthy": 1,
               "total": 1,
             },
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
           },
           "id": "svc",
           "placement": undefined,
+          "rateInterval": "",
         },
         "ref": null,
         "rendered": Object {
@@ -4437,10 +6339,12 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
+            "className": "health-icon",
             "name": "ok",
             "style": Object {
               "fontSize": "35px",
             },
+            "tabIndex": "0",
             "type": "pf",
           },
           "ref": null,
@@ -4490,18 +6394,25 @@ ShallowWrapper {
                   "healthy": 1,
                   "total": 1,
                 },
+                "requests": Object {
+                  "requestCount": 0,
+                  "requestErrorCount": 0,
+                },
               }
             }
             id="svc"
             placement={undefined}
+            rateInterval=""
           >
             <Icon
+              className="health-icon"
               name="ok"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />
           </HealthDetails>,
@@ -4521,12 +6432,14 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "children": <Icon
+              className="health-icon"
               name="ok"
               style={
                 Object {
                   "fontSize": "35px",
                 }
               }
+              tabIndex="0"
               type="pf"
             />,
             "headline": "Healthy",
@@ -4547,9 +6460,14 @@ ShallowWrapper {
                 "healthy": 1,
                 "total": 1,
               },
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
             },
             "id": "svc",
             "placement": undefined,
+            "rateInterval": "",
           },
           "ref": null,
           "rendered": Object {
@@ -4557,10 +6475,12 @@ ShallowWrapper {
             "key": undefined,
             "nodeType": "function",
             "props": Object {
+              "className": "health-icon",
               "name": "ok",
               "style": Object {
                 "fontSize": "35px",
               },
+              "tabIndex": "0",
               "type": "pf",
             },
             "ref": null,

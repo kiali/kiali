@@ -1,34 +1,34 @@
 import Namespace from './Namespace';
 import { Health } from './Health';
 
-export interface ServiceName {
+export interface ServiceOverview {
   name: string;
   health: Health;
   istio_sidecar: boolean;
-  request_count: number;
-  request_error_count: number;
-  error_rate: number;
 }
 
 export interface ServiceList {
   namespace: Namespace;
-  services: ServiceName[];
+  services: ServiceOverview[];
 }
 
-export interface ServiceItem {
-  servicename: string;
+export interface ServiceItem extends ServiceOverview {
   namespace: string;
-  health: Health;
-  istio_sidecar: boolean;
-  request_count: number;
-  request_error_count: number;
-  error_rate: number;
 }
+
+export const overviewToItem = (overview: ServiceOverview, namespace: string): ServiceItem => {
+  return {
+    name: overview.name,
+    health: overview.health,
+    istio_sidecar: overview.istio_sidecar,
+    namespace: namespace
+  };
+};
 
 export const IstioLogo = require('../assets/img/istio-logo.svg');
 
 export interface SortField {
-  id: string;
   title: string;
   isNumeric: boolean;
+  compare: (a: ServiceItem, b: ServiceItem) => number;
 }

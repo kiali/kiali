@@ -24,9 +24,14 @@ ShallowWrapper {
           "healthy": 1,
           "total": 1,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -42,93 +47,85 @@ ShallowWrapper {
     "props": Object {
       "children": undefined,
       "defaultOverlayShown": false,
-      "overlay": <Tooltip
-        bsClass="tooltip"
+      "overlay": <Popover
+        bsClass="popover"
         id="svc-health-tooltip"
         placement="right"
+        title=""
       >
-        <div
+        <strong>
+          <Icon
+            name="error-circle-o"
+            type="pf"
+          />
+           Deployments Status:
+        </strong>
+        <ul
           style={
             Object {
-              "paddingBottom": 10,
-              "paddingLeft": 15,
-              "paddingRight": 15,
+              "listStyleType": "none",
+              "paddingLeft": 12,
             }
           }
         >
-          <div>
-            <h4>
-              
-            </h4>
-          </div>
-          <div>
-            <strong>
-              <Icon
-                name="error-circle-o"
-                type="pf"
-              />
-                Deployments status:
-            </strong>
-            <ul
+          <li>
+            <span
               style={
                 Object {
-                  "listStyleType": "none",
-                  "paddingLeft": 12,
+                  "color": "#707070",
                 }
               }
             >
-              <li>
-                <span
-                  style={
-                    Object {
-                      "color": "#707070",
-                    }
-                  }
-                >
-                  N/A
-                </span>
-                 
-                A
-                 (
-                0
-                 / 
-                0
-                )
-              </li>
-              <li>
-                <span
-                  style={
-                    Object {
-                      "color": "#707070",
-                    }
-                  }
-                >
-                  N/A
-                </span>
-                 
-                B
-                 (
-                0
-                 / 
-                0
-                )
-              </li>
-            </ul>
-            <strong>
-              <Icon
-                name="ok"
-                type="pf"
-              />
-                Envoy health
-            </strong>
-             (
-            1
+              N/A
+            </span>
+             
+            A
+            : 
+            0
              / 
-            1
-            )
-          </div>
-        </div>
-      </Tooltip>,
+            0
+          </li>
+          <li>
+            <span
+              style={
+                Object {
+                  "color": "#707070",
+                }
+              }
+            >
+              N/A
+            </span>
+             
+            B
+            : 
+            0
+             / 
+            0
+          </li>
+        </ul>
+        <strong>
+          <Icon
+            name="ok"
+            type="pf"
+          />
+           Envoy Health:
+        </strong>
+         1 / 1
+        <br />
+        <strong>
+          <span
+            style={
+              Object {
+                "color": "#707070",
+              }
+            }
+          >
+            N/A
+          </span>
+           Error Rate:
+        </strong>
+         No requests over last undefined
+      </Popover>,
       "placement": "right",
       "rootClose": false,
       "trigger": Array [
@@ -148,93 +145,85 @@ ShallowWrapper {
       "props": Object {
         "children": undefined,
         "defaultOverlayShown": false,
-        "overlay": <Tooltip
-          bsClass="tooltip"
+        "overlay": <Popover
+          bsClass="popover"
           id="svc-health-tooltip"
           placement="right"
+          title=""
         >
-          <div
+          <strong>
+            <Icon
+              name="error-circle-o"
+              type="pf"
+            />
+             Deployments Status:
+          </strong>
+          <ul
             style={
               Object {
-                "paddingBottom": 10,
-                "paddingLeft": 15,
-                "paddingRight": 15,
+                "listStyleType": "none",
+                "paddingLeft": 12,
               }
             }
           >
-            <div>
-              <h4>
-                
-              </h4>
-            </div>
-            <div>
-              <strong>
-                <Icon
-                  name="error-circle-o"
-                  type="pf"
-                />
-                  Deployments status:
-              </strong>
-              <ul
+            <li>
+              <span
                 style={
                   Object {
-                    "listStyleType": "none",
-                    "paddingLeft": 12,
+                    "color": "#707070",
                   }
                 }
               >
-                <li>
-                  <span
-                    style={
-                      Object {
-                        "color": "#707070",
-                      }
-                    }
-                  >
-                    N/A
-                  </span>
-                   
-                  A
-                   (
-                  0
-                   / 
-                  0
-                  )
-                </li>
-                <li>
-                  <span
-                    style={
-                      Object {
-                        "color": "#707070",
-                      }
-                    }
-                  >
-                    N/A
-                  </span>
-                   
-                  B
-                   (
-                  0
-                   / 
-                  0
-                  )
-                </li>
-              </ul>
-              <strong>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                  Envoy health
-              </strong>
-               (
-              1
+                N/A
+              </span>
+               
+              A
+              : 
+              0
                / 
-              1
-              )
-            </div>
-          </div>
-        </Tooltip>,
+              0
+            </li>
+            <li>
+              <span
+                style={
+                  Object {
+                    "color": "#707070",
+                  }
+                }
+              >
+                N/A
+              </span>
+               
+              B
+              : 
+              0
+               / 
+              0
+            </li>
+          </ul>
+          <strong>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             Envoy Health:
+          </strong>
+           1 / 1
+          <br />
+          <strong>
+            <span
+              style={
+                Object {
+                  "color": "#707070",
+                }
+              }
+            >
+              N/A
+            </span>
+             Error Rate:
+          </strong>
+           No requests over last undefined
+        </Popover>,
         "placement": "right",
         "rootClose": false,
         "trigger": Array [
@@ -281,9 +270,14 @@ ShallowWrapper {
           "healthy": 1,
           "total": 1,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -299,83 +293,75 @@ ShallowWrapper {
     "props": Object {
       "children": undefined,
       "defaultOverlayShown": false,
-      "overlay": <Tooltip
-        bsClass="tooltip"
+      "overlay": <Popover
+        bsClass="popover"
         id="svc-health-tooltip"
         placement="right"
+        title=""
       >
-        <div
+        <strong>
+          <Icon
+            name="warning-triangle-o"
+            type="pf"
+          />
+           Deployments Status:
+        </strong>
+        <ul
           style={
             Object {
-              "paddingBottom": 10,
-              "paddingLeft": 15,
-              "paddingRight": 15,
+              "listStyleType": "none",
+              "paddingLeft": 12,
             }
           }
         >
-          <div>
-            <h4>
-              
-            </h4>
-          </div>
-          <div>
-            <strong>
-              <Icon
-                name="warning-triangle-o"
-                type="pf"
-              />
-                Deployments status:
-            </strong>
-            <ul
-              style={
-                Object {
-                  "listStyleType": "none",
-                  "paddingLeft": 12,
-                }
-              }
-            >
-              <li>
-                <Icon
-                  name="warning-triangle-o"
-                  type="pf"
-                />
-                 
-                A
-                 (
-                1
-                 / 
-                10
-                )
-              </li>
-              <li>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                 
-                B
-                 (
-                2
-                 / 
-                2
-                )
-              </li>
-            </ul>
-            <strong>
-              <Icon
-                name="ok"
-                type="pf"
-              />
-                Envoy health
-            </strong>
-             (
+          <li>
+            <Icon
+              name="warning-triangle-o"
+              type="pf"
+            />
+             
+            A
+            : 
             1
              / 
-            1
-            )
-          </div>
-        </div>
-      </Tooltip>,
+            10
+          </li>
+          <li>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             
+            B
+            : 
+            2
+             / 
+            2
+          </li>
+        </ul>
+        <strong>
+          <Icon
+            name="ok"
+            type="pf"
+          />
+           Envoy Health:
+        </strong>
+         1 / 1
+        <br />
+        <strong>
+          <span
+            style={
+              Object {
+                "color": "#707070",
+              }
+            }
+          >
+            N/A
+          </span>
+           Error Rate:
+        </strong>
+         No requests over last undefined
+      </Popover>,
       "placement": "right",
       "rootClose": false,
       "trigger": Array [
@@ -395,83 +381,75 @@ ShallowWrapper {
       "props": Object {
         "children": undefined,
         "defaultOverlayShown": false,
-        "overlay": <Tooltip
-          bsClass="tooltip"
+        "overlay": <Popover
+          bsClass="popover"
           id="svc-health-tooltip"
           placement="right"
+          title=""
         >
-          <div
+          <strong>
+            <Icon
+              name="warning-triangle-o"
+              type="pf"
+            />
+             Deployments Status:
+          </strong>
+          <ul
             style={
               Object {
-                "paddingBottom": 10,
-                "paddingLeft": 15,
-                "paddingRight": 15,
+                "listStyleType": "none",
+                "paddingLeft": 12,
               }
             }
           >
-            <div>
-              <h4>
-                
-              </h4>
-            </div>
-            <div>
-              <strong>
-                <Icon
-                  name="warning-triangle-o"
-                  type="pf"
-                />
-                  Deployments status:
-              </strong>
-              <ul
-                style={
-                  Object {
-                    "listStyleType": "none",
-                    "paddingLeft": 12,
-                  }
-                }
-              >
-                <li>
-                  <Icon
-                    name="warning-triangle-o"
-                    type="pf"
-                  />
-                   
-                  A
-                   (
-                  1
-                   / 
-                  10
-                  )
-                </li>
-                <li>
-                  <Icon
-                    name="ok"
-                    type="pf"
-                  />
-                   
-                  B
-                   (
-                  2
-                   / 
-                  2
-                  )
-                </li>
-              </ul>
-              <strong>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                  Envoy health
-              </strong>
-               (
+            <li>
+              <Icon
+                name="warning-triangle-o"
+                type="pf"
+              />
+               
+              A
+              : 
               1
                / 
-              1
-              )
-            </div>
-          </div>
-        </Tooltip>,
+              10
+            </li>
+            <li>
+              <Icon
+                name="ok"
+                type="pf"
+              />
+               
+              B
+              : 
+              2
+               / 
+              2
+            </li>
+          </ul>
+          <strong>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             Envoy Health:
+          </strong>
+           1 / 1
+          <br />
+          <strong>
+            <span
+              style={
+                Object {
+                  "color": "#707070",
+                }
+              }
+            >
+              N/A
+            </span>
+             Error Rate:
+          </strong>
+           No requests over last undefined
+        </Popover>,
         "placement": "right",
         "rootClose": false,
         "trigger": Array [
@@ -518,9 +496,14 @@ ShallowWrapper {
           "healthy": 1,
           "total": 10,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -536,83 +519,75 @@ ShallowWrapper {
     "props": Object {
       "children": undefined,
       "defaultOverlayShown": false,
-      "overlay": <Tooltip
-        bsClass="tooltip"
+      "overlay": <Popover
+        bsClass="popover"
         id="svc-health-tooltip"
         placement="right"
+        title=""
       >
-        <div
+        <strong>
+          <Icon
+            name="error-circle-o"
+            type="pf"
+          />
+           Deployments Status:
+        </strong>
+        <ul
           style={
             Object {
-              "paddingBottom": 10,
-              "paddingLeft": 15,
-              "paddingRight": 15,
+              "listStyleType": "none",
+              "paddingLeft": 12,
             }
           }
         >
-          <div>
-            <h4>
-              
-            </h4>
-          </div>
-          <div>
-            <strong>
-              <Icon
-                name="error-circle-o"
-                type="pf"
-              />
-                Deployments status:
-            </strong>
-            <ul
-              style={
-                Object {
-                  "listStyleType": "none",
-                  "paddingLeft": 12,
-                }
-              }
-            >
-              <li>
-                <Icon
-                  name="error-circle-o"
-                  type="pf"
-                />
-                 
-                A
-                 (
-                0
-                 / 
-                10
-                )
-              </li>
-              <li>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                 
-                B
-                 (
-                2
-                 / 
-                2
-                )
-              </li>
-            </ul>
-            <strong>
-              <Icon
-                name="warning-triangle-o"
-                type="pf"
-              />
-                Envoy health
-            </strong>
-             (
-            1
+          <li>
+            <Icon
+              name="error-circle-o"
+              type="pf"
+            />
+             
+            A
+            : 
+            0
              / 
             10
-            )
-          </div>
-        </div>
-      </Tooltip>,
+          </li>
+          <li>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             
+            B
+            : 
+            2
+             / 
+            2
+          </li>
+        </ul>
+        <strong>
+          <Icon
+            name="warning-triangle-o"
+            type="pf"
+          />
+           Envoy Health:
+        </strong>
+         1 / 10
+        <br />
+        <strong>
+          <span
+            style={
+              Object {
+                "color": "#707070",
+              }
+            }
+          >
+            N/A
+          </span>
+           Error Rate:
+        </strong>
+         No requests over last undefined
+      </Popover>,
       "placement": "right",
       "rootClose": false,
       "trigger": Array [
@@ -632,83 +607,75 @@ ShallowWrapper {
       "props": Object {
         "children": undefined,
         "defaultOverlayShown": false,
-        "overlay": <Tooltip
-          bsClass="tooltip"
+        "overlay": <Popover
+          bsClass="popover"
           id="svc-health-tooltip"
           placement="right"
+          title=""
         >
-          <div
+          <strong>
+            <Icon
+              name="error-circle-o"
+              type="pf"
+            />
+             Deployments Status:
+          </strong>
+          <ul
             style={
               Object {
-                "paddingBottom": 10,
-                "paddingLeft": 15,
-                "paddingRight": 15,
+                "listStyleType": "none",
+                "paddingLeft": 12,
               }
             }
           >
-            <div>
-              <h4>
-                
-              </h4>
-            </div>
-            <div>
-              <strong>
-                <Icon
-                  name="error-circle-o"
-                  type="pf"
-                />
-                  Deployments status:
-              </strong>
-              <ul
-                style={
-                  Object {
-                    "listStyleType": "none",
-                    "paddingLeft": 12,
-                  }
-                }
-              >
-                <li>
-                  <Icon
-                    name="error-circle-o"
-                    type="pf"
-                  />
-                   
-                  A
-                   (
-                  0
-                   / 
-                  10
-                  )
-                </li>
-                <li>
-                  <Icon
-                    name="ok"
-                    type="pf"
-                  />
-                   
-                  B
-                   (
-                  2
-                   / 
-                  2
-                  )
-                </li>
-              </ul>
-              <strong>
-                <Icon
-                  name="warning-triangle-o"
-                  type="pf"
-                />
-                  Envoy health
-              </strong>
-               (
-              1
+            <li>
+              <Icon
+                name="error-circle-o"
+                type="pf"
+              />
+               
+              A
+              : 
+              0
                / 
               10
-              )
-            </div>
-          </div>
-        </Tooltip>,
+            </li>
+            <li>
+              <Icon
+                name="ok"
+                type="pf"
+              />
+               
+              B
+              : 
+              2
+               / 
+              2
+            </li>
+          </ul>
+          <strong>
+            <Icon
+              name="warning-triangle-o"
+              type="pf"
+            />
+             Envoy Health:
+          </strong>
+           1 / 10
+          <br />
+          <strong>
+            <span
+              style={
+                Object {
+                  "color": "#707070",
+                }
+              }
+            >
+              N/A
+            </span>
+             Error Rate:
+          </strong>
+           No requests over last undefined
+        </Popover>,
         "placement": "right",
         "rootClose": false,
         "trigger": Array [
@@ -755,9 +722,14 @@ ShallowWrapper {
           "healthy": 1,
           "total": 10,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -773,83 +745,75 @@ ShallowWrapper {
     "props": Object {
       "children": undefined,
       "defaultOverlayShown": false,
-      "overlay": <Tooltip
-        bsClass="tooltip"
+      "overlay": <Popover
+        bsClass="popover"
         id="svc-health-tooltip"
         placement="right"
+        title=""
       >
-        <div
+        <strong>
+          <Icon
+            name="ok"
+            type="pf"
+          />
+           Deployments Status:
+        </strong>
+        <ul
           style={
             Object {
-              "paddingBottom": 10,
-              "paddingLeft": 15,
-              "paddingRight": 15,
+              "listStyleType": "none",
+              "paddingLeft": 12,
             }
           }
         >
-          <div>
-            <h4>
-              
-            </h4>
-          </div>
-          <div>
-            <strong>
-              <Icon
-                name="ok"
-                type="pf"
-              />
-                Deployments status:
-            </strong>
-            <ul
-              style={
-                Object {
-                  "listStyleType": "none",
-                  "paddingLeft": 12,
-                }
-              }
-            >
-              <li>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                 
-                A
-                 (
-                1
-                 / 
-                1
-                )
-              </li>
-              <li>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                 
-                B
-                 (
-                2
-                 / 
-                2
-                )
-              </li>
-            </ul>
-            <strong>
-              <Icon
-                name="warning-triangle-o"
-                type="pf"
-              />
-                Envoy health
-            </strong>
-             (
+          <li>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             
+            A
+            : 
             1
              / 
-            10
-            )
-          </div>
-        </div>
-      </Tooltip>,
+            1
+          </li>
+          <li>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             
+            B
+            : 
+            2
+             / 
+            2
+          </li>
+        </ul>
+        <strong>
+          <Icon
+            name="warning-triangle-o"
+            type="pf"
+          />
+           Envoy Health:
+        </strong>
+         1 / 10
+        <br />
+        <strong>
+          <span
+            style={
+              Object {
+                "color": "#707070",
+              }
+            }
+          >
+            N/A
+          </span>
+           Error Rate:
+        </strong>
+         No requests over last undefined
+      </Popover>,
       "placement": "right",
       "rootClose": false,
       "trigger": Array [
@@ -869,83 +833,75 @@ ShallowWrapper {
       "props": Object {
         "children": undefined,
         "defaultOverlayShown": false,
-        "overlay": <Tooltip
-          bsClass="tooltip"
+        "overlay": <Popover
+          bsClass="popover"
           id="svc-health-tooltip"
           placement="right"
+          title=""
         >
-          <div
+          <strong>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             Deployments Status:
+          </strong>
+          <ul
             style={
               Object {
-                "paddingBottom": 10,
-                "paddingLeft": 15,
-                "paddingRight": 15,
+                "listStyleType": "none",
+                "paddingLeft": 12,
               }
             }
           >
-            <div>
-              <h4>
-                
-              </h4>
-            </div>
-            <div>
-              <strong>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                  Deployments status:
-              </strong>
-              <ul
-                style={
-                  Object {
-                    "listStyleType": "none",
-                    "paddingLeft": 12,
-                  }
-                }
-              >
-                <li>
-                  <Icon
-                    name="ok"
-                    type="pf"
-                  />
-                   
-                  A
-                   (
-                  1
-                   / 
-                  1
-                  )
-                </li>
-                <li>
-                  <Icon
-                    name="ok"
-                    type="pf"
-                  />
-                   
-                  B
-                   (
-                  2
-                   / 
-                  2
-                  )
-                </li>
-              </ul>
-              <strong>
-                <Icon
-                  name="warning-triangle-o"
-                  type="pf"
-                />
-                  Envoy health
-              </strong>
-               (
+            <li>
+              <Icon
+                name="ok"
+                type="pf"
+              />
+               
+              A
+              : 
               1
                / 
-              10
-              )
-            </div>
-          </div>
-        </Tooltip>,
+              1
+            </li>
+            <li>
+              <Icon
+                name="ok"
+                type="pf"
+              />
+               
+              B
+              : 
+              2
+               / 
+              2
+            </li>
+          </ul>
+          <strong>
+            <Icon
+              name="warning-triangle-o"
+              type="pf"
+            />
+             Envoy Health:
+          </strong>
+           1 / 10
+          <br />
+          <strong>
+            <span
+              style={
+                Object {
+                  "color": "#707070",
+                }
+              }
+            >
+              N/A
+            </span>
+             Error Rate:
+          </strong>
+           No requests over last undefined
+        </Popover>,
         "placement": "right",
         "rootClose": false,
         "trigger": Array [
@@ -992,9 +948,14 @@ ShallowWrapper {
           "healthy": 0,
           "total": 10,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -1010,83 +971,75 @@ ShallowWrapper {
     "props": Object {
       "children": undefined,
       "defaultOverlayShown": false,
-      "overlay": <Tooltip
-        bsClass="tooltip"
+      "overlay": <Popover
+        bsClass="popover"
         id="svc-health-tooltip"
         placement="right"
+        title=""
       >
-        <div
+        <strong>
+          <Icon
+            name="warning-triangle-o"
+            type="pf"
+          />
+           Deployments Status:
+        </strong>
+        <ul
           style={
             Object {
-              "paddingBottom": 10,
-              "paddingLeft": 15,
-              "paddingRight": 15,
+              "listStyleType": "none",
+              "paddingLeft": 12,
             }
           }
         >
-          <div>
-            <h4>
-              
-            </h4>
-          </div>
-          <div>
-            <strong>
-              <Icon
-                name="warning-triangle-o"
-                type="pf"
-              />
-                Deployments status:
-            </strong>
-            <ul
-              style={
-                Object {
-                  "listStyleType": "none",
-                  "paddingLeft": 12,
-                }
-              }
-            >
-              <li>
-                <Icon
-                  name="warning-triangle-o"
-                  type="pf"
-                />
-                 
-                A
-                 (
-                1
-                 / 
-                10
-                )
-              </li>
-              <li>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                 
-                B
-                 (
-                2
-                 / 
-                2
-                )
-              </li>
-            </ul>
-            <strong>
-              <Icon
-                name="error-circle-o"
-                type="pf"
-              />
-                Envoy health
-            </strong>
-             (
-            0
+          <li>
+            <Icon
+              name="warning-triangle-o"
+              type="pf"
+            />
+             
+            A
+            : 
+            1
              / 
             10
-            )
-          </div>
-        </div>
-      </Tooltip>,
+          </li>
+          <li>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             
+            B
+            : 
+            2
+             / 
+            2
+          </li>
+        </ul>
+        <strong>
+          <Icon
+            name="error-circle-o"
+            type="pf"
+          />
+           Envoy Health:
+        </strong>
+         0 / 10
+        <br />
+        <strong>
+          <span
+            style={
+              Object {
+                "color": "#707070",
+              }
+            }
+          >
+            N/A
+          </span>
+           Error Rate:
+        </strong>
+         No requests over last undefined
+      </Popover>,
       "placement": "right",
       "rootClose": false,
       "trigger": Array [
@@ -1106,83 +1059,75 @@ ShallowWrapper {
       "props": Object {
         "children": undefined,
         "defaultOverlayShown": false,
-        "overlay": <Tooltip
-          bsClass="tooltip"
+        "overlay": <Popover
+          bsClass="popover"
           id="svc-health-tooltip"
           placement="right"
+          title=""
         >
-          <div
+          <strong>
+            <Icon
+              name="warning-triangle-o"
+              type="pf"
+            />
+             Deployments Status:
+          </strong>
+          <ul
             style={
               Object {
-                "paddingBottom": 10,
-                "paddingLeft": 15,
-                "paddingRight": 15,
+                "listStyleType": "none",
+                "paddingLeft": 12,
               }
             }
           >
-            <div>
-              <h4>
-                
-              </h4>
-            </div>
-            <div>
-              <strong>
-                <Icon
-                  name="warning-triangle-o"
-                  type="pf"
-                />
-                  Deployments status:
-              </strong>
-              <ul
-                style={
-                  Object {
-                    "listStyleType": "none",
-                    "paddingLeft": 12,
-                  }
-                }
-              >
-                <li>
-                  <Icon
-                    name="warning-triangle-o"
-                    type="pf"
-                  />
-                   
-                  A
-                   (
-                  1
-                   / 
-                  10
-                  )
-                </li>
-                <li>
-                  <Icon
-                    name="ok"
-                    type="pf"
-                  />
-                   
-                  B
-                   (
-                  2
-                   / 
-                  2
-                  )
-                </li>
-              </ul>
-              <strong>
-                <Icon
-                  name="error-circle-o"
-                  type="pf"
-                />
-                  Envoy health
-              </strong>
-               (
-              0
+            <li>
+              <Icon
+                name="warning-triangle-o"
+                type="pf"
+              />
+               
+              A
+              : 
+              1
                / 
               10
-              )
-            </div>
-          </div>
-        </Tooltip>,
+            </li>
+            <li>
+              <Icon
+                name="ok"
+                type="pf"
+              />
+               
+              B
+              : 
+              2
+               / 
+              2
+            </li>
+          </ul>
+          <strong>
+            <Icon
+              name="error-circle-o"
+              type="pf"
+            />
+             Envoy Health:
+          </strong>
+           0 / 10
+          <br />
+          <strong>
+            <span
+              style={
+                Object {
+                  "color": "#707070",
+                }
+              }
+            >
+              N/A
+            </span>
+             Error Rate:
+          </strong>
+           No requests over last undefined
+        </Popover>,
         "placement": "right",
         "rootClose": false,
         "trigger": Array [
@@ -1229,9 +1174,14 @@ ShallowWrapper {
           "healthy": 1,
           "total": 1,
         },
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
       }
     }
     id="svc"
+    rateInterval=""
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -1247,83 +1197,75 @@ ShallowWrapper {
     "props": Object {
       "children": undefined,
       "defaultOverlayShown": false,
-      "overlay": <Tooltip
-        bsClass="tooltip"
+      "overlay": <Popover
+        bsClass="popover"
         id="svc-health-tooltip"
         placement="right"
+        title=""
       >
-        <div
+        <strong>
+          <Icon
+            name="ok"
+            type="pf"
+          />
+           Deployments Status:
+        </strong>
+        <ul
           style={
             Object {
-              "paddingBottom": 10,
-              "paddingLeft": 15,
-              "paddingRight": 15,
+              "listStyleType": "none",
+              "paddingLeft": 12,
             }
           }
         >
-          <div>
-            <h4>
-              
-            </h4>
-          </div>
-          <div>
-            <strong>
-              <Icon
-                name="ok"
-                type="pf"
-              />
-                Deployments status:
-            </strong>
-            <ul
-              style={
-                Object {
-                  "listStyleType": "none",
-                  "paddingLeft": 12,
-                }
-              }
-            >
-              <li>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                 
-                A
-                 (
-                1
-                 / 
-                1
-                )
-              </li>
-              <li>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                 
-                B
-                 (
-                2
-                 / 
-                2
-                )
-              </li>
-            </ul>
-            <strong>
-              <Icon
-                name="ok"
-                type="pf"
-              />
-                Envoy health
-            </strong>
-             (
+          <li>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             
+            A
+            : 
             1
              / 
             1
-            )
-          </div>
-        </div>
-      </Tooltip>,
+          </li>
+          <li>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             
+            B
+            : 
+            2
+             / 
+            2
+          </li>
+        </ul>
+        <strong>
+          <Icon
+            name="ok"
+            type="pf"
+          />
+           Envoy Health:
+        </strong>
+         1 / 1
+        <br />
+        <strong>
+          <span
+            style={
+              Object {
+                "color": "#707070",
+              }
+            }
+          >
+            N/A
+          </span>
+           Error Rate:
+        </strong>
+         No requests over last undefined
+      </Popover>,
       "placement": "right",
       "rootClose": false,
       "trigger": Array [
@@ -1343,83 +1285,75 @@ ShallowWrapper {
       "props": Object {
         "children": undefined,
         "defaultOverlayShown": false,
-        "overlay": <Tooltip
-          bsClass="tooltip"
+        "overlay": <Popover
+          bsClass="popover"
           id="svc-health-tooltip"
           placement="right"
+          title=""
         >
-          <div
+          <strong>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             Deployments Status:
+          </strong>
+          <ul
             style={
               Object {
-                "paddingBottom": 10,
-                "paddingLeft": 15,
-                "paddingRight": 15,
+                "listStyleType": "none",
+                "paddingLeft": 12,
               }
             }
           >
-            <div>
-              <h4>
-                
-              </h4>
-            </div>
-            <div>
-              <strong>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                  Deployments status:
-              </strong>
-              <ul
-                style={
-                  Object {
-                    "listStyleType": "none",
-                    "paddingLeft": 12,
-                  }
-                }
-              >
-                <li>
-                  <Icon
-                    name="ok"
-                    type="pf"
-                  />
-                   
-                  A
-                   (
-                  1
-                   / 
-                  1
-                  )
-                </li>
-                <li>
-                  <Icon
-                    name="ok"
-                    type="pf"
-                  />
-                   
-                  B
-                   (
-                  2
-                   / 
-                  2
-                  )
-                </li>
-              </ul>
-              <strong>
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-                  Envoy health
-              </strong>
-               (
+            <li>
+              <Icon
+                name="ok"
+                type="pf"
+              />
+               
+              A
+              : 
               1
                / 
               1
-              )
-            </div>
-          </div>
-        </Tooltip>,
+            </li>
+            <li>
+              <Icon
+                name="ok"
+                type="pf"
+              />
+               
+              B
+              : 
+              2
+               / 
+              2
+            </li>
+          </ul>
+          <strong>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             Envoy Health:
+          </strong>
+           1 / 1
+          <br />
+          <strong>
+            <span
+              style={
+                Object {
+                  "color": "#707070",
+                }
+              }
+            >
+              N/A
+            </span>
+             Error Rate:
+          </strong>
+           No requests over last undefined
+        </Popover>,
         "placement": "right",
         "rootClose": false,
         "trigger": Array [

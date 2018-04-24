@@ -2,6 +2,7 @@ import * as React from 'react';
 import { mount, shallow } from 'enzyme';
 
 import MetricsOptionsBar from '../MetricsOptionsBar';
+import RateIntervals from '../../../types/RateIntervals';
 
 const optionsChanged = jest.fn();
 const lastOptionsChanged = () => {
@@ -47,9 +48,6 @@ describe('MetricsOptionsBar', () => {
       .last();
     elt.simulate('click');
     expect(optionsChanged).toHaveBeenCalledTimes(4);
-    expect(lastOptionsChanged()).toHaveProperty(
-      'rateInterval',
-      MetricsOptionsBar.RateIntervals[MetricsOptionsBar.RateIntervals.length - 1][0]
-    );
+    expect(lastOptionsChanged()).toHaveProperty('rateInterval', RateIntervals[RateIntervals.length - 1][0]);
   });
 });

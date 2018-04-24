@@ -3,6 +3,7 @@ import { Toolbar, ToolbarRightContent, DropdownButton, MenuItem, Icon } from 'pa
 
 import ValueSelectHelper from './ValueSelectHelper';
 import MetricsOptions from '../../types/MetricsOptions';
+import RateIntervals from '../../types/RateIntervals';
 
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
@@ -24,8 +25,7 @@ interface GroupByLabel {
 }
 
 export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsState> {
-  static RateIntervals = [['1m', '1 minute'], ['5m', '5 minutes'], ['10m', '10 minutes'], ['30m', '30 minutes']];
-  static DefaultRateInterval = MetricsOptionsBar.RateIntervals[0][0];
+  static DefaultRateInterval = RateIntervals[0][0];
 
   static PollIntervals = [
     [0, 'Pause'],
@@ -169,7 +169,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
             ))}
           </DropdownButton>
           <DropdownButton id="rateInterval" title="Rate interval" onSelect={this.onRateIntervalChanged}>
-            {MetricsOptionsBar.RateIntervals.map(r => (
+            {RateIntervals.map(r => (
               <MenuItem key={r[0]} active={r[0] === this.state.rateInterval} eventKey={r[0]}>
                 {r[1]}
               </MenuItem>

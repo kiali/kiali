@@ -1,6 +1,6 @@
 import * as React from 'react';
-import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import { DropdownButton, MenuItem } from 'patternfly-react';
+import RateIntervals from '../../types/RateIntervals';
 
 type RateIntervalToolbarItemProps = {
   rateIntervalSelected: string;
@@ -9,7 +9,7 @@ type RateIntervalToolbarItemProps = {
 
 export default class RateIntervalToolbarItem extends React.Component<RateIntervalToolbarItemProps> {
   render() {
-    const rateIntervalSelected = MetricsOptionsBar.RateIntervals.find(el => {
+    const rateIntervalSelected = RateIntervals.find(el => {
       return el[0] === this.props.rateIntervalSelected;
     });
 
@@ -21,7 +21,7 @@ export default class RateIntervalToolbarItem extends React.Component<RateInterva
           onSelect={this.props.onRateIntervalChanged}
           id="rateIntervalDropDown"
         >
-          {MetricsOptionsBar.RateIntervals.map(r => (
+          {RateIntervals.map(r => (
             <MenuItem key={r[0]} active={r[0] === this.props.rateIntervalSelected} eventKey={r[0]}>
               Last {r[1]}
             </MenuItem>

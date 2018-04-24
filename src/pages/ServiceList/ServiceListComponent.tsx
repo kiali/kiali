@@ -7,38 +7,62 @@ import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
-import { IstioLogo, ServiceItem, ServiceList, SortField } from '../../types/ServiceListComponent';
+import { IstioLogo, ServiceItem, ServiceList, SortField, overviewToItem } from '../../types/ServiceListComponent';
 import PropTypes from 'prop-types';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
+import { getRequestErrorsRatio } from '../../components/ServiceHealth/HealthHelper';
 import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
 import ServiceErrorRate from './ServiceErrorRate';
-import ServiceItemComparer from './ServiceItemComparer';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 
 import './ServiceListComponent.css';
 
-const sortFields: SortField[] = [
+// Exported for test
+export const sortFields: SortField[] = [
   {
-    id: 'namespace',
     title: 'Namespace',
-    isNumeric: false
+    isNumeric: false,
+    compare: (a: ServiceItem, b: ServiceItem) => {
+      let sortValue = a.namespace.localeCompare(b.namespace);
+      if (sortValue === 0) {
+        sortValue = a.name.localeCompare(b.name);
+      }
+      return sortValue;
+    }
   },
   {
-    id: 'servicename',
     title: 'Service Name',
-    isNumeric: false
+    isNumeric: false,
+    compare: (a: ServiceItem, b: ServiceItem) => a.name.localeCompare(b.name)
   },
   {
-    id: 'istio_sidecar',
     title: 'Istio Sidecar',
-    isNumeric: false
+    isNumeric: false,
+    compare: (a: ServiceItem, b: ServiceItem) => {
+      if (a.istio_sidecar && !b.istio_sidecar) {
+        return -1;
+      } else if (!a.istio_sidecar && b.istio_sidecar) {
+        return 1;
+      } else {
+        return a.name.localeCompare(b.name);
+      }
+    }
   },
   {
-    id: 'error_rate',
     title: 'Error Rate',
-    isNumeric: true
+    isNumeric: true,
+    compare: (a: ServiceItem, b: ServiceItem) => {
+      const ratioA = getRequestErrorsRatio(a.health.requests);
+      const ratioB = getRequestErrorsRatio(b.health.requests);
+      return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioA - ratioB;
+    }
   }
 ];
+
+// Exported for test
+export const sortServices = (services: ServiceItem[], sortField: SortField, isAscending: boolean): ServiceItem[] => {
+  return services.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+};
 
 const serviceNameFilter: FilterType = {
   id: 'servicename',
@@ -137,7 +161,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.setState(prevState => {
       return {
         currentSortField: sortField,
-        services: this.sortServices(prevState.services, sortField, prevState.isSortAscending)
+        services: sortServices(prevState.services, sortField, prevState.isSortAscending)
       };
     });
   }
@@ -146,7 +170,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.setState(prevState => {
       return {
         isSortAscending: !prevState.isSortAscending,
-        services: this.sortServices(prevState.services, prevState.currentSortField, !prevState.isSortAscending)
+        services: sortServices(prevState.services, prevState.currentSortField, !prevState.isSortAscending)
       };
     });
   }
@@ -192,23 +216,14 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         servicesResponse.forEach(serviceResponse => {
           const serviceList: ServiceList = serviceResponse['data'];
           const namespace = serviceList.namespace;
-          serviceList.services.forEach(serviceName => {
-            let serviceItem: ServiceItem = {
-              namespace: namespace.name,
-              servicename: serviceName.name,
-              health: serviceName.health,
-              istio_sidecar: serviceName.istio_sidecar,
-              request_count: serviceName.request_count,
-              request_error_count: serviceName.request_error_count,
-              error_rate: serviceName.error_rate
-            };
-            updatedServices.push(serviceItem);
+          serviceList.services.forEach(overview => {
+            updatedServices.push(overviewToItem(overview, namespace.name));
           });
         });
         if (servicenameFilters.length > 0 || istioFilters.length > 0) {
           updatedServices = this.filterServices(updatedServices, servicenameFilters, istioFilters);
         }
-        updatedServices = this.sortServices(updatedServices, this.state.currentSortField, this.state.isSortAscending);
+        updatedServices = sortServices(updatedServices, this.state.currentSortField, this.state.isSortAscending);
         this.setState(prevState => {
           return {
             loading: false,
@@ -248,7 +263,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     if (servicenameFilters.length > 0) {
       serviceNameFiltered = false;
       for (let i = 0; i < servicenameFilters.length; i++) {
-        if (service.servicename.includes(servicenameFilters[i])) {
+        if (service.name.includes(servicenameFilters[i])) {
           serviceNameFiltered = true;
           break;
         }
@@ -275,11 +290,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     return filteredServices;
   }
 
-  sortServices(services: ServiceItem[], sortField: SortField, isAscending: boolean): ServiceItem[] {
-    const comparer = new ServiceItemComparer(sortField, isAscending);
-    return services.sort(comparer.compareFunction);
-  }
-
   render() {
     let serviceList: any = [];
     let pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
@@ -288,16 +298,21 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
 
     for (let i = pageStart; i < pageEnd; i++) {
       const serviceItem = this.state.services[i];
-      const to = '/namespaces/' + serviceItem.namespace + '/services/' + serviceItem.servicename;
+      const to = '/namespaces/' + serviceItem.namespace + '/services/' + serviceItem.name;
       const serviceDescriptor = (
         <table style={{ width: '30em', tableLayout: 'fixed' }}>
           <tr>
             <td>
               <strong>Health: </strong>
-              <HealthIndicator id={serviceItem.servicename} health={serviceItem.health} mode={DisplayMode.SMALL} />
+              <HealthIndicator
+                id={serviceItem.name}
+                health={serviceItem.health}
+                mode={DisplayMode.SMALL}
+                rateInterval={this.state.rateInterval}
+              />
             </td>
             <td>
-              <ServiceErrorRate service={serviceItem} />
+              <ServiceErrorRate requestHealth={serviceItem.health.requests} />
             </td>
           </tr>
         </table>
@@ -317,7 +332,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
                   )}
                 </div>
                 <div className="ServiceList-Title">
-                  {serviceItem.servicename}
+                  {serviceItem.name}
                   <small>{serviceItem.namespace}</small>
                 </div>
               </div>

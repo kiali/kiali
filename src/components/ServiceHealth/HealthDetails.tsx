@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
+import { Icon, OverlayTrigger, Popover } from 'patternfly-react';
 
 import { Health } from '../../types/Health';
+import { getName } from '../../types/RateIntervals';
 import * as H from './HealthHelper';
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
   health: Health;
   headline: string;
   placement?: string;
+  rateInterval: string;
 }
 
 export class HealthDetails extends React.PureComponent<Props, {}> {
@@ -36,31 +38,36 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
     const globalDeplStatus: H.Status = allInactive
       ? H.FAILURE
       : deplsStatuses.reduce((prev, cur) => H.mergeStatus(prev, cur), H.NA);
+    const reqErrorsRatio = H.getRequestErrorsRatio(health.requests);
+    const reqErrorsStatus = H.requestErrorsThresholdCheck(reqErrorsRatio);
+    const reqErrorText = H.getRequestRatioText(reqErrorsRatio);
     return (
-      <Tooltip id={this.props.id + '-health-tooltip'}>
-        <div style={{ paddingLeft: 15, paddingRight: 15, paddingBottom: 10 }}>
-          <div>
-            <h4>{this.props.headline}</h4>
-          </div>
-          <div>
-            <strong>{this.renderStatus(globalDeplStatus)}&nbsp; Deployments status:</strong>
-            <ul style={{ listStyleType: 'none', paddingLeft: 12 }}>
-              {health.deploymentStatuses.map((st, idx) => {
-                return (
-                  <li key={idx}>
-                    {this.renderStatus(deplsStatuses[idx])}&nbsp;
-                    {st.name} ({st.available} / {st.replicas})
-                  </li>
-                );
-              })}
-            </ul>
-            <strong>
-              {this.renderStatus(H.ratioCheck(health.envoy.healthy, health.envoy.total))}&nbsp; Envoy health
-            </strong>
-            &nbsp;({health.envoy.healthy} / {health.envoy.total})
-          </div>
-        </div>
-      </Tooltip>
+      <Popover id={this.props.id + '-health-tooltip'} title={this.props.headline}>
+        <strong>
+          {this.renderStatus(globalDeplStatus)}
+          {' Deployments Status:'}
+        </strong>
+        <ul style={{ listStyleType: 'none', paddingLeft: 12 }}>
+          {health.deploymentStatuses.map((st, idx) => {
+            return (
+              <li key={idx}>
+                {this.renderStatus(deplsStatuses[idx])} {st.name}: {st.available} / {st.replicas}
+              </li>
+            );
+          })}
+        </ul>
+        <strong>
+          {this.renderStatus(H.ratioCheck(health.envoy.healthy, health.envoy.total))}
+          {' Envoy Health:'}
+        </strong>
+        {' ' + health.envoy.healthy + ' / ' + health.envoy.total}
+        <br />
+        <strong>
+          {this.renderStatus(reqErrorsStatus)}
+          {' Error Rate:'}
+        </strong>
+        {' ' + reqErrorText + ' over last ' + getName(this.props.rateInterval)}
+      </Popover>
     );
   }
 

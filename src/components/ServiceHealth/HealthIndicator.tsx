@@ -15,6 +15,7 @@ interface Props {
   health?: Health;
   mode: DisplayMode;
   tooltipPlacement?: string;
+  rateInterval: string;
 }
 
 export class HealthIndicator extends React.PureComponent<Props, {}> {
@@ -35,29 +36,44 @@ export class HealthIndicator extends React.PureComponent<Props, {}> {
     this.info = [];
     let countInactiveDeployments = 0;
     if (health) {
-      const envoyStatus = H.ratioCheck(health.envoy.healthy, health.envoy.total, severity =>
-        this.info.push('Envoy health ' + severity)
+      let statuses: H.Status[] = [];
+      // Envoy
+      statuses.push(
+        H.ratioCheck(health.envoy.healthy, health.envoy.total, severity => this.info.push('Envoy health ' + severity))
       );
-      this.globalStatus = health.deploymentStatuses.reduce((prev, cur) => {
-        const status = H.ratioCheck(cur.available, cur.replicas, severity =>
-          this.info.push('Pod deployment ' + severity)
-        );
-        if (status === H.NA) {
-          countInactiveDeployments++;
-        }
-        return H.mergeStatus(prev, status);
-      }, envoyStatus);
+      // Request errors
+      const reqErrorsRatio = H.getRequestErrorsRatio(health.requests);
+      statuses.push(
+        H.requestErrorsThresholdCheck(reqErrorsRatio, (severity, threshold, actual) => {
+          this.info.push(`Error rate ${severity}: ${(100 * actual).toFixed(2)}%>=${100 * threshold}%`);
+        })
+      );
+      // Pods
+      statuses = statuses.concat(
+        health.deploymentStatuses.map(dep => {
+          const status = H.ratioCheck(dep.available, dep.replicas, severity =>
+            this.info.push('Pod deployment ' + severity)
+          );
+          if (status === H.NA) {
+            countInactiveDeployments++;
+          }
+          return status;
+        })
+      );
+      // Merge all
+      this.globalStatus = statuses.reduce(H.mergeStatus, H.NA);
+
+      if (countInactiveDeployments > 0 && countInactiveDeployments === health.deploymentStatuses.length) {
+        // No active deployment => special case for failure
+        this.globalStatus = H.FAILURE;
+        this.info.push('No active deployment!');
+      } else if (countInactiveDeployments === 1) {
+        this.info.push('One inactive deployment');
+      } else if (countInactiveDeployments > 1) {
+        this.info.push(`${countInactiveDeployments} inactive deployments`);
+      }
     } else {
       this.globalStatus = H.NA;
-    }
-    if (health && countInactiveDeployments > 0 && countInactiveDeployments === health.deploymentStatuses.length) {
-      // No active deployment => special case for failure
-      this.globalStatus = H.FAILURE;
-      this.info.push('No active deployment!');
-    } else if (countInactiveDeployments === 1) {
-      this.info.push('One inactive deployment');
-    } else if (countInactiveDeployments > 1) {
-      this.info.push(`${countInactiveDeployments} inactive deployments`);
     }
   }
 
@@ -92,8 +108,20 @@ export class HealthIndicator extends React.PureComponent<Props, {}> {
   renderIndicator(health: Health, iconSize: string, textSize: string, title: string) {
     if (this.globalStatus.icon) {
       return (
-        <HealthDetails id={this.props.id} health={health} headline={title} placement={this.props.tooltipPlacement}>
-          <Icon type="pf" name={this.globalStatus.icon} style={{ fontSize: iconSize }} />
+        <HealthDetails
+          id={this.props.id}
+          health={health}
+          headline={title}
+          placement={this.props.tooltipPlacement}
+          rateInterval={this.props.rateInterval}
+        >
+          <Icon
+            type="pf"
+            name={this.globalStatus.icon}
+            style={{ fontSize: iconSize }}
+            className="health-icon"
+            tabIndex="0"
+          />
         </HealthDetails>
       );
     } else {
