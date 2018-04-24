@@ -8,7 +8,6 @@ import { ColaGraph } from './graphs/ColaGraph';
 import { CoseGraph } from './graphs/CoseGraph';
 import { KlayGraph } from './graphs/KlayGraph';
 import { DagreGraph } from './graphs/DagreGraph';
-import * as QueryOptions from '../../components/GraphFilter/QueryOptions';
 
 const bookinfoData = require('./__stories__/bookinfo.json');
 
@@ -32,7 +31,7 @@ const BookInfoCytoscapeLayout = graphLayout => (
     onReady={action('onReady')}
     graphLayout={graphLayout.getLayout()}
     namespace={{ name: 'test' }}
-    graphDuration={{ value: QueryOptions.DEFAULT.key }}
+    graphDuration={{ value: 60 }}
     elements={bookinfoData}
     onClick={action('OnClick')}
     isLoading={false}
@@ -53,7 +52,7 @@ storiesOf('CytoscapeLayout', module)
       onReady={action('onReady')}
       graphLayout={DagreGraph.getLayout()}
       namespace={{ name: 'test' }}
-      graphDuration={{ value: QueryOptions.DEFAULT.key }}
+      graphDuration={{ value: 60 }}
       elements={EMPTY_GRAPH}
       onClick={action('OnClick')}
       isLoading={false}
@@ -65,7 +64,7 @@ storiesOf('CytoscapeLayout', module)
       onReady={action('onReady')}
       graphLayout={DagreGraph.getLayout()}
       namespace={{ name: 'test' }}
-      graphDuration={{ value: QueryOptions.DEFAULT.key }}
+      graphDuration={{ value: 60 }}
       elements={EMPTY_GRAPH}
       onClick={action('OnClick')}
       isLoading={true}

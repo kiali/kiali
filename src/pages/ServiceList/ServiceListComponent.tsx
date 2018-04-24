@@ -96,7 +96,6 @@ const perPageOptions: number[] = [5, 10, 15];
 const defaultRateInterval = '10m';
 
 class ServiceListComponent extends React.Component<ServiceListComponentProps, ServiceListComponentState> {
-
   constructor(props: ServiceListComponentProps) {
     super(props);
     this.filterChange = this.filterChange.bind(this);

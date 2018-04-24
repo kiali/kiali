@@ -10,11 +10,11 @@ import SummaryPanel from './SummaryPanel';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
 import * as LayoutDictionary from '../../components/CytoscapeLayout/graphs/LayoutDictionary';
 import GraphFilter from '../../components/GraphFilter/GraphFilter';
-import * as QueryOptions from '../../components/GraphFilter/QueryOptions';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
 import PfHeader from '../../components/Pf/PfHeader';
 import PfAlerts from '../../components/Pf/PfAlerts';
 import * as API from '../../services/Api';
+import { computePrometheusQueryInterval } from '../../services/Prometheus';
 
 const URLSearchParams = require('url-search-params');
 
@@ -42,6 +42,8 @@ type ServiceGraphPageProps = {
   hideCBs: string;
 };
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
+const DEFAULT_DURATION = 60;
+const NUMBER_OF_DATAPOINTS = 30;
 
 export default class ServiceGraphPage extends React.Component<
   RouteComponentProps<ServiceGraphPageProps>,
@@ -82,7 +84,7 @@ export default class ServiceGraphPage extends React.Component<
     const hideCBs = urlParams.get('hideCBs') === 'true';
 
     return {
-      graphDuration: duration ? { value: duration } : { value: QueryOptions.DEFAULT.key },
+      graphDuration: duration ? { value: duration } : { value: DEFAULT_DURATION },
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
       badgeStatus: { hideCBs: hideCBs }
     };
@@ -191,7 +193,7 @@ export default class ServiceGraphPage extends React.Component<
             namespace={this.state.params.namespace.name}
             queryTime={this.state.graphTimestamp}
             duration={this.state.params.graphDuration.value}
-            {...QueryOptions.getOption(this.state.params.graphDuration.value)}
+            {...computePrometheusQueryInterval(this.state.params.graphDuration.value, NUMBER_OF_DATAPOINTS)}
           />
         </div>
       </PfContainerNavVertical>

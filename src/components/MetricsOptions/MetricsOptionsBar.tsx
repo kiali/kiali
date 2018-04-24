@@ -11,7 +11,6 @@ interface Props {
 }
 
 interface MetricsOptionsState {
-  rateInterval: string;
   pollInterval: number;
   duration: number;
   groupByLabels: string[];
