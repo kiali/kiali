@@ -30,9 +30,11 @@ func applyCircuitBreakers(n *tree.ServiceNode, namespaceName string, istioClient
 			for _, dp := range dps {
 				if dp.CircuitBreaker != nil {
 					if d, ok := dp.Destination.(map[string]interface{}); ok {
-						if d["labels"].(map[string]interface{})["version"] == n.Version {
-							n.Metadata["isCircuitBreaker"] = "true"
-							break // no need to keep going, we know it has at least one CB policy
+						if labels, ok2 := d["labels"].(map[string]interface{}); ok2 {
+							if labels["version"] == n.Version {
+								n.Metadata["isCircuitBreaker"] = "true"
+								break // no need to keep going, we know it has at least one CB policy
+							}
 						}
 					}
 				}
