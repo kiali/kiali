@@ -51,20 +51,6 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     this.handleMouseOut = this.handleMouseOut.bind(this);
   }
 
-  resizeWindow() {
-    let canvasWrapper = document.getElementById('cytoscape-container')!;
-
-    if (canvasWrapper) {
-      let dimensions = canvasWrapper.getBoundingClientRect();
-      canvasWrapper.style.height = `${document.documentElement.scrollHeight - dimensions.top}px`;
-    }
-  }
-
-  componentDidMount() {
-    window.addEventListener('resize', this.resizeWindow);
-    this.resizeWindow();
-  }
-
   shouldComponentUpdate(nextProps: any, nextState: any) {
     return (
       this.props.isLoading !== nextProps.isLoading ||
@@ -143,7 +129,7 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
   render() {
     const layout = LayoutDictionary.getLayout(this.props.graphLayout);
     return (
-      <div id="cytoscape-container" style={{ marginRight: '25em' }}>
+      <div id="cytoscape-container" style={{ marginRight: '25em', height: '100%' }}>
         <Spinner loading={this.props.isLoading}>
           <EmptyGraphLayout
             elements={this.props.elements}

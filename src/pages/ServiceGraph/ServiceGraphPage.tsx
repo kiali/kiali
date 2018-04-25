@@ -114,7 +114,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
           onRefresh={this.handleRefreshClick}
           {...graphParams}
         />
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'absolute', right: 20, bottom: 0, top: 230, left: 220 }}>
           <CytoscapeLayout
             {...graphParams}
             isLoading={this.state.isLoading}
