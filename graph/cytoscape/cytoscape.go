@@ -22,6 +22,7 @@ import (
 	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/graph/tree"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/services/models"
 )
 
 type NodeData struct {
@@ -30,17 +31,18 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	Service          string `json:"service"`
-	Version          string `json:"version,omitempty"`
-	Rate             string `json:"rate,omitempty"`             // edge aggregate
-	Rate3xx          string `json:"rate3XX,omitempty"`          // edge aggregate
-	Rate4xx          string `json:"rate4XX,omitempty"`          // edge aggregate
-	Rate5xx          string `json:"rate5XX,omitempty"`          // edge aggregate
-	IsCircuitBreaker string `json:"isCircuitBreaker,omitempty"` // true | false | unknown
-	IsGroup          string `json:"isGroup,omitempty"`          // set to the grouping type, current values: [ 'version' ]
-	IsRoot           string `json:"isRoot,omitempty"`           // true | false
-	IsSelfInvoke     string `json:"isSelfInvoke,omitempty"`     // rate of selfInvoke
-	IsUnused         string `json:"isUnused,omitempty"`         // true | false
+	Service             string                     `json:"service"`
+	Version             string                     `json:"version,omitempty"`
+	Rate                string                     `json:"rate,omitempty"`             // edge aggregate
+	Rate3xx             string                     `json:"rate3XX,omitempty"`          // edge aggregate
+	Rate4xx             string                     `json:"rate4XX,omitempty"`          // edge aggregate
+	Rate5xx             string                     `json:"rate5XX,omitempty"`          // edge aggregate
+	IsCircuitBreaker    string                     `json:"isCircuitBreaker,omitempty"` // true | false | unknown
+	IsGroup             string                     `json:"isGroup,omitempty"`          // set to the grouping type, current values: [ 'version' ]
+	IsRoot              string                     `json:"isRoot,omitempty"`           // true | false
+	IsSelfInvoke        string                     `json:"isSelfInvoke,omitempty"`     // rate of selfInvoke
+	IsUnused            string                     `json:"isUnused,omitempty"`         // true | false
+	DestinationPolicies models.DestinationPolicies `json:"destinationPolicies,omitempty"`
 }
 
 type EdgeData struct {
@@ -159,6 +161,7 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		// node may have a circuit breaker
 		if cb, ok := sn.Metadata["isCircuitBreaker"]; ok {
 			nd.IsCircuitBreaker = cb.(string)
+			nd.DestinationPolicies = sn.Metadata["destinationPolicies"].(models.DestinationPolicies)
 		}
 
 		nw := NodeWrapper{

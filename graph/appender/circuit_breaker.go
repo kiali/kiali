@@ -25,6 +25,7 @@ func applyCircuitBreakers(n *tree.ServiceNode, namespaceName string, istioClient
 	istioDetails, err := istioClient.GetIstioDetails(namespaceName, strings.Split(n.Name, ".")[0])
 	if err == nil {
 		if istioDetails.DestinationPolicies != nil {
+			var applicableDps models.DestinationPolicies
 			dps := make(models.DestinationPolicies, 0)
 			dps.Parse(istioDetails.DestinationPolicies)
 			for _, dp := range dps {
@@ -32,11 +33,12 @@ func applyCircuitBreakers(n *tree.ServiceNode, namespaceName string, istioClient
 					if d, ok := dp.Destination.(map[string]interface{}); ok {
 						if d["labels"].(map[string]interface{})["version"] == n.Version {
 							n.Metadata["isCircuitBreaker"] = "true"
-							break // no need to keep going, we know it has at least one CB policy
+							applicableDps = append(applicableDps, dp)
 						}
 					}
 				}
 			}
+			n.Metadata["destinationPolicies"] = applicableDps
 		}
 	} else {
 		log.Warningf("Cannot determine if service [%v:%v] has circuit breakers: %v", namespaceName, n.Name, err)
