@@ -1,4 +1,5 @@
 import Element from 'cytoscape';
+import { PfColors } from '../../../components/Pf/PfColors';
 
 const FLASH_BADGE: string = 'glyphicon glyphicon-flash';
 const MAIL_BADGE: string = 'glyphicon glyphicon-envelope';
@@ -86,12 +87,12 @@ class GraphBadge {
 
 export class CircuitBreakerBadge extends GraphBadge {
   constructor(node: Element) {
-    super(node, FLASH_BADGE, '#8461f7', 'top'); // color is pf-purple-300
+    super(node, FLASH_BADGE, PfColors.Purple300, 'top');
   }
 }
 
 export class MessageBadge extends GraphBadge {
   constructor(node: Element) {
-    super(node, MAIL_BADGE, '#92d400', 'bottom'); // color is pf-light-green-400
+    super(node, MAIL_BADGE, PfColors.LightBlue400, 'bottom');
   }
 }

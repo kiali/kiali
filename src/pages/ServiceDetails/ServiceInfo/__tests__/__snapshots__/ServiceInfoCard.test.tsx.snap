@@ -23,7 +23,7 @@ ShallowWrapper {
         >
           <li>
             <Badge
-              color="green"
+              color="#3f9c35"
               leftText="my_key"
               rightText="my_value"
               scale={0.8}
@@ -84,7 +84,7 @@ ShallowWrapper {
             >
               <li>
                 <Badge
-                  color="green"
+                  color="#3f9c35"
                   leftText="my_key"
                   rightText="my_value"
                   scale={0.8}
@@ -183,7 +183,7 @@ ShallowWrapper {
             >
               <li>
                 <Badge
-                  color="green"
+                  color="#3f9c35"
                   leftText="my_key"
                   rightText="my_value"
                   scale={0.8}
@@ -215,7 +215,7 @@ ShallowWrapper {
               >
                 <li>
                   <Badge
-                    color="green"
+                    color="#3f9c35"
                     leftText="my_key"
                     rightText="my_value"
                     scale={0.8}
@@ -257,7 +257,7 @@ ShallowWrapper {
               "props": Object {
                 "children": <li>
                   <Badge
-                    color="green"
+                    color="#3f9c35"
                     leftText="my_key"
                     rightText="my_value"
                     scale={0.8}
@@ -275,7 +275,7 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": <Badge
-                    color="green"
+                    color="#3f9c35"
                     leftText="my_key"
                     rightText="my_value"
                     scale={0.8}
@@ -288,7 +288,7 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "class",
                   "props": Object {
-                    "color": "green",
+                    "color": "#3f9c35",
                     "leftText": "my_key",
                     "rightText": "my_value",
                     "scale": 0.8,
@@ -353,7 +353,7 @@ ShallowWrapper {
               >
                 <li>
                   <Badge
-                    color="green"
+                    color="#3f9c35"
                     leftText="my_key"
                     rightText="my_value"
                     scale={0.8}
@@ -452,7 +452,7 @@ ShallowWrapper {
               >
                 <li>
                   <Badge
-                    color="green"
+                    color="#3f9c35"
                     leftText="my_key"
                     rightText="my_value"
                     scale={0.8}
@@ -484,7 +484,7 @@ ShallowWrapper {
                 >
                   <li>
                     <Badge
-                      color="green"
+                      color="#3f9c35"
                       leftText="my_key"
                       rightText="my_value"
                       scale={0.8}
@@ -526,7 +526,7 @@ ShallowWrapper {
                 "props": Object {
                   "children": <li>
                     <Badge
-                      color="green"
+                      color="#3f9c35"
                       leftText="my_key"
                       rightText="my_value"
                       scale={0.8}
@@ -544,7 +544,7 @@ ShallowWrapper {
                   "nodeType": "host",
                   "props": Object {
                     "children": <Badge
-                      color="green"
+                      color="#3f9c35"
                       leftText="my_key"
                       rightText="my_value"
                       scale={0.8}
@@ -557,7 +557,7 @@ ShallowWrapper {
                     "key": undefined,
                     "nodeType": "class",
                     "props": Object {
-                      "color": "green",
+                      "color": "#3f9c35",
                       "leftText": "my_key",
                       "rightText": "my_value",
                       "scale": 0.8,

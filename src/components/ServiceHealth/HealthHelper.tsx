@@ -1,4 +1,5 @@
 import { RequestHealth } from '../../types/Health';
+import { PfColors } from '../../components/Pf/PfColors';
 
 export interface Status {
   name: string;
@@ -11,25 +12,25 @@ export interface Status {
 // Colors from Patternfly status palette https://www.patternfly.org/styles/color-palette/
 export const FAILURE: Status = {
   name: 'Failure',
-  color: '#cc0000',
+  color: PfColors.Red,
   priority: 3,
   icon: 'error-circle-o'
 };
 export const DEGRADED: Status = {
   name: 'Degraded',
-  color: '#ec7a08',
+  color: PfColors.Orange,
   priority: 2,
   icon: 'warning-triangle-o'
 };
 export const HEALTHY: Status = {
   name: 'Healthy',
-  color: '#3f9c35',
+  color: PfColors.Green,
   priority: 1,
   icon: 'ok'
 };
 export const NA: Status = {
   name: 'No health information',
-  color: '#707070',
+  color: PfColors.Gray,
   priority: 0,
   text: 'N/A'
 };

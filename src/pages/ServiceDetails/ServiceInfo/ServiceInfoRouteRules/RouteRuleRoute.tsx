@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { DestinationWeight } from '../../../../types/ServiceInfo';
 import Badge from '../../../../components/Badge/Badge';
+import { PfColors } from '../../../../components/Pf/PfColors';
 
 interface RouteRuleRouteProps {
   route: DestinationWeight[];
@@ -33,7 +34,7 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
                   <Badge
                     scale={0.8}
                     style="plastic"
-                    color="green"
+                    color={PfColors.Green}
                     leftText={key}
                     rightText={label.labels ? label.labels[key] : ''}
                   />

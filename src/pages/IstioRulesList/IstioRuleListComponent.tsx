@@ -9,6 +9,7 @@ import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
 import { RuleItem, RuleList } from '../../types/IstioRuleListComponent';
 import PropTypes from 'prop-types';
+import { PfColors } from '../../components/Pf/PfColors';
 
 type SortField = {
   id: string;
@@ -247,7 +248,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
         );
       }
       ruleList.push(
-        <Link key={to} to={to} style={{ color: 'black' }}>
+        <Link key={to} to={to} style={{ color: PfColors.Black }}>
           <ListViewItem
             leftContent={<ListViewIcon type="pf" name="migration" />}
             heading={

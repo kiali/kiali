@@ -1,8 +1,15 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import Badge from '../Badge';
+import { PfColors } from '../../../components/Pf/PfColors';
 
-const mockBadge = (leftText = 'my_key', rightText = 'my_value', scale = 0.8, style = 'plastic', color = 'green') => {
+const mockBadge = (
+  leftText = 'my_key',
+  rightText = 'my_value',
+  scale = 0.8,
+  style = 'plastic',
+  color = PfColors.Green
+) => {
   const component = <Badge scale={scale} style={style} color={color} leftText={leftText} rightText={rightText} />;
   return shallow(component);
 };
@@ -87,7 +94,7 @@ describe('#Badge render correctly with data', () => {
   it('should render with a correct rect elements', () => {
     const scale = 1.1;
     const styleType = 'square';
-    const color = 'red';
+    const color = PfColors.Red;
     const minorMargin = scale;
     const majorMargin = 5 * scale;
     const textMargin = minorMargin + majorMargin;
@@ -99,7 +106,7 @@ describe('#Badge render correctly with data', () => {
     const wrapper = mockBadge('', '', scale, styleType, color);
     const rects = wrapper.find('rect').getElements();
     expect(rects[0].props.rx).toEqual(borderRadius);
-    expect(rects[0].props.fill).toEqual('#555');
+    expect(rects[0].props.fill).toEqual(PfColors.Gray);
     expect(rects[0].props.width).toEqual(fullWidth);
     expect(rects[0].props.height).toEqual(height);
 
@@ -141,7 +148,7 @@ describe('#Badge render correctly with data', () => {
     const firstText = wrapper.find('text').getElements()[0];
     expect(firstText.props.x).toEqual(textMargin);
     expect(firstText.props.y).toEqual(height - majorMargin);
-    expect(firstText.props.fill).toEqual('#010101');
+    expect(firstText.props.fill).toEqual(PfColors.Black1000);
     expect(firstText.props.fillOpacity).toEqual('.3');
     const secondText = wrapper.find('text').getElements()[1];
     expect(secondText.props.x).toEqual(textMargin);
@@ -149,7 +156,7 @@ describe('#Badge render correctly with data', () => {
     const thirdText = wrapper.find('text').getElements()[2];
     expect(thirdText.props.x).toEqual(rightOffset + textMargin);
     expect(thirdText.props.y).toEqual(height - majorMargin);
-    expect(thirdText.props.fill).toEqual('#010101');
+    expect(thirdText.props.fill).toEqual(PfColors.Black1000);
     expect(thirdText.props.fillOpacity).toEqual('.3');
     const fourthText = wrapper.find('text').getElements()[3];
     expect(fourthText.props.x).toEqual(rightOffset + textMargin);

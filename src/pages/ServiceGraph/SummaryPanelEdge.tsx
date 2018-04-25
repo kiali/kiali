@@ -7,6 +7,7 @@ import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/graphing';
 import MetricsOptions from '../../types/MetricsOptions';
+import { PfColors } from '../../components/Pf/PfColors';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -156,10 +157,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   };
 
   private renderLabels = (ns: string, ver: string) => (
-    // color="#2d7623" is pf-green-500
     <div style={{ paddingTop: '3px' }}>
-      <Badge scale={0.9} style="plastic" leftText="namespace" rightText={ns} color="#2d7623" />
-      <Badge scale={0.9} style="plastic" leftText="version" rightText={ver} color="#2d7623" />
+      <Badge scale={0.9} style="plastic" leftText="namespace" rightText={ns} color={PfColors.Green500} />
+      <Badge scale={0.9} style="plastic" leftText="version" rightText={ver} color={PfColors.Green500} />
     </div>
   );
 

@@ -8,6 +8,7 @@ import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import MetricsOptions from '../../types/MetricsOptions';
+import { PfColors } from '../../components/Pf/PfColors';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -75,7 +76,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               leftText="namespace"
               rightText={namespace}
               key={namespace}
-              color="#2d7623" // pf-green-500
+              color={PfColors.Green500}
             />
             {this.renderVersionBadges()}
           </div>
@@ -153,7 +154,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           leftText="version"
           rightText={c.data('version')}
           key={c.data('version')}
-          color="#2d7623" // pf-green-500
+          color={PfColors.Green500}
         />
       ));
   };

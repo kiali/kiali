@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { AreaChart } from 'patternfly-react';
+import { PfColors } from '../../components/Pf/PfColors';
 
 type RpsChartTypeProp = {
   label: string;
@@ -74,7 +75,7 @@ export default class RpsChart extends React.Component<RpsChartTypeProp, {}> {
         {this.props.dataRps.length > 0 && (
           <AreaChart
             size={{ height: 45 }}
-            color={{ pattern: ['#0088ce', '#cc0000'] }} // pf-blue, pf-red-100
+            color={{ pattern: [PfColors.Blue, PfColors.Red] }}
             legend={{ show: false }}
             grid={{ y: { show: false } }}
             axis={axis}

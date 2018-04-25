@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { StackedBarChart } from 'patternfly-react';
+import { PfColors } from '../../components/Pf/PfColors';
 
 type RateChartPropType = {
   percent2xx: number;
@@ -73,10 +74,10 @@ export default class RateChart extends React.Component<RateChartPropType> {
           ],
           // order: 'asc',
           colors: {
-            OK: '#3f9c35', // pf-green-400
-            '3xx': '#0088ce', // pf-blue-400
-            '4xx': '#ec7a08', // pf-orange-400
-            '5xx': '#cc0000' // pf-red-100
+            OK: PfColors.Green,
+            '3xx': PfColors.Blue,
+            '4xx': PfColors.Orange,
+            '5xx': PfColors.Red
           }
         }}
       />
