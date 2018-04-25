@@ -47,7 +47,7 @@ export class ServiceGraphRouteHandler extends React.Component<
     const urlParams = new URLSearchParams(queryString);
     // TODO: [KIALI-357] validate `duration`
     const _duration = urlParams.get('duration');
-    const _hideCBs = urlParams.get('hideCBs') ? urlParams.get('hideCBs') : true;
+    const _hideCBs = urlParams.get('hideCBs') ? urlParams.get('hideCBs') === 'true' : false;
     return {
       graphDuration: _duration ? { value: _duration } : { value: DEFAULT_DURATION },
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),

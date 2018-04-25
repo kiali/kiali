@@ -34,7 +34,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
     return (
       <div className="form-group">
         {this.props.nameDropdown && <label style={{ paddingRight: '0.5em' }}>{this.props.nameDropdown}:</label>}
-        <DropdownButton title={this.state.currentName} onSelect={this.onKeyChanged}>
+        <DropdownButton title={this.state.currentName} onSelect={this.onKeyChanged} id="kiali-dropdown">
           {this.props.options.map(r => (
             <MenuItem key={r[0]} active={r[0] === this.state.currentValue} eventKey={r}>
               {r[1]}

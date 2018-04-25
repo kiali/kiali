@@ -35,7 +35,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
     this.props.onRefresh();
   };
 
-  handleToggleCBs = (newValue: boolean) => {
+  handleToggleCBs = (event: any) => {
     this.props.onBadgeStatusChange({ hideCBs: !this.props.badgeStatus.hideCBs });
   };
 
@@ -104,9 +104,9 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
         <div style={{ paddingTop: '10px' }}>
           <ButtonGroup>
             <Switch
-              labelText="Show Circuit Breakers"
+              labelText="Circuit Breakers"
               disabled={this.props.disabled}
-              value={this.props.badgeStatus.hideCBs}
+              value={!this.props.badgeStatus.hideCBs}
               onChange={this.handleToggleCBs}
             />
           </ButtonGroup>

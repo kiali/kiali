@@ -10,9 +10,7 @@ export interface GraphFilterProps extends GraphParamsType {
   onRefresh: () => void;
 }
 
-export interface GraphFilterState {
-  availableNamespaces: { name: string }[];
-}
+export interface GraphFilterState {}
 
 export interface Layout {
   name: string;
