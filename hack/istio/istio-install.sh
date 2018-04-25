@@ -14,7 +14,7 @@ if [ "$?" != 0 ]; then
   ANSIBLE_ENV_SETUP_SCRIPT="${ANSIBLE_DIR}/hacking/env-setup"
   if [ ! -f ${ANSIBLE_ENV_SETUP_SCRIPT} ]; then
     echo "You do not have Ansible installed yet - attempting to install a local copy at $ANSIBLE_DIR"
-    cd $OUTPUT_DIR && git clone git://github.com/ansible/ansible.git --recursive
+    cd $OUTPUT_DIR && git clone git://github.com/ansible/ansible.git --recursive --depth 1 --shallow-submodules
     echo "Ansible has been downloaded here: ${ANSIBLE_DIR}"
     echo "Will now attempt to pip install required dependencies."
     pip2 install -r ${ANSIBLE_DIR}/requirements.txt > /dev/null 2>&1
@@ -40,7 +40,13 @@ set -e
 
 # See if Istio source repository is git cloned already - if not, clone it now
 if [ ! -d "./istio" ]; then
-  git clone git://github.com/istio/istio.git
+	liv=$(curl https://api.github.com/repos/istio/istio/releases/latest 2> /dev/null |\
+                grep  "tag_name" | \
+                sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
+        echo "Fetching Istio $liv"
+        wget https://github.com/istio/istio/archive/$liv.zip
+	unzip $liv.zip
+	mv istio-$liv istio
 fi
 
 # Go to the directory where the Istio Ansible Installer scripts are in the github source - must run them from here
