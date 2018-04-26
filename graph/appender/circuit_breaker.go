@@ -22,17 +22,17 @@ func (a CircuitBreakerAppender) AppendGraph(trees *[]tree.ServiceNode, namespace
 
 func applyCircuitBreakers(n *tree.ServiceNode, namespaceName string, istioClient *kubernetes.IstioClient) {
 	// determine if there is a circuit breaker on this node
-	istioDetails, err := istioClient.GetIstioDetails(namespaceName, strings.Split(n.Name, ".")[0])
+	destinationPolicies, err := istioClient.GetDestinationPolicies(namespaceName, strings.Split(n.Name, ".")[0])
 	if err == nil {
-		if istioDetails.DestinationPolicies != nil {
+		if destinationPolicies != nil {
 			dps := make(models.DestinationPolicies, 0)
-			dps.Parse(istioDetails.DestinationPolicies)
+			dps.Parse(destinationPolicies)
 			for _, dp := range dps {
 				if dp.CircuitBreaker != nil {
 					if d, ok := dp.Destination.(map[string]interface{}); ok {
 						if labels, ok2 := d["labels"].(map[string]interface{}); ok2 {
 							if labels["version"] == n.Version {
-								n.Metadata["isCircuitBreaker"] = "true"
+								n.Metadata["hasCircuitBreaker"] = "true"
 								break // no need to keep going, we know it has at least one CB policy
 							}
 						}
@@ -42,7 +42,7 @@ func applyCircuitBreakers(n *tree.ServiceNode, namespaceName string, istioClient
 		}
 	} else {
 		log.Warningf("Cannot determine if service [%v:%v] has circuit breakers: %v", namespaceName, n.Name, err)
-		n.Metadata["isCircuitBreaker"] = "unknown"
+		n.Metadata["hasCircuitBreaker"] = "unknown"
 	}
 
 	for _, child := range n.Children {

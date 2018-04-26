@@ -30,17 +30,18 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	Service          string `json:"service"`
-	Version          string `json:"version,omitempty"`
-	Rate             string `json:"rate,omitempty"`             // edge aggregate
-	Rate3xx          string `json:"rate3XX,omitempty"`          // edge aggregate
-	Rate4xx          string `json:"rate4XX,omitempty"`          // edge aggregate
-	Rate5xx          string `json:"rate5XX,omitempty"`          // edge aggregate
-	IsCircuitBreaker string `json:"isCircuitBreaker,omitempty"` // true | false | unknown
-	IsGroup          string `json:"isGroup,omitempty"`          // set to the grouping type, current values: [ 'version' ]
-	IsRoot           string `json:"isRoot,omitempty"`           // true | false
-	IsSelfInvoke     string `json:"isSelfInvoke,omitempty"`     // rate of selfInvoke
-	IsUnused         string `json:"isUnused,omitempty"`         // true | false
+	Service           string `json:"service"`
+	Version           string `json:"version,omitempty"`
+	Rate              string `json:"rate,omitempty"`           // edge aggregate
+	Rate3xx           string `json:"rate3XX,omitempty"`        // edge aggregate
+	Rate4xx           string `json:"rate4XX,omitempty"`        // edge aggregate
+	Rate5xx           string `json:"rate5XX,omitempty"`        // edge aggregate
+	RateSelfInvoke    string `json:"rateSelfInvoke,omitempty"` // rate of selfInvoke
+	HasCircuitBreaker string `json:"hasCB,omitempty"`          // true | false | unknown
+	HasRouteRule      string `json:"hasRR,omitempty"`          // true | false | unknown
+	IsGroup           string `json:"isGroup,omitempty"`        // set to the grouping type, current values: [ 'version' ]
+	IsRoot            string `json:"isRoot,omitempty"`         // true | false
+	IsUnused          string `json:"isUnused,omitempty"`       // true | false
 }
 
 type EdgeData struct {
@@ -157,8 +158,13 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		}
 
 		// node may have a circuit breaker
-		if cb, ok := sn.Metadata["isCircuitBreaker"]; ok {
-			nd.IsCircuitBreaker = cb.(string)
+		if cb, ok := sn.Metadata["hasCircuitBreaker"]; ok {
+			nd.HasCircuitBreaker = cb.(string)
+		}
+
+		// node may have a route rule
+		if cb, ok := sn.Metadata["hasRouteRule"]; ok {
+			nd.HasRouteRule = cb.(string)
 		}
 
 		nw := NodeWrapper{
@@ -171,7 +177,7 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		//TODO If we can find a graph layout that handles loop edges well then
 		// we can go back to allowing these but for now, flag the node text
 		if parentNodeId == nd.Id {
-			nd.IsSelfInvoke = fmt.Sprintf("%.3f", sn.Metadata["rate"].(float64))
+			nd.RateSelfInvoke = fmt.Sprintf("%.3f", sn.Metadata["rate"].(float64))
 		} else {
 			edgeId := fmt.Sprintf("e%v", *edgeIdSequence)
 			*edgeIdSequence++

@@ -27,7 +27,7 @@
           "service": "productpage.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "150.000",
-          "isSelfInvoke": "20.000"
+          "rateSelfInvoke": "20.000"
         }
       },
       {
@@ -61,7 +61,7 @@
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v2",
           "rate": "20.000",
-          "isSelfInvoke": "20.000"
+          "rateSelfInvoke": "20.000"
         }
       },
       {
@@ -71,7 +71,7 @@
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v3",
           "rate": "20.000",
-          "isSelfInvoke": "20.000"
+          "rateSelfInvoke": "20.000"
         }
       },
       {
