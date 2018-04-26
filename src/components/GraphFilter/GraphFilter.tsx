@@ -6,6 +6,26 @@ import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import AutoUpdateNamespaceList from '../../containers/AutoUpdateNamespaceList';
 
 export default class GraphFilter extends React.Component<GraphFilterProps, GraphFilterState> {
+  // TODO:  We should keep these mappings with their corresponding filtering components.
+  // GraphFilter should be minimal and used for assembling those filtering components.
+  static INTERVAL_DURATION = [
+    [60, '1 minute'],
+    [600, '10 minutes'],
+    [1800, '30 minutes'],
+    [3600, '1 hour'],
+    [14400, '4 hours'],
+    [28800, '8 hours'],
+    [86400, '1 day'],
+    [604800, '7 days'],
+    [2592000, '30 days']
+  ];
+  static GRAPH_LAYOUTS = [
+    ['breadthfirst', 'Breadthfirst'],
+    ['cola', 'Cola'],
+    ['cose', 'Cose'],
+    ['dagre', 'Dagre'],
+    ['klay', 'Klay']
+  ];
   constructor(props: GraphFilterProps) {
     super(props);
   }
@@ -40,29 +60,8 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
   };
 
   render() {
-    // TODO:  We should keep these mappings with their corresponding filtering components.
-    // GraphFilter should be minimal and used for assembling those filtering components.
-    const intervalDurations = [
-      [60, '1 minute'],
-      [600, '10 minutes'],
-      [1800, '30 minutes'],
-      [3600, '1 hour'],
-      [14400, '4 hours'],
-      [28800, '8 hours'],
-      [86400, '1 day'],
-      [604800, '7 days'],
-      [2592000, '30 days']
-    ];
-    const graphLayouts = [
-      ['breadthfirst', 'Breadthfirst'],
-      ['cola', 'Cola'],
-      ['cose', 'Cose'],
-      ['dagre', 'Dagre'],
-      ['klay', 'Klay']
-    ];
-
     return (
-      <div>
+      <>
         <Toolbar>
           <div className="form-group">
             <AutoUpdateNamespaceList
@@ -77,11 +76,11 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             nameDropdown={'Duration'}
             initialValue={this.props.graphDuration.value}
             initialLabel={String(
-              intervalDurations.filter(elem => {
+              GraphFilter.INTERVAL_DURATION.filter(elem => {
                 return elem[0] === Number(this.props.graphDuration.value);
               })[0][1]
             )}
-            options={intervalDurations}
+            options={GraphFilter.INTERVAL_DURATION}
           />
           <ToolbarDropdown
             disabled={this.props.disabled}
@@ -89,11 +88,11 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             nameDropdown={'Layout'}
             initialValue={this.props.graphLayout.name}
             initialLabel={String(
-              graphLayouts.filter(elem => {
+              GraphFilter.GRAPH_LAYOUTS.filter(elem => {
                 return elem[0] === String(this.props.graphLayout.name);
               })[0][1]
             )}
-            options={graphLayouts}
+            options={GraphFilter.GRAPH_LAYOUTS}
           />
           <Toolbar.RightContent>
             <Button disabled={this.props.disabled} onClick={this.handleRefresh}>
@@ -111,7 +110,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             />
           </ButtonGroup>
         </div>
-      </div>
+      </>
     );
   }
 }
