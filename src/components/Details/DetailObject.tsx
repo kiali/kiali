@@ -1,5 +1,6 @@
 import * as React from 'react';
 import Badge from '../Badge/Badge';
+import { PfColors } from '../../components/Pf/PfColors';
 
 interface DetailObjectProps {
   name: string;
@@ -25,7 +26,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
   }
 
   label(key: string, value: string) {
-    return <Badge scale={0.8} style="plastic" color="green" leftText={key} rightText={value} />;
+    return <Badge scale={0.8} style="plastic" color={PfColors.Green} leftText={key} rightText={value} />;
   }
 
   checkLabel(name: string) {

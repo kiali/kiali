@@ -7,6 +7,7 @@ import { HealthIndicator, DisplayMode } from '../../../components/ServiceHealth/
 import { Health } from '../../../types/Health';
 import { Endpoints, Port } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
+import { PfColors } from '../../../components/Pf/PfColors';
 
 import './ServiceInfoDescription.css';
 import { IstioLogo } from '../../../types/ServiceListComponent';
@@ -46,7 +47,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                   <Badge
                     scale={0.8}
                     style="plastic"
-                    color="#0088ce"
+                    color={PfColors.Blue}
                     leftText={key}
                     rightText={this.props.labels ? this.props.labels[key] : ''}
                   />
