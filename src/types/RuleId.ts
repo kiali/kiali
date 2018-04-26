@@ -1,6 +1,6 @@
 interface RuleId {
-  namespace: String;
-  rule: String;
+  namespace: string;
+  rule: string;
 }
 
 export default RuleId;

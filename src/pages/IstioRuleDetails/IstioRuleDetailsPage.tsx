@@ -26,7 +26,11 @@ const IstioRuleDetailsPage = (routeProps: RouteComponentProps<RuleId>) => {
           / {routeProps.match.params.rule}
         </h2>
       </div>
-      <IstioRuleInfo namespace={routeProps.match.params.namespace} rule={routeProps.match.params.rule} />
+      <IstioRuleInfo
+        namespace={routeProps.match.params.namespace}
+        rule={routeProps.match.params.rule}
+        search={routeProps.location.search}
+      />
     </div>
   );
 };
