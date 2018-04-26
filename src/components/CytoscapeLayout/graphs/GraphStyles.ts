@@ -1,3 +1,5 @@
+import { PfColors } from '../../../components/Pf/PfColors';
+
 export class GraphStyles {
   static options() {
     return { wheelSensitivity: 0.1, autounselectify: false, autoungrabify: true };
@@ -8,7 +10,7 @@ export class GraphStyles {
       {
         selector: 'node',
         css: {
-          color: '#030303', // pf-black
+          color: PfColors.Black,
           content: (ele: any) => {
             const version = ele.data('version');
             if (ele.data('parent')) {
@@ -18,8 +20,8 @@ export class GraphStyles {
             const service = name.split('.')[0];
             return version && version !== 'unknown' ? service + '\n' + version : service;
           },
-          'background-color': '#f9d67a', // pf-gold-200
-          'border-color': '#030303', // pf-black
+          'background-color': PfColors.Gold200,
+          'border-color': PfColors.Black,
           'border-style': (ele: any) => {
             return ele.data('isUnused') ? 'dotted' : 'solid';
           },
@@ -27,7 +29,7 @@ export class GraphStyles {
           'font-size': '10px',
           'overlay-padding': '6px',
           'text-halign': 'center',
-          'text-outline-color': '#f9d67a',
+          'text-outline-color': PfColors.Gold200,
           'text-outline-width': '2px',
           'text-valign': 'center',
           'text-wrap': 'wrap',
@@ -38,7 +40,7 @@ export class GraphStyles {
         selector: 'node:selected',
         style: {
           'border-width': '3px',
-          'border-color': '#0088ce' // pf-blue
+          'border-color': PfColors.Blue
         }
       },
       {
@@ -56,7 +58,7 @@ export class GraphStyles {
           'text-margin-x': '2px',
           'text-margin-y': '8px',
           'text-rotation': '90deg',
-          'background-color': '#fbeabc' // pf-gold-100
+          'background-color': PfColors.Gold100
         }
       },
       {
@@ -75,17 +77,17 @@ export class GraphStyles {
           'line-color': (ele: any) => {
             const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
             if (rate === 0 || ele.data('isUnused')) {
-              return 'black';
+              return PfColors.Black;
             }
             const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
             // todo: these thresholds should come from somewhere global
             if (pErr > 2.0) {
-              return 'red';
+              return PfColors.Red;
             }
             if (pErr > 0.1) {
-              return 'orange';
+              return PfColors.Orange;
             }
-            return 'green';
+            return PfColors.Green;
           },
           'line-style': (ele: any) => {
             return ele.data('isUnused') ? 'dotted' : 'solid';
@@ -93,16 +95,16 @@ export class GraphStyles {
           'target-arrow-shape': 'vee',
           'text-margin-x': '6px',
           'text-rotation': 'autorotate',
-          'target-arrow-color': '#030303', // pf-black
+          'target-arrow-color': PfColors.Black,
           width: 2
         }
       },
       {
         selector: 'edge:selected',
         css: {
-          'line-color': '#0088ce', // pf-blue
-          'target-arrow-color': '#0088ce', // pf-blue
-          'source-arrow-color': '#0088ce' // pf-blue
+          'line-color': PfColors.Blue,
+          'target-arrow-color': PfColors.Blue,
+          'source-arrow-color': PfColors.Blue
         }
       },
       // When you mouse over a node, all nodes other than the moused over node

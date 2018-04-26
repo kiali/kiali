@@ -13,6 +13,7 @@ import { getRequestErrorsRatio } from '../../components/ServiceHealth/HealthHelp
 import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
 import ServiceErrorRate from './ServiceErrorRate';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
+import { PfColors } from '../../components/Pf/PfColors';
 
 import './ServiceListComponent.css';
 
@@ -319,7 +320,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       );
 
       serviceList.push(
-        <Link key={to} to={to} style={{ color: 'black' }}>
+        <Link key={to} to={to} style={{ color: PfColors.Black }}>
           <ListViewItem
             leftContent={<ListViewIcon type="pf" name="service" />}
             heading={

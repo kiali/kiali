@@ -1,3 +1,5 @@
+import { PfColors } from '../../components/Pf/PfColors';
+
 export const TEST = {
   elements: {
     nodes: [
@@ -49,7 +51,7 @@ export const TEST = {
           source: 'n0',
           target: 'n1',
           text: '12.54pm',
-          color: 'green'
+          color: PfColors.Green
         }
       },
       {
@@ -58,7 +60,7 @@ export const TEST = {
           source: 'n1',
           target: 'n2',
           text: '12.54pm',
-          color: 'green'
+          color: PfColors.Green
         }
       },
       {
@@ -67,7 +69,7 @@ export const TEST = {
           source: 'n1',
           target: 'n3',
           text: '12.54pm',
-          color: 'green'
+          color: PfColors.Green
         }
       }
     ]
@@ -165,7 +167,7 @@ export const ISTIO_SYSTEM = {
           source: 'n0',
           target: 'n1',
           text: '0ps',
-          color: 'black'
+          color: PfColors.Black
         }
       },
       {
@@ -174,7 +176,7 @@ export const ISTIO_SYSTEM = {
           source: 'n1',
           target: 'n2',
           text: '0ps',
-          color: 'black'
+          color: PfColors.Black
         }
       },
       {
@@ -183,7 +185,7 @@ export const ISTIO_SYSTEM = {
           source: 'n1',
           target: 'n3',
           text: '0ps',
-          color: 'black'
+          color: PfColors.Black
         }
       },
       {
@@ -192,7 +194,7 @@ export const ISTIO_SYSTEM = {
           source: 'n1',
           target: 'n4',
           text: '0ps',
-          color: 'black'
+          color: PfColors.Black
         }
       },
       {
@@ -201,7 +203,7 @@ export const ISTIO_SYSTEM = {
           source: 'n1',
           target: 'n6',
           text: '0ps',
-          color: 'black'
+          color: PfColors.Black
         }
       },
       {
@@ -210,7 +212,7 @@ export const ISTIO_SYSTEM = {
           source: 'n4',
           target: 'n5',
           text: '0ps',
-          color: 'black'
+          color: PfColors.Black
         }
       },
       {
@@ -219,7 +221,7 @@ export const ISTIO_SYSTEM = {
           source: 'n6',
           target: 'n5',
           text: '0ps',
-          color: 'black'
+          color: PfColors.Black
         }
       }
     ]

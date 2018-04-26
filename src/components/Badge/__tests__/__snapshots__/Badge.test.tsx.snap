@@ -5,7 +5,7 @@ ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <Badge
-    color="green"
+    color="#3f9c35"
     leftText="my_key"
     rightText="my_value"
     scale={0.8}
@@ -40,20 +40,20 @@ ShallowWrapper {
           />
         </linearGradient>,
         <rect
-          fill="#555"
+          fill="#72767b"
           height={16}
           rx={2.4000000000000004}
           width={19.2}
         />,
         <rect
-          fill="green"
+          fill="#3f9c35"
           height={16}
           rx={2.4000000000000004}
           width={9.6}
           x={9.6}
         />,
         <rect
-          fill="green"
+          fill="#3f9c35"
           height={16}
           width="13"
           x={9.6}
@@ -70,7 +70,7 @@ ShallowWrapper {
           fontSize={8.8}
         >
           <text
-            fill="#010101"
+            fill="#030303"
             fillOpacity=".3"
             x={4.8}
             y={12}
@@ -84,7 +84,7 @@ ShallowWrapper {
             my_key
           </text>
           <text
-            fill="#010101"
+            fill="#030303"
             fillOpacity=".3"
             x={14.399999999999999}
             y={12}
@@ -166,7 +166,7 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "host",
         "props": Object {
-          "fill": "#555",
+          "fill": "#72767b",
           "height": 16,
           "rx": 2.4000000000000004,
           "width": 19.2,
@@ -180,7 +180,7 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "host",
         "props": Object {
-          "fill": "green",
+          "fill": "#3f9c35",
           "height": 16,
           "rx": 2.4000000000000004,
           "width": 9.6,
@@ -195,7 +195,7 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "host",
         "props": Object {
-          "fill": "green",
+          "fill": "#3f9c35",
           "height": 16,
           "width": "13",
           "x": 9.6,
@@ -225,7 +225,7 @@ ShallowWrapper {
         "props": Object {
           "children": Array [
             <text
-              fill="#010101"
+              fill="#030303"
               fillOpacity=".3"
               x={4.8}
               y={12}
@@ -239,7 +239,7 @@ ShallowWrapper {
               my_key
             </text>,
             <text
-              fill="#010101"
+              fill="#030303"
               fillOpacity=".3"
               x={14.399999999999999}
               y={12}
@@ -265,7 +265,7 @@ ShallowWrapper {
             "nodeType": "host",
             "props": Object {
               "children": "my_key",
-              "fill": "#010101",
+              "fill": "#030303",
               "fillOpacity": ".3",
               "x": 4.8,
               "y": 12,
@@ -293,7 +293,7 @@ ShallowWrapper {
             "nodeType": "host",
             "props": Object {
               "children": "my_value",
-              "fill": "#010101",
+              "fill": "#030303",
               "fillOpacity": ".3",
               "x": 14.399999999999999,
               "y": 12,
@@ -344,20 +344,20 @@ ShallowWrapper {
             />
           </linearGradient>,
           <rect
-            fill="#555"
+            fill="#72767b"
             height={16}
             rx={2.4000000000000004}
             width={19.2}
           />,
           <rect
-            fill="green"
+            fill="#3f9c35"
             height={16}
             rx={2.4000000000000004}
             width={9.6}
             x={9.6}
           />,
           <rect
-            fill="green"
+            fill="#3f9c35"
             height={16}
             width="13"
             x={9.6}
@@ -374,7 +374,7 @@ ShallowWrapper {
             fontSize={8.8}
           >
             <text
-              fill="#010101"
+              fill="#030303"
               fillOpacity=".3"
               x={4.8}
               y={12}
@@ -388,7 +388,7 @@ ShallowWrapper {
               my_key
             </text>
             <text
-              fill="#010101"
+              fill="#030303"
               fillOpacity=".3"
               x={14.399999999999999}
               y={12}
@@ -470,7 +470,7 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "host",
           "props": Object {
-            "fill": "#555",
+            "fill": "#72767b",
             "height": 16,
             "rx": 2.4000000000000004,
             "width": 19.2,
@@ -484,7 +484,7 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "host",
           "props": Object {
-            "fill": "green",
+            "fill": "#3f9c35",
             "height": 16,
             "rx": 2.4000000000000004,
             "width": 9.6,
@@ -499,7 +499,7 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "host",
           "props": Object {
-            "fill": "green",
+            "fill": "#3f9c35",
             "height": 16,
             "width": "13",
             "x": 9.6,
@@ -529,7 +529,7 @@ ShallowWrapper {
           "props": Object {
             "children": Array [
               <text
-                fill="#010101"
+                fill="#030303"
                 fillOpacity=".3"
                 x={4.8}
                 y={12}
@@ -543,7 +543,7 @@ ShallowWrapper {
                 my_key
               </text>,
               <text
-                fill="#010101"
+                fill="#030303"
                 fillOpacity=".3"
                 x={14.399999999999999}
                 y={12}
@@ -569,7 +569,7 @@ ShallowWrapper {
               "nodeType": "host",
               "props": Object {
                 "children": "my_key",
-                "fill": "#010101",
+                "fill": "#030303",
                 "fillOpacity": ".3",
                 "x": 4.8,
                 "y": 12,
@@ -597,7 +597,7 @@ ShallowWrapper {
               "nodeType": "host",
               "props": Object {
                 "children": "my_value",
-                "fill": "#010101",
+                "fill": "#030303",
                 "fillOpacity": ".3",
                 "x": 14.399999999999999,
                 "y": 12,

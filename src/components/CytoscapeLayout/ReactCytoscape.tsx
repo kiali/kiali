@@ -5,6 +5,7 @@ import dagre from 'cytoscape-dagre';
 import coseBilkent from 'cytoscape-cose-bilkent';
 import klay from 'cytoscape-klay';
 import popper from 'cytoscape-popper';
+import { PfColors } from '../../components/Pf/PfColors';
 
 cytoscape.use(cycola);
 cytoscape.use(dagre);
@@ -50,7 +51,7 @@ class ReactCytoscape extends Component<any, any> {
           'padding-right': '10px',
           'text-valign': 'top',
           'text-halign': 'center',
-          'background-color': '#bbb'
+          'background-color': PfColors.Black400
         }
       },
       {
@@ -62,10 +63,10 @@ class ReactCytoscape extends Component<any, any> {
       {
         selector: ':selected',
         css: {
-          'background-color': 'black',
-          'line-color': 'black',
-          'target-arrow-color': 'black',
-          'source-arrow-color': 'black'
+          'background-color': PfColors.Black,
+          'line-color': PfColors.Black,
+          'target-arrow-color': PfColors.Black,
+          'source-arrow-color': PfColors.Black
         }
       }
     ];

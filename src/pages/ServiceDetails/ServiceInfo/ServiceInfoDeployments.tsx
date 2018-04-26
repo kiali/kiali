@@ -4,6 +4,7 @@ import LocalTime from '../../../components/Time/LocalTime';
 import Badge from '../../../components/Badge/Badge';
 import { Deployment } from '../../../types/ServiceInfo';
 import { ratioCheck, Status } from '../../../components/ServiceHealth/HealthHelper';
+import { PfColors } from '../../../components/Pf/PfColors';
 
 interface ServiceInfoDeploymentsProps {
   deployments?: Deployment[];
@@ -30,7 +31,7 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
                       key={'deployment_' + i}
                       scale={0.8}
                       style="plastic"
-                      color="green"
+                      color={PfColors.Green}
                       leftText={key}
                       rightText={deployment.labels ? deployment.labels[key] : ''}
                     />

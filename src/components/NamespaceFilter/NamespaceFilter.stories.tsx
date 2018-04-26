@@ -7,6 +7,7 @@ import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 
 import NamespaceFilter from './NamespaceFilter';
+import { PfColors } from '../../components/Pf/PfColors';
 
 const stories = storiesOf('NamespaceFilter', module);
 
@@ -46,9 +47,9 @@ stories.add('Custom select filter', () => {
           placeholder: 'Select a custom filter',
           filterType: 'select',
           filterValues: [
-            { id: 'red', title: 'Red custom filter' },
-            { id: 'green', title: 'Green custom filter' },
-            { id: 'blue', title: 'Blue custom filter' }
+            { id: PfColors.Red, title: 'Red custom filter' },
+            { id: PfColors.Green, title: 'Green custom filter' },
+            { id: PfColors.Blue, title: 'Blue custom filter' }
           ]
         }
       ]}

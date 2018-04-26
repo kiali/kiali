@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { PfColors } from '../../components/Pf/PfColors';
 
 interface BadgeProps {
   scale: number;
@@ -64,18 +65,18 @@ class Badge extends React.Component<BadgeProps, BadgeState> {
         style={{ marginLeft: '5px' }}
       >
         <linearGradient id="a" x2="0" y2={this.props.style === 'plastic' ? '100%' : '0'}>
-          <stop stopOpacity=".1" stopColor="#bbb" offset="0" />
+          <stop stopOpacity=".1" stopColor={PfColors.Black400} offset="0" />
           <stop stopOpacity=".1" offset="1" />
         </linearGradient>
-        <rect rx={borderRadius} fill="#555" width={fullWidth} height={height} />
+        <rect rx={borderRadius} fill={PfColors.Gray} width={fullWidth} height={height} />
         <rect rx={borderRadius} fill={this.props.color} width={rightWidth} x={rightOffset} height={height} />
         <rect fill={this.props.color} x={rightOffset} width="13" height={height} />
         <rect rx={borderRadius} fill="url(#a)" width={fullWidth} height={height} />
-        <g fontSize={textSize} fontFamily="DejaVu Sans,Verdana,Geneva,sans-serif" fill="#fff">
+        <g fontSize={textSize} fontFamily="DejaVu Sans,Verdana,Geneva,sans-serif" fill={PfColors.White}>
           <text
             ref={ref => (this.textLeftText = ref)}
             x={textMargin}
-            fill="#010101"
+            fill={PfColors.Black1000}
             fillOpacity=".3"
             y={height - majorMargin}
           >
@@ -86,7 +87,7 @@ class Badge extends React.Component<BadgeProps, BadgeState> {
           </text>
           <text
             ref={ref => (this.textRightText = ref)}
-            fill="#010101"
+            fill={PfColors.Black1000}
             x={rightOffset + textMargin}
             fillOpacity=".3"
             y={height - majorMargin}

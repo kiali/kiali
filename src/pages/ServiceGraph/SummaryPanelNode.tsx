@@ -8,6 +8,7 @@ import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import MetricsOptions from '../../types/MetricsOptions';
+import { PfColors } from '../../components/Pf/PfColors';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -119,19 +120,13 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         <div className="panel-heading">
           Service: {isUnknown ? 'unknown' : serviceHotLink}
           <div style={{ paddingTop: '3px' }}>
-            <Badge
-              scale={0.9}
-              style="plastic"
-              leftText="namespace"
-              rightText={namespace}
-              color="#2d7623" // pf-green-500
-            />
+            <Badge scale={0.9} style="plastic" leftText="namespace" rightText={namespace} color={PfColors.Green500} />
             <Badge
               scale={0.9}
               style="plastic"
               leftText="version"
               rightText={this.props.data.summaryTarget.data('version')}
-              color="#2d7623" // pf-green-500
+              color={PfColors.Green500}
             />
           </div>
         </div>
