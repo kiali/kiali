@@ -7,6 +7,7 @@ const rules: RouteRule[] = [
   {
     name: 'reviews-default',
     created_at: '2018-03-14T10:17:52Z',
+    resource_version: '1234',
     destination: {
       name: 'reviews'
     },
@@ -21,6 +22,7 @@ const rules: RouteRule[] = [
   {
     name: 'reviews-test-v2',
     created_at: '2018-03-14T10:17:52Z',
+    resource_version: '1234',
     destination: {
       name: 'reviews'
     },

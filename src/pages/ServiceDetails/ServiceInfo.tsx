@@ -5,16 +5,38 @@ import ServiceInfoDeployments from './ServiceInfo/ServiceInfoDeployments';
 import ServiceInfoRouteRules from './ServiceInfo/ServiceInfoRouteRules';
 import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
 import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
-import { Endpoints, Deployment, Port, RouteRule, DestinationPolicy, hasIstioSidecar } from '../../types/ServiceInfo';
+import {
+  Endpoints,
+  Deployment,
+  Port,
+  RouteRule,
+  DestinationPolicy,
+  hasIstioSidecar,
+  VirtualService,
+  DestinationRule
+} from '../../types/ServiceInfo';
 import { Health } from '../../types/Health';
 import * as API from '../../services/Api';
-import { ToastNotification, ToastNotificationList, Col, Row } from 'patternfly-react';
+import {
+  ToastNotification,
+  ToastNotificationList,
+  Col,
+  Row,
+  TabContainer,
+  TabContent,
+  TabPane,
+  Nav,
+  NavItem
+} from 'patternfly-react';
+import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
+import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 
 type ServiceInfoState = {
   labels?: Map<string, string>;
   type: string;
   name: string;
   created_at: string;
+  resource_version: string;
   ip: string;
   ports?: Port[];
   endpoints?: Endpoints[];
@@ -22,6 +44,8 @@ type ServiceInfoState = {
   deployments?: Deployment[];
   routeRules?: RouteRule[];
   destinationPolicies?: DestinationPolicy[];
+  virtualServices?: VirtualService[];
+  destinationRules?: DestinationRule[];
   dependencies?: Map<string, string[]>;
   health?: Health;
   error: boolean;
@@ -35,6 +59,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
       labels: new Map(),
       name: '',
       created_at: '',
+      resource_version: '',
       type: '',
       ip: '',
       ports: [],
@@ -59,6 +84,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
           labels: data.labels,
           name: data.name,
           created_at: data.created_at,
+          resource_version: data.resource_version,
           type: data.type,
           ports: data.ports,
           endpoints: data.endpoints,
@@ -67,6 +93,8 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
           dependencies: data.dependencies,
           routeRules: this.sortRouteRulesByPrecedence(data.route_rules),
           destinationPolicies: data.destination_policies,
+          virtualServices: data.virtual_services,
+          destinationRules: data.destination_rules,
           ip: data.ip,
           health: data.health
         });
@@ -105,11 +133,8 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
     let dependencies = this.state.dependencies || new Map();
     let routeRules = this.state.routeRules || [];
     let destinationPolicies = this.state.destinationPolicies || [];
-    let cWidth = this.calculateColumns([
-      deployments.length > 0,
-      dependencies.size > 0,
-      routeRules.length > 0 || destinationPolicies.length > 0
-    ]);
+    let virtualServices = this.state.virtualServices || [];
+    let destinationRules = this.state.destinationRules || [];
     return (
       <div>
         {this.state.error ? (
@@ -128,6 +153,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
               <ServiceInfoDescription
                 name={this.state.name}
                 created_at={this.state.created_at}
+                resource_version={this.state.resource_version}
                 istio_sidecar={this.state.istio_sidecar}
                 labels={this.state.labels}
                 ports={this.state.ports}
@@ -139,26 +165,52 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
             </Col>
           </Row>
           <Row className="row-cards-pf">
-            {(deployments.length > 0 || this.state.istio_sidecar) && (
-              <Col xs={12} sm={12} md={cWidth} lg={cWidth}>
-                <ServiceInfoDeployments deployments={deployments} />
-              </Col>
-            )}
-            {(dependencies.size > 0 || this.state.istio_sidecar) && (
-              <Col xs={12} sm={6} md={cWidth} lg={cWidth}>
-                <ServiceInfoRoutes dependencies={dependencies} />
-              </Col>
-            )}
-            {(routeRules.length > 0 || destinationPolicies.length > 0 || this.state.istio_sidecar) && (
-              <Col xs={12} sm={6} md={cWidth} lg={cWidth}>
-                {(routeRules.length > 0 || this.state.istio_sidecar) && (
-                  <ServiceInfoRouteRules routeRules={routeRules} />
-                )}
-                {(destinationPolicies.length > 0 || this.state.istio_sidecar) && (
-                  <ServiceInfoDestinationPolicies destinationPolicies={destinationPolicies} />
-                )}
-              </Col>
-            )}
+            <Col xs={12} sm={12} md={12} lg={12}>
+              <TabContainer id="service-tabs" defaultActiveKey={1}>
+                <div>
+                  <Nav bsClass="nav nav-tabs nav-tabs-pf">
+                    <NavItem eventKey={1}>{'Deployments (' + deployments.length + ')'}</NavItem>
+                    <NavItem eventKey={2}>{'Source Services (' + Object.keys(dependencies).length + ')'}</NavItem>
+                    <NavItem eventKey={3}>{'Route Rules (' + routeRules.length + ')'}</NavItem>
+                    <NavItem eventKey={4}>{'Destination Policies (' + destinationPolicies.length + ')'}</NavItem>
+                    <NavItem eventKey={5}>{'Virtual Services (' + virtualServices.length + ')'}</NavItem>
+                    <NavItem eventKey={6}>{'Destination Rules (' + destinationRules.length + ')'}</NavItem>
+                  </Nav>
+                  <TabContent>
+                    <TabPane eventKey={1}>
+                      {(deployments.length > 0 || this.state.istio_sidecar) && (
+                        <ServiceInfoDeployments deployments={deployments} />
+                      )}
+                    </TabPane>
+                    <TabPane eventKey={2}>
+                      {(dependencies.size > 0 || this.state.istio_sidecar) && (
+                        <ServiceInfoRoutes dependencies={dependencies} />
+                      )}
+                    </TabPane>
+                    <TabPane eventKey={3}>
+                      {(routeRules.length > 0 || this.state.istio_sidecar) && (
+                        <ServiceInfoRouteRules routeRules={routeRules} />
+                      )}
+                    </TabPane>
+                    <TabPane eventKey={4}>
+                      {(destinationPolicies.length > 0 || this.state.istio_sidecar) && (
+                        <ServiceInfoDestinationPolicies destinationPolicies={destinationPolicies} />
+                      )}
+                    </TabPane>
+                    <TabPane eventKey={5}>
+                      {(virtualServices.length > 0 || this.state.istio_sidecar) && (
+                        <ServiceInfoVirtualServices virtualServices={virtualServices} />
+                      )}
+                    </TabPane>
+                    <TabPane eventKey={6}>
+                      {(destinationRules.length > 0 || this.state.istio_sidecar) && (
+                        <ServiceInfoDestinationRules destinationRules={destinationRules} />
+                      )}
+                    </TabPane>
+                  </TabContent>
+                </div>
+              </TabContainer>
+            </Col>
           </Row>
         </div>
       </div>

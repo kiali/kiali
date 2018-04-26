@@ -3,7 +3,6 @@ import { Col, Row, Icon } from 'patternfly-react';
 import LocalTime from '../../../components/Time/LocalTime';
 import Badge from '../../../components/Badge/Badge';
 import { Deployment } from '../../../types/ServiceInfo';
-import PfInfoCard from '../../../components/Pf/PfInfoCard';
 import { ratioCheck, Status } from '../../../components/ServiceHealth/HealthHelper';
 
 interface ServiceInfoDeploymentsProps {
@@ -17,14 +16,11 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
 
   render() {
     return (
-      <PfInfoCard
-        iconType="fa"
-        iconName="cube"
-        title="Deployments"
-        items={(this.props.deployments || []).map((deployment, u) => (
-          <Row key={'deployments_' + u}>
-            <Col xs={12}>
-              <div>
+      <div className="card-pf">
+        <Row className="row-cards-pf">
+          <Col xs={12} sm={12} md={12} lg={12}>
+            {(this.props.deployments || []).map((deployment, u) => (
+              <div className="card-pf-body" key={'deployments_' + u}>
                 <p>
                   <strong>{deployment.name}</strong>
                 </p>
@@ -52,16 +48,24 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
                     }% CPU)
                   </div>
                 )}
-                <p>
-                  <strong>Created at: </strong>
-                  <LocalTime time={deployment.created_at} />
-                </p>
+                <div>
+                  <span>
+                    <strong>Created at: </strong>
+                    <LocalTime time={deployment.created_at} />
+                  </span>
+                </div>
+                <div>
+                  <span>
+                    <strong>Resource Version: </strong>
+                    {deployment.resource_version}
+                  </span>
+                </div>
+                <hr />
               </div>
-              <hr />
-            </Col>
-          </Row>
-        ))}
-      />
+            ))}
+          </Col>
+        </Row>
+      </div>
     );
   }
 
