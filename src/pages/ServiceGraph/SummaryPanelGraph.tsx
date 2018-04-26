@@ -21,9 +21,10 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   static readonly panelStyle = {
     position: 'absolute' as 'absolute',
     width: '25em',
-    bottom: 0,
     top: 0,
-    right: 0
+    right: 0,
+    bottom: 0,
+    overflowY: 'auto' as 'auto'
   };
 
   // avoid state changes after component is unmounted

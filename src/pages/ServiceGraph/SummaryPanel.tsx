@@ -12,7 +12,7 @@ type SummaryPanelState = {
 export default class SummaryPanel extends React.Component<SummaryPanelPropType, SummaryPanelState> {
   render() {
     return (
-      <div>
+      <>
         {this.props.data.summaryType === 'edge' ? (
           <SummaryPanelEdge
             data={this.props.data}
@@ -53,7 +53,7 @@ export default class SummaryPanel extends React.Component<SummaryPanelPropType, 
             rateInterval={this.props.rateInterval}
           />
         ) : null}
-      </div>
+      </>
     );
   }
 }
