@@ -40,19 +40,18 @@ class Navigation extends React.Component<PropsType, StateType> {
     router: PropTypes.object
   };
 
-  constructor(props: any) {
-    super(props);
-    this.navigateTo = this.navigateTo.bind(this);
+  static getDerivedStateFromProps(nextProps: PropsType, prevState: StateType): Partial<StateType> | null {
+    const selected = Navigation.parsePath(nextProps.location.pathname);
+    if (selected === prevState.selectedItem) {
+      return null;
+    }
 
-    // handle initial path from the browser
-    const selected = this.parseInitialPath(props.location.pathname);
-    this.state = {
-      selectedItem: `/${selected}/`,
-      navCollapsed: false
+    return {
+      selectedItem: `/${selected}/`
     };
   }
 
-  parseInitialPath = (pathname: string) => {
+  private static parsePath = (pathname: string) => {
     let selected = '';
     if (pathname.startsWith('/namespaces') || pathname.startsWith('/services')) {
       selected = servicesTitle;
@@ -68,6 +67,17 @@ class Navigation extends React.Component<PropsType, StateType> {
     return selected;
   };
 
+  constructor(props: any) {
+    super(props);
+
+    // handle initial path from the browser
+    const selected = Navigation.parsePath(props.location.pathname);
+    this.state = {
+      selectedItem: `/${selected}/`,
+      navCollapsed: false
+    };
+  }
+
   setControlledState = event => {
     if (event.activePath) {
       // keep track of path as user clicks on nav bar
@@ -76,18 +86,6 @@ class Navigation extends React.Component<PropsType, StateType> {
       this.setState({ navCollapsed: event.navCollapsed });
     }
   };
-
-  navigateTo(e: any) {
-    if (e.title === servicesTitle) {
-      this.context.router.history.push(servicesPath);
-    } else if (e.title === istioRulesTitle) {
-      this.context.router.history.push(istioRulesPath);
-    } else if (e.title === servicesJaeger) {
-      this.context.router.history.push(servicesJaegerPath);
-    } else {
-      this.context.router.history.push(serviceGraphPath);
-    }
-  }
 
   render() {
     return (
@@ -126,6 +124,18 @@ class Navigation extends React.Component<PropsType, StateType> {
       </>
     );
   }
+
+  private navigateTo = (e: any) => {
+    if (e.title === servicesTitle) {
+      this.context.router.history.push(servicesPath);
+    } else if (e.title === istioRulesTitle) {
+      this.context.router.history.push(istioRulesPath);
+    } else if (e.title === servicesJaeger) {
+      this.context.router.history.push(servicesJaegerPath);
+    } else {
+      this.context.router.history.push(serviceGraphPath);
+    }
+  };
 }
 
 export default Navigation;
