@@ -8,6 +8,8 @@ import { NotificationMessage, NotificationGroup, MessageCenterPropsType } from '
 type StateType = {};
 
 export default class MessageCenter extends React.Component<MessageCenterPropsType, StateType> {
+  // Get messages that are meant to be show as notifications (Toast), appending
+  // the groupId to allow to recognize the group they belong. (see onDismissNotification)
   getNotificationMessages = (groups: NotificationGroup[]) => {
     return groups.reduce((messages: NotificationMessage[], group) => {
       return messages.concat(
