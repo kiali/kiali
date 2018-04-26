@@ -15,14 +15,14 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
   constructor(props: NamespaceListType) {
     super(props);
   }
+
   componentDidMount() {
     this.props.refresh();
   }
 
-  onSelectTypesafe = (value: string) => {
-    this.props.refresh();
-    this.props.onSelect({ name: value });
-  };
+  onSelectTypesafe = (value: string) => this.props.onSelect({ name: value });
+
+  onToggle = (isOpen: boolean) => (isOpen ? this.props.refresh() : undefined);
 
   render() {
     const disabled = this.props.disabled ? true : false;
@@ -32,6 +32,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
         id="namespace-selector"
         title={this.props.activeNamespace.name}
         onSelect={this.onSelectTypesafe}
+        onToggle={this.onToggle}
       >
         {this.props.items &&
           this.props.items.map(ns => (
