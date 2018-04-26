@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { ListView, ListViewItem, ListViewIcon, Sort } from 'patternfly-react';
-import { Link } from 'react-router-dom';
 import { NamespaceFilter, NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { Paginator } from 'patternfly-react';
 import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
@@ -9,7 +8,7 @@ import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
 import { RuleItem, RuleList } from '../../types/IstioRuleListComponent';
 import PropTypes from 'prop-types';
-import { PfColors } from '../../components/Pf/PfColors';
+import IstioRuleListDescription from './IstioRuleListDescription';
 
 type SortField = {
   id: string;
@@ -228,38 +227,18 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
 
     for (let i = pageStart; i < pageEnd; i++) {
       let ruleItem = this.state.rules[i];
-      let to = '/namespaces/' + ruleItem.namespace + '/rules/' + ruleItem.name;
-      let ruleActions: any = [];
-      for (let j = 0; j < ruleItem.actions.length; j++) {
-        let ruleAction = ruleItem.actions[j];
-        ruleActions.push(
-          <div key={'rule' + j}>
-            <div>
-              <strong>Handler</strong>
-              {': '}
-              {ruleAction.handler}
-            </div>
-            <div>
-              <strong>Instances</strong>
-              {': '}
-              {ruleAction.instances.join(', ')}
-            </div>
-          </div>
-        );
-      }
       ruleList.push(
-        <Link key={to} to={to} style={{ color: PfColors.Black }}>
-          <ListViewItem
-            leftContent={<ListViewIcon type="pf" name="migration" />}
-            heading={
-              <span>
-                {ruleItem.name}
-                <small>{ruleItem.namespace}</small>
-              </span>
-            }
-            description={<div>{ruleActions}</div>}
-          />
-        </Link>
+        <ListViewItem
+          key={ruleItem.name + '_' + ruleItem.namespace}
+          leftContent={<ListViewIcon type="pf" name="migration" />}
+          heading={
+            <span>
+              {ruleItem.name}
+              <small>{ruleItem.namespace}</small>
+            </span>
+          }
+          description={<IstioRuleListDescription ruleItem={ruleItem} />}
+        />
       );
     }
 

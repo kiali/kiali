@@ -16,6 +16,7 @@
     "patternfly": "3.45.0",
     "patternfly-react": "1.18.1",
     "react": "16.3.2",
+    "react-ace": "^6.1.0",
     "react-bootstrap": "0.32.1",
     "react-dom": "16.3.2",
     "react-iframe": "1.1.0",
@@ -25,7 +26,8 @@
     "ssri": "6.0.0",
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.2.0",
-    "url-search-params": "0.10.0"
+    "url-search-params": "0.10.0",
+    "js-yaml": "^3.11.0"
   },
   "scripts": {
     "copy-fonts": "cp -r node_modules/patternfly/dist/fonts src/",

@@ -1,21 +1,41 @@
 import * as React from 'react';
 import RuleId from '../../types/RuleId';
 import { ToastNotification, ToastNotificationList, Col, Row } from 'patternfly-react';
-import IstioRuleInfoDescription from './IstioRuleInfo/IstioRuleInfoDescription';
 import * as API from '../../services/Api';
 import { RuleAction } from '../../types/IstioRuleInfo';
-import IstioRuleInfoAction from './IstioRuleInfo/IstioRuleInfoAction';
+import IstioRuleDetailsDescription from './IstioRuleDestailsDescription';
+import AceEditor, { AceOptions } from 'react-ace';
+import 'brace/mode/yaml';
+import 'brace/theme/eclipse';
+import './IstioRuleInfo.css';
 
-type RuleInfoState = {
+const yaml = require('js-yaml');
+
+interface RuleInfoState {
   name: string;
   match: string;
   actions: RuleAction[];
   error: boolean;
   errorMessage: string;
+}
+
+interface RuleDetailsId extends RuleId {
+  search?: string;
+}
+
+interface ParsedSearch {
+  type?: string;
+  name?: string;
+}
+
+const aceOptions: AceOptions = {
+  readOnly: true,
+  showPrintMargin: false,
+  autoScrollEditorIntoView: true
 };
 
-class IstioRuleInfo extends React.Component<RuleId, RuleInfoState> {
-  constructor(props: RuleId) {
+class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
+  constructor(props: RuleDetailsId) {
     super(props);
     this.state = {
       name: '',
@@ -52,16 +72,50 @@ class IstioRuleInfo extends React.Component<RuleId, RuleInfoState> {
       });
   }
 
-  render() {
-    let actionList: any = [];
-    for (let i = 0; i < this.state.actions.length; i++) {
-      actionList.push(
-        <Col key={'ruleAction' + i}>
-          <IstioRuleInfoAction action={this.state.actions[i]} />
-        </Col>
-      );
+  // Helper method to extract search urls with format
+  // ?handler=name or ?instance=name
+  // Those url are expected to be received on this page.
+  parseSearch(): ParsedSearch {
+    if (this.props.search) {
+      let firstParams = this.props.search
+        .split('&')[0]
+        .replace('?', '')
+        .split('=');
+      return {
+        type: firstParams[0],
+        name: firstParams[1]
+      };
     }
+    return {};
+  }
 
+  editorContent(parsedSearch: ParsedSearch) {
+    if (parsedSearch && parsedSearch.type && parsedSearch.name) {
+      if (parsedSearch.type === 'handler') {
+        let handler = parsedSearch.name.split('.');
+        for (let i = 0; i < this.state.actions.length; i++) {
+          let action = this.state.actions[i];
+          if (action.handler.name === handler[0] && action.handler.adapter === handler[1]) {
+            return yaml.safeDump(action.handler.spec);
+          }
+        }
+      } else if (parsedSearch.type === 'instance') {
+        let instance = parsedSearch.name.split('.');
+        for (let i = 0; i < this.state.actions.length; i++) {
+          for (let j = 0; j < this.state.actions[i].instances.length; j++) {
+            let actionInstance = this.state.actions[i].instances[j];
+            if (actionInstance.name === instance[0] && actionInstance.template === instance[1]) {
+              return yaml.safeDump(actionInstance.spec);
+            }
+          }
+        }
+      }
+    }
+    return '';
+  }
+
+  render() {
+    let parsedSearch = this.parseSearch();
     return (
       <div>
         {this.state.error ? (
@@ -74,12 +128,27 @@ class IstioRuleInfo extends React.Component<RuleId, RuleInfoState> {
             </ToastNotification>
           </ToastNotificationList>
         ) : null}
+        <IstioRuleDetailsDescription
+          namespace={this.props.namespace}
+          name={this.state.name}
+          match={this.state.match}
+          actions={this.state.actions}
+        />
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">
             <Col>
-              <IstioRuleInfoDescription name={this.state.name} match={this.state.match} />
+              <h1>{parsedSearch.type + ': ' + parsedSearch.name}</h1>
+              <AceEditor
+                mode="yaml"
+                theme="eclipse"
+                readOnly={true}
+                width={'100%'}
+                height={'50vh'}
+                className={'istio-ace-editor'}
+                setOptions={aceOptions}
+                value={this.editorContent(parsedSearch)}
+              />
             </Col>
-            {actionList}
           </Row>
         </div>
       </div>
