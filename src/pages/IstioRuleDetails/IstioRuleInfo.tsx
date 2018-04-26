@@ -72,6 +72,9 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
       });
   }
 
+  // Helper method to extract search urls with format
+  // ?handler=name or ?instance=name
+  // Those url are expected to be received on this page.
   parseSearch(): ParsedSearch {
     if (this.props.search) {
       let firstParams = this.props.search
@@ -141,7 +144,7 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
                 readOnly={true}
                 width={'100%'}
                 height={'50vh'}
-                className={'IstioAceEditor'}
+                className={'istio-ace-editor'}
                 setOptions={aceOptions}
                 value={this.editorContent(parsedSearch)}
               />
