@@ -56,7 +56,17 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
   };
 
   handleToggleCBs = (event: any) => {
-    this.props.onBadgeStatusChange({ hideCBs: !this.props.badgeStatus.hideCBs });
+    this.props.onBadgeStatusChange({
+      hideCBs: !this.props.badgeStatus.hideCBs,
+      hideRRs: this.props.badgeStatus.hideRRs
+    });
+  };
+
+  handleToggleRRs = (event: any) => {
+    this.props.onBadgeStatusChange({
+      hideCBs: this.props.badgeStatus.hideCBs,
+      hideRRs: !this.props.badgeStatus.hideRRs
+    });
   };
 
   render() {
@@ -101,12 +111,20 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
           </Toolbar.RightContent>
         </Toolbar>
         <div style={{ paddingTop: '10px' }}>
-          <ButtonGroup>
+          <ButtonGroup style={{ paddingRight: '5px' }}>
             <Switch
               labelText="Circuit Breakers"
               disabled={this.props.disabled}
               value={!this.props.badgeStatus.hideCBs}
               onChange={this.handleToggleCBs}
+            />
+          </ButtonGroup>
+          <ButtonGroup>
+            <Switch
+              labelText="Route Rules"
+              disabled={this.props.disabled}
+              value={!this.props.badgeStatus.hideRRs}
+              onChange={this.handleToggleRRs}
             />
           </ButtonGroup>
         </div>

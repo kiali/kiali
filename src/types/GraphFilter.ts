@@ -22,4 +22,5 @@ export interface Duration {
 
 export interface BadgeStatus {
   hideCBs: boolean;
+  hideRRs: boolean;
 }

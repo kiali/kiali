@@ -2,7 +2,7 @@ import Element from 'cytoscape';
 import { PfColors } from '../../../components/Pf/PfColors';
 
 const FLASH_BADGE: string = 'glyphicon glyphicon-flash';
-const MAIL_BADGE: string = 'glyphicon glyphicon-envelope';
+const ROUTE_BADGE: string = 'glyphicon glyphicon-arrow-right';
 
 class GraphBadge {
   node: Element;
@@ -87,12 +87,12 @@ class GraphBadge {
 
 export class CircuitBreakerBadge extends GraphBadge {
   constructor(node: Element) {
-    super(node, FLASH_BADGE, PfColors.Purple300, 'top');
+    super(node, FLASH_BADGE, PfColors.Purple300, 'top-start');
   }
 }
 
-export class MessageBadge extends GraphBadge {
+export class RouteRuleBadge extends GraphBadge {
   constructor(node: Element) {
-    super(node, MAIL_BADGE, PfColors.LightBlue400, 'bottom');
+    super(node, ROUTE_BADGE, PfColors.Purple300, 'top');
   }
 }

@@ -86,21 +86,18 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
 
     // when the graph is fully populated and ready, we need to add appropriate badges to the nodes
     this.cy.ready((evt: any) => {
-      if (this.props.badgeStatus.hideCBs) {
+      if (this.props.badgeStatus.hideCBs && this.props.badgeStatus.hideRRs) {
         return;
       }
 
-      evt.cy
-        .nodes()
-        .filter((ele: any) => {
-          if (ele.isParent()) {
-            return false; // we never need the group box elements, filter them out
-          }
-          return ele.data('isCircuitBreaker') === 'true';
-        })
-        .forEach(ele => {
+      evt.cy.nodes().forEach(ele => {
+        if (!this.props.badgeStatus.hideCBs && ele.data('hasCB') === 'true') {
           new GraphBadge.CircuitBreakerBadge(ele).buildBadge();
-        });
+        }
+        if (!this.props.badgeStatus.hideRRs && ele.data('hasRR') === 'true') {
+          new GraphBadge.RouteRuleBadge(ele).buildBadge();
+        }
+      });
     });
 
     this.cy.on('mouseover', 'node,edge', (evt: any) => {

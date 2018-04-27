@@ -15,6 +15,7 @@ type ServiceGraphURLProps = {
   namespace: string;
   layout: string;
   hideCBs: string;
+  hideRRs: string;
 };
 
 // TODO put duration, step defaults and Prometheus translation in a single place
@@ -48,10 +49,11 @@ export class ServiceGraphRouteHandler extends React.Component<
     // TODO: [KIALI-357] validate `duration`
     const _duration = urlParams.get('duration');
     const _hideCBs = urlParams.get('hideCBs') ? urlParams.get('hideCBs') === 'true' : false;
+    const _hideRRs = urlParams.get('hideRRs') ? urlParams.get('hideRRs') === 'true' : false;
     return {
       graphDuration: _duration ? { value: _duration } : { value: DEFAULT_DURATION },
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
-      badgeStatus: { hideCBs: _hideCBs }
+      badgeStatus: { hideCBs: _hideCBs, hideRRs: _hideRRs }
     };
   };
 
@@ -69,7 +71,9 @@ export class ServiceGraphRouteHandler extends React.Component<
     const layoutHasChanged = nextLayout.name !== this.state.graphLayout.name;
     const namespaceHasChanged = nextNamespace.name !== this.state.namespace.name;
     const durationHasChanged = nextDuration.value !== this.state.graphDuration.value;
-    const badgeStatusHasChanged = nextBadgeStatus.hideCBs !== this.state.badgeStatus.hideCBs;
+    const badgeCBsChanged = nextBadgeStatus.hideCBs !== this.state.badgeStatus.hideCBs;
+    const badgeRRsHasChanged = nextBadgeStatus.hideRRs !== this.state.badgeStatus.hideRRs;
+    const badgeStatusHasChanged = badgeCBsChanged || badgeRRsHasChanged;
 
     if (layoutHasChanged || namespaceHasChanged || durationHasChanged || badgeStatusHasChanged) {
       const newParams: GraphParamsType = {
@@ -86,7 +90,7 @@ export class ServiceGraphRouteHandler extends React.Component<
   makeURLFromParams = (params: GraphParamsType) =>
     `/service-graph/${params.namespace.name}?layout=${params.graphLayout.name}&duration=${
       params.graphDuration.value
-    }&hideCBs=${params.badgeStatus.hideCBs}`;
+    }&hideCBs=${params.badgeStatus.hideCBs}&hideRRs=${params.badgeStatus.hideRRs}`;
 
   /** Change browser address bar and trigger new props propagation */
   onParamsChange = (params: GraphParamsType) => {
