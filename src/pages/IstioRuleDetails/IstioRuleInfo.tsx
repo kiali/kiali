@@ -86,6 +86,15 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
         name: firstParams[1]
       };
     }
+    if (this.state.actions.length > 0) {
+      let defaultAction = this.state.actions[0];
+      if (defaultAction.handler) {
+        return {
+          type: 'handler',
+          name: defaultAction.handler.name + '.' + defaultAction.handler.adapter
+        };
+      }
+    }
     return {};
   }
 
