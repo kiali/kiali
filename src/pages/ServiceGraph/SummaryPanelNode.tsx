@@ -9,6 +9,7 @@ import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import MetricsOptions from '../../types/MetricsOptions';
 import { PfColors } from '../../components/Pf/PfColors';
+import { Icon } from 'patternfly-react';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -129,6 +130,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               color={PfColors.Green500}
             />
           </div>
+          {this.renderBadgeSummary(node.data('hasCB'), node.data('hasRR'))}
         </div>
         <div className="panel-body">
           <InOutRateTable
@@ -148,7 +150,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     );
   }
 
-  renderRpsCharts = () => {
+  private renderRpsCharts = () => {
     if (this.state.loading) {
       return <strong>loading charts...</strong>;
     }
@@ -164,6 +166,27 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           dataRps={this.state.requestCountOut}
           dataErrors={this.state.errorCountOut}
         />
+      </>
+    );
+  };
+
+  private renderBadgeSummary = (hasCB: string, hasRR: string) => {
+    const displayCB = hasCB === 'true';
+    const displayRR = hasRR === 'true';
+    return (
+      <>
+        {displayCB && (
+          <div>
+            <Icon name="bolt" type="fa" style={{ width: '10px' }} />
+            Has Circuit Breaker
+          </div>
+        )}
+        {displayRR && (
+          <div>
+            <Icon name="code-fork" type="fa" style={{ width: '10px' }} />
+            Has Route Rule
+          </div>
+        )}
       </>
     );
   };

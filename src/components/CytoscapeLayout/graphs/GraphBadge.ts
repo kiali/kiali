@@ -1,8 +1,8 @@
 import Element from 'cytoscape';
 import { PfColors } from '../../../components/Pf/PfColors';
 
-const FLASH_BADGE: string = 'glyphicon glyphicon-flash';
-const ROUTE_BADGE: string = 'glyphicon glyphicon-arrow-right';
+const FLASH_BADGE: string = 'fa fa-bolt';
+const ROUTE_BADGE: string = 'fa fa-code-fork';
 
 class GraphBadge {
   node: Element;
