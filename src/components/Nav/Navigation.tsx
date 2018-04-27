@@ -26,6 +26,9 @@ export const servicesJaeger = 'Distributed Tracing';
 const pfLogo = require('../../img/logo-alt.svg');
 const pfBrand = require('../../assets/img/kiali-title.svg');
 
+const servicesRx = /\/namespaces\/(.*)\/services\/(.*)/g;
+const istioRulesRx = /\/namespaces\/(.*)\/rules\/(.*)/g;
+
 type PropsType = {
   location: any;
 };
@@ -53,7 +56,7 @@ class Navigation extends React.Component<PropsType, StateType> {
 
   private static parsePath = (pathname: string) => {
     let selected = '';
-    if (pathname.startsWith('/namespaces') || pathname.startsWith('/services')) {
+    if (pathname.startsWith('/services')) {
       selected = servicesTitle;
     } else if (pathname.startsWith('/service-graph')) {
       selected = serviceGraphTitle;
@@ -61,6 +64,13 @@ class Navigation extends React.Component<PropsType, StateType> {
       selected = istioRulesTitle;
     } else if (pathname.startsWith('/jaeger')) {
       selected = servicesJaeger;
+    } else if (pathname.startsWith('/namespaces')) {
+      // Use Regexp only if we have /namespaces
+      if (pathname.search(servicesRx) > -1) {
+        selected = servicesTitle;
+      } else if (pathname.search(istioRulesRx) > -1) {
+        selected = istioRulesTitle;
+      }
     } else {
       selected = serviceGraphTitle;
     }
