@@ -12,6 +12,7 @@
     "cytoscape-dagre": "2.2.1",
     "cytoscape-klay": "3.1.1",
     "cytoscape-popper": "1.0.1",
+    "js-yaml": "3.11.0",
     "lodash": "4.17.5",
     "patternfly": "3.45.0",
     "patternfly-react": "1.18.1",
@@ -20,14 +21,13 @@
     "react-bootstrap": "0.32.1",
     "react-dom": "16.3.2",
     "react-iframe": "1.1.0",
-    "react-redux": "^5.0.7",
+    "react-redux": "5.0.7",
     "react-router-dom": "4.2.2",
     "react-scripts-ts": "2.15.1",
     "ssri": "6.0.0",
-    "redux-logger": "^3.0.6",
-    "redux-thunk": "^2.2.0",
-    "url-search-params": "0.10.0",
-    "js-yaml": "^3.11.0"
+    "redux-logger": "3.0.6",
+    "redux-thunk": "2.2.0",
+    "url-search-params": "0.10.0"
   },
   "scripts": {
     "copy-fonts": "cp -r node_modules/patternfly/dist/fonts src/",
