@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Toolbar, Button, ButtonGroup, Switch, Icon } from 'patternfly-react';
+import { Toolbar, Button, ButtonGroup, Switch, Icon, FormGroup } from 'patternfly-react';
 
 import { GraphFilterProps, GraphFilterState } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
@@ -73,13 +73,14 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
     return (
       <>
         <Toolbar>
-          <div className="form-group">
+          <FormGroup style={{ paddingLeft: 0 }}>
+            <label style={{ paddingRight: '0.5em' }}>Namespace:</label>
             <AutoUpdateNamespaceList
               disabled={this.props.disabled}
               activeNamespace={this.props.namespace}
               onSelect={this.props.onNamespaceChange}
             />
-          </div>
+          </FormGroup>
           <ToolbarDropdown
             disabled={this.props.disabled}
             onClick={this.updateDuration}
