@@ -36,6 +36,7 @@ const BookInfoCytoscapeLayout = graphLayout => (
     onClick={action('OnClick')}
     isLoading={false}
     refresh={action('refresh')}
+    badgeStatus={{ hideCBs: true }}
   />
 );
 
@@ -57,6 +58,7 @@ storiesOf('CytoscapeLayout', module)
       onClick={action('OnClick')}
       isLoading={false}
       refresh={action('refresh')}
+      badgeStatus={{ hideCBs: true }}
     />
   ))
   .add('Loading', () => (
@@ -69,5 +71,6 @@ storiesOf('CytoscapeLayout', module)
       onClick={action('OnClick')}
       isLoading={true}
       refresh={action('refresh')}
+      badgeStatus={{ hideCBs: true }}
     />
   ));
