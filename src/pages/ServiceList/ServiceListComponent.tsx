@@ -99,12 +99,7 @@ const defaultRateInterval = '10m';
 class ServiceListComponent extends React.Component<ServiceListComponentProps, ServiceListComponentState> {
   constructor(props: ServiceListComponentProps) {
     super(props);
-    this.filterChange = this.filterChange.bind(this);
-    this.handleError = this.handleError.bind(this);
-    this.pageSet = this.pageSet.bind(this);
-    this.pageSelect = this.pageSelect.bind(this);
-    this.updateSortField = this.updateSortField.bind(this);
-    this.updateSortDirection = this.updateSortDirection.bind(this);
+
     this.state = {
       loading: true,
       services: [],
@@ -120,17 +115,17 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.updateServices();
   }
 
-  filterChange() {
+  filterChange = () => {
     this.setState({ loading: true });
     this.updateServices();
-  }
+  };
 
-  handleError(error: string) {
+  handleError = (error: string) => {
     this.props.onError(error);
     this.setState({ loading: false });
-  }
+  };
 
-  pageSet(page: number) {
+  pageSet = (page: number) => {
     this.setState(prevState => {
       return {
         loading: prevState.loading,
@@ -142,9 +137,9 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         }
       };
     });
-  }
+  };
 
-  pageSelect(perPage: number) {
+  pageSelect = (perPage: number) => {
     this.setState(prevState => {
       return {
         loading: prevState.loading,
@@ -156,25 +151,25 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         }
       };
     });
-  }
+  };
 
-  updateSortField(sortField: SortField) {
+  updateSortField = (sortField: SortField) => {
     this.setState(prevState => {
       return {
         currentSortField: sortField,
         services: sortServices(prevState.services, sortField, prevState.isSortAscending)
       };
     });
-  }
+  };
 
-  updateSortDirection() {
+  updateSortDirection = () => {
     this.setState(prevState => {
       return {
         isSortAscending: !prevState.isSortAscending,
         services: sortServices(prevState.services, prevState.currentSortField, !prevState.isSortAscending)
       };
     });
-  }
+  };
 
   updateServices(rateInterval: string = defaultRateInterval) {
     const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();

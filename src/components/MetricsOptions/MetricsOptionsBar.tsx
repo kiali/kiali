@@ -68,10 +68,6 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
   constructor(props: Props) {
     super(props);
 
-    this.onPollIntervalChanged = this.onPollIntervalChanged.bind(this);
-    this.onDurationChanged = this.onDurationChanged.bind(this);
-    this.changedGroupByLabel = this.changedGroupByLabel.bind(this);
-
     this.groupByLabelsHelper = new ValueSelectHelper({
       items: Object.keys(MetricsOptionsBar.GroupByLabelOptions),
       onChange: this.changedGroupByLabel,
@@ -92,18 +88,18 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     this.props.onPollIntervalChanged(this.state.pollInterval);
   }
 
-  onPollIntervalChanged(key: number) {
+  onPollIntervalChanged = (key: number) => {
     // We use a specific handler so that changing poll interval doesn't trigger a metrics refresh in parent
     // Especially useful when pausing
     this.props.onPollIntervalChanged(key);
     this.setState({ pollInterval: key });
-  }
+  };
 
-  onDurationChanged(key: number) {
+  onDurationChanged = (key: number) => {
     this.setState({ duration: key }, () => {
       this.reportOptions();
     });
-  }
+  };
 
   reportOptions() {
     // State-to-options converter (removes unnecessary properties)
@@ -116,11 +112,11 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     });
   }
 
-  changedGroupByLabel(labels: string[]) {
+  changedGroupByLabel = (labels: string[]) => {
     this.setState({ groupByLabels: labels }, () => {
       this.reportOptions();
     });
-  }
+  };
 
   render() {
     return (

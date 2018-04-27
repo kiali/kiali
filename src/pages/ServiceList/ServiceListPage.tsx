@@ -15,21 +15,19 @@ class ServiceListPage extends React.Component<ServiceListProps, ServiceListState
   constructor(props: ServiceListProps) {
     super(props);
 
-    this.dismissAlert = this.dismissAlert.bind(this);
-    this.handleError = this.handleError.bind(this);
     this.state = {
       alertVisible: false,
       alertDetails: ''
     };
   }
 
-  handleError(error: string) {
+  handleError = (error: string) => {
     this.setState({ alertVisible: true, alertDetails: error });
-  }
+  };
 
-  dismissAlert() {
+  dismissAlert = () => {
     this.setState({ alertVisible: false });
-  }
+  };
 
   render() {
     let alertsDiv = <div />;
