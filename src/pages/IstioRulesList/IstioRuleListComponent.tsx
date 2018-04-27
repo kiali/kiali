@@ -9,6 +9,8 @@ import { Pagination } from '../../types/Pagination';
 import { RuleItem, RuleList } from '../../types/IstioRuleListComponent';
 import PropTypes from 'prop-types';
 import IstioRuleListDescription from './IstioRuleListDescription';
+import { Link } from 'react-router-dom';
+import { PfColors } from '../../components/Pf/PfColors';
 
 type SortField = {
   id: string;
@@ -227,18 +229,21 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
 
     for (let i = pageStart; i < pageEnd; i++) {
       let ruleItem = this.state.rules[i];
+      let to = '/namespaces/' + ruleItem.namespace + '/rules/' + ruleItem.name;
       ruleList.push(
-        <ListViewItem
-          key={ruleItem.name + '_' + ruleItem.namespace}
-          leftContent={<ListViewIcon type="pf" name="migration" />}
-          heading={
-            <span>
-              {ruleItem.name}
-              <small>{ruleItem.namespace}</small>
-            </span>
-          }
-          description={<IstioRuleListDescription ruleItem={ruleItem} />}
-        />
+        <Link key={'ruleItem_' + i} to={to} style={{ color: PfColors.Black }}>
+          <ListViewItem
+            key={ruleItem.name + '_' + ruleItem.namespace}
+            leftContent={<ListViewIcon type="pf" name="migration" />}
+            heading={
+              <span>
+                {ruleItem.name}
+                <small>{ruleItem.namespace}</small>
+              </span>
+            }
+            description={<IstioRuleListDescription ruleItem={ruleItem} />}
+          />
+        </Link>
       );
     }
 
