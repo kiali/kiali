@@ -23,7 +23,6 @@ class Badge extends React.Component<BadgeProps, BadgeState> {
       leftWidth: 0,
       rightWidth: 0
     };
-    this.updateTextLength = this.updateTextLength.bind(this);
   }
   componentDidMount() {
     this.updateTextLength();
@@ -31,7 +30,7 @@ class Badge extends React.Component<BadgeProps, BadgeState> {
   componentDidUpdate() {
     this.updateTextLength();
   }
-  updateTextLength() {
+  updateTextLength = () => {
     let leftTextLength = this.TextLength(this.textLeftText);
     let rightTextLength = this.TextLength(this.textRightText);
     if (leftTextLength !== this.state.leftWidth || rightTextLength !== this.state.rightWidth) {
@@ -40,7 +39,7 @@ class Badge extends React.Component<BadgeProps, BadgeState> {
         rightWidth: rightTextLength
       });
     }
-  }
+  };
   TextLength(node: SVGTextContentElement | null) {
     return Math.round(node ? node.getComputedTextLength() : 0);
   }

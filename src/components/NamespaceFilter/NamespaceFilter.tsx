@@ -26,13 +26,6 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
   constructor(props: NamespaceFilterProps) {
     super(props);
 
-    this.updateCurrentValue = this.updateCurrentValue.bind(this);
-    this.onValueKeyPress = this.onValueKeyPress.bind(this);
-    this.selectFilterType = this.selectFilterType.bind(this);
-    this.filterValueSelected = this.filterValueSelected.bind(this);
-    this.removeFilter = this.removeFilter.bind(this);
-    this.clearFilters = this.clearFilters.bind(this);
-
     let namespaceFilter = {
       id: 'namespace',
       title: 'Namespace',
@@ -107,7 +100,7 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
     this.props.onFilterChange(activeFilters);
   }
 
-  selectFilterType(filterType: FilterType) {
+  selectFilterType = (filterType: FilterType) => {
     const { currentFilterType } = this.state;
     if (currentFilterType !== filterType) {
       this.setState({
@@ -115,21 +108,21 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
         currentFilterType: filterType
       });
     }
-  }
+  };
 
-  filterValueSelected(filterValue: FilterValue) {
+  filterValueSelected = (filterValue: FilterValue) => {
     const { currentFilterType, currentValue } = this.state;
 
     if (filterValue && filterValue.id !== currentValue) {
       this.filterAdded(currentFilterType, filterValue);
     }
-  }
+  };
 
-  updateCurrentValue(event: any) {
+  updateCurrentValue = (event: any) => {
     this.setState({ currentValue: event.target.value });
-  }
+  };
 
-  onValueKeyPress(keyEvent: any) {
+  onValueKeyPress = (keyEvent: any) => {
     const { currentValue, currentFilterType } = this.state;
 
     if (keyEvent.key === 'Enter' && currentValue && currentValue.length > 0) {
@@ -138,9 +131,9 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
       keyEvent.stopPropagation();
       keyEvent.preventDefault();
     }
-  }
+  };
 
-  removeFilter(filter: ActiveFilter) {
+  removeFilter = (filter: ActiveFilter) => {
     const { activeFilters } = this.state;
 
     let index = activeFilters.indexOf(filter);
@@ -150,13 +143,13 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
       NamespaceFilterSelected.setSelected(updated);
       this.props.onFilterChange(updated);
     }
-  }
+  };
 
-  clearFilters() {
+  clearFilters = () => {
     this.setState({ activeFilters: [] });
     NamespaceFilterSelected.setSelected([]);
     this.props.onFilterChange([]);
-  }
+  };
 
   renderInput() {
     const { currentFilterType, currentValue } = this.state;

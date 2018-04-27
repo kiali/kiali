@@ -45,10 +45,6 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     super(props);
 
     console.log(`Starting ServiceGraphPage for namespace: ${this.props.namespace.name}`);
-
-    this.handleTap = this.handleTap.bind(this);
-    this.handleMouseIn = this.handleMouseIn.bind(this);
-    this.handleMouseOut = this.handleMouseOut.bind(this);
   }
 
   shouldComponentUpdate(nextProps: any, nextState: any) {
@@ -152,16 +148,16 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
     );
   }
 
-  handleTap(event: CytoscapeClickEvent) {
+  handleTap = (event: CytoscapeClickEvent) => {
     this.props.onClick(event);
     this.graphHighlighter.onClick(event);
-  }
+  };
 
-  handleMouseIn(event: CytoscapeMouseInEvent) {
+  handleMouseIn = (event: CytoscapeMouseInEvent) => {
     this.graphHighlighter.onMouseIn(event);
-  }
+  };
 
-  handleMouseOut(event: CytoscapeMouseOutEvent) {
+  handleMouseOut = (event: CytoscapeMouseOutEvent) => {
     this.graphHighlighter.onMouseOut(event);
-  }
+  };
 }

@@ -21,9 +21,6 @@ export class ValueSelectHelper {
 
   constructor(props: Props) {
     this.props = props;
-    this.add = this.add.bind(this);
-    this.remove = this.remove.bind(this);
-    this.clear = this.clear.bind(this);
 
     this.items = props.items.map(name => ({ name: name, selected: false }));
     this.computeState();
@@ -34,7 +31,7 @@ export class ValueSelectHelper {
     this.selected = this.items.filter(it => it.selected).map(it => it.name);
   }
 
-  add(key: string) {
+  add = (key: string) => {
     const item = this.items.find(it => it.name === key);
     // If item is not found, probably was placeholder click
     if (item) {
@@ -42,9 +39,9 @@ export class ValueSelectHelper {
       this.computeState();
       this.props.onChange(this.selected);
     }
-  }
+  };
 
-  remove(key: string) {
+  remove = (key: string) => {
     const item = this.items.find(it => it.name === key);
     // If item is not found, probably was placeholder click
     if (item) {
@@ -52,13 +49,13 @@ export class ValueSelectHelper {
       this.computeState();
       this.props.onChange(this.selected);
     }
-  }
+  };
 
-  clear() {
+  clear = () => {
     this.items.forEach(it => (it.selected = false));
     this.computeState();
     this.props.onChange(this.selected);
-  }
+  };
 
   renderDropdown() {
     return (
