@@ -1,28 +1,24 @@
 import * as React from 'react';
 
 import Namespace from '../../types/Namespace';
-import { GraphParamsType } from '../../types/Graph';
+import { GraphParamsType, SummaryData } from '../../types/Graph';
 import { Duration, Layout, BadgeStatus } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
 import GraphFilter from '../../components/GraphFilter/GraphFilter';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
-// import PfHeader from '../../components/Pf/PfHeader';
 import PfAlerts from '../../components/Pf/PfAlerts';
 import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 
-// summaryData will have two fields:
-//   summaryTarget: The cytoscape element
-//   summaryType  : one of 'graph', 'node', 'edge', 'group'
 type ServiceGraphPageState = {
   alertVisible: boolean;
   alertDetails: {
     namespaceAlert?: any;
     graphLoadAlert?: any;
   };
-  summaryData: any;
+  summaryData?: SummaryData | null;
   graphTimestamp: string;
   graphData: any;
   isLoading: boolean;
@@ -47,7 +43,6 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
       isReady: false,
       alertVisible: false,
       alertDetails: {},
-      summaryData: { summaryType: 'graph' },
       graphTimestamp: new Date().toLocaleString(),
       graphData: EMPTY_GRAPH_DATA
     };
@@ -78,7 +73,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     this.setState({ alertVisible: false, alertDetails: {} });
   };
 
-  handleGraphClick = (data: any) => {
+  handleGraphClick = (data: SummaryData) => {
     if (data) {
       this.setState({ summaryData: data });
     }
@@ -86,7 +81,13 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
 
   handleReady = (cy: any) => {
     if (cy) {
-      this.setState({ summaryData: { summaryType: 'graph', summaryTarget: cy } });
+      this.setState({
+        isReady: true,
+        summaryData: {
+          summaryType: 'graph',
+          summaryTarget: cy
+        }
+      });
     }
   };
 
@@ -124,13 +125,15 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
             onReady={this.handleReady}
             refresh={this.handleRefreshClick}
           />
-          <SummaryPanel
-            data={this.state.summaryData}
-            namespace={this.props.namespace.name}
-            queryTime={this.state.graphTimestamp}
-            duration={this.props.graphDuration.value}
-            {...computePrometheusQueryInterval(this.props.graphDuration.value, NUMBER_OF_DATAPOINTS)}
-          />
+          {this.state.summaryData ? (
+            <SummaryPanel
+              data={this.state.summaryData}
+              namespace={this.props.namespace.name}
+              queryTime={this.state.graphTimestamp}
+              duration={this.props.graphDuration.value}
+              {...computePrometheusQueryInterval(this.props.graphDuration.value, NUMBER_OF_DATAPOINTS)}
+            />
+          ) : null}
         </div>
       </PfContainerNavVertical>
     );
@@ -194,7 +197,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
         this.setState({
           graphData: elements,
           graphTimestamp: timestamp,
-          summaryData: { summaryType: 'graph', summaryTarget: null },
+          summaryData: null,
           isLoading: false
         });
       })
@@ -206,7 +209,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
         this.setState({
           graphData: EMPTY_GRAPH_DATA,
           graphTimestamp: new Date().toLocaleString(),
-          summaryData: { summaryType: 'graph', summaryTarget: null },
+          summaryData: null,
           isLoading: false,
           alertVisible: true,
           alertDetails: { ...this.state.alertDetails, graphLoadAlert: error }
