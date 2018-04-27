@@ -17,22 +17,22 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 
 	go func() {
 		defer wg.Done()
-		routeRules, routeRulesErr = in.getRouteRules(namespace, serviceName)
+		routeRules, routeRulesErr = in.GetRouteRules(namespace, serviceName)
 	}()
 
 	go func() {
 		defer wg.Done()
-		destinationPolicies, destinationPoliciesErr = in.getDestinationPolicies(namespace, serviceName)
+		destinationPolicies, destinationPoliciesErr = in.GetDestinationPolicies(namespace, serviceName)
 	}()
 
 	go func() {
 		defer wg.Done()
-		virtualServices, virtualServicesErr = in.getVirtualServices(namespace, serviceName)
+		virtualServices, virtualServicesErr = in.GetVirtualServices(namespace, serviceName)
 	}()
 
 	go func() {
 		defer wg.Done()
-		destinationRules, destinationRulesErr = in.getDestinationRules(namespace, serviceName)
+		destinationRules, destinationRulesErr = in.GetDestinationRules(namespace, serviceName)
 	}()
 
 	wg.Wait()
@@ -62,7 +62,7 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 	return &istioDetails, nil
 }
 
-func (in *IstioClient) getRouteRules(namespace string, serviceName string) ([]IstioObject, error) {
+func (in *IstioClient) GetRouteRules(namespace string, serviceName string) ([]IstioObject, error) {
 	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(routeRules).Do().Get()
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (in *IstioClient) getRouteRules(namespace string, serviceName string) ([]Is
 	return routerRules, nil
 }
 
-func (in *IstioClient) getDestinationPolicies(namespace string, serviceName string) ([]IstioObject, error) {
+func (in *IstioClient) GetDestinationPolicies(namespace string, serviceName string) ([]IstioObject, error) {
 	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(destinationPolicies).Do().Get()
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func (in *IstioClient) getDestinationPolicies(namespace string, serviceName stri
 	return destinationPolicies, nil
 }
 
-func (in *IstioClient) getVirtualServices(namespace string, serviceName string) ([]IstioObject, error) {
+func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error) {
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(virtualServices).Do().Get()
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (in *IstioClient) getVirtualServices(namespace string, serviceName string) 
 	return virtualServices, nil
 }
 
-func (in *IstioClient) getDestinationRules(namespace string, serviceName string) ([]IstioObject, error) {
+func (in *IstioClient) GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error) {
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(destinationRules).Do().Get()
 	if err != nil {
 		return nil, err

@@ -159,7 +159,6 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 		i := 0
 		for k, d := range destinations {
 			s := strings.Split(k, " ")
-			// d["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, s[0], s[1])
 			child := tree.NewServiceNode(s[0], s[1])
 			child.Parent = sn
 			child.Metadata = d
@@ -246,7 +245,6 @@ func buildServiceTrees(o options.Options, client *prometheus.Client) (trees []tr
 		rootService := string(sourceSvc)
 		rootVersion := string(sourceVer)
 		md := make(map[string]interface{})
-		// md["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, rootService, rootVersion)
 
 		root := tree.NewServiceNode(rootService, rootVersion)
 		root.Parent = nil
@@ -291,7 +289,6 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, queryTime 
 		i := 0
 		for k, d := range destinations {
 			s := strings.Split(k, " ")
-			// d["link_prom_graph"] = linkPromGraph(client.Address(), o.Metric, s[0], s[1])
 			child := tree.NewServiceNode(s[0], s[1])
 			child.Parent = sn
 			child.Metadata = d

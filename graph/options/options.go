@@ -93,5 +93,8 @@ func parseAppenders(params url.Values) []appender.Appender {
 	if csl == all || strings.Contains(csl, "circuit_breaker") {
 		appenders = append(appenders, appender.CircuitBreakerAppender{})
 	}
+	if csl == all || strings.Contains(csl, "route_rule") {
+		appenders = append(appenders, appender.RouteRuleAppender{})
+	}
 	return appenders
 }
