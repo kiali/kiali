@@ -4,28 +4,14 @@ import { Toolbar, Button, ButtonGroup, Switch, Icon, FormGroup } from 'patternfl
 import { GraphFilterProps, GraphFilterState } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import AutoUpdateNamespaceList from '../../containers/AutoUpdateNamespaceList';
+import { config } from '../../config';
 
 export default class GraphFilter extends React.Component<GraphFilterProps, GraphFilterState> {
   // TODO:  We should keep these mappings with their corresponding filtering components.
   // GraphFilter should be minimal and used for assembling those filtering components.
-  static INTERVAL_DURATION = [
-    [60, '1 minute'],
-    [600, '10 minutes'],
-    [1800, '30 minutes'],
-    [3600, '1 hour'],
-    [14400, '4 hours'],
-    [28800, '8 hours'],
-    [86400, '1 day'],
-    [604800, '7 days'],
-    [2592000, '30 days']
-  ];
-  static GRAPH_LAYOUTS = [
-    ['breadthfirst', 'Breadthfirst'],
-    ['cola', 'Cola'],
-    ['cose', 'Cose'],
-    ['dagre', 'Dagre'],
-    ['klay', 'Klay']
-  ];
+  static INTERVAL_DURATION = config().toolbar.intervalDuration;
+  static GRAPH_LAYOUTS = config().toolbar.graphLayouts;
+
   constructor(props: GraphFilterProps) {
     super(props);
   }
@@ -33,6 +19,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
   updateDuration = (value: number) => {
     if (this.props.graphDuration.value !== value) {
       // notify callback
+      sessionStorage.setItem('appDuration', String(value));
       this.props.onFilterChange({ value: value });
     }
   };
@@ -85,11 +72,11 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             disabled={this.props.disabled}
             onClick={this.updateDuration}
             nameDropdown={'Duration'}
-            initialValue={this.props.graphDuration.value}
+            initialValue={Number(sessionStorage.getItem('appDuration')) || this.props.graphDuration.value}
             initialLabel={String(
-              GraphFilter.INTERVAL_DURATION.filter(elem => {
-                return elem[0] === Number(this.props.graphDuration.value);
-              })[0][1]
+              GraphFilter.INTERVAL_DURATION[
+                Number(sessionStorage.getItem('appDuration')) || config().toolbar.defaultDuration
+              ]
             )}
             options={GraphFilter.INTERVAL_DURATION}
           />
@@ -98,11 +85,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             onClick={this.updateLayout}
             nameDropdown={'Layout'}
             initialValue={this.props.graphLayout.name}
-            initialLabel={String(
-              GraphFilter.GRAPH_LAYOUTS.filter(elem => {
-                return elem[0] === String(this.props.graphLayout.name);
-              })[0][1]
-            )}
+            initialLabel={String(GraphFilter.GRAPH_LAYOUTS[this.props.graphLayout.name])}
             options={GraphFilter.GRAPH_LAYOUTS}
           />
           <Toolbar.RightContent>

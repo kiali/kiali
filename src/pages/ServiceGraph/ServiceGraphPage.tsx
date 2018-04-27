@@ -98,7 +98,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     const graphParams: GraphParamsType = {
       namespace: this.props.namespace,
       graphLayout: this.props.graphLayout,
-      graphDuration: this.props.graphDuration,
+      graphDuration: { value: Number(sessionStorage.getItem('appDuration')) } || this.props.graphDuration,
       badgeStatus: this.props.badgeStatus
     };
     return (
