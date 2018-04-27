@@ -98,6 +98,12 @@ export default class CytoscapeLayout extends React.Component<CytoscapeLayoutProp
           new GraphBadge.RouteRuleBadge(ele).buildBadge();
         }
       });
+
+      // Don't allow a large zoom if the graph has a few nodes (nodes would look too big).
+      if (this.cy.zoom() > 2.5) {
+        this.cy.zoom(2.5);
+        this.cy.center();
+      }
     });
 
     this.cy.on('mouseover', 'node,edge', (evt: any) => {
