@@ -1,5 +1,7 @@
+import deepFreeze from 'deep-freeze';
+
 export const config = () => {
-  return {
+  return deepFreeze({
     version: '0.1',
     backend: {
       user: 'jdoe',
@@ -37,5 +39,5 @@ export const config = () => {
         klay: 'Klay'
       }
     }
-  };
+  });
 };
