@@ -110,7 +110,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
         {this.groupByLabelsHelper.renderDropdown()}
         <ToolbarDropdown
           disabled={false}
-          onClick={this.onDurationChanged}
+          handleSelect={this.onDurationChanged}
           id={'duration'}
           nameDropdown={'Duration'}
           initialValue={Number(sessionStorage.getItem('appDuration')) || MetricsOptionsBar.DefaultDuration}
@@ -123,7 +123,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
         />
         <ToolbarDropdown
           disabled={false}
-          onClick={this.onPollIntervalChanged}
+          handleSelect={this.onPollIntervalChanged}
           nameDropdown={'Pool Interval'}
           initialValue={MetricsOptionsBar.DefaultPollInterval}
           initialLabel={String(MetricsOptionsBar.PollIntervals[MetricsOptionsBar.DefaultPollInterval])}

@@ -60,11 +60,11 @@ ShallowWrapper {
         </getContext(Filter)>,
         <ToolbarDropdown
           disabled={false}
+          handleSelect={[Function]}
           id="duration"
           initialLabel="Last minute"
           initialValue={60}
           nameDropdown="Duration"
-          onClick={[Function]}
           options={
             Object {
               "10800": "Last 3 hours",
@@ -83,10 +83,10 @@ ShallowWrapper {
         />,
         <ToolbarDropdown
           disabled={false}
+          handleSelect={[Function]}
           initialLabel="5 seconds"
           initialValue={5000}
           nameDropdown="Pool Interval"
-          onClick={[Function]}
           options={
             Object {
               "0": "Pause",
@@ -157,11 +157,11 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "disabled": false,
+          "handleSelect": [Function],
           "id": "duration",
           "initialLabel": "Last minute",
           "initialValue": 60,
           "nameDropdown": "Duration",
-          "onClick": [Function],
           "options": Object {
             "10800": "Last 3 hours",
             "1800": "Last 30 minutes",
@@ -186,10 +186,10 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "disabled": false,
+          "handleSelect": [Function],
           "initialLabel": "5 seconds",
           "initialValue": 5000,
           "nameDropdown": "Pool Interval",
-          "onClick": [Function],
           "options": Object {
             "0": "Pause",
             "10000": "10 seconds",
@@ -245,11 +245,11 @@ ShallowWrapper {
           </getContext(Filter)>,
           <ToolbarDropdown
             disabled={false}
+            handleSelect={[Function]}
             id="duration"
             initialLabel="Last minute"
             initialValue={60}
             nameDropdown="Duration"
-            onClick={[Function]}
             options={
               Object {
                 "10800": "Last 3 hours",
@@ -268,10 +268,10 @@ ShallowWrapper {
           />,
           <ToolbarDropdown
             disabled={false}
+            handleSelect={[Function]}
             initialLabel="5 seconds"
             initialValue={5000}
             nameDropdown="Pool Interval"
-            onClick={[Function]}
             options={
               Object {
                 "0": "Pause",
@@ -342,11 +342,11 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "disabled": false,
+            "handleSelect": [Function],
             "id": "duration",
             "initialLabel": "Last minute",
             "initialValue": 60,
             "nameDropdown": "Duration",
-            "onClick": [Function],
             "options": Object {
               "10800": "Last 3 hours",
               "1800": "Last 30 minutes",
@@ -371,10 +371,10 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "disabled": false,
+            "handleSelect": [Function],
             "initialLabel": "5 seconds",
             "initialValue": 5000,
             "nameDropdown": "Pool Interval",
-            "onClick": [Function],
             "options": Object {
               "0": "Pause",
               "10000": "10 seconds",

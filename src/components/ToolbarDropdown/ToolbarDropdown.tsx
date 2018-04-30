@@ -8,7 +8,7 @@ type ToolbarDropdownProps = {
   nameDropdown?: string;
   initialValue: number | string;
   initialLabel: string | undefined;
-  onClick: PropTypes.func;
+  handleSelect: PropTypes.func;
   options: PropTypes.Map<string | number, string>;
 };
 
@@ -28,7 +28,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
 
   onKeyChanged = (key: any) => {
     this.setState({ currentValue: key, currentName: this.props.options[key] });
-    this.props.onClick(key);
+    this.props.handleSelect(key);
   };
 
   render() {
