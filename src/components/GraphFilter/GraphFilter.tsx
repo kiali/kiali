@@ -70,7 +70,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
           </FormGroup>
           <ToolbarDropdown
             disabled={this.props.disabled}
-            onClick={this.updateDuration}
+            handleSelect={this.updateDuration}
             nameDropdown={'Duration'}
             initialValue={Number(sessionStorage.getItem('appDuration')) || this.props.graphDuration.value}
             initialLabel={String(
@@ -82,7 +82,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
           />
           <ToolbarDropdown
             disabled={this.props.disabled}
-            onClick={this.updateLayout}
+            handleSelect={this.updateLayout}
             nameDropdown={'Layout'}
             initialValue={this.props.graphLayout.name}
             initialLabel={String(GraphFilter.GRAPH_LAYOUTS[this.props.graphLayout.name])}
