@@ -11,9 +11,9 @@ type DestinationRule struct {
 	Name            string      `json:"name"`
 	CreatedAt       string      `json:"created_at"`
 	ResourceVersion string      `json:"resource_version"`
-	DestinationName interface{} `json:"destination_name"`
-	TrafficPolicy   interface{} `json:"traffic_policy"`
-	Subsets         interface{} `json:"subsets"`
+	DestinationName interface{} `json:"destination_name,omitempty"`
+	TrafficPolicy   interface{} `json:"traffic_policy,omitempty"`
+	Subsets         interface{} `json:"subsets,omitempty"`
 }
 
 func (dRules *DestinationRules) Parse(destinationRules []kubernetes.IstioObject) {

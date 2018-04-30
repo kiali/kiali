@@ -11,10 +11,10 @@ type DestinationPolicy struct {
 	Name            string      `json:"name"`
 	CreatedAt       string      `json:"created_at"`
 	ResourceVersion string      `json:"resource_version"`
-	Source          interface{} `json:"source"`
-	Destination     interface{} `json:"destination"`
-	LoadBalancing   interface{} `json:"loadbalancing"`
-	CircuitBreaker  interface{} `json:"circuitBreaker"`
+	Source          interface{} `json:"source,omitempty"`
+	Destination     interface{} `json:"destination,omitempty"`
+	LoadBalancing   interface{} `json:"loadbalancing,omitempty"`
+	CircuitBreaker  interface{} `json:"circuitBreaker,omitempty"`
 }
 
 func (policies *DestinationPolicies) Parse(destinationPolicies []kubernetes.IstioObject) {

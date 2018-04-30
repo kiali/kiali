@@ -11,14 +11,14 @@ type IstioRuleList struct {
 
 type IstioRule struct {
 	Name    string      `json:"name"`
-	Match   interface{} `json:"match"`
-	Actions interface{} `json:"actions"`
+	Match   interface{} `json:"match,omitempty"`
+	Actions interface{} `json:"actions,omitempty"`
 }
 
 type IstioRuleDetails struct {
 	Name      string             `json:"name"`
 	Namespace Namespace          `json:"namespace"`
-	Match     interface{}        `json:"match"`
+	Match     interface{}        `json:"match,omitempty"`
 	Actions   []*IstioRuleAction `json:"actions"`
 }
 
@@ -30,13 +30,13 @@ type IstioRuleAction struct {
 type IstioHandler struct {
 	Name    string      `json:"name"`
 	Adapter string      `json:"adapter"`
-	Spec    interface{} `json:"spec"`
+	Spec    interface{} `json:"spec,omitempty"`
 }
 
 type IstioInstance struct {
 	Name     string      `json:"name"`
 	Template string      `json:"template"`
-	Spec     interface{} `json:"spec"`
+	Spec     interface{} `json:"spec,omitempty"`
 }
 
 func GetIstioRulesByNamespace(namespaceName string) ([]IstioRule, error) {
