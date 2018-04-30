@@ -6,6 +6,8 @@
   },
   "dependencies": {
     "axios": "0.18.0",
+    "csstips": "0.2.3",
+    "csx": "8.5.0",
     "cytoscape": "3.2.11",
     "cytoscape-cola": "2.2.3",
     "cytoscape-cose-bilkent": "4.0.0",
@@ -17,7 +19,7 @@
     "patternfly": "3.45.0",
     "patternfly-react": "2.2.1",
     "react": "16.3.2",
-    "react-ace": "^6.1.0",
+    "react-ace": "6.1.0",
     "react-bootstrap": "0.32.1",
     "react-dom": "16.3.2",
     "react-iframe": "1.1.0",
@@ -28,6 +30,7 @@
     "ssri": "6.0.0",
     "redux-logger": "3.0.6",
     "redux-thunk": "2.2.0",
+    "typestyle": "1.7.2",
     "url-search-params": "0.10.0"
   },
   "scripts": {
