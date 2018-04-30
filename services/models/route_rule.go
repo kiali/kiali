@@ -11,20 +11,20 @@ type RouteRule struct {
 	Name             string      `json:"name"`
 	CreatedAt        string      `json:"created_at"`
 	ResourceVersion  string      `json:"resource_version"`
-	Destination      interface{} `json:"destination,omitempty"`
-	Precedence       interface{} `json:"precedence,omitempty"`
-	Match            interface{} `json:"match,omitempty"`
-	Route            interface{} `json:"route,omitempty"`
-	Redirect         interface{} `json:"redirect,omitempty"`
-	Rewrite          interface{} `json:"rewrite,omitempty"`
-	WebsocketUpgrade interface{} `json:"websocketUpgrade,omitempty"`
-	HttpReqTimeout   interface{} `json:"httpReqTimeout,omitempty"`
-	HttpReqRetries   interface{} `json:"httpReqRetries,omitempty"`
-	HttpFault        interface{} `json:"httpFault,omitempty"`
-	L4Fault          interface{} `json:"l4Fault,omitempty"`
-	Mirror           interface{} `json:"mirror,omitempty"`
-	CorsPolicy       interface{} `json:"corsPolicy,omitempty"`
-	AppendHeaders    interface{} `json:"appendHeaders,omitempty"`
+	Destination      interface{} `json:"destination"`
+	Precedence       interface{} `json:"precedence"`
+	Match            interface{} `json:"match"`
+	Route            interface{} `json:"route"`
+	Redirect         interface{} `json:"redirect"`
+	Rewrite          interface{} `json:"rewrite"`
+	WebsocketUpgrade interface{} `json:"websocketUpgrade"`
+	HttpReqTimeout   interface{} `json:"httpReqTimeout"`
+	HttpReqRetries   interface{} `json:"httpReqRetries"`
+	HttpFault        interface{} `json:"httpFault"`
+	L4Fault          interface{} `json:"l4Fault"`
+	Mirror           interface{} `json:"mirror"`
+	CorsPolicy       interface{} `json:"corsPolicy"`
+	AppendHeaders    interface{} `json:"appendHeaders"`
 }
 
 func (rules *RouteRules) Parse(routeRules []kubernetes.IstioObject) {

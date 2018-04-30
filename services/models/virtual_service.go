@@ -11,10 +11,10 @@ type VirtualService struct {
 	Name            string      `json:"name"`
 	CreatedAt       string      `json:"created_at"`
 	ResourceVersion string      `json:"resource_version"`
-	Hosts           interface{} `json:"hosts,omitempty"`
-	Gateways        interface{} `json:"gateways,omitempty"`
-	Http            interface{} `json:"http,omitempty"`
-	Tcp             interface{} `json:"tcp,omitempty"`
+	Hosts           interface{} `json:"hosts"`
+	Gateways        interface{} `json:"gateways"`
+	Http            interface{} `json:"http"`
+	Tcp             interface{} `json:"tcp"`
 }
 
 func (vServices *VirtualServices) Parse(virtualServices []kubernetes.IstioObject) {
