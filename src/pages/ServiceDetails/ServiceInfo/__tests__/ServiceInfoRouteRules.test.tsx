@@ -38,7 +38,9 @@ const rules: RouteRule[] = [
 
 describe('#ServiceInfoRouteRules render correctly with data', () => {
   it('should render service rules', () => {
-    const wrapper = shallow(<ServiceInfoRouteRules routeRules={rules} />);
+    const wrapper = shallow(
+      <ServiceInfoRouteRules routeRules={rules} editorLink={'/namespaces/test_namespace/services/test_services'} />
+    );
     expect(wrapper).toBeDefined();
     expect(wrapper).toMatchSnapshot();
   });

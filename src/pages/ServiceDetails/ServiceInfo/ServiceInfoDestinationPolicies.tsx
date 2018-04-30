@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Col, Row } from 'patternfly-react';
-import { DestinationPolicy } from '../../../types/ServiceInfo';
+import { DestinationPolicy, EditorLink } from '../../../types/ServiceInfo';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
+import { Link } from 'react-router-dom';
 
-interface ServiceInfoDestinationPoliciesProps {
+interface ServiceInfoDestinationPoliciesProps extends EditorLink {
   destinationPolicies?: DestinationPolicy[];
 }
 
@@ -24,7 +25,7 @@ class ServiceInfoDestinationPolicies extends React.Component<ServiceInfoDestinat
                   <div>
                     <strong>Name</strong>
                     {': '}
-                    {dPolicy.name}
+                    <Link to={this.props.editorLink + '?destinationpolicy=' + dPolicy.name}>{dPolicy.name}</Link>
                   </div>
                   <div>
                     <strong>Created at</strong>

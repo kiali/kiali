@@ -5,6 +5,7 @@ ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <ServiceInfoRouteRules
+    editorLink="/namespaces/test_namespace/services/test_services"
     routeRules={
       Array [
         Object {
@@ -77,7 +78,12 @@ ShallowWrapper {
                 Name
               </strong>
               : 
-              reviews-default
+              <Link
+                replace={false}
+                to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+              >
+                reviews-default
+              </Link>
             </div>
             <div>
               <strong>
@@ -123,7 +129,12 @@ ShallowWrapper {
                 Name
               </strong>
               : 
-              reviews-test-v2
+              <Link
+                replace={false}
+                to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+              >
+                reviews-test-v2
+              </Link>
             </div>
             <div>
               <strong>
@@ -188,7 +199,12 @@ ShallowWrapper {
                 Name
               </strong>
               : 
-              reviews-default
+              <Link
+                replace={false}
+                to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+              >
+                reviews-default
+              </Link>
             </div>
             <div>
               <strong>
@@ -234,7 +250,12 @@ ShallowWrapper {
                 Name
               </strong>
               : 
-              reviews-test-v2
+              <Link
+                replace={false}
+                to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+              >
+                reviews-test-v2
+              </Link>
             </div>
             <div>
               <strong>
@@ -292,7 +313,12 @@ ShallowWrapper {
                   Name
                 </strong>
                 : 
-                reviews-default
+                <Link
+                  replace={false}
+                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                >
+                  reviews-default
+                </Link>
               </div>
               <div>
                 <strong>
@@ -338,7 +364,12 @@ ShallowWrapper {
                   Name
                 </strong>
                 : 
-                reviews-test-v2
+                <Link
+                  replace={false}
+                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                >
+                  reviews-test-v2
+                </Link>
               </div>
               <div>
                 <strong>
@@ -396,7 +427,12 @@ ShallowWrapper {
                     Name
                   </strong>
                   : 
-                  reviews-default
+                  <Link
+                    replace={false}
+                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                  >
+                    reviews-default
+                  </Link>
                 </div>,
                 <div>
                   <strong>
@@ -457,7 +493,12 @@ ShallowWrapper {
                       Name
                     </strong>,
                     ": ",
-                    "reviews-default",
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                    >
+                      reviews-default
+                    </Link>,
                   ],
                 },
                 "ref": null,
@@ -474,7 +515,19 @@ ShallowWrapper {
                     "type": "strong",
                   },
                   ": ",
-                  "reviews-default",
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "children": "reviews-default",
+                      "replace": false,
+                      "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-default",
+                    },
+                    "ref": null,
+                    "rendered": "reviews-default",
+                    "type": [Function],
+                  },
                 ],
                 "type": "div",
               },
@@ -632,7 +685,12 @@ ShallowWrapper {
                     Name
                   </strong>
                   : 
-                  reviews-test-v2
+                  <Link
+                    replace={false}
+                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                  >
+                    reviews-test-v2
+                  </Link>
                 </div>,
                 <div>
                   <strong>
@@ -693,7 +751,12 @@ ShallowWrapper {
                       Name
                     </strong>,
                     ": ",
-                    "reviews-test-v2",
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                    >
+                      reviews-test-v2
+                    </Link>,
                   ],
                 },
                 "ref": null,
@@ -710,7 +773,19 @@ ShallowWrapper {
                     "type": "strong",
                   },
                   ": ",
-                  "reviews-test-v2",
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "children": "reviews-test-v2",
+                      "replace": false,
+                      "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2",
+                    },
+                    "ref": null,
+                    "rendered": "reviews-test-v2",
+                    "type": [Function],
+                  },
                 ],
                 "type": "div",
               },
@@ -891,7 +966,12 @@ ShallowWrapper {
                   Name
                 </strong>
                 : 
-                reviews-default
+                <Link
+                  replace={false}
+                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                >
+                  reviews-default
+                </Link>
               </div>
               <div>
                 <strong>
@@ -937,7 +1017,12 @@ ShallowWrapper {
                   Name
                 </strong>
                 : 
-                reviews-test-v2
+                <Link
+                  replace={false}
+                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                >
+                  reviews-test-v2
+                </Link>
               </div>
               <div>
                 <strong>
@@ -1002,7 +1087,12 @@ ShallowWrapper {
                   Name
                 </strong>
                 : 
-                reviews-default
+                <Link
+                  replace={false}
+                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                >
+                  reviews-default
+                </Link>
               </div>
               <div>
                 <strong>
@@ -1048,7 +1138,12 @@ ShallowWrapper {
                   Name
                 </strong>
                 : 
-                reviews-test-v2
+                <Link
+                  replace={false}
+                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                >
+                  reviews-test-v2
+                </Link>
               </div>
               <div>
                 <strong>
@@ -1106,7 +1201,12 @@ ShallowWrapper {
                     Name
                   </strong>
                   : 
-                  reviews-default
+                  <Link
+                    replace={false}
+                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                  >
+                    reviews-default
+                  </Link>
                 </div>
                 <div>
                   <strong>
@@ -1152,7 +1252,12 @@ ShallowWrapper {
                     Name
                   </strong>
                   : 
-                  reviews-test-v2
+                  <Link
+                    replace={false}
+                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                  >
+                    reviews-test-v2
+                  </Link>
                 </div>
                 <div>
                   <strong>
@@ -1210,7 +1315,12 @@ ShallowWrapper {
                       Name
                     </strong>
                     : 
-                    reviews-default
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                    >
+                      reviews-default
+                    </Link>
                   </div>,
                   <div>
                     <strong>
@@ -1271,7 +1381,12 @@ ShallowWrapper {
                         Name
                       </strong>,
                       ": ",
-                      "reviews-default",
+                      <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                      >
+                        reviews-default
+                      </Link>,
                     ],
                   },
                   "ref": null,
@@ -1288,7 +1403,19 @@ ShallowWrapper {
                       "type": "strong",
                     },
                     ": ",
-                    "reviews-default",
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "children": "reviews-default",
+                        "replace": false,
+                        "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-default",
+                      },
+                      "ref": null,
+                      "rendered": "reviews-default",
+                      "type": [Function],
+                    },
                   ],
                   "type": "div",
                 },
@@ -1446,7 +1573,12 @@ ShallowWrapper {
                       Name
                     </strong>
                     : 
-                    reviews-test-v2
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                    >
+                      reviews-test-v2
+                    </Link>
                   </div>,
                   <div>
                     <strong>
@@ -1507,7 +1639,12 @@ ShallowWrapper {
                         Name
                       </strong>,
                       ": ",
-                      "reviews-test-v2",
+                      <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                      >
+                        reviews-test-v2
+                      </Link>,
                     ],
                   },
                   "ref": null,
@@ -1524,7 +1661,19 @@ ShallowWrapper {
                       "type": "strong",
                     },
                     ": ",
-                    "reviews-test-v2",
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "children": "reviews-test-v2",
+                        "replace": false,
+                        "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2",
+                      },
+                      "ref": null,
+                      "rendered": "reviews-test-v2",
+                      "type": [Function],
+                    },
                   ],
                   "type": "div",
                 },

@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { Col, Row } from 'patternfly-react';
-import { RouteRule } from '../../../types/ServiceInfo';
+import { EditorLink, RouteRule } from '../../../types/ServiceInfo';
 import LocalTime from '../../../components/Time/LocalTime';
 import RouteRuleRoute from './ServiceInfoRouteRules/RouteRuleRoute';
 import DetailObject from '../../../components/Details/DetailObject';
+import { Link } from 'react-router-dom';
 
-interface ServiceInfoRouteRulesProps {
+interface ServiceInfoRouteRulesProps extends EditorLink {
   routeRules?: RouteRule[];
 }
 
@@ -22,7 +23,7 @@ class ServiceInfoRouteRules extends React.Component<ServiceInfoRouteRulesProps> 
             {(this.props.routeRules || []).map((rule, i) => (
               <div className="card-pf-body" key={'rule' + i}>
                 <div>
-                  <strong>Name</strong>: {rule.name}
+                  <strong>Name</strong>: <Link to={this.props.editorLink + '?routerule=' + rule.name}>{rule.name}</Link>
                 </div>
                 <div>
                   <strong>Created at</strong>: <LocalTime time={rule.created_at} />
