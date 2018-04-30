@@ -12,7 +12,7 @@ ShallowWrapper {
             Object {
               "byLabelsIn": Array [],
               "byLabelsOut": Array [],
-              "duration": 600,
+              "duration": 60,
             },
           ],
         ],
@@ -58,162 +58,46 @@ ShallowWrapper {
             placeholder="Group by"
           />
         </getContext(Filter)>,
-        <div
-          className="form-group"
-        >
-          <DropdownButton
-            id="duration"
-            onSelect={[Function]}
-            title="Duration"
-          >
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={300}
-              header={false}
-            >
-              Last 5 minutes
-            </MenuItem>
-            <MenuItem
-              active={true}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={600}
-              header={false}
-            >
-              Last 10 minutes
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={1800}
-              header={false}
-            >
-              Last 30 minutes
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={3600}
-              header={false}
-            >
-              Last hour
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={10800}
-              header={false}
-            >
-              Last 3 hours
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={21600}
-              header={false}
-            >
-              Last 6 hours
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={43200}
-              header={false}
-            >
-              Last 12 hours
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={86400}
-              header={false}
-            >
-              Last day
-            </MenuItem>
-          </DropdownButton>
-          <DropdownButton
-            id="pollInterval"
-            onSelect={[Function]}
-            title="Polling interval"
-          >
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={0}
-              header={false}
-            >
-              Pause
-            </MenuItem>
-            <MenuItem
-              active={true}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={5000}
-              header={false}
-            >
-              5 seconds
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={10000}
-              header={false}
-            >
-              10 seconds
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={30000}
-              header={false}
-            >
-              30 seconds
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={60000}
-              header={false}
-            >
-              1 minute
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey={300000}
-              header={false}
-            >
-              5 minutes
-            </MenuItem>
-          </DropdownButton>
-        </div>,
+        <ToolbarDropdown
+          disabled={false}
+          id="duration"
+          initialLabel="Last minute"
+          initialValue={60}
+          nameDropdown="Duration"
+          onClick={[Function]}
+          options={
+            Object {
+              "10800": "Last 3 hours",
+              "1800": "Last 30 minutes",
+              "21600": "Last 6 hours",
+              "2592000": "last 30 days",
+              "300": "Last 5 minutes",
+              "3600": "Last hour",
+              "43200": "Last 12 hours",
+              "60": "Last minute",
+              "600": "Last 10 minutes",
+              "604800": "Last 7 days",
+              "86400": "Last day",
+            }
+          }
+        />,
+        <ToolbarDropdown
+          disabled={false}
+          initialLabel="5 seconds"
+          initialValue={5000}
+          nameDropdown="Pool Interval"
+          onClick={[Function]}
+          options={
+            Object {
+              "0": "Pause",
+              "10000": "10 seconds",
+              "30000": "30 seconds",
+              "300000": "5 minutes",
+              "5000": "5 seconds",
+              "60000": "1 minute",
+            }
+          }
+        />,
         <ToolbarRightContent
           className=""
         />,
@@ -270,578 +154,54 @@ ShallowWrapper {
       Object {
         "instance": null,
         "key": undefined,
-        "nodeType": "host",
+        "nodeType": "class",
         "props": Object {
-          "children": Array [
-            <DropdownButton
-              id="duration"
-              onSelect={[Function]}
-              title="Duration"
-            >
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={300}
-                header={false}
-              >
-                Last 5 minutes
-              </MenuItem>
-              <MenuItem
-                active={true}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={600}
-                header={false}
-              >
-                Last 10 minutes
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={1800}
-                header={false}
-              >
-                Last 30 minutes
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={3600}
-                header={false}
-              >
-                Last hour
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={10800}
-                header={false}
-              >
-                Last 3 hours
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={21600}
-                header={false}
-              >
-                Last 6 hours
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={43200}
-                header={false}
-              >
-                Last 12 hours
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={86400}
-                header={false}
-              >
-                Last day
-              </MenuItem>
-            </DropdownButton>,
-            <DropdownButton
-              id="pollInterval"
-              onSelect={[Function]}
-              title="Polling interval"
-            >
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={0}
-                header={false}
-              >
-                Pause
-              </MenuItem>
-              <MenuItem
-                active={true}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={5000}
-                header={false}
-              >
-                5 seconds
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={10000}
-                header={false}
-              >
-                10 seconds
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={30000}
-                header={false}
-              >
-                30 seconds
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={60000}
-                header={false}
-              >
-                1 minute
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={300000}
-                header={false}
-              >
-                5 minutes
-              </MenuItem>
-            </DropdownButton>,
-          ],
-          "className": "form-group",
+          "disabled": false,
+          "id": "duration",
+          "initialLabel": "Last minute",
+          "initialValue": 60,
+          "nameDropdown": "Duration",
+          "onClick": [Function],
+          "options": Object {
+            "10800": "Last 3 hours",
+            "1800": "Last 30 minutes",
+            "21600": "Last 6 hours",
+            "2592000": "last 30 days",
+            "300": "Last 5 minutes",
+            "3600": "Last hour",
+            "43200": "Last 12 hours",
+            "60": "Last minute",
+            "600": "Last 10 minutes",
+            "604800": "Last 7 days",
+            "86400": "Last day",
+          },
         },
         "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "children": Array [
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={300}
-                  header={false}
-                >
-                  Last 5 minutes
-                </MenuItem>,
-                <MenuItem
-                  active={true}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={600}
-                  header={false}
-                >
-                  Last 10 minutes
-                </MenuItem>,
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={1800}
-                  header={false}
-                >
-                  Last 30 minutes
-                </MenuItem>,
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={3600}
-                  header={false}
-                >
-                  Last hour
-                </MenuItem>,
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={10800}
-                  header={false}
-                >
-                  Last 3 hours
-                </MenuItem>,
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={21600}
-                  header={false}
-                >
-                  Last 6 hours
-                </MenuItem>,
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={43200}
-                  header={false}
-                >
-                  Last 12 hours
-                </MenuItem>,
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={86400}
-                  header={false}
-                >
-                  Last day
-                </MenuItem>,
-              ],
-              "id": "duration",
-              "onSelect": [Function],
-              "title": "Duration",
-            },
-            "ref": null,
-            "rendered": Array [
-              Object {
-                "instance": null,
-                "key": "300",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "Last 5 minutes",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 300,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "Last 5 minutes",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "600",
-                "nodeType": "class",
-                "props": Object {
-                  "active": true,
-                  "bsClass": "dropdown",
-                  "children": "Last 10 minutes",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 600,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "Last 10 minutes",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "1800",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "Last 30 minutes",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 1800,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "Last 30 minutes",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "3600",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "Last hour",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 3600,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "Last hour",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "10800",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "Last 3 hours",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 10800,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "Last 3 hours",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "21600",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "Last 6 hours",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 21600,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "Last 6 hours",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "43200",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "Last 12 hours",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 43200,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "Last 12 hours",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "86400",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "Last day",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 86400,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "Last day",
-                "type": [Function],
-              },
-            ],
-            "type": [Function],
+        "rendered": null,
+        "type": [Function],
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "disabled": false,
+          "initialLabel": "5 seconds",
+          "initialValue": 5000,
+          "nameDropdown": "Pool Interval",
+          "onClick": [Function],
+          "options": Object {
+            "0": "Pause",
+            "10000": "10 seconds",
+            "30000": "30 seconds",
+            "300000": "5 minutes",
+            "5000": "5 seconds",
+            "60000": "1 minute",
           },
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "children": Array [
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={0}
-                  header={false}
-                >
-                  Pause
-                </MenuItem>,
-                <MenuItem
-                  active={true}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={5000}
-                  header={false}
-                >
-                  5 seconds
-                </MenuItem>,
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={10000}
-                  header={false}
-                >
-                  10 seconds
-                </MenuItem>,
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={30000}
-                  header={false}
-                >
-                  30 seconds
-                </MenuItem>,
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={60000}
-                  header={false}
-                >
-                  1 minute
-                </MenuItem>,
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={300000}
-                  header={false}
-                >
-                  5 minutes
-                </MenuItem>,
-              ],
-              "id": "pollInterval",
-              "onSelect": [Function],
-              "title": "Polling interval",
-            },
-            "ref": null,
-            "rendered": Array [
-              Object {
-                "instance": null,
-                "key": "0",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "Pause",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 0,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "Pause",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "5000",
-                "nodeType": "class",
-                "props": Object {
-                  "active": true,
-                  "bsClass": "dropdown",
-                  "children": "5 seconds",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 5000,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "5 seconds",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "10000",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "10 seconds",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 10000,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "10 seconds",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "30000",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "30 seconds",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 30000,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "30 seconds",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "60000",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "1 minute",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 60000,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "1 minute",
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": "300000",
-                "nodeType": "class",
-                "props": Object {
-                  "active": false,
-                  "bsClass": "dropdown",
-                  "children": "5 minutes",
-                  "disabled": false,
-                  "divider": false,
-                  "eventKey": 300000,
-                  "header": false,
-                },
-                "ref": null,
-                "rendered": "5 minutes",
-                "type": [Function],
-              },
-            ],
-            "type": [Function],
-          },
-        ],
-        "type": "div",
+        },
+        "ref": null,
+        "rendered": null,
+        "type": [Function],
       },
       Object {
         "instance": null,
@@ -883,162 +243,46 @@ ShallowWrapper {
               placeholder="Group by"
             />
           </getContext(Filter)>,
-          <div
-            className="form-group"
-          >
-            <DropdownButton
-              id="duration"
-              onSelect={[Function]}
-              title="Duration"
-            >
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={300}
-                header={false}
-              >
-                Last 5 minutes
-              </MenuItem>
-              <MenuItem
-                active={true}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={600}
-                header={false}
-              >
-                Last 10 minutes
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={1800}
-                header={false}
-              >
-                Last 30 minutes
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={3600}
-                header={false}
-              >
-                Last hour
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={10800}
-                header={false}
-              >
-                Last 3 hours
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={21600}
-                header={false}
-              >
-                Last 6 hours
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={43200}
-                header={false}
-              >
-                Last 12 hours
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={86400}
-                header={false}
-              >
-                Last day
-              </MenuItem>
-            </DropdownButton>
-            <DropdownButton
-              id="pollInterval"
-              onSelect={[Function]}
-              title="Polling interval"
-            >
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={0}
-                header={false}
-              >
-                Pause
-              </MenuItem>
-              <MenuItem
-                active={true}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={5000}
-                header={false}
-              >
-                5 seconds
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={10000}
-                header={false}
-              >
-                10 seconds
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={30000}
-                header={false}
-              >
-                30 seconds
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={60000}
-                header={false}
-              >
-                1 minute
-              </MenuItem>
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey={300000}
-                header={false}
-              >
-                5 minutes
-              </MenuItem>
-            </DropdownButton>
-          </div>,
+          <ToolbarDropdown
+            disabled={false}
+            id="duration"
+            initialLabel="Last minute"
+            initialValue={60}
+            nameDropdown="Duration"
+            onClick={[Function]}
+            options={
+              Object {
+                "10800": "Last 3 hours",
+                "1800": "Last 30 minutes",
+                "21600": "Last 6 hours",
+                "2592000": "last 30 days",
+                "300": "Last 5 minutes",
+                "3600": "Last hour",
+                "43200": "Last 12 hours",
+                "60": "Last minute",
+                "600": "Last 10 minutes",
+                "604800": "Last 7 days",
+                "86400": "Last day",
+              }
+            }
+          />,
+          <ToolbarDropdown
+            disabled={false}
+            initialLabel="5 seconds"
+            initialValue={5000}
+            nameDropdown="Pool Interval"
+            onClick={[Function]}
+            options={
+              Object {
+                "0": "Pause",
+                "10000": "10 seconds",
+                "30000": "30 seconds",
+                "300000": "5 minutes",
+                "5000": "5 seconds",
+                "60000": "1 minute",
+              }
+            }
+          />,
           <ToolbarRightContent
             className=""
           />,
@@ -1095,578 +339,54 @@ ShallowWrapper {
         Object {
           "instance": null,
           "key": undefined,
-          "nodeType": "host",
+          "nodeType": "class",
           "props": Object {
-            "children": Array [
-              <DropdownButton
-                id="duration"
-                onSelect={[Function]}
-                title="Duration"
-              >
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={300}
-                  header={false}
-                >
-                  Last 5 minutes
-                </MenuItem>
-                <MenuItem
-                  active={true}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={600}
-                  header={false}
-                >
-                  Last 10 minutes
-                </MenuItem>
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={1800}
-                  header={false}
-                >
-                  Last 30 minutes
-                </MenuItem>
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={3600}
-                  header={false}
-                >
-                  Last hour
-                </MenuItem>
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={10800}
-                  header={false}
-                >
-                  Last 3 hours
-                </MenuItem>
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={21600}
-                  header={false}
-                >
-                  Last 6 hours
-                </MenuItem>
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={43200}
-                  header={false}
-                >
-                  Last 12 hours
-                </MenuItem>
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={86400}
-                  header={false}
-                >
-                  Last day
-                </MenuItem>
-              </DropdownButton>,
-              <DropdownButton
-                id="pollInterval"
-                onSelect={[Function]}
-                title="Polling interval"
-              >
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={0}
-                  header={false}
-                >
-                  Pause
-                </MenuItem>
-                <MenuItem
-                  active={true}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={5000}
-                  header={false}
-                >
-                  5 seconds
-                </MenuItem>
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={10000}
-                  header={false}
-                >
-                  10 seconds
-                </MenuItem>
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={30000}
-                  header={false}
-                >
-                  30 seconds
-                </MenuItem>
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={60000}
-                  header={false}
-                >
-                  1 minute
-                </MenuItem>
-                <MenuItem
-                  active={false}
-                  bsClass="dropdown"
-                  disabled={false}
-                  divider={false}
-                  eventKey={300000}
-                  header={false}
-                >
-                  5 minutes
-                </MenuItem>
-              </DropdownButton>,
-            ],
-            "className": "form-group",
+            "disabled": false,
+            "id": "duration",
+            "initialLabel": "Last minute",
+            "initialValue": 60,
+            "nameDropdown": "Duration",
+            "onClick": [Function],
+            "options": Object {
+              "10800": "Last 3 hours",
+              "1800": "Last 30 minutes",
+              "21600": "Last 6 hours",
+              "2592000": "last 30 days",
+              "300": "Last 5 minutes",
+              "3600": "Last hour",
+              "43200": "Last 12 hours",
+              "60": "Last minute",
+              "600": "Last 10 minutes",
+              "604800": "Last 7 days",
+              "86400": "Last day",
+            },
           },
           "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "function",
-              "props": Object {
-                "children": Array [
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={300}
-                    header={false}
-                  >
-                    Last 5 minutes
-                  </MenuItem>,
-                  <MenuItem
-                    active={true}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={600}
-                    header={false}
-                  >
-                    Last 10 minutes
-                  </MenuItem>,
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={1800}
-                    header={false}
-                  >
-                    Last 30 minutes
-                  </MenuItem>,
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={3600}
-                    header={false}
-                  >
-                    Last hour
-                  </MenuItem>,
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={10800}
-                    header={false}
-                  >
-                    Last 3 hours
-                  </MenuItem>,
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={21600}
-                    header={false}
-                  >
-                    Last 6 hours
-                  </MenuItem>,
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={43200}
-                    header={false}
-                  >
-                    Last 12 hours
-                  </MenuItem>,
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={86400}
-                    header={false}
-                  >
-                    Last day
-                  </MenuItem>,
-                ],
-                "id": "duration",
-                "onSelect": [Function],
-                "title": "Duration",
-              },
-              "ref": null,
-              "rendered": Array [
-                Object {
-                  "instance": null,
-                  "key": "300",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "Last 5 minutes",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 300,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "Last 5 minutes",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "600",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": true,
-                    "bsClass": "dropdown",
-                    "children": "Last 10 minutes",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 600,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "Last 10 minutes",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "1800",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "Last 30 minutes",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 1800,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "Last 30 minutes",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "3600",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "Last hour",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 3600,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "Last hour",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "10800",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "Last 3 hours",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 10800,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "Last 3 hours",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "21600",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "Last 6 hours",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 21600,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "Last 6 hours",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "43200",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "Last 12 hours",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 43200,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "Last 12 hours",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "86400",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "Last day",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 86400,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "Last day",
-                  "type": [Function],
-                },
-              ],
-              "type": [Function],
+          "rendered": null,
+          "type": [Function],
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "disabled": false,
+            "initialLabel": "5 seconds",
+            "initialValue": 5000,
+            "nameDropdown": "Pool Interval",
+            "onClick": [Function],
+            "options": Object {
+              "0": "Pause",
+              "10000": "10 seconds",
+              "30000": "30 seconds",
+              "300000": "5 minutes",
+              "5000": "5 seconds",
+              "60000": "1 minute",
             },
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "function",
-              "props": Object {
-                "children": Array [
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={0}
-                    header={false}
-                  >
-                    Pause
-                  </MenuItem>,
-                  <MenuItem
-                    active={true}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={5000}
-                    header={false}
-                  >
-                    5 seconds
-                  </MenuItem>,
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={10000}
-                    header={false}
-                  >
-                    10 seconds
-                  </MenuItem>,
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={30000}
-                    header={false}
-                  >
-                    30 seconds
-                  </MenuItem>,
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={60000}
-                    header={false}
-                  >
-                    1 minute
-                  </MenuItem>,
-                  <MenuItem
-                    active={false}
-                    bsClass="dropdown"
-                    disabled={false}
-                    divider={false}
-                    eventKey={300000}
-                    header={false}
-                  >
-                    5 minutes
-                  </MenuItem>,
-                ],
-                "id": "pollInterval",
-                "onSelect": [Function],
-                "title": "Polling interval",
-              },
-              "ref": null,
-              "rendered": Array [
-                Object {
-                  "instance": null,
-                  "key": "0",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "Pause",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 0,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "Pause",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "5000",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": true,
-                    "bsClass": "dropdown",
-                    "children": "5 seconds",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 5000,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "5 seconds",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "10000",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "10 seconds",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 10000,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "10 seconds",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "30000",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "30 seconds",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 30000,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "30 seconds",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "60000",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "1 minute",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 60000,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "1 minute",
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": "300000",
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "bsClass": "dropdown",
-                    "children": "5 minutes",
-                    "disabled": false,
-                    "divider": false,
-                    "eventKey": 300000,
-                    "header": false,
-                  },
-                  "ref": null,
-                  "rendered": "5 minutes",
-                  "type": [Function],
-                },
-              ],
-              "type": [Function],
-            },
-          ],
-          "type": "div",
+          },
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
         },
         Object {
           "instance": null,

@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 
 type ToolbarDropdownProps = {
   disabled: boolean;
+  id?: string;
   nameDropdown?: string;
   initialValue: number | string;
   initialLabel: string | undefined;
@@ -26,18 +27,18 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
   }
 
   onKeyChanged = (key: any) => {
-    this.setState({ currentValue: key[0], currentName: key[1] });
-    this.props.onClick(key[0]);
+    this.setState({ currentValue: key, currentName: this.props.options[key] });
+    this.props.onClick(key);
   };
 
   render() {
     return (
       <div className="form-group">
         {this.props.nameDropdown && <label style={{ paddingRight: '0.5em' }}>{this.props.nameDropdown}:</label>}
-        <DropdownButton title={this.state.currentName} onSelect={this.onKeyChanged} id="kiali-dropdown">
-          {this.props.options.map(r => (
-            <MenuItem key={r[0]} active={r[0] === this.state.currentValue} eventKey={r}>
-              {r[1]}
+        <DropdownButton title={this.state.currentName} onSelect={this.onKeyChanged} {...this.props}>
+          {Object.keys(this.props.options).map(key => (
+            <MenuItem key={key} active={key === this.state.currentValue} eventKey={key}>
+              {this.props.options[key]}
             </MenuItem>
           ))}
         </DropdownButton>

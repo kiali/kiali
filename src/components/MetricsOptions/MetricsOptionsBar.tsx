@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { Toolbar, ToolbarRightContent, DropdownButton, MenuItem, Icon } from 'patternfly-react';
-
+import { Toolbar, ToolbarRightContent, Icon } from 'patternfly-react';
+import { config } from '../../config';
 import ValueSelectHelper from './ValueSelectHelper';
 import MetricsOptions from '../../types/MetricsOptions';
+import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
@@ -22,27 +23,11 @@ interface GroupByLabel {
 }
 
 export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsState> {
-  static PollIntervals = [
-    [0, 'Pause'],
-    [5000, '5 seconds'],
-    [10000, '10 seconds'],
-    [30000, '30 seconds'],
-    [60000, '1 minute'],
-    [300000, '5 minutes']
-  ];
-  static DefaultPollInterval = 5000;
+  static PollIntervals = config().toolbar.pollInterval;
+  static DefaultPollInterval = config().toolbar.defaultPollInterval;
 
-  static Durations: [number, string][] = [
-    [300, 'Last 5 minutes'],
-    [600, 'Last 10 minutes'],
-    [1800, 'Last 30 minutes'],
-    [3600, 'Last hour'],
-    [10800, 'Last 3 hours'],
-    [21600, 'Last 6 hours'],
-    [43200, 'Last 12 hours'],
-    [86400, 'Last day']
-  ];
-  static DefaultDuration = MetricsOptionsBar.Durations[1][0];
+  static Durations = config().toolbar.intervalDuration;
+  static DefaultDuration = config().toolbar.defaultDuration;
 
   static GroupByLabelOptions: { [key: string]: GroupByLabel } = {
     'local version': {
@@ -77,7 +62,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
 
     this.state = {
       pollInterval: MetricsOptionsBar.DefaultPollInterval,
-      duration: MetricsOptionsBar.DefaultDuration,
+      duration: Number(sessionStorage.getItem('appDuration')) || MetricsOptionsBar.DefaultDuration,
       groupByLabels: []
     };
   }
@@ -96,6 +81,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
   };
 
   onDurationChanged = (key: number) => {
+    sessionStorage.setItem('appDuration', String(key));
     this.setState({ duration: key }, () => {
       this.reportOptions();
     });
@@ -122,22 +108,27 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     return (
       <Toolbar>
         {this.groupByLabelsHelper.renderDropdown()}
-        <div className="form-group">
-          <DropdownButton id="duration" title="Duration" onSelect={this.onDurationChanged}>
-            {MetricsOptionsBar.Durations.map(r => (
-              <MenuItem key={r[0]} active={r[0] === this.state.duration} eventKey={r[0]}>
-                {r[1]}
-              </MenuItem>
-            ))}
-          </DropdownButton>
-          <DropdownButton id="pollInterval" title="Polling interval" onSelect={this.onPollIntervalChanged}>
-            {MetricsOptionsBar.PollIntervals.map(r => (
-              <MenuItem key={r[0]} active={r[0] === this.state.pollInterval} eventKey={r[0]}>
-                {r[1]}
-              </MenuItem>
-            ))}
-          </DropdownButton>
-        </div>
+        <ToolbarDropdown
+          disabled={false}
+          onClick={this.onDurationChanged}
+          id={'duration'}
+          nameDropdown={'Duration'}
+          initialValue={Number(sessionStorage.getItem('appDuration')) || MetricsOptionsBar.DefaultDuration}
+          initialLabel={String(
+            MetricsOptionsBar.Durations[
+              Number(sessionStorage.getItem('appDuration')) || MetricsOptionsBar.DefaultDuration
+            ]
+          )}
+          options={MetricsOptionsBar.Durations}
+        />
+        <ToolbarDropdown
+          disabled={false}
+          onClick={this.onPollIntervalChanged}
+          nameDropdown={'Pool Interval'}
+          initialValue={MetricsOptionsBar.DefaultPollInterval}
+          initialLabel={String(MetricsOptionsBar.PollIntervals[MetricsOptionsBar.DefaultPollInterval])}
+          options={MetricsOptionsBar.PollIntervals}
+        />
         <ToolbarRightContent>
           {this.props.loading && (
             <span>
