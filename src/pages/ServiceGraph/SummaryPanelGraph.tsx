@@ -41,14 +41,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   }
 
   componentDidMount() {
-    // don't load data here, wit until props are updated after the graph is loaded
     this._isMounted = true;
-  }
-
-  componentWillReceiveProps(nextProps: SummaryPanelPropType) {
-    if (nextProps.data.summaryTarget && nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
-      this.updateRpsChart(nextProps);
-    }
+    this.updateRpsChart(this.props);
   }
 
   componentWillUnmount() {
