@@ -36,7 +36,6 @@ reloads any changes to the browser for rapid development.
 * `src/components`: Stateless components (pure functions)
 * `src/pages`: Top level pages and nested components
 * `src/types`: Shared model
-* `stories`: Storybook files
 
 == Developing
 
@@ -107,13 +106,6 @@ Note: for OS/X users testing requires watchman to be installed
 [source,shell]
 ----
 brew install watchman
-----
-
-=== For Storybook Components
-[source,shell]
-----
-npm run storybook
-http://localhost:6006
 ----
 
 == Production Builds
