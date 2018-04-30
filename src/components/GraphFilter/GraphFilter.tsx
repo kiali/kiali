@@ -57,11 +57,22 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
   };
 
   render() {
+    // TODO, these inline styles could moveto typestyle
+    const zeroPaddingLeft = {
+      paddingLeft: '0px'
+    };
+    const labelPaddingRight = {
+      paddingRight: '0.5em'
+    };
+    const buttonPaddingLeft = {
+      paddingLeft: '5px'
+    };
+
     return (
       <>
         <Toolbar>
-          <FormGroup style={{ paddingLeft: 0 }}>
-            <label style={{ paddingRight: '0.5em' }}>Namespace:</label>
+          <FormGroup style={zeroPaddingLeft}>
+            <label style={labelPaddingRight}>Namespace:</label>
             <AutoUpdateNamespaceList
               disabled={this.props.disabled}
               activeNamespace={this.props.namespace}
@@ -94,8 +105,8 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             </Button>
           </Toolbar.RightContent>
         </Toolbar>
-        <div style={{ paddingTop: '10px' }}>
-          <ButtonGroup style={{ paddingRight: '5px' }}>
+        <Toolbar>
+          <ButtonGroup>
             <Switch
               labelText="Circuit Breakers"
               disabled={this.props.disabled}
@@ -103,7 +114,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
               onChange={this.handleToggleCBs}
             />
           </ButtonGroup>
-          <ButtonGroup>
+          <ButtonGroup style={buttonPaddingLeft}>
             <Switch
               labelText="Route Rules"
               disabled={this.props.disabled}
@@ -111,7 +122,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
               onChange={this.handleToggleRRs}
             />
           </ButtonGroup>
-        </div>
+        </Toolbar>
       </>
     );
   }
