@@ -297,20 +297,22 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       const to = '/namespaces/' + serviceItem.namespace + '/services/' + serviceItem.name;
       const serviceDescriptor = (
         <table style={{ width: '30em', tableLayout: 'fixed' }}>
-          <tr>
-            <td>
-              <strong>Health: </strong>
-              <HealthIndicator
-                id={serviceItem.name}
-                health={serviceItem.health}
-                mode={DisplayMode.SMALL}
-                rateInterval={this.state.rateInterval}
-              />
-            </td>
-            <td>
-              <ServiceErrorRate requestHealth={serviceItem.health.requests} />
-            </td>
-          </tr>
+          <tbody>
+            <tr>
+              <td>
+                <strong>Health: </strong>
+                <HealthIndicator
+                  id={serviceItem.name}
+                  health={serviceItem.health}
+                  mode={DisplayMode.SMALL}
+                  rateInterval={this.state.rateInterval}
+                />
+              </td>
+              <td>
+                <ServiceErrorRate requestHealth={serviceItem.health.requests} />
+              </td>
+            </tr>
+          </tbody>
         </table>
       );
 
