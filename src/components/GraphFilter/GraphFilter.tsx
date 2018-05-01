@@ -5,6 +5,7 @@ import { GraphFilterProps, GraphFilterState } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import AutoUpdateNamespaceList from '../../containers/AutoUpdateNamespaceList';
 import { config } from '../../config';
+import GraphLayersConnected from '../../containers/GraphLayers/GraphLayers';
 
 export default class GraphFilter extends React.Component<GraphFilterProps, GraphFilterState> {
   // TODO:  We should keep these mappings with their corresponding filtering components.
@@ -122,6 +123,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
               onChange={this.handleToggleRRs}
             />
           </ButtonGroup>
+          <GraphLayersConnected />
         </Toolbar>
       </>
     );

@@ -13,6 +13,9 @@ export class GraphStyles {
           // color: PfColors.Black,
           content: (ele: any) => {
             const version = ele.data('version');
+            if (!ele.data('showNodeLabels')) {
+              return '';
+            }
             if (ele.data('parent')) {
               return version;
             }
@@ -72,6 +75,9 @@ export class GraphStyles {
         selector: 'edge',
         css: {
           content: (ele: any) => {
+            if (!ele.data('showEdgeLabels')) {
+              return '';
+            }
             const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
             const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
             if (rate > 0) {
