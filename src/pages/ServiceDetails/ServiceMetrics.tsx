@@ -88,6 +88,8 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     this.setState({ pollMetrics: newRefInterval });
   };
 
+  onManualRefresh = () => (this.state.loading ? null : this.fetchMetrics());
+
   fetchMetrics = () => {
     this.setState({ loading: true });
     API.getServiceMetrics(this.props.namespace, this.props.service, this.options)
@@ -232,6 +234,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         <MetricsOptionsBar
           onOptionsChanged={this.onOptionsChanged}
           onPollIntervalChanged={this.onPollIntervalChanged}
+          onManualRefresh={this.onManualRefresh}
           loading={this.state.loading}
         />
         {this.renderMetrics()}

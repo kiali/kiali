@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Toolbar, ToolbarRightContent, Icon } from 'patternfly-react';
+import { Toolbar, ToolbarRightContent, Icon, Button } from 'patternfly-react';
 import { config } from '../../config';
 import ValueSelectHelper from './ValueSelectHelper';
 import MetricsOptions from '../../types/MetricsOptions';
@@ -8,6 +8,7 @@ import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
   onPollIntervalChanged: (interval: number) => void;
+  onManualRefresh: () => void;
   loading?: boolean;
 }
 
@@ -129,12 +130,16 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
           initialLabel={String(MetricsOptionsBar.PollIntervals[MetricsOptionsBar.DefaultPollInterval])}
           options={MetricsOptionsBar.PollIntervals}
         />
+
         <ToolbarRightContent>
           {this.props.loading && (
             <span>
-              <Icon name="spinner" spin={true} size="lg" /> Loading
+              <Icon name="spinner" spin={true} size="lg" /> Loading&nbsp;
             </span>
           )}
+          <Button disabled={this.props.loading} onClick={this.props.onManualRefresh}>
+            <Icon name="refresh" />
+          </Button>
         </ToolbarRightContent>
         {this.groupByLabelsHelper.hasResults() && (
           <Toolbar.Results>{this.groupByLabelsHelper.renderResults()}</Toolbar.Results>
