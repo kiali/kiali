@@ -1,6 +1,7 @@
 import { CytoscapeClickEvent, CytoscapeMouseInEvent, CytoscapeMouseOutEvent } from './../CytoscapeLayout';
 
 const DIM_CLASS: string = 'mousedim';
+const HIGHLIGHT_CLASS: string = 'mousehighlight';
 
 export class GraphHighlighter {
   cy: any;
@@ -16,14 +17,27 @@ export class GraphHighlighter {
   }
 
   // Need to define these methods using the "public class fields syntax", to be able to keep
-  // *this* binded when passing it to events handlers (or use the anoying syntax)
+  // *this* binded when passing it to events handlers (or use the annoying syntax)
   // https://reactjs.org/docs/handling-events.html
   onClick = (event: CytoscapeClickEvent) => {
+    // ignore clicks on the currently selected element
+    if (this.selected.summaryTarget === event.summaryTarget) {
+      return;
+    }
+
     this.selected = event;
-    this.refresh();
+    this.hovered = undefined;
+    this.unhighlight();
+
+    // only highlight when selecting something other than the graph background
+    if (this.selected.summaryType !== 'graph') {
+      this.refresh();
+    }
   };
 
   onMouseIn = (event: CytoscapeMouseInEvent) => {
+    // only highlight on hover when the graph is currently selected, otherwise leave the
+    // selected element highlighted
     if (this.selected.summaryType === 'graph' && ['node', 'edge', 'group'].indexOf(event.summaryType) !== -1) {
       this.hovered = event;
       this.refresh();
@@ -33,8 +47,13 @@ export class GraphHighlighter {
   onMouseOut = (event: CytoscapeMouseOutEvent) => {
     if (this.hovered && this.hovered.summaryTarget === event.summaryTarget) {
       this.hovered = undefined;
-      this.refresh();
+      this.unhighlight();
     }
+  };
+
+  unhighlight = () => {
+    this.cy.elements('.' + DIM_CLASS).removeClass(DIM_CLASS);
+    this.cy.elements('.' + HIGHLIGHT_CLASS).removeClass(HIGHLIGHT_CLASS);
   };
 
   // When you click a service node, that node and the nodes it connects (including the edges)
@@ -48,12 +67,17 @@ export class GraphHighlighter {
   // Note that we never dim the service group box elements. We know an element is a group box if its isParent() returns true.
   // When a service group box element is selected, we will highlight the nodes it contain,
   // their related nodes (including edges).
-  refresh() {
-    this.cy.elements('.' + DIM_CLASS).removeClass(DIM_CLASS);
+  refresh = () => {
     let toHighlight = this.getHighlighted();
     if (!toHighlight) {
-      toHighlight = this.cy.elements();
+      return;
     }
+
+    toHighlight
+      .filter((ele: any) => {
+        return !ele.isParent();
+      })
+      .addClass(HIGHLIGHT_CLASS);
 
     this.cy
       .elements()
@@ -62,7 +86,7 @@ export class GraphHighlighter {
         return !ele.isParent();
       })
       .addClass(DIM_CLASS);
-  }
+  };
 
   // Returns the nodes to highlight depending the selected or hovered summaryType
   // If current selected is 'graph' (e.g. no selection):
@@ -85,11 +109,10 @@ export class GraphHighlighter {
         return this.getGroupHighlight(event.summaryTarget);
       }
     }
-    return this.cy.elements();
+    return undefined;
   }
 
-  // return their children
-  // and related nodes to children (including edges)
+  // return the children and children relations, including edges
   getGroupHighlight(groupBox: any) {
     return groupBox.children().reduce((prev, child) => {
       if (!prev) {

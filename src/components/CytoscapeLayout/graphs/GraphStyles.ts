@@ -10,7 +10,7 @@ export class GraphStyles {
       {
         selector: 'node',
         css: {
-          color: PfColors.Black,
+          // color: PfColors.Black,
           content: (ele: any) => {
             const version = ele.data('version');
             if (ele.data('parent')) {
@@ -20,17 +20,15 @@ export class GraphStyles {
             const service = name.split('.')[0];
             return version && version !== 'unknown' ? service + '\n' + version : service;
           },
-          'background-color': PfColors.Gold200,
-          'border-color': PfColors.Black,
+          'background-color': PfColors.Black200,
+          'border-color': PfColors.Black400,
           'border-style': (ele: any) => {
             return ele.data('isUnused') ? 'dotted' : 'solid';
           },
           'border-width': '1px',
-          'font-size': '10px',
+          'font-size': '8px',
           'overlay-padding': '6px',
           'text-halign': 'center',
-          'text-outline-color': PfColors.Gold200,
-          'text-outline-width': '2px',
           'text-valign': 'center',
           'text-wrap': 'wrap',
           'z-index': '10'
@@ -39,8 +37,9 @@ export class GraphStyles {
       {
         selector: 'node:selected',
         style: {
-          'border-width': '3px',
-          'border-color': PfColors.Blue
+          'background-color': PfColors.Blue50,
+          'border-color': PfColors.Blue200,
+          'border-width': '2px'
         }
       },
       {
@@ -50,7 +49,7 @@ export class GraphStyles {
         }
       },
       {
-        // version group boxes
+        // version group
         selector: '$node > node',
         css: {
           'text-valign': 'top',
@@ -58,9 +57,17 @@ export class GraphStyles {
           'text-margin-x': '2px',
           'text-margin-y': '8px',
           'text-rotation': '90deg',
-          'background-color': PfColors.Gold100
+          'background-color': PfColors.Black100
         }
       },
+      // Uncomment and update if we decide to apply style overrides for a selected group (composite) node
+      // {
+      //  // version group selected
+      //  selector: '$node:selected',
+      //  css: {
+      //    'background-color': PfColors.Blue50
+      //  }
+      // },
       {
         selector: 'edge',
         css: {
@@ -82,12 +89,12 @@ export class GraphStyles {
             const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
             // todo: these thresholds should come from somewhere global
             if (pErr > 2.0) {
-              return PfColors.Red;
+              return PfColors.Red100;
             }
             if (pErr > 0.1) {
-              return PfColors.Orange;
+              return PfColors.Orange400;
             }
-            return PfColors.Green;
+            return PfColors.Green400;
           },
           'line-style': (ele: any) => {
             return ele.data('isUnused') ? 'dotted' : 'solid';
@@ -96,19 +103,26 @@ export class GraphStyles {
           'text-margin-x': '6px',
           'text-rotation': 'autorotate',
           'target-arrow-color': PfColors.Black,
-          width: 2
+          width: 1
         }
       },
       {
         selector: 'edge:selected',
         css: {
-          'line-color': PfColors.Blue,
-          'target-arrow-color': PfColors.Blue,
-          'source-arrow-color': PfColors.Blue
+          'line-color': PfColors.Blue200,
+          'source-arrow-color': PfColors.Blue200,
+          'target-arrow-color': PfColors.Blue200,
+          width: 2
         }
       },
       // When you mouse over a node, all nodes other than the moused over node
       // and its direct incoming/outgoing edges/nodes are dimmed by these styles.
+      {
+        selector: 'node.mousehighlight',
+        style: {
+          'background-color': PfColors.Blue50
+        }
+      },
       {
         selector: 'node.mousedim',
         style: {
