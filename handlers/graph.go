@@ -36,6 +36,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"time"
@@ -429,7 +430,7 @@ func handlePanic(w http.ResponseWriter) {
 		default:
 			message = fmt.Sprintf("%v", r)
 		}
-		log.Errorf("Error: %v\n", message)
+		log.Errorf("%s: %s", message, debug.Stack())
 		RespondWithError(w, http.StatusInternalServerError, message)
 	}
 }

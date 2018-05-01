@@ -33,8 +33,10 @@ var (
 
 // IstioClientInterface for mocks (only mocked function are necessary here)
 type IstioClientInterface interface {
+	GetService(namespace string, serviceName string) (*v1.Service, error)
 	GetServices(namespaceName string) (*ServiceList, error)
 	GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error)
+	GetServicePods(namespace string, serviceName string, serviceVersion string, selector string) (*v1.PodList, error)
 	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
 }
 

@@ -39,6 +39,7 @@ type NodeData struct {
 	RateSelfInvoke    string `json:"rateSelfInvoke,omitempty"` // rate of selfInvoke
 	HasCircuitBreaker string `json:"hasCB,omitempty"`          // true | false | unknown
 	HasRouteRule      string `json:"hasRR,omitempty"`          // true | false | unknown
+	IsDead            string `json:"isDead,omitempty"`         // true (has no pods) | false
 	IsGroup           string `json:"isGroup,omitempty"`        // set to the grouping type, current values: [ 'version' ]
 	IsRoot            string `json:"isRoot,omitempty"`         // true | false
 	IsUnused          string `json:"isUnused,omitempty"`       // true | false
@@ -145,6 +146,11 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 			Id:      nodeId,
 			Service: name,
 			Version: sn.Version,
+		}
+
+		// node may be dead (service defined but no pods running)
+		if dead, ok := sn.Metadata["isDead"]; ok {
+			nd.IsDead = dead.(string)
 		}
 
 		// node may be a root
