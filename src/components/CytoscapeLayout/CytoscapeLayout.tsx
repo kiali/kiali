@@ -118,12 +118,14 @@ export class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, Cytos
         return;
       }
 
+      const cbBadge = new GraphBadge.CircuitBreakerBadge();
+      const rrBadge = new GraphBadge.RouteRuleBadge();
       evt.cy.nodes().forEach(ele => {
         if (!this.props.badgeStatus.hideCBs && ele.data('hasCB') === 'true') {
-          new GraphBadge.CircuitBreakerBadge(ele).buildBadge();
+          cbBadge.buildBadge(ele);
         }
         if (!this.props.badgeStatus.hideRRs && ele.data('hasRR') === 'true') {
-          new GraphBadge.RouteRuleBadge(ele).buildBadge();
+          rrBadge.buildBadge(ele);
         }
       });
 

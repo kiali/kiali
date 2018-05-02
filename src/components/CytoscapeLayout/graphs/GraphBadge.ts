@@ -4,37 +4,50 @@ import { PfColors } from '../../../components/Pf/PfColors';
 const FLASH_BADGE: string = 'fa fa-bolt';
 const ROUTE_BADGE: string = 'fa fa-code-fork';
 
+// Each node that has a badge will have custom data associated with it.
+// Each entry in the custom data is keyed on the badge type; an entry is itself
+// a map with the references to the parent div and the popper itself (used so
+// we can destroy them later if we need to).
+// This supports being able to show any combination of multiple badges.
+const CUSTOM_DATA_NAMESPACE = '_kiali_badges';
+
 class GraphBadge {
-  node: Element;
   badgeType: string;
   badgeColor: string;
   placement: string;
 
-  constructor(node: Element, badgeType: string, badgeColor: string, placement: string) {
-    this.node = node;
+  constructor(badgeType: string, badgeColor: string, placement: string) {
     this.badgeType = badgeType;
     this.badgeColor = badgeColor;
     this.placement = placement;
   }
 
-  buildBadge() {
+  buildBadge(node: Element) {
+    let badgesMap: any = node.scratch(CUSTOM_DATA_NAMESPACE);
+    if (!badgesMap) {
+      badgesMap = node.scratch(CUSTOM_DATA_NAMESPACE, {});
+    }
+    if (badgesMap[this.badgeType]) {
+      return; // the node already has this badge
+    }
+
     const div = document.createElement('div');
     div.className = this.badgeType;
     div.style.color = this.badgeColor;
-    div.style.zIndex = this.node.css('z-index');
+    div.style.zIndex = node.css('z-index');
     div.style.position = 'absolute';
 
-    this.node
+    node
       .cy()
       .container()
       .children[0].appendChild(div);
 
     const setScale = () => {
-      const zoom = this.node.cy().zoom();
+      const zoom = node.cy().zoom();
       div.style.transform = div.style.transform + `scale(${zoom},${zoom})`;
     };
 
-    const popper = this.node.popper({
+    const popper = node.popper({
       content: target => div,
       // we need to re-position. the default isn't right.
       renderedPosition: element => {
@@ -42,8 +55,8 @@ class GraphBadge {
           .cy()
           .container()
           .getBoundingClientRect();
-        const position = this.node.renderedPosition();
-        const zoom = this.node.cy().zoom();
+        const position = node.renderedPosition();
+        const zoom = node.cy().zoom();
         return { x: position.x - offset.left + 4 * zoom, y: position.y - offset.top - 15 * zoom };
       },
       popper: {
@@ -64,6 +77,10 @@ class GraphBadge {
       }
     });
 
+    // add some custom data to the cy node data map indicating it has the badge
+    badgesMap[this.badgeType] = { popper: popper, div: div };
+    node.scratch(CUSTOM_DATA_NAMESPACE, badgesMap);
+
     let update = event => {
       popper.scheduleUpdate();
     };
@@ -78,21 +95,35 @@ class GraphBadge {
       div.style.opacity = event.target.hasClass('mousedim') ? '0.3' : '1.0';
     };
 
-    this.node.on('position', update);
-    this.node.on('style', highlighter);
-    this.node.cy().on('pan zoom resize', update);
-    this.node.cy().on('destroy', destroy);
+    node.on('position', update);
+    node.on('style', highlighter);
+    node.cy().on('pan zoom resize', update);
+    node.cy().on('destroy', destroy);
+  }
+
+  destroyBadge(node: Element) {
+    let badgesMap: any = node.scratch(CUSTOM_DATA_NAMESPACE) || {};
+    if (badgesMap[this.badgeType]) {
+      // if the node has the badge...
+      badgesMap[this.badgeType].popper.destroy();
+      let div = badgesMap[this.badgeType].div;
+      while (div.firstChild) {
+        div.removeChild(div.firstChild);
+      }
+      div.remove();
+      delete badgesMap[this.badgeType];
+    }
   }
 }
 
 export class CircuitBreakerBadge extends GraphBadge {
-  constructor(node: Element) {
-    super(node, FLASH_BADGE, PfColors.Purple300, 'top-start');
+  constructor() {
+    super(FLASH_BADGE, PfColors.Purple300, 'top-start');
   }
 }
 
 export class RouteRuleBadge extends GraphBadge {
-  constructor(node: Element) {
-    super(node, ROUTE_BADGE, PfColors.Purple300, 'top');
+  constructor() {
+    super(ROUTE_BADGE, PfColors.Purple300, 'top');
   }
 }
