@@ -4,8 +4,8 @@ export const config = () => {
   return deepFreeze({
     version: '0.1',
     backend: {
-      user: 'jdoe',
-      password: 'password'
+      user: 'admin',
+      password: 'admin'
     },
     toolbar: {
       defaultDuration: 60,
