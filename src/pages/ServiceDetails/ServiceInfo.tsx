@@ -11,12 +11,11 @@ import {
   Port,
   RouteRule,
   DestinationPolicy,
-  hasIstioSidecar,
   VirtualService,
-  DestinationRule
+  DestinationRule,
+  ServiceDetailsInfo
 } from '../../types/ServiceInfo';
 import { Health } from '../../types/Health';
-import * as API from '../../services/Api';
 import {
   ToastNotification,
   ToastNotificationList,
@@ -30,6 +29,10 @@ import {
 } from 'patternfly-react';
 import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
+
+interface ServiceDetailsId extends ServiceId {
+  serviceDetails: ServiceDetailsInfo;
+}
 
 type ServiceInfoState = {
   labels?: Map<string, string>;
@@ -52,60 +55,38 @@ type ServiceInfoState = {
   errorMessage: string;
 };
 
-class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
-  constructor(props: ServiceId) {
+class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
+  constructor(props: ServiceDetailsId) {
     super(props);
-    this.state = {
+    this.state = this.parseState(props.serviceDetails);
+  }
+
+  parseState = serviceInfoDetails => {
+    let parsed: ServiceInfoState = {
       labels: new Map(),
-      name: '',
-      created_at: '',
-      resource_version: '',
-      type: '',
-      ip: '',
-      ports: [],
-      istio_sidecar: false,
-      deployments: [],
-      routeRules: [],
-      dependencies: new Map(),
+      type: serviceInfoDetails.type,
+      name: serviceInfoDetails.name,
+      created_at: serviceInfoDetails.created_at,
+      resource_version: serviceInfoDetails.resource_version,
+      ip: serviceInfoDetails.ip,
+      ports: serviceInfoDetails.ports,
+      endpoints: serviceInfoDetails.endpoints,
+      istio_sidecar: serviceInfoDetails.istio_sidecar,
+      deployments: serviceInfoDetails.deployments,
+      routeRules: this.sortRouteRulesByPrecedence(serviceInfoDetails.routeRules || []),
+      destinationPolicies: serviceInfoDetails.destinationPolicies,
+      virtualServices: serviceInfoDetails.virtualServices,
+      destinationRules: serviceInfoDetails.destinationRules,
+      dependencies: serviceInfoDetails.dependencies,
+      health: serviceInfoDetails.health,
       error: false,
       errorMessage: ''
     };
-  }
+    return parsed;
+  };
 
-  componentWillReceiveProps(nextProps: ServiceId) {
-    this.fetchServiceDetails(nextProps);
-  }
-
-  fetchServiceDetails(props: ServiceId) {
-    API.getServiceDetail(props.namespace, props.service)
-      .then(response => {
-        let data = response['data'];
-        this.setState({
-          labels: data.labels,
-          name: data.name,
-          created_at: data.created_at,
-          resource_version: data.resource_version,
-          type: data.type,
-          ports: data.ports,
-          endpoints: data.endpoints,
-          istio_sidecar: hasIstioSidecar(data.deployments),
-          deployments: data.deployments,
-          dependencies: data.dependencies,
-          routeRules: this.sortRouteRulesByPrecedence(data.route_rules),
-          destinationPolicies: data.destination_policies,
-          virtualServices: data.virtual_services,
-          destinationRules: data.destination_rules,
-          ip: data.ip,
-          health: data.health
-        });
-      })
-      .catch(error => {
-        this.setState({
-          error: true,
-          errorMessage: API.getErrorMsg('Could not fetch Service Details.', error)
-        });
-        console.log(error);
-      });
+  componentWillReceiveProps(props: ServiceDetailsId) {
+    this.setState(this.parseState(props.serviceDetails));
   }
 
   sortRouteRulesByPrecedence(routeRules: RouteRule[]) {
@@ -121,13 +102,6 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
     return sorted;
   }
 
-  calculateColumns(items: boolean[]) {
-    let cells = 0;
-    items.forEach(v => (v ? cells++ : v));
-    let candidate = Number(12 / cells);
-    return candidate * cells > 12 ? candidate - 1 : candidate;
-  }
-
   render() {
     let deployments = this.state.deployments || [];
     let dependencies = this.state.dependencies || new Map();
@@ -135,6 +109,7 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
     let destinationPolicies = this.state.destinationPolicies || [];
     let virtualServices = this.state.virtualServices || [];
     let destinationRules = this.state.destinationRules || [];
+    let editorLink = '/namespaces/' + this.props.namespace + '/services/' + this.props.service;
     return (
       <div>
         {this.state.error ? (
@@ -189,22 +164,25 @@ class ServiceInfo extends React.Component<ServiceId, ServiceInfoState> {
                     </TabPane>
                     <TabPane eventKey={3}>
                       {(routeRules.length > 0 || this.state.istio_sidecar) && (
-                        <ServiceInfoRouteRules routeRules={routeRules} />
+                        <ServiceInfoRouteRules routeRules={routeRules} editorLink={editorLink} />
                       )}
                     </TabPane>
                     <TabPane eventKey={4}>
                       {(destinationPolicies.length > 0 || this.state.istio_sidecar) && (
-                        <ServiceInfoDestinationPolicies destinationPolicies={destinationPolicies} />
+                        <ServiceInfoDestinationPolicies
+                          destinationPolicies={destinationPolicies}
+                          editorLink={editorLink}
+                        />
                       )}
                     </TabPane>
                     <TabPane eventKey={5}>
                       {(virtualServices.length > 0 || this.state.istio_sidecar) && (
-                        <ServiceInfoVirtualServices virtualServices={virtualServices} />
+                        <ServiceInfoVirtualServices virtualServices={virtualServices} editorLink={editorLink} />
                       )}
                     </TabPane>
                     <TabPane eventKey={6}>
                       {(destinationRules.length > 0 || this.state.istio_sidecar) && (
-                        <ServiceInfoDestinationRules destinationRules={destinationRules} />
+                        <ServiceInfoDestinationRules destinationRules={destinationRules} editorLink={editorLink} />
                       )}
                     </TabPane>
                   </TabContent>

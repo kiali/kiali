@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Col, Row } from 'patternfly-react';
-import { VirtualService } from '../../../types/ServiceInfo';
+import { EditorLink, VirtualService } from '../../../types/ServiceInfo';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
+import { Link } from 'react-router-dom';
 
-interface ServiceInfoVirtualServicesProps {
+interface ServiceInfoVirtualServicesProps extends EditorLink {
   virtualServices?: VirtualService[];
 }
 
@@ -21,7 +22,10 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
             {(this.props.virtualServices || []).map((virtualService, i) => (
               <div className="card-pf-body" key={'virtualService' + i}>
                 <div>
-                  <strong>Name</strong>: {virtualService.name}
+                  <strong>Name</strong>:{' '}
+                  <Link to={this.props.editorLink + '?virtualservice=' + virtualService.name}>
+                    {virtualService.name}
+                  </Link>
                 </div>
                 <div>
                   <strong>Created at</strong>: <LocalTime time={virtualService.created_at} />

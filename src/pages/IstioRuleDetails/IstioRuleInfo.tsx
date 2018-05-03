@@ -72,19 +72,63 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
       });
   }
 
+  // Handlers and Instances have a type attached to the name with '.'
+  // i.e. handler=myhandler.kubernetes
+  validateParams(parsed: ParsedSearch): boolean {
+    if (!parsed.type || !parsed.name || this.state.actions.length === 0) {
+      return false;
+    }
+    let validationType = ['handler', 'instance'];
+    if (parsed.type && validationType.indexOf(parsed.type) < 0) {
+      return false;
+    }
+    let splitName = parsed.name.split('.');
+    if (splitName.length !== 2) {
+      return false;
+    }
+    // i.e. handler=myhandler.kubernetes
+    // innerName == myhandler
+    // innerType == kubernetes
+    let innerName = splitName[0];
+    let innerType = splitName[1];
+
+    for (let i = 0; i < this.state.actions.length; i++) {
+      if (
+        parsed.type === 'handler' &&
+        this.state.actions[i].handler.name === innerName &&
+        this.state.actions[i].handler.adapter === innerType
+      ) {
+        return true;
+      }
+      if (parsed.type === 'instance') {
+        for (let j = 0; j < this.state.actions[i].instances.length; j++) {
+          if (
+            this.state.actions[i].instances[j].name === innerName &&
+            this.state.actions[i].instances[j].template === innerType
+          ) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   // Helper method to extract search urls with format
-  // ?handler=name or ?instance=name
+  // ?handler=name.handlertype or ?instance=name.instancetype
   // Those url are expected to be received on this page.
   parseSearch(): ParsedSearch {
+    let parsed: ParsedSearch = {};
     if (this.props.search) {
       let firstParams = this.props.search
         .split('&')[0]
         .replace('?', '')
         .split('=');
-      return {
-        type: firstParams[0],
-        name: firstParams[1]
-      };
+      parsed.type = firstParams[0];
+      parsed.name = firstParams[1];
+    }
+    if (this.validateParams(parsed)) {
+      return parsed;
     }
     if (this.state.actions.length > 0) {
       let defaultAction = this.state.actions[0];
@@ -95,7 +139,7 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
         };
       }
     }
-    return {};
+    return parsed;
   }
 
   editorContent(parsedSearch: ParsedSearch) {

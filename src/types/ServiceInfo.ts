@@ -1,3 +1,5 @@
+import { Health } from './Health';
+
 export interface Endpoints {
   addresses?: EndpointAddress[];
   ports?: Port[];
@@ -341,3 +343,26 @@ export const hasIstioSidecar = (deployments: Deployment[]) => {
   }
   return false;
 };
+
+export interface ServiceDetailsInfo {
+  labels?: Map<string, string>;
+  type: string;
+  name: string;
+  created_at: string;
+  resource_version: string;
+  ip: string;
+  ports?: Port[];
+  endpoints?: Endpoints[];
+  istio_sidecar: boolean;
+  deployments?: Deployment[];
+  routeRules?: RouteRule[];
+  destinationPolicies?: DestinationPolicy[];
+  virtualServices?: VirtualService[];
+  destinationRules?: DestinationRule[];
+  dependencies?: Map<string, string[]>;
+  health?: Health;
+}
+
+export interface EditorLink {
+  editorLink: string;
+}

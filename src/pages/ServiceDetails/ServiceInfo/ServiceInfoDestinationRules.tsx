@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { DestinationRule } from '../../../types/ServiceInfo';
+import { DestinationRule, EditorLink } from '../../../types/ServiceInfo';
 import { Col, Row } from 'patternfly-react';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
+import { Link } from 'react-router-dom';
 
-interface ServiceInfoDestinationRulesProps {
+interface ServiceInfoDestinationRulesProps extends EditorLink {
   destinationRules?: DestinationRule[];
 }
 
@@ -21,7 +22,10 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
             {(this.props.destinationRules || []).map((destinationRule, i) => (
               <div className="card-pf-body" key={'virtualService' + i}>
                 <div>
-                  <strong>Name</strong>: {destinationRule.name}
+                  <strong>Name</strong>:{' '}
+                  <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.name}>
+                    {destinationRule.name}
+                  </Link>
                 </div>
                 <div>
                   <strong>Created at</strong>: <LocalTime time={destinationRule.created_at} />
