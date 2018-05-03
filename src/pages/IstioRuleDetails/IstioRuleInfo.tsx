@@ -82,16 +82,17 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
     if (parsed.type && validationType.indexOf(parsed.type) < 0) {
       return false;
     }
+    let splitName = parsed.name.split('.');
+    if (splitName.length !== 2) {
+      return false;
+    }
+    // i.e. handler=myhandler.kubernetes
+    // innerName == myhandler
+    // innerType == kubernetes
+    let innerName = splitName[0];
+    let innerType = splitName[1];
+
     for (let i = 0; i < this.state.actions.length; i++) {
-      let splitName = parsed.name.split('.');
-      if (splitName.length !== 2) {
-        continue;
-      }
-      // i.e. handler=myhandler.kubernetes
-      // innerName == myhandler
-      // innerType == kubernetes
-      let innerName = splitName[0];
-      let innerType = splitName[1];
       if (
         parsed.type === 'handler' &&
         this.state.actions[i].handler.name === innerName &&
