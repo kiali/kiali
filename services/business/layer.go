@@ -7,8 +7,9 @@ import (
 
 // Layer is a container for fast access to inner services
 type Layer struct {
-	Svc    SvcService
-	Health HealthService
+	Svc         SvcService
+	Health      HealthService
+	Validations IstioValidationsService
 }
 
 // Global business.Layer; currently only used for tests to inject mocks,
@@ -32,6 +33,7 @@ func Get() (*Layer, error) {
 	temporaryLayer := &Layer{}
 	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s}
 	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, health: &temporaryLayer.Health}
+	temporaryLayer.Validations = IstioValidationsService{k8s: k8s}
 	return temporaryLayer, nil
 }
 
@@ -40,5 +42,6 @@ func SetWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	layer = &Layer{}
 	layer.Health = HealthService{prom: prom, k8s: k8s}
 	layer.Svc = SvcService{prom: prom, k8s: k8s, health: &layer.Health}
+	layer.Validations = IstioValidationsService{k8s: k8s}
 	return layer
 }
