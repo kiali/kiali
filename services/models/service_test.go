@@ -379,7 +379,7 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					DesiredReplicas:                 2,
 					CurrentCPUUtilizationPercentage: &[]int32{30}[0]}}}}
 
-	return &kubernetes.ServiceDetails{service, endpoints, deployments, autoscalers}
+	return &kubernetes.ServiceDetails{service, endpoints, deployments, autoscalers, nil}
 }
 
 func fakeIstioDetails() *kubernetes.IstioDetails {
