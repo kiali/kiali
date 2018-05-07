@@ -11,7 +11,7 @@ import {
   EmptyStateIcon
 } from 'patternfly-react';
 
-import { MessageType, NotificationMessage, NotificationGroup } from './Types';
+import { MessageType, NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
 
 const typeForPfIcon = (type: MessageType) => {
   switch (type) {
@@ -60,7 +60,10 @@ class NotificationWrapper extends React.PureComponent<NotificationWrapperPropsTy
         <Icon className="pull-left" type="pf" name={typeForPfIcon(this.props.message.type)} />
         <Notification.Content>
           <Notification.Message>{this.props.message.content}</Notification.Message>
-          <Notification.Info leftText="left-text" rightText="right-text" />
+          <Notification.Info
+            leftText={this.props.message.created.toLocaleDateString()}
+            rightText={this.props.message.created.toLocaleTimeString()}
+          />
         </Notification.Content>
       </Notification>
     );

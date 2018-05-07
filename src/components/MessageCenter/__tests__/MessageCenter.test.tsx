@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 
 import NotificationList from '../NotificationList';
 import MessageCenter from '../MessageCenter';
-import { NotificationGroup, MessageType } from '../Types';
+import { NotificationGroup, MessageType } from '../../../types/MessageCenter';
 
 describe('MessageCenter', () => {
   const groupMessages: NotificationGroup[] = [
@@ -16,13 +16,15 @@ describe('MessageCenter', () => {
           seen: false,
           content: 'show me',
           type: MessageType.ERROR,
-          show_notification: true
+          show_notification: true,
+          created: new Date()
         },
         {
           id: 2,
           seen: false,
           content: 'hide me',
-          type: MessageType.ERROR
+          type: MessageType.ERROR,
+          created: new Date()
         }
       ]
     },
@@ -35,7 +37,8 @@ describe('MessageCenter', () => {
           seen: true,
           content: 'show me too',
           type: MessageType.SUCCESS,
-          show_notification: true
+          show_notification: true,
+          created: new Date()
         }
       ]
     }

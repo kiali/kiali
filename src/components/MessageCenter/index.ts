@@ -1,5 +1,4 @@
 import MessageCenter from './MessageCenter';
-import StatefulMessageCenter from './StatefulMessageCenter';
-import { NotificationMessage, NotificationGroup, MessageType } from './Types';
+import MessageCenterTrigger from './MessageCenterTrigger';
 
-export { NotificationMessage, NotificationGroup, MessageType, MessageCenter, StatefulMessageCenter };
+export { MessageCenter, MessageCenterTrigger };

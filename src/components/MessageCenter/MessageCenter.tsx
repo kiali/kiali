@@ -3,7 +3,7 @@ import * as React from 'react';
 import NotificationDrawer from './NotificationDrawer';
 import NotificationList from './NotificationList';
 
-import { NotificationMessage, NotificationGroup, MessageCenterPropsType } from './Types';
+import { NotificationMessage, NotificationGroup, MessageCenterPropsType } from '../../types/MessageCenter';
 
 type StateType = {};
 

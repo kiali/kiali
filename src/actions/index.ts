@@ -1,3 +1,4 @@
 import { NamespaceActionType } from './NamespaceAction';
+import { MessageCenterActionType } from './MessageCenterActions';
 
-export { NamespaceActionType };
+export { NamespaceActionType, MessageCenterActionType };

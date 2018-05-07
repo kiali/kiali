@@ -8,16 +8,11 @@ import SummaryPanel from './SummaryPanel';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
 import GraphFilter from '../../components/GraphFilter/GraphFilter';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
-import PfAlerts from '../../components/Pf/PfAlerts';
 import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
+import * as MessageCenter from '../../utils/MessageCenter';
 
 type ServiceGraphPageState = {
-  alertVisible: boolean;
-  alertDetails: {
-    namespaceAlert?: any;
-    graphLoadAlert?: any;
-  };
   summaryData?: SummaryData | null;
   graphTimestamp: string;
   graphData: any;
@@ -41,8 +36,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     this.state = {
       isLoading: false,
       isReady: false,
-      alertVisible: false,
-      alertDetails: {},
+      summaryData: { summaryType: 'graph', summaryTarget: null },
       graphTimestamp: new Date().toLocaleString(),
       graphData: EMPTY_GRAPH_DATA
     };
@@ -69,11 +63,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     this._isMounted = false;
   }
 
-  dismissAlert = () => {
-    this.setState({ alertVisible: false, alertDetails: {} });
-  };
-
-  handleGraphClick = (data: SummaryData) => {
+  handleGraphClick = (data: any) => {
     if (data) {
       this.setState({ summaryData: data });
     }
@@ -105,7 +95,6 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     return (
       <PfContainerNavVertical>
         <h2>Service Graph</h2>
-        <PfAlerts alerts={this.buildAlertsArray()} isVisible={this.state.alertVisible} onDismiss={this.dismissAlert} />
         <GraphFilter
           disabled={this.state.isLoading}
           onLayoutChange={this.handleLayoutChange}
@@ -206,33 +195,21 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
           console.log('ServiceGraphPage: Ignore fetch error, component not mounted.');
           return;
         }
+        MessageCenter.add(this.getGraphErrorAsString(error));
         this.setState({
           graphData: EMPTY_GRAPH_DATA,
           graphTimestamp: new Date().toLocaleString(),
           summaryData: null,
-          isLoading: false,
-          alertVisible: true,
-          alertDetails: { ...this.state.alertDetails, graphLoadAlert: error }
+          isLoading: false
         });
       });
   };
 
-  private buildAlertsArray = () => {
-    let alerts: string[] = [];
-
-    if (this.state.alertDetails.namespaceAlert) {
-      alerts.push('Cannot load namespace list: ' + this.state.alertDetails.namespaceAlert.toString());
+  private getGraphErrorAsString(error: any) {
+    if (error.response && error.response.data && error.response.data.error) {
+      return 'Cannot load the graph: ' + error.response.data.error;
+    } else {
+      return 'Cannot load the graph: ' + error.toString();
     }
-
-    let graphAlert = this.state.alertDetails.graphLoadAlert;
-    if (graphAlert) {
-      if (graphAlert.response && graphAlert.response.data && graphAlert.response.data.error) {
-        alerts.push('Cannot load the graph: ' + graphAlert.response.data.error);
-      } else {
-        alerts.push('Cannot load the graph: ' + graphAlert.toString());
-      }
-    }
-
-    return alerts;
-  };
+  }
 }

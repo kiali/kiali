@@ -4,18 +4,11 @@ import { Col, Row } from 'patternfly-react';
 import ServiceInfo from './ServiceInfo';
 import ServiceMetrics from './ServiceMetrics';
 import ServiceId from '../../types/ServiceId';
-import {
-  ToastNotification,
-  ToastNotificationList,
-  Nav,
-  NavItem,
-  TabContainer,
-  TabContent,
-  TabPane
-} from 'patternfly-react';
+import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
+import * as MessageCenter from '../../utils/MessageCenter';
 import { hasIstioSidecar, ServiceDetailsInfo } from '../../types/ServiceInfo';
 import AceEditor, { AceOptions } from 'react-ace';
 import 'brace/mode/yaml';
@@ -26,8 +19,6 @@ const yaml = require('js-yaml');
 type ServiceDetailsState = {
   jaegerUri: string;
   serviceDetailsInfo: ServiceDetailsInfo;
-  error: boolean;
-  errorMessage: string;
 };
 
 interface ParsedSearch {
@@ -59,9 +50,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         istio_sidecar: false,
         resource_version: '',
         ip: ''
-      },
-      error: false,
-      errorMessage: ''
+      }
     };
   }
 
@@ -188,10 +177,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         });
       })
       .catch(error => {
-        this.setState({
-          error: true,
-          errorMessage: API.getErrorMsg('Cannot fetch Jaeger info.', error)
-        });
+        MessageCenter.add(API.getErrorMsg('Cannot fetch Jaeger info.', error));
         console.log(error);
       });
     API.getServiceDetail(this.props.match.params.namespace, this.props.match.params.service)
@@ -202,10 +188,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         });
       })
       .catch(error => {
-        this.setState({
-          error: true,
-          errorMessage: API.getErrorMsg('Could not fetch Service Details.', error)
-        });
+        MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', error));
         console.log(error);
       });
   }
@@ -216,16 +199,6 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     let to = '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
     return (
       <div className="container-fluid container-pf-nav-pf-vertical">
-        {this.state.error ? (
-          <ToastNotificationList>
-            <ToastNotification type="danger">
-              <span>
-                <strong>Error </strong>
-                {this.state.errorMessage}
-              </span>
-            </ToastNotification>
-          </ToastNotificationList>
-        ) : null}
         <div className="page-header">
           <h2>
             Service{' '}

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { NotificationMessage } from './Types';
+import { NotificationMessage } from '../../types/MessageCenter';
 
 import { ToastNotificationList, TimedToastNotification } from 'patternfly-react';
 

@@ -5,6 +5,7 @@ import { Route, Redirect } from 'react-router-dom';
 
 import SwitchErrorBoundary from '../SwitchErrorBoundary/SwitchErrorBoundary';
 import PfContainerNavVertical from '../Pf/PfContainerNavVertical';
+import MessageCenter from '../../containers/MessageCenterContainer';
 
 import IstioRulesPage from '../../pages/IstioRulesList/IstioRuleListPage';
 import IstioRuleDetailsPage from '../../pages/IstioRuleDetails/IstioRuleDetailsPage';
@@ -108,8 +109,10 @@ class Navigation extends React.Component<PropsType, StateType> {
           <VerticalNav.Masthead title="Kiali">
             <VerticalNav.Brand iconImg={pfLogo} titleImg={pfBrand} />
             <VerticalNav.IconBar>
+              <MessageCenter.Trigger />
               <HelpDropdown />
             </VerticalNav.IconBar>
+            <MessageCenter drawerTitle="Message Center" />
           </VerticalNav.Masthead>
           <VerticalNav.Item title={serviceGraphTitle} iconClass="fa pficon-topology" onClick={this.navigateTo} />
           <VerticalNav.Item title={servicesTitle} iconClass="fa pficon-service" onClick={this.navigateTo} />

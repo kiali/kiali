@@ -1,10 +1,11 @@
 import * as React from 'react';
 import RuleId from '../../types/RuleId';
-import { ToastNotification, ToastNotificationList, Col, Row } from 'patternfly-react';
+import { Col, Row } from 'patternfly-react';
 import * as API from '../../services/Api';
 import { RuleAction } from '../../types/IstioRuleInfo';
 import IstioRuleDetailsDescription from './IstioRuleDestailsDescription';
 import AceEditor, { AceOptions } from 'react-ace';
+import * as MessageCenter from '../../utils/MessageCenter';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import './IstioRuleInfo.css';
@@ -15,8 +16,6 @@ interface RuleInfoState {
   name: string;
   match: string;
   actions: RuleAction[];
-  error: boolean;
-  errorMessage: string;
 }
 
 interface RuleDetailsId extends RuleId {
@@ -40,9 +39,7 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
     this.state = {
       name: '',
       match: '',
-      actions: [],
-      error: false,
-      errorMessage: ''
+      actions: []
     };
   }
 
@@ -65,10 +62,7 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
         });
       })
       .catch(error => {
-        this.setState({
-          error: true,
-          errorMessage: API.getErrorMsg('Could not fetch IstioRule details.', error)
-        });
+        MessageCenter.add(API.getErrorMsg('Could not fetch IstioRule details.', error));
       });
   }
 
@@ -171,16 +165,6 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
     let parsedSearch = this.parseSearch();
     return (
       <div>
-        {this.state.error ? (
-          <ToastNotificationList>
-            <ToastNotification type="danger">
-              <span>
-                <strong>Error </strong>
-                {this.state.errorMessage}
-              </span>
-            </ToastNotification>
-          </ToastNotificationList>
-        ) : null}
         <IstioRuleDetailsDescription
           namespace={this.props.namespace}
           name={this.state.name}

@@ -1,20 +1,19 @@
 import * as React from 'react';
 import Iframe from 'react-iframe';
 import * as API from '../../services/Api';
-import { Alert, EmptyState, EmptyStateTitle, EmptyStateIcon } from 'patternfly-react';
+import { EmptyState, EmptyStateTitle, EmptyStateIcon } from 'patternfly-react';
+import * as MessageCenter from '../../utils/MessageCenter';
 
 type ServiceJaegerState = {
   height: string;
   width: string;
   jaegerURL: string;
   error: boolean;
-  errorMsg: string;
 };
 
-const EmptyStatePage = ({ title }) => (
+const EmptyStatePage = () => (
   <>
     <h2>Distributed Tracing</h2>
-    <Alert>{title}</Alert>
     <EmptyState>
       <EmptyStateIcon name="info" />
       <EmptyStateTitle>
@@ -29,7 +28,7 @@ const EmptyStatePage = ({ title }) => (
 class ServiceJaegerPage extends React.Component<{}, ServiceJaegerState> {
   constructor(props: {}) {
     super(props);
-    this.state = { width: '0 px', jaegerURL: '', height: '0 px', error: false, errorMsg: '' };
+    this.state = { width: '0 px', jaegerURL: '', height: '0 px', error: false };
     this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
   }
 
@@ -45,10 +44,8 @@ class ServiceJaegerPage extends React.Component<{}, ServiceJaegerState> {
         });
       })
       .catch(error => {
-        this.setState({
-          error: true,
-          errorMsg: API.getErrorMsg('Could not fetch Jaeger info', error)
-        });
+        MessageCenter.add(API.getErrorMsg('Could not fetch Jaeger info', error));
+        this.setState({ error: true });
         console.log(error);
       });
   }
@@ -64,7 +61,7 @@ class ServiceJaegerPage extends React.Component<{}, ServiceJaegerState> {
   render() {
     return (
       <div className="container-fluid container-pf-nav-pf-vertical">
-        {this.state.error ? <EmptyStatePage title={this.state.errorMsg} /> : null}
+        {this.state.error ? <EmptyStatePage /> : null}
         <div className="container-fluid container-cards-pf">
           <Iframe
             url={this.state.jaegerURL}

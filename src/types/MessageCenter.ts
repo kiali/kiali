@@ -10,6 +10,7 @@ export interface NotificationMessage {
   seen: boolean;
   type: MessageType;
   content: string;
+  created: Date;
 
   show_notification?: boolean;
   groupId?: string;
