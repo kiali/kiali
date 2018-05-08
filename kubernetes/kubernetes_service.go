@@ -64,12 +64,12 @@ func (in *IstioClient) GetNamespaces() (*v1.NamespaceList, error) {
 
 // GetServices returns a list of services for a given namespace.
 // It returns an error on any problem.
-func (in *IstioClient) GetServices(namespaceName string) (*ServiceList, error) {
+func (in *IstioClient) GetServices(namespace string) (*ServiceList, error) {
 	var err error = nil
 	servicesChan, deploymentsChan := make(chan servicesResponse), make(chan deploymentsResponse)
 
-	go in.getServiceList(namespaceName, servicesChan)
-	go in.getDeployments(namespaceName, deploymentsChan)
+	go in.getServiceList(namespace, servicesChan)
+	go in.getDeployments(namespace, deploymentsChan)
 
 	servicesResponse := <-servicesChan
 	deploymentsResponse := <-deploymentsChan
@@ -89,27 +89,27 @@ func (in *IstioClient) GetServices(namespaceName string) (*ServiceList, error) {
 
 // GetDeployments returns a list of deployments for a given namespace.
 // It returns an error on any problem.
-func (in *IstioClient) GetDeployments(namespaceName string) (*v1beta1.DeploymentList, error) {
-	return in.k8s.AppsV1beta1().Deployments(namespaceName).List(emptyListOptions)
+func (in *IstioClient) GetDeployments(namespace string) (*v1beta1.DeploymentList, error) {
+	return in.k8s.AppsV1beta1().Deployments(namespace).List(emptyListOptions)
 }
 
-// GetDeployments returns a list of deployments for a given namespace.
+// GetService returns the definition of a specific service.
 // It returns an error on any problem.
-func (in *IstioClient) GetService(namespaceName, serviceName string) (*v1.Service, error) {
-	return in.k8s.CoreV1().Services(namespaceName).Get(serviceName, emptyGetOptions)
+func (in *IstioClient) GetService(namespace, serviceName string) (*v1.Service, error) {
+	return in.k8s.CoreV1().Services(namespace).Get(serviceName, emptyGetOptions)
 }
 
 // GetServiceDetails returns full details for a given service, consisting on service description, endpoints and pods.
 // A service is defined by the namespace and the service name.
 // It returns an error on any problem.
-func (in *IstioClient) GetServiceDetails(namespaceName string, serviceName string) (*ServiceDetails, error) {
+func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error) {
 	deploymentsChan := make(chan deploymentsResponse)
 	endpointsChan := make(chan endpointsResponse)
 	autoscalersChan := make(chan autoscalersResponse)
 	podsChan := make(chan podsResponse)
 
 	// Fetch the service first to ensure it exists, then fetch details in parallel
-	service, err := in.GetService(namespaceName, serviceName)
+	service, err := in.GetService(namespace, serviceName)
 	if err != nil {
 		return nil, err
 	}
@@ -118,22 +118,22 @@ func (in *IstioClient) GetServiceDetails(namespaceName string, serviceName strin
 	selector := selectorToString(service.Spec.Selector)
 
 	go func() {
-		deployments, err := in.k8s.AppsV1beta1().Deployments(namespaceName).List(meta_v1.ListOptions{LabelSelector: selector})
+		deployments, err := in.k8s.AppsV1beta1().Deployments(namespace).List(meta_v1.ListOptions{LabelSelector: selector})
 		deploymentsChan <- deploymentsResponse{deployments: deployments, err: err}
 	}()
 
 	go func() {
-		endpoints, err := in.k8s.CoreV1().Endpoints(namespaceName).Get(serviceName, emptyGetOptions)
+		endpoints, err := in.k8s.CoreV1().Endpoints(namespace).Get(serviceName, emptyGetOptions)
 		endpointsChan <- endpointsResponse{endpoints: endpoints, err: err}
 	}()
 
 	go func() {
-		autoscalers, err := in.k8s.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(emptyListOptions)
+		autoscalers, err := in.k8s.AutoscalingV1().HorizontalPodAutoscalers(namespace).List(emptyListOptions)
 		autoscalersChan <- autoscalersResponse{autoscalers: autoscalers, err: err}
 	}()
 
 	go func() {
-		pods, err := in.GetServicePods(namespaceName, "", "", selector)
+		pods, err := in.GetServicePods(namespace, "", "", selector)
 		podsChan <- podsResponse{pods: pods, err: err}
 	}()
 
@@ -168,11 +168,11 @@ func (in *IstioClient) GetServiceDetails(namespaceName string, serviceName strin
 	return &serviceDetails, nil
 }
 
-// GetServicePods returns the list of pods associated to a given service. namespaceName is required.
+// GetServicePods returns the list of pods associated to a given service. namespace is required.
 // If selector is supplied serviceName and serviceVersion are ignored.  If selector is not supplied
 // ("") then a default selector is generated using the canonical labels for serviceName (required)
 // and serviceVersion (optional).  An error is returned on any problem.
-func (in *IstioClient) GetServicePods(namespaceName, serviceName, serviceVersion, selector string) (*v1.PodList, error) {
+func (in *IstioClient) GetServicePods(namespace, serviceName, serviceVersion, selector string) (*v1.PodList, error) {
 	if "" == selector {
 		var labelSelectors []string
 
@@ -184,7 +184,7 @@ func (in *IstioClient) GetServicePods(namespaceName, serviceName, serviceVersion
 		selector = strings.Join(labelSelectors, ",")
 	}
 
-	podList, err := in.k8s.CoreV1().Pods(namespaceName).List(meta_v1.ListOptions{
+	podList, err := in.k8s.CoreV1().Pods(namespace).List(meta_v1.ListOptions{
 		LabelSelector: selector,
 	})
 	if err != nil {
@@ -218,12 +218,12 @@ func getDeploymentNames(deployments *v1beta1.DeploymentList) []string {
 	return deploymentNames
 }
 
-func (in *IstioClient) getServiceList(namespaceName string, servicesChan chan servicesResponse) {
-	services, err := in.k8s.CoreV1().Services(namespaceName).List(emptyListOptions)
+func (in *IstioClient) getServiceList(namespace string, servicesChan chan servicesResponse) {
+	services, err := in.k8s.CoreV1().Services(namespace).List(emptyListOptions)
 	servicesChan <- servicesResponse{services: services, err: err}
 }
 
-func (in *IstioClient) getDeployments(namespaceName string, deploymentsChan chan deploymentsResponse) {
-	deployments, err := in.k8s.AppsV1beta1().Deployments(namespaceName).List(emptyListOptions)
+func (in *IstioClient) getDeployments(namespace string, deploymentsChan chan deploymentsResponse) {
+	deployments, err := in.k8s.AppsV1beta1().Deployments(namespace).List(emptyListOptions)
 	deploymentsChan <- deploymentsResponse{deployments: deployments, err: err}
 }
