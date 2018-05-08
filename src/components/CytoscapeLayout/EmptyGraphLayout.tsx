@@ -19,7 +19,12 @@ type EmptyGraphLayoutState = {};
 
 export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
   render() {
-    if (!this.props.elements || this.props.elements.length < 1 || this.props.elements.nodes.length < 1) {
+    if (
+      !this.props.elements ||
+      this.props.elements.length < 1 ||
+      !this.props.elements.nodes ||
+      this.props.elements.nodes.length < 1
+    ) {
       return (
         <EmptyState className={emptyStateStyle}>
           <EmptyStateTitle>Empty Service Graph</EmptyStateTitle>

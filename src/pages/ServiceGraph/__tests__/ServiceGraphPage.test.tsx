@@ -7,6 +7,8 @@ import Namespace from '../../../types/Namespace';
 
 import ServiceGraphPage from '../ServiceGraphPage';
 
+const dummyFunction = () => 0;
+
 const PARAMS: GraphParamsType = {
   namespace: { name: 'itsio-system' },
   graphDuration: { value: 60 },
@@ -16,7 +18,17 @@ const PARAMS: GraphParamsType = {
 describe('ServiceGraphPage test', () => {
   it('should propagate filter params change with correct value', () => {
     const onParamsChangeFn = jest.fn();
-    const wrapper = shallow(<ServiceGraphPage {...PARAMS} onParamsChange={onParamsChangeFn} />);
+    const wrapper = shallow(
+      <ServiceGraphPage
+        {...PARAMS}
+        onParamsChange={onParamsChangeFn}
+        fetchGraphData={dummyFunction}
+        graphTimestamp={'0'}
+        graphData={[]}
+        isLoading={false}
+        isReady={true}
+      />
+    );
 
     const serviceGraph = wrapper.instance() as ServiceGraphPage;
     const newLayout: Layout = { name: 'Cola' };

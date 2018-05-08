@@ -13,11 +13,17 @@ cytoscape.use(coseBilkent);
 cytoscape.use(klay);
 cytoscape.use(popper);
 
-/**
- * A React Cytoscape wrapper.
- * props : style, elements, layout, cyRef, styleContainer, cytoscapeOptions, containerID
- */
-class ReactCytoscape extends Component<any, any> {
+interface ReactCytoscapeProps {
+  containerID?: string; // the div ID that contains the cy graph
+  elements?: any; // defines all the nodes, edges, and groups - this is the low-level graph data
+  style?: any;
+  styleContainer?: any;
+  cytoscapeOptions?: any;
+  layout?: any;
+  cyRef?: (cy: any) => void; // to be called when cy graph is initially created
+}
+
+export default class ReactCytoscape extends Component<ReactCytoscapeProps, any> {
   cy: any;
   container: any;
 
@@ -145,5 +151,3 @@ class ReactCytoscape extends Component<any, any> {
     }
   }
 }
-
-export default ReactCytoscape;

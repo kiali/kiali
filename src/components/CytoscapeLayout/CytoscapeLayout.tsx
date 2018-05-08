@@ -14,7 +14,7 @@ import { KialiAppState } from '../../store/Store';
 import * as GraphBadge from './graphs/GraphBadge';
 
 type CytoscapeLayoutType = {
-  elements: any;
+  elements?: any;
   onClick: (event: CytoscapeClickEvent) => void;
   onReady: (event: CytoscapeBaseEvent) => void;
   isLoading?: boolean;

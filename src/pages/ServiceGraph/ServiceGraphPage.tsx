@@ -8,42 +8,32 @@ import SummaryPanel from './SummaryPanel';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
 import GraphFilter from '../../components/GraphFilter/GraphFilter';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
-import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
-import * as MessageCenter from '../../utils/MessageCenter';
 
 type ServiceGraphPageState = {
   summaryData?: SummaryData | null;
+};
+
+type ServiceGraphPageProps = GraphParamsType & {
   graphTimestamp: string;
   graphData: any;
   isLoading: boolean;
   isReady: boolean;
-};
-
-type ServiceGraphPageProps = GraphParamsType & {
   onParamsChange: (params: GraphParamsType) => void;
+  fetchGraphData: (namespace: Namespace, graphDuration: Duration) => any;
 };
-const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 const NUMBER_OF_DATAPOINTS = 30;
 
 export default class ServiceGraphPage extends React.Component<ServiceGraphPageProps, ServiceGraphPageState> {
-  // avoid state changes after component is unmounted
-  _isMounted: boolean = false;
-
   constructor(props: ServiceGraphPageProps) {
     super(props);
 
     this.state = {
-      isLoading: false,
-      isReady: false,
-      summaryData: { summaryType: 'graph', summaryTarget: null },
-      graphTimestamp: new Date().toLocaleString(),
-      graphData: EMPTY_GRAPH_DATA
+      summaryData: { summaryType: 'graph', summaryTarget: null }
     };
   }
 
   componentDidMount() {
-    this._isMounted = true;
     this.loadGraphDataFromBackend();
   }
 
@@ -59,11 +49,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     }
   }
 
-  componentWillUnmount() {
-    this._isMounted = false;
-  }
-
-  handleGraphClick = (data: any) => {
+  handleGraphClick = (data: SummaryData) => {
     if (data) {
       this.setState({ summaryData: data });
     }
@@ -72,7 +58,6 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
   handleReady = (cy: any) => {
     if (cy) {
       this.setState({
-        isReady: true,
         summaryData: {
           summaryType: 'graph',
           summaryTarget: cy
@@ -96,7 +81,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
       <PfContainerNavVertical>
         <h2>Service Graph</h2>
         <GraphFilter
-          disabled={this.state.isLoading}
+          disabled={this.props.isLoading}
           onLayoutChange={this.handleLayoutChange}
           onFilterChange={this.handleFilterChange}
           onNamespaceChange={this.handleNamespaceChange}
@@ -107,9 +92,9 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
         <div style={{ position: 'absolute', right: 20, bottom: 0, top: 230, left: 220 }}>
           <CytoscapeLayout
             {...graphParams}
-            isLoading={this.state.isLoading}
-            isReady={this.state.isReady}
-            elements={this.state.graphData}
+            isLoading={this.props.isLoading}
+            isReady={this.props.isReady}
+            elements={this.props.graphData}
             onClick={this.handleGraphClick}
             onReady={this.handleReady}
             refresh={this.handleRefreshClick}
@@ -118,7 +103,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
             <SummaryPanel
               data={this.state.summaryData}
               namespace={this.props.namespace.name}
-              queryTime={this.state.graphTimestamp}
+              queryTime={this.props.graphTimestamp}
               duration={this.props.graphDuration.value}
               {...computePrometheusQueryInterval(this.props.graphDuration.value, NUMBER_OF_DATAPOINTS)}
             />
@@ -170,46 +155,11 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
 
   /** Fetch graph data */
   loadGraphDataFromBackend = (namespace?: Namespace, graphDuration?: Duration) => {
-    this.setState({ isLoading: true, isReady: false });
     namespace = namespace ? namespace : this.props.namespace;
-    const duration = graphDuration ? graphDuration.value : this.props.graphDuration.value;
-    const restParams = { duration: duration + 's' };
-    API.getGraphElements(namespace, restParams)
-      .then(response => {
-        if (!this._isMounted) {
-          console.log('ServiceGraphPage: Ignore fetch, component not mounted.');
-          return;
-        }
-        const responseData = response['data'];
-        const elements = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
-        const timestamp = responseData && responseData.timestamp ? responseData.timestamp : '';
-        this.setState({
-          graphData: elements,
-          graphTimestamp: timestamp,
-          summaryData: null,
-          isLoading: false
-        });
-      })
-      .catch(error => {
-        if (!this._isMounted) {
-          console.log('ServiceGraphPage: Ignore fetch error, component not mounted.');
-          return;
-        }
-        MessageCenter.add(this.getGraphErrorAsString(error));
-        this.setState({
-          graphData: EMPTY_GRAPH_DATA,
-          graphTimestamp: new Date().toLocaleString(),
-          summaryData: null,
-          isLoading: false
-        });
-      });
+    graphDuration = graphDuration ? graphDuration : this.props.graphDuration;
+    this.props.fetchGraphData(namespace, graphDuration);
+    this.setState({
+      summaryData: null
+    });
   };
-
-  private getGraphErrorAsString(error: any) {
-    if (error.response && error.response.data && error.response.data.error) {
-      return 'Cannot load the graph: ' + error.response.data.error;
-    } else {
-      return 'Cannot load the graph: ' + error.toString();
-    }
-  }
 }

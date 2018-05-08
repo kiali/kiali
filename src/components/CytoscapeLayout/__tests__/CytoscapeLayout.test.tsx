@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 
-import ReactCytoscape from '../ReactCytoscape';
+import ReactCytoscapeConnected from '../ReactCytoscape';
 import { CytoscapeLayout } from '../CytoscapeLayout';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
 import { Duration, Layout, BadgeStatus } from '../../../types/GraphFilter';
@@ -38,8 +38,8 @@ describe('CytoscapeLayout component test', () => {
         showNodeLabels={true}
       />
     );
-    const cytoscapeWrapper = wrapper.find(ReactCytoscape);
-    expect(cytoscapeWrapper.prop('elements').elements.nodes).toEqual(GRAPH_DATA[testNamespace].elements.nodes);
-    expect(cytoscapeWrapper.prop('elements').elements.edges).toEqual(GRAPH_DATA[testNamespace].elements.edges);
+    const cytoscapeWrapper = wrapper.find(ReactCytoscapeConnected);
+    expect(cytoscapeWrapper.prop('elements')['elements'].nodes).toEqual(GRAPH_DATA[testNamespace].elements.nodes);
+    expect(cytoscapeWrapper.prop('elements')['elements'].edges).toEqual(GRAPH_DATA[testNamespace].elements.edges);
   });
 });

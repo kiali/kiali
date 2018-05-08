@@ -15,6 +15,12 @@ export interface MessageCenterState {
   expandedGroupId: string;
 }
 
+export interface ServiceGraphDataState {
+  isLoading: boolean;
+  timestamp: number;
+  graphData: any;
+}
+
 // @todo: Add namespaces interface
 
 // This defines the Kiali Global Application State
@@ -23,4 +29,5 @@ export interface KialiAppState {
   messageCenter: MessageCenterState;
   namespaces: any;
   serviceGraphState: ServiceGraphState;
+  serviceGraphDataState: ServiceGraphDataState;
 }
