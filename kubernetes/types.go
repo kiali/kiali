@@ -385,6 +385,7 @@ type ServiceDetails struct {
 	Endpoints   *v1.Endpoints                              `json:"endpoints"`
 	Deployments *v1beta1.DeploymentList                    `json:"deployments"`
 	Autoscalers *autoscalingV1.HorizontalPodAutoscalerList `json:"autoscalers"`
+	Pods        *v1.PodList                                `json:"pods"`
 }
 
 // IstioDetails is a wrapper to group all Istio objects related to a Service.
