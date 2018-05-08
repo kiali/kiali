@@ -30,7 +30,7 @@ describe('MetricsOptionsBar', () => {
     expect(opts).toHaveProperty('duration', MetricsOptionsBar.DefaultDuration);
 
     let elt = wrapper
-      .find('#duration')
+      .find('#metrics_filter_interval_duration')
       .find('SafeAnchor')
       .first();
     elt.simulate('click');

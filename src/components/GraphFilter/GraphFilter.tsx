@@ -81,6 +81,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             />
           </FormGroup>
           <ToolbarDropdown
+            id={'graph_filter_interval_duration'}
             disabled={this.props.disabled}
             handleSelect={this.updateDuration}
             nameDropdown={'Duration'}
@@ -93,6 +94,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             options={GraphFilter.INTERVAL_DURATION}
           />
           <ToolbarDropdown
+            id={'graph_filter_layouts'}
             disabled={this.props.disabled}
             handleSelect={this.updateLayout}
             nameDropdown={'Layout'}
