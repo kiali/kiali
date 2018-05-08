@@ -87,6 +87,9 @@ func parseAppenders(params url.Values) []appender.Appender {
 		csl = strings.ToLower(params.Get("appenders"))
 	}
 
+	if csl == all || strings.Contains(csl, "dead_service") {
+		appenders = append(appenders, appender.DeadServiceAppender{})
+	}
 	if csl == all || strings.Contains(csl, "unused_service") {
 		appenders = append(appenders, appender.UnusedServiceAppender{})
 	}
