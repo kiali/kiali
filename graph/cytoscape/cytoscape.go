@@ -30,19 +30,20 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	Service           string `json:"service"`
-	Version           string `json:"version,omitempty"`
-	Rate              string `json:"rate,omitempty"`           // edge aggregate
-	Rate3xx           string `json:"rate3XX,omitempty"`        // edge aggregate
-	Rate4xx           string `json:"rate4XX,omitempty"`        // edge aggregate
-	Rate5xx           string `json:"rate5XX,omitempty"`        // edge aggregate
-	RateSelfInvoke    string `json:"rateSelfInvoke,omitempty"` // rate of selfInvoke
-	HasCircuitBreaker string `json:"hasCB,omitempty"`          // true | false
-	HasRouteRule      string `json:"hasRR,omitempty"`          // true | false
-	IsDead            string `json:"isDead,omitempty"`         // true (has no pods) | false
-	IsGroup           string `json:"isGroup,omitempty"`        // set to the grouping type, current values: [ 'version' ]
-	IsRoot            string `json:"isRoot,omitempty"`         // true | false
-	IsUnused          string `json:"isUnused,omitempty"`       // true | false
+	Service            string `json:"service"`
+	Version            string `json:"version,omitempty"`
+	Rate               string `json:"rate,omitempty"`               // edge aggregate
+	Rate3xx            string `json:"rate3XX,omitempty"`            // edge aggregate
+	Rate4xx            string `json:"rate4XX,omitempty"`            // edge aggregate
+	Rate5xx            string `json:"rate5XX,omitempty"`            // edge aggregate
+	RateSelfInvoke     string `json:"rateSelfInvoke,omitempty"`     // rate of selfInvoke
+	HasCircuitBreaker  string `json:"hasCB,omitempty"`              // true | false
+	HasRouteRule       string `json:"hasRR,omitempty"`              // true | false
+	IsDead             string `json:"isDead,omitempty"`             // true (has no pods) | false
+	IsGroup            string `json:"isGroup,omitempty"`            // set to the grouping type, current values: [ 'version' ]
+	IsRoot             string `json:"isRoot,omitempty"`             // true | false
+	IsUnused           string `json:"isUnused,omitempty"`           // true | false
+	HasMissingSidecars bool   `json:"hasMissingSidecars,omitempty"` // true | false
 }
 
 type EdgeData struct {
@@ -174,6 +175,11 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 			nd.HasRouteRule = cb.(string)
 		}
 
+		// set sidecars checks, if available
+		if cb, ok := sn.Metadata["hasMissingSidecars"]; ok {
+			nd.HasMissingSidecars = cb.(bool)
+		}
+
 		nw := NodeWrapper{
 			Data: nd,
 		}
@@ -288,9 +294,11 @@ func addCompositeNodes(nodes *[]*NodeWrapper, nodeIdSequence *int) {
 
 			// assign each service version node to the composite parent
 			hasRouteRule := false
+			nd.HasMissingSidecars = false
 			for _, n := range *nodes {
 				if k == n.Data.Service {
 					n.Data.Parent = nodeId
+					nd.HasMissingSidecars = nd.HasMissingSidecars || n.Data.HasMissingSidecars
 					// If there is a route rule defined in version node, move it to composite parent
 					if n.Data.HasRouteRule == "true" {
 						n.Data.HasRouteRule = "false"
