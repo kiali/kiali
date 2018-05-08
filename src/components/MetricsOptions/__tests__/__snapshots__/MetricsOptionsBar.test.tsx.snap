@@ -62,7 +62,7 @@ ShallowWrapper {
         <ToolbarDropdown
           disabled={false}
           handleSelect={[Function]}
-          id="duration"
+          id="metrics_filter_interval_duration"
           initialLabel="Last minute"
           initialValue={60}
           nameDropdown="Duration"
@@ -85,6 +85,7 @@ ShallowWrapper {
         <ToolbarDropdown
           disabled={false}
           handleSelect={[Function]}
+          id="metrics_filter_pool_interval"
           initialLabel="5 seconds"
           initialValue={5000}
           nameDropdown="Pool Interval"
@@ -173,7 +174,7 @@ ShallowWrapper {
         "props": Object {
           "disabled": false,
           "handleSelect": [Function],
-          "id": "duration",
+          "id": "metrics_filter_interval_duration",
           "initialLabel": "Last minute",
           "initialValue": 60,
           "nameDropdown": "Duration",
@@ -202,6 +203,7 @@ ShallowWrapper {
         "props": Object {
           "disabled": false,
           "handleSelect": [Function],
+          "id": "metrics_filter_pool_interval",
           "initialLabel": "5 seconds",
           "initialValue": 5000,
           "nameDropdown": "Pool Interval",
@@ -309,7 +311,7 @@ ShallowWrapper {
           <ToolbarDropdown
             disabled={false}
             handleSelect={[Function]}
-            id="duration"
+            id="metrics_filter_interval_duration"
             initialLabel="Last minute"
             initialValue={60}
             nameDropdown="Duration"
@@ -332,6 +334,7 @@ ShallowWrapper {
           <ToolbarDropdown
             disabled={false}
             handleSelect={[Function]}
+            id="metrics_filter_pool_interval"
             initialLabel="5 seconds"
             initialValue={5000}
             nameDropdown="Pool Interval"
@@ -420,7 +423,7 @@ ShallowWrapper {
           "props": Object {
             "disabled": false,
             "handleSelect": [Function],
-            "id": "duration",
+            "id": "metrics_filter_interval_duration",
             "initialLabel": "Last minute",
             "initialValue": 60,
             "nameDropdown": "Duration",
@@ -449,6 +452,7 @@ ShallowWrapper {
           "props": Object {
             "disabled": false,
             "handleSelect": [Function],
+            "id": "metrics_filter_pool_interval",
             "initialLabel": "5 seconds",
             "initialValue": 5000,
             "nameDropdown": "Pool Interval",
