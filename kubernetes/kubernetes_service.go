@@ -2,12 +2,13 @@ package kubernetes
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/kiali/kiali/config"
 	"k8s.io/api/apps/v1beta1"
 	autoscalingV1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
 )
 
 const (
@@ -92,56 +93,65 @@ func (in *IstioClient) GetDeployments(namespaceName string) (*v1beta1.Deployment
 	return in.k8s.AppsV1beta1().Deployments(namespaceName).List(emptyListOptions)
 }
 
+// GetDeployments returns a list of deployments for a given namespace.
+// It returns an error on any problem.
+func (in *IstioClient) GetService(namespaceName, serviceName string) (*v1.Service, error) {
+	return in.k8s.CoreV1().Services(namespaceName).Get(serviceName, emptyGetOptions)
+}
+
 // GetServiceDetails returns full details for a given service, consisting on service description, endpoints and pods.
 // A service is defined by the namespace and the service name.
 // It returns an error on any problem.
-func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error) {
-	serviceChan := make(chan serviceResponse)
+func (in *IstioClient) GetServiceDetails(namespaceName string, serviceName string) (*ServiceDetails, error) {
+	deploymentsChan := make(chan deploymentsResponse)
 	endpointsChan := make(chan endpointsResponse)
 	autoscalersChan := make(chan autoscalersResponse)
 	podsChan := make(chan podsResponse)
 
+	// Fetch the service first to ensure it exists, then fetch details in parallel
+	service, err := in.GetService(namespaceName, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	// selector used to get deployments and pods
+	selector := selectorToString(service.Spec.Selector)
+
 	go func() {
-		service, err := in.k8s.CoreV1().Services(namespace).Get(serviceName, emptyGetOptions)
-		serviceChan <- serviceResponse{service: service, err: err}
+		deployments, err := in.k8s.AppsV1beta1().Deployments(namespaceName).List(meta_v1.ListOptions{LabelSelector: selector})
+		deploymentsChan <- deploymentsResponse{deployments: deployments, err: err}
 	}()
 
 	go func() {
-		endpoints, err := in.k8s.CoreV1().Endpoints(namespace).Get(serviceName, emptyGetOptions)
+		endpoints, err := in.k8s.CoreV1().Endpoints(namespaceName).Get(serviceName, emptyGetOptions)
 		endpointsChan <- endpointsResponse{endpoints: endpoints, err: err}
 	}()
 
 	go func() {
-		autoscalers, err := in.k8s.AutoscalingV1().HorizontalPodAutoscalers(namespace).List(emptyListOptions)
+		autoscalers, err := in.k8s.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(emptyListOptions)
 		autoscalersChan <- autoscalersResponse{autoscalers: autoscalers, err: err}
 	}()
 
 	go func() {
-		pods, err := in.GetServicePods(namespace, serviceName, "")
+		pods, err := in.GetServicePods(namespaceName, "", "", selector)
 		podsChan <- podsResponse{pods: pods, err: err}
 	}()
 
 	serviceDetails := ServiceDetails{}
 
-	serviceResponse := <-serviceChan
-	if serviceResponse.err != nil {
-		return nil, serviceResponse.err
+	serviceDetails.Service = service
+
+	deploymentsResponse := <-deploymentsChan
+	if deploymentsResponse.err != nil {
+		return nil, deploymentsResponse.err
 	}
-	serviceDetails.Service = serviceResponse.service
+	serviceDetails.Deployments = deploymentsResponse.deployments
 
 	endpointsResponse := <-endpointsChan
 	if endpointsResponse.err != nil {
 		return nil, endpointsResponse.err
 	}
 	serviceDetails.Endpoints = endpointsResponse.endpoints
-
-	// Fetch deployments synchronously after we get service since we rely on its selector
-	selector := selectorToString(serviceDetails.Service.Spec.Selector)
-	deployments, err := in.k8s.AppsV1beta1().Deployments(namespace).List(meta_v1.ListOptions{LabelSelector: selector})
-	if err != nil {
-		return nil, err
-	}
-	serviceDetails.Deployments = deployments
 
 	autoscalersResponse := <-autoscalersChan
 	if autoscalersResponse.err != nil {
@@ -158,24 +168,24 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	return &serviceDetails, nil
 }
 
-// GetServicePods returns the list of pods associated to a given service.
-// Pods belonging to a service are resolved by looking at the "app" label of the pods.
-// Optionally, a version can be specified to only return the pods belonging to the version (else,
-// set the version to an empty string).
-// It returns an error on any problem.
-func (in *IstioClient) GetServicePods(namespace, serviceName, serviceVersion string) (*v1.PodList, error) {
-	var labelSelectors []string
+// GetServicePods returns the list of pods associated to a given service. namespaceName is required.
+// If selector is supplied serviceName and serviceVersion are ignored.  If selector is not supplied
+// ("") then a default selector is generated using the canonical labels for serviceName (required)
+// and serviceVersion (optional).  An error is returned on any problem.
+func (in *IstioClient) GetServicePods(namespaceName, serviceName, serviceVersion, selector string) (*v1.PodList, error) {
+	if "" == selector {
+		var labelSelectors []string
 
-	cfg := config.Get()
-	if serviceName != "" {
+		cfg := config.Get()
 		labelSelectors = append(labelSelectors, fmt.Sprintf("%v=%v", cfg.ServiceFilterLabelName, serviceName))
-	}
-	if serviceVersion != "" {
-		labelSelectors = append(labelSelectors, fmt.Sprintf("%v=%v", cfg.VersionFilterLabelName, serviceVersion))
+		if "" != serviceVersion {
+			labelSelectors = append(labelSelectors, fmt.Sprintf("%v=%v", cfg.VersionFilterLabelName, serviceVersion))
+		}
+		selector = strings.Join(labelSelectors, ",")
 	}
 
-	podList, err := in.k8s.CoreV1().Pods(namespace).List(meta_v1.ListOptions{
-		LabelSelector: strings.Join(labelSelectors, ","),
+	podList, err := in.k8s.CoreV1().Pods(namespaceName).List(meta_v1.ListOptions{
+		LabelSelector: selector,
 	})
 	if err != nil {
 		return nil, err
