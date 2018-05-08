@@ -1,10 +1,13 @@
 package kubernetes
 
 import (
+	"fmt"
+	"github.com/kiali/kiali/config"
 	"k8s.io/api/apps/v1beta1"
 	autoscalingV1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 const (
@@ -34,6 +37,11 @@ type deploymentsResponse struct {
 type autoscalersResponse struct {
 	autoscalers *autoscalingV1.HorizontalPodAutoscalerList
 	err         error
+}
+
+type podsResponse struct {
+	pods *v1.PodList
+	err  error
 }
 
 type podResponse struct {
@@ -91,6 +99,7 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	serviceChan := make(chan serviceResponse)
 	endpointsChan := make(chan endpointsResponse)
 	autoscalersChan := make(chan autoscalersResponse)
+	podsChan := make(chan podsResponse)
 
 	go func() {
 		service, err := in.k8s.CoreV1().Services(namespace).Get(serviceName, emptyGetOptions)
@@ -105,6 +114,11 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	go func() {
 		autoscalers, err := in.k8s.AutoscalingV1().HorizontalPodAutoscalers(namespace).List(emptyListOptions)
 		autoscalersChan <- autoscalersResponse{autoscalers: autoscalers, err: err}
+	}()
+
+	go func() {
+		pods, err := in.GetServicePods(namespace, serviceName, "")
+		podsChan <- podsResponse{pods: pods, err: err}
 	}()
 
 	serviceDetails := ServiceDetails{}
@@ -135,7 +149,39 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	}
 	serviceDetails.Autoscalers = autoscalersResponse.autoscalers
 
+	podsResponse := <-podsChan
+	if podsResponse.err != nil {
+		return nil, podsResponse.err
+	}
+	serviceDetails.Pods = podsResponse.pods
+
 	return &serviceDetails, nil
+}
+
+// GetServicePods returns the list of pods associated to a given service.
+// Pods belonging to a service are resolved by looking at the "app" label of the pods.
+// Optionally, a version can be specified to only return the pods belonging to the version (else,
+// set the version to an empty string).
+// It returns an error on any problem.
+func (in *IstioClient) GetServicePods(namespace, serviceName, serviceVersion string) (*v1.PodList, error) {
+	var labelSelectors []string
+
+	cfg := config.Get()
+	if serviceName != "" {
+		labelSelectors = append(labelSelectors, fmt.Sprintf("%v=%v", cfg.ServiceFilterLabelName, serviceName))
+	}
+	if serviceVersion != "" {
+		labelSelectors = append(labelSelectors, fmt.Sprintf("%v=%v", cfg.VersionFilterLabelName, serviceVersion))
+	}
+
+	podList, err := in.k8s.CoreV1().Pods(namespace).List(meta_v1.ListOptions{
+		LabelSelector: strings.Join(labelSelectors, ","),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return podList, nil
 }
 
 func filterAutoscalersByDeployments(deploymentNames []string, al *autoscalingV1.HorizontalPodAutoscalerList) *autoscalingV1.HorizontalPodAutoscalerList {
