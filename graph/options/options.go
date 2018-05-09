@@ -90,14 +90,11 @@ func parseAppenders(params url.Values) []appender.Appender {
 	if csl == all || strings.Contains(csl, "dead_service") {
 		appenders = append(appenders, appender.DeadServiceAppender{})
 	}
+	if csl == all || strings.Contains(csl, "istio") {
+		appenders = append(appenders, appender.IstioAppender{})
+	}
 	if csl == all || strings.Contains(csl, "unused_service") {
 		appenders = append(appenders, appender.UnusedServiceAppender{})
-	}
-	if csl == all || strings.Contains(csl, "circuit_breaker") {
-		appenders = append(appenders, appender.CircuitBreakerAppender{})
-	}
-	if csl == all || strings.Contains(csl, "route_rule") {
-		appenders = append(appenders, appender.RouteRuleAppender{})
 	}
 	return appenders
 }
