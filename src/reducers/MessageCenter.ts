@@ -1,6 +1,6 @@
 import { MessageType } from '../types/MessageCenter';
 import { MessageCenterState } from '../store/Store';
-import { MessageCenterActionType } from '../actions/MessageCenterActions';
+import { MessageCenterActionKeys } from '../actions/MessageCenterActions';
 
 const INITIAL_STATE: MessageCenterState = {
   nextId: 0,
@@ -30,7 +30,7 @@ const createMessage = (id: number, content: string, type: MessageType) => {
 
 const Messages = (state: MessageCenterState = INITIAL_STATE, action) => {
   switch (action.type) {
-    case MessageCenterActionType.ADD_MESSAGE: {
+    case MessageCenterActionKeys.MESSAGE_CENTER_ADD: {
       const { groupId, content, messageType } = action;
       const groups = state.groups.map(group => {
         if (group.id === groupId) {
@@ -43,7 +43,7 @@ const Messages = (state: MessageCenterState = INITIAL_STATE, action) => {
       });
       return mergeToState(state, { groups: groups, nextId: state.nextId + 1 });
     }
-    case MessageCenterActionType.REMOVE_MESSAGE: {
+    case MessageCenterActionKeys.MESSAGE_CENTER_REMOVE: {
       const messageId = action.messageId;
       const groups = state.groups.map(group => {
         group = Object.assign({}, group, {
@@ -55,7 +55,7 @@ const Messages = (state: MessageCenterState = INITIAL_STATE, action) => {
       });
       return mergeToState(state, { groups });
     }
-    case MessageCenterActionType.MARK_AS_READ: {
+    case MessageCenterActionKeys.MESSAGE_CENTER_MARK_AS_READ: {
       const messageId = action.messageId;
       const groups = state.groups.map(group => {
         group = Object.assign({}, group, {
@@ -70,20 +70,20 @@ const Messages = (state: MessageCenterState = INITIAL_STATE, action) => {
       });
       return mergeToState(state, { groups });
     }
-    case MessageCenterActionType.SHOW_MESSAGE_CENTER:
+    case MessageCenterActionKeys.MESSAGE_CENTER_SHOW:
       if (state.hidden) {
         return mergeToState(state, { hidden: false });
       }
       return state;
-    case MessageCenterActionType.HIDE_MESSAGE_CENTER:
+    case MessageCenterActionKeys.MESSAGE_CENTER_HIDE:
       if (!state.hidden) {
         return mergeToState(state, { hidden: true });
       }
       return state;
-    case MessageCenterActionType.TOGGLE_EXPAND_MESSAGE_CENTER:
+    case MessageCenterActionKeys.MESSAGE_CENTER_TOGGLE_EXPAND:
       return mergeToState(state, { expanded: !state.expanded });
 
-    case MessageCenterActionType.TOGGLE_GROUP: {
+    case MessageCenterActionKeys.MESSAGE_CENTER_TOGGLE_GROUP: {
       const { groupId } = action;
       if (state.expandedGroupId === groupId) {
         return mergeToState(state, { expandedGroupId: undefined });

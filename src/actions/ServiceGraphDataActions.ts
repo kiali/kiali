@@ -6,7 +6,7 @@ import * as MessageCenter from '../utils/MessageCenter';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 
-export enum ServiceGraphDataActionsType {
+export enum ServiceGraphDataActionKeys {
   GET_GRAPH_DATA_START = 'GET_GRAPH_DATA_START',
   GET_GRAPH_DATA_SUCCESS = 'GET_GRAPH_DATA_SUCCESS',
   GET_GRAPH_DATA_FAILURE = 'GET_GRAPH_DATA_FAILURE'
@@ -14,17 +14,17 @@ export enum ServiceGraphDataActionsType {
 
 // synchronous action creators
 export const ServiceGraphDataActions = {
-  getGraphDataStart: createAction(ServiceGraphDataActionsType.GET_GRAPH_DATA_START),
+  getGraphDataStart: createAction(ServiceGraphDataActionKeys.GET_GRAPH_DATA_START),
   getGraphDataSuccess: createAction(
-    ServiceGraphDataActionsType.GET_GRAPH_DATA_SUCCESS,
+    ServiceGraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
     (timestamp: number, graphData: any) => ({
-      type: ServiceGraphDataActionsType.GET_GRAPH_DATA_SUCCESS,
+      type: ServiceGraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
       timestamp: timestamp,
       graphData: graphData
     })
   ),
-  getGraphDataFailure: createAction(ServiceGraphDataActionsType.GET_GRAPH_DATA_FAILURE, (error: any) => ({
-    type: ServiceGraphDataActionsType.GET_GRAPH_DATA_FAILURE,
+  getGraphDataFailure: createAction(ServiceGraphDataActionKeys.GET_GRAPH_DATA_FAILURE, (error: any) => ({
+    type: ServiceGraphDataActionKeys.GET_GRAPH_DATA_FAILURE,
     error: error
   })),
 

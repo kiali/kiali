@@ -3,9 +3,9 @@ import { Toolbar, Button, Icon, FormGroup } from 'patternfly-react';
 
 import { GraphFilterProps, GraphFilterState } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
-import AutoUpdateNamespaceList from '../../containers/AutoUpdateNamespaceList';
+import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
 import { config } from '../../config';
-import GraphLayersConnected from '../../containers/GraphLayers/GraphLayers';
+import GraphLayersContainer from '../../containers/GraphLayersContainer';
 import { style } from 'typestyle';
 
 const zeroPaddingLeft = style({
@@ -57,7 +57,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
         <Toolbar>
           <FormGroup className={zeroPaddingLeft}>
             <label className={labelPaddingRight}>Namespace:</label>
-            <AutoUpdateNamespaceList
+            <NamespaceDropdownContainer
               disabled={this.props.disabled}
               activeNamespace={this.props.namespace}
               onSelect={this.props.onNamespaceChange}
@@ -92,7 +92,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
           </Toolbar.RightContent>
         </Toolbar>
         <Toolbar>
-          <GraphLayersConnected />
+          <GraphLayersContainer />
         </Toolbar>
       </>
     );

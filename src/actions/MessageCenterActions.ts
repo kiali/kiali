@@ -1,55 +1,55 @@
 import { MessageType } from '../types/MessageCenter';
 import { createAction } from 'typesafe-actions';
 
-export const enum MessageCenterActionType {
-  ADD_MESSAGE = 'add_message',
-  REMOVE_MESSAGE = 'remove_message',
-  MARK_AS_READ = 'mark_as_read',
-  SHOW_MESSAGE_CENTER = 'show_message_center',
-  HIDE_MESSAGE_CENTER = 'hide_message_center',
-  TOGGLE_EXPAND_MESSAGE_CENTER = 'toggle_expand_message_center',
-  TOGGLE_GROUP = 'toggle_group'
+export const enum MessageCenterActionKeys {
+  MESSAGE_CENTER_ADD = 'MESSAGE_CENTER_ADD',
+  MESSAGE_CENTER_REMOVE = 'MESSAGE_CENTER_REMOVE',
+  MESSAGE_CENTER_MARK_AS_READ = 'MESSAGE_CENTER_MARK_AS_READ',
+  MESSAGE_CENTER_SHOW = 'MESSAGE_CENTER_SHOW',
+  MESSAGE_CENTER_HIDE = 'MESSAGE_CENTER_HIDE',
+  MESSAGE_CENTER_TOGGLE_EXPAND = 'MESSAGE_CENTER_TOGGLE_EXPAND',
+  MESSAGE_CENTER_TOGGLE_GROUP = 'MESSAGE_CENTER_TOGGLE_GROUP'
 }
 
 const numberArray = (n: number | number[]) => (Array.isArray(n) ? n : [n]);
 
 export const MessageCenterActions = {
   addMessage: createAction(
-    MessageCenterActionType.ADD_MESSAGE,
+    MessageCenterActionKeys.MESSAGE_CENTER_ADD,
     (content: string, groupId: string, messageType: MessageType) => ({
-      type: MessageCenterActionType.ADD_MESSAGE,
+      type: MessageCenterActionKeys.MESSAGE_CENTER_ADD,
       content,
       groupId,
       messageType
     })
   ),
-  removeMessage: createAction(MessageCenterActionType.REMOVE_MESSAGE, (messageId: number | number[]) => {
-    const type = MessageCenterActionType.REMOVE_MESSAGE;
+  removeMessage: createAction(MessageCenterActionKeys.MESSAGE_CENTER_REMOVE, (messageId: number | number[]) => {
+    const type = MessageCenterActionKeys.MESSAGE_CENTER_REMOVE;
     messageId = numberArray(messageId);
     return {
       type,
       messageId
     };
   }),
-  markAsRead: createAction(MessageCenterActionType.MARK_AS_READ, (messageId: number | number[]) => {
-    const type = MessageCenterActionType.MARK_AS_READ;
+  markAsRead: createAction(MessageCenterActionKeys.MESSAGE_CENTER_MARK_AS_READ, (messageId: number | number[]) => {
+    const type = MessageCenterActionKeys.MESSAGE_CENTER_MARK_AS_READ;
     messageId = numberArray(messageId);
     return {
       type,
       messageId
     };
   }),
-  toggleGroup: createAction(MessageCenterActionType.TOGGLE_GROUP, (groupId: number) => {
-    const type = MessageCenterActionType.TOGGLE_GROUP;
+  toggleGroup: createAction(MessageCenterActionKeys.MESSAGE_CENTER_TOGGLE_GROUP, (groupId: number) => {
+    const type = MessageCenterActionKeys.MESSAGE_CENTER_TOGGLE_GROUP;
     return {
       type,
       groupId
     };
   }),
 
-  showMessageCenter: createAction(MessageCenterActionType.SHOW_MESSAGE_CENTER),
-  hideMessageCenter: createAction(MessageCenterActionType.HIDE_MESSAGE_CENTER),
-  togleExpandedMessageCenter: createAction(MessageCenterActionType.TOGGLE_EXPAND_MESSAGE_CENTER),
+  showMessageCenter: createAction(MessageCenterActionKeys.MESSAGE_CENTER_SHOW),
+  hideMessageCenter: createAction(MessageCenterActionKeys.MESSAGE_CENTER_HIDE),
+  togleExpandedMessageCenter: createAction(MessageCenterActionKeys.MESSAGE_CENTER_TOGGLE_EXPAND),
 
   toggleMessageCenter: () => {
     return (dispatch, getState) => {

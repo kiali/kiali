@@ -1,26 +1,26 @@
 import * as Api from '../services/Api';
 
-export enum NamespaceActionType {
-  RELOAD = 'reload',
-  API_INITIATE_REQUEST = 'api_initiate_request',
-  API_RECEIVE_LIST = 'api_receive_list'
+export enum NamespaceActionKeys {
+  NAMESPACE_RELOAD = 'NAMESPACE_RELOAD',
+  NAMESPACE_START = 'NAMESPACE_START',
+  NAMESPACE_SUCCESS = 'NAMESPACE_SUCCESS'
 }
 
 export const reload = () => {
   return {
-    type: NamespaceActionType.RELOAD
+    type: NamespaceActionKeys.NAMESPACE_RELOAD
   };
 };
 
 export const apiInitiateRequest = () => {
   return {
-    type: NamespaceActionType.API_INITIATE_REQUEST
+    type: NamespaceActionKeys.NAMESPACE_START
   };
 };
 
 export const apiReceiveList = newList => {
   return {
-    type: NamespaceActionType.API_RECEIVE_LIST,
+    type: NamespaceActionKeys.NAMESPACE_SUCCESS,
     list: newList,
     receivedAt: Date.now()
   };
@@ -38,10 +38,8 @@ export const asyncFetchNamespaces = () => {
 const shouldFetchNamespaces = state => {
   if (!state) {
     return true;
-  } else if (state.namespaces.isFetching) {
-    return false;
   } else {
-    return true;
+    return !state.namespaces.isFetching;
   }
 };
 

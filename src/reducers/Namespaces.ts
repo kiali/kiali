@@ -1,4 +1,4 @@
-import { NamespaceActionType } from '../actions/NamespaceAction';
+import { NamespaceActionKeys } from '../actions/NamespaceAction';
 
 const INITIAL_STATE = {
   isFetching: false,
@@ -8,18 +8,18 @@ const INITIAL_STATE = {
 
 const namespaces = (state = INITIAL_STATE, action) => {
   switch (action.type) {
-    case NamespaceActionType.RELOAD:
+    case NamespaceActionKeys.NAMESPACE_RELOAD:
       return Object.assign({}, state, {
         didInvalidate: true
       });
 
-    case NamespaceActionType.API_INITIATE_REQUEST:
+    case NamespaceActionKeys.NAMESPACE_START:
       return Object.assign({}, state, {
         isFetching: true,
         didInvalidate: false
       });
 
-    case NamespaceActionType.API_RECEIVE_LIST:
+    case NamespaceActionKeys.NAMESPACE_SUCCESS:
       return Object.assign({}, state, {
         isFetching: false,
         didInvalidate: false,

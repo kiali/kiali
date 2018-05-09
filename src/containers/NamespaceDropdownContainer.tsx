@@ -17,5 +17,5 @@ const mapDispatchToProps = dispatch => {
   };
 };
 
-const AutoUpdateNamespaceList = connect(mapStateToProps, mapDispatchToProps)(NamespaceDropdown);
-export default AutoUpdateNamespaceList;
+const NamespaceDropdownContainer = connect(mapStateToProps, mapDispatchToProps)(NamespaceDropdown);
+export default NamespaceDropdownContainer;
