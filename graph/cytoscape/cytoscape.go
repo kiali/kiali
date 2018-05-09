@@ -37,8 +37,8 @@ type NodeData struct {
 	Rate4xx           string `json:"rate4XX,omitempty"`        // edge aggregate
 	Rate5xx           string `json:"rate5XX,omitempty"`        // edge aggregate
 	RateSelfInvoke    string `json:"rateSelfInvoke,omitempty"` // rate of selfInvoke
-	HasCircuitBreaker string `json:"hasCB,omitempty"`          // true | false | unknown
-	HasRouteRule      string `json:"hasRR,omitempty"`          // true | false | unknown
+	HasCircuitBreaker string `json:"hasCB,omitempty"`          // true | false
+	HasRouteRule      string `json:"hasRR,omitempty"`          // true | false
 	IsDead            string `json:"isDead,omitempty"`         // true (has no pods) | false
 	IsGroup           string `json:"isGroup,omitempty"`        // set to the grouping type, current values: [ 'version' ]
 	IsRoot            string `json:"isRoot,omitempty"`         // true | false

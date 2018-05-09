@@ -256,7 +256,7 @@ func CheckDestinationRuleCircuitBreaker(destinationRule IstioObject, namespace s
 						if trafficPolicy, ok := innerSubset["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
 							if labels, ok := innerSubset["labels"]; ok {
 								if dLabels, ok := labels.(map[string]interface{}); ok && version != "" {
-									if dLabels[cfg.VersionFilterLabelName] == version {
+									if versionValue, ok := dLabels[cfg.VersionFilterLabelName]; ok && versionValue == version {
 										return true
 									}
 								}
@@ -336,7 +336,7 @@ func filterByDestination(spec map[string]interface{}, namespace string, serviceN
 		}
 		if dLabels, ok := dest["labels"]; ok && version != "" {
 			if labels, ok := dLabels.(map[string]interface{}); ok {
-				if labels[cfg.VersionFilterLabelName] == version {
+				if versionValue, ok := labels[cfg.VersionFilterLabelName]; ok && versionValue == version {
 					return true
 				}
 				return false
