@@ -2,52 +2,84 @@ import * as React from 'react';
 import Switch from 'react-bootstrap-switch';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { serviceGraphActions } from '../../actions/ServiceGraphActions';
-import { KialiAppState } from '../../store/Store';
+import { serviceGraphFilterActions } from '../../actions/ServiceGraphFilterActions';
+import { KialiAppState, ServiceGraphFilterState } from '../../store/Store';
+import { style } from 'typestyle';
 
-interface LabelFilterProps {
-  showEdgeLabels: boolean;
-  showNodeLabels: boolean;
-
+interface ServiceGraphDispatch {
+  // Dispatch methods
   toggleGraphEdgeLabels(): void;
   toggleGraphNodeLabels(): void;
+  toggleGraphCircuitBreakers(): void;
+  toggleGraphRouteRules(): void;
 }
+
+// inherit all of our Reducer state section  and Dispatch methods for redux
+type GraphLayersProps = ServiceGraphDispatch & ServiceGraphFilterState;
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState) => ({
-  showEdgeLabels: state.serviceGraphState.showEdgeLabels,
-  showNodeLabels: state.serviceGraphState.showNodeLabels
+  showEdgeLabels: state.serviceGraphFilterState.showEdgeLabels,
+  showNodeLabels: state.serviceGraphFilterState.showNodeLabels,
+  showCircuitBreakers: state.serviceGraphFilterState.showCircuitBreakers,
+  showRouteRules: state.serviceGraphFilterState.showRouteRules
 });
 
 // Map our actions to Redux
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    toggleGraphNodeLabels: bindActionCreators(serviceGraphActions.toggleGraphNodeLabel, dispatch),
-    toggleGraphEdgeLabels: bindActionCreators(serviceGraphActions.toggleGraphEdgeLabel, dispatch)
+    toggleGraphNodeLabels: bindActionCreators(serviceGraphFilterActions.toggleGraphNodeLabel, dispatch),
+    toggleGraphEdgeLabels: bindActionCreators(serviceGraphFilterActions.toggleGraphEdgeLabel, dispatch),
+    toggleGraphCircuitBreakers: bindActionCreators(serviceGraphFilterActions.toggleGraphCircuitBreakers, dispatch),
+    toggleGraphRouteRules: bindActionCreators(serviceGraphFilterActions.toggleGraphRouteRules, dispatch)
   };
 };
 
-class GraphLayers extends React.Component<LabelFilterProps, null> {
-  constructor(props: LabelFilterProps) {
+// Show/Hide Graph Visibility Layers -- there will be many
+// Right now it is a toolbar with Switch Buttons -- this will change once with UXD input
+class GraphLayers extends React.Component<GraphLayersProps, null> {
+  constructor(props: GraphLayersProps) {
     super(props);
   }
 
   render() {
+    const switchButtonStyle = style({
+      paddingLeft: '10px'
+    });
+
     return (
       <>
-        <span style={{ marginLeft: 10 }}>
+        <span className={switchButtonStyle}>
+          <Switch
+            bsSize={'medium'}
+            labelText={'Circuit Breakers'}
+            value={this.props.showCircuitBreakers}
+            disabled={false}
+            onChange={(el, state) => this.props.toggleGraphCircuitBreakers()}
+          />
+        </span>
+        <span className={switchButtonStyle}>
+          <Switch
+            bsSize={'medium'}
+            labelText={'Route Rules'}
+            value={this.props.showRouteRules}
+            disabled={false}
+            onChange={(el, state) => this.props.toggleGraphRouteRules()}
+          />
+        </span>
+        <span className={switchButtonStyle}>
           <Switch
             bsSize={'medium'}
             labelText={'Edge Labels'}
-            defaultValue={false}
+            value={this.props.showEdgeLabels}
             onChange={(el, state) => this.props.toggleGraphEdgeLabels()}
           />
         </span>
-        <span style={{ marginLeft: 5 }}>
+        <span className={switchButtonStyle}>
           <Switch
             bsSize={'medium'}
             labelText={'Node Labels'}
-            defaultValue={true}
+            value={this.props.showNodeLabels}
             onChange={(el, state) => this.props.toggleGraphNodeLabels()}
           />
         </span>

@@ -20,6 +20,8 @@ type CytoscapeLayoutType = {
   isLoading?: boolean;
   showEdgeLabels: boolean;
   showNodeLabels: boolean;
+  showCircuitBreakers: boolean;
+  showRouteRules: boolean;
   isReady?: boolean;
   refresh: any;
 };
@@ -57,9 +59,10 @@ export class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, Cytos
     return (
       this.props.isLoading !== nextProps.isLoading ||
       this.props.graphLayout !== nextProps.graphLayout ||
-      this.props.badgeStatus !== nextProps.badgeStatus ||
       this.props.showEdgeLabels !== nextProps.showEdgeLabels ||
-      this.props.showNodeLabels !== nextProps.showNodeLabels
+      this.props.showNodeLabels !== nextProps.showNodeLabels ||
+      this.props.showCircuitBreakers !== nextProps.showCircuitBreakers ||
+      this.props.showRouteRules !== nextProps.showRouteRules
     );
   }
 
@@ -114,17 +117,17 @@ export class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, Cytos
 
     // when the graph is fully populated and ready, we need to add appropriate badges to the nodes
     this.cy.ready((evt: any) => {
-      if (this.props.badgeStatus.hideCBs && this.props.badgeStatus.hideRRs) {
+      if (!this.props.showCircuitBreakers && !this.props.showRouteRules) {
         return;
       }
 
       const cbBadge = new GraphBadge.CircuitBreakerBadge();
       const rrBadge = new GraphBadge.RouteRuleBadge();
       evt.cy.nodes().forEach(ele => {
-        if (!this.props.badgeStatus.hideCBs && ele.data('hasCB') === 'true') {
+        if (this.props.showCircuitBreakers && ele.data('hasCB') === 'true') {
           cbBadge.buildBadge(ele);
         }
-        if (!this.props.badgeStatus.hideRRs && ele.data('hasRR') === 'true') {
+        if (this.props.showRouteRules && ele.data('hasRR') === 'true') {
           rrBadge.buildBadge(ele);
         }
       });
@@ -200,8 +203,10 @@ export class CytoscapeLayout extends React.Component<CytoscapeLayoutProps, Cytos
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  showEdgeLabels: state.serviceGraphState.showEdgeLabels,
-  showNodeLabels: state.serviceGraphState.showNodeLabels
+  showEdgeLabels: state.serviceGraphFilterState.showEdgeLabels,
+  showNodeLabels: state.serviceGraphFilterState.showNodeLabels,
+  showCircuitBreakers: state.serviceGraphFilterState.showCircuitBreakers,
+  showRouteRules: state.serviceGraphFilterState.showRouteRules
 });
 
 const CytoscapeLayoutConnected = connect(mapStateToProps, null)(CytoscapeLayout);

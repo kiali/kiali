@@ -6,7 +6,6 @@ export interface GraphFilterProps extends GraphParamsType {
   onLayoutChange: (newLayout: Layout) => void;
   onFilterChange: (newDuration: Duration) => void;
   onNamespaceChange: (newValue: Namespace) => void;
-  onBadgeStatusChange: (newValue: BadgeStatus) => void;
   onRefresh: () => void;
 }
 
@@ -18,9 +17,4 @@ export interface Layout {
 
 export interface Duration {
   value: number;
-}
-
-export interface BadgeStatus {
-  hideCBs: boolean;
-  hideRRs: boolean;
 }

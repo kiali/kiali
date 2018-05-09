@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import Namespace from '../../types/Namespace';
 import { GraphParamsType, SummaryData } from '../../types/Graph';
-import { Duration, Layout, BadgeStatus } from '../../types/GraphFilter';
+import { Duration, Layout } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
 import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
@@ -74,8 +74,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     const graphParams: GraphParamsType = {
       namespace: this.props.namespace,
       graphLayout: this.props.graphLayout,
-      graphDuration: { value: Number(sessionStorage.getItem('appDuration')) } || this.props.graphDuration,
-      badgeStatus: this.props.badgeStatus
+      graphDuration: { value: Number(sessionStorage.getItem('appDuration')) } || this.props.graphDuration
     };
     return (
       <PfContainerNavVertical>
@@ -85,7 +84,6 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
           onLayoutChange={this.handleLayoutChange}
           onFilterChange={this.handleFilterChange}
           onNamespaceChange={this.handleNamespaceChange}
-          onBadgeStatusChange={this.handleBadgeStatusChange}
           onRefresh={this.handleRefreshClick}
           {...graphParams}
         />
@@ -117,8 +115,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     const newParams: GraphParamsType = {
       namespace: this.props.namespace,
       graphDuration: this.props.graphDuration,
-      graphLayout: layout,
-      badgeStatus: this.props.badgeStatus
+      graphLayout: layout
     };
     this.props.onParamsChange(newParams);
   };
@@ -127,8 +124,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     const newParams: GraphParamsType = {
       namespace: this.props.namespace,
       graphDuration: duration,
-      graphLayout: this.props.graphLayout,
-      badgeStatus: this.props.badgeStatus
+      graphLayout: this.props.graphLayout
     };
     this.props.onParamsChange(newParams);
   };
@@ -137,18 +133,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     const newParams: GraphParamsType = {
       namespace: namespace,
       graphDuration: this.props.graphDuration,
-      graphLayout: this.props.graphLayout,
-      badgeStatus: this.props.badgeStatus
-    };
-    this.props.onParamsChange(newParams);
-  };
-
-  handleBadgeStatusChange = (newBS: BadgeStatus) => {
-    const newParams: GraphParamsType = {
-      namespace: this.props.namespace,
-      graphDuration: this.props.graphDuration,
-      graphLayout: this.props.graphLayout,
-      badgeStatus: newBS
+      graphLayout: this.props.graphLayout
     };
     this.props.onParamsChange(newParams);
   };

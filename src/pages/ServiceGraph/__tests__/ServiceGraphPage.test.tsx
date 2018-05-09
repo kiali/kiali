@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 
 import { GraphParamsType } from '../../../types/Graph';
-import { Duration, Layout, BadgeStatus } from '../../../types/GraphFilter';
+import { Duration, Layout } from '../../../types/GraphFilter';
 import Namespace from '../../../types/Namespace';
 
 import ServiceGraphPage from '../ServiceGraphPage';
@@ -12,8 +12,7 @@ const dummyFunction = () => 0;
 const PARAMS: GraphParamsType = {
   namespace: { name: 'itsio-system' },
   graphDuration: { value: 60 },
-  graphLayout: { name: 'Cose' },
-  badgeStatus: { hideCBs: true, hideRRs: true }
+  graphLayout: { name: 'Cose' }
 };
 describe('ServiceGraphPage test', () => {
   it('should propagate filter params change with correct value', () => {
@@ -45,10 +44,5 @@ describe('ServiceGraphPage test', () => {
     serviceGraph.handleNamespaceChange(newNamespace); // simulate name change
     const EXPECT3 = Object.assign({}, PARAMS, { namespace: newNamespace });
     expect(onParamsChangeFn).toHaveBeenLastCalledWith(EXPECT3);
-
-    const badgeStatus: BadgeStatus = { hideCBs: false, hideRRs: false };
-    serviceGraph.handleBadgeStatusChange(badgeStatus); // simulate 'show Circuit breaker' status change
-    const EXPECT4 = Object.assign({}, PARAMS, { badgeStatus: badgeStatus });
-    expect(onParamsChangeFn).toHaveBeenLastCalledWith(EXPECT4);
   });
 });

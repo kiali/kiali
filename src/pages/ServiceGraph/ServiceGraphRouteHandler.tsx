@@ -11,11 +11,11 @@ const URLSearchParams = require('url-search-params');
 const SESSION_KEY = 'service-graph-params';
 
 type ServiceGraphURLProps = {
+  // @todo: redo this manual params with Redux-Router
+  // @todo: add back in circuit-breaker, route-rules params to Redux-Router for URL-params
   duration: string;
   namespace: string;
   layout: string;
-  hideCBs: string;
-  hideRRs: string;
 };
 
 // TODO put duration, step defaults and Prometheus translation in a single place
@@ -64,23 +64,17 @@ export class ServiceGraphRouteHandler extends React.Component<
 
   componentWillReceiveProps(nextProps: RouteComponentProps<ServiceGraphURLProps>) {
     const nextNamespace = { name: nextProps.match.params.namespace };
-    const { graphDuration: nextDuration, graphLayout: nextLayout, badgeStatus: nextBadgeStatus } = this.parseProps(
-      nextProps.location.search
-    );
+    const { graphDuration: nextDuration, graphLayout: nextLayout } = this.parseProps(nextProps.location.search);
 
     const layoutHasChanged = nextLayout.name !== this.state.graphLayout.name;
     const namespaceHasChanged = nextNamespace.name !== this.state.namespace.name;
     const durationHasChanged = nextDuration.value !== this.state.graphDuration.value;
-    const badgeCBsChanged = nextBadgeStatus.hideCBs !== this.state.badgeStatus.hideCBs;
-    const badgeRRsHasChanged = nextBadgeStatus.hideRRs !== this.state.badgeStatus.hideRRs;
-    const badgeStatusHasChanged = badgeCBsChanged || badgeRRsHasChanged;
 
-    if (layoutHasChanged || namespaceHasChanged || durationHasChanged || badgeStatusHasChanged) {
+    if (layoutHasChanged || namespaceHasChanged || durationHasChanged) {
       const newParams: GraphParamsType = {
         namespace: nextNamespace,
         graphDuration: nextDuration,
-        graphLayout: nextLayout,
-        badgeStatus: nextBadgeStatus
+        graphLayout: nextLayout
       };
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(newParams));
       this.setState({ ...newParams });
@@ -88,9 +82,7 @@ export class ServiceGraphRouteHandler extends React.Component<
   }
 
   makeURLFromParams = (params: GraphParamsType) =>
-    `/service-graph/${params.namespace.name}?layout=${params.graphLayout.name}&duration=${
-      params.graphDuration.value
-    }&hideCBs=${params.badgeStatus.hideCBs}&hideRRs=${params.badgeStatus.hideRRs}`;
+    `/service-graph/${params.namespace.name}?layout=${params.graphLayout.name}&duration=${params.graphDuration.value}`;
 
   /** Change browser address bar and trigger new props propagation */
   onParamsChange = (params: GraphParamsType) => {

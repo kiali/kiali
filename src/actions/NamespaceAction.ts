@@ -51,9 +51,8 @@ export const fetchNamespacesIfNeeded = () => {
   // This is useful for avoiding a network request if
   // a cached value is already available.
   return (dispatch, getState) => {
-    console.log('fetchNamespacesIfNeeded()');
+    console.debug('fetchNamespacesIfNeeded()');
     if (shouldFetchNamespaces(getState())) {
-      console.log('begin async fetching namespaces');
       // Dispatch a thunk from thunk!
       return dispatch(asyncFetchNamespaces());
     } else {

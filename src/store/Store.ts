@@ -2,9 +2,15 @@ import { NotificationGroup } from '../types/MessageCenter';
 // Store is the Redux Data store
 
 // Various pages are described here with their various sections
-export interface ServiceGraphState {
-  showEdgeLabels: boolean;
-  showNodeLabels: boolean;
+export interface ServiceGraphFilterState {
+  // Toggle props
+  readonly showEdgeLabels: boolean;
+  readonly showNodeLabels: boolean;
+  readonly showCircuitBreakers: boolean;
+  readonly showRouteRules: boolean;
+  // disable the service graph layers toolbar
+  // @todo: add this back in later
+  // readonly disableLayers: boolean;
 }
 
 export interface MessageCenterState {
@@ -28,6 +34,6 @@ export interface KialiAppState {
   // page settings
   messageCenter: MessageCenterState;
   namespaces: any;
-  serviceGraphState: ServiceGraphState;
   serviceGraphDataState: ServiceGraphDataState;
+  serviceGraphFilterState: ServiceGraphFilterState;
 }

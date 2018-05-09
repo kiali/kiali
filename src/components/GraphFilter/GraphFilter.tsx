@@ -1,17 +1,25 @@
 import * as React from 'react';
-import { Toolbar, Button, ButtonGroup, Switch, Icon, FormGroup } from 'patternfly-react';
+import { Toolbar, Button, Icon, FormGroup } from 'patternfly-react';
 
 import { GraphFilterProps, GraphFilterState } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import AutoUpdateNamespaceList from '../../containers/AutoUpdateNamespaceList';
 import { config } from '../../config';
 import GraphLayersConnected from '../../containers/GraphLayers/GraphLayers';
+import { style } from 'typestyle';
+
+const zeroPaddingLeft = style({
+  paddingLeft: '0px'
+});
+const labelPaddingRight = style({
+  paddingRight: '0.5em'
+});
 
 export default class GraphFilter extends React.Component<GraphFilterProps, GraphFilterState> {
   // TODO:  We should keep these mappings with their corresponding filtering components.
   // GraphFilter should be minimal and used for assembling those filtering components.
-  static INTERVAL_DURATION = config().toolbar.intervalDuration;
-  static GRAPH_LAYOUTS = config().toolbar.graphLayouts;
+  static readonly INTERVAL_DURATION = config().toolbar.intervalDuration;
+  static readonly GRAPH_LAYOUTS = config().toolbar.graphLayouts;
 
   constructor(props: GraphFilterProps) {
     super(props);
@@ -43,37 +51,12 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
     this.props.onRefresh();
   };
 
-  handleToggleCBs = (event: any) => {
-    this.props.onBadgeStatusChange({
-      hideCBs: !this.props.badgeStatus.hideCBs,
-      hideRRs: this.props.badgeStatus.hideRRs
-    });
-  };
-
-  handleToggleRRs = (event: any) => {
-    this.props.onBadgeStatusChange({
-      hideCBs: this.props.badgeStatus.hideCBs,
-      hideRRs: !this.props.badgeStatus.hideRRs
-    });
-  };
-
   render() {
-    // TODO, these inline styles could moveto typestyle
-    const zeroPaddingLeft = {
-      paddingLeft: '0px'
-    };
-    const labelPaddingRight = {
-      paddingRight: '0.5em'
-    };
-    const buttonPaddingLeft = {
-      paddingLeft: '5px'
-    };
-
     return (
       <>
         <Toolbar>
-          <FormGroup style={zeroPaddingLeft}>
-            <label style={labelPaddingRight}>Namespace:</label>
+          <FormGroup className={zeroPaddingLeft}>
+            <label className={labelPaddingRight}>Namespace:</label>
             <AutoUpdateNamespaceList
               disabled={this.props.disabled}
               activeNamespace={this.props.namespace}
@@ -109,22 +92,6 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
           </Toolbar.RightContent>
         </Toolbar>
         <Toolbar>
-          <ButtonGroup>
-            <Switch
-              labelText="Circuit Breakers"
-              disabled={this.props.disabled}
-              value={!this.props.badgeStatus.hideCBs}
-              onChange={this.handleToggleCBs}
-            />
-          </ButtonGroup>
-          <ButtonGroup style={buttonPaddingLeft}>
-            <Switch
-              labelText="Route Rules"
-              disabled={this.props.disabled}
-              value={!this.props.badgeStatus.hideRRs}
-              onChange={this.handleToggleRRs}
-            />
-          </ButtonGroup>
           <GraphLayersConnected />
         </Toolbar>
       </>
