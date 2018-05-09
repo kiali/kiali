@@ -6,9 +6,9 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
-// GetIstioDetails returns Istio details for a given service,
-// on this version it collects the RouterRules, DestinationPolicies, VirtualService and DestinationRules defined for a service.
-// A service is defined by the namespace and the service name.
+// GetIstioDetails returns Istio details for a given namespace,
+// on this version it collects the RouterRules, DestinationPolicies, VirtualService and DestinationRules defined for a namespace.
+// If serviceName param is provided, it filters all the Istio objects pointing to a particular service.
 // It returns an error on any problem.
 func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error) {
 	var routeRules, destinationPolicies, virtualServices, destinationRules []IstioObject
