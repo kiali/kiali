@@ -5,7 +5,7 @@ import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
-import graphUtils from '../../utils/graphing';
+import graphUtils from '../../utils/Graphing';
 import MetricsOptions from '../../types/MetricsOptions';
 import { PfColors } from '../../components/Pf/PfColors';
 

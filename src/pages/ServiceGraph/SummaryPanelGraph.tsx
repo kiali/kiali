@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import RateTable from '../../components/SummaryPanel/RateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
-import graphUtils from '../../utils/graphing';
+import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
 import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';

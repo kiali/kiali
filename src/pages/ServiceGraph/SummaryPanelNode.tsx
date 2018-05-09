@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as API from '../../services/Api';
 
-import graphUtils from '../../utils/graphing';
+import graphUtils from '../../utils/Graphing';
 import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import Badge from '../../components/Badge/Badge';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';

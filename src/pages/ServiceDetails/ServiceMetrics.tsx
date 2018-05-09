@@ -7,7 +7,7 @@ import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import MetricsOptions from '../../types/MetricsOptions';
-import graphUtils from '../../utils/graphing';
+import graphUtils from '../../utils/Graphing';
 
 interface GrafanaInfo {
   url: string;
