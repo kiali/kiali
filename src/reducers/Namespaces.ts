@@ -1,4 +1,4 @@
-import { NamespaceActionType } from '../actions';
+import { NamespaceActionType } from '../actions/NamespaceAction';
 
 const INITIAL_STATE = {
   isFetching: false,
