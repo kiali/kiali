@@ -9,13 +9,6 @@ import (
 
 type IstioAppender struct {}
 
-type namespaceInfo struct {
-    destinationPolicies []kubernetes.IstioObject
-    routeRules          []kubernetes.IstioObject
-    virtualServices     []kubernetes.IstioObject
-    destinationRules    []kubernetes.IstioObject
-}
-
 func (a IstioAppender) AppendGraph(trees *[]tree.ServiceNode, namespaceName string) {
     istioClient, err := kubernetes.NewClient()
     checkError(err)
@@ -27,42 +20,28 @@ func (a IstioAppender) AppendGraph(trees *[]tree.ServiceNode, namespaceName stri
     }
 }
 
-func fetchNamespaceInfo(namespaceName string, istioClient *kubernetes.IstioClient) namespaceInfo {
-    destinationPolicies, err := istioClient.GetDestinationPolicies(namespaceName, "")
+func fetchNamespaceInfo(namespaceName string, istioClient *kubernetes.IstioClient) *kubernetes.IstioDetails {
+    istioDetails, err :=istioClient.GetIstioDetails(namespaceName, "")
     checkError(err)
 
-    routeRules, err := istioClient.GetRouteRules(namespaceName, "")
-    checkError(err)
-
-    virtualServices, err := istioClient.GetVirtualServices(namespaceName, "")
-    checkError(err)
-
-    destinationRules, err := istioClient.GetDestinationRules(namespaceName, "")
-    checkError(err)
-
-    return namespaceInfo{
-        destinationPolicies: destinationPolicies,
-        routeRules: routeRules,
-        virtualServices: virtualServices,
-        destinationRules: destinationRules,
-    }
+    return istioDetails
 }
 
-func addRouteBadges(n *tree.ServiceNode, namespaceName string, info namespaceInfo) {
-    applyCircuitBreakers(n, namespaceName, info)
-    applyRouteRules(n, namespaceName, info)
+func addRouteBadges(n *tree.ServiceNode, namespaceName string, istioDetails *kubernetes.IstioDetails) {
+    applyCircuitBreakers(n, namespaceName, istioDetails)
+    applyRouteRules(n, namespaceName, istioDetails)
 
     for _, child := range n.Children {
-        addRouteBadges(child, namespaceName, info)
+        addRouteBadges(child, namespaceName, istioDetails)
     }
 }
 
-func applyCircuitBreakers(n *tree.ServiceNode, namespaceName string, info namespaceInfo) {
+func applyCircuitBreakers(n *tree.ServiceNode, namespaceName string, istioDetails *kubernetes.IstioDetails) {
     serviceName := strings.Split(n.Name, ".")[0]
     version := n.Version
 
     found := false
-    for _, destinationPolicy := range info.destinationPolicies {
+    for _, destinationPolicy := range istioDetails.DestinationPolicies {
         if kubernetes.CheckDestinationPolicyCircuitBreaker(destinationPolicy, namespaceName, serviceName, version) {
             n.Metadata["hasCircuitBreaker"] = "true"
             found = true
@@ -72,7 +51,7 @@ func applyCircuitBreakers(n *tree.ServiceNode, namespaceName string, info namesp
 
     // If we have found a CircuitBreaker from destinationPolicies we don't continue searching
     if !found {
-        for _, destinationRule := range info.destinationRules {
+        for _, destinationRule := range istioDetails.DestinationRules {
             if kubernetes.CheckDestinationRuleCircuitBreaker(destinationRule, namespaceName, serviceName, version) {
                 n.Metadata["hasCircuitBreaker"] = "true"
                 break;
@@ -81,12 +60,12 @@ func applyCircuitBreakers(n *tree.ServiceNode, namespaceName string, info namesp
     }
 }
 
-func applyRouteRules(n *tree.ServiceNode, namespaceName string, info namespaceInfo) {
+func applyRouteRules(n *tree.ServiceNode, namespaceName string, istioDetails *kubernetes.IstioDetails) {
     serviceName := strings.Split(n.Name, ".")[0]
     version := n.Version
 
     found := false
-    for _, routeRule := range info.routeRules {
+    for _, routeRule := range istioDetails.RouteRules {
         if kubernetes.CheckRouteRule(routeRule, namespaceName, serviceName, version) {
             n.Metadata["hasRouteRule"] = "true"
             found = true
@@ -96,8 +75,8 @@ func applyRouteRules(n *tree.ServiceNode, namespaceName string, info namespaceIn
 
     // If we have found a RouteRule we don't continue searching
     if !found {
-        subsets := kubernetes.GetDestinationRulesSubsets(info.destinationRules, serviceName, version)
-        for _, virtualService := range info.virtualServices {
+        subsets := kubernetes.GetDestinationRulesSubsets(istioDetails.DestinationRules, serviceName, version)
+        for _, virtualService := range istioDetails.VirtualServices {
             if kubernetes.CheckVirtualService(virtualService, namespaceName, serviceName, subsets) {
                 n.Metadata["hasRouteRule"] = "true"
                 break
