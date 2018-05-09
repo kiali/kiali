@@ -156,7 +156,7 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 
 	destinationRules := make([]IstioObject, 0)
 	for _, destinationRule := range destinationRuleList.Items {
-		appendDestinationRule := serviceName != ""
+		appendDestinationRule := serviceName == ""
 		if name, ok := destinationRule.Spec["name"]; ok {
 			if name == serviceName {
 				appendDestinationRule = true
