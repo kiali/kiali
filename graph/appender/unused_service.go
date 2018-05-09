@@ -5,10 +5,10 @@ import (
 
 	"k8s.io/api/apps/v1beta1"
 
-	"github.com/kiali/kiali/graph/tree"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/graph/tree"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 )
 
 type UnusedServiceAppender struct {

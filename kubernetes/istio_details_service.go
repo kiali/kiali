@@ -2,8 +2,8 @@ package kubernetes
 
 import (
 	"fmt"
-	"sync"
 	"github.com/kiali/kiali/config"
+	"sync"
 )
 
 // GetIstioDetails returns Istio details for a given namespace,
