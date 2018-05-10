@@ -40,7 +40,6 @@ func NewOptions(r *http.Request) Options {
 
 	// query params
 	params := r.URL.Query()
-	appenders := parseAppenders(params)
 	groupByVersion, groupByVersionErr := strconv.ParseBool(params.Get("groupByVersion"))
 	duration, durationErr := time.ParseDuration(params.Get("duration"))
 	metric := params.Get("metric")
@@ -63,8 +62,7 @@ func NewOptions(r *http.Request) Options {
 		vendor = "cytoscape"
 	}
 
-	return Options{
-		Appenders: appenders,
+	options := Options{
 		Duration:  duration,
 		Metric:    metric,
 		Namespace: namespace,
@@ -76,9 +74,14 @@ func NewOptions(r *http.Request) Options {
 			Timestamp:      queryTime,
 		},
 	}
+
+	appenders := parseAppenders(params, options)
+	options.Appenders = appenders
+
+	return options
 }
 
-func parseAppenders(params url.Values) []appender.Appender {
+func parseAppenders(params url.Values, o Options) []appender.Appender {
 	var appenders []appender.Appender
 	const all = "_all_"
 	csl := all
@@ -92,6 +95,19 @@ func parseAppenders(params url.Values) []appender.Appender {
 	}
 	if csl == all || strings.Contains(csl, "istio") {
 		appenders = append(appenders, appender.IstioAppender{})
+	}
+	if csl == all || strings.Contains(csl, "latency") {
+		quantile := appender.DefaultQuantile
+		if _, ok := params["latencyQuantile"]; ok {
+			if latencyQuantile, err := strconv.ParseFloat(params.Get("latencyQuantile"), 64); err == nil {
+				quantile = latencyQuantile
+			}
+		}
+		appenders = append(appenders, appender.LatencyAppender{
+			Duration:  o.Duration,
+			Quantile:  quantile,
+			QueryTime: o.QueryTime,
+		})
 	}
 	if csl == all || strings.Contains(csl, "unused_service") {
 		appenders = append(appenders, appender.UnusedServiceAppender{})
