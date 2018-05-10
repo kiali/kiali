@@ -1,10 +1,9 @@
 import * as React from 'react';
-import Switch from 'react-bootstrap-switch';
+import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { serviceGraphFilterActions } from '../actions/ServiceGraphFilterActions';
 import { KialiAppState, ServiceGraphFilterState } from '../store/Store';
-import { style } from 'typestyle';
 
 interface ServiceGraphDispatch {
   // Dispatch methods
@@ -35,12 +34,8 @@ const mapDispatchToProps = (dispatch: any) => {
   };
 };
 
-// Styles
-const switchButtonStyle = style({
-  paddingLeft: '10px'
-});
-
 interface VisibilityLayersType {
+  id: string;
   labelText: string;
   value: boolean;
   onChange: () => void;
@@ -51,39 +46,53 @@ interface VisibilityLayersType {
 export const GraphLayers: React.SFC<GraphLayersProps> = props => {
   // map our attributes from redux
   const { showCircuitBreakers, showRouteRules, showEdgeLabels, showNodeLabels } = props;
-  // map or dispatchers for redux
+  // // map or dispatchers for redux
   const { toggleGraphCircuitBreakers, toggleGraphRouteRules, toggleGraphEdgeLabels, toggleGraphNodeLabels } = props;
 
   const visibilityLayers: VisibilityLayersType[] = [
     {
+      id: 'filterCB',
       labelText: 'Circuit Breakers',
       value: showCircuitBreakers,
       onChange: toggleGraphCircuitBreakers
     },
     {
+      id: 'filterRR',
       labelText: 'Route Rules',
       value: showRouteRules,
       onChange: toggleGraphRouteRules
     },
     {
+      id: 'filterEdges',
       labelText: 'Edge Labels',
       value: showEdgeLabels,
       onChange: toggleGraphEdgeLabels
     },
     {
+      id: 'filterNodes',
       labelText: 'Node Labels',
       value: showNodeLabels,
       onChange: toggleGraphNodeLabels
     }
   ];
 
-  const toggleItems = visibilityLayers.map((item: any) => (
-    <span className={switchButtonStyle}>
-      <Switch bsSize={'medium'} labelText={item.labelText} value={item.value} onChange={() => item.onChange()} />
-    </span>
+  const toggleItems = visibilityLayers.map((item: VisibilityLayersType) => (
+    <div id={item.id}>
+      <label>
+        <input name="isGoing" type="checkbox" checked={item.value} onChange={() => item.onChange()} />
+        {item.labelText}
+      </label>
+    </div>
   ));
+  const popover = <Popover>{toggleItems}</Popover>;
 
-  return <>{toggleItems}</>;
+  return (
+    <OverlayTrigger overlay={popover} placement="bottom" trigger={['click']} rootClose={'true'}>
+      <Button>
+        <Icon name="filter" />
+      </Button>
+    </OverlayTrigger>
+  );
 };
 
 // hook up to Redux for our State to be mapped to props
