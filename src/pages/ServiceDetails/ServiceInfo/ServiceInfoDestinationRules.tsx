@@ -33,8 +33,8 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
                 <div>
                   <strong>Resource Version</strong>: {destinationRule.resource_version}
                 </div>
-                {destinationRule.trafficPolicy ? (
-                  <DetailObject name="Traffic Policy" detail={destinationRule.trafficPolicy} />
+                {destinationRule.traffic_policy ? (
+                  <DetailObject name="Traffic Policy" detail={destinationRule.traffic_policy} />
                 ) : (
                   undefined
                 )}

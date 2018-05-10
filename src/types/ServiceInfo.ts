@@ -326,7 +326,7 @@ export interface DestinationRule {
   name: string;
   created_at: string;
   resource_version: string;
-  trafficPolicy: TrafficPolicy;
+  traffic_policy: TrafficPolicy;
   subsets: Subset[];
 }
 
