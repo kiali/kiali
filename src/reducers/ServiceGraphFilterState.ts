@@ -22,7 +22,7 @@ const serviceGraphFilterState = (state: ServiceGraphFilterState = INITIAL_STATE,
       return updateState(state, { showCircuitBreakers: !state.showCircuitBreakers });
     case ServiceGraphFilterActionKeys.TOGGLE_GRAPH_ROUTE_RULES:
       return updateState(state, { showRouteRules: !state.showRouteRules });
-    case ServiceGraphFilterActionKeys.DISABLE_GRAPH_LAYERS:
+    case ServiceGraphFilterActionKeys.ENABLE_GRAPH_FILTERS:
       return updateState(state, { disableLayers: action.payload });
     default:
       return state;
