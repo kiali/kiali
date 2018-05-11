@@ -1,12 +1,24 @@
 import * as React from 'react';
 import { Toolbar, Button, Icon, FormGroup } from 'patternfly-react';
 
-import { GraphFilterProps, GraphFilterState } from '../../types/GraphFilter';
+import { Duration, Layout } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
 import { config } from '../../config';
 import GraphLayersContainer from '../../containers/GraphLayersContainer';
 import { style } from 'typestyle';
+import { GraphParamsType } from '../../types/Graph';
+import Namespace from '../../types/Namespace';
+
+export interface GraphFilterProps extends GraphParamsType {
+  disabled: boolean;
+  onLayoutChange: (newLayout: Layout) => void;
+  onFilterChange: (newDuration: Duration) => void;
+  onNamespaceChange: (newValue: Namespace) => void;
+  onRefresh: () => void;
+}
+
+export interface GraphFilterState {}
 
 const zeroPaddingLeft = style({
   paddingLeft: '0px'
@@ -85,14 +97,15 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             initialLabel={String(GraphFilter.GRAPH_LAYOUTS[this.props.graphLayout.name])}
             options={GraphFilter.GRAPH_LAYOUTS}
           />
+          <FormGroup className={zeroPaddingLeft}>
+            <label className={labelPaddingRight}>Filters:</label>
+            <GraphLayersContainer />
+          </FormGroup>
           <Toolbar.RightContent>
             <Button disabled={this.props.disabled} onClick={this.handleRefresh}>
               <Icon name="refresh" />
             </Button>
           </Toolbar.RightContent>
-        </Toolbar>
-        <Toolbar>
-          <GraphLayersContainer />
         </Toolbar>
       </>
     );
