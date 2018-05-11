@@ -3,6 +3,7 @@ import { PfColors } from '../../../components/Pf/PfColors';
 
 const FLASH_BADGE: string = 'fa fa-bolt';
 const ROUTE_BADGE: string = 'fa fa-code-fork';
+const SIDECAR_BADGE: string = 'pf pficon-blueprint';
 
 // Each node that has a badge will have custom data associated with it.
 // Each entry in the custom data is keyed on the badge type; an entry is itself
@@ -44,7 +45,7 @@ class GraphBadge {
 
     const setScale = () => {
       const zoom = node.cy().zoom();
-      div.style.transform = div.style.transform + `scale(${zoom},${zoom})`;
+      div.style.fontSize = `${zoom}em`;
     };
 
     const popper = node.popper({
@@ -125,5 +126,11 @@ export class CircuitBreakerBadge extends GraphBadge {
 export class RouteRuleBadge extends GraphBadge {
   constructor() {
     super(ROUTE_BADGE, PfColors.Purple300, 'top');
+  }
+}
+
+export class MissingSidecarsBadge extends GraphBadge {
+  constructor() {
+    super(SIDECAR_BADGE, PfColors.Red100, 'bottom');
   }
 }

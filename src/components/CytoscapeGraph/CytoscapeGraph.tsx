@@ -20,6 +20,7 @@ type CytoscapeGraphType = {
   showNodeLabels: boolean;
   showCircuitBreakers: boolean;
   showRouteRules: boolean;
+  showMissingSidecars: boolean;
   onClick: (event: CytoscapeClickEvent) => void;
   onReady: (event: CytoscapeBaseEvent) => void;
   refresh: any;
@@ -63,6 +64,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.showNodeLabels !== nextProps.showNodeLabels ||
       this.props.showCircuitBreakers !== nextProps.showCircuitBreakers ||
       this.props.showRouteRules !== nextProps.showRouteRules ||
+      this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.elements !== nextProps.elements ||
       this.props.graphLayout !== nextProps.graphLayout
     );
@@ -207,6 +209,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     // Create and destroy badges
     const cbBadge = new GraphBadge.CircuitBreakerBadge();
     const rrBadge = new GraphBadge.RouteRuleBadge();
+    const msBadge = new GraphBadge.MissingSidecarsBadge();
     cy.nodes().forEach(ele => {
       if (this.props.showCircuitBreakers && ele.data('hasCB') === 'true') {
         cbBadge.buildBadge(ele);
@@ -217,6 +220,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         rrBadge.buildBadge(ele);
       } else {
         rrBadge.destroyBadge(ele);
+      }
+      if (this.props.showMissingSidecars && ele.data('hasMissingSidecars') && !ele.data('isGroup')) {
+        msBadge.buildBadge(ele);
+      } else {
+        msBadge.destroyBadge(ele);
       }
     });
 
@@ -249,6 +257,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showNodeLabels: state.serviceGraphFilterState.showNodeLabels,
   showCircuitBreakers: state.serviceGraphFilterState.showCircuitBreakers,
   showRouteRules: state.serviceGraphFilterState.showRouteRules,
+  showMissingSidecars: state.serviceGraphFilterState.showMissingSidecars,
   elements: state.serviceGraphDataState.graphData
 });
 
