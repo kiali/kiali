@@ -107,31 +107,37 @@ func testTree() []tree.ServiceNode {
 	trees[0].Children = make([]*tree.ServiceNode, 6)
 
 	child0 := tree.NewServiceNode("testPodsWithTraffic.testNamespace.svc.cluster.local", "v1")
+	child0.Parent = &trees[0]
 	child0.Metadata = make(map[string]interface{})
 	child0.Metadata["rate"] = 0.8
 	trees[0].Children[0] = &child0
 
 	child1 := tree.NewServiceNode("testPodsNoTraffic.testNamespace.svc.cluster.local", "v1")
+	child1.Parent = &trees[0]
 	child1.Metadata = make(map[string]interface{})
 	child1.Metadata["rate"] = 0.0
 	trees[0].Children[1] = &child1
 
 	child2 := tree.NewServiceNode("testNoPodsWithTraffic.testNamespace.svc.cluster.local", "v1")
+	child2.Parent = &trees[0]
 	child2.Metadata = make(map[string]interface{})
 	child2.Metadata["rate"] = 0.8
 	trees[0].Children[2] = &child2
 
 	child3 := tree.NewServiceNode("testNoPodsNoTraffic.testNamespace.svc.cluster.local", "v1")
+	child3.Parent = &trees[0]
 	child3.Metadata = make(map[string]interface{})
 	child3.Metadata["rate"] = 0.0
 	trees[0].Children[3] = &child3
 
 	child4 := tree.NewServiceNode("testNoServiceWithTraffic.testNamespace.svc.cluster.local", "v1")
+	child4.Parent = &trees[0]
 	child4.Metadata = make(map[string]interface{})
 	child4.Metadata["rate"] = 0.8
 	trees[0].Children[4] = &child4
 
 	child5 := tree.NewServiceNode("testNoServiceNoTraffic.testNamespace.svc.cluster.local", "v1")
+	child5.Parent = &trees[0]
 	child5.Metadata = make(map[string]interface{})
 	child5.Metadata["rate"] = 0.0
 	trees[0].Children[5] = &child5

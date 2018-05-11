@@ -57,6 +57,7 @@ type EdgeData struct {
 	Rate4xx    string `json:"rate4XX,omitempty"`
 	Rate5xx    string `json:"rate5XX,omitempty"`
 	PercentErr string `json:"percentErr,omitempty"`
+	Latency    string `json:"latency,omitempty"`
 	IsUnused   string `json:"isUnused,omitempty"` // true | false
 }
 
@@ -192,7 +193,7 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 				Source: parentNodeId,
 				Target: nd.Id,
 			}
-			addRate(&ed, sn, nd, o)
+			addTelemetry(&ed, sn, nd, o)
 			// TODO: Add in the response code breakdowns and/or other metric info
 			ew := EdgeWrapper{
 				Data: &ed,
@@ -215,7 +216,7 @@ func findNode(nodes *[]*NodeWrapper, service, version string) (*NodeData, bool) 
 	return nil, false
 }
 
-func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorOptions) {
+func addTelemetry(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorOptions) {
 	rate := sn.Metadata["rate"].(float64)
 
 	if rate > 0.0 {
@@ -242,6 +243,12 @@ func addRate(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.VendorO
 		if percentErr > 0.0 {
 			ed.PercentErr = fmt.Sprintf("%.3f", percentErr)
 		}
+
+		if val, ok := sn.Metadata["latency"]; ok {
+			latency := val.(float64)
+			ed.Latency = fmt.Sprintf("%.3f", latency)
+		}
+
 	} else {
 		if val, ok := sn.Metadata["isUnused"]; ok {
 			ed.IsUnused = val.(string)

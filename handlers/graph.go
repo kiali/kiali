@@ -23,6 +23,7 @@ package handlers
 // The handlers accept the following query parameters:
 //   duration:       time.Duration indicating desired query range duration, (default 10m)
 //   appenders       Comma-separated list of appenders to run from [circuit_breaker, unused_service] (default all)
+//                   Note, appenders may support appender-specific query parameters
 //   groupByVersion: If supported by vendor, visually group versions of the same service (default true)
 //   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
 //   queryTime:      Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
