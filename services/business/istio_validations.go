@@ -15,7 +15,7 @@ type ObjectChecker interface {
 }
 
 func (in *IstioValidationsService) GetServiceValidations(namespace, service string) (models.IstioValidations, error) {
-	// Get all the Istio objects from a namespace and service
+	// Get all the Istio objects from a Namespace and service
 	istioDetails, err := in.k8s.GetIstioDetails(namespace, service)
 	if err != nil {
 		return nil, err

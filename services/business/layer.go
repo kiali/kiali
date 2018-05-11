@@ -10,6 +10,7 @@ type Layer struct {
 	Svc         SvcService
 	Health      HealthService
 	Validations IstioValidationsService
+	IstioConfig IstioConfigService
 }
 
 // Global business.Layer; currently only used for tests to inject mocks,
@@ -34,6 +35,7 @@ func Get() (*Layer, error) {
 	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s}
 	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, health: &temporaryLayer.Health}
 	temporaryLayer.Validations = IstioValidationsService{k8s: k8s}
+	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s}
 	return temporaryLayer, nil
 }
 
@@ -43,5 +45,6 @@ func SetWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	layer.Health = HealthService{prom: prom, k8s: k8s}
 	layer.Svc = SvcService{prom: prom, k8s: k8s, health: &layer.Health}
 	layer.Validations = IstioValidationsService{k8s: k8s}
+	layer.IstioConfig = IstioConfigService{k8s: k8s}
 	return layer
 }

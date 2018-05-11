@@ -112,14 +112,14 @@ func fakeIstioObjects() *kubernetes.IstioDetails {
 					"weight": uint64(55),
 					"labels": map[string]string{
 						"version":   "v1",
-						"namespace": "bookinfo",
+						"Namespace": "bookinfo",
 					},
 				},
 				map[string]interface{}{
 					"weight": uint64(45),
 					"labels": map[string]string{
 						"version":   "v1",
-						"namespace": "bookinfo",
+						"Namespace": "bookinfo",
 					},
 				},
 			},
@@ -142,14 +142,14 @@ func fakeUnder100RouteRule() *kubernetes.IstioDetails {
 					"weight": uint64(45),
 					"labels": map[string]string{
 						"version":   "v1",
-						"namespace": "bookinfo",
+						"Namespace": "bookinfo",
 					},
 				},
 				map[string]interface{}{
 					"weight": uint64(45),
 					"labels": map[string]string{
 						"version":   "v1",
-						"namespace": "bookinfo",
+						"Namespace": "bookinfo",
 					},
 				},
 			},
@@ -172,14 +172,14 @@ func fakeOver100RouteRule() *kubernetes.IstioDetails {
 					"weight": uint64(55),
 					"labels": map[string]string{
 						"version":   "v1",
-						"namespace": "bookinfo",
+						"Namespace": "bookinfo",
 					},
 				},
 				map[string]interface{}{
 					"weight": uint64(55),
 					"labels": map[string]string{
 						"version":   "v1",
-						"namespace": "bookinfo",
+						"Namespace": "bookinfo",
 					},
 				},
 			},
@@ -202,14 +202,14 @@ func fakeMultipleChecks() *kubernetes.IstioDetails {
 					"weight": uint64(155),
 					"labels": map[string]string{
 						"version":   "v1",
-						"namespace": "bookinfo",
+						"Namespace": "bookinfo",
 					},
 				},
 				map[string]interface{}{
 					"weight": uint64(45),
 					"labels": map[string]string{
 						"version":   "v1",
-						"namespace": "bookinfo",
+						"Namespace": "bookinfo",
 					},
 				},
 			},

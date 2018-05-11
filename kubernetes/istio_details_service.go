@@ -89,6 +89,19 @@ func (in *IstioClient) GetRouteRules(namespace string, serviceName string) ([]Is
 	return routerRules, nil
 }
 
+func (in *IstioClient) GetRouteRule(namespace string, routerule string) (IstioObject, error) {
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(routeRules).SubResource(routerule).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	routeRule, ok := result.(*RouteRule)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a RouteRule object", namespace, routerule)
+	}
+	return routeRule.DeepCopyIstioObject(), nil
+}
+
 // GetDestinationPolicies returns all DestinationPolicies for a given namespace.
 // If serviceName param is provided it will filter all DestinationPolicies having a destination pointing to a particular service.
 // It returns an error on any problem.
@@ -113,6 +126,19 @@ func (in *IstioClient) GetDestinationPolicies(namespace string, serviceName stri
 		}
 	}
 	return destinationPolicies, nil
+}
+
+func (in *IstioClient) GetDestinationPolicy(namespace string, destinationpolicy string) (IstioObject, error) {
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(destinationPolicies).SubResource(destinationpolicy).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	destinationPolicy, ok := result.(*DestinationPolicy)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a DestinationPolicy object", namespace, destinationpolicy)
+	}
+	return destinationPolicy.DeepCopyIstioObject(), nil
 }
 
 // GetVirtualServices return all VirtualServices for a given namespace.
@@ -141,6 +167,19 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	return virtualServices, nil
 }
 
+func (in *IstioClient) GetVirtualService(namespace string, virtualservice string) (IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(virtualServices).SubResource(virtualservice).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	virtualService, ok := result.(*VirtualService)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService object", namespace, virtualservice)
+	}
+	return virtualService.DeepCopyIstioObject(), nil
+}
+
 // GetDestinationRules returns all DestinationRules for a given namespace.
 // If serviceName param is provided it will filter all DestinationRules having a host defined on a particular service.
 // It returns an error on any problem.
@@ -167,6 +206,18 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 		}
 	}
 	return destinationRules, nil
+}
+
+func (in *IstioClient) GetDestinationRule(namespace string, destinationrule string) (IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(destinationRules).SubResource(destinationrule).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	destinationRule, ok := result.(*DestinationRule)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a DestinationRule object", namespace, destinationrule)
+	}
+	return destinationRule.DeepCopyIstioObject(), nil
 }
 
 // CheckRouteRule returns true if the routeRule object includes a destination defined by namespace, serviceName and version parameters.
