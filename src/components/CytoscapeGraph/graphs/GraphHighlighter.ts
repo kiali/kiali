@@ -1,4 +1,4 @@
-import { CytoscapeClickEvent, CytoscapeMouseInEvent, CytoscapeMouseOutEvent } from './../CytoscapeLayout';
+import { CytoscapeClickEvent, CytoscapeMouseInEvent, CytoscapeMouseOutEvent } from '../CytoscapeGraph';
 
 const DIM_CLASS: string = 'mousedim';
 const HIGHLIGHT_CLASS: string = 'mousehighlight';

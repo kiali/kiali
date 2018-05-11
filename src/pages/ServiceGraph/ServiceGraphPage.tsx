@@ -5,7 +5,7 @@ import { GraphParamsType, SummaryData } from '../../types/Graph';
 import { Duration, Layout } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
-import CytoscapeLayout from '../../components/CytoscapeLayout/CytoscapeLayout';
+import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
 import GraphFilter from '../../components/GraphFilter/GraphFilter';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
@@ -88,7 +88,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
           {...graphParams}
         />
         <div style={{ position: 'absolute', right: 20, bottom: 0, top: 230, left: 220 }}>
-          <CytoscapeLayout
+          <CytoscapeGraph
             {...graphParams}
             isLoading={this.props.isLoading}
             isReady={this.props.isReady}

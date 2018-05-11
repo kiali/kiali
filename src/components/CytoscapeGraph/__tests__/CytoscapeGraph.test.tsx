@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 
-import ReactCytoscapeConnected from '../ReactCytoscape';
-import { CytoscapeLayout } from '../CytoscapeLayout';
+import { CytoscapeGraph } from '../CytoscapeGraph';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
 import { Duration, Layout } from '../../../types/GraphFilter';
+import { CytoscapeReactWrapper } from '../CytoscapeReactWrapper';
 
 jest.mock('../../../services/Api');
 
@@ -18,13 +18,13 @@ const testReadyHandler = () => {
   console.log('ready');
 };
 
-describe('CytoscapeLayout component test', () => {
+describe('CytoscapeGraph component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
     const myDuration: Duration = { value: 300 };
 
     const wrapper = shallow(
-      <CytoscapeLayout
+      <CytoscapeGraph
         namespace={{ name: testNamespace }}
         elements={GRAPH_DATA[testNamespace]}
         graphLayout={myLayout}
@@ -38,7 +38,7 @@ describe('CytoscapeLayout component test', () => {
         showRouteRules={true}
       />
     );
-    const cytoscapeWrapper = wrapper.find(ReactCytoscapeConnected);
+    const cytoscapeWrapper = wrapper.find(CytoscapeReactWrapper);
     expect(cytoscapeWrapper.prop('elements')['elements'].nodes).toEqual(GRAPH_DATA[testNamespace].elements.nodes);
     expect(cytoscapeWrapper.prop('elements')['elements'].edges).toEqual(GRAPH_DATA[testNamespace].elements.edges);
   });

@@ -3,7 +3,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import { PropTypes } from 'prop-types';
 
 import { GraphParamsType } from '../../types/Graph';
-import * as LayoutDictionary from '../../components/CytoscapeLayout/graphs/LayoutDictionary';
+import * as LayoutDictionary from '../../components/CytoscapeGraph/graphs/LayoutDictionary';
 import ServiceGraphPage from '../../containers/ServiceGraphPageContainer';
 
 const URLSearchParams = require('url-search-params');
