@@ -83,6 +83,56 @@ func TestFilterByHost(t *testing.T) {
 	assert.False(t, filterByHost(spec, "host3"))
 }
 
+func TestCheckRouteRule(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert.False(t, CheckRouteRule(nil, "", "", ""))
+
+	route1 := MockIstioObject{
+		Spec: map[string]interface{}{
+			"destination": map[string]interface{}{
+				"name":      "reviews",
+				"namespace": "tutorial",
+			},
+			"precedence": 1,
+			"route": []interface{}{
+				map[string]interface{}{
+					"labels": map[string]interface{}{
+						"version": "v1",
+					},
+				},
+			},
+		},
+	}
+
+	assert.True(t, CheckRouteRule(&route1, "tutorial", "reviews", "v1"))
+	assert.False(t, CheckRouteRule(&route1, "tutorial-bad", "reviews", "v1"))
+	assert.False(t, CheckRouteRule(&route1, "tutorial", "reviews-bad", "v1"))
+	assert.False(t, CheckRouteRule(&route1, "tutorial", "reviews", "v2"))
+
+	route2 := MockIstioObject{
+		Spec: map[string]interface{}{
+			"destination": map[string]interface{}{
+				"name": "reviews",
+			},
+			"precedence": 1,
+			"route": []interface{}{
+				map[string]interface{}{
+					"labels": map[string]interface{}{
+						"version": "v1",
+					},
+				},
+			},
+		},
+	}
+
+	assert.True(t, CheckRouteRule(&route2, "tutorial", "reviews", "v1"))
+	assert.True(t, CheckRouteRule(&route2, "tutorial-bad", "reviews", "v1"))
+	assert.False(t, CheckRouteRule(&route2, "tutorial", "reviews-bad", "v1"))
+	assert.False(t, CheckRouteRule(&route2, "tutorial", "reviews", "v2"))
+}
+
 func TestCheckVirtualService(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

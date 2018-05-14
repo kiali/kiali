@@ -30,4 +30,4 @@ products:
 
 # Uncomment service_filter_label_name to set up a different lable name for grouping all resources of a service.
 # Default is "app"
-service_filter_label_name: service
+# service_filter_label_name: service
