@@ -9,6 +9,7 @@ import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
 import GraphFilter from '../../components/GraphFilter/GraphFilter';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
+import { style } from 'typestyle';
 
 type ServiceGraphPageState = {
   summaryData?: SummaryData | null;
@@ -23,6 +24,14 @@ type ServiceGraphPageProps = GraphParamsType & {
   fetchGraphData: (namespace: Namespace, graphDuration: Duration) => any;
 };
 const NUMBER_OF_DATAPOINTS = 30;
+
+const cytscapeGraphStyle = style({
+  position: 'absolute',
+  right: 20,
+  bottom: 0,
+  top: 170,
+  left: 220
+});
 
 export default class ServiceGraphPage extends React.Component<ServiceGraphPageProps, ServiceGraphPageState> {
   constructor(props: ServiceGraphPageProps) {
@@ -87,7 +96,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
           onRefresh={this.handleRefreshClick}
           {...graphParams}
         />
-        <div style={{ position: 'absolute', right: 20, bottom: 0, top: 230, left: 220 }}>
+        <div className={cytscapeGraphStyle}>
           <CytoscapeGraph
             {...graphParams}
             isLoading={this.props.isLoading}
