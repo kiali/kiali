@@ -453,19 +453,19 @@ func mockEmptyRange(api *PromAPIMock, query string) {
 }
 
 func mockHistogram(api *PromAPIMock, baseName string, suffix string, retAvg model.SampleValue, retMed model.SampleValue, ret95 model.SampleValue, ret99 model.SampleValue) {
-	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
-	mockRange(api, "histogram_quantile(0.5, "+histMetric, retMed)
-	mockRange(api, "histogram_quantile(0.95, "+histMetric, ret95)
-	mockRange(api, "histogram_quantile(0.99, "+histMetric, ret99)
-	mockRange(api, "sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))", retAvg)
+	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le)), 0.001)"
+	mockRange(api, "round(histogram_quantile(0.5, "+histMetric, retMed)
+	mockRange(api, "round(histogram_quantile(0.95, "+histMetric, ret95)
+	mockRange(api, "round(histogram_quantile(0.99, "+histMetric, ret99)
+	mockRange(api, "round(sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+")), 0.001)", retAvg)
 }
 
 func mockEmptyHistogram(api *PromAPIMock, baseName string, suffix string) {
-	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
-	mockEmptyRange(api, "histogram_quantile(0.5, "+histMetric)
-	mockEmptyRange(api, "histogram_quantile(0.95, "+histMetric)
-	mockEmptyRange(api, "histogram_quantile(0.99, "+histMetric)
-	mockEmptyRange(api, "sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))")
+	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le)), 0.001)"
+	mockEmptyRange(api, "round(histogram_quantile(0.5, "+histMetric)
+	mockEmptyRange(api, "round(histogram_quantile(0.95, "+histMetric)
+	mockEmptyRange(api, "round(histogram_quantile(0.99, "+histMetric)
+	mockEmptyRange(api, "round(sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+")), 0.001)")
 }
 
 func setupExternal() (*prometheus.Client, error) {
