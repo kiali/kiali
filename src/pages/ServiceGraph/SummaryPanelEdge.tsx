@@ -2,6 +2,7 @@ import * as React from 'react';
 import Badge from '../../components/Badge/Badge';
 import RateTable from '../../components/SummaryPanel/RateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
+import LatencyChart from '../../components/SummaryPanel/LatencyChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
@@ -13,6 +14,10 @@ type SummaryPanelEdgeState = {
   loading: boolean;
   reqRates: [string, number][];
   errRates: [string, number][];
+  latAvg: [string, number][];
+  latMed: [string, number][];
+  lat95: [string, number][];
+  lat99: [string, number][];
 };
 
 export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
@@ -34,18 +39,22 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     this.state = {
       loading: true,
       reqRates: [],
-      errRates: []
+      errRates: [],
+      latAvg: [],
+      latMed: [],
+      lat95: [],
+      lat99: []
     };
   }
 
   componentDidMount() {
     this._isMounted = true;
-    this.updateRpsChart(this.props);
+    this.updateCharts(this.props);
   }
 
   componentWillReceiveProps(nextProps: SummaryPanelPropType) {
     if (nextProps.data.summaryTarget && nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
-      this.updateRpsChart(nextProps);
+      this.updateCharts(nextProps);
     }
   }
 
@@ -97,14 +106,14 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           />
           <div>
             <hr />
-            {this.renderRpsChart()}
+            {this.renderCharts()}
           </div>
         </div>
       </div>
     );
   }
 
-  private updateRpsChart = (props: SummaryPanelPropType) => {
+  private updateCharts = (props: SummaryPanelPropType) => {
     const edge = props.data.summaryTarget;
     const source = edge.source();
     const sourceService = source.data('service');
@@ -122,7 +131,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       duration: +props.duration,
       step: props.step,
       rateInterval: props.rateInterval,
-      filters: ['request_count', 'request_error_count']
+      filters: ['request_count', 'request_duration', 'request_error_count']
     };
     API.getServiceMetrics(destNamespace, destServiceName, options)
       .then(response => {
@@ -132,13 +141,42 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         }
         const data: M.Metrics = response['data'];
         const metrics: Map<String, M.MetricGroup> = data.metrics;
-        const reqRates = this.getRates(metrics['request_count_in'], 'RPS', sourceService, sourceVersion);
-        const errRates = this.getRates(metrics['request_error_count_in'], 'Error', sourceService, sourceVersion);
+        const histograms: Map<String, M.Histogram> = data.histograms;
+        const reqRates = this.getDatapoints(metrics['request_count_in'], 'RPS', sourceService, sourceVersion);
+        const errRates = this.getDatapoints(metrics['request_error_count_in'], 'Error', sourceService, sourceVersion);
+        const latAvg = this.getDatapoints(
+          histograms['request_duration_in']['average'],
+          'Average',
+          sourceService,
+          sourceVersion
+        );
+        const latMed = this.getDatapoints(
+          histograms['request_duration_in']['median'],
+          'Median',
+          sourceService,
+          sourceVersion
+        );
+        const lat95 = this.getDatapoints(
+          histograms['request_duration_in']['percentile95'],
+          '95th',
+          sourceService,
+          sourceVersion
+        );
+        const lat99 = this.getDatapoints(
+          histograms['request_duration_in']['percentile99'],
+          '99th',
+          sourceService,
+          sourceVersion
+        );
 
         this.setState({
           loading: false,
           reqRates: reqRates,
-          errRates: errRates
+          errRates: errRates,
+          latAvg: latAvg,
+          latMed: latMed,
+          lat95: lat95,
+          lat99: lat99
         });
       })
       .catch(error => {
@@ -163,15 +201,27 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     </div>
   );
 
-  private renderRpsChart = () => {
+  private renderCharts = () => {
     if (this.state.loading) {
-      return <strong>loading chart...</strong>;
+      return <strong>loading charts...</strong>;
     }
 
-    return <RpsChart label="Request Traffic" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />;
+    return (
+      <>
+        <RpsChart label="Request Traffic" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />
+        <hr />
+        <LatencyChart
+          label="Request Latency (ms)"
+          latAvg={this.state.latAvg}
+          latMed={this.state.latMed}
+          lat95={this.state.lat95}
+          lat99={this.state.lat99}
+        />
+      </>
+    );
   };
 
-  private getRates = (
+  private getDatapoints = (
     mg: M.MetricGroup,
     title: string,
     sourceService: string,
