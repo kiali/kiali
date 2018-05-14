@@ -7,7 +7,6 @@ import { KialiAppState, ServiceGraphFilterState } from '../store/Store';
 
 interface ServiceGraphDispatch {
   // Dispatch methods
-  toggleGraphEdgeLabels(): void;
   toggleGraphNodeLabels(): void;
   toggleGraphCircuitBreakers(): void;
   toggleGraphRouteRules(): void;
@@ -19,7 +18,6 @@ type GraphLayersProps = ServiceGraphDispatch & ServiceGraphFilterState;
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState) => ({
-  showEdgeLabels: state.serviceGraphFilterState.showEdgeLabels,
   showNodeLabels: state.serviceGraphFilterState.showNodeLabels,
   showCircuitBreakers: state.serviceGraphFilterState.showCircuitBreakers,
   showRouteRules: state.serviceGraphFilterState.showRouteRules,
@@ -30,7 +28,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: any) => {
   return {
     toggleGraphNodeLabels: bindActionCreators(serviceGraphFilterActions.toggleGraphNodeLabel, dispatch),
-    toggleGraphEdgeLabels: bindActionCreators(serviceGraphFilterActions.toggleGraphEdgeLabel, dispatch),
+    setGraphEdgeLabelMode: bindActionCreators(serviceGraphFilterActions.setGraphEdgeLabelMode, dispatch),
     toggleGraphCircuitBreakers: bindActionCreators(serviceGraphFilterActions.toggleGraphCircuitBreakers, dispatch),
     toggleGraphRouteRules: bindActionCreators(serviceGraphFilterActions.toggleGraphRouteRules, dispatch),
     toggleGraphMissingSidecars: bindActionCreators(serviceGraphFilterActions.toggleGraphMissingSidecars, dispatch)
@@ -48,12 +46,11 @@ interface VisibilityLayersType {
 // Right now it is a toolbar with Switch Buttons -- this will change once with UXD input
 export const GraphLayers: React.SFC<GraphLayersProps> = props => {
   // map our attributes from redux
-  const { showCircuitBreakers, showRouteRules, showEdgeLabels, showNodeLabels, showMissingSidecars } = props;
+  const { showCircuitBreakers, showRouteRules, showNodeLabels, showMissingSidecars } = props;
   // // map or dispatchers for redux
   const {
     toggleGraphCircuitBreakers,
     toggleGraphRouteRules,
-    toggleGraphEdgeLabels,
     toggleGraphNodeLabels,
     toggleGraphMissingSidecars
   } = props;
@@ -70,12 +67,6 @@ export const GraphLayers: React.SFC<GraphLayersProps> = props => {
       labelText: 'Route Rules',
       value: showRouteRules,
       onChange: toggleGraphRouteRules
-    },
-    {
-      id: 'filterEdges',
-      labelText: 'Edge Labels',
-      value: showEdgeLabels,
-      onChange: toggleGraphEdgeLabels
     },
     {
       id: 'filterNodes',
