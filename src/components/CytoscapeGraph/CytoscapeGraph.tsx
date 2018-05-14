@@ -134,6 +134,15 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
 
+    // Conveniently, the graph highlighter caches the cy instance that is currently in use.
+    // If that cy instance is the same one we are being asked to initialize, do NOT initialize it again;
+    // this would add duplicate callbacks and would screw up the graph highlighter. If, however,
+    // we are being asked to initialize a different cy instance, we assume the current one is now obsolete
+    // so we do want to initialize the new cy instance.
+    if (this.graphHighlighter && this.graphHighlighter.cy === cy) {
+      return;
+    }
+
     this.graphHighlighter = new GraphHighlighter(cy);
 
     const getCytoscapeBaseEvent = (event: any): CytoscapeBaseEvent | null => {
