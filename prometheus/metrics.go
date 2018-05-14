@@ -262,24 +262,24 @@ func fetchHistogramRange(api v1.API, metricName string, labels string, grouping 
 	// Average
 	// Example: sum(rate(my_histogram_sum{foo=bar}[5m])) by (baz) / sum(rate(my_histogram_count{foo=bar}[5m])) by (baz)
 	query := fmt.Sprintf(
-		"sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s", metricName, labels, rateInterval, groupingAvg,
+		"round(sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s, 0.001)", metricName, labels, rateInterval, groupingAvg,
 		metricName, labels, rateInterval, groupingAvg)
 	avg := fetchRange(api, query, bounds)
 
 	// Median
-	// Example: histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz))
+	// Example: round(histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz)), 0.001)
 	query = fmt.Sprintf(
-		"histogram_quantile(0.5, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
+		"round(histogram_quantile(0.5, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, rateInterval, groupingQuantile)
 	med := fetchRange(api, query, bounds)
 
 	// Quantile 95
 	query = fmt.Sprintf(
-		"histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
+		"round(histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, rateInterval, groupingQuantile)
 	p95 := fetchRange(api, query, bounds)
 
 	// Quantile 99
 	query = fmt.Sprintf(
-		"histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le%s))", metricName, labels, rateInterval, groupingQuantile)
+		"round(histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, rateInterval, groupingQuantile)
 	p99 := fetchRange(api, query, bounds)
 
 	return Histogram{
