@@ -175,7 +175,25 @@ func CheckRouteRule(routeRule IstioObject, namespace string, serviceName string,
 	if routeRule == nil || routeRule.GetSpec() == nil {
 		return false
 	}
-	return filterByDestination(routeRule.GetSpec(), namespace, serviceName, version)
+	if filterByDestination(routeRule.GetSpec(), namespace, serviceName, version) {
+		// RouteRule defines a version in the DestinationWeight
+		if routes, ok := routeRule.GetSpec()["route"]; ok {
+			if dRoutes, ok := routes.([]interface{}); ok {
+				for _, route := range dRoutes {
+					if dRoute, ok := route.(map[string]interface{}); ok {
+						if labels, ok := dRoute["labels"]; ok {
+							if dLabels, ok := labels.(map[string]interface{}); ok {
+								if versionValue, ok := dLabels["version"]; ok && versionValue == version {
+									return true
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return false
 }
 
 // CheckVirtualService returns true if virtualService object has defined a route on a service for any subset passed as parameter.
@@ -334,6 +352,7 @@ func filterByDestination(spec map[string]interface{}, namespace string, serviceN
 		if dName, ok := dest["name"]; ok && dName != serviceName {
 			return false
 		}
+
 		if dLabels, ok := dest["labels"]; ok && version != "" {
 			if labels, ok := dLabels.(map[string]interface{}); ok {
 				if versionValue, ok := labels[cfg.VersionFilterLabelName]; ok && versionValue == version {

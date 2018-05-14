@@ -287,10 +287,20 @@ func addCompositeNodes(nodes *[]*NodeWrapper, nodeIdSequence *int) {
 			}
 
 			// assign each service version node to the composite parent
+			hasRouteRule := false
 			for _, n := range *nodes {
 				if k == n.Data.Service {
 					n.Data.Parent = nodeId
+					// If there is a route rule defined in version node, move it to composite parent
+					if n.Data.HasRouteRule == "true" {
+						n.Data.HasRouteRule = "false"
+						hasRouteRule = true
+					}
 				}
+			}
+
+			if hasRouteRule {
+				nd.HasRouteRule = "true"
 			}
 
 			// add the composite node to the list of nodes
