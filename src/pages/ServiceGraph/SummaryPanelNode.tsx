@@ -130,7 +130,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               color={PfColors.Green500}
             />
           </div>
-          {this.renderBadgeSummary(node.data('hasCB'), node.data('hasRR'), node.data('hasMissingSidecars').toString())}
+          {this.renderBadgeSummary(node.data('hasCB'), node.data('hasRR'), node.data('hasMissingSidecars'))}
         </div>
         <div className="panel-body">
           <InOutRateTable
