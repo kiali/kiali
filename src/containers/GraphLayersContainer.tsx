@@ -77,7 +77,7 @@ export const GraphLayers: React.SFC<GraphLayersProps> = props => {
   ];
 
   const toggleItems = visibilityLayers.map((item: VisibilityLayersType) => (
-    <div id={item.id}>
+    <div id={item.id} key={item.id}>
       <label>
         <input name="isGoing" type="checkbox" checked={item.value} onChange={() => item.onChange()} />
         {item.labelText}
