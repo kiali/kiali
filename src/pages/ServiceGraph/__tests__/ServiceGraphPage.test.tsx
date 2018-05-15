@@ -25,7 +25,6 @@ describe('ServiceGraphPage test', () => {
         graphTimestamp={'0'}
         graphData={[]}
         isLoading={false}
-        isReady={true}
       />
     );
 
