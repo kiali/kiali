@@ -375,6 +375,7 @@ type IstioObjectList interface {
 
 type ServiceList struct {
 	Services    *v1.ServiceList
+	Pods        *v1.PodList
 	Deployments *v1beta1.DeploymentList
 }
 

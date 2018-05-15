@@ -27,7 +27,7 @@ func TestDeadService(t *testing.T) {
 				Kind: "foo",
 			},
 		}, nil)
-	k8s.On("GetServicePods", mock.AnythingOfType("string"), "testPodsWithTraffic", "v1", "").Return(
+	k8s.On("GetServicePods", mock.AnythingOfType("string"), "testPodsWithTraffic", "v1").Return(
 		&v1.PodList{
 			Items: []v1.Pod{v1.Pod{
 				Status: v1.PodStatus{
@@ -42,7 +42,7 @@ func TestDeadService(t *testing.T) {
 				Kind: "foo",
 			},
 		}, nil)
-	k8s.On("GetServicePods", mock.AnythingOfType("string"), "testPodsNoTraffic", "v1", "").Return(
+	k8s.On("GetServicePods", mock.AnythingOfType("string"), "testPodsNoTraffic", "v1").Return(
 		&v1.PodList{
 			Items: []v1.Pod{v1.Pod{
 				Status: v1.PodStatus{
@@ -57,7 +57,7 @@ func TestDeadService(t *testing.T) {
 				Kind: "foo",
 			},
 		}, nil)
-	k8s.On("GetServicePods", mock.AnythingOfType("string"), "testNoPodsWithTraffic", "v1", "").Return(
+	k8s.On("GetServicePods", mock.AnythingOfType("string"), "testNoPodsWithTraffic", "v1").Return(
 		&v1.PodList{
 			Items: []v1.Pod{},
 		}, nil)
@@ -68,7 +68,7 @@ func TestDeadService(t *testing.T) {
 				Kind: "foo",
 			},
 		}, nil)
-	k8s.On("GetServicePods", mock.AnythingOfType("string"), "testNoPodsNoTraffic", "v1", "").Return(
+	k8s.On("GetServicePods", mock.AnythingOfType("string"), "testNoPodsNoTraffic", "v1").Return(
 		&v1.PodList{
 			Items: []v1.Pod{},
 		}, nil)

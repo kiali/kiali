@@ -40,7 +40,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernete
 
 	// Convert each k8s service into our model
 	for i, item := range sl.Services.Items {
-		depls := kubernetes.FilterDeploymentsForService(&item, sl.Deployments)
+		depls := kubernetes.FilterDeploymentsForService(&item, sl.Pods, sl.Deployments)
 		services[i] = in.castServiceOverview(&item, depls)
 	}
 
@@ -61,7 +61,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernete
 	return &models.ServiceList{Namespace: namespace, Services: services}
 }
 
-func (in *SvcService) castServiceOverview(s *v1.Service, deployments *[]v1beta1.Deployment) models.ServiceOverview {
+func (in *SvcService) castServiceOverview(s *v1.Service, deployments []v1beta1.Deployment) models.ServiceOverview {
 	hasSideCar := hasIstioSideCar(deployments)
 	statuses := castDeploymentsStatuses(deployments)
 	health := models.Health{
@@ -73,8 +73,8 @@ func (in *SvcService) castServiceOverview(s *v1.Service, deployments *[]v1beta1.
 		Health:       health}
 }
 
-func hasIstioSideCar(deployments *[]v1beta1.Deployment) bool {
-	for _, deployment := range *deployments {
+func hasIstioSideCar(deployments []v1beta1.Deployment) bool {
+	for _, deployment := range deployments {
 		if deployment.Spec.Template.Annotations != nil {
 			if _, exists := deployment.Spec.Template.Annotations[config.Get().Products.Istio.IstioSidecarAnnotation]; exists {
 				return true
@@ -116,7 +116,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		return nil, err
 	}
 
-	statuses := castDeploymentsStatuses(&serviceDetails.Deployments.Items)
+	statuses := castDeploymentsStatuses(serviceDetails.Deployments.Items)
 	health := models.Health{
 		DeploymentStatuses: statuses,
 		DeploymentsFetched: true}

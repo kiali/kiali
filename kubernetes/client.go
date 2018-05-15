@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strings"
 
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	kialiConfig "github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 const (
@@ -36,7 +37,8 @@ type IstioClientInterface interface {
 	GetService(namespace string, serviceName string) (*v1.Service, error)
 	GetServices(namespaceName string) (*ServiceList, error)
 	GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error)
-	GetServicePods(namespace string, serviceName string, serviceVersion string, selector string) (*v1.PodList, error)
+	GetPods(namespace string, labelsSet labels.Set) (*v1.PodList, error)
+	GetServicePods(namespace string, serviceName string, serviceVersion string) (*v1.PodList, error)
 	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
 }
 
@@ -152,40 +154,48 @@ func NewClient() (*IstioClient, error) {
 	return &client, nil
 }
 
-// FilterDeploymentsForService returns a subpart of deployments list where labels match the ones of the given service
-func FilterDeploymentsForService(s *v1.Service, deployments *v1beta1.DeploymentList) *[]v1beta1.Deployment {
-	if s == nil || deployments == nil {
+// FilterDeploymentsForService returns a subpart of deployments list filtered according to pods labels.
+func FilterDeploymentsForService(s *v1.Service, allPods *v1.PodList, allDepls *v1beta1.DeploymentList) []v1beta1.Deployment {
+	if s == nil || allDepls == nil || allPods == nil {
 		return nil
 	}
-	depls := make([]v1beta1.Deployment, len(deployments.Items))
-	i := 0
-	for _, depl := range deployments.Items {
-		if labelsMatch(depl.ObjectMeta.Labels, s.Spec.Selector) {
-			depls[i] = depl
-			i++
+	serviceSelector := labels.Set(s.Spec.Selector).AsSelector()
+	pods := filterPodsForService(serviceSelector, allPods)
+
+	var deployments []v1beta1.Deployment
+	for _, d := range allDepls.Items {
+		depSelector, err := meta_v1.LabelSelectorAsSelector(d.Spec.Selector)
+		if err != nil {
+			log.Errorf("Invalid label selector: %v", err)
+		}
+		added := false
+		// If it matches any of the pods, then it's "part" of the service
+		for _, pod := range pods {
+			// If a deployment with an empty selector creeps in, it should match nothing, not everything.
+			if !depSelector.Empty() && depSelector.Matches(labels.Set(pod.ObjectMeta.Labels)) {
+				deployments = append(deployments, d)
+				added = true
+				break
+			}
+		}
+		if !added {
+			// Maybe there's no pod (yet) for a deployment, but it still "belongs" to that service
+			// We can try to guess that by matching service selector with deployment labels and assume they would match.
+			// This is of course not guaranteed.
+			if !serviceSelector.Empty() && serviceSelector.Matches(labels.Set(d.ObjectMeta.Labels)) {
+				deployments = append(deployments, d)
+			}
 		}
 	}
-	shrinked := depls[:i]
-	return &shrinked
+	return deployments
 }
 
-func labelsMatch(serviceLabels, filterLabels map[string]string) bool {
-	labelMatch := true
-
-	for key, value := range filterLabels {
-		if serviceLabels[key] != value {
-			labelMatch = false
-			break
+func filterPodsForService(selector labels.Selector, allPods *v1.PodList) []v1.Pod {
+	var pods []v1.Pod
+	for _, pod := range allPods.Items {
+		if selector.Matches(labels.Set(pod.ObjectMeta.Labels)) {
+			pods = append(pods, pod)
 		}
 	}
-
-	return labelMatch
-}
-
-func selectorToString(selector map[string]string) string {
-	querySelector := make([]string, 0, len(selector))
-	for label, name := range selector {
-		querySelector = append(querySelector, label+"="+name)
-	}
-	return strings.Join(querySelector, ",")
+	return pods
 }
