@@ -16,6 +16,7 @@ import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import { PfColors } from '../../components/Pf/PfColors';
 
 import './ServiceListComponent.css';
+import PfSpinner from '../../components/Pf/PfSpinner';
 
 // Exported for test
 export const sortFields: SortField[] = [
@@ -343,7 +344,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
 
     let serviceListComponent;
     if (this.state.loading) {
-      serviceListComponent = <div className="spinner spinner-sm left-spinner" />;
+      serviceListComponent = <PfSpinner />;
     } else {
       serviceListComponent = (
         <div>

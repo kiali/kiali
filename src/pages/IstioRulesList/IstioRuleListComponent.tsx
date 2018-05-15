@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import IstioRuleListDescription from './IstioRuleListDescription';
 import { Link } from 'react-router-dom';
 import { PfColors } from '../../components/Pf/PfColors';
+import PfSpinner from '../../components/Pf/PfSpinner';
 
 type SortField = {
   id: string;
@@ -249,7 +250,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
 
     let ruleListComponent;
     if (this.state.loading) {
-      ruleListComponent = <div className="spinner spinner-sm left-spinner" />;
+      ruleListComponent = <PfSpinner />;
     } else {
       ruleListComponent = (
         <div>
