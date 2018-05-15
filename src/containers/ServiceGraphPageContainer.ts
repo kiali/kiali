@@ -9,8 +9,7 @@ import { ServiceGraphDataActions } from '../actions/ServiceGraphDataActions';
 const mapStateToProps = (state: KialiAppState) => ({
   graphTimestamp: state.serviceGraphDataState.timestamp,
   graphData: state.serviceGraphDataState.graphData,
-  isLoading: state.serviceGraphDataState.isLoading,
-  isReady: !state.serviceGraphDataState.isLoading
+  isLoading: state.serviceGraphDataState.isLoading
 });
 
 const mapDispatchToProps = (dispatch: any) => ({

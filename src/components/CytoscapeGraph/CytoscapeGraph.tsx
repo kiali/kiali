@@ -15,7 +15,6 @@ import * as GraphBadge from './graphs/GraphBadge';
 type CytoscapeGraphType = {
   elements?: any;
   isLoading?: boolean;
-  isReady?: boolean;
   showEdgeLabels: boolean;
   showNodeLabels: boolean;
   showCircuitBreakers: boolean;
@@ -183,10 +182,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       }
     });
     cy.ready((evt: any) => {
-      if (!this.props.isReady) {
-        // TODO why do we have this isReady prop?
-        this.props.onReady(evt.cy);
-      }
+      this.props.onReady(evt.cy);
       this.processGraphUpdate(cy);
     });
   }

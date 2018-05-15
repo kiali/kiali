@@ -19,7 +19,6 @@ type ServiceGraphPageProps = GraphParamsType & {
   graphTimestamp: string;
   graphData: any;
   isLoading: boolean;
-  isReady: boolean;
   onParamsChange: (params: GraphParamsType) => void;
   fetchGraphData: (namespace: Namespace, graphDuration: Duration) => any;
 };
@@ -65,7 +64,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
   };
 
   handleReady = (cy: any) => {
-    if (cy) {
+    if (cy && (!this.state.summaryData || this.state.summaryData.summaryTarget !== cy)) {
       this.setState({
         summaryData: {
           summaryType: 'graph',
@@ -100,7 +99,6 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
           <CytoscapeGraph
             {...graphParams}
             isLoading={this.props.isLoading}
-            isReady={this.props.isReady}
             elements={this.props.graphData}
             onClick={this.handleGraphClick}
             onReady={this.handleReady}
