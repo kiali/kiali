@@ -7,7 +7,8 @@ describe('ServiceGraphFilterState reducer', () => {
       showNodeLabels: true,
       showEdgeLabels: false,
       showCircuitBreakers: false,
-      showRouteRules: true
+      showRouteRules: true,
+      showMissingSidecars: true
     });
   });
 
@@ -18,7 +19,8 @@ describe('ServiceGraphFilterState reducer', () => {
           showNodeLabels: true,
           showEdgeLabels: true,
           showCircuitBreakers: false,
-          showRouteRules: true
+          showRouteRules: true,
+          showMissingSidecars: true
         },
         {
           type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL
@@ -28,7 +30,8 @@ describe('ServiceGraphFilterState reducer', () => {
       showNodeLabels: false,
       showEdgeLabels: true,
       showCircuitBreakers: false,
-      showRouteRules: true
+      showRouteRules: true,
+      showMissingSidecars: true
     });
   });
 
@@ -39,7 +42,8 @@ describe('ServiceGraphFilterState reducer', () => {
           showNodeLabels: true,
           showEdgeLabels: true,
           showCircuitBreakers: false,
-          showRouteRules: true
+          showRouteRules: true,
+          showMissingSidecars: true
         },
         {
           type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_EDGE_LABEL
@@ -49,7 +53,8 @@ describe('ServiceGraphFilterState reducer', () => {
       showNodeLabels: true,
       showEdgeLabels: false,
       showCircuitBreakers: false,
-      showRouteRules: true
+      showRouteRules: true,
+      showMissingSidecars: true
     });
   });
   it('should handle TOGGLE_GRAPH_CIRCUIT_BREAKERS', () => {
@@ -59,7 +64,8 @@ describe('ServiceGraphFilterState reducer', () => {
           showNodeLabels: true,
           showEdgeLabels: false,
           showCircuitBreakers: false,
-          showRouteRules: true
+          showRouteRules: true,
+          showMissingSidecars: true
         },
         {
           type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS
@@ -69,7 +75,8 @@ describe('ServiceGraphFilterState reducer', () => {
       showNodeLabels: true,
       showEdgeLabels: false,
       showCircuitBreakers: true,
-      showRouteRules: true
+      showRouteRules: true,
+      showMissingSidecars: true
     });
   });
   it('should handle TOGGLE_GRAPH_ROUTE_RULES', () => {
@@ -79,7 +86,8 @@ describe('ServiceGraphFilterState reducer', () => {
           showNodeLabels: true,
           showEdgeLabels: false,
           showCircuitBreakers: false,
-          showRouteRules: true
+          showRouteRules: true,
+          showMissingSidecars: true
         },
         {
           type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_ROUTE_RULES
@@ -89,7 +97,30 @@ describe('ServiceGraphFilterState reducer', () => {
       showNodeLabels: true,
       showEdgeLabels: false,
       showCircuitBreakers: false,
-      showRouteRules: false
+      showRouteRules: false,
+      showMissingSidecars: true
+    });
+  });
+  it('should handle TOGGLE_GRAPH_MISSING_SIDECARS', () => {
+    expect(
+      serviceGraphFilterState(
+        {
+          showNodeLabels: true,
+          showEdgeLabels: false,
+          showCircuitBreakers: false,
+          showRouteRules: true,
+          showMissingSidecars: true
+        },
+        {
+          type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS
+        }
+      )
+    ).toEqual({
+      showNodeLabels: true,
+      showEdgeLabels: false,
+      showCircuitBreakers: false,
+      showRouteRules: true,
+      showMissingSidecars: false
     });
   });
 });

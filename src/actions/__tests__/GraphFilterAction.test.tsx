@@ -30,6 +30,13 @@ describe('GraphFilterActions', () => {
     expect(serviceGraphFilterActions.toggleGraphRouteRules()).toEqual(expectedAction);
   });
 
+  it('should toggle missing sidecars', () => {
+    const expectedAction = {
+      type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS
+    };
+    expect(serviceGraphFilterActions.toggleGraphMissingSidecars()).toEqual(expectedAction);
+  });
+
   it('should enable graph filters toggles', () => {
     const expectedAction = {
       type: ServiceGraphFilterActionKeys.ENABLE_GRAPH_FILTERS,
