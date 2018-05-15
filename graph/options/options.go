@@ -112,5 +112,8 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 	if csl == all || strings.Contains(csl, "unused_service") {
 		appenders = append(appenders, appender.UnusedServiceAppender{})
 	}
+	if csl == all || strings.Contains(csl, "sidecars_check") {
+		appenders = append(appenders, appender.SidecarsCheckAppender{})
+	}
 	return appenders
 }

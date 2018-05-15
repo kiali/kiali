@@ -2,8 +2,10 @@ package business
 
 import (
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/services/business/checkers"
 	"github.com/kiali/kiali/services/models"
+	"k8s.io/api/core/v1"
 )
 
 type IstioValidationsService struct {
@@ -21,31 +23,39 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		return nil, err
 	}
 
-	objectCheckers := enabledCheckersFor(istioDetails)
+	pods, err := in.k8s.GetServicePods(namespace, service, "", "")
+	if err != nil {
+		log.Warningf("Cannot get pods for service %v.%v.", namespace, service)
+		return nil, err
+	}
+
+	objectCheckers := enabledCheckersFor(istioDetails, pods)
 	objectCheckersCount := len(objectCheckers)
 
 	objectValidations := models.IstioValidations{}
-	validationsChannel := make(chan *models.IstioValidations, objectCheckersCount)
+	validationsChannels := make([]chan *models.IstioValidations, objectCheckersCount)
 
 	// Run checks for each IstioObject type
-	for _, objectChecker := range objectCheckers {
-		go func() {
-			validationsChannel <- objectChecker.Check()
-			close(validationsChannel)
-		}()
+	for i, objectChecker := range objectCheckers {
+		validationsChannels[i] = make(chan *models.IstioValidations)
+		go func(channel chan *models.IstioValidations, checker ObjectChecker) {
+			channel <- checker.Check()
+			close(channel)
+		}(validationsChannels[i], objectChecker)
 	}
 
 	// Receive validations and merge them into one object
-	for validation := range validationsChannel {
-		objectValidations.MergeValidations(validation)
+	for _, validation := range validationsChannels {
+		objectValidations.MergeValidations(<-validation)
 	}
 
 	// Get groupal validations for same kind istio objects
 	return objectValidations, nil
 }
 
-func enabledCheckersFor(istioDetails *kubernetes.IstioDetails) []ObjectChecker {
+func enabledCheckersFor(istioDetails *kubernetes.IstioDetails, pods *v1.PodList) []ObjectChecker {
 	return []ObjectChecker{
 		checkers.RouteRuleChecker{istioDetails.RouteRules},
+		&checkers.PodChecker{Pods: pods.Items},
 	}
 }

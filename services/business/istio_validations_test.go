@@ -9,6 +9,7 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"k8s.io/api/core/v1"
 )
 
 func TestServiceWellRouteRuleValidation(t *testing.T) {
@@ -224,6 +225,7 @@ func fakeMultipleChecks() *kubernetes.IstioDetails {
 func mockValidationService(istioObjects *kubernetes.IstioDetails) IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetIstioDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(istioObjects, nil)
+	k8s.On("GetServicePods", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&v1.PodList{}, nil)
 
 	return IstioValidationsService{k8s: k8s}
 }
