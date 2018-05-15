@@ -6,7 +6,7 @@ describe('ServiceGraphFilterState reducer', () => {
   it('should return the initial state', () => {
     expect(serviceGraphFilterState(undefined, {})).toEqual({
       showNodeLabels: true,
-      edgeLabelMode: EdgeLabelMode.NONE,
+      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showRouteRules: true,
       showMissingSidecars: true
@@ -18,7 +18,7 @@ describe('ServiceGraphFilterState reducer', () => {
       serviceGraphFilterState(
         {
           showNodeLabels: true,
-          edgeLabelMode: EdgeLabelMode.NONE,
+          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
           showMissingSidecars: true
@@ -29,7 +29,7 @@ describe('ServiceGraphFilterState reducer', () => {
       )
     ).toEqual({
       showNodeLabels: false,
-      edgeLabelMode: EdgeLabelMode.NONE,
+      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showRouteRules: true,
       showMissingSidecars: true
@@ -41,19 +41,19 @@ describe('ServiceGraphFilterState reducer', () => {
       serviceGraphFilterState(
         {
           showNodeLabels: true,
-          edgeLabelMode: EdgeLabelMode.NONE,
+          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
           showMissingSidecars: true
         },
         {
           type: ServiceGraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
-          payload: EdgeLabelMode.LATENCY
+          payload: EdgeLabelMode.LATENCY_95TH_PERCENTILE
         }
       )
     ).toEqual({
       showNodeLabels: true,
-      edgeLabelMode: EdgeLabelMode.LATENCY,
+      edgeLabelMode: EdgeLabelMode.LATENCY_95TH_PERCENTILE,
       showCircuitBreakers: false,
       showRouteRules: true,
       showMissingSidecars: true
@@ -64,7 +64,7 @@ describe('ServiceGraphFilterState reducer', () => {
       serviceGraphFilterState(
         {
           showNodeLabels: true,
-          edgeLabelMode: EdgeLabelMode.NONE,
+          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
           showMissingSidecars: true
@@ -75,7 +75,7 @@ describe('ServiceGraphFilterState reducer', () => {
       )
     ).toEqual({
       showNodeLabels: true,
-      edgeLabelMode: EdgeLabelMode.NONE,
+      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: true,
       showRouteRules: true,
       showMissingSidecars: true
@@ -86,7 +86,7 @@ describe('ServiceGraphFilterState reducer', () => {
       serviceGraphFilterState(
         {
           showNodeLabels: true,
-          edgeLabelMode: EdgeLabelMode.NONE,
+          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
           showMissingSidecars: true
@@ -97,7 +97,7 @@ describe('ServiceGraphFilterState reducer', () => {
       )
     ).toEqual({
       showNodeLabels: true,
-      edgeLabelMode: EdgeLabelMode.NONE,
+      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showRouteRules: false,
       showMissingSidecars: true
@@ -111,7 +111,7 @@ describe('ServiceGraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showRouteRules: true,
           showMissingSidecars: true,
-          edgeLabelMode: EdgeLabelMode.NONE
+          edgeLabelMode: EdgeLabelMode.HIDE
         },
         {
           type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS
@@ -122,7 +122,7 @@ describe('ServiceGraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showRouteRules: true,
       showMissingSidecars: false,
-      edgeLabelMode: EdgeLabelMode.NONE
+      edgeLabelMode: EdgeLabelMode.HIDE
     });
   });
 });

@@ -22,7 +22,7 @@ describe('CytoscapeGraph component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
     const myDuration: Duration = { value: 300 };
-    const myEdgeLabelMode: EdgeLabelMode = EdgeLabelMode.NONE;
+    const myEdgeLabelMode: EdgeLabelMode = EdgeLabelMode.HIDE;
 
     const wrapper = shallow(
       <CytoscapeGraph

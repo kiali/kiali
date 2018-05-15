@@ -13,7 +13,7 @@ const PARAMS: GraphParamsType = {
   namespace: { name: 'itsio-system' },
   graphDuration: { value: 60 },
   graphLayout: { name: 'Cose' },
-  edgeLabelMode: EdgeLabelMode.NONE
+  edgeLabelMode: EdgeLabelMode.HIDE
 };
 describe('ServiceGraphPage test', () => {
   it('should propagate filter params change with correct value', () => {

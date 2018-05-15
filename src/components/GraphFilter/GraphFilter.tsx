@@ -115,7 +115,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             id={'graph_filter_edges'}
             disabled={this.props.disabled}
             handleSelect={this.updateEdges}
-            nameDropdown={'Edge Mode'}
+            nameDropdown={'Edge Labels'}
             initialValue={this.props.edgeLabelMode}
             initialLabel={GraphFilter.EDGE_LABEL_MODES[this.props.edgeLabelMode]}
             options={GraphFilter.EDGE_LABEL_MODES}

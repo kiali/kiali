@@ -51,7 +51,7 @@ export class ServiceGraphRouteHandler extends React.Component<
     const _duration = urlParams.get('duration');
     const _hideCBs = urlParams.get('hideCBs') ? urlParams.get('hideCBs') === 'true' : false;
     const _hideRRs = urlParams.get('hideRRs') ? urlParams.get('hideRRs') === 'true' : false;
-    const _edgeLabelMode = EdgeLabelMode.fromString(urlParams.get('edges'), EdgeLabelMode.NONE);
+    const _edgeLabelMode = EdgeLabelMode.fromString(urlParams.get('edges'), EdgeLabelMode.HIDE);
     return {
       graphDuration: _duration ? { value: _duration } : { value: DEFAULT_DURATION },
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),

@@ -7,9 +7,9 @@ export interface Duration {
 }
 
 export enum EdgeLabelMode {
-  NONE = 'NONE',
-  REQUEST_RATE = 'REQUEST_RATE',
-  LATENCY = 'LATENCY'
+  HIDE = 'HIDE',
+  REQUESTS_PER_SECOND = 'REQUESTS_PER_SECOND',
+  LATENCY_95TH_PERCENTILE = 'LATENCY_95TH_PERCENTILE'
 }
 
 export namespace EdgeLabelMode {

@@ -10,7 +10,7 @@ const INITIAL_STATE: ServiceGraphFilterState = {
   showMissingSidecars: true,
   // @ todo: add disableLayers back in later
   // disableLayers: false
-  edgeLabelMode: EdgeLabelMode.NONE
+  edgeLabelMode: EdgeLabelMode.HIDE
 };
 
 // This Reducer allows changes to the 'serviceGraphFilterState' portion of Redux Store
