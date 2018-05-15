@@ -87,7 +87,7 @@ export const GraphLayers: React.SFC<GraphLayersProps> = props => {
   const popover = <Popover>{toggleItems}</Popover>;
 
   return (
-    <OverlayTrigger overlay={popover} placement="bottom" trigger={['click']} rootClose={'true'}>
+    <OverlayTrigger overlay={popover} placement="bottom" trigger={['click']} rootClose={true}>
       <Button>
         <Icon name="filter" />
       </Button>
