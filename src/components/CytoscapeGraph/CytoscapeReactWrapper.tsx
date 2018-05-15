@@ -67,8 +67,7 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
 
   render() {
     console.log('CY: rendering cy div parent');
-    const style = GraphStyles.styles();
-    const styleContainer = Object.assign({ height: '100%', width: '100%', display: 'block' }, style);
+    const styleContainer = { height: '100%', width: '100%', display: 'block' };
     return <div id="cy" className="graph" style={styleContainer} ref={this.divParentRef} />;
   }
 
