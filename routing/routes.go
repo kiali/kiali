@@ -50,7 +50,7 @@ func NewRoutes() (r *Routes) {
 		},
 		/*
 			TODO the /rules endpoint is now deprecated in favor of /istio
-		 */
+		*/
 		{
 			"IstioRuleList",
 			"GET",
@@ -59,7 +59,7 @@ func NewRoutes() (r *Routes) {
 		},
 		/*
 			TODO the /rules/{rule} is now deprecated in favor of /istio/{object_type}/{object}
-		 */
+		*/
 		{
 			"IstioRuleDetails",
 			"GET",
