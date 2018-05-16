@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 
 import { GraphParamsType } from '../../../types/Graph';
-import { Duration, Layout } from '../../../types/GraphFilter';
+import { Duration, Layout, EdgeLabelMode } from '../../../types/GraphFilter';
 import Namespace from '../../../types/Namespace';
 
 import ServiceGraphPage from '../ServiceGraphPage';
@@ -12,7 +12,8 @@ const dummyFunction = () => 0;
 const PARAMS: GraphParamsType = {
   namespace: { name: 'itsio-system' },
   graphDuration: { value: 60 },
-  graphLayout: { name: 'Cose' }
+  graphLayout: { name: 'Cose' },
+  edgeLabelMode: EdgeLabelMode.HIDE
 };
 describe('ServiceGraphPage test', () => {
   it('should propagate filter params change with correct value', () => {

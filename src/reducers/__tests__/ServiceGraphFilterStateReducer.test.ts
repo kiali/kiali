@@ -1,11 +1,12 @@
 import serviceGraphFilterState from '../ServiceGraphFilterState';
 import { ServiceGraphFilterActionKeys } from '../../actions/ServiceGraphFilterActions';
+import { EdgeLabelMode } from '../../types/GraphFilter';
 
 describe('ServiceGraphFilterState reducer', () => {
   it('should return the initial state', () => {
     expect(serviceGraphFilterState(undefined, {})).toEqual({
       showNodeLabels: true,
-      showEdgeLabels: false,
+      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showRouteRules: true,
       showMissingSidecars: true
@@ -17,7 +18,7 @@ describe('ServiceGraphFilterState reducer', () => {
       serviceGraphFilterState(
         {
           showNodeLabels: true,
-          showEdgeLabels: true,
+          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
           showMissingSidecars: true
@@ -28,7 +29,7 @@ describe('ServiceGraphFilterState reducer', () => {
       )
     ).toEqual({
       showNodeLabels: false,
-      showEdgeLabels: true,
+      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showRouteRules: true,
       showMissingSidecars: true
@@ -40,18 +41,19 @@ describe('ServiceGraphFilterState reducer', () => {
       serviceGraphFilterState(
         {
           showNodeLabels: true,
-          showEdgeLabels: true,
+          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
           showMissingSidecars: true
         },
         {
-          type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_EDGE_LABEL
+          type: ServiceGraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
+          payload: EdgeLabelMode.LATENCY_95TH_PERCENTILE
         }
       )
     ).toEqual({
       showNodeLabels: true,
-      showEdgeLabels: false,
+      edgeLabelMode: EdgeLabelMode.LATENCY_95TH_PERCENTILE,
       showCircuitBreakers: false,
       showRouteRules: true,
       showMissingSidecars: true
@@ -62,7 +64,7 @@ describe('ServiceGraphFilterState reducer', () => {
       serviceGraphFilterState(
         {
           showNodeLabels: true,
-          showEdgeLabels: false,
+          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
           showMissingSidecars: true
@@ -73,7 +75,7 @@ describe('ServiceGraphFilterState reducer', () => {
       )
     ).toEqual({
       showNodeLabels: true,
-      showEdgeLabels: false,
+      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: true,
       showRouteRules: true,
       showMissingSidecars: true
@@ -84,7 +86,7 @@ describe('ServiceGraphFilterState reducer', () => {
       serviceGraphFilterState(
         {
           showNodeLabels: true,
-          showEdgeLabels: false,
+          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
           showMissingSidecars: true
@@ -95,7 +97,7 @@ describe('ServiceGraphFilterState reducer', () => {
       )
     ).toEqual({
       showNodeLabels: true,
-      showEdgeLabels: false,
+      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showRouteRules: false,
       showMissingSidecars: true
@@ -106,10 +108,10 @@ describe('ServiceGraphFilterState reducer', () => {
       serviceGraphFilterState(
         {
           showNodeLabels: true,
-          showEdgeLabels: false,
           showCircuitBreakers: false,
           showRouteRules: true,
-          showMissingSidecars: true
+          showMissingSidecars: true,
+          edgeLabelMode: EdgeLabelMode.HIDE
         },
         {
           type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS
@@ -117,10 +119,10 @@ describe('ServiceGraphFilterState reducer', () => {
       )
     ).toEqual({
       showNodeLabels: true,
-      showEdgeLabels: false,
       showCircuitBreakers: false,
       showRouteRules: true,
-      showMissingSidecars: false
+      showMissingSidecars: false,
+      edgeLabelMode: EdgeLabelMode.HIDE
     });
   });
 });

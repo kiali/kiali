@@ -1,10 +1,10 @@
 import { NotificationGroup } from '../types/MessageCenter';
+import { EdgeLabelMode } from '../types/GraphFilter';
 // Store is the Redux Data store
 
 // Various pages are described here with their various sections
 export interface ServiceGraphFilterState {
   // Toggle props
-  readonly showEdgeLabels: boolean;
   readonly showNodeLabels: boolean;
   readonly showCircuitBreakers: boolean;
   readonly showRouteRules: boolean;
@@ -12,6 +12,8 @@ export interface ServiceGraphFilterState {
   // disable the service graph layers toolbar
   // @todo: add this back in later
   // readonly disableLayers: boolean;
+
+  readonly edgeLabelMode: EdgeLabelMode;
 }
 
 export interface MessageCenterState {

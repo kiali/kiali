@@ -9,13 +9,14 @@ import EmptyGraphLayout from './EmptyGraphLayout';
 import CytoscapeReactWrapper from './CytoscapeReactWrapper';
 
 import { GraphParamsType } from '../../types/Graph';
+import { EdgeLabelMode } from '../../types/GraphFilter';
 import { KialiAppState } from '../../store/Store';
 import * as GraphBadge from './graphs/GraphBadge';
 
 type CytoscapeGraphType = {
   elements?: any;
   isLoading?: boolean;
-  showEdgeLabels: boolean;
+  edgeLabelMode: EdgeLabelMode;
   showNodeLabels: boolean;
   showCircuitBreakers: boolean;
   showRouteRules: boolean;
@@ -59,7 +60,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     return (
       this.props.isLoading !== nextProps.isLoading ||
       this.props.graphLayout !== nextProps.graphLayout ||
-      this.props.showEdgeLabels !== nextProps.showEdgeLabels ||
+      this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
       this.props.showNodeLabels !== nextProps.showNodeLabels ||
       this.props.showCircuitBreakers !== nextProps.showCircuitBreakers ||
       this.props.showRouteRules !== nextProps.showRouteRules ||
@@ -112,11 +113,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.cyInitialization(this.getCy());
   }
 
-  private turnEdgeLabelsTo = (value: boolean) => {
+  private turnEdgeLabelsTo = (value: EdgeLabelMode) => {
     let elements = this.props.elements;
     if (elements && elements.edges) {
       elements.edges.forEach(edge => {
-        edge.data.showEdgeLabels = value;
+        edge.data.edgeLabelMode = value;
       });
     }
   };
@@ -208,7 +209,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     // Create and destroy labels
-    this.turnEdgeLabelsTo(this.props.showEdgeLabels);
+    this.turnEdgeLabelsTo(this.props.edgeLabelMode);
     this.turnNodeLabelsTo(this.props.showNodeLabels);
 
     // Create and destroy badges
@@ -258,7 +259,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  showEdgeLabels: state.serviceGraphFilterState.showEdgeLabels,
   showNodeLabels: state.serviceGraphFilterState.showNodeLabels,
   showCircuitBreakers: state.serviceGraphFilterState.showCircuitBreakers,
   showRouteRules: state.serviceGraphFilterState.showRouteRules,

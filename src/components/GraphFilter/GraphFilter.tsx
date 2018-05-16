@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Toolbar, Button, Icon, FormGroup } from 'patternfly-react';
 
-import { Duration, Layout } from '../../types/GraphFilter';
+import { Duration, Layout, EdgeLabelMode } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
 import { config } from '../../config';
@@ -10,11 +10,14 @@ import { style } from 'typestyle';
 import { GraphParamsType } from '../../types/Graph';
 import Namespace from '../../types/Namespace';
 
+import * as _ from 'lodash';
+
 export interface GraphFilterProps extends GraphParamsType {
   disabled: boolean;
   onLayoutChange: (newLayout: Layout) => void;
   onFilterChange: (newDuration: Duration) => void;
   onNamespaceChange: (newValue: Namespace) => void;
+  onEdgeLabelModeChange: (newEdges: EdgeLabelMode) => void;
   onRefresh: () => void;
 }
 
@@ -32,6 +35,10 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
   // GraphFilter should be minimal and used for assembling those filtering components.
   static readonly INTERVAL_DURATION = config().toolbar.intervalDuration;
   static readonly GRAPH_LAYOUTS = config().toolbar.graphLayouts;
+  static readonly EDGE_LABEL_MODES = EdgeLabelMode.getValues().reduce((map, edgeLabelMode) => {
+    map[edgeLabelMode] = _.capitalize(_.startCase(edgeLabelMode));
+    return map;
+  }, {});
 
   constructor(props: GraphFilterProps) {
     super(props);
@@ -56,6 +63,13 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
     if (this.props.namespace.name !== selected) {
       // notify callback
       this.props.onNamespaceChange({ name: selected });
+    }
+  };
+
+  updateEdges = (selected: EdgeLabelMode) => {
+    if (this.props.edgeLabelMode !== selected) {
+      // notify callback
+      this.props.onEdgeLabelModeChange(selected);
     }
   };
 
@@ -96,6 +110,15 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             initialValue={this.props.graphLayout.name}
             initialLabel={String(GraphFilter.GRAPH_LAYOUTS[this.props.graphLayout.name])}
             options={GraphFilter.GRAPH_LAYOUTS}
+          />
+          <ToolbarDropdown
+            id={'graph_filter_edges'}
+            disabled={this.props.disabled}
+            handleSelect={this.updateEdges}
+            nameDropdown={'Edge Labels'}
+            initialValue={this.props.edgeLabelMode}
+            initialLabel={GraphFilter.EDGE_LABEL_MODES[this.props.edgeLabelMode]}
+            options={GraphFilter.EDGE_LABEL_MODES}
           />
           <FormGroup className={zeroPaddingLeft}>
             <label className={labelPaddingRight}>Filters:</label>

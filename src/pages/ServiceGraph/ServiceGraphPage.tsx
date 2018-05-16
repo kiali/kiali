@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import Namespace from '../../types/Namespace';
 import { GraphParamsType, SummaryData } from '../../types/Graph';
-import { Duration, Layout } from '../../types/GraphFilter';
+import { Duration, Layout, EdgeLabelMode } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
 import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
@@ -82,6 +82,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     const graphParams: GraphParamsType = {
       namespace: this.props.namespace,
       graphLayout: this.props.graphLayout,
+      edgeLabelMode: this.props.edgeLabelMode,
       graphDuration: { value: Number(sessionStorage.getItem('appDuration')) } || this.props.graphDuration
     };
     return (
@@ -92,6 +93,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
           onLayoutChange={this.handleLayoutChange}
           onFilterChange={this.handleFilterChange}
           onNamespaceChange={this.handleNamespaceChange}
+          onEdgeLabelModeChange={this.handleEdgeLabelModeChange}
           onRefresh={this.handleRefreshClick}
           {...graphParams}
         />
@@ -118,31 +120,44 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     );
   }
 
-  handleLayoutChange = (layout: Layout) => {
-    const newParams: GraphParamsType = {
-      namespace: this.props.namespace,
-      graphDuration: this.props.graphDuration,
-      graphLayout: layout
-    };
-    this.props.onParamsChange(newParams);
+  handleLayoutChange = (graphLayout: Layout) => {
+    const { namespace, graphDuration, edgeLabelMode } = this.getGraphParams();
+    this.props.onParamsChange({
+      graphDuration,
+      namespace,
+      graphLayout,
+      edgeLabelMode
+    });
   };
 
-  handleFilterChange = (duration: Duration) => {
-    const newParams: GraphParamsType = {
-      namespace: this.props.namespace,
-      graphDuration: duration,
-      graphLayout: this.props.graphLayout
-    };
-    this.props.onParamsChange(newParams);
+  handleFilterChange = (graphDuration: Duration) => {
+    const { namespace, graphLayout, edgeLabelMode } = this.getGraphParams();
+    this.props.onParamsChange({
+      graphDuration,
+      namespace,
+      graphLayout,
+      edgeLabelMode
+    });
   };
 
   handleNamespaceChange = (namespace: Namespace) => {
-    const newParams: GraphParamsType = {
-      namespace: namespace,
-      graphDuration: this.props.graphDuration,
-      graphLayout: this.props.graphLayout
-    };
-    this.props.onParamsChange(newParams);
+    const { graphDuration, graphLayout, edgeLabelMode } = this.getGraphParams();
+    this.props.onParamsChange({
+      namespace,
+      graphDuration,
+      graphLayout,
+      edgeLabelMode
+    });
+  };
+
+  handleEdgeLabelModeChange = (edgeLabelMode: EdgeLabelMode) => {
+    const { namespace, graphDuration, graphLayout } = this.getGraphParams();
+    this.props.onParamsChange({
+      namespace,
+      graphDuration,
+      graphLayout,
+      edgeLabelMode
+    });
   };
 
   /** Fetch graph data */
@@ -153,5 +168,14 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     this.setState({
       summaryData: null
     });
+  };
+
+  private getGraphParams: () => GraphParamsType = () => {
+    return {
+      namespace: this.props.namespace,
+      graphDuration: this.props.graphDuration,
+      graphLayout: this.props.graphLayout,
+      edgeLabelMode: this.props.edgeLabelMode
+    };
   };
 }

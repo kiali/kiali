@@ -1,15 +1,16 @@
 import { ServiceGraphFilterState } from '../store/Store';
 import { ServiceGraphFilterActionKeys } from '../actions/ServiceGraphFilterActions';
 import { updateState } from '../utils/Reducer';
+import { EdgeLabelMode } from '../types/GraphFilter';
 
 const INITIAL_STATE: ServiceGraphFilterState = {
   showNodeLabels: true,
-  showEdgeLabels: false,
   showCircuitBreakers: false,
   showRouteRules: true,
-  showMissingSidecars: true
+  showMissingSidecars: true,
   // @ todo: add disableLayers back in later
   // disableLayers: false
+  edgeLabelMode: EdgeLabelMode.HIDE
 };
 
 // This Reducer allows changes to the 'serviceGraphFilterState' portion of Redux Store
@@ -17,8 +18,8 @@ const serviceGraphFilterState = (state: ServiceGraphFilterState = INITIAL_STATE,
   switch (action.type) {
     case ServiceGraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL:
       return updateState(state, { showNodeLabels: !state.showNodeLabels });
-    case ServiceGraphFilterActionKeys.TOGGLE_GRAPH_EDGE_LABEL:
-      return updateState(state, { showEdgeLabels: !state.showEdgeLabels });
+    case ServiceGraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE:
+      return updateState(state, { edgeLabelMode: action.payload });
     case ServiceGraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS:
       return updateState(state, { showCircuitBreakers: !state.showCircuitBreakers });
     case ServiceGraphFilterActionKeys.TOGGLE_GRAPH_ROUTE_RULES:

@@ -1,4 +1,5 @@
 import { PfColors } from '../../../components/Pf/PfColors';
+import { EdgeLabelMode } from '../../../types/GraphFilter';
 
 export class GraphStyles {
   static options() {
@@ -75,13 +76,21 @@ export class GraphStyles {
         selector: 'edge',
         css: {
           content: (ele: any) => {
-            if (!ele.data('showEdgeLabels')) {
+            const edgeLabelMode = ele.data('edgeLabelMode');
+            if (!edgeLabelMode) {
               return '';
             }
-            const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
-            const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
-            if (rate > 0) {
-              return pErr > 0 ? rate.toFixed(2) + ', ' + pErr.toFixed(1) + '%' : rate.toFixed(2);
+            if (edgeLabelMode === EdgeLabelMode.REQUESTS_PER_SECOND) {
+              const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
+              const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
+              if (rate > 0) {
+                return pErr > 0 ? rate.toFixed(2) + ', ' + pErr.toFixed(1) + '%' : rate.toFixed(2);
+              }
+            } else if (edgeLabelMode === EdgeLabelMode.LATENCY_95TH_PERCENTILE) {
+              const latency = ele.data('latency') ? parseFloat(ele.data('latency')) : 0;
+              if (latency > 0) {
+                return latency.toFixed(2) + 's';
+              }
             }
             return '';
           },

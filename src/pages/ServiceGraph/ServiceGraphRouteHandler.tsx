@@ -3,6 +3,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import { PropTypes } from 'prop-types';
 
 import { GraphParamsType } from '../../types/Graph';
+import { EdgeLabelMode } from '../../types/GraphFilter';
 import * as LayoutDictionary from '../../components/CytoscapeGraph/graphs/LayoutDictionary';
 import ServiceGraphPage from '../../containers/ServiceGraphPageContainer';
 
@@ -50,10 +51,12 @@ export class ServiceGraphRouteHandler extends React.Component<
     const _duration = urlParams.get('duration');
     const _hideCBs = urlParams.get('hideCBs') ? urlParams.get('hideCBs') === 'true' : false;
     const _hideRRs = urlParams.get('hideRRs') ? urlParams.get('hideRRs') === 'true' : false;
+    const _edgeLabelMode = EdgeLabelMode.fromString(urlParams.get('edges'), EdgeLabelMode.HIDE);
     return {
       graphDuration: _duration ? { value: _duration } : { value: DEFAULT_DURATION },
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
-      badgeStatus: { hideCBs: _hideCBs, hideRRs: _hideRRs }
+      badgeStatus: { hideCBs: _hideCBs, hideRRs: _hideRRs },
+      edgeLabelMode: _edgeLabelMode
     };
   };
 
@@ -64,17 +67,21 @@ export class ServiceGraphRouteHandler extends React.Component<
 
   componentWillReceiveProps(nextProps: RouteComponentProps<ServiceGraphURLProps>) {
     const nextNamespace = { name: nextProps.match.params.namespace };
-    const { graphDuration: nextDuration, graphLayout: nextLayout } = this.parseProps(nextProps.location.search);
+    const { graphDuration: nextDuration, graphLayout: nextLayout, edgeLabelMode: nextEdgeLabelMode } = this.parseProps(
+      nextProps.location.search
+    );
 
     const layoutHasChanged = nextLayout.name !== this.state.graphLayout.name;
     const namespaceHasChanged = nextNamespace.name !== this.state.namespace.name;
     const durationHasChanged = nextDuration.value !== this.state.graphDuration.value;
+    const edgeLabelModeChanged = nextEdgeLabelMode !== this.state.edgeLabelMode;
 
-    if (layoutHasChanged || namespaceHasChanged || durationHasChanged) {
+    if (layoutHasChanged || namespaceHasChanged || durationHasChanged || edgeLabelModeChanged) {
       const newParams: GraphParamsType = {
         namespace: nextNamespace,
         graphDuration: nextDuration,
-        graphLayout: nextLayout
+        graphLayout: nextLayout,
+        edgeLabelMode: nextEdgeLabelMode
       };
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(newParams));
       this.setState({ ...newParams });
@@ -82,7 +89,9 @@ export class ServiceGraphRouteHandler extends React.Component<
   }
 
   makeURLFromParams = (params: GraphParamsType) =>
-    `/service-graph/${params.namespace.name}?layout=${params.graphLayout.name}&duration=${params.graphDuration.value}`;
+    `/service-graph/${params.namespace.name}?layout=${params.graphLayout.name}&duration=${
+      params.graphDuration.value
+    }&edges=${params.edgeLabelMode}`;
 
   /** Change browser address bar and trigger new props propagation */
   onParamsChange = (params: GraphParamsType) => {

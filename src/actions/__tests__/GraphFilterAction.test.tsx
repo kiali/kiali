@@ -1,12 +1,16 @@
 import { ServiceGraphFilterActionKeys, serviceGraphFilterActions } from '../ServiceGraphFilterActions';
+import { EdgeLabelMode } from '../../types/GraphFilter';
 
 // Test our ActionCreators for proper message format
 describe('GraphFilterActions', () => {
   it('should toggle an edge label ', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_EDGE_LABEL
+      type: ServiceGraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
+      payload: EdgeLabelMode.LATENCY_95TH_PERCENTILE
     };
-    expect(serviceGraphFilterActions.toggleGraphEdgeLabel()).toEqual(expectedAction);
+    expect(serviceGraphFilterActions.setGraphEdgeLabelMode(EdgeLabelMode.LATENCY_95TH_PERCENTILE)).toEqual(
+      expectedAction
+    );
   });
 
   it('should toggle a node label ', () => {
