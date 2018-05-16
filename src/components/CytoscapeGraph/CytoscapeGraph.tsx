@@ -215,6 +215,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     // Create and destroy badges
     const cbBadge = new GraphBadge.CircuitBreakerBadge();
     const rrBadge = new GraphBadge.RouteRuleBadge();
+    const rrGroupBadge = new GraphBadge.RouteRuleGroupBadge();
     const msBadge = new GraphBadge.MissingSidecarsBadge();
     cy.nodes().forEach(ele => {
       if (this.props.showCircuitBreakers && ele.data('hasCB') === 'true') {
@@ -223,7 +224,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         cbBadge.destroyBadge(ele);
       }
       if (this.props.showRouteRules && ele.data('hasRR') === 'true') {
-        rrBadge.buildBadge(ele);
+        if (ele.data('isGroup')) {
+          rrGroupBadge.buildBadge(ele);
+        } else {
+          rrBadge.buildBadge(ele);
+        }
       } else {
         rrBadge.destroyBadge(ele);
       }

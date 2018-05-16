@@ -9,6 +9,7 @@ import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import MetricsOptions from '../../types/MetricsOptions';
 import { PfColors } from '../../components/Pf/PfColors';
+import { Icon } from 'patternfly-react';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -58,12 +59,14 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   }
 
   render() {
-    const namespace = this.props.data.summaryTarget.data('service').split('.')[1];
-    const service = this.props.data.summaryTarget.data('service').split('.')[0];
+    const group = this.props.data.summaryTarget;
+
+    const namespace = group.data('service').split('.')[1];
+    const service = group.data('service').split('.')[0];
     const serviceHotLink = <a href={`../namespaces/${namespace}/services/${service}`}>{service}</a>;
 
-    const incoming = getAccumulatedTrafficRate(this.props.data.summaryTarget.children());
-    const outgoing = getAccumulatedTrafficRate(this.props.data.summaryTarget.children().edgesTo('*'));
+    const incoming = getAccumulatedTrafficRate(group.children());
+    const outgoing = getAccumulatedTrafficRate(group.children().edgesTo('*'));
 
     return (
       <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
@@ -80,6 +83,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
             />
             {this.renderVersionBadges()}
           </div>
+          {this.renderBadgeSummary(group.data('hasRR'))}
         </div>
         <div className="panel-body">
           <InOutRateTable
@@ -157,6 +161,20 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           color={PfColors.Green500}
         />
       ));
+  };
+
+  private renderBadgeSummary = (hasRR: string) => {
+    const displayRR = hasRR === 'true';
+    return (
+      <>
+        {displayRR && (
+          <div>
+            <Icon name="code-fork" type="fa" style={{ width: '10px' }} />
+            Has Route Rule
+          </div>
+        )}
+      </>
+    );
   };
 
   private renderRpsCharts = () => {

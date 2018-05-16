@@ -16,11 +16,13 @@ class GraphBadge {
   badgeType: string;
   badgeColor: string;
   placement: string;
+  inner: boolean;
 
-  constructor(badgeType: string, badgeColor: string, placement: string) {
+  constructor(badgeType: string, badgeColor: string, placement: string, inner: boolean) {
     this.badgeType = badgeType;
     this.badgeColor = badgeColor;
     this.placement = placement;
+    this.inner = inner;
   }
 
   buildBadge(node: Element) {
@@ -66,7 +68,7 @@ class GraphBadge {
         onCreate: setScale,
         onUpdate: setScale,
         modifiers: {
-          inner: { enabled: true },
+          inner: { enabled: this.inner },
           preventOverflow: {
             enabled: true,
             padding: 0
@@ -119,18 +121,24 @@ class GraphBadge {
 
 export class CircuitBreakerBadge extends GraphBadge {
   constructor() {
-    super(FLASH_BADGE, PfColors.Purple300, 'top-start');
+    super(FLASH_BADGE, PfColors.Purple300, 'top-start', true);
   }
 }
 
 export class RouteRuleBadge extends GraphBadge {
   constructor() {
-    super(ROUTE_BADGE, PfColors.Purple300, 'top');
+    super(ROUTE_BADGE, PfColors.Purple300, 'top', true);
+  }
+}
+
+export class RouteRuleGroupBadge extends GraphBadge {
+  constructor() {
+    super(ROUTE_BADGE, PfColors.Purple300, 'top', false);
   }
 }
 
 export class MissingSidecarsBadge extends GraphBadge {
   constructor() {
-    super(SIDECAR_BADGE, PfColors.Red100, 'bottom');
+    super(SIDECAR_BADGE, PfColors.Red100, 'bottom', true);
   }
 }
