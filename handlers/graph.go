@@ -156,6 +156,7 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 	// identify the unique destination services
 	destinations := toDestinations(sn.Name, sn.Version, vector)
 
+	sn.Metadata["rateOut"] = 0.0
 	if len(destinations) > 0 {
 		sn.Children = make([]*tree.ServiceNode, len(destinations))
 		i := 0
@@ -164,6 +165,8 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 			child := tree.NewServiceNode(s[0], s[1])
 			child.Parent = sn
 			child.Metadata = d
+
+			sn.Metadata["rateOut"] = sn.Metadata["rateOut"].(float64) + d["rate"].(float64)
 
 			log.Debugf("Adding child Service: %v(%v)->%v(%v)\n", sn.Name, sn.Version, child.Name, child.Version)
 			sn.Children[i] = &child
@@ -286,6 +289,7 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, queryTime 
 	// identify the unique destination services
 	destinations := toDestinations(sn.Name, sn.Version, vector)
 
+	sn.Metadata["rateOut"] = 0.0
 	if len(destinations) > 0 {
 		sn.Children = make([]*tree.ServiceNode, len(destinations))
 		i := 0
@@ -294,6 +298,8 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, queryTime 
 			child := tree.NewServiceNode(s[0], s[1])
 			child.Parent = sn
 			child.Metadata = d
+
+			sn.Metadata["rateOut"] = sn.Metadata["rateOut"].(float64) + d["rate"].(float64)
 
 			log.Debugf("Child Service: %v(%v)->%v(%v)\n", sn.Name, sn.Version, child.Name, child.Version)
 			sn.Children[i] = &child

@@ -60,7 +60,8 @@
           "id": "e0",
           "source": "n0",
           "target": "n1",
-          "rate": "20.000"
+          "rate": "20.000",
+          "percentRate": "33.333"
         }
       },
       {
@@ -68,7 +69,8 @@
           "id": "e1",
           "source": "n0",
           "target": "n2",
-          "rate": "20.000"
+          "rate": "20.000",
+          "percentRate": "33.333"
         }
       },
       {
@@ -76,7 +78,8 @@
           "id": "e3",
           "source": "n0",
           "target": "n4",
-          "rate": "20.000"
+          "rate": "20.000",
+          "percentRate": "33.333"
         }
       },
       {
@@ -84,7 +87,8 @@
           "id": "e2",
           "source": "n2",
           "target": "n3",
-          "rate": "20.000"
+          "rate": "20.000",
+          "percentRate": "50.000"
         }
       },
       {
@@ -92,7 +96,8 @@
           "id": "e4",
           "source": "n4",
           "target": "n3",
-          "rate": "20.000"
+          "rate": "20.000",
+          "percentRate": "50.000"
         }
       }
     ]
