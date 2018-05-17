@@ -260,7 +260,9 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
               </div>
               {this.state.grafanaLinkIn && (
                 <span id="grafana-in-link">
-                  <a href={this.state.grafanaLinkIn}>View in Grafana</a>
+                  <a href={this.state.grafanaLinkIn} target="_blank">
+                    View in Grafana
+                  </a>
                 </span>
               )}
             </div>
@@ -279,7 +281,9 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
               </ul>
               {this.state.grafanaLinkOut && (
                 <span id="grafana-out-link">
-                  <a href={this.state.grafanaLinkOut}>View in Grafana</a>
+                  <a href={this.state.grafanaLinkOut} target="_blank">
+                    View in Grafana
+                  </a>
                 </span>
               )}
             </div>
