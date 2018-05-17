@@ -36,7 +36,7 @@ func (route RouteChecker) Check() ([]*models.IstioCheck, bool) {
 		if err != nil {
 			valid = false
 			validation := models.BuildCheck("Weight must be a number",
-				"error", "spec/precedence/"+route["weight"].(string))
+				"error", "spec/route/weight/"+route["weight"].(string))
 			validations = append(validations, &validation)
 		}
 
