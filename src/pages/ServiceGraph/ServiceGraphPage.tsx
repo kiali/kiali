@@ -2,11 +2,11 @@ import * as React from 'react';
 
 import Namespace from '../../types/Namespace';
 import { GraphParamsType, SummaryData } from '../../types/Graph';
-import { Duration, Layout, EdgeLabelMode } from '../../types/GraphFilter';
+import { Duration } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
 import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
-import GraphFilter from '../../components/GraphFilter/GraphFilter';
+import GraphFilterToolbar from '../../components/GraphFilter/GraphFilterToolbar';
 import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import { style } from 'typestyle';
@@ -19,7 +19,7 @@ type ServiceGraphPageProps = GraphParamsType & {
   graphTimestamp: string;
   graphData: any;
   isLoading: boolean;
-  onParamsChange: (params: GraphParamsType) => void;
+  isReady: boolean;
   fetchGraphData: (namespace: Namespace, graphDuration: Duration) => any;
 };
 const NUMBER_OF_DATAPOINTS = 30;
@@ -83,18 +83,17 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
       namespace: this.props.namespace,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
+      // @todo: graphDuration should be coming from this.props.graphDuration
+      // since it's a required prop.  Getting the value from sessionStorage
+      // makes this component stateful.
       graphDuration: { value: Number(sessionStorage.getItem('appDuration')) } || this.props.graphDuration
     };
     return (
       <PfContainerNavVertical>
         <h2>Service Graph</h2>
-        <GraphFilter
-          disabled={this.props.isLoading}
-          onLayoutChange={this.handleLayoutChange}
-          onFilterChange={this.handleFilterChange}
-          onNamespaceChange={this.handleNamespaceChange}
-          onEdgeLabelModeChange={this.handleEdgeLabelModeChange}
-          onRefresh={this.handleRefreshClick}
+        <GraphFilterToolbar
+          isLoading={this.props.isLoading}
+          handleRefreshClick={this.handleRefreshClick}
           {...graphParams}
         />
         <div className={cytscapeGraphStyle}>
@@ -120,46 +119,6 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     );
   }
 
-  handleLayoutChange = (graphLayout: Layout) => {
-    const { namespace, graphDuration, edgeLabelMode } = this.getGraphParams();
-    this.props.onParamsChange({
-      graphDuration,
-      namespace,
-      graphLayout,
-      edgeLabelMode
-    });
-  };
-
-  handleFilterChange = (graphDuration: Duration) => {
-    const { namespace, graphLayout, edgeLabelMode } = this.getGraphParams();
-    this.props.onParamsChange({
-      graphDuration,
-      namespace,
-      graphLayout,
-      edgeLabelMode
-    });
-  };
-
-  handleNamespaceChange = (namespace: Namespace) => {
-    const { graphDuration, graphLayout, edgeLabelMode } = this.getGraphParams();
-    this.props.onParamsChange({
-      namespace,
-      graphDuration,
-      graphLayout,
-      edgeLabelMode
-    });
-  };
-
-  handleEdgeLabelModeChange = (edgeLabelMode: EdgeLabelMode) => {
-    const { namespace, graphDuration, graphLayout } = this.getGraphParams();
-    this.props.onParamsChange({
-      namespace,
-      graphDuration,
-      graphLayout,
-      edgeLabelMode
-    });
-  };
-
   /** Fetch graph data */
   loadGraphDataFromBackend = (namespace?: Namespace, graphDuration?: Duration) => {
     namespace = namespace ? namespace : this.props.namespace;
@@ -168,14 +127,5 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     this.setState({
       summaryData: null
     });
-  };
-
-  private getGraphParams: () => GraphParamsType = () => {
-    return {
-      namespace: this.props.namespace,
-      graphDuration: this.props.graphDuration,
-      graphLayout: this.props.graphLayout,
-      edgeLabelMode: this.props.edgeLabelMode
-    };
   };
 }

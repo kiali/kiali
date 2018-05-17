@@ -15,7 +15,7 @@ import * as _ from 'lodash';
 export interface GraphFilterProps extends GraphParamsType {
   disabled: boolean;
   onLayoutChange: (newLayout: Layout) => void;
-  onFilterChange: (newDuration: Duration) => void;
+  onDurationChange: (newDuration: Duration) => void;
   onNamespaceChange: (newValue: Namespace) => void;
   onEdgeLabelModeChange: (newEdges: EdgeLabelMode) => void;
   onRefresh: () => void;
@@ -48,7 +48,7 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
     if (this.props.graphDuration.value !== value) {
       // notify callback
       sessionStorage.setItem('appDuration', String(value));
-      this.props.onFilterChange({ value: value });
+      this.props.onDurationChange({ value: value });
     }
   };
 

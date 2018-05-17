@@ -11,7 +11,7 @@ import IstioRulesPage from '../../pages/IstioRulesList/IstioRuleListPage';
 import IstioRuleDetailsPage from '../../pages/IstioRuleDetails/IstioRuleDetailsPage';
 import HelpDropdown from './HelpDropdown';
 import ServiceDetailsPage from '../../pages/ServiceDetails/ServiceDetailsPage';
-import { ServiceGraphRouteHandler } from '../../pages/ServiceGraph';
+import ServiceGraphRouteHandler from '../../pages/ServiceGraph/ServiceGraphRouteHandler';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 import ServiceJaegerPage from '../../pages/ServiceJaeger/ServiceJaegerPage';
 

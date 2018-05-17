@@ -6,6 +6,7 @@ import { GraphParamsType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import * as LayoutDictionary from '../../components/CytoscapeGraph/graphs/LayoutDictionary';
 import ServiceGraphPage from '../../containers/ServiceGraphPageContainer';
+import { makeURLFromParams } from '../../components/Nav/NavUtils';
 
 const URLSearchParams = require('url-search-params');
 
@@ -25,7 +26,7 @@ const DEFAULT_DURATION = 60;
 /**
  * Handle URL parameters for ServiceGraph page
  */
-export class ServiceGraphRouteHandler extends React.Component<
+export default class ServiceGraphRouteHandler extends React.Component<
   RouteComponentProps<ServiceGraphURLProps>,
   GraphParamsType
 > {
@@ -62,7 +63,7 @@ export class ServiceGraphRouteHandler extends React.Component<
 
   componentDidMount() {
     // Note: `history.replace` simply changes the address bar text, not re-navigation
-    this.context.router.history.replace(this.makeURLFromParams(this.state));
+    this.context.router.history.replace(makeURLFromParams(this.state));
   }
 
   componentWillReceiveProps(nextProps: RouteComponentProps<ServiceGraphURLProps>) {
@@ -88,17 +89,7 @@ export class ServiceGraphRouteHandler extends React.Component<
     }
   }
 
-  makeURLFromParams = (params: GraphParamsType) =>
-    `/service-graph/${params.namespace.name}?layout=${params.graphLayout.name}&duration=${
-      params.graphDuration.value
-    }&edges=${params.edgeLabelMode}`;
-
-  /** Change browser address bar and trigger new props propagation */
-  onParamsChange = (params: GraphParamsType) => {
-    this.context.router.history.push(this.makeURLFromParams(params));
-  };
-
   render() {
-    return <ServiceGraphPage {...this.state} onParamsChange={this.onParamsChange} />;
+    return <ServiceGraphPage {...this.state} />;
   }
 }
