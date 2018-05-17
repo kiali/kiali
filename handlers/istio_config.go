@@ -12,7 +12,14 @@ import (
 )
 
 func IstioConfigList(w http.ResponseWriter, r *http.Request) {
-	criteria := parseListParams(r)
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	query := r.URL.Query()
+	objects := ""
+	if _, ok := query["objects"]; ok {
+		objects = strings.ToLower(query.Get("objects"))
+	}
+	criteria := parseCriteria(namespace, objects)
 
 	// Get business layer
 	business, err := business.Get()
@@ -31,37 +38,43 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, istioConfig)
 }
 
-func parseListParams(r *http.Request) business.IstioConfigCriteria {
-	criteria := business.IstioConfigCriteria{}
-	params := mux.Vars(r)
-	criteria.Namespace = params["namespace"]
-	criteria.IncludeRouteRules = false
-	criteria.IncludeDestinationPolicies = false
-	criteria.IncludeVirtualServices = false
-	criteria.IncludeDestinationRules = false
-	criteria.IncludeRules = false
+func checkType(types []string, name string) bool {
+	for _, typeName := range types {
+		if typeName == name {
+			return true
+		}
+	}
+	return false
+}
 
-	query := r.URL.Query()
-	const all = "_all_"
-	csl := all
-	_, ok := query["objects"]
-	if ok {
-		csl = strings.ToLower(query.Get("objects"))
+func parseCriteria(namespace string, objects string) business.IstioConfigCriteria {
+	defaultInclude := objects == ""
+	criteria := business.IstioConfigCriteria{}
+	criteria.Namespace = namespace
+	criteria.IncludeRouteRules = defaultInclude
+	criteria.IncludeDestinationPolicies = defaultInclude
+	criteria.IncludeVirtualServices = defaultInclude
+	criteria.IncludeDestinationRules = defaultInclude
+	criteria.IncludeRules = defaultInclude
+
+	if defaultInclude {
+		return criteria
 	}
 
-	if csl == all || strings.Contains(csl, "routerules") {
+	types := strings.Split(objects, ",")
+	if checkType(types, "routerules") {
 		criteria.IncludeRouteRules = true
 	}
-	if csl == all || strings.Contains(csl, "destinationpolicies") {
+	if checkType(types, "destinationpolicies") {
 		criteria.IncludeDestinationPolicies = true
 	}
-	if csl == all || strings.Contains(csl, "virtualservices") {
+	if checkType(types, "virtualservices") {
 		criteria.IncludeVirtualServices = true
 	}
-	if csl == all || strings.Contains(csl, "destinationrules") {
+	if checkType(types, "destinationrules") {
 		criteria.IncludeDestinationRules = true
 	}
-	if csl == all || strings.Contains(csl, "rules") {
+	if checkType(types, "rules") {
 		criteria.IncludeRules = true
 	}
 	return criteria
