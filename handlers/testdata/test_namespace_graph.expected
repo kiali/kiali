@@ -101,7 +101,8 @@
           "rate3XX": "20.000",
           "rate4XX": "20.000",
           "rate5XX": "20.000",
-          "percentErr": "50.000"
+          "percentErr": "50.000",
+          "percentRate": "50.000"
         }
       },
       {
@@ -109,7 +110,8 @@
           "id": "e2",
           "source": "n1",
           "target": "n3",
-          "rate": "20.000"
+          "rate": "20.000",
+          "percentRate": "12.500"
         }
       },
       {
@@ -117,7 +119,8 @@
           "id": "e3",
           "source": "n1",
           "target": "n4",
-          "rate": "20.000"
+          "rate": "20.000",
+          "percentRate": "12.500"
         }
       },
       {
@@ -125,7 +128,8 @@
           "id": "e5",
           "source": "n1",
           "target": "n6",
-          "rate": "20.000"
+          "rate": "20.000",
+          "percentRate": "12.500"
         }
       },
       {
@@ -133,7 +137,8 @@
           "id": "e4",
           "source": "n4",
           "target": "n5",
-          "rate": "20.000"
+          "rate": "20.000",
+          "percentRate": "50.000"
         }
       },
       {
@@ -141,7 +146,8 @@
           "id": "e6",
           "source": "n6",
           "target": "n5",
-          "rate": "20.000"
+          "rate": "20.000",
+          "percentRate": "50.000"
         }
       },
       {

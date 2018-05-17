@@ -53,13 +53,14 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 
 	// App Fields (not required by Cytoscape)
-	Rate       string `json:"rate,omitempty"`
-	Rate3xx    string `json:"rate3XX,omitempty"`
-	Rate4xx    string `json:"rate4XX,omitempty"`
-	Rate5xx    string `json:"rate5XX,omitempty"`
-	PercentErr string `json:"percentErr,omitempty"`
-	Latency    string `json:"latency,omitempty"`
-	IsUnused   string `json:"isUnused,omitempty"` // true | false
+	Rate        string `json:"rate,omitempty"`
+	Rate3xx     string `json:"rate3XX,omitempty"`
+	Rate4xx     string `json:"rate4XX,omitempty"`
+	Rate5xx     string `json:"rate5XX,omitempty"`
+	PercentErr  string `json:"percentErr,omitempty"`
+	PercentRate string `json:"percentRate,omitempty"` // percent of total parent requests
+	Latency     string `json:"latency,omitempty"`
+	IsUnused    string `json:"isUnused,omitempty"` // true | false
 }
 
 type NodeWrapper struct {
@@ -91,7 +92,7 @@ func NewConfig(namespace string, sn *[]tree.ServiceNode, o options.VendorOptions
 	for _, t := range *sn {
 		log.Debugf("Walk Tree Root %v", t.ID)
 
-		walk(&t, &nodes, &edges, "", &nodeIdSequence, &edgeIdSequence, o)
+		walk(&t, nil, &nodes, &edges, &nodeIdSequence, &edgeIdSequence, o)
 	}
 
 	// Add composite nodes that group together different versions of the same service
@@ -129,7 +130,7 @@ func NewConfig(namespace string, sn *[]tree.ServiceNode, o options.VendorOptions
 	return result
 }
 
-func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, parentNodeId string, nodeIdSequence, edgeIdSequence *int, o options.VendorOptions) {
+func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, nodeIdSequence, edgeIdSequence *int, o options.VendorOptions) {
 	name := sn.Name
 	if "" == name {
 		name = tree.UnknownService
@@ -186,17 +187,17 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 		*nodes = append(*nodes, &nw)
 	}
 
-	if parentNodeId != "" {
+	if ndParent != nil {
 		//TODO If we can find a graph layout that handles loop edges well then
 		// we can go back to allowing these but for now, flag the node text
-		if parentNodeId == nd.Id {
+		if ndParent.Id == nd.Id {
 			nd.RateSelfInvoke = fmt.Sprintf("%.3f", sn.Metadata["rate"].(float64))
 		} else {
 			edgeId := fmt.Sprintf("e%v", *edgeIdSequence)
 			*edgeIdSequence++
 			ed := EdgeData{
 				Id:     edgeId,
-				Source: parentNodeId,
+				Source: ndParent.Id,
 				Target: nd.Id,
 			}
 			addTelemetry(&ed, sn, nd, o)
@@ -209,7 +210,7 @@ func walk(sn *tree.ServiceNode, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, pa
 	}
 
 	for _, c := range sn.Children {
-		walk(c, nodes, edges, nd.Id, nodeIdSequence, edgeIdSequence, o)
+		walk(c, nd, nodes, edges, nodeIdSequence, edgeIdSequence, o)
 	}
 }
 
@@ -253,6 +254,11 @@ func addTelemetry(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.Ve
 		if val, ok := sn.Metadata["latency"]; ok {
 			latency := val.(float64)
 			ed.Latency = fmt.Sprintf("%.3f", latency)
+		}
+
+		percentRate := rate / sn.Parent.Metadata["rateOut"].(float64) * 100.0
+		if percentRate < 100.0 {
+			ed.PercentRate = fmt.Sprintf("%.3f", percentRate)
 		}
 
 	} else {
