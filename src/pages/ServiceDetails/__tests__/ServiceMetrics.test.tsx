@@ -120,14 +120,16 @@ describe('ServiceMetrics', () => {
           expect(mounted!.find('#grafana-out-link > a').map(div => div.getElement().props)).toEqual([
             {
               children: 'View in Grafana',
-              href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-source=svc.ns.svc.cluster.local'
+              href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-source=svc.ns.svc.cluster.local',
+              target: '_blank'
             }
           ]);
           expect(mounted!.find('#grafana-in-link > a').map(div => div.getElement().props)).toEqual([
             {
               children: 'View in Grafana',
               href:
-                'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-http_destination=svc.ns.svc.cluster.local'
+                'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-http_destination=svc.ns.svc.cluster.local',
+              target: '_blank'
             }
           ]);
         })
