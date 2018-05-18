@@ -83,10 +83,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
       namespace: this.props.namespace,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
-      // @todo: graphDuration should be coming from this.props.graphDuration
-      // since it's a required prop.  Getting the value from sessionStorage
-      // makes this component stateful.
-      graphDuration: { value: Number(sessionStorage.getItem('appDuration')) } || this.props.graphDuration
+      graphDuration: this.props.graphDuration
     };
     return (
       <PfContainerNavVertical>
