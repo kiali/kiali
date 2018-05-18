@@ -85,10 +85,10 @@ ShallowWrapper {
         <ToolbarDropdown
           disabled={false}
           handleSelect={[Function]}
-          id="metrics_filter_pool_interval"
+          id="metrics_filter_poll_interval"
           initialLabel="5 seconds"
           initialValue={5000}
-          nameDropdown="Pool Interval"
+          nameDropdown="Poll Interval"
           options={
             Object {
               "0": "Pause",
@@ -203,10 +203,10 @@ ShallowWrapper {
         "props": Object {
           "disabled": false,
           "handleSelect": [Function],
-          "id": "metrics_filter_pool_interval",
+          "id": "metrics_filter_poll_interval",
           "initialLabel": "5 seconds",
           "initialValue": 5000,
-          "nameDropdown": "Pool Interval",
+          "nameDropdown": "Poll Interval",
           "options": Object {
             "0": "Pause",
             "10000": "10 seconds",
@@ -334,10 +334,10 @@ ShallowWrapper {
           <ToolbarDropdown
             disabled={false}
             handleSelect={[Function]}
-            id="metrics_filter_pool_interval"
+            id="metrics_filter_poll_interval"
             initialLabel="5 seconds"
             initialValue={5000}
-            nameDropdown="Pool Interval"
+            nameDropdown="Poll Interval"
             options={
               Object {
                 "0": "Pause",
@@ -452,10 +452,10 @@ ShallowWrapper {
           "props": Object {
             "disabled": false,
             "handleSelect": [Function],
-            "id": "metrics_filter_pool_interval",
+            "id": "metrics_filter_poll_interval",
             "initialLabel": "5 seconds",
             "initialValue": 5000,
-            "nameDropdown": "Pool Interval",
+            "nameDropdown": "Poll Interval",
             "options": Object {
               "0": "Pause",
               "10000": "10 seconds",
