@@ -16,8 +16,9 @@ A UI for the Kiali Istio Observability Project
 == Quick Start
 [source,shell]
 ----
-npm install
-npm start
+npm install -g yarn
+yarn
+yarn start
 ----
 
 A new browser window should automatically open.
@@ -39,6 +40,11 @@ reloads any changes to the browser for rapid development.
 
 == Developing
 
+We use `yarn` as the package manager, if adding dependencies to `package.json`
+make sure you install them with `yarn` and commit the `yarn.lock` file.
+
+=== Testing with Kiali
+
 When developing, is usual to run this application outside of https://github.com/kiali/kiali[kiali].
 
 Is possible to proxy the API requests without having to push the changes to kiali.
@@ -54,10 +60,10 @@ property to `package.json` with the url of kiali.
 ...
 ----
 
-Run `npm start` and try it!
+Run `yarn start` and try it!
 [source, bash]
 ----
-$ curl -u jdoe:password http://localhost:3000/api
+$ curl -u admin:admin http://localhost:3000/api
 Namespaces: [default istio-system kube-public kube-system myproject openshift openshift-infra openshift-node]
 
 Namespace: default Services [docker-registry kubernetes router]
@@ -82,18 +88,18 @@ Once Sass compiles, the resulting CSS can be found next to its SCSS counterpart 
 To compile CSS, run:
 [source,shell]
 ----
-npm run build-css
+yarn build-css
 ----
 
 Note:
 Only static assets which are `import` 'ed into your application will be included in your resulting build output.
 
 === Testing
-To run the tests, the standard command `npm test` is valid,
+To run the tests, the standard command `yarn test` is valid,
 but since some tests are using link:https://facebook.github.io/jest/docs/en/snapshot-testing.html[snapshots] the preferred command is to update them in the same time:
 [source,shell]
 ----
-npm test -- -u
+yarn test -u
 ----
 
 Then hit `a` to run all tests.
@@ -109,7 +115,7 @@ brew install watchman
 ----
 
 == Production Builds
-Use `npm run build` which will bundle the build artifacts using webpack into the `build` directory.
+Use `yarn build` which will bundle the build artifacts using webpack into the `build` directory.
 
 == General
 

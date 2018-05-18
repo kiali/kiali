@@ -8,18 +8,22 @@ addons:
 node_js:
   - 8
 cache:
+  yarn: true
   directories:
     - node_modules
+before_install:
+  yarn --frozen-lockfile --non-interactive || true
+  # Above is a candidate to test if package.json is in sync with yarn.lock
+  # if out of sync, it will fail. This can be moved to the "install" phase
 script:
-  - npm run prettier -- --list-different &&
-    npm run build-css &&
-    npm run build &&
-    npm test -- --coverage
+  - yarn prettier --list-different &&
+    yarn build &&
+    yarn test --coverage
   - ./run_itest.sh
 after_success:
   - cat ./coverage/lcov.info | coveralls
 before_deploy:
-  - npm run set-snapshot-version $TRAVIS_BUILD_NUMBER
+  - yarn set-snapshot-version $TRAVIS_BUILD_NUMBER
 deploy:
   skip_cleanup: true
   provider: npm
