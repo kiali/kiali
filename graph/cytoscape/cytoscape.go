@@ -307,7 +307,7 @@ func addCompositeNodes(nodes *[]*NodeWrapper, nodeIdSequence *int) {
 					nd.HasMissingSidecars = nd.HasMissingSidecars || n.Data.HasMissingSidecars
 					// If there is a route rule defined in version node, move it to composite parent
 					if n.Data.HasRouteRule == "true" {
-						n.Data.HasRouteRule = "false"
+						n.Data.HasRouteRule = ""
 						hasRouteRule = true
 					}
 				}

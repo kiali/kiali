@@ -90,11 +90,13 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		csl = strings.ToLower(params.Get("appenders"))
 	}
 
+	// The appender order is important
+	// To reduce processing, filter dead services first
+	// To reduce processing, next run appenders that don't apply to orphan services
+	// Add orphan (unused) services
+	// Run remaining appenders
 	if csl == all || strings.Contains(csl, "dead_service") {
 		appenders = append(appenders, appender.DeadServiceAppender{})
-	}
-	if csl == all || strings.Contains(csl, "istio") {
-		appenders = append(appenders, appender.IstioAppender{})
 	}
 	if csl == all || strings.Contains(csl, "latency") {
 		quantile := appender.DefaultQuantile
@@ -111,6 +113,9 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 	}
 	if csl == all || strings.Contains(csl, "unused_service") {
 		appenders = append(appenders, appender.UnusedServiceAppender{})
+	}
+	if csl == all || strings.Contains(csl, "istio") {
+		appenders = append(appenders, appender.IstioAppender{})
 	}
 	if csl == all || strings.Contains(csl, "sidecars_check") {
 		appenders = append(appenders, appender.SidecarsCheckAppender{})
