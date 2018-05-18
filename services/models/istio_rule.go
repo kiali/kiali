@@ -9,6 +9,7 @@ type IstioRuleList struct {
 	Rules     []IstioRule `json:"rules"`
 }
 
+type IstioRules []IstioRule
 type IstioRule struct {
 	Name    string      `json:"name"`
 	Match   interface{} `json:"match"`
@@ -67,7 +68,7 @@ func GetIstioRuleDetails(namespaceName string, istiorule string) (*IstioRuleDeta
 	return CastIstioRuleDetails(istioRuleDetails), nil
 }
 
-func CastIstioRulesCollection(rules *kubernetes.IstioRules) []IstioRule {
+func CastIstioRulesCollection(rules *kubernetes.IstioRules) IstioRules {
 	istioRules := make([]IstioRule, len(rules.Rules))
 	for i, rule := range rules.Rules {
 		istioRules[i] = CastIstioRule(rule)

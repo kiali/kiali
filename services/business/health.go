@@ -15,7 +15,7 @@ type HealthService struct {
 	k8s  kubernetes.IstioClientInterface
 }
 
-// GetServiceHealth returns a service health from just namespace and service (thus, it fetches data from K8S and Prometheus)
+// GetServiceHealth returns a service health from just Namespace and service (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetServiceHealth(namespace, service, rateInterval string) models.Health {
 	// Fill all parts
 	health := models.Health{}

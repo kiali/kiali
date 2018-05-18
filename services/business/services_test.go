@@ -28,9 +28,9 @@ func TestServiceListParsing(t *testing.T) {
 	prom.On("GetNamespaceServicesRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeRequestCounters())
 	svc := setupServices(k8s, prom)
 
-	serviceList, _ := svc.GetServiceList("namespace", "1m")
+	serviceList, _ := svc.GetServiceList("Namespace", "1m")
 
-	assert.Equal("namespace", serviceList.Namespace.Name)
+	assert.Equal("Namespace", serviceList.Namespace.Name)
 	assert.Len(serviceList.Services, 2)
 	reviewsOverview := serviceList.Services[0]
 	httpbinOverview := serviceList.Services[1]
@@ -67,9 +67,9 @@ func TestSingleServiceHealthParsing(t *testing.T) {
 	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeServiceRequestCounters())
 	svc := setupServices(k8s, prom)
 
-	service, _ := svc.GetService("namespace", "httpbin", "1m")
+	service, _ := svc.GetService("Namespace", "httpbin", "1m")
 
-	assert.Equal("namespace", service.Namespace.Name)
+	assert.Equal("Namespace", service.Namespace.Name)
 	assert.Equal("httpbin", service.Name)
 	assert.Equal(1, service.Health.Envoy.Total)
 	assert.Equal(1, service.Health.Envoy.Healthy)

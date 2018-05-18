@@ -20,7 +20,7 @@ type SvcService struct {
 	health *HealthService
 }
 
-// GetServiceList returns a list of all services for a given namespace
+// GetServiceList returns a list of all services for a given Namespace
 func (in *SvcService) GetServiceList(namespace, rateInterval string) (*models.ServiceList, error) {
 	// Fetch services list
 	kubernetesServices, err := in.k8s.GetServices(namespace)
