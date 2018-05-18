@@ -33,6 +33,7 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 		DestinationPolicies: models.DestinationPolicies{},
 		VirtualServices:     models.VirtualServices{},
 		DestinationRules:    models.DestinationRules{},
+		Rules:               models.IstioRules{},
 	}
 	var rrErr, dpErr, vsErr, drErr, mrErr error
 	var wg sync.WaitGroup
