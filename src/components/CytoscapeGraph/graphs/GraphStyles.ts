@@ -77,22 +77,29 @@ export class GraphStyles {
         css: {
           content: (ele: any) => {
             const edgeLabelMode = ele.data('edgeLabelMode');
-            if (!edgeLabelMode) {
-              return '';
-            }
-            if (edgeLabelMode === EdgeLabelMode.REQUESTS_PER_SECOND) {
-              const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
-              const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
-              if (rate > 0) {
-                return pErr > 0 ? rate.toFixed(2) + ', ' + pErr.toFixed(1) + '%' : rate.toFixed(2);
+            switch (edgeLabelMode) {
+              case EdgeLabelMode.REQUESTS_PER_SECOND: {
+                const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
+                if (rate > 0) {
+                  const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
+                  return pErr > 0 ? rate.toFixed(2) + ', ' + pErr.toFixed(1) + '%' : rate.toFixed(2);
+                }
+                return '';
               }
-            } else if (edgeLabelMode === EdgeLabelMode.LATENCY_95TH_PERCENTILE) {
-              const latency = ele.data('latency') ? parseFloat(ele.data('latency')) : 0;
-              if (latency > 0) {
-                return latency.toFixed(2) + 's';
+              case EdgeLabelMode.LATENCY_95TH_PERCENTILE: {
+                const latency = ele.data('latency') ? parseFloat(ele.data('latency')) : 0;
+                if (latency > 0) {
+                  return latency < 1.0 ? (latency * 1000).toFixed(0) + 'ms' : latency.toFixed(2) + 's';
+                }
+                return '';
               }
+              case EdgeLabelMode.REQUESTS_PERCENT_OF_TOTAL: {
+                const percentRate = ele.data('percentRate') ? parseFloat(ele.data('percentRate')) : 0;
+                return percentRate > 0 ? percentRate.toFixed(0) + '%' : '';
+              }
+              default:
+                return '';
             }
-            return '';
           },
           'curve-style': 'bezier',
           'font-size': '7px',

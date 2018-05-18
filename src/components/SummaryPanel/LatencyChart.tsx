@@ -37,7 +37,7 @@ export default class LatencyChart extends React.Component<LatencyChartTypeProp, 
         .concat(this.props.lat95 as [string, number][])
         .concat(this.props.lat99 as [string, number][]),
       type: 'area-spline',
-      hide: ['Average', '95th', '99th']
+      hide: ['Average', 'Median', '99th']
     };
 
     return (
