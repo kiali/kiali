@@ -21,6 +21,10 @@ $icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/";
   }
 }
 
+.navbar-pf-vertical .nav .nav-item-iconic .badge-danger {
+  background-color: #cc0000; // Red100
+}
+
 a:hover,
 a:focus {
   text-decoration: none;

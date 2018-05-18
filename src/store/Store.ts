@@ -21,7 +21,7 @@ export interface MessageCenterState {
   groups: NotificationGroup[];
   hidden: boolean;
   expanded: boolean;
-  expandedGroupId: string;
+  expandedGroupId?: string;
 }
 
 export interface ServiceGraphDataState {
