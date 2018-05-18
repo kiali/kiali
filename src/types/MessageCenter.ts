@@ -36,7 +36,7 @@ export interface MessageCenterPropsType {
   onClearGroup: (group: NotificationGroup) => void;
   onNotificationClick: (message: NotificationMessage, group: NotificationGroup) => void;
 
-  onDismissNotification: (message: NotificationMessage, group: NotificationGroup) => void;
+  onDismissNotification: (message: NotificationMessage, group: NotificationGroup, userDismissed: boolean) => void;
 
   groups: NotificationGroup[];
 }

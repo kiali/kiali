@@ -4,6 +4,7 @@ import * as PfReact from 'patternfly-react';
 type StateType = {};
 type PropsType = {
   newMessagesCount: number;
+  badgeDanger: boolean;
   toggleMessageCenter: () => void;
 };
 
@@ -14,7 +15,9 @@ export default class MessageCenterTrigger extends React.PureComponent<PropsType,
         <a className="nav-item-iconic" onClick={this.props.toggleMessageCenter}>
           <PfReact.Icon name="bell" />
           {this.props.newMessagesCount > 0 && (
-            <PfReact.Badge className="pf-badge-bodered">{this.props.newMessagesCount}</PfReact.Badge>
+            <PfReact.Badge className={'pf-badge-bodered' + (this.props.badgeDanger ? ' badge-danger' : '')}>
+              {this.props.newMessagesCount}
+            </PfReact.Badge>
           )}
         </a>
       </li>

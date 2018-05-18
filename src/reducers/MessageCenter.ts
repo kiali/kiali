@@ -23,14 +23,32 @@ const createMessage = (id: number, content: string, type: MessageType) => {
     id,
     content,
     type,
+    show_notification: type === MessageType.ERROR || type === MessageType.WARNING,
     seen: false,
     created: new Date()
   };
 };
 
+// Updates several messages with the same payload, useful for marking messages
+// returns the updated state
+const updateMessage = (state: MessageCenterState, messageIds: number[], updater) => {
+  const groups = state.groups.map(group => {
+    group = Object.assign({}, group, {
+      messages: group.messages.map(message => {
+        if (messageIds.includes(message.id)) {
+          message = updater(message);
+        }
+        return message;
+      })
+    });
+    return group;
+  });
+  return mergeToState(state, { groups });
+};
+
 const Messages = (state: MessageCenterState = INITIAL_STATE, action) => {
   switch (action.type) {
-    case MessageCenterActionKeys.MESSAGE_CENTER_ADD: {
+    case MessageCenterActionKeys.ADD_MESSAGE: {
       const { groupId, content, messageType } = action;
       const groups = state.groups.map(group => {
         if (group.id === groupId) {
@@ -43,7 +61,7 @@ const Messages = (state: MessageCenterState = INITIAL_STATE, action) => {
       });
       return mergeToState(state, { groups: groups, nextId: state.nextId + 1 });
     }
-    case MessageCenterActionKeys.MESSAGE_CENTER_REMOVE: {
+    case MessageCenterActionKeys.REMOVE_MESSAGE: {
       const messageId = action.messageId;
       const groups = state.groups.map(group => {
         group = Object.assign({}, group, {
@@ -55,35 +73,26 @@ const Messages = (state: MessageCenterState = INITIAL_STATE, action) => {
       });
       return mergeToState(state, { groups });
     }
-    case MessageCenterActionKeys.MESSAGE_CENTER_MARK_AS_READ: {
-      const messageId = action.messageId;
-      const groups = state.groups.map(group => {
-        group = Object.assign({}, group, {
-          messages: group.messages.map(message => {
-            if (messageId.includes(message.id)) {
-              message = Object.assign({}, message, { seen: true });
-            }
-            return message;
-          })
-        });
-        return group;
-      });
-      return mergeToState(state, { groups });
+    case MessageCenterActionKeys.MARK_MESSAGE_AS_READ: {
+      return updateMessage(state, action.messageId, message => ({ ...message, seen: true, show_notification: false }));
     }
-    case MessageCenterActionKeys.MESSAGE_CENTER_SHOW:
+    case MessageCenterActionKeys.HIDE_NOTIFICATION: {
+      return updateMessage(state, action.messageId, message => ({ ...message, show_notification: false }));
+    }
+    case MessageCenterActionKeys.SHOW:
       if (state.hidden) {
         return mergeToState(state, { hidden: false });
       }
       return state;
-    case MessageCenterActionKeys.MESSAGE_CENTER_HIDE:
+    case MessageCenterActionKeys.HIDE:
       if (!state.hidden) {
         return mergeToState(state, { hidden: true });
       }
       return state;
-    case MessageCenterActionKeys.MESSAGE_CENTER_TOGGLE_EXPAND:
+    case MessageCenterActionKeys.TOGGLE_EXPAND:
       return mergeToState(state, { expanded: !state.expanded });
 
-    case MessageCenterActionKeys.MESSAGE_CENTER_TOGGLE_GROUP: {
+    case MessageCenterActionKeys.TOGGLE_GROUP: {
       const { groupId } = action;
       if (state.expandedGroupId === groupId) {
         return mergeToState(state, { expandedGroupId: undefined });

@@ -20,8 +20,12 @@ export default class MessageCenter extends React.Component<MessageCenterPropsTyp
     }, []);
   };
 
-  onDismissNotification = (message: NotificationMessage) => {
-    this.props.onDismissNotification(message, this.props.groups.find(group => group.id === message.groupId)!);
+  onDismissNotification = (message: NotificationMessage, userDismissed: boolean) => {
+    this.props.onDismissNotification(
+      message,
+      this.props.groups.find(group => group.id === message.groupId)!,
+      userDismissed
+    );
   };
 
   render() {

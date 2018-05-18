@@ -29,6 +29,7 @@
     "react-scripts-ts": "2.15.1",
     "redux": "3.7.2",
     "redux-logger": "3.0.6",
+    "redux-mock-store": "1.5.1",
     "redux-thunk": "2.2.0",
     "ssri": "6.0.0",
     "typesafe-actions": "1.1.2",

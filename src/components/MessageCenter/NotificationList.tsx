@@ -8,7 +8,7 @@ const DEFAULT_TIMER_DELAY = 5000;
 
 type PropsType = {
   messages: NotificationMessage[];
-  onDismiss: (message: NotificationMessage) => void;
+  onDismiss: (message: NotificationMessage, userDismissed: boolean) => void;
 };
 type StateType = {};
 
@@ -22,7 +22,7 @@ export default class NotificationList extends React.PureComponent<PropsType, Sta
             persistent={false}
             paused={false}
             timerdelay={DEFAULT_TIMER_DELAY}
-            onDismiss={() => this.props.onDismiss(message)}
+            onDismiss={event => this.props.onDismiss(message, event !== undefined)}
             type={message.type}
           >
             <span>{message.content}</span>
