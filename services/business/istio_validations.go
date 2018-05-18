@@ -23,7 +23,7 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		return nil, err
 	}
 
-	pods, err := in.k8s.GetServicePods(namespace, service, "", "")
+	pods, err := in.k8s.GetServicePods(namespace, service, "")
 	if err != nil {
 		log.Warningf("Cannot get pods for service %v.%v.", namespace, service)
 		return nil, err

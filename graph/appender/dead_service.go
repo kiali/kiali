@@ -35,7 +35,7 @@ func applyDeadServices(n *tree.ServiceNode, namespace string, istioClient kubern
 				isDead = true
 			} else {
 				// flag the service if it has a defined service but no pods running for the service version
-				servicePods, err := istioClient.GetServicePods(namespace, serviceName, child.Version, "")
+				servicePods, err := istioClient.GetServicePods(namespace, serviceName, child.Version)
 				if err != nil || servicePods == nil || len(servicePods.Items) == 0 {
 					child.Metadata["isDead"] = "true"
 				}

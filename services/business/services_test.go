@@ -176,35 +176,57 @@ func fakeServiceList() *kubernetes.ServiceList {
 								Protocol: "TCP",
 								Port:     3000}}}},
 			}},
+		Pods: &v1.PodList{
+			Items: []v1.Pod{
+				v1.Pod{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:   "reviews-v1",
+						Labels: map[string]string{"app": "reviews", "version": "v1"}}},
+				v1.Pod{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:   "reviews-v2",
+						Labels: map[string]string{"app": "reviews", "version": "v2"}}},
+				v1.Pod{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:   "httpbin-v1",
+						Labels: map[string]string{"app": "httpbin", "version": "v1"}}},
+			}},
 		Deployments: &v1beta1.DeploymentList{
 			Items: []v1beta1.Deployment{
 				v1beta1.Deployment{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:              "reviews-v1",
-						CreationTimestamp: meta_v1.NewTime(t1),
-						Labels:            map[string]string{"app": "reviews", "version": "v1"}},
+						CreationTimestamp: meta_v1.NewTime(t1)},
 					Status: v1beta1.DeploymentStatus{
 						Replicas:            3,
 						AvailableReplicas:   2,
-						UnavailableReplicas: 1}},
+						UnavailableReplicas: 1},
+					Spec: v1beta1.DeploymentSpec{
+						Selector: &meta_v1.LabelSelector{
+							MatchLabels: map[string]string{"app": "reviews", "version": "v1"}}}},
 				v1beta1.Deployment{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:              "reviews-v2",
-						CreationTimestamp: meta_v1.NewTime(t1),
-						Labels:            map[string]string{"app": "reviews", "version": "v2"}},
+						CreationTimestamp: meta_v1.NewTime(t1)},
 					Status: v1beta1.DeploymentStatus{
 						Replicas:            2,
 						AvailableReplicas:   1,
-						UnavailableReplicas: 1}},
+						UnavailableReplicas: 1},
+					Spec: v1beta1.DeploymentSpec{
+						Selector: &meta_v1.LabelSelector{
+							MatchLabels: map[string]string{"app": "reviews", "version": "v2"}}}},
 				v1beta1.Deployment{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:              "httpbin-v1",
-						CreationTimestamp: meta_v1.NewTime(t2),
-						Labels:            map[string]string{"app": "httpbin", "version": "v1"}},
+						CreationTimestamp: meta_v1.NewTime(t2)},
 					Status: v1beta1.DeploymentStatus{
 						Replicas:            1,
 						AvailableReplicas:   1,
-						UnavailableReplicas: 0}}}}}
+						UnavailableReplicas: 0},
+					Spec: v1beta1.DeploymentSpec{
+						Selector: &meta_v1.LabelSelector{
+							MatchLabels: map[string]string{"app": "httpbin", "version": "v1"}}}},
+			}}}
 }
 
 var t1 = model.Now()

@@ -28,7 +28,7 @@ func (in *HealthService) fillMissingParts(namespace, service, rateInterval strin
 	health.FillDeploymentStatusesIfMissing(func() []models.DeploymentStatus {
 		details, _ := in.k8s.GetServiceDetails(namespace, service)
 		if details != nil {
-			return castDeploymentsStatuses(&details.Deployments.Items)
+			return castDeploymentsStatuses(details.Deployments.Items)
 		}
 		return []models.DeploymentStatus{}
 	})
@@ -64,9 +64,9 @@ func sumRequestCounters(toRemoveServiceName string, rqHealth *models.RequestHeal
 	}
 }
 
-func castDeploymentsStatuses(deployments *[]v1beta1.Deployment) []models.DeploymentStatus {
-	statuses := make([]models.DeploymentStatus, len(*deployments))
-	for i, deployment := range *deployments {
+func castDeploymentsStatuses(deployments []v1beta1.Deployment) []models.DeploymentStatus {
+	statuses := make([]models.DeploymentStatus, len(deployments))
+	for i, deployment := range deployments {
 		statuses[i] = models.DeploymentStatus{
 			Name:              deployment.Name,
 			Replicas:          deployment.Status.Replicas,

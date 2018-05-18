@@ -1,10 +1,11 @@
 package appender
 
 import (
+	"strings"
+
 	"github.com/kiali/kiali/graph/tree"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/business/checkers"
-	"strings"
 )
 
 type SidecarsCheckAppender struct{}
@@ -22,7 +23,7 @@ func (a SidecarsCheckAppender) applySidecarsChecks(n *tree.ServiceNode, namespac
 	serviceName := strings.Split(n.Name, ".")[0]
 	serviceVersion := n.Version
 
-	pods, err := k8s.GetServicePods(namespaceName, serviceName, serviceVersion, "")
+	pods, err := k8s.GetServicePods(namespaceName, serviceName, serviceVersion)
 	checkError(err)
 
 	checker := checkers.PodChecker{Pods: pods.Items}
