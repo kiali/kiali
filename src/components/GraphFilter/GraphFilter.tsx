@@ -47,7 +47,6 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
   updateDuration = (value: number) => {
     if (this.props.graphDuration.value !== value) {
       // notify callback
-      sessionStorage.setItem('appDuration', String(value));
       this.props.onDurationChange({ value: value });
     }
   };
@@ -94,12 +93,8 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             disabled={this.props.disabled}
             handleSelect={this.updateDuration}
             nameDropdown={'Duration'}
-            initialValue={Number(sessionStorage.getItem('appDuration')) || this.props.graphDuration.value}
-            initialLabel={String(
-              GraphFilter.INTERVAL_DURATION[
-                Number(sessionStorage.getItem('appDuration')) || config().toolbar.defaultDuration
-              ]
-            )}
+            initialValue={this.props.graphDuration.value}
+            initialLabel={String(GraphFilter.INTERVAL_DURATION[this.props.graphDuration.value])}
             options={GraphFilter.INTERVAL_DURATION}
           />
           <ToolbarDropdown

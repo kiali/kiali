@@ -7,6 +7,7 @@ import { EdgeLabelMode } from '../../types/GraphFilter';
 import * as LayoutDictionary from '../../components/CytoscapeGraph/graphs/LayoutDictionary';
 import ServiceGraphPage from '../../containers/ServiceGraphPageContainer';
 import { makeURLFromParams } from '../../components/Nav/NavUtils';
+import { config } from '../../config';
 
 const URLSearchParams = require('url-search-params');
 
@@ -19,9 +20,6 @@ type ServiceGraphURLProps = {
   namespace: string;
   layout: string;
 };
-
-// TODO put duration, step defaults and Prometheus translation in a single place
-const DEFAULT_DURATION = 60;
 
 /**
  * Handle URL parameters for ServiceGraph page
@@ -54,7 +52,7 @@ export default class ServiceGraphRouteHandler extends React.Component<
     const _hideRRs = urlParams.get('hideRRs') ? urlParams.get('hideRRs') === 'true' : false;
     const _edgeLabelMode = EdgeLabelMode.fromString(urlParams.get('edges'), EdgeLabelMode.HIDE);
     return {
-      graphDuration: _duration ? { value: _duration } : { value: DEFAULT_DURATION },
+      graphDuration: _duration ? { value: _duration } : { value: config().toolbar.defaultDuration },
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
       badgeStatus: { hideCBs: _hideCBs, hideRRs: _hideRRs },
       edgeLabelMode: _edgeLabelMode
