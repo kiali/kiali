@@ -123,10 +123,10 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
           options={MetricsOptionsBar.Durations}
         />
         <ToolbarDropdown
-          id={'metrics_filter_pool_interval'}
+          id={'metrics_filter_poll_interval'}
           disabled={false}
           handleSelect={this.onPollIntervalChanged}
-          nameDropdown={'Pool Interval'}
+          nameDropdown={'Poll Interval'}
           initialValue={MetricsOptionsBar.DefaultPollInterval}
           initialLabel={String(MetricsOptionsBar.PollIntervals[MetricsOptionsBar.DefaultPollInterval])}
           options={MetricsOptionsBar.PollIntervals}
