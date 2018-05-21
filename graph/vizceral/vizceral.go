@@ -19,9 +19,11 @@ package vizceral
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
+	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/graph/tree"
 )
 
@@ -62,13 +64,20 @@ type Node struct {
 
 type Config Node
 
-func NewConfig(namespace string, sn *[]tree.ServiceNode) (result Config) {
-	namespaceNodes := []Node{}
+func NewConfig(namespace string, sn *[]tree.ServiceNode, o options.VendorOptions) (result Config) {
+
+	namespaceOrphanNode := Node{
+		Renderer:    "focusedChild",
+		Name:        "orphan",
+		DisplayName: "orphans (no traffic)",
+	}
+
+	namespaceNodes := []Node{namespaceOrphanNode}
 	var namespaceConnections []Connection
 	var maxVolume float64
 
 	for _, t := range *sn {
-		walk(&t, &namespaceNodes, &namespaceConnections, &maxVolume)
+		walk(&t, &namespaceNodes, &namespaceConnections, &maxVolume, o)
 	}
 
 	regionNamespaceNode := Node{
@@ -89,9 +98,7 @@ func NewConfig(namespace string, sn *[]tree.ServiceNode) (result Config) {
 		Target: namespace,
 		Metrics: Metrics{
 			// TODO, should break up MaxVolume by code from the actual unknown/ingress nodes
-			Normal:  maxVolume * 1.0,
-			Warning: maxVolume * 0.0,
-			Danger:  maxVolume * 0.0,
+			Normal: maxVolume * 1.0,
 		},
 	}
 
@@ -107,23 +114,11 @@ func NewConfig(namespace string, sn *[]tree.ServiceNode) (result Config) {
 	return result
 }
 
-func walk(sn *tree.ServiceNode, nodes *[]Node, connections *[]Connection, volume *float64) {
-	// The unknown/unknown root node is set to act as the INTERNET node
-	isRoot := "unknown" == sn.Name && "unknown" == sn.Version
-	var name string
-	if isRoot {
-		name = "INTERNET"
-	} else {
-		name = fmt.Sprintf("%v (%v)", sn.Name, sn.Version)
-	}
+func walk(sn *tree.ServiceNode, nodes *[]Node, connections *[]Connection, volume *float64, o options.VendorOptions) {
+	name := fmt.Sprintf("%v (%v)", sn.Name, sn.Version)
 	_, found := getNode(nodes, name)
 	if !found {
-		var displayName string
-		if isRoot {
-			displayName = "INTERNET"
-		} else {
-			displayName = fmt.Sprintf("%v (%v)", strings.Split(sn.Name, ".")[0], sn.Version)
-		}
+		displayName := fmt.Sprintf("%v (%v)", strings.Split(sn.Name, ".")[0], sn.Version)
 		n := Node{
 			Renderer:    "focusedChild",
 			Name:        name,
@@ -131,40 +126,49 @@ func walk(sn *tree.ServiceNode, nodes *[]Node, connections *[]Connection, volume
 			Notices: []Notice{
 				{
 					Title: "Prometheus Graph",
-					Link:  sn.Metadata["link_prom_graph"].(string),
+					Link:  linkPromGraph(sn.Name, sn.Version),
 				}},
 		}
 		*nodes = append(*nodes, n)
 	}
 
-	var c Connection
-	if nil != sn.Parent {
-		isParentRoot := "unknown" == sn.Parent.Name && "unknown" == sn.Parent.Version
+	isRoot := sn.Metadata["isRoot"] == "true"
+
+	if !isRoot {
+		var c Connection
 		var source string
-		if isParentRoot {
-			source = "INTERNET"
+		isUnused := sn.Metadata["isUnused"] == "true"
+		if isUnused {
+			source = "orphan"
 		} else {
 			source = fmt.Sprintf("%v (%v)", sn.Parent.Name, sn.Parent.Version)
+		}
+		rate := 0.0
+		normal := 0.0
+		warning := 0.0
+		danger := 0.0
+		if !isUnused {
+			rate = sn.Metadata["rate"].(float64)
+			normal = sn.Metadata["rate_2xx"].(float64) / (rate + 0.0001)
+			warning = sn.Metadata["rate_3xx"].(float64) / (rate + 0.0001)
+			danger = (sn.Metadata["rate_4xx"].(float64) + sn.Metadata["rate_5xx"].(float64)) / (rate + 0.0001)
+			*volume += rate
 		}
 		c = Connection{
 			Source: source,
 			Target: name,
 			Metrics: Metrics{
-				Normal:  sn.Metadata["rate_2xx"].(float64) / (sn.Metadata["rate"].(float64) + 0.0001),
-				Warning: sn.Metadata["rate_3xx"].(float64) / (sn.Metadata["rate"].(float64) + 0.0001),
-				Danger:  (sn.Metadata["rate_4xx"].(float64) + sn.Metadata["rate_5xx"].(float64)) / (sn.Metadata["rate"].(float64) + 0.0001),
+				Normal:  normal,
+				Warning: warning,
+				Danger:  danger,
 			},
 		}
 
-		*volume += sn.Metadata["rate_2xx"].(float64)
-		*volume += sn.Metadata["rate_3xx"].(float64)
-		*volume += sn.Metadata["rate_4xx"].(float64)
-		*volume += sn.Metadata["rate_5xx"].(float64)
+		*connections = append(*connections, c)
 	}
-	*connections = append(*connections, c)
 
 	for _, child := range sn.Children {
-		walk(child, nodes, connections, volume)
+		walk(child, nodes, connections, volume, o)
 	}
 }
 
@@ -175,4 +179,17 @@ func getNode(nodes *[]Node, name string) (*Node, bool) {
 		}
 	}
 	return nil, false
+}
+
+func linkPromGraph(name, version string) (link string) {
+	// todo: this hardcoded address makes some assumptions...
+	address := "http://prometheus-istio-system.127.0.0.1.nip.io"
+	var promExpr string
+	if tree.UnknownVersion == version {
+		promExpr = fmt.Sprintf("istio_request_count{source_service=\"%v\",source_version=\"%v\"}", name, version)
+	} else {
+		promExpr = fmt.Sprintf("istio_request_count{destination_service=\"%v\",destination_version=\"%v\"}", name, version)
+	}
+	link = fmt.Sprintf("%v/graph?g0.range_input=1h&g0.tab=0&g0.expr=%v", address, url.QueryEscape(promExpr))
+	return link
 }
