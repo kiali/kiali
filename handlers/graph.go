@@ -328,7 +328,7 @@ func generateGraph(trees *[]tree.ServiceNode, w http.ResponseWriter, o options.O
 	var vendorConfig interface{}
 	switch o.Vendor {
 	case "vizceral":
-		vendorConfig = vizceral.NewConfig(o.Namespace, trees)
+		vendorConfig = vizceral.NewConfig(o.Namespace, trees, o.VendorOptions)
 	case "cytoscape":
 		vendorConfig = cytoscape.NewConfig(o.Namespace, trees, o.VendorOptions)
 	}
