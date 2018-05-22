@@ -6,18 +6,20 @@ import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
-import { RuleItem, RuleList } from '../../types/IstioRuleListComponent';
+import {
+  dicIstioType,
+  filterByName,
+  IstioConfigItem,
+  IstioConfigList,
+  SortField,
+  sortIstioItems,
+  toIstioItems
+} from '../../types/IstioConfigListComponent';
 import PropTypes from 'prop-types';
-import IstioRuleListDescription from './IstioRuleListDescription';
+// import IstioRuleListDescription from './IstioRuleListDescription';
 import { Link } from 'react-router-dom';
 import { PfColors } from '../../components/Pf/PfColors';
 import PfSpinner from '../../components/Pf/PfSpinner';
-
-type SortField = {
-  id: string;
-  title: string;
-  isNumeric: boolean;
-};
 
 const sortFields: SortField[] = [
   {
@@ -26,36 +28,70 @@ const sortFields: SortField[] = [
     isNumeric: false
   },
   {
-    id: 'rulename',
-    title: 'Rule Name',
+    id: 'istiotype',
+    title: 'Istio Type',
+    isNumeric: false
+  },
+  {
+    id: 'istioname',
+    title: 'Istio Name',
     isNumeric: false
   }
 ];
 
-const ruleNameFilter: FilterType = {
-  id: 'rulename',
-  title: 'Rule Name',
-  placeholder: 'Filter by Rule Name',
+const istioNameFilter: FilterType = {
+  id: 'istioname',
+  title: 'Istio Name',
+  placeholder: 'Filter by Istio Name',
   filterType: 'text',
   filterValues: []
 };
 
-type IstioRuleListComponentState = {
+const istioTypeFilter: FilterType = {
+  id: 'istiotype',
+  title: 'Istio Type',
+  placeholder: 'Filter by Istio Type',
+  filterType: 'select',
+  filterValues: [
+    {
+      id: 'RouteRule',
+      title: 'RouteRule'
+    },
+    {
+      id: 'DestinationPolicy',
+      title: 'DestinationPolicy'
+    },
+    {
+      id: 'VirtualService',
+      title: 'VirtualService'
+    },
+    {
+      id: 'DestinationRule',
+      title: 'DestinationRule'
+    },
+    {
+      id: 'Rule',
+      title: 'Rule'
+    }
+  ]
+};
+
+type IstioConfigListComponentState = {
   loading: boolean;
-  rules: RuleItem[];
+  istioItems: IstioConfigItem[];
   pagination: Pagination;
   currentSortField: SortField;
   isSortAscending: boolean;
 };
 
-type IstioRuleListComponentProps = {
+type IstioConfigListComponentProps = {
   onError: PropTypes.func;
 };
 
 const perPageOptions: number[] = [5, 10, 15];
 
-class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps, IstioRuleListComponentState> {
-  constructor(props: IstioRuleListComponentProps) {
+class IstioConfigListComponent extends React.Component<IstioConfigListComponentProps, IstioConfigListComponentState> {
+  constructor(props: IstioConfigListComponentProps) {
     super(props);
     this.filterChange = this.filterChange.bind(this);
     this.handleError = this.handleError.bind(this);
@@ -65,7 +101,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
     this.updateSortDirection = this.updateSortDirection.bind(this);
     this.state = {
       loading: true,
-      rules: [],
+      istioItems: [],
       pagination: { page: 1, perPage: 10, perPageOptions: perPageOptions },
       currentSortField: sortFields[0],
       isSortAscending: true
@@ -74,12 +110,12 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
 
   componentDidMount() {
     this.setState({ loading: true });
-    this.updateRules();
+    this.updateIstioConfig();
   }
 
   filterChange() {
     this.setState({ loading: true });
-    this.updateRules();
+    this.updateIstioConfig();
   }
 
   handleError(error: string) {
@@ -91,7 +127,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
     this.setState(prevState => {
       return {
         loading: prevState.loading,
-        rules: prevState.rules,
+        istioItems: prevState.istioItems,
         pagination: {
           page: page,
           perPage: prevState.pagination.perPage,
@@ -105,7 +141,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
     this.setState(prevState => {
       return {
         loading: prevState.loading,
-        rules: prevState.rules,
+        istioItems: prevState.istioItems,
         pagination: {
           page: 1,
           perPage: perPage,
@@ -119,7 +155,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
     this.setState(prevState => {
       return {
         currentSortField: sortField,
-        rules: this.sortRules(prevState.rules, sortField, prevState.isSortAscending)
+        istioItems: sortIstioItems(prevState.istioItems, sortField, prevState.isSortAscending)
       };
     });
   }
@@ -128,56 +164,52 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
     this.setState(prevState => {
       return {
         isSortAscending: !prevState.isSortAscending,
-        rules: this.sortRules(prevState.rules, prevState.currentSortField, !prevState.isSortAscending)
+        istioItems: sortIstioItems(prevState.istioItems, prevState.currentSortField, !prevState.isSortAscending)
       };
     });
   }
 
-  updateRules() {
+  updateIstioConfig() {
     const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
       .map(activeFilter => activeFilter.value);
-    let rulenameFilters: string[] = activeFilters
-      .filter(activeFilter => activeFilter.category === 'Rule Name')
+    let istioTypeFilters: string[] = activeFilters
+      .filter(activeFilter => activeFilter.category === 'Istio Type')
+      .map(activeFilter => dicIstioType[activeFilter.value]);
+    let istioNameFilters: string[] = activeFilters
+      .filter(activeFilter => activeFilter.category === 'Istio Name')
       .map(activeFilter => activeFilter.value);
 
     if (namespacesSelected.length === 0) {
       API.getNamespaces()
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
-          this.fetchRules(namespaces.map(namespace => namespace.name), rulenameFilters);
+          this.fetchIstioConfig(namespaces.map(namespace => namespace.name), istioTypeFilters, istioNameFilters);
         })
         .catch(namespacesError => {
           console.error(JSON.stringify(namespacesError));
           this.handleError(API.getErrorMsg('Could not fetch namespace list.', namespacesError));
         });
     } else {
-      this.fetchRules(namespacesSelected, rulenameFilters);
+      this.fetchIstioConfig(namespacesSelected, istioTypeFilters, istioNameFilters);
     }
   }
 
-  fetchRules(namespaces: string[], rulenameFilters: string[]) {
-    const promises = namespaces.map(ns => API.getIstioRules(ns));
+  fetchIstioConfig(namespaces: string[], istioTypeFilters: string[], istioNameFilters: string[]) {
+    const promises = namespaces.map(namespace => API.getIstioConfig(namespace, istioTypeFilters));
     Promise.all(promises)
-      .then(rulesResponse => {
-        let updatedRules: RuleItem[] = [];
-        rulesResponse.forEach(ruleResponse => {
-          const ruleList: RuleList = ruleResponse['data'];
-          const namespace = ruleList.namespace;
-          ruleList.rules.forEach(ruleItem => {
-            ruleItem.namespace = namespace.name;
-            updatedRules.push(ruleItem);
-          });
+      .then(istioResponses => {
+        let istioItems: IstioConfigItem[] = [];
+        istioResponses.forEach(istioResponse => {
+          const istioConfig: IstioConfigList = istioResponse['data'];
+          istioItems = istioItems.concat(toIstioItems(filterByName(istioConfig, istioNameFilters)));
         });
-        if (rulenameFilters.length > 0) {
-          updatedRules = this.filterRules(updatedRules, rulenameFilters);
-        }
-        updatedRules = this.sortRules(updatedRules, this.state.currentSortField, this.state.isSortAscending);
+        istioItems = sortIstioItems(istioItems, this.state.currentSortField, this.state.isSortAscending);
         this.setState(prevState => {
           return {
             loading: false,
-            rules: updatedRules,
+            istioItems: istioItems,
             pagination: {
               page: 1,
               perPage: prevState.pagination.perPage,
@@ -186,66 +218,72 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
           };
         });
       })
-      .catch(servicesError => {
-        console.error(JSON.stringify(servicesError));
-        this.handleError(API.getErrorMsg('Could not fetch rule list.', servicesError));
+      .catch(istioError => {
+        this.handleError(API.getErrorMsg('Could not fetch Istio objects list.', istioError));
       });
   }
 
-  isFiltered(rule: RuleItem, rulenameFilters: string[]) {
-    for (let i = 0; i < rulenameFilters.length; i++) {
-      if (rule.name.includes(rulenameFilters[i])) {
-        return true;
-      }
+  renderIstioItem(istioItem: IstioConfigItem, index: number) {
+    let to = '/namespaces/' + istioItem.namespace + '/istio';
+    let name = '';
+    let iconName = '';
+    let iconType = '';
+    let type = 'No type found';
+    if (istioItem.routeRule) {
+      name = istioItem.routeRule.name;
+      iconName = 'code-fork';
+      iconType = 'fa';
+      type = 'RouteRule';
+    } else if (istioItem.destinationPolicy) {
+      name = istioItem.destinationPolicy.name;
+      iconName = 'network';
+      iconType = 'pf';
+      type = 'DestinationPolicy';
+    } else if (istioItem.virtualService) {
+      name = istioItem.virtualService.name;
+      iconName = 'code-fork';
+      iconType = 'fa';
+      type = 'VirtualService';
+    } else if (istioItem.destinationRule) {
+      name = istioItem.destinationRule.name;
+      iconName = 'network';
+      iconType = 'pf';
+      type = 'DestinationRule';
+    } else if (istioItem.rule) {
+      iconName = 'migration';
+      iconType = 'pf';
+      name = istioItem.rule.name;
+      type = 'Rule';
     }
-    return false;
-  }
-
-  filterRules(rules: RuleItem[], rulenameFilters: string[]) {
-    let filteredRules: RuleItem[] = rules.filter(service => this.isFiltered(service, rulenameFilters));
-    return filteredRules;
-  }
-
-  sortRules(services: RuleItem[], sortField: SortField, isAscending: boolean): RuleItem[] {
-    let sorted: RuleItem[] = services.sort((a: RuleItem, b: RuleItem) => {
-      let sortValue = -1;
-      if (sortField.id === 'namespace') {
-        sortValue = a.namespace.localeCompare(b.namespace);
-        if (sortValue === 0) {
-          sortValue = a.name.localeCompare(b.name);
-        }
-      } else {
-        sortValue = a.name.localeCompare(b.name);
-      }
-      return isAscending ? sortValue : sortValue * -1;
-    });
-    return sorted;
+    to = to + '/' + dicIstioType[type] + '/' + name;
+    return (
+      <Link
+        key={'istioItemItem_' + index + '_' + istioItem.namespace + '_' + name}
+        to={to}
+        style={{ color: PfColors.Black }}
+      >
+        <ListViewItem
+          leftContent={<ListViewIcon type={iconType} name={iconName} />}
+          heading={
+            <span>
+              {name}
+              <small>{istioItem.namespace}</small>
+            </span>
+          }
+          description={<div>{type}</div>}
+        />
+      </Link>
+    );
   }
 
   render() {
-    let ruleList: any = [];
+    let istioList: any = [];
     let pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
     let pageEnd = pageStart + this.state.pagination.perPage;
-    pageEnd = pageEnd < this.state.rules.length ? pageEnd : this.state.rules.length;
+    pageEnd = pageEnd < this.state.istioItems.length ? pageEnd : this.state.istioItems.length;
 
     for (let i = pageStart; i < pageEnd; i++) {
-      let ruleItem = this.state.rules[i];
-      let to = '/namespaces/' + ruleItem.namespace + '/rules/' + ruleItem.name;
-      ruleList.push(
-        <Link key={'ruleItem_' + i} to={to} style={{ color: PfColors.Black }}>
-          <ListViewItem
-            key={ruleItem.name + '_' + ruleItem.namespace}
-            leftContent={<ListViewIcon type="pf" name="migration" />}
-            heading={
-              <span>
-                {ruleItem.name}
-                <small>{ruleItem.namespace}</small>
-              </span>
-            }
-            description={<IstioRuleListDescription ruleItem={ruleItem} />}
-          />
-        </Link>
-      );
+      istioList.push(this.renderIstioItem(this.state.istioItems[i], i));
     }
 
     let ruleListComponent;
@@ -255,7 +293,7 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
       ruleListComponent = (
         <div>
           <NamespaceFilter
-            initialFilters={[ruleNameFilter]}
+            initialFilters={[istioTypeFilter, istioNameFilter]}
             onFilterChange={this.filterChange}
             onError={this.handleError}
           >
@@ -272,11 +310,11 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
               />
             </Sort>
           </NamespaceFilter>
-          <ListView>{ruleList}</ListView>
+          <ListView>{istioList}</ListView>
           <Paginator
             viewType="list"
             pagination={this.state.pagination}
-            itemCount={this.state.rules.length}
+            itemCount={this.state.istioItems.length}
             onPageSet={this.pageSet}
             onPerPageSelect={this.pageSelect}
           />
@@ -287,4 +325,4 @@ class IstioRuleListComponent extends React.Component<IstioRuleListComponentProps
   }
 }
 
-export default IstioRuleListComponent;
+export default IstioConfigListComponent;

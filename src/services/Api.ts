@@ -42,8 +42,13 @@ export const getNamespaceMetrics = (namespace: String, params: any) => {
   return newRequest('get', `/api/namespaces/${namespace}/metrics`, params, {});
 };
 
-export const getIstioRules = (namespace: String) => {
-  return newRequest('get', `/api/namespaces/${namespace}/rules`, {}, {});
+export const getIstioConfig = (namespace: String, objects: String[]) => {
+  let params = objects && objects.length > 0 ? { objects: objects.join(',') } : {};
+  return newRequest('get', `/api/namespaces/${namespace}/istio`, params, {});
+};
+
+export const getIstioConfigDetail = (namespace: String, objectType: String, object: String) => {
+  return newRequest('get', `/api/namespaces/${namespace}/istio/${objectType}/${object}`, {}, {});
 };
 
 export const getServices = (namespace: String, params?: ServiceListOptions) => {
@@ -76,10 +81,6 @@ export const getServiceDetail = (namespace: String, service: String) => {
 
 export const getServiceValidations = (namespace: String, service: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/services/${service}/istio_validations`, {}, {});
-};
-
-export const getIstioRuleDetail = (namespace: String, rule: String) => {
-  return newRequest('get', `/api/namespaces/${namespace}/rules/${rule}`, {}, {});
 };
 
 export const getErrorMsg = (msg: string, error: AxiosError) => {

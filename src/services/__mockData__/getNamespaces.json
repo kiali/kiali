@@ -22,5 +22,8 @@
   },
   {
     "name": "openshift-node"
+  },
+  {
+    "name": "bookinfo"
   }
 ]

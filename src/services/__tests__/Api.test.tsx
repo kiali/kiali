@@ -4,7 +4,7 @@ const API = require('../Api');
 
 describe('#GetNamespaces using Promises', () => {
   it('should load namespaces', () => {
-    return API.getNamespaces().then(data => {
+    return API.getNamespaces().then(({ data }) => {
       expect(data).toBeDefined();
       expect(data).toBeInstanceOf(Array);
     });
@@ -13,7 +13,7 @@ describe('#GetNamespaces using Promises', () => {
 
 describe('#GetServices using Promises', () => {
   it('should load services of namespace', () => {
-    return API.getServices('istio-system').then(data => {
+    return API.getServices('istio-system').then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.namespace.name).toEqual('istio-system');
       expect(data.services).toBeDefined();
@@ -24,7 +24,7 @@ describe('#GetServices using Promises', () => {
 
 describe('#getGrafanaInfo using Promises', () => {
   it('should load the information about grafana', () => {
-    return API.getGrafanaInfo().then(data => {
+    return API.getGrafanaInfo().then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.url).toBeDefined();
       expect(data.variablesSuffix).toBeDefined();
@@ -34,7 +34,7 @@ describe('#getGrafanaInfo using Promises', () => {
 
 describe('#getJaegerInfo using Promises', () => {
   it('should load the information about jaeger', () => {
-    return API.getGrafanaInfo().then(data => {
+    return API.getGrafanaInfo().then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.url).toBeDefined();
     });
@@ -55,7 +55,7 @@ describe('#GetGraphElements using Promises', () => {
 
 describe('#GetServiceDetail using Promises', () => {
   it('should load service detail data', () => {
-    return API.getServiceDetail('istio-system', 'reviews').then(data => {
+    return API.getServiceDetail('istio-system', 'reviews').then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.name).toEqual('reviews');
       expect(data.namespace.name).toEqual('istio-system');
@@ -69,25 +69,25 @@ describe('#GetServiceDetail using Promises', () => {
   });
 });
 
-describe('#GetIstioRules using Promises', () => {
-  it('should load istio rules of namespace', () => {
-    return API.getIstioRules('tutorial').then(data => {
+describe('#GetIstioConfig using Promises', () => {
+  it('should load istio config objects of namespace', () => {
+    return API.getIstioConfig('bookinfo').then(({ data }) => {
       expect(data).toBeDefined();
-      expect(data.namespace.name).toEqual('tutorial');
+      expect(data.namespace.name).toEqual('bookinfo');
       expect(data.rules).toBeDefined();
       expect(data.rules).toBeInstanceOf(Array);
     });
   });
 });
 
-describe('#GetIstioRuleDetail using Promises', () => {
-  it('should load istio rule detail data', () => {
-    return API.getIstioRuleDetail('tutorial', 'checkfromcustomer').then(data => {
+describe('#GetIstioConfigDetail using Promises', () => {
+  it('should load istio config detail data', () => {
+    return API.getIstioConfigDetail('istio-system', 'promhttp').then(({ data }) => {
       expect(data).toBeDefined();
-      expect(data.name).toEqual('checkfromcustomer');
-      expect(data.namespace.name).toEqual('tutorial');
-      expect(data.match).toEqual('destination.labels["app"] == "preference"');
-      expect(data.actions).toBeInstanceOf(Array);
+      expect(data.namespace.name).toEqual('istio-system');
+      expect(data.rule.name).toEqual('promhttp');
+      expect(data.rule.match).toEqual('context.protocol == "http"');
+      expect(data.rule.actions).toBeInstanceOf(Array);
     });
   });
 });

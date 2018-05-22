@@ -15,7 +15,7 @@ class IstioRuleDetailsDescription extends React.Component<IstioRuleDetailsDescri
   }
 
   render() {
-    let to = '/namespaces/' + this.props.namespace + '/rules/' + this.props.name;
+    let to = '/namespaces/' + this.props.namespace + '/istio/rules/' + this.props.name;
     let ruleMatch: any = undefined;
     if (this.props.match && this.props.match.length > 0) {
       ruleMatch = (

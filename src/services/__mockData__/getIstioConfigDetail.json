@@ -1,0 +1,190 @@
+{
+  "namespace": {
+    "name": "istio-system"
+  },
+  "object_type": "rules",
+  "route_rule": null,
+  "destination_policy": null,
+  "virtual_service": null,
+  "destination_rule": null,
+  "rule": {
+    "name": "promhttp",
+    "namespace": {
+      "name": ""
+    },
+    "match": "context.protocol == \"http\"",
+    "actions": [
+      {
+        "handler": {
+          "name": "handler",
+          "adapter": "prometheus",
+          "spec": {
+            "metrics": [
+              {
+                "instance_name": "requestcount.metric.istio-system",
+                "kind": "COUNTER",
+                "label_names": [
+                  "source_service",
+                  "source_version",
+                  "destination_service",
+                  "destination_version",
+                  "response_code",
+                  "connection_mtls"
+                ],
+                "name": "request_count"
+              },
+              {
+                "buckets": {
+                  "explicit_buckets": {
+                    "bounds": [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
+                  }
+                },
+                "instance_name": "requestduration.metric.istio-system",
+                "kind": "DISTRIBUTION",
+                "label_names": [
+                  "source_service",
+                  "source_version",
+                  "destination_service",
+                  "destination_version",
+                  "response_code",
+                  "connection_mtls"
+                ],
+                "name": "request_duration"
+              },
+              {
+                "buckets": {
+                  "exponentialBuckets": {
+                    "growthFactor": 10,
+                    "numFiniteBuckets": 8,
+                    "scale": 1
+                  }
+                },
+                "instance_name": "requestsize.metric.istio-system",
+                "kind": "DISTRIBUTION",
+                "label_names": [
+                  "source_service",
+                  "source_version",
+                  "destination_service",
+                  "destination_version",
+                  "response_code",
+                  "connection_mtls"
+                ],
+                "name": "request_size"
+              },
+              {
+                "buckets": {
+                  "exponentialBuckets": {
+                    "growthFactor": 10,
+                    "numFiniteBuckets": 8,
+                    "scale": 1
+                  }
+                },
+                "instance_name": "responsesize.metric.istio-system",
+                "kind": "DISTRIBUTION",
+                "label_names": [
+                  "source_service",
+                  "source_version",
+                  "destination_service",
+                  "destination_version",
+                  "response_code",
+                  "connection_mtls"
+                ],
+                "name": "response_size"
+              },
+              {
+                "instance_name": "tcpbytesent.metric.istio-system",
+                "kind": "COUNTER",
+                "label_names": [
+                  "source_service",
+                  "source_version",
+                  "destination_service",
+                  "destination_version",
+                  "connection_mtls"
+                ],
+                "name": "tcp_bytes_sent"
+              },
+              {
+                "instance_name": "tcpbytereceived.metric.istio-system",
+                "kind": "COUNTER",
+                "label_names": [
+                  "source_service",
+                  "source_version",
+                  "destination_service",
+                  "destination_version",
+                  "connection_mtls"
+                ],
+                "name": "tcp_bytes_received"
+              }
+            ]
+          }
+        },
+        "instances": [
+          {
+            "name": "responsesize",
+            "template": "metric",
+            "spec": {
+              "dimensions": {
+                "connection_mtls": "connection.mtls | false",
+                "destination_service": "destination.service | \"unknown\"",
+                "destination_version": "destination.labels[\"version\"] | \"unknown\"",
+                "response_code": "response.code | 200",
+                "source_service": "source.service | \"unknown\"",
+                "source_version": "source.labels[\"version\"] | \"unknown\""
+              },
+              "monitored_resource_type": "\"UNSPECIFIED\"",
+              "value": "response.size | 0"
+            }
+          },
+          {
+            "name": "requestcount",
+            "template": "metric",
+            "spec": {
+              "dimensions": {
+                "connection_mtls": "connection.mtls | false",
+                "destination_service": "destination.service | \"unknown\"",
+                "destination_version": "destination.labels[\"version\"] | \"unknown\"",
+                "response_code": "response.code | 200",
+                "source_service": "source.service | \"unknown\"",
+                "source_version": "source.labels[\"version\"] | \"unknown\""
+              },
+              "monitored_resource_type": "\"UNSPECIFIED\"",
+              "value": "1"
+            }
+          },
+          {
+            "name": "requestsize",
+            "template": "metric",
+            "spec": {
+              "dimensions": {
+                "connection_mtls": "connection.mtls | false",
+                "destination_service": "destination.service | \"unknown\"",
+                "destination_version": "destination.labels[\"version\"] | \"unknown\"",
+                "response_code": "response.code | 200",
+                "source_service": "source.service | \"unknown\"",
+                "source_version": "source.labels[\"version\"] | \"unknown\""
+              },
+              "monitored_resource_type": "\"UNSPECIFIED\"",
+              "value": "request.size | 0"
+            }
+          },
+          {
+            "name": "requestduration",
+            "template": "metric",
+            "spec": {
+              "dimensions": {
+                "connection_mtls": "connection.mtls | false",
+                "destination_service": "destination.service | \"unknown\"",
+                "destination_version": "destination.labels[\"version\"] | \"unknown\"",
+                "response_code": "response.code | 200",
+                "source_service": "source.service | \"unknown\"",
+                "source_version": "source.labels[\"version\"] | \"unknown\""
+              },
+              "monitored_resource_type": "\"UNSPECIFIED\"",
+              "value": "response.duration | \"0ms\""
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

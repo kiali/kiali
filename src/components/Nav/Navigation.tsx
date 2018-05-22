@@ -7,16 +7,16 @@ import SwitchErrorBoundary from '../SwitchErrorBoundary/SwitchErrorBoundary';
 import PfContainerNavVertical from '../Pf/PfContainerNavVertical';
 import MessageCenter from '../../containers/MessageCenterContainer';
 
-import IstioRulesPage from '../../pages/IstioRulesList/IstioRuleListPage';
-import IstioRuleDetailsPage from '../../pages/IstioRuleDetails/IstioRuleDetailsPage';
+import IstioConfigPage from '../../pages/IstioConfigList/IstioConfigListPage';
+import IstioConfigDetailsPage from '../../pages/IstioConfigDetails/IstioConfigDetailsPage';
 import HelpDropdown from './HelpDropdown';
 import ServiceDetailsPage from '../../pages/ServiceDetails/ServiceDetailsPage';
 import ServiceGraphRouteHandler from '../../pages/ServiceGraph/ServiceGraphRouteHandler';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 import ServiceJaegerPage from '../../pages/ServiceJaeger/ServiceJaegerPage';
 
-const istioRulesPath = '/rules';
-export const istioRulesTitle = 'Istio Mixer';
+const istioConfigPath = '/istio';
+export const istioConfigTitle = 'Istio Config';
 const serviceGraphPath = '/service-graph/istio-system';
 export const serviceGraphTitle = 'Graph';
 const servicesPath = '/services';
@@ -28,7 +28,7 @@ const pfLogo = require('../../img/logo-alt.svg');
 const pfBrand = require('../../assets/img/kiali-title.svg');
 
 const servicesRx = /\/namespaces\/(.*)\/services\/(.*)/g;
-const istioRulesRx = /\/namespaces\/(.*)\/rules\/(.*)/g;
+const istioConfigRx = /\/namespaces\/(.*)\/istio\/(.*)/g;
 
 type PropsType = {
   location: any;
@@ -61,16 +61,16 @@ class Navigation extends React.Component<PropsType, StateType> {
       selected = servicesTitle;
     } else if (pathname.startsWith('/service-graph')) {
       selected = serviceGraphTitle;
-    } else if (pathname.startsWith('/rules')) {
-      selected = istioRulesTitle;
+    } else if (pathname.startsWith('/istio')) {
+      selected = istioConfigTitle;
     } else if (pathname.startsWith('/jaeger')) {
       selected = servicesJaeger;
     } else if (pathname.startsWith('/namespaces')) {
       // Use Regexp only if we have /namespaces
       if (pathname.search(servicesRx) > -1) {
         selected = servicesTitle;
-      } else if (pathname.search(istioRulesRx) > -1) {
-        selected = istioRulesTitle;
+      } else if (pathname.search(istioConfigRx) > -1) {
+        selected = istioConfigTitle;
       }
     } else {
       selected = serviceGraphTitle;
@@ -116,7 +116,7 @@ class Navigation extends React.Component<PropsType, StateType> {
           </VerticalNav.Masthead>
           <VerticalNav.Item title={serviceGraphTitle} iconClass="fa pficon-topology" onClick={this.navigateTo} />
           <VerticalNav.Item title={servicesTitle} iconClass="fa pficon-service" onClick={this.navigateTo} />
-          <VerticalNav.Item title={istioRulesTitle} iconClass="fa pficon-migration" onClick={this.navigateTo} />
+          <VerticalNav.Item title={istioConfigTitle} iconClass="fa pficon-template" onClick={this.navigateTo} />
           <VerticalNav.Item title={servicesJaeger} iconClass="fa fa-paw" onClick={this.navigateTo} />
         </VerticalNav>
         <SwitchErrorBoundary
@@ -130,8 +130,8 @@ class Navigation extends React.Component<PropsType, StateType> {
           <Route path={servicesPath} component={ServiceListPage} />
           <Route path={servicesJaegerPath} component={ServiceJaegerPage} />
           <Route path="/namespaces/:namespace/services/:service" component={ServiceDetailsPage} />
-          <Route path={istioRulesPath} component={IstioRulesPage} />
-          <Route path="/namespaces/:namespace/rules/:rule" component={IstioRuleDetailsPage} />
+          <Route path={istioConfigPath} component={IstioConfigPage} />
+          <Route path="/namespaces/:namespace/istio/:objectType/:object" component={IstioConfigDetailsPage} />
           <Redirect to={serviceGraphPath} />
         </SwitchErrorBoundary>
       </>
@@ -141,8 +141,8 @@ class Navigation extends React.Component<PropsType, StateType> {
   private navigateTo = (e: any) => {
     if (e.title === servicesTitle) {
       this.context.router.history.push(servicesPath);
-    } else if (e.title === istioRulesTitle) {
-      this.context.router.history.push(istioRulesPath);
+    } else if (e.title === istioConfigTitle) {
+      this.context.router.history.push(istioConfigPath);
     } else if (e.title === servicesJaeger) {
       this.context.router.history.push(servicesJaegerPath);
     } else {
