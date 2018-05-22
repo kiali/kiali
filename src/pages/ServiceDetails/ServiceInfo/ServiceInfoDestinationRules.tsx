@@ -21,12 +21,11 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
           <Col xs={12} sm={12} md={12} lg={12}>
             {(this.props.destinationRules || []).map((destinationRule, i) => (
               <div className="card-pf-body" key={'virtualService' + i}>
-                <div>
-                  <strong>Name</strong>:{' '}
+                <h3>
                   <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.name}>
                     {destinationRule.name}
                   </Link>
-                </div>
+                </h3>
                 <div>
                   <strong>Created at</strong>: <LocalTime time={destinationRule.created_at} />
                 </div>

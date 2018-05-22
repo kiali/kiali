@@ -22,9 +22,7 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
           <Col xs={12} sm={12} md={12} lg={12}>
             {(this.props.deployments || []).map((deployment, u) => (
               <div className="card-pf-body" key={'deployments_' + u}>
-                <p>
-                  <strong>{deployment.name}</strong>
-                </p>
+                <h3>{deployment.name}</h3>
                 <div key="labels">
                   {Object.keys(deployment.labels || new Map()).map((key, i) => (
                     <Badge

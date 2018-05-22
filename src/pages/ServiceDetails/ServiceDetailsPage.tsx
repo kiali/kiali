@@ -9,7 +9,7 @@ import { NamespaceFilterSelected } from '../../components/NamespaceFilter/Namesp
 import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
-import { hasIstioSidecar, ServiceDetailsInfo } from '../../types/ServiceInfo';
+import { hasIstioSidecar, ServiceDetailsInfo, ObjectValidation } from '../../types/ServiceInfo';
 import AceEditor, { AceOptions } from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
@@ -19,6 +19,7 @@ const yaml = require('js-yaml');
 type ServiceDetailsState = {
   jaegerUri: string;
   serviceDetailsInfo: ServiceDetailsInfo;
+  validations: Map<string, ObjectValidation>;
 };
 
 interface ParsedSearch {
@@ -43,6 +44,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     super(props);
     this.state = {
       jaegerUri: '',
+      validations: new Map(),
       serviceDetailsInfo: {
         type: '',
         name: '',
@@ -178,7 +180,6 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       })
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Cannot fetch Jaeger info.', error));
-        console.log(error);
       });
     API.getServiceDetail(this.props.match.params.namespace, this.props.match.params.service)
       .then(response => {
@@ -189,7 +190,15 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       })
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', error));
-        console.log(error);
+      });
+    API.getServiceValidations(this.props.match.params.namespace, this.props.match.params.service)
+      .then(response => {
+        this.setState({
+          validations: response['data']
+        });
+      })
+      .catch(error => {
+        MessageCenter.add(API.getErrorMsg('Could not fetch Service Validations.', error));
       });
   }
 
@@ -255,6 +264,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
                     namespace={this.props.match.params.namespace}
                     service={this.props.match.params.service}
                     serviceDetails={this.state.serviceDetailsInfo}
+                    validations={this.state.validations}
                   />
                 </TabPane>
                 <TabPane eventKey={2} mountOnEnter={true} unmountOnExit={true}>

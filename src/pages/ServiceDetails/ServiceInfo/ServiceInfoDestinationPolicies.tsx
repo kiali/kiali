@@ -23,9 +23,9 @@ class ServiceInfoDestinationPolicies extends React.Component<ServiceInfoDestinat
               return (
                 <div className="card-pf-body" key={'rule' + i}>
                   <div>
-                    <strong>Name</strong>
-                    {': '}
-                    <Link to={this.props.editorLink + '?destinationpolicy=' + dPolicy.name}>{dPolicy.name}</Link>
+                    <h3>
+                      <Link to={this.props.editorLink + '?destinationpolicy=' + dPolicy.name}>{dPolicy.name}</Link>
+                    </h3>
                   </div>
                   <div>
                     <strong>Created at</strong>

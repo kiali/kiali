@@ -92,11 +92,9 @@ ShallowWrapper {
           <div
             className="card-pf-body"
           >
-            <p>
-              <strong>
-                reviews-v2
-              </strong>
-            </p>
+            <h3>
+              reviews-v2
+            </h3>
             <div />
             <div>
               <strong>
@@ -147,11 +145,9 @@ ShallowWrapper {
           <div
             className="card-pf-body"
           >
-            <p>
-              <strong>
-                reviews-v3
-              </strong>
-            </p>
+            <h3>
+              reviews-v3
+            </h3>
             <div />
             <div>
               <strong>
@@ -202,11 +198,9 @@ ShallowWrapper {
           <div
             className="card-pf-body"
           >
-            <p>
-              <strong>
-                reviews-v1
-              </strong>
-            </p>
+            <h3>
+              reviews-v1
+            </h3>
             <div />
             <div>
               <strong>
@@ -276,11 +270,9 @@ ShallowWrapper {
           <div
             className="card-pf-body"
           >
-            <p>
-              <strong>
-                reviews-v2
-              </strong>
-            </p>
+            <h3>
+              reviews-v2
+            </h3>
             <div />
             <div>
               <strong>
@@ -331,11 +323,9 @@ ShallowWrapper {
           <div
             className="card-pf-body"
           >
-            <p>
-              <strong>
-                reviews-v3
-              </strong>
-            </p>
+            <h3>
+              reviews-v3
+            </h3>
             <div />
             <div>
               <strong>
@@ -386,11 +376,9 @@ ShallowWrapper {
           <div
             className="card-pf-body"
           >
-            <p>
-              <strong>
-                reviews-v1
-              </strong>
-            </p>
+            <h3>
+              reviews-v1
+            </h3>
             <div />
             <div>
               <strong>
@@ -453,11 +441,9 @@ ShallowWrapper {
             <div
               className="card-pf-body"
             >
-              <p>
-                <strong>
-                  reviews-v2
-                </strong>
-              </p>
+              <h3>
+                reviews-v2
+              </h3>
               <div />
               <div>
                 <strong>
@@ -508,11 +494,9 @@ ShallowWrapper {
             <div
               className="card-pf-body"
             >
-              <p>
-                <strong>
-                  reviews-v3
-                </strong>
-              </p>
+              <h3>
+                reviews-v3
+              </h3>
               <div />
               <div>
                 <strong>
@@ -563,11 +547,9 @@ ShallowWrapper {
             <div
               className="card-pf-body"
             >
-              <p>
-                <strong>
-                  reviews-v1
-                </strong>
-              </p>
+              <h3>
+                reviews-v1
+              </h3>
               <div />
               <div>
                 <strong>
@@ -630,11 +612,9 @@ ShallowWrapper {
             "nodeType": "host",
             "props": Object {
               "children": Array [
-                <p>
-                  <strong>
-                    reviews-v2
-                  </strong>
-                </p>,
+                <h3>
+                  reviews-v2
+                </h3>,
                 <div />,
                 <div>
                   <strong>
@@ -691,23 +671,11 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "host",
                 "props": Object {
-                  "children": <strong>
-                    reviews-v2
-                  </strong>,
+                  "children": "reviews-v2",
                 },
                 "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": "reviews-v2",
-                  },
-                  "ref": null,
-                  "rendered": "reviews-v2",
-                  "type": "strong",
-                },
-                "type": "p",
+                "rendered": "reviews-v2",
+                "type": "h3",
               },
               Object {
                 "instance": null,
@@ -934,11 +902,9 @@ ShallowWrapper {
             "nodeType": "host",
             "props": Object {
               "children": Array [
-                <p>
-                  <strong>
-                    reviews-v3
-                  </strong>
-                </p>,
+                <h3>
+                  reviews-v3
+                </h3>,
                 <div />,
                 <div>
                   <strong>
@@ -995,23 +961,11 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "host",
                 "props": Object {
-                  "children": <strong>
-                    reviews-v3
-                  </strong>,
+                  "children": "reviews-v3",
                 },
                 "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": "reviews-v3",
-                  },
-                  "ref": null,
-                  "rendered": "reviews-v3",
-                  "type": "strong",
-                },
-                "type": "p",
+                "rendered": "reviews-v3",
+                "type": "h3",
               },
               Object {
                 "instance": null,
@@ -1238,11 +1192,9 @@ ShallowWrapper {
             "nodeType": "host",
             "props": Object {
               "children": Array [
-                <p>
-                  <strong>
-                    reviews-v1
-                  </strong>
-                </p>,
+                <h3>
+                  reviews-v1
+                </h3>,
                 <div />,
                 <div>
                   <strong>
@@ -1299,23 +1251,11 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "host",
                 "props": Object {
-                  "children": <strong>
-                    reviews-v1
-                  </strong>,
+                  "children": "reviews-v1",
                 },
                 "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": "reviews-v1",
-                  },
-                  "ref": null,
-                  "rendered": "reviews-v1",
-                  "type": "strong",
-                },
-                "type": "p",
+                "rendered": "reviews-v1",
+                "type": "h3",
               },
               Object {
                 "instance": null,
@@ -1565,11 +1505,9 @@ ShallowWrapper {
             <div
               className="card-pf-body"
             >
-              <p>
-                <strong>
-                  reviews-v2
-                </strong>
-              </p>
+              <h3>
+                reviews-v2
+              </h3>
               <div />
               <div>
                 <strong>
@@ -1620,11 +1558,9 @@ ShallowWrapper {
             <div
               className="card-pf-body"
             >
-              <p>
-                <strong>
-                  reviews-v3
-                </strong>
-              </p>
+              <h3>
+                reviews-v3
+              </h3>
               <div />
               <div>
                 <strong>
@@ -1675,11 +1611,9 @@ ShallowWrapper {
             <div
               className="card-pf-body"
             >
-              <p>
-                <strong>
-                  reviews-v1
-                </strong>
-              </p>
+              <h3>
+                reviews-v1
+              </h3>
               <div />
               <div>
                 <strong>
@@ -1749,11 +1683,9 @@ ShallowWrapper {
             <div
               className="card-pf-body"
             >
-              <p>
-                <strong>
-                  reviews-v2
-                </strong>
-              </p>
+              <h3>
+                reviews-v2
+              </h3>
               <div />
               <div>
                 <strong>
@@ -1804,11 +1736,9 @@ ShallowWrapper {
             <div
               className="card-pf-body"
             >
-              <p>
-                <strong>
-                  reviews-v3
-                </strong>
-              </p>
+              <h3>
+                reviews-v3
+              </h3>
               <div />
               <div>
                 <strong>
@@ -1859,11 +1789,9 @@ ShallowWrapper {
             <div
               className="card-pf-body"
             >
-              <p>
-                <strong>
-                  reviews-v1
-                </strong>
-              </p>
+              <h3>
+                reviews-v1
+              </h3>
               <div />
               <div>
                 <strong>
@@ -1926,11 +1854,9 @@ ShallowWrapper {
               <div
                 className="card-pf-body"
               >
-                <p>
-                  <strong>
-                    reviews-v2
-                  </strong>
-                </p>
+                <h3>
+                  reviews-v2
+                </h3>
                 <div />
                 <div>
                   <strong>
@@ -1981,11 +1907,9 @@ ShallowWrapper {
               <div
                 className="card-pf-body"
               >
-                <p>
-                  <strong>
-                    reviews-v3
-                  </strong>
-                </p>
+                <h3>
+                  reviews-v3
+                </h3>
                 <div />
                 <div>
                   <strong>
@@ -2036,11 +1960,9 @@ ShallowWrapper {
               <div
                 className="card-pf-body"
               >
-                <p>
-                  <strong>
-                    reviews-v1
-                  </strong>
-                </p>
+                <h3>
+                  reviews-v1
+                </h3>
                 <div />
                 <div>
                   <strong>
@@ -2103,11 +2025,9 @@ ShallowWrapper {
               "nodeType": "host",
               "props": Object {
                 "children": Array [
-                  <p>
-                    <strong>
-                      reviews-v2
-                    </strong>
-                  </p>,
+                  <h3>
+                    reviews-v2
+                  </h3>,
                   <div />,
                   <div>
                     <strong>
@@ -2164,23 +2084,11 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "host",
                   "props": Object {
-                    "children": <strong>
-                      reviews-v2
-                    </strong>,
+                    "children": "reviews-v2",
                   },
                   "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "reviews-v2",
-                    },
-                    "ref": null,
-                    "rendered": "reviews-v2",
-                    "type": "strong",
-                  },
-                  "type": "p",
+                  "rendered": "reviews-v2",
+                  "type": "h3",
                 },
                 Object {
                   "instance": null,
@@ -2407,11 +2315,9 @@ ShallowWrapper {
               "nodeType": "host",
               "props": Object {
                 "children": Array [
-                  <p>
-                    <strong>
-                      reviews-v3
-                    </strong>
-                  </p>,
+                  <h3>
+                    reviews-v3
+                  </h3>,
                   <div />,
                   <div>
                     <strong>
@@ -2468,23 +2374,11 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "host",
                   "props": Object {
-                    "children": <strong>
-                      reviews-v3
-                    </strong>,
+                    "children": "reviews-v3",
                   },
                   "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "reviews-v3",
-                    },
-                    "ref": null,
-                    "rendered": "reviews-v3",
-                    "type": "strong",
-                  },
-                  "type": "p",
+                  "rendered": "reviews-v3",
+                  "type": "h3",
                 },
                 Object {
                   "instance": null,
@@ -2711,11 +2605,9 @@ ShallowWrapper {
               "nodeType": "host",
               "props": Object {
                 "children": Array [
-                  <p>
-                    <strong>
-                      reviews-v1
-                    </strong>
-                  </p>,
+                  <h3>
+                    reviews-v1
+                  </h3>,
                   <div />,
                   <div>
                     <strong>
@@ -2772,23 +2664,11 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "host",
                   "props": Object {
-                    "children": <strong>
-                      reviews-v1
-                    </strong>,
+                    "children": "reviews-v1",
                   },
                   "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "reviews-v1",
-                    },
-                    "ref": null,
-                    "rendered": "reviews-v1",
-                    "type": "strong",
-                  },
-                  "type": "p",
+                  "rendered": "reviews-v1",
+                  "type": "h3",
                 },
                 Object {
                   "instance": null,

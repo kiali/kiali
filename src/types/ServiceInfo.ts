@@ -363,6 +363,65 @@ export interface ServiceDetailsInfo {
   health?: Health;
 }
 
+export interface ObjectValidation {
+  name: string;
+  objectType: string;
+  valid: boolean;
+  checks?: ObjectCheck[];
+}
+
+export interface ObjectCheck {
+  message: string;
+  severity: string;
+  path: string;
+}
+
+const IconSeverityMap = new Map<string, string>([
+  ['error', 'error-circle-o'],
+  ['warning', 'warning-triangle-o'],
+  ['improvement', 'info'],
+  ['correct', 'ok']
+]);
+
+export const severityToIconName = (severity: string): string => {
+  let iconName = IconSeverityMap.get(severity);
+  if (!iconName) {
+    iconName = 'ok';
+  }
+
+  return iconName;
+};
+
+export const validationToIconName = (object: ObjectValidation): string => {
+  let severity = 'correct';
+
+  if (object) {
+    if (!object.valid) {
+      severity = 'error';
+    } else if (object.checks) {
+      severity = 'warning';
+    }
+  }
+
+  return severityToIconName(severity);
+};
+
+export const checkForPath = (object: ObjectValidation, path: string): ObjectCheck[] => {
+  if (!object || !object.checks) {
+    return [];
+  }
+
+  let check = object.checks.filter(item => {
+    return item.path === path;
+  });
+
+  return check;
+};
+
+export const globalChecks = (object: ObjectValidation): ObjectCheck[] => {
+  return checkForPath(object, '');
+};
+
 export interface EditorLink {
   editorLink: string;
 }

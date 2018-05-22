@@ -74,6 +74,10 @@ export const getServiceDetail = (namespace: String, service: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/services/${service}`, {}, {});
 };
 
+export const getServiceValidations = (namespace: String, service: String) => {
+  return newRequest('get', `/api/namespaces/${namespace}/services/${service}/istio_validations`, {}, {});
+};
+
 export const getIstioRuleDetail = (namespace: String, rule: String) => {
   return newRequest('get', `/api/namespaces/${namespace}/rules/${rule}`, {}, {});
 };

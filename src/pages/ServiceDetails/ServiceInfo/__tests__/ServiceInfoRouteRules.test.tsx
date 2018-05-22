@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import ServiceInfoRouteRules from '../ServiceInfoRouteRules';
-import { RouteRule } from '../../../../types/ServiceInfo';
+import { ObjectValidation, RouteRule } from '../../../../types/ServiceInfo';
 
 const rules: RouteRule[] = [
   {
@@ -38,8 +38,14 @@ const rules: RouteRule[] = [
 
 describe('#ServiceInfoRouteRules render correctly with data', () => {
   it('should render service rules', () => {
+    let validations: Map<string, ObjectValidation> = new Map<string, ObjectValidation>();
+
     const wrapper = shallow(
-      <ServiceInfoRouteRules routeRules={rules} editorLink={'/namespaces/test_namespace/services/test_services'} />
+      <ServiceInfoRouteRules
+        validations={validations}
+        routeRules={rules}
+        editorLink={'/namespaces/test_namespace/services/test_services'}
+      />
     );
     expect(wrapper).toBeDefined();
     expect(wrapper).toMatchSnapshot();

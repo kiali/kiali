@@ -22,10 +22,11 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
             {(this.props.virtualServices || []).map((virtualService, i) => (
               <div className="card-pf-body" key={'virtualService' + i}>
                 <div>
-                  <strong>Name</strong>:{' '}
-                  <Link to={this.props.editorLink + '?virtualservice=' + virtualService.name}>
-                    {virtualService.name}
-                  </Link>
+                  <h3>
+                    <Link to={this.props.editorLink + '?virtualservice=' + virtualService.name}>
+                      {virtualService.name}
+                    </Link>
+                  </h3>
                 </div>
                 <div>
                   <strong>Created at</strong>: <LocalTime time={virtualService.created_at} />

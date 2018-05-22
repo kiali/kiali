@@ -44,6 +44,7 @@ ShallowWrapper {
         },
       ]
     }
+    validations={Map {}}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -70,108 +71,152 @@ ShallowWrapper {
           sm={12}
           xs={12}
         >
-          <div
-            className="card-pf-body"
+          <Row
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
           >
-            <div>
-              <strong>
-                Name
-              </strong>
-              : 
-              <Link
-                replace={false}
-                to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={3}
+              md={3}
+              sm={12}
+              xs={12}
+            >
+              <div
+                className="card-pf-body"
               >
-                reviews-default
-              </Link>
-            </div>
-            <div>
-              <strong>
-                Created at
-              </strong>
-              : 
-              <LocalTime
-                time="2018-03-14T10:17:52Z"
-              />
-            </div>
-            <div>
-              <strong>
-                Resource Version
-              </strong>
-              : 
-              1234
-            </div>
-            <div>
-              <strong>
-                Precedence
-              </strong>
-              : 
-              1
-            </div>
-            <RouteRuleRoute
-              route={
-                Array [
-                  Object {
-                    "labels": Map {
-                      "version" => "v1",
+                <h3>
+                  <Link
+                    replace={false}
+                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                  >
+                    reviews-default
+                  </Link>
+                </h3>
+                
+                <div>
+                  <strong>
+                    Created at
+                  </strong>
+                  : 
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </div>
+                <div>
+                  <strong>
+                    Resource Version
+                  </strong>
+                  : 
+                  1234
+                </div>
+                <div>
+                  <strong>
+                    Precedence
+                  </strong>
+                  : 
+                  1
+                </div>
+              </div>
+            </Col>
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={5}
+              md={5}
+              sm={12}
+              xs={12}
+            >
+              <RouteRuleRoute
+                name="reviews-default"
+                route={
+                  Array [
+                    Object {
+                      "labels": Map {
+                        "version" => "v1",
+                      },
                     },
-                  },
-                ]
-              }
-            />
-            <hr />
-          </div>
-          <div
-            className="card-pf-body"
+                  ]
+                }
+                validations={Map {}}
+              />
+            </Col>
+          </Row>
+          <Row
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
           >
-            <div>
-              <strong>
-                Name
-              </strong>
-              : 
-              <Link
-                replace={false}
-                to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={3}
+              md={3}
+              sm={12}
+              xs={12}
+            >
+              <div
+                className="card-pf-body"
               >
-                reviews-test-v2
-              </Link>
-            </div>
-            <div>
-              <strong>
-                Created at
-              </strong>
-              : 
-              <LocalTime
-                time="2018-03-14T10:17:52Z"
-              />
-            </div>
-            <div>
-              <strong>
-                Resource Version
-              </strong>
-              : 
-              1234
-            </div>
-            <div>
-              <strong>
-                Precedence
-              </strong>
-              : 
-              2
-            </div>
-            <RouteRuleRoute
-              route={
-                Array [
-                  Object {
-                    "labels": Map {
-                      "version" => "v2",
+                <h3>
+                  <Link
+                    replace={false}
+                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                  >
+                    reviews-test-v2
+                  </Link>
+                </h3>
+                
+                <div>
+                  <strong>
+                    Created at
+                  </strong>
+                  : 
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </div>
+                <div>
+                  <strong>
+                    Resource Version
+                  </strong>
+                  : 
+                  1234
+                </div>
+                <div>
+                  <strong>
+                    Precedence
+                  </strong>
+                  : 
+                  2
+                </div>
+              </div>
+            </Col>
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={5}
+              md={5}
+              sm={12}
+              xs={12}
+            >
+              <RouteRuleRoute
+                name="reviews-test-v2"
+                route={
+                  Array [
+                    Object {
+                      "labels": Map {
+                        "version" => "v2",
+                      },
                     },
-                  },
-                ]
-              }
-            />
-            <hr />
-          </div>
+                  ]
+                }
+                validations={Map {}}
+              />
+            </Col>
+          </Row>
         </Col>
       </Row>,
       "className": "card-pf",
@@ -191,108 +236,152 @@ ShallowWrapper {
           sm={12}
           xs={12}
         >
-          <div
-            className="card-pf-body"
+          <Row
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
           >
-            <div>
-              <strong>
-                Name
-              </strong>
-              : 
-              <Link
-                replace={false}
-                to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={3}
+              md={3}
+              sm={12}
+              xs={12}
+            >
+              <div
+                className="card-pf-body"
               >
-                reviews-default
-              </Link>
-            </div>
-            <div>
-              <strong>
-                Created at
-              </strong>
-              : 
-              <LocalTime
-                time="2018-03-14T10:17:52Z"
-              />
-            </div>
-            <div>
-              <strong>
-                Resource Version
-              </strong>
-              : 
-              1234
-            </div>
-            <div>
-              <strong>
-                Precedence
-              </strong>
-              : 
-              1
-            </div>
-            <RouteRuleRoute
-              route={
-                Array [
-                  Object {
-                    "labels": Map {
-                      "version" => "v1",
+                <h3>
+                  <Link
+                    replace={false}
+                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                  >
+                    reviews-default
+                  </Link>
+                </h3>
+                
+                <div>
+                  <strong>
+                    Created at
+                  </strong>
+                  : 
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </div>
+                <div>
+                  <strong>
+                    Resource Version
+                  </strong>
+                  : 
+                  1234
+                </div>
+                <div>
+                  <strong>
+                    Precedence
+                  </strong>
+                  : 
+                  1
+                </div>
+              </div>
+            </Col>
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={5}
+              md={5}
+              sm={12}
+              xs={12}
+            >
+              <RouteRuleRoute
+                name="reviews-default"
+                route={
+                  Array [
+                    Object {
+                      "labels": Map {
+                        "version" => "v1",
+                      },
                     },
-                  },
-                ]
-              }
-            />
-            <hr />
-          </div>
-          <div
-            className="card-pf-body"
+                  ]
+                }
+                validations={Map {}}
+              />
+            </Col>
+          </Row>
+          <Row
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
           >
-            <div>
-              <strong>
-                Name
-              </strong>
-              : 
-              <Link
-                replace={false}
-                to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={3}
+              md={3}
+              sm={12}
+              xs={12}
+            >
+              <div
+                className="card-pf-body"
               >
-                reviews-test-v2
-              </Link>
-            </div>
-            <div>
-              <strong>
-                Created at
-              </strong>
-              : 
-              <LocalTime
-                time="2018-03-14T10:17:52Z"
-              />
-            </div>
-            <div>
-              <strong>
-                Resource Version
-              </strong>
-              : 
-              1234
-            </div>
-            <div>
-              <strong>
-                Precedence
-              </strong>
-              : 
-              2
-            </div>
-            <RouteRuleRoute
-              route={
-                Array [
-                  Object {
-                    "labels": Map {
-                      "version" => "v2",
+                <h3>
+                  <Link
+                    replace={false}
+                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                  >
+                    reviews-test-v2
+                  </Link>
+                </h3>
+                
+                <div>
+                  <strong>
+                    Created at
+                  </strong>
+                  : 
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </div>
+                <div>
+                  <strong>
+                    Resource Version
+                  </strong>
+                  : 
+                  1234
+                </div>
+                <div>
+                  <strong>
+                    Precedence
+                  </strong>
+                  : 
+                  2
+                </div>
+              </div>
+            </Col>
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={5}
+              md={5}
+              sm={12}
+              xs={12}
+            >
+              <RouteRuleRoute
+                name="reviews-test-v2"
+                route={
+                  Array [
+                    Object {
+                      "labels": Map {
+                        "version" => "v2",
+                      },
                     },
-                  },
-                ]
-              }
-            />
-            <hr />
-          </div>
+                  ]
+                }
+                validations={Map {}}
+              />
+            </Col>
+          </Row>
         </Col>,
         "className": "row-cards-pf",
         "componentClass": "div",
@@ -305,108 +394,152 @@ ShallowWrapper {
         "props": Object {
           "bsClass": "col",
           "children": Array [
-            <div
-              className="card-pf-body"
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
             >
-              <div>
-                <strong>
-                  Name
-                </strong>
-                : 
-                <Link
-                  replace={false}
-                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={3}
+                md={3}
+                sm={12}
+                xs={12}
+              >
+                <div
+                  className="card-pf-body"
                 >
-                  reviews-default
-                </Link>
-              </div>
-              <div>
-                <strong>
-                  Created at
-                </strong>
-                : 
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </div>
-              <div>
-                <strong>
-                  Resource Version
-                </strong>
-                : 
-                1234
-              </div>
-              <div>
-                <strong>
-                  Precedence
-                </strong>
-                : 
-                1
-              </div>
-              <RouteRuleRoute
-                route={
-                  Array [
-                    Object {
-                      "labels": Map {
-                        "version" => "v1",
+                  <h3>
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                    >
+                      reviews-default
+                    </Link>
+                  </h3>
+                  
+                  <div>
+                    <strong>
+                      Created at
+                    </strong>
+                    : 
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </div>
+                  <div>
+                    <strong>
+                      Resource Version
+                    </strong>
+                    : 
+                    1234
+                  </div>
+                  <div>
+                    <strong>
+                      Precedence
+                    </strong>
+                    : 
+                    1
+                  </div>
+                </div>
+              </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={5}
+                md={5}
+                sm={12}
+                xs={12}
+              >
+                <RouteRuleRoute
+                  name="reviews-default"
+                  route={
+                    Array [
+                      Object {
+                        "labels": Map {
+                          "version" => "v1",
+                        },
                       },
-                    },
-                  ]
-                }
-              />
-              <hr />
-            </div>,
-            <div
-              className="card-pf-body"
+                    ]
+                  }
+                  validations={Map {}}
+                />
+              </Col>
+            </Row>,
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
             >
-              <div>
-                <strong>
-                  Name
-                </strong>
-                : 
-                <Link
-                  replace={false}
-                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={3}
+                md={3}
+                sm={12}
+                xs={12}
+              >
+                <div
+                  className="card-pf-body"
                 >
-                  reviews-test-v2
-                </Link>
-              </div>
-              <div>
-                <strong>
-                  Created at
-                </strong>
-                : 
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </div>
-              <div>
-                <strong>
-                  Resource Version
-                </strong>
-                : 
-                1234
-              </div>
-              <div>
-                <strong>
-                  Precedence
-                </strong>
-                : 
-                2
-              </div>
-              <RouteRuleRoute
-                route={
-                  Array [
-                    Object {
-                      "labels": Map {
-                        "version" => "v2",
+                  <h3>
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                    >
+                      reviews-test-v2
+                    </Link>
+                  </h3>
+                  
+                  <div>
+                    <strong>
+                      Created at
+                    </strong>
+                    : 
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </div>
+                  <div>
+                    <strong>
+                      Resource Version
+                    </strong>
+                    : 
+                    1234
+                  </div>
+                  <div>
+                    <strong>
+                      Precedence
+                    </strong>
+                    : 
+                    2
+                  </div>
+                </div>
+              </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={5}
+                md={5}
+                sm={12}
+                xs={12}
+              >
+                <RouteRuleRoute
+                  name="reviews-test-v2"
+                  route={
+                    Array [
+                      Object {
+                        "labels": Map {
+                          "version" => "v2",
+                        },
                       },
-                    },
-                  ]
-                }
-              />
-              <hr />
-            </div>,
+                    ]
+                  }
+                  validations={Map {}}
+                />
+              </Col>
+            </Row>,
           ],
           "componentClass": "div",
           "lg": 12,
@@ -418,519 +551,761 @@ ShallowWrapper {
         "rendered": Array [
           Object {
             "instance": null,
-            "key": "rule0",
-            "nodeType": "host",
+            "key": "routerule0",
+            "nodeType": "class",
             "props": Object {
+              "bsClass": "row",
               "children": Array [
-                <div>
-                  <strong>
-                    Name
-                  </strong>
-                  : 
-                  <Link
-                    replace={false}
-                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={3}
+                  md={3}
+                  sm={12}
+                  xs={12}
+                >
+                  <div
+                    className="card-pf-body"
                   >
-                    reviews-default
-                  </Link>
-                </div>,
-                <div>
-                  <strong>
-                    Created at
-                  </strong>
-                  : 
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
+                    <h3>
+                      <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                      >
+                        reviews-default
+                      </Link>
+                    </h3>
+                    
+                    <div>
+                      <strong>
+                        Created at
+                      </strong>
+                      : 
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </div>
+                    <div>
+                      <strong>
+                        Resource Version
+                      </strong>
+                      : 
+                      1234
+                    </div>
+                    <div>
+                      <strong>
+                        Precedence
+                      </strong>
+                      : 
+                      1
+                    </div>
+                  </div>
+                </Col>,
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={5}
+                  md={5}
+                  sm={12}
+                  xs={12}
+                >
+                  <RouteRuleRoute
+                    name="reviews-default"
+                    route={
+                      Array [
+                        Object {
+                          "labels": Map {
+                            "version" => "v1",
+                          },
+                        },
+                      ]
+                    }
+                    validations={Map {}}
                   />
-                </div>,
-                <div>
-                  <strong>
-                    Resource Version
-                  </strong>
-                  : 
-                  1234
-                </div>,
-                <div>
-                  <strong>
-                    Precedence
-                  </strong>
-                  : 
-                  1
-                </div>,
-                null,
-                <RouteRuleRoute
-                  route={
-                    Array [
+                </Col>,
+              ],
+              "className": "row-cards-pf",
+              "componentClass": "div",
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": <div
+                    className="card-pf-body"
+                  >
+                    <h3>
+                      <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                      >
+                        reviews-default
+                      </Link>
+                    </h3>
+                    
+                    <div>
+                      <strong>
+                        Created at
+                      </strong>
+                      : 
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </div>
+                    <div>
+                      <strong>
+                        Resource Version
+                      </strong>
+                      : 
+                      1234
+                    </div>
+                    <div>
+                      <strong>
+                        Precedence
+                      </strong>
+                      : 
+                      1
+                    </div>
+                  </div>,
+                  "componentClass": "div",
+                  "lg": 3,
+                  "md": 3,
+                  "sm": 12,
+                  "xs": 12,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": "ruleconfig0",
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <h3>
+                        <Link
+                          replace={false}
+                          to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                        >
+                          reviews-default
+                        </Link>
+                      </h3>,
+                      "",
+                      <div>
+                        <strong>
+                          Created at
+                        </strong>
+                        : 
+                        <LocalTime
+                          time="2018-03-14T10:17:52Z"
+                        />
+                      </div>,
+                      <div>
+                        <strong>
+                          Resource Version
+                        </strong>
+                        : 
+                        1234
+                      </div>,
+                      <div>
+                        <strong>
+                          Precedence
+                        </strong>
+                        : 
+                        1
+                      </div>,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                    ],
+                    "className": "card-pf-body",
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": <Link
+                          replace={false}
+                          to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                        >
+                          reviews-default
+                        </Link>,
+                      },
+                      "ref": null,
+                      "rendered": Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "children": "reviews-default",
+                          "replace": false,
+                          "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-default",
+                        },
+                        "ref": null,
+                        "rendered": "reviews-default",
+                        "type": [Function],
+                      },
+                      "type": "h3",
+                    },
+                    "",
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": Array [
+                          <strong>
+                            Created at
+                          </strong>,
+                          ": ",
+                          <LocalTime
+                            time="2018-03-14T10:17:52Z"
+                          />,
+                        ],
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "host",
+                          "props": Object {
+                            "children": "Created at",
+                          },
+                          "ref": null,
+                          "rendered": "Created at",
+                          "type": "strong",
+                        },
+                        ": ",
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "time": "2018-03-14T10:17:52Z",
+                          },
+                          "ref": null,
+                          "rendered": null,
+                          "type": [Function],
+                        },
+                      ],
+                      "type": "div",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": Array [
+                          <strong>
+                            Resource Version
+                          </strong>,
+                          ": ",
+                          "1234",
+                        ],
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "host",
+                          "props": Object {
+                            "children": "Resource Version",
+                          },
+                          "ref": null,
+                          "rendered": "Resource Version",
+                          "type": "strong",
+                        },
+                        ": ",
+                        "1234",
+                      ],
+                      "type": "div",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": Array [
+                          <strong>
+                            Precedence
+                          </strong>,
+                          ": ",
+                          1,
+                        ],
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "host",
+                          "props": Object {
+                            "children": "Precedence",
+                          },
+                          "ref": null,
+                          "rendered": "Precedence",
+                          "type": "strong",
+                        },
+                        ": ",
+                        1,
+                      ],
+                      "type": "div",
+                    },
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                  ],
+                  "type": "div",
+                },
+                "type": [Function],
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": <RouteRuleRoute
+                    name="reviews-default"
+                    route={
+                      Array [
+                        Object {
+                          "labels": Map {
+                            "version" => "v1",
+                          },
+                        },
+                      ]
+                    }
+                    validations={Map {}}
+                  />,
+                  "componentClass": "div",
+                  "lg": 5,
+                  "md": 5,
+                  "sm": 12,
+                  "xs": 12,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "name": "reviews-default",
+                    "route": Array [
                       Object {
                         "labels": Map {
                           "version" => "v1",
                         },
                       },
-                    ]
-                  }
-                />,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                <hr />,
+                    ],
+                    "validations": Map {},
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+                "type": [Function],
+              },
+            ],
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "routerule1",
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "row",
+              "children": Array [
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={3}
+                  md={3}
+                  sm={12}
+                  xs={12}
+                >
+                  <div
+                    className="card-pf-body"
+                  >
+                    <h3>
+                      <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                      >
+                        reviews-test-v2
+                      </Link>
+                    </h3>
+                    
+                    <div>
+                      <strong>
+                        Created at
+                      </strong>
+                      : 
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </div>
+                    <div>
+                      <strong>
+                        Resource Version
+                      </strong>
+                      : 
+                      1234
+                    </div>
+                    <div>
+                      <strong>
+                        Precedence
+                      </strong>
+                      : 
+                      2
+                    </div>
+                  </div>
+                </Col>,
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={5}
+                  md={5}
+                  sm={12}
+                  xs={12}
+                >
+                  <RouteRuleRoute
+                    name="reviews-test-v2"
+                    route={
+                      Array [
+                        Object {
+                          "labels": Map {
+                            "version" => "v2",
+                          },
+                        },
+                      ]
+                    }
+                    validations={Map {}}
+                  />
+                </Col>,
               ],
-              "className": "card-pf-body",
+              "className": "row-cards-pf",
+              "componentClass": "div",
             },
             "ref": null,
             "rendered": Array [
               Object {
                 "instance": null,
                 "key": undefined,
-                "nodeType": "host",
+                "nodeType": "class",
                 "props": Object {
-                  "children": Array [
-                    <strong>
-                      Name
-                    </strong>,
-                    ": ",
-                    <Link
-                      replace={false}
-                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
-                    >
-                      reviews-default
-                    </Link>,
-                  ],
+                  "bsClass": "col",
+                  "children": <div
+                    className="card-pf-body"
+                  >
+                    <h3>
+                      <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                      >
+                        reviews-test-v2
+                      </Link>
+                    </h3>
+                    
+                    <div>
+                      <strong>
+                        Created at
+                      </strong>
+                      : 
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </div>
+                    <div>
+                      <strong>
+                        Resource Version
+                      </strong>
+                      : 
+                      1234
+                    </div>
+                    <div>
+                      <strong>
+                        Precedence
+                      </strong>
+                      : 
+                      2
+                    </div>
+                  </div>,
+                  "componentClass": "div",
+                  "lg": 3,
+                  "md": 3,
+                  "sm": 12,
+                  "xs": 12,
                 },
                 "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Name",
-                    },
-                    "ref": null,
-                    "rendered": "Name",
-                    "type": "strong",
+                "rendered": Object {
+                  "instance": null,
+                  "key": "ruleconfig1",
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <h3>
+                        <Link
+                          replace={false}
+                          to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                        >
+                          reviews-test-v2
+                        </Link>
+                      </h3>,
+                      "",
+                      <div>
+                        <strong>
+                          Created at
+                        </strong>
+                        : 
+                        <LocalTime
+                          time="2018-03-14T10:17:52Z"
+                        />
+                      </div>,
+                      <div>
+                        <strong>
+                          Resource Version
+                        </strong>
+                        : 
+                        1234
+                      </div>,
+                      <div>
+                        <strong>
+                          Precedence
+                        </strong>
+                        : 
+                        2
+                      </div>,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                    ],
+                    "className": "card-pf-body",
                   },
-                  ": ",
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "children": "reviews-default",
-                      "replace": false,
-                      "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-default",
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": <Link
+                          replace={false}
+                          to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                        >
+                          reviews-test-v2
+                        </Link>,
+                      },
+                      "ref": null,
+                      "rendered": Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "children": "reviews-test-v2",
+                          "replace": false,
+                          "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2",
+                        },
+                        "ref": null,
+                        "rendered": "reviews-test-v2",
+                        "type": [Function],
+                      },
+                      "type": "h3",
                     },
-                    "ref": null,
-                    "rendered": "reviews-default",
-                    "type": [Function],
-                  },
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Created at
-                    </strong>,
-                    ": ",
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />,
+                    "",
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": Array [
+                          <strong>
+                            Created at
+                          </strong>,
+                          ": ",
+                          <LocalTime
+                            time="2018-03-14T10:17:52Z"
+                          />,
+                        ],
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "host",
+                          "props": Object {
+                            "children": "Created at",
+                          },
+                          "ref": null,
+                          "rendered": "Created at",
+                          "type": "strong",
+                        },
+                        ": ",
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "time": "2018-03-14T10:17:52Z",
+                          },
+                          "ref": null,
+                          "rendered": null,
+                          "type": [Function],
+                        },
+                      ],
+                      "type": "div",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": Array [
+                          <strong>
+                            Resource Version
+                          </strong>,
+                          ": ",
+                          "1234",
+                        ],
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "host",
+                          "props": Object {
+                            "children": "Resource Version",
+                          },
+                          "ref": null,
+                          "rendered": "Resource Version",
+                          "type": "strong",
+                        },
+                        ": ",
+                        "1234",
+                      ],
+                      "type": "div",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": Array [
+                          <strong>
+                            Precedence
+                          </strong>,
+                          ": ",
+                          2,
+                        ],
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "host",
+                          "props": Object {
+                            "children": "Precedence",
+                          },
+                          "ref": null,
+                          "rendered": "Precedence",
+                          "type": "strong",
+                        },
+                        ": ",
+                        2,
+                      ],
+                      "type": "div",
+                    },
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                   ],
+                  "type": "div",
                 },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Created at",
-                    },
-                    "ref": null,
-                    "rendered": "Created at",
-                    "type": "strong",
-                  },
-                  ": ",
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "time": "2018-03-14T10:17:52Z",
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                ],
-                "type": "div",
+                "type": [Function],
               },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Resource Version
-                    </strong>,
-                    ": ",
-                    "1234",
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Resource Version",
-                    },
-                    "ref": null,
-                    "rendered": "Resource Version",
-                    "type": "strong",
-                  },
-                  ": ",
-                  "1234",
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Precedence
-                    </strong>,
-                    ": ",
-                    1,
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Precedence",
-                    },
-                    "ref": null,
-                    "rendered": "Precedence",
-                    "type": "strong",
-                  },
-                  ": ",
-                  1,
-                ],
-                "type": "div",
-              },
-              null,
               Object {
                 "instance": null,
                 "key": undefined,
                 "nodeType": "class",
                 "props": Object {
-                  "route": Array [
-                    Object {
-                      "labels": Map {
-                        "version" => "v1",
-                      },
-                    },
-                  ],
+                  "bsClass": "col",
+                  "children": <RouteRuleRoute
+                    name="reviews-test-v2"
+                    route={
+                      Array [
+                        Object {
+                          "labels": Map {
+                            "version" => "v2",
+                          },
+                        },
+                      ]
+                    }
+                    validations={Map {}}
+                  />,
+                  "componentClass": "div",
+                  "lg": 5,
+                  "md": 5,
+                  "sm": 12,
+                  "xs": 12,
                 },
                 "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {},
-                "ref": null,
-                "rendered": null,
-                "type": "hr",
-              },
-            ],
-            "type": "div",
-          },
-          Object {
-            "instance": null,
-            "key": "rule1",
-            "nodeType": "host",
-            "props": Object {
-              "children": Array [
-                <div>
-                  <strong>
-                    Name
-                  </strong>
-                  : 
-                  <Link
-                    replace={false}
-                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
-                  >
-                    reviews-test-v2
-                  </Link>
-                </div>,
-                <div>
-                  <strong>
-                    Created at
-                  </strong>
-                  : 
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </div>,
-                <div>
-                  <strong>
-                    Resource Version
-                  </strong>
-                  : 
-                  1234
-                </div>,
-                <div>
-                  <strong>
-                    Precedence
-                  </strong>
-                  : 
-                  2
-                </div>,
-                null,
-                <RouteRuleRoute
-                  route={
-                    Array [
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "name": "reviews-test-v2",
+                    "route": Array [
                       Object {
                         "labels": Map {
                           "version" => "v2",
                         },
                       },
-                    ]
-                  }
-                />,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                <hr />,
-              ],
-              "className": "card-pf-body",
-            },
-            "ref": null,
-            "rendered": Array [
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Name
-                    </strong>,
-                    ": ",
-                    <Link
-                      replace={false}
-                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
-                    >
-                      reviews-test-v2
-                    </Link>,
-                  ],
+                    ],
+                    "validations": Map {},
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
                 },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Name",
-                    },
-                    "ref": null,
-                    "rendered": "Name",
-                    "type": "strong",
-                  },
-                  ": ",
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "children": "reviews-test-v2",
-                      "replace": false,
-                      "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2",
-                    },
-                    "ref": null,
-                    "rendered": "reviews-test-v2",
-                    "type": [Function],
-                  },
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Created at
-                    </strong>,
-                    ": ",
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />,
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Created at",
-                    },
-                    "ref": null,
-                    "rendered": "Created at",
-                    "type": "strong",
-                  },
-                  ": ",
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "time": "2018-03-14T10:17:52Z",
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Resource Version
-                    </strong>,
-                    ": ",
-                    "1234",
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Resource Version",
-                    },
-                    "ref": null,
-                    "rendered": "Resource Version",
-                    "type": "strong",
-                  },
-                  ": ",
-                  "1234",
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Precedence
-                    </strong>,
-                    ": ",
-                    2,
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Precedence",
-                    },
-                    "ref": null,
-                    "rendered": "Precedence",
-                    "type": "strong",
-                  },
-                  ": ",
-                  2,
-                ],
-                "type": "div",
-              },
-              null,
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "class",
-                "props": Object {
-                  "route": Array [
-                    Object {
-                      "labels": Map {
-                        "version" => "v2",
-                      },
-                    },
-                  ],
-                },
-                "ref": null,
-                "rendered": null,
                 "type": [Function],
               },
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {},
-                "ref": null,
-                "rendered": null,
-                "type": "hr",
-              },
             ],
-            "type": "div",
+            "type": [Function],
           },
         ],
         "type": [Function],
@@ -958,108 +1333,152 @@ ShallowWrapper {
             sm={12}
             xs={12}
           >
-            <div
-              className="card-pf-body"
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
             >
-              <div>
-                <strong>
-                  Name
-                </strong>
-                : 
-                <Link
-                  replace={false}
-                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={3}
+                md={3}
+                sm={12}
+                xs={12}
+              >
+                <div
+                  className="card-pf-body"
                 >
-                  reviews-default
-                </Link>
-              </div>
-              <div>
-                <strong>
-                  Created at
-                </strong>
-                : 
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </div>
-              <div>
-                <strong>
-                  Resource Version
-                </strong>
-                : 
-                1234
-              </div>
-              <div>
-                <strong>
-                  Precedence
-                </strong>
-                : 
-                1
-              </div>
-              <RouteRuleRoute
-                route={
-                  Array [
-                    Object {
-                      "labels": Map {
-                        "version" => "v1",
+                  <h3>
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                    >
+                      reviews-default
+                    </Link>
+                  </h3>
+                  
+                  <div>
+                    <strong>
+                      Created at
+                    </strong>
+                    : 
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </div>
+                  <div>
+                    <strong>
+                      Resource Version
+                    </strong>
+                    : 
+                    1234
+                  </div>
+                  <div>
+                    <strong>
+                      Precedence
+                    </strong>
+                    : 
+                    1
+                  </div>
+                </div>
+              </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={5}
+                md={5}
+                sm={12}
+                xs={12}
+              >
+                <RouteRuleRoute
+                  name="reviews-default"
+                  route={
+                    Array [
+                      Object {
+                        "labels": Map {
+                          "version" => "v1",
+                        },
                       },
-                    },
-                  ]
-                }
-              />
-              <hr />
-            </div>
-            <div
-              className="card-pf-body"
+                    ]
+                  }
+                  validations={Map {}}
+                />
+              </Col>
+            </Row>
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
             >
-              <div>
-                <strong>
-                  Name
-                </strong>
-                : 
-                <Link
-                  replace={false}
-                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={3}
+                md={3}
+                sm={12}
+                xs={12}
+              >
+                <div
+                  className="card-pf-body"
                 >
-                  reviews-test-v2
-                </Link>
-              </div>
-              <div>
-                <strong>
-                  Created at
-                </strong>
-                : 
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </div>
-              <div>
-                <strong>
-                  Resource Version
-                </strong>
-                : 
-                1234
-              </div>
-              <div>
-                <strong>
-                  Precedence
-                </strong>
-                : 
-                2
-              </div>
-              <RouteRuleRoute
-                route={
-                  Array [
-                    Object {
-                      "labels": Map {
-                        "version" => "v2",
+                  <h3>
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                    >
+                      reviews-test-v2
+                    </Link>
+                  </h3>
+                  
+                  <div>
+                    <strong>
+                      Created at
+                    </strong>
+                    : 
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </div>
+                  <div>
+                    <strong>
+                      Resource Version
+                    </strong>
+                    : 
+                    1234
+                  </div>
+                  <div>
+                    <strong>
+                      Precedence
+                    </strong>
+                    : 
+                    2
+                  </div>
+                </div>
+              </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={5}
+                md={5}
+                sm={12}
+                xs={12}
+              >
+                <RouteRuleRoute
+                  name="reviews-test-v2"
+                  route={
+                    Array [
+                      Object {
+                        "labels": Map {
+                          "version" => "v2",
+                        },
                       },
-                    },
-                  ]
-                }
-              />
-              <hr />
-            </div>
+                    ]
+                  }
+                  validations={Map {}}
+                />
+              </Col>
+            </Row>
           </Col>
         </Row>,
         "className": "card-pf",
@@ -1079,108 +1498,152 @@ ShallowWrapper {
             sm={12}
             xs={12}
           >
-            <div
-              className="card-pf-body"
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
             >
-              <div>
-                <strong>
-                  Name
-                </strong>
-                : 
-                <Link
-                  replace={false}
-                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={3}
+                md={3}
+                sm={12}
+                xs={12}
+              >
+                <div
+                  className="card-pf-body"
                 >
-                  reviews-default
-                </Link>
-              </div>
-              <div>
-                <strong>
-                  Created at
-                </strong>
-                : 
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </div>
-              <div>
-                <strong>
-                  Resource Version
-                </strong>
-                : 
-                1234
-              </div>
-              <div>
-                <strong>
-                  Precedence
-                </strong>
-                : 
-                1
-              </div>
-              <RouteRuleRoute
-                route={
-                  Array [
-                    Object {
-                      "labels": Map {
-                        "version" => "v1",
+                  <h3>
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                    >
+                      reviews-default
+                    </Link>
+                  </h3>
+                  
+                  <div>
+                    <strong>
+                      Created at
+                    </strong>
+                    : 
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </div>
+                  <div>
+                    <strong>
+                      Resource Version
+                    </strong>
+                    : 
+                    1234
+                  </div>
+                  <div>
+                    <strong>
+                      Precedence
+                    </strong>
+                    : 
+                    1
+                  </div>
+                </div>
+              </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={5}
+                md={5}
+                sm={12}
+                xs={12}
+              >
+                <RouteRuleRoute
+                  name="reviews-default"
+                  route={
+                    Array [
+                      Object {
+                        "labels": Map {
+                          "version" => "v1",
+                        },
                       },
-                    },
-                  ]
-                }
-              />
-              <hr />
-            </div>
-            <div
-              className="card-pf-body"
+                    ]
+                  }
+                  validations={Map {}}
+                />
+              </Col>
+            </Row>
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
             >
-              <div>
-                <strong>
-                  Name
-                </strong>
-                : 
-                <Link
-                  replace={false}
-                  to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={3}
+                md={3}
+                sm={12}
+                xs={12}
+              >
+                <div
+                  className="card-pf-body"
                 >
-                  reviews-test-v2
-                </Link>
-              </div>
-              <div>
-                <strong>
-                  Created at
-                </strong>
-                : 
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </div>
-              <div>
-                <strong>
-                  Resource Version
-                </strong>
-                : 
-                1234
-              </div>
-              <div>
-                <strong>
-                  Precedence
-                </strong>
-                : 
-                2
-              </div>
-              <RouteRuleRoute
-                route={
-                  Array [
-                    Object {
-                      "labels": Map {
-                        "version" => "v2",
+                  <h3>
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                    >
+                      reviews-test-v2
+                    </Link>
+                  </h3>
+                  
+                  <div>
+                    <strong>
+                      Created at
+                    </strong>
+                    : 
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </div>
+                  <div>
+                    <strong>
+                      Resource Version
+                    </strong>
+                    : 
+                    1234
+                  </div>
+                  <div>
+                    <strong>
+                      Precedence
+                    </strong>
+                    : 
+                    2
+                  </div>
+                </div>
+              </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={5}
+                md={5}
+                sm={12}
+                xs={12}
+              >
+                <RouteRuleRoute
+                  name="reviews-test-v2"
+                  route={
+                    Array [
+                      Object {
+                        "labels": Map {
+                          "version" => "v2",
+                        },
                       },
-                    },
-                  ]
-                }
-              />
-              <hr />
-            </div>
+                    ]
+                  }
+                  validations={Map {}}
+                />
+              </Col>
+            </Row>
           </Col>,
           "className": "row-cards-pf",
           "componentClass": "div",
@@ -1193,108 +1656,152 @@ ShallowWrapper {
           "props": Object {
             "bsClass": "col",
             "children": Array [
-              <div
-                className="card-pf-body"
+              <Row
+                bsClass="row"
+                className="row-cards-pf"
+                componentClass="div"
               >
-                <div>
-                  <strong>
-                    Name
-                  </strong>
-                  : 
-                  <Link
-                    replace={false}
-                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={3}
+                  md={3}
+                  sm={12}
+                  xs={12}
+                >
+                  <div
+                    className="card-pf-body"
                   >
-                    reviews-default
-                  </Link>
-                </div>
-                <div>
-                  <strong>
-                    Created at
-                  </strong>
-                  : 
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </div>
-                <div>
-                  <strong>
-                    Resource Version
-                  </strong>
-                  : 
-                  1234
-                </div>
-                <div>
-                  <strong>
-                    Precedence
-                  </strong>
-                  : 
-                  1
-                </div>
-                <RouteRuleRoute
-                  route={
-                    Array [
-                      Object {
-                        "labels": Map {
-                          "version" => "v1",
+                    <h3>
+                      <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                      >
+                        reviews-default
+                      </Link>
+                    </h3>
+                    
+                    <div>
+                      <strong>
+                        Created at
+                      </strong>
+                      : 
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </div>
+                    <div>
+                      <strong>
+                        Resource Version
+                      </strong>
+                      : 
+                      1234
+                    </div>
+                    <div>
+                      <strong>
+                        Precedence
+                      </strong>
+                      : 
+                      1
+                    </div>
+                  </div>
+                </Col>
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={5}
+                  md={5}
+                  sm={12}
+                  xs={12}
+                >
+                  <RouteRuleRoute
+                    name="reviews-default"
+                    route={
+                      Array [
+                        Object {
+                          "labels": Map {
+                            "version" => "v1",
+                          },
                         },
-                      },
-                    ]
-                  }
-                />
-                <hr />
-              </div>,
-              <div
-                className="card-pf-body"
+                      ]
+                    }
+                    validations={Map {}}
+                  />
+                </Col>
+              </Row>,
+              <Row
+                bsClass="row"
+                className="row-cards-pf"
+                componentClass="div"
               >
-                <div>
-                  <strong>
-                    Name
-                  </strong>
-                  : 
-                  <Link
-                    replace={false}
-                    to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={3}
+                  md={3}
+                  sm={12}
+                  xs={12}
+                >
+                  <div
+                    className="card-pf-body"
                   >
-                    reviews-test-v2
-                  </Link>
-                </div>
-                <div>
-                  <strong>
-                    Created at
-                  </strong>
-                  : 
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </div>
-                <div>
-                  <strong>
-                    Resource Version
-                  </strong>
-                  : 
-                  1234
-                </div>
-                <div>
-                  <strong>
-                    Precedence
-                  </strong>
-                  : 
-                  2
-                </div>
-                <RouteRuleRoute
-                  route={
-                    Array [
-                      Object {
-                        "labels": Map {
-                          "version" => "v2",
+                    <h3>
+                      <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                      >
+                        reviews-test-v2
+                      </Link>
+                    </h3>
+                    
+                    <div>
+                      <strong>
+                        Created at
+                      </strong>
+                      : 
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </div>
+                    <div>
+                      <strong>
+                        Resource Version
+                      </strong>
+                      : 
+                      1234
+                    </div>
+                    <div>
+                      <strong>
+                        Precedence
+                      </strong>
+                      : 
+                      2
+                    </div>
+                  </div>
+                </Col>
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={5}
+                  md={5}
+                  sm={12}
+                  xs={12}
+                >
+                  <RouteRuleRoute
+                    name="reviews-test-v2"
+                    route={
+                      Array [
+                        Object {
+                          "labels": Map {
+                            "version" => "v2",
+                          },
                         },
-                      },
-                    ]
-                  }
-                />
-                <hr />
-              </div>,
+                      ]
+                    }
+                    validations={Map {}}
+                  />
+                </Col>
+              </Row>,
             ],
             "componentClass": "div",
             "lg": 12,
@@ -1306,519 +1813,761 @@ ShallowWrapper {
           "rendered": Array [
             Object {
               "instance": null,
-              "key": "rule0",
-              "nodeType": "host",
+              "key": "routerule0",
+              "nodeType": "class",
               "props": Object {
+                "bsClass": "row",
                 "children": Array [
-                  <div>
-                    <strong>
-                      Name
-                    </strong>
-                    : 
-                    <Link
-                      replace={false}
-                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                  <Col
+                    bsClass="col"
+                    componentClass="div"
+                    lg={3}
+                    md={3}
+                    sm={12}
+                    xs={12}
+                  >
+                    <div
+                      className="card-pf-body"
                     >
-                      reviews-default
-                    </Link>
-                  </div>,
-                  <div>
-                    <strong>
-                      Created at
-                    </strong>
-                    : 
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
+                      <h3>
+                        <Link
+                          replace={false}
+                          to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                        >
+                          reviews-default
+                        </Link>
+                      </h3>
+                      
+                      <div>
+                        <strong>
+                          Created at
+                        </strong>
+                        : 
+                        <LocalTime
+                          time="2018-03-14T10:17:52Z"
+                        />
+                      </div>
+                      <div>
+                        <strong>
+                          Resource Version
+                        </strong>
+                        : 
+                        1234
+                      </div>
+                      <div>
+                        <strong>
+                          Precedence
+                        </strong>
+                        : 
+                        1
+                      </div>
+                    </div>
+                  </Col>,
+                  <Col
+                    bsClass="col"
+                    componentClass="div"
+                    lg={5}
+                    md={5}
+                    sm={12}
+                    xs={12}
+                  >
+                    <RouteRuleRoute
+                      name="reviews-default"
+                      route={
+                        Array [
+                          Object {
+                            "labels": Map {
+                              "version" => "v1",
+                            },
+                          },
+                        ]
+                      }
+                      validations={Map {}}
                     />
-                  </div>,
-                  <div>
-                    <strong>
-                      Resource Version
-                    </strong>
-                    : 
-                    1234
-                  </div>,
-                  <div>
-                    <strong>
-                      Precedence
-                    </strong>
-                    : 
-                    1
-                  </div>,
-                  null,
-                  <RouteRuleRoute
-                    route={
-                      Array [
+                  </Col>,
+                ],
+                "className": "row-cards-pf",
+                "componentClass": "div",
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": <div
+                      className="card-pf-body"
+                    >
+                      <h3>
+                        <Link
+                          replace={false}
+                          to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                        >
+                          reviews-default
+                        </Link>
+                      </h3>
+                      
+                      <div>
+                        <strong>
+                          Created at
+                        </strong>
+                        : 
+                        <LocalTime
+                          time="2018-03-14T10:17:52Z"
+                        />
+                      </div>
+                      <div>
+                        <strong>
+                          Resource Version
+                        </strong>
+                        : 
+                        1234
+                      </div>
+                      <div>
+                        <strong>
+                          Precedence
+                        </strong>
+                        : 
+                        1
+                      </div>
+                    </div>,
+                    "componentClass": "div",
+                    "lg": 3,
+                    "md": 3,
+                    "sm": 12,
+                    "xs": 12,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": "ruleconfig0",
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <h3>
+                          <Link
+                            replace={false}
+                            to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                          >
+                            reviews-default
+                          </Link>
+                        </h3>,
+                        "",
+                        <div>
+                          <strong>
+                            Created at
+                          </strong>
+                          : 
+                          <LocalTime
+                            time="2018-03-14T10:17:52Z"
+                          />
+                        </div>,
+                        <div>
+                          <strong>
+                            Resource Version
+                          </strong>
+                          : 
+                          1234
+                        </div>,
+                        <div>
+                          <strong>
+                            Precedence
+                          </strong>
+                          : 
+                          1
+                        </div>,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                      ],
+                      "className": "card-pf-body",
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": <Link
+                            replace={false}
+                            to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
+                          >
+                            reviews-default
+                          </Link>,
+                        },
+                        "ref": null,
+                        "rendered": Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "children": "reviews-default",
+                            "replace": false,
+                            "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-default",
+                          },
+                          "ref": null,
+                          "rendered": "reviews-default",
+                          "type": [Function],
+                        },
+                        "type": "h3",
+                      },
+                      "",
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": Array [
+                            <strong>
+                              Created at
+                            </strong>,
+                            ": ",
+                            <LocalTime
+                              time="2018-03-14T10:17:52Z"
+                            />,
+                          ],
+                        },
+                        "ref": null,
+                        "rendered": Array [
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "host",
+                            "props": Object {
+                              "children": "Created at",
+                            },
+                            "ref": null,
+                            "rendered": "Created at",
+                            "type": "strong",
+                          },
+                          ": ",
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "time": "2018-03-14T10:17:52Z",
+                            },
+                            "ref": null,
+                            "rendered": null,
+                            "type": [Function],
+                          },
+                        ],
+                        "type": "div",
+                      },
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": Array [
+                            <strong>
+                              Resource Version
+                            </strong>,
+                            ": ",
+                            "1234",
+                          ],
+                        },
+                        "ref": null,
+                        "rendered": Array [
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "host",
+                            "props": Object {
+                              "children": "Resource Version",
+                            },
+                            "ref": null,
+                            "rendered": "Resource Version",
+                            "type": "strong",
+                          },
+                          ": ",
+                          "1234",
+                        ],
+                        "type": "div",
+                      },
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": Array [
+                            <strong>
+                              Precedence
+                            </strong>,
+                            ": ",
+                            1,
+                          ],
+                        },
+                        "ref": null,
+                        "rendered": Array [
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "host",
+                            "props": Object {
+                              "children": "Precedence",
+                            },
+                            "ref": null,
+                            "rendered": "Precedence",
+                            "type": "strong",
+                          },
+                          ": ",
+                          1,
+                        ],
+                        "type": "div",
+                      },
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                    ],
+                    "type": "div",
+                  },
+                  "type": [Function],
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": <RouteRuleRoute
+                      name="reviews-default"
+                      route={
+                        Array [
+                          Object {
+                            "labels": Map {
+                              "version" => "v1",
+                            },
+                          },
+                        ]
+                      }
+                      validations={Map {}}
+                    />,
+                    "componentClass": "div",
+                    "lg": 5,
+                    "md": 5,
+                    "sm": 12,
+                    "xs": 12,
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "name": "reviews-default",
+                      "route": Array [
                         Object {
                           "labels": Map {
                             "version" => "v1",
                           },
                         },
-                      ]
-                    }
-                  />,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  <hr />,
+                      ],
+                      "validations": Map {},
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                  "type": [Function],
+                },
+              ],
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "routerule1",
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "row",
+                "children": Array [
+                  <Col
+                    bsClass="col"
+                    componentClass="div"
+                    lg={3}
+                    md={3}
+                    sm={12}
+                    xs={12}
+                  >
+                    <div
+                      className="card-pf-body"
+                    >
+                      <h3>
+                        <Link
+                          replace={false}
+                          to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                        >
+                          reviews-test-v2
+                        </Link>
+                      </h3>
+                      
+                      <div>
+                        <strong>
+                          Created at
+                        </strong>
+                        : 
+                        <LocalTime
+                          time="2018-03-14T10:17:52Z"
+                        />
+                      </div>
+                      <div>
+                        <strong>
+                          Resource Version
+                        </strong>
+                        : 
+                        1234
+                      </div>
+                      <div>
+                        <strong>
+                          Precedence
+                        </strong>
+                        : 
+                        2
+                      </div>
+                    </div>
+                  </Col>,
+                  <Col
+                    bsClass="col"
+                    componentClass="div"
+                    lg={5}
+                    md={5}
+                    sm={12}
+                    xs={12}
+                  >
+                    <RouteRuleRoute
+                      name="reviews-test-v2"
+                      route={
+                        Array [
+                          Object {
+                            "labels": Map {
+                              "version" => "v2",
+                            },
+                          },
+                        ]
+                      }
+                      validations={Map {}}
+                    />
+                  </Col>,
                 ],
-                "className": "card-pf-body",
+                "className": "row-cards-pf",
+                "componentClass": "div",
               },
               "ref": null,
               "rendered": Array [
                 Object {
                   "instance": null,
                   "key": undefined,
-                  "nodeType": "host",
+                  "nodeType": "class",
                   "props": Object {
-                    "children": Array [
-                      <strong>
-                        Name
-                      </strong>,
-                      ": ",
-                      <Link
-                        replace={false}
-                        to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
-                      >
-                        reviews-default
-                      </Link>,
-                    ],
+                    "bsClass": "col",
+                    "children": <div
+                      className="card-pf-body"
+                    >
+                      <h3>
+                        <Link
+                          replace={false}
+                          to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                        >
+                          reviews-test-v2
+                        </Link>
+                      </h3>
+                      
+                      <div>
+                        <strong>
+                          Created at
+                        </strong>
+                        : 
+                        <LocalTime
+                          time="2018-03-14T10:17:52Z"
+                        />
+                      </div>
+                      <div>
+                        <strong>
+                          Resource Version
+                        </strong>
+                        : 
+                        1234
+                      </div>
+                      <div>
+                        <strong>
+                          Precedence
+                        </strong>
+                        : 
+                        2
+                      </div>
+                    </div>,
+                    "componentClass": "div",
+                    "lg": 3,
+                    "md": 3,
+                    "sm": 12,
+                    "xs": 12,
                   },
                   "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Name",
-                      },
-                      "ref": null,
-                      "rendered": "Name",
-                      "type": "strong",
+                  "rendered": Object {
+                    "instance": null,
+                    "key": "ruleconfig1",
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <h3>
+                          <Link
+                            replace={false}
+                            to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                          >
+                            reviews-test-v2
+                          </Link>
+                        </h3>,
+                        "",
+                        <div>
+                          <strong>
+                            Created at
+                          </strong>
+                          : 
+                          <LocalTime
+                            time="2018-03-14T10:17:52Z"
+                          />
+                        </div>,
+                        <div>
+                          <strong>
+                            Resource Version
+                          </strong>
+                          : 
+                          1234
+                        </div>,
+                        <div>
+                          <strong>
+                            Precedence
+                          </strong>
+                          : 
+                          2
+                        </div>,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                      ],
+                      "className": "card-pf-body",
                     },
-                    ": ",
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "class",
-                      "props": Object {
-                        "children": "reviews-default",
-                        "replace": false,
-                        "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-default",
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": <Link
+                            replace={false}
+                            to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
+                          >
+                            reviews-test-v2
+                          </Link>,
+                        },
+                        "ref": null,
+                        "rendered": Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "children": "reviews-test-v2",
+                            "replace": false,
+                            "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2",
+                          },
+                          "ref": null,
+                          "rendered": "reviews-test-v2",
+                          "type": [Function],
+                        },
+                        "type": "h3",
                       },
-                      "ref": null,
-                      "rendered": "reviews-default",
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Created at
-                      </strong>,
-                      ": ",
-                      <LocalTime
-                        time="2018-03-14T10:17:52Z"
-                      />,
+                      "",
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": Array [
+                            <strong>
+                              Created at
+                            </strong>,
+                            ": ",
+                            <LocalTime
+                              time="2018-03-14T10:17:52Z"
+                            />,
+                          ],
+                        },
+                        "ref": null,
+                        "rendered": Array [
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "host",
+                            "props": Object {
+                              "children": "Created at",
+                            },
+                            "ref": null,
+                            "rendered": "Created at",
+                            "type": "strong",
+                          },
+                          ": ",
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "time": "2018-03-14T10:17:52Z",
+                            },
+                            "ref": null,
+                            "rendered": null,
+                            "type": [Function],
+                          },
+                        ],
+                        "type": "div",
+                      },
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": Array [
+                            <strong>
+                              Resource Version
+                            </strong>,
+                            ": ",
+                            "1234",
+                          ],
+                        },
+                        "ref": null,
+                        "rendered": Array [
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "host",
+                            "props": Object {
+                              "children": "Resource Version",
+                            },
+                            "ref": null,
+                            "rendered": "Resource Version",
+                            "type": "strong",
+                          },
+                          ": ",
+                          "1234",
+                        ],
+                        "type": "div",
+                      },
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": Array [
+                            <strong>
+                              Precedence
+                            </strong>,
+                            ": ",
+                            2,
+                          ],
+                        },
+                        "ref": null,
+                        "rendered": Array [
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "host",
+                            "props": Object {
+                              "children": "Precedence",
+                            },
+                            "ref": null,
+                            "rendered": "Precedence",
+                            "type": "strong",
+                          },
+                          ": ",
+                          2,
+                        ],
+                        "type": "div",
+                      },
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
                     ],
+                    "type": "div",
                   },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Created at",
-                      },
-                      "ref": null,
-                      "rendered": "Created at",
-                      "type": "strong",
-                    },
-                    ": ",
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "class",
-                      "props": Object {
-                        "time": "2018-03-14T10:17:52Z",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "div",
+                  "type": [Function],
                 },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Resource Version
-                      </strong>,
-                      ": ",
-                      "1234",
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Resource Version",
-                      },
-                      "ref": null,
-                      "rendered": "Resource Version",
-                      "type": "strong",
-                    },
-                    ": ",
-                    "1234",
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Precedence
-                      </strong>,
-                      ": ",
-                      1,
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Precedence",
-                      },
-                      "ref": null,
-                      "rendered": "Precedence",
-                      "type": "strong",
-                    },
-                    ": ",
-                    1,
-                  ],
-                  "type": "div",
-                },
-                null,
                 Object {
                   "instance": null,
                   "key": undefined,
                   "nodeType": "class",
                   "props": Object {
-                    "route": Array [
-                      Object {
-                        "labels": Map {
-                          "version" => "v1",
-                        },
-                      },
-                    ],
+                    "bsClass": "col",
+                    "children": <RouteRuleRoute
+                      name="reviews-test-v2"
+                      route={
+                        Array [
+                          Object {
+                            "labels": Map {
+                              "version" => "v2",
+                            },
+                          },
+                        ]
+                      }
+                      validations={Map {}}
+                    />,
+                    "componentClass": "div",
+                    "lg": 5,
+                    "md": 5,
+                    "sm": 12,
+                    "xs": 12,
                   },
                   "ref": null,
-                  "rendered": null,
-                  "type": [Function],
-                },
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {},
-                  "ref": null,
-                  "rendered": null,
-                  "type": "hr",
-                },
-              ],
-              "type": "div",
-            },
-            Object {
-              "instance": null,
-              "key": "rule1",
-              "nodeType": "host",
-              "props": Object {
-                "children": Array [
-                  <div>
-                    <strong>
-                      Name
-                    </strong>
-                    : 
-                    <Link
-                      replace={false}
-                      to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
-                    >
-                      reviews-test-v2
-                    </Link>
-                  </div>,
-                  <div>
-                    <strong>
-                      Created at
-                    </strong>
-                    : 
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />
-                  </div>,
-                  <div>
-                    <strong>
-                      Resource Version
-                    </strong>
-                    : 
-                    1234
-                  </div>,
-                  <div>
-                    <strong>
-                      Precedence
-                    </strong>
-                    : 
-                    2
-                  </div>,
-                  null,
-                  <RouteRuleRoute
-                    route={
-                      Array [
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "name": "reviews-test-v2",
+                      "route": Array [
                         Object {
                           "labels": Map {
                             "version" => "v2",
                           },
                         },
-                      ]
-                    }
-                  />,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  <hr />,
-                ],
-                "className": "card-pf-body",
-              },
-              "ref": null,
-              "rendered": Array [
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Name
-                      </strong>,
-                      ": ",
-                      <Link
-                        replace={false}
-                        to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
-                      >
-                        reviews-test-v2
-                      </Link>,
-                    ],
+                      ],
+                      "validations": Map {},
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
                   },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Name",
-                      },
-                      "ref": null,
-                      "rendered": "Name",
-                      "type": "strong",
-                    },
-                    ": ",
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "class",
-                      "props": Object {
-                        "children": "reviews-test-v2",
-                        "replace": false,
-                        "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2",
-                      },
-                      "ref": null,
-                      "rendered": "reviews-test-v2",
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Created at
-                      </strong>,
-                      ": ",
-                      <LocalTime
-                        time="2018-03-14T10:17:52Z"
-                      />,
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Created at",
-                      },
-                      "ref": null,
-                      "rendered": "Created at",
-                      "type": "strong",
-                    },
-                    ": ",
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "class",
-                      "props": Object {
-                        "time": "2018-03-14T10:17:52Z",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Resource Version
-                      </strong>,
-                      ": ",
-                      "1234",
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Resource Version",
-                      },
-                      "ref": null,
-                      "rendered": "Resource Version",
-                      "type": "strong",
-                    },
-                    ": ",
-                    "1234",
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Precedence
-                      </strong>,
-                      ": ",
-                      2,
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Precedence",
-                      },
-                      "ref": null,
-                      "rendered": "Precedence",
-                      "type": "strong",
-                    },
-                    ": ",
-                    2,
-                  ],
-                  "type": "div",
-                },
-                null,
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "class",
-                  "props": Object {
-                    "route": Array [
-                      Object {
-                        "labels": Map {
-                          "version" => "v2",
-                        },
-                      },
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": null,
                   "type": [Function],
                 },
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {},
-                  "ref": null,
-                  "rendered": null,
-                  "type": "hr",
-                },
               ],
-              "type": "div",
+              "type": [Function],
             },
           ],
           "type": [Function],

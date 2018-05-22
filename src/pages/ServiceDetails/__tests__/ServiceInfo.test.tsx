@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import ServiceInfo from '../ServiceInfo';
-import { hasIstioSidecar, ServiceDetailsInfo } from '../../../types/ServiceInfo';
+import { hasIstioSidecar, ObjectValidation, ServiceDetailsInfo } from '../../../types/ServiceInfo';
 
 jest.mock('../../../services/Api');
 
@@ -29,8 +29,15 @@ describe('#ServiceInfo render correctly with data', () => {
         ip: data.ip,
         health: data.health
       };
+      let validations: Map<string, ObjectValidation> = new Map<string, ObjectValidation>();
+
       const wrapper = shallow(
-        <ServiceInfo namespace="istio-system" service="reviews" serviceDetails={serviceDetailsInfo} />
+        <ServiceInfo
+          namespace="istio-system"
+          service="reviews"
+          serviceDetails={serviceDetailsInfo}
+          validations={validations}
+        />
       );
       expect(wrapper).toBeDefined();
       expect(wrapper).toMatchSnapshot();
