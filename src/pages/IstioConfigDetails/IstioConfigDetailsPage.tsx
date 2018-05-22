@@ -51,7 +51,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     API.getIstioConfigDetail(props.namespace, props.objectType, props.object)
       .then(response => {
         let istioObjectDetails: IstioConfigDetails = response['data'];
-        console.log('DELETEME istioObjectDetails: ' + JSON.stringify(istioObjectDetails));
         this.setState({
           istioObjectDetails: istioObjectDetails
         });

@@ -6,96 +6,28 @@ import {
   toIstioItems
 } from '../../../types/IstioConfigListComponent';
 
-const unfiltered: IstioConfigList = {
-  namespace: {
-    name: 'test'
-  },
-  route_rules: [
-    {
-      name: 'white1',
-      created_at: 't1',
-      resource_version: 'r1'
+const mockIstioConfigList = (names: string[]): IstioConfigList => {
+  let testData: IstioConfigList = {
+    namespace: {
+      name: 'test'
     },
-    {
-      name: 'red1',
-      created_at: 't1',
-      resource_version: 'r1'
-    },
-    {
-      name: 'blue1',
-      created_at: 't1',
-      resource_version: 'r1'
-    }
-  ],
-  destination_policies: [
-    {
-      name: 'white2',
-      created_at: 't2',
-      resource_version: 'r2'
-    },
-    {
-      name: 'red2',
-      created_at: 't2',
-      resource_version: 'r2'
-    },
-    {
-      name: 'blue2',
-      created_at: 't2',
-      resource_version: 'r2'
-    }
-  ],
-  virtual_services: [
-    {
-      name: 'white3',
-      created_at: 't3',
-      resource_version: 'r3'
-    },
-    {
-      name: 'red3',
-      created_at: 't3',
-      resource_version: 'r3'
-    },
-    {
-      name: 'blue3',
-      created_at: 't3',
-      resource_version: 'r3'
-    }
-  ],
-  destination_rules: [
-    {
-      name: 'white4',
-      created_at: 't4',
-      resource_version: 'r4'
-    },
-    {
-      name: 'red4',
-      created_at: 't4',
-      resource_version: 'r4'
-    },
-    {
-      name: 'blue4',
-      created_at: 't4',
-      resource_version: 'r4'
-    }
-  ],
-  rules: [
-    {
-      name: 'white5',
-      match: '',
-      actions: []
-    },
-    {
-      name: 'red5',
-      match: '',
-      actions: []
-    },
-    {
-      name: 'blue5',
-      match: '',
-      actions: []
-    }
-  ]
+    route_rules: [],
+    destination_policies: [],
+    virtual_services: [],
+    destination_rules: [],
+    rules: []
+  };
+  names.forEach(name => {
+    testData.route_rules.push({ name: name + '1', created_at: 't1', resource_version: 'r1' });
+    testData.destination_policies.push({ name: name + '2', created_at: 't2', resource_version: 'r2' });
+    testData.virtual_services.push({ name: name + '3', created_at: 't3', resource_version: 'r3' });
+    testData.destination_rules.push({ name: name + '4', created_at: 't4', resource_version: 'r4' });
+    testData.rules.push({ name: name + '5', match: '', actions: [] });
+  });
+  return testData;
 };
+
+const unfiltered = mockIstioConfigList(['white', 'red', 'blue']);
 
 describe('IstioConfigListComponent#filterByName', () => {
   it('should filter IstioConfigList by name', () => {
