@@ -12,6 +12,11 @@ type K8SClientMock struct {
 	mock.Mock
 }
 
+func (o *K8SClientMock) GetNamespaces() (*v1.NamespaceList, error) {
+	args := o.Called()
+	return args.Get(0).(*v1.NamespaceList), args.Error(1)
+}
+
 func (o *K8SClientMock) GetService(namespace string, serviceName string) (*v1.Service, error) {
 	args := o.Called(namespace, serviceName)
 	return args.Get(0).(*v1.Service), args.Error(1)

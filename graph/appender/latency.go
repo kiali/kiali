@@ -28,6 +28,7 @@ type LatencyAppender struct {
 	QueryTime int64 // unix time in seconds
 }
 
+// AppendGraph implements Appender
 func (a LatencyAppender) AppendGraph(trees *[]tree.ServiceNode, namespace string) {
 	client, err := prometheus.NewClient()
 	checkError(err)

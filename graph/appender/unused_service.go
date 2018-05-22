@@ -14,6 +14,7 @@ import (
 type UnusedServiceAppender struct {
 }
 
+// AppendGraph implements Appender
 func (a UnusedServiceAppender) AppendGraph(trees *[]tree.ServiceNode, namespaceName string) {
 	istioClient, err := kubernetes.NewClient()
 	checkError(err)

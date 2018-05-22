@@ -11,22 +11,41 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/kiali/kiali/services/business"
 )
 
 // Setup mock
 
 func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, error) {
 	config.Set(config.NewConfig())
+	k8s := new(kubetest.K8SClientMock)
+	business.SetWithBackends(k8s, nil)
+
+	k8s.On("GetNamespaces").Return(
+		&v1.NamespaceList{
+			Items: []v1.Namespace{
+				v1.Namespace{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "istio-system",
+					},
+				},
+			},
+		}, nil)
+
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
 	if err != nil {
 		return nil, nil, err
 	}
 	client.Inject(api)
+
 	return client, api, nil
 }
 
@@ -336,6 +355,84 @@ func TestServiceGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_service_graph.expected")
+
+	if !assert.Equal(t, expected, actual) {
+		fmt.Printf("\nActual:\n%v", string(actual))
+	}
+	assert.Equal(t, 200, resp.StatusCode)
+}
+
+func TestOverviewGraph(t *testing.T) {
+	q0 := "round(sum(rate(istio_request_count{source_service=~\"unknown\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_service,source_version,destination_service,destination_version,response_code),0.001)"
+	q0m0 := model.Metric{
+		"source_service":      "unknown",
+		"source_version":      "v1",
+		"destination_service": "productpage.bookinfo.svc.cluster.local",
+		"destination_version": "v1",
+		"response_code":       "200"}
+	q0m1 := model.Metric{
+		"source_service":      "unknown",
+		"source_version":      "v1",
+		"destination_service": "productpage.bookinfo.svc.cluster.local",
+		"destination_version": "v2",
+		"response_code":       "200"}
+	v0 := model.Vector{
+		&model.Sample{
+			Metric: q0m0,
+			Value:  100},
+		&model.Sample{
+			Metric: q0m1,
+			Value:  100}}
+
+	q1 := "round(sum(rate(istio_request_count{source_service=~\"istio-ingress\\\\.istio-system\\\\..+\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_service,source_version,destination_service,destination_version,response_code),0.001)"
+	q1m0 := model.Metric{
+		"source_service":      "istio-ingress.istio-system.svc.cluster.local",
+		"source_version":      "v1",
+		"destination_service": "productpage.bookinfo.svc.cluster.local",
+		"destination_version": "v1",
+		"response_code":       "200"}
+	q1m1 := model.Metric{
+		"source_service":      "istio-ingress.istio-system.svc.cluster.local",
+		"source_version":      "v1",
+		"destination_service": "productpage.bookinfo.svc.cluster.local",
+		"destination_version": "v2",
+		"response_code":       "200"}
+	v1 := model.Vector{
+		&model.Sample{
+			Metric: q1m0,
+			Value:  500},
+		&model.Sample{
+			Metric: q1m1,
+			Value:  500}}
+
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mockQuery(api, q0, &v0)
+	mockQuery(api, q1, &v1)
+
+	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
+
+	mr := mux.NewRouter()
+	mr.HandleFunc("/api/overview/graph", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			fut(w, r, client)
+		}))
+
+	ts := httptest.NewServer(mr)
+	defer ts.Close()
+
+	fut = graphOverview
+	url := ts.URL + "/api/overview/graph?appenders&queryTime=1523364075"
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, _ := ioutil.ReadAll(resp.Body)
+	expected, _ := ioutil.ReadFile("testdata/test_overview_graph.expected")
+	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
 		fmt.Printf("\nActual:\n%v", string(actual))

@@ -108,6 +108,7 @@ func NewRoutes() (r *Routes) {
 			// queryTime:      Unix timestamp in seconds is query range end time (default now)
 			// duration:       Duration indicating desired query period (default 10m)
 			// appenders:      comma-separated list of desired appenders (default all)
+			// namespaces:     comma-separated list of namespaces will override path param (path param 'all' for all namespaces)
 
 			"GraphNamespace",
 			"GET",
@@ -116,7 +117,6 @@ func NewRoutes() (r *Routes) {
 		},
 		{
 			// Supported query parameters:
-			// vendor:         cytoscape (default)
 			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
 			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
 			// queryTime:      Unix timestamp in seconds is query range end time (default now)
@@ -127,6 +127,17 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/graph",
 			handlers.GraphService,
+		},
+		{
+			// Supported query parameters:
+			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
+			// queryTime:      Unix timestamp in seconds is query range end time (default now)
+			// duration:       Duration indicating desired query period (default 10m)
+
+			"GraphOverview",
+			"GET",
+			"/api/overview/graph",
+			handlers.GraphOverview,
 		},
 		{
 			"GrafanaURL",
