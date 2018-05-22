@@ -10,7 +10,7 @@ const API = require('../../../services/Api');
 describe('#ServiceInfo render correctly with data', () => {
   it('should render serviceInfo with data', () => {
     return API.getServiceDetail('istio-system', 'reviews').then(response => {
-      let data = response;
+      let data = response['data'];
       let serviceDetailsInfo: ServiceDetailsInfo = {
         labels: data.labels,
         name: data.name,

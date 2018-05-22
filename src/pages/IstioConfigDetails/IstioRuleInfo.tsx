@@ -1,24 +1,17 @@
 import * as React from 'react';
-import RuleId from '../../types/RuleId';
 import { Col, Row } from 'patternfly-react';
-import * as API from '../../services/Api';
-import { RuleAction } from '../../types/IstioRuleInfo';
 import IstioRuleDetailsDescription from './IstioRuleDestailsDescription';
-import AceEditor, { AceOptions } from 'react-ace';
-import * as MessageCenter from '../../utils/MessageCenter';
+import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import './IstioRuleInfo.css';
+import { aceOptions, IstioRuleDetails, safeDumpOptions } from '../../types/IstioConfigDetails';
 
 const yaml = require('js-yaml');
 
-interface RuleInfoState {
-  name: string;
-  match: string;
-  actions: RuleAction[];
-}
-
-interface RuleDetailsId extends RuleId {
+interface IstioRuleInfoProps {
+  namespace: string;
+  rule: IstioRuleDetails;
   search?: string;
 }
 
@@ -27,49 +20,15 @@ interface ParsedSearch {
   name?: string;
 }
 
-const aceOptions: AceOptions = {
-  readOnly: true,
-  showPrintMargin: false,
-  autoScrollEditorIntoView: true
-};
-
-class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
-  constructor(props: RuleDetailsId) {
+class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
+  constructor(props: IstioRuleInfoProps) {
     super(props);
-    this.state = {
-      name: '',
-      match: '',
-      actions: []
-    };
-  }
-
-  componentDidMount() {
-    this.fetchIstioRuleDetails(this.props);
-  }
-
-  componentWillReceiveProps(nextProps: RuleId) {
-    this.fetchIstioRuleDetails(nextProps);
-  }
-
-  fetchIstioRuleDetails(props: RuleId) {
-    API.getIstioRuleDetail(props.namespace, props.rule)
-      .then(response => {
-        let data = response['data'];
-        this.setState({
-          name: data.name,
-          match: data.match,
-          actions: data.actions
-        });
-      })
-      .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch IstioRule details.', error));
-      });
   }
 
   // Handlers and Instances have a type attached to the name with '.'
   // i.e. handler=myhandler.kubernetes
   validateParams(parsed: ParsedSearch): boolean {
-    if (!parsed.type || !parsed.name || this.state.actions.length === 0) {
+    if (!parsed.type || !parsed.name || this.props.rule.actions.length === 0) {
       return false;
     }
     let validationType = ['handler', 'instance'];
@@ -86,19 +45,19 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
     let innerName = splitName[0];
     let innerType = splitName[1];
 
-    for (let i = 0; i < this.state.actions.length; i++) {
+    for (let i = 0; i < this.props.rule.actions.length; i++) {
       if (
         parsed.type === 'handler' &&
-        this.state.actions[i].handler.name === innerName &&
-        this.state.actions[i].handler.adapter === innerType
+        this.props.rule.actions[i].handler.name === innerName &&
+        this.props.rule.actions[i].handler.adapter === innerType
       ) {
         return true;
       }
       if (parsed.type === 'instance') {
-        for (let j = 0; j < this.state.actions[i].instances.length; j++) {
+        for (let j = 0; j < this.props.rule.actions[i].instances.length; j++) {
           if (
-            this.state.actions[i].instances[j].name === innerName &&
-            this.state.actions[i].instances[j].template === innerType
+            this.props.rule.actions[i].instances[j].name === innerName &&
+            this.props.rule.actions[i].instances[j].template === innerType
           ) {
             return true;
           }
@@ -124,8 +83,8 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
     if (this.validateParams(parsed)) {
       return parsed;
     }
-    if (this.state.actions.length > 0) {
-      let defaultAction = this.state.actions[0];
+    if (this.props.rule.actions.length > 0) {
+      let defaultAction = this.props.rule.actions[0];
       if (defaultAction.handler) {
         return {
           type: 'handler',
@@ -140,19 +99,19 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
     if (parsedSearch && parsedSearch.type && parsedSearch.name) {
       if (parsedSearch.type === 'handler') {
         let handler = parsedSearch.name.split('.');
-        for (let i = 0; i < this.state.actions.length; i++) {
-          let action = this.state.actions[i];
+        for (let i = 0; i < this.props.rule.actions.length; i++) {
+          let action = this.props.rule.actions[i];
           if (action.handler.name === handler[0] && action.handler.adapter === handler[1]) {
-            return yaml.safeDump(action.handler.spec);
+            return yaml.safeDump(action.handler.spec, safeDumpOptions);
           }
         }
       } else if (parsedSearch.type === 'instance') {
         let instance = parsedSearch.name.split('.');
-        for (let i = 0; i < this.state.actions.length; i++) {
-          for (let j = 0; j < this.state.actions[i].instances.length; j++) {
-            let actionInstance = this.state.actions[i].instances[j];
+        for (let i = 0; i < this.props.rule.actions.length; i++) {
+          for (let j = 0; j < this.props.rule.actions[i].instances.length; j++) {
+            let actionInstance = this.props.rule.actions[i].instances[j];
             if (actionInstance.name === instance[0] && actionInstance.template === instance[1]) {
-              return yaml.safeDump(actionInstance.spec);
+              return yaml.safeDump(actionInstance.spec, safeDumpOptions);
             }
           }
         }
@@ -167,9 +126,9 @@ class IstioRuleInfo extends React.Component<RuleDetailsId, RuleInfoState> {
       <div>
         <IstioRuleDetailsDescription
           namespace={this.props.namespace}
-          name={this.state.name}
-          match={this.state.match}
-          actions={this.state.actions}
+          name={this.props.rule.name}
+          match={this.props.rule.match}
+          actions={this.props.rule.actions}
         />
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">

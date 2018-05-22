@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 
-import Navigation, { servicesTitle, istioRulesTitle } from '../Navigation';
+import Navigation, { servicesTitle, istioConfigTitle } from '../Navigation';
 import { VerticalNav } from 'patternfly-react';
 
 const _tester = (path: string, expectedMenuPath: string) => {
@@ -13,6 +13,6 @@ const _tester = (path: string, expectedMenuPath: string) => {
 describe('Navigation test', () => {
   it('should select menu item according to browser url', () => {
     _tester('/services', servicesTitle);
-    _tester('/rules', istioRulesTitle);
+    _tester('/istio', istioConfigTitle);
   });
 });

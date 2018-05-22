@@ -202,10 +202,10 @@ export interface DestinationPolicy {
   name: string;
   created_at: string;
   resource_version: string;
-  destination: IstioService;
-  source: IstioService;
-  loadbalancing: LoadBalancing;
-  circuitBreaker: CircuitBreaker;
+  destination?: IstioService;
+  source?: IstioService;
+  loadbalancing?: LoadBalancing;
+  circuitBreaker?: CircuitBreaker;
 }
 
 // Virtual Service
@@ -254,10 +254,10 @@ export interface VirtualService {
   name: string;
   created_at: string;
   resource_version: string;
-  hosts: string[];
-  gateways: string[];
-  http: HTTPRoute[];
-  tcp: TCPRoute[];
+  hosts?: string[];
+  gateways?: string[];
+  http?: HTTPRoute[];
+  tcp?: TCPRoute[];
 }
 
 // Destination Rule
@@ -326,8 +326,8 @@ export interface DestinationRule {
   name: string;
   created_at: string;
   resource_version: string;
-  traffic_policy: TrafficPolicy;
-  subsets: Subset[];
+  traffic_policy?: TrafficPolicy;
+  subsets?: Subset[];
 }
 
 // Istio Sidecar

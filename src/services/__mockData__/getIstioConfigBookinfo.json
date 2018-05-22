@@ -1,0 +1,320 @@
+{
+  "namespace": {
+    "name": "bookinfo"
+  },
+  "route_rules": [
+    {
+      "name": "details-default",
+      "created_at": "2018-05-21T09:21:12+02:00",
+      "resource_version": "197438",
+      "destination": {
+        "name": "details"
+      },
+      "precedence": 1,
+      "match": null,
+      "route": [
+        {
+          "labels": {
+            "version": "v1"
+          }
+        }
+      ],
+      "redirect": null,
+      "rewrite": null,
+      "websocketUpgrade": null,
+      "httpReqTimeout": null,
+      "httpReqRetries": null,
+      "httpFault": null,
+      "l4Fault": null,
+      "mirror": null,
+      "corsPolicy": null,
+      "appendHeaders": null,
+      "routeWarning": ""
+    },
+    {
+      "name": "productpage-default",
+      "created_at": "2018-05-21T09:21:12+02:00",
+      "resource_version": "197435",
+      "destination": {
+        "name": "productpage"
+      },
+      "precedence": 1,
+      "match": null,
+      "route": [
+        {
+          "labels": {
+            "version": "v1"
+          }
+        }
+      ],
+      "redirect": null,
+      "rewrite": null,
+      "websocketUpgrade": null,
+      "httpReqTimeout": null,
+      "httpReqRetries": null,
+      "httpFault": null,
+      "l4Fault": null,
+      "mirror": null,
+      "corsPolicy": null,
+      "appendHeaders": null,
+      "routeWarning": ""
+    },
+    {
+      "name": "ratings-default",
+      "created_at": "2018-05-21T09:21:12+02:00",
+      "resource_version": "197437",
+      "destination": {
+        "name": "ratings"
+      },
+      "precedence": 1,
+      "match": null,
+      "route": [
+        {
+          "labels": {
+            "version": "v1"
+          }
+        }
+      ],
+      "redirect": null,
+      "rewrite": null,
+      "websocketUpgrade": null,
+      "httpReqTimeout": null,
+      "httpReqRetries": null,
+      "httpFault": null,
+      "l4Fault": null,
+      "mirror": null,
+      "corsPolicy": null,
+      "appendHeaders": null,
+      "routeWarning": ""
+    },
+    {
+      "name": "reviews-default",
+      "created_at": "2018-05-21T09:21:12+02:00",
+      "resource_version": "197436",
+      "destination": {
+        "name": "reviews"
+      },
+      "precedence": 1,
+      "match": null,
+      "route": [
+        {
+          "labels": {
+            "version": "v1"
+          }
+        }
+      ],
+      "redirect": null,
+      "rewrite": null,
+      "websocketUpgrade": null,
+      "httpReqTimeout": null,
+      "httpReqRetries": null,
+      "httpFault": null,
+      "l4Fault": null,
+      "mirror": null,
+      "corsPolicy": null,
+      "appendHeaders": null,
+      "routeWarning": ""
+    }
+  ],
+  "destination_policies": [
+    {
+      "name": "reviews-cb",
+      "created_at": "2018-05-21T09:21:30+02:00",
+      "resource_version": "197460",
+      "source": null,
+      "destination": {
+        "labels": {
+          "version": "v2"
+        },
+        "name": "reviews"
+      },
+      "loadbalancing": null,
+      "circuitBreaker": {
+        "simpleCb": {
+          "maxConnections": 100
+        }
+      }
+    }
+  ],
+  "virtual_services": [
+    {
+      "name": "details",
+      "created_at": "2018-05-21T09:21:42+02:00",
+      "resource_version": "197479",
+      "hosts": ["details"],
+      "gateways": null,
+      "http": [
+        {
+          "route": [
+            {
+              "destination": {
+                "name": "details",
+                "subset": "v1"
+              }
+            }
+          ]
+        }
+      ],
+      "tcp": null
+    },
+    {
+      "name": "productpage",
+      "created_at": "2018-05-21T09:21:42+02:00",
+      "resource_version": "197476",
+      "hosts": ["productpage"],
+      "gateways": ["bookinfo", "mesh"],
+      "http": [
+        {
+          "route": [
+            {
+              "destination": {
+                "name": "productpage",
+                "subset": "v1"
+              }
+            }
+          ]
+        }
+      ],
+      "tcp": null
+    },
+    {
+      "name": "ratings",
+      "created_at": "2018-05-21T09:21:42+02:00",
+      "resource_version": "197478",
+      "hosts": ["ratings"],
+      "gateways": null,
+      "http": [
+        {
+          "route": [
+            {
+              "destination": {
+                "name": "ratings",
+                "subset": "v1"
+              }
+            }
+          ]
+        }
+      ],
+      "tcp": null
+    },
+    {
+      "name": "reviews",
+      "created_at": "2018-05-21T09:21:42+02:00",
+      "resource_version": "197477",
+      "hosts": ["reviews"],
+      "gateways": null,
+      "http": [
+        {
+          "route": [
+            {
+              "destination": {
+                "name": "reviews",
+                "subset": "v1"
+              }
+            }
+          ]
+        }
+      ],
+      "tcp": null
+    }
+  ],
+  "destination_rules": [
+    {
+      "name": "details",
+      "created_at": "2018-05-21T09:21:42+02:00",
+      "resource_version": "197483",
+      "destination_name": "details",
+      "traffic_policy": null,
+      "subsets": [
+        {
+          "labels": {
+            "version": "v1"
+          },
+          "name": "v1"
+        },
+        {
+          "labels": {
+            "version": "v2"
+          },
+          "name": "v2"
+        }
+      ]
+    },
+    {
+      "name": "productpage",
+      "created_at": "2018-05-21T09:21:42+02:00",
+      "resource_version": "197480",
+      "destination_name": "productpage",
+      "traffic_policy": null,
+      "subsets": [
+        {
+          "labels": {
+            "version": "v1"
+          },
+          "name": "v1"
+        }
+      ]
+    },
+    {
+      "name": "ratings",
+      "created_at": "2018-05-21T09:21:42+02:00",
+      "resource_version": "197482",
+      "destination_name": "ratings",
+      "traffic_policy": null,
+      "subsets": [
+        {
+          "labels": {
+            "version": "v1"
+          },
+          "name": "v1"
+        },
+        {
+          "labels": {
+            "version": "v2"
+          },
+          "name": "v2"
+        },
+        {
+          "labels": {
+            "version": "v2-mysql"
+          },
+          "name": "v2-mysql"
+        },
+        {
+          "labels": {
+            "version": "v2-mysql-vm"
+          },
+          "name": "v2-mysql-vm"
+        }
+      ]
+    },
+    {
+      "name": "reviews",
+      "created_at": "2018-05-21T09:21:42+02:00",
+      "resource_version": "197481",
+      "destination_name": "reviews",
+      "traffic_policy": null,
+      "subsets": [
+        {
+          "labels": {
+            "version": "v1"
+          },
+          "name": "v1"
+        },
+        {
+          "labels": {
+            "version": "v2"
+          },
+          "name": "v2"
+        },
+        {
+          "labels": {
+            "version": "v3"
+          },
+          "name": "v3"
+        }
+      ]
+    }
+  ],
+  "rules": []
+}

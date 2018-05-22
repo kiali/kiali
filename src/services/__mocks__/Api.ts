@@ -1,58 +1,36 @@
 import * as GraphData from '../__mockData__/getGraphElements';
 import { AxiosError } from 'axios';
+import ServiceListOptions from '../../types/ServiceListOptions';
 
 const fs = require('fs');
 
-export const getNamespaces = () => {
+export const mockPromiseFromFile = (path: string) => {
   return new Promise((resolve, reject) => {
-    fs.readFile(`./src/services/__mockData__/getNamespaces.json`, 'utf8', (err, data) => {
+    fs.readFile(path, 'utf8', (err, data) => {
       if (err) {
         reject(err);
       } else {
         // Parse the data as JSON and put in the key entity (just like the request library does)
-        resolve(JSON.parse(data));
+        resolve({ data: JSON.parse(data) });
       }
     });
   });
 };
 
-export const getServices = (namespace: String) => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(`./src/services/__mockData__/getServices.json`, 'utf8', (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        // Parse the data as JSON and put in the key entity (just like the request library does)
-        resolve(JSON.parse(data));
-      }
-    });
-  });
+export const getNamespaces = () => {
+  return mockPromiseFromFile(`./src/services/__mockData__/getNamespaces.json`);
+};
+
+export const getServices = (namespace: String, params?: ServiceListOptions) => {
+  return mockPromiseFromFile(`./src/services/__mockData__/getServices.json`);
 };
 
 export const getGrafanaInfo = () => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(`./src/services/__mockData__/getGrafanaInfo.json`, 'utf8', (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        // Parse the data as JSON and put in the key entity (just like the request library does)
-        resolve(JSON.parse(data));
-      }
-    });
-  });
+  return mockPromiseFromFile(`./src/services/__mockData__/getGrafanaInfo.json`);
 };
 
 export const getJaegerInfo = () => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(`./src/services/__mockData__/getJaegerInfo.json`, 'utf8', (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        // Parse the data as JSON and put in the key entity (just like the request library does)
-        resolve(JSON.parse(data));
-      }
-    });
-  });
+  return mockPromiseFromFile(`./src/services/__mockData__/getJaegerInfo.json`);
 };
 
 export const getGraphElements = (namespace: string, params: any) => {
@@ -64,55 +42,34 @@ export const getGraphElements = (namespace: string, params: any) => {
 };
 
 export const getServiceDetail = (namespace: String, service: String) => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(`./src/services/__mockData__/getServiceDetail.json`, 'utf8', (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        // Parse the data as JSON and put in the key entity (just like the request library does)
-        resolve(JSON.parse(data));
-      }
-    });
+  return mockPromiseFromFile(`./src/services/__mockData__/getServiceDetail.json`);
+};
+
+export const getIstioConfig = (namespace: String) => {
+  if (namespace === 'bookinfo') {
+    return mockPromiseFromFile(`./src/services/__mockData__/getIstioConfigBookinfo.json`);
+  }
+  let emptyIstioConfig = {
+    namespace: {
+      name: namespace
+    },
+    route_rules: [],
+    destination_policies: [],
+    virtual_services: [],
+    destination_rules: [],
+    rules: []
+  };
+  return new Promise(resolve => {
+    resolve({ data: emptyIstioConfig });
   });
 };
 
-export const getIstioRules = (namespace: String) => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(`./src/services/__mockData__/getIstioRules.json`, 'utf8', (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        // Parse the data as JSON and put in the key entity (just like the request library does)
-        resolve(JSON.parse(data));
-      }
-    });
-  });
-};
-
-export const getIstioRuleDetail = (namespace: String, rule: String) => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(`./src/services/__mockData__/getIstioRuleDetail.json`, 'utf8', (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        // Parse the data as JSON and put in the key entity (just like the request library does)
-        resolve(JSON.parse(data));
-      }
-    });
-  });
+export const getIstioConfigDetail = (namespace: String, objectType: String, object: String) => {
+  return mockPromiseFromFile(`./src/services/__mockData__/getIstioConfigDetail.json`);
 };
 
 export const getServiceHealth = () => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(`./src/services/__mockData__/getServiceHealth.json`, 'utf8', (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        // Parse the data as JSON and put in the key entity (just like the request library does)
-        resolve(JSON.parse(data));
-      }
-    });
-  });
+  return mockPromiseFromFile(`./src/services/__mockData__/getServiceHealth.json`);
 };
 
 export const getNamespaceMetrics = (namespace: String, params: any) => {
