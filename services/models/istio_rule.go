@@ -40,34 +40,6 @@ type IstioInstance struct {
 	Spec     interface{} `json:"spec"`
 }
 
-func GetIstioRulesByNamespace(namespaceName string) ([]IstioRule, error) {
-	istioClient, err := kubernetes.NewClient()
-	if err != nil {
-		return nil, err
-	}
-
-	rules, err := istioClient.GetIstioRules(namespaceName)
-	if err != nil {
-		return nil, err
-	}
-
-	return CastIstioRulesCollection(rules), nil
-}
-
-func GetIstioRuleDetails(namespaceName string, istiorule string) (*IstioRuleDetails, error) {
-	istioClient, err := kubernetes.NewClient()
-	if err != nil {
-		return nil, err
-	}
-
-	istioRuleDetails, err := istioClient.GetIstioRuleDetails(namespaceName, istiorule)
-	if err != nil {
-		return nil, err
-	}
-
-	return CastIstioRuleDetails(istioRuleDetails), nil
-}
-
 func CastIstioRulesCollection(rules *kubernetes.IstioRules) IstioRules {
 	istioRules := make([]IstioRule, len(rules.Rules))
 	for i, rule := range rules.Rules {

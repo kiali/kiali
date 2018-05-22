@@ -48,24 +48,6 @@ func NewRoutes() (r *Routes) {
 			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
 			handlers.IstioConfigDetails,
 		},
-		/*
-			TODO the /rules endpoint is now deprecated in favor of /istio
-		*/
-		{
-			"IstioRuleList",
-			"GET",
-			"/api/namespaces/{namespace}/rules",
-			handlers.IstioRuleList,
-		},
-		/*
-			TODO the /rules/{rule} is now deprecated in favor of /istio/{object_type}/{object}
-		*/
-		{
-			"IstioRuleDetails",
-			"GET",
-			"/api/namespaces/{namespace}/rules/{rule}",
-			handlers.IstioRuleDetails,
-		},
 		{
 			"ServiceList",
 			"GET",
