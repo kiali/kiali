@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -32,6 +30,7 @@ type Service struct {
 	VirtualServices     VirtualServices     `json:"virtual_services"`
 	DestinationRules    DestinationRules    `json:"destination_rules"`
 	Dependencies        map[string][]string `json:"dependencies"`
+	Pods                Pods                `json:"pods"`
 	Deployments         Deployments         `json:"deployments"`
 	Health              Health              `json:"health"`
 }
@@ -47,12 +46,13 @@ func (s *Service) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails
 		s.Labels = serviceDetails.Service.Labels
 		s.Type = string(serviceDetails.Service.Spec.Type)
 		s.Ip = serviceDetails.Service.Spec.ClusterIP
-		s.CreatedAt = serviceDetails.Service.CreationTimestamp.Time.Format(time.RFC3339)
+		s.CreatedAt = formatTime(serviceDetails.Service.CreationTimestamp.Time)
 		s.ResourceVersion = serviceDetails.Service.ResourceVersion
 		(&s.Ports).Parse(serviceDetails.Service.Spec.Ports)
 	}
 
 	(&s.Endpoints).Parse(serviceDetails.Endpoints)
+	(&s.Pods).Parse(serviceDetails.Pods)
 	(&s.Deployments).Parse(serviceDetails.Deployments)
 	(&s.Deployments).AddAutoscalers(serviceDetails.Autoscalers)
 }
