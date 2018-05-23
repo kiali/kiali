@@ -43,6 +43,9 @@ func TestServiceDetailParsing(t *testing.T) {
 				Port{Name: "http", Protocol: "TCP", Port: 3000},
 			}}})
 
+	assert.Len(service.Pods, 2)
+	assert.Equal(service.Pods[0].Name, "reviews-v1-1234")
+	assert.Equal(service.Pods[1].Name, "reviews-v2-1234")
 	assert.Equal(*service.Deployments[0], Deployment{
 		Name:                "reviews-v1",
 		Labels:              map[string]string{"apps": "reviews", "version": "v1"},
@@ -321,6 +324,20 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					{Name: "http", Protocol: "TCP", Port: 3000},
 				}}}}
 
+	pods := &v1.PodList{
+		Items: []v1.Pod{
+			v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:              "reviews-v1-1234",
+					CreationTimestamp: meta_v1.NewTime(t1),
+					Labels:            map[string]string{"apps": "reviews", "version": "v1"}}},
+			v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:              "reviews-v2-1234",
+					CreationTimestamp: meta_v1.NewTime(t2),
+					Labels:            map[string]string{"apps": "reviews", "version": "v2"}}},
+		}}
+
 	deployments := &v1beta1.DeploymentList{
 		Items: []v1beta1.Deployment{
 			v1beta1.Deployment{
@@ -379,7 +396,13 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					DesiredReplicas:                 2,
 					CurrentCPUUtilizationPercentage: &[]int32{30}[0]}}}}
 
-	return &kubernetes.ServiceDetails{service, endpoints, deployments, autoscalers, nil}
+	return &kubernetes.ServiceDetails{
+		Service:     service,
+		Endpoints:   endpoints,
+		Pods:        pods,
+		Deployments: deployments,
+		Autoscalers: autoscalers,
+	}
 }
 
 func fakeIstioDetails() *kubernetes.IstioDetails {

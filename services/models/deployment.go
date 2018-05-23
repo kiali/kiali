@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/autoscaling/v1"
 )
@@ -36,7 +34,7 @@ func (deployment *Deployment) Parse(d *v1beta1.Deployment) {
 	deployment.Name = d.Name
 	deployment.TemplateAnnotations = d.Spec.Template.Annotations
 	deployment.Labels = d.Labels
-	deployment.CreatedAt = d.CreationTimestamp.Time.Format(time.RFC3339)
+	deployment.CreatedAt = formatTime(d.CreationTimestamp.Time)
 	deployment.ResourceVersion = d.ResourceVersion
 	deployment.Replicas = d.Status.Replicas
 	deployment.AvailableReplicas = d.Status.AvailableReplicas

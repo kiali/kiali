@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -38,7 +36,7 @@ func (rules *RouteRules) Parse(routeRules []kubernetes.IstioObject) {
 
 func (rule *RouteRule) Parse(routeRule kubernetes.IstioObject) {
 	rule.Name = routeRule.GetObjectMeta().Name
-	rule.CreatedAt = routeRule.GetObjectMeta().CreationTimestamp.Time.Format(time.RFC3339)
+	rule.CreatedAt = formatTime(routeRule.GetObjectMeta().CreationTimestamp.Time)
 	rule.ResourceVersion = routeRule.GetObjectMeta().ResourceVersion
 	rule.Destination = routeRule.GetSpec()["destination"]
 	rule.Precedence = routeRule.GetSpec()["precedence"]

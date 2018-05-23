@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -27,7 +25,7 @@ func (vServices *VirtualServices) Parse(virtualServices []kubernetes.IstioObject
 
 func (vService *VirtualService) Parse(virtualService kubernetes.IstioObject) {
 	vService.Name = virtualService.GetObjectMeta().Name
-	vService.CreatedAt = virtualService.GetObjectMeta().CreationTimestamp.Time.Format(time.RFC3339)
+	vService.CreatedAt = formatTime(virtualService.GetObjectMeta().CreationTimestamp.Time)
 	vService.ResourceVersion = virtualService.GetObjectMeta().ResourceVersion
 	vService.Hosts = virtualService.GetSpec()["hosts"]
 	vService.Gateways = virtualService.GetSpec()["gateways"]

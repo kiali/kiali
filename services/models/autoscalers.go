@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"k8s.io/api/autoscaling/v1"
 )
 
@@ -25,7 +23,7 @@ type Autoscaler struct {
 func (autoscaler *Autoscaler) Parse(d *v1.HorizontalPodAutoscaler) {
 	autoscaler.Name = d.Name
 	autoscaler.Labels = d.Labels
-	autoscaler.CreatedAt = d.CreationTimestamp.Time.Format(time.RFC3339)
+	autoscaler.CreatedAt = formatTime(d.CreationTimestamp.Time)
 
 	// Spec
 	autoscaler.MaxReplicas = d.Spec.MaxReplicas
@@ -47,7 +45,7 @@ func (autoscaler *Autoscaler) Parse(d *v1.HorizontalPodAutoscaler) {
 	}
 
 	if d.Status.LastScaleTime != nil {
-		autoscaler.LastScaleTime = (*d.Status.LastScaleTime).Time.Format(time.RFC3339)
+		autoscaler.LastScaleTime = formatTime((*d.Status.LastScaleTime).Time)
 	}
 
 	if d.Status.CurrentCPUUtilizationPercentage != nil {

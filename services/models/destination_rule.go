@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -26,7 +24,7 @@ func (dRules *DestinationRules) Parse(destinationRules []kubernetes.IstioObject)
 
 func (dRule *DestinationRule) Parse(destinationRule kubernetes.IstioObject) {
 	dRule.Name = destinationRule.GetObjectMeta().Name
-	dRule.CreatedAt = destinationRule.GetObjectMeta().CreationTimestamp.Time.Format(time.RFC3339)
+	dRule.CreatedAt = formatTime(destinationRule.GetObjectMeta().CreationTimestamp.Time)
 	dRule.ResourceVersion = destinationRule.GetObjectMeta().ResourceVersion
 	dRule.DestinationName = destinationRule.GetSpec()["name"]
 	dRule.TrafficPolicy = destinationRule.GetSpec()["trafficPolicy"]
