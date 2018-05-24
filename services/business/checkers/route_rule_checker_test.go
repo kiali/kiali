@@ -10,7 +10,7 @@ import (
 	"github.com/kiali/kiali/services/models"
 )
 
-func prepareTest(istioObject kubernetes.IstioObject) *models.IstioValidations {
+func prepareTest(istioObject kubernetes.IstioObject) *models.IstioTypeValidations {
 	istioObjects := []kubernetes.IstioObject{istioObject}
 
 	routeRuleChecker := RouteRuleChecker{istioObjects}
@@ -21,10 +21,14 @@ func TestWellRouteRuleValidation(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	validations := *(prepareTest(fakeIstioObjects()))
+	typeValidations := *(prepareTest(fakeIstioObjects()))
+	assert.NotEmpty(typeValidations)
+
+	nameValidations := (*typeValidations["routerule"])
+	assert.NotEmpty(nameValidations)
 
 	// Well configured object
-	validObject := validations["reviews-well"]
+	validObject := nameValidations["reviews-well"]
 	assert.Equal(validObject.Name, "reviews-well")
 	assert.Equal(validObject.ObjectType, "routerule")
 	assert.Equal(validObject.Valid, true)
@@ -36,10 +40,14 @@ func TestMultipleCheck(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	validations := *(prepareTest(fakeMultipleChecks()))
+	typeValidations := *(prepareTest(fakeMultipleChecks()))
+	assert.NotEmpty(typeValidations)
+
+	nameValidations := (*typeValidations["routerule"])
+	assert.NotEmpty(nameValidations)
 
 	// route rule with multiple problems
-	invalidObject := validations["reviews-multiple"]
+	invalidObject := nameValidations["reviews-multiple"]
 	assert.NotEmpty(invalidObject)
 	assert.Equal(invalidObject.Name, "reviews-multiple")
 	assert.Equal(invalidObject.ObjectType, "routerule")
@@ -51,10 +59,14 @@ func TestCorrectPrecedence(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	validations := *(prepareTest(fakeCorrectPrecedence()))
+	typeValidations := *(prepareTest(fakeCorrectPrecedence()))
+	assert.NotEmpty(typeValidations)
+
+	nameValidations := (*typeValidations["routerule"])
+	assert.NotEmpty(nameValidations)
 
 	// wrong weight'ed route rule
-	invalidObject := validations["reviews-precedence"]
+	invalidObject := nameValidations["reviews-precedence"]
 	assert.NotEmpty(invalidObject)
 	assert.Equal(invalidObject.Name, "reviews-precedence")
 	assert.Equal(invalidObject.ObjectType, "routerule")
@@ -66,10 +78,14 @@ func TestNegativePrecedence(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	validations := *(prepareTest(fakeNegative()))
+	typeValidations := *(prepareTest(fakeNegative()))
+	assert.NotEmpty(typeValidations)
+
+	nameValidations := (*typeValidations["routerule"])
+	assert.NotEmpty(nameValidations)
 
 	// Negative precedence
-	invalidObject := validations["reviews-negative"]
+	invalidObject := nameValidations["reviews-negative"]
 	assert.NotEmpty(invalidObject)
 	assert.Equal(invalidObject.Name, "reviews-negative")
 	assert.Equal(invalidObject.ObjectType, "routerule")
@@ -81,10 +97,14 @@ func TestMixedCheckerRoule(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	validations := *(prepareTest(fakeMixedChecker()))
+	typeValidations := *(prepareTest(fakeMixedChecker()))
+	assert.NotEmpty(typeValidations)
+
+	nameValidations := (*typeValidations["routerule"])
+	assert.NotEmpty(nameValidations)
 
 	// Precedence is incorrect
-	invalidObject := validations["reviews-mixed"]
+	invalidObject := nameValidations["reviews-mixed"]
 	assert.NotEmpty(invalidObject)
 	assert.Equal(invalidObject.Name, "reviews-mixed")
 	assert.Equal(invalidObject.ObjectType, "routerule")

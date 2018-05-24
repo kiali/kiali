@@ -13,10 +13,10 @@ type IstioValidationsService struct {
 }
 
 type ObjectChecker interface {
-	Check() *models.IstioValidations
+	Check() *models.IstioTypeValidations
 }
 
-func (in *IstioValidationsService) GetServiceValidations(namespace, service string) (models.IstioValidations, error) {
+func (in *IstioValidationsService) GetServiceValidations(namespace, service string) (models.IstioTypeValidations, error) {
 	// Get all the Istio objects from a Namespace and service
 	istioDetails, err := in.k8s.GetIstioDetails(namespace, service)
 	if err != nil {
@@ -32,13 +32,13 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	objectCheckers := enabledCheckersFor(istioDetails, pods)
 	objectCheckersCount := len(objectCheckers)
 
-	objectValidations := models.IstioValidations{}
-	validationsChannels := make([]chan *models.IstioValidations, objectCheckersCount)
+	objectTypeValidations := models.IstioTypeValidations{}
+	validationsChannels := make([]chan *models.IstioTypeValidations, objectCheckersCount)
 
 	// Run checks for each IstioObject type
 	for i, objectChecker := range objectCheckers {
-		validationsChannels[i] = make(chan *models.IstioValidations)
-		go func(channel chan *models.IstioValidations, checker ObjectChecker) {
+		validationsChannels[i] = make(chan *models.IstioTypeValidations)
+		go func(channel chan *models.IstioTypeValidations, checker ObjectChecker) {
 			channel <- checker.Check()
 			close(channel)
 		}(validationsChannels[i], objectChecker)
@@ -46,11 +46,11 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 
 	// Receive validations and merge them into one object
 	for _, validation := range validationsChannels {
-		objectValidations.MergeValidations(<-validation)
+		objectTypeValidations.MergeValidations(<-validation)
 	}
 
 	// Get groupal validations for same kind istio objects
-	return objectValidations, nil
+	return objectTypeValidations, nil
 }
 
 func enabledCheckersFor(istioDetails *kubernetes.IstioDetails, pods *v1.PodList) []ObjectChecker {

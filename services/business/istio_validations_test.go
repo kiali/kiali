@@ -20,7 +20,9 @@ func TestServiceWellRouteRuleValidation(t *testing.T) {
 	validations, _ := vs.GetServiceValidations("bookinfo", "reviews")
 
 	// Well configured object
-	validObject := validations["reviews-well"]
+	nameValidations := validations["routerule"]
+	assert.NotEmpty(nameValidations)
+	validObject := (*nameValidations)["reviews-well"]
 	assert.NotEmpty(validObject)
 	assert.Equal(validObject.Name, "reviews-well")
 	assert.Equal(validObject.ObjectType, "routerule")
@@ -38,7 +40,9 @@ func TestServiceMultipleChecks(t *testing.T) {
 	validations, _ := vs.GetServiceValidations("bookinfo", "reviews")
 
 	// wrong weight'ed route rule
-	invalidObject := validations["reviews-multiple"]
+	nameValidations := validations["routerule"]
+	assert.NotEmpty(nameValidations)
+	invalidObject := (*nameValidations)["reviews-multiple"]
 	assert.NotEmpty(invalidObject)
 	assert.Equal(invalidObject.Name, "reviews-multiple")
 	assert.Equal(invalidObject.ObjectType, "routerule")
@@ -65,7 +69,9 @@ func TestServiceOver100RouteRule(t *testing.T) {
 	validations, _ := vs.GetServiceValidations("bookinfo", "reviews")
 
 	// wrong weight'ed route rule
-	invalidObject := validations["reviews-100-plus"]
+	nameValidations := validations["routerule"]
+	assert.NotEmpty(nameValidations)
+	invalidObject := (*nameValidations)["reviews-100-plus"]
 	assert.NotEmpty(invalidObject)
 
 	assert.Equal(invalidObject.Name, "reviews-100-plus")
@@ -88,7 +94,9 @@ func TestServiceUnder100RouteRule(t *testing.T) {
 	validations, _ := vs.GetServiceValidations("bookinfo", "reviews")
 
 	// wrong weight'ed route rule
-	invalidObject := validations["reviews-100-minus"]
+	nameValidations := validations["routerule"]
+	assert.NotEmpty(nameValidations)
+	invalidObject := (*nameValidations)["reviews-100-minus"]
 	assert.NotEmpty(invalidObject)
 
 	assert.Equal(invalidObject.Name, "reviews-100-minus")
