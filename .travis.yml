@@ -18,10 +18,8 @@ before_install:
 script:
   - yarn prettier --list-different &&
     yarn build &&
-    yarn test --coverage
+    yarn test
   - ./run_itest.sh
-after_success:
-  - cat ./coverage/lcov.info | coveralls
 before_deploy:
   - yarn set-snapshot-version $TRAVIS_BUILD_NUMBER
 deploy:

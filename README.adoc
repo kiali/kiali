@@ -3,7 +3,6 @@
 
 toc::[]
 = Kiali UI
-image:https://coveralls.io/repos/github/kiali/kiali-ui/badge.svg?branch=master[Coverage Status, link=https://coveralls.io/github/kiali/kiali-ui?branch=master]
 
 == Introduction
 
