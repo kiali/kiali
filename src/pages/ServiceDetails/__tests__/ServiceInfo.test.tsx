@@ -29,7 +29,7 @@ describe('#ServiceInfo render correctly with data', () => {
         ip: data.ip,
         health: data.health
       };
-      let validations: Map<string, ObjectValidation> = new Map<string, ObjectValidation>();
+      let validations: Map<string, Map<string, ObjectValidation>> = new Map();
 
       const wrapper = shallow(
         <ServiceInfo

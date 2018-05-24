@@ -19,7 +19,8 @@ const yaml = require('js-yaml');
 type ServiceDetailsState = {
   jaegerUri: string;
   serviceDetailsInfo: ServiceDetailsInfo;
-  validations: Map<string, ObjectValidation>;
+  // validations are grouped per 'objectType' first in the first map and 'name' in the inner map
+  validations: Map<string, Map<string, ObjectValidation>>;
 };
 
 interface ParsedSearch {
