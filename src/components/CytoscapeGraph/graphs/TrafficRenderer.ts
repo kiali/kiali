@@ -52,7 +52,8 @@ class TrafficPointGenerator {
   constructor(speed: number, timer: number | undefined) {
     this.speed = speed;
     this.timer = timer;
-    this.timerForNextPoint = 0; // Start as soon as posible
+    // Start as soon as posible, unless we have no traffic
+    this.timerForNextPoint = this.timer === undefined ? undefined : 0;
   }
 
   /**
