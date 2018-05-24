@@ -106,12 +106,6 @@ class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
     return sorted;
   }
 
-  validationsFor(objectType: string) {
-    return this.state.validations && typeof this.state.validations.get === 'function'
-      ? this.state.validations.get(objectType)
-      : null;
-  }
-
   render() {
     let deployments = this.state.deployments || [];
     let dependencies = this.state.dependencies || new Map();
@@ -177,7 +171,7 @@ class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
                         <ServiceInfoRouteRules
                           routeRules={routeRules}
                           editorLink={editorLink}
-                          validations={this.validationsFor('routerule') || new Map()}
+                          validations={this.state.validations!['routerule']}
                         />
                       )}
                     </TabPane>

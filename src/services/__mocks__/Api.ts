@@ -45,6 +45,10 @@ export const getServiceDetail = (namespace: String, service: String) => {
   return mockPromiseFromFile(`./src/services/__mockData__/getServiceDetail.json`);
 };
 
+export const getServiceValidations = (namespace: String, service: String) => {
+  return mockPromiseFromFile(`./src/services/__mockData__/getServiceValidations.json`);
+};
+
 export const getIstioConfig = (namespace: String) => {
   if (namespace === 'bookinfo') {
     return mockPromiseFromFile(`./src/services/__mockData__/getIstioConfigBookinfo.json`);
