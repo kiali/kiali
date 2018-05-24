@@ -44,61 +44,47 @@ func (pods *Pods) Parse(list *v1.PodList) {
 	}
 }
 
+// Below types are used for unmarshalling json
+type createdBy struct {
+	Reference Reference `json:"reference"`
+}
+type sideCarStatus struct {
+	Containers     []string `json:"containers"`
+	InitContainers []string `json:"initContainers"`
+}
+
 // Parse extracts desired information from k8s Pod info
 func (pod *Pod) Parse(p *v1.Pod) {
 	pod.Name = p.Name
 	pod.Labels = p.Labels
 	pod.CreatedAt = formatTime(p.CreationTimestamp.Time)
 	// Parse some annotations
-	if createdBy, ok := p.Annotations["kubernetes.io/created-by"]; ok {
-		var f interface{}
-		err := json.Unmarshal([]byte(createdBy), &f)
+	if jSon, ok := p.Annotations["kubernetes.io/created-by"]; ok {
+		var cby createdBy
+		err := json.Unmarshal([]byte(jSon), &cby)
 		if err == nil {
-			switch ff := f.(type) {
-			case map[string]interface{}:
-				if fref, ok := ff["reference"]; ok {
-					switch ref := fref.(type) {
-					case map[string]interface{}:
-						pod.CreatedBy = Reference{
-							Name: ref["name"].(string),
-							Kind: ref["kind"].(string),
-						}
-					}
-				}
-			}
+			pod.CreatedBy = Reference{
+				Name: cby.Reference.Name,
+				Kind: cby.Reference.Kind}
 		}
 	}
-	if istio, ok := p.Annotations["sidecar.istio.io/status"]; ok {
-		var f interface{}
-		err := json.Unmarshal([]byte(istio), &f)
+	if jSon, ok := p.Annotations["sidecar.istio.io/status"]; ok {
+		var scs sideCarStatus
+		err := json.Unmarshal([]byte(jSon), &scs)
 		if err == nil {
-			switch ff := f.(type) {
-			case map[string]interface{}:
-				if fcontainers, ok := ff["initContainers"]; ok {
-					switch containers := fcontainers.(type) {
-					case []interface{}:
-						for _, name := range containers {
-							pod.IstioInitContainers = append(pod.IstioInitContainers, &ContainerInfo{Name: name.(string)})
-						}
-					}
-				}
-				if fcontainers, ok := ff["containers"]; ok {
-					switch containers := fcontainers.(type) {
-					case []interface{}:
-						for _, name := range containers {
-							pod.IstioContainers = append(pod.IstioContainers, &ContainerInfo{Name: name.(string)})
-						}
-					}
-				}
+			for _, name := range scs.InitContainers {
+				container := ContainerInfo{
+					Name:  name,
+					Image: lookupImage(name, p.Spec.InitContainers)}
+				pod.IstioInitContainers = append(pod.IstioInitContainers, &container)
+			}
+			for _, name := range scs.Containers {
+				container := ContainerInfo{
+					Name:  name,
+					Image: lookupImage(name, p.Spec.Containers)}
+				pod.IstioContainers = append(pod.IstioContainers, &container)
 			}
 		}
-	}
-	// Lookup images for containers found
-	for _, container := range pod.IstioInitContainers {
-		container.Image = lookupImage(container.Name, p.Spec.InitContainers)
-	}
-	for _, container := range pod.IstioContainers {
-		container.Image = lookupImage(container.Name, p.Spec.Containers)
 	}
 }
 
