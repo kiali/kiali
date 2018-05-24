@@ -1,0 +1,30 @@
+{
+  "pod": {
+    "reviews-v1-3758685241-z4ppr": {
+      "name": "reviews-v1-3758685241-z4ppr",
+      "object_type": "pod",
+      "valid": true,
+      "checks": null
+    },
+    "reviews-v2-29632839-dsl5c": {
+      "name": "reviews-v2-29632839-dsl5c",
+      "object_type": "pod",
+      "valid": true,
+      "checks": null
+    },
+    "reviews-v3-2285656649-f9qgb": {
+      "name": "reviews-v3-2285656649-f9qgb",
+      "object_type": "pod",
+      "valid": true,
+      "checks": null
+    }
+  },
+  "routerule": {
+    "reviews-default": {
+      "name": "reviews-default",
+      "object_type": "routerule",
+      "valid": true,
+      "checks": null
+    }
+  }
+}

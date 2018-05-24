@@ -91,3 +91,13 @@ describe('#GetIstioConfigDetail using Promises', () => {
     });
   });
 });
+
+describe('#GetServiceValidations using Promises', () => {
+  it('should load istio service validation data', () => {
+    return API.getServiceValidations('bookinfo', 'reviews').then(({ data }) => {
+      expect(data).toBeDefined();
+      expect(data!['pod']).toBeDefined();
+      expect(data!['routerule']).toBeDefined();
+    });
+  });
+});
