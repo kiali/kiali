@@ -18,6 +18,10 @@ type RouteRuleChecker struct {
 	RouteRules []kubernetes.IstioObject
 }
 
+// An Object Checker runs all checkers for an specific object type (i.e.: pod, route rule,...)
+// It run two kinds of checkers:
+// 1. Individual checks: validating individual objects.
+// 2. Group checks: validating behaviour between configurations.
 func (in RouteRuleChecker) Check() *models.IstioTypeValidations {
 	typeValidations := models.IstioTypeValidations{}
 
@@ -27,6 +31,7 @@ func (in RouteRuleChecker) Check() *models.IstioTypeValidations {
 	return &typeValidations
 }
 
+// Runs individual checks for each route rule
 func (in RouteRuleChecker) runIndividualChecks() *models.IstioTypeValidations {
 	typeValidations := models.IstioTypeValidations{}
 	var wg sync.WaitGroup
@@ -42,10 +47,12 @@ func (in RouteRuleChecker) runIndividualChecks() *models.IstioTypeValidations {
 	return &typeValidations
 }
 
+// runGroupChecks runs group checks for all route rules
 func (in *RouteRuleChecker) runGroupChecks() *models.IstioTypeValidations {
 	return &models.IstioTypeValidations{}
 }
 
+// enabledCheckersFor returns the list of all individual enabled checkers
 func enabledCheckersFor(object kubernetes.IstioObject) []Checker {
 	return []Checker{
 		route_rules.RouteChecker{object},
@@ -53,6 +60,7 @@ func enabledCheckersFor(object kubernetes.IstioObject) []Checker {
 	}
 }
 
+// runChecks runs all the individual checks for a single route rule and it appends the result into typeValidations
 func runChecks(routeRule kubernetes.IstioObject, typeValidations *models.IstioTypeValidations, wg *sync.WaitGroup) {
 	defer (*wg).Done()
 	var checkersWg sync.WaitGroup
@@ -74,6 +82,7 @@ func runChecks(routeRule kubernetes.IstioObject, typeValidations *models.IstioTy
 	checkersWg.Wait()
 }
 
+// runChecker runs the specific checker and store its result into nameValidations under objectName map.
 func runChecker(checker Checker, objectName string, nameValidations *models.IstioNameValidations, wg *sync.WaitGroup) {
 	defer (*wg).Done()
 

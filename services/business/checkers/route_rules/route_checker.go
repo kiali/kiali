@@ -11,6 +11,12 @@ import (
 
 type RouteChecker struct{ kubernetes.IstioObject }
 
+// Check returns both an array of IstioCheck and a boolean indicating if the current route rule is valid.
+// The array of IstioChecks contains the result of running the following validations:
+// 1. All weights with a numeric number.
+// 2. All weights have value between 0 and 100.
+// 3. Sum of all weights are 100 (if only one weight, then it assumes that is 100).
+// 4. All the route has to have weight label.
 func (route RouteChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 

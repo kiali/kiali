@@ -16,6 +16,8 @@ type ObjectChecker interface {
 	Check() *models.IstioTypeValidations
 }
 
+// GetServiceValidations returns an IstioTypeValidations object with all the checks found when running
+// all the enabled checkers.
 func (in *IstioValidationsService) GetServiceValidations(namespace, service string) (models.IstioTypeValidations, error) {
 	// Get all the Istio objects from a Namespace and service
 	istioDetails, err := in.k8s.GetIstioDetails(namespace, service)
@@ -49,10 +51,11 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		objectTypeValidations.MergeValidations(<-validation)
 	}
 
-	// Get groupal validations for same kind istio objects
 	return objectTypeValidations, nil
 }
 
+// enabledCheckersFor returns the list of ObjectCheckers that will be run for istioDetails and pods
+// objects passed by parameters
 func enabledCheckersFor(istioDetails *kubernetes.IstioDetails, pods *v1.PodList) []ObjectChecker {
 	return []ObjectChecker{
 		checkers.RouteRuleChecker{istioDetails.RouteRules},

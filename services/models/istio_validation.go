@@ -1,6 +1,6 @@
 package models
 
-// IstioTypeValidations represents a set of IstioNameValidations grouper per Istio ObjectType.
+// IstioTypeValidations represents a set of IstioNameValidations grouped per Istio ObjectType.
 // It is possible that different object types have same name, but names per ObjectType are unique.
 type IstioTypeValidations map[string]*IstioNameValidations
 
@@ -9,16 +9,16 @@ type IstioTypeValidations map[string]*IstioNameValidations
 type IstioNameValidations map[string]*IstioValidation
 
 type IstioValidation struct {
-	Name       string        `json:"name"`
-	ObjectType string        `json:"object_type"`
-	Valid      bool          `json:"valid"`
-	Checks     []*IstioCheck `json:"checks"`
+	Name       string        `json:"name"`        // Name of the object itself
+	ObjectType string        `json:"object_type"` // Type of the object
+	Valid      bool          `json:"valid"`       // Represents validity of the object: in case of warning, validity remainds as true
+	Checks     []*IstioCheck `json:"checks"`      // Array of checks
 }
 
 type IstioCheck struct {
-	Message  string `json:"message"`
-	Severity string `json:"severity"`
-	Path     string `json:"path"`
+	Message  string `json:"message"`  // Description of the check
+	Severity string `json:"severity"` // Indicates the level of importance: error or warning
+	Path     string `json:"path"`     // String that describes where in the yaml file is the check located
 }
 
 func BuildCheck(message, severity, path string) IstioCheck {

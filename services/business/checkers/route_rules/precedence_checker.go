@@ -10,6 +10,8 @@ import (
 
 type PrecedenceChecker struct{ kubernetes.IstioObject }
 
+// Check returns both an array of IstioCheck objects and a boolean telling if the route rule is valid.
+// Each IstioCheck represent an error or warning detected when validating the precedence field.
 func (route PrecedenceChecker) Check() ([]*models.IstioCheck, bool) {
 	valid := true
 	validations := make([]*models.IstioCheck, 0)
