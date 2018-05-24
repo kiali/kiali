@@ -23,11 +23,15 @@ func TestSidecarsCheckOneValidPod(t *testing.T) {
 	}
 
 	checker := PodChecker{Pods: fakePodList}
-	result := checker.Check()
+	typeValidations := checker.Check()
 
-	assert.Equal(t, 1, len(*result))
-	assert.True(t, (*result)["myPodWithSidecar"].Valid)
-	assert.Equal(t, 0, len((*result)["myPodWithSidecar"].Checks))
+	assert.Equal(t, 1, len(*typeValidations))
+
+	nameValidations := (*typeValidations)["pod"]
+
+	assert.Equal(t, 1, len(*nameValidations))
+	assert.True(t, (*nameValidations)["myPodWithSidecar"].Valid)
+	assert.Equal(t, 0, len((*nameValidations)["myPodWithSidecar"].Checks))
 }
 
 // Pod with no sidecar, check should be Warning
@@ -37,13 +41,17 @@ func TestSidecarsCheckOneInvalidPod(t *testing.T) {
 	}
 
 	checker := PodChecker{Pods: fakePodList}
-	result := checker.Check()
+	typeValidations := checker.Check()
 
-	assert.Equal(t, 1, len(*result))
-	assert.False(t, (*result)["myPodWithNoSidecar"].Valid)
-	assert.Equal(t, 1, len((*result)["myPodWithNoSidecar"].Checks))
-	assert.Equal(t, "warning", (*result)["myPodWithNoSidecar"].Checks[0].Severity)
-	assert.NotEqual(t, "Ok", (*result)["myPodWithNoSidecar"].Checks[0].Message)
+	assert.Equal(t, 1, len(*typeValidations))
+
+	nameValidations := (*typeValidations)["pod"]
+
+	assert.Equal(t, 1, len(*nameValidations))
+	assert.False(t, (*nameValidations)["myPodWithNoSidecar"].Valid)
+	assert.Equal(t, 1, len((*nameValidations)["myPodWithNoSidecar"].Checks))
+	assert.Equal(t, "warning", (*nameValidations)["myPodWithNoSidecar"].Checks[0].Severity)
+	assert.NotEqual(t, "Ok", (*nameValidations)["myPodWithNoSidecar"].Checks[0].Message)
 }
 
 func buildPodWithSidecar() v1.Pod {

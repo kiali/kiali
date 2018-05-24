@@ -18,32 +18,32 @@ type RouteRuleChecker struct {
 	RouteRules []kubernetes.IstioObject
 }
 
-func (in RouteRuleChecker) Check() *models.IstioValidations {
-	objectValidations := models.IstioValidations{}
+func (in RouteRuleChecker) Check() *models.IstioTypeValidations {
+	typeValidations := models.IstioTypeValidations{}
 
-	objectValidations = objectValidations.MergeValidations(in.runIndividualChecks())
-	objectValidations = objectValidations.MergeValidations(in.runGroupChecks())
+	typeValidations = typeValidations.MergeValidations(in.runIndividualChecks())
+	typeValidations = typeValidations.MergeValidations(in.runGroupChecks())
 
-	return &objectValidations
+	return &typeValidations
 }
 
-func (in RouteRuleChecker) runIndividualChecks() *models.IstioValidations {
-	validations := models.IstioValidations{}
+func (in RouteRuleChecker) runIndividualChecks() *models.IstioTypeValidations {
+	typeValidations := models.IstioTypeValidations{}
 	var wg sync.WaitGroup
 
 	wg.Add(len(in.RouteRules))
 
 	for _, routeRule := range in.RouteRules {
-		go runChecks(routeRule, &validations, &wg)
+		go runChecks(routeRule, &typeValidations, &wg)
 	}
 
 	wg.Wait()
 
-	return &validations
+	return &typeValidations
 }
 
-func (in *RouteRuleChecker) runGroupChecks() *models.IstioValidations {
-	return &models.IstioValidations{}
+func (in *RouteRuleChecker) runGroupChecks() *models.IstioTypeValidations {
+	return &models.IstioTypeValidations{}
 }
 
 func enabledCheckersFor(object kubernetes.IstioObject) []Checker {
@@ -53,30 +53,31 @@ func enabledCheckersFor(object kubernetes.IstioObject) []Checker {
 	}
 }
 
-func runChecks(routeRule kubernetes.IstioObject, validationsPointer *models.IstioValidations, wg *sync.WaitGroup) {
+func runChecks(routeRule kubernetes.IstioObject, typeValidations *models.IstioTypeValidations, wg *sync.WaitGroup) {
 	defer (*wg).Done()
 	var checkersWg sync.WaitGroup
 
+	nameValidations := models.IstioNameValidations{}
+	(*typeValidations)[objectType] = &nameValidations
+
 	ruleName := routeRule.GetObjectMeta().Name
 	validation := &models.IstioValidation{Name: ruleName, ObjectType: objectType, Valid: true}
-	validations := *validationsPointer
-	validations[ruleName] = validation
+	nameValidations[ruleName] = validation
 
 	checkers := enabledCheckersFor(routeRule)
 	checkersWg.Add(len(checkers))
 
 	for _, checker := range checkers {
-		go runChecker(checker, ruleName, validationsPointer, &checkersWg)
+		go runChecker(checker, ruleName, &nameValidations, &checkersWg)
 	}
 
 	checkersWg.Wait()
 }
 
-func runChecker(checker Checker, objectName string, validationsPointer *models.IstioValidations, wg *sync.WaitGroup) {
+func runChecker(checker Checker, objectName string, nameValidations *models.IstioNameValidations, wg *sync.WaitGroup) {
 	defer (*wg).Done()
-	validations := *validationsPointer
 
 	checks, validChecker := checker.Check()
-	validations[objectName].Checks = append(validations[objectName].Checks, checks...)
-	validations[objectName].Valid = validations[objectName].Valid && validChecker
+	(*nameValidations)[objectName].Checks = append((*nameValidations)[objectName].Checks, checks...)
+	(*nameValidations)[objectName].Valid = (*nameValidations)[objectName].Valid && validChecker
 }
