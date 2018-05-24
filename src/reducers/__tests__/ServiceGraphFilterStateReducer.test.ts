@@ -9,7 +9,8 @@ describe('ServiceGraphFilterState reducer', () => {
       edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showRouteRules: true,
-      showMissingSidecars: true
+      showMissingSidecars: true,
+      showTrafficAnimation: false
     });
   });
 
@@ -21,7 +22,8 @@ describe('ServiceGraphFilterState reducer', () => {
           edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
-          showMissingSidecars: true
+          showMissingSidecars: true,
+          showTrafficAnimation: false
         },
         {
           type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL
@@ -32,7 +34,8 @@ describe('ServiceGraphFilterState reducer', () => {
       edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showRouteRules: true,
-      showMissingSidecars: true
+      showMissingSidecars: true,
+      showTrafficAnimation: false
     });
   });
 
@@ -44,7 +47,8 @@ describe('ServiceGraphFilterState reducer', () => {
           edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
-          showMissingSidecars: true
+          showMissingSidecars: true,
+          showTrafficAnimation: false
         },
         {
           type: ServiceGraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
@@ -56,7 +60,8 @@ describe('ServiceGraphFilterState reducer', () => {
       edgeLabelMode: EdgeLabelMode.LATENCY_95TH_PERCENTILE,
       showCircuitBreakers: false,
       showRouteRules: true,
-      showMissingSidecars: true
+      showMissingSidecars: true,
+      showTrafficAnimation: false
     });
   });
   it('should handle TOGGLE_GRAPH_CIRCUIT_BREAKERS', () => {
@@ -67,7 +72,8 @@ describe('ServiceGraphFilterState reducer', () => {
           edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
-          showMissingSidecars: true
+          showMissingSidecars: true,
+          showTrafficAnimation: false
         },
         {
           type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS
@@ -78,7 +84,8 @@ describe('ServiceGraphFilterState reducer', () => {
       edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: true,
       showRouteRules: true,
-      showMissingSidecars: true
+      showMissingSidecars: true,
+      showTrafficAnimation: false
     });
   });
   it('should handle TOGGLE_GRAPH_ROUTE_RULES', () => {
@@ -89,7 +96,8 @@ describe('ServiceGraphFilterState reducer', () => {
           edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showRouteRules: true,
-          showMissingSidecars: true
+          showMissingSidecars: true,
+          showTrafficAnimation: false
         },
         {
           type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_ROUTE_RULES
@@ -100,7 +108,8 @@ describe('ServiceGraphFilterState reducer', () => {
       edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showRouteRules: false,
-      showMissingSidecars: true
+      showMissingSidecars: true,
+      showTrafficAnimation: false
     });
   });
   it('should handle TOGGLE_GRAPH_MISSING_SIDECARS', () => {
@@ -111,7 +120,8 @@ describe('ServiceGraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showRouteRules: true,
           showMissingSidecars: true,
-          edgeLabelMode: EdgeLabelMode.HIDE
+          edgeLabelMode: EdgeLabelMode.HIDE,
+          showTrafficAnimation: false
         },
         {
           type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS
@@ -122,7 +132,32 @@ describe('ServiceGraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showRouteRules: true,
       showMissingSidecars: false,
-      edgeLabelMode: EdgeLabelMode.HIDE
+      edgeLabelMode: EdgeLabelMode.HIDE,
+      showTrafficAnimation: false
+    });
+  });
+  it('should handle TOGGLE_TRAFFIC_ANIMATION', () => {
+    expect(
+      serviceGraphFilterState(
+        {
+          showNodeLabels: true,
+          showCircuitBreakers: false,
+          showRouteRules: true,
+          showMissingSidecars: true,
+          edgeLabelMode: EdgeLabelMode.HIDE,
+          showTrafficAnimation: false
+        },
+        {
+          type: ServiceGraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION
+        }
+      )
+    ).toEqual({
+      showNodeLabels: true,
+      showCircuitBreakers: false,
+      showRouteRules: true,
+      showMissingSidecars: true,
+      edgeLabelMode: EdgeLabelMode.HIDE,
+      showTrafficAnimation: true
     });
   });
 });

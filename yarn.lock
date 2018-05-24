@@ -2106,6 +2106,10 @@ cyclist@~0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/cyclist/-/cyclist-0.2.2.tgz#1b33792e11e914a2fd6d6ed6447464444e5fa640"
 
+cytoscape-canvas@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/cytoscape-canvas/-/cytoscape-canvas-3.0.1.tgz#7d963be51e6e5f3f2482b05d22562c8ee941d125"
+
 cytoscape-cola@2.2.3:
   version "2.2.3"
   resolved "https://registry.yarnpkg.com/cytoscape-cola/-/cytoscape-cola-2.2.3.tgz#96c50e7230f0056324089bdae3996a17d82f7dd9"

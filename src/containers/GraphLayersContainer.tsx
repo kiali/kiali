@@ -11,6 +11,7 @@ interface ServiceGraphDispatch {
   toggleGraphCircuitBreakers(): void;
   toggleGraphRouteRules(): void;
   toggleGraphMissingSidecars(): void;
+  toggleTrafficAnimation(): void;
 }
 
 // inherit all of our Reducer state section  and Dispatch methods for redux
@@ -21,7 +22,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   showNodeLabels: state.serviceGraphFilterState.showNodeLabels,
   showCircuitBreakers: state.serviceGraphFilterState.showCircuitBreakers,
   showRouteRules: state.serviceGraphFilterState.showRouteRules,
-  showMissingSidecars: state.serviceGraphFilterState.showMissingSidecars
+  showMissingSidecars: state.serviceGraphFilterState.showMissingSidecars,
+  showTrafficAnimation: state.serviceGraphFilterState.showTrafficAnimation
 });
 
 // Map our actions to Redux
@@ -31,7 +33,8 @@ const mapDispatchToProps = (dispatch: any) => {
     setGraphEdgeLabelMode: bindActionCreators(serviceGraphFilterActions.setGraphEdgeLabelMode, dispatch),
     toggleGraphCircuitBreakers: bindActionCreators(serviceGraphFilterActions.toggleGraphCircuitBreakers, dispatch),
     toggleGraphRouteRules: bindActionCreators(serviceGraphFilterActions.toggleGraphRouteRules, dispatch),
-    toggleGraphMissingSidecars: bindActionCreators(serviceGraphFilterActions.toggleGraphMissingSidecars, dispatch)
+    toggleGraphMissingSidecars: bindActionCreators(serviceGraphFilterActions.toggleGraphMissingSidecars, dispatch),
+    toggleTrafficAnimation: bindActionCreators(serviceGraphFilterActions.toggleTrafficAnimation, dispatch)
   };
 };
 
@@ -46,13 +49,14 @@ interface VisibilityLayersType {
 // Right now it is a toolbar with Switch Buttons -- this will change once with UXD input
 export const GraphLayers: React.SFC<GraphLayersProps> = props => {
   // map our attributes from redux
-  const { showCircuitBreakers, showRouteRules, showNodeLabels, showMissingSidecars } = props;
+  const { showCircuitBreakers, showRouteRules, showNodeLabels, showMissingSidecars, showTrafficAnimation } = props;
   // // map or dispatchers for redux
   const {
     toggleGraphCircuitBreakers,
     toggleGraphRouteRules,
     toggleGraphNodeLabels,
-    toggleGraphMissingSidecars
+    toggleGraphMissingSidecars,
+    toggleTrafficAnimation
   } = props;
 
   const visibilityLayers: VisibilityLayersType[] = [
@@ -79,6 +83,12 @@ export const GraphLayers: React.SFC<GraphLayersProps> = props => {
       labelText: 'Missing Sidecars',
       value: showMissingSidecars,
       onChange: toggleGraphMissingSidecars
+    },
+    {
+      id: 'filterTrafficAnimation',
+      labelText: 'Traffic Animation',
+      value: showTrafficAnimation,
+      onChange: toggleTrafficAnimation
     }
   ];
 

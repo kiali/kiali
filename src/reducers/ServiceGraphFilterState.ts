@@ -8,6 +8,7 @@ const INITIAL_STATE: ServiceGraphFilterState = {
   showCircuitBreakers: false,
   showRouteRules: true,
   showMissingSidecars: true,
+  showTrafficAnimation: false,
   // @ todo: add disableLayers back in later
   // disableLayers: false
   edgeLabelMode: EdgeLabelMode.HIDE
@@ -26,6 +27,8 @@ const serviceGraphFilterState = (state: ServiceGraphFilterState = INITIAL_STATE,
       return updateState(state, { showRouteRules: !state.showRouteRules });
     case ServiceGraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS:
       return updateState(state, { showMissingSidecars: !state.showMissingSidecars });
+    case ServiceGraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION:
+      return updateState(state, { showTrafficAnimation: !state.showTrafficAnimation });
     case ServiceGraphFilterActionKeys.ENABLE_GRAPH_FILTERS:
       return updateState(state, { disableLayers: action.payload });
     default:

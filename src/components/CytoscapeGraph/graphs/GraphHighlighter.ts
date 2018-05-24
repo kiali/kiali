@@ -1,6 +1,7 @@
 import { CytoscapeClickEvent, CytoscapeMouseInEvent, CytoscapeMouseOutEvent } from '../CytoscapeGraph';
+import { DimClass } from './GraphStyles';
 
-const DIM_CLASS: string = 'mousedim';
+const DIM_CLASS: string = DimClass;
 const HIGHLIGHT_CLASS: string = 'mousehighlight';
 
 export class GraphHighlighter {

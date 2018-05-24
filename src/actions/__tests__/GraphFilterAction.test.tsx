@@ -41,6 +41,13 @@ describe('GraphFilterActions', () => {
     expect(serviceGraphFilterActions.toggleGraphMissingSidecars()).toEqual(expectedAction);
   });
 
+  it('should toggle traffic animations', () => {
+    const expectedAction = {
+      type: ServiceGraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION
+    };
+    expect(serviceGraphFilterActions.toggleTrafficAnimation()).toEqual(expectedAction);
+  });
+
   it('should enable graph filters toggles', () => {
     const expectedAction = {
       type: ServiceGraphFilterActionKeys.ENABLE_GRAPH_FILTERS,

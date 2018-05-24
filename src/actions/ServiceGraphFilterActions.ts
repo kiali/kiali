@@ -8,6 +8,7 @@ export enum ServiceGraphFilterActionKeys {
   TOGGLE_GRAPH_CIRCUIT_BREAKERS = 'TOGGLE_GRAPH_CIRCUIT_BREAKERS',
   TOGGLE_GRAPH_ROUTE_RULES = 'TOGGLE_GRAPH_ROUTE_RULES',
   TOGGLE_GRAPH_MISSING_SIDECARS = 'TOGGLE_GRAPH_MISSING_SIDECARS',
+  TOGGLE_TRAFFIC_ANIMATION = 'TOGGLE_TRAFFIC_ANIMATION',
   SET_GRAPH_EDGE_LABEL_MODE = 'SET_GRAPH_EDGE_LABEL_MODE',
   // Disable Actions
   ENABLE_GRAPH_FILTERS = 'ENABLE_GRAPH_FILTERS'
@@ -26,6 +27,7 @@ export const serviceGraphFilterActions = {
   toggleGraphRouteRules: createAction(ServiceGraphFilterActionKeys.TOGGLE_GRAPH_ROUTE_RULES),
   toggleGraphCircuitBreakers: createAction(ServiceGraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS),
   toggleGraphMissingSidecars: createAction(ServiceGraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS),
+  toggleTrafficAnimation: createAction(ServiceGraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION),
   showGraphFilters: createAction(ServiceGraphFilterActionKeys.ENABLE_GRAPH_FILTERS, (value: boolean) => ({
     type: ServiceGraphFilterActionKeys.ENABLE_GRAPH_FILTERS,
     payload: value

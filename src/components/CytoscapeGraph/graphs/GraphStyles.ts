@@ -1,6 +1,8 @@
 import { PfColors } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
 
+export const DimClass = 'mousedim';
+
 export class GraphStyles {
   static options() {
     return { wheelSensitivity: 0.1, autounselectify: false, autoungrabify: true };
@@ -146,13 +148,13 @@ export class GraphStyles {
         }
       },
       {
-        selector: 'node.mousedim',
+        selector: 'node.' + DimClass,
         style: {
           opacity: '0.3'
         }
       },
       {
-        selector: 'edge.mousedim',
+        selector: 'edge.' + DimClass,
         style: {
           opacity: '0.3'
         }

@@ -12,6 +12,7 @@ import { GraphParamsType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import { KialiAppState } from '../../store/Store';
 import * as GraphBadge from './graphs/GraphBadge';
+import TrafficRender from './graphs/TrafficRenderer';
 
 type CytoscapeGraphType = {
   elements?: any;
@@ -21,6 +22,7 @@ type CytoscapeGraphType = {
   showCircuitBreakers: boolean;
   showRouteRules: boolean;
   showMissingSidecars: boolean;
+  showTrafficAnimation: boolean;
   onClick: (event: CytoscapeClickEvent) => void;
   onReady: (event: CytoscapeBaseEvent) => void;
   refresh: any;
@@ -47,8 +49,10 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   };
 
   private graphHighlighter: GraphHighlighter;
+  private trafficRenderer: TrafficRender;
   private cytoscapeReactWrapperRef: any;
   private newLayout: any;
+  private cy: any;
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
@@ -66,7 +70,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.showRouteRules !== nextProps.showRouteRules ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.elements !== nextProps.elements ||
-      this.props.graphLayout !== nextProps.graphLayout
+      this.props.graphLayout !== nextProps.graphLayout ||
+      this.props.showTrafficAnimation !== nextProps.showTrafficAnimation
     );
   }
 
@@ -136,16 +141,18 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
 
-    // Conveniently, the graph highlighter caches the cy instance that is currently in use.
+    // Caches the cy instance that is currently in use.
     // If that cy instance is the same one we are being asked to initialize, do NOT initialize it again;
     // this would add duplicate callbacks and would screw up the graph highlighter. If, however,
     // we are being asked to initialize a different cy instance, we assume the current one is now obsolete
     // so we do want to initialize the new cy instance.
-    if (this.graphHighlighter && this.graphHighlighter.cy === cy) {
+    if (this.cy === cy) {
       return;
     }
+    this.cy = cy;
 
     this.graphHighlighter = new GraphHighlighter(cy);
+    this.trafficRenderer = new TrafficRender(cy, cy.edges());
 
     const getCytoscapeBaseEvent = (event: any): CytoscapeBaseEvent | null => {
       const target = event.target;
@@ -188,6 +195,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.onReady(evt.cy);
       this.processGraphUpdate(cy);
     });
+
+    cy.on('destroy', (evt: any) => {
+      this.trafficRenderer.stop();
+      this.cy = undefined;
+    });
   }
 
   private processGraphUpdate(cy: any) {
@@ -196,6 +208,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     console.log('CY: graph is being updated');
+
+    this.trafficRenderer.stop();
 
     cy.startBatch();
 
@@ -247,6 +261,12 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     cy.endBatch();
+
+    // Update TrafficRenderer
+    this.trafficRenderer.setEdges(cy.edges());
+    if (this.props.showTrafficAnimation) {
+      this.trafficRenderer.start();
+    }
   }
 
   private handleTap = (event: CytoscapeClickEvent) => {
@@ -268,6 +288,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showCircuitBreakers: state.serviceGraphFilterState.showCircuitBreakers,
   showRouteRules: state.serviceGraphFilterState.showRouteRules,
   showMissingSidecars: state.serviceGraphFilterState.showMissingSidecars,
+  showTrafficAnimation: state.serviceGraphFilterState.showTrafficAnimation,
   elements: state.serviceGraphDataState.graphData
 });
 

@@ -38,6 +38,7 @@ describe('CytoscapeGraph component test', () => {
         showCircuitBreakers={false}
         showRouteRules={true}
         showMissingSidecars={true}
+        showTrafficAnimation={false}
       />
     );
     const cytoscapeWrapper = wrapper.find(CytoscapeReactWrapper);
