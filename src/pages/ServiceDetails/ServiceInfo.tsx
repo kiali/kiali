@@ -107,7 +107,9 @@ class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
   }
 
   validationsFor(objectType: string) {
-    return this.state.validations.get(objectType);
+    return this.state.validations && typeof this.state.validations.get === 'function'
+      ? this.state.validations.get(objectType)
+      : null;
   }
 
   render() {
@@ -175,7 +177,7 @@ class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
                         <ServiceInfoRouteRules
                           routeRules={routeRules}
                           editorLink={editorLink}
-                          validations={this.state.validations.get('routerule') || new Map()}
+                          validations={this.validationsFor('routerule') || new Map()}
                         />
                       )}
                     </TabPane>
