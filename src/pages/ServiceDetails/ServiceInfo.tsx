@@ -33,7 +33,7 @@ import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRul
 
 interface ServiceDetailsId extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
-  validations: Map<string, ObjectValidation>;
+  validations: Map<string, Map<string, ObjectValidation>>;
 }
 
 type ServiceInfoState = {
@@ -53,7 +53,7 @@ type ServiceInfoState = {
   destinationRules?: DestinationRule[];
   dependencies?: Map<string, string[]>;
   health?: Health;
-  validations: Map<string, ObjectValidation>;
+  validations: Map<string, Map<string, ObjectValidation>>;
   error: boolean;
   errorMessage: string;
 };
@@ -107,9 +107,7 @@ class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
   }
 
   validationsFor(objectType: string) {
-    return Array.from(this.state.validations.values()).filter(
-      (item: ObjectValidation) => item.objectType === objectType
-    );
+    return this.state.validations.get(objectType);
   }
 
   render() {
@@ -177,7 +175,7 @@ class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
                         <ServiceInfoRouteRules
                           routeRules={routeRules}
                           editorLink={editorLink}
-                          validations={this.state.validations}
+                          validations={this.state.validations.get('routerule') || new Map()}
                         />
                       )}
                     </TabPane>
