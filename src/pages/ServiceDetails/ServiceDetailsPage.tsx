@@ -248,16 +248,14 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
             <div>
               <Nav bsClass="nav nav-tabs nav-tabs-pf">
                 <NavItem eventKey={1}>
-                  <div dangerouslySetInnerHTML={{ __html: 'Info' }} />
+                  <div>Info</div>
                 </NavItem>
                 <NavItem eventKey={2}>
-                  <div dangerouslySetInnerHTML={{ __html: 'Metrics' }} />
+                  <div>Metrics</div>
                 </NavItem>
-                <li role="presentation">
-                  <a href={this.state.jaegerUri} target="_blank">
-                    <div dangerouslySetInnerHTML={{ __html: 'Traces' }} />
-                  </a>
-                </li>
+                <NavItem href={this.state.jaegerUri}>
+                  <div>Traces</div>
+                </NavItem>
               </Nav>
               <TabContent>
                 <TabPane eventKey={1}>

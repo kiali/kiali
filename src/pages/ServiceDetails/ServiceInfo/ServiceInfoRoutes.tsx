@@ -30,7 +30,7 @@ class ServiceInfoRoutes extends React.Component<ServiceInfoRoutesProps> {
                     if (servicename.length > 0 && namespace.length > 0) {
                       let to = '/namespaces/' + namespace + '/services/' + servicename;
                       return (
-                        <Link key={to} to={to}>
+                        <Link key={to + key + dependency} to={to}>
                           <li key={'dependencies_' + u + '_dependency_' + i}>{dependency}</li>
                         </Link>
                       );
