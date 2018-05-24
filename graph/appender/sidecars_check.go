@@ -31,8 +31,10 @@ func (a SidecarsCheckAppender) applySidecarsChecks(n *tree.ServiceNode, namespac
 	nameValidations := (*typeValidations)["pod"]
 
 	sidecarsOk := true
-	for _, check := range *nameValidations {
-		sidecarsOk = sidecarsOk && check.Valid
+	if nameValidations != nil {
+		for _, check := range *nameValidations {
+			sidecarsOk = sidecarsOk && check.Valid
+		}
 	}
 	n.Metadata["hasMissingSidecars"] = !sidecarsOk
 
