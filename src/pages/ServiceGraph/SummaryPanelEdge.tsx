@@ -10,6 +10,8 @@ import graphUtils from '../../utils/Graphing';
 import MetricsOptions from '../../types/MetricsOptions';
 import { PfColors } from '../../components/Pf/PfColors';
 import { authentication } from '../../utils/Authentication';
+import { Icon } from 'patternfly-react';
+import { Link } from 'react-router-dom';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -82,9 +84,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const rate4xx = this.safeRate(edge.data('rate4XX'));
     const rate5xx = this.safeRate(edge.data('rate5XX'));
     const sourceLink = (
-      <a href={`../namespaces/${sourceNamespace}/services/${sourceServiceName}`}>{sourceServiceName}</a>
+      <Link to={`/namespaces/${sourceNamespace}/services/${sourceServiceName}`}>{sourceServiceName}</Link>
     );
-    const destLink = <a href={`../namespaces/${destNamespace}/services/${destServiceName}`}>{destServiceName}</a>;
+    const destLink = <Link to={`/namespaces/${destNamespace}/services/${destServiceName}`}>{destServiceName}</Link>;
 
     const isUnknown = sourceServiceName === 'unknown';
     return (
@@ -98,6 +100,16 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           {this.renderLabels(destNamespace, destVersion)}
         </div>
         <div className="panel-body">
+          <p style={{ textAlign: 'right' }}>
+            <Link
+              to={
+                (isUnknown ? destLink.props.to : sourceLink.props.to) +
+                '?tab=metrics&groupings=local+version%2Cremote+service%2Cremote+version%2Cresponse+code'
+              }
+            >
+              View detailed charts <Icon name="angle-double-right" />
+            </Link>
+          </p>
           <RateTable
             title="Traffic (requests per second):"
             rate={rate}

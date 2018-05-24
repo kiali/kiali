@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { BrowserRouter, withRouter } from 'react-router-dom';
+import { Router, withRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import './App.css';
 import Navigation from '../containers/NavigationContainer';
 import store from '../store/ConfigStore';
 import axios from 'axios';
 import { GlobalActionKeys } from '../actions/GlobalActions';
+import history from './History';
 
 // intercept all Axios requests and dispatch the LOADING_SPINNER_ON Action
 axios.interceptors.request.use(
@@ -43,9 +44,9 @@ class App extends React.Component {
     const Sidebar = withRouter(Navigation);
     return (
       <Provider store={store}>
-        <BrowserRouter basename="/console">
+        <Router history={history}>
           <Sidebar />
-        </BrowserRouter>
+        </Router>
       </Provider>
     );
   }

@@ -12,6 +12,7 @@ import { Metrics } from '../../types/Metrics';
 import { PfColors } from '../../components/Pf/PfColors';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
+import { Link } from 'react-router-dom';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -111,7 +112,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const serviceSplit = node.data('service').split('.');
     const namespace = serviceSplit.length < 2 ? 'unknown' : serviceSplit[1];
     const service = serviceSplit[0];
-    const serviceHotLink = <a href={`../namespaces/${namespace}/services/${service}`}>{service}</a>;
+    const serviceHotLink = <Link to={`/namespaces/${namespace}/services/${service}`}>{service}</Link>;
 
     const incoming = getTrafficRate(node);
     const outgoing = getAccumulatedTrafficRate(this.props.data.summaryTarget.edgesTo('*'));
@@ -134,6 +135,15 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           {this.renderBadgeSummary(node.data('hasCB'), node.data('hasRR'), node.data('hasMissingSidecars'))}
         </div>
         <div className="panel-body">
+          {!isUnknown && (
+            <p style={{ textAlign: 'right' }}>
+              <Link
+                to={`/namespaces/${namespace}/services/${service}?tab=metrics&groupings=local+version%2Cresponse+code`}
+              >
+                View detailed charts <Icon name="angle-double-right" />
+              </Link>
+            </p>
+          )}
           <InOutRateTable
             title="Request Traffic (requests per second):"
             inRate={incoming.rate}

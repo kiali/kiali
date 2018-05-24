@@ -57,13 +57,14 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
       items: Object.keys(MetricsOptionsBar.GroupByLabelOptions),
       onChange: this.changedGroupByLabel,
       dropdownTitle: 'Group by',
-      resultsTitle: 'Grouping by:'
+      resultsTitle: 'Grouping by:',
+      urlAttrName: 'groupings'
     });
 
     this.state = {
       pollInterval: MetricsOptionsBar.DefaultPollInterval,
       duration: Number(sessionStorage.getItem('appDuration')) || MetricsOptionsBar.DefaultDuration,
-      groupByLabels: []
+      groupByLabels: this.groupByLabelsHelper.selected
     };
   }
 

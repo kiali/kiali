@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { Filter } from 'patternfly-react';
+import history from '../../app/History';
 
 interface Props {
   dropdownTitle: string;
   resultsTitle: string;
   items: string[];
   onChange: (selected: string[]) => void;
+  urlAttrName: string;
 }
 
 interface Item {
@@ -22,13 +24,37 @@ export class ValueSelectHelper {
   constructor(props: Props) {
     this.props = props;
 
-    this.items = props.items.map(name => ({ name: name, selected: false }));
+    this.buildItems();
     this.computeState();
+  }
+
+  buildItems() {
+    // Check whether URL has pre-selection
+    let preSelections: string[] = [];
+    const urlParams = new URLSearchParams(history.location.search);
+    if (urlParams.has(this.props.urlAttrName)) {
+      preSelections = urlParams.get(this.props.urlAttrName)!.split(',');
+    }
+
+    // Build items
+    this.items = this.props.items.map(name => ({ name: name, selected: preSelections.includes(name) }));
   }
 
   computeState() {
     this.available = this.items.filter(it => !it.selected).map(it => it.name);
     this.selected = this.items.filter(it => it.selected).map(it => it.name);
+
+    // Change URL to match selected filters.
+    const urlParams = new URLSearchParams(history.location.search);
+    if (this.selected.length === 0) {
+      urlParams.delete(this.props.urlAttrName);
+    } else {
+      urlParams.set(this.props.urlAttrName, this.selected.join(','));
+    }
+    const newUrlSearch = '?' + urlParams.toString();
+    if (newUrlSearch !== history.location.search) {
+      history.push(history.location.pathname + newUrlSearch);
+    }
   }
 
   add = (key: string) => {
