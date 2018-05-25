@@ -19,8 +19,8 @@ ShallowWrapper {
           "resource_version": "1234",
           "route": Array [
             Object {
-              "labels": Map {
-                "version" => "v1",
+              "labels": Object {
+                "version": "v1",
               },
             },
           ],
@@ -36,8 +36,8 @@ ShallowWrapper {
           "resource_version": "1234",
           "route": Array [
             Object {
-              "labels": Map {
-                "version" => "v2",
+              "labels": Object {
+                "version": "v2",
               },
             },
           ],
@@ -134,8 +134,8 @@ ShallowWrapper {
                 route={
                   Array [
                     Object {
-                      "labels": Map {
-                        "version" => "v1",
+                      "labels": Object {
+                        "version": "v1",
                       },
                     },
                   ]
@@ -207,8 +207,8 @@ ShallowWrapper {
                 route={
                   Array [
                     Object {
-                      "labels": Map {
-                        "version" => "v2",
+                      "labels": Object {
+                        "version": "v2",
                       },
                     },
                   ]
@@ -299,8 +299,8 @@ ShallowWrapper {
                 route={
                   Array [
                     Object {
-                      "labels": Map {
-                        "version" => "v1",
+                      "labels": Object {
+                        "version": "v1",
                       },
                     },
                   ]
@@ -372,8 +372,8 @@ ShallowWrapper {
                 route={
                   Array [
                     Object {
-                      "labels": Map {
-                        "version" => "v2",
+                      "labels": Object {
+                        "version": "v2",
                       },
                     },
                   ]
@@ -457,8 +457,8 @@ ShallowWrapper {
                   route={
                     Array [
                       Object {
-                        "labels": Map {
-                          "version" => "v1",
+                        "labels": Object {
+                          "version": "v1",
                         },
                       },
                     ]
@@ -530,8 +530,8 @@ ShallowWrapper {
                   route={
                     Array [
                       Object {
-                        "labels": Map {
-                          "version" => "v2",
+                        "labels": Object {
+                          "version": "v2",
                         },
                       },
                     ]
@@ -614,8 +614,8 @@ ShallowWrapper {
                     route={
                       Array [
                         Object {
-                          "labels": Map {
-                            "version" => "v1",
+                          "labels": Object {
+                            "version": "v1",
                           },
                         },
                       ]
@@ -889,8 +889,8 @@ ShallowWrapper {
                     route={
                       Array [
                         Object {
-                          "labels": Map {
-                            "version" => "v1",
+                          "labels": Object {
+                            "version": "v1",
                           },
                         },
                       ]
@@ -912,8 +912,8 @@ ShallowWrapper {
                     "name": "reviews-default",
                     "route": Array [
                       Object {
-                        "labels": Map {
-                          "version" => "v1",
+                        "labels": Object {
+                          "version": "v1",
                         },
                       },
                     ],
@@ -993,8 +993,8 @@ ShallowWrapper {
                     route={
                       Array [
                         Object {
-                          "labels": Map {
-                            "version" => "v2",
+                          "labels": Object {
+                            "version": "v2",
                           },
                         },
                       ]
@@ -1268,8 +1268,8 @@ ShallowWrapper {
                     route={
                       Array [
                         Object {
-                          "labels": Map {
-                            "version" => "v2",
+                          "labels": Object {
+                            "version": "v2",
                           },
                         },
                       ]
@@ -1291,8 +1291,8 @@ ShallowWrapper {
                     "name": "reviews-test-v2",
                     "route": Array [
                       Object {
-                        "labels": Map {
-                          "version" => "v2",
+                        "labels": Object {
+                          "version": "v2",
                         },
                       },
                     ],
@@ -1396,8 +1396,8 @@ ShallowWrapper {
                   route={
                     Array [
                       Object {
-                        "labels": Map {
-                          "version" => "v1",
+                        "labels": Object {
+                          "version": "v1",
                         },
                       },
                     ]
@@ -1469,8 +1469,8 @@ ShallowWrapper {
                   route={
                     Array [
                       Object {
-                        "labels": Map {
-                          "version" => "v2",
+                        "labels": Object {
+                          "version": "v2",
                         },
                       },
                     ]
@@ -1561,8 +1561,8 @@ ShallowWrapper {
                   route={
                     Array [
                       Object {
-                        "labels": Map {
-                          "version" => "v1",
+                        "labels": Object {
+                          "version": "v1",
                         },
                       },
                     ]
@@ -1634,8 +1634,8 @@ ShallowWrapper {
                   route={
                     Array [
                       Object {
-                        "labels": Map {
-                          "version" => "v2",
+                        "labels": Object {
+                          "version": "v2",
                         },
                       },
                     ]
@@ -1719,8 +1719,8 @@ ShallowWrapper {
                     route={
                       Array [
                         Object {
-                          "labels": Map {
-                            "version" => "v1",
+                          "labels": Object {
+                            "version": "v1",
                           },
                         },
                       ]
@@ -1792,8 +1792,8 @@ ShallowWrapper {
                     route={
                       Array [
                         Object {
-                          "labels": Map {
-                            "version" => "v2",
+                          "labels": Object {
+                            "version": "v2",
                           },
                         },
                       ]
@@ -1876,8 +1876,8 @@ ShallowWrapper {
                       route={
                         Array [
                           Object {
-                            "labels": Map {
-                              "version" => "v1",
+                            "labels": Object {
+                              "version": "v1",
                             },
                           },
                         ]
@@ -2151,8 +2151,8 @@ ShallowWrapper {
                       route={
                         Array [
                           Object {
-                            "labels": Map {
-                              "version" => "v1",
+                            "labels": Object {
+                              "version": "v1",
                             },
                           },
                         ]
@@ -2174,8 +2174,8 @@ ShallowWrapper {
                       "name": "reviews-default",
                       "route": Array [
                         Object {
-                          "labels": Map {
-                            "version" => "v1",
+                          "labels": Object {
+                            "version": "v1",
                           },
                         },
                       ],
@@ -2255,8 +2255,8 @@ ShallowWrapper {
                       route={
                         Array [
                           Object {
-                            "labels": Map {
-                              "version" => "v2",
+                            "labels": Object {
+                              "version": "v2",
                             },
                           },
                         ]
@@ -2530,8 +2530,8 @@ ShallowWrapper {
                       route={
                         Array [
                           Object {
-                            "labels": Map {
-                              "version" => "v2",
+                            "labels": Object {
+                              "version": "v2",
                             },
                           },
                         ]
@@ -2553,8 +2553,8 @@ ShallowWrapper {
                       "name": "reviews-test-v2",
                       "route": Array [
                         Object {
-                          "labels": Map {
-                            "version" => "v2",
+                          "labels": Object {
+                            "version": "v2",
                           },
                         },
                       ],

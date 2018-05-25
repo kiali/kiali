@@ -38,8 +38,8 @@ ShallowWrapper {
     }
     ip="172.30.78.33"
     labels={
-      Map {
-        "app" => "reviews",
+      Object {
+        "app": "reviews",
       }
     }
     name="reviews"
@@ -78,6 +78,15 @@ ShallowWrapper {
             <strong>
               Labels
             </strong>
+          </div>
+          <div>
+            <Badge
+              color="#0088ce"
+              leftText="app"
+              rightText="reviews"
+              scale={0.8}
+              style="plastic"
+            />
           </div>
           <div>
             <strong>
@@ -257,6 +266,15 @@ ShallowWrapper {
               <strong>
                 Labels
               </strong>
+            </div>
+            <div>
+              <Badge
+                color="#0088ce"
+                leftText="app"
+                rightText="reviews"
+                scale={0.8}
+                style="plastic"
+              />
             </div>
             <div>
               <strong>

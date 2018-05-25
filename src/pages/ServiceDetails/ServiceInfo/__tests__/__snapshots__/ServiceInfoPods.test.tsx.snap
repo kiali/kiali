@@ -1,65 +1,35 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`#ServiceInfoDeployments render correctly with data should render service pods 1`] = `
+exports[`#ServiceInfoPods render correctly with data should render service pods 1`] = `
 ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <ServiceInfoDeployments
-    deployments={
+  Symbol(enzyme.__unrendered__): <ServiceInfoPods
+    pods={
       Array [
         Object {
-          "autoscaler": Object {
-            "max_replicas": 10,
-            "min_replicas": 2,
-            "name": "reviews-v2-autoscaler",
-            "target_cpu_utilization_percentage": 50,
-          },
-          "available_replicas": 3,
-          "created_at": "2018-03-14T10:17:52Z",
+          "createdAt": "2018-03-14T10:17:52Z",
           "labels": Object {
             "app": "reviews",
             "version": "v2",
           },
-          "name": "reviews-v2",
-          "replicas": 5,
-          "resource_version": "1234",
-          "unavailable_replicas": 2,
+          "name": "reviews-v2-1234",
         },
         Object {
-          "autoscaler": Object {
-            "max_replicas": 10,
-            "min_replicas": 2,
-            "name": "reviews-v2-autoscaler",
-            "target_cpu_utilization_percentage": 50,
-          },
-          "available_replicas": 2,
-          "created_at": "2018-03-14T10:17:52Z",
+          "createdAt": "2018-03-14T10:17:52Z",
           "labels": Object {
             "app": "reviews",
             "version": "v3",
           },
-          "name": "reviews-v3",
-          "replicas": 2,
-          "resource_version": "1234",
-          "unavailable_replicas": 0,
+          "name": "reviews-v3-1234",
         },
         Object {
-          "autoscaler": Object {
-            "max_replicas": 10,
-            "min_replicas": 2,
-            "name": "reviews-v2-autoscaler",
-            "target_cpu_utilization_percentage": 50,
-          },
-          "available_replicas": 1,
-          "created_at": "2018-03-14T10:17:52Z",
+          "createdAt": "2018-03-14T10:17:52Z",
           "labels": Object {
             "app": "reviews",
             "version": "v1",
           },
-          "name": "reviews-v1",
-          "replicas": 1,
-          "resource_version": "1234",
-          "unavailable_replicas": 0,
+          "name": "reviews-v1-1234",
         },
       ]
     }
@@ -93,7 +63,7 @@ ShallowWrapper {
             className="card-pf-body"
           >
             <h3>
-              reviews-v2
+              reviews-v2-1234
             </h3>
             <div>
               <Badge
@@ -112,32 +82,6 @@ ShallowWrapper {
               />
             </div>
             <div>
-              <strong>
-                Pod status: 
-              </strong>
-               
-              3
-               / 
-              5
-               
-              <Icon
-                name="warning-triangle-o"
-                type="pf"
-              />
-            </div>
-            <div>
-              <strong>
-                Autoscaler: 
-              </strong>
-              from 
-              2
-               to 
-              10
-               pods (
-              50
-              % CPU)
-            </div>
-            <div>
               <span>
                 <strong>
                   Created at: 
@@ -147,21 +91,13 @@ ShallowWrapper {
                 />
               </span>
             </div>
-            <div>
-              <span>
-                <strong>
-                  Resource Version: 
-                </strong>
-                1234
-              </span>
-            </div>
             <hr />
           </div>
           <div
             className="card-pf-body"
           >
             <h3>
-              reviews-v3
+              reviews-v3-1234
             </h3>
             <div>
               <Badge
@@ -180,32 +116,6 @@ ShallowWrapper {
               />
             </div>
             <div>
-              <strong>
-                Pod status: 
-              </strong>
-               
-              2
-               / 
-              2
-               
-              <Icon
-                name="ok"
-                type="pf"
-              />
-            </div>
-            <div>
-              <strong>
-                Autoscaler: 
-              </strong>
-              from 
-              2
-               to 
-              10
-               pods (
-              50
-              % CPU)
-            </div>
-            <div>
               <span>
                 <strong>
                   Created at: 
@@ -215,21 +125,13 @@ ShallowWrapper {
                 />
               </span>
             </div>
-            <div>
-              <span>
-                <strong>
-                  Resource Version: 
-                </strong>
-                1234
-              </span>
-            </div>
             <hr />
           </div>
           <div
             className="card-pf-body"
           >
             <h3>
-              reviews-v1
+              reviews-v1-1234
             </h3>
             <div>
               <Badge
@@ -248,32 +150,6 @@ ShallowWrapper {
               />
             </div>
             <div>
-              <strong>
-                Pod status: 
-              </strong>
-               
-              1
-               / 
-              1
-               
-              <Icon
-                name="ok"
-                type="pf"
-              />
-            </div>
-            <div>
-              <strong>
-                Autoscaler: 
-              </strong>
-              from 
-              2
-               to 
-              10
-               pods (
-              50
-              % CPU)
-            </div>
-            <div>
               <span>
                 <strong>
                   Created at: 
@@ -281,14 +157,6 @@ ShallowWrapper {
                 <LocalTime
                   time="2018-03-14T10:17:52Z"
                 />
-              </span>
-            </div>
-            <div>
-              <span>
-                <strong>
-                  Resource Version: 
-                </strong>
-                1234
               </span>
             </div>
             <hr />
@@ -316,7 +184,7 @@ ShallowWrapper {
             className="card-pf-body"
           >
             <h3>
-              reviews-v2
+              reviews-v2-1234
             </h3>
             <div>
               <Badge
@@ -335,32 +203,6 @@ ShallowWrapper {
               />
             </div>
             <div>
-              <strong>
-                Pod status: 
-              </strong>
-               
-              3
-               / 
-              5
-               
-              <Icon
-                name="warning-triangle-o"
-                type="pf"
-              />
-            </div>
-            <div>
-              <strong>
-                Autoscaler: 
-              </strong>
-              from 
-              2
-               to 
-              10
-               pods (
-              50
-              % CPU)
-            </div>
-            <div>
               <span>
                 <strong>
                   Created at: 
@@ -370,21 +212,13 @@ ShallowWrapper {
                 />
               </span>
             </div>
-            <div>
-              <span>
-                <strong>
-                  Resource Version: 
-                </strong>
-                1234
-              </span>
-            </div>
             <hr />
           </div>
           <div
             className="card-pf-body"
           >
             <h3>
-              reviews-v3
+              reviews-v3-1234
             </h3>
             <div>
               <Badge
@@ -403,32 +237,6 @@ ShallowWrapper {
               />
             </div>
             <div>
-              <strong>
-                Pod status: 
-              </strong>
-               
-              2
-               / 
-              2
-               
-              <Icon
-                name="ok"
-                type="pf"
-              />
-            </div>
-            <div>
-              <strong>
-                Autoscaler: 
-              </strong>
-              from 
-              2
-               to 
-              10
-               pods (
-              50
-              % CPU)
-            </div>
-            <div>
               <span>
                 <strong>
                   Created at: 
@@ -438,21 +246,13 @@ ShallowWrapper {
                 />
               </span>
             </div>
-            <div>
-              <span>
-                <strong>
-                  Resource Version: 
-                </strong>
-                1234
-              </span>
-            </div>
             <hr />
           </div>
           <div
             className="card-pf-body"
           >
             <h3>
-              reviews-v1
+              reviews-v1-1234
             </h3>
             <div>
               <Badge
@@ -471,32 +271,6 @@ ShallowWrapper {
               />
             </div>
             <div>
-              <strong>
-                Pod status: 
-              </strong>
-               
-              1
-               / 
-              1
-               
-              <Icon
-                name="ok"
-                type="pf"
-              />
-            </div>
-            <div>
-              <strong>
-                Autoscaler: 
-              </strong>
-              from 
-              2
-               to 
-              10
-               pods (
-              50
-              % CPU)
-            </div>
-            <div>
               <span>
                 <strong>
                   Created at: 
@@ -504,14 +278,6 @@ ShallowWrapper {
                 <LocalTime
                   time="2018-03-14T10:17:52Z"
                 />
-              </span>
-            </div>
-            <div>
-              <span>
-                <strong>
-                  Resource Version: 
-                </strong>
-                1234
               </span>
             </div>
             <hr />
@@ -532,7 +298,7 @@ ShallowWrapper {
               className="card-pf-body"
             >
               <h3>
-                reviews-v2
+                reviews-v2-1234
               </h3>
               <div>
                 <Badge
@@ -551,32 +317,6 @@ ShallowWrapper {
                 />
               </div>
               <div>
-                <strong>
-                  Pod status: 
-                </strong>
-                 
-                3
-                 / 
-                5
-                 
-                <Icon
-                  name="warning-triangle-o"
-                  type="pf"
-                />
-              </div>
-              <div>
-                <strong>
-                  Autoscaler: 
-                </strong>
-                from 
-                2
-                 to 
-                10
-                 pods (
-                50
-                % CPU)
-              </div>
-              <div>
                 <span>
                   <strong>
                     Created at: 
@@ -586,21 +326,13 @@ ShallowWrapper {
                   />
                 </span>
               </div>
-              <div>
-                <span>
-                  <strong>
-                    Resource Version: 
-                  </strong>
-                  1234
-                </span>
-              </div>
               <hr />
             </div>,
             <div
               className="card-pf-body"
             >
               <h3>
-                reviews-v3
+                reviews-v3-1234
               </h3>
               <div>
                 <Badge
@@ -619,32 +351,6 @@ ShallowWrapper {
                 />
               </div>
               <div>
-                <strong>
-                  Pod status: 
-                </strong>
-                 
-                2
-                 / 
-                2
-                 
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-              </div>
-              <div>
-                <strong>
-                  Autoscaler: 
-                </strong>
-                from 
-                2
-                 to 
-                10
-                 pods (
-                50
-                % CPU)
-              </div>
-              <div>
                 <span>
                   <strong>
                     Created at: 
@@ -654,21 +360,13 @@ ShallowWrapper {
                   />
                 </span>
               </div>
-              <div>
-                <span>
-                  <strong>
-                    Resource Version: 
-                  </strong>
-                  1234
-                </span>
-              </div>
               <hr />
             </div>,
             <div
               className="card-pf-body"
             >
               <h3>
-                reviews-v1
+                reviews-v1-1234
               </h3>
               <div>
                 <Badge
@@ -687,32 +385,6 @@ ShallowWrapper {
                 />
               </div>
               <div>
-                <strong>
-                  Pod status: 
-                </strong>
-                 
-                1
-                 / 
-                1
-                 
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-              </div>
-              <div>
-                <strong>
-                  Autoscaler: 
-                </strong>
-                from 
-                2
-                 to 
-                10
-                 pods (
-                50
-                % CPU)
-              </div>
-              <div>
                 <span>
                   <strong>
                     Created at: 
@@ -720,14 +392,6 @@ ShallowWrapper {
                   <LocalTime
                     time="2018-03-14T10:17:52Z"
                   />
-                </span>
-              </div>
-              <div>
-                <span>
-                  <strong>
-                    Resource Version: 
-                  </strong>
-                  1234
                 </span>
               </div>
               <hr />
@@ -743,12 +407,12 @@ ShallowWrapper {
         "rendered": Array [
           Object {
             "instance": null,
-            "key": "deployments_0",
+            "key": "pods_0",
             "nodeType": "host",
             "props": Object {
               "children": Array [
                 <h3>
-                  reviews-v2
+                  reviews-v2-1234
                 </h3>,
                 <div>
                   <Badge
@@ -767,32 +431,6 @@ ShallowWrapper {
                   />
                 </div>,
                 <div>
-                  <strong>
-                    Pod status: 
-                  </strong>
-                   
-                  3
-                   / 
-                  5
-                   
-                  <Icon
-                    name="warning-triangle-o"
-                    type="pf"
-                  />
-                </div>,
-                <div>
-                  <strong>
-                    Autoscaler: 
-                  </strong>
-                  from 
-                  2
-                   to 
-                  10
-                   pods (
-                  50
-                  % CPU)
-                </div>,
-                <div>
                   <span>
                     <strong>
                       Created at: 
@@ -802,14 +440,9 @@ ShallowWrapper {
                     />
                   </span>
                 </div>,
-                <div>
-                  <span>
-                    <strong>
-                      Resource Version: 
-                    </strong>
-                    1234
-                  </span>
-                </div>,
+                undefined,
+                undefined,
+                undefined,
                 <hr />,
               ],
               "className": "card-pf-body",
@@ -821,10 +454,10 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "host",
                 "props": Object {
-                  "children": "reviews-v2",
+                  "children": "reviews-v2-1234",
                 },
                 "ref": null,
-                "rendered": "reviews-v2",
+                "rendered": "reviews-v2-1234",
                 "type": "h3",
               },
               Object {
@@ -853,7 +486,7 @@ ShallowWrapper {
                 "rendered": Array [
                   Object {
                     "instance": null,
-                    "key": "deployment_0",
+                    "key": "pod_0",
                     "nodeType": "class",
                     "props": Object {
                       "color": "#3f9c35",
@@ -868,7 +501,7 @@ ShallowWrapper {
                   },
                   Object {
                     "instance": null,
-                    "key": "deployment_1",
+                    "key": "pod_1",
                     "nodeType": "class",
                     "props": Object {
                       "color": "#3f9c35",
@@ -881,100 +514,6 @@ ShallowWrapper {
                     "rendered": null,
                     "type": [Function],
                   },
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Pod status: 
-                    </strong>,
-                    " ",
-                    3,
-                    " / ",
-                    5,
-                    " ",
-                    <Icon
-                      name="warning-triangle-o"
-                      type="pf"
-                    />,
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Pod status: ",
-                    },
-                    "ref": null,
-                    "rendered": "Pod status: ",
-                    "type": "strong",
-                  },
-                  " ",
-                  3,
-                  " / ",
-                  5,
-                  " ",
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "function",
-                    "props": Object {
-                      "name": "warning-triangle-o",
-                      "type": "pf",
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Autoscaler: 
-                    </strong>,
-                    "from ",
-                    2,
-                    " to ",
-                    10,
-                    " pods (",
-                    50,
-                    "% CPU)",
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Autoscaler: ",
-                    },
-                    "ref": null,
-                    "rendered": "Autoscaler: ",
-                    "type": "strong",
-                  },
-                  "from ",
-                  2,
-                  " to ",
-                  10,
-                  " pods (",
-                  50,
-                  "% CPU)",
                 ],
                 "type": "div",
               },
@@ -1036,50 +575,9 @@ ShallowWrapper {
                 },
                 "type": "div",
               },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": <span>
-                    <strong>
-                      Resource Version: 
-                    </strong>
-                    1234
-                  </span>,
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Resource Version: 
-                      </strong>,
-                      "1234",
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Resource Version: ",
-                      },
-                      "ref": null,
-                      "rendered": "Resource Version: ",
-                      "type": "strong",
-                    },
-                    "1234",
-                  ],
-                  "type": "span",
-                },
-                "type": "div",
-              },
+              undefined,
+              undefined,
+              undefined,
               Object {
                 "instance": null,
                 "key": undefined,
@@ -1094,12 +592,12 @@ ShallowWrapper {
           },
           Object {
             "instance": null,
-            "key": "deployments_1",
+            "key": "pods_1",
             "nodeType": "host",
             "props": Object {
               "children": Array [
                 <h3>
-                  reviews-v3
+                  reviews-v3-1234
                 </h3>,
                 <div>
                   <Badge
@@ -1118,32 +616,6 @@ ShallowWrapper {
                   />
                 </div>,
                 <div>
-                  <strong>
-                    Pod status: 
-                  </strong>
-                   
-                  2
-                   / 
-                  2
-                   
-                  <Icon
-                    name="ok"
-                    type="pf"
-                  />
-                </div>,
-                <div>
-                  <strong>
-                    Autoscaler: 
-                  </strong>
-                  from 
-                  2
-                   to 
-                  10
-                   pods (
-                  50
-                  % CPU)
-                </div>,
-                <div>
                   <span>
                     <strong>
                       Created at: 
@@ -1153,14 +625,9 @@ ShallowWrapper {
                     />
                   </span>
                 </div>,
-                <div>
-                  <span>
-                    <strong>
-                      Resource Version: 
-                    </strong>
-                    1234
-                  </span>
-                </div>,
+                undefined,
+                undefined,
+                undefined,
                 <hr />,
               ],
               "className": "card-pf-body",
@@ -1172,10 +639,10 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "host",
                 "props": Object {
-                  "children": "reviews-v3",
+                  "children": "reviews-v3-1234",
                 },
                 "ref": null,
-                "rendered": "reviews-v3",
+                "rendered": "reviews-v3-1234",
                 "type": "h3",
               },
               Object {
@@ -1204,7 +671,7 @@ ShallowWrapper {
                 "rendered": Array [
                   Object {
                     "instance": null,
-                    "key": "deployment_0",
+                    "key": "pod_0",
                     "nodeType": "class",
                     "props": Object {
                       "color": "#3f9c35",
@@ -1219,7 +686,7 @@ ShallowWrapper {
                   },
                   Object {
                     "instance": null,
-                    "key": "deployment_1",
+                    "key": "pod_1",
                     "nodeType": "class",
                     "props": Object {
                       "color": "#3f9c35",
@@ -1232,100 +699,6 @@ ShallowWrapper {
                     "rendered": null,
                     "type": [Function],
                   },
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Pod status: 
-                    </strong>,
-                    " ",
-                    2,
-                    " / ",
-                    2,
-                    " ",
-                    <Icon
-                      name="ok"
-                      type="pf"
-                    />,
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Pod status: ",
-                    },
-                    "ref": null,
-                    "rendered": "Pod status: ",
-                    "type": "strong",
-                  },
-                  " ",
-                  2,
-                  " / ",
-                  2,
-                  " ",
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "function",
-                    "props": Object {
-                      "name": "ok",
-                      "type": "pf",
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Autoscaler: 
-                    </strong>,
-                    "from ",
-                    2,
-                    " to ",
-                    10,
-                    " pods (",
-                    50,
-                    "% CPU)",
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Autoscaler: ",
-                    },
-                    "ref": null,
-                    "rendered": "Autoscaler: ",
-                    "type": "strong",
-                  },
-                  "from ",
-                  2,
-                  " to ",
-                  10,
-                  " pods (",
-                  50,
-                  "% CPU)",
                 ],
                 "type": "div",
               },
@@ -1387,50 +760,9 @@ ShallowWrapper {
                 },
                 "type": "div",
               },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": <span>
-                    <strong>
-                      Resource Version: 
-                    </strong>
-                    1234
-                  </span>,
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Resource Version: 
-                      </strong>,
-                      "1234",
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Resource Version: ",
-                      },
-                      "ref": null,
-                      "rendered": "Resource Version: ",
-                      "type": "strong",
-                    },
-                    "1234",
-                  ],
-                  "type": "span",
-                },
-                "type": "div",
-              },
+              undefined,
+              undefined,
+              undefined,
               Object {
                 "instance": null,
                 "key": undefined,
@@ -1445,12 +777,12 @@ ShallowWrapper {
           },
           Object {
             "instance": null,
-            "key": "deployments_2",
+            "key": "pods_2",
             "nodeType": "host",
             "props": Object {
               "children": Array [
                 <h3>
-                  reviews-v1
+                  reviews-v1-1234
                 </h3>,
                 <div>
                   <Badge
@@ -1469,32 +801,6 @@ ShallowWrapper {
                   />
                 </div>,
                 <div>
-                  <strong>
-                    Pod status: 
-                  </strong>
-                   
-                  1
-                   / 
-                  1
-                   
-                  <Icon
-                    name="ok"
-                    type="pf"
-                  />
-                </div>,
-                <div>
-                  <strong>
-                    Autoscaler: 
-                  </strong>
-                  from 
-                  2
-                   to 
-                  10
-                   pods (
-                  50
-                  % CPU)
-                </div>,
-                <div>
                   <span>
                     <strong>
                       Created at: 
@@ -1504,14 +810,9 @@ ShallowWrapper {
                     />
                   </span>
                 </div>,
-                <div>
-                  <span>
-                    <strong>
-                      Resource Version: 
-                    </strong>
-                    1234
-                  </span>
-                </div>,
+                undefined,
+                undefined,
+                undefined,
                 <hr />,
               ],
               "className": "card-pf-body",
@@ -1523,10 +824,10 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "host",
                 "props": Object {
-                  "children": "reviews-v1",
+                  "children": "reviews-v1-1234",
                 },
                 "ref": null,
-                "rendered": "reviews-v1",
+                "rendered": "reviews-v1-1234",
                 "type": "h3",
               },
               Object {
@@ -1555,7 +856,7 @@ ShallowWrapper {
                 "rendered": Array [
                   Object {
                     "instance": null,
-                    "key": "deployment_0",
+                    "key": "pod_0",
                     "nodeType": "class",
                     "props": Object {
                       "color": "#3f9c35",
@@ -1570,7 +871,7 @@ ShallowWrapper {
                   },
                   Object {
                     "instance": null,
-                    "key": "deployment_1",
+                    "key": "pod_1",
                     "nodeType": "class",
                     "props": Object {
                       "color": "#3f9c35",
@@ -1583,100 +884,6 @@ ShallowWrapper {
                     "rendered": null,
                     "type": [Function],
                   },
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Pod status: 
-                    </strong>,
-                    " ",
-                    1,
-                    " / ",
-                    1,
-                    " ",
-                    <Icon
-                      name="ok"
-                      type="pf"
-                    />,
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Pod status: ",
-                    },
-                    "ref": null,
-                    "rendered": "Pod status: ",
-                    "type": "strong",
-                  },
-                  " ",
-                  1,
-                  " / ",
-                  1,
-                  " ",
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "function",
-                    "props": Object {
-                      "name": "ok",
-                      "type": "pf",
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <strong>
-                      Autoscaler: 
-                    </strong>,
-                    "from ",
-                    2,
-                    " to ",
-                    10,
-                    " pods (",
-                    50,
-                    "% CPU)",
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Autoscaler: ",
-                    },
-                    "ref": null,
-                    "rendered": "Autoscaler: ",
-                    "type": "strong",
-                  },
-                  "from ",
-                  2,
-                  " to ",
-                  10,
-                  " pods (",
-                  50,
-                  "% CPU)",
                 ],
                 "type": "div",
               },
@@ -1738,50 +945,9 @@ ShallowWrapper {
                 },
                 "type": "div",
               },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": <span>
-                    <strong>
-                      Resource Version: 
-                    </strong>
-                    1234
-                  </span>,
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Resource Version: 
-                      </strong>,
-                      "1234",
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Resource Version: ",
-                      },
-                      "ref": null,
-                      "rendered": "Resource Version: ",
-                      "type": "strong",
-                    },
-                    "1234",
-                  ],
-                  "type": "span",
-                },
-                "type": "div",
-              },
+              undefined,
+              undefined,
+              undefined,
               Object {
                 "instance": null,
                 "key": undefined,
@@ -1824,7 +990,7 @@ ShallowWrapper {
               className="card-pf-body"
             >
               <h3>
-                reviews-v2
+                reviews-v2-1234
               </h3>
               <div>
                 <Badge
@@ -1843,32 +1009,6 @@ ShallowWrapper {
                 />
               </div>
               <div>
-                <strong>
-                  Pod status: 
-                </strong>
-                 
-                3
-                 / 
-                5
-                 
-                <Icon
-                  name="warning-triangle-o"
-                  type="pf"
-                />
-              </div>
-              <div>
-                <strong>
-                  Autoscaler: 
-                </strong>
-                from 
-                2
-                 to 
-                10
-                 pods (
-                50
-                % CPU)
-              </div>
-              <div>
                 <span>
                   <strong>
                     Created at: 
@@ -1878,21 +1018,13 @@ ShallowWrapper {
                   />
                 </span>
               </div>
-              <div>
-                <span>
-                  <strong>
-                    Resource Version: 
-                  </strong>
-                  1234
-                </span>
-              </div>
               <hr />
             </div>
             <div
               className="card-pf-body"
             >
               <h3>
-                reviews-v3
+                reviews-v3-1234
               </h3>
               <div>
                 <Badge
@@ -1911,32 +1043,6 @@ ShallowWrapper {
                 />
               </div>
               <div>
-                <strong>
-                  Pod status: 
-                </strong>
-                 
-                2
-                 / 
-                2
-                 
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-              </div>
-              <div>
-                <strong>
-                  Autoscaler: 
-                </strong>
-                from 
-                2
-                 to 
-                10
-                 pods (
-                50
-                % CPU)
-              </div>
-              <div>
                 <span>
                   <strong>
                     Created at: 
@@ -1946,21 +1052,13 @@ ShallowWrapper {
                   />
                 </span>
               </div>
-              <div>
-                <span>
-                  <strong>
-                    Resource Version: 
-                  </strong>
-                  1234
-                </span>
-              </div>
               <hr />
             </div>
             <div
               className="card-pf-body"
             >
               <h3>
-                reviews-v1
+                reviews-v1-1234
               </h3>
               <div>
                 <Badge
@@ -1979,32 +1077,6 @@ ShallowWrapper {
                 />
               </div>
               <div>
-                <strong>
-                  Pod status: 
-                </strong>
-                 
-                1
-                 / 
-                1
-                 
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-              </div>
-              <div>
-                <strong>
-                  Autoscaler: 
-                </strong>
-                from 
-                2
-                 to 
-                10
-                 pods (
-                50
-                % CPU)
-              </div>
-              <div>
                 <span>
                   <strong>
                     Created at: 
@@ -2012,14 +1084,6 @@ ShallowWrapper {
                   <LocalTime
                     time="2018-03-14T10:17:52Z"
                   />
-                </span>
-              </div>
-              <div>
-                <span>
-                  <strong>
-                    Resource Version: 
-                  </strong>
-                  1234
                 </span>
               </div>
               <hr />
@@ -2047,7 +1111,7 @@ ShallowWrapper {
               className="card-pf-body"
             >
               <h3>
-                reviews-v2
+                reviews-v2-1234
               </h3>
               <div>
                 <Badge
@@ -2066,32 +1130,6 @@ ShallowWrapper {
                 />
               </div>
               <div>
-                <strong>
-                  Pod status: 
-                </strong>
-                 
-                3
-                 / 
-                5
-                 
-                <Icon
-                  name="warning-triangle-o"
-                  type="pf"
-                />
-              </div>
-              <div>
-                <strong>
-                  Autoscaler: 
-                </strong>
-                from 
-                2
-                 to 
-                10
-                 pods (
-                50
-                % CPU)
-              </div>
-              <div>
                 <span>
                   <strong>
                     Created at: 
@@ -2101,21 +1139,13 @@ ShallowWrapper {
                   />
                 </span>
               </div>
-              <div>
-                <span>
-                  <strong>
-                    Resource Version: 
-                  </strong>
-                  1234
-                </span>
-              </div>
               <hr />
             </div>
             <div
               className="card-pf-body"
             >
               <h3>
-                reviews-v3
+                reviews-v3-1234
               </h3>
               <div>
                 <Badge
@@ -2134,32 +1164,6 @@ ShallowWrapper {
                 />
               </div>
               <div>
-                <strong>
-                  Pod status: 
-                </strong>
-                 
-                2
-                 / 
-                2
-                 
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-              </div>
-              <div>
-                <strong>
-                  Autoscaler: 
-                </strong>
-                from 
-                2
-                 to 
-                10
-                 pods (
-                50
-                % CPU)
-              </div>
-              <div>
                 <span>
                   <strong>
                     Created at: 
@@ -2169,21 +1173,13 @@ ShallowWrapper {
                   />
                 </span>
               </div>
-              <div>
-                <span>
-                  <strong>
-                    Resource Version: 
-                  </strong>
-                  1234
-                </span>
-              </div>
               <hr />
             </div>
             <div
               className="card-pf-body"
             >
               <h3>
-                reviews-v1
+                reviews-v1-1234
               </h3>
               <div>
                 <Badge
@@ -2202,32 +1198,6 @@ ShallowWrapper {
                 />
               </div>
               <div>
-                <strong>
-                  Pod status: 
-                </strong>
-                 
-                1
-                 / 
-                1
-                 
-                <Icon
-                  name="ok"
-                  type="pf"
-                />
-              </div>
-              <div>
-                <strong>
-                  Autoscaler: 
-                </strong>
-                from 
-                2
-                 to 
-                10
-                 pods (
-                50
-                % CPU)
-              </div>
-              <div>
                 <span>
                   <strong>
                     Created at: 
@@ -2235,14 +1205,6 @@ ShallowWrapper {
                   <LocalTime
                     time="2018-03-14T10:17:52Z"
                   />
-                </span>
-              </div>
-              <div>
-                <span>
-                  <strong>
-                    Resource Version: 
-                  </strong>
-                  1234
                 </span>
               </div>
               <hr />
@@ -2263,7 +1225,7 @@ ShallowWrapper {
                 className="card-pf-body"
               >
                 <h3>
-                  reviews-v2
+                  reviews-v2-1234
                 </h3>
                 <div>
                   <Badge
@@ -2282,32 +1244,6 @@ ShallowWrapper {
                   />
                 </div>
                 <div>
-                  <strong>
-                    Pod status: 
-                  </strong>
-                   
-                  3
-                   / 
-                  5
-                   
-                  <Icon
-                    name="warning-triangle-o"
-                    type="pf"
-                  />
-                </div>
-                <div>
-                  <strong>
-                    Autoscaler: 
-                  </strong>
-                  from 
-                  2
-                   to 
-                  10
-                   pods (
-                  50
-                  % CPU)
-                </div>
-                <div>
                   <span>
                     <strong>
                       Created at: 
@@ -2317,21 +1253,13 @@ ShallowWrapper {
                     />
                   </span>
                 </div>
-                <div>
-                  <span>
-                    <strong>
-                      Resource Version: 
-                    </strong>
-                    1234
-                  </span>
-                </div>
                 <hr />
               </div>,
               <div
                 className="card-pf-body"
               >
                 <h3>
-                  reviews-v3
+                  reviews-v3-1234
                 </h3>
                 <div>
                   <Badge
@@ -2350,32 +1278,6 @@ ShallowWrapper {
                   />
                 </div>
                 <div>
-                  <strong>
-                    Pod status: 
-                  </strong>
-                   
-                  2
-                   / 
-                  2
-                   
-                  <Icon
-                    name="ok"
-                    type="pf"
-                  />
-                </div>
-                <div>
-                  <strong>
-                    Autoscaler: 
-                  </strong>
-                  from 
-                  2
-                   to 
-                  10
-                   pods (
-                  50
-                  % CPU)
-                </div>
-                <div>
                   <span>
                     <strong>
                       Created at: 
@@ -2385,21 +1287,13 @@ ShallowWrapper {
                     />
                   </span>
                 </div>
-                <div>
-                  <span>
-                    <strong>
-                      Resource Version: 
-                    </strong>
-                    1234
-                  </span>
-                </div>
                 <hr />
               </div>,
               <div
                 className="card-pf-body"
               >
                 <h3>
-                  reviews-v1
+                  reviews-v1-1234
                 </h3>
                 <div>
                   <Badge
@@ -2418,32 +1312,6 @@ ShallowWrapper {
                   />
                 </div>
                 <div>
-                  <strong>
-                    Pod status: 
-                  </strong>
-                   
-                  1
-                   / 
-                  1
-                   
-                  <Icon
-                    name="ok"
-                    type="pf"
-                  />
-                </div>
-                <div>
-                  <strong>
-                    Autoscaler: 
-                  </strong>
-                  from 
-                  2
-                   to 
-                  10
-                   pods (
-                  50
-                  % CPU)
-                </div>
-                <div>
                   <span>
                     <strong>
                       Created at: 
@@ -2451,14 +1319,6 @@ ShallowWrapper {
                     <LocalTime
                       time="2018-03-14T10:17:52Z"
                     />
-                  </span>
-                </div>
-                <div>
-                  <span>
-                    <strong>
-                      Resource Version: 
-                    </strong>
-                    1234
                   </span>
                 </div>
                 <hr />
@@ -2474,12 +1334,12 @@ ShallowWrapper {
           "rendered": Array [
             Object {
               "instance": null,
-              "key": "deployments_0",
+              "key": "pods_0",
               "nodeType": "host",
               "props": Object {
                 "children": Array [
                   <h3>
-                    reviews-v2
+                    reviews-v2-1234
                   </h3>,
                   <div>
                     <Badge
@@ -2498,32 +1358,6 @@ ShallowWrapper {
                     />
                   </div>,
                   <div>
-                    <strong>
-                      Pod status: 
-                    </strong>
-                     
-                    3
-                     / 
-                    5
-                     
-                    <Icon
-                      name="warning-triangle-o"
-                      type="pf"
-                    />
-                  </div>,
-                  <div>
-                    <strong>
-                      Autoscaler: 
-                    </strong>
-                    from 
-                    2
-                     to 
-                    10
-                     pods (
-                    50
-                    % CPU)
-                  </div>,
-                  <div>
                     <span>
                       <strong>
                         Created at: 
@@ -2533,14 +1367,9 @@ ShallowWrapper {
                       />
                     </span>
                   </div>,
-                  <div>
-                    <span>
-                      <strong>
-                        Resource Version: 
-                      </strong>
-                      1234
-                    </span>
-                  </div>,
+                  undefined,
+                  undefined,
+                  undefined,
                   <hr />,
                 ],
                 "className": "card-pf-body",
@@ -2552,10 +1381,10 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "host",
                   "props": Object {
-                    "children": "reviews-v2",
+                    "children": "reviews-v2-1234",
                   },
                   "ref": null,
-                  "rendered": "reviews-v2",
+                  "rendered": "reviews-v2-1234",
                   "type": "h3",
                 },
                 Object {
@@ -2584,7 +1413,7 @@ ShallowWrapper {
                   "rendered": Array [
                     Object {
                       "instance": null,
-                      "key": "deployment_0",
+                      "key": "pod_0",
                       "nodeType": "class",
                       "props": Object {
                         "color": "#3f9c35",
@@ -2599,7 +1428,7 @@ ShallowWrapper {
                     },
                     Object {
                       "instance": null,
-                      "key": "deployment_1",
+                      "key": "pod_1",
                       "nodeType": "class",
                       "props": Object {
                         "color": "#3f9c35",
@@ -2612,100 +1441,6 @@ ShallowWrapper {
                       "rendered": null,
                       "type": [Function],
                     },
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Pod status: 
-                      </strong>,
-                      " ",
-                      3,
-                      " / ",
-                      5,
-                      " ",
-                      <Icon
-                        name="warning-triangle-o"
-                        type="pf"
-                      />,
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Pod status: ",
-                      },
-                      "ref": null,
-                      "rendered": "Pod status: ",
-                      "type": "strong",
-                    },
-                    " ",
-                    3,
-                    " / ",
-                    5,
-                    " ",
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "function",
-                      "props": Object {
-                        "name": "warning-triangle-o",
-                        "type": "pf",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Autoscaler: 
-                      </strong>,
-                      "from ",
-                      2,
-                      " to ",
-                      10,
-                      " pods (",
-                      50,
-                      "% CPU)",
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Autoscaler: ",
-                      },
-                      "ref": null,
-                      "rendered": "Autoscaler: ",
-                      "type": "strong",
-                    },
-                    "from ",
-                    2,
-                    " to ",
-                    10,
-                    " pods (",
-                    50,
-                    "% CPU)",
                   ],
                   "type": "div",
                 },
@@ -2767,50 +1502,9 @@ ShallowWrapper {
                   },
                   "type": "div",
                 },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": <span>
-                      <strong>
-                        Resource Version: 
-                      </strong>
-                      1234
-                    </span>,
-                  },
-                  "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": Array [
-                        <strong>
-                          Resource Version: 
-                        </strong>,
-                        "1234",
-                      ],
-                    },
-                    "ref": null,
-                    "rendered": Array [
-                      Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "host",
-                        "props": Object {
-                          "children": "Resource Version: ",
-                        },
-                        "ref": null,
-                        "rendered": "Resource Version: ",
-                        "type": "strong",
-                      },
-                      "1234",
-                    ],
-                    "type": "span",
-                  },
-                  "type": "div",
-                },
+                undefined,
+                undefined,
+                undefined,
                 Object {
                   "instance": null,
                   "key": undefined,
@@ -2825,12 +1519,12 @@ ShallowWrapper {
             },
             Object {
               "instance": null,
-              "key": "deployments_1",
+              "key": "pods_1",
               "nodeType": "host",
               "props": Object {
                 "children": Array [
                   <h3>
-                    reviews-v3
+                    reviews-v3-1234
                   </h3>,
                   <div>
                     <Badge
@@ -2849,32 +1543,6 @@ ShallowWrapper {
                     />
                   </div>,
                   <div>
-                    <strong>
-                      Pod status: 
-                    </strong>
-                     
-                    2
-                     / 
-                    2
-                     
-                    <Icon
-                      name="ok"
-                      type="pf"
-                    />
-                  </div>,
-                  <div>
-                    <strong>
-                      Autoscaler: 
-                    </strong>
-                    from 
-                    2
-                     to 
-                    10
-                     pods (
-                    50
-                    % CPU)
-                  </div>,
-                  <div>
                     <span>
                       <strong>
                         Created at: 
@@ -2884,14 +1552,9 @@ ShallowWrapper {
                       />
                     </span>
                   </div>,
-                  <div>
-                    <span>
-                      <strong>
-                        Resource Version: 
-                      </strong>
-                      1234
-                    </span>
-                  </div>,
+                  undefined,
+                  undefined,
+                  undefined,
                   <hr />,
                 ],
                 "className": "card-pf-body",
@@ -2903,10 +1566,10 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "host",
                   "props": Object {
-                    "children": "reviews-v3",
+                    "children": "reviews-v3-1234",
                   },
                   "ref": null,
-                  "rendered": "reviews-v3",
+                  "rendered": "reviews-v3-1234",
                   "type": "h3",
                 },
                 Object {
@@ -2935,7 +1598,7 @@ ShallowWrapper {
                   "rendered": Array [
                     Object {
                       "instance": null,
-                      "key": "deployment_0",
+                      "key": "pod_0",
                       "nodeType": "class",
                       "props": Object {
                         "color": "#3f9c35",
@@ -2950,7 +1613,7 @@ ShallowWrapper {
                     },
                     Object {
                       "instance": null,
-                      "key": "deployment_1",
+                      "key": "pod_1",
                       "nodeType": "class",
                       "props": Object {
                         "color": "#3f9c35",
@@ -2963,100 +1626,6 @@ ShallowWrapper {
                       "rendered": null,
                       "type": [Function],
                     },
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Pod status: 
-                      </strong>,
-                      " ",
-                      2,
-                      " / ",
-                      2,
-                      " ",
-                      <Icon
-                        name="ok"
-                        type="pf"
-                      />,
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Pod status: ",
-                      },
-                      "ref": null,
-                      "rendered": "Pod status: ",
-                      "type": "strong",
-                    },
-                    " ",
-                    2,
-                    " / ",
-                    2,
-                    " ",
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "function",
-                      "props": Object {
-                        "name": "ok",
-                        "type": "pf",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Autoscaler: 
-                      </strong>,
-                      "from ",
-                      2,
-                      " to ",
-                      10,
-                      " pods (",
-                      50,
-                      "% CPU)",
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Autoscaler: ",
-                      },
-                      "ref": null,
-                      "rendered": "Autoscaler: ",
-                      "type": "strong",
-                    },
-                    "from ",
-                    2,
-                    " to ",
-                    10,
-                    " pods (",
-                    50,
-                    "% CPU)",
                   ],
                   "type": "div",
                 },
@@ -3118,50 +1687,9 @@ ShallowWrapper {
                   },
                   "type": "div",
                 },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": <span>
-                      <strong>
-                        Resource Version: 
-                      </strong>
-                      1234
-                    </span>,
-                  },
-                  "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": Array [
-                        <strong>
-                          Resource Version: 
-                        </strong>,
-                        "1234",
-                      ],
-                    },
-                    "ref": null,
-                    "rendered": Array [
-                      Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "host",
-                        "props": Object {
-                          "children": "Resource Version: ",
-                        },
-                        "ref": null,
-                        "rendered": "Resource Version: ",
-                        "type": "strong",
-                      },
-                      "1234",
-                    ],
-                    "type": "span",
-                  },
-                  "type": "div",
-                },
+                undefined,
+                undefined,
+                undefined,
                 Object {
                   "instance": null,
                   "key": undefined,
@@ -3176,12 +1704,12 @@ ShallowWrapper {
             },
             Object {
               "instance": null,
-              "key": "deployments_2",
+              "key": "pods_2",
               "nodeType": "host",
               "props": Object {
                 "children": Array [
                   <h3>
-                    reviews-v1
+                    reviews-v1-1234
                   </h3>,
                   <div>
                     <Badge
@@ -3200,32 +1728,6 @@ ShallowWrapper {
                     />
                   </div>,
                   <div>
-                    <strong>
-                      Pod status: 
-                    </strong>
-                     
-                    1
-                     / 
-                    1
-                     
-                    <Icon
-                      name="ok"
-                      type="pf"
-                    />
-                  </div>,
-                  <div>
-                    <strong>
-                      Autoscaler: 
-                    </strong>
-                    from 
-                    2
-                     to 
-                    10
-                     pods (
-                    50
-                    % CPU)
-                  </div>,
-                  <div>
                     <span>
                       <strong>
                         Created at: 
@@ -3235,14 +1737,9 @@ ShallowWrapper {
                       />
                     </span>
                   </div>,
-                  <div>
-                    <span>
-                      <strong>
-                        Resource Version: 
-                      </strong>
-                      1234
-                    </span>
-                  </div>,
+                  undefined,
+                  undefined,
+                  undefined,
                   <hr />,
                 ],
                 "className": "card-pf-body",
@@ -3254,10 +1751,10 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "host",
                   "props": Object {
-                    "children": "reviews-v1",
+                    "children": "reviews-v1-1234",
                   },
                   "ref": null,
-                  "rendered": "reviews-v1",
+                  "rendered": "reviews-v1-1234",
                   "type": "h3",
                 },
                 Object {
@@ -3286,7 +1783,7 @@ ShallowWrapper {
                   "rendered": Array [
                     Object {
                       "instance": null,
-                      "key": "deployment_0",
+                      "key": "pod_0",
                       "nodeType": "class",
                       "props": Object {
                         "color": "#3f9c35",
@@ -3301,7 +1798,7 @@ ShallowWrapper {
                     },
                     Object {
                       "instance": null,
-                      "key": "deployment_1",
+                      "key": "pod_1",
                       "nodeType": "class",
                       "props": Object {
                         "color": "#3f9c35",
@@ -3314,100 +1811,6 @@ ShallowWrapper {
                       "rendered": null,
                       "type": [Function],
                     },
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Pod status: 
-                      </strong>,
-                      " ",
-                      1,
-                      " / ",
-                      1,
-                      " ",
-                      <Icon
-                        name="ok"
-                        type="pf"
-                      />,
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Pod status: ",
-                      },
-                      "ref": null,
-                      "rendered": "Pod status: ",
-                      "type": "strong",
-                    },
-                    " ",
-                    1,
-                    " / ",
-                    1,
-                    " ",
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "function",
-                      "props": Object {
-                        "name": "ok",
-                        "type": "pf",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Autoscaler: 
-                      </strong>,
-                      "from ",
-                      2,
-                      " to ",
-                      10,
-                      " pods (",
-                      50,
-                      "% CPU)",
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Autoscaler: ",
-                      },
-                      "ref": null,
-                      "rendered": "Autoscaler: ",
-                      "type": "strong",
-                    },
-                    "from ",
-                    2,
-                    " to ",
-                    10,
-                    " pods (",
-                    50,
-                    "% CPU)",
                   ],
                   "type": "div",
                 },
@@ -3469,50 +1872,9 @@ ShallowWrapper {
                   },
                   "type": "div",
                 },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": <span>
-                      <strong>
-                        Resource Version: 
-                      </strong>
-                      1234
-                    </span>,
-                  },
-                  "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": Array [
-                        <strong>
-                          Resource Version: 
-                        </strong>,
-                        "1234",
-                      ],
-                    },
-                    "ref": null,
-                    "rendered": Array [
-                      Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "host",
-                        "props": Object {
-                          "children": "Resource Version: ",
-                        },
-                        "ref": null,
-                        "rendered": "Resource Version: ",
-                        "type": "strong",
-                      },
-                      "1234",
-                    ],
-                    "type": "span",
-                  },
-                  "type": "div",
-                },
+                undefined,
+                undefined,
+                undefined,
                 Object {
                   "instance": null,
                   "key": undefined,

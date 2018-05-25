@@ -96,8 +96,8 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
     return <Popover id={this.props.name + '-weight-tooltip'}>{message}</Popover>;
   }
 
-  labelsFrom(routeLabels: Map<String, String>) {
-    return Object.keys(routeLabels || new Map()).map((key, n) => (
+  labelsFrom(routeLabels: { [key: string]: string }) {
+    return Object.keys(routeLabels || {}).map(key => (
       <Badge
         scale={0.8}
         style="plastic"

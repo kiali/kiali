@@ -1,22 +1,12 @@
 import * as React from 'react';
 import ServiceId from '../../types/ServiceId';
 import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
+import ServiceInfoPods from './ServiceInfo/ServiceInfoPods';
 import ServiceInfoDeployments from './ServiceInfo/ServiceInfoDeployments';
 import ServiceInfoRouteRules from './ServiceInfo/ServiceInfoRouteRules';
 import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
 import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
-import {
-  Endpoints,
-  Deployment,
-  Port,
-  RouteRule,
-  DestinationPolicy,
-  VirtualService,
-  DestinationRule,
-  ServiceDetailsInfo,
-  ObjectValidation
-} from '../../types/ServiceInfo';
-import { Health } from '../../types/Health';
+import { RouteRule, ServiceDetailsInfo, ObjectValidation } from '../../types/ServiceInfo';
 import {
   ToastNotification,
   ToastNotificationList,
@@ -31,66 +21,24 @@ import {
 import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 
-interface ServiceDetailsId extends ServiceId {
+interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
   validations: Map<string, Map<string, ObjectValidation>>;
 }
 
 type ServiceInfoState = {
-  labels?: Map<string, string>;
-  type: string;
-  name: string;
-  created_at: string;
-  resource_version: string;
-  ip: string;
-  ports?: Port[];
-  endpoints?: Endpoints[];
-  istio_sidecar: boolean;
-  deployments?: Deployment[];
-  routeRules?: RouteRule[];
-  destinationPolicies?: DestinationPolicy[];
-  virtualServices?: VirtualService[];
-  destinationRules?: DestinationRule[];
-  dependencies?: Map<string, string[]>;
-  health?: Health;
-  validations: Map<string, Map<string, ObjectValidation>>;
   error: boolean;
   errorMessage: string;
 };
 
-class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
-  constructor(props: ServiceDetailsId) {
+class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
+  constructor(props: ServiceDetails) {
     super(props);
-    this.state = this.parseState(props.serviceDetails, props.validations);
-  }
-
-  parseState = (serviceInfoDetails, validations) => {
-    let parsed: ServiceInfoState = {
-      labels: new Map(),
-      type: serviceInfoDetails.type,
-      name: serviceInfoDetails.name,
-      created_at: serviceInfoDetails.created_at,
-      resource_version: serviceInfoDetails.resource_version,
-      ip: serviceInfoDetails.ip,
-      ports: serviceInfoDetails.ports,
-      endpoints: serviceInfoDetails.endpoints,
-      istio_sidecar: serviceInfoDetails.istio_sidecar,
-      deployments: serviceInfoDetails.deployments,
-      routeRules: this.sortRouteRulesByPrecedence(serviceInfoDetails.routeRules || []),
-      destinationPolicies: serviceInfoDetails.destinationPolicies,
-      virtualServices: serviceInfoDetails.virtualServices,
-      destinationRules: serviceInfoDetails.destinationRules,
-      dependencies: serviceInfoDetails.dependencies,
-      health: serviceInfoDetails.health,
-      validations: validations,
+    props.serviceDetails.routeRules = this.sortRouteRulesByPrecedence(props.serviceDetails.routeRules || []);
+    this.state = {
       error: false,
       errorMessage: ''
     };
-    return parsed;
-  };
-
-  componentWillReceiveProps(props: ServiceDetailsId) {
-    this.setState(this.parseState(props.serviceDetails, props.validations));
   }
 
   sortRouteRulesByPrecedence(routeRules: RouteRule[]) {
@@ -107,13 +55,14 @@ class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
   }
 
   render() {
-    let deployments = this.state.deployments || [];
-    let dependencies = this.state.dependencies || new Map();
-    let routeRules = this.state.routeRules || [];
-    let destinationPolicies = this.state.destinationPolicies || [];
-    let virtualServices = this.state.virtualServices || [];
-    let destinationRules = this.state.destinationRules || [];
-    let editorLink = '/namespaces/' + this.props.namespace + '/services/' + this.props.service;
+    const pods = this.props.serviceDetails.pods || [];
+    const deployments = this.props.serviceDetails.deployments || [];
+    const dependencies = this.props.serviceDetails.dependencies || new Map();
+    const routeRules = this.props.serviceDetails.routeRules || [];
+    const destinationPolicies = this.props.serviceDetails.destinationPolicies || [];
+    const virtualServices = this.props.serviceDetails.virtualServices || [];
+    const destinationRules = this.props.serviceDetails.destinationRules || [];
+    const editorLink = '/namespaces/' + this.props.namespace + '/services/' + this.props.service;
     return (
       <div>
         {this.state.error ? (
@@ -130,24 +79,25 @@ class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
               <ServiceInfoDescription
-                name={this.state.name}
-                created_at={this.state.created_at}
-                resource_version={this.state.resource_version}
-                istio_sidecar={this.state.istio_sidecar}
-                labels={this.state.labels}
-                ports={this.state.ports}
-                type={this.state.type}
-                ip={this.state.ip}
-                endpoints={this.state.endpoints}
-                health={this.state.health}
+                name={this.props.serviceDetails.name}
+                created_at={this.props.serviceDetails.created_at}
+                resource_version={this.props.serviceDetails.resource_version}
+                istio_sidecar={this.props.serviceDetails.istio_sidecar}
+                labels={this.props.serviceDetails.labels}
+                ports={this.props.serviceDetails.ports}
+                type={this.props.serviceDetails.type}
+                ip={this.props.serviceDetails.ip}
+                endpoints={this.props.serviceDetails.endpoints}
+                health={this.props.serviceDetails.health}
               />
             </Col>
           </Row>
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
-              <TabContainer id="service-tabs" defaultActiveKey={1}>
+              <TabContainer id="service-tabs" defaultActiveKey={0}>
                 <div>
                   <Nav bsClass="nav nav-tabs nav-tabs-pf">
+                    <NavItem eventKey={0}>{'Pods (' + pods.length + ')'}</NavItem>
                     <NavItem eventKey={1}>{'Deployments (' + deployments.length + ')'}</NavItem>
                     <NavItem eventKey={2}>{'Source Services (' + Object.keys(dependencies).length + ')'}</NavItem>
                     <NavItem eventKey={3}>{'Route Rules (' + routeRules.length + ')'}</NavItem>
@@ -156,27 +106,30 @@ class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
                     <NavItem eventKey={6}>{'Destination Rules (' + destinationRules.length + ')'}</NavItem>
                   </Nav>
                   <TabContent>
+                    <TabPane eventKey={0}>
+                      {(pods.length > 0 || this.props.serviceDetails.istio_sidecar) && <ServiceInfoPods pods={pods} />}
+                    </TabPane>
                     <TabPane eventKey={1}>
-                      {(deployments.length > 0 || this.state.istio_sidecar) && (
+                      {(deployments.length > 0 || this.props.serviceDetails.istio_sidecar) && (
                         <ServiceInfoDeployments deployments={deployments} />
                       )}
                     </TabPane>
                     <TabPane eventKey={2}>
-                      {(dependencies.size > 0 || this.state.istio_sidecar) && (
+                      {(dependencies.size > 0 || this.props.serviceDetails.istio_sidecar) && (
                         <ServiceInfoRoutes dependencies={dependencies} />
                       )}
                     </TabPane>
                     <TabPane eventKey={3}>
-                      {(routeRules.length > 0 || this.state.istio_sidecar) && (
+                      {(routeRules.length > 0 || this.props.serviceDetails.istio_sidecar) && (
                         <ServiceInfoRouteRules
                           routeRules={routeRules}
                           editorLink={editorLink}
-                          validations={this.state.validations!['routerule']}
+                          validations={this.props.validations!['routerule']}
                         />
                       )}
                     </TabPane>
                     <TabPane eventKey={4}>
-                      {(destinationPolicies.length > 0 || this.state.istio_sidecar) && (
+                      {(destinationPolicies.length > 0 || this.props.serviceDetails.istio_sidecar) && (
                         <ServiceInfoDestinationPolicies
                           destinationPolicies={destinationPolicies}
                           editorLink={editorLink}
@@ -184,12 +137,12 @@ class ServiceInfo extends React.Component<ServiceDetailsId, ServiceInfoState> {
                       )}
                     </TabPane>
                     <TabPane eventKey={5}>
-                      {(virtualServices.length > 0 || this.state.istio_sidecar) && (
+                      {(virtualServices.length > 0 || this.props.serviceDetails.istio_sidecar) && (
                         <ServiceInfoVirtualServices virtualServices={virtualServices} editorLink={editorLink} />
                       )}
                     </TabPane>
                     <TabPane eventKey={6}>
-                      {(destinationRules.length > 0 || this.state.istio_sidecar) && (
+                      {(destinationRules.length > 0 || this.props.serviceDetails.istio_sidecar) && (
                         <ServiceInfoDestinationRules destinationRules={destinationRules} editorLink={editorLink} />
                       )}
                     </TabPane>

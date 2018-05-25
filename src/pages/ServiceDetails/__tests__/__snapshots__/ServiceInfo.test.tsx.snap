@@ -168,7 +168,11 @@ ShallowWrapper {
                 health={undefined}
                 ip="172.30.78.33"
                 istio_sidecar={false}
-                labels={Map {}}
+                labels={
+                  Object {
+                    "app": "reviews",
+                  }
+                }
                 name="reviews"
                 ports={
                   Array [
@@ -198,7 +202,7 @@ ShallowWrapper {
               xs={12}
             >
               <Uncontrolled(TabContainer)
-                defaultActiveKey={1}
+                defaultActiveKey={0}
                 id="service-tabs"
               >
                 <div>
@@ -209,6 +213,13 @@ ShallowWrapper {
                     pullRight={false}
                     stacked={false}
                   >
+                    <NavItem
+                      active={false}
+                      disabled={false}
+                      eventKey={0}
+                    >
+                      Pods (0)
+                    </NavItem>
                     <NavItem
                       active={false}
                       disabled={false}
@@ -259,6 +270,10 @@ ShallowWrapper {
                     mountOnEnter={false}
                     unmountOnExit={false}
                   >
+                    <TabPane
+                      bsClass="tab-pane"
+                      eventKey={0}
+                    />
                     <TabPane
                       bsClass="tab-pane"
                       eventKey={1}
@@ -395,7 +410,11 @@ ShallowWrapper {
                   health={undefined}
                   ip="172.30.78.33"
                   istio_sidecar={false}
-                  labels={Map {}}
+                  labels={
+                    Object {
+                      "app": "reviews",
+                    }
+                  }
                   name="reviews"
                   ports={
                     Array [
@@ -425,7 +444,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <Uncontrolled(TabContainer)
-                  defaultActiveKey={1}
+                  defaultActiveKey={0}
                   id="service-tabs"
                 >
                   <div>
@@ -436,6 +455,13 @@ ShallowWrapper {
                       pullRight={false}
                       stacked={false}
                     >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={0}
+                      >
+                        Pods (0)
+                      </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
@@ -486,6 +512,10 @@ ShallowWrapper {
                       mountOnEnter={false}
                       unmountOnExit={false}
                     >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={0}
+                      />
                       <TabPane
                         bsClass="tab-pane"
                         eventKey={1}
@@ -616,7 +646,11 @@ ShallowWrapper {
                   health={undefined}
                   ip="172.30.78.33"
                   istio_sidecar={false}
-                  labels={Map {}}
+                  labels={
+                    Object {
+                      "app": "reviews",
+                    }
+                  }
                   name="reviews"
                   ports={
                     Array [
@@ -676,7 +710,11 @@ ShallowWrapper {
                   health={undefined}
                   ip="172.30.78.33"
                   istio_sidecar={false}
-                  labels={Map {}}
+                  labels={
+                    Object {
+                      "app": "reviews",
+                    }
+                  }
                   name="reviews"
                   ports={
                     Array [
@@ -734,7 +772,9 @@ ShallowWrapper {
                   "health": undefined,
                   "ip": "172.30.78.33",
                   "istio_sidecar": false,
-                  "labels": Map {},
+                  "labels": Object {
+                    "app": "reviews",
+                  },
                   "name": "reviews",
                   "ports": Array [
                     Object {
@@ -769,7 +809,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <Uncontrolled(TabContainer)
-                  defaultActiveKey={1}
+                  defaultActiveKey={0}
                   id="service-tabs"
                 >
                   <div>
@@ -780,6 +820,13 @@ ShallowWrapper {
                       pullRight={false}
                       stacked={false}
                     >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={0}
+                      >
+                        Pods (0)
+                      </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
@@ -830,6 +877,10 @@ ShallowWrapper {
                       mountOnEnter={false}
                       unmountOnExit={false}
                     >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={0}
+                      />
                       <TabPane
                         bsClass="tab-pane"
                         eventKey={1}
@@ -916,7 +967,7 @@ ShallowWrapper {
               "props": Object {
                 "bsClass": "col",
                 "children": <Uncontrolled(TabContainer)
-                  defaultActiveKey={1}
+                  defaultActiveKey={0}
                   id="service-tabs"
                 >
                   <div>
@@ -927,6 +978,13 @@ ShallowWrapper {
                       pullRight={false}
                       stacked={false}
                     >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={0}
+                      >
+                        Pods (0)
+                      </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
@@ -977,6 +1035,10 @@ ShallowWrapper {
                       mountOnEnter={false}
                       unmountOnExit={false}
                     >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={0}
+                      />
                       <TabPane
                         bsClass="tab-pane"
                         eventKey={1}
@@ -1074,6 +1136,13 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
+                        eventKey={0}
+                      >
+                        Pods (0)
+                      </NavItem>
+                      <NavItem
+                        active={false}
+                        disabled={false}
                         eventKey={1}
                       >
                         Deployments (0)
@@ -1121,6 +1190,10 @@ ShallowWrapper {
                       mountOnEnter={false}
                       unmountOnExit={false}
                     >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={0}
+                      />
                       <TabPane
                         bsClass="tab-pane"
                         eventKey={1}
@@ -1194,7 +1267,7 @@ ShallowWrapper {
                       />
                     </TabContent>
                   </div>,
-                  "defaultActiveKey": 1,
+                  "defaultActiveKey": 0,
                   "id": "service-tabs",
                 },
                 "ref": null,
@@ -1211,6 +1284,13 @@ ShallowWrapper {
                         pullRight={false}
                         stacked={false}
                       >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={0}
+                        >
+                          Pods (0)
+                        </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
@@ -1261,6 +1341,10 @@ ShallowWrapper {
                         mountOnEnter={false}
                         unmountOnExit={false}
                       >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={0}
+                        />
                         <TabPane
                           bsClass="tab-pane"
                           eventKey={1}
@@ -1347,6 +1431,13 @@ ShallowWrapper {
                           <NavItem
                             active={false}
                             disabled={false}
+                            eventKey={0}
+                          >
+                            Pods (0)
+                          </NavItem>,
+                          <NavItem
+                            active={false}
+                            disabled={false}
                             eventKey={1}
                           >
                             Deployments (0)
@@ -1394,6 +1485,20 @@ ShallowWrapper {
                       },
                       "ref": null,
                       "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "active": false,
+                            "children": "Pods (0)",
+                            "disabled": false,
+                            "eventKey": 0,
+                          },
+                          "ref": null,
+                          "rendered": "Pods (0)",
+                          "type": [Function],
+                        },
                         Object {
                           "instance": null,
                           "key": undefined,
@@ -1491,6 +1596,10 @@ ShallowWrapper {
                         "children": Array [
                           <TabPane
                             bsClass="tab-pane"
+                            eventKey={0}
+                          />,
+                          <TabPane
+                            bsClass="tab-pane"
                             eventKey={1}
                           />,
                           <TabPane
@@ -1567,6 +1676,19 @@ ShallowWrapper {
                       },
                       "ref": null,
                       "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "bsClass": "tab-pane",
+                            "children": false,
+                            "eventKey": 0,
+                          },
+                          "ref": null,
+                          "rendered": false,
+                          "type": [Function],
+                        },
                         Object {
                           "instance": null,
                           "key": undefined,
@@ -1818,7 +1940,11 @@ ShallowWrapper {
                   health={undefined}
                   ip="172.30.78.33"
                   istio_sidecar={false}
-                  labels={Map {}}
+                  labels={
+                    Object {
+                      "app": "reviews",
+                    }
+                  }
                   name="reviews"
                   ports={
                     Array [
@@ -1848,7 +1974,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <Uncontrolled(TabContainer)
-                  defaultActiveKey={1}
+                  defaultActiveKey={0}
                   id="service-tabs"
                 >
                   <div>
@@ -1859,6 +1985,13 @@ ShallowWrapper {
                       pullRight={false}
                       stacked={false}
                     >
+                      <NavItem
+                        active={false}
+                        disabled={false}
+                        eventKey={0}
+                      >
+                        Pods (0)
+                      </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
@@ -1909,6 +2042,10 @@ ShallowWrapper {
                       mountOnEnter={false}
                       unmountOnExit={false}
                     >
+                      <TabPane
+                        bsClass="tab-pane"
+                        eventKey={0}
+                      />
                       <TabPane
                         bsClass="tab-pane"
                         eventKey={1}
@@ -2045,7 +2182,11 @@ ShallowWrapper {
                     health={undefined}
                     ip="172.30.78.33"
                     istio_sidecar={false}
-                    labels={Map {}}
+                    labels={
+                      Object {
+                        "app": "reviews",
+                      }
+                    }
                     name="reviews"
                     ports={
                       Array [
@@ -2075,7 +2216,7 @@ ShallowWrapper {
                   xs={12}
                 >
                   <Uncontrolled(TabContainer)
-                    defaultActiveKey={1}
+                    defaultActiveKey={0}
                     id="service-tabs"
                   >
                     <div>
@@ -2086,6 +2227,13 @@ ShallowWrapper {
                         pullRight={false}
                         stacked={false}
                       >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={0}
+                        >
+                          Pods (0)
+                        </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
@@ -2136,6 +2284,10 @@ ShallowWrapper {
                         mountOnEnter={false}
                         unmountOnExit={false}
                       >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={0}
+                        />
                         <TabPane
                           bsClass="tab-pane"
                           eventKey={1}
@@ -2266,7 +2418,11 @@ ShallowWrapper {
                     health={undefined}
                     ip="172.30.78.33"
                     istio_sidecar={false}
-                    labels={Map {}}
+                    labels={
+                      Object {
+                        "app": "reviews",
+                      }
+                    }
                     name="reviews"
                     ports={
                       Array [
@@ -2326,7 +2482,11 @@ ShallowWrapper {
                     health={undefined}
                     ip="172.30.78.33"
                     istio_sidecar={false}
-                    labels={Map {}}
+                    labels={
+                      Object {
+                        "app": "reviews",
+                      }
+                    }
                     name="reviews"
                     ports={
                       Array [
@@ -2384,7 +2544,9 @@ ShallowWrapper {
                     "health": undefined,
                     "ip": "172.30.78.33",
                     "istio_sidecar": false,
-                    "labels": Map {},
+                    "labels": Object {
+                      "app": "reviews",
+                    },
                     "name": "reviews",
                     "ports": Array [
                       Object {
@@ -2419,7 +2581,7 @@ ShallowWrapper {
                   xs={12}
                 >
                   <Uncontrolled(TabContainer)
-                    defaultActiveKey={1}
+                    defaultActiveKey={0}
                     id="service-tabs"
                   >
                     <div>
@@ -2430,6 +2592,13 @@ ShallowWrapper {
                         pullRight={false}
                         stacked={false}
                       >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={0}
+                        >
+                          Pods (0)
+                        </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
@@ -2480,6 +2649,10 @@ ShallowWrapper {
                         mountOnEnter={false}
                         unmountOnExit={false}
                       >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={0}
+                        />
                         <TabPane
                           bsClass="tab-pane"
                           eventKey={1}
@@ -2566,7 +2739,7 @@ ShallowWrapper {
                 "props": Object {
                   "bsClass": "col",
                   "children": <Uncontrolled(TabContainer)
-                    defaultActiveKey={1}
+                    defaultActiveKey={0}
                     id="service-tabs"
                   >
                     <div>
@@ -2577,6 +2750,13 @@ ShallowWrapper {
                         pullRight={false}
                         stacked={false}
                       >
+                        <NavItem
+                          active={false}
+                          disabled={false}
+                          eventKey={0}
+                        >
+                          Pods (0)
+                        </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
@@ -2627,6 +2807,10 @@ ShallowWrapper {
                         mountOnEnter={false}
                         unmountOnExit={false}
                       >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={0}
+                        />
                         <TabPane
                           bsClass="tab-pane"
                           eventKey={1}
@@ -2724,6 +2908,13 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
+                          eventKey={0}
+                        >
+                          Pods (0)
+                        </NavItem>
+                        <NavItem
+                          active={false}
+                          disabled={false}
                           eventKey={1}
                         >
                           Deployments (0)
@@ -2771,6 +2962,10 @@ ShallowWrapper {
                         mountOnEnter={false}
                         unmountOnExit={false}
                       >
+                        <TabPane
+                          bsClass="tab-pane"
+                          eventKey={0}
+                        />
                         <TabPane
                           bsClass="tab-pane"
                           eventKey={1}
@@ -2844,7 +3039,7 @@ ShallowWrapper {
                         />
                       </TabContent>
                     </div>,
-                    "defaultActiveKey": 1,
+                    "defaultActiveKey": 0,
                     "id": "service-tabs",
                   },
                   "ref": null,
@@ -2861,6 +3056,13 @@ ShallowWrapper {
                           pullRight={false}
                           stacked={false}
                         >
+                          <NavItem
+                            active={false}
+                            disabled={false}
+                            eventKey={0}
+                          >
+                            Pods (0)
+                          </NavItem>
                           <NavItem
                             active={false}
                             disabled={false}
@@ -2911,6 +3113,10 @@ ShallowWrapper {
                           mountOnEnter={false}
                           unmountOnExit={false}
                         >
+                          <TabPane
+                            bsClass="tab-pane"
+                            eventKey={0}
+                          />
                           <TabPane
                             bsClass="tab-pane"
                             eventKey={1}
@@ -2997,6 +3203,13 @@ ShallowWrapper {
                             <NavItem
                               active={false}
                               disabled={false}
+                              eventKey={0}
+                            >
+                              Pods (0)
+                            </NavItem>,
+                            <NavItem
+                              active={false}
+                              disabled={false}
                               eventKey={1}
                             >
                               Deployments (0)
@@ -3044,6 +3257,20 @@ ShallowWrapper {
                         },
                         "ref": null,
                         "rendered": Array [
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "active": false,
+                              "children": "Pods (0)",
+                              "disabled": false,
+                              "eventKey": 0,
+                            },
+                            "ref": null,
+                            "rendered": "Pods (0)",
+                            "type": [Function],
+                          },
                           Object {
                             "instance": null,
                             "key": undefined,
@@ -3141,6 +3368,10 @@ ShallowWrapper {
                           "children": Array [
                             <TabPane
                               bsClass="tab-pane"
+                              eventKey={0}
+                            />,
+                            <TabPane
+                              bsClass="tab-pane"
                               eventKey={1}
                             />,
                             <TabPane
@@ -3217,6 +3448,19 @@ ShallowWrapper {
                         },
                         "ref": null,
                         "rendered": Array [
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "bsClass": "tab-pane",
+                              "children": false,
+                              "eventKey": 0,
+                            },
+                            "ref": null,
+                            "rendered": false,
+                            "type": [Function],
+                          },
                           Object {
                             "instance": null,
                             "key": undefined,

@@ -14,7 +14,7 @@ const rules: RouteRule[] = [
     precedence: 1,
     route: [
       {
-        labels: new Map([['version', 'v1']])
+        labels: { version: 'v1' }
       }
     ],
     match: undefined
@@ -29,7 +29,7 @@ const rules: RouteRule[] = [
     precedence: 2,
     route: [
       {
-        labels: new Map([['version', 'v2']])
+        labels: { version: 'v2' }
       }
     ],
     match: undefined

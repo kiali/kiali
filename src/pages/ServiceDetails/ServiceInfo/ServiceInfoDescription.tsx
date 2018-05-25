@@ -17,7 +17,7 @@ interface ServiceInfoDescriptionProps {
   created_at: string;
   resource_version: string;
   istio_sidecar?: boolean;
-  labels?: Map<string, string>;
+  labels?: { [key: string]: string };
   type?: string;
   ip?: any;
   ports?: Port[];

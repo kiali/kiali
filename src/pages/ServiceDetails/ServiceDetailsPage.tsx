@@ -9,7 +9,12 @@ import { NamespaceFilterSelected } from '../../components/NamespaceFilter/Namesp
 import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
-import { hasIstioSidecar, ServiceDetailsInfo, ObjectValidation } from '../../types/ServiceInfo';
+import {
+  hasIstioSidecar,
+  ServiceDetailsInfo,
+  ServiceDetailsInfoFromAPI,
+  ObjectValidation
+} from '../../types/ServiceInfo';
 import AceEditor, { AceOptions } from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
@@ -66,8 +71,8 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     NamespaceFilterSelected.setSelected([activeFilter]);
   };
 
-  parseServiceDetailsInfo = data => {
-    let parsed: ServiceDetailsInfo = {
+  parseServiceDetailsInfo = (data: ServiceDetailsInfoFromAPI): ServiceDetailsInfo => {
+    return {
       labels: data.labels,
       name: data.name,
       created_at: data.created_at,
@@ -75,7 +80,8 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       type: data.type,
       ports: data.ports,
       endpoints: data.endpoints,
-      istio_sidecar: hasIstioSidecar(data.deployments),
+      istio_sidecar: hasIstioSidecar(data.pods),
+      pods: data.pods,
       deployments: data.deployments,
       dependencies: data.dependencies,
       routeRules: data.route_rules,
@@ -85,7 +91,6 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       ip: data.ip,
       health: data.health
     };
-    return parsed;
   };
 
   validateParams(parsed: ParsedSearch): boolean {
@@ -184,7 +189,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       });
     API.getServiceDetail(this.props.match.params.namespace, this.props.match.params.service)
       .then(response => {
-        let data = response['data'];
+        const data: ServiceDetailsInfoFromAPI = response['data'];
         this.setState({
           serviceDetailsInfo: this.parseServiceDetailsInfo(data)
         });

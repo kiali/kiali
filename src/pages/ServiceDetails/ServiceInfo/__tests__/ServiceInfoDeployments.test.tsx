@@ -6,7 +6,7 @@ import { Deployment } from '../../../../types/ServiceInfo';
 const deployments: Deployment[] = [
   {
     name: 'reviews-v2',
-    labels: new Map([['app', 'reviews'], ['version', 'v2']]),
+    labels: { app: 'reviews', version: 'v2' },
     created_at: '2018-03-14T10:17:52Z',
     resource_version: '1234',
     replicas: 5,
@@ -21,7 +21,7 @@ const deployments: Deployment[] = [
   },
   {
     name: 'reviews-v3',
-    labels: new Map([['app', 'reviews'], ['version', 'v3']]),
+    labels: { app: 'reviews', version: 'v3' },
     created_at: '2018-03-14T10:17:52Z',
     resource_version: '1234',
     replicas: 2,
@@ -36,7 +36,7 @@ const deployments: Deployment[] = [
   },
   {
     name: 'reviews-v1',
-    labels: new Map([['app', 'reviews'], ['version', 'v1']]),
+    labels: { app: 'reviews', version: 'v1' },
     created_at: '2018-03-14T10:17:52Z',
     resource_version: '1234',
     replicas: 1,
