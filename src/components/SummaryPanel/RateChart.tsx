@@ -74,10 +74,10 @@ export default class RateChart extends React.Component<RateChartPropType> {
           ],
           // order: 'asc',
           colors: {
-            OK: PfColors.Green,
+            OK: PfColors.Green400,
             '3xx': PfColors.Blue,
-            '4xx': PfColors.Orange,
-            '5xx': PfColors.Red
+            '4xx': PfColors.Orange400,
+            '5xx': PfColors.Red100
           }
         }}
       />

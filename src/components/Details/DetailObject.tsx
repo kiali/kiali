@@ -26,7 +26,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
   }
 
   label(key: string, value: string) {
-    return <Badge scale={0.8} style="plastic" color={PfColors.Green} leftText={key} rightText={value} />;
+    return <Badge scale={0.8} style="plastic" color={PfColors.Green400} leftText={key} rightText={value} />;
   }
 
   checkLabel(name: string) {

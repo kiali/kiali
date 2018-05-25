@@ -19,9 +19,13 @@ export interface GraphFilterProps extends GraphParamsType {
   onNamespaceChange: (newValue: Namespace) => void;
   onEdgeLabelModeChange: (newEdges: EdgeLabelMode) => void;
   onRefresh: () => void;
+  onLegend: () => void;
+  hideLegend: boolean;
 }
 
-export interface GraphFilterState {}
+export interface GraphFilterState {
+  legend: boolean;
+}
 
 const zeroPaddingLeft = style({
   paddingLeft: '0px'
@@ -42,6 +46,9 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
 
   constructor(props: GraphFilterProps) {
     super(props);
+    this.state = {
+      legend: false
+    };
   }
 
   updateDuration = (value: number) => {
@@ -120,9 +127,14 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             <GraphLayersContainer />
           </FormGroup>
           <Toolbar.RightContent>
-            <Button disabled={this.props.disabled} onClick={this.handleRefresh}>
-              <Icon name="refresh" />
-            </Button>
+            <div className="form-group">
+              <Button onClick={this.props.onLegend}>{this.props.hideLegend ? 'Show' : 'Hide'} Legend</Button>
+            </div>
+            <div className="form-group">
+              <Button disabled={this.props.disabled} onClick={this.handleRefresh}>
+                <Icon name="refresh" />
+              </Button>
+            </div>
           </Toolbar.RightContent>
         </Toolbar>
       </>

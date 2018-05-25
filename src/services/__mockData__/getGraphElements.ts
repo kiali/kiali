@@ -51,7 +51,7 @@ export const TEST = {
           source: 'n0',
           target: 'n1',
           text: '12.54pm',
-          color: PfColors.Green
+          color: PfColors.Green400
         }
       },
       {
@@ -60,7 +60,7 @@ export const TEST = {
           source: 'n1',
           target: 'n2',
           text: '12.54pm',
-          color: PfColors.Green
+          color: PfColors.Green400
         }
       },
       {
@@ -69,7 +69,7 @@ export const TEST = {
           source: 'n1',
           target: 'n3',
           text: '12.54pm',
-          color: PfColors.Green
+          color: PfColors.Green400
         }
       }
     ]

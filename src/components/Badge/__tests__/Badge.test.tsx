@@ -8,7 +8,7 @@ const mockBadge = (
   rightText = 'my_value',
   scale = 0.8,
   style = 'plastic',
-  color = PfColors.Green
+  color = PfColors.Green400
 ) => {
   const component = <Badge scale={scale} style={style} color={color} leftText={leftText} rightText={rightText} />;
   return shallow(component);
@@ -94,7 +94,7 @@ describe('#Badge render correctly with data', () => {
   it('should render with a correct rect elements', () => {
     const scale = 1.1;
     const styleType = 'square';
-    const color = PfColors.Red;
+    const color = PfColors.Red100;
     const minorMargin = scale;
     const majorMargin = 5 * scale;
     const textMargin = minorMargin + majorMargin;

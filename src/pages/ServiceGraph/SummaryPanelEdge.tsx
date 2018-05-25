@@ -196,8 +196,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
   private renderLabels = (ns: string, ver: string) => (
     <div style={{ paddingTop: '3px' }}>
-      <Badge scale={0.9} style="plastic" leftText="namespace" rightText={ns} color={PfColors.Green500} />
-      <Badge scale={0.9} style="plastic" leftText="version" rightText={ver} color={PfColors.Green500} />
+      <Badge scale={0.9} style="plastic" leftText="namespace" rightText={ns} color={PfColors.Green400} />
+      <Badge scale={0.9} style="plastic" leftText="version" rightText={ver} color={PfColors.Green400} />
     </div>
   );
 

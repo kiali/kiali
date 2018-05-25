@@ -31,6 +31,8 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
         onNamespaceChange={this.handleNamespaceChange}
         onEdgeLabelModeChange={this.handleEdgeLabelModeChange}
         onRefresh={this.props.handleRefreshClick}
+        onLegend={this.props.handleLegendClick}
+        hideLegend={this.props.hideLegend}
         {...graphParams}
       />
     );

@@ -79,7 +79,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               leftText="namespace"
               rightText={namespace}
               key={namespace}
-              color={PfColors.Green500}
+              color={PfColors.Green400}
             />
             {this.renderVersionBadges()}
           </div>
@@ -158,7 +158,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           leftText="version"
           rightText={c.data('version')}
           key={c.data('version')}
-          color={PfColors.Green500}
+          color={PfColors.Green400}
         />
       ));
   };

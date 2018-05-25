@@ -47,7 +47,7 @@ export default class LatencyChart extends React.Component<LatencyChartTypeProp, 
         </div>
         <AreaChart
           size={{ height: 80 }}
-          color={{ pattern: [PfColors.Black, PfColors.Green, PfColors.Blue, PfColors.Orange] }}
+          color={{ pattern: [PfColors.Black, PfColors.Green400, PfColors.Blue, PfColors.Orange400] }}
           legend={{ show: true }}
           grid={{ y: { show: false } }}
           axis={axis}

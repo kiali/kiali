@@ -7,7 +7,8 @@ const INITIAL_STATE: any = {
   isLoading: false,
   graphDataTimestamp: 0,
   graphData: {},
-  sidePanelInfo: null
+  sidePanelInfo: null,
+  hideLegend: true
 };
 
 // This Reducer allows changes to the 'serviceGraphDataState' portion of Redux Store
@@ -24,6 +25,12 @@ const serviceGraphDataState = (state: ServiceGraphState = INITIAL_STATE, action)
       newState.isLoading = true;
       newState.sidePanelInfo = null;
       break;
+    case ServiceGraphDataActionKeys.HANDLE_LEGEND:
+      console.log('ServiceGraphDataState reducer: ' + (state.hideLegend ? 'hide' : 'show') + 'legend...');
+      return {
+        ...state,
+        hideLegend: !state.hideLegend
+      };
     case ServiceGraphDataActionKeys.GET_GRAPH_DATA_SUCCESS:
       console.log('ServiceGraphDataState reducer: graph data successfully received');
       newState.isLoading = false;

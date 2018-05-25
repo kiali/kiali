@@ -12,19 +12,19 @@ export interface Status {
 // Colors from Patternfly status palette https://www.patternfly.org/styles/color-palette/
 export const FAILURE: Status = {
   name: 'Failure',
-  color: PfColors.Red,
+  color: PfColors.Red100,
   priority: 3,
   icon: 'error-circle-o'
 };
 export const DEGRADED: Status = {
   name: 'Degraded',
-  color: PfColors.Orange,
+  color: PfColors.Orange400,
   priority: 2,
   icon: 'warning-triangle-o'
 };
 export const HEALTHY: Status = {
   name: 'Healthy',
-  color: PfColors.Green,
+  color: PfColors.Green400,
   priority: 1,
   icon: 'ok'
 };

@@ -29,12 +29,12 @@ export interface ServiceGraphState {
   isLoading: boolean;
   graphDataTimestamp: number;
   graphData: any;
-
   filterState: ServiceGraphFilterState;
   sidePanelInfo: {
     kind: string;
     graphReference: any;
   } | null;
+  hideLegend: boolean;
 }
 
 // @todo: Add namespaces interface

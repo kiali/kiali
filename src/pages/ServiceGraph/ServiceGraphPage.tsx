@@ -11,6 +11,8 @@ import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import { style } from 'typestyle';
 
+import GraphLegend from '../../components/GraphFilter/GraphLegend';
+
 type ServiceGraphPageState = {
   // stateless
 };
@@ -19,9 +21,11 @@ type ServiceGraphPageProps = GraphParamsType & {
   graphTimestamp: string;
   graphData: any;
   isLoading: boolean;
+  hideLegend: boolean;
   isReady: boolean;
   fetchGraphData: (namespace: Namespace, graphDuration: Duration) => any;
   summaryData: SummaryData | null;
+  handleLegend: () => void;
 };
 const NUMBER_OF_DATAPOINTS = 30;
 
@@ -75,6 +79,8 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
         <GraphFilterToolbar
           isLoading={this.props.isLoading}
           handleRefreshClick={this.handleRefreshClick}
+          handleLegendClick={this.props.handleLegend}
+          hideLegend={this.props.hideLegend}
           {...graphParams}
         />
         <div className={cytscapeGraphStyle}>
@@ -94,6 +100,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
             />
           ) : null}
         </div>
+        {!this.props.hideLegend && <GraphLegend closeLegend={this.props.handleLegend} />}
       </PfContainerNavVertical>
     );
   }

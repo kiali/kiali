@@ -17,7 +17,15 @@ const PARAMS: GraphParamsType = {
 describe('ServiceGraphPage test', () => {
   it('should propagate filter params change with correct value', () => {
     const onParamsChangeMockFn = jest.fn();
-    const wrapper = shallow(<GraphFilterToolbar {...PARAMS} isLoading={false} handleRefreshClick={jest.fn()} />);
+    const wrapper = shallow(
+      <GraphFilterToolbar
+        {...PARAMS}
+        isLoading={false}
+        handleRefreshClick={jest.fn()}
+        handleLegendClick={jest.fn()}
+        hideLegend={true}
+      />
+    );
 
     const toolbar = wrapper.instance() as GraphFilterToolbar;
     toolbar.handleFilterChange = onParamsChangeMockFn;

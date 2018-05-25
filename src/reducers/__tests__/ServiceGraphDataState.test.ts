@@ -9,6 +9,7 @@ describe('ServiceGraphDataState', () => {
       filterState: serviceGraphFilterState(undefined, {}),
       isLoading: false,
       graphDataTimestamp: 0,
+      hideLegend: true,
       graphData: {},
       sidePanelInfo: null
     });

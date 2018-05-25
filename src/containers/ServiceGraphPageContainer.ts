@@ -15,12 +15,14 @@ const mapStateToProps = (state: KialiAppState) => ({
         summaryTarget: state.serviceGraph.sidePanelInfo.graphReference,
         summaryType: state.serviceGraph.sidePanelInfo.kind
       }
-    : null
+    : null,
+  hideLegend: state.serviceGraph.hideLegend
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
   fetchGraphData: (namespace: Namespace, graphDuration: Duration) =>
-    dispatch(ServiceGraphDataActions.fetchGraphData(namespace, graphDuration))
+    dispatch(ServiceGraphDataActions.fetchGraphData(namespace, graphDuration)),
+  handleLegend: () => dispatch(ServiceGraphDataActions.handleLegend())
 });
 
 const ServiceGraphPageConnected = connect(mapStateToProps, mapDispatchToProps)(ServiceGraphPage);

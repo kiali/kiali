@@ -121,13 +121,13 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         <div className="panel-heading">
           Service: {isUnknown ? 'unknown' : serviceHotLink}
           <div style={{ paddingTop: '3px' }}>
-            <Badge scale={0.9} style="plastic" leftText="namespace" rightText={namespace} color={PfColors.Green500} />
+            <Badge scale={0.9} style="plastic" leftText="namespace" rightText={namespace} color={PfColors.Green400} />
             <Badge
               scale={0.9}
               style="plastic"
               leftText="version"
               rightText={this.props.data.summaryTarget.data('version')}
-              color={PfColors.Green500}
+              color={PfColors.Green400}
             />
           </div>
           {this.renderBadgeSummary(node.data('hasCB'), node.data('hasRR'), node.data('hasMissingSidecars'))}

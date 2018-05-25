@@ -29,7 +29,7 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
                       key={'deployment_' + i}
                       scale={0.8}
                       style="plastic"
-                      color={PfColors.Green}
+                      color={PfColors.Green400}
                       leftText={key}
                       rightText={deployment.labels ? deployment.labels[key] : ''}
                     />

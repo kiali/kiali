@@ -11,7 +11,7 @@ const CardContent = (
     </div>
     <ul style={{ listStyleType: 'none' }}>
       <li key="pod_labels_badge_">
-        <Badge scale={0.8} style="plastic" color={PfColors.Green} leftText="my_key" rightText="my_value" />
+        <Badge scale={0.8} style="plastic" color={PfColors.Green400} leftText="my_key" rightText="my_value" />
       </li>
     </ul>
   </div>

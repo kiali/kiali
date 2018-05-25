@@ -9,7 +9,8 @@ const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 export enum ServiceGraphDataActionKeys {
   GET_GRAPH_DATA_START = 'GET_GRAPH_DATA_START',
   GET_GRAPH_DATA_SUCCESS = 'GET_GRAPH_DATA_SUCCESS',
-  GET_GRAPH_DATA_FAILURE = 'GET_GRAPH_DATA_FAILURE'
+  GET_GRAPH_DATA_FAILURE = 'GET_GRAPH_DATA_FAILURE',
+  HANDLE_LEGEND = 'HANDLE_LEGEND'
 }
 
 // synchronous action creators
@@ -27,6 +28,7 @@ export const ServiceGraphDataActions = {
     type: ServiceGraphDataActionKeys.GET_GRAPH_DATA_FAILURE,
     error: error
   })),
+  handleLegend: createAction(ServiceGraphDataActionKeys.HANDLE_LEGEND),
 
   // action creator that performs the async request
   fetchGraphData: (namespace: Namespace, graphDuration: Duration) => {
