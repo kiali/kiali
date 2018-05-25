@@ -1,39 +1,51 @@
-import { ServiceGraphDataState } from '../store/Store';
+import { ServiceGraphState } from '../store/Store';
 import { ServiceGraphDataActionKeys } from '../actions/ServiceGraphDataActions';
+import { ServiceGraphActionKeys } from '../actions/ServiceGraphActions';
+import FilterStateReducer from './ServiceGraphFilterState';
 
-const INITIAL_STATE: ServiceGraphDataState = {
+const INITIAL_STATE: any = {
   isLoading: false,
-  timestamp: 0,
-  graphData: {}
+  graphDataTimestamp: 0,
+  graphData: {},
+  sidePanelInfo: null
 };
 
 // This Reducer allows changes to the 'serviceGraphDataState' portion of Redux Store
-const serviceGraphDataState = (state: ServiceGraphDataState = INITIAL_STATE, action) => {
+const serviceGraphDataState = (state: ServiceGraphState = INITIAL_STATE, action) => {
+  const filterState = FilterStateReducer(state.filterState, action);
+  let newState: ServiceGraphState = {
+    ...state,
+    filterState
+  };
+
   switch (action.type) {
     case ServiceGraphDataActionKeys.GET_GRAPH_DATA_START:
       console.log('ServiceGraphDataState reducer: graph data is loading...');
-      return {
-        ...state,
-        isLoading: true
-      };
+      newState.isLoading = true;
+      newState.sidePanelInfo = null;
+      break;
     case ServiceGraphDataActionKeys.GET_GRAPH_DATA_SUCCESS:
       console.log('ServiceGraphDataState reducer: graph data successfully received');
-      return {
-        ...state,
-        isLoading: false,
-        timestamp: action.timestamp,
-        graphData: action.graphData
-      };
+      newState.isLoading = false;
+      newState.graphDataTimestamp = action.timestamp;
+      newState.graphData = action.graphData;
+      break;
     case ServiceGraphDataActionKeys.GET_GRAPH_DATA_FAILURE:
       console.warn('ServiceGraphDataState reducer: failed to get graph data');
-      return {
-        ...state,
-        isLoading: false,
-        error: action.error
+      newState.isLoading = false;
+      // newState.error = action.error; // Already handled in the action.
+      break;
+    case ServiceGraphActionKeys.SERVICE_GRAPH_SIDE_PANEL_SHOW_INFO:
+      newState.sidePanelInfo = {
+        kind: action.summaryType,
+        graphReference: action.summaryTarget
       };
+      break;
     default:
-      return state;
+      break;
   }
+
+  return newState;
 };
 
 export default serviceGraphDataState;

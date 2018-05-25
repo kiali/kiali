@@ -13,6 +13,7 @@ import { EdgeLabelMode } from '../../types/GraphFilter';
 import { KialiAppState } from '../../store/Store';
 import * as GraphBadge from './graphs/GraphBadge';
 import TrafficRender from './graphs/TrafficRenderer';
+import { ServiceGraphActions } from '../../actions/ServiceGraphActions';
 
 type CytoscapeGraphType = {
   elements?: any;
@@ -24,7 +25,7 @@ type CytoscapeGraphType = {
   showMissingSidecars: boolean;
   showTrafficAnimation: boolean;
   onClick: (event: CytoscapeClickEvent) => void;
-  onReady: (event: CytoscapeBaseEvent) => void;
+  onReady: (cytoscapeRef: any) => void;
   refresh: any;
 };
 
@@ -284,13 +285,18 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  showNodeLabels: state.serviceGraphFilterState.showNodeLabels,
-  showCircuitBreakers: state.serviceGraphFilterState.showCircuitBreakers,
-  showRouteRules: state.serviceGraphFilterState.showRouteRules,
-  showMissingSidecars: state.serviceGraphFilterState.showMissingSidecars,
-  showTrafficAnimation: state.serviceGraphFilterState.showTrafficAnimation,
-  elements: state.serviceGraphDataState.graphData
+  showNodeLabels: state.serviceGraph.filterState.showNodeLabels,
+  showCircuitBreakers: state.serviceGraph.filterState.showCircuitBreakers,
+  showRouteRules: state.serviceGraph.filterState.showRouteRules,
+  showMissingSidecars: state.serviceGraph.filterState.showMissingSidecars,
+  showTrafficAnimation: state.serviceGraph.filterState.showTrafficAnimation,
+  elements: state.serviceGraph.graphData
 });
 
-const CytoscapeGraphConnected = connect(mapStateToProps, null)(CytoscapeGraph);
+const mapDispatchToProps = (dispatch: any) => ({
+  onClick: (event: CytoscapeClickEvent) => dispatch(ServiceGraphActions.showSidePanelInfo(event)),
+  onReady: (cy: any) => dispatch(ServiceGraphActions.graphRendered(cy))
+});
+
+const CytoscapeGraphConnected = connect(mapStateToProps, mapDispatchToProps)(CytoscapeGraph);
 export default CytoscapeGraphConnected;

@@ -7,9 +7,15 @@ import ServiceGraphPage from '../pages/ServiceGraph/ServiceGraphPage';
 import { ServiceGraphDataActions } from '../actions/ServiceGraphDataActions';
 
 const mapStateToProps = (state: KialiAppState) => ({
-  graphTimestamp: state.serviceGraphDataState.timestamp,
-  graphData: state.serviceGraphDataState.graphData,
-  isLoading: state.serviceGraphDataState.isLoading
+  graphTimestamp: state.serviceGraph.graphDataTimestamp,
+  graphData: state.serviceGraph.graphData,
+  isLoading: state.serviceGraph.isLoading,
+  summaryData: state.serviceGraph.sidePanelInfo
+    ? {
+        summaryTarget: state.serviceGraph.sidePanelInfo.graphReference,
+        summaryType: state.serviceGraph.sidePanelInfo.kind
+      }
+    : null
 });
 
 const mapDispatchToProps = (dispatch: any) => ({

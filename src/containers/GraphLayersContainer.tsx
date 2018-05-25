@@ -19,11 +19,11 @@ type GraphLayersProps = ServiceGraphDispatch & ServiceGraphFilterState;
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState) => ({
-  showNodeLabels: state.serviceGraphFilterState.showNodeLabels,
-  showCircuitBreakers: state.serviceGraphFilterState.showCircuitBreakers,
-  showRouteRules: state.serviceGraphFilterState.showRouteRules,
-  showMissingSidecars: state.serviceGraphFilterState.showMissingSidecars,
-  showTrafficAnimation: state.serviceGraphFilterState.showTrafficAnimation
+  showNodeLabels: state.serviceGraph.filterState.showNodeLabels,
+  showCircuitBreakers: state.serviceGraph.filterState.showCircuitBreakers,
+  showRouteRules: state.serviceGraph.filterState.showRouteRules,
+  showMissingSidecars: state.serviceGraph.filterState.showMissingSidecars,
+  showTrafficAnimation: state.serviceGraph.filterState.showTrafficAnimation
 });
 
 // Map our actions to Redux

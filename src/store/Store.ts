@@ -25,10 +25,16 @@ export interface MessageCenterState {
   expandedGroupId?: string;
 }
 
-export interface ServiceGraphDataState {
+export interface ServiceGraphState {
   isLoading: boolean;
-  timestamp: number;
+  graphDataTimestamp: number;
   graphData: any;
+
+  filterState: ServiceGraphFilterState;
+  sidePanelInfo: {
+    kind: string;
+    graphReference: any;
+  } | null;
 }
 
 // @todo: Add namespaces interface
@@ -38,6 +44,5 @@ export interface KialiAppState {
   // page settings
   messageCenter: MessageCenterState;
   namespaces: any;
-  serviceGraphDataState: ServiceGraphDataState;
-  serviceGraphFilterState: ServiceGraphFilterState;
+  serviceGraph: ServiceGraphState;
 }

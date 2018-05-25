@@ -12,7 +12,7 @@ import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import { style } from 'typestyle';
 
 type ServiceGraphPageState = {
-  summaryData?: SummaryData | null;
+  // stateless
 };
 
 type ServiceGraphPageProps = GraphParamsType & {
@@ -21,6 +21,7 @@ type ServiceGraphPageProps = GraphParamsType & {
   isLoading: boolean;
   isReady: boolean;
   fetchGraphData: (namespace: Namespace, graphDuration: Duration) => any;
+  summaryData: SummaryData | null;
 };
 const NUMBER_OF_DATAPOINTS = 30;
 
@@ -57,23 +58,6 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
     }
   }
 
-  handleGraphClick = (data: SummaryData) => {
-    if (data) {
-      this.setState({ summaryData: data });
-    }
-  };
-
-  handleReady = (cy: any) => {
-    if (cy && (!this.state.summaryData || this.state.summaryData.summaryTarget !== cy)) {
-      this.setState({
-        summaryData: {
-          summaryType: 'graph',
-          summaryTarget: cy
-        }
-      });
-    }
-  };
-
   handleRefreshClick = () => {
     this.loadGraphDataFromBackend();
   };
@@ -98,13 +82,11 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
             {...graphParams}
             isLoading={this.props.isLoading}
             elements={this.props.graphData}
-            onClick={this.handleGraphClick}
-            onReady={this.handleReady}
             refresh={this.handleRefreshClick}
           />
-          {this.state.summaryData ? (
+          {this.props.summaryData ? (
             <SummaryPanel
-              data={this.state.summaryData}
+              data={this.props.summaryData}
               namespace={this.props.namespace.name}
               queryTime={this.props.graphTimestamp}
               duration={this.props.graphDuration.value}
