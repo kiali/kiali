@@ -58,7 +58,6 @@ func runChecks(routeRule kubernetes.IstioObject, typeValidations *models.IstioTy
 	var checkersWg sync.WaitGroup
 
 	nameValidations := models.IstioNameValidations{}
-	(*typeValidations)[objectType] = &nameValidations
 
 	ruleName := routeRule.GetObjectMeta().Name
 	validation := &models.IstioValidation{Name: ruleName, ObjectType: objectType, Valid: true}
@@ -72,6 +71,11 @@ func runChecks(routeRule kubernetes.IstioObject, typeValidations *models.IstioTy
 	}
 
 	checkersWg.Wait()
+	if (*typeValidations)[objectType] != nil {
+		(*typeValidations)[objectType].MergeNameValidations(&nameValidations)
+	} else {
+		(*typeValidations)[objectType] = &nameValidations
+	}
 }
 
 func runChecker(checker Checker, objectName string, nameValidations *models.IstioNameValidations, wg *sync.WaitGroup) {
