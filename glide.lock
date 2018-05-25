@@ -1,8 +1,8 @@
 hash: 41ca3223bacf04f1e4b1e7528d88ae650eb36842c9ae02eeb330751f7d02d9b0
-updated: 2018-03-23T17:37:17.661627595-04:00
+updated: 2018-05-24T17:11:15.352508131-04:00
 imports:
 - name: github.com/davecgh/go-spew
-  version: 782f4967f2dc4564575ca782fe2d04090b5faca8
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
 - name: github.com/emicklei/go-restful
@@ -47,7 +47,7 @@ imports:
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
-  version: 53c1911da2b537f792e7cafcb446b05ffe33b996
+  version: e3702bed27f0d39777b0b37b664b6280e8ef8fbf
 - name: github.com/gregjones/httpcache
   version: 787624de3eb7bd915c329cba748687a3b22666a6
   subpackages:
@@ -62,10 +62,14 @@ imports:
   - buffer
   - jlexer
   - jwriter
+- name: github.com/openshift/api
+  version: 0d921e363e951d89f583292c60d013c318df64dc
+  subpackages:
+  - project/v1
 - name: github.com/peterbourgon/diskv
   version: 5f041e8faa004a95c88a202771f4cc3e991971e6
 - name: github.com/pmezard/go-difflib
-  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/prometheus/client_golang
@@ -84,7 +88,7 @@ imports:
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/stretchr/objx
-  version: 8a3f7159479fbc75b30357fbc48f380b7320f08e
+  version: a5cfa15c000af5f09784e5355969ba7eb66ef0de
 - name: github.com/stretchr/testify
   version: 12b6f73e6084dad08a7c6e575284b177ecafbc71
   subpackages:
@@ -136,7 +140,6 @@ imports:
   - core/v1
   - events/v1beta1
   - extensions/v1beta1
-  - imagepolicy/v1alpha1
   - networking/v1
   - policy/v1beta1
   - rbac/v1
@@ -148,7 +151,7 @@ imports:
   - storage/v1alpha1
   - storage/v1beta1
 - name: k8s.io/apimachinery
-  version: cb88e003047fb517f284ff8af294451b20f0b403
+  version: 21efb2924c7cf1920f76af05b1fd6a325bf46dfc
   subpackages:
   - pkg/api/errors
   - pkg/api/meta
