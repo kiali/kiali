@@ -112,6 +112,34 @@ func TestMixedCheckerRoule(t *testing.T) {
 	assert.Len(invalidObject.Checks, 3)
 }
 
+func TestMultipleIstioObjects(t *testing.T) {
+	assert := assert.New(t)
+
+	// Setup mocks
+	routeRuleChecker := RouteRuleChecker{fakeMultipleIstioObjects()}
+	typeValidations := *(routeRuleChecker.Check())
+	assert.NotEmpty(typeValidations)
+
+	nameValidations := (*typeValidations["routerule"])
+	assert.NotEmpty(nameValidations)
+
+	// Precedence is incorrect
+	invalidObject := nameValidations["reviews-mixed"]
+	assert.NotEmpty(invalidObject)
+	assert.Equal(invalidObject.Name, "reviews-mixed")
+	assert.Equal(invalidObject.ObjectType, "routerule")
+	assert.Equal(invalidObject.Valid, false)
+	assert.Len(invalidObject.Checks, 3)
+
+	// Negative precedence
+	invalidObject = nameValidations["reviews-negative"]
+	assert.NotEmpty(invalidObject)
+	assert.Equal(invalidObject.Name, "reviews-negative")
+	assert.Equal(invalidObject.ObjectType, "routerule")
+	assert.Equal(invalidObject.Valid, false)
+	assert.Len(invalidObject.Checks, 1)
+}
+
 func fakeIstioObjects() kubernetes.IstioObject {
 	validRouteRule := (&kubernetes.RouteRule{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -221,4 +249,8 @@ func fakeMixedChecker() kubernetes.IstioObject {
 	}).DeepCopyIstioObject()
 
 	return routeRule
+}
+
+func fakeMultipleIstioObjects() []kubernetes.IstioObject {
+	return []kubernetes.IstioObject{fakeMixedChecker(), fakeNegative()}
 }
