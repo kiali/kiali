@@ -4,14 +4,14 @@
     "nodes": [
       {
         "data": {
-          "id": "b86b9cd5c1cfea8b88c4e422f45d1eb9",
+          "id": "ef10172953f8ad2cd4135d73afe62c63",
           "service": "productpage.istio-system.svc.cluster.local",
           "version": "v1"
         }
       },
       {
         "data": {
-          "id": "f66bcc30ac809e472db4dfe6b2091815",
+          "id": "5932332ea8128356e493d44620483e23",
           "service": "ratings.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "40.000"
@@ -19,15 +19,15 @@
       },
       {
         "data": {
-          "id": "0afa1e7244eebc91f2da51f8bc273a2e",
+          "id": "98a1c1cea90d0a4af0f009d6d7a9814e",
           "service": "reviews.istio-system.svc.cluster.local",
           "isGroup": "version"
         }
       },
       {
         "data": {
-          "id": "29dde1c226065e3dca6d36108c72fee3",
-          "parent": "0afa1e7244eebc91f2da51f8bc273a2e",
+          "id": "047fedf43d6b41f55d8c7c14a80a22ca",
+          "parent": "98a1c1cea90d0a4af0f009d6d7a9814e",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "20.000"
@@ -35,8 +35,8 @@
       },
       {
         "data": {
-          "id": "e116d63b26d2dd0f0450a1ef4c481d4e",
-          "parent": "0afa1e7244eebc91f2da51f8bc273a2e",
+          "id": "c7a03b129bb359511003f1d560c092fd",
+          "parent": "98a1c1cea90d0a4af0f009d6d7a9814e",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v2",
           "rate": "20.000",
@@ -45,8 +45,8 @@
       },
       {
         "data": {
-          "id": "6e2292bee6d458c624ed9b661fa34675",
-          "parent": "0afa1e7244eebc91f2da51f8bc273a2e",
+          "id": "ff0100c5e664424396c2f264bb30da25",
+          "parent": "98a1c1cea90d0a4af0f009d6d7a9814e",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v3",
           "rate": "20.000",
@@ -57,45 +57,45 @@
     "edges": [
       {
         "data": {
-          "id": "2857d88250a8f34f155cd791a145e674",
-          "source": "6e2292bee6d458c624ed9b661fa34675",
-          "target": "f66bcc30ac809e472db4dfe6b2091815",
+          "id": "fdbc06677bb0f6130f6ac1072fa92cb3",
+          "source": "c7a03b129bb359511003f1d560c092fd",
+          "target": "5932332ea8128356e493d44620483e23",
           "rate": "20.000",
           "percentRate": "50.000"
         }
       },
       {
         "data": {
-          "id": "206ef341e7b6c51c170b331f261e2967",
-          "source": "b86b9cd5c1cfea8b88c4e422f45d1eb9",
-          "target": "29dde1c226065e3dca6d36108c72fee3",
+          "id": "875b53697932c163844cd17ce454d962",
+          "source": "ef10172953f8ad2cd4135d73afe62c63",
+          "target": "047fedf43d6b41f55d8c7c14a80a22ca",
           "rate": "20.000",
           "percentRate": "33.333"
         }
       },
       {
         "data": {
-          "id": "6cb486d17eef1a3e43b488c826dfdfd4",
-          "source": "b86b9cd5c1cfea8b88c4e422f45d1eb9",
-          "target": "6e2292bee6d458c624ed9b661fa34675",
+          "id": "7071b96e54595edd3e1ce226788facb3",
+          "source": "ef10172953f8ad2cd4135d73afe62c63",
+          "target": "c7a03b129bb359511003f1d560c092fd",
           "rate": "20.000",
           "percentRate": "33.333"
         }
       },
       {
         "data": {
-          "id": "58fcc188cb5101417390f7c83e588a42",
-          "source": "b86b9cd5c1cfea8b88c4e422f45d1eb9",
-          "target": "e116d63b26d2dd0f0450a1ef4c481d4e",
+          "id": "35ef6eb03cb34330034f87a98f62452f",
+          "source": "ef10172953f8ad2cd4135d73afe62c63",
+          "target": "ff0100c5e664424396c2f264bb30da25",
           "rate": "20.000",
           "percentRate": "33.333"
         }
       },
       {
         "data": {
-          "id": "045473b3ef0125b0cf3b3df4d042a469",
-          "source": "e116d63b26d2dd0f0450a1ef4c481d4e",
-          "target": "f66bcc30ac809e472db4dfe6b2091815",
+          "id": "fa39bdc4937943a9e645dffd0117a2f9",
+          "source": "ff0100c5e664424396c2f264bb30da25",
+          "target": "5932332ea8128356e493d44620483e23",
           "rate": "20.000",
           "percentRate": "50.000"
         }

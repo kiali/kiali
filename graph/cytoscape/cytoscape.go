@@ -82,12 +82,12 @@ type Config struct {
 	Elements  Elements `json:"elements"`
 }
 
-func nodeHash(id string, version string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s", id, version))))
+func nodeHash(id string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(id)))
 }
 
-func edgeHash(from *NodeData, to *NodeData) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s", nodeHash(from.Id, from.Version), nodeHash(to.Id, from.Version)))))
+func edgeHash(from string, to string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s", from, to))))
 }
 
 // NewConfig currently ignores namespace arg
@@ -145,7 +145,7 @@ func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges
 	nd, found := findNode(nodes, name, sn.Version)
 
 	if !found {
-		nodeId := nodeHash(sn.ID, sn.Version)
+		nodeId := nodeHash(sn.ID)
 
 		text := strings.Split(name, ".")[0]
 		if tree.UnknownVersion != sn.Version {
@@ -199,7 +199,7 @@ func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges
 		if ndParent.Id == nd.Id {
 			nd.RateSelfInvoke = fmt.Sprintf("%.3f", sn.Metadata["rate"].(float64))
 		} else {
-			edgeId := edgeHash(ndParent, nd)
+			edgeId := edgeHash(ndParent.Id, nd.Id)
 			ed := EdgeData{
 				Id:     edgeId,
 				Source: ndParent.Id,
@@ -285,21 +285,22 @@ func add(current string, val float64) string {
 // addCompositeNodes generates additional nodes to group multiple versions of the
 // same service.
 func addCompositeNodes(nodes *[]*NodeWrapper) {
-	serviceCount := make(map[string][]*NodeData)
+	grouped := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
-		serviceCount[nw.Data.Service] = append(serviceCount[nw.Data.Service], nw.Data)
+		grouped[nw.Data.Service] = append(grouped[nw.Data.Service], nw.Data)
 	}
 
-	for k, v := range serviceCount {
+	for k, v := range grouped {
 		if len(v) > 1 {
 			// create the composite grouping all versions of the service
-			nodeId := nodeHash(k, "0")
+			nodeId := nodeHash(k)
 			nd := NodeData{
 				Id:      nodeId,
 				Service: k,
 				IsGroup: "version",
 			}
+
 			nw := NodeWrapper{
 				Data: &nd,
 			}
