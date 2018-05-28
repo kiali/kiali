@@ -37,7 +37,7 @@ const mapStateToPropsMessageCenterTrigger = state => {
     badgeDanger: boolean;
   };
   const dangerousMessageTypes = [MessageType.ERROR, MessageType.WARNING];
-  const messageCenterTriggerPropsToMap = state.messageCenter.groups
+  return state.messageCenter.groups
     .reduce((unreadMessages: any[], group) => {
       return unreadMessages.concat(
         group.messages.reduce((unreadMessagesInGroup: any[], message) => {
@@ -56,9 +56,6 @@ const mapStateToPropsMessageCenterTrigger = state => {
       },
       { newMessagesCount: 0, badgeDanger: false }
     );
-  console.log(messageCenterTriggerPropsToMap);
-
-  return messageCenterTriggerPropsToMap;
 };
 
 const mapDispatchToPropsMessageCenterTrigger = dispatch => {
