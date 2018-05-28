@@ -7,6 +7,8 @@ import (
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+
+	osv1 "github.com/openshift/api/project/v1"
 )
 
 type servicesResponse struct {
@@ -54,6 +56,19 @@ func (in *IstioClient) GetNamespaces() (*v1.NamespaceList, error) {
 	}
 
 	return namespaces, nil
+}
+
+func (in *IstioClient) GetProjects() (*osv1.ProjectList, error) {
+
+	result := &osv1.ProjectList{}
+
+	err := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects").Do().Into(result)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // GetServices returns a list of services for a given namespace.
