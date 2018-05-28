@@ -4,7 +4,7 @@
     "nodes": [
       {
         "data": {
-          "id": "n2",
+          "id": "32fda8753c26d348f348807c6b56705c",
           "service": "details.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "80.000",
@@ -15,7 +15,7 @@
       },
       {
         "data": {
-          "id": "n7",
+          "id": "dbcb1a8f5bb7328294eebda1e370d3a3",
           "service": "ingress.istio-system.svc.cluster.local",
           "version": "unknown",
           "isRoot": "true"
@@ -23,7 +23,7 @@
       },
       {
         "data": {
-          "id": "n1",
+          "id": "ef10172953f8ad2cd4135d73afe62c63",
           "service": "productpage.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "150.000",
@@ -32,7 +32,7 @@
       },
       {
         "data": {
-          "id": "n5",
+          "id": "5932332ea8128356e493d44620483e23",
           "service": "ratings.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "40.000"
@@ -40,15 +40,15 @@
       },
       {
         "data": {
-          "id": "n8",
+          "id": "98a1c1cea90d0a4af0f009d6d7a9814e",
           "service": "reviews.istio-system.svc.cluster.local",
           "isGroup": "version"
         }
       },
       {
         "data": {
-          "id": "n3",
-          "parent": "n8",
+          "id": "047fedf43d6b41f55d8c7c14a80a22ca",
+          "parent": "98a1c1cea90d0a4af0f009d6d7a9814e",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v1",
           "rate": "20.000"
@@ -56,8 +56,8 @@
       },
       {
         "data": {
-          "id": "n4",
-          "parent": "n8",
+          "id": "c7a03b129bb359511003f1d560c092fd",
+          "parent": "98a1c1cea90d0a4af0f009d6d7a9814e",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v2",
           "rate": "20.000",
@@ -66,8 +66,8 @@
       },
       {
         "data": {
-          "id": "n6",
-          "parent": "n8",
+          "id": "ff0100c5e664424396c2f264bb30da25",
+          "parent": "98a1c1cea90d0a4af0f009d6d7a9814e",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v3",
           "rate": "20.000",
@@ -76,7 +76,7 @@
       },
       {
         "data": {
-          "id": "n0",
+          "id": "ba113404e46b8aa41dc0e7cc339073fe",
           "service": "unknown",
           "version": "unknown",
           "isRoot": "true"
@@ -86,17 +86,43 @@
     "edges": [
       {
         "data": {
-          "id": "e0",
-          "source": "n0",
-          "target": "n1",
+          "id": "27abd2c57da5dc459a2695524e33cc8b",
+          "source": "ba113404e46b8aa41dc0e7cc339073fe",
+          "target": "ef10172953f8ad2cd4135d73afe62c63",
           "rate": "50.000"
         }
       },
       {
         "data": {
-          "id": "e1",
-          "source": "n1",
-          "target": "n2",
+          "id": "fdbc06677bb0f6130f6ac1072fa92cb3",
+          "source": "c7a03b129bb359511003f1d560c092fd",
+          "target": "5932332ea8128356e493d44620483e23",
+          "rate": "20.000",
+          "percentRate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "e9d7488f52233ea7a5f440ab6fc777e2",
+          "source": "dbcb1a8f5bb7328294eebda1e370d3a3",
+          "target": "ef10172953f8ad2cd4135d73afe62c63",
+          "rate": "100.000"
+        }
+      },
+      {
+        "data": {
+          "id": "875b53697932c163844cd17ce454d962",
+          "source": "ef10172953f8ad2cd4135d73afe62c63",
+          "target": "047fedf43d6b41f55d8c7c14a80a22ca",
+          "rate": "20.000",
+          "percentRate": "12.500"
+        }
+      },
+      {
+        "data": {
+          "id": "ae6a74a628bdd233ddb48bc5b4faa9fb",
+          "source": "ef10172953f8ad2cd4135d73afe62c63",
+          "target": "32fda8753c26d348f348807c6b56705c",
           "rate": "80.000",
           "rate3XX": "20.000",
           "rate4XX": "20.000",
@@ -107,55 +133,29 @@
       },
       {
         "data": {
-          "id": "e2",
-          "source": "n1",
-          "target": "n3",
+          "id": "7071b96e54595edd3e1ce226788facb3",
+          "source": "ef10172953f8ad2cd4135d73afe62c63",
+          "target": "c7a03b129bb359511003f1d560c092fd",
           "rate": "20.000",
           "percentRate": "12.500"
         }
       },
       {
         "data": {
-          "id": "e3",
-          "source": "n1",
-          "target": "n4",
+          "id": "35ef6eb03cb34330034f87a98f62452f",
+          "source": "ef10172953f8ad2cd4135d73afe62c63",
+          "target": "ff0100c5e664424396c2f264bb30da25",
           "rate": "20.000",
           "percentRate": "12.500"
         }
       },
       {
         "data": {
-          "id": "e5",
-          "source": "n1",
-          "target": "n6",
-          "rate": "20.000",
-          "percentRate": "12.500"
-        }
-      },
-      {
-        "data": {
-          "id": "e4",
-          "source": "n4",
-          "target": "n5",
+          "id": "fa39bdc4937943a9e645dffd0117a2f9",
+          "source": "ff0100c5e664424396c2f264bb30da25",
+          "target": "5932332ea8128356e493d44620483e23",
           "rate": "20.000",
           "percentRate": "50.000"
-        }
-      },
-      {
-        "data": {
-          "id": "e6",
-          "source": "n6",
-          "target": "n5",
-          "rate": "20.000",
-          "percentRate": "50.000"
-        }
-      },
-      {
-        "data": {
-          "id": "e7",
-          "source": "n7",
-          "target": "n1",
-          "rate": "100.000"
         }
       }
     ]

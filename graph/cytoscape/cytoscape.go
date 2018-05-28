@@ -14,6 +14,7 @@
 package cytoscape
 
 import (
+	"crypto/md5"
 	"fmt"
 	"sort"
 	"strconv"
@@ -81,23 +82,28 @@ type Config struct {
 	Elements  Elements `json:"elements"`
 }
 
+func nodeHash(id string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(id)))
+}
+
+func edgeHash(from string, to string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s", from, to))))
+}
+
 // NewConfig currently ignores namespace arg
 func NewConfig(namespace string, sn *[]tree.ServiceNode, o options.VendorOptions) (result Config) {
 	nodes := []*NodeWrapper{}
 	edges := []*EdgeWrapper{}
 
-	var nodeIdSequence int
-	var edgeIdSequence int
-
 	for _, t := range *sn {
 		log.Debugf("Walk Tree Root %v", t.ID)
 
-		walk(&t, nil, &nodes, &edges, &nodeIdSequence, &edgeIdSequence, o)
+		walk(&t, nil, &nodes, &edges, o)
 	}
 
 	// Add composite nodes that group together different versions of the same service
 	if o.GroupByVersion {
-		addCompositeNodes(&nodes, &nodeIdSequence)
+		addCompositeNodes(&nodes)
 	}
 
 	// sort nodes and edges for better json presentation (and predictable testing)
@@ -130,7 +136,7 @@ func NewConfig(namespace string, sn *[]tree.ServiceNode, o options.VendorOptions
 	return result
 }
 
-func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, nodeIdSequence, edgeIdSequence *int, o options.VendorOptions) {
+func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, o options.VendorOptions) {
 	name := sn.Name
 	if "" == name {
 		name = tree.UnknownService
@@ -139,12 +145,12 @@ func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges
 	nd, found := findNode(nodes, name, sn.Version)
 
 	if !found {
-		nodeId := fmt.Sprintf("n%v", *nodeIdSequence)
+		nodeId := nodeHash(sn.ID)
+
 		text := strings.Split(name, ".")[0]
 		if tree.UnknownVersion != sn.Version {
 			text = fmt.Sprintf("%v %v", text, sn.Version)
 		}
-		*nodeIdSequence++
 		nd = &NodeData{
 			Id:      nodeId,
 			Service: name,
@@ -193,8 +199,7 @@ func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges
 		if ndParent.Id == nd.Id {
 			nd.RateSelfInvoke = fmt.Sprintf("%.3f", sn.Metadata["rate"].(float64))
 		} else {
-			edgeId := fmt.Sprintf("e%v", *edgeIdSequence)
-			*edgeIdSequence++
+			edgeId := edgeHash(ndParent.Id, nd.Id)
 			ed := EdgeData{
 				Id:     edgeId,
 				Source: ndParent.Id,
@@ -210,7 +215,7 @@ func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges
 	}
 
 	for _, c := range sn.Children {
-		walk(c, nd, nodes, edges, nodeIdSequence, edgeIdSequence, o)
+		walk(c, nd, nodes, edges, o)
 	}
 }
 
@@ -279,21 +284,23 @@ func add(current string, val float64) string {
 
 // addCompositeNodes generates additional nodes to group multiple versions of the
 // same service.
-func addCompositeNodes(nodes *[]*NodeWrapper, nodeIdSequence *int) {
-	serviceCount := make(map[string]int)
+func addCompositeNodes(nodes *[]*NodeWrapper) {
+	grouped := make(map[string][]*NodeData)
+
 	for _, nw := range *nodes {
-		serviceCount[nw.Data.Service] += 1
+		grouped[nw.Data.Service] = append(grouped[nw.Data.Service], nw.Data)
 	}
-	for k, v := range serviceCount {
-		if v > 1 {
+
+	for k, v := range grouped {
+		if len(v) > 1 {
 			// create the composite grouping all versions of the service
-			nodeId := fmt.Sprintf("n%v", *nodeIdSequence)
-			*nodeIdSequence++
+			nodeId := nodeHash(k)
 			nd := NodeData{
 				Id:      nodeId,
 				Service: k,
 				IsGroup: "version",
 			}
+
 			nw := NodeWrapper{
 				Data: &nd,
 			}
@@ -301,15 +308,13 @@ func addCompositeNodes(nodes *[]*NodeWrapper, nodeIdSequence *int) {
 			// assign each service version node to the composite parent
 			hasRouteRule := false
 			nd.HasMissingSidecars = false
-			for _, n := range *nodes {
-				if k == n.Data.Service {
-					n.Data.Parent = nodeId
-					nd.HasMissingSidecars = nd.HasMissingSidecars || n.Data.HasMissingSidecars
-					// If there is a route rule defined in version node, move it to composite parent
-					if n.Data.HasRouteRule == "true" {
-						n.Data.HasRouteRule = ""
-						hasRouteRule = true
-					}
+			for _, n := range v {
+				n.Parent = nodeId
+				nd.HasMissingSidecars = nd.HasMissingSidecars || n.HasMissingSidecars
+				// If there is a route rule defined in version node, move it to composite parent
+				if n.HasRouteRule == "true" {
+					n.HasRouteRule = ""
+					hasRouteRule = true
 				}
 			}
 
