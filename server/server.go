@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/security"
@@ -77,8 +78,13 @@ type serverAuthProxyHandler struct {
 func (h *serverAuthProxyHandler) handler(w http.ResponseWriter, r *http.Request) {
 	statusCode := http.StatusOK
 
-	// before we handle any requests, make sure the user is authenticated
-	if h.credentials.Username != "" || h.credentials.Password != "" {
+	if strings.Contains(r.Header.Get("Authorization"), "Bearer") {
+		err := config.ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+		if err != nil {
+			log.Warning("Error token %+v", err)
+			statusCode = http.StatusUnauthorized
+		}
+	} else if h.credentials.Username != "" || h.credentials.Password != "" {
 		u, p, ok := r.BasicAuth()
 		if !ok || h.credentials.Username != u || h.credentials.Password != p {
 			statusCode = http.StatusUnauthorized

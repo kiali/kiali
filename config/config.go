@@ -46,6 +46,9 @@ const (
 
 	EnvServiceFilterLabelName = "SERVICE_FILTER_LABEL_NAME"
 	EnvVersionFilterLabelName = "VERSION_FILTER_LABEL_NAME"
+
+	EnvTokenSecret       = "TOKEN_SECRET"
+	EnvTokenExpirationAt = "TOKEN_EXPIRATION_AT"
 )
 
 // Global configuration for the application.
@@ -92,6 +95,11 @@ type Products struct {
 	Jaeger               JaegerConfig  `yaml:"jaeger,omitempty"`
 }
 
+type Token struct {
+	Secret       []byte `yaml:"secret,omitempty"`
+	ExpirationAt int64  `yaml:"expiration,omitempty"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	Identity               security.Identity `yaml:",omitempty"`
@@ -100,6 +108,7 @@ type Config struct {
 	ServiceFilterLabelName string            `yaml:"service_filter_label_name,omitempty"`
 	VersionFilterLabelName string            `yaml:"version_filter_label_name,omitempty"`
 	Products               Products          `yaml:"products,omitempty"`
+	Token                  Token             `yaml:"token,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -144,6 +153,10 @@ func NewConfig() (c *Config) {
 	c.Products.Istio.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
 	c.Products.Istio.UrlServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioUrlServiceVersion, "http://istio-pilot:9093/version"))
 
+	// Token Configuration
+	c.Token.Secret = []byte(strings.TrimSpace(getDefaultString(EnvTokenSecret, "kiali")))
+	c.Token.ExpirationAt = getDefaultInt64(EnvTokenExpirationAt, 36000)
+
 	return
 }
 
@@ -171,6 +184,21 @@ func getDefaultInt(envvar string, defaultValue int) (retVal int) {
 		retVal = defaultValue
 	} else {
 		if num, err := strconv.Atoi(retValString); err != nil {
+			log.Warningf("Invalid number for envvar [%v]. err=%v", envvar, err)
+			retVal = defaultValue
+		} else {
+			retVal = num
+		}
+	}
+	return
+}
+
+func getDefaultInt64(envvar string, defaultValue int64) (retVal int64) {
+	retValString := os.Getenv(envvar)
+	if retValString == "" {
+		retVal = defaultValue
+	} else {
+		if num, err := strconv.ParseInt(retValString, 10, 64); err != nil {
 			log.Warningf("Invalid number for envvar [%v]. err=%v", envvar, err)
 			retVal = defaultValue
 		} else {
