@@ -91,7 +91,9 @@ func ServiceHealth(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, health)
 }
 
-// ServiceIstioValidations is the API handler to get istio validations of a single service
+// ServiceIstioValidations is the API handler to get istio validations of a single service that returns
+// an IstioValidation object which contains for each object type (i.e.: routerule, pod, destinationpolicy,...)
+// one validation per each detected object in the current cluster that have an error/warning in its configuration.
 func ServiceIstioValidations(w http.ResponseWriter, r *http.Request) {
 	// Get business layer
 	business, err := business.Get()

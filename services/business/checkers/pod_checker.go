@@ -12,12 +12,12 @@ type PodChecker struct {
 
 const podsCheckerType = "pod"
 
+// Runs all checkers for Pod objects passed into the PodChecker
 func (checker PodChecker) Check() *models.IstioTypeValidations {
-	// The only available checker test for missing
-	// sidecars in a service. Only individual checks makes sense for now.
 	return checker.runIndividualChecks()
 }
 
+// Runs individual checks for each pod in pod checker.
 func (checker PodChecker) runIndividualChecks() *models.IstioTypeValidations {
 	typeValidations := models.IstioTypeValidations{}
 	if len(checker.Pods) == 0 {
@@ -47,6 +47,7 @@ func (checker PodChecker) runIndividualChecks() *models.IstioTypeValidations {
 	return &typeValidations
 }
 
+// Returns a list of all individual enabled checkers
 func (checker *PodChecker) enabledCheckersFor(object *v1.Pod) []Checker {
 	return []Checker{
 		pods.SidecarPresenceChecker{Pod: object},
