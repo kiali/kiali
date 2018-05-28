@@ -20,7 +20,7 @@ package handlers
 //   GraphService:    Generate a graph centered on versions of a specified service, limited to
 //                    requesting and requested services.
 //
-// The handlers accept the following query parameters:
+// The handlers accept the following query parameters (some handlers may ignore some parameters):
 //   duration:       time.Duration indicating desired query range duration, (default 10m)
 //   appenders       Comma-separated list of appenders to run from [circuit_breaker, unused_service] (default all)
 //                   Note, appenders may support appender-specific query parameters
@@ -28,6 +28,7 @@ package handlers
 //   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
 //   queryTime:      Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
 //   vendor:         cytoscape | vizceral (default cytoscape)
+//   namespaces:     Comma-separated list of namespace names to use in the graph. Will override namespace path param
 //
 // * Error% is the percentage of requests with response code != 2XX
 // * See the vendor-specific config generators for more details about the specific vendor.
@@ -45,6 +46,7 @@ import (
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
+	"github.com/kiali/kiali/graph/appender"
 	"github.com/kiali/kiali/graph/cytoscape"
 	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/graph/tree"
@@ -67,7 +69,11 @@ func GraphNamespace(w http.ResponseWriter, r *http.Request) {
 // graphNamespace provides a testing hook that can supply a mock client
 func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
 	o := options.NewOptions(r)
+	roots := graphNamespaces(o, client)
+	generateGraph(roots, w, o)
+}
 
+func graphNamespaces(o options.Options, client *prometheus.Client) *[]tree.ServiceNode {
 	switch o.Vendor {
 	case "cytoscape":
 	case "vizceral":
@@ -75,25 +81,102 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 		checkError(errors.New(fmt.Sprintf("Vendor [%v] does not support Namespace Graphs", o.Vendor)))
 	}
 
-	log.Debugf("Build roots (root destination services nodes) for [%v] namespace graph with options [%+v]", o.Vendor, o)
+	roots := []tree.ServiceNode{}
 
-	trees := buildNamespaceTrees(o, client)
+	for _, namespace := range o.Namespaces {
+		log.Debugf("Build graph for namespace [%s]", namespace)
+		namespaceRoots := buildNamespaceTrees(namespace, o, client)
 
-	for _, a := range o.Appenders {
-		a.AppendGraph(&trees, o.Namespace)
+		if len(*namespaceRoots) > 0 {
+			for _, a := range o.Appenders {
+				a.AppendGraph(namespaceRoots, namespace)
+			}
+			mergeRoots(&roots, namespaceRoots)
+		} else {
+			log.Debugf("No roots found for namespace [%s]", namespace)
+		}
 	}
 
-	generateGraph(&trees, w, o)
+	if len(o.Namespaces) > 0 {
+		mergeNamespaces(&roots)
+	}
+
+	return &roots
+}
+
+// mergeRoots ensures that we only have unique root nodes by removing duplicate roots
+// and merging their children.
+func mergeRoots(roots, namespaceRoots *[]tree.ServiceNode) {
+	for _, nsr := range *namespaceRoots {
+		merged := false
+		for _, r := range *roots {
+			if r.ID == nsr.ID {
+				r.Children = append(r.Children, nsr.Children...)
+				merged = true
+				log.Debugf("Merged duplicate root node [%s]", r.ID)
+				break
+			}
+		}
+		if !merged {
+			*roots = append(*roots, nsr)
+		}
+	}
+}
+
+// mergeNamespaces ties together namespaces to avoid duplicate edges. A duplicate can
+// occur when an edge node of one namespace is a root node of another.  For example:
+//   ns1 graph: unknown -> ns1:A -> ns2:B
+//   ns2 graph:   ns1:A -> ns2:B -> ns2:C
+//
+// The edge ns1:A -> ns2:B is duplicated in each graph because ns1:A is an edge node of
+// ns1 and makes requests out of the namespace to leaf node ns2:B.  That will make ns1:A
+// a root node for the ns2 graph.  When the same node is a leaf and a root we can have
+// duplicate edges.  In this case we remove the leaf node in the combined graph.
+func mergeNamespaces(roots *[]tree.ServiceNode) {
+	edgeNodes := make(map[string]*tree.ServiceNode) // nodes leading to child outside namespace
+	for _, r := range *roots {
+		collectEdgeNodes(&r, edgeNodes)
+	}
+
+	for _, r := range *roots {
+		if edge, ok := edgeNodes[r.ID]; ok {
+			for i := len(edge.Children) - 1; i >= 0; i-- {
+				if containsNode(edge.Children[i], &r.Children) {
+					log.Debugf("Removing child [%s] from edge [%s] because it is found under root [%s]", edge.Children[i].ID, edge.ID, r.ID)
+					edge.Children = append(edge.Children[:i], edge.Children[i+1:]...)
+				}
+			}
+		}
+	}
+}
+
+func collectEdgeNodes(node *tree.ServiceNode, edgeNodes map[string]*tree.ServiceNode) {
+	if len(node.Children) == 0 && node.Metadata["isOutsideNamespace"] == "true" {
+		edgeNodes[node.Parent.ID] = node.Parent
+	} else {
+		for _, c := range node.Children {
+			collectEdgeNodes(c, edgeNodes)
+		}
+	}
+}
+
+func containsNode(target *tree.ServiceNode, nodes *[]*tree.ServiceNode) bool {
+	for _, node := range *nodes {
+		if target.ID == node.ID {
+			return true
+		}
+	}
+	return false
 }
 
 // buildNamespaceTrees returns trees rooted at services receiving requests from outside the namespace
-func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []tree.ServiceNode) {
+func buildNamespaceTrees(namespace string, o options.Options, client *prometheus.Client) (trees *[]tree.ServiceNode) {
 	// avoid circularities by keeping track of all seen nodes
 	seenNodes := make(map[string]*tree.ServiceNode)
 
 	// Query for root nodes. Root nodes must originate outside of the requested
 	// namespace (typically "unknown").  Destination nodes must be in the namespace.
-	namespacePattern := fmt.Sprintf(".*\\\\.%v\\\\..*", o.Namespace)
+	namespacePattern := fmt.Sprintf(".*\\\\.%v\\\\..*", namespace)
 	query := fmt.Sprintf("sum(rate(%v{source_service!~\"%v\",destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
 		o.Metric,
 		namespacePattern,          // regex for namespace-constrained service
@@ -106,7 +189,7 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []
 	vector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
 	// generate a tree rooted at each source node
-	trees = []tree.ServiceNode{}
+	trees = &[]tree.ServiceNode{}
 
 	for _, s := range vector {
 		m := s.Metric
@@ -127,20 +210,20 @@ func buildNamespaceTrees(o options.Options, client *prometheus.Client) (trees []
 		seenNodes[root.ID] = &root
 
 		log.Debugf("Building namespace tree for Root ServiceNode: %v\n", root.ID)
-		buildNamespaceTree(&root, time.Unix(o.QueryTime, 0), seenNodes, o, client)
+		buildNamespaceTree(namespace, &root, time.Unix(o.QueryTime, 0), seenNodes, o, client)
 
-		trees = append(trees, root)
+		*trees = append(*trees, root)
 	}
 
 	return trees
 }
 
-func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client) {
+func buildNamespaceTree(namespace string, sn *tree.ServiceNode, start time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client) {
 	log.Debugf("Adding children for ServiceNode: %v\n", sn.ID)
 
 	var destinationSvcFilter string
-	if !strings.Contains(sn.Name, o.Namespace) {
-		destinationSvcFilter = fmt.Sprintf(",destination_service=~\".*\\\\.%v\\\\..*\"", o.Namespace)
+	if !strings.Contains(sn.Name, namespace) {
+		destinationSvcFilter = fmt.Sprintf(",destination_service=~\".*\\\\.%v\\\\..*\"", namespace)
 	}
 	query := fmt.Sprintf("sum(rate(%v{source_service=\"%v\",source_version=\"%v\"%v,response_code=~\"%v\"} [%vs])) by (%v)",
 		o.Metric,
@@ -179,7 +262,12 @@ func buildNamespaceTree(sn *tree.ServiceNode, start time.Time, seenNodes map[str
 		for _, child := range sn.Children {
 			if _, seen := seenNodes[child.ID]; !seen {
 				seenNodes[child.ID] = child
-				buildNamespaceTree(child, start, seenNodes, o, client)
+				if strings.Contains(child.Name, namespace) {
+					buildNamespaceTree(namespace, child, start, seenNodes, o, client)
+				} else {
+					log.Debugf("Not recursing on child service %v(%v) outside of namespace [%s]\n", child.Name, child.Version, namespace)
+					child.Metadata["isOutsideNamespace"] = "true"
+				}
 			} else {
 				log.Debugf("Not recursing on seen child service: %v(%v)\n", child.Name, child.Version)
 			}
@@ -207,7 +295,7 @@ func graphService(w http.ResponseWriter, r *http.Request, client *prometheus.Cli
 		checkError(errors.New(fmt.Sprintf("Vendor [%v] does not support Service Graphs", o.Vendor)))
 	}
 
-	log.Debugf("Build roots (root destination services nodes) for [%v] service graph with options [%+v]", o.Vendor, o)
+	log.Debugf("Build roots (root services nodes) for [%v] service graph with options [%+v]", o.Vendor, o)
 
 	trees := buildServiceTrees(o, client)
 
@@ -220,10 +308,10 @@ func buildServiceTrees(o options.Options, client *prometheus.Client) (trees []tr
 	// services requesting the specified destination services in the namespace.
 	query := fmt.Sprintf("sum(rate(%v{destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
 		o.Metric,
-		fmt.Sprintf("%v\\\\.%v\\\\..*", o.Service, o.Namespace), // regex for namespace-constrained destination service
-		"[2345][0-9][0-9]",                                      // regex for valid response_codes
-		int(o.Duration.Seconds()),                               // range duration for the query
-		"source_service, source_version")                        // group by
+		fmt.Sprintf("%v\\\\.%v\\\\..*", o.Service, o.Namespaces[0]), // regex for namespace-constrained destination service
+		"[2345][0-9][0-9]",                                          // regex for valid response_codes
+		int(o.Duration.Seconds()),                                   // range duration for the query
+		"source_service, source_version")                            // group by
 
 	// avoid circularities by keeping track of seen nodes
 	seenNodes := make(map[string]*tree.ServiceNode)
@@ -270,9 +358,9 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, queryTime 
 
 	var destinationSvcFilter string
 	if "" == destinationSvc {
-		destinationSvcFilter = fmt.Sprintf(".*\\\\.%v\\\\..*", o.Namespace)
+		destinationSvcFilter = fmt.Sprintf(".*\\\\.%v\\\\..*", o.Namespaces[0])
 	} else {
-		destinationSvcFilter = fmt.Sprintf("%v\\\\.%v\\\\..*", o.Service, o.Namespace)
+		destinationSvcFilter = fmt.Sprintf("%v\\\\.%v\\\\..*", o.Service, o.Namespaces[0])
 	}
 	query := fmt.Sprintf("sum(rate(%v{source_service=\"%v\",source_version=\"%v\",destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
 		o.Metric,
@@ -322,15 +410,122 @@ func buildServiceSubtree(sn *tree.ServiceNode, destinationSvc string, queryTime 
 	}
 }
 
+// GraphOverview is a REST http.HandlerFunc handling a cross-namespace overview graph entrypoint
+func GraphOverview(w http.ResponseWriter, r *http.Request) {
+	defer handlePanic(w)
+
+	client, err := prometheus.NewClient()
+	checkError(err)
+
+	graphOverview(w, r, client)
+}
+
+// graphOverview provides a testing hook that can supply a mock client
+func graphOverview(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
+	o := options.NewOptions(r)
+
+	switch o.Vendor {
+	case "cytoscape":
+	default:
+		checkError(errors.New(fmt.Sprintf("Vendor [%v] does not support Overview Graphs", o.Vendor)))
+	}
+
+	log.Debugf("Build roots (entry services nodes) for [%v] overview graph with options [%+v]", o.Vendor, o)
+
+	trees := buildOverviewTrees(o, client)
+
+	for _, a := range o.Appenders {
+		// not all appenders apply to this graph type
+		switch a.(type) {
+		case appender.DeadServiceAppender:
+			a.AppendGraph(&trees, "")
+		default:
+			// ignore
+		}
+	}
+
+	generateGraph(&trees, w, o)
+}
+
+// buildOverviewTrees returns trees for ingress and/or unknown, cross-namespace and one level deep. In essence,
+// the services handling external requests
+func buildOverviewTrees(o options.Options, client *prometheus.Client) (trees []tree.ServiceNode) {
+	// External requests currently come from ingress or unknown but you can add more here...
+	rootSourcePatterns := []string{
+		"unknown",
+		"istio-ingress\\\\.istio-system\\\\..+",
+	}
+
+	// generate a tree rooted at each source node
+	trees = []tree.ServiceNode{}
+
+	for _, rootSourcePattern := range rootSourcePatterns {
+		// Query for root nodes.
+		groupBy := "source_service,source_version,destination_service,destination_version,response_code"
+		query := fmt.Sprintf("sum(rate(%v{source_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
+			o.Metric,
+			rootSourcePattern,         // regex for namespace-constrained service
+			"[2345][0-9][0-9]",        // regex for valid response_codes
+			int(o.Duration.Seconds()), // range duration for the query
+			groupBy)
+
+		// fetch the root time series
+		vector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+		if len(vector) == 0 {
+			continue
+		}
+
+		m := vector[0].Metric
+		sourceSvc := string(m["source_service"])
+		sourceVer := string(m["source_version"])
+		md := make(map[string]interface{})
+		md["isRoot"] = "true"
+		root := tree.NewServiceNode(sourceSvc, sourceVer)
+		root.Parent = nil
+		root.Metadata = md
+
+		destinations := toDestinations(root.Name, root.Version, vector)
+
+		md["rateOut"] = 0.0
+		if len(destinations) > 0 {
+			root.Children = []*tree.ServiceNode{}
+			i := 0
+			for k, d := range destinations {
+				s := strings.Split(k, " ")
+				// special case: we want ingress to be a root node so ignore it as a child (typically unknown->ingress)
+				if strings.HasPrefix(s[0], "istio-ingress") {
+					continue
+				}
+
+				child := tree.NewServiceNode(s[0], s[1])
+				child.Parent = &root
+				child.Metadata = d
+
+				root.Metadata["rateOut"] = root.Metadata["rateOut"].(float64) + d["rate"].(float64)
+
+				log.Debugf("Adding child Service: %v(%v)->%v(%v)\n", root.Name, root.Version, child.Name, child.Version)
+				root.Children = append(root.Children, &child)
+				i++
+			}
+			// sort children for better presentation (and predictable testing)
+			sort.Slice(root.Children, func(i, j int) bool {
+				return root.Children[i].ID < root.Children[j].ID
+			})
+		}
+		trees = append(trees, root)
+	}
+	return trees
+}
+
 func generateGraph(trees *[]tree.ServiceNode, w http.ResponseWriter, o options.Options) {
 	log.Debugf("Generating config for [%v] service graph...", o.Vendor)
 
 	var vendorConfig interface{}
 	switch o.Vendor {
 	case "vizceral":
-		vendorConfig = vizceral.NewConfig(o.Namespace, trees, o.VendorOptions)
+		vendorConfig = vizceral.NewConfig(fmt.Sprintf("%v", o.Namespaces), trees, o.VendorOptions)
 	case "cytoscape":
-		vendorConfig = cytoscape.NewConfig(o.Namespace, trees, o.VendorOptions)
+		vendorConfig = cytoscape.NewConfig(trees, o.VendorOptions)
 	}
 
 	log.Debugf("Done generating config for [%v] service graph.", o.Vendor)
@@ -441,3 +636,20 @@ func handlePanic(w http.ResponseWriter) {
 		RespondWithError(w, http.StatusInternalServerError, message)
 	}
 }
+
+// some debugging utils
+//func ids(r *[]tree.ServiceNode) []string {
+//	s := []string{}
+//	for _, r := range *r {
+//		s = append(s, r.ID)
+//	}
+//	return s
+//}
+
+//func keys(m map[string]*tree.ServiceNode) []string {
+//	s := []string{}
+//	for k := range m {
+//		s = append(s, k)
+//	}
+//	return s
+//}

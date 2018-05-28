@@ -11,15 +11,11 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/tree"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/prometheus/prometheustest"
-	"github.com/kiali/kiali/services/business"
 )
 
 func TestDeadService(t *testing.T) {
 	assert := assert.New(t)
 	k8s := new(kubetest.K8SClientMock)
-	prom := new(prometheustest.PromClientMock)
-	business.SetWithBackends(k8s, prom)
 
 	k8s.On("GetService", mock.AnythingOfType("string"), "testPodsWithTraffic").Return(
 		&v1.Service{
@@ -84,7 +80,7 @@ func TestDeadService(t *testing.T) {
 	assert.Equal(tree.UnknownService, trees[0].Name)
 	assert.Equal(6, len(trees[0].Children))
 
-	applyDeadServices(&trees[0], "testNamespace", k8s)
+	applyDeadServices(&trees[0], k8s)
 
 	assert.Equal(1, len(trees))
 	assert.Equal(tree.UnknownService, trees[0].Name)

@@ -90,8 +90,7 @@ func edgeHash(from string, to string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s", from, to))))
 }
 
-// NewConfig currently ignores namespace arg
-func NewConfig(namespace string, sn *[]tree.ServiceNode, o options.VendorOptions) (result Config) {
+func NewConfig(sn *[]tree.ServiceNode, o options.VendorOptions) (result Config) {
 	nodes := []*NodeWrapper{}
 	edges := []*EdgeWrapper{}
 

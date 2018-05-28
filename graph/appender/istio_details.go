@@ -9,6 +9,7 @@ import (
 
 type IstioAppender struct{}
 
+// AppendGraph implements Appender
 func (a IstioAppender) AppendGraph(trees *[]tree.ServiceNode, namespaceName string) {
 	istioClient, err := kubernetes.NewClient()
 	checkError(err)

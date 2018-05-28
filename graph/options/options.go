@@ -12,6 +12,12 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/graph/appender"
+	"github.com/kiali/kiali/services/models"
+)
+
+const (
+	AppenderAll  string = "_all_"
+	NamespaceAll string = "all"
 )
 
 // VendorOptions are those that are supplied to the vendor-specific generators.
@@ -22,13 +28,13 @@ type VendorOptions struct {
 
 // Options are all supported graph generation options.
 type Options struct {
-	Appenders []appender.Appender
-	Duration  time.Duration
-	Metric    string
-	Namespace string
-	QueryTime int64 // unix time in seconds
-	Service   string
-	Vendor    string
+	Appenders  []appender.Appender
+	Duration   time.Duration
+	Metric     string
+	Namespaces []string
+	QueryTime  int64 // unix time in seconds
+	Service    string
+	Vendor     string
 	VendorOptions
 }
 
@@ -45,6 +51,25 @@ func NewOptions(r *http.Request) Options {
 	metric := params.Get("metric")
 	vendor := params.Get("vendor")
 	queryTime, queryTimeErr := strconv.ParseInt(params.Get("queryTime"), 10, 64)
+	namespaces := params.Get("namespaces") // csl of namespaces. Overrides namespace path param if set
+
+	var namespaceNames []string
+	fetchNamespaces := namespaces == NamespaceAll || (namespaces == "" && (namespace == NamespaceAll))
+	if fetchNamespaces {
+		namespaces, err := models.GetNamespaces()
+		checkError(err)
+
+		for _, namespace := range namespaces {
+			namespaceNames = append(namespaceNames, namespace.Name)
+		}
+	} else if namespaces != "" {
+		namespaceNames = strings.Split(namespaces, ",")
+	} else if namespace != "" {
+		namespaceNames = []string{namespace}
+	} else {
+		// note, some global handlers do not require any namespaces
+		namespaceNames = []string{}
+	}
 
 	if groupByVersionErr != nil {
 		groupByVersion = true
@@ -63,12 +88,12 @@ func NewOptions(r *http.Request) Options {
 	}
 
 	options := Options{
-		Duration:  duration,
-		Metric:    metric,
-		Namespace: namespace,
-		QueryTime: queryTime,
-		Service:   service,
-		Vendor:    vendor,
+		Duration:   duration,
+		Metric:     metric,
+		Namespaces: namespaceNames,
+		QueryTime:  queryTime,
+		Service:    service,
+		Vendor:     vendor,
 		VendorOptions: VendorOptions{
 			GroupByVersion: groupByVersion,
 			Timestamp:      queryTime,
@@ -83,8 +108,7 @@ func NewOptions(r *http.Request) Options {
 
 func parseAppenders(params url.Values, o Options) []appender.Appender {
 	var appenders []appender.Appender
-	const all = "_all_"
-	csl := all
+	csl := AppenderAll
 	_, ok := params["appenders"]
 	if ok {
 		csl = strings.ToLower(params.Get("appenders"))
@@ -95,30 +119,37 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 	// To reduce processing, next run appenders that don't apply to orphan services
 	// Add orphan (unused) services
 	// Run remaining appenders
-	if csl == all || strings.Contains(csl, "dead_service") {
+	if csl == AppenderAll || strings.Contains(csl, "dead_service") {
 		appenders = append(appenders, appender.DeadServiceAppender{})
 	}
-	if csl == all || strings.Contains(csl, "latency") {
+	if csl == AppenderAll || strings.Contains(csl, "latency") {
 		quantile := appender.DefaultQuantile
 		if _, ok := params["latencyQuantile"]; ok {
 			if latencyQuantile, err := strconv.ParseFloat(params.Get("latencyQuantile"), 64); err == nil {
 				quantile = latencyQuantile
 			}
 		}
-		appenders = append(appenders, appender.LatencyAppender{
+		a := appender.LatencyAppender{
 			Duration:  o.Duration,
 			Quantile:  quantile,
 			QueryTime: o.QueryTime,
-		})
+		}
+		appenders = append(appenders, a)
 	}
-	if csl == all || strings.Contains(csl, "unused_service") {
+	if csl == AppenderAll || strings.Contains(csl, "unused_service") {
 		appenders = append(appenders, appender.UnusedServiceAppender{})
 	}
-	if csl == all || strings.Contains(csl, "istio") {
+	if csl == AppenderAll || strings.Contains(csl, "istio") {
 		appenders = append(appenders, appender.IstioAppender{})
 	}
-	if csl == all || strings.Contains(csl, "sidecars_check") {
+	if csl == AppenderAll || strings.Contains(csl, "sidecars_check") {
 		appenders = append(appenders, appender.SidecarsCheckAppender{})
 	}
 	return appenders
+}
+
+func checkError(err error) {
+	if err != nil {
+		panic(err.Error)
+	}
 }
