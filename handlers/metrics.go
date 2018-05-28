@@ -42,15 +42,16 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) erro
 	}
 	if queryTimes, ok := queryParams["queryTime"]; ok && len(queryTimes) > 0 {
 		if num, err := strconv.ParseInt(queryTimes[0], 10, 64); err == nil {
-			q.QueryTime = time.Unix(num, 0)
+			q.End = time.Unix(num, 0)
 		} else {
 			// Bad request
 			return errors.New("Bad request, cannot parse query parameter 'queryTime'")
 		}
 	}
 	if durations, ok := queryParams["duration"]; ok && len(durations) > 0 {
-		if num, err := strconv.Atoi(durations[0]); err == nil {
-			q.Duration = time.Duration(num) * time.Second
+		if num, err := strconv.ParseInt(durations[0], 10, 64); err == nil {
+			duration := time.Duration(num) * time.Second
+			q.Start = q.End.Add(-duration)
 		} else {
 			// Bad request
 			return errors.New("Bad request, cannot parse query parameter 'duration'")
@@ -76,5 +77,9 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) erro
 	if lblsout, ok := queryParams["byLabelsOut[]"]; ok && len(lblsout) > 0 {
 		q.ByLabelsOut = lblsout
 	}
+	// Adjust start & end times to be a multiple of step
+	stepInSecs := int64(q.Step.Seconds())
+	q.Start = time.Unix((q.Start.Unix()/stepInSecs)*stepInSecs, 0)
+	q.End = time.Unix(((q.End.Unix()/stepInSecs)+1)*stepInSecs, 0)
 	return nil
 }

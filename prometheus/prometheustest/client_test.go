@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -114,9 +115,12 @@ func TestGetServiceMetrics(t *testing.T) {
 		Namespace: "istio-system",
 		Service:   "productpage",
 		MetricsQuery: prometheus.MetricsQuery{
+			Range: v1.Range{
+				Start: time.Unix(1000, 0),
+				End:   time.Unix(2000, 0),
+				Step:  10,
+			},
 			Version:      "",
-			Duration:     1000,
-			Step:         10,
 			RateInterval: "5m",
 			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
@@ -175,9 +179,12 @@ func TestGetFilteredServiceMetrics(t *testing.T) {
 		Namespace: "istio-system",
 		Service:   "productpage",
 		MetricsQuery: prometheus.MetricsQuery{
+			Range: v1.Range{
+				Start: time.Unix(1000, 0),
+				End:   time.Unix(2000, 0),
+				Step:  10,
+			},
 			Version:      "",
-			Duration:     1000,
-			Step:         10,
 			RateInterval: "5m",
 			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
@@ -208,9 +215,12 @@ func TestGetServiceMetricsInstantRates(t *testing.T) {
 		Namespace: "istio-system",
 		Service:   "productpage",
 		MetricsQuery: prometheus.MetricsQuery{
+			Range: v1.Range{
+				Start: time.Unix(1000, 0),
+				End:   time.Unix(2000, 0),
+				Step:  10,
+			},
 			Version:      "",
-			Duration:     1000,
-			Step:         10,
 			RateInterval: "1m",
 			RateFunc:     "irate",
 			ByLabelsIn:   []string{},
@@ -261,9 +271,12 @@ func TestGetServiceMetricsUnavailable(t *testing.T) {
 		Namespace: "istio-system",
 		Service:   "productpage",
 		MetricsQuery: prometheus.MetricsQuery{
+			Range: v1.Range{
+				Start: time.Unix(1000, 0),
+				End:   time.Unix(2000, 0),
+				Step:  10,
+			},
 			Version:      "",
-			Duration:     1000,
-			Step:         10,
 			RateInterval: "5m",
 			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
@@ -321,9 +334,12 @@ func TestGetNamespaceMetrics(t *testing.T) {
 		Namespace:      "istio-system",
 		ServicePattern: "",
 		MetricsQuery: prometheus.MetricsQuery{
+			Range: v1.Range{
+				Start: time.Unix(1000, 0),
+				End:   time.Unix(2000, 0),
+				Step:  10,
+			},
 			Version:      "",
-			Duration:     1000,
-			Step:         10,
 			RateInterval: "5m",
 			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
@@ -504,9 +520,12 @@ func TestAgainstLiveGetServiceMetrics(t *testing.T) {
 		Namespace: "tutorial",
 		Service:   "preference",
 		MetricsQuery: prometheus.MetricsQuery{
+			Range: v1.Range{
+				Start: time.Unix(1000, 0),
+				End:   time.Unix(2000, 0),
+				Step:  10,
+			},
 			Version:      "",
-			Duration:     1000 * time.Second,
-			Step:         10 * time.Second,
 			RateInterval: "5m",
 			RateFunc:     "rate",
 			ByLabelsIn:   []string{},

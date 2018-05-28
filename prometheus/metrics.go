@@ -20,10 +20,8 @@ var (
 
 // MetricsQuery is a common struct for ServiceMetricsQuery and NamespaceMetricsQuery
 type MetricsQuery struct {
+	v1.Range
 	Version      string
-	QueryTime    time.Time
-	Duration     time.Duration
-	Step         time.Duration
 	RateInterval string
 	RateFunc     string
 	Filters      []string
@@ -33,8 +31,8 @@ type MetricsQuery struct {
 
 // FillDefaults fills the struct with default parameters
 func (q *MetricsQuery) FillDefaults() {
-	q.QueryTime = time.Now()
-	q.Duration = 30 * time.Minute
+	q.End = time.Now()
+	q.Start = q.End.Add(-30 * time.Minute)
 	q.Step = 15 * time.Second
 	q.RateInterval = "1m"
 	q.RateFunc = "rate"
@@ -161,25 +159,20 @@ func joinLabels(labels []string) string {
 }
 
 func fetchAllMetrics(api v1.API, q *MetricsQuery, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut string) Metrics {
-	bounds := v1.Range{
-		Start: q.QueryTime.Add(-q.Duration),
-		End:   q.QueryTime,
-		Step:  q.Step}
-
 	var wg sync.WaitGroup
 	fetchRateInOut := func(p8sFamilyName string, metricIn **Metric, metricOut **Metric, lblIn string, lblOut string) {
 		defer wg.Done()
-		m := fetchRateRange(api, p8sFamilyName, lblIn, groupingIn, bounds, q.RateInterval, q.RateFunc)
+		m := fetchRateRange(api, p8sFamilyName, lblIn, groupingIn, q)
 		*metricIn = m
-		m = fetchRateRange(api, p8sFamilyName, lblOut, groupingOut, bounds, q.RateInterval, q.RateFunc)
+		m = fetchRateRange(api, p8sFamilyName, lblOut, groupingOut, q)
 		*metricOut = m
 	}
 
 	fetchHistoInOut := func(p8sFamilyName string, hIn *Histogram, hOut *Histogram) {
 		defer wg.Done()
-		h := fetchHistogramRange(api, p8sFamilyName, labelsIn, groupingIn, bounds, q.RateInterval)
+		h := fetchHistogramRange(api, p8sFamilyName, labelsIn, groupingIn, q)
 		*hIn = h
-		h = fetchHistogramRange(api, p8sFamilyName, labelsOut, groupingOut, bounds, q.RateInterval)
+		h = fetchHistogramRange(api, p8sFamilyName, labelsOut, groupingOut, q)
 		*hOut = h
 	}
 
@@ -237,18 +230,18 @@ func fetchAllMetrics(api v1.API, q *MetricsQuery, labelsIn, labelsOut, labelsErr
 		Histograms: histograms}
 }
 
-func fetchRateRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string, rateFunc string) *Metric {
+func fetchRateRange(api v1.API, metricName string, labels string, grouping string, q *MetricsQuery) *Metric {
 	var query string
 	// Example: round(sum(rate(my_counter{foo=bar}[5m])) by (baz), 0.001)
 	if grouping == "" {
-		query = fmt.Sprintf("round(sum(%s(%s%s[%s])), 0.001)", rateFunc, metricName, labels, rateInterval)
+		query = fmt.Sprintf("round(sum(%s(%s%s[%s])), 0.001)", q.RateFunc, metricName, labels, q.RateInterval)
 	} else {
-		query = fmt.Sprintf("round(sum(%s(%s%s[%s])) by (%s), 0.001)", rateFunc, metricName, labels, rateInterval, grouping)
+		query = fmt.Sprintf("round(sum(%s(%s%s[%s])) by (%s), 0.001)", q.RateFunc, metricName, labels, q.RateInterval, grouping)
 	}
-	return fetchRange(api, query, bounds)
+	return fetchRange(api, query, q.Range)
 }
 
-func fetchHistogramRange(api v1.API, metricName string, labels string, grouping string, bounds v1.Range, rateInterval string) Histogram {
+func fetchHistogramRange(api v1.API, metricName string, labels string, grouping string, q *MetricsQuery) Histogram {
 	// Note: we may want to make returned stats configurable in the future
 	// Note 2: the p8s queries are not run in parallel here, but they are at the caller's place.
 	//	This is because we may not want to create too many threads in the lowest layer
@@ -262,25 +255,25 @@ func fetchHistogramRange(api v1.API, metricName string, labels string, grouping 
 	// Average
 	// Example: sum(rate(my_histogram_sum{foo=bar}[5m])) by (baz) / sum(rate(my_histogram_count{foo=bar}[5m])) by (baz)
 	query := fmt.Sprintf(
-		"round(sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s, 0.001)", metricName, labels, rateInterval, groupingAvg,
-		metricName, labels, rateInterval, groupingAvg)
-	avg := fetchRange(api, query, bounds)
+		"round(sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s, 0.001)", metricName, labels, q.RateInterval, groupingAvg,
+		metricName, labels, q.RateInterval, groupingAvg)
+	avg := fetchRange(api, query, q.Range)
 
 	// Median
 	// Example: round(histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz)), 0.001)
 	query = fmt.Sprintf(
-		"round(histogram_quantile(0.5, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, rateInterval, groupingQuantile)
-	med := fetchRange(api, query, bounds)
+		"round(histogram_quantile(0.5, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, q.RateInterval, groupingQuantile)
+	med := fetchRange(api, query, q.Range)
 
 	// Quantile 95
 	query = fmt.Sprintf(
-		"round(histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, rateInterval, groupingQuantile)
-	p95 := fetchRange(api, query, bounds)
+		"round(histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, q.RateInterval, groupingQuantile)
+	p95 := fetchRange(api, query, q.Range)
 
 	// Quantile 99
 	query = fmt.Sprintf(
-		"round(histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, rateInterval, groupingQuantile)
-	p99 := fetchRange(api, query, bounds)
+		"round(histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, q.RateInterval, groupingQuantile)
+	p99 := fetchRange(api, query, q.Range)
 
 	return Histogram{
 		Average:      avg,
