@@ -13,7 +13,7 @@ func TestFilterByDestination(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	assert.False(t, filterByDestination(nil, "", "", ""))
+	assert.False(t, FilterByDestination(nil, "", "", ""))
 
 	spec := map[string]interface{}{
 		"destination": map[string]interface{}{
@@ -21,9 +21,9 @@ func TestFilterByDestination(t *testing.T) {
 		},
 	}
 
-	assert.True(t, filterByDestination(spec, "ignored", "reviews", "ignored"))
-	assert.False(t, filterByDestination(spec, "ignored", "", "ignored"))
-	assert.False(t, filterByDestination(spec, "ignored", "reviews-bad", "ignored"))
+	assert.True(t, FilterByDestination(spec, "ignored", "reviews", "ignored"))
+	assert.False(t, FilterByDestination(spec, "ignored", "", "ignored"))
+	assert.False(t, FilterByDestination(spec, "ignored", "reviews-bad", "ignored"))
 
 	spec = map[string]interface{}{
 		"destination": map[string]interface{}{
@@ -32,10 +32,10 @@ func TestFilterByDestination(t *testing.T) {
 		},
 	}
 
-	assert.True(t, filterByDestination(spec, "bookinfo", "reviews", "ignored"))
-	assert.False(t, filterByDestination(spec, "bookinfo", "", "ignored"))
-	assert.False(t, filterByDestination(spec, "bookinfo-bad", "reviews", "ignored"))
-	assert.False(t, filterByDestination(spec, "bookinfo", "reviews-bad", "ignored"))
+	assert.True(t, FilterByDestination(spec, "bookinfo", "reviews", "ignored"))
+	assert.False(t, FilterByDestination(spec, "bookinfo", "", "ignored"))
+	assert.False(t, FilterByDestination(spec, "bookinfo-bad", "reviews", "ignored"))
+	assert.False(t, FilterByDestination(spec, "bookinfo", "reviews-bad", "ignored"))
 
 	spec = map[string]interface{}{
 		"destination": map[string]interface{}{
@@ -47,20 +47,20 @@ func TestFilterByDestination(t *testing.T) {
 		},
 	}
 
-	assert.True(t, filterByDestination(spec, "bookinfo", "reviews", ""))
-	assert.True(t, filterByDestination(spec, "bookinfo", "reviews", "v1"))
-	assert.False(t, filterByDestination(spec, "bookinfo", "reviews", "v2"))
-	assert.False(t, filterByDestination(spec, "bookinfo", "", ""))
-	assert.False(t, filterByDestination(spec, "bookinfo", "", "ignored"))
-	assert.False(t, filterByDestination(spec, "bookinfo-bad", "reviews", "v1"))
-	assert.False(t, filterByDestination(spec, "bookinfo", "reviews-bad", "v1"))
+	assert.True(t, FilterByDestination(spec, "bookinfo", "reviews", ""))
+	assert.True(t, FilterByDestination(spec, "bookinfo", "reviews", "v1"))
+	assert.False(t, FilterByDestination(spec, "bookinfo", "reviews", "v2"))
+	assert.False(t, FilterByDestination(spec, "bookinfo", "", ""))
+	assert.False(t, FilterByDestination(spec, "bookinfo", "", "ignored"))
+	assert.False(t, FilterByDestination(spec, "bookinfo-bad", "reviews", "v1"))
+	assert.False(t, FilterByDestination(spec, "bookinfo", "reviews-bad", "v1"))
 }
 
 func TestFilterByHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	assert.False(t, filterByHost(nil, ""))
+	assert.False(t, FilterByHost(nil, ""))
 
 	spec := map[string]interface{}{
 		"hosts": []interface{}{
@@ -68,8 +68,8 @@ func TestFilterByHost(t *testing.T) {
 		},
 	}
 
-	assert.True(t, filterByHost(spec, "host1"))
-	assert.False(t, filterByHost(spec, "host2"))
+	assert.True(t, FilterByHost(spec, "host1"))
+	assert.False(t, FilterByHost(spec, "host2"))
 
 	spec = map[string]interface{}{
 		"hosts": []interface{}{
@@ -78,9 +78,9 @@ func TestFilterByHost(t *testing.T) {
 		},
 	}
 
-	assert.True(t, filterByHost(spec, "host1"))
-	assert.True(t, filterByHost(spec, "host2"))
-	assert.False(t, filterByHost(spec, "host3"))
+	assert.True(t, FilterByHost(spec, "host1"))
+	assert.True(t, FilterByHost(spec, "host2"))
+	assert.False(t, FilterByHost(spec, "host3"))
 }
 
 func TestCheckRouteRule(t *testing.T) {

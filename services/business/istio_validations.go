@@ -5,7 +5,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/services/business/checkers"
 	"github.com/kiali/kiali/services/models"
-	"k8s.io/api/core/v1"
 )
 
 type IstioValidationsService struct {
@@ -31,11 +30,42 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		return nil, err
 	}
 
-	objectCheckers := enabledCheckersFor(istioDetails, pods)
-	objectCheckersCount := len(objectCheckers)
+	objectCheckers := []ObjectChecker{
+		checkers.RouteRuleChecker{istioDetails.RouteRules},
+		&checkers.PodChecker{Pods: pods.Items},
+	}
 
+	objectTypeValidations := runObjectCheckers(objectCheckers)
+
+	// Get groupal validations for same kind istio objects
+	return *objectTypeValidations, nil
+}
+
+func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (models.IstioTypeValidations, error) {
+	// Get all the Istio objects from a Namespace
+	istioDetails, err := in.k8s.GetIstioDetails(namespace, "")
+	if err != nil {
+		return nil, err
+	}
+
+	serviceList, err := in.k8s.GetServices(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	objectCheckers := []ObjectChecker{
+		checkers.RouteRuleChecker{istioDetails.RouteRules},
+		checkers.NoServiceChecker{IstioDetails: istioDetails, ServiceList: serviceList},
+	}
+
+	objectTypeValidations := runObjectCheckers(objectCheckers)
+
+	return *objectTypeValidations, nil
+}
+
+func runObjectCheckers(objectCheckers []ObjectChecker) *models.IstioTypeValidations {
 	objectTypeValidations := models.IstioTypeValidations{}
-	validationsChannels := make([]chan *models.IstioTypeValidations, objectCheckersCount)
+	validationsChannels := make([]chan *models.IstioTypeValidations, len(objectCheckers))
 
 	// Run checks for each IstioObject type
 	for i, objectChecker := range objectCheckers {
@@ -50,15 +80,5 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	for _, validation := range validationsChannels {
 		objectTypeValidations.MergeValidations(<-validation)
 	}
-
-	return objectTypeValidations, nil
-}
-
-// enabledCheckersFor returns the list of ObjectCheckers that will be run for istioDetails and pods
-// objects passed by parameters
-func enabledCheckersFor(istioDetails *kubernetes.IstioDetails, pods *v1.PodList) []ObjectChecker {
-	return []ObjectChecker{
-		checkers.RouteRuleChecker{istioDetails.RouteRules},
-		&checkers.PodChecker{Pods: pods.Items},
-	}
+	return &objectTypeValidations
 }
