@@ -101,6 +101,12 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceMetrics,
 		},
 		{
+			"NamespaceValidations",
+			"GET",
+			"/api/namespaces/{namespace}/istio_validations",
+			handlers.NamespaceIstioValidations,
+		},
+		{
 			// Supported query parameters:
 			// vendor:         cytoscape (default) | vizceral
 			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)

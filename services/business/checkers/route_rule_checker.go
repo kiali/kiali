@@ -10,10 +10,6 @@ import (
 
 const objectType = "routerule"
 
-type Checker interface {
-	Check() ([]*models.IstioCheck, bool)
-}
-
 type RouteRuleChecker struct {
 	RouteRules []kubernetes.IstioObject
 }

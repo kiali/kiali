@@ -79,7 +79,7 @@ func (in *IstioClient) GetRouteRules(namespace string, serviceName string) ([]Is
 	routerRules := make([]IstioObject, 0)
 	for _, rule := range rulesList.GetItems() {
 		appendRule := serviceName == ""
-		if !appendRule && filterByDestination(rule.GetSpec(), namespace, serviceName, "") {
+		if !appendRule && FilterByDestination(rule.GetSpec(), namespace, serviceName, "") {
 			appendRule = true
 		}
 		if appendRule {
@@ -118,7 +118,7 @@ func (in *IstioClient) GetDestinationPolicies(namespace string, serviceName stri
 	destinationPolicies := make([]IstioObject, 0)
 	for _, policy := range destinationPolicyList.Items {
 		appendPolicy := serviceName == ""
-		if !appendPolicy && filterByDestination(policy.GetSpec(), namespace, serviceName, "") {
+		if !appendPolicy && FilterByDestination(policy.GetSpec(), namespace, serviceName, "") {
 			appendPolicy = true
 		}
 		if appendPolicy {
@@ -157,7 +157,7 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	virtualServices := make([]IstioObject, 0)
 	for _, virtualService := range virtualServiceList.GetItems() {
 		appendVirtualService := serviceName == ""
-		if !appendVirtualService && filterByHost(virtualService.GetSpec(), serviceName) {
+		if !appendVirtualService && FilterByHost(virtualService.GetSpec(), serviceName) {
 			appendVirtualService = true
 		}
 		if appendVirtualService {
@@ -226,7 +226,7 @@ func CheckRouteRule(routeRule IstioObject, namespace string, serviceName string,
 	if routeRule == nil || routeRule.GetSpec() == nil {
 		return false
 	}
-	if filterByDestination(routeRule.GetSpec(), namespace, serviceName, version) {
+	if FilterByDestination(routeRule.GetSpec(), namespace, serviceName, version) {
 		// RouteRule defines a version in the DestinationWeight
 		if routes, ok := routeRule.GetSpec()["route"]; ok {
 			if dRoutes, ok := routes.([]interface{}); ok {
@@ -253,7 +253,7 @@ func CheckVirtualService(virtualService IstioObject, namespace string, serviceNa
 	if virtualService == nil || virtualService.GetSpec() == nil || subsets == nil {
 		return false
 	}
-	if len(subsets) > 0 && filterByHost(virtualService.GetSpec(), serviceName) {
+	if len(subsets) > 0 && FilterByHost(virtualService.GetSpec(), serviceName) {
 		if http, ok := virtualService.GetSpec()["http"]; ok && checkSubsetRoute(http, serviceName, subsets) {
 			return true
 		}
@@ -275,7 +275,7 @@ func CheckDestinationPolicyCircuitBreaker(destinationPolicy IstioObject, namespa
 	if !hasCircuitBreaker {
 		return false
 	}
-	return filterByDestination(destinationPolicy.GetSpec(), namespace, serviceName, version)
+	return FilterByDestination(destinationPolicy.GetSpec(), namespace, serviceName, version)
 }
 
 // GetDestinationRulesSubsets returns an array of subset names where a specific version is defined for a given service
@@ -387,7 +387,7 @@ func checkTrafficPolicy(trafficPolicy interface{}) bool {
 	return false
 }
 
-func filterByDestination(spec map[string]interface{}, namespace string, serviceName string, version string) bool {
+func FilterByDestination(spec map[string]interface{}, namespace string, serviceName string, version string) bool {
 	if spec == nil {
 		return false
 	}
@@ -419,7 +419,7 @@ func filterByDestination(spec map[string]interface{}, namespace string, serviceN
 	return false
 }
 
-func filterByHost(spec map[string]interface{}, hostName string) bool {
+func FilterByHost(spec map[string]interface{}, hostName string) bool {
 	if hosts, ok := spec["hosts"]; ok {
 		if hostsArray, ok := hosts.([]interface{}); ok {
 			for _, host := range hostsArray {
