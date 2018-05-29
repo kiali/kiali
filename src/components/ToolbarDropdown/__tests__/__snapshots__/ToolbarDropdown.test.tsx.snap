@@ -16,7 +16,7 @@ ShallowWrapper {
         "10800": "Last 3 hours",
         "1800": "Last 30 minutes",
         "21600": "Last 6 hours",
-        "2592000": "last 30 days",
+        "2592000": "Last 30 days",
         "300": "Last 5 minutes",
         "3600": "Last hour",
         "43200": "Last 12 hours",
@@ -163,7 +163,7 @@ ShallowWrapper {
             eventKey="2592000"
             header={false}
           >
-            last 30 days
+            Last 30 days
           </MenuItem>
         </DropdownButton>,
       ],
@@ -305,7 +305,7 @@ ShallowWrapper {
               eventKey="2592000"
               header={false}
             >
-              last 30 days
+              Last 30 days
             </MenuItem>,
           ],
           "id": "graph_filter_interval_duration",
@@ -491,14 +491,14 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "last 30 days",
+              "children": "Last 30 days",
               "disabled": false,
               "divider": false,
               "eventKey": "2592000",
               "header": false,
             },
             "ref": null,
-            "rendered": "last 30 days",
+            "rendered": "Last 30 days",
             "type": [Function],
           },
         ],
@@ -637,7 +637,7 @@ ShallowWrapper {
               eventKey="2592000"
               header={false}
             >
-              last 30 days
+              Last 30 days
             </MenuItem>
           </DropdownButton>,
         ],
@@ -779,7 +779,7 @@ ShallowWrapper {
                 eventKey="2592000"
                 header={false}
               >
-                last 30 days
+                Last 30 days
               </MenuItem>,
             ],
             "id": "graph_filter_interval_duration",
@@ -965,14 +965,14 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "last 30 days",
+                "children": "Last 30 days",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "2592000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "last 30 days",
+              "rendered": "Last 30 days",
               "type": [Function],
             },
           ],
