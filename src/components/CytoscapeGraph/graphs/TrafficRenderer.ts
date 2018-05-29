@@ -4,12 +4,12 @@ import { PfColors } from '../../../components/Pf/PfColors';
 
 // Min and max values to clamp the request per second rate
 const TIMER_REQUEST_PER_SECOND_MIN = 0;
-const TIMER_REQUEST_PER_SECOND_MAX = 2000;
+const TIMER_REQUEST_PER_SECOND_MAX = 750;
 
 // Range of time to use between spawning a new dot.
 // At higher request per second rate, faster dot spawning.
 const TIMER_TIME_BETWEEN_DOTS_MIN = 20;
-const TIMER_TIME_BETWEEN_DOTS_MAX = 4000;
+const TIMER_TIME_BETWEEN_DOTS_MAX = 2000;
 
 // Clamp latency from min to max
 const SPEED_LATENCY_MIN = 0;
@@ -21,6 +21,18 @@ const SPEED_RATE_MAX = 2.0;
 
 // How often paint a frame
 const FRAME_RATE = 1 / 60;
+
+enum PointShape {
+  CIRCLE,
+  DIAMOND
+}
+
+const TRAFFIC_POINT_ERROR_SHAPE = PointShape.DIAMOND;
+const TRAFFIC_POINT_ERROR_COLOR = PfColors.Red100;
+const TRAFFIC_POINT_DEFAULT_SHAPE = PointShape.CIRCLE;
+const TRAFFIC_POINT_DEFAULT_COLOR = PfColors.Black;
+
+const TRAFFIC_POINT_RADIO = 3;
 
 /**
  * Traffic Point, it defines in an edge
@@ -35,6 +47,8 @@ const FRAME_RATE = 1 / 60;
 type TrafficPoint = {
   speed: number;
   delta: number;
+  shape: PointShape;
+  color: string;
 };
 
 /**
@@ -47,11 +61,13 @@ class TrafficPointGenerator {
   private timer?: number;
   private timerForNextPoint?: number;
   private speed: number;
+  private errorRate: number;
 
   // If timer is undefined, no point is going to be generated, ideal when traffic is zero
-  constructor(speed: number, timer: number | undefined) {
+  constructor(speed: number, timer: number | undefined, errorRate: number) {
     this.speed = speed;
     this.timer = timer;
+    this.errorRate = errorRate;
     // Start as soon as posible, unless we have no traffic
     this.timerForNextPoint = this.timer === undefined ? undefined : 0;
   }
@@ -68,7 +84,7 @@ class TrafficPointGenerator {
       // Add some random-ness to make it less "flat"
       if (this.timerForNextPoint <= Math.random() * 200) {
         this.timerForNextPoint = this.timer;
-        return { speed: this.speed, delta: 0 };
+        return this.nextPoint();
       }
     }
     return undefined;
@@ -84,6 +100,20 @@ class TrafficPointGenerator {
   setSpeed(speed: number) {
     this.speed = speed;
   }
+
+  setErrorRate(errorRate: number) {
+    this.errorRate = errorRate;
+  }
+
+  private nextPoint(): TrafficPoint {
+    const isErrorPoint = Math.random() <= this.errorRate;
+    return {
+      speed: this.speed,
+      delta: 0, // at the beginning of the edge
+      color: isErrorPoint ? TRAFFIC_POINT_ERROR_COLOR : TRAFFIC_POINT_DEFAULT_COLOR,
+      shape: isErrorPoint ? TRAFFIC_POINT_ERROR_SHAPE : TRAFFIC_POINT_DEFAULT_SHAPE
+    };
+  }
 }
 
 /**
@@ -98,8 +128,8 @@ class TrafficEdge {
   private generator: TrafficPointGenerator;
   private edge: any;
 
-  constructor(speed: number, timer: number | undefined, edge: any) {
-    this.generator = new TrafficPointGenerator(speed, timer);
+  constructor(speed: number, timer: number | undefined, errorRate: number, edge: any) {
+    this.generator = new TrafficPointGenerator(speed, timer, errorRate);
     this.edge = edge;
   }
 
@@ -139,6 +169,10 @@ class TrafficEdge {
 
   setSpeed(speed: number) {
     this.generator.setSpeed(speed);
+  }
+
+  setErrorRate(errorRate: number) {
+    this.generator.setErrorRate(errorRate);
   }
 
   setEdge(edge: any) {
@@ -241,11 +275,27 @@ export default class TrafficRenderer {
       const target = edge.targetEndpoint();
       const x = source.x + (target.x - source.x) * point.delta;
       const y = source.y + (target.y - source.y) * point.delta;
-      this.context.beginPath();
-      this.context.arc(x, y, 2, 0, 2 * Math.PI, true);
-      this.context.fillStyle = PfColors.Black;
-      this.context.fill(); // or stroke if we only want the outer ring
+      this.renderPoint(point, x, y, TRAFFIC_POINT_RADIO);
     });
+  }
+
+  private renderPoint(point: TrafficPoint, x: number, y: number, radio: number) {
+    this.context.fillStyle = point.color;
+    this.context.beginPath();
+    switch (point.shape) {
+      case PointShape.CIRCLE:
+        this.context.arc(x, y, radio, 0, 2 * Math.PI, true);
+        break;
+      case PointShape.DIAMOND:
+        this.context.moveTo(x, y - radio);
+        this.context.lineTo(x + radio, y);
+        this.context.lineTo(x, y + radio);
+        this.context.lineTo(x - radio, y);
+        break;
+      default:
+        throw Error('Unknown shape ' + point.shape);
+    }
+    this.context.fill(); // or stroke if we only want the outer ring
   }
 
   private currentStep(currentTime: number): number {
@@ -258,14 +308,16 @@ export default class TrafficRenderer {
       const edgeId = edge.data('id');
       const timer = this.timerFromRate(edge.data('rate'));
       const speed = this.speedFromLatency(edge.data('latency'));
+      const errorRate = edge.data('percentErr') === undefined ? 0 : edge.data('percentErr') / 100;
       if (edgeId in this.trafficEdges) {
         const trafficEdge = this.trafficEdges[edgeId];
         trafficEdge.setTimer(timer);
         trafficEdge.setSpeed(speed);
         trafficEdge.setEdge(edge);
+        trafficEdge.setErrorRate(errorRate);
         trafficEdges[edgeId] = trafficEdge;
       } else {
-        trafficEdges[edgeId] = new TrafficEdge(speed, timer, edge);
+        trafficEdges[edgeId] = new TrafficEdge(speed, timer, errorRate, edge);
       }
       return trafficEdges;
     }, {});
@@ -281,13 +333,15 @@ export default class TrafficRenderer {
       clamp(rate, TIMER_REQUEST_PER_SECOND_MIN, TIMER_REQUEST_PER_SECOND_MAX) / TIMER_REQUEST_PER_SECOND_MAX;
 
     // Invert and scale
-    return TIMER_TIME_BETWEEN_DOTS_MIN + (1 - delta) * (TIMER_TIME_BETWEEN_DOTS_MAX - TIMER_TIME_BETWEEN_DOTS_MIN);
+    return (
+      TIMER_TIME_BETWEEN_DOTS_MIN + Math.pow(1 - delta, 2) * (TIMER_TIME_BETWEEN_DOTS_MAX - TIMER_TIME_BETWEEN_DOTS_MIN)
+    );
   }
 
   private speedFromLatency(latency: number) {
     // Consider NaN latency as "everything is going as fast as possible"
     if (isNaN(latency)) {
-      return SPEED_RATE_MIN;
+      return SPEED_RATE_MAX;
     }
     // Normalize
     const delta = clamp(latency, SPEED_LATENCY_MIN, SPEED_LATENCY_MAX) / SPEED_LATENCY_MAX;
