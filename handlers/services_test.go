@@ -28,7 +28,7 @@ func TestServiceMetricsDefault(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/ns/services/svc/metrics"
 	now := time.Now()
-	delta := 2 * time.Second
+	delta := 15 * time.Second
 	coveredPath := 0
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
@@ -73,7 +73,7 @@ func TestServiceMetricsWithParams(t *testing.T) {
 	q := req.URL.Query()
 	q.Add("rateInterval", "5h")
 	q.Add("rateFunc", "rate")
-	q.Add("step", "99")
+	q.Add("step", "2")
 	q.Add("queryTime", "1523364075")
 	q.Add("duration", "1000")
 	q.Add("byLabelsIn[]", "response_code")
@@ -101,8 +101,8 @@ func TestServiceMetricsWithParams(t *testing.T) {
 			assert.Contains(t, query, " by (response_code)")
 			coveredPath |= 2
 		}
-		assert.Equal(t, 99*time.Second, r.Step)
-		assert.Equal(t, queryTime, r.End)
+		assert.Equal(t, 2*time.Second, r.Step)
+		assert.WithinDuration(t, queryTime, r.End, delta)
 		assert.WithinDuration(t, queryTime.Add(-1000*time.Second), r.Start, delta)
 	})
 
