@@ -7,17 +7,17 @@ import (
 type Autoscaler struct {
 	Name      string            `json:"name"`
 	Labels    map[string]string `json:"labels"`
-	CreatedAt string            `json:"created_at"`
+	CreatedAt string            `json:"createdAt"`
 	// Spec
-	MinReplicas                    int32 `json:"min_replicas"`
-	MaxReplicas                    int32 `json:"max_replicas"`
-	TargetCPUUtilizationPercentage int32 `json:"target_cpu_utilization_percentage"`
+	MinReplicas                    int32 `json:"minReplicas"`
+	MaxReplicas                    int32 `json:"maxReplicas"`
+	TargetCPUUtilizationPercentage int32 `json:"targetCPUUtilizationPercentage"`
 	// Status
-	ObservedGeneration              int64  `json:"observed_generation,omitempty"`
-	LastScaleTime                   string `json:"last_scale_time,omitempty"`
-	CurrentReplicas                 int32  `json:"current_replicas"`
-	DesiredReplicas                 int32  `json:"desired_replicas"`
-	CurrentCPUUtilizationPercentage int32  `json:"current_CPU_utilization_percentage,omitempty"`
+	ObservedGeneration              int64  `json:"observedGeneration,omitempty"`
+	LastScaleTime                   string `json:"lastScaleTime,omitempty"`
+	CurrentReplicas                 int32  `json:"currentReplicas"`
+	DesiredReplicas                 int32  `json:"desiredReplicas"`
+	CurrentCPUUtilizationPercentage int32  `json:"currentCPUUtilizationPercentage,omitempty"`
 }
 
 func (autoscaler *Autoscaler) Parse(d *v1.HorizontalPodAutoscaler) {

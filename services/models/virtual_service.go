@@ -7,8 +7,8 @@ import (
 type VirtualServices []VirtualService
 type VirtualService struct {
 	Name            string      `json:"name"`
-	CreatedAt       string      `json:"created_at"`
-	ResourceVersion string      `json:"resource_version"`
+	CreatedAt       string      `json:"createdAt"`
+	ResourceVersion string      `json:"resourceVersion"`
 	Hosts           interface{} `json:"hosts"`
 	Gateways        interface{} `json:"gateways"`
 	Http            interface{} `json:"http"`

@@ -7,8 +7,8 @@ import (
 type DestinationPolicies []DestinationPolicy
 type DestinationPolicy struct {
 	Name            string      `json:"name"`
-	CreatedAt       string      `json:"created_at"`
-	ResourceVersion string      `json:"resource_version"`
+	CreatedAt       string      `json:"createdAt"`
+	ResourceVersion string      `json:"resourceVersion"`
 	Source          interface{} `json:"source"`
 	Destination     interface{} `json:"destination"`
 	LoadBalancing   interface{} `json:"loadbalancing"`

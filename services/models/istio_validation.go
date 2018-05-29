@@ -9,10 +9,10 @@ type IstioTypeValidations map[string]*IstioNameValidations
 type IstioNameValidations map[string]*IstioValidation
 
 type IstioValidation struct {
-	Name       string        `json:"name"`        // Name of the object itself
-	ObjectType string        `json:"object_type"` // Type of the object
-	Valid      bool          `json:"valid"`       // Represents validity of the object: in case of warning, validity remainds as true
-	Checks     []*IstioCheck `json:"checks"`      // Array of checks
+	Name       string        `json:"name"`       // Name of the object itself
+	ObjectType string        `json:"objectType"` // Type of the object
+	Valid      bool          `json:"valid"`      // Represents validity of the object: in case of warning, validity remainds as true
+	Checks     []*IstioCheck `json:"checks"`     // Array of checks
 }
 
 type IstioCheck struct {
