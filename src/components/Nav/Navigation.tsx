@@ -17,7 +17,7 @@ import ServiceJaegerPage from '../../pages/ServiceJaeger/ServiceJaegerPage';
 
 const istioConfigPath = '/istio';
 export const istioConfigTitle = 'Istio Config';
-const serviceGraphPath = '/service-graph/istio-system';
+const serviceGraphPath = '/service-graph/all';
 export const serviceGraphTitle = 'Graph';
 const servicesPath = '/services';
 const servicesJaegerPath = '/jaeger';

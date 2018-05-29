@@ -34,6 +34,9 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
         onSelect={this.onSelectTypesafe}
         onToggle={this.onToggle}
       >
+        <MenuItem key="all" active={'all' === this.props.activeNamespace.name} eventKey="all">
+          all
+        </MenuItem>
         {this.props.items &&
           this.props.items.map(ns => (
             <MenuItem key={ns.name} active={ns.name === this.props.activeNamespace.name} eventKey={ns.name}>
