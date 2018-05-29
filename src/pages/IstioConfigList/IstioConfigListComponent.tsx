@@ -10,7 +10,6 @@ import {
   dicIstioType,
   filterByName,
   IstioConfigItem,
-  IstioConfigList,
   SortField,
   sortIstioItems,
   toIstioItems
@@ -199,11 +198,10 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
   fetchIstioConfig(namespaces: string[], istioTypeFilters: string[], istioNameFilters: string[]) {
     const promises = namespaces.map(namespace => API.getIstioConfig(namespace, istioTypeFilters));
     Promise.all(promises)
-      .then(istioResponses => {
+      .then(responses => {
         let istioItems: IstioConfigItem[] = [];
-        istioResponses.forEach(istioResponse => {
-          const istioConfig: IstioConfigList = istioResponse['data'];
-          istioItems = istioItems.concat(toIstioItems(filterByName(istioConfig, istioNameFilters)));
+        responses.forEach(response => {
+          istioItems = istioItems.concat(toIstioItems(filterByName(response.data, istioNameFilters)));
         });
         istioItems = sortIstioItems(istioItems, this.state.currentSortField, this.state.isSortAscending);
         this.setState(prevState => {

@@ -120,9 +120,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           console.log('SummaryPanelGroup: Ignore fetch, component not mounted.');
           return;
         }
-        const data: M.Metrics = response['data'];
-        const metrics: Map<String, M.MetricGroup> = data.metrics;
-
+        const metrics = response.data.metrics;
         const reqCountIn: M.MetricGroup = metrics['request_count_in'];
         const reqCountOut: M.MetricGroup = metrics['request_count_out'];
         const errCountIn: M.MetricGroup = metrics['request_error_count_in'];

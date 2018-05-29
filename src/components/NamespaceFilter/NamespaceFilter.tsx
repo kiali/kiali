@@ -8,7 +8,6 @@ import {
   NamespaceFilterState
 } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
-import Namespace from '../../types/Namespace';
 
 export namespace NamespaceFilterSelected {
   let selectedFilters: ActiveFilter[] = [];
@@ -55,17 +54,16 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
   updateNamespaces() {
     API.getNamespaces()
       .then(response => {
-        const namespaces: Namespace[] = response['data'];
-        let namespaceFilter: FilterType = {
+        const namespaceFilter: FilterType = {
           id: 'namespace',
           title: 'Namespace',
           placeholder: 'Filter by Namespace',
           filterType: 'select',
-          filterValues: namespaces.map(namespace => {
+          filterValues: response.data.map(namespace => {
             return { title: namespace.name, id: namespace.name };
           })
         };
-        let initialFilters = this.initialFilterList(namespaceFilter);
+        const initialFilters = this.initialFilterList(namespaceFilter);
         this.setState({ filterTypeList: initialFilters });
       })
       .catch(error => {

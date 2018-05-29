@@ -12,10 +12,10 @@ export interface IstioConfigItem {
 
 export interface IstioConfigList {
   namespace: Namespace;
-  route_rules: RouteRule[];
-  destination_policies: DestinationPolicy[];
-  virtual_services: VirtualService[];
-  destination_rules: DestinationRule[];
+  routeRules: RouteRule[];
+  destinationPolicies: DestinationPolicy[];
+  virtualServices: VirtualService[];
+  destinationRules: DestinationRule[];
   rules: IstioRule[];
 }
 
@@ -64,10 +64,10 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]) => {
   }
   let filtered: IstioConfigList = {
     namespace: unfiltered.namespace,
-    route_rules: unfiltered.route_rules.filter(rr => includeName(rr.name, names)),
-    destination_policies: unfiltered.destination_policies.filter(dp => includeName(dp.name, names)),
-    virtual_services: unfiltered.virtual_services.filter(vs => includeName(vs.name, names)),
-    destination_rules: unfiltered.destination_rules.filter(dr => includeName(dr.name, names)),
+    routeRules: unfiltered.routeRules.filter(rr => includeName(rr.name, names)),
+    destinationPolicies: unfiltered.destinationPolicies.filter(dp => includeName(dp.name, names)),
+    virtualServices: unfiltered.virtualServices.filter(vs => includeName(vs.name, names)),
+    destinationRules: unfiltered.destinationRules.filter(dr => includeName(dr.name, names)),
     rules: unfiltered.rules.filter(r => includeName(r.name, names))
   };
   return filtered;
@@ -75,16 +75,16 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]) => {
 
 export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[] => {
   let istioItems: IstioConfigItem[] = [];
-  istioConfigList.route_rules.forEach(rr =>
+  istioConfigList.routeRules.forEach(rr =>
     istioItems.push({ namespace: istioConfigList.namespace.name, routeRule: rr })
   );
-  istioConfigList.destination_policies.forEach(dp =>
+  istioConfigList.destinationPolicies.forEach(dp =>
     istioItems.push({ namespace: istioConfigList.namespace.name, destinationPolicy: dp })
   );
-  istioConfigList.virtual_services.forEach(vs =>
+  istioConfigList.virtualServices.forEach(vs =>
     istioItems.push({ namespace: istioConfigList.namespace.name, virtualService: vs })
   );
-  istioConfigList.destination_rules.forEach(dr =>
+  istioConfigList.destinationRules.forEach(dr =>
     istioItems.push({ namespace: istioConfigList.namespace.name, destinationRule: dr })
   );
   istioConfigList.rules.forEach(r => istioItems.push({ namespace: istioConfigList.namespace.name, rule: r }));

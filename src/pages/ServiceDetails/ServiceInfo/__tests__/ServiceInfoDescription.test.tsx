@@ -42,8 +42,8 @@ describe('#ServiceInfoDescription render correctly with data', () => {
         type="ClusterIP"
         ip="172.30.78.33"
         endpoints={endpoints}
-        created_at="2018-04-04T15:11:46Z"
-        resource_version="1234"
+        createdAt="2018-04-04T15:11:46Z"
+        resourceVersion="1234"
       />
     );
     expect(wrapper).toBeDefined();

@@ -27,13 +27,13 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
                   </Link>
                 </h3>
                 <div>
-                  <strong>Created at</strong>: <LocalTime time={destinationRule.created_at} />
+                  <strong>Created at</strong>: <LocalTime time={destinationRule.createdAt} />
                 </div>
                 <div>
-                  <strong>Resource Version</strong>: {destinationRule.resource_version}
+                  <strong>Resource Version</strong>: {destinationRule.resourceVersion}
                 </div>
-                {destinationRule.traffic_policy ? (
-                  <DetailObject name="Traffic Policy" detail={destinationRule.traffic_policy} />
+                {destinationRule.trafficPolicy ? (
+                  <DetailObject name="Traffic Policy" detail={destinationRule.trafficPolicy} />
                 ) : (
                   undefined
                 )}

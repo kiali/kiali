@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 import ServiceInfoRoutes from '../ServiceInfoRoutes';
 
-const dependencies: Map<string, string[]> = new Map([['v1', ['productpage.istio-system/v1']]]);
+const dependencies = { v1: ['productpage.istio-system/v1'] };
 
 describe('#ServiceInfoRoutes render correctly with data', () => {
   it('should render service routes', () => {

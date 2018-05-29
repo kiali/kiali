@@ -36,27 +36,27 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
                   ))}
                 </div>
                 <div>
-                  <strong>Pod status: </strong> {deployment.available_replicas} / {deployment.replicas}{' '}
-                  {this.renderStatus(ratioCheck(deployment.available_replicas, deployment.replicas))}
+                  <strong>Pod status: </strong> {deployment.availableReplicas} / {deployment.replicas}{' '}
+                  {this.renderStatus(ratioCheck(deployment.availableReplicas, deployment.replicas))}
                 </div>
                 {deployment.autoscaler.name !== '' && (
                   <div>
                     <strong>Autoscaler: </strong>
-                    from {deployment.autoscaler.min_replicas} to {deployment.autoscaler.max_replicas} pods ({
-                      deployment.autoscaler.target_cpu_utilization_percentage
+                    from {deployment.autoscaler.minReplicas} to {deployment.autoscaler.maxReplicas} pods ({
+                      deployment.autoscaler.targetCPUUtilizationPercentage
                     }% CPU)
                   </div>
                 )}
                 <div>
                   <span>
                     <strong>Created at: </strong>
-                    <LocalTime time={deployment.created_at} />
+                    <LocalTime time={deployment.createdAt} />
                   </span>
                 </div>
                 <div>
                   <span>
                     <strong>Resource Version: </strong>
-                    {deployment.resource_version}
+                    {deployment.resourceVersion}
                   </span>
                 </div>
                 <hr />

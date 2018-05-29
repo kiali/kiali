@@ -3,7 +3,7 @@ import { Col, Row } from 'patternfly-react';
 import { Link } from 'react-router-dom';
 
 interface ServiceInfoRoutesProps {
-  dependencies?: Map<string, string[]>;
+  dependencies?: { [key: string]: string[] };
 }
 
 class ServiceInfoRoutes extends React.Component<ServiceInfoRoutesProps> {

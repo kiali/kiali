@@ -14,7 +14,7 @@ import { Link } from 'react-router-dom';
 
 interface ServiceInfoRouteRulesProps extends EditorLink {
   routeRules?: RouteRule[];
-  validations: Map<string, ObjectValidation>;
+  validations: { [k: string]: ObjectValidation };
 }
 
 class ServiceInfoRouteRules extends React.Component<ServiceInfoRouteRulesProps> {
@@ -30,10 +30,10 @@ class ServiceInfoRouteRules extends React.Component<ServiceInfoRouteRulesProps> 
         </h3>
         {this.globalStatus(rule)}
         <div>
-          <strong>Created at</strong>: <LocalTime time={rule.created_at} />
+          <strong>Created at</strong>: <LocalTime time={rule.createdAt} />
         </div>
         <div>
-          <strong>Resource Version</strong>: {rule.resource_version}
+          <strong>Resource Version</strong>: {rule.resourceVersion}
         </div>
         <div>
           <strong>Precedence</strong>: {rule.precedence}

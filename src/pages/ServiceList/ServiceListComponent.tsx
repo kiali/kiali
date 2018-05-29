@@ -40,9 +40,9 @@ export const sortFields: SortField[] = [
     title: 'Istio Sidecar',
     isNumeric: false,
     compare: (a: ServiceItem, b: ServiceItem) => {
-      if (a.istio_sidecar && !b.istio_sidecar) {
+      if (a.istioSidecar && !b.istioSidecar) {
         return -1;
-      } else if (!a.istio_sidecar && b.istio_sidecar) {
+      } else if (!a.istioSidecar && b.istioSidecar) {
         return 1;
       } else {
         return a.name.localeCompare(b.name);
@@ -211,7 +211,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       .then(servicesResponse => {
         let updatedServices: ServiceItem[] = [];
         servicesResponse.forEach(serviceResponse => {
-          const serviceList: ServiceList = serviceResponse['data'];
+          const serviceList: ServiceList = serviceResponse.data;
           const namespace = serviceList.namespace;
           serviceList.services.forEach(overview => {
             updatedServices.push(overviewToItem(overview, namespace.name));
@@ -270,10 +270,10 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     let istioFiltered = true;
     if (istioFilters.length === 1) {
       if (istioFilters[0] === 'Deployed') {
-        istioFiltered = service.istio_sidecar;
+        istioFiltered = service.istioSidecar;
       }
       if (istioFilters[0] === 'Undeployed') {
-        istioFiltered = !service.istio_sidecar;
+        istioFiltered = !service.istioSidecar;
       }
     }
 
@@ -324,7 +324,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             heading={
               <div className="ServiceList-Heading">
                 <div className="ServiceList-IstioLogo">
-                  {serviceItem.istio_sidecar ? (
+                  {serviceItem.istioSidecar ? (
                     <img className="IstioLogo" src={IstioLogo} alt="Istio sidecar" />
                   ) : (
                     undefined

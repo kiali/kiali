@@ -11,17 +11,17 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     namespace: {
       name: 'test'
     },
-    route_rules: [],
-    destination_policies: [],
-    virtual_services: [],
-    destination_rules: [],
+    routeRules: [],
+    destinationPolicies: [],
+    virtualServices: [],
+    destinationRules: [],
     rules: []
   };
   names.forEach(name => {
-    testData.route_rules.push({ name: name + '1', created_at: 't1', resource_version: 'r1' });
-    testData.destination_policies.push({ name: name + '2', created_at: 't2', resource_version: 'r2' });
-    testData.virtual_services.push({ name: name + '3', created_at: 't3', resource_version: 'r3' });
-    testData.destination_rules.push({ name: name + '4', created_at: 't4', resource_version: 'r4' });
+    testData.routeRules.push({ name: name + '1', createdAt: 't1', resourceVersion: 'r1' });
+    testData.destinationPolicies.push({ name: name + '2', createdAt: 't2', resourceVersion: 'r2' });
+    testData.virtualServices.push({ name: name + '3', createdAt: 't3', resourceVersion: 'r3' });
+    testData.destinationRules.push({ name: name + '4', createdAt: 't4', resourceVersion: 'r4' });
     testData.rules.push({ name: name + '5', match: '', actions: [] });
   });
   return testData;
@@ -33,23 +33,23 @@ describe('IstioConfigListComponent#filterByName', () => {
   it('should filter IstioConfigList by name', () => {
     let filtered = filterByName(unfiltered, ['white', 'red']);
     expect(filtered).toBeDefined();
-    expect(filtered.route_rules.length).toBe(2);
-    expect(filtered.destination_policies.length).toBe(2);
-    expect(filtered.virtual_services.length).toBe(2);
-    expect(filtered.destination_rules.length).toBe(2);
+    expect(filtered.routeRules.length).toBe(2);
+    expect(filtered.destinationPolicies.length).toBe(2);
+    expect(filtered.virtualServices.length).toBe(2);
+    expect(filtered.destinationRules.length).toBe(2);
     expect(filtered.rules.length).toBe(2);
-    expect(filtered.route_rules[0].name).toBe('white1');
-    expect(filtered.destination_policies[0].name).toBe('white2');
-    expect(filtered.virtual_services[0].name).toBe('white3');
-    expect(filtered.destination_rules[0].name).toBe('white4');
+    expect(filtered.routeRules[0].name).toBe('white1');
+    expect(filtered.destinationPolicies[0].name).toBe('white2');
+    expect(filtered.virtualServices[0].name).toBe('white3');
+    expect(filtered.destinationRules[0].name).toBe('white4');
     expect(filtered.rules[0].name).toBe('white5');
 
     filtered = filterByName(unfiltered, ['bad']);
     expect(filtered).toBeDefined();
-    expect(filtered.route_rules.length).toBe(0);
-    expect(filtered.destination_policies.length).toBe(0);
-    expect(filtered.virtual_services.length).toBe(0);
-    expect(filtered.destination_rules.length).toBe(0);
+    expect(filtered.routeRules.length).toBe(0);
+    expect(filtered.destinationPolicies.length).toBe(0);
+    expect(filtered.virtualServices.length).toBe(0);
+    expect(filtered.destinationRules.length).toBe(0);
     expect(filtered.rules.length).toBe(0);
   });
 });

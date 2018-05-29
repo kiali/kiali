@@ -7,46 +7,46 @@ const deployments: Deployment[] = [
   {
     name: 'reviews-v2',
     labels: { app: 'reviews', version: 'v2' },
-    created_at: '2018-03-14T10:17:52Z',
-    resource_version: '1234',
+    createdAt: '2018-03-14T10:17:52Z',
+    resourceVersion: '1234',
     replicas: 5,
-    available_replicas: 3,
-    unavailable_replicas: 2,
+    availableReplicas: 3,
+    unavailableReplicas: 2,
     autoscaler: {
       name: 'reviews-v2-autoscaler',
-      min_replicas: 2,
-      max_replicas: 10,
-      target_cpu_utilization_percentage: 50
+      minReplicas: 2,
+      maxReplicas: 10,
+      targetCPUUtilizationPercentage: 50
     }
   },
   {
     name: 'reviews-v3',
     labels: { app: 'reviews', version: 'v3' },
-    created_at: '2018-03-14T10:17:52Z',
-    resource_version: '1234',
+    createdAt: '2018-03-14T10:17:52Z',
+    resourceVersion: '1234',
     replicas: 2,
-    available_replicas: 2,
-    unavailable_replicas: 0,
+    availableReplicas: 2,
+    unavailableReplicas: 0,
     autoscaler: {
       name: 'reviews-v2-autoscaler',
-      min_replicas: 2,
-      max_replicas: 10,
-      target_cpu_utilization_percentage: 50
+      minReplicas: 2,
+      maxReplicas: 10,
+      targetCPUUtilizationPercentage: 50
     }
   },
   {
     name: 'reviews-v1',
     labels: { app: 'reviews', version: 'v1' },
-    created_at: '2018-03-14T10:17:52Z',
-    resource_version: '1234',
+    createdAt: '2018-03-14T10:17:52Z',
+    resourceVersion: '1234',
     replicas: 1,
-    available_replicas: 1,
-    unavailable_replicas: 0,
+    availableReplicas: 1,
+    unavailableReplicas: 0,
     autoscaler: {
       name: 'reviews-v2-autoscaler',
-      min_replicas: 2,
-      max_replicas: 10,
-      target_cpu_utilization_percentage: 50
+      minReplicas: 2,
+      maxReplicas: 10,
+      targetCPUUtilizationPercentage: 50
     }
   }
 ];

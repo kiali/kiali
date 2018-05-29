@@ -50,9 +50,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   fetchIstioObjectDetails = (props: IstioConfigId) => {
     API.getIstioConfigDetail(props.namespace, props.objectType, props.object)
       .then(response => {
-        let istioObjectDetails: IstioConfigDetails = response['data'];
         this.setState({
-          istioObjectDetails: istioObjectDetails
+          istioObjectDetails: response.data
         });
       })
       .catch(error => {
@@ -106,17 +105,17 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
             / {this.props.match.params.object}
           </h2>
         </div>
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.route_rule
-          ? this.renderEditor(this.state.istioObjectDetails.route_rule)
+        {this.state.istioObjectDetails && this.state.istioObjectDetails.routeRule
+          ? this.renderEditor(this.state.istioObjectDetails.routeRule)
           : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.destination_policy
-          ? this.renderEditor(this.state.istioObjectDetails.destination_policy)
+        {this.state.istioObjectDetails && this.state.istioObjectDetails.destinationPolicy
+          ? this.renderEditor(this.state.istioObjectDetails.destinationPolicy)
           : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.virtual_service
-          ? this.renderEditor(this.state.istioObjectDetails.virtual_service)
+        {this.state.istioObjectDetails && this.state.istioObjectDetails.virtualService
+          ? this.renderEditor(this.state.istioObjectDetails.virtualService)
           : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.destination_rule
-          ? this.renderEditor(this.state.istioObjectDetails.destination_rule)
+        {this.state.istioObjectDetails && this.state.istioObjectDetails.destinationRule
+          ? this.renderEditor(this.state.istioObjectDetails.destinationRule)
           : undefined}
         {this.state.istioObjectDetails && this.state.istioObjectDetails.rule ? (
           <IstioRuleInfo
