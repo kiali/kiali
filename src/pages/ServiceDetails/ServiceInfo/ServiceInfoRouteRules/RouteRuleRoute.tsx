@@ -10,7 +10,7 @@ import './RouteRuleRoute.css';
 interface RouteRuleRouteProps {
   name: string;
   route: DestinationWeight[];
-  validations: { [k: string]: ObjectValidation };
+  validations: { [key: string]: ObjectValidation };
 }
 
 class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {

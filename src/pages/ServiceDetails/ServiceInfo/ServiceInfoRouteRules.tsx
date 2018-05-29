@@ -14,7 +14,7 @@ import { Link } from 'react-router-dom';
 
 interface ServiceInfoRouteRulesProps extends EditorLink {
   routeRules?: RouteRule[];
-  validations: { [k: string]: ObjectValidation };
+  validations: { [key: string]: ObjectValidation };
 }
 
 class ServiceInfoRouteRules extends React.Component<ServiceInfoRouteRulesProps> {

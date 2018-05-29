@@ -1,6 +1,6 @@
 export interface Metrics {
-  metrics: { [k: string]: MetricGroup };
-  histograms: { [k: string]: Histogram };
+  metrics: { [key: string]: MetricGroup };
+  histograms: { [key: string]: Histogram };
 }
 
 export interface Histogram {
@@ -15,7 +15,7 @@ export interface MetricGroup {
 }
 
 export interface TimeSeries {
-  metric: { [k: string]: string };
+  metric: { [key: string]: string };
   values: Datapoint[];
   name: string;
 }
