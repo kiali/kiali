@@ -3,19 +3,12 @@ import { Alert, LineChart } from 'patternfly-react';
 
 import ServiceId from '../../types/ServiceId';
 import * as M from '../../types/Metrics';
+import GrafanaInfo from '../../types/GrafanaInfo';
 import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import MetricsOptions from '../../types/MetricsOptions';
 import graphUtils from '../../utils/Graphing';
-
-interface GrafanaInfo {
-  url: string;
-  variablesSuffix: string;
-  dashboard: string;
-  varServiceSource: string;
-  varServiceDest: string;
-}
 
 type ServiceMetricsState = {
   loading: boolean;
@@ -94,7 +87,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     this.setState({ loading: true });
     API.getServiceMetrics(this.props.namespace, this.props.service, this.options)
       .then(response => {
-        const metrics: M.Metrics = response['data'];
+        const metrics: M.Metrics = response.data;
         this.setState({
           loading: false,
           requestCountIn: this.nameMetric(

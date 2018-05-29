@@ -9,12 +9,7 @@ import { NamespaceFilterSelected } from '../../components/NamespaceFilter/Namesp
 import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
-import {
-  hasIstioSidecar,
-  ServiceDetailsInfo,
-  ServiceDetailsInfoFromAPI,
-  ObjectValidation
-} from '../../types/ServiceInfo';
+import { hasIstioSidecar, ServiceDetailsInfo, Validations } from '../../types/ServiceInfo';
 import AceEditor, { AceOptions } from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
@@ -24,8 +19,7 @@ const yaml = require('js-yaml');
 type ServiceDetailsState = {
   jaegerUri: string;
   serviceDetailsInfo: ServiceDetailsInfo;
-  // validations are grouped per 'objectType' first in the first map and 'name' in the inner map
-  validations: Map<string, Map<string, ObjectValidation>>;
+  validations: Validations;
 };
 
 interface ParsedSearch {
@@ -50,47 +44,25 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     super(props);
     this.state = {
       jaegerUri: '',
-      validations: new Map(),
+      validations: {},
       serviceDetailsInfo: {
         type: '',
         name: '',
-        created_at: '',
-        istio_sidecar: false,
-        resource_version: '',
+        createdAt: '',
+        istioSidecar: false,
+        resourceVersion: '',
         ip: ''
       }
     };
   }
 
   updateFilter = () => {
-    let activeFilter: ActiveFilter = {
+    const activeFilter: ActiveFilter = {
       label: 'Namespace: ' + this.props.match.params.namespace,
       category: 'Namespace',
       value: this.props.match.params.namespace.toString()
     };
     NamespaceFilterSelected.setSelected([activeFilter]);
-  };
-
-  parseServiceDetailsInfo = (data: ServiceDetailsInfoFromAPI): ServiceDetailsInfo => {
-    return {
-      labels: data.labels,
-      name: data.name,
-      created_at: data.created_at,
-      resource_version: data.resource_version,
-      type: data.type,
-      ports: data.ports,
-      endpoints: data.endpoints,
-      istio_sidecar: hasIstioSidecar(data.pods),
-      pods: data.pods,
-      deployments: data.deployments,
-      dependencies: data.dependencies,
-      routeRules: data.route_rules,
-      destinationPolicies: data.destination_policies,
-      virtualServices: data.virtual_services,
-      destinationRules: data.destination_rules,
-      ip: data.ip,
-      health: data.health
-    };
   };
 
   validateParams(parsed: ParsedSearch): boolean {
@@ -181,7 +153,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     API.getJaegerInfo()
       .then(response => {
         this.setState({
-          jaegerUri: `${response['data'].url}/search?service=${this.props.match.params.service}`
+          jaegerUri: `${response.data.url}/search?service=${this.props.match.params.service}`
         });
       })
       .catch(error => {
@@ -189,10 +161,9 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       });
     API.getServiceDetail(this.props.match.params.namespace, this.props.match.params.service)
       .then(response => {
-        const data: ServiceDetailsInfoFromAPI = response['data'];
-        this.setState({
-          serviceDetailsInfo: this.parseServiceDetailsInfo(data)
-        });
+        const details = response.data;
+        details.istioSidecar = hasIstioSidecar(details.pods);
+        this.setState({ serviceDetailsInfo: details });
       })
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', error));
@@ -200,7 +171,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     API.getServiceValidations(this.props.match.params.namespace, this.props.match.params.service)
       .then(response => {
         this.setState({
-          validations: response['data']
+          validations: response.data
         });
       })
       .catch(error => {

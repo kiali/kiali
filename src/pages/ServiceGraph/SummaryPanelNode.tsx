@@ -8,6 +8,7 @@ import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import MetricsOptions from '../../types/MetricsOptions';
+import { Metrics } from '../../types/Metrics';
 import { PfColors } from '../../components/Pf/PfColors';
 import { Icon } from 'patternfly-react';
 
@@ -78,7 +79,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           console.log('SummaryPanelNode: Ignore fetch, component not mounted.');
           return;
         }
-        this.showRequestCountMetrics(response);
+        this.showRequestCountMetrics(response.data);
       })
       .catch(error => {
         if (!this._isMounted) {
@@ -92,15 +93,14 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     this.setState({ loading: true });
   }
 
-  showRequestCountMetrics(xhrRequest: any) {
-    const metrics = xhrRequest.data.metrics;
-
+  showRequestCountMetrics(all: Metrics) {
+    const metrics = all.metrics;
     this.setState({
       loading: false,
-      requestCountOut: graphUtils.toC3Columns(metrics.request_count_out.matrix, 'RPS'),
-      requestCountIn: graphUtils.toC3Columns(metrics.request_count_in.matrix, 'RPS'),
-      errorCountIn: graphUtils.toC3Columns(metrics.request_error_count_in.matrix, 'Error'),
-      errorCountOut: graphUtils.toC3Columns(metrics.request_error_count_out.matrix, 'Error')
+      requestCountOut: graphUtils.toC3Columns(metrics['request_count_out'].matrix, 'RPS'),
+      requestCountIn: graphUtils.toC3Columns(metrics['request_count_in'].matrix, 'RPS'),
+      errorCountIn: graphUtils.toC3Columns(metrics['request_error_count_in'].matrix, 'Error'),
+      errorCountOut: graphUtils.toC3Columns(metrics['request_error_count_out'].matrix, 'Error')
     });
   }
 

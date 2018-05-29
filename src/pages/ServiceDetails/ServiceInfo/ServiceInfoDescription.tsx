@@ -14,8 +14,8 @@ import { IstioLogo } from '../../../types/ServiceListComponent';
 
 interface ServiceInfoDescriptionProps {
   name: string;
-  created_at: string;
-  resource_version: string;
+  createdAt: string;
+  resourceVersion: string;
   istio_sidecar?: boolean;
   labels?: { [key: string]: string };
   type?: string;
@@ -71,10 +71,10 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 )}
               </div>
               <div>
-                <strong>Created at</strong> <LocalTime time={this.props.created_at} />
+                <strong>Created at</strong> <LocalTime time={this.props.createdAt} />
               </div>
               <div>
-                <strong>Resource Version</strong> {this.props.resource_version}
+                <strong>Resource Version</strong> {this.props.resourceVersion}
               </div>
             </Col>
             <Col xs={12} sm={6} md={3} lg={3}>

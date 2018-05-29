@@ -38,7 +38,7 @@ export const ServiceGraphDataActions = {
       const restParams = { duration: duration + 's' };
       API.getGraphElements(namespace, restParams).then(
         response => {
-          const responseData = response['data'];
+          const responseData: any = response['data'];
           const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
           const timestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
           dispatch(ServiceGraphDataActions.getGraphDataSuccess(timestamp, graphData));

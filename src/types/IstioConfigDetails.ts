@@ -18,10 +18,10 @@ export interface IstioRuleDetails {
 
 export interface IstioConfigDetails {
   namespace: Namespace;
-  route_rule: RouteRule;
-  destination_policy: DestinationPolicy;
-  virtual_service: VirtualService;
-  destination_rule: DestinationRule;
+  routeRule: RouteRule;
+  destinationPolicy: DestinationPolicy;
+  virtualService: VirtualService;
+  destinationRule: DestinationRule;
   rule: IstioRuleDetails;
 }
 

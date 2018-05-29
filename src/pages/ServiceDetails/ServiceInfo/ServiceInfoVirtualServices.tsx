@@ -29,10 +29,10 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
                   </h3>
                 </div>
                 <div>
-                  <strong>Created at</strong>: <LocalTime time={virtualService.created_at} />
+                  <strong>Created at</strong>: <LocalTime time={virtualService.createdAt} />
                 </div>
                 <div>
-                  <strong>Resource Version</strong>: {virtualService.resource_version}
+                  <strong>Resource Version</strong>: {virtualService.resourceVersion}
                 </div>
                 {virtualService.hosts && virtualService.hosts.length > 0 ? (
                   <DetailObject name="Hosts" detail={virtualService.hosts} />

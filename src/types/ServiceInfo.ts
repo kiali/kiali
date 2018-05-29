@@ -38,32 +38,32 @@ export interface ContainerInfo {
 
 export interface Deployment {
   name: string;
-  template_annotations?: { [key: string]: string };
+  templateAnnotations?: { [key: string]: string };
   labels?: { [key: string]: string };
-  created_at: string;
-  resource_version: string;
+  createdAt: string;
+  resourceVersion: string;
   replicas: number;
-  available_replicas: number;
-  unavailable_replicas: number;
+  availableReplicas: number;
+  unavailableReplicas: number;
   autoscaler: Autoscaler;
 }
 
 export interface Autoscaler {
   name: string;
   labels?: { [key: string]: string };
-  min_replicas: number;
-  max_replicas: number;
-  target_cpu_utilization_percentage: number;
-  current_replicas?: number;
-  desired_replicas?: number;
+  minReplicas: number;
+  maxReplicas: number;
+  targetCPUUtilizationPercentage: number;
+  currentReplicas?: number;
+  desiredReplicas?: number;
 }
 
 // RouteRule type
 
 export interface RouteRule {
   name: string;
-  created_at: string;
-  resource_version: string;
+  createdAt: string;
+  resourceVersion: string;
   destination?: IstioService;
   precedence?: number;
   match?: MatchCondition;
@@ -77,7 +77,7 @@ export interface RouteRule {
   l4Fault?: L4FaultInjection;
   mirror?: IstioService;
   corsPolicy?: CorsPolicy;
-  appendHeaders?: Map<String, String>;
+  appendHeaders?: { [key: string]: string };
 }
 
 export interface IstioService {
@@ -101,7 +101,7 @@ export interface L4MatchAttributes {
 }
 
 export interface MatchRequest {
-  headers: Map<string, StringMatch>;
+  headers: { [key: string]: StringMatch };
 }
 
 export interface StringMatch {
@@ -219,8 +219,8 @@ export interface CircuitBreaker {
 
 export interface DestinationPolicy {
   name: string;
-  created_at: string;
-  resource_version: string;
+  createdAt: string;
+  resourceVersion: string;
   destination?: IstioService;
   source?: IstioService;
   loadbalancing?: LoadBalancing;
@@ -245,9 +245,9 @@ export interface HTTPMatchRequest {
   scheme: StringMatch;
   method: StringMatch;
   authority: StringMatch;
-  headers: Map<string, StringMatch>;
+  headers: { [key: string]: StringMatch };
   port: PortSelector;
-  sourceLabels: Map<string, string>;
+  sourceLabels: { [key: string]: string };
   gateways: string[];
 }
 
@@ -261,7 +261,7 @@ export interface HTTPRoute {
   retries: HTTPRetry;
   mirror: Destination;
   corsPolicy: CorsPolicy;
-  appendHeaders: Map<string, string>;
+  appendHeaders: { [key: string]: string };
 }
 
 export interface TCPRoute {
@@ -271,8 +271,8 @@ export interface TCPRoute {
 
 export interface VirtualService {
   name: string;
-  created_at: string;
-  resource_version: string;
+  createdAt: string;
+  resourceVersion: string;
   hosts?: string[];
   gateways?: string[];
   http?: HTTPRoute[];
@@ -337,15 +337,15 @@ export interface TrafficPolicy {
 
 export interface Subset {
   name: string;
-  labels: Map<string, string>;
+  labels: { [key: string]: string };
   trafficPolicy: TrafficPolicy;
 }
 
 export interface DestinationRule {
   name: string;
-  created_at: string;
-  resource_version: string;
-  traffic_policy?: TrafficPolicy;
+  createdAt: string;
+  resourceVersion: string;
+  trafficPolicy?: TrafficPolicy;
   subsets?: Subset[];
 }
 
@@ -362,42 +362,24 @@ export interface ServiceDetailsInfo {
   labels?: { [key: string]: string };
   type: string;
   name: string;
-  created_at: string;
-  resource_version: string;
+  createdAt: string;
+  resourceVersion: string;
   ip: string;
   ports?: Port[];
   endpoints?: Endpoints[];
-  istio_sidecar: boolean;
+  istioSidecar: boolean;
   pods?: Pod[];
   deployments?: Deployment[];
   routeRules?: RouteRule[];
   destinationPolicies?: DestinationPolicy[];
   virtualServices?: VirtualService[];
   destinationRules?: DestinationRule[];
-  dependencies?: Map<string, string[]>;
+  dependencies?: { [key: string]: string[] };
   health?: Health;
 }
 
-// Temporary interface due to tiny differences between the model from REST API and the ServiceDetailsInfo used above.
-//  They should be cleaned & merged asap
-export interface ServiceDetailsInfoFromAPI {
-  labels?: { [key: string]: string };
-  type: string;
-  name: string;
-  created_at: string;
-  resource_version: string;
-  ip: string;
-  ports?: Port[];
-  endpoints?: Endpoints[];
-  pods?: Pod[];
-  deployments?: Deployment[];
-  route_rules?: RouteRule[];
-  destination_policies?: DestinationPolicy[];
-  virtual_services?: VirtualService[];
-  destination_rules?: DestinationRule[];
-  dependencies?: Map<string, string[]>;
-  health?: Health;
-}
+// validations are grouped per 'objectType' first in the first map and 'name' in the inner map
+export type Validations = { [key1: string]: { [key2: string]: ObjectValidation } };
 
 export interface ObjectValidation {
   name: string;

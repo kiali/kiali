@@ -57,10 +57,10 @@ export const getIstioConfig = (namespace: String) => {
     namespace: {
       name: namespace
     },
-    route_rules: [],
-    destination_policies: [],
-    virtual_services: [],
-    destination_rules: [],
+    routeRules: [],
+    destinationPolicies: [],
+    virtualServices: [],
+    destinationRules: [],
     rules: []
   };
   return new Promise(resolve => {

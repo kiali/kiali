@@ -69,7 +69,7 @@
       }
     }
   ],
-  "route_rules": [
+  "routeRules": [
     {
       "name": "reviews-default",
       "destination": {

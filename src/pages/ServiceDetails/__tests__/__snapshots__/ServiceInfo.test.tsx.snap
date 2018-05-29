@@ -9,7 +9,7 @@ ShallowWrapper {
     service="reviews"
     serviceDetails={
       Object {
-        "created_at": undefined,
+        "createdAt": undefined,
         "dependencies": Object {},
         "deployments": undefined,
         "destinationPolicies": undefined,
@@ -44,7 +44,7 @@ ShallowWrapper {
         ],
         "health": undefined,
         "ip": "172.30.78.33",
-        "istio_sidecar": false,
+        "istioSidecar": false,
         "labels": Object {
           "app": "reviews",
         },
@@ -56,7 +56,7 @@ ShallowWrapper {
             "protocol": "TCP",
           },
         ],
-        "resource_version": undefined,
+        "resourceVersion": undefined,
         "routeRules": Array [
           Object {
             "destination": Object {
@@ -101,7 +101,7 @@ ShallowWrapper {
         "virtualServices": undefined,
       }
     }
-    validations={Map {}}
+    validations={Object {}}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -134,7 +134,7 @@ ShallowWrapper {
               xs={12}
             >
               <ServiceInfoDescription
-                created_at={undefined}
+                createdAt={undefined}
                 endpoints={
                   Array [
                     Object {
@@ -183,7 +183,7 @@ ShallowWrapper {
                     },
                   ]
                 }
-                resource_version={undefined}
+                resourceVersion={undefined}
                 type="ClusterIP"
               />
             </Col>
@@ -376,7 +376,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <ServiceInfoDescription
-                  created_at={undefined}
+                  createdAt={undefined}
                   endpoints={
                     Array [
                       Object {
@@ -425,7 +425,7 @@ ShallowWrapper {
                       },
                     ]
                   }
-                  resource_version={undefined}
+                  resourceVersion={undefined}
                   type="ClusterIP"
                 />
               </Col>
@@ -612,7 +612,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <ServiceInfoDescription
-                  created_at={undefined}
+                  createdAt={undefined}
                   endpoints={
                     Array [
                       Object {
@@ -661,7 +661,7 @@ ShallowWrapper {
                       },
                     ]
                   }
-                  resource_version={undefined}
+                  resourceVersion={undefined}
                   type="ClusterIP"
                 />
               </Col>,
@@ -676,7 +676,7 @@ ShallowWrapper {
               "props": Object {
                 "bsClass": "col",
                 "children": <ServiceInfoDescription
-                  created_at={undefined}
+                  createdAt={undefined}
                   endpoints={
                     Array [
                       Object {
@@ -725,7 +725,7 @@ ShallowWrapper {
                       },
                     ]
                   }
-                  resource_version={undefined}
+                  resourceVersion={undefined}
                   type="ClusterIP"
                 />,
                 "componentClass": "div",
@@ -740,7 +740,7 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "class",
                 "props": Object {
-                  "created_at": undefined,
+                  "createdAt": undefined,
                   "endpoints": Array [
                     Object {
                       "addresses": Array [
@@ -783,7 +783,7 @@ ShallowWrapper {
                       "protocol": "TCP",
                     },
                   ],
-                  "resource_version": undefined,
+                  "resourceVersion": undefined,
                   "type": "ClusterIP",
                 },
                 "ref": null,
@@ -1906,7 +1906,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <ServiceInfoDescription
-                  created_at={undefined}
+                  createdAt={undefined}
                   endpoints={
                     Array [
                       Object {
@@ -1955,7 +1955,7 @@ ShallowWrapper {
                       },
                     ]
                   }
-                  resource_version={undefined}
+                  resourceVersion={undefined}
                   type="ClusterIP"
                 />
               </Col>
@@ -2148,7 +2148,7 @@ ShallowWrapper {
                   xs={12}
                 >
                   <ServiceInfoDescription
-                    created_at={undefined}
+                    createdAt={undefined}
                     endpoints={
                       Array [
                         Object {
@@ -2197,7 +2197,7 @@ ShallowWrapper {
                         },
                       ]
                     }
-                    resource_version={undefined}
+                    resourceVersion={undefined}
                     type="ClusterIP"
                   />
                 </Col>
@@ -2384,7 +2384,7 @@ ShallowWrapper {
                   xs={12}
                 >
                   <ServiceInfoDescription
-                    created_at={undefined}
+                    createdAt={undefined}
                     endpoints={
                       Array [
                         Object {
@@ -2433,7 +2433,7 @@ ShallowWrapper {
                         },
                       ]
                     }
-                    resource_version={undefined}
+                    resourceVersion={undefined}
                     type="ClusterIP"
                   />
                 </Col>,
@@ -2448,7 +2448,7 @@ ShallowWrapper {
                 "props": Object {
                   "bsClass": "col",
                   "children": <ServiceInfoDescription
-                    created_at={undefined}
+                    createdAt={undefined}
                     endpoints={
                       Array [
                         Object {
@@ -2497,7 +2497,7 @@ ShallowWrapper {
                         },
                       ]
                     }
-                    resource_version={undefined}
+                    resourceVersion={undefined}
                     type="ClusterIP"
                   />,
                   "componentClass": "div",
@@ -2512,7 +2512,7 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "class",
                   "props": Object {
-                    "created_at": undefined,
+                    "createdAt": undefined,
                     "endpoints": Array [
                       Object {
                         "addresses": Array [
@@ -2555,7 +2555,7 @@ ShallowWrapper {
                         "protocol": "TCP",
                       },
                     ],
-                    "resource_version": undefined,
+                    "resourceVersion": undefined,
                     "type": "ClusterIP",
                   },
                   "ref": null,

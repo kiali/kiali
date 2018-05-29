@@ -6,7 +6,7 @@ import ServiceInfoDeployments from './ServiceInfo/ServiceInfoDeployments';
 import ServiceInfoRouteRules from './ServiceInfo/ServiceInfoRouteRules';
 import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
 import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
-import { RouteRule, ServiceDetailsInfo, ObjectValidation } from '../../types/ServiceInfo';
+import { RouteRule, ServiceDetailsInfo, Validations } from '../../types/ServiceInfo';
 import {
   ToastNotification,
   ToastNotificationList,
@@ -23,7 +23,7 @@ import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRul
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
-  validations: Map<string, Map<string, ObjectValidation>>;
+  validations: Validations;
 }
 
 type ServiceInfoState = {
@@ -57,7 +57,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
   render() {
     const pods = this.props.serviceDetails.pods || [];
     const deployments = this.props.serviceDetails.deployments || [];
-    const dependencies = this.props.serviceDetails.dependencies || new Map();
+    const dependencies = this.props.serviceDetails.dependencies || {};
     const routeRules = this.props.serviceDetails.routeRules || [];
     const destinationPolicies = this.props.serviceDetails.destinationPolicies || [];
     const virtualServices = this.props.serviceDetails.virtualServices || [];
@@ -80,9 +80,9 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
             <Col xs={12} sm={12} md={12} lg={12}>
               <ServiceInfoDescription
                 name={this.props.serviceDetails.name}
-                created_at={this.props.serviceDetails.created_at}
-                resource_version={this.props.serviceDetails.resource_version}
-                istio_sidecar={this.props.serviceDetails.istio_sidecar}
+                createdAt={this.props.serviceDetails.createdAt}
+                resourceVersion={this.props.serviceDetails.resourceVersion}
+                istio_sidecar={this.props.serviceDetails.istioSidecar}
                 labels={this.props.serviceDetails.labels}
                 ports={this.props.serviceDetails.ports}
                 type={this.props.serviceDetails.type}
@@ -107,20 +107,20 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                   </Nav>
                   <TabContent>
                     <TabPane eventKey={0}>
-                      {(pods.length > 0 || this.props.serviceDetails.istio_sidecar) && <ServiceInfoPods pods={pods} />}
+                      {(pods.length > 0 || this.props.serviceDetails.istioSidecar) && <ServiceInfoPods pods={pods} />}
                     </TabPane>
                     <TabPane eventKey={1}>
-                      {(deployments.length > 0 || this.props.serviceDetails.istio_sidecar) && (
+                      {(deployments.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoDeployments deployments={deployments} />
                       )}
                     </TabPane>
                     <TabPane eventKey={2}>
-                      {(dependencies.size > 0 || this.props.serviceDetails.istio_sidecar) && (
+                      {(Object.keys(dependencies).length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoRoutes dependencies={dependencies} />
                       )}
                     </TabPane>
                     <TabPane eventKey={3}>
-                      {(routeRules.length > 0 || this.props.serviceDetails.istio_sidecar) && (
+                      {(routeRules.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoRouteRules
                           routeRules={routeRules}
                           editorLink={editorLink}
@@ -129,7 +129,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       )}
                     </TabPane>
                     <TabPane eventKey={4}>
-                      {(destinationPolicies.length > 0 || this.props.serviceDetails.istio_sidecar) && (
+                      {(destinationPolicies.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoDestinationPolicies
                           destinationPolicies={destinationPolicies}
                           editorLink={editorLink}
@@ -137,12 +137,12 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       )}
                     </TabPane>
                     <TabPane eventKey={5}>
-                      {(virtualServices.length > 0 || this.props.serviceDetails.istio_sidecar) && (
+                      {(virtualServices.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoVirtualServices virtualServices={virtualServices} editorLink={editorLink} />
                       )}
                     </TabPane>
                     <TabPane eventKey={6}>
-                      {(destinationRules.length > 0 || this.props.serviceDetails.istio_sidecar) && (
+                      {(destinationRules.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoDestinationRules destinationRules={destinationRules} editorLink={editorLink} />
                       )}
                     </TabPane>

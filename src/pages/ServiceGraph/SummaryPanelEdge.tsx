@@ -139,9 +139,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           console.log('SummaryPanelEdge: Ignore fetch, component not mounted.');
           return;
         }
-        const data: M.Metrics = response['data'];
-        const metrics: Map<String, M.MetricGroup> = data.metrics;
-        const histograms: Map<String, M.Histogram> = data.histograms;
+        const metrics = response.data.metrics;
+        const histograms = response.data.histograms;
         const reqRates = this.getDatapoints(metrics['request_count_in'], 'RPS', sourceService, sourceVersion);
         const errRates = this.getDatapoints(metrics['request_error_count_in'], 'Error', sourceService, sourceVersion);
         const latAvg = this.getDatapoints(

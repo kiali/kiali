@@ -4,7 +4,7 @@ import { Health } from './Health';
 export interface ServiceOverview {
   name: string;
   health: Health;
-  istio_sidecar: boolean;
+  istioSidecar: boolean;
 }
 
 export interface ServiceList {
@@ -20,7 +20,7 @@ export const overviewToItem = (overview: ServiceOverview, namespace: string): Se
   return {
     name: overview.name,
     health: overview.health,
-    istio_sidecar: overview.istio_sidecar,
+    istioSidecar: overview.istioSidecar,
     namespace: namespace
   };
 };

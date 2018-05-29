@@ -30,12 +30,12 @@ class ServiceInfoDestinationPolicies extends React.Component<ServiceInfoDestinat
                   <div>
                     <strong>Created at</strong>
                     {': '}
-                    <LocalTime time={dPolicy.created_at} />
+                    <LocalTime time={dPolicy.createdAt} />
                   </div>
                   <div>
                     <strong>Resource Version</strong>
                     {': '}
-                    {dPolicy.resource_version}
+                    {dPolicy.resourceVersion}
                   </div>
                   {dPolicy.destination ? (
                     <DetailObject name="Destination" detail={dPolicy.destination} labels={['labels']} />
