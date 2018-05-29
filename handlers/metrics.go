@@ -80,6 +80,9 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) erro
 	// Adjust start & end times to be a multiple of step
 	stepInSecs := int64(q.Step.Seconds())
 	q.Start = time.Unix((q.Start.Unix()/stepInSecs)*stepInSecs, 0)
-	q.End = time.Unix(((q.End.Unix()/stepInSecs)+1)*stepInSecs, 0)
+	rawEnd := q.End.Unix()
+	if rawEnd%stepInSecs != 0 {
+		q.End = time.Unix(((rawEnd/stepInSecs)+1)*stepInSecs, 0)
+	}
 	return nil
 }
