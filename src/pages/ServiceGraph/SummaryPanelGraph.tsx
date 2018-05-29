@@ -42,7 +42,11 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
   componentDidMount() {
     this._isMounted = true;
-    this.updateRpsChart(this.props);
+    // TODO (maybe) we omit the rps chart when dealing with multiple namespaces. There is no backend
+    // API support to gather the data. The whole-graph chart is of nominal value, it will likely be OK.
+    if (this.props.namespace !== 'all') {
+      this.updateRpsChart(this.props);
+    }
   }
 
   componentWillUnmount() {
@@ -83,10 +87,12 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
               rate4xx={trafficRate.rate4xx}
               rate5xx={trafficRate.rate5xx}
             />
-            <div>
-              <hr />
-              {this.renderRpsChart()}
-            </div>
+            {this.props.namespace !== 'all' && (
+              <div>
+                <hr />
+                {this.renderRpsChart()}
+              </div>
+            )}
           </div>
         </div>
       </div>
