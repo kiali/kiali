@@ -1,5 +1,9 @@
 package models
 
+import (
+	"encoding/json"
+)
+
 // IstioValidationKey is the key value composed of an Istio ObjectType and Name.
 type IstioValidationKey struct {
 	ObjectType string
@@ -39,4 +43,17 @@ func (iv IstioValidations) MergeValidations(validations IstioValidations) IstioV
 		}
 	}
 	return iv
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (iv IstioValidations) MarshalJSON() ([]byte, error) {
+	out := make(map[string]map[string]*IstioValidation)
+	for k, v := range iv {
+		_, ok := out[k.ObjectType]
+		if !ok {
+			out[k.ObjectType] = make(map[string]*IstioValidation)
+		}
+		out[k.ObjectType][k.Name] = v
+	}
+	return json.Marshal(out)
 }
