@@ -72,6 +72,10 @@ make test
 
 == Running
 
+=== Secrets
+
+*Note*: There is a secret variable in the configuration called *TOKEN_SECRET*, be careful with this secret.
+
 === Running on OpenShift
 
 ==== Setting up OpenShift
@@ -413,6 +417,21 @@ products:
 products:
   jaeger:
     service: VALUE
+----
+
+|`TOKEN_SECRET`
+|The token secret for generate. This configuration is ignored if `TOKEN_SECRET` is set. (default is `kiali`)
+[source,yaml]
+----
+token:
+  secret: VALUE
+----
+|`TOKEN_EXPIRATION_AT`
+|The token expired in VALUE seconds. This configuration is ignored if `TOKEN_EXPIRATION_AT` is set. (default is 10 hours => 36000)
+[source,yaml]
+----
+token:
+  expiration_hours: VALUE
 ----
 |===
 
