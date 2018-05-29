@@ -41,28 +41,29 @@ export default class RpsChart extends React.Component<RpsChartTypeProp, {}> {
       dataErrors = (this.props.dataErrors as [string, number][])[1];
     }
 
-    let len = dataRps.length;
-    let minRps: number = len > 1 ? +dataRps[1] : 0;
-    let maxRps: number = len > 1 ? +dataRps[1] : 0;
-    let sumRps: number = 0;
-    for (let i = 2; i < len; ++i) {
-      let sample: number = +dataRps[i];
+    // NOTE: dataRps and dataErrors are arrays of data value points EXCEPT for the first array item.
+    // At index 0 of the array is the data label (dataRps[0] == "RPS" and dataErrors[0] == "Error").
+    // This is why we skip the first element in each array.
+    let minRps: number = dataRps.length > 1 ? +dataRps[1] : 0;
+    let maxRps: number = minRps;
+    let errSample: number = dataErrors.length > 1 ? +dataErrors[1] : 0;
+    let pctMinErr: number = 100 * errSample / minRps;
+    let pctMaxErr: number = pctMinErr;
+    for (let i = 2; i < dataRps.length; ++i) {
+      const sample: number = +dataRps[i];
       minRps = sample < minRps ? sample : minRps;
       maxRps = sample > maxRps ? sample : maxRps;
-      sumRps += +sample;
+      if (sample !== 0) {
+        errSample = dataErrors.length > i ? +dataErrors[i] : 0;
+        const errPct = 100 * errSample / sample;
+        if (isNaN(pctMinErr) || errPct < pctMinErr) {
+          pctMinErr = errPct;
+        }
+        if (isNaN(pctMaxErr) || errPct > pctMaxErr) {
+          pctMaxErr = errPct;
+        }
+      }
     }
-    const avgRps = len < 2 ? 0 : sumRps / (len - 1);
-
-    len = dataErrors.length;
-    let minErr: number = len > 1 ? +dataErrors[1] : 0;
-    let maxErr: number = len > 1 ? +dataErrors[1] : 0;
-    for (let i = 2; i < len; ++i) {
-      let sample: number = +dataErrors[i];
-      minErr = sample < minErr ? sample : minErr;
-      maxErr = sample > maxErr ? sample : maxErr;
-    }
-    const pctMinErr = avgRps === 0 ? 0 : minErr / avgRps * 100;
-    const pctMaxErr = avgRps === 0 ? 0 : maxErr / avgRps * 100;
 
     return (
       <>
