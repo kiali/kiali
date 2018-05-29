@@ -7,7 +7,7 @@ import (
 type ServiceOverview struct {
 	Name         string `json:"name"`
 	Health       Health `json:"health"`
-	IstioSidecar bool   `json:"istio_sidecar"`
+	IstioSidecar bool   `json:"istioSidecar"`
 }
 
 type ServiceList struct {
@@ -17,18 +17,18 @@ type ServiceList struct {
 
 type Service struct {
 	Name                string              `json:"name"`
-	CreatedAt           string              `json:"created_at"`
-	ResourceVersion     string              `json:"resource_version"`
+	CreatedAt           string              `json:"createdAt"`
+	ResourceVersion     string              `json:"resourceVersion"`
 	Namespace           Namespace           `json:"namespace"`
 	Labels              map[string]string   `json:"labels"`
 	Type                string              `json:"type"`
 	Ip                  string              `json:"ip"`
 	Ports               Ports               `json:"ports"`
 	Endpoints           Endpoints           `json:"endpoints"`
-	RouteRules          RouteRules          `json:"route_rules"`
-	DestinationPolicies DestinationPolicies `json:"destination_policies"`
-	VirtualServices     VirtualServices     `json:"virtual_services"`
-	DestinationRules    DestinationRules    `json:"destination_rules"`
+	RouteRules          RouteRules          `json:"routeRules"`
+	DestinationPolicies DestinationPolicies `json:"destinationPolicies"`
+	VirtualServices     VirtualServices     `json:"virtualServices"`
+	DestinationRules    DestinationRules    `json:"destinationRules"`
 	Dependencies        map[string][]string `json:"dependencies"`
 	Pods                Pods                `json:"pods"`
 	Deployments         Deployments         `json:"deployments"`

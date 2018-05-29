@@ -7,10 +7,10 @@ import (
 type DestinationRules []DestinationRule
 type DestinationRule struct {
 	Name            string      `json:"name"`
-	CreatedAt       string      `json:"created_at"`
-	ResourceVersion string      `json:"resource_version"`
-	DestinationName interface{} `json:"destination_name"`
-	TrafficPolicy   interface{} `json:"traffic_policy"`
+	CreatedAt       string      `json:"createdAt"`
+	ResourceVersion string      `json:"resourceVersion"`
+	DestinationName interface{} `json:"destinationName"`
+	TrafficPolicy   interface{} `json:"trafficPolicy"`
 	Subsets         interface{} `json:"subsets"`
 }
 

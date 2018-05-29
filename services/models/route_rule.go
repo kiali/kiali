@@ -7,8 +7,8 @@ import (
 type RouteRules []RouteRule
 type RouteRule struct {
 	Name             string      `json:"name"`
-	CreatedAt        string      `json:"created_at"`
-	ResourceVersion  string      `json:"resource_version"`
+	CreatedAt        string      `json:"createdAt"`
+	ResourceVersion  string      `json:"resourceVersion"`
 	Destination      interface{} `json:"destination"`
 	Precedence       interface{} `json:"precedence"`
 	Match            interface{} `json:"match"`

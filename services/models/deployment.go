@@ -8,13 +8,13 @@ import (
 type Deployments []*Deployment
 type Deployment struct {
 	Name                string            `json:"name"`
-	TemplateAnnotations map[string]string `json:"template_annotations"`
+	TemplateAnnotations map[string]string `json:"templateAnnotations"`
 	Labels              map[string]string `json:"labels"`
-	CreatedAt           string            `json:"created_at"`
-	ResourceVersion     string            `json:"resource_version"`
+	CreatedAt           string            `json:"createdAt"`
+	ResourceVersion     string            `json:"resourceVersion"`
 	Replicas            int32             `json:"replicas"`
-	AvailableReplicas   int32             `json:"available_replicas"`
-	UnavailableReplicas int32             `json:"unavailable_replicas"`
+	AvailableReplicas   int32             `json:"availableReplicas"`
+	UnavailableReplicas int32             `json:"unavailableReplicas"`
 	Autoscaler          Autoscaler        `json:"autoscaler"`
 }
 
