@@ -2,6 +2,7 @@ package checkers
 
 import (
 	"github.com/kiali/kiali/services/business/checkers/pods"
+	"github.com/kiali/kiali/services/models"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +14,7 @@ func TestSidecarsCheckNoPods(t *testing.T) {
 	checker := PodChecker{Pods: []v1.Pod{}}
 	result := checker.Check()
 
-	assert.Equal(t, 0, len(*result))
+	assert.Equal(t, 0, len(result))
 }
 
 // Pod with sidecar, check should be OK
@@ -23,15 +24,14 @@ func TestSidecarsCheckOneValidPod(t *testing.T) {
 	}
 
 	checker := PodChecker{Pods: fakePodList}
-	typeValidations := checker.Check()
+	validations := checker.Check()
 
-	assert.Equal(t, 1, len(*typeValidations))
+	assert.Equal(t, 1, len(validations))
 
-	nameValidations := (*typeValidations)["pod"]
-
-	assert.Equal(t, 1, len(*nameValidations))
-	assert.True(t, (*nameValidations)["myPodWithSidecar"].Valid)
-	assert.Equal(t, 0, len((*nameValidations)["myPodWithSidecar"].Checks))
+	validation, ok := validations[models.IstioValidationKey{"pod", "myPodWithSidecar"}]
+	assert.True(t, ok)
+	assert.True(t, validation.Valid)
+	assert.Equal(t, 0, len(validation.Checks))
 }
 
 // Pod with no sidecar, check should be Warning
@@ -41,17 +41,16 @@ func TestSidecarsCheckOneInvalidPod(t *testing.T) {
 	}
 
 	checker := PodChecker{Pods: fakePodList}
-	typeValidations := checker.Check()
+	validations := checker.Check()
 
-	assert.Equal(t, 1, len(*typeValidations))
+	assert.Equal(t, 1, len(validations))
 
-	nameValidations := (*typeValidations)["pod"]
-
-	assert.Equal(t, 1, len(*nameValidations))
-	assert.False(t, (*nameValidations)["myPodWithNoSidecar"].Valid)
-	assert.Equal(t, 1, len((*nameValidations)["myPodWithNoSidecar"].Checks))
-	assert.Equal(t, "warning", (*nameValidations)["myPodWithNoSidecar"].Checks[0].Severity)
-	assert.NotEqual(t, "Ok", (*nameValidations)["myPodWithNoSidecar"].Checks[0].Message)
+	validation, ok := validations[models.IstioValidationKey{"pod", "myPodWithNoSidecar"}]
+	assert.True(t, ok)
+	assert.False(t, validation.Valid)
+	assert.Equal(t, 1, len(validation.Checks))
+	assert.Equal(t, "warning", validation.Checks[0].Severity)
+	assert.NotEqual(t, "Ok", validation.Checks[0].Message)
 }
 
 func buildPodWithSidecar() v1.Pod {

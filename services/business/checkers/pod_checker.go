@@ -13,19 +13,13 @@ type PodChecker struct {
 const podsCheckerType = "pod"
 
 // Runs all checkers for Pod objects passed into the PodChecker
-func (checker PodChecker) Check() *models.IstioTypeValidations {
+func (checker PodChecker) Check() models.IstioValidations {
 	return checker.runIndividualChecks()
 }
 
 // Runs individual checks for each pod in pod checker.
-func (checker PodChecker) runIndividualChecks() *models.IstioTypeValidations {
-	typeValidations := models.IstioTypeValidations{}
-	if len(checker.Pods) == 0 {
-		return &typeValidations
-	}
-
-	nameValidations := models.IstioNameValidations{}
-	typeValidations[podsCheckerType] = &nameValidations
+func (checker PodChecker) runIndividualChecks() models.IstioValidations {
+	validations := models.IstioValidations{}
 
 	for _, pod := range checker.Pods {
 		validation := models.IstioValidation{
@@ -33,18 +27,18 @@ func (checker PodChecker) runIndividualChecks() *models.IstioTypeValidations {
 			ObjectType: podsCheckerType,
 			Valid:      true,
 		}
-		nameValidations[pod.ObjectMeta.Name] = &validation
 
-		checkers := checker.enabledCheckersFor(&pod)
-
-		for _, podChecker := range checkers {
+		for _, podChecker := range checker.enabledCheckersFor(&pod) {
 			checks, isValid := podChecker.Check()
 			validation.Checks = append(validation.Checks, checks...)
 			validation.Valid = validation.Valid && isValid
 		}
+
+		key := models.IstioValidationKey{ObjectType: podsCheckerType, Name: pod.ObjectMeta.Name}
+		validations[key] = &validation
 	}
 
-	return &typeValidations
+	return validations
 }
 
 // Returns a list of all individual enabled checkers

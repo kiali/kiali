@@ -115,6 +115,10 @@ test-debug:
 	@echo Running tests in debug mode, excluding third party tests under vendor
 	go test -v $(shell go list ./... | grep -v -e /vendor/)
 
+test-race:
+	@echo Running tests with race detection, excluding third party tests under vendor
+	go test -race $(shell go list ./... | grep -v -e /vendor/)
+
 run:
 	@echo Running...
 	@${GOPATH}/bin/kiali -v ${VERBOSE_MODE} -config config.yaml

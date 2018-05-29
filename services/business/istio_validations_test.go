@@ -9,6 +9,7 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/services/models"
 	"k8s.io/api/core/v1"
 )
 
@@ -20,10 +21,8 @@ func TestServiceWellRouteRuleValidation(t *testing.T) {
 	validations, _ := vs.GetServiceValidations("bookinfo", "reviews")
 
 	// Well configured object
-	nameValidations := validations["routerule"]
-	assert.NotEmpty(nameValidations)
-	validObject := (*nameValidations)["reviews-well"]
-	assert.NotEmpty(validObject)
+	validObject, ok := validations[models.IstioValidationKey{"routerule", "reviews-well"}]
+	assert.True(ok)
 	assert.Equal(validObject.Name, "reviews-well")
 	assert.Equal(validObject.ObjectType, "routerule")
 	assert.Equal(validObject.Valid, true)
@@ -40,10 +39,8 @@ func TestServiceMultipleChecks(t *testing.T) {
 	validations, _ := vs.GetServiceValidations("bookinfo", "reviews")
 
 	// wrong weight'ed route rule
-	nameValidations := validations["routerule"]
-	assert.NotEmpty(nameValidations)
-	invalidObject := (*nameValidations)["reviews-multiple"]
-	assert.NotEmpty(invalidObject)
+	invalidObject, ok := validations[models.IstioValidationKey{"routerule", "reviews-multiple"}]
+	assert.True(ok)
 	assert.Equal(invalidObject.Name, "reviews-multiple")
 	assert.Equal(invalidObject.ObjectType, "routerule")
 	assert.Equal(invalidObject.Valid, false)
@@ -69,10 +66,8 @@ func TestServiceOver100RouteRule(t *testing.T) {
 	validations, _ := vs.GetServiceValidations("bookinfo", "reviews")
 
 	// wrong weight'ed route rule
-	nameValidations := validations["routerule"]
-	assert.NotEmpty(nameValidations)
-	invalidObject := (*nameValidations)["reviews-100-plus"]
-	assert.NotEmpty(invalidObject)
+	invalidObject, ok := validations[models.IstioValidationKey{"routerule", "reviews-100-plus"}]
+	assert.True(ok)
 
 	assert.Equal(invalidObject.Name, "reviews-100-plus")
 	assert.Equal(invalidObject.ObjectType, "routerule")
@@ -94,10 +89,8 @@ func TestServiceUnder100RouteRule(t *testing.T) {
 	validations, _ := vs.GetServiceValidations("bookinfo", "reviews")
 
 	// wrong weight'ed route rule
-	nameValidations := validations["routerule"]
-	assert.NotEmpty(nameValidations)
-	invalidObject := (*nameValidations)["reviews-100-minus"]
-	assert.NotEmpty(invalidObject)
+	invalidObject, ok := validations[models.IstioValidationKey{"routerule", "reviews-100-minus"}]
+	assert.True(ok)
 
 	assert.Equal(invalidObject.Name, "reviews-100-minus")
 	assert.Equal(invalidObject.ObjectType, "routerule")
@@ -118,32 +111,25 @@ func TestCombinedCheckers(t *testing.T) {
 	validations, _ := vs.GetNamespaceValidations("test")
 
 	assert.NotEmpty(validations)
-	assert.NotEmpty(validations["routerule"])
-	assert.NotEmpty(validations["destinationpolicy"])
-	assert.NotEmpty(validations["virtualservice"])
-	assert.NotEmpty(validations["destinationrule"])
-	assert.NotEmpty((*validations["routerule"])["reviews-rr"])
-	assert.NotEmpty((*validations["destinationpolicy"])["details-dp"])
-	assert.NotEmpty((*validations["virtualservice"])["product-vs"])
-	assert.NotEmpty((*validations["destinationrule"])["customer-dr"])
-	assert.False((*validations["routerule"])["reviews-rr"].Valid)
-	assert.True((*validations["destinationpolicy"])["details-dp"].Valid)
-	assert.True((*validations["virtualservice"])["product-vs"].Valid)
-	assert.True((*validations["destinationrule"])["customer-dr"].Valid)
+	assert.True(validations[models.IstioValidationKey{"destinationpolicy", "details-dp"}].Valid)
+	assert.True(validations[models.IstioValidationKey{"virtualservice", "product-vs"}].Valid)
+	assert.True(validations[models.IstioValidationKey{"destinationrule", "customer-dr"}].Valid)
 
-	assert.Equal(3, len((*validations["routerule"])["reviews-rr"].Checks))
+	reviewsRr := validations[models.IstioValidationKey{"routerule", "reviews-rr"}]
+	assert.False(reviewsRr.Valid)
+	assert.Equal(3, len(reviewsRr.Checks))
 
-	assert.Equal("spec/route/weight/155", (*validations["routerule"])["reviews-rr"].Checks[0].Path)
-	assert.Equal("Weight should be between 0 and 100", (*validations["routerule"])["reviews-rr"].Checks[0].Message)
-	assert.Equal("error", (*validations["routerule"])["reviews-rr"].Checks[0].Severity)
+	assert.Equal("spec/route/weight/155", reviewsRr.Checks[0].Path)
+	assert.Equal("Weight should be between 0 and 100", reviewsRr.Checks[0].Message)
+	assert.Equal("error", reviewsRr.Checks[0].Severity)
 
-	assert.Equal("", (*validations["routerule"])["reviews-rr"].Checks[1].Path)
-	assert.Equal("Weight sum should be 100", (*validations["routerule"])["reviews-rr"].Checks[1].Message)
-	assert.Equal("error", (*validations["routerule"])["reviews-rr"].Checks[1].Severity)
+	assert.Equal("", reviewsRr.Checks[1].Path)
+	assert.Equal("Weight sum should be 100", reviewsRr.Checks[1].Message)
+	assert.Equal("error", reviewsRr.Checks[1].Severity)
 
-	assert.Equal("spec/destination", (*validations["routerule"])["reviews-rr"].Checks[2].Path)
-	assert.Equal("Destination doesn't have a valid service", (*validations["routerule"])["reviews-rr"].Checks[2].Message)
-	assert.Equal("error", (*validations["routerule"])["reviews-rr"].Checks[2].Severity)
+	assert.Equal("spec/destination", reviewsRr.Checks[2].Path)
+	assert.Equal("Destination doesn't have a valid service", reviewsRr.Checks[2].Message)
+	assert.Equal("error", reviewsRr.Checks[2].Severity)
 }
 
 func fakeIstioObjects() *kubernetes.IstioDetails {
