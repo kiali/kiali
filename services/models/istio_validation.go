@@ -1,13 +1,15 @@
 package models
 
-// IstioTypeValidations represents a set of IstioNameValidations grouped per Istio ObjectType.
-// It is possible that different object types have same name, but names per ObjectType are unique.
-type IstioTypeValidations map[string]*IstioNameValidations
+// IstioValidationKey is the key value composed of an Istio ObjectType and Name.
+type IstioValidationKey struct {
+	ObjectType string
+	Name       string
+}
 
-// IstioNameValidations represents a set of checks grouped per Istio object.
-// The key of the map represents the name of the Istio object.
-type IstioNameValidations map[string]*IstioValidation
+// IstioValidations represents a set of IstioValidation grouped by IstioValidationKey.
+type IstioValidations map[IstioValidationKey]*IstioValidation
 
+// IstioValidation represents a list of checks associated to an Istio object.
 type IstioValidation struct {
 	Name       string        `json:"name"`       // Name of the object itself
 	ObjectType string        `json:"objectType"` // Type of the object
@@ -15,6 +17,7 @@ type IstioValidation struct {
 	Checks     []*IstioCheck `json:"checks"`     // Array of checks
 }
 
+// IstioCheck represents an individual check.
 type IstioCheck struct {
 	Message  string `json:"message"`  // Description of the check
 	Severity string `json:"severity"` // Indicates the level of importance: error or warning
@@ -22,30 +25,18 @@ type IstioCheck struct {
 }
 
 func BuildCheck(message, severity, path string) IstioCheck {
-	return IstioCheck{message, severity, path}
+	return IstioCheck{Message: message, Severity: severity, Path: path}
 }
 
-func (in IstioTypeValidations) MergeValidations(typeValidations *IstioTypeValidations) IstioTypeValidations {
-	for objectType, nameValidations := range *typeValidations {
-		if in[objectType] != nil {
-			in[objectType].MergeNameValidations(nameValidations)
+func (iv IstioValidations) MergeValidations(validations IstioValidations) IstioValidations {
+	for key, validation := range validations {
+		v, ok := iv[key]
+		if !ok {
+			iv[key] = validation
 		} else {
-			in[objectType] = nameValidations
+			v.Checks = append(v.Checks, validation.Checks...)
+			v.Valid = v.Valid && validation.Valid
 		}
 	}
-
-	return in
-}
-
-func (in IstioNameValidations) MergeNameValidations(nameValidations *IstioNameValidations) IstioNameValidations {
-	for name, validation := range *nameValidations {
-		if in[name] != nil {
-			in[name].Checks = append(in[name].Checks, validation.Checks...)
-			in[name].Valid = validation.Valid && in[name].Valid
-		} else {
-			in[name] = validation
-		}
-	}
-
-	return in
+	return iv
 }

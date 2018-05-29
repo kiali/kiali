@@ -33,14 +33,11 @@ func (a SidecarsCheckAppender) applySidecarsChecks(n *tree.ServiceNode, k8s *kub
 	checkError(err)
 
 	checker := checkers.PodChecker{Pods: pods.Items}
-	typeValidations := checker.Check()
-	nameValidations := (*typeValidations)["pod"]
+	validations := checker.Check()
 
 	sidecarsOk := true
-	if nameValidations != nil {
-		for _, check := range *nameValidations {
-			sidecarsOk = sidecarsOk && check.Valid
-		}
+	for _, check := range validations {
+		sidecarsOk = sidecarsOk && check.Valid
 	}
 	n.Metadata["hasMissingSidecars"] = !sidecarsOk
 

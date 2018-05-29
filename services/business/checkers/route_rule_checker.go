@@ -1,8 +1,6 @@
 package checkers
 
 import (
-	"sync"
-
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/business/checkers/route_rules"
 	"github.com/kiali/kiali/services/models"
@@ -18,37 +16,32 @@ type RouteRuleChecker struct {
 // It run two kinds of checkers:
 // 1. Individual checks: validating individual objects.
 // 2. Group checks: validating behaviour between configurations.
-func (in RouteRuleChecker) Check() *models.IstioTypeValidations {
-	typeValidations := models.IstioTypeValidations{}
+func (in RouteRuleChecker) Check() models.IstioValidations {
+	validations := models.IstioValidations{}
 
-	typeValidations = typeValidations.MergeValidations(in.runIndividualChecks())
-	typeValidations = typeValidations.MergeValidations(in.runGroupChecks())
+	validations = validations.MergeValidations(in.runIndividualChecks())
+	validations = validations.MergeValidations(in.runGroupChecks())
 
-	return &typeValidations
+	return validations
 }
 
 // Runs individual checks for each route rule
-func (in RouteRuleChecker) runIndividualChecks() *models.IstioTypeValidations {
-	typeValidations := models.IstioTypeValidations{}
-	var wg sync.WaitGroup
-
-	wg.Add(len(in.RouteRules))
+func (in RouteRuleChecker) runIndividualChecks() models.IstioValidations {
+	validations := models.IstioValidations{}
 
 	for _, routeRule := range in.RouteRules {
-		go runChecks(routeRule, &typeValidations, &wg)
+		runChecks(routeRule, validations)
 	}
 
-	wg.Wait()
-
-	return &typeValidations
+	return validations
 }
 
 // runGroupChecks runs group checks for all route rules
-func (in *RouteRuleChecker) runGroupChecks() *models.IstioTypeValidations {
-	return &models.IstioTypeValidations{}
+func (in RouteRuleChecker) runGroupChecks() models.IstioValidations {
+	return models.IstioValidations{}
 }
 
-// enabledCheckersFor returns the list of all individual enabled checkers
+// enabledCheckersFor returns the list of all individual enabled checkers.
 func enabledCheckersFor(object kubernetes.IstioObject) []Checker {
 	return []Checker{
 		route_rules.RouteChecker{object},
@@ -56,37 +49,21 @@ func enabledCheckersFor(object kubernetes.IstioObject) []Checker {
 	}
 }
 
-// runChecks runs all the individual checks for a single route rule and it appends the result into typeValidations
-func runChecks(routeRule kubernetes.IstioObject, typeValidations *models.IstioTypeValidations, wg *sync.WaitGroup) {
-	defer (*wg).Done()
-	var checkersWg sync.WaitGroup
-
-	nameValidations := models.IstioNameValidations{}
-
+// runChecks runs all the individual checks for a single route rule and appends the result into validations.
+func runChecks(routeRule kubernetes.IstioObject, validations models.IstioValidations) {
 	ruleName := routeRule.GetObjectMeta().Name
-	validation := &models.IstioValidation{Name: ruleName, ObjectType: objectType, Valid: true}
-	nameValidations[ruleName] = validation
-
-	checkers := enabledCheckersFor(routeRule)
-	checkersWg.Add(len(checkers))
-
-	for _, checker := range checkers {
-		go runChecker(checker, ruleName, &nameValidations, &checkersWg)
+	key := models.IstioValidationKey{Name: ruleName, ObjectType: objectType}
+	rrValidation := &models.IstioValidation{
+		Name:       ruleName,
+		ObjectType: objectType,
+		Valid:      true,
 	}
 
-	checkersWg.Wait()
-	if (*typeValidations)[objectType] != nil {
-		(*typeValidations)[objectType].MergeNameValidations(&nameValidations)
-	} else {
-		(*typeValidations)[objectType] = &nameValidations
+	for _, checker := range enabledCheckersFor(routeRule) {
+		checks, validChecker := checker.Check()
+		rrValidation.Checks = append(rrValidation.Checks, checks...)
+		rrValidation.Valid = rrValidation.Valid && validChecker
 	}
-}
 
-// runChecker runs the specific checker and store its result into nameValidations under objectName map.
-func runChecker(checker Checker, objectName string, nameValidations *models.IstioNameValidations, wg *sync.WaitGroup) {
-	defer (*wg).Done()
-
-	checks, validChecker := checker.Check()
-	(*nameValidations)[objectName].Checks = append((*nameValidations)[objectName].Checks, checks...)
-	(*nameValidations)[objectName].Valid = (*nameValidations)[objectName].Valid && validChecker
+	validations.MergeValidations(models.IstioValidations{key: rrValidation})
 }

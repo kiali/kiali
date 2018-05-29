@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -30,6 +31,7 @@ func TestServiceMetricsDefault(t *testing.T) {
 	now := time.Now()
 	delta := 15 * time.Second
 	coveredPath := 0
+	path := make(chan int)
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
@@ -40,15 +42,25 @@ func TestServiceMetricsDefault(t *testing.T) {
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
 			assert.Contains(t, query, " by (le)")
-			coveredPath |= 1
+			path <- 1
 		} else {
 			assert.NotContains(t, query, " by ")
-			coveredPath |= 2
+			path <- 2
 		}
 		assert.Equal(t, 15*time.Second, r.Step)
 		assert.WithinDuration(t, now, r.End, delta)
 		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
 	})
+
+	// Update coveredPath through a channel to avoid data races.
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := range path {
+			coveredPath |= i
+		}
+	}()
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -59,6 +71,8 @@ func TestServiceMetricsDefault(t *testing.T) {
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
 	// Assert branch coverage
+	close(path)
+	wg.Wait()
 	assert.Equal(t, coveredPath, 3)
 }
 
@@ -85,6 +99,7 @@ func TestServiceMetricsWithParams(t *testing.T) {
 	queryTime := time.Unix(1523364075, 0)
 	delta := 2 * time.Second
 	coveredPath := 0
+	path := make(chan int)
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
@@ -96,15 +111,25 @@ func TestServiceMetricsWithParams(t *testing.T) {
 			// Histogram specific queries
 			assert.Contains(t, query, " by (le,response_code)")
 			assert.Contains(t, query, "istio_request_size")
-			coveredPath |= 1
+			path <- 1
 		} else {
 			assert.Contains(t, query, " by (response_code)")
-			coveredPath |= 2
+			path <- 2
 		}
 		assert.Equal(t, 2*time.Second, r.Step)
 		assert.WithinDuration(t, queryTime, r.End, delta)
 		assert.WithinDuration(t, queryTime.Add(-1000*time.Second), r.Start, delta)
 	})
+
+	// Update coveredPath through a channel to avoid data races.
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := range path {
+			coveredPath |= i
+		}
+	}()
 
 	httpclient := &http.Client{}
 	resp, err := httpclient.Do(req)
@@ -116,6 +141,8 @@ func TestServiceMetricsWithParams(t *testing.T) {
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
 	// Assert branch coverage
+	close(path)
+	wg.Wait()
 	assert.Equal(t, coveredPath, 3)
 }
 

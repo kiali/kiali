@@ -12,12 +12,12 @@ type IstioValidationsService struct {
 }
 
 type ObjectChecker interface {
-	Check() *models.IstioTypeValidations
+	Check() models.IstioValidations
 }
 
-// GetServiceValidations returns an IstioTypeValidations object with all the checks found when running
+// GetServiceValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers.
-func (in *IstioValidationsService) GetServiceValidations(namespace, service string) (models.IstioTypeValidations, error) {
+func (in *IstioValidationsService) GetServiceValidations(namespace, service string) (models.IstioValidations, error) {
 	// Get all the Istio objects from a Namespace and service
 	istioDetails, err := in.k8s.GetIstioDetails(namespace, service)
 	if err != nil {
@@ -35,13 +35,11 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		&checkers.PodChecker{Pods: pods.Items},
 	}
 
-	objectTypeValidations := runObjectCheckers(objectCheckers)
-
 	// Get groupal validations for same kind istio objects
-	return *objectTypeValidations, nil
+	return runObjectCheckers(objectCheckers), nil
 }
 
-func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (models.IstioTypeValidations, error) {
+func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (models.IstioValidations, error) {
 	// Get all the Istio objects from a Namespace
 	istioDetails, err := in.k8s.GetIstioDetails(namespace, "")
 	if err != nil {
@@ -58,19 +56,17 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 		checkers.NoServiceChecker{IstioDetails: istioDetails, ServiceList: serviceList},
 	}
 
-	objectTypeValidations := runObjectCheckers(objectCheckers)
-
-	return *objectTypeValidations, nil
+	return runObjectCheckers(objectCheckers), nil
 }
 
-func runObjectCheckers(objectCheckers []ObjectChecker) *models.IstioTypeValidations {
-	objectTypeValidations := models.IstioTypeValidations{}
-	validationsChannels := make([]chan *models.IstioTypeValidations, len(objectCheckers))
+func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
+	objectTypeValidations := models.IstioValidations{}
+	validationsChannels := make([]chan models.IstioValidations, len(objectCheckers))
 
 	// Run checks for each IstioObject type
 	for i, objectChecker := range objectCheckers {
-		validationsChannels[i] = make(chan *models.IstioTypeValidations)
-		go func(channel chan *models.IstioTypeValidations, checker ObjectChecker) {
+		validationsChannels[i] = make(chan models.IstioValidations)
+		go func(channel chan models.IstioValidations, checker ObjectChecker) {
 			channel <- checker.Check()
 			close(channel)
 		}(validationsChannels[i], objectChecker)
@@ -80,5 +76,5 @@ func runObjectCheckers(objectCheckers []ObjectChecker) *models.IstioTypeValidati
 	for _, validation := range validationsChannels {
 		objectTypeValidations.MergeValidations(<-validation)
 	}
-	return &objectTypeValidations
+	return objectTypeValidations
 }
