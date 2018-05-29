@@ -72,6 +72,10 @@ make test
 
 == Running
 
+=== Secrets
+
+*Note*: There is a secret variable in the configuration called *TOKEN_SECRET*, be careful with this secret.
+
 === Running on OpenShift
 
 ==== Setting up OpenShift
