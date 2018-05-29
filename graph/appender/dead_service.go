@@ -14,6 +14,10 @@ type DeadServiceAppender struct{}
 
 // AppendGraph implements Appender
 func (a DeadServiceAppender) AppendGraph(trees *[]tree.ServiceNode, _ string) {
+	if len(*trees) == 0 {
+		return
+	}
+
 	istioClient, err := kubernetes.NewClient()
 	checkError(err)
 

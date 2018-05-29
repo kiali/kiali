@@ -87,14 +87,10 @@ func graphNamespaces(o options.Options, client *prometheus.Client) *[]tree.Servi
 		log.Debugf("Build graph for namespace [%s]", namespace)
 		namespaceRoots := buildNamespaceTrees(namespace, o, client)
 
-		if len(*namespaceRoots) > 0 {
-			for _, a := range o.Appenders {
-				a.AppendGraph(namespaceRoots, namespace)
-			}
-			mergeRoots(&roots, namespaceRoots)
-		} else {
-			log.Debugf("No roots found for namespace [%s]", namespace)
+		for _, a := range o.Appenders {
+			a.AppendGraph(namespaceRoots, namespace)
 		}
+		mergeRoots(&roots, namespaceRoots)
 	}
 
 	if len(o.Namespaces) > 0 {
