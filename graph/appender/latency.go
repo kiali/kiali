@@ -30,6 +30,10 @@ type LatencyAppender struct {
 
 // AppendGraph implements Appender
 func (a LatencyAppender) AppendGraph(trees *[]tree.ServiceNode, namespace string) {
+	if len(*trees) == 0 {
+		return
+	}
+
 	client, err := prometheus.NewClient()
 	checkError(err)
 

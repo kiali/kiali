@@ -12,6 +12,10 @@ type SidecarsCheckAppender struct{}
 
 // AppendGraph implements Appender
 func (a SidecarsCheckAppender) AppendGraph(trees *[]tree.ServiceNode, _ string) {
+	if len(*trees) == 0 {
+		return
+	}
+
 	k8s, err := kubernetes.NewClient()
 	checkError(err)
 
