@@ -144,7 +144,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 
 		}
 	default:
-		err = fmt.Errorf("Object type not found", objectType)
+		err = fmt.Errorf("Object type not found: %v", objectType)
 	}
 
 	return istioConfigDetail, err
