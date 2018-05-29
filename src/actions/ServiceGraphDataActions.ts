@@ -50,7 +50,6 @@ export const ServiceGraphDataActions = {
           } else {
             emsg = 'Cannot load the graph: ' + error.toString();
           }
-          console.log('ServiceGraphDataActions: ', emsg);
           MessageCenter.add(emsg);
           dispatch(ServiceGraphDataActions.getGraphDataFailure(emsg));
         }

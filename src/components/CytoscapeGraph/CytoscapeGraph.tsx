@@ -77,18 +77,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   }
 
   componentDidMount() {
-    console.log('CY: mounting graph component');
     this.cyInitialization(this.getCy());
   }
 
   componentDidUpdate() {
-    console.log('CY: updating graph component');
     this.processGraphUpdate(this.getCy());
   }
 
   render() {
-    console.log('CY: rendering graph component');
-
     return (
       <div id="cytoscape-container" style={{ marginRight: '25em', height: '100%' }}>
         <Spinner loading={this.props.isLoading}>
@@ -207,8 +203,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     if (!cy) {
       return;
     }
-
-    console.log('CY: graph is being updated');
 
     this.trafficRenderer.stop();
 

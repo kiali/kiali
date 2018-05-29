@@ -58,23 +58,19 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
   }
 
   componentDidMount() {
-    console.log('CY: mounting cy wrapper');
     this.build();
   }
 
   componentWillUnmount() {
-    console.log('CY: unmounting cy wrapper');
     this.destroy();
   }
 
   render() {
-    console.log('CY: rendering cy div parent');
     const styleContainer = { height: '100%', width: '100%', display: 'block' };
     return <div id="cy" className="graph" style={styleContainer} ref={this.divParentRef} />;
   }
 
   build() {
-    console.log('CY: creating a new cy instance');
     if (this.cy) {
       this.destroy();
     }
@@ -95,7 +91,6 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
 
   destroy() {
     if (this.cy) {
-      console.log('CY: cy instance is being destroyed');
       this.cy.destroy();
       this.cy = null;
     }
