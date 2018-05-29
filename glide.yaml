@@ -16,3 +16,5 @@ import:
   version: 89604d197083d4781071d3c65855d24ecfb0a563
 - package: github.com/stretchr/testify
   version: v1.2.1
+- package: github.com/dgrijalva/jwt-go
+  version: v3.2.0

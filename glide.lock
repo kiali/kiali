@@ -1,10 +1,12 @@
-hash: 41ca3223bacf04f1e4b1e7528d88ae650eb36842c9ae02eeb330751f7d02d9b0
-updated: 2018-03-23T17:37:17.661627595-04:00
+hash: 1359ffb9363125d471cae13d0f8c3f2f4f75a7abff6db8f7937f147da16f8de2
+updated: 2018-05-28T20:33:44.703045735+02:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 782f4967f2dc4564575ca782fe2d04090b5faca8
   subpackages:
   - spew
+- name: github.com/dgrijalva/jwt-go
+  version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
 - name: github.com/emicklei/go-restful
   version: ff4f55a206334ef123e4f79bbf348980da81ca46
   subpackages:
@@ -47,7 +49,7 @@ imports:
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
-  version: 53c1911da2b537f792e7cafcb446b05ffe33b996
+  version: e3702bed27f0d39777b0b37b664b6280e8ef8fbf
 - name: github.com/gregjones/httpcache
   version: 787624de3eb7bd915c329cba748687a3b22666a6
   subpackages:
@@ -84,7 +86,7 @@ imports:
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/stretchr/objx
-  version: 8a3f7159479fbc75b30357fbc48f380b7320f08e
+  version: d1e4838ff99bdc9b78118344a62885513e090da5
 - name: github.com/stretchr/testify
   version: 12b6f73e6084dad08a7c6e575284b177ecafbc71
   subpackages:
@@ -136,7 +138,6 @@ imports:
   - core/v1
   - events/v1beta1
   - extensions/v1beta1
-  - imagepolicy/v1alpha1
   - networking/v1
   - policy/v1beta1
   - rbac/v1
@@ -148,7 +149,7 @@ imports:
   - storage/v1alpha1
   - storage/v1beta1
 - name: k8s.io/apimachinery
-  version: cb88e003047fb517f284ff8af294451b20f0b403
+  version: 21efb2924c7cf1920f76af05b1fd6a325bf46dfc
   subpackages:
   - pkg/api/errors
   - pkg/api/meta
