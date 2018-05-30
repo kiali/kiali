@@ -47,8 +47,8 @@ export default class RpsChart extends React.Component<RpsChartTypeProp, {}> {
     let minRps: number = dataRps.length > 1 ? +dataRps[1] : 0;
     let maxRps: number = minRps;
     let errSample: number = dataErrors.length > 1 ? +dataErrors[1] : 0;
-    let pctMinErr: number = 100 * errSample / minRps;
-    let pctMaxErr: number = pctMinErr;
+    let minPctErr: number = 100 * errSample / minRps;
+    let maxPctErr: number = minPctErr;
     for (let i = 2; i < dataRps.length; ++i) {
       const sample: number = +dataRps[i];
       minRps = sample < minRps ? sample : minRps;
@@ -56,11 +56,11 @@ export default class RpsChart extends React.Component<RpsChartTypeProp, {}> {
       if (sample !== 0) {
         errSample = dataErrors.length > i ? +dataErrors[i] : 0;
         const errPct = 100 * errSample / sample;
-        if (isNaN(pctMinErr) || errPct < pctMinErr) {
-          pctMinErr = errPct;
+        if (isNaN(minPctErr) || errPct < minPctErr) {
+          minPctErr = errPct;
         }
-        if (isNaN(pctMaxErr) || errPct > pctMaxErr) {
-          pctMaxErr = errPct;
+        if (isNaN(maxPctErr) || errPct > maxPctErr) {
+          maxPctErr = errPct;
         }
       }
     }
@@ -71,7 +71,7 @@ export default class RpsChart extends React.Component<RpsChartTypeProp, {}> {
           <strong>{this.props.label} min / max:</strong>
         </div>
         <div>
-          RPS: {minRps.toFixed(2)} / {maxRps.toFixed(2)} , %Error {pctMinErr.toFixed(2)} / {pctMaxErr.toFixed(2)}
+          RPS: {minRps.toFixed(2)} / {maxRps.toFixed(2)} , %Error {minPctErr.toFixed(2)} / {maxPctErr.toFixed(2)}
         </div>
         {this.props.dataRps.length > 0 && (
           <AreaChart
