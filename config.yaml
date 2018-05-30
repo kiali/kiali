@@ -3,9 +3,9 @@ server:
   port: 8000
 
   # Uncomment credentials to enable basic authentication for server
-  # credentials:
-  #   username: u
-  #   password: p
+  credentials:
+    username: admin
+    password: admin
 
   # Uncomment static_content_root_directory to set up a different directory for static front-end content.
   # Default is /static-files
