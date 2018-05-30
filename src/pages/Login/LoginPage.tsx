@@ -35,11 +35,6 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
     };
   }
 
-  componentDidMount() {
-    // Change layout-pf layout-pf-fixed by
-    document.documentElement.className = 'login-pf';
-  }
-
   handleChange = (e: any) => {
     const { name, value } = e.target;
     this.setState({ [name]: value });
