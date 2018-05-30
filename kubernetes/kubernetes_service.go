@@ -105,6 +105,12 @@ func (in *IstioClient) GetPods(namespace string, labelsSet labels.Set) (*v1.PodL
 	return in.k8s.CoreV1().Pods(namespace).List(meta_v1.ListOptions{LabelSelector: formatted})
 }
 
+// GetPods returns the pods definitions for a given namespace
+// It returns an error on any problem.
+func (in *IstioClient) GetNamespacePods(namespace string) (*v1.PodList, error) {
+	return in.k8s.CoreV1().Pods(namespace).List(emptyListOptions)
+}
+
 // GetServiceDetails returns full details for a given service, consisting on service description, endpoints and pods.
 // A service is defined by the namespace and the service name.
 // It returns an error on any problem.
@@ -211,7 +217,7 @@ func (in *IstioClient) getServiceList(namespace string, servicesChan chan servic
 }
 
 func (in *IstioClient) getPodsList(namespace string, podsChan chan podsResponse) {
-	pods, err := in.k8s.CoreV1().Pods(namespace).List(emptyListOptions)
+	pods, err := in.GetNamespacePods(namespace)
 	podsChan <- podsResponse{pods: pods, err: err}
 }
 

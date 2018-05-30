@@ -45,13 +45,13 @@ func fakeCorrectVersions() kubernetes.IstioObject {
 			"route": []map[string]interface{}{
 				map[string]interface{}{
 					"weight": uint64(55),
-					"labels": map[string]string{
+					"labels": map[string]interface{}{
 						"version": "v1",
 					},
 				},
 				map[string]interface{}{
 					"weight": uint64(45),
-					"labels": map[string]string{
+					"labels": map[string]interface{}{
 						"version": "v2",
 					},
 				},
@@ -93,13 +93,13 @@ func fakeNoPodsVersion() kubernetes.IstioObject {
 			"route": []map[string]interface{}{
 				map[string]interface{}{
 					"weight": uint64(55),
-					"labels": map[string]string{
+					"labels": map[string]interface{}{
 						"version": "not-v1",
 					},
 				},
 				map[string]interface{}{
 					"weight": uint64(45),
-					"labels": map[string]string{
+					"labels": map[string]interface{}{
 						"version": "not-v2",
 					},
 				},

@@ -4,11 +4,14 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/business/checkers/route_rules"
 	"github.com/kiali/kiali/services/models"
+	"k8s.io/api/core/v1"
 )
 
 const objectType = "routerule"
 
 type RouteRuleChecker struct {
+	Namespace  string
+	PodList    []v1.Pod
 	RouteRules []kubernetes.IstioObject
 }
 
@@ -30,7 +33,7 @@ func (in RouteRuleChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	for _, routeRule := range in.RouteRules {
-		runChecks(routeRule, validations)
+		in.runChecks(routeRule, validations)
 	}
 
 	return validations
@@ -42,15 +45,16 @@ func (in RouteRuleChecker) runGroupChecks() models.IstioValidations {
 }
 
 // enabledCheckersFor returns the list of all individual enabled checkers.
-func enabledCheckersFor(object kubernetes.IstioObject) []Checker {
+func (in RouteRuleChecker) enabledCheckersFor(object kubernetes.IstioObject) []Checker {
 	return []Checker{
 		route_rules.RouteChecker{object},
 		route_rules.PrecedenceChecker{object},
+		route_rules.VersionPresenceChecker{in.Namespace, in.PodList, object},
 	}
 }
 
 // runChecks runs all the individual checks for a single route rule and appends the result into validations.
-func runChecks(routeRule kubernetes.IstioObject, validations models.IstioValidations) {
+func (in RouteRuleChecker) runChecks(routeRule kubernetes.IstioObject, validations models.IstioValidations) {
 	ruleName := routeRule.GetObjectMeta().Name
 	key := models.IstioValidationKey{Name: ruleName, ObjectType: objectType}
 	rrValidation := &models.IstioValidation{
@@ -59,7 +63,7 @@ func runChecks(routeRule kubernetes.IstioObject, validations models.IstioValidat
 		Valid:      true,
 	}
 
-	for _, checker := range enabledCheckersFor(routeRule) {
+	for _, checker := range in.enabledCheckersFor(routeRule) {
 		checks, validChecker := checker.Check()
 		rrValidation.Checks = append(rrValidation.Checks, checks...)
 		rrValidation.Valid = rrValidation.Valid && validChecker

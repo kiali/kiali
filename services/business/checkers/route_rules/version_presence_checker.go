@@ -31,7 +31,7 @@ func (checker VersionPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 			continue
 		}
 
-		routeSelector := labels.Set(route["labels"].(map[string]string)).AsSelector()
+		routeSelector := getSelector(route["labels"])
 		if !checker.hasMatchingPod(routeSelector) {
 			valid = false
 			validation := models.BuildCheck("No pods found for the selector", "warning",
@@ -55,4 +55,13 @@ func (checker VersionPresenceChecker) hasMatchingPod(selector labels.Selector) b
 	}
 
 	return podFound
+}
+
+func getSelector(rawLabels interface{}) labels.Selector {
+	routeLabels := map[string]string{}
+	for key, value := range rawLabels.(map[string]interface{}) {
+		routeLabels[key] = value.(string)
+	}
+
+	return labels.Set(routeLabels).AsSelector()
 }
