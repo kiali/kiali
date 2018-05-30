@@ -16,7 +16,6 @@ import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import { PfColors } from '../../components/Pf/PfColors';
 
 import './ServiceListComponent.css';
-import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 
 // Exported for test
 export const sortFields: SortField[] = [
@@ -344,8 +343,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
 
     let serviceListComponent;
     serviceListComponent = (
-      <div>
-        <PfSpinnerContainer />
+      <>
         <NamespaceFilter
           initialFilters={[serviceNameFilter, istioFilter]}
           onFilterChange={this.filterChange}
@@ -376,7 +374,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
           onPageSet={this.pageSet}
           onPerPageSelect={this.pageSelect}
         />
-      </div>
+      </>
     );
     return <div>{serviceListComponent}</div>;
   }

@@ -14,6 +14,7 @@ import ServiceDetailsPage from '../../pages/ServiceDetails/ServiceDetailsPage';
 import ServiceGraphRouteHandler from '../../pages/ServiceGraph/ServiceGraphRouteHandler';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 import ServiceJaegerPage from '../../pages/ServiceJaeger/ServiceJaegerPage';
+import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 
 const istioConfigPath = '/istio';
 export const istioConfigTitle = 'Istio Config';
@@ -108,6 +109,7 @@ class Navigation extends React.Component<PropsType, StateType> {
         >
           <VerticalNav.Masthead title="Kiali">
             <VerticalNav.Brand iconImg={pfLogo} titleImg={pfBrand} />
+            <PfSpinnerContainer />
             <VerticalNav.IconBar>
               <MessageCenter.Trigger />
               <HelpDropdown />

@@ -18,7 +18,6 @@ import PropTypes from 'prop-types';
 // import IstioRuleListDescription from './IstioRuleListDescription';
 import { Link } from 'react-router-dom';
 import { PfColors } from '../../components/Pf/PfColors';
-import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 
 const sortFields: SortField[] = [
   {
@@ -287,7 +286,6 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     let ruleListComponent;
     ruleListComponent = (
       <>
-        <PfSpinnerContainer />
         <NamespaceFilter
           initialFilters={[istioTypeFilter, istioNameFilter]}
           onFilterChange={this.filterChange}

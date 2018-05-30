@@ -13,7 +13,6 @@ import { KialiAppState } from '../../store/Store';
 import * as GraphBadge from './graphs/GraphBadge';
 import TrafficRender from './graphs/TrafficRenderer';
 import { ServiceGraphActions } from '../../actions/ServiceGraphActions';
-import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 
 type CytoscapeGraphType = {
   elements?: any;
@@ -87,7 +86,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   render() {
     return (
       <div id="cytoscape-container" style={{ marginRight: '25em', height: '100%' }}>
-        <PfSpinnerContainer />
         <EmptyGraphLayout
           elements={this.props.elements}
           namespace={this.props.namespace.name}
