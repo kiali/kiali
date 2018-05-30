@@ -24,40 +24,52 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 		return validations
 	}
 
-	tempVal := make([]models.IstioValidations, 4)
-	for i := range tempVal {
-		tempVal[i] = make(models.IstioValidations)
-	}
+	tempVal := makeTempValidations(4)
 	serviceNames := getServiceNames(in.ServiceList)
 
 	var wg sync.WaitGroup
 	wg.Add(4)
 
-	go runRouteRulesCheck(in.IstioDetails.RouteRules, in.Namespace, serviceNames, tempVal[0], &wg)
-	go runDestinationPoliciesCheck(in.IstioDetails.DestinationPolicies, in.Namespace, serviceNames, tempVal[1], &wg)
-	go runVirtualServicesCheck(in.IstioDetails.VirtualServices, in.Namespace, serviceNames, tempVal[2], &wg)
-	go runDestinationRulesCheck(in.IstioDetails.DestinationRules, in.Namespace, serviceNames, tempVal[3], &wg)
+	go runRouteRulesCheck(in.IstioDetails.RouteRules, in.Namespace, serviceNames, &tempVal[0], &wg)
+	go runDestinationPoliciesCheck(in.IstioDetails.DestinationPolicies, in.Namespace, serviceNames, &tempVal[1], &wg)
+	go runVirtualServicesCheck(in.IstioDetails.VirtualServices, in.Namespace, serviceNames, &tempVal[2], &wg)
+	go runDestinationRulesCheck(in.IstioDetails.DestinationRules, in.Namespace, serviceNames, &tempVal[3], &wg)
 
 	wg.Wait()
+	mergeTempValidations(tempVal, &validations)
 
-	for i := range tempVal {
-		validations.MergeValidations(tempVal[i])
-	}
 	return validations
 }
 
-func runRouteRulesCheck(routeRules []kubernetes.IstioObject, namespace string, serviceNames []string, validations models.IstioValidations, wg *sync.WaitGroup) {
+func makeTempValidations(len int) []models.IstioValidations {
+	tempVal := make([]models.IstioValidations, len)
+	for i := range tempVal {
+		tempVal[i] = make(models.IstioValidations)
+	}
+	return tempVal
+}
+
+func mergeTempValidations(tempVal []models.IstioValidations, result *models.IstioValidations) {
+	for i := range tempVal {
+		(*result).MergeValidations(tempVal[i])
+	}
+}
+
+func runRouteRulesCheck(routeRules []kubernetes.IstioObject, namespace string, serviceNames []string, validations *models.IstioValidations, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var rrWg sync.WaitGroup
 	rrWg.Add(len(routeRules))
+	tempVal := makeTempValidations(len(routeRules))
 
-	for _, routeRule := range routeRules {
-		go runRouteRuleCheck(routeRule, namespace, serviceNames, validations, &rrWg)
+	for i, routeRule := range routeRules {
+		go runRouteRuleCheck(routeRule, namespace, serviceNames, &tempVal[i], &rrWg)
 	}
+
 	rrWg.Wait()
+	mergeTempValidations(tempVal, validations)
 }
 
-func runRouteRuleCheck(routeRule kubernetes.IstioObject, namespace string, serviceNames []string, validations models.IstioValidations, wg *sync.WaitGroup) {
+func runRouteRuleCheck(routeRule kubernetes.IstioObject, namespace string, serviceNames []string, validations *models.IstioValidations, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	result, valid := route_rules.NoDestinationChecker{
@@ -68,7 +80,7 @@ func runRouteRuleCheck(routeRule kubernetes.IstioObject, namespace string, servi
 
 	istioObjectName := routeRule.GetObjectMeta().Name
 	key := models.IstioValidationKey{ObjectType: "routerule", Name: istioObjectName}
-	validations[key] = &models.IstioValidation{
+	(*validations)[key] = &models.IstioValidation{
 		Name:       istioObjectName,
 		ObjectType: "routerule",
 		Checks:     result,
@@ -76,18 +88,21 @@ func runRouteRuleCheck(routeRule kubernetes.IstioObject, namespace string, servi
 	}
 }
 
-func runDestinationPoliciesCheck(destinationPolicies []kubernetes.IstioObject, namespace string, serviceNames []string, validations models.IstioValidations, wg *sync.WaitGroup) {
+func runDestinationPoliciesCheck(destinationPolicies []kubernetes.IstioObject, namespace string, serviceNames []string, validations *models.IstioValidations, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var dpWg sync.WaitGroup
 	dpWg.Add(len(destinationPolicies))
+	tempVal := makeTempValidations(len(destinationPolicies))
 
-	for _, destinationPolicy := range destinationPolicies {
-		go runDestinationPolicyCheck(destinationPolicy, namespace, serviceNames, validations, &dpWg)
+	for i, destinationPolicy := range destinationPolicies {
+		go runDestinationPolicyCheck(destinationPolicy, namespace, serviceNames, &tempVal[i], &dpWg)
 	}
+
 	dpWg.Wait()
+	mergeTempValidations(tempVal, validations)
 }
 
-func runDestinationPolicyCheck(destinationPolicy kubernetes.IstioObject, namespace string, serviceNames []string, validations models.IstioValidations, wg *sync.WaitGroup) {
+func runDestinationPolicyCheck(destinationPolicy kubernetes.IstioObject, namespace string, serviceNames []string, validations *models.IstioValidations, wg *sync.WaitGroup) {
 	defer wg.Done()
 	result, valid := destination_policies.NoDestinationChecker{
 		Namespace:         namespace,
@@ -97,7 +112,7 @@ func runDestinationPolicyCheck(destinationPolicy kubernetes.IstioObject, namespa
 
 	istioObjectName := destinationPolicy.GetObjectMeta().Name
 	key := models.IstioValidationKey{ObjectType: "destinationpolicy", Name: istioObjectName}
-	validations[key] = &models.IstioValidation{
+	(*validations)[key] = &models.IstioValidation{
 		Name:       istioObjectName,
 		ObjectType: "destinationpolicy",
 		Checks:     result,
@@ -105,18 +120,21 @@ func runDestinationPolicyCheck(destinationPolicy kubernetes.IstioObject, namespa
 	}
 }
 
-func runVirtualServicesCheck(virtualServices []kubernetes.IstioObject, namespace string, serviceNames []string, validations models.IstioValidations, wg *sync.WaitGroup) {
+func runVirtualServicesCheck(virtualServices []kubernetes.IstioObject, namespace string, serviceNames []string, validations *models.IstioValidations, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var dpWg sync.WaitGroup
 	dpWg.Add(len(virtualServices))
+	tempVal := makeTempValidations(len(virtualServices))
 
-	for _, virtualService := range virtualServices {
-		go runVirtualServiceCheck(virtualService, namespace, serviceNames, validations, &dpWg)
+	for i, virtualService := range virtualServices {
+		go runVirtualServiceCheck(virtualService, namespace, serviceNames, &tempVal[i], &dpWg)
 	}
+
 	dpWg.Wait()
+	mergeTempValidations(tempVal, validations)
 }
 
-func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string, validations models.IstioValidations, wg *sync.WaitGroup) {
+func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string, validations *models.IstioValidations, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	result, valid := virtual_services.NoHostChecker{
@@ -127,7 +145,7 @@ func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace str
 
 	istioObjectName := virtualService.GetObjectMeta().Name
 	key := models.IstioValidationKey{ObjectType: "virtualservice", Name: istioObjectName}
-	validations[key] = &models.IstioValidation{
+	(*validations)[key] = &models.IstioValidation{
 		Name:       istioObjectName,
 		ObjectType: "virtualservice",
 		Checks:     result,
@@ -135,18 +153,21 @@ func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace str
 	}
 }
 
-func runDestinationRulesCheck(destinationRules []kubernetes.IstioObject, namespace string, serviceNames []string, validations models.IstioValidations, wg *sync.WaitGroup) {
+func runDestinationRulesCheck(destinationRules []kubernetes.IstioObject, namespace string, serviceNames []string, validations *models.IstioValidations, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var dpWg sync.WaitGroup
 	dpWg.Add(len(destinationRules))
+	tempVal := makeTempValidations(len(destinationRules))
 
-	for _, destinationRule := range destinationRules {
-		go runDestinationRuleCheck(destinationRule, namespace, serviceNames, validations, &dpWg)
+	for i, destinationRule := range destinationRules {
+		go runDestinationRuleCheck(destinationRule, namespace, serviceNames, &tempVal[i], &dpWg)
 	}
+
 	dpWg.Wait()
+	mergeTempValidations(tempVal, validations)
 }
 
-func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, serviceNames []string, validations models.IstioValidations, wg *sync.WaitGroup) {
+func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, serviceNames []string, validations *models.IstioValidations, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	result, valid := destination_rules.NoNameChecker{
@@ -157,7 +178,7 @@ func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace s
 
 	istioObjectName := destinationRule.GetObjectMeta().Name
 	key := models.IstioValidationKey{ObjectType: "destinationrule", Name: istioObjectName}
-	validations[key] = &models.IstioValidation{
+	(*validations)[key] = &models.IstioValidation{
 		Name:       istioObjectName,
 		ObjectType: "destinationrule",
 		Checks:     result,
