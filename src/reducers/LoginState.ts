@@ -27,9 +27,13 @@ const LoginState = (state: LoginState = INITIAL_STATE, action) => {
       });
     case LoginActionKeys.LOGIN_FAILURE:
       document.documentElement.className = 'login-pf';
+      let message = 'Error connecting to Kiali';
+      if (action.error.request.status === 401) {
+        message = 'Unauthorized. Error in username or password';
+      }
       return Object.assign({}, INITIAL_STATE, {
         error: true,
-        message: 'Error in username or password'
+        message: message
       });
     case LoginActionKeys.LOGOUT_SUCCESS:
       document.documentElement.className = 'login-pf';
