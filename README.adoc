@@ -474,3 +474,7 @@ If you git cloned the Kiali UI repository in directory `/my/git/repo` and have b
 ----
 CONSOLE_VERSION=local CONSOLE_LOCAL_DIR=/my/git/repo make docker-build
 ----
+
+== Style Code Guide
+
+See the link:./STYLE_GUIDE.adoc[STYLE CODE GUIDE file].

@@ -1,0 +1,31 @@
+= Style Code Guide
+:toc: macro
+:toc-title:
+
+toc::[]
+=== Imports
+
+If you need any library you should import them in the following format
+
+----
+<standard imports>
+LINE
+<third party imports>
+LINE
+<kiali imports>
+----
+
+Example:
+
+[source,go]
+----
+import (
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
+
+	"github.com/kiali/kiali/log"
+)
+----
