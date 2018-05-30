@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Spinner } from 'patternfly-react';
 import PropTypes from 'prop-types';
 
 import { GraphHighlighter } from './graphs/GraphHighlighter';
@@ -14,6 +13,7 @@ import { KialiAppState } from '../../store/Store';
 import * as GraphBadge from './graphs/GraphBadge';
 import TrafficRender from './graphs/TrafficRenderer';
 import { ServiceGraphActions } from '../../actions/ServiceGraphActions';
+import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 
 type CytoscapeGraphType = {
   elements?: any;
@@ -87,21 +87,20 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   render() {
     return (
       <div id="cytoscape-container" style={{ marginRight: '25em', height: '100%' }}>
-        <Spinner loading={this.props.isLoading}>
-          <EmptyGraphLayout
+        <PfSpinnerContainer />
+        <EmptyGraphLayout
+          elements={this.props.elements}
+          namespace={this.props.namespace.name}
+          action={this.props.refresh}
+        >
+          <CytoscapeReactWrapper
+            ref={e => {
+              this.setCytoscapeReactWrapperRef(e);
+            }}
             elements={this.props.elements}
-            namespace={this.props.namespace.name}
-            action={this.props.refresh}
-          >
-            <CytoscapeReactWrapper
-              ref={e => {
-                this.setCytoscapeReactWrapperRef(e);
-              }}
-              elements={this.props.elements}
-              layout={this.props.graphLayout}
-            />
-          </EmptyGraphLayout>
-        </Spinner>
+            layout={this.props.graphLayout}
+          />
+        </EmptyGraphLayout>
       </div>
     );
   }

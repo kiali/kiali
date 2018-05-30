@@ -2,6 +2,10 @@ import { NotificationGroup } from '../types/MessageCenter';
 import { EdgeLabelMode } from '../types/GraphFilter';
 // Store is the Redux Data store
 
+export interface GlobalState {
+  readonly isLoading: boolean;
+}
+
 // Various pages are described here with their various sections
 export interface ServiceGraphFilterState {
   // Toggle props
@@ -18,7 +22,7 @@ export interface ServiceGraphFilterState {
 }
 
 export interface MessageCenterState {
-  nextId: number; // This likely will go away once we hace persistence
+  nextId: number; // This likely will go away once we have persistence
   groups: NotificationGroup[];
   hidden: boolean;
   expanded: boolean;
@@ -41,6 +45,9 @@ export interface ServiceGraphState {
 
 // This defines the Kiali Global Application State
 export interface KialiAppState {
+  // Global state === across multiple pages
+  // could also be session state
+  globalState: GlobalState;
   // page settings
   messageCenter: MessageCenterState;
   namespaces: any;

@@ -16,7 +16,7 @@ import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import { PfColors } from '../../components/Pf/PfColors';
 
 import './ServiceListComponent.css';
-import PfSpinner from '../../components/Pf/PfSpinner';
+import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 
 // Exported for test
 export const sortFields: SortField[] = [
@@ -343,44 +343,41 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     }
 
     let serviceListComponent;
-    if (this.state.loading) {
-      serviceListComponent = <PfSpinner />;
-    } else {
-      serviceListComponent = (
-        <div>
-          <NamespaceFilter
-            initialFilters={[serviceNameFilter, istioFilter]}
-            onFilterChange={this.filterChange}
-            onError={this.handleError}
-          >
-            <Sort>
-              <Sort.TypeSelector
-                sortTypes={sortFields}
-                currentSortType={this.state.currentSortField}
-                onSortTypeSelected={this.updateSortField}
-              />
-              <Sort.DirectionSelector
-                isNumeric={this.state.currentSortField.isNumeric}
-                isAscending={this.state.isSortAscending}
-                onClick={this.updateSortDirection}
-              />
-            </Sort>
-            <RateIntervalToolbarItem
-              rateIntervalSelected={this.state.rateInterval}
-              onRateIntervalChanged={this.rateIntervalChangedHandler}
+    serviceListComponent = (
+      <div>
+        <PfSpinnerContainer />
+        <NamespaceFilter
+          initialFilters={[serviceNameFilter, istioFilter]}
+          onFilterChange={this.filterChange}
+          onError={this.handleError}
+        >
+          <Sort>
+            <Sort.TypeSelector
+              sortTypes={sortFields}
+              currentSortType={this.state.currentSortField}
+              onSortTypeSelected={this.updateSortField}
             />
-          </NamespaceFilter>
-          <ListView>{serviceList}</ListView>
-          <Paginator
-            viewType="list"
-            pagination={this.state.pagination}
-            itemCount={this.state.services.length}
-            onPageSet={this.pageSet}
-            onPerPageSelect={this.pageSelect}
+            <Sort.DirectionSelector
+              isNumeric={this.state.currentSortField.isNumeric}
+              isAscending={this.state.isSortAscending}
+              onClick={this.updateSortDirection}
+            />
+          </Sort>
+          <RateIntervalToolbarItem
+            rateIntervalSelected={this.state.rateInterval}
+            onRateIntervalChanged={this.rateIntervalChangedHandler}
           />
-        </div>
-      );
-    }
+        </NamespaceFilter>
+        <ListView>{serviceList}</ListView>
+        <Paginator
+          viewType="list"
+          pagination={this.state.pagination}
+          itemCount={this.state.services.length}
+          onPageSet={this.pageSet}
+          onPerPageSelect={this.pageSelect}
+        />
+      </div>
+    );
     return <div>{serviceListComponent}</div>;
   }
 

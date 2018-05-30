@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 // import IstioRuleListDescription from './IstioRuleListDescription';
 import { Link } from 'react-router-dom';
 import { PfColors } from '../../components/Pf/PfColors';
-import PfSpinner from '../../components/Pf/PfSpinner';
+import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 
 const sortFields: SortField[] = [
   {
@@ -285,40 +285,37 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     }
 
     let ruleListComponent;
-    if (this.state.loading) {
-      ruleListComponent = <PfSpinner />;
-    } else {
-      ruleListComponent = (
-        <div>
-          <NamespaceFilter
-            initialFilters={[istioTypeFilter, istioNameFilter]}
-            onFilterChange={this.filterChange}
-            onError={this.handleError}
-          >
-            <Sort>
-              <Sort.TypeSelector
-                sortTypes={sortFields}
-                currentSortType={this.state.currentSortField}
-                onSortTypeSelected={this.updateSortField}
-              />
-              <Sort.DirectionSelector
-                isNumeric={false}
-                isAscending={this.state.isSortAscending}
-                onClick={this.updateSortDirection}
-              />
-            </Sort>
-          </NamespaceFilter>
-          <ListView>{istioList}</ListView>
-          <Paginator
-            viewType="list"
-            pagination={this.state.pagination}
-            itemCount={this.state.istioItems.length}
-            onPageSet={this.pageSet}
-            onPerPageSelect={this.pageSelect}
-          />
-        </div>
-      );
-    }
+    ruleListComponent = (
+      <>
+        <PfSpinnerContainer />
+        <NamespaceFilter
+          initialFilters={[istioTypeFilter, istioNameFilter]}
+          onFilterChange={this.filterChange}
+          onError={this.handleError}
+        >
+          <Sort>
+            <Sort.TypeSelector
+              sortTypes={sortFields}
+              currentSortType={this.state.currentSortField}
+              onSortTypeSelected={this.updateSortField}
+            />
+            <Sort.DirectionSelector
+              isNumeric={false}
+              isAscending={this.state.isSortAscending}
+              onClick={this.updateSortDirection}
+            />
+          </Sort>
+        </NamespaceFilter>
+        <ListView>{istioList}</ListView>
+        <Paginator
+          viewType="list"
+          pagination={this.state.pagination}
+          itemCount={this.state.istioItems.length}
+          onPageSet={this.pageSet}
+          onPerPageSelect={this.pageSelect}
+        />
+      </>
+    );
     return <div>{ruleListComponent}</div>;
   }
 }
