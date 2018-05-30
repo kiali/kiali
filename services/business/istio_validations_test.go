@@ -111,11 +111,11 @@ func TestCombinedCheckers(t *testing.T) {
 	validations, _ := vs.GetNamespaceValidations("test")
 
 	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{"destinationpolicy", "details-dp"}].Valid)
-	assert.True(validations[models.IstioValidationKey{"virtualservice", "product-vs"}].Valid)
-	assert.True(validations[models.IstioValidationKey{"destinationrule", "customer-dr"}].Valid)
+	assert.True(validations["test"][models.IstioValidationKey{"destinationpolicy", "details-dp"}].Valid)
+	assert.True(validations["test"][models.IstioValidationKey{"virtualservice", "product-vs"}].Valid)
+	assert.True(validations["test"][models.IstioValidationKey{"destinationrule", "customer-dr"}].Valid)
 
-	reviewsRr := validations[models.IstioValidationKey{"routerule", "reviews-rr"}]
+	reviewsRr := validations["test"][models.IstioValidationKey{"routerule", "reviews-rr"}]
 	assert.False(reviewsRr.Valid)
 	assert.Equal(3, len(reviewsRr.Checks))
 

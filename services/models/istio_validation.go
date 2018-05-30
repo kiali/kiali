@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 )
 
+// NamespaceValidations represents a set of IstioValidations grouped by namespace
+type NamespaceValidations map[string]IstioValidations
+
 // IstioValidationKey is the key value composed of an Istio ObjectType and Name.
 type IstioValidationKey struct {
 	ObjectType string

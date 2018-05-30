@@ -39,7 +39,7 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	return runObjectCheckers(objectCheckers), nil
 }
 
-func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (models.IstioValidations, error) {
+func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (models.NamespaceValidations, error) {
 	// Get all the Istio objects from a Namespace
 	istioDetails, err := in.k8s.GetIstioDetails(namespace, "")
 	if err != nil {
@@ -56,7 +56,7 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 		checkers.NoServiceChecker{IstioDetails: istioDetails, ServiceList: serviceList},
 	}
 
-	return runObjectCheckers(objectCheckers), nil
+	return models.NamespaceValidations{namespace: runObjectCheckers(objectCheckers)}, nil
 }
 
 func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
