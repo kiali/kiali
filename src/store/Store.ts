@@ -41,6 +41,18 @@ export interface ServiceGraphState {
   hideLegend: boolean;
 }
 
+export interface Token {
+  token: string;
+  expired_at: string;
+}
+export interface LoginState {
+  token: Token | undefined;
+  username: string | undefined;
+  error: any;
+  message: string;
+  logged: boolean;
+  logging: boolean;
+}
 // @todo: Add namespaces interface
 
 // This defines the Kiali Global Application State
@@ -49,6 +61,7 @@ export interface KialiAppState {
   // could also be session state
   globalState: GlobalState;
   // page settings
+  authentication: LoginState;
   messageCenter: MessageCenterState;
   namespaces: any;
   serviceGraph: ServiceGraphState;

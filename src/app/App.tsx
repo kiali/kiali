@@ -2,7 +2,7 @@ import * as React from 'react';
 import { BrowserRouter, withRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import './App.css';
-import Navigation from '../components/Nav/Navigation';
+import Navigation from '../containers/NavigationContainer';
 import store from '../store/ConfigStore';
 import axios from 'axios';
 import { GlobalActionKeys } from '../actions/GlobalActions';

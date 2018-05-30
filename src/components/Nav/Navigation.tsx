@@ -10,11 +10,14 @@ import MessageCenter from '../../containers/MessageCenterContainer';
 import IstioConfigPage from '../../pages/IstioConfigList/IstioConfigListPage';
 import IstioConfigDetailsPage from '../../pages/IstioConfigDetails/IstioConfigDetailsPage';
 import HelpDropdown from './HelpDropdown';
+import UserDropdown from '../../containers/UserDropdownContainer';
 import ServiceDetailsPage from '../../pages/ServiceDetails/ServiceDetailsPage';
 import ServiceGraphRouteHandler from '../../pages/ServiceGraph/ServiceGraphRouteHandler';
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 import ServiceJaegerPage from '../../pages/ServiceJaeger/ServiceJaegerPage';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
+import LoginPage from '../../containers/LoginPageContainer';
+import store from '../../store/ConfigStore';
 
 const istioConfigPath = '/istio';
 export const istioConfigTitle = 'Istio Config';
@@ -33,6 +36,7 @@ const istioConfigRx = /\/namespaces\/(.*)\/istio\/(.*)/g;
 
 type PropsType = {
   location: any;
+  authenticated: boolean;
 };
 
 type StateType = {
@@ -100,7 +104,10 @@ class Navigation extends React.Component<PropsType, StateType> {
   };
 
   render() {
-    return (
+    store.subscribe(() => {
+      document.documentElement.className = this.props.authenticated ? 'layout-pf layout-pf-fixed' : 'login-pf';
+    });
+    return this.props.authenticated ? (
       <>
         <VerticalNav
           setControlledState={this.setControlledState}
@@ -113,6 +120,7 @@ class Navigation extends React.Component<PropsType, StateType> {
             <VerticalNav.IconBar>
               <MessageCenter.Trigger />
               <HelpDropdown />
+              <UserDropdown />
             </VerticalNav.IconBar>
             <MessageCenter drawerTitle="Message Center" />
           </VerticalNav.Masthead>
@@ -137,6 +145,8 @@ class Navigation extends React.Component<PropsType, StateType> {
           <Redirect to={serviceGraphPath} />
         </SwitchErrorBoundary>
       </>
+    ) : (
+      <LoginPage />
     );
   }
 

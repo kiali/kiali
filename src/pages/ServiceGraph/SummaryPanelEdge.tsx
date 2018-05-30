@@ -9,6 +9,7 @@ import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import MetricsOptions from '../../types/MetricsOptions';
 import { PfColors } from '../../components/Pf/PfColors';
+import { authentication } from '../../utils/Authentication';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -133,7 +134,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       rateInterval: props.rateInterval,
       filters: ['request_count', 'request_duration', 'request_error_count']
     };
-    API.getServiceMetrics(destNamespace, destServiceName, options)
+    API.getServiceMetrics(authentication(), destNamespace, destServiceName, options)
       .then(response => {
         if (!this._isMounted) {
           console.log('SummaryPanelEdge: Ignore fetch, component not mounted.');

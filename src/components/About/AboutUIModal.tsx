@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { AboutModal, Spinner } from 'patternfly-react';
 import * as API from '../../services/Api';
+import { authentication } from '../../utils/Authentication';
 
 const pfLogo = require('../../img/logo-alt.svg');
 const KIALI_CORE_COMMIT_HASH = 'Kiali core commit hash';
@@ -25,7 +26,7 @@ type AboutUIModalProduct = {
 };
 
 const getStatus = () => {
-  return API.getStatus().then(response => {
+  return API.getStatus(authentication()).then(response => {
     const rawStatus = response['data'];
     return {
       kiali: [

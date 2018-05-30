@@ -11,6 +11,7 @@ import IstioRuleInfo from './IstioRuleInfo';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
+import { authentication } from '../../utils/Authentication';
 
 const yaml = require('js-yaml');
 
@@ -48,7 +49,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   updateTypeFilter = () => this.updateFilters(true);
 
   fetchIstioObjectDetails = (props: IstioConfigId) => {
-    API.getIstioConfigDetail(props.namespace, props.objectType, props.object)
+    API.getIstioConfigDetail(authentication(), props.namespace, props.objectType, props.object)
       .then(response => {
         this.setState({
           istioObjectDetails: response.data

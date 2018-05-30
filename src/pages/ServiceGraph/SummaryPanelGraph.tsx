@@ -10,6 +10,7 @@ import { NamespaceFilterSelected } from '../../components/NamespaceFilter/Namesp
 import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as M from '../../types/Metrics';
 import { Icon } from 'patternfly-react';
+import { authentication } from '../../utils/Authentication';
 
 type SummaryPanelGraphState = {
   loading: boolean;
@@ -106,7 +107,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       step: props.step,
       rateInterval: props.rateInterval
     };
-    API.getNamespaceMetrics(props.namespace, options)
+    API.getNamespaceMetrics(authentication(), props.namespace, options)
       .then(response => {
         if (!this._isMounted) {
           console.log('SummaryPanelGraph: Ignore fetch, component not mounted.');

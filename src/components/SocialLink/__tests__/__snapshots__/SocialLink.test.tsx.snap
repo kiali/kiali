@@ -1,0 +1,479 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`#Badge render correctly with data should render badge 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <SocialLink />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <li>
+          <a
+            className="login-pf-page-footer-link"
+            href="https://github.com/kiali"
+            target="_blank"
+          >
+            <Icon
+              name="github"
+              type="fa"
+            />
+             
+            Github
+          </a>
+        </li>,
+        <li>
+          <a
+            className="login-pf-page-footer-link"
+            href="https://www.youtube.com/channel/UCcm2NzDN_UCZKk2yYmOpc5w"
+            target="_blank"
+          >
+            <Icon
+              name="youtube"
+              type="fa"
+            />
+             
+            Youtube
+          </a>
+        </li>,
+        <li>
+          <a
+            className="login-pf-page-footer-link"
+            href="https://twitter.com/KialiProject"
+            target="_blank"
+          >
+            <Icon
+              name="twitter"
+              type="fa"
+            />
+             
+            Twitter
+          </a>
+        </li>,
+      ],
+      "className": "login-pf-page-footer-links list-unstyled",
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": "github",
+        "nodeType": "host",
+        "props": Object {
+          "children": <a
+            className="login-pf-page-footer-link"
+            href="https://github.com/kiali"
+            target="_blank"
+          >
+            <Icon
+              name="github"
+              type="fa"
+            />
+             
+            Github
+          </a>,
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              <Icon
+                name="github"
+                type="fa"
+              />,
+              " ",
+              "Github",
+            ],
+            "className": "login-pf-page-footer-link",
+            "href": "https://github.com/kiali",
+            "target": "_blank",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "function",
+              "props": Object {
+                "name": "github",
+                "type": "fa",
+              },
+              "ref": null,
+              "rendered": null,
+              "type": [Function],
+            },
+            " ",
+            "Github",
+          ],
+          "type": "a",
+        },
+        "type": "li",
+      },
+      Object {
+        "instance": null,
+        "key": "youtube",
+        "nodeType": "host",
+        "props": Object {
+          "children": <a
+            className="login-pf-page-footer-link"
+            href="https://www.youtube.com/channel/UCcm2NzDN_UCZKk2yYmOpc5w"
+            target="_blank"
+          >
+            <Icon
+              name="youtube"
+              type="fa"
+            />
+             
+            Youtube
+          </a>,
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              <Icon
+                name="youtube"
+                type="fa"
+              />,
+              " ",
+              "Youtube",
+            ],
+            "className": "login-pf-page-footer-link",
+            "href": "https://www.youtube.com/channel/UCcm2NzDN_UCZKk2yYmOpc5w",
+            "target": "_blank",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "function",
+              "props": Object {
+                "name": "youtube",
+                "type": "fa",
+              },
+              "ref": null,
+              "rendered": null,
+              "type": [Function],
+            },
+            " ",
+            "Youtube",
+          ],
+          "type": "a",
+        },
+        "type": "li",
+      },
+      Object {
+        "instance": null,
+        "key": "twitter",
+        "nodeType": "host",
+        "props": Object {
+          "children": <a
+            className="login-pf-page-footer-link"
+            href="https://twitter.com/KialiProject"
+            target="_blank"
+          >
+            <Icon
+              name="twitter"
+              type="fa"
+            />
+             
+            Twitter
+          </a>,
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              <Icon
+                name="twitter"
+                type="fa"
+              />,
+              " ",
+              "Twitter",
+            ],
+            "className": "login-pf-page-footer-link",
+            "href": "https://twitter.com/KialiProject",
+            "target": "_blank",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "function",
+              "props": Object {
+                "name": "twitter",
+                "type": "fa",
+              },
+              "ref": null,
+              "rendered": null,
+              "type": [Function],
+            },
+            " ",
+            "Twitter",
+          ],
+          "type": "a",
+        },
+        "type": "li",
+      },
+    ],
+    "type": "ul",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <li>
+            <a
+              className="login-pf-page-footer-link"
+              href="https://github.com/kiali"
+              target="_blank"
+            >
+              <Icon
+                name="github"
+                type="fa"
+              />
+               
+              Github
+            </a>
+          </li>,
+          <li>
+            <a
+              className="login-pf-page-footer-link"
+              href="https://www.youtube.com/channel/UCcm2NzDN_UCZKk2yYmOpc5w"
+              target="_blank"
+            >
+              <Icon
+                name="youtube"
+                type="fa"
+              />
+               
+              Youtube
+            </a>
+          </li>,
+          <li>
+            <a
+              className="login-pf-page-footer-link"
+              href="https://twitter.com/KialiProject"
+              target="_blank"
+            >
+              <Icon
+                name="twitter"
+                type="fa"
+              />
+               
+              Twitter
+            </a>
+          </li>,
+        ],
+        "className": "login-pf-page-footer-links list-unstyled",
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": "github",
+          "nodeType": "host",
+          "props": Object {
+            "children": <a
+              className="login-pf-page-footer-link"
+              href="https://github.com/kiali"
+              target="_blank"
+            >
+              <Icon
+                name="github"
+                type="fa"
+              />
+               
+              Github
+            </a>,
+          },
+          "ref": null,
+          "rendered": Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "children": Array [
+                <Icon
+                  name="github"
+                  type="fa"
+                />,
+                " ",
+                "Github",
+              ],
+              "className": "login-pf-page-footer-link",
+              "href": "https://github.com/kiali",
+              "target": "_blank",
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "function",
+                "props": Object {
+                  "name": "github",
+                  "type": "fa",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+              " ",
+              "Github",
+            ],
+            "type": "a",
+          },
+          "type": "li",
+        },
+        Object {
+          "instance": null,
+          "key": "youtube",
+          "nodeType": "host",
+          "props": Object {
+            "children": <a
+              className="login-pf-page-footer-link"
+              href="https://www.youtube.com/channel/UCcm2NzDN_UCZKk2yYmOpc5w"
+              target="_blank"
+            >
+              <Icon
+                name="youtube"
+                type="fa"
+              />
+               
+              Youtube
+            </a>,
+          },
+          "ref": null,
+          "rendered": Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "children": Array [
+                <Icon
+                  name="youtube"
+                  type="fa"
+                />,
+                " ",
+                "Youtube",
+              ],
+              "className": "login-pf-page-footer-link",
+              "href": "https://www.youtube.com/channel/UCcm2NzDN_UCZKk2yYmOpc5w",
+              "target": "_blank",
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "function",
+                "props": Object {
+                  "name": "youtube",
+                  "type": "fa",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+              " ",
+              "Youtube",
+            ],
+            "type": "a",
+          },
+          "type": "li",
+        },
+        Object {
+          "instance": null,
+          "key": "twitter",
+          "nodeType": "host",
+          "props": Object {
+            "children": <a
+              className="login-pf-page-footer-link"
+              href="https://twitter.com/KialiProject"
+              target="_blank"
+            >
+              <Icon
+                name="twitter"
+                type="fa"
+              />
+               
+              Twitter
+            </a>,
+          },
+          "ref": null,
+          "rendered": Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "children": Array [
+                <Icon
+                  name="twitter"
+                  type="fa"
+                />,
+                " ",
+                "Twitter",
+              ],
+              "className": "login-pf-page-footer-link",
+              "href": "https://twitter.com/KialiProject",
+              "target": "_blank",
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "function",
+                "props": Object {
+                  "name": "twitter",
+                  "type": "fa",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+              " ",
+              "Twitter",
+            ],
+            "type": "a",
+          },
+          "type": "li",
+        },
+      ],
+      "type": "ul",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;

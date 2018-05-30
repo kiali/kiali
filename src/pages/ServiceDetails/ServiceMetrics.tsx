@@ -9,6 +9,7 @@ import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import MetricsOptions from '../../types/MetricsOptions';
 import graphUtils from '../../utils/Graphing';
+import { authentication } from '../../utils/Authentication';
 
 type ServiceMetricsState = {
   loading: boolean;
@@ -85,7 +86,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
 
   fetchMetrics = () => {
     this.setState({ loading: true });
-    API.getServiceMetrics(this.props.namespace, this.props.service, this.options)
+    API.getServiceMetrics(authentication(), this.props.namespace, this.props.service, this.options)
       .then(response => {
         const metrics: M.Metrics = response.data;
         this.setState({
@@ -184,7 +185,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   }
 
   getGrafanaInfo() {
-    API.getGrafanaInfo()
+    API.getGrafanaInfo(authentication())
       .then(response => {
         const info: GrafanaInfo = response['data'];
         if (info) {

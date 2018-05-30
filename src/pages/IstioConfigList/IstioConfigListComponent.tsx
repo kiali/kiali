@@ -18,6 +18,7 @@ import PropTypes from 'prop-types';
 // import IstioRuleListDescription from './IstioRuleListDescription';
 import { Link } from 'react-router-dom';
 import { PfColors } from '../../components/Pf/PfColors';
+import { authentication } from '../../utils/Authentication';
 
 const sortFields: SortField[] = [
   {
@@ -180,7 +181,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       .map(activeFilter => activeFilter.value);
 
     if (namespacesSelected.length === 0) {
-      API.getNamespaces()
+      API.getNamespaces(authentication())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchIstioConfig(namespaces.map(namespace => namespace.name), istioTypeFilters, istioNameFilters);
@@ -195,7 +196,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
   }
 
   fetchIstioConfig(namespaces: string[], istioTypeFilters: string[], istioNameFilters: string[]) {
-    const promises = namespaces.map(namespace => API.getIstioConfig(namespace, istioTypeFilters));
+    const promises = namespaces.map(namespace => API.getIstioConfig(authentication(), namespace, istioTypeFilters));
     Promise.all(promises)
       .then(responses => {
         let istioItems: IstioConfigItem[] = [];

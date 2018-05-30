@@ -14,8 +14,8 @@ import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/Hea
 import ServiceErrorRate from './ServiceErrorRate';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import { PfColors } from '../../components/Pf/PfColors';
-
 import './ServiceListComponent.css';
+import { authentication } from '../../utils/Authentication';
 
 // Exported for test
 export const sortFields: SortField[] = [
@@ -185,7 +185,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     istioFilters = this.cleanIstioFilters(istioFilters);
 
     if (namespacesSelected.length === 0) {
-      API.getNamespaces()
+      API.getNamespaces(authentication())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchServices(
@@ -205,7 +205,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   }
 
   fetchServices(namespaces: string[], servicenameFilters: string[], istioFilters: string[], rateInterval?: string) {
-    const promises = namespaces.map(ns => API.getServices(ns, { rateInterval: rateInterval }));
+    const promises = namespaces.map(ns => API.getServices(authentication(), ns, { rateInterval: rateInterval }));
     Promise.all(promises)
       .then(servicesResponse => {
         let updatedServices: ServiceItem[] = [];

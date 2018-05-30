@@ -3,6 +3,7 @@ import Namespace from '../types/Namespace';
 import { Duration } from '../types/GraphFilter';
 import * as API from '../services/Api';
 import * as MessageCenter from '../utils/MessageCenter';
+import { authentication } from '../utils/Authentication';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 
@@ -36,7 +37,7 @@ export const ServiceGraphDataActions = {
       dispatch(ServiceGraphDataActions.getGraphDataStart());
       const duration = graphDuration.value;
       const restParams = { duration: duration + 's' };
-      API.getGraphElements(namespace, restParams).then(
+      API.getGraphElements(authentication(), namespace, restParams).then(
         response => {
           const responseData: any = response['data'];
           const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;

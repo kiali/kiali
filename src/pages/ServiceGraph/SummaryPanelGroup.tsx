@@ -10,6 +10,7 @@ import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import MetricsOptions from '../../types/MetricsOptions';
 import { PfColors } from '../../components/Pf/PfColors';
 import { Icon } from 'patternfly-react';
+import { authentication } from '../../utils/Authentication';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -114,7 +115,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       rateInterval: props.rateInterval,
       filters: ['request_count', 'request_error_count']
     };
-    API.getServiceMetrics(namespace, service, options)
+    API.getServiceMetrics(authentication(), namespace, service, options)
       .then(response => {
         if (!this._isMounted) {
           console.log('SummaryPanelGroup: Ignore fetch, component not mounted.');

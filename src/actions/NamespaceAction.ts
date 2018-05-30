@@ -26,10 +26,10 @@ export const apiReceiveList = newList => {
   };
 };
 
-export const asyncFetchNamespaces = () => {
+export const asyncFetchNamespaces = (auth: any) => {
   return dispatch => {
     dispatch(apiInitiateRequest());
-    return Api.getNamespaces()
+    return Api.getNamespaces(auth)
       .then(response => response['data'])
       .then(data => dispatch(apiReceiveList(data)));
   };
@@ -52,7 +52,8 @@ export const fetchNamespacesIfNeeded = () => {
     console.debug('fetchNamespacesIfNeeded()');
     if (shouldFetchNamespaces(getState())) {
       // Dispatch a thunk from thunk!
-      return dispatch(asyncFetchNamespaces());
+      const auth = 'Bearer ' + getState().authentication.token.token;
+      return dispatch(asyncFetchNamespaces(auth));
     } else {
       // Let the calling code know there's nothing to wait for.
       return Promise.resolve();

@@ -11,6 +11,7 @@ import MetricsOptions from '../../types/MetricsOptions';
 import { Metrics } from '../../types/Metrics';
 import { PfColors } from '../../components/Pf/PfColors';
 import { Icon } from 'patternfly-react';
+import { authentication } from '../../utils/Authentication';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -73,7 +74,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       rateInterval: props.rateInterval,
       filters: ['request_count', 'request_error_count']
     };
-    API.getServiceMetrics(namespace, service, options)
+    API.getServiceMetrics(authentication(), namespace, service, options)
       .then(response => {
         if (!this._isMounted) {
           console.log('SummaryPanelNode: Ignore fetch, component not mounted.');

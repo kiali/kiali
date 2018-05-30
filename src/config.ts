@@ -3,10 +3,6 @@ import deepFreeze from 'deep-freeze';
 export const config = () => {
   return deepFreeze({
     version: '0.1',
-    backend: {
-      user: 'admin',
-      password: 'admin'
-    },
     toolbar: {
       defaultDuration: 60,
       intervalDuration: {
@@ -41,3 +37,23 @@ export const config = () => {
     }
   });
 };
+
+export const KEY_CODES = { TAB_KEY: 9, ENTER_KEY: 13, ESCAPE_KEY: 27 };
+
+export const socialLinks = [
+  {
+    url: 'https://github.com/kiali',
+    icon: { type: 'fa', name: 'github' },
+    label: 'Github'
+  },
+  {
+    url: 'https://www.youtube.com/channel/UCcm2NzDN_UCZKk2yYmOpc5w',
+    icon: { type: 'fa', name: 'youtube' },
+    label: 'Youtube'
+  },
+  {
+    url: 'https://twitter.com/KialiProject',
+    icon: { type: 'fa', name: 'twitter' },
+    label: 'Twitter'
+  }
+];

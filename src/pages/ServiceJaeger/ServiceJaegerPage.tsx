@@ -3,6 +3,7 @@ import Iframe from 'react-iframe';
 import * as API from '../../services/Api';
 import { EmptyState, EmptyStateTitle, EmptyStateIcon } from 'patternfly-react';
 import * as MessageCenter from '../../utils/MessageCenter';
+import { authentication } from '../../utils/Authentication';
 
 type ServiceJaegerState = {
   height: string;
@@ -36,7 +37,7 @@ class ServiceJaegerPage extends React.Component<{}, ServiceJaegerState> {
     this.updateWindowDimensions();
     window.addEventListener('resize', this.updateWindowDimensions);
 
-    API.getJaegerInfo()
+    API.getJaegerInfo(authentication())
       .then(response => {
         let data = response['data'];
         this.setState({

@@ -13,6 +13,7 @@ import { hasIstioSidecar, ServiceDetailsInfo, Validations } from '../../types/Se
 import AceEditor, { AceOptions } from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
+import { authentication } from '../../utils/Authentication';
 
 const yaml = require('js-yaml');
 
@@ -150,7 +151,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   }
 
   componentDidMount() {
-    API.getJaegerInfo()
+    API.getJaegerInfo(authentication())
       .then(response => {
         this.setState({
           jaegerUri: `${response.data.url}/search?service=${this.props.match.params.service}`
@@ -159,7 +160,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Cannot fetch Jaeger info.', error));
       });
-    API.getServiceDetail(this.props.match.params.namespace, this.props.match.params.service)
+    API.getServiceDetail(authentication(), this.props.match.params.namespace, this.props.match.params.service)
       .then(response => {
         const details = response.data;
         details.istioSidecar = hasIstioSidecar(details.pods);
@@ -168,7 +169,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', error));
       });
-    API.getServiceValidations(this.props.match.params.namespace, this.props.match.params.service)
+    API.getServiceValidations(authentication(), this.props.match.params.namespace, this.props.match.params.service)
       .then(response => {
         this.setState({
           validations: response.data
