@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Toolbar, ToolbarRightContent, Icon, Button } from 'patternfly-react';
+import { Button, Icon, Toolbar, ToolbarRightContent } from 'patternfly-react';
 import { config } from '../../config';
 import ValueSelectHelper from './ValueSelectHelper';
 import MetricsOptions from '../../types/MetricsOptions';
@@ -9,7 +9,6 @@ interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
   onPollIntervalChanged: (interval: number) => void;
   onManualRefresh: () => void;
-  loading?: boolean;
 }
 
 interface MetricsOptionsState {
@@ -133,12 +132,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
         />
 
         <ToolbarRightContent>
-          {this.props.loading && (
-            <span>
-              <Icon name="spinner" spin={true} size="lg" /> Loading&nbsp;
-            </span>
-          )}
-          <Button disabled={this.props.loading} onClick={this.props.onManualRefresh}>
+          <Button onClick={this.props.onManualRefresh}>
             <Icon name="refresh" />
           </Button>
         </ToolbarRightContent>

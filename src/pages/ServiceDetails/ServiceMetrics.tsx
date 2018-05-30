@@ -12,7 +12,6 @@ import graphUtils from '../../utils/Graphing';
 import { authentication } from '../../utils/Authentication';
 
 type ServiceMetricsState = {
-  loading: boolean;
   alertDetails?: string;
   requestCountIn?: NamedMetric;
   requestCountOut?: NamedMetric;
@@ -47,9 +46,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
 
   constructor(props: ServiceId) {
     super(props);
-    this.state = {
-      loading: false
-    };
+    this.state = {};
   }
 
   componentDidMount() {
@@ -82,15 +79,11 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     this.setState({ pollMetrics: newRefInterval });
   };
 
-  onManualRefresh = () => (this.state.loading ? null : this.fetchMetrics());
-
   fetchMetrics = () => {
-    this.setState({ loading: true });
     API.getServiceMetrics(authentication(), this.props.namespace, this.props.service, this.options)
       .then(response => {
         const metrics: M.Metrics = response.data;
         this.setState({
-          loading: false,
           requestCountIn: this.nameMetric(
             metrics.metrics['request_count_in'],
             'Request volume (ops)',
@@ -134,7 +127,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         });
       })
       .catch(error => {
-        this.setState({ loading: false, alertDetails: API.getErrorMsg('Cannot fetch metrics.', error) });
+        this.setState({ alertDetails: API.getErrorMsg('Cannot fetch metrics.', error) });
         console.error(error);
       });
   };
@@ -228,8 +221,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         <MetricsOptionsBar
           onOptionsChanged={this.onOptionsChanged}
           onPollIntervalChanged={this.onPollIntervalChanged}
-          onManualRefresh={this.onManualRefresh}
-          loading={this.state.loading}
+          onManualRefresh={this.fetchMetrics}
         />
         {this.renderMetrics()}
       </div>
