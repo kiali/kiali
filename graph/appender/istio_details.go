@@ -10,7 +10,7 @@ import (
 type IstioAppender struct{}
 
 // AppendGraph implements Appender
-func (a IstioAppender) AppendGraph(trees *[]tree.ServiceNode, namespaceName string) {
+func (a IstioAppender) AppendGraph(trees *[]*tree.ServiceNode, namespaceName string) {
 	if len(*trees) == 0 {
 		return
 	}
@@ -21,7 +21,7 @@ func (a IstioAppender) AppendGraph(trees *[]tree.ServiceNode, namespaceName stri
 	namespaceInfo := fetchNamespaceInfo(namespaceName, istioClient)
 
 	for _, tree := range *trees {
-		addRouteBadges(&tree, namespaceName, namespaceInfo)
+		addRouteBadges(tree, namespaceName, namespaceInfo)
 	}
 }
 

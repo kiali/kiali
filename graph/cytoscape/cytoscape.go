@@ -90,14 +90,14 @@ func edgeHash(from string, to string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s", from, to))))
 }
 
-func NewConfig(sn *[]tree.ServiceNode, o options.VendorOptions) (result Config) {
+func NewConfig(sn *[]*tree.ServiceNode, o options.VendorOptions) (result Config) {
 	nodes := []*NodeWrapper{}
 	edges := []*EdgeWrapper{}
 
 	for _, t := range *sn {
 		log.Debugf("Walk Tree Root %v", t.ID)
 
-		walk(&t, nil, &nodes, &edges, o)
+		walk(t, nil, &nodes, &edges, o)
 	}
 
 	// Add composite nodes that group together different versions of the same service
