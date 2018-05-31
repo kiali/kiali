@@ -102,12 +102,11 @@ func (in *IstioClient) GetService(namespace, serviceName string) (*v1.Service, e
 
 // GetPods returns the pods definitions for a given set of labels.
 // It returns an error on any problem.
-func (in *IstioClient) GetPods(namespace string, labelsSet labels.Set) (*v1.PodList, error) {
-	formatted := labelsSet.String()
+func (in *IstioClient) GetPods(namespace, labelSelector string) (*v1.PodList, error) {
 	// An empty selector is ambiguous in the go client, could mean either "select all" or "select none"
 	// Here we assume empty == select all
 	// (see also https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)
-	return in.k8s.CoreV1().Pods(namespace).List(meta_v1.ListOptions{LabelSelector: formatted})
+	return in.k8s.CoreV1().Pods(namespace).List(meta_v1.ListOptions{LabelSelector: labelSelector})
 }
 
 // GetNamespacePods returns the pods definitions for a given namespace
@@ -141,7 +140,7 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	}()
 
 	go func() {
-		pods, err := in.GetPods(namespace, service.Spec.Selector)
+		pods, err := in.GetPods(namespace, labels.Set(service.Spec.Selector).String())
 		podsChan <- podsResponse{pods: pods, err: err}
 	}()
 
@@ -189,7 +188,7 @@ func (in *IstioClient) GetServicePods(namespace, serviceName, serviceVersion str
 	if "" != serviceVersion {
 		selector[cfg.VersionFilterLabelName] = serviceVersion
 	}
-	return in.GetPods(namespace, selector)
+	return in.GetPods(namespace, selector.String())
 }
 
 func filterAutoscalersByDeployments(deploymentNames []string, al *autoscalingV1.HorizontalPodAutoscalerList) *autoscalingV1.HorizontalPodAutoscalerList {

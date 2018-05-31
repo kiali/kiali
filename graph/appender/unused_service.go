@@ -3,12 +3,11 @@ package appender
 import (
 	"fmt"
 
-	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/tree"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 )
 
 type UnusedServiceAppender struct {
@@ -19,14 +18,16 @@ func (a UnusedServiceAppender) AppendGraph(trees *[]*tree.ServiceNode, namespace
 	istioClient, err := kubernetes.NewClient()
 	checkError(err)
 
-	deployments, err := istioClient.GetDeployments(namespaceName)
+	cfg := config.Get()
+	labels := cfg.ServiceFilterLabelName + "," + cfg.VersionFilterLabelName
+	pods, err := istioClient.GetPods(namespaceName, labels)
 	checkError(err)
 
-	addUnusedNodes(trees, namespaceName, deployments)
+	addUnusedNodes(trees, namespaceName, pods)
 }
 
-func addUnusedNodes(trees *[]*tree.ServiceNode, namespaceName string, deployments *v1beta1.DeploymentList) {
-	staticNodeList := buildStaticNodeList(namespaceName, deployments)
+func addUnusedNodes(trees *[]*tree.ServiceNode, namespaceName string, pods *v1.PodList) {
+	staticNodeList := buildStaticNodeList(namespaceName, pods)
 	currentNodeSet := make(map[string]struct{})
 	for _, tree := range *trees {
 		buildNodeSet(&currentNodeSet, tree)
@@ -47,25 +48,22 @@ func addUnusedNodes(trees *[]*tree.ServiceNode, namespaceName string, deployment
 	}
 }
 
-func buildStaticNodeList(namespaceName string, deployments *v1beta1.DeploymentList) []*tree.ServiceNode {
+func buildStaticNodeList(namespaceName string, pods *v1.PodList) []*tree.ServiceNode {
 	nonTrafficList := make([]*tree.ServiceNode, 0)
+	resolvedServices := make(map[string]bool)
 	appLabel := config.Get().ServiceFilterLabelName
 	versionLabel := config.Get().VersionFilterLabelName
 	identityDomain := config.Get().Products.Istio.IstioIdentityDomain
-	for _, deployment := range deployments.Items {
-		app, ok := deployment.GetObjectMeta().GetLabels()[appLabel]
-		if !ok {
-			log.Warningf("Deployment %s has not a proper app label [%s]", deployment.Name, appLabel)
-			continue
+	for _, pod := range pods.Items {
+		app := pod.GetObjectMeta().GetLabels()[appLabel]
+		version := pod.GetObjectMeta().GetLabels()[versionLabel]
+		srvId := fmt.Sprintf("%s.%s.%s.%s", app, namespaceName, identityDomain, version)
+		if _, ok := resolvedServices[srvId]; !ok {
+			staticNode := tree.NewServiceNode(fmt.Sprintf("%s.%s.%s", app, namespaceName, identityDomain), version)
+			staticNode.Metadata = map[string]interface{}{"rate": 0.0, "isUnused": "true"}
+			nonTrafficList = append(nonTrafficList, &staticNode)
+			resolvedServices[srvId] = true
 		}
-		version, ok := deployment.GetObjectMeta().GetLabels()[versionLabel]
-		if !ok {
-			log.Warningf("Deployment %s has not a proper version label [%s]", deployment.Name, versionLabel)
-			continue
-		}
-		staticNode := tree.NewServiceNode(fmt.Sprintf("%s.%s.%s", app, namespaceName, identityDomain), version)
-		staticNode.Metadata = map[string]interface{}{"rate": 0.0, "isUnused": "true"}
-		nonTrafficList = append(nonTrafficList, &staticNode)
 	}
 	return nonTrafficList
 }
