@@ -31,7 +31,7 @@ func TestServiceMultipleChecks(t *testing.T) {
 	assert.Len(validations, 2)
 	assert.Equal(validations[0].Message, "Weight should be between 0 and 100")
 	assert.Equal(validations[0].Severity, "error")
-	assert.Equal(validations[0].Path, "spec/route/weight/155")
+	assert.Equal(validations[0].Path, "spec/route[0]/weight/155")
 
 	assert.Equal(validations[1].Message, "Weight sum should be 100")
 	assert.Equal(validations[1].Severity, "error")
