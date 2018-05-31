@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { getRequestErrorsRatio, getRequestRatioText } from '../../components/ServiceHealth/HealthHelper';
+import { NA, getRequestErrorsRatio } from '../../components/ServiceHealth/HealthHelper';
 import { RequestHealth } from '../../types/Health';
 
 type ServiceErrorRateProps = {
@@ -18,6 +18,6 @@ export default class ServiceErrorRate extends React.Component<ServiceErrorRatePr
 
   private errorRateIndicator = () => {
     const ratio = getRequestErrorsRatio(this.props.requestHealth);
-    return getRequestRatioText(ratio);
+    return ratio.status === NA ? 'No requests' : ratio.value.toFixed(2) + '%';
   };
 }

@@ -54,7 +54,7 @@ export const sortFields: SortField[] = [
     compare: (a: ServiceItem, b: ServiceItem) => {
       const ratioA = getRequestErrorsRatio(a.health.requests);
       const ratioB = getRequestErrorsRatio(b.health.requests);
-      return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioA - ratioB;
+      return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioA.value - ratioB.value;
     }
   }
 ];

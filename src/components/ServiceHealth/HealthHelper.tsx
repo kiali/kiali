@@ -1,4 +1,4 @@
-import { RequestHealth } from '../../types/Health';
+import { Health, RequestHealth } from '../../types/Health';
 import { PfColors } from '../../components/Pf/PfColors';
 
 export interface Status {
@@ -35,19 +35,34 @@ export const NA: Status = {
   text: 'N/A'
 };
 
-export const ratioCheck = (valid: number, total: number, issueReporter?: (severity: string) => void): Status => {
+interface Thresholds {
+  degraded: number;
+  failure: number;
+  unit: string;
+}
+
+const REQUESTS_THRESHOLDS: Thresholds = {
+  degraded: 0.1,
+  failure: 20,
+  unit: '%'
+};
+
+interface ThresholdStatus {
+  value: number;
+  status: Status;
+  violation?: string;
+}
+
+// Use -1 rather than NaN to allow straigthforward comparison
+const RATIO_NA = -1;
+
+export const ratioCheck = (valid: number, total: number): Status => {
   if (total === 0) {
     return NA;
   } else if (valid === 0) {
-    if (issueReporter) {
-      issueReporter('failure');
-    }
     return FAILURE;
   } else if (valid === total) {
     return HEALTHY;
-  }
-  if (issueReporter) {
-    issueReporter('degraded');
   }
   return DEGRADED;
 };
@@ -56,55 +71,81 @@ export const mergeStatus = (s1: Status, s2: Status): Status => {
   return s1.priority > s2.priority ? s1 : s2;
 };
 
-interface Thresholds {
-  degraded: number;
-  failure: number;
-}
-
-const REQUESTS_THRESHOLDS: Thresholds = {
-  degraded: 0.001,
-  failure: 0.2
-};
-
-const ascendingThresholdCheck = (
-  value: number,
-  thresholds: Thresholds,
-  thresholdReporter?: (severity: string, threshold: number, actual: number) => void
-): Status => {
+const ascendingThresholdCheck = (value: number, thresholds: Thresholds): ThresholdStatus => {
   if (value >= thresholds.failure) {
-    if (thresholdReporter) {
-      thresholdReporter('failure', thresholds.failure, value);
-    }
-    return FAILURE;
+    return {
+      value: value,
+      status: FAILURE,
+      violation: value.toFixed(2) + thresholds.unit + '>=' + thresholds.failure + thresholds.unit
+    };
   } else if (value >= thresholds.degraded) {
-    if (thresholdReporter) {
-      thresholdReporter('degraded', thresholds.degraded, value);
-    }
-    return DEGRADED;
+    return {
+      value: value,
+      status: DEGRADED,
+      violation: value.toFixed(2) + thresholds.unit + '>=' + thresholds.degraded + thresholds.unit
+    };
   }
-  return HEALTHY;
+  return { value: value, status: HEALTHY };
 };
 
-export type Ratio = number;
-const RATIO_NA: Ratio = -1;
-
-export const getRequestRatioText = (ratio: Ratio): string => {
-  return ratio === RATIO_NA ? 'No requests' : (100 * ratio).toFixed(2) + '%';
-};
-
-export const getRequestErrorsRatio = (rh: RequestHealth): Ratio => {
+export const getRequestErrorsRatio = (rh: RequestHealth): ThresholdStatus => {
   if (rh.requestCount === 0) {
-    return RATIO_NA;
+    return {
+      value: RATIO_NA,
+      status: NA
+    };
   }
-  return rh.requestErrorCount / rh.requestCount;
+  return ascendingThresholdCheck(100 * rh.requestErrorCount / rh.requestCount, REQUESTS_THRESHOLDS);
 };
 
-export const requestErrorsThresholdCheck = (
-  ratio: Ratio,
-  thresholdReporter?: (severity: string, threshold: number, actual: number) => void
-): Status => {
-  if (ratio === RATIO_NA) {
-    return NA;
+export const computeAggregatedHealth = (health?: Health, reporter?: (info: string) => void): Status => {
+  let countInactiveDeployments = 0;
+  if (health) {
+    let statuses: Status[] = [];
+    {
+      // Envoy
+      const envoy = ratioCheck(health.envoy.healthy, health.envoy.total);
+      if (reporter && (envoy === FAILURE || envoy === DEGRADED)) {
+        reporter('Envoy health ' + envoy.name.toLowerCase());
+      }
+      statuses.push(envoy);
+    }
+    {
+      // Request errors
+      const reqErrorsRatio = getRequestErrorsRatio(health.requests);
+      statuses.push(reqErrorsRatio.status);
+      if (reporter && reqErrorsRatio.violation) {
+        reporter(`Error rate ${reqErrorsRatio.status.name.toLowerCase()}: ${reqErrorsRatio.violation}`);
+      }
+    }
+    {
+      // Pods
+      statuses = statuses.concat(
+        health.deploymentStatuses.map(dep => {
+          const status = ratioCheck(dep.available, dep.replicas);
+          if (reporter && (status === FAILURE || status === DEGRADED)) {
+            reporter('Pod deployment ' + status.name.toLowerCase());
+          } else if (status === NA) {
+            countInactiveDeployments++;
+          }
+          return status;
+        })
+      );
+    }
+
+    if (countInactiveDeployments > 0 && countInactiveDeployments === health.deploymentStatuses.length) {
+      // No active deployment => special case for failure
+      if (reporter) {
+        reporter('No active deployment!');
+      }
+      return FAILURE;
+    } else if (reporter && countInactiveDeployments === 1) {
+      reporter('One inactive deployment');
+    } else if (reporter && countInactiveDeployments > 1) {
+      reporter(`${countInactiveDeployments} inactive deployments`);
+    }
+    // Merge all
+    return statuses.reduce(mergeStatus, NA);
   }
-  return ascendingThresholdCheck(ratio, REQUESTS_THRESHOLDS, thresholdReporter);
+  return NA;
 };

@@ -39,8 +39,7 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
       ? H.FAILURE
       : deplsStatuses.reduce((prev, cur) => H.mergeStatus(prev, cur), H.NA);
     const reqErrorsRatio = H.getRequestErrorsRatio(health.requests);
-    const reqErrorsStatus = H.requestErrorsThresholdCheck(reqErrorsRatio);
-    const reqErrorText = H.getRequestRatioText(reqErrorsRatio);
+    const reqErrorsText = reqErrorsRatio.status === H.NA ? 'No requests' : reqErrorsRatio.value.toFixed(2) + '%';
     return (
       <Popover id={this.props.id + '-health-tooltip'} title={this.props.headline}>
         <strong>
@@ -63,10 +62,10 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
         {' ' + health.envoy.healthy + ' / ' + health.envoy.total}
         <br />
         <strong>
-          {this.renderStatus(reqErrorsStatus)}
+          {this.renderStatus(reqErrorsRatio.status)}
           {' Error Rate:'}
         </strong>
-        {' ' + reqErrorText + ' over last ' + getName(this.props.rateInterval)}
+        {' ' + reqErrorsText + ' over last ' + getName(this.props.rateInterval)}
       </Popover>
     );
   }
