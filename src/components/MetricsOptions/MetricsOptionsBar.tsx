@@ -4,6 +4,7 @@ import { config } from '../../config';
 import ValueSelectHelper from './ValueSelectHelper';
 import MetricsOptions from '../../types/MetricsOptions';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
+import PollIntervalFilter from '../Filters/PollIntervalFilter';
 
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
@@ -121,14 +122,10 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
           )}
           options={MetricsOptionsBar.Durations}
         />
-        <ToolbarDropdown
+        <PollIntervalFilter
           id={'metrics_filter_poll_interval'}
           disabled={false}
-          handleSelect={this.onPollIntervalChanged}
-          nameDropdown={'Poll Interval'}
-          initialValue={MetricsOptionsBar.DefaultPollInterval}
-          initialLabel={String(MetricsOptionsBar.PollIntervals[MetricsOptionsBar.DefaultPollInterval])}
-          options={MetricsOptionsBar.PollIntervals}
+          onPollIntervalChanged={this.onPollIntervalChanged}
         />
 
         <ToolbarRightContent>

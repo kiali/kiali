@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Toolbar, Button, Icon, FormGroup } from 'patternfly-react';
 
-import { Duration, Layout, EdgeLabelMode } from '../../types/GraphFilter';
+import { Duration, Layout, EdgeLabelMode, PollInterval } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
 import { config } from '../../config';
@@ -9,6 +9,7 @@ import GraphLayersContainer from '../../containers/GraphLayersContainer';
 import { style } from 'typestyle';
 import { GraphParamsType } from '../../types/Graph';
 import Namespace from '../../types/Namespace';
+import PollIntervalFilter from '../Filters/PollIntervalFilter';
 
 import * as _ from 'lodash';
 
@@ -18,9 +19,11 @@ export interface GraphFilterProps extends GraphParamsType {
   onDurationChange: (newDuration: Duration) => void;
   onNamespaceChange: (newValue: Namespace) => void;
   onEdgeLabelModeChange: (newEdges: EdgeLabelMode) => void;
+  onPollIntervalChanged: (newPollInterval: PollInterval) => void;
   onRefresh: () => void;
   onLegend: () => void;
   hideLegend: boolean;
+  isLoading: boolean;
 }
 
 export interface GraphFilterState {
@@ -79,6 +82,12 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
     }
   };
 
+  pollInterval = (selected: number) => {
+    if (this.props.pollInterval.value !== selected) {
+      this.props.onPollIntervalChanged({ value: selected });
+    }
+  };
+
   handleRefresh = (e: any) => {
     this.props.onRefresh();
   };
@@ -121,6 +130,12 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
             initialValue={this.props.edgeLabelMode}
             initialLabel={GraphFilter.EDGE_LABEL_MODES[this.props.edgeLabelMode]}
             options={GraphFilter.EDGE_LABEL_MODES}
+          />
+          <PollIntervalFilter
+            id={'metrics_filter_poll_interval'}
+            disabled={false}
+            onPollIntervalChanged={this.pollInterval}
+            selected={this.props.pollInterval}
           />
           <FormGroup className={zeroPaddingLeft}>
             <label className={labelPaddingRight}>Filters:</label>

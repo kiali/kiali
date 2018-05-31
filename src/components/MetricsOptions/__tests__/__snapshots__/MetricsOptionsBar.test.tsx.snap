@@ -82,21 +82,13 @@ ShallowWrapper {
             }
           }
         />,
-        <ToolbarDropdown
+        <PollIntervalFilter
           disabled={false}
-          handleSelect={[Function]}
           id="metrics_filter_poll_interval"
-          initialLabel="5 seconds"
-          initialValue={5000}
-          nameDropdown="Poll Interval"
-          options={
+          onPollIntervalChanged={[Function]}
+          selected={
             Object {
-              "0": "Pause",
-              "10000": "10 seconds",
-              "30000": "30 seconds",
-              "300000": "5 minutes",
-              "5000": "5 seconds",
-              "60000": "1 minute",
+              "value": 5000,
             }
           }
         />,
@@ -199,21 +191,13 @@ ShallowWrapper {
       Object {
         "instance": null,
         "key": undefined,
-        "nodeType": "class",
+        "nodeType": "function",
         "props": Object {
           "disabled": false,
-          "handleSelect": [Function],
           "id": "metrics_filter_poll_interval",
-          "initialLabel": "5 seconds",
-          "initialValue": 5000,
-          "nameDropdown": "Poll Interval",
-          "options": Object {
-            "0": "Pause",
-            "10000": "10 seconds",
-            "30000": "30 seconds",
-            "300000": "5 minutes",
-            "5000": "5 seconds",
-            "60000": "1 minute",
+          "onPollIntervalChanged": [Function],
+          "selected": Object {
+            "value": 5000,
           },
         },
         "ref": null,
@@ -325,21 +309,13 @@ ShallowWrapper {
               }
             }
           />,
-          <ToolbarDropdown
+          <PollIntervalFilter
             disabled={false}
-            handleSelect={[Function]}
             id="metrics_filter_poll_interval"
-            initialLabel="5 seconds"
-            initialValue={5000}
-            nameDropdown="Poll Interval"
-            options={
+            onPollIntervalChanged={[Function]}
+            selected={
               Object {
-                "0": "Pause",
-                "10000": "10 seconds",
-                "30000": "30 seconds",
-                "300000": "5 minutes",
-                "5000": "5 seconds",
-                "60000": "1 minute",
+                "value": 5000,
               }
             }
           />,
@@ -442,21 +418,13 @@ ShallowWrapper {
         Object {
           "instance": null,
           "key": undefined,
-          "nodeType": "class",
+          "nodeType": "function",
           "props": Object {
             "disabled": false,
-            "handleSelect": [Function],
             "id": "metrics_filter_poll_interval",
-            "initialLabel": "5 seconds",
-            "initialValue": 5000,
-            "nameDropdown": "Poll Interval",
-            "options": Object {
-              "0": "Pause",
-              "10000": "10 seconds",
-              "30000": "30 seconds",
-              "300000": "5 minutes",
-              "5000": "5 seconds",
-              "60000": "1 minute",
+            "onPollIntervalChanged": [Function],
+            "selected": Object {
+              "value": 5000,
             },
           },
           "ref": null,
