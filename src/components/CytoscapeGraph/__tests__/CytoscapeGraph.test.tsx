@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 
 import { CytoscapeGraph } from '../CytoscapeGraph';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
-import { Duration, Layout, EdgeLabelMode, PollInterval } from '../../../types/GraphFilter';
+import { Duration, Layout, EdgeLabelMode } from '../../../types/GraphFilter';
 import { CytoscapeReactWrapper } from '../CytoscapeReactWrapper';
 
 jest.mock('../../../services/Api');
@@ -22,7 +22,6 @@ describe('CytoscapeGraph component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
     const myDuration: Duration = { value: 300 };
-    const myPollInterval: PollInterval = { value: 5 };
     const myEdgeLabelMode: EdgeLabelMode = EdgeLabelMode.HIDE;
 
     const wrapper = shallow(
@@ -32,7 +31,6 @@ describe('CytoscapeGraph component test', () => {
         graphLayout={myLayout}
         graphDuration={myDuration}
         edgeLabelMode={myEdgeLabelMode}
-        pollInterval={myPollInterval}
         onClick={testClickHandler}
         onReady={testReadyHandler}
         refresh={testClickHandler}

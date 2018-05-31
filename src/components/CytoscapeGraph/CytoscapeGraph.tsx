@@ -13,9 +13,11 @@ import { KialiAppState } from '../../store/Store';
 import * as GraphBadge from './graphs/GraphBadge';
 import TrafficRender from './graphs/TrafficRenderer';
 import { ServiceGraphActions } from '../../actions/ServiceGraphActions';
+import { Spinner } from 'patternfly-react';
 
 type CytoscapeGraphType = {
   elements?: any;
+  isLoading?: boolean;
   edgeLabelMode: EdgeLabelMode;
   showNodeLabels: boolean;
   showCircuitBreakers: boolean;
@@ -61,7 +63,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   shouldComponentUpdate(nextProps: any, nextState: any) {
     this.newLayout = this.props.graphLayout !== nextProps.graphLayout ? nextProps.graphLayout : '';
     return (
-      this.props.namespace.name !== nextProps.namespace.name ||
+      this.props.isLoading !== nextProps.isLoading ||
       this.props.graphLayout !== nextProps.graphLayout ||
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
       this.props.showNodeLabels !== nextProps.showNodeLabels ||
@@ -85,19 +87,21 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   render() {
     return (
       <div id="cytoscape-container" style={{ marginRight: '25em', height: '100%' }}>
-        <EmptyGraphLayout
-          elements={this.props.elements}
-          namespace={this.props.namespace.name}
-          action={this.props.refresh}
-        >
-          <CytoscapeReactWrapper
-            ref={e => {
-              this.setCytoscapeReactWrapperRef(e);
-            }}
+        <Spinner loading={this.props.isLoading}>
+          <EmptyGraphLayout
             elements={this.props.elements}
-            layout={this.props.graphLayout}
-          />
-        </EmptyGraphLayout>
+            namespace={this.props.namespace.name}
+            action={this.props.refresh}
+          >
+            <CytoscapeReactWrapper
+              ref={e => {
+                this.setCytoscapeReactWrapperRef(e);
+              }}
+              elements={this.props.elements}
+              layout={this.props.graphLayout}
+            />
+          </EmptyGraphLayout>
+        </Spinner>
       </div>
     );
   }
@@ -202,31 +206,31 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     this.trafficRenderer.stop();
 
-    // Create and destroy badges
-    // We must destroy all badges before updating the json, or else we will lose all the
-    // references to removed nodes
-    const cbBadge = new GraphBadge.CircuitBreakerBadge();
-    const rrBadge = new GraphBadge.RouteRuleBadge();
-    const rrGroupBadge = new GraphBadge.RouteRuleGroupBadge();
-    const msBadge = new GraphBadge.MissingSidecarsBadge();
-    cy.nodes().forEach(ele => {
-      cbBadge.destroyBadge(ele);
-      rrBadge.destroyBadge(ele);
-      rrGroupBadge.destroyBadge(ele);
-      msBadge.destroyBadge(ele);
-    });
-
     cy.startBatch();
+
     // update the entire set of nodes and edges to keep the graph up-to-date
     cy.json({ elements: this.props.elements });
+
+    // update the layout if it changed
+    if (this.newLayout) {
+      cy.layout(LayoutDictionary.getLayout(this.newLayout)).run();
+      this.newLayout = '';
+    }
 
     // Create and destroy labels
     this.turnEdgeLabelsTo(this.props.edgeLabelMode);
     this.turnNodeLabelsTo(this.props.showNodeLabels);
 
+    // Create and destroy badges
+    const cbBadge = new GraphBadge.CircuitBreakerBadge();
+    const rrBadge = new GraphBadge.RouteRuleBadge();
+    const rrGroupBadge = new GraphBadge.RouteRuleGroupBadge();
+    const msBadge = new GraphBadge.MissingSidecarsBadge();
     cy.nodes().forEach(ele => {
       if (this.props.showCircuitBreakers && ele.data('hasCB') === 'true') {
         cbBadge.buildBadge(ele);
+      } else {
+        cbBadge.destroyBadge(ele);
       }
       if (this.props.showRouteRules && ele.data('hasRR') === 'true') {
         if (ele.data('isGroup')) {
@@ -234,9 +238,13 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         } else {
           rrBadge.buildBadge(ele);
         }
+      } else {
+        rrBadge.destroyBadge(ele);
       }
       if (this.props.showMissingSidecars && ele.data('hasMissingSidecars') && !ele.data('isGroup')) {
         msBadge.buildBadge(ele);
+      } else {
+        msBadge.destroyBadge(ele);
       }
     });
 
@@ -245,11 +253,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     if (cy.zoom() > 2.5) {
       cy.zoom(2.5);
       cy.center();
-    }
-
-    if (this.newLayout) {
-      cy.layout(LayoutDictionary.getLayout(this.newLayout)).run();
-      this.newLayout = '';
     }
 
     cy.endBatch();

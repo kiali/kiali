@@ -14,48 +14,6 @@ export enum ServiceGraphDataActionKeys {
   HANDLE_LEGEND = 'HANDLE_LEGEND'
 }
 
-// When updating the cytoscape graph, the element data expects to have all the changes
-// non provided values are taken as "this didn't change", similar as setState does.
-// Put default values for all fields that are ommited.
-const decorateGraphData = (graphData: any) => {
-  const elementsDefaults = {
-    edges: {
-      rate: undefined,
-      rate3XX: undefined,
-      rate4XX: undefined,
-      rate5XX: undefined,
-      percentErr: undefined,
-      percentRate: undefined,
-      latency: undefined,
-      isUnused: undefined
-    },
-    nodes: {
-      version: undefined,
-      rate: undefined,
-      rate3XX: undefined,
-      rate4XX: undefined,
-      rate5XX: undefined,
-      rateSelfInvoke: undefined,
-      hasCB: undefined,
-      hasRR: undefined,
-      isDead: undefined,
-      isGroup: undefined,
-      isRoot: undefined,
-      isUnused: undefined,
-      hasMissingSidecars: undefined
-    }
-  };
-  if (graphData && graphData.elements) {
-    if (graphData.elements.nodes) {
-      graphData.elements.nodes.map(node => ({ ...elementsDefaults.nodes, ...node }));
-    }
-    if (graphData.elements.edges) {
-      graphData.elements.edges.map(edge => ({ ...elementsDefaults.edges, ...edge }));
-    }
-  }
-  return graphData;
-};
-
 // synchronous action creators
 export const ServiceGraphDataActions = {
   getGraphDataStart: createAction(ServiceGraphDataActionKeys.GET_GRAPH_DATA_START),
@@ -64,7 +22,7 @@ export const ServiceGraphDataActions = {
     (timestamp: number, graphData: any) => ({
       type: ServiceGraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
       timestamp: timestamp,
-      graphData: decorateGraphData(graphData)
+      graphData: graphData
     })
   ),
   getGraphDataFailure: createAction(ServiceGraphDataActionKeys.GET_GRAPH_DATA_FAILURE, (error: any) => ({
@@ -79,12 +37,11 @@ export const ServiceGraphDataActions = {
       dispatch(ServiceGraphDataActions.getGraphDataStart());
       const duration = graphDuration.value;
       const restParams = { duration: duration + 's' };
-      return API.getGraphElements(authentication(), namespace, restParams).then(
+      API.getGraphElements(authentication(), namespace, restParams).then(
         response => {
           const responseData: any = response['data'];
           const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
           const timestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
-
           dispatch(ServiceGraphDataActions.getGraphDataSuccess(timestamp, graphData));
         },
         error => {

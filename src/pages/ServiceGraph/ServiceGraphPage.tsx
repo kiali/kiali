@@ -38,35 +38,27 @@ const cytscapeGraphStyle = style({
 });
 
 export default class ServiceGraphPage extends React.Component<ServiceGraphPageProps, ServiceGraphPageState> {
-  private pollTimeoutRef?: number;
-
   constructor(props: ServiceGraphPageProps) {
     super(props);
+
+    this.state = {
+      summaryData: { summaryType: 'graph', summaryTarget: null }
+    };
   }
 
   componentDidMount() {
     this.loadGraphDataFromBackend();
-    this.installPollIntervalTimer();
-  }
-
-  componentWillUnmount() {
-    this.removePollIntervalTimer();
   }
 
   componentWillReceiveProps(nextProps: ServiceGraphPageProps) {
     const nextNamespace = nextProps.namespace;
     const nextDuration = nextProps.graphDuration;
-    const nextPollInterval = nextProps.pollInterval;
 
     const namespaceHasChanged = nextNamespace.name !== this.props.namespace.name;
     const durationHasChanged = nextDuration.value !== this.props.graphDuration.value;
-    const pollIntervalChanged = nextPollInterval.value !== this.props.pollInterval.value;
 
     if (namespaceHasChanged || durationHasChanged) {
       this.loadGraphDataFromBackend(nextNamespace, nextDuration);
-    }
-    if (pollIntervalChanged) {
-      this.installPollIntervalTimer(nextPollInterval.value);
     }
   }
 
@@ -79,8 +71,7 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
       namespace: this.props.namespace,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
-      graphDuration: this.props.graphDuration,
-      pollInterval: this.props.pollInterval
+      graphDuration: this.props.graphDuration
     };
     return (
       <PfContainerNavVertical>
@@ -118,30 +109,9 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
   loadGraphDataFromBackend = (namespace?: Namespace, graphDuration?: Duration) => {
     namespace = namespace ? namespace : this.props.namespace;
     graphDuration = graphDuration ? graphDuration : this.props.graphDuration;
-    return this.props.fetchGraphData(namespace, graphDuration);
+    this.props.fetchGraphData(namespace, graphDuration);
+    this.setState({
+      summaryData: null
+    });
   };
-
-  private installPollIntervalTimer(pollInterval?: number) {
-    this.removePollIntervalTimer();
-    this.scheduleNextTimeout(pollInterval);
-  }
-
-  private scheduleNextTimeout(pollInterval?: number) {
-    const defaultVal = this.props.pollInterval && this.props.pollInterval.value ? this.props.pollInterval.value : 0;
-    pollInterval = pollInterval ? pollInterval : defaultVal;
-    if (pollInterval > 0) {
-      this.pollTimeoutRef = window.setTimeout(() => {
-        this.loadGraphDataFromBackend().then(() => {
-          this.scheduleNextTimeout();
-        });
-      }, pollInterval);
-    }
-  }
-
-  private removePollIntervalTimer() {
-    if (this.pollTimeoutRef) {
-      clearTimeout(this.pollTimeoutRef);
-      this.pollTimeoutRef = undefined;
-    }
-  }
 }

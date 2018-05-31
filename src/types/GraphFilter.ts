@@ -6,10 +6,6 @@ export interface Duration {
   value: number;
 }
 
-export interface PollInterval {
-  value: number;
-}
-
 export enum EdgeLabelMode {
   HIDE = 'hide',
   REQUESTS_PER_SECOND = 'requestsPerSecond',

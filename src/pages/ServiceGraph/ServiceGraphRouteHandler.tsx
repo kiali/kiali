@@ -19,7 +19,6 @@ type ServiceGraphURLProps = {
   duration: string;
   namespace: string;
   layout: string;
-  pollInterval: string;
 };
 
 /**
@@ -52,13 +51,11 @@ export default class ServiceGraphRouteHandler extends React.Component<
     const _hideCBs = urlParams.get('hideCBs') ? urlParams.get('hideCBs') === 'true' : false;
     const _hideRRs = urlParams.get('hideRRs') ? urlParams.get('hideRRs') === 'true' : false;
     const _edgeLabelMode = EdgeLabelMode.fromString(urlParams.get('edges'), EdgeLabelMode.HIDE);
-    const _pollInterval = urlParams.get('pollInterval');
     return {
       graphDuration: _duration ? { value: _duration } : { value: config().toolbar.defaultDuration },
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
       badgeStatus: { hideCBs: _hideCBs, hideRRs: _hideRRs },
-      edgeLabelMode: _edgeLabelMode,
-      pollInterval: _pollInterval ? { value: _pollInterval } : { value: config().toolbar.defaultPollInterval }
+      edgeLabelMode: _edgeLabelMode
     };
   };
 
@@ -69,26 +66,21 @@ export default class ServiceGraphRouteHandler extends React.Component<
 
   componentWillReceiveProps(nextProps: RouteComponentProps<ServiceGraphURLProps>) {
     const nextNamespace = { name: nextProps.match.params.namespace };
-    const {
-      graphDuration: nextDuration,
-      graphLayout: nextLayout,
-      edgeLabelMode: nextEdgeLabelMode,
-      pollInterval: nextPollInverval
-    } = this.parseProps(nextProps.location.search);
+    const { graphDuration: nextDuration, graphLayout: nextLayout, edgeLabelMode: nextEdgeLabelMode } = this.parseProps(
+      nextProps.location.search
+    );
 
     const layoutHasChanged = nextLayout.name !== this.state.graphLayout.name;
     const namespaceHasChanged = nextNamespace.name !== this.state.namespace.name;
     const durationHasChanged = nextDuration.value !== this.state.graphDuration.value;
     const edgeLabelModeChanged = nextEdgeLabelMode !== this.state.edgeLabelMode;
-    const pollIntervalChanged = nextPollInverval !== this.state.pollInterval;
 
-    if (layoutHasChanged || namespaceHasChanged || durationHasChanged || edgeLabelModeChanged || pollIntervalChanged) {
+    if (layoutHasChanged || namespaceHasChanged || durationHasChanged || edgeLabelModeChanged) {
       const newParams: GraphParamsType = {
         namespace: nextNamespace,
         graphDuration: nextDuration,
         graphLayout: nextLayout,
-        edgeLabelMode: nextEdgeLabelMode,
-        pollInterval: nextPollInverval
+        edgeLabelMode: nextEdgeLabelMode
       };
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(newParams));
       this.setState({ ...newParams });

@@ -22,6 +22,7 @@ const serviceGraphDataState = (state: ServiceGraphState = INITIAL_STATE, action)
   switch (action.type) {
     case ServiceGraphDataActionKeys.GET_GRAPH_DATA_START:
       newState.isLoading = true;
+      newState.sidePanelInfo = null;
       break;
     case ServiceGraphDataActionKeys.HANDLE_LEGEND:
       return {

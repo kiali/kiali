@@ -2,7 +2,7 @@ import * as React from 'react';
 import { PropTypes } from 'prop-types';
 
 import { GraphParamsType } from '../../types/Graph';
-import { Duration, Layout, EdgeLabelMode, PollInterval } from '../../types/GraphFilter';
+import { Duration, Layout, EdgeLabelMode } from '../../types/GraphFilter';
 import Namespace from '../../types/Namespace';
 import GraphFilterToolbarType from '../../types/GraphFilterToolbar';
 
@@ -20,8 +20,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
       namespace: this.props.namespace,
       graphLayout: this.props.graphLayout,
       graphDuration: this.props.graphDuration,
-      edgeLabelMode: this.props.edgeLabelMode,
-      pollInterval: this.props.pollInterval
+      edgeLabelMode: this.props.edgeLabelMode
     };
 
     return (
@@ -32,44 +31,50 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
         onNamespaceChange={this.handleNamespaceChange}
         onEdgeLabelModeChange={this.handleEdgeLabelModeChange}
         onRefresh={this.props.handleRefreshClick}
-        onPollIntervalChanged={this.handlePollIntervalChanged}
         onLegend={this.props.handleLegendClick}
         hideLegend={this.props.hideLegend}
-        isLoading={this.props.isLoading}
         {...graphParams}
       />
     );
   }
 
   handleLayoutChange = (graphLayout: Layout) => {
+    const { namespace, graphDuration, edgeLabelMode } = this.getGraphParams();
     this.handleFilterChange({
-      ...this.getGraphParams(),
-      graphLayout
+      graphDuration,
+      namespace,
+      graphLayout,
+      edgeLabelMode
     });
   };
 
   handleDurationChange = (graphDuration: Duration) => {
+    const { namespace, graphLayout, edgeLabelMode } = this.getGraphParams();
     this.handleFilterChange({
-      ...this.getGraphParams(),
-      graphDuration
+      graphDuration,
+      namespace,
+      graphLayout,
+      edgeLabelMode
     });
   };
 
   handleNamespaceChange = (namespace: Namespace) => {
+    const { graphDuration, graphLayout, edgeLabelMode } = this.getGraphParams();
     this.handleFilterChange({
-      ...this.getGraphParams(),
-      namespace
+      namespace,
+      graphDuration,
+      graphLayout,
+      edgeLabelMode
     });
   };
 
   handleEdgeLabelModeChange = (edgeLabelMode: EdgeLabelMode) => {
-    this.handleFilterChange({ ...this.getGraphParams(), edgeLabelMode });
-  };
-
-  handlePollIntervalChanged = (pollInterval: PollInterval) => {
+    const { namespace, graphDuration, graphLayout } = this.getGraphParams();
     this.handleFilterChange({
-      ...this.getGraphParams(),
-      pollInterval
+      namespace,
+      graphDuration,
+      graphLayout,
+      edgeLabelMode
     });
   };
 
@@ -82,8 +87,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
       namespace: this.props.namespace,
       graphDuration: this.props.graphDuration,
       graphLayout: this.props.graphLayout,
-      edgeLabelMode: this.props.edgeLabelMode,
-      pollInterval: this.props.pollInterval
+      edgeLabelMode: this.props.edgeLabelMode
     };
   };
 }

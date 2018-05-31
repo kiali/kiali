@@ -11,8 +11,7 @@ const PARAMS: GraphParamsType = {
   namespace: { name: 'itsio-system' },
   graphDuration: { value: 60 },
   graphLayout: { name: 'Cose' },
-  edgeLabelMode: EdgeLabelMode.HIDE,
-  pollInterval: { value: 5 }
+  edgeLabelMode: EdgeLabelMode.HIDE
 };
 
 describe('ServiceGraphPage test', () => {
