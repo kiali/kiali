@@ -12,5 +12,8 @@ const mapDispatchToProps = (dispatch: any) => ({
   logout: () => dispatch(LoginActions.logoutSuccess())
 });
 
-const UserDropdownConnected = connect(mapStateToProps, mapDispatchToProps)(UserDropdown);
+const UserDropdownConnected = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(UserDropdown);
 export default UserDropdownConnected;

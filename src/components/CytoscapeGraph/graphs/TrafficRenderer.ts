@@ -139,7 +139,7 @@ class TrafficEdge {
    */
   processStep(step: number) {
     this.points = this.points.map(p => {
-      p.delta += step * p.speed / 1000;
+      p.delta += (step * p.speed) / 1000;
       return p;
     });
     const point = this.generator.processStep(step);

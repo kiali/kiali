@@ -64,9 +64,13 @@ const mapDispatchToPropsMessageCenterTrigger = dispatch => {
   };
 };
 
-const MessageCenterContainer = connect(mapStateToPropsMessageCenter, mapDispatchToPropsMessageCenter)(MessageCenter);
-MessageCenterContainer.Trigger = connect(mapStateToPropsMessageCenterTrigger, mapDispatchToPropsMessageCenterTrigger)(
-  MessageCenterTrigger
-);
+const MessageCenterContainer = connect(
+  mapStateToPropsMessageCenter,
+  mapDispatchToPropsMessageCenter
+)(MessageCenter);
+MessageCenterContainer.Trigger = connect(
+  mapStateToPropsMessageCenterTrigger,
+  mapDispatchToPropsMessageCenterTrigger
+)(MessageCenterTrigger);
 
 export default MessageCenterContainer;

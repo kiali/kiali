@@ -17,5 +17,8 @@ const mapDispatchToProps = dispatch => {
   };
 };
 
-const NamespaceDropdownContainer = connect(mapStateToProps, mapDispatchToProps)(NamespaceDropdown);
+const NamespaceDropdownContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(NamespaceDropdown);
 export default NamespaceDropdownContainer;

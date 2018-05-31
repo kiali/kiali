@@ -131,5 +131,8 @@ export const GraphLayers: React.SFC<GraphLayersProps> = props => {
 };
 
 // hook up to Redux for our State to be mapped to props
-const GraphLayersContainer = connect(mapStateToProps, mapDispatchToProps)(GraphLayers);
+const GraphLayersContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(GraphLayers);
 export default GraphLayersContainer;

@@ -13,16 +13,16 @@ export default class RateTable extends React.Component<RateTablePropType, {}> {
   render() {
     // for the table
     const errRate: number = this.props.rate4xx + this.props.rate5xx;
-    const percentErr: number = this.props.rate === 0 ? 0 : errRate / this.props.rate * 100;
+    const percentErr: number = this.props.rate === 0 ? 0 : (errRate / this.props.rate) * 100;
     const successErr: number = 100 - percentErr;
 
     // for the graph
     const rate2xx: number =
       this.props.rate === 0 ? 0 : this.props.rate - this.props.rate3xx - this.props.rate4xx - this.props.rate5xx;
-    const percent2xx: number = this.props.rate === 0 ? 0 : rate2xx / this.props.rate * 100;
-    const percent3xx: number = this.props.rate === 0 ? 0 : this.props.rate3xx / this.props.rate * 100;
-    const percent4xx: number = this.props.rate === 0 ? 0 : this.props.rate4xx / this.props.rate * 100;
-    const percent5xx: number = this.props.rate === 0 ? 0 : this.props.rate5xx / this.props.rate * 100;
+    const percent2xx: number = this.props.rate === 0 ? 0 : (rate2xx / this.props.rate) * 100;
+    const percent3xx: number = this.props.rate === 0 ? 0 : (this.props.rate3xx / this.props.rate) * 100;
+    const percent4xx: number = this.props.rate === 0 ? 0 : (this.props.rate4xx / this.props.rate) * 100;
+    const percent5xx: number = this.props.rate === 0 ? 0 : (this.props.rate5xx / this.props.rate) * 100;
 
     return (
       <div>

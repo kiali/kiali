@@ -18,8 +18,8 @@ export default class InOutRateTable extends React.Component<InOutRateTablePropTy
     // for the table
     const inErrRate: number = this.props.inRate4xx + this.props.inRate5xx;
     const outErrRate: number = this.props.outRate4xx + this.props.outRate5xx;
-    const percentInErr: number = this.props.inRate === 0 ? 0 : inErrRate / this.props.inRate * 100;
-    const percentOutErr: number = this.props.outRate === 0 ? 0 : outErrRate / this.props.outRate * 100;
+    const percentInErr: number = this.props.inRate === 0 ? 0 : (inErrRate / this.props.inRate) * 100;
+    const percentOutErr: number = this.props.outRate === 0 ? 0 : (outErrRate / this.props.outRate) * 100;
     const percentInSuccess: number = 100 - percentInErr;
     const percentOutSuccess: number = 100 - percentOutErr;
 
@@ -32,14 +32,14 @@ export default class InOutRateTable extends React.Component<InOutRateTablePropTy
       this.props.outRate === 0
         ? 0
         : this.props.outRate - this.props.outRate3xx - this.props.outRate4xx - this.props.outRate5xx;
-    const percent2xxIn: number = this.props.inRate === 0 ? 0 : rate2xxIn / this.props.inRate * 100;
-    const percent3xxIn: number = this.props.inRate === 0 ? 0 : this.props.inRate3xx / this.props.inRate * 100;
-    const percent4xxIn: number = this.props.inRate === 0 ? 0 : this.props.inRate4xx / this.props.inRate * 100;
-    const percent5xxIn: number = this.props.inRate === 0 ? 0 : this.props.inRate5xx / this.props.inRate * 100;
-    const percent2xxOut: number = this.props.outRate === 0 ? 0 : rate2xxOut / this.props.outRate * 100;
-    const percent3xxOut: number = this.props.outRate === 0 ? 0 : this.props.outRate3xx / this.props.outRate * 100;
-    const percent4xxOut: number = this.props.outRate === 0 ? 0 : this.props.outRate4xx / this.props.outRate * 100;
-    const percent5xxOut: number = this.props.outRate === 0 ? 0 : this.props.outRate5xx / this.props.outRate * 100;
+    const percent2xxIn: number = this.props.inRate === 0 ? 0 : (rate2xxIn / this.props.inRate) * 100;
+    const percent3xxIn: number = this.props.inRate === 0 ? 0 : (this.props.inRate3xx / this.props.inRate) * 100;
+    const percent4xxIn: number = this.props.inRate === 0 ? 0 : (this.props.inRate4xx / this.props.inRate) * 100;
+    const percent5xxIn: number = this.props.inRate === 0 ? 0 : (this.props.inRate5xx / this.props.inRate) * 100;
+    const percent2xxOut: number = this.props.outRate === 0 ? 0 : (rate2xxOut / this.props.outRate) * 100;
+    const percent3xxOut: number = this.props.outRate === 0 ? 0 : (this.props.outRate3xx / this.props.outRate) * 100;
+    const percent4xxOut: number = this.props.outRate === 0 ? 0 : (this.props.outRate4xx / this.props.outRate) * 100;
+    const percent5xxOut: number = this.props.outRate === 0 ? 0 : (this.props.outRate5xx / this.props.outRate) * 100;
 
     return (
       <div>
