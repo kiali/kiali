@@ -53,7 +53,7 @@ func TestServiceMultipleChecks(t *testing.T) {
 
 	assert.Equal(checks[0].Message, "Weight should be between 0 and 100")
 	assert.Equal(checks[0].Severity, "error")
-	assert.Equal(checks[0].Path, "spec/route/weight/155")
+	assert.Equal(checks[0].Path, "spec/route[0]/weight/155")
 
 	assert.Equal(checks[1].Message, "Weight sum should be 100")
 	assert.Equal(checks[1].Severity, "error")
@@ -123,7 +123,7 @@ func TestCombinedCheckers(t *testing.T) {
 	assert.False(reviewsRr.Valid)
 	assert.Equal(3, len(reviewsRr.Checks))
 
-	assert.Equal("spec/route/weight/155", reviewsRr.Checks[0].Path)
+	assert.Equal("spec/route[0]/weight/155", reviewsRr.Checks[0].Path)
 	assert.Equal("Weight should be between 0 and 100", reviewsRr.Checks[0].Message)
 	assert.Equal("error", reviewsRr.Checks[0].Severity)
 
