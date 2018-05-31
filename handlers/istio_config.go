@@ -113,6 +113,39 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, istioConfigDetails)
 }
 
+func IstioConfigValidations(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	objectType := params["object_type"]
+	object := params["object"]
+
+	if !checkObjectType(objectType) {
+		RespondWithError(w, http.StatusBadRequest, "Object type not found: "+objectType)
+		return
+	}
+
+	// Get business layer
+	business, err := business.Get()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	istioConfigValidations, err := business.Validations.GetIstioObjectValidations(namespace, objectType, object)
+	if errors.IsNotFound(err) {
+		RespondWithError(w, http.StatusNotFound, err.Error())
+		return
+	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
+		RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
+		return
+	} else if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, istioConfigValidations)
+}
+
 func checkObjectType(objectType string) bool {
 	switch objectType {
 	case

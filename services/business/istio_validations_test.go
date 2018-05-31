@@ -36,6 +36,8 @@ func TestServiceWellRouteRuleValidation(t *testing.T) {
 
 func TestServiceMultipleChecks(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	// Setup mocks
 	vs := mockValidationService(fakeMultipleChecks(), fakePods())
@@ -63,6 +65,8 @@ func TestServiceMultipleChecks(t *testing.T) {
 
 func TestServiceOver100RouteRule(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	// Setup mocks
 	vs := mockValidationService(fakeOver100RouteRule(), fakePods())
@@ -86,6 +90,8 @@ func TestServiceOver100RouteRule(t *testing.T) {
 
 func TestServiceUnder100RouteRule(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	// Setup mocks
 	vs := mockValidationService(fakeUnder100RouteRule(), fakePods())
@@ -106,8 +112,10 @@ func TestServiceUnder100RouteRule(t *testing.T) {
 	assert.Equal(checks[0].Path, "")
 }
 
-func TestCombinedCheckers(t *testing.T) {
+func TestGetNamespaceValidations(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	vs := mockCombinedValidationService(fakeCombinedIstioDetails(),
 		[]string{"details", "product", "customer"}, fakePods())
@@ -120,6 +128,35 @@ func TestCombinedCheckers(t *testing.T) {
 	assert.True(validations["test"][models.IstioValidationKey{"destinationrule", "customer-dr"}].Valid)
 
 	reviewsRr := validations["test"][models.IstioValidationKey{"routerule", "reviews-rr"}]
+	assert.False(reviewsRr.Valid)
+	assert.Equal(3, len(reviewsRr.Checks))
+
+	assert.Equal("spec/route/weight/155", reviewsRr.Checks[0].Path)
+	assert.Equal("Weight should be between 0 and 100", reviewsRr.Checks[0].Message)
+	assert.Equal("error", reviewsRr.Checks[0].Severity)
+
+	assert.Equal("", reviewsRr.Checks[1].Path)
+	assert.Equal("Weight sum should be 100", reviewsRr.Checks[1].Message)
+	assert.Equal("error", reviewsRr.Checks[1].Severity)
+
+	assert.Equal("spec/destination", reviewsRr.Checks[2].Path)
+	assert.Equal("Destination doesn't have a valid service", reviewsRr.Checks[2].Message)
+	assert.Equal("error", reviewsRr.Checks[2].Severity)
+}
+
+func TestGetIstioObjectValidations(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vs := mockCombinedValidationService(fakeCombinedIstioDetails(), []string{"details", "product", "customer"}, fakePods())
+
+	validations, _ := vs.GetIstioObjectValidations("test", "routerules", "reviews-rr")
+
+	assert.NotEmpty(validations)
+	assert.NotEmpty(validations[models.IstioValidationKey{"routerule", "reviews-rr"}])
+
+	reviewsRr := validations[models.IstioValidationKey{"routerule", "reviews-rr"}]
 	assert.False(reviewsRr.Valid)
 	assert.Equal(3, len(reviewsRr.Checks))
 
@@ -274,38 +311,43 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 	k8s.On("GetIstioDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(istioObjects, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string")).Return(fakeCombinedServices(services), nil)
 	k8s.On("GetNamespacePods", mock.AnythingOfType("string")).Return(podList, nil)
+	k8s.On("GetRouteRule", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetRouteRule(), nil)
 
 	return IstioValidationsService{k8s: k8s}
+}
+
+func fakeGetRouteRule() kubernetes.IstioObject {
+	return &kubernetes.RouteRule{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "reviews-rr",
+		},
+		Spec: map[string]interface{}{
+			"destination": map[string]interface{}{
+				"name": "reviews",
+			},
+			"route": []map[string]interface{}{
+				{
+					"weight": uint64(155),
+					"labels": map[string]interface{}{
+						"version": "v1",
+					},
+				},
+				{
+					"weight": uint64(45),
+					"labels": map[string]interface{}{
+						"version": "v2",
+					},
+				},
+			},
+		},
+	}
 }
 
 func fakeCombinedIstioDetails() *kubernetes.IstioDetails {
 	istioDetails := kubernetes.IstioDetails{}
 
 	istioDetails.RouteRules = []kubernetes.IstioObject{
-		&kubernetes.RouteRule{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "reviews-rr",
-			},
-			Spec: map[string]interface{}{
-				"destination": map[string]interface{}{
-					"name": "reviews",
-				},
-				"route": []map[string]interface{}{
-					{
-						"weight": uint64(155),
-						"labels": map[string]interface{}{
-							"version": "v1",
-						},
-					},
-					{
-						"weight": uint64(45),
-						"labels": map[string]interface{}{
-							"version": "v2",
-						},
-					},
-				},
-			},
-		},
+		fakeGetRouteRule(),
 	}
 
 	istioDetails.DestinationPolicies = []kubernetes.IstioObject{

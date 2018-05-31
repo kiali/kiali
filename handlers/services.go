@@ -114,26 +114,6 @@ func ServiceIstioValidations(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, istioValidations)
 }
 
-// NamespaceIstioValidations is the API handler to get istio validations of a given namespace
-func NamespaceIstioValidations(w http.ResponseWriter, r *http.Request) {
-	// Get business layer
-	business, err := business.Get()
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
-		return
-	}
-
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-
-	istioValidations, err := business.Validations.GetNamespaceValidations(namespace)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error checking istio object consistency: "+err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, istioValidations)
-}
-
 // ServiceDetails is the API handler to fetch full details of an specific service
 func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	// Get business layer
