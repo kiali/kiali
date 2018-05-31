@@ -151,6 +151,19 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   }
 
   componentDidMount() {
+    this.fetchBackend();
+  }
+
+  componentDidUpdate(prevProps: RouteComponentProps<ServiceId>, prevState: ServiceDetailsState) {
+    if (
+      prevProps.match.params.namespace !== this.props.match.params.namespace ||
+      prevProps.match.params.service !== this.props.match.params.service
+    ) {
+      this.fetchBackend();
+    }
+  }
+
+  fetchBackend() {
     API.getJaegerInfo(authentication())
       .then(response => {
         this.setState({
