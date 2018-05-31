@@ -32,6 +32,11 @@ func (o *K8SClientMock) GetPods(namespace string, labelsSet labels.Set) (*v1.Pod
 	return args.Get(0).(*v1.PodList), args.Error(1)
 }
 
+func (o *K8SClientMock) GetNamespacePods(namespace string) (*v1.PodList, error) {
+	args := o.Called(namespace)
+	return args.Get(0).(*v1.PodList), args.Error(1)
+}
+
 func (o *K8SClientMock) GetServiceDetails(namespace string, serviceName string) (*kubernetes.ServiceDetails, error) {
 	args := o.Called(namespace, serviceName)
 	return args.Get(0).(*kubernetes.ServiceDetails), args.Error(1)

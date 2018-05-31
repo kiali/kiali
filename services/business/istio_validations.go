@@ -31,7 +31,7 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	}
 
 	objectCheckers := []ObjectChecker{
-		checkers.RouteRuleChecker{istioDetails.RouteRules},
+		checkers.RouteRuleChecker{namespace, pods.Items, istioDetails.RouteRules},
 		&checkers.PodChecker{Pods: pods.Items},
 	}
 
@@ -51,8 +51,14 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 		return nil, err
 	}
 
+	pods, err := in.k8s.GetNamespacePods(namespace)
+	if err != nil {
+		log.Warningf("Cannot get pods for namespace %v.", namespace)
+		return nil, err
+	}
+
 	objectCheckers := []ObjectChecker{
-		checkers.RouteRuleChecker{istioDetails.RouteRules},
+		checkers.RouteRuleChecker{Namespace: namespace, PodList: pods.Items, RouteRules: istioDetails.RouteRules},
 		checkers.NoServiceChecker{IstioDetails: istioDetails, ServiceList: serviceList},
 	}
 
