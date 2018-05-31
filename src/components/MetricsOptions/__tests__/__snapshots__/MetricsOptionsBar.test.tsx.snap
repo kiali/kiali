@@ -225,59 +225,53 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "function",
         "props": Object {
-          "children": Array [
-            undefined,
-            <Button
-              active={false}
-              block={false}
-              bsClass="btn"
-              bsStyle="default"
-              disabled={false}
-              onClick={[MockFunction]}
-            >
-              <Icon
-                name="refresh"
-                type="fa"
-              />
-            </Button>,
-          ],
+          "children": <Button
+            active={false}
+            block={false}
+            bsClass="btn"
+            bsStyle="default"
+            disabled={false}
+            onClick={[MockFunction]}
+          >
+            <Icon
+              name="refresh"
+              type="fa"
+            />
+          </Button>,
           "className": "",
         },
         "ref": null,
-        "rendered": Array [
-          undefined,
-          Object {
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "active": false,
+            "block": false,
+            "bsClass": "btn",
+            "bsStyle": "default",
+            "children": <Icon
+              name="refresh"
+              type="fa"
+            />,
+            "disabled": false,
+            "onClick": [MockFunction],
+          },
+          "ref": null,
+          "rendered": Object {
             "instance": null,
             "key": undefined,
-            "nodeType": "class",
+            "nodeType": "function",
             "props": Object {
-              "active": false,
-              "block": false,
-              "bsClass": "btn",
-              "bsStyle": "default",
-              "children": <Icon
-                name="refresh"
-                type="fa"
-              />,
-              "disabled": false,
-              "onClick": [MockFunction],
+              "name": "refresh",
+              "type": "fa",
             },
             "ref": null,
-            "rendered": Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "function",
-              "props": Object {
-                "name": "refresh",
-                "type": "fa",
-              },
-              "ref": null,
-              "rendered": null,
-              "type": [Function],
-            },
+            "rendered": null,
             "type": [Function],
           },
-        ],
+          "type": [Function],
+        },
         "type": [Function],
       },
       false,
@@ -474,59 +468,53 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "function",
           "props": Object {
-            "children": Array [
-              undefined,
-              <Button
-                active={false}
-                block={false}
-                bsClass="btn"
-                bsStyle="default"
-                disabled={false}
-                onClick={[MockFunction]}
-              >
-                <Icon
-                  name="refresh"
-                  type="fa"
-                />
-              </Button>,
-            ],
+            "children": <Button
+              active={false}
+              block={false}
+              bsClass="btn"
+              bsStyle="default"
+              disabled={false}
+              onClick={[MockFunction]}
+            >
+              <Icon
+                name="refresh"
+                type="fa"
+              />
+            </Button>,
             "className": "",
           },
           "ref": null,
-          "rendered": Array [
-            undefined,
-            Object {
+          "rendered": Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "block": false,
+              "bsClass": "btn",
+              "bsStyle": "default",
+              "children": <Icon
+                name="refresh"
+                type="fa"
+              />,
+              "disabled": false,
+              "onClick": [MockFunction],
+            },
+            "ref": null,
+            "rendered": Object {
               "instance": null,
               "key": undefined,
-              "nodeType": "class",
+              "nodeType": "function",
               "props": Object {
-                "active": false,
-                "block": false,
-                "bsClass": "btn",
-                "bsStyle": "default",
-                "children": <Icon
-                  name="refresh"
-                  type="fa"
-                />,
-                "disabled": false,
-                "onClick": [MockFunction],
+                "name": "refresh",
+                "type": "fa",
               },
               "ref": null,
-              "rendered": Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "function",
-                "props": Object {
-                  "name": "refresh",
-                  "type": "fa",
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
+              "rendered": null,
               "type": [Function],
             },
-          ],
+            "type": [Function],
+          },
           "type": [Function],
         },
         false,
