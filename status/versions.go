@@ -2,13 +2,17 @@ package status
 
 import (
 	"encoding/json"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"io/ioutil"
-	"k8s.io/api/core/v1"
-	kube "k8s.io/client-go/kubernetes"
 	"net/http"
 	"regexp"
+	"strings"
+
+	"github.com/hashicorp/go-version"
+	"k8s.io/api/core/v1"
+	kube "k8s.io/client-go/kubernetes"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 )
 
 type serviceProduct func() (*ProductInfo, error)
@@ -35,6 +39,28 @@ func getVersionProduct(serviceProduct serviceProduct) {
 	}
 }
 
+func validateVersion(istioReq string, installedVersion string) bool {
+	reqWords := strings.Split(istioReq, " ")
+	requirementV, errReqV := version.NewVersion(reqWords[1])
+	installedV, errInsV := version.NewVersion(installedVersion)
+	if errReqV != nil || errInsV != nil {
+		return false
+	}
+	switch operator := reqWords[0]; operator {
+	case "==":
+		return installedV.Equal(requirementV)
+	case ">=":
+		return installedV.GreaterThan(requirementV) || installedV.Equal(requirementV)
+	case ">":
+		return installedV.GreaterThan(requirementV)
+	case "<=":
+		return installedV.LessThan(requirementV) || installedV.Equal(requirementV)
+	case "<":
+		return installedV.LessThan(requirementV)
+	}
+	return false
+}
+
 func istioVersion() (*ProductInfo, error) {
 	product := ProductInfo{}
 	istioConfig := config.Get().Products.Istio
@@ -47,6 +73,9 @@ func istioVersion() (*ProductInfo, error) {
 			version := expVersion.FindStringSubmatch(string(body))
 			if product.Version = "Unknown"; version != nil {
 				product.Version = version[0]
+			}
+			if !validateVersion(config.IstioVersionSupported, product.Version) {
+				info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
 			}
 			return &product, nil
 		}

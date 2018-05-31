@@ -11,8 +11,9 @@ const (
 )
 
 type StatusInfo struct {
-	Status   map[string]string `json:"status"`
-	Products []ProductInfo     `json:"products"`
+	Status          map[string]string `json:"status"`
+	Products        []ProductInfo     `json:"products"`
+	WarningMessages []string          `json:"warningMessages"`
 }
 
 var info StatusInfo
@@ -37,6 +38,7 @@ func Put(name, value string) (previous string, hasPrevious bool) {
 // Get returns a copy of the current status info.
 func Get() (status StatusInfo) {
 	info.Products = []ProductInfo{}
+	info.WarningMessages = []string{}
 	getVersions()
 	return info
 }
