@@ -3,7 +3,7 @@ import { Col, Row, Icon } from 'patternfly-react';
 import LocalTime from '../../../components/Time/LocalTime';
 import Badge from '../../../components/Badge/Badge';
 import { Deployment } from '../../../types/ServiceInfo';
-import { ratioCheck, Status } from '../../../components/ServiceHealth/HealthHelper';
+import { ratioCheck, Status } from '../../../utils/Health';
 import { PfColors } from '../../../components/Pf/PfColors';
 
 interface ServiceInfoDeploymentsProps {

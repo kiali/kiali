@@ -9,7 +9,7 @@ import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
 import { IstioLogo, ServiceItem, ServiceList, SortField, overviewToItem } from '../../types/ServiceListComponent';
 import PropTypes from 'prop-types';
-import { getRequestErrorsRatio } from '../../components/ServiceHealth/HealthHelper';
+import { getRequestErrorsRatio } from '../../utils/Health';
 import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
 import ServiceErrorRate from './ServiceErrorRate';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
@@ -55,7 +55,7 @@ export const sortFields: SortField[] = [
     compare: (a: ServiceItem, b: ServiceItem) => {
       const ratioA = getRequestErrorsRatio(a.health.requests);
       const ratioB = getRequestErrorsRatio(b.health.requests);
-      return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioA - ratioB;
+      return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioA.value - ratioB.value;
     }
   }
 ];

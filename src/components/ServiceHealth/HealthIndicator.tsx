@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Icon } from 'patternfly-react';
 
 import { Health } from '../../types/Health';
-import * as H from './HealthHelper';
+import * as H from '../../utils/Health';
 import { HealthDetails } from './HealthDetails';
 
 export enum DisplayMode {
@@ -34,47 +34,7 @@ export class HealthIndicator extends React.PureComponent<Props, {}> {
 
   updateHealth(health?: Health) {
     this.info = [];
-    let countInactiveDeployments = 0;
-    if (health) {
-      let statuses: H.Status[] = [];
-      // Envoy
-      statuses.push(
-        H.ratioCheck(health.envoy.healthy, health.envoy.total, severity => this.info.push('Envoy health ' + severity))
-      );
-      // Request errors
-      const reqErrorsRatio = H.getRequestErrorsRatio(health.requests);
-      statuses.push(
-        H.requestErrorsThresholdCheck(reqErrorsRatio, (severity, threshold, actual) => {
-          this.info.push(`Error rate ${severity}: ${(100 * actual).toFixed(2)}%>=${100 * threshold}%`);
-        })
-      );
-      // Pods
-      statuses = statuses.concat(
-        health.deploymentStatuses.map(dep => {
-          const status = H.ratioCheck(dep.available, dep.replicas, severity =>
-            this.info.push('Pod deployment ' + severity)
-          );
-          if (status === H.NA) {
-            countInactiveDeployments++;
-          }
-          return status;
-        })
-      );
-      // Merge all
-      this.globalStatus = statuses.reduce(H.mergeStatus, H.NA);
-
-      if (countInactiveDeployments > 0 && countInactiveDeployments === health.deploymentStatuses.length) {
-        // No active deployment => special case for failure
-        this.globalStatus = H.FAILURE;
-        this.info.push('No active deployment!');
-      } else if (countInactiveDeployments === 1) {
-        this.info.push('One inactive deployment');
-      } else if (countInactiveDeployments > 1) {
-        this.info.push(`${countInactiveDeployments} inactive deployments`);
-      }
-    } else {
-      this.globalStatus = H.NA;
-    }
+    this.globalStatus = H.computeAggregatedHealth(health, info => this.info.push(info));
   }
 
   render() {
