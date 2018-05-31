@@ -17,7 +17,7 @@ func TestNonTrafficScenario(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	// Empty trees
-	trees := make([]tree.ServiceNode, 0)
+	trees := make([]*tree.ServiceNode, 0)
 	deployments := mockDeploments()
 
 	addUnusedNodes(&trees, "testNamespace", deployments)
@@ -146,10 +146,11 @@ func mockDeploments() *v1beta1.DeploymentList {
 	return &deployments
 }
 
-func oneNodeTraffic() []tree.ServiceNode {
-	trees := make([]tree.ServiceNode, 1)
+func oneNodeTraffic() []*tree.ServiceNode {
+	trees := make([]*tree.ServiceNode, 1)
 
-	trees[0] = tree.NewServiceNode(tree.UnknownService, tree.UnknownVersion)
+	n := tree.NewServiceNode(tree.UnknownService, tree.UnknownVersion)
+	trees[0] = &n
 	trees[0].Children = make([]*tree.ServiceNode, 1)
 	child := tree.NewServiceNode("customer.testNamespace.svc.cluster.local", "v1")
 	child.Metadata = make(map[string]interface{})
@@ -161,10 +162,11 @@ func oneNodeTraffic() []tree.ServiceNode {
 	return trees
 }
 
-func v1Traffic() []tree.ServiceNode {
-	trees := make([]tree.ServiceNode, 1)
+func v1Traffic() []*tree.ServiceNode {
+	trees := make([]*tree.ServiceNode, 1)
 
-	trees[0] = tree.NewServiceNode(tree.UnknownService, tree.UnknownVersion)
+	unknown := tree.NewServiceNode(tree.UnknownService, tree.UnknownVersion)
+	trees[0] = &unknown
 	trees[0].Children = make([]*tree.ServiceNode, 1)
 	customer := tree.NewServiceNode("customer.testNamespace.svc.cluster.local", "v1")
 	customer.Metadata = make(map[string]interface{})

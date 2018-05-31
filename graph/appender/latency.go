@@ -29,7 +29,7 @@ type LatencyAppender struct {
 }
 
 // AppendGraph implements Appender
-func (a LatencyAppender) AppendGraph(trees *[]tree.ServiceNode, namespace string) {
+func (a LatencyAppender) AppendGraph(trees *[]*tree.ServiceNode, namespace string) {
 	if len(*trees) == 0 {
 		return
 	}
@@ -40,7 +40,7 @@ func (a LatencyAppender) AppendGraph(trees *[]tree.ServiceNode, namespace string
 	a.appendGraph(trees, namespace, client)
 }
 
-func (a LatencyAppender) appendGraph(trees *[]tree.ServiceNode, namespace string, client *prometheus.Client) {
+func (a LatencyAppender) appendGraph(trees *[]*tree.ServiceNode, namespace string, client *prometheus.Client) {
 	quantile := a.Quantile
 	if a.Quantile <= 0.0 || a.Quantile >= 100.0 {
 		log.Warningf("Replacing invalid quantile [%.2f] with default [%.2f]", a.Quantile, DefaultQuantile)
@@ -75,7 +75,7 @@ func (a LatencyAppender) appendGraph(trees *[]tree.ServiceNode, namespace string
 	populateLatencyMap(latencyMap, &inVector)
 
 	for _, tree := range *trees {
-		applyLatency(&tree, latencyMap)
+		applyLatency(tree, latencyMap)
 	}
 }
 

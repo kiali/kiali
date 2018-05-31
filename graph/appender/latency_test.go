@@ -140,7 +140,7 @@ func TestLatency(t *testing.T) {
 	assert.NotEqual(ratingsPath1, ratingsPath2)
 }
 
-func latencyTestTree() []tree.ServiceNode {
+func latencyTestTree() []*tree.ServiceNode {
 	ingress := tree.NewServiceNode("ingress.istio-system.svc.cluster.local", tree.UnknownVersion)
 	productpage := tree.NewServiceNode("productpage.bookinfo.svc.cluster.local", "v1")
 	reviewsV1 := tree.NewServiceNode("reviews.bookinfo.svc.cluster.local", "v1")
@@ -174,8 +174,8 @@ func latencyTestTree() []tree.ServiceNode {
 	ratingsPath2.Parent = &reviewsV2
 	ratingsPath2.Metadata = make(map[string]interface{})
 
-	trees := make([]tree.ServiceNode, 1)
-	trees[0] = ingress
+	trees := make([]*tree.ServiceNode, 1)
+	trees[0] = &ingress
 
 	return trees
 }

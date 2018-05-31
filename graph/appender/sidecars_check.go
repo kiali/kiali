@@ -11,7 +11,7 @@ import (
 type SidecarsCheckAppender struct{}
 
 // AppendGraph implements Appender
-func (a SidecarsCheckAppender) AppendGraph(trees *[]tree.ServiceNode, _ string) {
+func (a SidecarsCheckAppender) AppendGraph(trees *[]*tree.ServiceNode, _ string) {
 	if len(*trees) == 0 {
 		return
 	}
@@ -20,7 +20,7 @@ func (a SidecarsCheckAppender) AppendGraph(trees *[]tree.ServiceNode, _ string) 
 	checkError(err)
 
 	for _, tree := range *trees {
-		a.applySidecarsChecks(&tree, k8s)
+		a.applySidecarsChecks(tree, k8s)
 	}
 }
 

@@ -64,7 +64,7 @@ type Node struct {
 
 type Config Node
 
-func NewConfig(namespace string, sn *[]tree.ServiceNode, o options.VendorOptions) (result Config) {
+func NewConfig(namespace string, sn *[]*tree.ServiceNode, o options.VendorOptions) (result Config) {
 
 	namespaceOrphanNode := Node{
 		Renderer:    "focusedChild",
@@ -77,7 +77,7 @@ func NewConfig(namespace string, sn *[]tree.ServiceNode, o options.VendorOptions
 	var maxVolume float64
 
 	for _, t := range *sn {
-		walk(&t, &namespaceNodes, &namespaceConnections, &maxVolume, o)
+		walk(t, &namespaceNodes, &namespaceConnections, &maxVolume, o)
 	}
 
 	regionNamespaceNode := Node{

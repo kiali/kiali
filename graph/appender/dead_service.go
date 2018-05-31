@@ -13,7 +13,7 @@ import (
 type DeadServiceAppender struct{}
 
 // AppendGraph implements Appender
-func (a DeadServiceAppender) AppendGraph(trees *[]tree.ServiceNode, _ string) {
+func (a DeadServiceAppender) AppendGraph(trees *[]*tree.ServiceNode, _ string) {
 	if len(*trees) == 0 {
 		return
 	}
@@ -22,7 +22,7 @@ func (a DeadServiceAppender) AppendGraph(trees *[]tree.ServiceNode, _ string) {
 	checkError(err)
 
 	for _, tree := range *trees {
-		applyDeadServices(&tree, istioClient)
+		applyDeadServices(tree, istioClient)
 	}
 }
 

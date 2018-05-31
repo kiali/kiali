@@ -65,7 +65,7 @@ func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector)
 }
 
 func TestNamespaceGraph(t *testing.T) {
-	q0 := "round(sum(rate(istio_request_count{source_service!~\".*\\\\.istio-system\\\\..*\",destination_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_service),0.001)"
+	q0 := "round(sum(rate(istio_request_count{source_service!~\".*\\\\.bookinfo\\\\..*\",destination_service=~\".*\\\\.bookinfo\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_service),0.001)"
 	q0m0 := model.Metric{
 		"source_service": "unknown"}
 	q0m1 := model.Metric{
@@ -78,58 +78,58 @@ func TestNamespaceGraph(t *testing.T) {
 			Metric: q0m1,
 			Value:  0}}
 
-	q1 := "round(sum(rate(istio_request_count{source_service=\"ingress.istio-system.svc.cluster.local\",source_version=\"unknown\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	q1 := "round(sum(rate(istio_request_count{source_service=\"unknown\",source_version=\"unknown\",destination_service=~\".*\\\\.bookinfo\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
 	q1m0 := model.Metric{
-		"destination_service": "productpage.istio-system.svc.cluster.local",
+		"destination_service": "productpage.bookinfo.svc.cluster.local",
 		"destination_version": "v1",
 		"response_code":       "200"}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
-			Value:  100}}
+			Value:  50}}
 
-	q2 := "round(sum(rate(istio_request_count{source_service=\"unknown\",source_version=\"unknown\",destination_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	q2 := "round(sum(rate(istio_request_count{source_service=\"ingress.istio-system.svc.cluster.local\",source_version=\"unknown\",destination_service=~\".*\\\\.bookinfo\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
 	q2m0 := model.Metric{
-		"destination_service": "productpage.istio-system.svc.cluster.local",
+		"destination_service": "productpage.bookinfo.svc.cluster.local",
 		"destination_version": "v1",
 		"response_code":       "200"}
 	v2 := model.Vector{
 		&model.Sample{
 			Metric: q2m0,
-			Value:  50}}
+			Value:  100}}
 
-	q3 := "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",source_version=\"v1\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	q3 := "round(sum(rate(istio_request_count{source_service=\"productpage.bookinfo.svc.cluster.local\",source_version=\"v1\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
 	q3m0 := model.Metric{
-		"destination_service": "reviews.istio-system.svc.cluster.local",
+		"destination_service": "reviews.bookinfo.svc.cluster.local",
 		"destination_version": "v1",
 		"response_code":       "200"}
 	q3m1 := model.Metric{
-		"destination_service": "reviews.istio-system.svc.cluster.local",
+		"destination_service": "reviews.bookinfo.svc.cluster.local",
 		"destination_version": "v2",
 		"response_code":       "200"}
 	q3m2 := model.Metric{
-		"destination_service": "reviews.istio-system.svc.cluster.local",
+		"destination_service": "reviews.bookinfo.svc.cluster.local",
 		"destination_version": "v3",
 		"response_code":       "200"}
 	q3m3 := model.Metric{
-		"destination_service": "details.istio-system.svc.cluster.local",
+		"destination_service": "details.bookinfo.svc.cluster.local",
 		"destination_version": "v1",
 		"response_code":       "300"}
 	q3m4 := model.Metric{
-		"destination_service": "details.istio-system.svc.cluster.local",
+		"destination_service": "details.bookinfo.svc.cluster.local",
 		"destination_version": "v1",
 		"response_code":       "400"}
 	q3m5 := model.Metric{
-		"destination_service": "details.istio-system.svc.cluster.local",
+		"destination_service": "details.bookinfo.svc.cluster.local",
 		"destination_version": "v1",
 		"response_code":       "500"}
 	q3m6 := model.Metric{
-		"destination_service": "details.istio-system.svc.cluster.local",
+		"destination_service": "details.bookinfo.svc.cluster.local",
 		"destination_version": "v1",
 		"response_code":       "200"}
 
 	q3m7 := model.Metric{
-		"destination_service": "productpage.istio-system.svc.cluster.local",
+		"destination_service": "productpage.bookinfo.svc.cluster.local",
 		"destination_version": "v1",
 		"response_code":       "200"}
 	v3 := model.Vector{
@@ -158,16 +158,16 @@ func TestNamespaceGraph(t *testing.T) {
 			Metric: q3m7,
 			Value:  20}}
 
-	q4 := "round(sum(rate(istio_request_count{source_service=\"reviews.istio-system.svc.cluster.local\",source_version=\"v1\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	q4 := "round(sum(rate(istio_request_count{source_service=\"reviews.bookinfo.svc.cluster.local\",source_version=\"v1\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
 	v4 := model.Vector{}
 
-	q5 := "round(sum(rate(istio_request_count{source_service=\"reviews.istio-system.svc.cluster.local\",source_version=\"v2\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	q5 := "round(sum(rate(istio_request_count{source_service=\"reviews.bookinfo.svc.cluster.local\",source_version=\"v2\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
 	q5m0 := model.Metric{
-		"destination_service": "ratings.istio-system.svc.cluster.local",
+		"destination_service": "ratings.bookinfo.svc.cluster.local",
 		"destination_version": "v1",
 		"response_code":       "200"}
 	q5m1 := model.Metric{
-		"destination_service": "reviews.istio-system.svc.cluster.local",
+		"destination_service": "reviews.bookinfo.svc.cluster.local",
 		"destination_version": "v2",
 		"response_code":       "200"}
 	v5 := model.Vector{
@@ -178,13 +178,13 @@ func TestNamespaceGraph(t *testing.T) {
 			Metric: q5m1,
 			Value:  20}}
 
-	q6 := "round(sum(rate(istio_request_count{source_service=\"reviews.istio-system.svc.cluster.local\",source_version=\"v3\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	q6 := "round(sum(rate(istio_request_count{source_service=\"reviews.bookinfo.svc.cluster.local\",source_version=\"v3\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
 	q6m0 := model.Metric{
-		"destination_service": "ratings.istio-system.svc.cluster.local",
+		"destination_service": "ratings.bookinfo.svc.cluster.local",
 		"destination_version": "v1",
 		"response_code":       "200"}
 	q6m1 := model.Metric{
-		"destination_service": "reviews.istio-system.svc.cluster.local",
+		"destination_service": "reviews.bookinfo.svc.cluster.local",
 		"destination_version": "v3",
 		"response_code":       "200"}
 	v6 := model.Vector{
@@ -195,10 +195,10 @@ func TestNamespaceGraph(t *testing.T) {
 			Metric: q6m1,
 			Value:  20}}
 
-	q7 := "round(sum(rate(istio_request_count{source_service=\"details.istio-system.svc.cluster.local\",source_version=\"v1\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	q7 := "round(sum(rate(istio_request_count{source_service=\"details.bookinfo.svc.cluster.local\",source_version=\"v1\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
 	v7 := model.Vector{}
 
-	q8 := "round(sum(rate(istio_request_count{source_service=\"ratings.istio-system.svc.cluster.local\",source_version=\"v1\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	q8 := "round(sum(rate(istio_request_count{source_service=\"ratings.bookinfo.svc.cluster.local\",source_version=\"v1\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
 	v8 := model.Vector{}
 
 	client, api, err := setupMocked()
@@ -228,13 +228,96 @@ func TestNamespaceGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNamespace
-	url := ts.URL + "/api/namespaces/istio-system/graph?appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/bookinfo/graph?appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_namespace_graph.expected")
+	expected = expected[:len(expected)-1] // remove EOF byte
+
+	if !assert.Equal(t, expected, actual) {
+		fmt.Printf("\nActual:\n%v", string(actual))
+	}
+	assert.Equal(t, 200, resp.StatusCode)
+}
+
+func TestMultiNamespaceGraph(t *testing.T) {
+	q0 := "round(sum(rate(istio_request_count{source_service!~\".*\\\\.bookinfo\\\\..*\",destination_service=~\".*\\\\.bookinfo\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_service),0.001)"
+	q0m0 := model.Metric{
+		"source_service": "unknown"}
+	v0 := model.Vector{
+		&model.Sample{
+			Metric: q0m0,
+			Value:  0}}
+
+	q1 := "round(sum(rate(istio_request_count{source_service=\"unknown\",source_version=\"unknown\",destination_service=~\".*\\\\.bookinfo\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	q1m0 := model.Metric{
+		"destination_service": "productpage.bookinfo.svc.cluster.local",
+		"destination_version": "v1",
+		"response_code":       "200"}
+	v1 := model.Vector{
+		&model.Sample{
+			Metric: q1m0,
+			Value:  50}}
+
+	q2 := "round(sum(rate(istio_request_count{source_service=\"productpage.bookinfo.svc.cluster.local\",source_version=\"v1\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	v2 := model.Vector{}
+
+	q3 := "round(sum(rate(istio_request_count{source_service!~\".*\\\\.tutorial\\\\..*\",destination_service=~\".*\\\\.tutorial\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_service),0.001)"
+	q3m0 := model.Metric{
+		"source_service": "unknown"}
+	v3 := model.Vector{
+		&model.Sample{
+			Metric: q3m0,
+			Value:  0}}
+
+	q4 := "round(sum(rate(istio_request_count{source_service=\"unknown\",source_version=\"unknown\",destination_service=~\".*\\\\.tutorial\\\\..*\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	q4m0 := model.Metric{
+		"destination_service": "customer.tutorial.svc.cluster.local",
+		"destination_version": "v1",
+		"response_code":       "200"}
+	v4 := model.Vector{
+		&model.Sample{
+			Metric: q4m0,
+			Value:  50}}
+
+	q5 := "round(sum(rate(istio_request_count{source_service=\"customer.tutorial.svc.cluster.local\",source_version=\"v1\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (destination_service,destination_version,response_code),0.001)"
+	v5 := model.Vector{}
+
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mockQuery(api, q0, &v0)
+	mockQuery(api, q1, &v1)
+	mockQuery(api, q2, &v2)
+	mockQuery(api, q3, &v3)
+	mockQuery(api, q4, &v4)
+	mockQuery(api, q5, &v5)
+
+	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
+
+	mr := mux.NewRouter()
+	mr.HandleFunc("/api/namespaces/{namespace}/graph", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			fut(w, r, client)
+		}))
+
+	ts := httptest.NewServer(mr)
+	defer ts.Close()
+
+	fut = graphNamespace
+	url := ts.URL + "/api/namespaces/bookinfo/graph?appenders&queryTime=1523364075&namespaces=bookinfo,tutorial"
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, _ := ioutil.ReadAll(resp.Body)
+	expected, _ := ioutil.ReadFile("testdata/test_multi_namespace_graph.expected")
+	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
 		fmt.Printf("\nActual:\n%v", string(actual))
@@ -355,6 +438,7 @@ func TestServiceGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_service_graph.expected")
+	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
 		fmt.Printf("\nActual:\n%v", string(actual))

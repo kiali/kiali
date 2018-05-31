@@ -15,7 +15,7 @@ type UnusedServiceAppender struct {
 }
 
 // AppendGraph implements Appender
-func (a UnusedServiceAppender) AppendGraph(trees *[]tree.ServiceNode, namespaceName string) {
+func (a UnusedServiceAppender) AppendGraph(trees *[]*tree.ServiceNode, namespaceName string) {
 	istioClient, err := kubernetes.NewClient()
 	checkError(err)
 
@@ -25,11 +25,11 @@ func (a UnusedServiceAppender) AppendGraph(trees *[]tree.ServiceNode, namespaceN
 	addUnusedNodes(trees, namespaceName, deployments)
 }
 
-func addUnusedNodes(trees *[]tree.ServiceNode, namespaceName string, deployments *v1beta1.DeploymentList) {
+func addUnusedNodes(trees *[]*tree.ServiceNode, namespaceName string, deployments *v1beta1.DeploymentList) {
 	staticNodeList := buildStaticNodeList(namespaceName, deployments)
 	currentNodeSet := make(map[string]struct{})
 	for _, tree := range *trees {
-		buildNodeSet(&currentNodeSet, &tree)
+		buildNodeSet(&currentNodeSet, tree)
 	}
 
 	// Empty trees, no traffic in whole namespace, so we create a default tree with the static info
@@ -42,13 +42,13 @@ func addUnusedNodes(trees *[]tree.ServiceNode, namespaceName string, deployments
 	for i := 0; i < len(staticNodeList); i++ {
 		// Node found in the static list but with no traffic, it should be added to the trees
 		if _, ok := currentNodeSet[staticNodeList[i].ID]; !ok {
-			addNodeToTrees(trees, &staticNodeList[i])
+			addNodeToTrees(trees, staticNodeList[i])
 		}
 	}
 }
 
-func buildStaticNodeList(namespaceName string, deployments *v1beta1.DeploymentList) []tree.ServiceNode {
-	nonTrafficList := make([]tree.ServiceNode, 0)
+func buildStaticNodeList(namespaceName string, deployments *v1beta1.DeploymentList) []*tree.ServiceNode {
+	nonTrafficList := make([]*tree.ServiceNode, 0)
 	appLabel := config.Get().ServiceFilterLabelName
 	versionLabel := config.Get().VersionFilterLabelName
 	identityDomain := config.Get().Products.Istio.IstioIdentityDomain
@@ -65,7 +65,7 @@ func buildStaticNodeList(namespaceName string, deployments *v1beta1.DeploymentLi
 		}
 		staticNode := tree.NewServiceNode(fmt.Sprintf("%s.%s.%s", app, namespaceName, identityDomain), version)
 		staticNode.Metadata = map[string]interface{}{"rate": 0.0, "isUnused": "true"}
-		nonTrafficList = append(nonTrafficList, staticNode)
+		nonTrafficList = append(nonTrafficList, &staticNode)
 	}
 	return nonTrafficList
 }
@@ -77,7 +77,7 @@ func buildNodeSet(nodeSet *map[string]struct{}, tree *tree.ServiceNode) {
 	}
 }
 
-func buildDefaultTrees(trees *[]tree.ServiceNode, staticNodeList *[]tree.ServiceNode) {
+func buildDefaultTrees(trees *[]*tree.ServiceNode, staticNodeList *[]*tree.ServiceNode) {
 	if len(*staticNodeList) == 0 {
 		return
 	}
@@ -86,19 +86,19 @@ func buildDefaultTrees(trees *[]tree.ServiceNode, staticNodeList *[]tree.Service
 	}
 }
 
-func addNodeToTrees(trees *[]tree.ServiceNode, node *tree.ServiceNode) {
+func addNodeToTrees(trees *[]*tree.ServiceNode, node *tree.ServiceNode) {
 	// First we try to find a sibling and add the under under same parent
 	added := false
 	for i := 0; i < len(*trees); i++ {
 		if !added {
-			added = findAndAddSibling(&((*trees)[i]), node)
+			added = findAndAddSibling((*trees)[i], node)
 		} else {
 			break
 		}
 	}
 	// Second, if not founded, we add them as root tree level
 	if !added {
-		*trees = append(*trees, *node)
+		*trees = append(*trees, node)
 	}
 }
 
