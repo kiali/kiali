@@ -1,6 +1,8 @@
 package business
 
 import (
+	"fmt"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/services/business/checkers"
@@ -63,6 +65,58 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 	}
 
 	return models.NamespaceValidations{namespace: runObjectCheckers(objectCheckers)}, nil
+}
+
+func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, objectType string, object string) (models.IstioValidations, error) {
+	serviceList, err := in.k8s.GetServices(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get only the given Istio Object
+	var rr, dp, vs, dr kubernetes.IstioObject
+	var objectCheckers []ObjectChecker
+	noServiceChecker := checkers.NoServiceChecker{ServiceList: serviceList}
+	istioDetails := kubernetes.IstioDetails{}
+	noServiceChecker.IstioDetails = &istioDetails
+	switch objectType {
+	case "routerules":
+		if rr, err = in.k8s.GetRouteRule(namespace, object); err == nil {
+			pods, err := in.k8s.GetNamespacePods(namespace)
+			if err != nil {
+				log.Warningf("Cannot get pods for namespace %v.", namespace)
+				return nil, err
+			}
+			routeRuleChecker := checkers.RouteRuleChecker{Namespace: namespace, PodList: pods.Items, RouteRules: []kubernetes.IstioObject{rr}}
+			istioDetails.RouteRules = []kubernetes.IstioObject{rr}
+			objectCheckers = []ObjectChecker{routeRuleChecker, noServiceChecker}
+		}
+	case "destinationpolicies":
+		if dp, err = in.k8s.GetDestinationPolicy(namespace, object); err == nil {
+			istioDetails.DestinationPolicies = []kubernetes.IstioObject{dp}
+			objectCheckers = []ObjectChecker{noServiceChecker}
+		}
+	case "virtualservices":
+		if vs, err = in.k8s.GetVirtualService(namespace, object); err == nil {
+			istioDetails.VirtualServices = []kubernetes.IstioObject{vs}
+			objectCheckers = []ObjectChecker{noServiceChecker}
+		}
+	case "destinationrules":
+		if dr, err = in.k8s.GetDestinationRule(namespace, object); err == nil {
+			istioDetails.DestinationRules = []kubernetes.IstioObject{dr}
+			objectCheckers = []ObjectChecker{noServiceChecker}
+		}
+	case "rules":
+		// Validations on Istio Rules are not yet in place
+	default:
+		err = fmt.Errorf("Object type not found: %v", objectType)
+	}
+
+	if objectCheckers == nil || err != nil {
+		return models.IstioValidations{}, err
+	}
+
+	return runObjectCheckers(objectCheckers), nil
 }
 
 func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {

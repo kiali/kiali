@@ -55,6 +55,12 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigDetails,
 		},
 		{
+			"IstioConfigValidation",
+			"GET",
+			"/api/namespaces/{namespace}/istio/{object_type}/{object}/istio_validations",
+			handlers.IstioConfigValidations,
+		},
+		{
 			"ServiceList",
 			"GET",
 			"/api/namespaces/{namespace}/services",
