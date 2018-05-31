@@ -42,14 +42,14 @@ func (route RouteChecker) Check() ([]*models.IstioCheck, bool) {
 		if err != nil {
 			valid = false
 			validation := models.BuildCheck("Weight must be a number",
-				"error", "spec/route/weight/"+route["weight"].(string))
+				"error", "spec/route["+strconv.Itoa(i)+"]/weight/"+route["weight"].(string))
 			validations = append(validations, &validation)
 		}
 
 		if weight > 100 || weight < 0 {
 			valid = false
 			validation := models.BuildCheck("Weight should be between 0 and 100",
-				"error", "spec/route/weight/"+strconv.Itoa(weight))
+				"error", "spec/route["+strconv.Itoa(i)+"]/weight/"+strconv.Itoa(weight))
 			validations = append(validations, &validation)
 		}
 
