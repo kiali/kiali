@@ -1,10 +1,11 @@
 package checkers
 
 import (
+	"k8s.io/api/core/v1"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/business/checkers/route_rules"
 	"github.com/kiali/kiali/services/models"
-	"k8s.io/api/core/v1"
 )
 
 const objectType = "routerule"

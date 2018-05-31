@@ -7,6 +7,7 @@ import (
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
 )
@@ -20,6 +21,8 @@ func prepareTest(istioObject kubernetes.IstioObject) models.IstioValidations {
 
 func TestWellRouteRuleValidation(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	// Setup mocks
 	validations := prepareTest(fakeIstioObjects())
@@ -130,6 +133,9 @@ func fakeIstioObjects() kubernetes.IstioObject {
 			Name: "reviews-well",
 		},
 		Spec: map[string]interface{}{
+			"destination": map[string]interface{}{
+				"name": "reviews",
+			},
 			"route": []map[string]interface{}{
 				map[string]interface{}{
 					"weight": uint64(55),
@@ -156,6 +162,9 @@ func fakeMultipleChecks() kubernetes.IstioObject {
 			Name: "reviews-multiple",
 		},
 		Spec: map[string]interface{}{
+			"destination": map[string]interface{}{
+				"name": "reviews",
+			},
 			"route": []map[string]interface{}{
 				map[string]interface{}{
 					"weight": uint64(155),
@@ -182,6 +191,9 @@ func fakeCorrectPrecedence() kubernetes.IstioObject {
 			Name: "reviews-precedence",
 		},
 		Spec: map[string]interface{}{
+			"destination": map[string]interface{}{
+				"name": "reviews",
+			},
 			"precedence": uint64(1),
 		},
 	}).DeepCopyIstioObject()
@@ -195,6 +207,9 @@ func fakeNegative() kubernetes.IstioObject {
 			Name: "reviews-negative",
 		},
 		Spec: map[string]interface{}{
+			"destination": map[string]interface{}{
+				"name": "reviews",
+			},
 			"precedence": int64(-1),
 		},
 	}).DeepCopyIstioObject()
@@ -208,6 +223,9 @@ func fakeMixedChecker() kubernetes.IstioObject {
 			Name: "reviews-mixed",
 		},
 		Spec: map[string]interface{}{
+			"destination": map[string]interface{}{
+				"name": "reviews",
+			},
 			"precedence": int64(-1),
 			"route": []map[string]interface{}{
 				map[string]interface{}{
@@ -239,6 +257,7 @@ func fakePods() []v1.Pod {
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "reviews-12345-hello",
 				Labels: map[string]string{
+					"app":     "reviews",
 					"version": "v2",
 				},
 			},
@@ -247,6 +266,7 @@ func fakePods() []v1.Pod {
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "reviews-54321-hello",
 				Labels: map[string]string{
+					"app":     "reviews",
 					"version": "v1",
 				},
 			},

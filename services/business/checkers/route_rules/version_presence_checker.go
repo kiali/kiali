@@ -4,10 +4,12 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/services/models"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/services/models"
 )
 
 type VersionPresenceChecker struct {
@@ -26,15 +28,15 @@ func (checker VersionPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	for i := 0; i < slice.Len(); i++ {
-		route := slice.Index(i).Interface().(map[string]interface{})
-		if route["labels"] == nil {
+		route, ok := slice.Index(i).Interface().(map[string]interface{})
+		if !ok || route["labels"] == nil {
 			continue
 		}
 
-		routeSelector := getSelector(route["labels"])
-		if !checker.hasMatchingPod(routeSelector) {
+		routeSelector := getSelector(checker.RouteRule, route["labels"])
+		if routeSelector == nil || !checker.hasMatchingPod(routeSelector) {
 			valid = false
-			validation := models.BuildCheck("No pods found for the selector", "warning",
+			validation := models.BuildCheck("No pods found for this selector", "warning",
 				"spec/route["+strconv.Itoa(i)+"]/labels")
 			validations = append(validations, &validation)
 		}
@@ -48,7 +50,7 @@ func (checker VersionPresenceChecker) hasMatchingPod(selector labels.Selector) b
 	podFound := false
 
 	for _, pod := range checker.PodList {
-		podFound = podFound || selector.Matches(labels.Set(pod.ObjectMeta.Labels))
+		podFound = selector.Matches(labels.Set(pod.ObjectMeta.Labels))
 		if podFound {
 			break
 		}
@@ -57,11 +59,36 @@ func (checker VersionPresenceChecker) hasMatchingPod(selector labels.Selector) b
 	return podFound
 }
 
-func getSelector(rawLabels interface{}) labels.Selector {
+func getSelector(routeRule kubernetes.IstioObject, rawLabels interface{}) labels.Selector {
 	routeLabels := map[string]string{}
-	for key, value := range rawLabels.(map[string]interface{}) {
+
+	castedLabels, ok := rawLabels.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	for key, value := range castedLabels {
 		routeLabels[key] = value.(string)
 	}
 
+	routeLabels[config.Get().ServiceFilterLabelName] = getServiceName(routeRule)
 	return labels.Set(routeLabels).AsSelector()
+}
+
+func getServiceName(routeRule kubernetes.IstioObject) string {
+	serviceName := ""
+
+	spec := routeRule.GetSpec()
+	if spec == nil {
+		return ""
+	}
+
+	if destination, ok := spec["destination"]; ok {
+		dest, ok := destination.(map[string]interface{})
+		if ok {
+			serviceName = dest["name"].(string)
+		}
+	}
+
+	return serviceName
 }

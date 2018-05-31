@@ -105,7 +105,7 @@ func (in *IstioClient) GetPods(namespace string, labelsSet labels.Set) (*v1.PodL
 	return in.k8s.CoreV1().Pods(namespace).List(meta_v1.ListOptions{LabelSelector: formatted})
 }
 
-// GetPods returns the pods definitions for a given namespace
+// GetNamespacePods returns the pods definitions for a given namespace
 // It returns an error on any problem.
 func (in *IstioClient) GetNamespacePods(namespace string) (*v1.PodList, error) {
 	return in.k8s.CoreV1().Pods(namespace).List(emptyListOptions)
