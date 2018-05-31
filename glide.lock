@@ -1,5 +1,5 @@
-hash: 1359ffb9363125d471cae13d0f8c3f2f4f75a7abff6db8f7937f147da16f8de2
-updated: 2018-05-28T20:33:44.703045735+02:00
+hash: 9ccc09ca3ae448865859caa8a8814c3ace3dcd1e1c915fa479bcc314e741a7f1
+updated: 2018-05-31T10:49:25.879641907+02:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 782f4967f2dc4564575ca782fe2d04090b5faca8
@@ -54,6 +54,8 @@ imports:
   version: 787624de3eb7bd915c329cba748687a3b22666a6
   subpackages:
   - diskcache
+- name: github.com/hashicorp/go-version
+  version: 23480c0665776210b5fbbac6eaaee40e3e6a96b7
 - name: github.com/json-iterator/go
   version: 36b14963da70d11297d313183d7e6388c8510e1e
 - name: github.com/juju/ratelimit
