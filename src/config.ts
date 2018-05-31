@@ -16,7 +16,7 @@ export const config = () => {
         43200: 'Last 12 hours',
         86400: 'Last day',
         604800: 'Last 7 days',
-        2592000: 'last 30 days'
+        2592000: 'Last 30 days'
       },
       defaultPollInterval: 5000,
       pollInterval: {
