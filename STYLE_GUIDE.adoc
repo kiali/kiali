@@ -1,0 +1,177 @@
+:toc: macro
+:toc-title:
+
+toc::[]
+
+= File naming conventions
+
+[source,typescript]
+----
+// bad
+import Footer from './Footer/index';
+// good
+import Footer from './Footer';
+----
+
+
+= Methods
+
+=== Naming
+
+* action types - use constants, [NOUN]_[VERB], eg. USER_FETCH or MATERIAL_REQUEST_UPDATE
+* action creators - [verb][Noun]() eg. fetchCurrentUser(), acceptMaterialRequest()
+* selectors - get[NOUN]() or select[NOUN]() eg. getSelectedCards(), selectActiveRows()
+
+=== Handlers
+
+Use consistent naming for events and event handlers: Name the handler methods after their triggering event
+
+Event handlers should:
+
+* begin with handle
+* end with the name of the event they handle (eg, Click, Change)
+* be present-tense
+
+Event names:
+
+* in props should start with on
+* should not clash with builtin/native event names, eg. use onSelect instead of onFocus or onClick
+
+=== Use arrow functions
+
+[source,typescript]
+----
+CreateItem = () => {
+    return (
+      <ul>
+        {props.items.map((item, index) => (
+          <Item
+            key={item.key}
+            onClick={() => doSomethingWith(item.name, index)}
+          />
+        ))}
+      </ul>
+    );
+}
+----
+
+= Interfaces
+
+Typechecking components
+
+== Proptypes
+
+[source,typescript]
+----
+import PropTypes from 'prop-types';
+
+class MyComponent extends React.Component {
+  render() {
+    // This must be exactly one element or it will warn.
+    const children = this.props.children;
+    const name = this.props.name;
+    return (
+      <div>
+        The name is { name }
+        {children}
+      </div>
+    );
+  }
+}
+
+MyComponent.propTypes = {
+  name: PropTypes.string,
+  children: PropTypes.element.isRequired
+};
+
+// Specifies the default values for props:
+MyComponent.defaultProps = {
+  name: 'Stranger'
+};
+----
+
+Here is an example documenting the different validators provided:
+
+[source,typescript]
+----
+import PropTypes from 'prop-types';
+
+MyComponent.propTypes = {
+  // You can declare that a prop is a specific JS type. By default, these
+  // are all optional.
+  optionalArray: PropTypes.array,
+  optionalBool: PropTypes.bool,
+  optionalFunc: PropTypes.func,
+  optionalNumber: PropTypes.number,
+  optionalObject: PropTypes.object,
+  optionalString: PropTypes.string,
+  optionalSymbol: PropTypes.symbol,
+
+  // Anything that can be rendered: numbers, strings, elements or an array
+  // (or fragment) containing these types.
+  optionalNode: PropTypes.node,
+
+  // A React element.
+  optionalElement: PropTypes.element,
+
+  // You can also declare that a prop is an instance of a class. This uses
+  // JS's instanceof operator.
+  optionalMessage: PropTypes.instanceOf(Message),
+
+  // You can ensure that your prop is limited to specific values by treating
+  // it as an enum.
+  optionalEnum: PropTypes.oneOf(['News', 'Photos']),
+
+  // An object that could be one of many types
+  optionalUnion: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+    PropTypes.instanceOf(Message)
+  ]),
+
+  // An array of a certain type
+  optionalArrayOf: PropTypes.arrayOf(PropTypes.number),
+
+  // An object with property values of a certain type
+  optionalObjectOf: PropTypes.objectOf(PropTypes.number),
+
+  // An object taking on a particular shape
+  optionalObjectWithShape: PropTypes.shape({
+    color: PropTypes.string,
+    fontSize: PropTypes.number
+  }),
+
+  // You can chain any of the above with `isRequired` to make sure a warning
+  // is shown if the prop isn't provided.
+  requiredFunc: PropTypes.func.isRequired,
+
+  // A value of any data type
+  requiredAny: PropTypes.any.isRequired,
+
+  // You can also specify a custom validator. It should return an Error
+  // object if the validation fails. Don't `console.warn` or throw, as this
+  // won't work inside `oneOfType`.
+  customProp: function(props, propName, componentName) {
+    if (!/matchme/.test(props[propName])) {
+      return new Error(
+        'Invalid prop `' + propName + '` supplied to' +
+        ' `' + componentName + '`. Validation failed.'
+      );
+    }
+  },
+
+  // You can also supply a custom validator to `arrayOf` and `objectOf`.
+  // It should return an Error object if the validation fails. The validator
+  // will be called for each key in the array or object. The first two
+  // arguments of the validator are the array or object itself, and the
+  // current item's key.
+  customArrayProp: PropTypes.arrayOf(function(propValue, key, componentName, location, propFullName) {
+    if (!/matchme/.test(propValue[key])) {
+      return new Error(
+        'Invalid prop `' + propFullName + '` supplied to' +
+        ' `' + componentName + '`. Validation failed.'
+      );
+    }
+  })
+};
+----
