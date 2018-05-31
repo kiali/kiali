@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Icon } from 'patternfly-react';
 
 import { Health } from '../../types/Health';
-import * as H from './HealthHelper';
+import * as H from '../../utils/Health';
 import { HealthDetails } from './HealthDetails';
 
 export enum DisplayMode {

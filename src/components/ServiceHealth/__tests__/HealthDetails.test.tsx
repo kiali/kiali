@@ -16,17 +16,6 @@ describe('HealthDetails', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('renders deployments degraded', () => {
-    const health: Health = {
-      envoy: { healthy: 1, total: 1 },
-      deploymentStatuses: [{ name: 'A', available: 1, replicas: 10 }, { name: 'B', available: 2, replicas: 2 }],
-      requests: { requestCount: 0, requestErrorCount: 0 }
-    };
-
-    let wrapper = shallow(<HealthDetails id="svc" health={health} headline="" rateInterval="" />);
-    expect(wrapper).toMatchSnapshot();
-  });
-
   it('renders envoy degraded', () => {
     const health: Health = {
       envoy: { healthy: 1, total: 10 },
@@ -42,28 +31,6 @@ describe('HealthDetails', () => {
     const health: Health = {
       envoy: { healthy: 1, total: 10 },
       deploymentStatuses: [{ name: 'A', available: 0, replicas: 10 }, { name: 'B', available: 2, replicas: 2 }],
-      requests: { requestCount: 0, requestErrorCount: 0 }
-    };
-
-    let wrapper = shallow(<HealthDetails id="svc" health={health} headline="" rateInterval="" />);
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('renders envoy failure', () => {
-    const health: Health = {
-      envoy: { healthy: 0, total: 10 },
-      deploymentStatuses: [{ name: 'A', available: 1, replicas: 10 }, { name: 'B', available: 2, replicas: 2 }],
-      requests: { requestCount: 0, requestErrorCount: 0 }
-    };
-
-    let wrapper = shallow(<HealthDetails id="svc" health={health} headline="" rateInterval="" />);
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('renders all deployments down', () => {
-    const health: Health = {
-      envoy: { healthy: 1, total: 1 },
-      deploymentStatuses: [{ name: 'A', available: 0, replicas: 0 }, { name: 'B', available: 0, replicas: 0 }],
       requests: { requestCount: 0, requestErrorCount: 0 }
     };
 

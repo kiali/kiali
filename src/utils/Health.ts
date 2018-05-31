@@ -1,5 +1,5 @@
-import { Health, RequestHealth } from '../../types/Health';
-import { PfColors } from '../../components/Pf/PfColors';
+import { Health, RequestHealth } from '../types/Health';
+import { PfColors } from '../components/Pf/PfColors';
 
 export interface Status {
   name: string;
@@ -9,7 +9,6 @@ export interface Status {
   text?: string;
 }
 
-// Colors from Patternfly status palette https://www.patternfly.org/styles/color-palette/
 export const FAILURE: Status = {
   name: 'Failure',
   color: PfColors.Red100,
