@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"fmt"
+
 	"github.com/kiali/kiali/config"
 	"k8s.io/api/apps/v1beta1"
 	autoscalingV1 "k8s.io/api/autoscaling/v1"
@@ -101,7 +103,10 @@ func (in *IstioClient) GetService(namespace, serviceName string) (*v1.Service, e
 // GetPods returns the pods definitions for a given set of labels.
 // It returns an error on any problem.
 func (in *IstioClient) GetPods(namespace string, labelsSet labels.Set) (*v1.PodList, error) {
-	formatted := labels.FormatLabels(labelsSet)
+	formatted := labelsSet.String()
+	// An empty selector is ambiguous in the go client, could mean either "select all" or "select none"
+	// Here we assume empty == select all
+	// (see also https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)
 	return in.k8s.CoreV1().Pods(namespace).List(meta_v1.ListOptions{LabelSelector: formatted})
 }
 
@@ -122,7 +127,7 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	// Fetch the service first to ensure it exists, then fetch details in parallel
 	service, err := in.GetService(namespace, serviceName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("service: %s", err.Error())
 	}
 
 	go func() {
@@ -143,7 +148,7 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	// Last fetch can be performed in main thread. This list is potentially too large and will be narrowed down below
 	deployments, err := in.k8s.AppsV1beta1().Deployments(namespace).List(emptyListOptions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("deployments: %s", err.Error())
 	}
 
 	serviceDetails := ServiceDetails{}
@@ -152,19 +157,19 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 
 	endpointsResponse := <-endpointsChan
 	if endpointsResponse.err != nil {
-		return nil, endpointsResponse.err
+		return nil, fmt.Errorf("endpoints: %s", endpointsResponse.err.Error())
 	}
 	serviceDetails.Endpoints = endpointsResponse.endpoints
 
 	autoscalersResponse := <-autoscalersChan
 	if autoscalersResponse.err != nil {
-		return nil, autoscalersResponse.err
+		return nil, fmt.Errorf("autoscalers: %s", autoscalersResponse.err.Error())
 	}
 	serviceDetails.Autoscalers = autoscalersResponse.autoscalers
 
 	podsResponse := <-podsChan
 	if podsResponse.err != nil {
-		return nil, podsResponse.err
+		return nil, fmt.Errorf("pods: %s", podsResponse.err.Error())
 	}
 	serviceDetails.Pods = podsResponse.pods
 
