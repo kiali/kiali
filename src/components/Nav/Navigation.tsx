@@ -93,6 +93,15 @@ class Navigation extends React.Component<PropsType, StateType> {
     };
   }
 
+  componentDidMount() {
+    // Change layout-pf layout-pf-fixed by
+    if (this.props.authenticated) {
+      document.documentElement.className = 'layout-pf layout-pf-fixed';
+    } else {
+      document.documentElement.className = 'login-pf';
+    }
+  }
+
   setControlledState = event => {
     if (event.activePath) {
       // keep track of path as user clicks on nav bar

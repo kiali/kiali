@@ -8,6 +8,11 @@ type UserProps = {
 type UserState = {};
 
 class UserDropdown extends React.Component<UserProps, UserState> {
+  handleLogout() {
+    this.props.logout();
+    document.documentElement.className = 'login-pf';
+  }
+
   render() {
     return (
       <>
@@ -16,7 +21,7 @@ class UserDropdown extends React.Component<UserProps, UserState> {
             <Icon type="pf" name="user" /> {this.props.username}
           </Dropdown.Toggle>
           <Dropdown.Menu>
-            <MenuItem id="usermenu_logout" onClick={() => this.props.logout()}>
+            <MenuItem id="usermenu_logout" onClick={() => this.handleLogout()}>
               <Icon type="pf" name="key" /> Logout
             </MenuItem>
           </Dropdown.Menu>
