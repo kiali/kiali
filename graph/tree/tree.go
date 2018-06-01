@@ -14,12 +14,13 @@ const (
 )
 
 type ServiceNode struct {
-	ID       string                 // unique identifier for the service node
-	Name     string                 // service name
-	Version  string                 // service version
-	Parent   *ServiceNode           // parent service node, or nil if no parent
-	Children []*ServiceNode         // children services nodes
-	Metadata map[string]interface{} // app-specific data
+	ID        string                 // unique identifier for the service node
+	Name      string                 // service name
+	Version   string                 // service version
+	Namespace string                 // Service namespace
+	Parent    *ServiceNode           // parent service node, or nil if no parent
+	Children  []*ServiceNode         // children services nodes
+	Metadata  map[string]interface{} // app-specific data
 }
 
 func NewServiceNode(name, version string) ServiceNode {

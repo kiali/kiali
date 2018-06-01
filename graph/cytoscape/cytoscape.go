@@ -32,6 +32,7 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
+	Namespace          string         `json:"namespace"`
 	Service            string         `json:"service"`
 	Version            string         `json:"version,omitempty"`
 	Rate               string         `json:"rate,omitempty"`               // edge aggregate
@@ -46,6 +47,7 @@ type NodeData struct {
 	IsUnused           string         `json:"isUnused,omitempty"`           // true | false
 	HasMissingSidecars bool           `json:"hasMissingSidecars,omitempty"` // true | false
 	Health             *models.Health `json:"health,omitempty"`
+	IsOutsideNamespace bool           `json:"isOutsideNamespace,omitempty"` // true | false
 }
 
 type EdgeData struct {
@@ -147,14 +149,23 @@ func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges
 	if !found {
 		nodeId := nodeHash(sn.ID)
 
-		text := strings.Split(name, ".")[0]
+		split := strings.Split(name, ".")
+		text := split[0]
 		if tree.UnknownVersion != sn.Version {
 			text = fmt.Sprintf("%v %v", text, sn.Version)
 		}
+
+		namespace := "unknown"
+
+		if len(split) > 1 {
+			namespace = split[1]
+		}
+
 		nd = &NodeData{
-			Id:      nodeId,
-			Service: name,
-			Version: sn.Version,
+			Id:        nodeId,
+			Service:   name,
+			Namespace: namespace,
+			Version:   sn.Version,
 		}
 
 		// node may be dead (service defined but no pods running)
@@ -192,9 +203,15 @@ func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges
 			nd.Health = val.(*models.Health)
 		}
 
+		// check if node is on another namespace
+		if val, ok := sn.Metadata["isOutsideNamespace"]; ok {
+			nd.IsOutsideNamespace = val.(bool)
+		}
+
 		nw := NodeWrapper{
 			Data: nd,
 		}
+
 		*nodes = append(*nodes, &nw)
 	}
 
