@@ -194,6 +194,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   }
 
   render() {
+    const urlParams = new URLSearchParams(this.props.location.search);
     let parsedSearch = this.parseSearch();
     let editorVisible = parsedSearch.name && parsedSearch.type;
     let to = '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
@@ -234,13 +235,13 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
             </Row>
           </div>
         ) : (
-          <TabContainer id="basic-tabs" defaultActiveKey={1}>
+          <TabContainer id="basic-tabs" activeKey={urlParams.get('tab') || 'info'} onSelect={this.mainTabSelectHandler}>
             <div>
               <Nav bsClass="nav nav-tabs nav-tabs-pf">
-                <NavItem eventKey={1}>
+                <NavItem eventKey="info">
                   <div>Info</div>
                 </NavItem>
-                <NavItem eventKey={2}>
+                <NavItem eventKey="metrics">
                   <div>Metrics</div>
                 </NavItem>
                 <NavItem href={this.state.jaegerUri}>
@@ -248,7 +249,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
                 </NavItem>
               </Nav>
               <TabContent>
-                <TabPane eventKey={1}>
+                <TabPane eventKey="info">
                   <ServiceInfo
                     namespace={this.props.match.params.namespace}
                     service={this.props.match.params.service}
@@ -256,7 +257,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
                     validations={this.state.validations}
                   />
                 </TabPane>
-                <TabPane eventKey={2} mountOnEnter={true} unmountOnExit={true}>
+                <TabPane eventKey="metrics" mountOnEnter={true} unmountOnExit={true}>
                   <ServiceMetrics
                     namespace={this.props.match.params.namespace}
                     service={this.props.match.params.service}
@@ -269,6 +270,17 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       </div>
     );
   }
+
+  private mainTabSelectHandler = (tabKey?: string) => {
+    if (!tabKey) {
+      return;
+    }
+
+    const urlParams = new URLSearchParams(this.props.location.search);
+    urlParams.set('tab', tabKey);
+
+    this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
+  };
 }
 
 export default ServiceDetails;

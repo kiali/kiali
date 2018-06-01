@@ -103,9 +103,7 @@ describe('ServiceMetrics', () => {
           mounted!.update();
           expect(mounted!.find('Spinner').map(div => div.getElement().props.loading)).toEqual([]);
           expect(mounted!.find('.card-pf-body')).toHaveLength(2);
-          mounted!
-            .find('.card-pf-body')
-            .forEach(pfCard => expect(pfCard.children().map(div => div.text())).toEqual(['', '', '', '']));
+          mounted!.find('.card-pf-body').forEach(pfCard => expect(pfCard.children().length === 0));
         })
         .catch(err => done.fail(err)),
       mockGrafanaInfo({

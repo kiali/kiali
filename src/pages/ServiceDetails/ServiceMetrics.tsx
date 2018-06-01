@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Alert, LineChart } from 'patternfly-react';
-
+import { Alert } from 'patternfly-react';
 import ServiceId from '../../types/ServiceId';
 import * as M from '../../types/Metrics';
 import GrafanaInfo from '../../types/GrafanaInfo';
@@ -8,37 +7,24 @@ import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import MetricsOptions from '../../types/MetricsOptions';
-import graphUtils from '../../utils/Graphing';
 import { authentication } from '../../utils/Authentication';
+import HistogramChart from './HistogramChart';
+import MetricChart from './MetricChart';
+import { Histogram, MetricGroup } from '../../types/Metrics';
 
 type ServiceMetricsState = {
   alertDetails?: string;
-  requestCountIn?: NamedMetric;
-  requestCountOut?: NamedMetric;
-  requestSizeIn?: NamedHistogram;
-  requestSizeOut?: NamedHistogram;
-  requestDurationIn?: NamedHistogram;
-  requestDurationOut?: NamedHistogram;
-  responseSizeIn?: NamedHistogram;
-  responseSizeOut?: NamedHistogram;
+  requestCountIn?: MetricGroup;
+  requestCountOut?: MetricGroup;
+  requestSizeIn?: Histogram;
+  requestSizeOut?: Histogram;
+  requestDurationIn?: Histogram;
+  requestDurationOut?: Histogram;
+  responseSizeIn?: Histogram;
+  responseSizeOut?: Histogram;
   grafanaLinkIn?: string;
   grafanaLinkOut?: string;
   pollMetrics?: number;
-};
-
-type NamedMetric = {
-  id: string;
-  familyName: string;
-  matrix: M.TimeSeries[];
-};
-
-type NamedHistogram = {
-  id: string;
-  familyName: string;
-  average: NamedMetric;
-  median: NamedMetric;
-  percentile95: NamedMetric;
-  percentile99: NamedMetric;
 };
 
 class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
@@ -84,46 +70,14 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       .then(response => {
         const metrics: M.Metrics = response.data;
         this.setState({
-          requestCountIn: this.nameMetric(
-            metrics.metrics['request_count_in'],
-            'Request volume (ops)',
-            this.options.byLabelsIn
-          ),
-          requestCountOut: this.nameMetric(
-            metrics.metrics['request_count_out'],
-            'Request volume (ops)',
-            this.options.byLabelsOut
-          ),
-          requestSizeIn: this.nameHistogram(
-            metrics.histograms['request_size_in'],
-            'Request size (bytes)',
-            this.options.byLabelsIn
-          ),
-          requestSizeOut: this.nameHistogram(
-            metrics.histograms['request_size_out'],
-            'Request size (bytes)',
-            this.options.byLabelsOut
-          ),
-          requestDurationIn: this.nameHistogram(
-            metrics.histograms['request_duration_in'],
-            'Request duration (seconds)',
-            this.options.byLabelsIn
-          ),
-          requestDurationOut: this.nameHistogram(
-            metrics.histograms['request_duration_out'],
-            'Request duration (seconds)',
-            this.options.byLabelsOut
-          ),
-          responseSizeIn: this.nameHistogram(
-            metrics.histograms['response_size_in'],
-            'Response size (bytes)',
-            this.options.byLabelsIn
-          ),
-          responseSizeOut: this.nameHistogram(
-            metrics.histograms['response_size_out'],
-            'Response size (bytes)',
-            this.options.byLabelsOut
-          )
+          requestCountIn: metrics.metrics['request_count_in'],
+          requestCountOut: metrics.metrics['request_count_out'],
+          requestSizeIn: metrics.histograms['request_size_in'],
+          requestSizeOut: metrics.histograms['request_size_out'],
+          requestDurationIn: metrics.histograms['request_duration_in'],
+          requestDurationOut: metrics.histograms['request_duration_out'],
+          responseSizeIn: metrics.histograms['response_size_in'],
+          responseSizeOut: metrics.histograms['response_size_out']
         });
       })
       .catch(error => {
@@ -131,51 +85,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         console.error(error);
       });
   };
-
-  nameMetric(metric: M.MetricGroup, familyName: string, labels?: string[]): NamedMetric | undefined {
-    if (metric) {
-      let id = familyName;
-      if (labels && labels.length > 0) {
-        id += '-' + labels.join('-');
-      }
-      metric.matrix.forEach(ts => {
-        if (labels === undefined || labels.length === 0) {
-          ts.name = familyName;
-        } else {
-          const strLabels = labels.map(lbl => ts.metric[lbl]).join(',');
-          ts.name = `${familyName}{${strLabels}}`;
-        }
-      });
-      return {
-        id: id,
-        familyName: familyName,
-        matrix: metric.matrix
-      };
-    }
-    return undefined;
-  }
-
-  nameHistogram(histo: M.Histogram, familyName: string, labels?: string[]): NamedHistogram | undefined {
-    if (histo) {
-      let id = familyName;
-      if (labels) {
-        id += '-' + labels.join('-');
-      }
-      const average = this.nameMetric(histo.average, familyName + '[avg]', labels);
-      const median = this.nameMetric(histo.median, familyName + '[med]', labels);
-      const percentile95 = this.nameMetric(histo.percentile95, familyName + '[p95]', labels);
-      const percentile99 = this.nameMetric(histo.percentile99, familyName + '[p99]', labels);
-      return {
-        id: id,
-        familyName: familyName,
-        average: average!,
-        median: median!,
-        percentile95: percentile95!,
-        percentile99: percentile99!
-      };
-    }
-    return undefined;
-  }
 
   getGrafanaInfo() {
     API.getGrafanaInfo(authentication())
@@ -207,11 +116,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
     }`;
   }
 
-  round(val: number): number {
-    // 2 decimal digits
-    return Math.round(val * 100) / 100;
-  }
-
   dismissAlert = () => this.setState({ alertDetails: undefined });
 
   render() {
@@ -239,10 +143,18 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
                 Input
               </h3>
               <div className="card-pf-body">
-                {this.renderMetric(this.state.requestCountIn)}
-                {this.renderHistogram(this.state.requestDurationIn)}
-                {this.renderHistogram(this.state.requestSizeIn)}
-                {this.renderHistogram(this.state.responseSizeIn)}
+                {this.state.requestCountIn && (
+                  <MetricChart series={this.state.requestCountIn.matrix} familyName="Request volume (ops)" />
+                )}
+                {this.state.requestDurationIn && (
+                  <HistogramChart histogram={this.state.requestDurationIn} familyName="Request duration (seconds)" />
+                )}
+                {this.state.requestSizeIn && (
+                  <HistogramChart histogram={this.state.requestSizeIn} familyName="Request size (bytes)" />
+                )}
+                {this.state.responseSizeIn && (
+                  <HistogramChart histogram={this.state.responseSizeIn} familyName="Response size (bytes)" />
+                )}
               </div>
               {this.state.grafanaLinkIn && (
                 <span id="grafana-in-link">
@@ -260,10 +172,18 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
                 Output
               </h3>
               <ul className="card-pf-body">
-                {this.renderMetric(this.state.requestCountOut)}
-                {this.renderHistogram(this.state.requestDurationOut)}
-                {this.renderHistogram(this.state.requestSizeOut)}
-                {this.renderHistogram(this.state.responseSizeOut)}
+                {this.state.requestCountOut && (
+                  <MetricChart series={this.state.requestCountOut.matrix} familyName="Request volume (ops)" />
+                )}
+                {this.state.requestDurationOut && (
+                  <HistogramChart histogram={this.state.requestDurationOut} familyName="Request duration (seconds)" />
+                )}
+                {this.state.requestSizeOut && (
+                  <HistogramChart histogram={this.state.requestSizeOut} familyName="Request size (bytes)" />
+                )}
+                {this.state.responseSizeOut && (
+                  <HistogramChart histogram={this.state.responseSizeOut} familyName="Response size (bytes)" />
+                )}
               </ul>
               {this.state.grafanaLinkOut && (
                 <span id="grafana-out-link">
@@ -276,56 +196,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
           </div>
         </div>
       </div>
-    );
-  }
-
-  renderMetric(metric?: NamedMetric) {
-    if (metric) {
-      return this.renderChart(metric.id, metric.familyName, graphUtils.toC3Columns(metric.matrix));
-    }
-    return <div />;
-  }
-
-  renderHistogram(histo?: NamedHistogram) {
-    if (histo) {
-      const columns = graphUtils
-        .toC3Columns(histo.average.matrix)
-        .concat(graphUtils.toC3Columns(histo.median.matrix))
-        .concat(graphUtils.toC3Columns(histo.percentile95.matrix))
-        .concat(graphUtils.toC3Columns(histo.percentile99.matrix));
-      return this.renderChart(histo.id, histo.familyName, columns);
-    }
-    return <div />;
-  }
-
-  renderChart(id: string, title: string, columns: [string, number][]) {
-    const data = {
-      x: 'x',
-      columns: columns
-    };
-    const axis = {
-      x: {
-        type: 'timeseries',
-        tick: {
-          fit: true,
-          count: 15,
-          multiline: false,
-          format: '%H:%M:%S'
-        }
-      },
-      y: {
-        tick: {
-          format: val => {
-            // parseFloat is used to remove trailing zeros
-            return parseFloat(val.toFixed(5));
-          }
-        }
-      }
-    };
-    return (
-      <span key={id}>
-        <LineChart id={id} title={{ text: title }} data={data} axis={axis} point={{ show: false }} />
-      </span>
     );
   }
 }
