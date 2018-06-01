@@ -16,7 +16,6 @@ import ServiceErrorRate from './ServiceErrorRate';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import { PfColors } from '../../components/Pf/PfColors';
 import { authentication } from '../../utils/Authentication';
-import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 import './ServiceListComponent.css';
 
 // Exported for test
@@ -345,8 +344,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
 
     let serviceListComponent;
     serviceListComponent = (
-      <div>
-        <PfSpinnerContainer />
+      <>
         <NamespaceFilter
           initialFilters={[serviceNameFilter, istioFilter]}
           onFilterChange={this.filterChange}
@@ -377,7 +375,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
           onPageSet={this.pageSet}
           onPerPageSelect={this.pageSelect}
         />
-      </div>
+      </>
     );
     return <div>{serviceListComponent}</div>;
   }

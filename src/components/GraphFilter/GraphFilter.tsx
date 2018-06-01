@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Toolbar, Button, Icon, FormGroup, Spinner } from 'patternfly-react';
+import { Toolbar, Button, Icon, FormGroup } from 'patternfly-react';
 
 import { Duration, Layout, EdgeLabelMode } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
@@ -131,11 +131,9 @@ export default class GraphFilter extends React.Component<GraphFilterProps, Graph
               <Button onClick={this.props.onLegend}>{this.props.hideLegend ? 'Show' : 'Hide'} Legend</Button>
             </div>
             <div className="form-group">
-              <Spinner loading={this.props.disabled}>
-                <Button disabled={this.props.disabled} onClick={this.handleRefresh}>
-                  <Icon name="refresh" />
-                </Button>
-              </Spinner>
+              <Button disabled={this.props.disabled} onClick={this.handleRefresh}>
+                <Icon name="refresh" />
+              </Button>
             </div>
           </Toolbar.RightContent>
         </Toolbar>
