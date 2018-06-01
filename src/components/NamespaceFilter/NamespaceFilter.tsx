@@ -68,8 +68,9 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
         this.setState({ filterTypeList: initialFilters });
       })
       .catch(error => {
-        console.error(error);
-        this.props.onError('Error fetching namespace list.');
+        const errMsg = API.getErrorMsg('Error fetching namespace list.', error);
+        console.error(errMsg);
+        this.props.onError(errMsg);
       });
   }
 
