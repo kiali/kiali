@@ -148,7 +148,7 @@ func mergeNamespaces(roots *[]*tree.ServiceNode) {
 }
 
 func collectEdgeNodes(node *tree.ServiceNode, edgeNodes map[string]*tree.ServiceNode) {
-	if len(node.Children) == 0 && node.Metadata["isOutsideNamespace"] == "true" {
+	if len(node.Children) == 0 && node.Metadata["isOutsideNamespace"] == true {
 		edgeNodes[node.Parent.ID] = node.Parent
 	} else {
 		for _, c := range node.Children {
@@ -263,7 +263,7 @@ func buildNamespaceTree(namespace string, sn *tree.ServiceNode, start time.Time,
 					buildNamespaceTree(namespace, child, start, seenNodes, o, client)
 				} else {
 					log.Debugf("Not recursing on child service %v(%v) outside of namespace [%s]\n", child.Name, child.Version, namespace)
-					child.Metadata["isOutsideNamespace"] = "true"
+					child.Metadata["isOutsideNamespace"] = true
 				}
 			} else {
 				log.Debugf("Not recursing on seen child service: %v(%v)\n", child.Name, child.Version)
