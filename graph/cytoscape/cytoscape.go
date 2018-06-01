@@ -31,6 +31,7 @@ type NodeData struct {
 
 	// App Fields (not required by Cytoscape)
 	Service      string         `json:"service"`
+	Namespace    string         `json:"namespace"`
 	Version      string         `json:"version,omitempty"`
 	Rate         string         `json:"rate,omitempty"`         // edge aggregate
 	Rate3xx      string         `json:"rate3XX,omitempty"`      // edge aggregate
@@ -41,10 +42,11 @@ type NodeData struct {
 	HasMissingSC bool           `json:"hasMissingSC,omitempty"` // true (has missing sidecar) | false
 	HasRR        bool           `json:"hasRR,omitempty"`        // true (has route rule) | false
 	Health       *models.Health `json:"health,omitempty"`
-	IsDead       bool           `json:"isDead,omitempty"`   // true (has no pods) | false
-	IsGroup      string         `json:"isGroup,omitempty"`  // set to the grouping type, current values: [ 'version' ]
-	IsRoot       bool           `json:"isRoot,omitempty"`   // true | false
-	IsUnused     bool           `json:"isUnused,omitempty"` // true | false
+	IsDead       bool           `json:"isDead,omitempty"`    // true (has no pods) | false
+	IsGroup      string         `json:"isGroup,omitempty"`   // set to the grouping type, current values: [ 'version' ]
+	IsOutside    bool           `json:"isOutside,omitempty"` // true | false
+	IsRoot       bool           `json:"isRoot,omitempty"`    // true | false
+	IsUnused     bool           `json:"isUnused,omitempty"`  // true | false
 }
 
 type EdgeData struct {
@@ -137,9 +139,10 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		nodeId := nodeHash(id)
 
 		nd := &NodeData{
-			Id:      nodeId,
-			Service: s.Name,
-			Version: s.Version,
+			Id:        nodeId,
+			Service:   s.Name,
+			Namespace: s.Namespace,
+			Version:   s.Version,
 		}
 
 		addServiceTelemetry(s, nd)
@@ -179,9 +182,15 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			nd.Health = val.(*models.Health)
 		}
 
+		// check if node is on another namespace
+		if val, ok := s.Metadata["isOutside"]; ok {
+			nd.IsOutside = val.(bool)
+		}
+
 		nw := NodeWrapper{
 			Data: nd,
 		}
+
 		*nodes = append(*nodes, &nw)
 
 		for _, e := range s.Edges {
@@ -310,9 +319,12 @@ func addCompositeNodes(nodes *[]*NodeWrapper) {
 			// assign each service version node to the composite parent
 			hasRouteRule := false
 			nd.HasMissingSC = false
+
 			for _, n := range v {
 				n.Parent = nodeId
+
 				nd.HasMissingSC = nd.HasMissingSC || n.HasMissingSC
+
 				// If there is a route rule defined in version node, move it to composite parent
 				if n.HasRR {
 					n.HasRR = false

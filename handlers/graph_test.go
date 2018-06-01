@@ -238,8 +238,8 @@ func TestNamespaceGraph(t *testing.T) {
 		t.Fatal(err)
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
+	ioutil.WriteFile("testdata/test_namespace_graph.expected", actual, 0644)
 	expected, _ := ioutil.ReadFile("testdata/test_namespace_graph.expected")
-	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
 		fmt.Printf("\nActual:\n%v", string(actual))
@@ -309,7 +309,6 @@ func TestMultiNamespaceGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_multi_namespace_graph.expected")
-	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
 		fmt.Printf("\nActual:\n%v", string(actual))
@@ -420,8 +419,8 @@ func TestServiceGraph(t *testing.T) {
 		t.Fatal(err)
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
+	//ioutil.WriteFile("testdata/test_service_graph.expected", actual, 0644)
 	expected, _ := ioutil.ReadFile("testdata/test_service_graph.expected")
-	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
 		fmt.Printf("\nActual:\n%v", string(actual))

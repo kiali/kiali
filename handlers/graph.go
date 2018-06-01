@@ -92,9 +92,20 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 		mergeTrafficMaps(trafficMap, namespaceTrafficMap)
 	}
 
-	// now that the services are final, make one pass to set the roots (i.e. traffic generators).
-	// A root is defined as a service with only outgoing traffic.
 	for _, s := range trafficMap {
+		// Check if the node is in one of the requested namespaces.
+		found := false
+		for _, namespace := range o.Namespaces {
+			if s.Namespace == namespace {
+				found = true
+				break
+			}
+		}
+
+		s.Metadata["isOutside"] = !found && s.ServiceName != "unknown"
+
+		// now that the services are final, make one pass to set the roots (i.e. traffic generators).
+		// A root is defined as a service with only outgoing traffic.
 		if s.Metadata["rate"].(float64) == 0.0 && s.Metadata["rateOut"].(float64) > 0.0 {
 			s.Metadata["isRoot"] = true
 		}

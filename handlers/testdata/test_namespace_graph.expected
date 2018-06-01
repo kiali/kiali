@@ -6,6 +6,7 @@
         "data": {
           "id": "50c81fc80cd32ed8f2c2b5c1e698e9f8",
           "service": "details.bookinfo.svc.cluster.local",
+          "namespace": "bookinfo",
           "version": "v1",
           "rate": "80.000",
           "rate3XX": "20.000",
@@ -17,15 +18,18 @@
         "data": {
           "id": "a8b6f512ceed0f9209287424b216200c",
           "service": "ingressgateway.istio-system.svc.cluster.local",
+          "namespace": "istio-system",
           "version": "unknown",
           "rateOut": "100.000",
-          "isRoot": true
+          "isRoot": true,
+          "isOutside": true
         }
       },
       {
         "data": {
           "id": "32f13d185b9a6764d67f9f96f8796f6c",
           "service": "productpage.bookinfo.svc.cluster.local",
+          "namespace": "bookinfo",
           "version": "v1",
           "rate": "170.000",
           "rateOut": "160.000"
@@ -35,6 +39,7 @@
         "data": {
           "id": "4bd6b4e52f760784b8cf5a9ae38241e2",
           "service": "ratings.bookinfo.svc.cluster.local",
+          "namespace": "bookinfo",
           "version": "v1",
           "rate": "40.000"
         }
@@ -43,6 +48,7 @@
         "data": {
           "id": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
+          "namespace": "",
           "isGroup": "version"
         }
       },
@@ -51,6 +57,7 @@
           "id": "09db1ec4064c7f4e77c2c65f0c8709ac",
           "parent": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
+          "namespace": "bookinfo",
           "version": "v1",
           "rate": "20.000"
         }
@@ -60,6 +67,7 @@
           "id": "a30ebe6d7004dc26a24a989e27550aa2",
           "parent": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
+          "namespace": "bookinfo",
           "version": "v2",
           "rate": "40.000",
           "rateOut": "40.000"
@@ -70,6 +78,7 @@
           "id": "9b88963ddbd1603b0bbca88cfca29781",
           "parent": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
+          "namespace": "bookinfo",
           "version": "v3",
           "rate": "40.000",
           "rateOut": "40.000"
@@ -79,6 +88,7 @@
         "data": {
           "id": "ba113404e46b8aa41dc0e7cc339073fe",
           "service": "unknown",
+          "namespace": "unknown",
           "version": "unknown",
           "rateOut": "50.000",
           "isRoot": true
