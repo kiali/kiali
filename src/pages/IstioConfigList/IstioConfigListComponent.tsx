@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { ListView, ListViewItem, ListViewIcon, Sort } from 'patternfly-react';
+import { AxiosError } from 'axios';
 import { NamespaceFilter, NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { Paginator } from 'patternfly-react';
 import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
@@ -123,6 +124,12 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     this.setState({ loading: false });
   }
 
+  handleAxiosError(message: string, error: AxiosError) {
+    const errMsg = API.getErrorMsg(message, error);
+    console.error(errMsg);
+    this.handleError(errMsg);
+  }
+
   pageSet(page: number) {
     this.setState(prevState => {
       return {
@@ -187,10 +194,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchIstioConfig(namespaces.map(namespace => namespace.name), istioTypeFilters, istioNameFilters);
         })
-        .catch(namespacesError => {
-          console.error(JSON.stringify(namespacesError));
-          this.handleError(API.getErrorMsg('Could not fetch namespace list.', namespacesError));
-        });
+        .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
     } else {
       this.fetchIstioConfig(namespacesSelected, istioTypeFilters, istioNameFilters);
     }
@@ -217,9 +221,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
           };
         });
       })
-      .catch(istioError => {
-        this.handleError(API.getErrorMsg('Could not fetch Istio objects list.', istioError));
-      });
+      .catch(istioError => this.handleAxiosError('Could not fetch Istio objects list.', istioError));
   }
 
   renderIstioItem(istioItem: IstioConfigItem, index: number) {

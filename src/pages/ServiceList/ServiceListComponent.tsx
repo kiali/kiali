@@ -1,22 +1,23 @@
 import * as React from 'react';
+import { AxiosError } from 'axios';
 import { ListView, ListViewItem, ListViewIcon, Sort } from 'patternfly-react';
 import { Link } from 'react-router-dom';
-import { NamespaceFilter, NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { Paginator } from 'patternfly-react';
+import PropTypes from 'prop-types';
+import { NamespaceFilter, NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
 import { IstioLogo, ServiceItem, ServiceList, SortField, overviewToItem } from '../../types/ServiceListComponent';
-import PropTypes from 'prop-types';
 import { getRequestErrorsRatio } from '../../utils/Health';
 import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
 import ServiceErrorRate from './ServiceErrorRate';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import { PfColors } from '../../components/Pf/PfColors';
-import './ServiceListComponent.css';
 import { authentication } from '../../utils/Authentication';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
+import './ServiceListComponent.css';
 
 // Exported for test
 export const sortFields: SortField[] = [
@@ -126,6 +127,12 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.setState({ loading: false });
   };
 
+  handleAxiosError(message: string, error: AxiosError) {
+    const errMsg = API.getErrorMsg(message, error);
+    console.error(errMsg);
+    this.handleError(errMsg);
+  }
+
   pageSet = (page: number) => {
     this.setState(prevState => {
       return {
@@ -196,10 +203,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             rateInterval
           );
         })
-        .catch(namespacesError => {
-          console.error(JSON.stringify(namespacesError));
-          this.handleError(API.getErrorMsg('Could not fetch namespace list.', namespacesError));
-        });
+        .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
     } else {
       this.fetchServices(namespacesSelected, servicenameFilters, istioFilters);
     }
@@ -233,10 +237,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
           };
         });
       })
-      .catch(servicesError => {
-        console.error(JSON.stringify(servicesError));
-        this.handleError(API.getErrorMsg('Could not fetch service list.', servicesError));
-      });
+      .catch(servicesError => this.handleAxiosError('Could not fetch service list.', servicesError));
   }
 
   // Patternfly-react Filter has not a boolean / checkbox filter option, so as we want to use the same component
