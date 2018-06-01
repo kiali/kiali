@@ -13,6 +13,7 @@ import { PfColors } from '../../components/Pf/PfColors';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
+import { shouldRefreshData } from './SummaryPanelCommon';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -53,9 +54,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     this.fetchRequestCountMetrics(this.props);
   }
 
-  componentWillReceiveProps(nextProps: SummaryPanelPropType) {
-    if (nextProps.data.summaryTarget && nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
-      this.fetchRequestCountMetrics(nextProps);
+  componentDidUpdate(prevProps: SummaryPanelPropType) {
+    if (shouldRefreshData(prevProps, this.props)) {
+      this.fetchRequestCountMetrics(this.props);
     }
   }
 

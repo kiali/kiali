@@ -12,6 +12,7 @@ import { PfColors } from '../../components/Pf/PfColors';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
+import { shouldRefreshData } from './SummaryPanelCommon';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -50,9 +51,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     this.updateRpsCharts(this.props);
   }
 
-  componentWillReceiveProps(nextProps: SummaryPanelPropType) {
-    if (nextProps.data.summaryTarget && nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
-      this.updateRpsCharts(nextProps);
+  componentDidUpdate(prevProps: SummaryPanelPropType) {
+    if (shouldRefreshData(prevProps, this.props)) {
+      this.updateRpsCharts(this.props);
     }
   }
 

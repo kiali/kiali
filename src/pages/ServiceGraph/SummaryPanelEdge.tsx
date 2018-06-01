@@ -12,6 +12,7 @@ import { PfColors } from '../../components/Pf/PfColors';
 import { authentication } from '../../utils/Authentication';
 import { Icon } from 'patternfly-react';
 import { Link } from 'react-router-dom';
+import { shouldRefreshData } from './SummaryPanelCommon';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -55,9 +56,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     this.updateCharts(this.props);
   }
 
-  componentWillReceiveProps(nextProps: SummaryPanelPropType) {
-    if (nextProps.data.summaryTarget && nextProps.data.summaryTarget !== this.props.data.summaryTarget) {
-      this.updateCharts(nextProps);
+  componentDidUpdate(prevProps: SummaryPanelPropType) {
+    if (shouldRefreshData(prevProps, this.props)) {
+      this.updateCharts(this.props);
     }
   }
 

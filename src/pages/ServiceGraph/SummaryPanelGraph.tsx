@@ -11,6 +11,7 @@ import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as M from '../../types/Metrics';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
+import { shouldRefreshData } from './SummaryPanelCommon';
 
 type SummaryPanelGraphState = {
   loading: boolean;
@@ -43,10 +44,18 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
   componentDidMount() {
     this._isMounted = true;
-    // TODO (maybe) we omit the rps chart when dealing with multiple namespaces. There is no backend
-    // API support to gather the data. The whole-graph chart is of nominal value, it will likely be OK.
     if (this.props.namespace !== 'all') {
       this.updateRpsChart(this.props);
+    }
+  }
+
+  componentDidUpdate(prevProps: SummaryPanelPropType) {
+    if (shouldRefreshData(prevProps, this.props)) {
+      // TODO (maybe) we omit the rps chart when dealing with multiple namespaces. There is no backend
+      // API support to gather the data. The whole-graph chart is of nominal value, it will likely be OK.
+      if (this.props.namespace !== 'all') {
+        this.updateRpsChart(this.props);
+      }
     }
   }
 

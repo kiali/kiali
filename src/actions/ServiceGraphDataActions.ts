@@ -14,6 +14,56 @@ export enum ServiceGraphDataActionKeys {
   HANDLE_LEGEND = 'HANDLE_LEGEND'
 }
 
+// When updating the cytoscape graph, the element data expects to have all the changes
+// non provided values are taken as "this didn't change", similar as setState does.
+// Put default values for all fields that are omitted.
+const decorateGraphData = (graphData: any) => {
+  const elementsDefaults = {
+    edges: {
+      rate: undefined,
+      rate3XX: undefined,
+      rate4XX: undefined,
+      rate5XX: undefined,
+      percentErr: undefined,
+      percentRate: undefined,
+      latency: undefined,
+      isUnused: undefined
+    },
+    nodes: {
+      version: undefined,
+      rate: undefined,
+      rate3XX: undefined,
+      rate4XX: undefined,
+      rate5XX: undefined,
+      rateSelfInvoke: undefined,
+      hasCB: undefined,
+      hasRR: undefined,
+      isDead: undefined,
+      isGroup: undefined,
+      isRoot: undefined,
+      isUnused: undefined,
+      hasMissingSidecars: undefined
+    }
+  };
+  if (graphData) {
+    if (graphData.nodes) {
+      graphData.nodes = graphData.nodes.map(node => {
+        const decoratedNode = { ...node };
+        decoratedNode.data = { ...elementsDefaults.nodes, ...decoratedNode.data };
+        return decoratedNode;
+      });
+    }
+    if (graphData.edges) {
+      graphData.edges = graphData.edges.map(edge => {
+        const decoratedEdge = { ...edge };
+        decoratedEdge.data = { ...elementsDefaults.edges, ...decoratedEdge.data };
+        return decoratedEdge;
+      });
+    }
+  }
+  return graphData;
+};
+
 // synchronous action creators
 export const ServiceGraphDataActions = {
   getGraphDataStart: createAction(ServiceGraphDataActionKeys.GET_GRAPH_DATA_START),
@@ -22,7 +72,7 @@ export const ServiceGraphDataActions = {
     (timestamp: number, graphData: any) => ({
       type: ServiceGraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
       timestamp: timestamp,
-      graphData: graphData
+      graphData: decorateGraphData(graphData)
     })
   ),
   getGraphDataFailure: createAction(ServiceGraphDataActionKeys.GET_GRAPH_DATA_FAILURE, (error: any) => ({

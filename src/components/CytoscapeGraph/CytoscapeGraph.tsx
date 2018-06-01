@@ -13,11 +13,9 @@ import { KialiAppState } from '../../store/Store';
 import * as GraphBadge from './graphs/GraphBadge';
 import TrafficRender from './graphs/TrafficRenderer';
 import { ServiceGraphActions } from '../../actions/ServiceGraphActions';
-import { Spinner } from 'patternfly-react';
 
 type CytoscapeGraphType = {
   elements?: any;
-  isLoading?: boolean;
   edgeLabelMode: EdgeLabelMode;
   showNodeLabels: boolean;
   showCircuitBreakers: boolean;
@@ -52,18 +50,20 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private graphHighlighter: GraphHighlighter;
   private trafficRenderer: TrafficRender;
   private cytoscapeReactWrapperRef: any;
-  private newLayout: any;
+  private updateLayout: boolean;
   private cy: any;
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
-    this.newLayout = '';
+    this.updateLayout = false;
   }
 
   shouldComponentUpdate(nextProps: any, nextState: any) {
-    this.newLayout = this.props.graphLayout !== nextProps.graphLayout ? nextProps.graphLayout : '';
+    this.updateLayout =
+      this.props.graphLayout !== nextProps.graphLayout ||
+      (this.props.elements !== nextProps.elements &&
+        this.elementsNeedRelayout(this.props.elements, nextProps.elements));
     return (
-      this.props.isLoading !== nextProps.isLoading ||
       this.props.graphLayout !== nextProps.graphLayout ||
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
       this.props.showNodeLabels !== nextProps.showNodeLabels ||
@@ -87,21 +87,19 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   render() {
     return (
       <div id="cytoscape-container" style={{ marginRight: '25em', height: '100%' }}>
-        <Spinner loading={this.props.isLoading}>
-          <EmptyGraphLayout
+        <EmptyGraphLayout
+          elements={this.props.elements}
+          namespace={this.props.namespace.name}
+          action={this.props.refresh}
+        >
+          <CytoscapeReactWrapper
+            ref={e => {
+              this.setCytoscapeReactWrapperRef(e);
+            }}
             elements={this.props.elements}
-            namespace={this.props.namespace.name}
-            action={this.props.refresh}
-          >
-            <CytoscapeReactWrapper
-              ref={e => {
-                this.setCytoscapeReactWrapperRef(e);
-              }}
-              elements={this.props.elements}
-              layout={this.props.graphLayout}
-            />
-          </EmptyGraphLayout>
-        </Spinner>
+            layout={this.props.graphLayout}
+          />
+        </EmptyGraphLayout>
       </div>
     );
   }
@@ -116,21 +114,15 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   }
 
   private turnEdgeLabelsTo = (value: EdgeLabelMode) => {
-    let elements = this.props.elements;
-    if (elements && elements.edges) {
-      elements.edges.forEach(edge => {
-        edge.data.edgeLabelMode = value;
-      });
-    }
+    this.cy.edges().forEach(edge => {
+      edge.data('edgeLabelMode', value);
+    });
   };
 
   private turnNodeLabelsTo = (value: boolean) => {
-    let elements = this.props.elements;
-    if (elements && elements.nodes) {
-      elements.nodes.forEach(node => {
-        node.data.showNodeLabels = value;
-      });
-    }
+    this.cy.nodes().forEach(node => {
+      node.data('showNodeLabels', value);
+    });
   };
 
   private cyInitialization(cy: any) {
@@ -206,31 +198,46 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     this.trafficRenderer.stop();
 
+    const isTheGraphSelected = this.cy.$(':selected').length === 0;
+
     cy.startBatch();
+
+    // Destroy badges
+    // We must destroy all badges before updating the json, or else we will lose all the
+    // references to removed nodes
+    const cbBadge = new GraphBadge.CircuitBreakerBadge();
+    const rrBadge = new GraphBadge.RouteRuleBadge();
+    const rrGroupBadge = new GraphBadge.RouteRuleGroupBadge();
+    const msBadge = new GraphBadge.MissingSidecarsBadge();
+    cy.nodes().forEach(ele => {
+      cbBadge.destroyBadge(ele);
+      rrBadge.destroyBadge(ele);
+      rrGroupBadge.destroyBadge(ele);
+      msBadge.destroyBadge(ele);
+    });
 
     // update the entire set of nodes and edges to keep the graph up-to-date
     cy.json({ elements: this.props.elements });
 
-    // update the layout if it changed
-    if (this.newLayout) {
-      cy.layout(LayoutDictionary.getLayout(this.newLayout)).run();
-      this.newLayout = '';
+    // update the layout if needed
+    if (this.updateLayout) {
+      cy.layout(LayoutDictionary.getLayout(this.props.graphLayout)).run();
+      // Don't allow a large zoom if the graph has a few nodes (nodes would look too big).
+      if (cy.zoom() > 2.5) {
+        cy.zoom(2.5);
+        cy.center();
+      }
+      this.updateLayout = false;
     }
 
     // Create and destroy labels
     this.turnEdgeLabelsTo(this.props.edgeLabelMode);
     this.turnNodeLabelsTo(this.props.showNodeLabels);
 
-    // Create and destroy badges
-    const cbBadge = new GraphBadge.CircuitBreakerBadge();
-    const rrBadge = new GraphBadge.RouteRuleBadge();
-    const rrGroupBadge = new GraphBadge.RouteRuleGroupBadge();
-    const msBadge = new GraphBadge.MissingSidecarsBadge();
+    // Create badges
     cy.nodes().forEach(ele => {
       if (this.props.showCircuitBreakers && ele.data('hasCB') === 'true') {
         cbBadge.buildBadge(ele);
-      } else {
-        cbBadge.destroyBadge(ele);
       }
       if (this.props.showRouteRules && ele.data('hasRR') === 'true') {
         if (ele.data('isGroup')) {
@@ -238,24 +245,18 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         } else {
           rrBadge.buildBadge(ele);
         }
-      } else {
-        rrBadge.destroyBadge(ele);
       }
       if (this.props.showMissingSidecars && ele.data('hasMissingSidecars') && !ele.data('isGroup')) {
         msBadge.buildBadge(ele);
-      } else {
-        msBadge.destroyBadge(ele);
       }
     });
 
-    // Don't allow a large zoom if the graph has a few nodes (nodes would look too big).
-    // TODO: only do this if there is a small number of nodes - let the user zoom in large graphs
-    if (cy.zoom() > 2.5) {
-      cy.zoom(2.5);
-      cy.center();
-    }
-
     cy.endBatch();
+
+    // Verify our current selection is still valid, if not, select the graph
+    if (!isTheGraphSelected && this.cy.$(':selected').length === 0) {
+      this.props.onReady(this.cy);
+    }
 
     // Update TrafficRenderer
     this.trafficRenderer.setEdges(cy.edges());
@@ -276,6 +277,40 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private handleMouseOut = (event: CytoscapeMouseOutEvent) => {
     this.graphHighlighter.onMouseOut(event);
   };
+
+  // To know if we should re-layout, we need to know if any element changed
+  // Do a quick round by comparing the number of nodes and edges, if different
+  // a change is expected.
+  // If we have the same number of elements, compare the ids, if we find one that isn't
+  // in the other, we can be sure that there are changes.
+  // Worst case is when they are the same, avoid that.
+  private elementsNeedRelayout(prevElements: any, nextElements: any) {
+    if (
+      !prevElements ||
+      !nextElements ||
+      !prevElements.nodes ||
+      !prevElements.edges ||
+      !nextElements.nodes ||
+      !nextElements.edges ||
+      prevElements.nodes.length !== nextElements.nodes.length ||
+      prevElements.edges.length !== nextElements.edges.length
+    ) {
+      return true;
+    }
+    // If both have the same ids, we don't need to relayout
+    return !(
+      this.nodeOrEdgeArrayHasSameIds(nextElements.nodes, prevElements.nodes) &&
+      this.nodeOrEdgeArrayHasSameIds(nextElements.edges, prevElements.edges)
+    );
+  }
+
+  private nodeOrEdgeArrayHasSameIds(a: Array<any>, b: Array<any>) {
+    const aIds = a.map(e => e.id).sort();
+    return b
+      .map(e => e.id)
+      .sort()
+      .every((eId, index) => eId === aIds[index]);
+  }
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
