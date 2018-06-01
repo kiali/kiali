@@ -60,7 +60,10 @@ class GraphBadge {
           .getBoundingClientRect();
         const position = node.renderedPosition();
         const zoom = node.cy().zoom();
-        return { x: position.x - offset.left + 4 * zoom, y: position.y - offset.top - 15 * zoom };
+        return {
+          x: position.x - offset.left + 4 * zoom - 2 * window.pageXOffset,
+          y: position.y - offset.top - 15 * zoom - 2 * window.pageYOffset
+        };
       },
       popper: {
         positionFixed: false,
