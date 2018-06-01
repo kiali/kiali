@@ -198,7 +198,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     this.trafficRenderer.stop();
 
-    const isTheGraphSelected = this.cy.$(':selected').length === 0;
+    const isTheGraphSelected = cy.$(':selected').length === 0;
 
     cy.startBatch();
 
@@ -254,8 +254,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     cy.endBatch();
 
     // Verify our current selection is still valid, if not, select the graph
-    if (!isTheGraphSelected && this.cy.$(':selected').length === 0) {
-      this.props.onReady(this.cy);
+    if (!isTheGraphSelected && cy.$(':selected').length === 0) {
+      this.handleTap({ summaryType: 'graph', summaryTarget: cy });
     }
 
     // Update TrafficRenderer
