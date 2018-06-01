@@ -1,7 +1,14 @@
 import * as React from 'react';
 import * as resolve from 'table-resolver';
-import { checkForPath, DestinationWeight, ObjectValidation, severityToIconName } from '../../../../types/ServiceInfo';
-import { Table, Icon, OverlayTrigger, Popover } from 'patternfly-react';
+import {
+  checkForPath,
+  DestinationWeight,
+  highestSeverity,
+  ObjectValidation,
+  severityToIconName,
+  ObjectCheck
+} from '../../../../types/ServiceInfo';
+import { Row, Col, Table, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import Badge from '../../../../components/Badge/Badge';
 import { PfColors } from '../../../../components/Pf/PfColors';
 
@@ -61,7 +68,7 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
   rows() {
     return (this.props.route || []).map((routeItem, u) => ({
       id: u,
-      status: this.statusFrom(this.validation(), routeItem),
+      status: this.statusFrom(this.validation(), routeItem, u),
       weight: routeItem.weight ? routeItem.weight : '-',
       labels: this.labelsFrom(routeItem.labels)
     }));
@@ -71,16 +78,18 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
     return this.props.validations[this.props.name];
   }
 
-  statusFrom(validation: ObjectValidation, routeItem: DestinationWeight) {
-    let check = checkForPath(validation, 'spec/route/weight/' + routeItem.weight)[0];
-    let iconName = check ? severityToIconName(check.severity) : 'ok';
-    let message = check ? check.message : 'All checks passed!';
+  statusFrom(validation: ObjectValidation, routeItem: DestinationWeight, index: number) {
+    let checks = checkForPath(validation, 'spec/route[' + index + ']/weight/' + routeItem.weight);
+    checks.push(...checkForPath(validation, 'spec/route[' + index + ']/labels'));
 
+    let severity = highestSeverity(checks);
+
+    let iconName = severity ? severityToIconName(severity) : 'ok';
     if (iconName !== 'ok') {
       return (
         <OverlayTrigger
           placement={'right'}
-          overlay={this.infotipContent(message)}
+          overlay={this.infotipContent(checks)}
           trigger={['hover', 'focus']}
           rootClose={false}
         >
@@ -92,8 +101,14 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
     }
   }
 
-  infotipContent(message: string) {
-    return <Popover id={this.props.name + '-weight-tooltip'}>{message}</Popover>;
+  infotipContent(checks: ObjectCheck[]) {
+    return (
+      <Popover id={this.props.name + '-weight-tooltip'}>
+        {checks.map(check => {
+          return this.objectCheckToHtml(check);
+        })}
+      </Popover>
+    );
   }
 
   labelsFrom(routeLabels: { [key: string]: string }) {
@@ -106,6 +121,19 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
         rightText={routeLabels[key] ? routeLabels[key] : ''}
       />
     ));
+  }
+
+  objectCheckToHtml(object: ObjectCheck) {
+    return (
+      <Row>
+        <Col xs={1}>
+          <Icon type="pf" name={severityToIconName(object.severity)} />
+        </Col>
+        <Col xs={10} style={{ marginLeft: '-20px' }}>
+          {object.message}
+        </Col>
+      </Row>
+    );
   }
 
   render() {

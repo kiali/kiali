@@ -394,6 +394,15 @@ export interface ObjectCheck {
   path: string;
 }
 
+const higherThan = [
+  'error-warning',
+  'error-improvement',
+  'error-correct',
+  'warning-improvement',
+  'warning-correct',
+  'improvement-correct'
+];
+
 const IconSeverityMap = new Map<string, string>([
   ['error', 'error-circle-o'],
   ['warning', 'warning-triangle-o'],
@@ -408,6 +417,22 @@ export const severityToIconName = (severity: string): string => {
   }
 
   return iconName;
+};
+
+export const higherSeverity = (a: string, b: string): boolean => {
+  return higherThan.includes(a + '-' + b);
+};
+
+export const highestSeverity = (checks: ObjectCheck[]): string => {
+  let severity = 'correct';
+
+  checks.forEach(check => {
+    if (higherSeverity(check.severity, severity)) {
+      severity = check.severity;
+    }
+  });
+
+  return severity;
 };
 
 export const validationToIconName = (object: ObjectValidation): string => {
