@@ -63,7 +63,30 @@ ShallowWrapper {
             className="card-pf-body"
           >
             <h3>
-              reviews-v2-1234
+              <OverlayTrigger
+                defaultOverlayShown={false}
+                overlay={
+                  <Tooltip
+                    bsClass="tooltip"
+                    id="pod_names_0"
+                    placement="right"
+                    title="Pod Names"
+                  >
+                    reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                  </Tooltip>
+                }
+                placement="top"
+                trigger={
+                  Array [
+                    "hover",
+                    "focus",
+                  ]
+                }
+              >
+                <span>
+                  reviews-v... (3 replicas)
+                </span>
+              </OverlayTrigger>
             </h3>
             <div>
               <Badge
@@ -73,90 +96,15 @@ ShallowWrapper {
                 scale={0.8}
                 style="plastic"
               />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v2"
-                scale={0.8}
-                style="plastic"
-              />
             </div>
             <div>
               <span>
-                <strong>
-                  Created at: 
-                </strong>
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </span>
-            </div>
-            <hr />
-          </div>
-          <div
-            className="card-pf-body"
-          >
-            <h3>
-              reviews-v3-1234
-            </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
-              />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v3"
-                scale={0.8}
-                style="plastic"
-              />
-            </div>
-            <div>
-              <span>
-                <strong>
-                  Created at: 
-                </strong>
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </span>
-            </div>
-            <hr />
-          </div>
-          <div
-            className="card-pf-body"
-          >
-            <h3>
-              reviews-v1-1234
-            </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
-              />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v1"
-                scale={0.8}
-                style="plastic"
-              />
-            </div>
-            <div>
-              <span>
-                <strong>
-                  Created at: 
-                </strong>
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
+                <UNDEFINED>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  2018-03-14T10:17:52.000Z
+                </UNDEFINED>
               </span>
             </div>
             <hr />
@@ -184,7 +132,30 @@ ShallowWrapper {
             className="card-pf-body"
           >
             <h3>
-              reviews-v2-1234
+              <OverlayTrigger
+                defaultOverlayShown={false}
+                overlay={
+                  <Tooltip
+                    bsClass="tooltip"
+                    id="pod_names_0"
+                    placement="right"
+                    title="Pod Names"
+                  >
+                    reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                  </Tooltip>
+                }
+                placement="top"
+                trigger={
+                  Array [
+                    "hover",
+                    "focus",
+                  ]
+                }
+              >
+                <span>
+                  reviews-v... (3 replicas)
+                </span>
+              </OverlayTrigger>
             </h3>
             <div>
               <Badge
@@ -194,90 +165,15 @@ ShallowWrapper {
                 scale={0.8}
                 style="plastic"
               />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v2"
-                scale={0.8}
-                style="plastic"
-              />
             </div>
             <div>
               <span>
-                <strong>
-                  Created at: 
-                </strong>
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </span>
-            </div>
-            <hr />
-          </div>
-          <div
-            className="card-pf-body"
-          >
-            <h3>
-              reviews-v3-1234
-            </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
-              />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v3"
-                scale={0.8}
-                style="plastic"
-              />
-            </div>
-            <div>
-              <span>
-                <strong>
-                  Created at: 
-                </strong>
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
-              </span>
-            </div>
-            <hr />
-          </div>
-          <div
-            className="card-pf-body"
-          >
-            <h3>
-              reviews-v1-1234
-            </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
-              />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v1"
-                scale={0.8}
-                style="plastic"
-              />
-            </div>
-            <div>
-              <span>
-                <strong>
-                  Created at: 
-                </strong>
-                <LocalTime
-                  time="2018-03-14T10:17:52Z"
-                />
+                <UNDEFINED>
+                  <strong>
+                    Created at: 
+                  </strong>
+                  2018-03-14T10:17:52.000Z
+                </UNDEFINED>
               </span>
             </div>
             <hr />
@@ -298,7 +194,30 @@ ShallowWrapper {
               className="card-pf-body"
             >
               <h3>
-                reviews-v2-1234
+                <OverlayTrigger
+                  defaultOverlayShown={false}
+                  overlay={
+                    <Tooltip
+                      bsClass="tooltip"
+                      id="pod_names_0"
+                      placement="right"
+                      title="Pod Names"
+                    >
+                      reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                    </Tooltip>
+                  }
+                  placement="top"
+                  trigger={
+                    Array [
+                      "hover",
+                      "focus",
+                    ]
+                  }
+                >
+                  <span>
+                    reviews-v... (3 replicas)
+                  </span>
+                </OverlayTrigger>
               </h3>
               <div>
                 <Badge
@@ -308,90 +227,15 @@ ShallowWrapper {
                   scale={0.8}
                   style="plastic"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v2"
-                  scale={0.8}
-                  style="plastic"
-                />
               </div>
               <div>
                 <span>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </span>
-              </div>
-              <hr />
-            </div>,
-            <div
-              className="card-pf-body"
-            >
-              <h3>
-                reviews-v3-1234
-              </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
-                />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v3"
-                  scale={0.8}
-                  style="plastic"
-                />
-              </div>
-              <div>
-                <span>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </span>
-              </div>
-              <hr />
-            </div>,
-            <div
-              className="card-pf-body"
-            >
-              <h3>
-                reviews-v1-1234
-              </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
-                />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v1"
-                  scale={0.8}
-                  style="plastic"
-                />
-              </div>
-              <div>
-                <span>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
+                  <UNDEFINED>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    2018-03-14T10:17:52.000Z
+                  </UNDEFINED>
                 </span>
               </div>
               <hr />
@@ -412,7 +256,30 @@ ShallowWrapper {
             "props": Object {
               "children": Array [
                 <h3>
-                  reviews-v2-1234
+                  <OverlayTrigger
+                    defaultOverlayShown={false}
+                    overlay={
+                      <Tooltip
+                        bsClass="tooltip"
+                        id="pod_names_0"
+                        placement="right"
+                        title="Pod Names"
+                      >
+                        reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                      </Tooltip>
+                    }
+                    placement="top"
+                    trigger={
+                      Array [
+                        "hover",
+                        "focus",
+                      ]
+                    }
+                  >
+                    <span>
+                      reviews-v... (3 replicas)
+                    </span>
+                  </OverlayTrigger>
                 </h3>,
                 <div>
                   <Badge
@@ -422,22 +289,15 @@ ShallowWrapper {
                     scale={0.8}
                     style="plastic"
                   />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v2"
-                    scale={0.8}
-                    style="plastic"
-                  />
                 </div>,
                 <div>
                   <span>
-                    <strong>
-                      Created at: 
-                    </strong>
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />
+                    <UNDEFINED>
+                      <strong>
+                        Created at: 
+                      </strong>
+                      2018-03-14T10:17:52.000Z
+                    </UNDEFINED>
                   </span>
                 </div>,
                 undefined,
@@ -454,10 +314,69 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "host",
                 "props": Object {
-                  "children": "reviews-v2-1234",
+                  "children": <OverlayTrigger
+                    defaultOverlayShown={false}
+                    overlay={
+                      <Tooltip
+                        bsClass="tooltip"
+                        id="pod_names_0"
+                        placement="right"
+                        title="Pod Names"
+                      >
+                        reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                      </Tooltip>
+                    }
+                    placement="top"
+                    trigger={
+                      Array [
+                        "hover",
+                        "focus",
+                      ]
+                    }
+                  >
+                    <span>
+                      reviews-v... (3 replicas)
+                    </span>
+                  </OverlayTrigger>,
                 },
                 "ref": null,
-                "rendered": "reviews-v2-1234",
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "children": <span>
+                      reviews-v... (3 replicas)
+                    </span>,
+                    "defaultOverlayShown": false,
+                    "overlay": <Tooltip
+                      bsClass="tooltip"
+                      id="pod_names_0"
+                      placement="right"
+                      title="Pod Names"
+                    >
+                      reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                    </Tooltip>,
+                    "placement": "top",
+                    "trigger": Array [
+                      "hover",
+                      "focus",
+                    ],
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": "reviews-v... (3 replicas)",
+                    },
+                    "ref": null,
+                    "rendered": "reviews-v... (3 replicas)",
+                    "type": "span",
+                  },
+                  "type": [Function],
+                },
                 "type": "h3",
               },
               Object {
@@ -473,40 +392,18 @@ ShallowWrapper {
                       scale={0.8}
                       style="plastic"
                     />,
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v2"
-                      scale={0.8}
-                      style="plastic"
-                    />,
                   ],
                 },
                 "ref": null,
                 "rendered": Array [
                   Object {
                     "instance": null,
-                    "key": "pod_0",
+                    "key": "pod_0_0",
                     "nodeType": "class",
                     "props": Object {
                       "color": "#3f9c35",
                       "leftText": "app",
                       "rightText": "reviews",
-                      "scale": 0.8,
-                      "style": "plastic",
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                  Object {
-                    "instance": null,
-                    "key": "pod_1",
-                    "nodeType": "class",
-                    "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "version",
-                      "rightText": "v2",
                       "scale": 0.8,
                       "style": "plastic",
                     },
@@ -523,12 +420,12 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": <span>
-                    <strong>
-                      Created at: 
-                    </strong>
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />
+                    <UNDEFINED>
+                      <strong>
+                        Created at: 
+                      </strong>
+                      2018-03-14T10:17:52.000Z
+                    </UNDEFINED>
                   </span>,
                 },
                 "ref": null,
@@ -537,410 +434,43 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "host",
                   "props": Object {
-                    "children": Array [
+                    "children": <UNDEFINED>
                       <strong>
                         Created at: 
-                      </strong>,
-                      <LocalTime
-                        time="2018-03-14T10:17:52Z"
-                      />,
-                    ],
+                      </strong>
+                      2018-03-14T10:17:52.000Z
+                    </UNDEFINED>,
                   },
                   "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Created at: ",
-                      },
-                      "ref": null,
-                      "rendered": "Created at: ",
-                      "type": "strong",
-                    },
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "class",
-                      "props": Object {
-                        "time": "2018-03-14T10:17:52Z",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "span",
-                },
-                "type": "div",
-              },
-              undefined,
-              undefined,
-              undefined,
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {},
-                "ref": null,
-                "rendered": null,
-                "type": "hr",
-              },
-            ],
-            "type": "div",
-          },
-          Object {
-            "instance": null,
-            "key": "pods_1",
-            "nodeType": "host",
-            "props": Object {
-              "children": Array [
-                <h3>
-                  reviews-v3-1234
-                </h3>,
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
-                  />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v3"
-                    scale={0.8}
-                    style="plastic"
-                  />
-                </div>,
-                <div>
-                  <span>
-                    <strong>
-                      Created at: 
-                    </strong>
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />
-                  </span>
-                </div>,
-                undefined,
-                undefined,
-                undefined,
-                <hr />,
-              ],
-              "className": "card-pf-body",
-            },
-            "ref": null,
-            "rendered": Array [
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": "reviews-v3-1234",
-                },
-                "ref": null,
-                "rendered": "reviews-v3-1234",
-                "type": "h3",
-              },
-              Object {
-                "instance": null,
-                "key": "labels",
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
-                    />,
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v3"
-                      scale={0.8}
-                      style="plastic"
-                    />,
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
+                  "rendered": Object {
                     "instance": null,
-                    "key": "pod_0",
-                    "nodeType": "class",
+                    "key": undefined,
+                    "nodeType": "function",
                     "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "app",
-                      "rightText": "reviews",
-                      "scale": 0.8,
-                      "style": "plastic",
+                      "children": Array [
+                        <strong>
+                          Created at: 
+                        </strong>,
+                        "2018-03-14T10:17:52.000Z",
+                      ],
                     },
                     "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                  Object {
-                    "instance": null,
-                    "key": "pod_1",
-                    "nodeType": "class",
-                    "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "version",
-                      "rightText": "v3",
-                      "scale": 0.8,
-                      "style": "plastic",
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": <span>
-                    <strong>
-                      Created at: 
-                    </strong>
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />
-                  </span>,
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Created at: 
-                      </strong>,
-                      <LocalTime
-                        time="2018-03-14T10:17:52Z"
-                      />,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": "Created at: ",
+                        },
+                        "ref": null,
+                        "rendered": "Created at: ",
+                        "type": "strong",
+                      },
+                      "2018-03-14T10:17:52.000Z",
                     ],
+                    "type": Symbol(react.fragment),
                   },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Created at: ",
-                      },
-                      "ref": null,
-                      "rendered": "Created at: ",
-                      "type": "strong",
-                    },
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "class",
-                      "props": Object {
-                        "time": "2018-03-14T10:17:52Z",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "span",
-                },
-                "type": "div",
-              },
-              undefined,
-              undefined,
-              undefined,
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {},
-                "ref": null,
-                "rendered": null,
-                "type": "hr",
-              },
-            ],
-            "type": "div",
-          },
-          Object {
-            "instance": null,
-            "key": "pods_2",
-            "nodeType": "host",
-            "props": Object {
-              "children": Array [
-                <h3>
-                  reviews-v1-1234
-                </h3>,
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
-                  />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v1"
-                    scale={0.8}
-                    style="plastic"
-                  />
-                </div>,
-                <div>
-                  <span>
-                    <strong>
-                      Created at: 
-                    </strong>
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />
-                  </span>
-                </div>,
-                undefined,
-                undefined,
-                undefined,
-                <hr />,
-              ],
-              "className": "card-pf-body",
-            },
-            "ref": null,
-            "rendered": Array [
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": "reviews-v1-1234",
-                },
-                "ref": null,
-                "rendered": "reviews-v1-1234",
-                "type": "h3",
-              },
-              Object {
-                "instance": null,
-                "key": "labels",
-                "nodeType": "host",
-                "props": Object {
-                  "children": Array [
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
-                    />,
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v1"
-                      scale={0.8}
-                      style="plastic"
-                    />,
-                  ],
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": "pod_0",
-                    "nodeType": "class",
-                    "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "app",
-                      "rightText": "reviews",
-                      "scale": 0.8,
-                      "style": "plastic",
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                  Object {
-                    "instance": null,
-                    "key": "pod_1",
-                    "nodeType": "class",
-                    "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "version",
-                      "rightText": "v1",
-                      "scale": 0.8,
-                      "style": "plastic",
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                ],
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": <span>
-                    <strong>
-                      Created at: 
-                    </strong>
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />
-                  </span>,
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <strong>
-                        Created at: 
-                      </strong>,
-                      <LocalTime
-                        time="2018-03-14T10:17:52Z"
-                      />,
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "children": "Created at: ",
-                      },
-                      "ref": null,
-                      "rendered": "Created at: ",
-                      "type": "strong",
-                    },
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "class",
-                      "props": Object {
-                        "time": "2018-03-14T10:17:52Z",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                  ],
                   "type": "span",
                 },
                 "type": "div",
@@ -990,7 +520,30 @@ ShallowWrapper {
               className="card-pf-body"
             >
               <h3>
-                reviews-v2-1234
+                <OverlayTrigger
+                  defaultOverlayShown={false}
+                  overlay={
+                    <Tooltip
+                      bsClass="tooltip"
+                      id="pod_names_0"
+                      placement="right"
+                      title="Pod Names"
+                    >
+                      reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                    </Tooltip>
+                  }
+                  placement="top"
+                  trigger={
+                    Array [
+                      "hover",
+                      "focus",
+                    ]
+                  }
+                >
+                  <span>
+                    reviews-v... (3 replicas)
+                  </span>
+                </OverlayTrigger>
               </h3>
               <div>
                 <Badge
@@ -1000,90 +553,15 @@ ShallowWrapper {
                   scale={0.8}
                   style="plastic"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v2"
-                  scale={0.8}
-                  style="plastic"
-                />
               </div>
               <div>
                 <span>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </span>
-              </div>
-              <hr />
-            </div>
-            <div
-              className="card-pf-body"
-            >
-              <h3>
-                reviews-v3-1234
-              </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
-                />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v3"
-                  scale={0.8}
-                  style="plastic"
-                />
-              </div>
-              <div>
-                <span>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </span>
-              </div>
-              <hr />
-            </div>
-            <div
-              className="card-pf-body"
-            >
-              <h3>
-                reviews-v1-1234
-              </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
-                />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v1"
-                  scale={0.8}
-                  style="plastic"
-                />
-              </div>
-              <div>
-                <span>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
+                  <UNDEFINED>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    2018-03-14T10:17:52.000Z
+                  </UNDEFINED>
                 </span>
               </div>
               <hr />
@@ -1111,7 +589,30 @@ ShallowWrapper {
               className="card-pf-body"
             >
               <h3>
-                reviews-v2-1234
+                <OverlayTrigger
+                  defaultOverlayShown={false}
+                  overlay={
+                    <Tooltip
+                      bsClass="tooltip"
+                      id="pod_names_0"
+                      placement="right"
+                      title="Pod Names"
+                    >
+                      reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                    </Tooltip>
+                  }
+                  placement="top"
+                  trigger={
+                    Array [
+                      "hover",
+                      "focus",
+                    ]
+                  }
+                >
+                  <span>
+                    reviews-v... (3 replicas)
+                  </span>
+                </OverlayTrigger>
               </h3>
               <div>
                 <Badge
@@ -1121,90 +622,15 @@ ShallowWrapper {
                   scale={0.8}
                   style="plastic"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v2"
-                  scale={0.8}
-                  style="plastic"
-                />
               </div>
               <div>
                 <span>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </span>
-              </div>
-              <hr />
-            </div>
-            <div
-              className="card-pf-body"
-            >
-              <h3>
-                reviews-v3-1234
-              </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
-                />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v3"
-                  scale={0.8}
-                  style="plastic"
-                />
-              </div>
-              <div>
-                <span>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
-                </span>
-              </div>
-              <hr />
-            </div>
-            <div
-              className="card-pf-body"
-            >
-              <h3>
-                reviews-v1-1234
-              </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
-                />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v1"
-                  scale={0.8}
-                  style="plastic"
-                />
-              </div>
-              <div>
-                <span>
-                  <strong>
-                    Created at: 
-                  </strong>
-                  <LocalTime
-                    time="2018-03-14T10:17:52Z"
-                  />
+                  <UNDEFINED>
+                    <strong>
+                      Created at: 
+                    </strong>
+                    2018-03-14T10:17:52.000Z
+                  </UNDEFINED>
                 </span>
               </div>
               <hr />
@@ -1225,7 +651,30 @@ ShallowWrapper {
                 className="card-pf-body"
               >
                 <h3>
-                  reviews-v2-1234
+                  <OverlayTrigger
+                    defaultOverlayShown={false}
+                    overlay={
+                      <Tooltip
+                        bsClass="tooltip"
+                        id="pod_names_0"
+                        placement="right"
+                        title="Pod Names"
+                      >
+                        reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                      </Tooltip>
+                    }
+                    placement="top"
+                    trigger={
+                      Array [
+                        "hover",
+                        "focus",
+                      ]
+                    }
+                  >
+                    <span>
+                      reviews-v... (3 replicas)
+                    </span>
+                  </OverlayTrigger>
                 </h3>
                 <div>
                   <Badge
@@ -1235,90 +684,15 @@ ShallowWrapper {
                     scale={0.8}
                     style="plastic"
                   />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v2"
-                    scale={0.8}
-                    style="plastic"
-                  />
                 </div>
                 <div>
                   <span>
-                    <strong>
-                      Created at: 
-                    </strong>
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />
-                  </span>
-                </div>
-                <hr />
-              </div>,
-              <div
-                className="card-pf-body"
-              >
-                <h3>
-                  reviews-v3-1234
-                </h3>
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
-                  />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v3"
-                    scale={0.8}
-                    style="plastic"
-                  />
-                </div>
-                <div>
-                  <span>
-                    <strong>
-                      Created at: 
-                    </strong>
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />
-                  </span>
-                </div>
-                <hr />
-              </div>,
-              <div
-                className="card-pf-body"
-              >
-                <h3>
-                  reviews-v1-1234
-                </h3>
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
-                  />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v1"
-                    scale={0.8}
-                    style="plastic"
-                  />
-                </div>
-                <div>
-                  <span>
-                    <strong>
-                      Created at: 
-                    </strong>
-                    <LocalTime
-                      time="2018-03-14T10:17:52Z"
-                    />
+                    <UNDEFINED>
+                      <strong>
+                        Created at: 
+                      </strong>
+                      2018-03-14T10:17:52.000Z
+                    </UNDEFINED>
                   </span>
                 </div>
                 <hr />
@@ -1339,7 +713,30 @@ ShallowWrapper {
               "props": Object {
                 "children": Array [
                   <h3>
-                    reviews-v2-1234
+                    <OverlayTrigger
+                      defaultOverlayShown={false}
+                      overlay={
+                        <Tooltip
+                          bsClass="tooltip"
+                          id="pod_names_0"
+                          placement="right"
+                          title="Pod Names"
+                        >
+                          reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                        </Tooltip>
+                      }
+                      placement="top"
+                      trigger={
+                        Array [
+                          "hover",
+                          "focus",
+                        ]
+                      }
+                    >
+                      <span>
+                        reviews-v... (3 replicas)
+                      </span>
+                    </OverlayTrigger>
                   </h3>,
                   <div>
                     <Badge
@@ -1349,22 +746,15 @@ ShallowWrapper {
                       scale={0.8}
                       style="plastic"
                     />
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v2"
-                      scale={0.8}
-                      style="plastic"
-                    />
                   </div>,
                   <div>
                     <span>
-                      <strong>
-                        Created at: 
-                      </strong>
-                      <LocalTime
-                        time="2018-03-14T10:17:52Z"
-                      />
+                      <UNDEFINED>
+                        <strong>
+                          Created at: 
+                        </strong>
+                        2018-03-14T10:17:52.000Z
+                      </UNDEFINED>
                     </span>
                   </div>,
                   undefined,
@@ -1381,10 +771,69 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "host",
                   "props": Object {
-                    "children": "reviews-v2-1234",
+                    "children": <OverlayTrigger
+                      defaultOverlayShown={false}
+                      overlay={
+                        <Tooltip
+                          bsClass="tooltip"
+                          id="pod_names_0"
+                          placement="right"
+                          title="Pod Names"
+                        >
+                          reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                        </Tooltip>
+                      }
+                      placement="top"
+                      trigger={
+                        Array [
+                          "hover",
+                          "focus",
+                        ]
+                      }
+                    >
+                      <span>
+                        reviews-v... (3 replicas)
+                      </span>
+                    </OverlayTrigger>,
                   },
                   "ref": null,
-                  "rendered": "reviews-v2-1234",
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "children": <span>
+                        reviews-v... (3 replicas)
+                      </span>,
+                      "defaultOverlayShown": false,
+                      "overlay": <Tooltip
+                        bsClass="tooltip"
+                        id="pod_names_0"
+                        placement="right"
+                        title="Pod Names"
+                      >
+                        reviews-v2-1234, reviews-v3-1234, reviews-v1-1234
+                      </Tooltip>,
+                      "placement": "top",
+                      "trigger": Array [
+                        "hover",
+                        "focus",
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "reviews-v... (3 replicas)",
+                      },
+                      "ref": null,
+                      "rendered": "reviews-v... (3 replicas)",
+                      "type": "span",
+                    },
+                    "type": [Function],
+                  },
                   "type": "h3",
                 },
                 Object {
@@ -1400,40 +849,18 @@ ShallowWrapper {
                         scale={0.8}
                         style="plastic"
                       />,
-                      <Badge
-                        color="#3f9c35"
-                        leftText="version"
-                        rightText="v2"
-                        scale={0.8}
-                        style="plastic"
-                      />,
                     ],
                   },
                   "ref": null,
                   "rendered": Array [
                     Object {
                       "instance": null,
-                      "key": "pod_0",
+                      "key": "pod_0_0",
                       "nodeType": "class",
                       "props": Object {
                         "color": "#3f9c35",
                         "leftText": "app",
                         "rightText": "reviews",
-                        "scale": 0.8,
-                        "style": "plastic",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                    Object {
-                      "instance": null,
-                      "key": "pod_1",
-                      "nodeType": "class",
-                      "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "version",
-                        "rightText": "v2",
                         "scale": 0.8,
                         "style": "plastic",
                       },
@@ -1450,12 +877,12 @@ ShallowWrapper {
                   "nodeType": "host",
                   "props": Object {
                     "children": <span>
-                      <strong>
-                        Created at: 
-                      </strong>
-                      <LocalTime
-                        time="2018-03-14T10:17:52Z"
-                      />
+                      <UNDEFINED>
+                        <strong>
+                          Created at: 
+                        </strong>
+                        2018-03-14T10:17:52.000Z
+                      </UNDEFINED>
                     </span>,
                   },
                   "ref": null,
@@ -1464,410 +891,43 @@ ShallowWrapper {
                     "key": undefined,
                     "nodeType": "host",
                     "props": Object {
-                      "children": Array [
+                      "children": <UNDEFINED>
                         <strong>
                           Created at: 
-                        </strong>,
-                        <LocalTime
-                          time="2018-03-14T10:17:52Z"
-                        />,
-                      ],
+                        </strong>
+                        2018-03-14T10:17:52.000Z
+                      </UNDEFINED>,
                     },
                     "ref": null,
-                    "rendered": Array [
-                      Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "host",
-                        "props": Object {
-                          "children": "Created at: ",
-                        },
-                        "ref": null,
-                        "rendered": "Created at: ",
-                        "type": "strong",
-                      },
-                      Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "class",
-                        "props": Object {
-                          "time": "2018-03-14T10:17:52Z",
-                        },
-                        "ref": null,
-                        "rendered": null,
-                        "type": [Function],
-                      },
-                    ],
-                    "type": "span",
-                  },
-                  "type": "div",
-                },
-                undefined,
-                undefined,
-                undefined,
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {},
-                  "ref": null,
-                  "rendered": null,
-                  "type": "hr",
-                },
-              ],
-              "type": "div",
-            },
-            Object {
-              "instance": null,
-              "key": "pods_1",
-              "nodeType": "host",
-              "props": Object {
-                "children": Array [
-                  <h3>
-                    reviews-v3-1234
-                  </h3>,
-                  <div>
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
-                    />
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v3"
-                      scale={0.8}
-                      style="plastic"
-                    />
-                  </div>,
-                  <div>
-                    <span>
-                      <strong>
-                        Created at: 
-                      </strong>
-                      <LocalTime
-                        time="2018-03-14T10:17:52Z"
-                      />
-                    </span>
-                  </div>,
-                  undefined,
-                  undefined,
-                  undefined,
-                  <hr />,
-                ],
-                "className": "card-pf-body",
-              },
-              "ref": null,
-              "rendered": Array [
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": "reviews-v3-1234",
-                  },
-                  "ref": null,
-                  "rendered": "reviews-v3-1234",
-                  "type": "h3",
-                },
-                Object {
-                  "instance": null,
-                  "key": "labels",
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <Badge
-                        color="#3f9c35"
-                        leftText="app"
-                        rightText="reviews"
-                        scale={0.8}
-                        style="plastic"
-                      />,
-                      <Badge
-                        color="#3f9c35"
-                        leftText="version"
-                        rightText="v3"
-                        scale={0.8}
-                        style="plastic"
-                      />,
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
+                    "rendered": Object {
                       "instance": null,
-                      "key": "pod_0",
-                      "nodeType": "class",
+                      "key": undefined,
+                      "nodeType": "function",
                       "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "app",
-                        "rightText": "reviews",
-                        "scale": 0.8,
-                        "style": "plastic",
+                        "children": Array [
+                          <strong>
+                            Created at: 
+                          </strong>,
+                          "2018-03-14T10:17:52.000Z",
+                        ],
                       },
                       "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                    Object {
-                      "instance": null,
-                      "key": "pod_1",
-                      "nodeType": "class",
-                      "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "version",
-                        "rightText": "v3",
-                        "scale": 0.8,
-                        "style": "plastic",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": <span>
-                      <strong>
-                        Created at: 
-                      </strong>
-                      <LocalTime
-                        time="2018-03-14T10:17:52Z"
-                      />
-                    </span>,
-                  },
-                  "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": Array [
-                        <strong>
-                          Created at: 
-                        </strong>,
-                        <LocalTime
-                          time="2018-03-14T10:17:52Z"
-                        />,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "host",
+                          "props": Object {
+                            "children": "Created at: ",
+                          },
+                          "ref": null,
+                          "rendered": "Created at: ",
+                          "type": "strong",
+                        },
+                        "2018-03-14T10:17:52.000Z",
                       ],
+                      "type": Symbol(react.fragment),
                     },
-                    "ref": null,
-                    "rendered": Array [
-                      Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "host",
-                        "props": Object {
-                          "children": "Created at: ",
-                        },
-                        "ref": null,
-                        "rendered": "Created at: ",
-                        "type": "strong",
-                      },
-                      Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "class",
-                        "props": Object {
-                          "time": "2018-03-14T10:17:52Z",
-                        },
-                        "ref": null,
-                        "rendered": null,
-                        "type": [Function],
-                      },
-                    ],
-                    "type": "span",
-                  },
-                  "type": "div",
-                },
-                undefined,
-                undefined,
-                undefined,
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {},
-                  "ref": null,
-                  "rendered": null,
-                  "type": "hr",
-                },
-              ],
-              "type": "div",
-            },
-            Object {
-              "instance": null,
-              "key": "pods_2",
-              "nodeType": "host",
-              "props": Object {
-                "children": Array [
-                  <h3>
-                    reviews-v1-1234
-                  </h3>,
-                  <div>
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
-                    />
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v1"
-                      scale={0.8}
-                      style="plastic"
-                    />
-                  </div>,
-                  <div>
-                    <span>
-                      <strong>
-                        Created at: 
-                      </strong>
-                      <LocalTime
-                        time="2018-03-14T10:17:52Z"
-                      />
-                    </span>
-                  </div>,
-                  undefined,
-                  undefined,
-                  undefined,
-                  <hr />,
-                ],
-                "className": "card-pf-body",
-              },
-              "ref": null,
-              "rendered": Array [
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": "reviews-v1-1234",
-                  },
-                  "ref": null,
-                  "rendered": "reviews-v1-1234",
-                  "type": "h3",
-                },
-                Object {
-                  "instance": null,
-                  "key": "labels",
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <Badge
-                        color="#3f9c35"
-                        leftText="app"
-                        rightText="reviews"
-                        scale={0.8}
-                        style="plastic"
-                      />,
-                      <Badge
-                        color="#3f9c35"
-                        leftText="version"
-                        rightText="v1"
-                        scale={0.8}
-                        style="plastic"
-                      />,
-                    ],
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": "pod_0",
-                      "nodeType": "class",
-                      "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "app",
-                        "rightText": "reviews",
-                        "scale": 0.8,
-                        "style": "plastic",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                    Object {
-                      "instance": null,
-                      "key": "pod_1",
-                      "nodeType": "class",
-                      "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "version",
-                        "rightText": "v1",
-                        "scale": 0.8,
-                        "style": "plastic",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": <span>
-                      <strong>
-                        Created at: 
-                      </strong>
-                      <LocalTime
-                        time="2018-03-14T10:17:52Z"
-                      />
-                    </span>,
-                  },
-                  "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": Array [
-                        <strong>
-                          Created at: 
-                        </strong>,
-                        <LocalTime
-                          time="2018-03-14T10:17:52Z"
-                        />,
-                      ],
-                    },
-                    "ref": null,
-                    "rendered": Array [
-                      Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "host",
-                        "props": Object {
-                          "children": "Created at: ",
-                        },
-                        "ref": null,
-                        "rendered": "Created at: ",
-                        "type": "strong",
-                      },
-                      Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "class",
-                        "props": Object {
-                          "time": "2018-03-14T10:17:52Z",
-                        },
-                        "ref": null,
-                        "rendered": null,
-                        "type": [Function],
-                      },
-                    ],
                     "type": "span",
                   },
                   "type": "div",

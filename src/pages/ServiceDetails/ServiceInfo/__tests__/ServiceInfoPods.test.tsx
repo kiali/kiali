@@ -21,6 +21,10 @@ const pods: Pod[] = [
   }
 ];
 
+// Mocking "toLocaleString", which is used for dates display
+//  since it may produce different results on CI and dev machines, breaking snapshots.
+Date.prototype.toLocaleString = jest.fn(Date.prototype.toISOString);
+
 describe('#ServiceInfoPods render correctly with data', () => {
   it('should render service pods', () => {
     const wrapper = shallow(<ServiceInfoPods pods={pods} />);
