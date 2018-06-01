@@ -24,33 +24,13 @@ ShallowWrapper {
       "bounds": false,
       "cancel": null,
       "children": <Card
-        accented={true}
+        accented={false}
         aggregated={false}
         aggregatedMini={false}
         cardRef={null}
-        className="f1yemdoz"
+        className="f1lq7yal"
         matchHeight={false}
       >
-        <CardHeading
-          className=""
-        >
-          <Icon
-            aria-hidden="true"
-            name="close"
-            onClick={[MockFunction]}
-            style={
-              Object {
-                "float": "right",
-              }
-            }
-            type="pf"
-          />
-          <CardTitle
-            className=""
-          >
-            Traffic Legend
-          </CardTitle>
-        </CardHeading>
         <CardBody
           className=""
         >
@@ -86,7 +66,7 @@ ShallowWrapper {
       "defaultClassNameDragging": "react-draggable-dragging",
       "defaultPosition": Object {
         "x": 20,
-        "y": 600,
+        "y": 500,
       },
       "disabled": false,
       "enableUserSelectHack": true,
@@ -106,31 +86,169 @@ ShallowWrapper {
       "key": undefined,
       "nodeType": "function",
       "props": Object {
-        "accented": true,
+        "accented": false,
         "aggregated": false,
         "aggregatedMini": false,
         "cardRef": null,
-        "children": Array [
-          <CardHeading
-            className=""
-          >
-            <Icon
-              aria-hidden="true"
-              name="close"
-              onClick={[MockFunction]}
-              style={
-                Object {
-                  "float": "right",
-                }
-              }
-              type="pf"
-            />
-            <CardTitle
-              className=""
-            >
-              Traffic Legend
-            </CardTitle>
-          </CardHeading>,
+        "children": <CardBody
+          className=""
+        >
+          <Arrow
+            color="#cc0000"
+            dashed={false}
+            label="Over 10% Error"
+          />
+          <Arrow
+            color="#ec7a08"
+            dashed={false}
+            label="5 - 10% Error"
+          />
+          <Arrow
+            color="#3f9c35"
+            dashed={false}
+            label="< 5% Error"
+          />
+          <Arrow
+            color="#030303"
+            dashed={false}
+            label="Idle"
+          />
+          <Arrow
+            color="#030303"
+            dashed={true}
+            label="No Traffic yet"
+          />
+        </CardBody>,
+        "className": "f1lq7yal",
+        "matchHeight": false,
+      },
+      "ref": null,
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "children": Array [
+            <Arrow
+              color="#cc0000"
+              dashed={false}
+              label="Over 10% Error"
+            />,
+            <Arrow
+              color="#ec7a08"
+              dashed={false}
+              label="5 - 10% Error"
+            />,
+            <Arrow
+              color="#3f9c35"
+              dashed={false}
+              label="< 5% Error"
+            />,
+            <Arrow
+              color="#030303"
+              dashed={false}
+              label="Idle"
+            />,
+            <Arrow
+              color="#030303"
+              dashed={true}
+              label="No Traffic yet"
+            />,
+          ],
+          "className": "",
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "function",
+            "props": Object {
+              "color": "#cc0000",
+              "dashed": false,
+              "label": "Over 10% Error",
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "function",
+            "props": Object {
+              "color": "#ec7a08",
+              "dashed": false,
+              "label": "5 - 10% Error",
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "function",
+            "props": Object {
+              "color": "#3f9c35",
+              "dashed": false,
+              "label": "< 5% Error",
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "function",
+            "props": Object {
+              "color": "#030303",
+              "dashed": false,
+              "label": "Idle",
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "function",
+            "props": Object {
+              "color": "#030303",
+              "dashed": true,
+              "label": "No Traffic yet",
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+        ],
+        "type": [Function],
+      },
+      "type": [Function],
+    },
+    "type": [Function],
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "allowAnyClick": false,
+        "axis": "both",
+        "bounds": false,
+        "cancel": null,
+        "children": <Card
+          accented={false}
+          aggregated={false}
+          aggregatedMini={false}
+          cardRef={null}
+          className="f1lq7yal"
+          matchHeight={false}
+        >
           <CardBody
             className=""
           >
@@ -159,73 +277,71 @@ ShallowWrapper {
               dashed={true}
               label="No Traffic yet"
             />
-          </CardBody>,
-        ],
-        "className": "f1yemdoz",
-        "matchHeight": false,
+          </CardBody>
+        </Card>,
+        "defaultClassName": "react-draggable",
+        "defaultClassNameDragged": "react-draggable-dragged",
+        "defaultClassNameDragging": "react-draggable-dragging",
+        "defaultPosition": Object {
+          "x": 20,
+          "y": 500,
+        },
+        "disabled": false,
+        "enableUserSelectHack": true,
+        "grid": null,
+        "handle": null,
+        "offsetParent": null,
+        "onDrag": [Function],
+        "onMouseDown": [Function],
+        "onStart": [Function],
+        "onStop": [Function],
+        "position": null,
+        "transform": null,
       },
       "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "children": Array [
-              <Icon
-                aria-hidden="true"
-                name="close"
-                onClick={[MockFunction]}
-                style={
-                  Object {
-                    "float": "right",
-                  }
-                }
-                type="pf"
-              />,
-              <CardTitle
-                className=""
-              >
-                Traffic Legend
-              </CardTitle>,
-            ],
-            "className": "",
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "function",
-              "props": Object {
-                "aria-hidden": "true",
-                "name": "close",
-                "onClick": [MockFunction],
-                "style": Object {
-                  "float": "right",
-                },
-                "type": "pf",
-              },
-              "ref": null,
-              "rendered": null,
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "function",
-              "props": Object {
-                "children": "Traffic Legend",
-                "className": "",
-              },
-              "ref": null,
-              "rendered": "Traffic Legend",
-              "type": [Function],
-            },
-          ],
-          "type": [Function],
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "accented": false,
+          "aggregated": false,
+          "aggregatedMini": false,
+          "cardRef": null,
+          "children": <CardBody
+            className=""
+          >
+            <Arrow
+              color="#cc0000"
+              dashed={false}
+              label="Over 10% Error"
+            />
+            <Arrow
+              color="#ec7a08"
+              dashed={false}
+              label="5 - 10% Error"
+            />
+            <Arrow
+              color="#3f9c35"
+              dashed={false}
+              label="< 5% Error"
+            />
+            <Arrow
+              color="#030303"
+              dashed={false}
+              label="Idle"
+            />
+            <Arrow
+              color="#030303"
+              dashed={true}
+              label="No Traffic yet"
+            />
+          </CardBody>,
+          "className": "f1lq7yal",
+          "matchHeight": false,
         },
-        Object {
+        "ref": null,
+        "rendered": Object {
           "instance": null,
           "key": undefined,
           "nodeType": "function",
@@ -329,328 +445,6 @@ ShallowWrapper {
           ],
           "type": [Function],
         },
-      ],
-      "type": [Function],
-    },
-    "type": [Function],
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "class",
-      "props": Object {
-        "allowAnyClick": false,
-        "axis": "both",
-        "bounds": false,
-        "cancel": null,
-        "children": <Card
-          accented={true}
-          aggregated={false}
-          aggregatedMini={false}
-          cardRef={null}
-          className="f1yemdoz"
-          matchHeight={false}
-        >
-          <CardHeading
-            className=""
-          >
-            <Icon
-              aria-hidden="true"
-              name="close"
-              onClick={[MockFunction]}
-              style={
-                Object {
-                  "float": "right",
-                }
-              }
-              type="pf"
-            />
-            <CardTitle
-              className=""
-            >
-              Traffic Legend
-            </CardTitle>
-          </CardHeading>
-          <CardBody
-            className=""
-          >
-            <Arrow
-              color="#cc0000"
-              dashed={false}
-              label="Over 10% Error"
-            />
-            <Arrow
-              color="#ec7a08"
-              dashed={false}
-              label="5 - 10% Error"
-            />
-            <Arrow
-              color="#3f9c35"
-              dashed={false}
-              label="< 5% Error"
-            />
-            <Arrow
-              color="#030303"
-              dashed={false}
-              label="Idle"
-            />
-            <Arrow
-              color="#030303"
-              dashed={true}
-              label="No Traffic yet"
-            />
-          </CardBody>
-        </Card>,
-        "defaultClassName": "react-draggable",
-        "defaultClassNameDragged": "react-draggable-dragged",
-        "defaultClassNameDragging": "react-draggable-dragging",
-        "defaultPosition": Object {
-          "x": 20,
-          "y": 600,
-        },
-        "disabled": false,
-        "enableUserSelectHack": true,
-        "grid": null,
-        "handle": null,
-        "offsetParent": null,
-        "onDrag": [Function],
-        "onMouseDown": [Function],
-        "onStart": [Function],
-        "onStop": [Function],
-        "position": null,
-        "transform": null,
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "accented": true,
-          "aggregated": false,
-          "aggregatedMini": false,
-          "cardRef": null,
-          "children": Array [
-            <CardHeading
-              className=""
-            >
-              <Icon
-                aria-hidden="true"
-                name="close"
-                onClick={[MockFunction]}
-                style={
-                  Object {
-                    "float": "right",
-                  }
-                }
-                type="pf"
-              />
-              <CardTitle
-                className=""
-              >
-                Traffic Legend
-              </CardTitle>
-            </CardHeading>,
-            <CardBody
-              className=""
-            >
-              <Arrow
-                color="#cc0000"
-                dashed={false}
-                label="Over 10% Error"
-              />
-              <Arrow
-                color="#ec7a08"
-                dashed={false}
-                label="5 - 10% Error"
-              />
-              <Arrow
-                color="#3f9c35"
-                dashed={false}
-                label="< 5% Error"
-              />
-              <Arrow
-                color="#030303"
-                dashed={false}
-                label="Idle"
-              />
-              <Arrow
-                color="#030303"
-                dashed={true}
-                label="No Traffic yet"
-              />
-            </CardBody>,
-          ],
-          "className": "f1yemdoz",
-          "matchHeight": false,
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "children": Array [
-                <Icon
-                  aria-hidden="true"
-                  name="close"
-                  onClick={[MockFunction]}
-                  style={
-                    Object {
-                      "float": "right",
-                    }
-                  }
-                  type="pf"
-                />,
-                <CardTitle
-                  className=""
-                >
-                  Traffic Legend
-                </CardTitle>,
-              ],
-              "className": "",
-            },
-            "ref": null,
-            "rendered": Array [
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "function",
-                "props": Object {
-                  "aria-hidden": "true",
-                  "name": "close",
-                  "onClick": [MockFunction],
-                  "style": Object {
-                    "float": "right",
-                  },
-                  "type": "pf",
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "function",
-                "props": Object {
-                  "children": "Traffic Legend",
-                  "className": "",
-                },
-                "ref": null,
-                "rendered": "Traffic Legend",
-                "type": [Function],
-              },
-            ],
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "children": Array [
-                <Arrow
-                  color="#cc0000"
-                  dashed={false}
-                  label="Over 10% Error"
-                />,
-                <Arrow
-                  color="#ec7a08"
-                  dashed={false}
-                  label="5 - 10% Error"
-                />,
-                <Arrow
-                  color="#3f9c35"
-                  dashed={false}
-                  label="< 5% Error"
-                />,
-                <Arrow
-                  color="#030303"
-                  dashed={false}
-                  label="Idle"
-                />,
-                <Arrow
-                  color="#030303"
-                  dashed={true}
-                  label="No Traffic yet"
-                />,
-              ],
-              "className": "",
-            },
-            "ref": null,
-            "rendered": Array [
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "function",
-                "props": Object {
-                  "color": "#cc0000",
-                  "dashed": false,
-                  "label": "Over 10% Error",
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "function",
-                "props": Object {
-                  "color": "#ec7a08",
-                  "dashed": false,
-                  "label": "5 - 10% Error",
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "function",
-                "props": Object {
-                  "color": "#3f9c35",
-                  "dashed": false,
-                  "label": "< 5% Error",
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "function",
-                "props": Object {
-                  "color": "#030303",
-                  "dashed": false,
-                  "label": "Idle",
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "function",
-                "props": Object {
-                  "color": "#030303",
-                  "dashed": true,
-                  "label": "No Traffic yet",
-                },
-                "ref": null,
-                "rendered": null,
-                "type": [Function],
-              },
-            ],
-            "type": [Function],
-          },
-        ],
         "type": [Function],
       },
       "type": [Function],

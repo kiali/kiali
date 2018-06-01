@@ -18,7 +18,7 @@ before_install:
 script:
   - yarn prettier --list-different &&
     yarn build &&
-    yarn test --forceExit
+    yarn test --forceExit --maxWorkers=4
   - ./run_itest.sh
 before_deploy:
   - yarn set-snapshot-version $TRAVIS_BUILD_NUMBER

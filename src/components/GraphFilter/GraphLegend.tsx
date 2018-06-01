@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Draggable from 'react-draggable';
-import { Card, Icon } from 'patternfly-react';
+import { Card } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
 import { style } from 'typestyle';
 import { NestedCSSProperties } from 'typestyle/lib/types';
@@ -29,14 +29,14 @@ const Arrow = (props: ArrowProps) => {
   }
   const lineBase = style(line);
   const arrowStyle = style({ marginTop: 20, clear: 'both' });
-  const arrowDiv = style({ width: '120px', float: 'left' });
+  const arrowDiv = style({ width: '175px', float: 'left' });
   const labelStyle = style({ float: 'left', verticalAlign: 'middle', height: '20px' });
   return (
     <div className={arrowStyle}>
       <div className={arrowDiv}>
         <div className={lineBase} />
+        <div className={labelStyle}>{props.label}</div>
       </div>
-      <div className={labelStyle}>{props.label}</div>
     </div>
   );
 };
@@ -48,20 +48,10 @@ export default class GraphLegend extends React.Component<GraphLegendProps, Graph
 
   render() {
     const dragHandlers = {};
-    const cardStyle = style({ zIndex: 10, width: '20%', height: '200px' });
+    const cardStyle = style({ zIndex: 10, width: '20%', height: '100%' });
     return (
-      <Draggable defaultPosition={{ x: 20, y: 600 }} {...dragHandlers}>
-        <Card accented={true} className={cardStyle}>
-          <Card.Heading>
-            <Icon
-              type="pf"
-              name="close"
-              aria-hidden="true"
-              onClick={this.props.closeLegend}
-              style={{ float: 'right' }}
-            />
-            <Card.Title>Traffic Legend</Card.Title>
-          </Card.Heading>
+      <Draggable defaultPosition={{ x: 20, y: 500 }} {...dragHandlers}>
+        <Card accented={false} className={cardStyle}>
           <Card.Body>
             <Arrow color={PfColors.Red100} label={'Over 10% Error'} dashed={false} />
             <Arrow color={PfColors.Orange400} label={'5 - 10% Error'} dashed={false} />
