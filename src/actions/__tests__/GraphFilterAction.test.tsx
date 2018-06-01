@@ -13,6 +13,13 @@ describe('GraphFilterActions', () => {
     );
   });
 
+  it('should toggle the legend ', () => {
+    const expectedAction = {
+      type: ServiceGraphFilterActionKeys.TOGGLE_LEGEND
+    };
+    expect(serviceGraphFilterActions.toggleLegend()).toEqual(expectedAction);
+  });
+
   it('should toggle a node label ', () => {
     const expectedAction = {
       type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL

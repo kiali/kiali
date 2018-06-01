@@ -13,19 +13,15 @@ import { style } from 'typestyle';
 
 import GraphLegend from '../../components/GraphFilter/GraphLegend';
 
-type ServiceGraphPageState = {
-  // stateless
-};
-
 type ServiceGraphPageProps = GraphParamsType & {
   graphTimestamp: string;
   graphData: any;
   isLoading: boolean;
-  hideLegend: boolean;
+  showLegend: boolean;
   isReady: boolean;
   fetchGraphData: (namespace: Namespace, graphDuration: Duration) => any;
+  toggleLegend: () => void;
   summaryData: SummaryData | null;
-  handleLegend: () => void;
 };
 const NUMBER_OF_DATAPOINTS = 30;
 
@@ -37,7 +33,7 @@ const cytscapeGraphStyle = style({
   left: 220
 });
 
-export default class ServiceGraphPage extends React.Component<ServiceGraphPageProps, ServiceGraphPageState> {
+export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPageProps> {
   constructor(props: ServiceGraphPageProps) {
     super(props);
 
@@ -79,8 +75,6 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
         <GraphFilterToolbar
           isLoading={this.props.isLoading}
           handleRefreshClick={this.handleRefreshClick}
-          handleLegendClick={this.props.handleLegend}
-          hideLegend={this.props.hideLegend}
           {...graphParams}
         />
         <div className={cytscapeGraphStyle}>
@@ -100,13 +94,13 @@ export default class ServiceGraphPage extends React.Component<ServiceGraphPagePr
             />
           ) : null}
         </div>
-        {!this.props.hideLegend && <GraphLegend closeLegend={this.props.handleLegend} />}
+        {this.props.showLegend && <GraphLegend closeLegend={this.props.toggleLegend} />}
       </PfContainerNavVertical>
     );
   }
 
   /** Fetch graph data */
-  loadGraphDataFromBackend = (namespace?: Namespace, graphDuration?: Duration) => {
+  private loadGraphDataFromBackend = (namespace?: Namespace, graphDuration?: Duration) => {
     namespace = namespace ? namespace : this.props.namespace;
     graphDuration = graphDuration ? graphDuration : this.props.graphDuration;
     this.props.fetchGraphData(namespace, graphDuration);

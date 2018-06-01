@@ -5,6 +5,34 @@ import { EdgeLabelMode } from '../../types/GraphFilter';
 describe('ServiceGraphFilterState reducer', () => {
   it('should return the initial state', () => {
     expect(serviceGraphFilterState(undefined, {})).toEqual({
+      showLegend: false,
+      showNodeLabels: true,
+      edgeLabelMode: EdgeLabelMode.HIDE,
+      showCircuitBreakers: false,
+      showRouteRules: true,
+      showMissingSidecars: true,
+      showTrafficAnimation: false
+    });
+  });
+
+  it('should handle TOGGLE_LEGEND', () => {
+    expect(
+      serviceGraphFilterState(
+        {
+          showLegend: false,
+          showNodeLabels: true,
+          edgeLabelMode: EdgeLabelMode.HIDE,
+          showCircuitBreakers: false,
+          showRouteRules: true,
+          showMissingSidecars: true,
+          showTrafficAnimation: false
+        },
+        {
+          type: ServiceGraphFilterActionKeys.TOGGLE_LEGEND
+        }
+      )
+    ).toEqual({
+      showLegend: true,
       showNodeLabels: true,
       edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
@@ -18,6 +46,7 @@ describe('ServiceGraphFilterState reducer', () => {
     expect(
       serviceGraphFilterState(
         {
+          showLegend: false,
           showNodeLabels: true,
           edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
@@ -30,6 +59,7 @@ describe('ServiceGraphFilterState reducer', () => {
         }
       )
     ).toEqual({
+      showLegend: false,
       showNodeLabels: false,
       edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
@@ -43,6 +73,7 @@ describe('ServiceGraphFilterState reducer', () => {
     expect(
       serviceGraphFilterState(
         {
+          showLegend: false,
           showNodeLabels: true,
           edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
@@ -56,6 +87,7 @@ describe('ServiceGraphFilterState reducer', () => {
         }
       )
     ).toEqual({
+      showLegend: false,
       showNodeLabels: true,
       edgeLabelMode: EdgeLabelMode.LATENCY_95TH_PERCENTILE,
       showCircuitBreakers: false,
@@ -68,6 +100,7 @@ describe('ServiceGraphFilterState reducer', () => {
     expect(
       serviceGraphFilterState(
         {
+          showLegend: false,
           showNodeLabels: true,
           edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
@@ -80,6 +113,7 @@ describe('ServiceGraphFilterState reducer', () => {
         }
       )
     ).toEqual({
+      showLegend: false,
       showNodeLabels: true,
       edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: true,
@@ -92,6 +126,7 @@ describe('ServiceGraphFilterState reducer', () => {
     expect(
       serviceGraphFilterState(
         {
+          showLegend: false,
           showNodeLabels: true,
           edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
@@ -104,6 +139,7 @@ describe('ServiceGraphFilterState reducer', () => {
         }
       )
     ).toEqual({
+      showLegend: false,
       showNodeLabels: true,
       edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
@@ -116,6 +152,7 @@ describe('ServiceGraphFilterState reducer', () => {
     expect(
       serviceGraphFilterState(
         {
+          showLegend: false,
           showNodeLabels: true,
           showCircuitBreakers: false,
           showRouteRules: true,
@@ -128,6 +165,7 @@ describe('ServiceGraphFilterState reducer', () => {
         }
       )
     ).toEqual({
+      showLegend: false,
       showNodeLabels: true,
       showCircuitBreakers: false,
       showRouteRules: true,
@@ -140,6 +178,7 @@ describe('ServiceGraphFilterState reducer', () => {
     expect(
       serviceGraphFilterState(
         {
+          showLegend: false,
           showNodeLabels: true,
           showCircuitBreakers: false,
           showRouteRules: true,
@@ -152,6 +191,7 @@ describe('ServiceGraphFilterState reducer', () => {
         }
       )
     ).toEqual({
+      showLegend: false,
       showNodeLabels: true,
       showCircuitBreakers: false,
       showRouteRules: true,

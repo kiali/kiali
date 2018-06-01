@@ -9,6 +9,7 @@ export interface GlobalState {
 // Various pages are described here with their various sections
 export interface ServiceGraphFilterState {
   // Toggle props
+  readonly showLegend: boolean;
   readonly showNodeLabels: boolean;
   readonly showCircuitBreakers: boolean;
   readonly showRouteRules: boolean;

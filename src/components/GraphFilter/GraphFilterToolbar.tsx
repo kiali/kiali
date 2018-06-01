@@ -10,7 +10,7 @@ import { makeURLFromParams } from '../../components/Nav/NavUtils';
 
 import GraphFilter from './GraphFilter';
 
-export default class GraphFilterToolbar extends React.PureComponent<GraphFilterToolbarType, {}> {
+export default class GraphFilterToolbar extends React.PureComponent<GraphFilterToolbarType> {
   static contextTypes = {
     router: PropTypes.object
   };
@@ -31,8 +31,6 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
         onNamespaceChange={this.handleNamespaceChange}
         onEdgeLabelModeChange={this.handleEdgeLabelModeChange}
         onRefresh={this.props.handleRefreshClick}
-        onLegend={this.props.handleLegendClick}
-        hideLegend={this.props.hideLegend}
         {...graphParams}
       />
     );

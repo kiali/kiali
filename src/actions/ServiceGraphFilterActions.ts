@@ -4,6 +4,7 @@ import { EdgeLabelMode } from '../types/GraphFilter';
 
 export enum ServiceGraphFilterActionKeys {
   // Toggle Actions
+  TOGGLE_LEGEND = 'TOGGLE_LEGEND',
   TOGGLE_GRAPH_NODE_LABEL = 'TOGGLE_GRAPH_NODE_LABEL',
   TOGGLE_GRAPH_CIRCUIT_BREAKERS = 'TOGGLE_GRAPH_CIRCUIT_BREAKERS',
   TOGGLE_GRAPH_ROUTE_RULES = 'TOGGLE_GRAPH_ROUTE_RULES',
@@ -17,6 +18,7 @@ export enum ServiceGraphFilterActionKeys {
 export const serviceGraphFilterActions = {
   // Toggle actions
   toggleGraphNodeLabel: createAction(ServiceGraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL),
+  toggleLegend: createAction(ServiceGraphFilterActionKeys.TOGGLE_LEGEND),
   setGraphEdgeLabelMode: createAction(
     ServiceGraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
     (edgeLabelMode: EdgeLabelMode) => ({

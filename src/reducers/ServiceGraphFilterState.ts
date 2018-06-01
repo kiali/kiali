@@ -4,6 +4,7 @@ import { updateState } from '../utils/Reducer';
 import { EdgeLabelMode } from '../types/GraphFilter';
 
 const INITIAL_STATE: ServiceGraphFilterState = {
+  showLegend: false,
   showNodeLabels: true,
   showCircuitBreakers: false,
   showRouteRules: true,
@@ -17,6 +18,8 @@ const INITIAL_STATE: ServiceGraphFilterState = {
 // This Reducer allows changes to the 'serviceGraphFilterState' portion of Redux Store
 const serviceGraphFilterState = (state: ServiceGraphFilterState = INITIAL_STATE, action) => {
   switch (action.type) {
+    case ServiceGraphFilterActionKeys.TOGGLE_LEGEND:
+      return updateState(state, { showLegend: !state.showLegend });
     case ServiceGraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL:
       return updateState(state, { showNodeLabels: !state.showNodeLabels });
     case ServiceGraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE:

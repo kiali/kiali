@@ -5,6 +5,8 @@ import { Duration } from '../types/GraphFilter';
 import ServiceGraphPage from '../pages/ServiceGraph/ServiceGraphPage';
 
 import { ServiceGraphDataActions } from '../actions/ServiceGraphDataActions';
+import { serviceGraphFilterActions } from '../actions/ServiceGraphFilterActions';
+import { bindActionCreators } from 'redux';
 
 const mapStateToProps = (state: KialiAppState) => ({
   graphTimestamp: state.serviceGraph.graphDataTimestamp,
@@ -16,13 +18,13 @@ const mapStateToProps = (state: KialiAppState) => ({
         summaryType: state.serviceGraph.sidePanelInfo.kind
       }
     : null,
-  hideLegend: state.serviceGraph.hideLegend
+  showLegend: state.serviceGraph.filterState.showLegend
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
   fetchGraphData: (namespace: Namespace, graphDuration: Duration) =>
     dispatch(ServiceGraphDataActions.fetchGraphData(namespace, graphDuration)),
-  handleLegend: () => dispatch(ServiceGraphDataActions.handleLegend())
+  toggleLegend: () => bindActionCreators(serviceGraphFilterActions.toggleLegend, dispatch)
 });
 
 const ServiceGraphPageConnected = connect(mapStateToProps, mapDispatchToProps)(ServiceGraphPage);

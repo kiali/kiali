@@ -4,9 +4,11 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { serviceGraphFilterActions } from '../actions/ServiceGraphFilterActions';
 import { KialiAppState, ServiceGraphFilterState } from '../store/Store';
+import { style } from 'typestyle';
 
 interface ServiceGraphDispatch {
   // Dispatch methods
+  toggleLegend(): void;
   toggleGraphNodeLabels(): void;
   toggleGraphCircuitBreakers(): void;
   toggleGraphRouteRules(): void;
@@ -19,6 +21,7 @@ type GraphLayersProps = ServiceGraphDispatch & ServiceGraphFilterState;
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState) => ({
+  showLegend: state.serviceGraph.filterState.showLegend,
   showNodeLabels: state.serviceGraph.filterState.showNodeLabels,
   showCircuitBreakers: state.serviceGraph.filterState.showCircuitBreakers,
   showRouteRules: state.serviceGraph.filterState.showRouteRules,
@@ -29,6 +32,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 // Map our actions to Redux
 const mapDispatchToProps = (dispatch: any) => {
   return {
+    toggleLegend: bindActionCreators(serviceGraphFilterActions.toggleLegend, dispatch),
     toggleGraphNodeLabels: bindActionCreators(serviceGraphFilterActions.toggleGraphNodeLabel, dispatch),
     setGraphEdgeLabelMode: bindActionCreators(serviceGraphFilterActions.setGraphEdgeLabelMode, dispatch),
     toggleGraphCircuitBreakers: bindActionCreators(serviceGraphFilterActions.toggleGraphCircuitBreakers, dispatch),
@@ -49,9 +53,17 @@ interface VisibilityLayersType {
 // Right now it is a toolbar with Switch Buttons -- this will change once with UXD input
 export const GraphLayers: React.SFC<GraphLayersProps> = props => {
   // map our attributes from redux
-  const { showCircuitBreakers, showRouteRules, showNodeLabels, showMissingSidecars, showTrafficAnimation } = props;
+  const {
+    showLegend,
+    showCircuitBreakers,
+    showRouteRules,
+    showNodeLabels,
+    showMissingSidecars,
+    showTrafficAnimation
+  } = props;
   // // map or dispatchers for redux
   const {
+    toggleLegend,
     toggleGraphCircuitBreakers,
     toggleGraphRouteRules,
     toggleGraphNodeLabels,
@@ -60,6 +72,12 @@ export const GraphLayers: React.SFC<GraphLayersProps> = props => {
   } = props;
 
   const visibilityLayers: VisibilityLayersType[] = [
+    {
+      id: 'toggleLegend',
+      labelText: 'Legend',
+      value: showLegend,
+      onChange: toggleLegend
+    },
     {
       id: 'filterCB',
       labelText: 'Circuit Breakers',
@@ -92,11 +110,12 @@ export const GraphLayers: React.SFC<GraphLayersProps> = props => {
     }
   ];
 
+  const checkboxStyle = style({ marginLeft: 5 });
   const toggleItems = visibilityLayers.map((item: VisibilityLayersType) => (
     <div id={item.id} key={item.id}>
       <label>
-        <input name="isGoing" type="checkbox" checked={item.value} onChange={() => item.onChange()} />
-        {item.labelText}
+        <input type="checkbox" checked={item.value} onChange={() => item.onChange()} />
+        <span className={checkboxStyle}>{item.labelText}</span>
       </label>
     </div>
   ));
