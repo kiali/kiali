@@ -1,0 +1,12 @@
+name: reviews-cb
+createdAt: '2018-06-02T09:53:25+02:00'
+resourceVersion: '101929'
+source: ~
+destination:
+  labels:
+    version: v2
+  name: reviews
+loadbalancing: ~
+circuitBreaker:
+  simpleCb:
+    maxConnections: 100

@@ -378,6 +378,9 @@ export interface ServiceDetailsInfo {
   health?: Health;
 }
 
+// NamespaceValidations are grouped per 'namespace'
+export type NamespaceValidations = { [key: string]: Validations };
+
 // validations are grouped per 'objectType' first in the first map and 'name' in the inner map
 export type Validations = { [key1: string]: { [key2: string]: ObjectValidation } };
 

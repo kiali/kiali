@@ -1,0 +1,14 @@
+name: productpage
+createdAt: '2018-06-01T11:16:45+02:00'
+resourceVersion: '2440'
+hosts:
+  - productpage
+gateways:
+  - bookinfo
+  - mesh
+http:
+  - route:
+      - destination:
+          name: productpage
+          subset: v1
+tcp: ~

@@ -12,11 +12,14 @@ import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
+import { Validations } from '../../types/ServiceInfo';
+import { parseAceValidations } from '../../types/AceValidations';
 
 const yaml = require('js-yaml');
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
+  validations?: Validations;
 }
 
 class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioConfigId>, IstioConfigDetailsState> {
@@ -58,6 +61,15 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig details.', error));
       });
+    API.getIstioConfigValidations(authentication(), props.namespace, props.objectType, props.object)
+      .then(response => {
+        this.setState({
+          validations: response.data
+        });
+      })
+      .catch(error => {
+        MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig validations.', error));
+      });
   };
 
   componentDidMount() {
@@ -69,6 +81,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   }
 
   renderEditor(routingObject: any) {
+    const yamlSource = yaml.safeDump(routingObject, safeDumpOptions);
+    const aceValidations = parseAceValidations(yamlSource, this.state.validations);
     return (
       <div className="container-fluid container-cards-pf">
         <Row className="row-cards-pf">
@@ -82,7 +96,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
               height={'50vh'}
               className={'istio-ace-editor'}
               setOptions={aceOptions}
-              value={yaml.safeDump(routingObject, safeDumpOptions)}
+              value={yamlSource}
+              annotations={aceValidations.annotations}
+              markers={aceValidations.markers}
             />
           </Col>
         </Row>

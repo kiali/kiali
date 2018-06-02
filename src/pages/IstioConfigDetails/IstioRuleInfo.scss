@@ -3,3 +3,13 @@
   min-height: 200px;
   border:1px solid #8b8d8f
 }
+
+.istio-validation-error {
+  position: absolute;
+  background: rgba(204,0,0,0.5);
+}
+
+.istio-validation-warning {
+  position: absolute;
+  background: rgba(236, 122, 8, 0.5);
+}
