@@ -436,6 +436,8 @@ func graphOverview(w http.ResponseWriter, r *http.Request, client *prometheus.Cl
 		switch a.(type) {
 		case appender.DeadServiceAppender:
 			a.AppendGraph(&trees, "")
+		case appender.HealthAppender:
+			a.AppendGraph(&trees, "")
 		default:
 			// ignore
 		}
@@ -497,6 +499,7 @@ func buildOverviewTrees(o options.Options, client *prometheus.Client) (trees []*
 				child := tree.NewServiceNode(s[0], s[1])
 				child.Parent = &root
 				child.Metadata = d
+				child.Metadata["isHealthIndicator"] = "true"
 
 				root.Metadata["rateOut"] = root.Metadata["rateOut"].(float64) + d["rate"].(float64)
 
