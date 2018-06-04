@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { AboutModal, Spinner } from 'patternfly-react';
-import * as API from '../../services/Api';
-import { authentication } from '../../utils/Authentication';
+import { AboutModal } from 'patternfly-react';
+import { Component } from '../../store/Store';
 
 const pfLogo = require('../../img/logo-alt.svg');
 const KIALI_CORE_COMMIT_HASH = 'Kiali core commit hash';
@@ -9,67 +8,21 @@ const KIALI_CORE_VERSION = 'Kiali core version';
 
 type AboutUIModalState = {
   showModal: boolean;
-  loadingVersions: boolean;
-  versions: Array<AboutUIModalService>;
-  externalServices: Array<AboutUIModalProduct>;
 };
 
-type AboutUIModalService = {
-  name: string;
-  version: string;
+type AboutUIModalProps = {
+  status: { [key: string]: string };
+  components: Component[];
 };
 
-type AboutUIModalProduct = {
-  name: string;
-  version: string;
-  full_version: string;
-};
-
-const getStatus = () => {
-  return API.getStatus(authentication()).then(response => {
-    const rawStatus = response['data'];
-    return {
-      kiali: [
-        {
-          name: 'kiali',
-          version: `${rawStatus['status'][KIALI_CORE_VERSION]} (${rawStatus['status'][KIALI_CORE_COMMIT_HASH]})`
-        }
-      ],
-      externalServices: rawStatus['externalServices']
-    };
-  });
-};
-
-class AboutUIModal extends React.Component<Object, AboutUIModalState> {
-  constructor(props: any) {
+class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState> {
+  constructor(props: AboutUIModalProps) {
     super(props);
-    this.state = { showModal: false, loadingVersions: false, versions: [], externalServices: [] };
+    this.state = { showModal: false };
   }
 
   open = () => {
-    this.setState(state => {
-      if (!state.loadingVersions) {
-        getStatus().then(
-          status => {
-            this.setState({
-              loadingVersions: false,
-              versions: status['kiali'],
-              externalServices: status['externalServices']
-            });
-          },
-          error => {
-            console.log(error);
-            this.setState({
-              loadingVersions: false,
-              versions: [],
-              externalServices: []
-            });
-          }
-        );
-        return { showModal: true, loadingVersions: true, versions: [], externalServices: [] };
-      }
-      return state;
-    });
+    this.setState({ showModal: true });
   };
 
   close = () => {
@@ -84,22 +37,20 @@ class AboutUIModal extends React.Component<Object, AboutUIModalState> {
         productTitle="Kiali"
         logo={pfLogo}
         altLogo="Kiali Logo"
-        trademarkText="Trademark Text"
       >
         <AboutModal.Versions>
           <AboutModal.VersionItem
             label="kiali-ui"
             versionText={`${process.env.REACT_APP_VERSION} (${process.env.REACT_APP_GIT_HASH})`}
           />
-          <Spinner style={{ marginTop: '15px' }} loading={this.state.loadingVersions} size="lg" inverse={true}>
-            {this.state.versions.map(service => (
-              <AboutModal.VersionItem key={service.name} label={service.name} versionText={service.version} />
-            ))}
-            <h3>Esternal Services </h3>
-            {this.state.externalServices.map(extServ => (
-              <AboutModal.VersionItem key={extServ.name} label={extServ.name} versionText={extServ.version} />
-            ))}
-          </Spinner>
+          <AboutModal.VersionItem
+            label="kiali"
+            versionText={`${this.props.status[KIALI_CORE_VERSION]} (${this.props.status[KIALI_CORE_COMMIT_HASH]})`}
+          />
+          <h3>Components </h3>
+          {this.props.components.map(component => (
+            <AboutModal.VersionItem key={component.name} label={component.name} versionText={component.version} />
+          ))}
         </AboutModal.Versions>
       </AboutModal>
     );
