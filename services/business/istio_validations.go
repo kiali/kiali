@@ -61,7 +61,7 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 
 	objectCheckers := []ObjectChecker{
 		checkers.RouteRuleChecker{Namespace: namespace, PodList: pods.Items, RouteRules: istioDetails.RouteRules},
-		checkers.NoServiceChecker{IstioDetails: istioDetails, ServiceList: serviceList},
+		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: istioDetails, ServiceList: serviceList},
 	}
 
 	return models.NamespaceValidations{namespace: runObjectCheckers(objectCheckers)}, nil
@@ -76,7 +76,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	// Get only the given Istio Object
 	var rr, dp, vs, dr kubernetes.IstioObject
 	var objectCheckers []ObjectChecker
-	noServiceChecker := checkers.NoServiceChecker{ServiceList: serviceList}
+	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, ServiceList: serviceList}
 	istioDetails := kubernetes.IstioDetails{}
 	noServiceChecker.IstioDetails = &istioDetails
 	switch objectType {
