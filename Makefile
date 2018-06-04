@@ -6,26 +6,42 @@ SHELL=/bin/bash
 VERSION ?= 0.3.1.Alpha-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
+# Indicates which version of the UI console is to be embedded
+# in the docker image. If "local" the CONSOLE_LOCAL_DIR is
+# where the UI project has been git cloned and has its
+# content built in its build/ subdirectory.
+# WARNING: If you have previously run the 'docker' target but
+# later want to change the CONSOLE_VERSION then you must run
+# the 'clean' target first before re-running the 'docker' target.
+CONSOLE_VERSION ?= latest
+CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
+
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. These resources will have labels of
 # "app: kiali" and "version: ${VERSION_LABEL}" In this development
 # environment, setting the label names equal to the branch names
 # allows developers to build and deploy multiple Kiali instances
 # at the same time which is useful for debugging and testing.
-# Due to restrictions on allowed characters, we convert uppercase
-# characters to lowercase characters and underscores to dashes.
+# Due to restrictions on allowed characters in label values,
+# we ensure only alphanumeric, underscore, dash, and dot are allowed.
+# Due to restrictions on allowed characters in names, we convert
+# uppercase characters to lowercase characters and
+# underscores/dots/spaces to dashes.
 # If we are deploying from a branch, we must ensure all the OS/k8s
 # names to be created are unique - the NAME_SUFFIX will be appended
 # to all names so they are unique.
-# We finally ensure the version label results in a valid label.
-VERSION_LABEL ?= $(shell git rev-parse --abbrev-ref HEAD | tr '[:upper:]_' '[:lower:]-')
-ifneq ($(shell [[ ${VERSION_LABEL} =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$$ ]] && echo valid),valid)
-  $(error Your version label '${VERSION_LABEL}' is invalid and cannot be used.)
+VERSION_LABEL ?= $(shell git rev-parse --abbrev-ref HEAD)
+ifneq ($(shell [[ ${VERSION_LABEL} =~ ^[a-zA-Z0-9]([-_.a-zA-Z0-9]*[a-zA-Z0-9])?$$ ]] && echo valid),valid)
+  $(error Your version label value '${VERSION_LABEL}' is invalid and cannot be used.)
 endif
 ifeq (${VERSION_LABEL},master)
   NAME_SUFFIX ?=
 else
-  NAME_SUFFIX ?= -${VERSION_LABEL}
+  # note: we want to start suffix with a dash so it is between the name and the suffix
+  NAME_SUFFIX ?= $(shell echo -n "-${VERSION_LABEL}" | tr '[:upper:][:space:]_.' '[:lower:]---')
+  ifneq ($(shell [[ ${NAME_SUFFIX} =~ ^([-a-z0-9]*[a-z0-9])?$$ ]] && echo valid),valid)
+    $(error Your name suffix '${NAME_SUFFIX}' is invalid and cannot be used.)
+  endif
 endif
 
 # The minimum Go version that must be used to build the app.
@@ -42,16 +58,6 @@ else
   DOCKER_VERSION ?= ${VERSION_LABEL}
 endif
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
-
-# Indicates which version of the UI console is to be embedded
-# in the docker image. If "local" the CONSOLE_LOCAL_DIR is
-# where the UI project has been git cloned and has its
-# content built in its build/ subdirectory.
-# WARNING: If you have previously run the 'docker' target but
-# later want to change the CONSOLE_VERSION then you must run
-# the 'clean' target first before re-running the 'docker' target.
-CONSOLE_VERSION ?= latest
-CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 
 # Indicates the log level the app will use when started.
 # <4=INFO
