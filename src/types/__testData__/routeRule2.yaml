@@ -1,0 +1,25 @@
+name: details-v2
+createdAt: '2018-06-04T09:51:44+02:00'
+resourceVersion: '19686'
+destination:
+  name: details
+precedence: 2
+match: ~
+route:
+  - labels:
+      version: v1
+    weight: 50
+  - labels:
+      version: v2
+    weight: -50
+redirect: ~
+rewrite: ~
+websocketUpgrade: ~
+httpReqTimeout: ~
+httpReqRetries: ~
+httpFault: ~
+l4Fault: ~
+mirror: ~
+corsPolicy: ~
+appendHeaders: ~
+routeWarning: ''

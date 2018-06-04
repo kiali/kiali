@@ -38,6 +38,7 @@ const parseMarker = (yaml: string, word: string, occurrence?: number): AceMarker
     let fromPos = 0;
     for (let i = 0; i < occurrence; i++) {
       startPos = yaml.indexOf(word, fromPos);
+      fromPos = startPos + word.length;
     }
   } else {
     startPos = yaml.indexOf(word);
@@ -104,8 +105,8 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
       - spec/destination
       - spec/name (this is used for destination Rules which maps spec/name into destinationName)
       - spec/precedence/<value>
-      - spec/route/weight/<value>
-      - spec/route[<value>]/labels
+      - spec/route[<nWeight>]/weight/<value>
+      - spec/route[<nLabel>]/labels
       - spec/hosts
 
     For this version we are going to mark the first element block.
@@ -120,13 +121,13 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
       aceMarker = parseMarker(yaml, 'destinationName:');
     } else if (path.startsWith('spec/precedence')) {
       aceMarker = parseMarker(yaml, 'precedence:');
-    } else if (path.startsWith('spec/route/weight')) {
-      aceMarker = parseMarker(yaml, 'route:');
     } else if (path.startsWith('spec/route[')) {
       let startPos = path.indexOf('[');
       let endPos = path.indexOf(']');
-      let labelPos = path.substr(startPos + 1, endPos - startPos - 1);
-      aceMarker = parseMarker(yaml, 'labels:', +labelPos);
+      let indexPos = +path.substr(startPos + 1, endPos - startPos - 1);
+      let occurrences = indexPos + 1;
+      let searchFor = check.path.endsWith('labels') ? 'labels:' : 'weight:';
+      aceMarker = parseMarker(yaml, searchFor, occurrences);
     } else if (path.startsWith('spec/hosts')) {
       aceMarker = parseMarker(yaml, 'hosts:');
     }

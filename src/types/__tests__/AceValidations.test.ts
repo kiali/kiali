@@ -69,7 +69,7 @@ const routeRuleValidations: Validations = {
         {
           message: 'Weight must be a number',
           severity: 'error',
-          path: 'spec/route/weight/25a'
+          path: 'spec/route[0]/weight/25a'
         },
         {
           message: 'Weight sum should be 100',
@@ -80,6 +80,33 @@ const routeRuleValidations: Validations = {
           message: 'No pods found for this selector',
           severity: 'warning',
           path: 'spec/route[0]/labels'
+        }
+      ]
+    }
+  }
+};
+
+const routeRule2Validations: Validations = {
+  routerule: {
+    'details-v2': {
+      name: 'details-v2',
+      objectType: 'routerule',
+      valid: false,
+      checks: [
+        {
+          message: 'Weight should be between 0 and 100',
+          severity: 'error',
+          path: 'spec/route[1]/weight/-50'
+        },
+        {
+          message: 'Weight sum should be 100',
+          severity: 'error',
+          path: ''
+        },
+        {
+          message: 'No pods found for this selector',
+          severity: 'warning',
+          path: 'spec/route[1]/labels'
         }
       ]
     }
@@ -211,26 +238,20 @@ describe('#parseAceValidations in RouteRule', () => {
       expect(annotation.text).toBe('Precedence should be greater than or equal to 0');
 
       /*
-        Check it marks lines 9-16:
-          route:
-            - labels:
-                version: 1
-              weight: 25a
-            - labels:
-                version: 2
-              weight: 75
+        Check it marks lines 12-13:
+          weight: 25a
        */
       marker = aceValidations.markers[2];
       expect(marker).toBeDefined();
-      expect(marker.startRow).toBe(8);
-      expect(marker.endRow).toBe(15);
-      expect(marker.startCol).toBe(0);
+      expect(marker.startRow).toBe(11);
+      expect(marker.endRow).toBe(12);
+      expect(marker.startCol).toBe(4);
       expect(marker.endCol).toBe(0);
 
       annotation = aceValidations.annotations[2];
       expect(annotation).toBeDefined();
-      expect(annotation.column).toBe(0);
-      expect(annotation.row).toBe(8);
+      expect(annotation.column).toBe(4);
+      expect(annotation.row).toBe(11);
       expect(annotation.type).toBe('error');
       expect(annotation.text).toBe('Weight must be a number');
 
@@ -253,13 +274,8 @@ describe('#parseAceValidations in RouteRule', () => {
 
       /*
         Check it marks lines 10-12:
-          route:
-            - labels:
-                version: 1
-              weight: 25a
-            - labels:
-                version: 2
-              weight: 75
+          - labels:
+              version: 1
        */
       marker = aceValidations.markers[4];
       expect(marker).toBeDefined();
@@ -272,6 +288,71 @@ describe('#parseAceValidations in RouteRule', () => {
       expect(annotation).toBeDefined();
       expect(annotation.column).toBe(4);
       expect(annotation.row).toBe(9);
+      expect(annotation.type).toBe('warning');
+      expect(annotation.text).toBe('No pods found for this selector');
+    });
+  });
+});
+
+describe('#parseAceValidations in RouteRule2', () => {
+  it('should detect AceValidations', () => {
+    mockPromiseFromFile(`./src/types/__testData__/routeRule2.yaml`).then(routeRuleYaml => {
+      const aceValidations = parseAceValidations(routeRuleYaml, routeRule2Validations);
+      expect(aceValidations).toBeDefined();
+      expect(aceValidations.markers.length).toBe(3);
+      expect(aceValidations.annotations.length).toBe(3);
+
+      /*
+        Check it marks lines 14-15:
+          weight: -50
+       */
+      let marker = aceValidations.markers[0];
+      expect(marker).toBeDefined();
+      expect(marker.startRow).toBe(13);
+      expect(marker.endRow).toBe(14);
+      expect(marker.startCol).toBe(4);
+      expect(marker.endCol).toBe(0);
+
+      let annotation = aceValidations.annotations[0];
+      expect(annotation).toBeDefined();
+      expect(annotation.column).toBe(4);
+      expect(annotation.row).toBe(13);
+      expect(annotation.type).toBe('error');
+      expect(annotation.text).toBe('Weight should be between 0 and 100');
+
+      /*
+        Check mark is set at beginning of the file
+       */
+      marker = aceValidations.markers[1];
+      expect(marker).toBeDefined();
+      expect(marker.startRow).toBe(0);
+      expect(marker.endRow).toBe(0);
+      expect(marker.startCol).toBe(0);
+      expect(marker.endCol).toBe(0);
+
+      annotation = aceValidations.annotations[1];
+      expect(annotation).toBeDefined();
+      expect(annotation.column).toBe(0);
+      expect(annotation.row).toBe(0);
+      expect(annotation.type).toBe('error');
+      expect(annotation.text).toBe('Weight sum should be 100');
+
+      /*
+        Check it marks lines 12-14:
+          - labels:
+              version: v2
+       */
+      marker = aceValidations.markers[2];
+      expect(marker).toBeDefined();
+      expect(marker.startRow).toBe(11);
+      expect(marker.endRow).toBe(13);
+      expect(marker.startCol).toBe(4);
+      expect(marker.endCol).toBe(0);
+
+      annotation = aceValidations.annotations[2];
+      expect(annotation).toBeDefined();
+      expect(annotation.column).toBe(4);
+      expect(annotation.row).toBe(11);
       expect(annotation.type).toBe('warning');
       expect(annotation.text).toBe('No pods found for this selector');
     });
