@@ -75,49 +75,34 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     const virtualServices = this.props.serviceDetails.virtualServices || [];
     const destinationRules = this.props.serviceDetails.destinationRules || [];
 
-    for (let i = 0; i < routeRules.length; i++) {
-      if (
+    validationChecks.hasRouteRuleChecks = routeRules.some(
+      routeRule =>
         this.props.validations['routerule'] &&
-        this.props.validations['routerule'][routeRules[i].name] &&
-        !this.props.validations['routerule'][routeRules[i].name].valid
-      ) {
-        validationChecks.hasRouteRuleChecks = true;
-        break;
-      }
-    }
+        this.props.validations['routerule'][routeRule.name] &&
+        !this.props.validations['routerule'][routeRule.name].valid
+    );
 
-    for (let i = 0; i < destinationPolicies.length; i++) {
-      if (
+    validationChecks.hasDestinationPolicyChecks = destinationPolicies.some(
+      destinationPolicy =>
         this.props.validations['destinationpolicy'] &&
-        this.props.validations['destinationpolicy'][destinationPolicies[i].name] &&
-        !this.props.validations['destinationpolicy'][destinationPolicies[i].name].valid
-      ) {
-        validationChecks.hasDestinationPolicyChecks = true;
-        break;
-      }
-    }
+        this.props.validations['destinationpolicy'][destinationPolicy.name] &&
+        !this.props.validations['destinationpolicy'][destinationPolicy.name].valid
+    );
 
-    for (let i = 0; i < virtualServices.length; i++) {
-      if (
+    validationChecks.hasVirtualServiceChecks = virtualServices.some(
+      virtualService =>
         this.props.validations['virtualservice'] &&
-        this.props.validations['virtualservice'][virtualServices[i].name] &&
-        !this.props.validations['virtualservice'][virtualServices[i].name].valid
-      ) {
-        validationChecks.hasVirtualServiceChecks = true;
-        break;
-      }
-    }
+        this.props.validations['virtualservice'][virtualService.name] &&
+        !this.props.validations['virtualservice'][virtualService.name].valid
+    );
 
-    for (let i = 0; i < destinationRules.length; i++) {
-      if (
+    validationChecks.hasDestinationRuleChecks = destinationRules.some(
+      destinationRule =>
         this.props.validations['destinationrule'] &&
-        this.props.validations['destinationrule'][destinationRules[i].name] &&
-        !this.props.validations['destinationrule'][destinationRules[i].name].valid
-      ) {
-        validationChecks.hasDestinationRuleChecks = true;
-        break;
-      }
-    }
+        this.props.validations['destinationrule'][destinationRule.name] &&
+        !this.props.validations['destinationrule'][destinationRule.name].valid
+    );
+
     return validationChecks;
   }
 
