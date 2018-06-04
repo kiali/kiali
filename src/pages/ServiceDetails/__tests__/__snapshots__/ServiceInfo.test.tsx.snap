@@ -1533,12 +1533,18 @@ ShallowWrapper {
                           "nodeType": "class",
                           "props": Object {
                             "active": false,
-                            "children": "Route Rules (2)",
+                            "children": Array [
+                              "Route Rules (2)",
+                              undefined,
+                            ],
                             "disabled": false,
                             "eventKey": 3,
                           },
                           "ref": null,
-                          "rendered": "Route Rules (2)",
+                          "rendered": Array [
+                            "Route Rules (2)",
+                            undefined,
+                          ],
                           "type": [Function],
                         },
                         Object {
@@ -1547,12 +1553,18 @@ ShallowWrapper {
                           "nodeType": "class",
                           "props": Object {
                             "active": false,
-                            "children": "Destination Policies (0)",
+                            "children": Array [
+                              "Destination Policies (0)",
+                              undefined,
+                            ],
                             "disabled": false,
                             "eventKey": 4,
                           },
                           "ref": null,
-                          "rendered": "Destination Policies (0)",
+                          "rendered": Array [
+                            "Destination Policies (0)",
+                            undefined,
+                          ],
                           "type": [Function],
                         },
                         Object {
@@ -1561,12 +1573,18 @@ ShallowWrapper {
                           "nodeType": "class",
                           "props": Object {
                             "active": false,
-                            "children": "Virtual Services (0)",
+                            "children": Array [
+                              "Virtual Services (0)",
+                              undefined,
+                            ],
                             "disabled": false,
                             "eventKey": 5,
                           },
                           "ref": null,
-                          "rendered": "Virtual Services (0)",
+                          "rendered": Array [
+                            "Virtual Services (0)",
+                            undefined,
+                          ],
                           "type": [Function],
                         },
                         Object {
@@ -1575,12 +1593,18 @@ ShallowWrapper {
                           "nodeType": "class",
                           "props": Object {
                             "active": false,
-                            "children": "Destination Rules (0)",
+                            "children": Array [
+                              "Destination Rules (0)",
+                              undefined,
+                            ],
                             "disabled": false,
                             "eventKey": 6,
                           },
                           "ref": null,
-                          "rendered": "Destination Rules (0)",
+                          "rendered": Array [
+                            "Destination Rules (0)",
+                            undefined,
+                          ],
                           "type": [Function],
                         },
                       ],
@@ -3305,12 +3329,18 @@ ShallowWrapper {
                             "nodeType": "class",
                             "props": Object {
                               "active": false,
-                              "children": "Route Rules (2)",
+                              "children": Array [
+                                "Route Rules (2)",
+                                undefined,
+                              ],
                               "disabled": false,
                               "eventKey": 3,
                             },
                             "ref": null,
-                            "rendered": "Route Rules (2)",
+                            "rendered": Array [
+                              "Route Rules (2)",
+                              undefined,
+                            ],
                             "type": [Function],
                           },
                           Object {
@@ -3319,12 +3349,18 @@ ShallowWrapper {
                             "nodeType": "class",
                             "props": Object {
                               "active": false,
-                              "children": "Destination Policies (0)",
+                              "children": Array [
+                                "Destination Policies (0)",
+                                undefined,
+                              ],
                               "disabled": false,
                               "eventKey": 4,
                             },
                             "ref": null,
-                            "rendered": "Destination Policies (0)",
+                            "rendered": Array [
+                              "Destination Policies (0)",
+                              undefined,
+                            ],
                             "type": [Function],
                           },
                           Object {
@@ -3333,12 +3369,18 @@ ShallowWrapper {
                             "nodeType": "class",
                             "props": Object {
                               "active": false,
-                              "children": "Virtual Services (0)",
+                              "children": Array [
+                                "Virtual Services (0)",
+                                undefined,
+                              ],
                               "disabled": false,
                               "eventKey": 5,
                             },
                             "ref": null,
-                            "rendered": "Virtual Services (0)",
+                            "rendered": Array [
+                              "Virtual Services (0)",
+                              undefined,
+                            ],
                             "type": [Function],
                           },
                           Object {
@@ -3347,12 +3389,18 @@ ShallowWrapper {
                             "nodeType": "class",
                             "props": Object {
                               "active": false,
-                              "children": "Destination Rules (0)",
+                              "children": Array [
+                                "Destination Rules (0)",
+                                undefined,
+                              ],
                               "disabled": false,
                               "eventKey": 6,
                             },
                             "ref": null,
-                            "rendered": "Destination Rules (0)",
+                            "rendered": Array [
+                              "Destination Rules (0)",
+                              undefined,
+                            ],
                             "type": [Function],
                           },
                         ],

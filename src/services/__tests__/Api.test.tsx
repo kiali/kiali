@@ -82,7 +82,7 @@ describe('#GetIstioConfig using Promises', () => {
 
 describe('#GetIstioConfigDetail using Promises', () => {
   it('should load istio config detail data', () => {
-    return API.getIstioConfigDetail('istio-system', 'promhttp').then(({ data }) => {
+    return API.getIstioConfigDetail('istio-system', 'rules', 'promhttp').then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.namespace.name).toEqual('istio-system');
       expect(data.rule.name).toEqual('promhttp');
@@ -98,6 +98,30 @@ describe('#GetServiceValidations using Promises', () => {
       expect(data).toBeDefined();
       expect(data!['pod']).toBeDefined();
       expect(data!['routerule']).toBeDefined();
+    });
+  });
+});
+
+describe('#GetNamespaceValidations using Promises', () => {
+  it('should load istio namespace validation data', () => {
+    return API.getNamespaceValidations('bookinfo').then(({ data }) => {
+      expect(data).toBeDefined();
+      expect(Object.keys(data)).toEqual(['bookinfo']);
+      expect(data!['bookinfo']).toBeDefined();
+      expect(data!['bookinfo']['routerule']).toBeDefined();
+      expect(data!['bookinfo']['destinationrule']).toBeDefined();
+      expect(data!['bookinfo']['virtualservice']).toBeDefined();
+    });
+  });
+});
+
+describe('#GetIstioConfigValidations using Promises', () => {
+  it('should load istio object validation data', () => {
+    return API.getIstioConfigValidations('bookinfo', 'routerule', 'recommendation-503').then(({ data }) => {
+      expect(data).toBeDefined();
+      expect(Object.keys(data)).toEqual(['routerule']);
+      expect(data!['routerule']).toBeDefined();
+      expect(data!['routerule']['recommendation-503']).toBeDefined();
     });
   });
 });

@@ -5,7 +5,7 @@ import { Metrics } from '../types/Metrics';
 import ServiceListOptions from '../types/ServiceListOptions';
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
 import { IstioConfigList } from '../types/IstioConfigListComponent';
-import { ServiceDetailsInfo, Validations } from '../types/ServiceInfo';
+import { NamespaceValidations, ServiceDetailsInfo, Validations } from '../types/ServiceInfo';
 import JaegerInfo from '../types/JaegerInfo';
 import GrafanaInfo from '../types/GrafanaInfo';
 import { Health } from '../types/Health';
@@ -125,6 +125,25 @@ export const getServiceValidations = (
   service: String
 ): Promise<Response<Validations>> => {
   return newRequest('get', `/api/namespaces/${namespace}/services/${service}/istio_validations`, {}, {}, auth);
+};
+
+export const getNamespaceValidations = (auth: any, namespace: String): Promise<Response<NamespaceValidations>> => {
+  return newRequest('get', `/api/namespaces/${namespace}/istio_validations`, {}, {}, auth);
+};
+
+export const getIstioConfigValidations = (
+  auth: any,
+  namespace: String,
+  objectType: String,
+  object: String
+): Promise<Response<Validations>> => {
+  return newRequest(
+    'get',
+    `/api/namespaces/${namespace}/istio/${objectType}/${object}/istio_validations`,
+    {},
+    {},
+    auth
+  );
 };
 
 export const getErrorMsg = (msg: string, error: AxiosError) => {

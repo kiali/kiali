@@ -1,13 +1,16 @@
 import Namespace from './Namespace';
-import { DestinationPolicy, DestinationRule, RouteRule, VirtualService } from './ServiceInfo';
+import { DestinationPolicy, DestinationRule, ObjectValidation, RouteRule, VirtualService } from './ServiceInfo';
 
 export interface IstioConfigItem {
   namespace: string;
+  type: string;
+  name: string;
   routeRule?: RouteRule;
   destinationPolicy?: DestinationPolicy;
   virtualService?: VirtualService;
   destinationRule?: DestinationRule;
   rule?: IstioRule;
+  validation?: ObjectValidation;
 }
 
 export interface IstioConfigList {
@@ -73,54 +76,66 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]) => {
   return filtered;
 };
 
+export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFilters: string[]): IstioConfigItem[] => {
+  if (configFilters && configFilters.length === 0) {
+    return unfiltered;
+  }
+  let filtered: IstioConfigItem[] = [];
+
+  let filterByValid = configFilters.indexOf('Valid') > -1;
+  let filterByNotValid = configFilters.indexOf('Not Valid') > -1;
+  let filterByNotValidated = configFilters.indexOf('Not Validated') > -1;
+  if (filterByValid && filterByNotValid && filterByNotValidated) {
+    return unfiltered;
+  }
+
+  unfiltered.forEach(item => {
+    if (filterByValid && item.validation && item.validation.valid) {
+      filtered.push(item);
+    }
+    if (filterByNotValid && item.validation && !item.validation.valid) {
+      filtered.push(item);
+    }
+    if (filterByNotValidated && !item.validation) {
+      filtered.push(item);
+    }
+  });
+  return filtered;
+};
+
 export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[] => {
   let istioItems: IstioConfigItem[] = [];
   istioConfigList.routeRules.forEach(rr =>
-    istioItems.push({ namespace: istioConfigList.namespace.name, routeRule: rr })
+    istioItems.push({ namespace: istioConfigList.namespace.name, type: 'routerule', name: rr.name, routeRule: rr })
   );
   istioConfigList.destinationPolicies.forEach(dp =>
-    istioItems.push({ namespace: istioConfigList.namespace.name, destinationPolicy: dp })
+    istioItems.push({
+      namespace: istioConfigList.namespace.name,
+      type: 'destinationpolicy',
+      name: dp.name,
+      destinationPolicy: dp
+    })
   );
   istioConfigList.virtualServices.forEach(vs =>
-    istioItems.push({ namespace: istioConfigList.namespace.name, virtualService: vs })
+    istioItems.push({
+      namespace: istioConfigList.namespace.name,
+      type: 'virtualservice',
+      name: vs.name,
+      virtualService: vs
+    })
   );
   istioConfigList.destinationRules.forEach(dr =>
-    istioItems.push({ namespace: istioConfigList.namespace.name, destinationRule: dr })
+    istioItems.push({
+      namespace: istioConfigList.namespace.name,
+      type: 'destinationrule',
+      name: dr.name,
+      destinationRule: dr
+    })
   );
-  istioConfigList.rules.forEach(r => istioItems.push({ namespace: istioConfigList.namespace.name, rule: r }));
+  istioConfigList.rules.forEach(r =>
+    istioItems.push({ namespace: istioConfigList.namespace.name, type: 'rule', name: r.name, rule: r })
+  );
   return istioItems;
-};
-
-const getIstioType = (item: IstioConfigItem) => {
-  let istioType = '';
-  if (item.routeRule) {
-    istioType = 'RouteRule';
-  } else if (item.destinationPolicy) {
-    istioType = 'DestinationPolicy';
-  } else if (item.virtualService) {
-    istioType = 'VirtualService';
-  } else if (item.destinationRule) {
-    istioType = 'DestinationRule';
-  } else if (item.rule) {
-    istioType = 'Rule';
-  }
-  return istioType;
-};
-
-const getIstioName = (item: IstioConfigItem) => {
-  let istioName = '';
-  if (item.routeRule) {
-    istioName = item.routeRule.name;
-  } else if (item.destinationPolicy) {
-    istioName = item.destinationPolicy.name;
-  } else if (item.virtualService) {
-    istioName = item.virtualService.name;
-  } else if (item.destinationRule) {
-    istioName = item.destinationRule.name;
-  } else if (item.rule) {
-    istioName = item.rule.name;
-  }
-  return istioName;
 };
 
 export const sortIstioItems = (unsorted: IstioConfigItem[], sortField: SortField, isAscending: boolean) => {
@@ -130,10 +145,38 @@ export const sortIstioItems = (unsorted: IstioConfigItem[], sortField: SortField
       sortValue = a.namespace.localeCompare(b.namespace);
     }
     if (sortField.id === 'istiotype') {
-      sortValue = getIstioType(a).localeCompare(getIstioType(b));
+      sortValue = a.type.localeCompare(b.type);
     }
+    if (sortField.id === 'configvalidation') {
+      if (a.validation && !b.validation) {
+        sortValue = -1;
+      }
+      if (!a.validation && b.validation) {
+        sortValue = 1;
+      }
+      if (!a.validation && !b.validation) {
+        sortValue = 0;
+      }
+      if (a.validation && b.validation) {
+        if (a.validation.valid && !b.validation.valid) {
+          sortValue = -1;
+        }
+        if (!a.validation.valid && b.validation.valid) {
+          sortValue = 1;
+        }
+        if (a.validation.valid && b.validation.valid) {
+          sortValue = 0;
+        }
+        if (!a.validation.valid && !b.validation.valid) {
+          let aIssues = a.validation.checks ? a.validation.checks.length : 0;
+          let bIssues = b.validation.checks ? b.validation.checks.length : 0;
+          sortValue = aIssues > bIssues ? -1 : aIssues < bIssues ? 1 : 0;
+        }
+      }
+    }
+    // Istioname at the end to be the default sort when sortValue === 0
     if (sortField.id === 'istioname' || sortValue === 0) {
-      sortValue = getIstioName(a).localeCompare(getIstioName(b));
+      sortValue = a.name.localeCompare(b.name);
     }
     return isAscending ? sortValue : sortValue * -1;
   });

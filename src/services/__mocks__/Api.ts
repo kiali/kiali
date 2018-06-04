@@ -49,6 +49,10 @@ export const getServiceValidations = (namespace: String, service: String) => {
   return mockPromiseFromFile(`./src/services/__mockData__/getServiceValidations.json`);
 };
 
+export const getNamespaceValidations = (namespace: String, service: String) => {
+  return mockPromiseFromFile(`./src/services/__mockData__/getNamespaceValidations.json`);
+};
+
 export const getIstioConfig = (namespace: String) => {
   if (namespace === 'bookinfo') {
     return mockPromiseFromFile(`./src/services/__mockData__/getIstioConfigBookinfo.json`);
@@ -70,6 +74,10 @@ export const getIstioConfig = (namespace: String) => {
 
 export const getIstioConfigDetail = (namespace: String, objectType: String, object: String) => {
   return mockPromiseFromFile(`./src/services/__mockData__/getIstioConfigDetail.json`);
+};
+
+export const getIstioConfigValidations = (namespace: String, objectType: String, object: String) => {
+  return mockPromiseFromFile(`./src/services/__mockData__/getIstioConfigValidations.json`);
 };
 
 export const getServiceHealth = () => {

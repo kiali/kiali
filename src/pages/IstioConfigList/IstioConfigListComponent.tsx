@@ -9,6 +9,7 @@ import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
 import {
   dicIstioType,
+  filterByConfigValidation,
   filterByName,
   IstioConfigItem,
   SortField,
@@ -16,10 +17,11 @@ import {
   toIstioItems
 } from '../../types/IstioConfigListComponent';
 import PropTypes from 'prop-types';
-// import IstioRuleListDescription from './IstioRuleListDescription';
 import { Link } from 'react-router-dom';
 import { PfColors } from '../../components/Pf/PfColors';
 import { authentication } from '../../utils/Authentication';
+import { NamespaceValidations } from '../../types/ServiceInfo';
+import { ConfigIndicator } from '../../components/ConfigValidation/ConfigIndicator';
 
 const sortFields: SortField[] = [
   {
@@ -35,6 +37,11 @@ const sortFields: SortField[] = [
   {
     id: 'istioname',
     title: 'Istio Name',
+    isNumeric: false
+  },
+  {
+    id: 'configvalidation',
+    title: 'Config',
     isNumeric: false
   }
 ];
@@ -72,6 +79,27 @@ const istioTypeFilter: FilterType = {
     {
       id: 'Rule',
       title: 'Rule'
+    }
+  ]
+};
+
+const configValidationFilter: FilterType = {
+  id: 'configvalidation',
+  title: 'Config',
+  placeholder: 'Filter by Config Validation',
+  filterType: 'select',
+  filterValues: [
+    {
+      id: 'valid',
+      title: 'Valid'
+    },
+    {
+      id: 'notvalid',
+      title: 'Not Valid'
+    },
+    {
+      id: 'notvalidated',
+      title: 'Not Validated'
     }
   ]
 };
@@ -186,22 +214,51 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     let istioNameFilters: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Istio Name')
       .map(activeFilter => activeFilter.value);
+    let configValidationFilters: string[] = activeFilters
+      .filter(activeFilter => activeFilter.category === 'Config')
+      .map(activeFilter => activeFilter.value);
 
     if (namespacesSelected.length === 0) {
       API.getNamespaces(authentication())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
-          this.fetchIstioConfig(namespaces.map(namespace => namespace.name), istioTypeFilters, istioNameFilters);
+          this.fetchIstioConfig(
+            namespaces.map(namespace => namespace.name),
+            istioTypeFilters,
+            istioNameFilters,
+            configValidationFilters
+          );
         })
         .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
     } else {
-      this.fetchIstioConfig(namespacesSelected, istioTypeFilters, istioNameFilters);
+      this.fetchIstioConfig(namespacesSelected, istioTypeFilters, istioNameFilters, configValidationFilters);
     }
   }
 
-  fetchIstioConfig(namespaces: string[], istioTypeFilters: string[], istioNameFilters: string[]) {
-    const promises = namespaces.map(namespace => API.getIstioConfig(authentication(), namespace, istioTypeFilters));
-    Promise.all(promises)
+  updateValidation(istioItems: IstioConfigItem[], namespaceValidation: NamespaceValidations): IstioConfigItem[] {
+    istioItems.forEach(istioItem => {
+      if (
+        namespaceValidation[istioItem.namespace] &&
+        namespaceValidation[istioItem.namespace][istioItem.type] &&
+        namespaceValidation[istioItem.namespace][istioItem.type][istioItem.name]
+      ) {
+        istioItem.validation = namespaceValidation[istioItem.namespace][istioItem.type][istioItem.name];
+      }
+    });
+    return istioItems;
+  }
+
+  fetchIstioConfig(
+    namespaces: string[],
+    istioTypeFilters: string[],
+    istioNameFilters: string[],
+    configValidationFilters: string[]
+  ) {
+    const istioConfigPromises = namespaces.map(namespace =>
+      API.getIstioConfig(authentication(), namespace, istioTypeFilters)
+    );
+    const validationPromises = namespaces.map(namespace => API.getNamespaceValidations(authentication(), namespace));
+    Promise.all(istioConfigPromises)
       .then(responses => {
         let istioItems: IstioConfigItem[] = [];
         responses.forEach(response => {
@@ -219,43 +276,71 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
             }
           };
         });
+        return Promise.all(validationPromises);
+      })
+      .then(responses => {
+        let namespaceValidations: NamespaceValidations = {};
+        responses.forEach(response =>
+          Object.keys(response.data).forEach(namespace => (namespaceValidations[namespace] = response.data[namespace]))
+        );
+        this.setState(prevState => {
+          return {
+            istioItems: filterByConfigValidation(
+              this.updateValidation(prevState.istioItems, namespaceValidations),
+              configValidationFilters
+            )
+          };
+        });
       })
       .catch(istioError => this.handleAxiosError('Could not fetch Istio objects list.', istioError));
   }
 
   renderIstioItem(istioItem: IstioConfigItem, index: number) {
     let to = '/namespaces/' + istioItem.namespace + '/istio';
-    let name = '';
+    let name = istioItem.name;
     let iconName = '';
     let iconType = '';
     let type = 'No type found';
-    if (istioItem.routeRule) {
-      name = istioItem.routeRule.name;
+    if (istioItem.type === 'routerule') {
       iconName = 'code-fork';
       iconType = 'fa';
       type = 'RouteRule';
-    } else if (istioItem.destinationPolicy) {
-      name = istioItem.destinationPolicy.name;
+    } else if (istioItem.type === 'destinationpolicy') {
       iconName = 'network';
       iconType = 'pf';
       type = 'DestinationPolicy';
-    } else if (istioItem.virtualService) {
-      name = istioItem.virtualService.name;
+    } else if (istioItem.type === 'virtualservice') {
       iconName = 'code-fork';
       iconType = 'fa';
       type = 'VirtualService';
-    } else if (istioItem.destinationRule) {
-      name = istioItem.destinationRule.name;
+    } else if (istioItem.type === 'destinationrule') {
       iconName = 'network';
       iconType = 'pf';
       type = 'DestinationRule';
-    } else if (istioItem.rule) {
+    } else if (istioItem.type === 'rule') {
       iconName = 'migration';
       iconType = 'pf';
-      name = istioItem.rule.name;
       type = 'Rule';
     }
     to = to + '/' + dicIstioType[type] + '/' + name;
+
+    const itemDescription = (
+      <table style={{ width: '30em', tableLayout: 'fixed' }}>
+        <tbody>
+          <tr>
+            <td>{type}</td>
+            {istioItem.validation ? (
+              <td>
+                <ConfigIndicator id={index + '-config-validation'} validation={istioItem.validation} />
+              </td>
+            ) : (
+              undefined
+            )}
+          </tr>
+        </tbody>
+      </table>
+    );
+
     return (
       <Link
         key={'istioItemItem_' + index + '_' + istioItem.namespace + '_' + name}
@@ -270,7 +355,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
               <small>{istioItem.namespace}</small>
             </span>
           }
-          description={<div>{type}</div>}
+          description={itemDescription}
         />
       </Link>
     );
@@ -290,7 +375,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     ruleListComponent = (
       <>
         <NamespaceFilter
-          initialFilters={[istioTypeFilter, istioNameFilter]}
+          initialFilters={[istioTypeFilter, istioNameFilter, configValidationFilter]}
           onFilterChange={this.filterChange}
           onError={this.handleError}
         >

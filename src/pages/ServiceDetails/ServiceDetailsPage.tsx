@@ -10,10 +10,11 @@ import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import { hasIstioSidecar, ServiceDetailsInfo, Validations } from '../../types/ServiceInfo';
-import AceEditor, { AceOptions } from 'react-ace';
+import AceEditor, { AceOptions, Annotation, Marker } from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
+import { parseAceValidations } from '../../types/AceValidations';
 
 const yaml = require('js-yaml');
 
@@ -178,6 +179,11 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         const details = response.data;
         details.istioSidecar = hasIstioSidecar(details.pods);
         this.setState({ serviceDetailsInfo: details });
+        return API.getServiceValidations(
+          authentication(),
+          this.props.match.params.namespace,
+          this.props.match.params.service
+        );
       })
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', error));
@@ -197,6 +203,26 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     const urlParams = new URLSearchParams(this.props.location.search);
     let parsedSearch = this.parseSearch();
     let editorVisible = parsedSearch.name && parsedSearch.type;
+    let yamlEditor = '';
+    let aceMarkers: Array<Marker> = [];
+    let aceAnnotations: Array<Annotation> = [];
+    if (editorVisible) {
+      yamlEditor = this.editorContent(parsedSearch);
+      if (
+        this.state.validations &&
+        parsedSearch.type &&
+        parsedSearch.name &&
+        this.state.validations[parsedSearch.type] &&
+        this.state.validations[parsedSearch.type][parsedSearch.name]
+      ) {
+        let vals: Validations = {};
+        vals[parsedSearch.type] = {};
+        vals[parsedSearch.type][parsedSearch.name] = this.state.validations[parsedSearch.type][parsedSearch.name];
+        let aceValidations = parseAceValidations(yamlEditor, vals);
+        aceMarkers = aceValidations.markers;
+        aceAnnotations = aceValidations.annotations;
+      }
+    }
     let to = '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
     return (
       <div className="container-fluid container-pf-nav-pf-vertical">
@@ -229,7 +255,9 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
                   height={'50vh'}
                   className={'istio-ace-editor'}
                   setOptions={aceOptions}
-                  value={this.editorContent(parsedSearch)}
+                  value={yamlEditor}
+                  markers={aceMarkers}
+                  annotations={aceAnnotations}
                 />
               </Col>
             </Row>

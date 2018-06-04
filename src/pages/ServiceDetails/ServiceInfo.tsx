@@ -6,11 +6,12 @@ import ServiceInfoDeployments from './ServiceInfo/ServiceInfoDeployments';
 import ServiceInfoRouteRules from './ServiceInfo/ServiceInfoRouteRules';
 import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
 import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
-import { RouteRule, ServiceDetailsInfo, Validations } from '../../types/ServiceInfo';
+import { RouteRule, ServiceDetailsInfo, severityToIconName, Validations } from '../../types/ServiceInfo';
 import {
   ToastNotification,
   ToastNotificationList,
   Col,
+  Icon,
   Row,
   TabContainer,
   TabContent,
@@ -30,6 +31,13 @@ type ServiceInfoState = {
   error: boolean;
   errorMessage: string;
 };
+
+interface ValidationChecks {
+  hasRouteRuleChecks: boolean;
+  hasDestinationPolicyChecks: boolean;
+  hasVirtualServiceChecks: boolean;
+  hasDestinationRuleChecks: boolean;
+}
 
 class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
   constructor(props: ServiceDetails) {
@@ -54,6 +62,50 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     return sorted;
   }
 
+  validationChecks(): ValidationChecks {
+    let validationChecks = {
+      hasRouteRuleChecks: false,
+      hasDestinationPolicyChecks: false,
+      hasVirtualServiceChecks: false,
+      hasDestinationRuleChecks: false
+    };
+
+    const routeRules = this.props.serviceDetails.routeRules || [];
+    const destinationPolicies = this.props.serviceDetails.destinationPolicies || [];
+    const virtualServices = this.props.serviceDetails.virtualServices || [];
+    const destinationRules = this.props.serviceDetails.destinationRules || [];
+
+    validationChecks.hasRouteRuleChecks = routeRules.some(
+      routeRule =>
+        this.props.validations['routerule'] &&
+        this.props.validations['routerule'][routeRule.name] &&
+        !this.props.validations['routerule'][routeRule.name].valid
+    );
+
+    validationChecks.hasDestinationPolicyChecks = destinationPolicies.some(
+      destinationPolicy =>
+        this.props.validations['destinationpolicy'] &&
+        this.props.validations['destinationpolicy'][destinationPolicy.name] &&
+        !this.props.validations['destinationpolicy'][destinationPolicy.name].valid
+    );
+
+    validationChecks.hasVirtualServiceChecks = virtualServices.some(
+      virtualService =>
+        this.props.validations['virtualservice'] &&
+        this.props.validations['virtualservice'][virtualService.name] &&
+        !this.props.validations['virtualservice'][virtualService.name].valid
+    );
+
+    validationChecks.hasDestinationRuleChecks = destinationRules.some(
+      destinationRule =>
+        this.props.validations['destinationrule'] &&
+        this.props.validations['destinationrule'][destinationRule.name] &&
+        !this.props.validations['destinationrule'][destinationRule.name].valid
+    );
+
+    return validationChecks;
+  }
+
   render() {
     const pods = this.props.serviceDetails.pods || [];
     const deployments = this.props.serviceDetails.deployments || [];
@@ -62,6 +114,14 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     const destinationPolicies = this.props.serviceDetails.destinationPolicies || [];
     const virtualServices = this.props.serviceDetails.virtualServices || [];
     const destinationRules = this.props.serviceDetails.destinationRules || [];
+    const validationChecks = this.validationChecks();
+    const errorIcon: any = (
+      <span>
+        {' '}
+        <Icon type="pf" name={severityToIconName('error')} />
+      </span>
+    );
+
     const editorLink = '/namespaces/' + this.props.namespace + '/services/' + this.props.service;
     return (
       <div>
@@ -100,10 +160,22 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                     <NavItem eventKey={0}>{'Pods (' + pods.length + ')'}</NavItem>
                     <NavItem eventKey={1}>{'Deployments (' + deployments.length + ')'}</NavItem>
                     <NavItem eventKey={2}>{'Source Services (' + Object.keys(dependencies).length + ')'}</NavItem>
-                    <NavItem eventKey={3}>{'Route Rules (' + routeRules.length + ')'}</NavItem>
-                    <NavItem eventKey={4}>{'Destination Policies (' + destinationPolicies.length + ')'}</NavItem>
-                    <NavItem eventKey={5}>{'Virtual Services (' + virtualServices.length + ')'}</NavItem>
-                    <NavItem eventKey={6}>{'Destination Rules (' + destinationRules.length + ')'}</NavItem>
+                    <NavItem eventKey={3}>
+                      {'Route Rules (' + routeRules.length + ')'}
+                      {validationChecks.hasRouteRuleChecks ? errorIcon : undefined}
+                    </NavItem>
+                    <NavItem eventKey={4}>
+                      {'Destination Policies (' + destinationPolicies.length + ')'}
+                      {validationChecks.hasDestinationPolicyChecks ? errorIcon : undefined}
+                    </NavItem>
+                    <NavItem eventKey={5}>
+                      {'Virtual Services (' + virtualServices.length + ')'}
+                      {validationChecks.hasVirtualServiceChecks ? errorIcon : undefined}
+                    </NavItem>
+                    <NavItem eventKey={6}>
+                      {'Destination Rules (' + destinationRules.length + ')'}
+                      {validationChecks.hasDestinationRuleChecks ? errorIcon : undefined}
+                    </NavItem>
                   </Nav>
                   <TabContent>
                     <TabPane eventKey={0}>
