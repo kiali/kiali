@@ -4,6 +4,7 @@ import * as API from '../../services/Api';
 import { EmptyState, EmptyStateTitle, EmptyStateIcon } from 'patternfly-react';
 import * as MessageCenter from '../../utils/MessageCenter';
 import { authentication } from '../../utils/Authentication';
+import { RouteComponentProps } from 'react-router-dom';
 
 type ServiceJaegerState = {
   height: string;
@@ -26,11 +27,10 @@ const EmptyStatePage = () => (
   </>
 );
 
-class ServiceJaegerPage extends React.Component<{}, ServiceJaegerState> {
-  constructor(props: {}) {
+class ServiceJaegerPage extends React.Component<RouteComponentProps<{}>, ServiceJaegerState> {
+  constructor(props: RouteComponentProps<{}>) {
     super(props);
     this.state = { width: '0 px', jaegerURL: '', height: '0 px', error: false };
-    this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
   }
 
   componentDidMount() {
@@ -55,17 +55,24 @@ class ServiceJaegerPage extends React.Component<{}, ServiceJaegerState> {
     window.removeEventListener('resize', this.updateWindowDimensions);
   }
 
-  updateWindowDimensions() {
+  updateWindowDimensions = () => {
     this.setState({ width: window.innerWidth - 300 + 'px', height: window.innerHeight - 100 + 'px' });
-  }
+  };
 
   render() {
+    let frameUrl = this.state.jaegerURL;
+    const urlParams = new URLSearchParams(this.props.location.search);
+
+    if (frameUrl.length > 0 && urlParams.has('path')) {
+      frameUrl += urlParams.get('path');
+    }
+
     return (
       <div className="container-fluid container-pf-nav-pf-vertical">
         {this.state.error ? <EmptyStatePage /> : null}
         <div className="container-fluid container-cards-pf">
           <Iframe
-            url={this.state.jaegerURL}
+            url={frameUrl}
             width={this.state.width}
             height={this.state.height}
             id="jaegerUI"
