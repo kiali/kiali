@@ -31,13 +31,13 @@ type ContainerInfo struct {
 	Image string `json:"image"`
 }
 
-// Parse extracts desired information from k8s PodList info
-func (pods *Pods) Parse(list *v1.PodList) {
+// Parse extracts desired information from k8s []Pod info
+func (pods *Pods) Parse(list []v1.Pod) {
 	if list == nil {
 		return
 	}
 
-	for _, pod := range list.Items {
+	for _, pod := range list {
 		casted := Pod{}
 		casted.Parse(&pod)
 		*pods = append(*pods, &casted)

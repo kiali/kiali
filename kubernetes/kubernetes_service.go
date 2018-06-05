@@ -171,7 +171,7 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	if podsResponse.err != nil {
 		return nil, fmt.Errorf("pods: %s", podsResponse.err.Error())
 	}
-	serviceDetails.Pods = podsResponse.pods
+	serviceDetails.Pods = filterPodsForEndpoints(serviceDetails.Endpoints, podsResponse.pods)
 
 	// Finally, after we get the pods we can narrow down the deployments list
 	serviceDetails.Deployments = &v1beta1.DeploymentList{

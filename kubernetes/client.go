@@ -211,3 +211,23 @@ func filterPodsForService(selector labels.Selector, allPods *v1.PodList) []v1.Po
 	}
 	return pods
 }
+
+// filterPodsForEndpoints performs a second pass was selector may return too many data
+// This case happens when a "nil" selector (such as one of default/kubernetes service) is used
+func filterPodsForEndpoints(endpoints *v1.Endpoints, unfiltered *v1.PodList) []v1.Pod {
+	endpointPods := make(map[string]bool)
+	for _, subset := range endpoints.Subsets {
+		for _, address := range subset.Addresses {
+			if address.TargetRef != nil && address.TargetRef.Kind == "Pod" {
+				endpointPods[address.TargetRef.Name] = true
+			}
+		}
+	}
+	var pods []v1.Pod
+	for _, pod := range unfiltered.Items {
+		if _, ok := endpointPods[pod.Name]; ok {
+			pods = append(pods, pod)
+		}
+	}
+	return pods
+}
