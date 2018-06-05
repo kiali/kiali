@@ -113,14 +113,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.cyInitialization(this.getCy());
   }
 
-  private turnEdgeLabelsTo = (value: EdgeLabelMode) => {
-    this.cy.edges().forEach(edge => {
+  private turnEdgeLabelsTo = (cy: any, value: EdgeLabelMode) => {
+    cy.edges().forEach(edge => {
       edge.data('edgeLabelMode', value);
     });
   };
 
-  private turnNodeLabelsTo = (value: boolean) => {
-    this.cy.nodes().forEach(node => {
+  private turnNodeLabelsTo = (cy: any, value: boolean) => {
+    cy.nodes().forEach(node => {
       node.data('showNodeLabels', value);
     });
   };
@@ -231,8 +231,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     // Create and destroy labels
-    this.turnEdgeLabelsTo(this.props.edgeLabelMode);
-    this.turnNodeLabelsTo(this.props.showNodeLabels);
+    this.turnEdgeLabelsTo(cy, this.props.edgeLabelMode);
+    this.turnNodeLabelsTo(cy, this.props.showNodeLabels);
 
     // Create badges
     cy.nodes().forEach(ele => {
