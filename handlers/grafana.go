@@ -29,8 +29,8 @@ func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 
 // getGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
 func getGrafanaInfo(osRouteSupplier osRouteSupplier, serviceSupplier serviceSupplier) (*models.GrafanaInfo, int, error) {
-	suffix := config.Get().Products.Istio.IstioIdentityDomain
-	grafanaConfig := config.Get().Products.Grafana
+	suffix := config.Get().ExternalServices.Istio.IstioIdentityDomain
+	grafanaConfig := config.Get().ExternalServices.Grafana
 	if !grafanaConfig.DisplayLink {
 		return nil, http.StatusNoContent, nil
 	}

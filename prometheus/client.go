@@ -36,7 +36,7 @@ func NewClient() (*Client, error) {
 	if config.Get() == nil {
 		return nil, errors.New("config.Get() must be not null")
 	}
-	p8s, err := api.NewClient(api.Config{Address: config.Get().Products.PrometheusServiceURL})
+	p8s, err := api.NewClient(api.Config{Address: config.Get().ExternalServices.PrometheusServiceURL})
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (in *Client) Inject(api v1.API) {
 // It returns an error on any problem.
 func (in *Client) GetSourceServices(namespace string, servicename string) (map[string][]string, error) {
 	query := fmt.Sprintf("istio_request_count{destination_service=\"%s.%s.%s\"}",
-		servicename, namespace, config.Get().Products.Istio.IstioIdentityDomain)
+		servicename, namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain)
 	result, err := in.api.Query(context.Background(), query, time.Now())
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 			index := fmt.Sprintf("%s", metric["destination_version"])
 			sourceService := string(metric["source_service"])
 			// sourceService is in the form "service.namespace.istio_identity_domain". We want to keep only "service.namespace".
-			if i := strings.Index(sourceService, "."+config.Get().Products.Istio.IstioIdentityDomain); i > 0 {
+			if i := strings.Index(sourceService, "."+config.Get().ExternalServices.Istio.IstioIdentityDomain); i > 0 {
 				sourceService = sourceService[:i]
 			}
 			source := fmt.Sprintf("%s/%s", sourceService, metric["source_version"])
@@ -131,5 +131,5 @@ func (in *Client) API() v1.API {
 
 // Address return the configured Prometheus service URL
 func (in *Client) Address() string {
-	return config.Get().Products.PrometheusServiceURL
+	return config.Get().ExternalServices.PrometheusServiceURL
 }

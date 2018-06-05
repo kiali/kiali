@@ -53,7 +53,7 @@ func buildStaticNodeList(namespaceName string, pods *v1.PodList) []*tree.Service
 	resolvedServices := make(map[string]bool)
 	appLabel := config.Get().ServiceFilterLabelName
 	versionLabel := config.Get().VersionFilterLabelName
-	identityDomain := config.Get().Products.Istio.IstioIdentityDomain
+	identityDomain := config.Get().ExternalServices.Istio.IstioIdentityDomain
 	for _, pod := range pods.Items {
 		app := pod.GetObjectMeta().GetLabels()[appLabel]
 		version := pod.GetObjectMeta().GetLabels()[versionLabel]

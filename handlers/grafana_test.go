@@ -13,7 +13,7 @@ import (
 
 func TestGetGrafanaInfoDisabled(t *testing.T) {
 	conf := config.NewConfig()
-	conf.Products.Grafana.DisplayLink = false
+	conf.ExternalServices.Grafana.DisplayLink = false
 	config.Set(conf)
 	info, code, err := getGrafanaInfo(func(_, _ string) (string, error) {
 		return "http://fromopenshift", nil
@@ -64,7 +64,7 @@ func TestGetGrafanaInfoFromService(t *testing.T) {
 
 func TestGetGrafanaInfoFromConfig(t *testing.T) {
 	conf := config.NewConfig()
-	conf.Products.Grafana.URL = "http://fromconfig:3001"
+	conf.ExternalServices.Grafana.URL = "http://fromconfig:3001"
 	config.Set(conf)
 	info, code, err := getGrafanaInfo(func(_, _ string) (string, error) {
 		return "http://fromopenshift", nil
