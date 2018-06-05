@@ -324,19 +324,18 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					{Name: "http", Protocol: "TCP", Port: 3000},
 				}}}}
 
-	pods := &v1.PodList{
-		Items: []v1.Pod{
-			v1.Pod{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:              "reviews-v1-1234",
-					CreationTimestamp: meta_v1.NewTime(t1),
-					Labels:            map[string]string{"apps": "reviews", "version": "v1"}}},
-			v1.Pod{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:              "reviews-v2-1234",
-					CreationTimestamp: meta_v1.NewTime(t2),
-					Labels:            map[string]string{"apps": "reviews", "version": "v2"}}},
-		}}
+	pods := []v1.Pod{
+		v1.Pod{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "reviews-v1-1234",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{"apps": "reviews", "version": "v1"}}},
+		v1.Pod{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "reviews-v2-1234",
+				CreationTimestamp: meta_v1.NewTime(t2),
+				Labels:            map[string]string{"apps": "reviews", "version": "v2"}}},
+	}
 
 	deployments := &v1beta1.DeploymentList{
 		Items: []v1beta1.Deployment{

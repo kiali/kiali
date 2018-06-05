@@ -1,6 +1,7 @@
 package business
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/prometheus/common/model"
@@ -103,17 +104,17 @@ func processRequestRates(services []models.ServiceOverview, rates model.Vector, 
 func (in *SvcService) GetService(namespace, service, interval string) (*models.Service, error) {
 	serviceDetails, err := in.k8s.GetServiceDetails(namespace, service)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Service details: %s", err.Error())
 	}
 
 	istioDetails, err := in.k8s.GetIstioDetails(namespace, service)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Istio details: %s", err.Error())
 	}
 
 	prometheusDetails, err := in.prom.GetSourceServices(namespace, service)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Source services: %s", err.Error())
 	}
 
 	statuses := castDeploymentsStatuses(serviceDetails.Deployments.Items)
