@@ -19,7 +19,6 @@ import { parseAceValidations } from '../../types/AceValidations';
 const yaml = require('js-yaml');
 
 type ServiceDetailsState = {
-  jaegerUri: string;
   serviceDetailsInfo: ServiceDetailsInfo;
   validations: Validations;
 };
@@ -45,7 +44,6 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   constructor(props: RouteComponentProps<ServiceId>) {
     super(props);
     this.state = {
-      jaegerUri: '',
       validations: {},
       serviceDetailsInfo: {
         type: '',
@@ -165,15 +163,6 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   }
 
   fetchBackend() {
-    API.getJaegerInfo(authentication())
-      .then(response => {
-        this.setState({
-          jaegerUri: `${response.data.url}/search?service=${this.props.match.params.service}`
-        });
-      })
-      .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Cannot fetch Jaeger info.', error));
-      });
     API.getServiceDetail(authentication(), this.props.match.params.namespace, this.props.match.params.service)
       .then(response => {
         const details = response.data;
@@ -272,7 +261,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
                 <NavItem eventKey="metrics">
                   <div>Metrics</div>
                 </NavItem>
-                <NavItem href={this.state.jaegerUri}>
+                <NavItem onClick={this.navigateToJaeger}>
                   <div>Traces</div>
                 </NavItem>
               </Nav>
@@ -308,6 +297,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     urlParams.set('tab', tabKey);
 
     this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
+  };
+
+  private navigateToJaeger = () => {
+    this.props.history.push('/jaeger?path=' + encodeURIComponent(`/search?service=${this.props.match.params.service}`));
   };
 }
 
