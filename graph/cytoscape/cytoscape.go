@@ -23,6 +23,7 @@ import (
 	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/graph/tree"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/services/models"
 )
 
 type NodeData struct {
@@ -31,20 +32,21 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	Service            string `json:"service"`
-	Version            string `json:"version,omitempty"`
-	Rate               string `json:"rate,omitempty"`               // edge aggregate
-	Rate3xx            string `json:"rate3XX,omitempty"`            // edge aggregate
-	Rate4xx            string `json:"rate4XX,omitempty"`            // edge aggregate
-	Rate5xx            string `json:"rate5XX,omitempty"`            // edge aggregate
-	RateSelfInvoke     string `json:"rateSelfInvoke,omitempty"`     // rate of selfInvoke
-	HasCircuitBreaker  string `json:"hasCB,omitempty"`              // true | false
-	HasRouteRule       string `json:"hasRR,omitempty"`              // true | false
-	IsDead             string `json:"isDead,omitempty"`             // true (has no pods) | false
-	IsGroup            string `json:"isGroup,omitempty"`            // set to the grouping type, current values: [ 'version' ]
-	IsRoot             string `json:"isRoot,omitempty"`             // true | false
-	IsUnused           string `json:"isUnused,omitempty"`           // true | false
-	HasMissingSidecars bool   `json:"hasMissingSidecars,omitempty"` // true | false
+	Service            string         `json:"service"`
+	Version            string         `json:"version,omitempty"`
+	Rate               string         `json:"rate,omitempty"`               // edge aggregate
+	Rate3xx            string         `json:"rate3XX,omitempty"`            // edge aggregate
+	Rate4xx            string         `json:"rate4XX,omitempty"`            // edge aggregate
+	Rate5xx            string         `json:"rate5XX,omitempty"`            // edge aggregate
+	RateSelfInvoke     string         `json:"rateSelfInvoke,omitempty"`     // rate of selfInvoke
+	HasCircuitBreaker  string         `json:"hasCB,omitempty"`              // true | false
+	HasRouteRule       string         `json:"hasRR,omitempty"`              // true | false
+	IsDead             string         `json:"isDead,omitempty"`             // true (has no pods) | false
+	IsGroup            string         `json:"isGroup,omitempty"`            // set to the grouping type, current values: [ 'version' ]
+	IsRoot             string         `json:"isRoot,omitempty"`             // true | false
+	IsUnused           string         `json:"isUnused,omitempty"`           // true | false
+	HasMissingSidecars bool           `json:"hasMissingSidecars,omitempty"` // true | false
+	Health             *models.Health `json:"health,omitempty"`
 }
 
 type EdgeData struct {
@@ -157,33 +159,38 @@ func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges
 		}
 
 		// node may be dead (service defined but no pods running)
-		if dead, ok := sn.Metadata["isDead"]; ok {
-			nd.IsDead = dead.(string)
+		if val, ok := sn.Metadata["isDead"]; ok {
+			nd.IsDead = val.(string)
 		}
 
 		// node may be a root
-		if root, ok := sn.Metadata["isRoot"]; ok {
-			nd.IsRoot = root.(string)
+		if val, ok := sn.Metadata["isRoot"]; ok {
+			nd.IsRoot = val.(string)
 		}
 
 		// node may be an unused service
-		if unused, ok := sn.Metadata["isUnused"]; ok {
-			nd.IsUnused = unused.(string)
+		if val, ok := sn.Metadata["isUnused"]; ok {
+			nd.IsUnused = val.(string)
 		}
 
 		// node may have a circuit breaker
-		if cb, ok := sn.Metadata["hasCircuitBreaker"]; ok {
-			nd.HasCircuitBreaker = cb.(string)
+		if val, ok := sn.Metadata["hasCircuitBreaker"]; ok {
+			nd.HasCircuitBreaker = val.(string)
 		}
 
 		// node may have a route rule
-		if cb, ok := sn.Metadata["hasRouteRule"]; ok {
-			nd.HasRouteRule = cb.(string)
+		if val, ok := sn.Metadata["hasRouteRule"]; ok {
+			nd.HasRouteRule = val.(string)
 		}
 
 		// set sidecars checks, if available
-		if cb, ok := sn.Metadata["hasMissingSidecars"]; ok {
-			nd.HasMissingSidecars = cb.(bool)
+		if val, ok := sn.Metadata["hasMissingSidecars"]; ok {
+			nd.HasMissingSidecars = val.(bool)
+		}
+
+		// set health, if available
+		if val, ok := sn.Metadata["health"]; ok {
+			nd.Health = val.(*models.Health)
 		}
 
 		nw := NodeWrapper{
