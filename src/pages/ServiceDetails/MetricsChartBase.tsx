@@ -44,13 +44,21 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
     };
   }
 
+  adjustHeight(columns: any[]): number {
+    const series = columns.length - 1;
+    return 350 + series * 23;
+  }
+
   render() {
+    const data = this.seriesData;
+    const height = this.adjustHeight(data.columns);
     return (
       <div key={this.controlKey}>
         <LineChart
+          style={{ height: height }}
           id={this.props.familyName}
           title={{ text: this.props.familyName }}
-          data={this.seriesData}
+          data={data}
           axis={this.axisDefinition}
           point={{ show: false }}
         />

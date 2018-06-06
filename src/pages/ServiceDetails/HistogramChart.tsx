@@ -26,9 +26,9 @@ class HistogramChart extends MetricsChartBase<HistogramChartProps> {
       x: 'x',
       columns: graphUtils
         .toC3Columns(this.nameTimeSeries('[avg]', this.props.histogram.average.matrix))
-        .concat(graphUtils.toC3Columns(this.nameTimeSeries('[med]', this.props.histogram.median.matrix)))
-        .concat(graphUtils.toC3Columns(this.nameTimeSeries('[p95]', this.props.histogram.percentile95.matrix)))
-        .concat(graphUtils.toC3Columns(this.nameTimeSeries('[p99]', this.props.histogram.percentile99.matrix)))
+        .concat(graphUtils.toC3ValueColumns(this.nameTimeSeries('[med]', this.props.histogram.median.matrix)))
+        .concat(graphUtils.toC3ValueColumns(this.nameTimeSeries('[p95]', this.props.histogram.percentile95.matrix)))
+        .concat(graphUtils.toC3ValueColumns(this.nameTimeSeries('[p99]', this.props.histogram.percentile99.matrix)))
     };
   }
 }
