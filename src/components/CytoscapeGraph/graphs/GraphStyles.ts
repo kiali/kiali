@@ -1,5 +1,6 @@
 import { PfColors } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
+import { config } from '../../../config';
 
 export const DimClass = 'mousedim';
 
@@ -9,6 +10,21 @@ export class GraphStyles {
   }
 
   static styles() {
+    const getEdgeColor = (ele: any): string => {
+      const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
+      if (rate === 0 || ele.data('isUnused')) {
+        return PfColors.Black;
+      }
+      const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
+      if (pErr > config().threshold.percentErrorSevere) {
+        return PfColors.Red100;
+      }
+      if (pErr > config().threshold.percentErrorWarn) {
+        return PfColors.Orange400;
+      }
+      return PfColors.Green400;
+    };
+
     return [
       {
         selector: 'node',
@@ -106,27 +122,17 @@ export class GraphStyles {
           'curve-style': 'bezier',
           'font-size': '7px',
           'line-color': (ele: any) => {
-            const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
-            if (rate === 0 || ele.data('isUnused')) {
-              return PfColors.Black;
-            }
-            const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
-            // todo: these thresholds should come from somewhere global
-            if (pErr > 2.0) {
-              return PfColors.Red100;
-            }
-            if (pErr > 0.1) {
-              return PfColors.Orange400;
-            }
-            return PfColors.Green400;
+            return getEdgeColor(ele);
           },
           'line-style': (ele: any) => {
             return ele.data('isUnused') ? 'dotted' : 'solid';
           },
           'target-arrow-shape': 'vee',
+          'target-arrow-color': (ele: any) => {
+            return getEdgeColor(ele);
+          },
           'text-margin-x': '6px',
           'text-rotation': 'autorotate',
-          'target-arrow-color': PfColors.Black,
           width: 1
         }
       },
