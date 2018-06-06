@@ -94,7 +94,7 @@ export const getRequestErrorsRatio = (rh: RequestHealth): ThresholdStatus => {
       status: NA
     };
   }
-  return ascendingThresholdCheck(100 * rh.requestErrorCount / rh.requestCount, REQUESTS_THRESHOLDS);
+  return ascendingThresholdCheck((100 * rh.requestErrorCount) / rh.requestCount, REQUESTS_THRESHOLDS);
 };
 
 export const computeAggregatedHealth = (health?: Health, reporter?: (info: string) => void): Status => {

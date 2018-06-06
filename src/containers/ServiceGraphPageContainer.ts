@@ -28,5 +28,8 @@ const mapDispatchToProps = (dispatch: any) => ({
   toggleLegend: () => bindActionCreators(serviceGraphFilterActions.toggleLegend, dispatch)
 });
 
-const ServiceGraphPageConnected = connect(mapStateToProps, mapDispatchToProps)(ServiceGraphPage);
+const ServiceGraphPageConnected = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ServiceGraphPage);
 export default ServiceGraphPageConnected;

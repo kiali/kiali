@@ -329,5 +329,8 @@ const mapDispatchToProps = (dispatch: any) => ({
   onReady: (cy: any) => dispatch(ServiceGraphActions.graphRendered(cy))
 });
 
-const CytoscapeGraphConnected = connect(mapStateToProps, mapDispatchToProps)(CytoscapeGraph);
+const CytoscapeGraphConnected = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(CytoscapeGraph);
 export default CytoscapeGraphConnected;

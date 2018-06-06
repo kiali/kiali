@@ -16,5 +16,8 @@ const mapDispatchToProps = (dispatch: any) => ({
   authenticate: (username: string, password: string) => dispatch(LoginActions.authenticate(username, password))
 });
 
-const LoginPageConnected = connect(mapStateToProps, mapDispatchToProps)(LoginPage);
+const LoginPageConnected = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(LoginPage);
 export default LoginPageConnected;

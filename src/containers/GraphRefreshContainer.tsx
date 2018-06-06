@@ -24,5 +24,8 @@ const GraphRefreshWithDefaultOptions = props => {
   return <GraphRefresh options={pollIntervalDefaults} {...props} />;
 };
 
-const GraphRefreshContainer = connect(mapStateToProps, mapDispatchToProps)(GraphRefreshWithDefaultOptions);
+const GraphRefreshContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(GraphRefreshWithDefaultOptions);
 export default GraphRefreshContainer;

@@ -8,5 +8,8 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: any) => ({});
 
-const NavigationConnected = connect(mapStateToProps, mapDispatchToProps)(Navigation);
+const NavigationConnected = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Navigation);
 export default NavigationConnected;
