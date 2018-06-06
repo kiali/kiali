@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -18,9 +18,9 @@ func TestNonTrafficScenario(t *testing.T) {
 
 	// Empty trees
 	trees := make([]*tree.ServiceNode, 0)
-	deployments := mockDeploments()
+	pods := mockPods()
 
-	addUnusedNodes(&trees, "testNamespace", deployments)
+	addUnusedNodes(&trees, "testNamespace", pods)
 
 	assert.Equal(4, len(trees))
 
@@ -49,9 +49,9 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	trees := oneNodeTraffic()
-	deployments := mockDeploments()
+	pods := mockPods()
 
-	addUnusedNodes(&trees, "testNamespace", deployments)
+	addUnusedNodes(&trees, "testNamespace", pods)
 
 	assert.Equal(4, len(trees))
 	assert.Equal(tree.UnknownService, trees[0].Name)
@@ -80,9 +80,9 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	trees := v1Traffic()
-	deployments := mockDeploments()
+	pods := mockPods()
 
-	addUnusedNodes(&trees, "testNamespace", deployments)
+	addUnusedNodes(&trees, "testNamespace", pods)
 
 	assert.Equal(1, len(trees))
 	assert.Equal(tree.UnknownService, trees[0].Name)
@@ -113,9 +113,9 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal("true", recommendationV2.Metadata["isUnused"])
 }
 
-func mockDeploments() *v1beta1.DeploymentList {
-	deployments := v1beta1.DeploymentList{
-		Items: []v1beta1.Deployment{
+func mockPods() *v1.PodList {
+	pods := v1.PodList{
+		Items: []v1.Pod{
 			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:   "customer-v1",
@@ -125,6 +125,12 @@ func mockDeploments() *v1beta1.DeploymentList {
 			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:   "preference-v1",
+					Labels: map[string]string{"app": "preference", "version": "v1"},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:   "preference-v1-scaled-2",
 					Labels: map[string]string{"app": "preference", "version": "v1"},
 				},
 			},
@@ -140,10 +146,16 @@ func mockDeploments() *v1beta1.DeploymentList {
 					Labels: map[string]string{"app": "recommendation", "version": "v2"},
 				},
 			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:   "recommendation-v2-scaled2",
+					Labels: map[string]string{"app": "recommendation", "version": "v2"},
+				},
+			},
 		},
 	}
 
-	return &deployments
+	return &pods
 }
 
 func oneNodeTraffic() []*tree.ServiceNode {
