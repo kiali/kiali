@@ -11,10 +11,7 @@ cache:
   yarn: true
   directories:
     - node_modules
-before_install:
-  yarn --frozen-lockfile --non-interactive || true
-  # Above is a candidate to test if package.json is in sync with yarn.lock
-  # if out of sync, it will fail. This can be moved to the "install" phase
+install: yarn --frozen-lockfile --non-interactive || (echo 'package.json is not in sync with yarn.lock, check that you include yarn.lock' && false)
 script:
   - yarn prettier --list-different &&
     yarn build &&
