@@ -26,8 +26,7 @@
           "id": "32f13d185b9a6764d67f9f96f8796f6c",
           "service": "productpage.bookinfo.svc.cluster.local",
           "version": "v1",
-          "rate": "150.000",
-          "rateSelfInvoke": "20.000"
+          "rate": "170.000"
         }
       },
       {
@@ -60,8 +59,7 @@
           "parent": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
           "version": "v2",
-          "rate": "20.000",
-          "rateSelfInvoke": "20.000"
+          "rate": "40.000"
         }
       },
       {
@@ -70,8 +68,7 @@
           "parent": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
           "version": "v3",
-          "rate": "20.000",
-          "rateSelfInvoke": "20.000"
+          "rate": "40.000"
         }
       },
       {
@@ -89,6 +86,15 @@
           "id": "135f13040b3436024eadbbeae35f4bd9",
           "source": "32f13d185b9a6764d67f9f96f8796f6c",
           "target": "09db1ec4064c7f4e77c2c65f0c8709ac",
+          "rate": "20.000",
+          "percentRate": "12.500"
+        }
+      },
+      {
+        "data": {
+          "id": "7210b692d602cc191e0bdb8e6d929565",
+          "source": "32f13d185b9a6764d67f9f96f8796f6c",
+          "target": "32f13d185b9a6764d67f9f96f8796f6c",
           "rate": "20.000",
           "percentRate": "12.500"
         }
@@ -135,9 +141,27 @@
       },
       {
         "data": {
+          "id": "32695edf89b0c3db87effffa9409d575",
+          "source": "9b88963ddbd1603b0bbca88cfca29781",
+          "target": "9b88963ddbd1603b0bbca88cfca29781",
+          "rate": "20.000",
+          "percentRate": "50.000"
+        }
+      },
+      {
+        "data": {
           "id": "9bdc27314a16a7e9c7d8fc0cd3c55827",
           "source": "a30ebe6d7004dc26a24a989e27550aa2",
           "target": "4bd6b4e52f760784b8cf5a9ae38241e2",
+          "rate": "20.000",
+          "percentRate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "2b9280fc4208f3f5d9197e741e7bdf87",
+          "source": "a30ebe6d7004dc26a24a989e27550aa2",
+          "target": "a30ebe6d7004dc26a24a989e27550aa2",
           "rate": "20.000",
           "percentRate": "50.000"
         }
