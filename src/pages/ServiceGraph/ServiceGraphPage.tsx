@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import Namespace from '../../types/Namespace';
 import { GraphParamsType, SummaryData } from '../../types/Graph';
-import { Duration } from '../../types/GraphFilter';
+import { Duration, PollIntervalInMs } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
 import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
@@ -22,6 +22,7 @@ type ServiceGraphPageProps = GraphParamsType & {
   fetchGraphData: (namespace: Namespace, graphDuration: Duration) => any;
   toggleLegend: () => void;
   summaryData: SummaryData | null;
+  pollInterval: PollIntervalInMs;
 };
 const NUMBER_OF_DATAPOINTS = 30;
 
@@ -34,32 +35,37 @@ const cytscapeGraphStyle = style({
 });
 
 export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPageProps> {
+  private pollTimeoutRef?: number;
   constructor(props: ServiceGraphPageProps) {
     super(props);
-
-    this.state = {
-      summaryData: { summaryType: 'graph', summaryTarget: null }
-    };
   }
 
   componentDidMount() {
-    this.loadGraphDataFromBackend();
+    this.scheduleNextPollingInterval(0);
   }
 
-  componentWillReceiveProps(nextProps: ServiceGraphPageProps) {
-    const nextNamespace = nextProps.namespace;
-    const nextDuration = nextProps.graphDuration;
+  componentWillUnmount() {
+    this.removePollingIntervalTimer();
+  }
 
-    const namespaceHasChanged = nextNamespace.name !== this.props.namespace.name;
-    const durationHasChanged = nextDuration.value !== this.props.graphDuration.value;
+  componentDidUpdate(prevProps: ServiceGraphPageProps) {
+    const prevNamespace = prevProps.namespace;
+    const prevDuration = prevProps.graphDuration;
+    const prevPollInterval = prevProps.pollInterval;
+
+    const namespaceHasChanged = prevNamespace.name !== this.props.namespace.name;
+    const durationHasChanged = prevDuration.value !== this.props.graphDuration.value;
+    const pollIntervalChanged = prevPollInterval !== this.props.pollInterval;
 
     if (namespaceHasChanged || durationHasChanged) {
-      this.loadGraphDataFromBackend(nextNamespace, nextDuration);
+      this.scheduleNextPollingInterval(0);
+    } else if (pollIntervalChanged) {
+      this.scheduleNextPollingIntervalFromProps();
     }
   }
 
   handleRefreshClick = () => {
-    this.loadGraphDataFromBackend();
+    this.scheduleNextPollingInterval(0);
   };
 
   render() {
@@ -103,9 +109,39 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
   private loadGraphDataFromBackend = (namespace?: Namespace, graphDuration?: Duration) => {
     namespace = namespace ? namespace : this.props.namespace;
     graphDuration = graphDuration ? graphDuration : this.props.graphDuration;
-    this.props.fetchGraphData(namespace, graphDuration);
-    this.setState({
-      summaryData: null
-    });
+    return this.props.fetchGraphData(namespace, graphDuration);
   };
+
+  private scheduleNextPollingIntervalFromProps() {
+    if (this.props.pollInterval > 0) {
+      this.scheduleNextPollingInterval(this.props.pollInterval);
+    } else {
+      this.removePollingIntervalTimer();
+    }
+  }
+
+  private scheduleNextPollingInterval(pollInterval: number) {
+    // Remove any pending timeout to avoid having multiple requests at once
+    this.removePollingIntervalTimer();
+    // We are using setTimeout instead of setInterval because we have more control over it
+    // e.g. If a request takes much time, the next interval will fire up anyway and is
+    // possible that it will take much time as well. Instead wait for it to timeout/error to
+    // try again.
+    this.pollTimeoutRef = window.setTimeout(() => {
+      this.loadGraphDataFromBackend()
+        .then(() => {
+          this.scheduleNextPollingIntervalFromProps();
+        })
+        .catch(() => {
+          this.scheduleNextPollingIntervalFromProps();
+        });
+    }, pollInterval);
+  }
+
+  private removePollingIntervalTimer() {
+    if (this.pollTimeoutRef) {
+      clearTimeout(this.pollTimeoutRef);
+      this.pollTimeoutRef = undefined;
+    }
+  }
 }

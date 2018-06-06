@@ -23,7 +23,7 @@ ShallowWrapper {
       [MockFunction] {
         "calls": Array [
           Array [
-            5000,
+            15000,
           ],
         ],
       }
@@ -86,13 +86,14 @@ ShallowWrapper {
           disabled={false}
           handleSelect={[Function]}
           id="metrics_filter_poll_interval"
-          initialLabel="5 seconds"
-          initialValue={5000}
+          initialLabel="15 seconds"
+          initialValue={15000}
           nameDropdown="Poll Interval"
           options={
             Object {
               "0": "Pause",
               "10000": "10 seconds",
+              "15000": "15 seconds",
               "30000": "30 seconds",
               "300000": "5 minutes",
               "5000": "5 seconds",
@@ -204,12 +205,13 @@ ShallowWrapper {
           "disabled": false,
           "handleSelect": [Function],
           "id": "metrics_filter_poll_interval",
-          "initialLabel": "5 seconds",
-          "initialValue": 5000,
+          "initialLabel": "15 seconds",
+          "initialValue": 15000,
           "nameDropdown": "Poll Interval",
           "options": Object {
             "0": "Pause",
             "10000": "10 seconds",
+            "15000": "15 seconds",
             "30000": "30 seconds",
             "300000": "5 minutes",
             "5000": "5 seconds",
@@ -329,13 +331,14 @@ ShallowWrapper {
             disabled={false}
             handleSelect={[Function]}
             id="metrics_filter_poll_interval"
-            initialLabel="5 seconds"
-            initialValue={5000}
+            initialLabel="15 seconds"
+            initialValue={15000}
             nameDropdown="Poll Interval"
             options={
               Object {
                 "0": "Pause",
                 "10000": "10 seconds",
+                "15000": "15 seconds",
                 "30000": "30 seconds",
                 "300000": "5 minutes",
                 "5000": "5 seconds",
@@ -447,12 +450,13 @@ ShallowWrapper {
             "disabled": false,
             "handleSelect": [Function],
             "id": "metrics_filter_poll_interval",
-            "initialLabel": "5 seconds",
-            "initialValue": 5000,
+            "initialLabel": "15 seconds",
+            "initialValue": 15000,
             "nameDropdown": "Poll Interval",
             "options": Object {
               "0": "Pause",
               "10000": "10 seconds",
+              "15000": "15 seconds",
               "30000": "30 seconds",
               "300000": "5 minutes",
               "5000": "5 seconds",

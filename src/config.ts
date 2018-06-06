@@ -18,11 +18,12 @@ export const config = () => {
         604800: 'Last 7 days',
         2592000: 'Last 30 days'
       },
-      defaultPollInterval: 5000,
+      defaultPollInterval: 15000,
       pollInterval: {
         0: 'Pause',
         5000: '5 seconds',
         10000: '10 seconds',
+        15000: '15 seconds',
         30000: '30 seconds',
         60000: '1 minute',
         300000: '5 minutes'

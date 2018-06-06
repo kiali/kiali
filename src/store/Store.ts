@@ -1,5 +1,5 @@
 import { NotificationGroup } from '../types/MessageCenter';
-import { EdgeLabelMode } from '../types/GraphFilter';
+import { EdgeLabelMode, PollIntervalInMs } from '../types/GraphFilter';
 // Store is the Redux Data store
 
 export interface GlobalState {
@@ -20,6 +20,7 @@ export interface ServiceGraphFilterState {
   // readonly disableLayers: boolean;
 
   readonly edgeLabelMode: EdgeLabelMode;
+  readonly refreshRate: PollIntervalInMs;
 }
 
 export interface MessageCenterState {

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Toolbar, Button, Icon, FormGroup } from 'patternfly-react';
+import { Toolbar, FormGroup } from 'patternfly-react';
 
 import { Duration, Layout, EdgeLabelMode } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
@@ -9,6 +9,7 @@ import GraphLayersContainer from '../../containers/GraphLayersContainer';
 import { style } from 'typestyle';
 import { GraphParamsType } from '../../types/Graph';
 import Namespace from '../../types/Namespace';
+import GraphRefreshContainer from '../../containers/GraphRefreshContainer';
 
 import * as _ from 'lodash';
 
@@ -121,9 +122,7 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
           </FormGroup>
           <Toolbar.RightContent>
             <FormGroup className={zeroPaddingLeft}>
-              <Button disabled={this.props.disabled} onClick={this.handleRefresh}>
-                <Icon name="refresh" />
-              </Button>
+              <GraphRefreshContainer id="refresh-button" handleRefresh={this.handleRefresh} />
             </FormGroup>
           </Toolbar.RightContent>
         </Toolbar>

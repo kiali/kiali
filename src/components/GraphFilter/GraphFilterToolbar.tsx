@@ -37,41 +37,29 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
   }
 
   handleLayoutChange = (graphLayout: Layout) => {
-    const { namespace, graphDuration, edgeLabelMode } = this.getGraphParams();
     this.handleFilterChange({
-      graphDuration,
-      namespace,
-      graphLayout,
-      edgeLabelMode
+      ...this.getGraphParams(),
+      graphLayout
     });
   };
 
   handleDurationChange = (graphDuration: Duration) => {
-    const { namespace, graphLayout, edgeLabelMode } = this.getGraphParams();
     this.handleFilterChange({
-      graphDuration,
-      namespace,
-      graphLayout,
-      edgeLabelMode
+      ...this.getGraphParams(),
+      graphDuration
     });
   };
 
   handleNamespaceChange = (namespace: Namespace) => {
-    const { graphDuration, graphLayout, edgeLabelMode } = this.getGraphParams();
     this.handleFilterChange({
-      namespace,
-      graphDuration,
-      graphLayout,
-      edgeLabelMode
+      ...this.getGraphParams(),
+      namespace
     });
   };
 
   handleEdgeLabelModeChange = (edgeLabelMode: EdgeLabelMode) => {
-    const { namespace, graphDuration, graphLayout } = this.getGraphParams();
     this.handleFilterChange({
-      namespace,
-      graphDuration,
-      graphLayout,
+      ...this.getGraphParams(),
       edgeLabelMode
     });
   };

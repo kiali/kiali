@@ -1000,13 +1000,14 @@ ShallowWrapper {
     disabled={false}
     handleSelect={[MockFunction]}
     id="metrics_filter_poll_interval"
-    initialLabel="5 seconds"
-    initialValue={5000}
+    initialLabel="15 seconds"
+    initialValue={15000}
     nameDropdown="metrics_filter_poll_interval"
     options={
       Object {
         "0": "Pause",
         "10000": "10 seconds",
+        "15000": "15 seconds",
         "30000": "30 seconds",
         "300000": "5 minutes",
         "5000": "5 seconds",
@@ -1040,7 +1041,7 @@ ShallowWrapper {
         <DropdownButton
           id="metrics_filter_poll_interval"
           onSelect={[Function]}
-          title="5 seconds"
+          title="15 seconds"
         >
           <MenuItem
             active={false}
@@ -1071,6 +1072,16 @@ ShallowWrapper {
             header={false}
           >
             10 seconds
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="15000"
+            header={false}
+          >
+            15 seconds
           </MenuItem>
           <MenuItem
             active={false}
@@ -1169,6 +1180,16 @@ ShallowWrapper {
               bsClass="dropdown"
               disabled={false}
               divider={false}
+              eventKey="15000"
+              header={false}
+            >
+              15 seconds
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
               eventKey="30000"
               header={false}
             >
@@ -1197,7 +1218,7 @@ ShallowWrapper {
           ],
           "id": "metrics_filter_poll_interval",
           "onSelect": [Function],
-          "title": "5 seconds",
+          "title": "15 seconds",
         },
         "ref": null,
         "rendered": Array [
@@ -1250,6 +1271,23 @@ ShallowWrapper {
             },
             "ref": null,
             "rendered": "10 seconds",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "15000",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "15 seconds",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "15000",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "15 seconds",
             "type": [Function],
           },
           Object {
@@ -1329,7 +1367,7 @@ ShallowWrapper {
           <DropdownButton
             id="metrics_filter_poll_interval"
             onSelect={[Function]}
-            title="5 seconds"
+            title="15 seconds"
           >
             <MenuItem
               active={false}
@@ -1360,6 +1398,16 @@ ShallowWrapper {
               header={false}
             >
               10 seconds
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="15000"
+              header={false}
+            >
+              15 seconds
             </MenuItem>
             <MenuItem
               active={false}
@@ -1458,6 +1506,16 @@ ShallowWrapper {
                 bsClass="dropdown"
                 disabled={false}
                 divider={false}
+                eventKey="15000"
+                header={false}
+              >
+                15 seconds
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
                 eventKey="30000"
                 header={false}
               >
@@ -1486,7 +1544,7 @@ ShallowWrapper {
             ],
             "id": "metrics_filter_poll_interval",
             "onSelect": [Function],
-            "title": "5 seconds",
+            "title": "15 seconds",
           },
           "ref": null,
           "rendered": Array [
@@ -1539,6 +1597,23 @@ ShallowWrapper {
               },
               "ref": null,
               "rendered": "10 seconds",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "15000",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "15 seconds",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "15000",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "15 seconds",
               "type": [Function],
             },
             Object {

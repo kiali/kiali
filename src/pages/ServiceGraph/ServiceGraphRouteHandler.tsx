@@ -32,11 +32,18 @@ export default class ServiceGraphRouteHandler extends React.Component<
     router: PropTypes.object
   };
 
+  readonly graphParamsDefaults: GraphParamsType = {
+    graphDuration: { value: config().toolbar.defaultDuration },
+    graphLayout: LayoutDictionary.getLayout({ name: '' }),
+    edgeLabelMode: EdgeLabelMode.HIDE,
+    namespace: { name: 'all' }
+  };
+
   constructor(routeProps: RouteComponentProps<ServiceGraphURLProps>) {
     super(routeProps);
     const previousParamsStr = sessionStorage.getItem(SESSION_KEY);
     const graphParams: GraphParamsType = previousParamsStr
-      ? JSON.parse(previousParamsStr)
+      ? this.ensureGraphParamsDefaults(JSON.parse(previousParamsStr))
       : {
           namespace: { name: routeProps.match.params.namespace },
           ...this.parseProps(routeProps.location.search)
@@ -46,15 +53,13 @@ export default class ServiceGraphRouteHandler extends React.Component<
 
   parseProps = (queryString: string) => {
     const urlParams = new URLSearchParams(queryString);
-    // TODO: [KIALI-357] validate `duration`
-    const _duration = urlParams.get('duration');
-    const _hideCBs = urlParams.get('hideCBs') ? urlParams.get('hideCBs') === 'true' : false;
-    const _hideRRs = urlParams.get('hideRRs') ? urlParams.get('hideRRs') === 'true' : false;
-    const _edgeLabelMode = EdgeLabelMode.fromString(urlParams.get('edges'), EdgeLabelMode.HIDE);
+    const _duration = urlParams.get('duration')
+      ? { value: urlParams.get('duration') }
+      : this.graphParamsDefaults.graphDuration;
+    const _edgeLabelMode = EdgeLabelMode.fromString(urlParams.get('edges'), this.graphParamsDefaults.edgeLabelMode);
     return {
-      graphDuration: _duration ? { value: _duration } : { value: config().toolbar.defaultDuration },
+      graphDuration: _duration,
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
-      badgeStatus: { hideCBs: _hideCBs, hideRRs: _hideRRs },
       edgeLabelMode: _edgeLabelMode
     };
   };
@@ -89,5 +94,10 @@ export default class ServiceGraphRouteHandler extends React.Component<
 
   render() {
     return <ServiceGraphPage {...this.state} />;
+  }
+
+  // Set default values in case we have an old state that is missing something
+  private ensureGraphParamsDefaults(graphParams: any): GraphParamsType {
+    return { ...this.graphParamsDefaults, ...graphParams };
   }
 }

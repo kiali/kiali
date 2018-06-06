@@ -2,6 +2,7 @@ import { ServiceGraphFilterState } from '../store/Store';
 import { ServiceGraphFilterActionKeys } from '../actions/ServiceGraphFilterActions';
 import { updateState } from '../utils/Reducer';
 import { EdgeLabelMode } from '../types/GraphFilter';
+import { config } from '../config';
 
 const INITIAL_STATE: ServiceGraphFilterState = {
   showLegend: false,
@@ -12,7 +13,8 @@ const INITIAL_STATE: ServiceGraphFilterState = {
   showTrafficAnimation: false,
   // @ todo: add disableLayers back in later
   // disableLayers: false
-  edgeLabelMode: EdgeLabelMode.HIDE
+  edgeLabelMode: EdgeLabelMode.HIDE,
+  refreshRate: config().toolbar.defaultPollInterval
 };
 
 // This Reducer allows changes to the 'serviceGraphFilterState' portion of Redux Store
@@ -34,6 +36,8 @@ const serviceGraphFilterState = (state: ServiceGraphFilterState = INITIAL_STATE,
       return updateState(state, { showTrafficAnimation: !state.showTrafficAnimation });
     case ServiceGraphFilterActionKeys.ENABLE_GRAPH_FILTERS:
       return updateState(state, { disableLayers: action.payload });
+    case ServiceGraphFilterActionKeys.SET_GRAPH_REFRESH_RATE:
+      return updateState(state, { refreshRate: action.payload });
     default:
       return state;
   }

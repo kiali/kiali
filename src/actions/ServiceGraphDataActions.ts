@@ -87,7 +87,7 @@ export const ServiceGraphDataActions = {
       dispatch(ServiceGraphDataActions.getGraphDataStart());
       const duration = graphDuration.value;
       const restParams = { duration: duration + 's' };
-      API.getGraphElements(authentication(), namespace, restParams).then(
+      return API.getGraphElements(authentication(), namespace, restParams).then(
         response => {
           const responseData: any = response['data'];
           const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;

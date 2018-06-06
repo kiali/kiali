@@ -70,4 +70,20 @@ describe('GraphFilterActions', () => {
     };
     expect(serviceGraphFilterActions.showGraphFilters(false)).toEqual(expectedAction);
   });
+
+  it('should set graph refresh rate to 0', () => {
+    const expectedAction = {
+      type: ServiceGraphFilterActionKeys.SET_GRAPH_REFRESH_RATE,
+      payload: 0
+    };
+    expect(serviceGraphFilterActions.setRefreshRate(0)).toEqual(expectedAction);
+  });
+
+  it('should set graph refresh rate to 15000', () => {
+    const expectedAction = {
+      type: ServiceGraphFilterActionKeys.SET_GRAPH_REFRESH_RATE,
+      payload: 15000
+    };
+    expect(serviceGraphFilterActions.setRefreshRate(15000)).toEqual(expectedAction);
+  });
 });

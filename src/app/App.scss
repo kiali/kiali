@@ -37,6 +37,11 @@ a:focus {
   vertical-align: middle;
 }
 
+// SplitButton looks separated inside a toolbar, fix that
+.toolbar-pf .form-group .btn+.btn {
+  margin-left: 0;
+}
+
 .App-body {
   text-align: center;
 }
