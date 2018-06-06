@@ -65,7 +65,7 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
               <Row>
                 <Col sm={10} smOffset={1} md={8} mdOffset={2} lg={8} lgOffset={2}>
                   <div className={'card-pf'}>
-                    <header className={'login-pf-header'}>{this.props.logging && <h3>Logging...</h3>}</header>
+                    <header className={'login-pf-header'}>{this.props.logging && <h3>Logging in...</h3>}</header>
                     {this.props.error && <Alert>{this.props.message}</Alert>}
                     <Form onSubmit={e => this.handleSubmit(e)} id={'kiali-login'}>
                       <FormGroup>
