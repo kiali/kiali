@@ -180,6 +180,13 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         this.handleMouseOut(cytoscapeEvent);
       }
     });
+    cy.on('layoutstop', (evt: any) => {
+      // Don't allow a large zoom if the graph has a few nodes (nodes would look too big).
+      if (cy.zoom() > 2.5) {
+        cy.zoom(2.5);
+        cy.center();
+      }
+    });
     cy.ready((evt: any) => {
       this.props.onReady(evt.cy);
       this.processGraphUpdate(cy);
@@ -222,11 +229,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     // update the layout if needed
     if (this.updateLayout) {
       cy.layout(LayoutDictionary.getLayout(this.props.graphLayout)).run();
-      // Don't allow a large zoom if the graph has a few nodes (nodes would look too big).
-      if (cy.zoom() > 2.5) {
-        cy.zoom(2.5);
-        cy.center();
-      }
       this.updateLayout = false;
     }
 
