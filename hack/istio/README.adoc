@@ -1,14 +1,12 @@
-== Installing Istio and BookInfo Demo
+== Installing Istio Bookinfo Demo
 
 [NOTE]
-Before attempting to install Istio, make sure you have a running cluster (either OpenShift or Kubernetes). You also must ensure your user is currently authenticated with the cluster and, if on OpenShift, must have the admin role associated with it.
+Before attempting to install the https://istio.io/docs/guides/bookinfo.html[Istio Bookinfo Demo] make sure you have a running cluster (either OpenShift or Kubernetes) with  Istio deployed in it. Kiali has provided some link:..[hack scripts] to assist you if you want a quick way to start that up.
 
 [NOTE]
-Use of this provided hack script is not required. It is provided only as a convenience. You can decide to install Istio in whatever way you choose. This script only illustrates one way to do this.
+Use of this provided hack script is not required. It is provided only as a convenience. You can decide to install the Bookinfo Demo in whatever way you choose. This script only illustrates one way to do this.
 
-This link:./istio-install.sh[install script] is used to deploy http://istio.io[Istio] and its https://istio.io/docs/guides/bookinfo.html[BookInfo] demo on either OpenShift or Kubernetes.
-
-You will need to be logged in as an user that has admin permissions. If you do not have one set up (the case with just running `oc cluster up`), you can give the developer user cluster admin permissions:
+If on OpenShift, you will need to be logged in as a user that has admin permissions. If you do not have one set up (the case with just running `oc cluster up`), you can give the developer user cluster admin permissions:
 
 ```bash
 oc login -u system:admin
@@ -16,24 +14,13 @@ oc adm policy add-cluster-role-to-user cluster-admin -z default admin
 oc login -u admin -p admin
 ```
 
-Then, simply run the script on a command line with no arguments to install the latest version of Istio on OpenShift.
+Then, simply run the script link:./install-bookinfo-demo.sh[] on a command line with no arguments.
 
-If you want to install a specific version of Istio, pass the argument `-v x.y.z` where `x.y.z` is the version you want to install (e.g. `-v 0.7.1`).
+This script actually needs to download a copy of Istio.  If you want to install a specific version of Istio, pass the argument `-v x.y.z` where `x.y.z` is the version you want to install (e.g. `-v 0.8.0`). By default, it will install Istio in the `_output` directory. If you want it to go somewhere else, pass in the `-o` option specifying the parent directory where Istio is to be installed.
 
-If you want to install Istio on Kubernetes, pass the argument `-c k8s` to the script.
+If you are installing the Bookinfo Demo in Kubernetes, pass in the option `-c kubectl` to indicate the script should use that client tool. The default client tool that will be used is `istiooc`. You can optionally choose to use `-c oc` if you want general OpenShift `oc` client tool to be used. Whatever you pass into the `-c` option must either be a full path to the binary or must be an executable found in your PATH.
 
-Edit the install script if you wish to change any other settings.
+== Uninstalling Istio Bookinfo Demo
 
-Under the covers, Istio is installed using the Istio Ansible Installer. Read more about the Istio Ansible Installer on github at https://github.com/istio/istio/tree/master/install/ansible
+All the Bookinfo Demo pods and services are installed in the "bookinfo" namespace. In order to uninstall it, simply delete that namespace via something like `oc delete namespace bookinfo`.
 
-=== Troubleshooting
-
-* *When I run the script, the containers are being created, but after some time they get the `Evicted` status, and do not run anymore.*
-  This usually happens when disk usage on the partition hosting `/var/lib/docker` is more than 80%. Cleaning up the partition will fix the problem. Running `docker system prune -a` might help free some space.
-
-* *When I run the script I'm getting errors on Ansible, such as missing 'jinja2' dependency.*
-  This happens if ansible was installed using python3, and then is run with python2. You can install the dependencies manually as such:
-
-```bash
-sudo pip2 install jinja2 PyYAML
-```

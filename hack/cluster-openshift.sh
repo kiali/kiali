@@ -3,7 +3,7 @@
 ##############################################################################
 # cluster-openshift.sh
 #
-# Run this script to start/stop OpenShift via the "oc cluster" command.
+# Run this script to start/stop OpenShift cluster with Istio.
 #
 # This script takes one argument whose value is one of the following:
 #       up: starts the OpenShift environment
@@ -15,11 +15,23 @@
 cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./env-openshift.sh
 
-echo Will use OpenShift that is located here: ${OPENSHIFT_BINARY_DIR}
-echo Will use oc that is located here: ${OPENSHIFT_EXE_OC}
-cd ${OPENSHIFT_BINARY_DIR}
+# Fail fast if we don't even have the correct location where the oc client should be
+if [ ! -d "${OPENSHIFT_BIN_PATH}" ]; then
+  echo "You must define OPENSHIFT_BIN_PATH to an existing location where you want the oc client tool to be. It is currently set to: ${OPENSHIFT_BIN_PATH}"
+  exit 1
+fi
 
-if [ "$1" = "up" ];then
+# Download the oc client if we do not have it yet
+if [[ ! -x "${OPENSHIFT_OC_EXE_PATH}" ]]; then
+  echo "Downloading binary to ${OPENSHIFT_OC_EXE_PATH}"
+  wget -O ${OPENSHIFT_OC_EXE_PATH} ${OPENSHIFT_OC_DOWNLOAD_LOCATION}
+  chmod +x ${OPENSHIFT_OC_EXE_PATH}
+fi
+
+echo "oc command that will be used: ${OPENSHIFT_OC_COMMAND}"
+cd ${OPENSHIFT_BIN_PATH}
+
+if [ "$1" = "up" ]; then
 
   # The OpenShift docs say to define docker with an insecure registry setting. This checks such a setting is enabled.
   pgrep -a dockerd | grep '[-]-insecure-registry' > /dev/null 2>&1
@@ -49,8 +61,8 @@ if [ "$1" = "up" ];then
     sudo systemctl restart docker.service
   fi
 
-  echo Will start the OpenShift cluster at ${OPENSHIFT_IP_ADDRESS}
-  ${OPENSHIFT_EXE_OC} cluster up ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS}
+  echo Will start the OpenShift cluster with Istio at ${OPENSHIFT_IP_ADDRESS}
+  ${OPENSHIFT_OC_COMMAND} cluster up --istio ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS}
 
   echo 'Do you want the admin user to be assigned the cluster-admin role?'
   echo 'NOTE: This could expose your machine to root access!'
@@ -59,8 +71,8 @@ if [ "$1" = "up" ];then
     case $yn in
       Yes )
         echo Will assign the cluster-admin role to the admin user.
-        ${OPENSHIFT_EXE_OC} login -u system:admin
-        ${OPENSHIFT_EXE_OC} adm policy add-cluster-role-to-user cluster-admin admin
+        ${OPENSHIFT_OC_COMMAND} login -u system:admin
+        ${OPENSHIFT_OC_COMMAND} adm policy add-cluster-role-to-user cluster-admin admin
         break;;
       No )
         echo Admin user will not be assigned the cluster-admin role.
@@ -71,7 +83,7 @@ if [ "$1" = "up" ];then
 elif [ "$1" = "down" ];then
 
   echo Will shutdown the OpenShift cluster
-  ${OPENSHIFT_EXE_OC} cluster down
+  ${OPENSHIFT_OC_COMMAND} cluster down
   mount | grep "openshift.local.volumes" | awk '{ print $3}' | xargs -l -r sudo umount
   # only purge these if we do not want persistence
   if [ "${OPENSHIFT_PERSISTENCE_ARGS}" == "" ]; then
@@ -83,9 +95,8 @@ elif [ "$1" = "down" ];then
 
 elif [ "$1" = "status" ];then
 
-  ${OPENSHIFT_EXE_OC} version
-  ${OPENSHIFT_EXE_OC} login
-  ${OPENSHIFT_EXE_OC} cluster status
+  ${OPENSHIFT_OC_COMMAND} version
+  ${OPENSHIFT_OC_COMMAND} cluster status
 
 else
   echo 'Required argument must be either: up, down, or status'
