@@ -84,9 +84,11 @@ func graphNamespaces(o options.Options, client *prometheus.Client) *[]*tree.Serv
 	log.Debugf("Build graph for [%v] namespaces [%s]", len(o.Namespaces), o.Namespaces)
 
 	roots := []*tree.ServiceNode{}
+	allNamespaces := (len(o.Namespaces) > 1)
+
 	for _, namespace := range o.Namespaces {
 		log.Debugf("Build graph for namespace [%s]", namespace)
-		namespaceRoots := buildNamespaceTrees(namespace, o, client)
+		namespaceRoots := buildNamespaceTrees(namespace, o, client, allNamespaces)
 
 		for _, a := range o.Appenders {
 			a.AppendGraph(namespaceRoots, namespace)
@@ -167,7 +169,7 @@ func containsNode(target *tree.ServiceNode, nodes *[]*tree.ServiceNode) bool {
 }
 
 // buildNamespaceTrees returns trees rooted at services receiving requests from outside the namespace
-func buildNamespaceTrees(namespace string, o options.Options, client *prometheus.Client) (trees *[]*tree.ServiceNode) {
+func buildNamespaceTrees(namespace string, o options.Options, client *prometheus.Client, allNamespaces bool) (trees *[]*tree.ServiceNode) {
 	// avoid circularities by keeping track of all seen nodes
 	seenNodes := make(map[string]*tree.ServiceNode)
 
@@ -207,7 +209,7 @@ func buildNamespaceTrees(namespace string, o options.Options, client *prometheus
 		seenNodes[root.ID] = &root
 
 		log.Debugf("Building namespace tree for Root ServiceNode: %v\n", root.ID)
-		buildNamespaceTree(namespace, &root, time.Unix(o.QueryTime, 0), seenNodes, o, client)
+		buildNamespaceTree(namespace, &root, time.Unix(o.QueryTime, 0), seenNodes, o, client, allNamespaces)
 
 		*trees = append(*trees, &root)
 	}
@@ -215,7 +217,7 @@ func buildNamespaceTrees(namespace string, o options.Options, client *prometheus
 	return trees
 }
 
-func buildNamespaceTree(namespace string, sn *tree.ServiceNode, start time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client) {
+func buildNamespaceTree(namespace string, sn *tree.ServiceNode, start time.Time, seenNodes map[string]*tree.ServiceNode, o options.Options, client *prometheus.Client, allNamespaces bool) {
 	log.Debugf("Adding children for ServiceNode: %v\n", sn.ID)
 
 	var destinationSvcFilter string
@@ -260,10 +262,10 @@ func buildNamespaceTree(namespace string, sn *tree.ServiceNode, start time.Time,
 			if _, seen := seenNodes[child.ID]; !seen {
 				seenNodes[child.ID] = child
 				if strings.Contains(child.Name, namespace) {
-					buildNamespaceTree(namespace, child, start, seenNodes, o, client)
+					buildNamespaceTree(namespace, child, start, seenNodes, o, client, allNamespaces)
 				} else {
 					log.Debugf("Not recursing on child service %v(%v) outside of namespace [%s]\n", child.Name, child.Version, namespace)
-					child.Metadata["isOutsideNamespace"] = true
+					child.Metadata["isOutsideNamespace"] = !allNamespaces
 				}
 			} else {
 				log.Debugf("Not recursing on seen child service: %v(%v)\n", child.Name, child.Version)
