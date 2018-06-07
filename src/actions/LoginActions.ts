@@ -1,6 +1,7 @@
 import { createAction } from 'typesafe-actions';
 import * as API from '../services/Api';
 import { Token } from '../store/Store';
+import { HTTP_CODES } from '../types/Common';
 
 export enum LoginActionKeys {
   LOGIN_REQUEST = 'LOGIN_REQUEST',
@@ -28,7 +29,26 @@ export const LoginActions = {
     username: undefined,
     logged: false
   })),
-
+  checkCredentials: () => {
+    return (dispatch, getState) => {
+      const actualState = getState() || {};
+      const token =
+        actualState['authentication']['token'] !== undefined ? getState().authentication.token.token || '' : '';
+      const auth = `Bearer ${token}`;
+      API.getNamespaces(auth).then(
+        status => {
+          dispatch(
+            LoginActions.loginSuccess(actualState['authentication']['token'], actualState['authentication']['username'])
+          );
+        },
+        error => {
+          if (error.response.status === HTTP_CODES.UNAUTHORIZED) {
+            dispatch(LoginActions.logoutSuccess());
+          }
+        }
+      );
+    };
+  },
   // action creator that performs the async request
   authenticate: (username: string, password: string) => {
     return dispatch => {

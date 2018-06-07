@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import LoginPage from '../LoginPage';
-import { KEY_CODES } from '../../../config';
+import { KEY_CODES } from '../../../types/Common';
 
 const LoginProps = {
   user: undefined,

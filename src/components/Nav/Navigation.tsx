@@ -37,6 +37,7 @@ const istioConfigRx = /\/namespaces\/(.*)\/istio\/(.*)/g;
 type PropsType = {
   location: any;
   authenticated: boolean;
+  checkCredentials: () => void;
 };
 
 type StateType = {
@@ -92,6 +93,7 @@ class Navigation extends React.Component<PropsType, StateType> {
       selectedItem: `/${selected}/`,
       navCollapsed: false
     };
+    this.props.checkCredentials();
   }
 
   componentDidMount() {
