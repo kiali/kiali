@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert, Row, Col, Form, FormGroup, FormControl, Button, HelpBlock } from 'patternfly-react';
 import PropTypes from 'prop-types';
-import { KEY_CODES } from '../../config';
+import { KEY_CODES } from '../../types/Common';
 import SocialLink from '../../components/SocialLink/SocialLink';
 
 const kialiTitle = require('../../assets/img/kiali-title.svg');

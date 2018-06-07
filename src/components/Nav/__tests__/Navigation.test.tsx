@@ -5,7 +5,9 @@ import Navigation, { servicesTitle, istioConfigTitle } from '../Navigation';
 import { VerticalNav } from 'patternfly-react';
 
 const _tester = (path: string, expectedMenuPath: string) => {
-  const wrapper = shallow(<Navigation location={{ pathname: path }} authenticated={true} />);
+  const wrapper = shallow(
+    <Navigation location={{ pathname: path }} authenticated={true} checkCredentials={jest.fn()} />
+  );
   const navWrapper = wrapper.find(VerticalNav);
   expect(navWrapper.prop('activePath')).toEqual(`/${expectedMenuPath}/`);
 };

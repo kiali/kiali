@@ -16,6 +16,12 @@ interface Response<T> {
 }
 
 const loginHeaders = { 'X-Auth-Type-Kiali-UI': '1' };
+const authHeader = (auth: string) => {
+  return { Authorization: auth };
+};
+const basicAuth = (username: string, password: string) => {
+  return { username: username, password: password };
+};
 
 let newRequest = <T>(method: string, url: string, queryParams: any, data: any, auth: any) => {
   return new Promise<Response<T>>((resolve, reject) => {
@@ -23,7 +29,7 @@ let newRequest = <T>(method: string, url: string, queryParams: any, data: any, a
       method: method,
       url: url,
       data: data,
-      headers: { Authorization: auth },
+      headers: { ...loginHeaders, ...authHeader(auth) },
       params: queryParams
     })
       .then(response => {
@@ -41,7 +47,7 @@ export const login = (username: string, password: string) => {
       method: 'get',
       url: '/api/token',
       headers: loginHeaders,
-      auth: { username: username, password: password }
+      auth: basicAuth(username, password)
     })
       .then(response => {
         resolve(response);

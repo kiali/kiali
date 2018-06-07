@@ -43,8 +43,6 @@ export const config = () => {
   });
 };
 
-export const KEY_CODES = { TAB_KEY: 9, ENTER_KEY: 13, ESCAPE_KEY: 27 };
-
 export const socialLinks = [
   {
     url: 'https://github.com/kiali',
