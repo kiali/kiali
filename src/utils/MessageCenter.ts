@@ -1,4 +1,4 @@
-import store from '../store/ConfigStore';
+import { store } from '../store/ConfigStore';
 import { MessageType } from '../types/MessageCenter';
 import { MessageCenterActions } from '../actions/MessageCenterActions';
 

@@ -3,10 +3,11 @@ import { Router, withRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import './App.css';
 import Navigation from '../containers/NavigationContainer';
-import store from '../store/ConfigStore';
+import { store, persistor } from '../store/ConfigStore';
 import axios from 'axios';
 import { GlobalActionKeys } from '../actions/GlobalActions';
 import history from './History';
+import { PersistGate } from 'redux-persist/lib/integration/react';
 
 // intercept all Axios requests and dispatch the LOADING_SPINNER_ON Action
 axios.interceptors.request.use(
@@ -38,14 +39,20 @@ axios.interceptors.response.use(
   }
 );
 
+const Loading = () => {
+  return <div>Loading</div>;
+};
+
 class App extends React.Component {
   render() {
     const Sidebar = withRouter(Navigation);
     return (
       <Provider store={store}>
-        <Router history={history}>
-          <Sidebar />
-        </Router>
+        <PersistGate loading={<Loading />} persistor={persistor}>
+          <Router history={history}>
+            <Sidebar />
+          </Router>
+        </PersistGate>
       </Provider>
     );
   }

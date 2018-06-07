@@ -1,4 +1,4 @@
-import store from '../store/ConfigStore';
+import { store } from '../store/ConfigStore';
 
 export const authentication = () => {
   const actualState = store.getState() || {};

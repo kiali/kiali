@@ -16,7 +16,7 @@ import ServiceGraphRouteHandler from '../../pages/ServiceGraph/ServiceGraphRoute
 import ServiceListPage from '../../pages/ServiceList/ServiceListPage';
 import ServiceJaegerPage from '../../pages/ServiceJaeger/ServiceJaegerPage';
 import LoginPage from '../../containers/LoginPageContainer';
-import store from '../../store/ConfigStore';
+import { store } from '../../store/ConfigStore';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 
 const istioConfigPath = '/istio';

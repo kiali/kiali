@@ -1,5 +1,5 @@
 import { authentication } from '../Authentication';
-import store from '../../store/ConfigStore';
+import { store } from '../../store/ConfigStore';
 import { LoginActions } from '../../actions/LoginActions';
 
 const token =
