@@ -11,7 +11,7 @@ type AboutUIModalState = {
   showModal: boolean;
   loadingVersions: boolean;
   versions: Array<AboutUIModalService>;
-  products: Array<AboutUIModalProduct>;
+  externalServices: Array<AboutUIModalProduct>;
 };
 
 type AboutUIModalService = {
@@ -35,7 +35,7 @@ const getStatus = () => {
           version: `${rawStatus['status'][KIALI_CORE_VERSION]} (${rawStatus['status'][KIALI_CORE_COMMIT_HASH]})`
         }
       ],
-      products: rawStatus['products']
+      externalServices: rawStatus['externalServices']
     };
   });
 };
@@ -43,7 +43,7 @@ const getStatus = () => {
 class AboutUIModal extends React.Component<Object, AboutUIModalState> {
   constructor(props: any) {
     super(props);
-    this.state = { showModal: false, loadingVersions: false, versions: [], products: [] };
+    this.state = { showModal: false, loadingVersions: false, versions: [], externalServices: [] };
   }
 
   open = () => {
@@ -54,7 +54,7 @@ class AboutUIModal extends React.Component<Object, AboutUIModalState> {
             this.setState({
               loadingVersions: false,
               versions: status['kiali'],
-              products: status['products']
+              externalServices: status['externalServices']
             });
           },
           error => {
@@ -62,11 +62,11 @@ class AboutUIModal extends React.Component<Object, AboutUIModalState> {
             this.setState({
               loadingVersions: false,
               versions: [],
-              products: []
+              externalServices: []
             });
           }
         );
-        return { showModal: true, loadingVersions: true, versions: [], products: [] };
+        return { showModal: true, loadingVersions: true, versions: [], externalServices: [] };
       }
       return state;
     });
@@ -95,9 +95,9 @@ class AboutUIModal extends React.Component<Object, AboutUIModalState> {
             {this.state.versions.map(service => (
               <AboutModal.VersionItem key={service.name} label={service.name} versionText={service.version} />
             ))}
-            <h3>Products </h3>
-            {this.state.products.map(product => (
-              <AboutModal.VersionItem key={product.name} label={product.name} versionText={product.version} />
+            <h3>Esternal Services </h3>
+            {this.state.externalServices.map(extServ => (
+              <AboutModal.VersionItem key={extServ.name} label={extServ.name} versionText={extServ.version} />
             ))}
           </Spinner>
         </AboutModal.Versions>
