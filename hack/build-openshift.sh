@@ -101,7 +101,7 @@ fi
 export GOPATH=${OPENSHIFT_GOPATH}
 
 echo Building OpenShift Origin binaries ...
-python2 hack/env make clean build
+hack/env make clean build
 
 echo Building OpenShift Origin images...
 python2 hack/build-local-images.py
