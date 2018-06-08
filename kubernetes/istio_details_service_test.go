@@ -393,6 +393,24 @@ func TestCheckDestinationRuleCircuitBreaker(t *testing.T) {
 	assert.False(t, CheckDestinationRuleCircuitBreaker(&destinationRule2, "", "reviews-bad", "v2"))
 }
 
+func TestCheckDestinationRulemTLS(t *testing.T) {
+	assert.False(t, CheckDestinationRulemTLS(nil, "", ""))
+
+	destinationRule1 := MockIstioObject{
+		Spec: map[string]interface{}{
+			"name": "reviews",
+			"trafficPolicy": map[string]interface{}{
+				"tls": map[string]interface{}{
+					"mode": "ISTIO_MUTUAL",
+				},
+			},
+		},
+	}
+
+	assert.True(t, CheckDestinationRulemTLS(&destinationRule1, "", "reviews"))
+	assert.False(t, CheckDestinationRulemTLS(&destinationRule1, "", "reviews-bad"))
+}
+
 func TestShortHostname(t *testing.T) {
 	assert.True(t, matchService("reviews", "reviews", "bookinfo"))
 	assert.False(t, matchService("reviews", "ratings", "bookinfo"))
