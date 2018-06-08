@@ -17,15 +17,38 @@ source ./env-openshift.sh
 
 # Fail fast if we don't even have the correct location where the oc client should be
 if [ ! -d "${OPENSHIFT_BIN_PATH}" ]; then
+  echo "===== WARNING ====="
   echo "You must define OPENSHIFT_BIN_PATH to an existing location where you want the oc client tool to be. It is currently set to: ${OPENSHIFT_BIN_PATH}"
+  echo "===== WARNING ====="
   exit 1
 fi
 
 # Download the oc client if we do not have it yet
-if [[ ! -x "${OPENSHIFT_OC_EXE_PATH}" ]]; then
-  echo "Downloading binary to ${OPENSHIFT_OC_EXE_PATH}"
-  wget -O ${OPENSHIFT_OC_EXE_PATH} ${OPENSHIFT_OC_DOWNLOAD_LOCATION}
-  chmod +x ${OPENSHIFT_OC_EXE_PATH}
+if [[ -f "${OPENSHIFT_OC_EXE_PATH}" ]]; then
+  _existingVersion=$(${OPENSHIFT_OC_EXE_PATH} version | head -n 1 | sed -n "s/^.* \(\S*\)+.*$/\1/p")
+  if [ "$_existingVersion" != "${OPENSHIFT_OC_DOWNLOAD_VERSION}" ]; then
+    echo "===== WARNING ====="
+    echo "You already have the client binary but it does not match the version you want."
+    echo "Either delete your existing client binary and let this script download another one,"
+    echo "or change the version passed to this script to match the version of your client binary."
+    echo "Client binary is here: ${OPENSHIFT_OC_EXE_PATH}"
+    echo "The version of the client binary is: ${_existingVersion}"
+    echo "You asked for this version via OPENSHIFT_OC_DOWNLOAD_VERSION: ${OPENSHIFT_OC_DOWNLOAD_VERSION}"
+    echo "===== WARNING ====="
+    exit 1
+  fi
+else
+   echo "Downloading binary to ${OPENSHIFT_OC_EXE_PATH}"
+   wget -O ${OPENSHIFT_OC_EXE_PATH} ${OPENSHIFT_OC_DOWNLOAD_LOCATION}
+   if [ "$?" != "0" ]; then
+     echo "===== WARNING ====="
+     echo "Could not download the client binary for the version you want."
+     echo "Make sure this is valid: ${OPENSHIFT_OC_DOWNLOAD_LOCATION}"
+     echo "===== WARNING ====="
+     rm ${OPENSHIFT_OC_EXE_PATH}
+     exit 1
+   fi
+   chmod +x ${OPENSHIFT_OC_EXE_PATH}
 fi
 
 echo "oc command that will be used: ${OPENSHIFT_OC_COMMAND}"

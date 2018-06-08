@@ -32,3 +32,16 @@ those environment variables on the command line like this:
 ```
   OPENSHIFT_BIN_PATH=/my/bin/dir ./cluster-openshift.sh up
 ```
+
+=== Bookinfo Demo
+
+If you want to install a sample mesh, you can use the link:istio/install-bookinfo-demo.sh[Bookinfo Demo Install Script] as a convenient way to install the Istio Bookinfo Demo. See the link:istio/README.adoc[README] for more.
+
+=== Installing Istio 0.7.1
+
+These hack scripts will by default install OpenShift 3.9 with Istio 0.8.0. If you wish to install Istio 0.7.1 instead, you can run the hack scripts like this:
+
+```
+OPENSHIFT_OC_DOWNLOAD_VERSION=istio-3.9-0.7.1-alpha8 ./cluster-openshift.sh
+./istio/install-bookinfo-demo.sh -v 0.7.1
+```

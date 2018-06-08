@@ -19,7 +19,7 @@ OPENSHIFT_IP_ADDRESS=${OPENSHIFT_IP_ADDRESS:-`echo $(ip -f inet addr | grep 'sta
 
 # The version is the tag from the openshift-istio/origin release builds.
 # The platform is either "linux" or "darwin".
-# The download URL is where to get the binary from the github release page.
+#OPENSHIFT_OC_DOWNLOAD_VERSION="${OPENSHIFT_OC_DOWNLOAD_VERSION:-istio-3.9-0.7.1-alpha8}"
 OPENSHIFT_OC_DOWNLOAD_VERSION="${OPENSHIFT_OC_DOWNLOAD_VERSION:-istio-3.9-0.8.0-alpha1}"
 OPENSHIFT_OC_DOWNLOAD_PLATFORM="${OPENSHIFT_OC_DOWNLOAD_PLATFORM:-linux}"
 
@@ -43,6 +43,7 @@ else
 fi
 
 # Determine where to get the binary executable and its full path and how to execute it.
+# This download URL is where to the binary is on the github release page.
 OPENSHIFT_OC_DOWNLOAD_LOCATION="https://github.com/openshift-istio/origin/releases/download/${OPENSHIFT_OC_DOWNLOAD_VERSION}/istiooc_${OPENSHIFT_OC_DOWNLOAD_PLATFORM}"
 OPENSHIFT_OC_EXE_NAME=istiooc
 OPENSHIFT_OC_EXE_PATH="${OPENSHIFT_BIN_PATH}/${OPENSHIFT_OC_EXE_NAME}"
