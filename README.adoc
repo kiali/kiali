@@ -10,7 +10,7 @@ A UI for the Kiali Istio Observability Project
 
 == Technologies
 * React.js
-* TBD
+* Redux
 
 == Quick Start
 [source,shell]
@@ -119,10 +119,6 @@ brew install watchman
 
 == Production Builds
 Use `yarn build` which will bundle the build artifacts using webpack into the `build` directory.
-
-== General
-
-This project was bootstrapped with https://github.com/facebookincubator/create-react-app[create-react-app]
 
 == License and Copyright
 See the link:./LICENSE[LICENSE file].
