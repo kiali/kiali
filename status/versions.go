@@ -15,27 +15,27 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-type serviceProduct func() (*ProductInfo, error)
+type externalService func() (*ExternalServiceInfo, error)
 
 var (
 	expVersion = regexp.MustCompile("[0-9]\\.[0-9]\\.[0-9]")
 )
 
 func getVersions() {
-	products := []serviceProduct{
+	components := []externalService{
 		istioVersion,
 		prometheusVersion,
 		kubernetesVersion,
 	}
-	for _, prod := range products {
-		getVersionProduct(prod)
+	for _, comp := range components {
+		getVersionComponent(comp)
 	}
 }
 
-func getVersionProduct(serviceProduct serviceProduct) {
-	productInfo, err := serviceProduct()
+func getVersionComponent(serviceComponent externalService) {
+	componentInfo, err := serviceComponent()
 	if err == nil {
-		info.Products = append(info.Products, *productInfo)
+		info.ExternalServices = append(info.ExternalServices, *componentInfo)
 	}
 }
 
@@ -61,9 +61,9 @@ func validateVersion(istioReq string, installedVersion string) bool {
 	return false
 }
 
-func istioVersion() (*ProductInfo, error) {
-	product := ProductInfo{}
-	istioConfig := config.Get().Products.Istio
+func istioVersion() (*ExternalServiceInfo, error) {
+	product := ExternalServiceInfo{}
+	istioConfig := config.Get().ExternalServices.Istio
 	resp, err := http.Get(istioConfig.UrlServiceVersion)
 	if err == nil {
 		defer resp.Body.Close()
@@ -88,10 +88,10 @@ type p8sResponseVersion struct {
 	Revision string `json:"revision"`
 }
 
-func prometheusVersion() (*ProductInfo, error) {
-	product := ProductInfo{}
+func prometheusVersion() (*ExternalServiceInfo, error) {
+	product := ExternalServiceInfo{}
 	prometheusV := new(p8sResponseVersion)
-	prometheusUrl := config.Get().Products.PrometheusServiceURL
+	prometheusUrl := config.Get().ExternalServices.PrometheusServiceURL
 	resp, err := http.Get(prometheusUrl + "/version")
 	if err == nil {
 		defer resp.Body.Close()
@@ -114,8 +114,8 @@ const (
 	k8sBurst = 200
 )
 
-func kubernetesVersion() (*ProductInfo, error) {
-	product := ProductInfo{}
+func kubernetesVersion() (*ExternalServiceInfo, error) {
+	product := ExternalServiceInfo{}
 	config, err := kubernetes.ConfigClient()
 	if err == nil {
 		config.QPS = k8sQPS

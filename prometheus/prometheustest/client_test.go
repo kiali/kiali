@@ -486,7 +486,7 @@ func mockEmptyHistogram(api *PromAPIMock, baseName string, suffix string) {
 
 func setupExternal() (*prometheus.Client, error) {
 	conf := config.NewConfig()
-	conf.Products.PrometheusServiceURL = "http://prometheus-istio-system.127.0.0.1.nip.io"
+	conf.ExternalServices.PrometheusServiceURL = "http://prometheus-istio-system.127.0.0.1.nip.io"
 	config.Set(conf)
 	return prometheus.NewClient()
 }

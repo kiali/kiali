@@ -297,7 +297,7 @@ service_filter_label_name: VALUE
 |The URL used to access and query the Prometheus Server.
 [source,yaml]
 ----
-products:
+external_services:
   prometheus_service_url: VALUE
 ----
 
@@ -305,7 +305,7 @@ products:
 |The annotation used by Istio in a Deployment template.
 [source,yaml]
 ----
-products:
+external_services:
   istio:
     istio_sidecar_annotation: VALUE
 ----
@@ -314,7 +314,7 @@ products:
 |The annotation used by Istio how Identity Domain. (default is `svc.cluster.local`)
 [source,yaml]
 ----
-products:
+external_services:
   istio:
     istio_identity_domain: VALUE
 ----
@@ -323,7 +323,7 @@ products:
 |The Service of Istio to check version. (default is `http://istio-pilot:9093/version`)
 [source,yaml]
 ----
-products:
+external_services:
   istio:
     istio_url_service_version: VALUE
 ----
@@ -333,7 +333,7 @@ products:
 |When true, a link to Grafana will be displayed for more metrics.
 [source,yaml]
 ----
-products:
+external_services:
   grafana:
     display_link: (true\|false)
 ----
@@ -342,7 +342,7 @@ products:
 |The URL to the Grafana server. When not set, the URL may be automatically detected from OpenShift or Kubernetes API.
 [source,yaml]
 ----
-products:
+external_services:
   grafana:
     url: VALUE
 ----
@@ -351,7 +351,7 @@ products:
 |The Kubernetes namespace that holds the Grafana service. This configuration is ignored if `GRAFANA_URL` is set. (default is `istio-system`)
 [source,yaml]
 ----
-products:
+external_services:
   grafana:
     service_namespace: VALUE
 ----
@@ -360,7 +360,7 @@ products:
 |The OpenShift route name or the Kubernetes service name for Grafana. This configuration is ignored if `GRAFANA_URL` is set. (default is `grafana`)
 [source,yaml]
 ----
-products:
+external_services:
   grafana:
     service: VALUE
 ----
@@ -369,7 +369,7 @@ products:
 |The name of the Grafana dashboard used as a landing page. (default is `istio-dashboard`)
 [source,yaml]
 ----
-products:
+external_services:
   grafana:
     dashboard: VALUE
 ----
@@ -378,7 +378,7 @@ products:
 |The name of the Grafana variable that controls service sources, as defined in the configured `GRAFANA_DASHBOARD`. (default is `var-source`)
 [source,yaml]
 ----
-products:
+external_services:
   grafana:
     var_service_source: VALUE
 ----
@@ -387,7 +387,7 @@ products:
 |The name of the Grafana variable that controls service destinations, as defined in the configured `GRAFANA_DASHBOARD`. (default is `var-http_destination`)
 [source,yaml]
 ----
-products:
+external_services:
   grafana:
     var_service_dest: VALUE
 ----
@@ -396,7 +396,7 @@ products:
 |The URL to the Jaeger server. When not set, the URL may be automatically detected from OpenShift or Kubernetes API.
 [source,yaml]
 ----
-products:
+external_services:
   jaeger:
     url: VALUE
 ----
@@ -405,7 +405,7 @@ products:
 |The Kubernetes namespace that holds the Jaeger service. This configuration is ignored if `JAEGER_URL` is set. (default is `istio-system`)
 [source,yaml]
 ----
-products:
+external_services:
   jaeger:
     service_namespace: VALUE
 ----
@@ -414,7 +414,7 @@ products:
 |The OpenShift route name or the Kubernetes service name for Jaeger. This configuration is ignored if `JAEGER_URL` is set. (default is `jaeger-query`)
 [source,yaml]
 ----
-products:
+external_services:
   jaeger:
     service: VALUE
 ----
