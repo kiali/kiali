@@ -85,8 +85,12 @@ if [ ! -z "${OPENSHIFT_BRANCH_NAME}" ]; then
     echo "Switching to the origin/${OPENSHIFT_BRANCH_NAME} branch"
     git checkout origin/${OPENSHIFT_BRANCH_NAME}
     if [ "$?" != "0" ]; then
-      echo "Cannot build - there is no branch for the version you want: ${OPENSHIFT_BRANCH_NAME}"
-      exit 1
+      echo "${OPENSHIFT_BRANCH_NAME} is not a branch - switching to a tag of the same name"
+      git checkout ${OPENSHIFT_BRANCH_NAME}
+      if [ "$?" != "0" ]; then
+        echo "Cannot build - there is no branch or tag for the version you want: ${OPENSHIFT_BRANCH_NAME}"
+        exit 1
+      fi
     fi
   fi
 else
