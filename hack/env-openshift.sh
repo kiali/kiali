@@ -17,7 +17,7 @@ OPENSHIFT_IP_ADDRESS=${OPENSHIFT_IP_ADDRESS:-`echo $(ip -f inet addr | grep 'sta
 
 # If you want to run the last release of OpenShift, use "latest" or "master".
 # If you want to run with a specific version, set it to the branch you want.
-OPENSHIFT_BRANCH_NAME="release-3.7"
+OPENSHIFT_BRANCH_NAME="release-3.9"
 
 # If you want to persist data across restarts of OpenShift, uncomment this
 # line and set the host data directory to the place where you want the data stored.
