@@ -6,16 +6,19 @@ export default {
       return [['x'], [title || '']];
     }
 
-    return matrix
-      .map(mat => {
-        let xseries: any = ['x'];
-        return xseries.concat(mat.values.map(dp => dp[0] * 1000));
+    let xseries: any = ['x'];
+    return [xseries.concat(matrix[0].values.map(dp => dp[0] * 1000))].concat(
+      matrix.map(mat => {
+        let yseries: any = [title || mat.name];
+        return yseries.concat(mat.values.map(dp => dp[1]));
       })
-      .concat(
-        matrix.map(mat => {
-          let yseries: any = [title || mat.name];
-          return yseries.concat(mat.values.map(dp => dp[1]));
-        })
-      );
+    );
+  },
+
+  toC3ValueColumns(matrix: TimeSeries[], title?: string) {
+    return matrix.map(mat => {
+      let yseries: any = [title || mat.name];
+      return yseries.concat(mat.values.map(dp => dp[1]));
+    });
   }
 };
