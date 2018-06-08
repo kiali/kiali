@@ -85,8 +85,12 @@ if [ ! -z "${OPENSHIFT_BRANCH_NAME}" ]; then
     echo "Switching to the origin/${OPENSHIFT_BRANCH_NAME} branch"
     git checkout origin/${OPENSHIFT_BRANCH_NAME}
     if [ "$?" != "0" ]; then
-      echo "Cannot build - there is no branch for the version you want: ${OPENSHIFT_BRANCH_NAME}"
-      exit 1
+      echo "${OPENSHIFT_BRANCH_NAME} is not a branch - switching to a tag of the same name"
+      git checkout ${OPENSHIFT_BRANCH_NAME}
+      if [ "$?" != "0" ]; then
+        echo "Cannot build - there is no branch or tag for the version you want: ${OPENSHIFT_BRANCH_NAME}"
+        exit 1
+      fi
     fi
   fi
 else
@@ -97,7 +101,7 @@ fi
 export GOPATH=${OPENSHIFT_GOPATH}
 
 echo Building OpenShift Origin binaries ...
-python2 hack/env make clean build
+hack/env make clean build
 
 echo Building OpenShift Origin images...
 python2 hack/build-local-images.py
