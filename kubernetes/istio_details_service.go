@@ -196,7 +196,7 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 	destinationRules := make([]IstioObject, 0)
 	for _, destinationRule := range destinationRuleList.Items {
 		appendDestinationRule := serviceName == ""
-		if name, ok := destinationRule.Spec["name"]; ok {
+		if name, ok := destinationRule.Spec["host"]; ok {
 			if name == serviceName {
 				appendDestinationRule = true
 			}
@@ -283,7 +283,7 @@ func GetDestinationRulesSubsets(destinationRules []IstioObject, serviceName, ver
 	cfg := config.Get()
 	foundSubsets := make([]string, 0)
 	for _, destinationRule := range destinationRules {
-		if dName, ok := destinationRule.GetSpec()["name"]; ok && dName == serviceName {
+		if dName, ok := destinationRule.GetSpec()["host"]; ok && dName == serviceName {
 			if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
 				if dSubsets, ok := subsets.([]interface{}); ok {
 					for _, subset := range dSubsets {
@@ -314,7 +314,7 @@ func CheckDestinationRuleCircuitBreaker(destinationRule IstioObject, namespace s
 		return false
 	}
 	cfg := config.Get()
-	if dName, ok := destinationRule.GetSpec()["name"]; ok && dName == serviceName {
+	if dName, ok := destinationRule.GetSpec()["host"]; ok && dName == serviceName {
 		if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
 			return true
 		}

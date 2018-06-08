@@ -268,7 +268,7 @@ func TestGetDestinationRulesSubsets(t *testing.T) {
 
 	destinationRule1 := MockIstioObject{
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"subsets": []interface{}{
 				map[string]interface{}{
 					"name": "v1",
@@ -287,7 +287,7 @@ func TestGetDestinationRulesSubsets(t *testing.T) {
 	}
 	destinationRule2 := MockIstioObject{
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"trafficPolicy": map[string]interface{}{
 				"loadBalancer": map[string]interface{}{
 					"simple": "LEAST_CONN",
@@ -322,7 +322,7 @@ func TestCheckDestinationRuleCircuitBreaker(t *testing.T) {
 
 	destinationRule1 := MockIstioObject{
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"trafficPolicy": map[string]interface{}{
 				"connectionPool": map[string]interface{}{
 					"http": map[string]interface{}{
@@ -358,7 +358,7 @@ func TestCheckDestinationRuleCircuitBreaker(t *testing.T) {
 
 	destinationRule2 := MockIstioObject{
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"subsets": []interface{}{
 				map[string]interface{}{
 					"name": "v1",
