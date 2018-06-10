@@ -4,57 +4,199 @@
 # cluster-openshift.sh
 #
 # Run this script to start/stop OpenShift cluster with Istio.
+# This can also optionally install Kiali.
 #
-# This script takes one argument whose value is one of the following:
+# This script takes one command whose value is one of the following:
 #       up: starts the OpenShift environment
 #     down: stops the OpenShift environment
 #   status: outputs the current status of the OpenShift environment
+#
+# This script accepts several options - see --help for details.
+#
 ##############################################################################
+
+debug() {
+  if [ "$_VERBOSE" == "true" ]; then
+    echo "DEBUG: $1"
+  fi
+}
 
 # Change to the directory where this script is and set our env
 cd "$(dirname "${BASH_SOURCE[0]}")"
+
+# process command line args to override environment
+_CMD=""
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    up)
+      _CMD="up"
+      shift
+      ;;
+    down)
+      _CMD="down"
+      shift
+      ;;
+    status)
+      _CMD="status"
+      shift
+      ;;
+    -v|--verbose)
+      _VERBOSE=true
+      shift
+      ;;
+    -b|--bin-dir)
+      OPENSHIFT_BIN_PATH="$2"
+      shift;shift
+      ;;
+    -a|--address)
+      OPENSHIFT_IP_ADDRESS="$2"
+      shift;shift
+      ;;
+    -iv|--istiooc-version)
+      OS_ISTIO_OC_DOWNLOAD_VERSION="$2"
+      shift;shift
+      ;;
+    -ip|--istiooc-platform)
+      OS_ISTIO_OC_DOWNLOAD_PLATFORM="$2"
+      shift;shift
+      ;;
+    -p|--persistence-dir)
+      OPENSHIFT_PERSISTENCE_DIR="$2"
+      shift;shift
+      ;;
+    -ke|--kiali-enabled)
+      KIALI_ENABLED="$2"
+      shift;shift
+      ;;
+    -kv|--kiali-version)
+      KIALI_VERSION="$2"
+      shift;shift
+      ;;
+    -ku|--kiali-username)
+      KIALI_USERNAME="$2"
+      shift;shift
+      ;;
+    -kp|--kiali-password)
+      KIALI_PASSWORD="$2"
+      shift;shift
+      ;;
+    -h|--help)
+      cat <<HELPMSG
+
+$0 [option...] command
+
+Valid options:
+  -b|--bin-dir <dir>
+      Directory where the OpenShift binaries are or will be stored when downloaded.
+      Default: ${HOME}/bin
+  -h|--help : this message
+  -a|--address <address>
+      The public IP or named address bound to by the OpenShift cluster.
+      Default: $(echo $(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/'))
+      Used only for the 'up' command.
+  -iv|--istiooc-version <version>
+      The version of the istiooc binary to use.
+      If one does not exist in the bin directory, it will be downloaded there.
+      Default: istio-3.9-0.8.0-alpha2
+  -ip|--istiooc-platform (linux|darwin)
+      The platform indicator to determine what istiooc binary executable to download.
+      Default: linux
+  -ke|--kiali-enabled (true|false)
+      When set to true, Kiali will be installed in OpenShift.
+      Default: false
+      Used only for the 'up' command.
+  -ku|--kiali-username <username>
+      The username needed when logging into Kiali.
+      Default: admin
+      Used only for the 'up' command.
+  -kp|--kiali-password <password>
+      The password needed when logging into Kiali.
+      Default: admin
+      Used only for the 'up' command.
+  -kv|--kiali-version <version>
+      The Kiali version to be installed in OpenShift.
+      Default: 0.3.1.Alpha
+      Used only for the 'up' command.
+  -p|--persistence-dir <dir>
+      When set, OpenShift will persist data to this directory.
+      Restarting OpenShift will restore its previous state when this is set.
+      If not set, OpenShift will start clean every time.
+      Default: /var/lib/origin/persistent.data
+
+The command must be either: up, down, or status
+HELPMSG
+      exit 1
+      ;;
+    *)
+      echo "Unknown argument [$key]. Aborting."
+      exit 1
+      ;;
+  esac
+done
+
+# set the environment
 source ./env-openshift.sh
+
+debug "ENVIRONMENT:
+  command=$_CMD
+  OPENSHIFT_BIN_PATH=$OPENSHIFT_BIN_PATH
+  OPENSHIFT_IP_ADDRESS=$OPENSHIFT_IP_ADDRESS
+  OS_ISTIO_OC_DOWNLOAD_VERSION=$OS_ISTIO_OC_DOWNLOAD_VERSION
+  OS_ISTIO_OC_DOWNLOAD_PLATFORM=$OS_ISTIO_OC_DOWNLOAD_PLATFORM
+  OPENSHIFT_PERSISTENCE_DIR=$OPENSHIFT_PERSISTENCE_DIR
+  KIALI_ENABLED=$KIALI_ENABLED
+  KIALI_USERNAME=$KIALI_USERNAME
+  KIALI_PASSWORD=$KIALI_PASSWORD
+  DOCKER_SUDO=$DOCKER_SUDO
+  OS_ISTIO_OC_DOWNLOAD_LOCATION=$OS_ISTIO_OC_DOWNLOAD_LOCATION
+  OS_ISTIO_OC_EXE_NAME=$OS_ISTIO_OC_EXE_NAME
+  OS_ISTIO_OC_EXE_PATH=$OS_ISTIO_OC_EXE_PATH
+  OS_ISTIO_OC_COMMAND=$OS_ISTIO_OC_COMMAND
+  OPENSHIFT_PERSISTENCE_ARGS=$OPENSHIFT_PERSISTENCE_ARGS
+  KIALI_ARGS=$KIALI_ARGS
+  "
 
 # Fail fast if we don't even have the correct location where the oc client should be
 if [ ! -d "${OPENSHIFT_BIN_PATH}" ]; then
-  echo "===== WARNING ====="
-  echo "You must define OPENSHIFT_BIN_PATH to an existing location where you want the oc client tool to be. It is currently set to: ${OPENSHIFT_BIN_PATH}"
-  echo "===== WARNING ====="
+  echo "ERROR: You must define OPENSHIFT_BIN_PATH to an existing location where you want the oc client tool to be. It is currently set to: ${OPENSHIFT_BIN_PATH}"
   exit 1
 fi
 
 # Download the oc client if we do not have it yet
-if [[ -f "${OPENSHIFT_OC_EXE_PATH}" ]]; then
-  _existingVersion=$(${OPENSHIFT_OC_EXE_PATH} version | head -n 1 | sed -n "s/^.* \(\S*\)+.*$/\1/p")
-  if [ "$_existingVersion" != "${OPENSHIFT_OC_DOWNLOAD_VERSION}" ]; then
+if [[ -f "${OS_ISTIO_OC_EXE_PATH}" ]]; then
+  _existingVersion=$(${OS_ISTIO_OC_EXE_PATH} version | head -n 1 | sed -n "s/^.* \(\S*\)+.*$/\1/p")
+  if [ "$_existingVersion" != "${OS_ISTIO_OC_DOWNLOAD_VERSION}" ]; then
     echo "===== WARNING ====="
     echo "You already have the client binary but it does not match the version you want."
     echo "Either delete your existing client binary and let this script download another one,"
     echo "or change the version passed to this script to match the version of your client binary."
-    echo "Client binary is here: ${OPENSHIFT_OC_EXE_PATH}"
+    echo "Client binary is here: ${OS_ISTIO_OC_EXE_PATH}"
     echo "The version of the client binary is: ${_existingVersion}"
-    echo "You asked for this version via OPENSHIFT_OC_DOWNLOAD_VERSION: ${OPENSHIFT_OC_DOWNLOAD_VERSION}"
+    echo "You asked for version: ${OS_ISTIO_OC_DOWNLOAD_VERSION}"
     echo "===== WARNING ====="
     exit 1
   fi
 else
-   echo "Downloading binary to ${OPENSHIFT_OC_EXE_PATH}"
-   wget -O ${OPENSHIFT_OC_EXE_PATH} ${OPENSHIFT_OC_DOWNLOAD_LOCATION}
+   echo "Downloading binary to ${OS_ISTIO_OC_EXE_PATH}"
+   wget -O ${OS_ISTIO_OC_EXE_PATH} ${OS_ISTIO_OC_DOWNLOAD_LOCATION}
    if [ "$?" != "0" ]; then
      echo "===== WARNING ====="
      echo "Could not download the client binary for the version you want."
-     echo "Make sure this is valid: ${OPENSHIFT_OC_DOWNLOAD_LOCATION}"
+     echo "Make sure this is valid: ${OS_ISTIO_OC_DOWNLOAD_LOCATION}"
      echo "===== WARNING ====="
-     rm ${OPENSHIFT_OC_EXE_PATH}
+     rm ${OS_ISTIO_OC_EXE_PATH}
      exit 1
    fi
-   chmod +x ${OPENSHIFT_OC_EXE_PATH}
+   chmod +x ${OS_ISTIO_OC_EXE_PATH}
 fi
 
-echo "oc command that will be used: ${OPENSHIFT_OC_COMMAND}"
+debug "oc command that will be used: ${OS_ISTIO_OC_COMMAND}"
+debug "$(${OS_ISTIO_OC_COMMAND} version)"
+
 cd ${OPENSHIFT_BIN_PATH}
 
-if [ "$1" = "up" ]; then
+if [ "$_CMD" = "up" ]; then
 
   # The OpenShift docs say to define docker with an insecure registry setting. This checks such a setting is enabled.
   pgrep -a dockerd | grep '[-]-insecure-registry' > /dev/null 2>&1
@@ -65,27 +207,34 @@ if [ "$1" = "up" ]; then
       if [ "$?" != "0" ]; then
         echo 'WARNING: You must run Docker with the --insecure-registry argument with an appropriate value (usually "--insecure-registry 172.30.0.0/16"). See the OpenShift Origin documentation for more details: https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md#linux'
       else
-        echo /etc/docker/daemon.json has the insecure-registry setting. This is good.
+        debug "/etc/docker/daemon.json has the insecure-registry setting. This is good."
       fi
     else
-      echo /etc/sysconfig/docker has defined the insecure-registry setting. This is good.
+      debug "/etc/sysconfig/docker has defined the insecure-registry setting. This is good."
     fi
   else
-    echo Docker daemon is running with --insecure-registry setting. This is good.
+    debug "Docker daemon is running with --insecure-registry setting. This is good."
   fi
 
   # The OpenShift docs say to disable firewalld for now. Just in case it is running, stop it now.
   # If firewalld was running and is shutdown, it changes the iptable rules and screws up docker,
   # so we must restart docker in order for it to rebuild its iptable rules.
+  echo "SUDO ACCESS: Determine status of firewalld"
   sudo systemctl status firewalld > /dev/null 2>&1
   if [ "$?" == "0" ]; then
-    echo Turning off firewalld as per OpenShift recommendation and then restarting docker to rebuild iptable rules
+    echo "SUDO ACCESS: Turning off firewalld as per OpenShift recommendation and then restarting docker to rebuild iptable rules"
     sudo systemctl stop firewalld
     sudo systemctl restart docker.service
   fi
 
-  echo Will start the OpenShift cluster with Istio at ${OPENSHIFT_IP_ADDRESS}
-  ${OPENSHIFT_OC_COMMAND} cluster up --istio ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS}
+  echo "Starting the OpenShift cluster..."
+  debug "${OS_ISTIO_OC_COMMAND} cluster up --istio ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${KIALI_ARGS}"
+  ${OS_ISTIO_OC_COMMAND} cluster up --istio ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${KIALI_ARGS}
+
+  if [ "$?" != "0" ]; then
+    echo "ERROR: failed to start OpenShift"
+    exit 1
+  fi
 
   echo 'Do you want the admin user to be assigned the cluster-admin role?'
   echo 'NOTE: This could expose your machine to root access!'
@@ -94,8 +243,8 @@ if [ "$1" = "up" ]; then
     case $yn in
       Yes )
         echo Will assign the cluster-admin role to the admin user.
-        ${OPENSHIFT_OC_COMMAND} login -u system:admin
-        ${OPENSHIFT_OC_COMMAND} adm policy add-cluster-role-to-user cluster-admin admin
+        ${OS_ISTIO_OC_COMMAND} login -u system:admin
+        ${OS_ISTIO_OC_COMMAND} adm policy add-cluster-role-to-user cluster-admin admin
         break;;
       No )
         echo Admin user will not be assigned the cluster-admin role.
@@ -103,25 +252,26 @@ if [ "$1" = "up" ]; then
     esac
   done
 
-elif [ "$1" = "down" ];then
+elif [ "$_CMD" = "down" ];then
 
-  echo Will shutdown the OpenShift cluster
-  ${OPENSHIFT_OC_COMMAND} cluster down
+  echo "Will shutdown the OpenShift cluster"
+  ${OS_ISTIO_OC_COMMAND} cluster down
+  echo "SUDO ACCESS: unmounting openshift local volumes"
   mount | grep "openshift.local.volumes" | awk '{ print $3}' | xargs -l -r sudo umount
   # only purge these if we do not want persistence
   if [ "${OPENSHIFT_PERSISTENCE_ARGS}" == "" ]; then
-    echo "Purging /var/lib/origin files"
+    echo "SUDO ACCESS: Purging /var/lib/origin files"
     sudo rm -rf /var/lib/origin/* && sudo rmdir /var/lib/origin
   else
     echo "OpenShift has left your persisted data here: ${OPENSHIFT_PERSISTENCE_DIR}"
   fi
 
-elif [ "$1" = "status" ];then
+elif [ "$_CMD" = "status" ];then
 
-  ${OPENSHIFT_OC_COMMAND} version
-  ${OPENSHIFT_OC_COMMAND} cluster status
+  ${OS_ISTIO_OC_COMMAND} version
+  ${OS_ISTIO_OC_COMMAND} cluster status
 
 else
-  echo 'Required argument must be either: up, down, or status'
+  echo "ERROR: Required command must be either: up, down, or status"
   exit 1
 fi
