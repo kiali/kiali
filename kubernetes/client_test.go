@@ -51,7 +51,13 @@ func TestFilterDeploymentsForService(t *testing.T) {
 						MatchLabels: map[string]string{"foo": "bazz", "version": "v1"}}}},
 		}}
 
-	matches := FilterDeploymentsForService(&service, &pods, &deployments)
+	sPods:= FilterPodsForService(&service, &pods)
+
+	assert.Len(sPods, 2)
+	assert.Equal("reviews-v1", sPods[0].ObjectMeta.Name)
+	assert.Equal("reviews-v2", sPods[1].ObjectMeta.Name)
+
+	matches := FilterDeploymentsForService(&service, sPods, &deployments)
 
 	assert.Len(matches, 2)
 	assert.Equal("reviews-v1", matches[0].ObjectMeta.Name)
@@ -81,7 +87,10 @@ func TestFilterDeploymentsForServiceWithSpecificLabels(t *testing.T) {
 						MatchLabels: map[string]string{"jaeger-infra": "jaeger-pod"}}}},
 		}}
 
-	matches := FilterDeploymentsForService(&service, &pods, &deployments)
+	sPods := FilterPodsForService(&service, &pods)
+	assert.Len(sPods, 1)
+
+	matches := FilterDeploymentsForService(&service, sPods, &deployments)
 	assert.Len(matches, 1)
 }
 
@@ -101,7 +110,10 @@ func TestFilterDeploymentsForServiceWithoutPod(t *testing.T) {
 					Labels: map[string]string{"app": "foo", "hash": "123456"}}},
 		}}
 
-	matches := FilterDeploymentsForService(&service, &pods, &deployments)
+	sPods := FilterPodsForService(&service, &pods)
+	assert.Len(sPods, 0)
+
+	matches := FilterDeploymentsForService(&service, sPods, &deployments)
 	assert.Len(matches, 1)
 }
 
