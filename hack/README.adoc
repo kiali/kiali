@@ -16,6 +16,7 @@ If you want a specific version of `istiooc`, you can specify it via `istiooc-ver
 You can see the versions available at: https://github.com/openshift-istio/origin/releases
 
 If you wish to install a version of Kiali, you can do so by passing in `--kiali-enabled true`. If you wish to install a specific version of Kiali, you can define that via `--kiali-version VERSION` where VERSION identifies the version string (e.g. 0.3.1.Alpha). The default credentials to log into Kiali will be `admin`/`admin` unless you specify something else via `--kiali-username` and `--kiali-password`.
+(NOTE: this does not work when using older versions of `istiooc` and older Istio versions via the `--istio-version` option).
 
 Execute `cluster-openshift.sh --help` for information on other command line options available.
 
@@ -23,11 +24,11 @@ Execute `cluster-openshift.sh --help` for information on other command line opti
 
 If you want to install a sample mesh, you can use the link:istio/install-bookinfo-demo.sh[Bookinfo Demo Install Script] as a convenient way to install the Istio Bookinfo Demo. See the link:istio/README.adoc[README] for more.
 
-=== Installing Istio 0.7.1
+=== Installing A Specific Istio Version
 
-These hack scripts will by default install OpenShift 3.9 with Istio 0.8. If you wish to install Istio 0.7.1 instead, you can run the hack scripts like this:
+If you wish to install a specific version of Istio, you can pass in `--istio-version` to the `cluster-openshift.sh` hack script.
+For example, to install Istio 0.7.1:
 
 ```
-cluster-openshift.sh --istiooc-version istio-3.9-0.7.1-alpha8 up
-istio/install-bookinfo-demo.sh -v 0.7.1
+cluster-openshift.sh --istio-version 0.7.1
 ```
