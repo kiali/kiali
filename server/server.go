@@ -84,7 +84,7 @@ func (h *serverAuthProxyHandler) handler(w http.ResponseWriter, r *http.Request)
 			log.Warning("Error token %+v", err)
 			statusCode = http.StatusUnauthorized
 		}
-	} else if h.credentials.Username != "" || h.credentials.Password != "" {
+	} else if (h.credentials.Username != "" || h.credentials.Password != "") && strings.HasPrefix(r.URL.Path, "/api") {
 		u, p, ok := r.BasicAuth()
 		if !ok || h.credentials.Username != u || h.credentials.Password != p {
 			statusCode = http.StatusUnauthorized
