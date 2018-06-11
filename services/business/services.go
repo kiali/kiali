@@ -77,14 +77,12 @@ func (in *SvcService) castServiceOverview(s *v1.Service, pods []v1.Pod, deployme
 func hasIstioSideCar(pods []v1.Pod) bool {
 	mPods := models.Pods{}
 	mPods.Parse(pods)
-	hasSideCar := true
 	for _, pod := range mPods {
-		if len(pod.IstioContainers) == 0 {
-			hasSideCar = false
-			break
+		if len(pod.IstioContainers) > 0 {
+			return true
 		}
 	}
-	return hasSideCar
+	return false
 }
 
 // processRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the service list.
