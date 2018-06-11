@@ -39,8 +39,7 @@
           "parent": "98a1c1cea90d0a4af0f009d6d7a9814e",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v2",
-          "rate": "20.000",
-          "rateSelfInvoke": "20.000"
+          "rate": "40.000"
         }
       },
       {
@@ -49,8 +48,7 @@
           "parent": "98a1c1cea90d0a4af0f009d6d7a9814e",
           "service": "reviews.istio-system.svc.cluster.local",
           "version": "v3",
-          "rate": "20.000",
-          "rateSelfInvoke": "20.000"
+          "rate": "40.000"
         }
       }
     ],
@@ -60,6 +58,15 @@
           "id": "fdbc06677bb0f6130f6ac1072fa92cb3",
           "source": "c7a03b129bb359511003f1d560c092fd",
           "target": "5932332ea8128356e493d44620483e23",
+          "rate": "20.000",
+          "percentRate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "c5d73d7c4bf5c144f0cc34645672a246",
+          "source": "c7a03b129bb359511003f1d560c092fd",
+          "target": "c7a03b129bb359511003f1d560c092fd",
           "rate": "20.000",
           "percentRate": "50.000"
         }
@@ -96,6 +103,15 @@
           "id": "fa39bdc4937943a9e645dffd0117a2f9",
           "source": "ff0100c5e664424396c2f264bb30da25",
           "target": "5932332ea8128356e493d44620483e23",
+          "rate": "20.000",
+          "percentRate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "5f35c907109136e195feea6e66d97c39",
+          "source": "ff0100c5e664424396c2f264bb30da25",
+          "target": "ff0100c5e664424396c2f264bb30da25",
           "rate": "20.000",
           "percentRate": "50.000"
         }
