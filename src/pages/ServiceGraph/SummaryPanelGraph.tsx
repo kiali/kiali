@@ -173,11 +173,15 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   };
 
   private updateServicesFilter = () => {
-    let activeFilter: ActiveFilter = {
-      label: 'Namespace: ' + this.props.namespace,
-      category: 'Namespace',
-      value: this.props.namespace.toString()
-    };
-    NamespaceFilterSelected.setSelected([activeFilter]);
+    let filters: ActiveFilter[] = [];
+    if (this.props.namespace !== 'all') {
+      let activeFilter: ActiveFilter = {
+        label: 'Namespace: ' + this.props.namespace,
+        category: 'Namespace',
+        value: this.props.namespace.toString()
+      };
+      filters = [activeFilter];
+    }
+    NamespaceFilterSelected.setSelected(filters);
   };
 }
