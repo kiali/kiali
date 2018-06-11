@@ -156,8 +156,8 @@ OPENSHIFT_IP_ADDRESS=${OPENSHIFT_IP_ADDRESS:-`echo $(ip -f inet addr | grep 'sta
 
 # The version is the tag from the openshift-istio/origin release builds.
 # The platform is either "linux" or "darwin".
-#OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.7.1-alpha8}"
-OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.8.0-alpha2}"
+OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.7.1-alpha8}"
+#OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.8.0-alpha2}"
 OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-linux}"
 
 # If you want to persist data across restarts of OpenShift, set to the persistence directory.
