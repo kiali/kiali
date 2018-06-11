@@ -51,7 +51,7 @@ func TestFilterDeploymentsForService(t *testing.T) {
 						MatchLabels: map[string]string{"foo": "bazz", "version": "v1"}}}},
 		}}
 
-	sPods:= FilterPodsForService(&service, &pods)
+	sPods := FilterPodsForService(&service, &pods)
 
 	assert.Len(sPods, 2)
 	assert.Equal("reviews-v1", sPods[0].ObjectMeta.Name)
