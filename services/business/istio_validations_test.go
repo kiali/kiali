@@ -382,7 +382,7 @@ func fakeCombinedIstioDetails() *kubernetes.IstioDetails {
 				Name: "customer-dr",
 			},
 			Spec: map[string]interface{}{
-				"name": "customer",
+				"host": "customer",
 				"subsets": []interface{}{
 					map[string]interface{}{
 						"name": "v1",

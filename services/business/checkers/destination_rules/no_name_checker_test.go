@@ -1,9 +1,10 @@
 package destination_rules
 
 import (
+	"testing"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestValidName(t *testing.T) {
@@ -39,7 +40,7 @@ func TestNoValidName(t *testing.T) {
 func fakeNameDestinationRule() kubernetes.IstioObject {
 	destinationRule := kubernetes.DestinationRule{
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"subsets": []interface{}{
 				map[string]interface{}{
 					"name": "v1",
