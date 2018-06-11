@@ -6,7 +6,35 @@ toc::[]
 
 == Introduction
 
-The Kiali server-side application implemented in the Go Programming Language.
+Kiali provides answers to the question _What are the microservices in my Istio service mesh doing?_
+
+image::https://kiali.org/assets/img/kiali-graph.png[Kiali Graph]
+
+=== Description
+
+A Microservice Architecture breaks up the monolith into many smaller pieces that are composed together. Patterns to secure the communication between services like fault tolerance (via timeout, retry, circuit breaking, etc.) have come up as well as distributed tracing to be able to see where calls are going.
+
+A service mesh can now provide these services on a platform level and frees the application writers from those tasks. Routing decisions are done at the mesh level.
+
+Kiali works with Istio to visualise the service mesh topology, features like circuit breakers or request rates.
+
+Kiali also includes Jaeger Tracing to provide distributed tracing out of the box.
+
+=== Getting Started
+
+If you are not a developer but just want to run something to see Kiali, then go to https://kiali.org for some instructions.
+
+You could also try to use our hack script to quickly install OpenShift, Istio, and Kiali like this:
+
+```
+wget https://raw.githubusercontent.com/kiali/kiali/master/hack/cluster-openshift.sh
+sh cluster-openshift.sh --istio-version 0.7.1 --kiali-enabled true up
+```
+
+[NOTE]
+Notice the above command line forces the version of Istio to 0.7.1. Kiali will support Istio 0.8.0 in the very near future, but for now, we recommend using `--istio-version 0.7.1` if you just want to see what Kiali is all about.
+
+If you do not already have an Istio-enabled application to test with, you can install one using the link:hack/istio/README.adoc[Bookinfo Demo install script] provided here as a convenience.
 
 === Docker Image
 
