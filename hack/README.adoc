@@ -28,6 +28,6 @@ If you want to install a sample mesh, you can use the link:istio/install-bookinf
 These hack scripts will by default install OpenShift 3.9 with Istio 0.8. If you wish to install Istio 0.7.1 instead, you can run the hack scripts like this:
 
 ```
-cluster-openshift.sh --istiooc-version istio-3.9-0.7.1-alpha8
+cluster-openshift.sh --istiooc-version istio-3.9-0.7.1-alpha8 up
 istio/install-bookinfo-demo.sh -v 0.7.1
 ```
