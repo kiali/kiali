@@ -52,7 +52,7 @@ func ValidateToken(tokenString string) error {
 		return err
 	}
 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-		return errors.New(fmt.Sprintf("Unexpected signing method: ", token.Header["alg"]))
+		return errors.New(fmt.Sprintf("Unexpected signing method: %s", token.Header["alg"]))
 	}
 	if token.Valid {
 		return nil
