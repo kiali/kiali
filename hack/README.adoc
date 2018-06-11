@@ -6,8 +6,8 @@ These files are used to start and stop your own OpenShift environment that conta
 |===
 |Script Name|Description
 
-|`env-openshift.sh`|Defines the OpenShift environment. Edit this so the variables are set to the appropriate values.
-|`cluster-openshift.sh`|Starts and stops your OpenShift Origin environment. Pass "up"/"down" to start/stop OpenShift.
+|`env-openshift.sh`|Defines the default OpenShift environment.
+|`cluster-openshift.sh`|Starts and stops your OpenShift Origin cluster environment.
 |===
 
 To start and stop OpenShift with the environment set up by the `env-openshift.sh` script, you use the `cluster-openshift.sh` script:
@@ -16,19 +16,30 @@ To start and stop OpenShift with the environment set up by the `env-openshift.sh
 * You can stop it via: `cluster-openshift.sh down`
 * You can get version and status information via: `cluster-openshift.sh status`
 
+There are several options you can pass to this script - see its `--help` for details.
+
 These scripts utilize the `istiooc` binary to deploy and start OpenShift with Istio.
 
-If you already have `istiooc` on your machine, you can use it by simply setting `OPENSHIFT_BIN_PATH` to the directory where it is located.  If you do not have it, the `cluster-openshift.sh` will download a copy for you in the directory specified by that `OPENSHIFT_BIN_PATH` environment variable. If `OPENSHIFT_BIN_PATH` is not defined, it will default to `${HOME}/bin`.
+If you already have `istiooc` on your machine, you can use it by simply setting `--bin-dir` to the directory where it is located.  If you do not have it, the `cluster-openshift.sh` will download a copy for you in the directory specified by that `--bin-dir` option. If that option is not set, the default is `${HOME}/bin`.
 
-If you need `istiooc` downloaded, the script will download the Linux binary by default. If you are on a Mac, set
-`OPENSHIFT_OC_DOWNLOAD_PLATFORM` to `darwin`.
+If you need `istiooc` downloaded, the script will download the Linux binary by default. If you are on a Mac, set `--istiooc-platform` to `darwin`.
 
-Finally, if you want a specific version of `istiooc`, you can specify it via `OPENSHIFT_OC_DOWNLOAD_VERSION`.
+Finally, if you want a specific version of `istiooc`, you can specify it via `istiooc-version`.
 You can see the versions available at: https://github.com/openshift-istio/origin/releases
 
-To set the environment variables described above, you can either edit the `env-openshift.sh` script or pass in
-those environment variables on the command line like this:
+If you wish to install a version of Kiali, you can do so by passing in `--kiali-enabled true`. If you wish to install a specific version of Kiali, you can define that via `--kiali-version VERSION` where VERSION identifies the version string (e.g. 0.3.1.Alpha). The default credentials to log into Kiali will be `admin`/`admin` unless you specify something else via `--kiali-username` and `--kiali-password`.
+
+Execute `cluster-openshift.sh --help` for information on other command line options available.
+
+=== Bookinfo Demo
+
+If you want to install a sample mesh, you can use the link:istio/install-bookinfo-demo.sh[Bookinfo Demo Install Script] as a convenient way to install the Istio Bookinfo Demo. See the link:istio/README.adoc[README] for more.
+
+=== Installing Istio 0.7.1
+
+These hack scripts will by default install OpenShift 3.9 with Istio 0.8.0. If you wish to install Istio 0.7.1 instead, you can run the hack scripts like this:
 
 ```
-  OPENSHIFT_BIN_PATH=/my/bin/dir ./cluster-openshift.sh up
+cluster-openshift.sh --istiooc-version istio-3.9-0.7.1-alpha8
+istio/install-bookinfo-demo.sh -v 0.7.1
 ```
