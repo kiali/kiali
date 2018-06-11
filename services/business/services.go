@@ -8,7 +8,6 @@ import (
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/services/models"
@@ -41,8 +40,9 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernete
 
 	// Convert each k8s service into our model
 	for i, item := range sl.Services.Items {
-		depls := kubernetes.FilterDeploymentsForService(&item, sl.Pods, sl.Deployments)
-		services[i] = in.castServiceOverview(&item, depls)
+		sPods := kubernetes.FilterPodsForService(&item, sl.Pods)
+		depls := kubernetes.FilterDeploymentsForService(&item, sPods, sl.Deployments)
+		services[i] = in.castServiceOverview(&item, sPods, depls)
 	}
 
 	// Fill with collected request rates
@@ -62,8 +62,8 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernete
 	return &models.ServiceList{Namespace: namespace, Services: services}
 }
 
-func (in *SvcService) castServiceOverview(s *v1.Service, deployments []v1beta1.Deployment) models.ServiceOverview {
-	hasSideCar := hasIstioSideCar(deployments)
+func (in *SvcService) castServiceOverview(s *v1.Service, pods []v1.Pod, deployments []v1beta1.Deployment) models.ServiceOverview {
+	hasSideCar := hasIstioSideCar(pods)
 	statuses := castDeploymentsStatuses(deployments)
 	health := models.Health{
 		DeploymentStatuses: statuses,
@@ -74,12 +74,12 @@ func (in *SvcService) castServiceOverview(s *v1.Service, deployments []v1beta1.D
 		Health:       health}
 }
 
-func hasIstioSideCar(deployments []v1beta1.Deployment) bool {
-	for _, deployment := range deployments {
-		if deployment.Spec.Template.Annotations != nil {
-			if _, exists := deployment.Spec.Template.Annotations[config.Get().ExternalServices.Istio.IstioSidecarAnnotation]; exists {
-				return true
-			}
+func hasIstioSideCar(pods []v1.Pod) bool {
+	mPods := models.Pods{}
+	mPods.Parse(pods)
+	for _, pod := range mPods {
+		if len(pod.IstioContainers) > 0 {
+			return true
 		}
 	}
 	return false

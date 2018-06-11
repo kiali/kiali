@@ -166,13 +166,23 @@ func NewClient() (*IstioClient, error) {
 	return &client, nil
 }
 
-// FilterDeploymentsForService returns a subpart of deployments list filtered according to pods labels.
-func FilterDeploymentsForService(s *v1.Service, allPods *v1.PodList, allDepls *v1beta1.DeploymentList) []v1beta1.Deployment {
-	if s == nil || allDepls == nil || allPods == nil {
+// FilterPodsForService returns a subpart of pod list filtered according service selector
+func FilterPodsForService(s *v1.Service, allPods *v1.PodList) []v1.Pod {
+	if s == nil || allPods == nil {
 		return nil
 	}
 	serviceSelector := labels.Set(s.Spec.Selector).AsSelector()
 	pods := filterPodsForService(serviceSelector, allPods)
+
+	return pods
+}
+
+// FilterDeploymentsForService returns a subpart of deployments list filtered according to pods labels.
+func FilterDeploymentsForService(s *v1.Service, servicePods []v1.Pod, allDepls *v1beta1.DeploymentList) []v1beta1.Deployment {
+	if s == nil || allDepls == nil {
+		return nil
+	}
+	serviceSelector := labels.Set(s.Spec.Selector).AsSelector()
 
 	var deployments []v1beta1.Deployment
 	for _, d := range allDepls.Items {
@@ -182,7 +192,7 @@ func FilterDeploymentsForService(s *v1.Service, allPods *v1.PodList, allDepls *v
 		}
 		added := false
 		// If it matches any of the pods, then it's "part" of the service
-		for _, pod := range pods {
+		for _, pod := range servicePods {
 			// If a deployment with an empty selector creeps in, it should match nothing, not everything.
 			if !depSelector.Empty() && depSelector.Matches(labels.Set(pod.ObjectMeta.Labels)) {
 				deployments = append(deployments, d)
