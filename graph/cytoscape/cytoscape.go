@@ -62,7 +62,8 @@ type EdgeData struct {
 	PercentErr  string `json:"percentErr,omitempty"`
 	PercentRate string `json:"percentRate,omitempty"` // percent of total parent requests
 	Latency     string `json:"latency,omitempty"`
-	IsUnused    string `json:"isUnused,omitempty"` // true | false
+	IsUnused    string `json:"isUnused,omitempty"`    // true | false
+	EnabledmTLS string `json:"enabledmTLS,omitempty"` // true | false
 }
 
 type NodeWrapper struct {
@@ -199,18 +200,25 @@ func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges
 	}
 
 	if ndParent != nil {
-		edgeId := edgeHash(ndParent.Id, nd.Id)
-		ed := EdgeData{
-			Id:     edgeId,
-			Source: ndParent.Id,
-			Target: nd.Id,
+		//TODO If we can find a graph layout that handles loop edges well then
+		// we can go back to allowing these but for now, flag the node text
+		if ndParent.Id == nd.Id {
+			nd.RateSelfInvoke = fmt.Sprintf("%.3f", sn.Metadata["rate"].(float64))
+		} else {
+			edgeId := edgeHash(ndParent.Id, nd.Id)
+			ed := EdgeData{
+				Id:     edgeId,
+				Source: ndParent.Id,
+				Target: nd.Id,
+			}
+			addTelemetry(&ed, sn, nd, o)
+			addTLS(&ed, sn, o)
+			// TODO: Add in the response code breakdowns and/or other metric info
+			ew := EdgeWrapper{
+				Data: &ed,
+			}
+			*edges = append(*edges, &ew)
 		}
-		addTelemetry(&ed, sn, nd, o)
-		// TODO: Add in the response code breakdowns and/or other metric info
-		ew := EdgeWrapper{
-			Data: &ed,
-		}
-		*edges = append(*edges, &ew)
 	}
 
 	for _, c := range sn.Children {
@@ -269,6 +277,31 @@ func addTelemetry(ed *EdgeData, sn *tree.ServiceNode, nd *NodeData, o options.Ve
 		if val, ok := sn.Metadata["isUnused"]; ok {
 			ed.IsUnused = val.(string)
 		}
+	}
+}
+
+func addTLS(ed *EdgeData, sn *tree.ServiceNode, o options.VendorOptions) {
+	if sn.Parent == nil {
+		return
+	}
+
+	nmTLS, ok := sn.Metadata["hasmTLS"].(bool)
+	if !ok {
+		nmTLS = false
+	}
+
+	nMissingSideCars, ok := sn.Metadata["hasMissingSidecars"].(bool)
+	if !ok {
+		nMissingSideCars = true
+	}
+
+	pnMissingSideCars, ok := sn.Parent.Metadata["hasMissingSidecars"].(bool)
+	if !ok {
+		pnMissingSideCars = true
+	}
+
+	if nmTLS && !nMissingSideCars && !pnMissingSideCars {
+		ed.EnabledmTLS = "true"
 	}
 }
 
