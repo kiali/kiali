@@ -6,10 +6,12 @@ const pods: Pod[] = [
     name: 'reviews-v1-1234',
     labels: { app: 'reviews', version: 'v1' },
     createdAt: '2018-03-14T10:00:00Z',
-    createdBy: {
-      kind: 'ReplicaSet',
-      name: 'reviews-v1'
-    },
+    createdBy: [
+      {
+        kind: 'ReplicaSet',
+        name: 'reviews-v1'
+      }
+    ],
     istioContainers: [
       {
         image: 'istio-image',
@@ -27,10 +29,12 @@ const pods: Pod[] = [
     name: 'reviews-v2-1234',
     labels: { app: 'reviews', version: 'v2' },
     createdAt: '2018-03-14T10:00:00Z',
-    createdBy: {
-      kind: 'ReplicaSet',
-      name: 'reviews-v2'
-    },
+    createdBy: [
+      {
+        kind: 'ReplicaSet',
+        name: 'reviews-v2'
+      }
+    ],
     istioContainers: [
       {
         image: 'istio-image',
@@ -48,10 +52,12 @@ const pods: Pod[] = [
     name: 'reviews-v2-5678',
     labels: { app: 'reviews', version: 'v2', foo: 'bar' },
     createdAt: '2018-03-14T11:00:00Z',
-    createdBy: {
-      kind: 'ReplicaSet',
-      name: 'reviews-v2'
-    },
+    createdBy: [
+      {
+        kind: 'ReplicaSet',
+        name: 'reviews-v2'
+      }
+    ],
     istioContainers: [
       {
         image: 'istio-image',
@@ -69,10 +75,12 @@ const pods: Pod[] = [
     name: 'reviews-v2-9999',
     labels: { app: 'reviews', version: 'v2' },
     createdAt: '2018-03-14T12:00:00Z',
-    createdBy: {
-      kind: 'ReplicaSet',
-      name: 'reviews-v2'
-    },
+    createdBy: [
+      {
+        kind: 'ReplicaSet',
+        name: 'reviews-v2'
+      }
+    ],
     istioContainers: [
       {
         image: 'istio-image',
@@ -99,7 +107,7 @@ describe('#ServiceInfoPodsGrouping', () => {
     expect(groups[0].commonLabels).toEqual({ app: 'reviews', version: 'v1' });
     expect(groups[0].createdAtStart).toEqual(new Date('2018-03-14T10:00:00Z').getTime());
     expect(groups[0].createdAtEnd).toEqual(new Date('2018-03-14T10:00:00Z').getTime());
-    expect(groups[0].createdBy!.name).toEqual('reviews-v1');
+    expect(groups[0].createdBy[0].name).toEqual('reviews-v1');
     expect(groups[0].istioContainers).toHaveLength(1);
     expect(groups[0].istioInitContainers).toHaveLength(1);
 
@@ -109,7 +117,7 @@ describe('#ServiceInfoPodsGrouping', () => {
     expect(groups[1].commonLabels).toEqual({ app: 'reviews', version: 'v2' });
     expect(groups[1].createdAtStart).toEqual(new Date('2018-03-14T10:00:00Z').getTime());
     expect(groups[1].createdAtEnd).toEqual(new Date('2018-03-14T12:00:00Z').getTime());
-    expect(groups[1].createdBy!.name).toEqual('reviews-v2');
+    expect(groups[1].createdBy[0].name).toEqual('reviews-v2');
     expect(groups[1].istioContainers).toHaveLength(1);
     expect(groups[1].istioInitContainers).toHaveLength(1);
   });

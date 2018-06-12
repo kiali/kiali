@@ -72,11 +72,11 @@ class ServiceInfoPods extends React.Component<Props> {
                     )}
                   </span>
                 </div>
-                {group.createdBy && (
+                {group.createdBy.length > 0 && (
                   <div>
                     <span>
                       <strong>Created by: </strong>
-                      {group.createdBy.name + ' (' + group.createdBy.kind + ')'}
+                      {group.createdBy.map(ref => ref.name + ' (' + ref.kind + ')').join(', ')}
                     </span>
                   </div>
                 )}

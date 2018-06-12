@@ -9,6 +9,7 @@ ShallowWrapper {
       Array [
         Object {
           "createdAt": "2018-03-14T10:17:52Z",
+          "createdBy": Array [],
           "labels": Object {
             "app": "reviews",
             "version": "v2",
@@ -17,6 +18,7 @@ ShallowWrapper {
         },
         Object {
           "createdAt": "2018-03-14T10:17:52Z",
+          "createdBy": Array [],
           "labels": Object {
             "app": "reviews",
             "version": "v3",
@@ -25,6 +27,7 @@ ShallowWrapper {
         },
         Object {
           "createdAt": "2018-03-14T10:17:52Z",
+          "createdBy": Array [],
           "labels": Object {
             "app": "reviews",
             "version": "v1",
@@ -300,7 +303,7 @@ ShallowWrapper {
                     </UNDEFINED>
                   </span>
                 </div>,
-                undefined,
+                false,
                 undefined,
                 undefined,
                 <hr />,
@@ -475,7 +478,7 @@ ShallowWrapper {
                 },
                 "type": "div",
               },
-              undefined,
+              false,
               undefined,
               undefined,
               Object {
@@ -757,7 +760,7 @@ ShallowWrapper {
                       </UNDEFINED>
                     </span>
                   </div>,
-                  undefined,
+                  false,
                   undefined,
                   undefined,
                   <hr />,
@@ -932,7 +935,7 @@ ShallowWrapper {
                   },
                   "type": "div",
                 },
-                undefined,
+                false,
                 undefined,
                 undefined,
                 Object {

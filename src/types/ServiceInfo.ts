@@ -21,7 +21,7 @@ export interface Pod {
   name: string;
   labels?: { [key: string]: string };
   createdAt: string;
-  createdBy?: Reference;
+  createdBy: Reference[];
   istioContainers?: ContainerInfo[];
   istioInitContainers?: ContainerInfo[];
 }
