@@ -230,7 +230,7 @@ func TestServiceDetailParsing(t *testing.T) {
 			Name:            "reviews-destination",
 			CreatedAt:       "2018-03-08T17:47:00+03:00",
 			ResourceVersion: "1234",
-			DestinationName: "reviews",
+			Host: "reviews",
 			Subsets: []interface{}{
 				map[string]interface{}{
 					"name": "v1",
@@ -250,7 +250,7 @@ func TestServiceDetailParsing(t *testing.T) {
 			Name:            "bookinfo-ratings",
 			CreatedAt:       "2018-03-08T17:47:00+03:00",
 			ResourceVersion: "1234",
-			DestinationName: "ratings",
+			Host: "ratings",
 			TrafficPolicy: map[string]interface{}{
 				"loadBalancer": map[string]interface{}{
 					"simple": "LEAST_CONN",
@@ -581,7 +581,7 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 			ResourceVersion:   "1234",
 		},
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"subsets": []interface{}{
 				map[string]interface{}{
 					"name": "v1",
@@ -605,7 +605,7 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 			ResourceVersion:   "1234",
 		},
 		Spec: map[string]interface{}{
-			"name": "ratings",
+			"host": "ratings",
 			"trafficPolicy": map[string]interface{}{
 				"loadBalancer": map[string]interface{}{
 					"simple": "LEAST_CONN",
