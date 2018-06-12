@@ -197,35 +197,37 @@ docker-push:
 	docker push ${DOCKER_TAG}
 
 .openshift-validate:
-	@oc get project ${NAMESPACE} > /dev/null
+	@$(eval OC ?= $(shell which istiooc 2>/dev/null || which oc))
+	@${OC} get project ${NAMESPACE} > /dev/null
 
 openshift-deploy: openshift-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to OpenShift project ${NAMESPACE}
-	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | oc create -n ${NAMESPACE} -f -
-	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | oc create -n ${NAMESPACE} -f -
+	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | ${OC} create -n ${NAMESPACE} -f -
+	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | ${OC} create -n ${NAMESPACE} -f -
 
 openshift-undeploy: .openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
-	oc delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,routerules --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
+	${OC} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,routerules --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
 
 openshift-reload-image: .openshift-validate
 	@echo Refreshing image in OpenShift project ${NAMESPACE}
-	oc delete pod --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
+	${OC} delete pod --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
 
 .k8s-validate:
-	@kubectl get namespace ${NAMESPACE} > /dev/null
+	@$(eval KUBECTL ?= $(shell which kubectl))
+	@${KUBECTL} get namespace ${NAMESPACE} > /dev/null
 
 k8s-deploy: k8s-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
-	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | kubectl create -n ${NAMESPACE} -f -
-	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | kubectl create -n ${NAMESPACE} -f -
+	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
+	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
 
-k8s-undeploy:
+k8s-undeploy: .k8s-validate
 	@echo Undeploying from Kubernetes namespace ${NAMESPACE}
-	kubectl delete all,secrets,sa,configmaps,deployments,ingresses,clusterroles,clusterrolebindings,routerules --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
+	${KUBECTL} delete all,secrets,sa,configmaps,deployments,ingresses,clusterroles,clusterrolebindings,routerules --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
 
 k8s-reload-image: .k8s-validate
 	@echo Refreshing image in Kubernetes namespace ${NAMESPACE}
-	kubectl delete pod --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
+	${KUBECTL} delete pod --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
