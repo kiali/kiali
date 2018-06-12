@@ -35,6 +35,7 @@ func fetchNamespaceInfo(namespaceName string, istioClient *kubernetes.IstioClien
 func addRouteBadges(n *tree.ServiceNode, namespaceName string, istioDetails *kubernetes.IstioDetails) {
 	applyCircuitBreakers(n, namespaceName, istioDetails)
 	applyRouteRules(n, namespaceName, istioDetails)
+	applymTLS(n, namespaceName, istioDetails)
 
 	for _, child := range n.Children {
 		addRouteBadges(child, namespaceName, istioDetails)
@@ -88,4 +89,22 @@ func applyRouteRules(n *tree.ServiceNode, namespaceName string, istioDetails *ku
 			}
 		}
 	}
+}
+
+func applymTLS(n *tree.ServiceNode, namespaceName string, istioDetails *kubernetes.IstioDetails) {
+	if n.Parent == nil {
+		return
+	}
+
+	serviceName := strings.Split(n.Name, ".")[0]
+
+	hasmTLSenabled := false
+
+	for _, destinationRule := range istioDetails.DestinationRules {
+		if kubernetes.CheckDestinationRulemTLS(destinationRule, namespaceName, serviceName) {
+			hasmTLSenabled = true
+		}
+	}
+
+	n.Metadata["hasmTLS"] = hasmTLSenabled
 }
