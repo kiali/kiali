@@ -20,7 +20,7 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
         <Row className="row-cards-pf">
           <Col xs={12} sm={12} md={12} lg={12}>
             {(this.props.destinationRules || []).map((destinationRule, i) => (
-              <div className="card-pf-body" key={'virtualService' + i}>
+              <div className="card-pf-body" key={'destinationRule' + i}>
                 <h3>
                   <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.name}>
                     {destinationRule.name}
@@ -32,6 +32,7 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
                 <div>
                   <strong>Resource Version</strong>: {destinationRule.resourceVersion}
                 </div>
+                {destinationRule.host ? <DetailObject name="Host" detail={destinationRule.host} /> : undefined}
                 {destinationRule.trafficPolicy ? (
                   <DetailObject name="Traffic Policy" detail={destinationRule.trafficPolicy} />
                 ) : (
