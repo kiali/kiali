@@ -5,6 +5,7 @@
       {
         "data": {
           "id": "1577cdd7de3b143366c3c9bf5ac3b33c",
+          "namespace": "istio-system",
           "service": "istio-ingress.istio-system.svc.cluster.local",
           "version": "v1",
           "isRoot": "true"
@@ -13,6 +14,7 @@
       {
         "data": {
           "id": "71b83e8e74b0dff11ac9c91111c62506",
+          "namespace": "",
           "service": "productpage.bookinfo.svc.cluster.local",
           "isGroup": "version"
         }
@@ -21,6 +23,7 @@
         "data": {
           "id": "32f13d185b9a6764d67f9f96f8796f6c",
           "parent": "71b83e8e74b0dff11ac9c91111c62506",
+          "namespace": "bookinfo",
           "service": "productpage.bookinfo.svc.cluster.local",
           "version": "v1",
           "rate": "600.000"
@@ -30,6 +33,7 @@
         "data": {
           "id": "7650f84fca37e1450453beb7239cbb50",
           "parent": "71b83e8e74b0dff11ac9c91111c62506",
+          "namespace": "bookinfo",
           "service": "productpage.bookinfo.svc.cluster.local",
           "version": "v2",
           "rate": "600.000"
@@ -38,6 +42,7 @@
       {
         "data": {
           "id": "ad25845da56756075b9ffa2999107f00",
+          "namespace": "unknown",
           "service": "unknown",
           "version": "v1",
           "isRoot": "true"

@@ -5,6 +5,7 @@
       {
         "data": {
           "id": "80c2e74be9c24effcaf63df866f8f02d",
+          "namespace": "tutorial",
           "service": "customer.tutorial.svc.cluster.local",
           "version": "v1",
           "rate": "50.000"
@@ -13,6 +14,7 @@
       {
         "data": {
           "id": "32f13d185b9a6764d67f9f96f8796f6c",
+          "namespace": "bookinfo",
           "service": "productpage.bookinfo.svc.cluster.local",
           "version": "v1",
           "rate": "50.000"
@@ -21,6 +23,7 @@
       {
         "data": {
           "id": "ba113404e46b8aa41dc0e7cc339073fe",
+          "namespace": "unknown",
           "service": "unknown",
           "version": "unknown",
           "isRoot": "true"
