@@ -412,33 +412,33 @@ func TestCheckDestinationRulemTLS(t *testing.T) {
 }
 
 func TestShortHostname(t *testing.T) {
-	assert.True(t, matchService("reviews", "reviews", "bookinfo"))
-	assert.False(t, matchService("reviews", "ratings", "bookinfo"))
+	assert.True(t, CheckHostnameService("reviews", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("reviews", "ratings", "bookinfo"))
 }
 
 func TestFQDNHostname(t *testing.T) {
-	assert.True(t, matchService("reviews.bookinfo.svc", "reviews", "bookinfo"))
-	assert.True(t, matchService("reviews.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.True(t, CheckHostnameService("reviews.bookinfo.svc", "reviews", "bookinfo"))
+	assert.True(t, CheckHostnameService("reviews.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
 
-	assert.False(t, matchService("reviews.foo.svc", "reviews", "bookinfo"))
-	assert.False(t, matchService("reviews.foo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("reviews.foo.svc", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("reviews.foo.svc.cluster.local", "reviews", "bookinfo"))
 
-	assert.False(t, matchService("ratings.bookinfo.svc", "reviews", "bookinfo"))
-	assert.False(t, matchService("ratings.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("ratings.bookinfo.svc", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("ratings.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
 
-	assert.False(t, matchService("ratings.foo.svc", "reviews", "bookinfo"))
-	assert.False(t, matchService("ratings.foo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("ratings.foo.svc", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("ratings.foo.svc.cluster.local", "reviews", "bookinfo"))
 }
 
 func TestWildcardHostname(t *testing.T) {
-	assert.True(t, matchService("*.bookinfo.svc", "reviews", "bookinfo"))
-	assert.True(t, matchService("*.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.True(t, CheckHostnameService("*.bookinfo.svc", "reviews", "bookinfo"))
+	assert.True(t, CheckHostnameService("*.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
 
-	assert.True(t, matchService("*.bookinfo.svc", "ratings", "bookinfo"))
-	assert.True(t, matchService("*.bookinfo.svc.cluster.local", "ratings", "bookinfo"))
+	assert.True(t, CheckHostnameService("*.bookinfo.svc", "ratings", "bookinfo"))
+	assert.True(t, CheckHostnameService("*.bookinfo.svc.cluster.local", "ratings", "bookinfo"))
 
-	assert.False(t, matchService("*.foo.svc", "ratings", "bookinfo"))
-	assert.False(t, matchService("*.foo.svc.cluster.local", "ratings", "bookinfo"))
-	assert.False(t, matchService("*.foo.svc", "reviews", "bookinfo"))
-	assert.False(t, matchService("*.foo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("*.foo.svc", "ratings", "bookinfo"))
+	assert.False(t, CheckHostnameService("*.foo.svc.cluster.local", "ratings", "bookinfo"))
+	assert.False(t, CheckHostnameService("*.foo.svc", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("*.foo.svc.cluster.local", "reviews", "bookinfo"))
 }

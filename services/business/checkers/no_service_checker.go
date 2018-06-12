@@ -160,7 +160,7 @@ func runDestinationRulesCheck(destinationRules []kubernetes.IstioObject, namespa
 func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, serviceNames []string, drvalidationsc chan models.IstioValidations, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	result, valid := destination_rules.NoNameChecker{
+	result, valid := destination_rules.NoHostChecker{
 		Namespace:       namespace,
 		ServiceNames:    serviceNames,
 		DestinationRule: destinationRule,

@@ -199,7 +199,7 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 	for _, destinationRule := range destinationRuleList.Items {
 		appendDestinationRule := serviceName == ""
 		if host, ok := destinationRule.Spec["host"]; ok {
-			if dHost, ok := host.(string); ok && matchService(dHost, serviceName, namespace) {
+			if dHost, ok := host.(string); ok && CheckHostnameService(dHost, serviceName, namespace) {
 				appendDestinationRule = true
 			}
 		}
@@ -286,7 +286,7 @@ func GetDestinationRulesSubsets(destinationRules []IstioObject, serviceName, ver
 	foundSubsets := make([]string, 0)
 	for _, destinationRule := range destinationRules {
 		if dHost, ok := destinationRule.GetSpec()["host"]; ok {
-			if host, ok := dHost.(string); ok && matchService(host, serviceName, destinationRule.GetObjectMeta().Namespace) {
+			if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, destinationRule.GetObjectMeta().Namespace) {
 				if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
 					if dSubsets, ok := subsets.([]interface{}); ok {
 						for _, subset := range dSubsets {
@@ -319,7 +319,7 @@ func CheckDestinationRuleCircuitBreaker(destinationRule IstioObject, namespace s
 	}
 	cfg := config.Get()
 	if dHost, ok := destinationRule.GetSpec()["host"]; ok {
-		if host, ok := dHost.(string); ok && matchService(host, serviceName, namespace) {
+		if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, namespace) {
 			if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
 				return true
 			}
@@ -460,11 +460,11 @@ func FilterByHost(spec map[string]interface{}, hostName string) bool {
 	return false
 }
 
-// Match returns true when the hostname specifies the service passed by param.
+// CheckHostnameService returns true when the hostname specifies the service passed by param.
 // It accepts the following hostname formats:
 // reviews, reviews.bookinfo.svc, reviews.bookinfo.svc.cluster.local,
 // *.bookinfo.svc, *.bookinfo.svc.cluster.local
-func matchService(hostname, service, namespace string) bool {
+func CheckHostnameService(hostname, service, namespace string) bool {
 	domainParts := strings.Split(hostname, ".")
 	match := false
 
