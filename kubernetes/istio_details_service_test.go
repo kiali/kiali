@@ -398,7 +398,7 @@ func TestCheckDestinationRulemTLS(t *testing.T) {
 
 	destinationRule1 := MockIstioObject{
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"trafficPolicy": map[string]interface{}{
 				"tls": map[string]interface{}{
 					"mode": "ISTIO_MUTUAL",
@@ -408,6 +408,20 @@ func TestCheckDestinationRulemTLS(t *testing.T) {
 	}
 
 	assert.True(t, CheckDestinationRulemTLS(&destinationRule1, "", "reviews"))
+	assert.False(t, CheckDestinationRulemTLS(&destinationRule1, "", "reviews-bad"))
+
+	destinationRule1 := MockIstioObject{
+		Spec: map[string]interface{}{
+			"host": "reviews",
+			"trafficPolicy": map[string]interface{}{
+				"tls": map[string]interface{}{
+					"mode": "DISABLE",
+				},
+			},
+		},
+	}
+
+	assert.FALSE(t, CheckDestinationRulemTLS(&destinationRule1, "", "reviews"))
 	assert.False(t, CheckDestinationRulemTLS(&destinationRule1, "", "reviews-bad"))
 }
 
