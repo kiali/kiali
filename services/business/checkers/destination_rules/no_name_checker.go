@@ -16,7 +16,7 @@ func (destinationRule NoNameChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	for _, serviceName := range destinationRule.ServiceNames {
-		if name, ok := destinationRule.DestinationRule.GetSpec()["name"]; ok && name == serviceName {
+		if name, ok := destinationRule.DestinationRule.GetSpec()["host"]; ok && name == serviceName {
 			valid = true
 			break
 		}
