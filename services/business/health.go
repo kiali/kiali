@@ -34,9 +34,9 @@ func (in *HealthService) fillMissingParts(namespace, service, rateInterval strin
 	})
 
 	// Envoy health
-	health.Envoy.FillIfMissing(func() (int, int) {
-		healthy, total, _ := in.prom.GetServiceHealth(namespace, service)
-		return healthy, total
+	health.Envoy.FillIfMissing(func() prometheus.EnvoyHealth {
+		health, _ := in.prom.GetServiceHealth(namespace, service)
+		return health
 	})
 
 	// Request errors

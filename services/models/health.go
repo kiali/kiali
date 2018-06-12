@@ -1,17 +1,18 @@
 package models
 
+import "github.com/kiali/kiali/prometheus"
+
 // Health contains aggregated health from various sources, for a given service
 type Health struct {
-	Envoy              EnvoyHealth        `json:"envoy"`
+	Envoy              EnvoyHealthWrapper `json:"envoy"`
 	DeploymentStatuses []DeploymentStatus `json:"deploymentStatuses"`
 	Requests           RequestHealth      `json:"requests"`
 	DeploymentsFetched bool               `json:"-"`
 }
 
-// EnvoyHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster (ie. service)
-type EnvoyHealth struct {
-	Healthy int  `json:"healthy"`
-	Total   int  `json:"total"`
+// EnvoyHealthWrapper wraps EnvoyHealth with memo flag
+type EnvoyHealthWrapper struct {
+	prometheus.EnvoyHealth
 	Fetched bool `json:"-"`
 }
 
@@ -38,11 +39,9 @@ func (in *Health) FillDeploymentStatusesIfMissing(supplier func() []DeploymentSt
 }
 
 // FillIfMissing sets EnvoyHealth if necessary. Supplier must return (healthy, total)
-func (in *EnvoyHealth) FillIfMissing(supplier func() (int, int)) {
+func (in *EnvoyHealthWrapper) FillIfMissing(supplier func() prometheus.EnvoyHealth) {
 	if !in.Fetched {
-		h, t := supplier()
-		in.Healthy = h
-		in.Total = t
+		in.EnvoyHealth = supplier()
 		in.Fetched = true
 	}
 }

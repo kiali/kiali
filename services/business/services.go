@@ -3,6 +3,7 @@ package business
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/prometheus/common/model"
 	"k8s.io/api/apps/v1beta1"
@@ -50,14 +51,22 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernete
 	processRequestRates(services, inRates, "destination_service")
 	processRequestRates(services, outRates, "source_service")
 
+	var wg sync.WaitGroup
+	wg.Add(len(services))
+
 	// Finally complete missing health information
 	for idx := range services {
 		s := &services[idx]
-		// rateinterval not necessary here since we already fetched the request rates
-		// mark request health as fetched
-		s.Health.Requests.Fetched = true
-		in.health.fillMissingParts(namespace.Name, s.Name, "", &s.Health)
+		go func() {
+			defer wg.Done()
+			// rateinterval not necessary here since we already fetched the request rates
+			// mark request health as fetched
+			s.Health.Requests.Fetched = true
+			in.health.fillMissingParts(namespace.Name, s.Name, "", &s.Health)
+		}()
 	}
+
+	wg.Wait()
 
 	return &models.ServiceList{Namespace: namespace, Services: services}
 }
