@@ -5,6 +5,11 @@ export interface Health {
 }
 
 export interface EnvoyHealth {
+  inbound: EnvoyRatio;
+  outbound: EnvoyRatio;
+}
+
+export interface EnvoyRatio {
   healthy: number;
   total: number;
 }

@@ -38,6 +38,8 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
     const globalDeplStatus: H.Status = allInactive
       ? H.FAILURE
       : deplsStatuses.reduce((prev, cur) => H.mergeStatus(prev, cur), H.NA);
+    const envoyInbound = H.ratioCheck(health.envoy.inbound.healthy, health.envoy.inbound.total);
+    const envoyOutbound = H.ratioCheck(health.envoy.outbound.healthy, health.envoy.outbound.total);
     const reqErrorsRatio = H.getRequestErrorsRatio(health.requests);
     const reqErrorsText = reqErrorsRatio.status === H.NA ? 'No requests' : reqErrorsRatio.value.toFixed(2) + '%';
     return (
@@ -56,11 +58,17 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
           })}
         </ul>
         <strong>
-          {this.renderStatus(H.ratioCheck(health.envoy.healthy, health.envoy.total))}
+          {this.renderStatus(H.mergeStatus(envoyInbound, envoyOutbound))}
           {' Envoy Health:'}
         </strong>
-        {' ' + health.envoy.healthy + ' / ' + health.envoy.total}
-        <br />
+        <ul style={{ listStyleType: 'none', paddingLeft: 12 }}>
+          <li key="inbound">
+            {this.renderStatus(envoyInbound)} Inbound: {health.envoy.inbound.healthy} / {health.envoy.inbound.total}
+          </li>
+          <li key="outbound">
+            {this.renderStatus(envoyOutbound)} Outbound: {health.envoy.outbound.healthy} / {health.envoy.outbound.total}
+          </li>
+        </ul>
         <strong>
           {this.renderStatus(reqErrorsRatio.status)}
           {' Error Rate:'}

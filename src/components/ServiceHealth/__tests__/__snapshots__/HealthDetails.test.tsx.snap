@@ -21,8 +21,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 10,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 10,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -100,8 +106,35 @@ ShallowWrapper {
           />
            Envoy Health:
         </strong>
-         1 / 10
-        <br />
+        <ul
+          style={
+            Object {
+              "listStyleType": "none",
+              "paddingLeft": 12,
+            }
+          }
+        >
+          <li>
+            <Icon
+              name="warning-triangle-o"
+              type="pf"
+            />
+             Inbound: 
+            1
+             / 
+            10
+          </li>
+          <li>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             Outbound: 
+            1
+             / 
+            1
+          </li>
+        </ul>
         <strong>
           <span
             style={
@@ -188,8 +221,35 @@ ShallowWrapper {
             />
              Envoy Health:
           </strong>
-           1 / 10
-          <br />
+          <ul
+            style={
+              Object {
+                "listStyleType": "none",
+                "paddingLeft": 12,
+              }
+            }
+          >
+            <li>
+              <Icon
+                name="warning-triangle-o"
+                type="pf"
+              />
+               Inbound: 
+              1
+               / 
+              10
+            </li>
+            <li>
+              <Icon
+                name="ok"
+                type="pf"
+              />
+               Outbound: 
+              1
+               / 
+              1
+            </li>
+          </ul>
           <strong>
             <span
               style={
@@ -247,8 +307,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 10,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 10,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -326,8 +392,35 @@ ShallowWrapper {
           />
            Envoy Health:
         </strong>
-         1 / 10
-        <br />
+        <ul
+          style={
+            Object {
+              "listStyleType": "none",
+              "paddingLeft": 12,
+            }
+          }
+        >
+          <li>
+            <Icon
+              name="warning-triangle-o"
+              type="pf"
+            />
+             Inbound: 
+            1
+             / 
+            10
+          </li>
+          <li>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             Outbound: 
+            1
+             / 
+            1
+          </li>
+        </ul>
         <strong>
           <span
             style={
@@ -414,8 +507,35 @@ ShallowWrapper {
             />
              Envoy Health:
           </strong>
-           1 / 10
-          <br />
+          <ul
+            style={
+              Object {
+                "listStyleType": "none",
+                "paddingLeft": 12,
+              }
+            }
+          >
+            <li>
+              <Icon
+                name="warning-triangle-o"
+                type="pf"
+              />
+               Inbound: 
+              1
+               / 
+              10
+            </li>
+            <li>
+              <Icon
+                name="ok"
+                type="pf"
+              />
+               Outbound: 
+              1
+               / 
+              1
+            </li>
+          </ul>
           <strong>
             <span
               style={
@@ -473,8 +593,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 1,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -552,8 +678,35 @@ ShallowWrapper {
           />
            Envoy Health:
         </strong>
-         1 / 1
-        <br />
+        <ul
+          style={
+            Object {
+              "listStyleType": "none",
+              "paddingLeft": 12,
+            }
+          }
+        >
+          <li>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             Inbound: 
+            1
+             / 
+            1
+          </li>
+          <li>
+            <Icon
+              name="ok"
+              type="pf"
+            />
+             Outbound: 
+            1
+             / 
+            1
+          </li>
+        </ul>
         <strong>
           <span
             style={
@@ -640,8 +793,35 @@ ShallowWrapper {
             />
              Envoy Health:
           </strong>
-           1 / 1
-          <br />
+          <ul
+            style={
+              Object {
+                "listStyleType": "none",
+                "paddingLeft": 12,
+              }
+            }
+          >
+            <li>
+              <Icon
+                name="ok"
+                type="pf"
+              />
+               Inbound: 
+              1
+               / 
+              1
+            </li>
+            <li>
+              <Icon
+                name="ok"
+                type="pf"
+              />
+               Outbound: 
+              1
+               / 
+              1
+            </li>
+          </ul>
           <strong>
             <span
               style={
