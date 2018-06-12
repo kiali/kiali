@@ -9,7 +9,9 @@ import (
 )
 
 func TestDrawPathProperly(t *testing.T) {
-	router := NewRouter(new(config.Config))
+	conf := new(config.Config)
+	config.Set(conf)
+	router := NewRouter()
 	testRoute(router, "Root", "GET", t)
 }
 

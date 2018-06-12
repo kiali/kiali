@@ -3,10 +3,8 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/routing"
 )
@@ -20,22 +18,14 @@ type Server struct {
 func NewServer() *Server {
 	conf := config.Get()
 	// create a router that will route all incoming API server requests to different handlers
-	router := routing.NewRouter(conf)
+
+	router := routing.NewRouter()
 
 	if conf.Server.CORSAllowAll {
 		router.Use(corsAllowed)
 	}
 
-	// put our proxy handler in front to handle auth
-	proxyHandler := serverAuthProxyHandler{
-		credentials: security.Credentials{
-			Username: conf.Server.Credentials.Username,
-			Password: conf.Server.Credentials.Password,
-		},
-		trueHandler: router,
-	}
-	http.HandleFunc("/", proxyHandler.handler)
-
+	http.Handle("/", router)
 	// create the server definition that will handle both console and api server traffic
 	httpServer := &http.Server{
 		Addr: fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.Port),
@@ -68,47 +58,6 @@ func (s *Server) Start() {
 func (s *Server) Stop() {
 	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
 	s.httpServer.Close()
-}
-
-type serverAuthProxyHandler struct {
-	credentials security.Credentials
-	trueHandler http.Handler
-}
-
-func (h *serverAuthProxyHandler) handler(w http.ResponseWriter, r *http.Request) {
-	statusCode := http.StatusOK
-
-	if strings.Contains(r.Header.Get("Authorization"), "Bearer") {
-		err := config.ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
-		if err != nil {
-			log.Warning("Error token %+v", err)
-			statusCode = http.StatusUnauthorized
-		}
-	} else if (h.credentials.Username != "" || h.credentials.Password != "") && strings.HasPrefix(r.URL.Path, "/api") {
-		u, p, ok := r.BasicAuth()
-		if !ok || h.credentials.Username != u || h.credentials.Password != p {
-			statusCode = http.StatusUnauthorized
-		}
-	} else {
-		log.Trace("Access to the server endpoint is not secured with credentials - letting request come in")
-	}
-
-	switch statusCode {
-	case http.StatusOK:
-		h.trueHandler.ServeHTTP(w, r)
-	case http.StatusUnauthorized:
-		// If header exists return the value, must be 1 to use the API from Kiali
-		// Otherwise an empty string is returned and WWW-Authenticate will be Basic
-		if r.Header.Get("X-Auth-Type-Kiali-UI") == "1" {
-			w.Header().Set("WWW-Authenticate", "xBasic realm=\"Kiali\"")
-		} else {
-			w.Header().Set("WWW-Authenticate", "Basic realm=\"Kiali\"")
-		}
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-	default:
-		http.Error(w, http.StatusText(statusCode), statusCode)
-		log.Errorf("Cannot send response to unauthorized user: %v", statusCode)
-	}
 }
 
 func corsAllowed(next http.Handler) http.Handler {

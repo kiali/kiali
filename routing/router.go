@@ -9,20 +9,24 @@ import (
 )
 
 // NewRouter creates the router with all API routes and the static files handler
-func NewRouter(conf *config.Config) *mux.Router {
+func NewRouter() *mux.Router {
 
 	router := mux.NewRouter().StrictSlash(true)
 
 	// Build our API server routes and install them.
 	routes := NewRoutes()
 	for _, route := range routes.Routes {
+		var handlerFunction http.Handler
+		if handlerFunction = route.HandlerFunc; route.Authenticated {
+			handlerFunction = config.AuthenticationHandler(handlerFunction)
+		}
 		router.
 			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
-			Handler(route.HandlerFunc)
+			Handler(handlerFunction)
 	}
-
+	conf := config.Get()
 	// All client-side routes are prefixed with /console.
 	// They are forwarded to index.html and will be handled by react-router.
 	router.PathPrefix("/console").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
