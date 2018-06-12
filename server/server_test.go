@@ -75,7 +75,6 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.Credentials.Password = authorizedPassword
 
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
-	consoleURL := serverURL + "/"
 	apiURL := serverURL + "/api"
 
 	config.Set(conf)
@@ -123,29 +122,17 @@ func TestSecureComm(t *testing.T) {
 
 	// TEST WITH AN AUTHORIZED USER
 
-	if _, err = getRequestResults(t, httpClient, consoleURL, basicCredentials); err != nil {
-		t.Fatalf("Failed: Basic Auth Console URL: %v", err)
-	}
-
 	if _, err = getRequestResults(t, httpClient, apiURL, basicCredentials); err != nil {
 		t.Fatalf("Failed: Basic Auth API URL: %v", err)
 	}
 
 	// TEST WITH AN INVALID USER
 
-	if _, err = getRequestResults(t, httpClient, consoleURL, badBasicCredentials); err == nil {
-		t.Fatalf("Failed: Basic Auth Console URL should have failed")
-	}
-
 	if _, err = getRequestResults(t, httpClient, apiURL, badBasicCredentials); err == nil {
 		t.Fatalf("Failed: Basic Auth API URL should have failed")
 	}
 
 	// TEST WITH NO USER
-
-	if _, err = getRequestResults(t, httpClient, consoleURL, noCredentials); err == nil {
-		t.Fatalf("Failed: Basic Auth Console URL should have failed with no credentials: %v", err)
-	}
 
 	if _, err = getRequestResults(t, httpClient, apiURL, noCredentials); err == nil {
 		t.Fatalf("Failed: Basic Auth API URL should have failed with with no credentials")
