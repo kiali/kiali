@@ -339,6 +339,28 @@ func CheckDestinationRuleCircuitBreaker(destinationRule IstioObject, namespace s
 	return false
 }
 
+func CheckDestinationRulemTLS(destinationRule IstioObject, namespace string, serviceName string) bool {
+	if destinationRule == nil || destinationRule.GetSpec() == nil {
+		return false
+	}
+	if dName, ok := destinationRule.GetSpec()["name"]; ok && dName == serviceName {
+		if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok {
+			if dTrafficPolicy, ok := trafficPolicy.(map[string]interface{}); ok {
+				if mtls, ok := dTrafficPolicy["tls"]; ok {
+					if dmTLS, ok := mtls.(map[string]interface{}); ok {
+						if mode, ok := dmTLS["mode"]; ok {
+							if dmode, ok := mode.(string); ok {
+								return dmode == "ISTIO_MUTUAL"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
 // Helper method to check if exist a route with a destination and a subset defined for a httpRoute or tcpRoute in a VirtualService
 func checkSubsetRoute(routes interface{}, serviceName string, subsets []string) bool {
 	if httpTcpRoutes, ok := routes.([]interface{}); ok {
