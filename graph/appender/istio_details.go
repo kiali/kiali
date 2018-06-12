@@ -96,12 +96,18 @@ func applymTLS(n *tree.ServiceNode, namespaceName string, istioDetails *kubernet
 		return
 	}
 
-	serviceName := strings.Split(n.Name, ".")[0]
+	splitedHost := strings.Split(n.Name, ".")
+	if len(splitedHost) < 3 {
+		return
+	}
+
+	nodeService := splitedHost[0]
+	nodeNamespace := splitedHost[1]
 
 	hasmTLSenabled := false
 
 	for _, destinationRule := range istioDetails.DestinationRules {
-		if kubernetes.CheckDestinationRulemTLS(destinationRule, namespaceName, serviceName) {
+		if kubernetes.CheckDestinationRulemTLS(destinationRule, nodeNamespace, nodeService) {
 			hasmTLSenabled = true
 		}
 	}

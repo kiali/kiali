@@ -396,7 +396,7 @@ func TestCheckDestinationRuleCircuitBreaker(t *testing.T) {
 func TestCheckDestinationRulemTLS(t *testing.T) {
 	assert.False(t, CheckDestinationRulemTLS(nil, "", ""))
 
-	destinationRule1 := MockIstioObject{
+	destinationRule := MockIstioObject{
 		Spec: map[string]interface{}{
 			"host": "reviews",
 			"trafficPolicy": map[string]interface{}{
@@ -407,10 +407,10 @@ func TestCheckDestinationRulemTLS(t *testing.T) {
 		},
 	}
 
-	assert.True(t, CheckDestinationRulemTLS(&destinationRule1, "", "reviews"))
-	assert.False(t, CheckDestinationRulemTLS(&destinationRule1, "", "reviews-bad"))
+	assert.True(t, CheckDestinationRulemTLS(&destinationRule, "", "reviews"))
+	assert.False(t, CheckDestinationRulemTLS(&destinationRule, "", "reviews-bad"))
 
-	destinationRule1 := MockIstioObject{
+	destinationRule = MockIstioObject{
 		Spec: map[string]interface{}{
 			"host": "reviews",
 			"trafficPolicy": map[string]interface{}{
@@ -421,8 +421,8 @@ func TestCheckDestinationRulemTLS(t *testing.T) {
 		},
 	}
 
-	assert.FALSE(t, CheckDestinationRulemTLS(&destinationRule1, "", "reviews"))
-	assert.False(t, CheckDestinationRulemTLS(&destinationRule1, "", "reviews-bad"))
+	assert.False(t, CheckDestinationRulemTLS(&destinationRule, "", "reviews"))
+	assert.False(t, CheckDestinationRulemTLS(&destinationRule, "", "reviews-bad"))
 }
 
 func TestShortHostname(t *testing.T) {
