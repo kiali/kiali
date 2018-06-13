@@ -1,6 +1,8 @@
-hash: 804e1624aefee0ad5806d1d5f685c2726ed0e4f8f2c2e99775271930bd27e76d
-updated: 2018-06-13T10:11:22.445488782+02:00
+hash: 8f137dff8098f16898311bf38db5c9d7c67660d9bfb713b51561eec0661fee2a
+updated: 2018-06-13T11:28:20.941968354+02:00
 imports:
+- name: github.com/asaskevich/govalidator
+  version: 521b25f4b05fd26bec69d9dedeb8f9c9a83939a8
 - name: github.com/davecgh/go-spew
   version: 782f4967f2dc4564575ca782fe2d04090b5faca8
   subpackages:
@@ -13,14 +15,34 @@ imports:
   - log
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
+- name: github.com/go-openapi/analysis
+  version: 5957818e100395077187fb7ef3b8a28227af06c6
+- name: github.com/go-openapi/errors
+  version: b2b2befaf267d082d779bcef52d682a47c779517
 - name: github.com/go-openapi/jsonpointer
   version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
 - name: github.com/go-openapi/jsonreference
   version: 13c6e3589ad90f49bd3e3bbe2c2cb3d7a4142272
+- name: github.com/go-openapi/loads
+  version: 2a2b323bab96e6b1fdee110e57d959322446e9c9
+- name: github.com/go-openapi/runtime
+  version: c0cae94704c76c8643896d8054080f91e920105b
+  subpackages:
+  - client
+  - logger
+  - middleware
+  - middleware/denco
+  - middleware/header
+  - middleware/untyped
+  - security
 - name: github.com/go-openapi/spec
   version: 7abd5745472fff5eb3685386d5fb8bf38683154d
+- name: github.com/go-openapi/strfmt
+  version: 481808443b00a14745fada967cb5eeff0f9b1df2
 - name: github.com/go-openapi/swag
   version: f3f9494671f93fcff853e3c6e9e948b3eb71e590
+- name: github.com/go-openapi/validate
+  version: b0a3ed684d0fdd3e1eda00433382188ce8aa7169
 - name: github.com/go-swagger/go-swagger
   version: 25e637c5028dee7baf8cdf5d172ccb28cb8e5c3e
 - name: github.com/gogo/protobuf
@@ -68,6 +90,8 @@ imports:
   - buffer
   - jlexer
   - jwriter
+- name: github.com/mitchellh/mapstructure
+  version: bb74f1db0675b241733089d5a1faa5dd8b0ef57b
 - name: github.com/peterbourgon/diskv
   version: 5f041e8faa004a95c88a202771f4cc3e991971e6
 - name: github.com/pmezard/go-difflib
@@ -99,6 +123,8 @@ imports:
 - name: golang.org/x/net
   version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
+  - context
+  - context/ctxhttp
   - http2
   - http2/hpack
   - idna
@@ -119,6 +145,11 @@ imports:
   - width
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
+- name: gopkg.in/mgo.v2
+  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  subpackages:
+  - bson
+  - internal/json
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 - name: k8s.io/api
