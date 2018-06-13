@@ -1,5 +1,5 @@
-hash: 9ccc09ca3ae448865859caa8a8814c3ace3dcd1e1c915fa479bcc314e741a7f1
-updated: 2018-05-31T10:49:25.879641907+02:00
+hash: 804e1624aefee0ad5806d1d5f685c2726ed0e4f8f2c2e99775271930bd27e76d
+updated: 2018-06-13T10:11:22.445488782+02:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 782f4967f2dc4564575ca782fe2d04090b5faca8
@@ -21,6 +21,8 @@ imports:
   version: 7abd5745472fff5eb3685386d5fb8bf38683154d
 - name: github.com/go-openapi/swag
   version: f3f9494671f93fcff853e3c6e9e948b3eb71e590
+- name: github.com/go-swagger/go-swagger
+  version: 25e637c5028dee7baf8cdf5d172ccb28cb8e5c3e
 - name: github.com/gogo/protobuf
   version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
   subpackages:
@@ -88,7 +90,7 @@ imports:
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/stretchr/objx
-  version: d1e4838ff99bdc9b78118344a62885513e090da5
+  version: 0ab728f62c7f6fcd754334f7931c2dd659dce1d1
 - name: github.com/stretchr/testify
   version: 12b6f73e6084dad08a7c6e575284b177ecafbc71
   subpackages:
@@ -140,6 +142,7 @@ imports:
   - core/v1
   - events/v1beta1
   - extensions/v1beta1
+  - imagepolicy/v1alpha1
   - networking/v1
   - policy/v1beta1
   - rbac/v1
