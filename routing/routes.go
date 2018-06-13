@@ -8,10 +8,11 @@ import (
 
 // Route describes a single route
 type Route struct {
-	Name        string
-	Method      string
-	Pattern     string
-	HandlerFunc http.HandlerFunc
+	Name          string
+	Method        string
+	Pattern       string
+	HandlerFunc   http.HandlerFunc
+	Authenticated bool
 }
 
 // Routes holds an array of Route
@@ -29,54 +30,63 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api",
 			handlers.Root,
+			false,
 		},
 		{ // Request the token
 			"Status",
 			"GET",
 			"/api/token",
 			handlers.GetToken,
+			true,
 		},
 		{ // another way to get to root, both show status
 			"Status",
 			"GET",
 			"/api/status",
 			handlers.Root,
+			false,
 		},
 		{
 			"IstioConfigList",
 			"GET",
 			"/api/namespaces/{namespace}/istio",
 			handlers.IstioConfigList,
+			true,
 		},
 		{
 			"IstioConfigDetails",
 			"GET",
 			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
 			handlers.IstioConfigDetails,
+			true,
 		},
 		{
 			"IstioConfigValidation",
 			"GET",
 			"/api/namespaces/{namespace}/istio/{object_type}/{object}/istio_validations",
 			handlers.IstioConfigValidations,
+			true,
 		},
 		{
 			"ServiceList",
 			"GET",
 			"/api/namespaces/{namespace}/services",
 			handlers.ServiceList,
+			true,
 		},
 		{
 			"ServiceDetails",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}",
 			handlers.ServiceDetails,
+			true,
 		},
 		{
 			"NamespaceList",
 			"GET",
 			"/api/namespaces",
 			handlers.NamespaceList,
+			true,
 		},
 		{
 			// Supported query parameters:
@@ -93,30 +103,35 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/metrics",
 			handlers.ServiceMetrics,
+			true,
 		},
 		{
 			"ServiceHealth",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/health",
 			handlers.ServiceHealth,
+			true,
 		},
 		{
 			"ServiceValidations",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/istio_validations",
 			handlers.ServiceIstioValidations,
+			true,
 		},
 		{
 			"NamespaceMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/metrics",
 			handlers.NamespaceMetrics,
+			true,
 		},
 		{
 			"NamespaceValidations",
 			"GET",
 			"/api/namespaces/{namespace}/istio_validations",
 			handlers.NamespaceIstioValidations,
+			true,
 		},
 		{
 			// Supported query parameters:
@@ -132,6 +147,7 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/namespaces/{namespace}/graph",
 			handlers.GraphNamespace,
+			true,
 		},
 		{
 			// Supported query parameters:
@@ -145,6 +161,7 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/graph",
 			handlers.GraphService,
+			true,
 		},
 		{
 			// Supported query parameters:
@@ -156,18 +173,21 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/overview/graph",
 			handlers.GraphOverview,
+			true,
 		},
 		{
 			"GrafanaURL",
 			"GET",
 			"/api/grafana",
 			handlers.GetGrafanaInfo,
+			true,
 		},
 		{
 			"JaegerURL",
 			"GET",
 			"/api/jaeger",
 			handlers.GetJaegerInfo,
+			true,
 		},
 	}
 
