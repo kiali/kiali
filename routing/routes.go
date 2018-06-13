@@ -90,14 +90,15 @@ func NewRoutes() (r *Routes) {
 		},
 		{
 			// Supported query parameters:
-			// version:				When provided, filters metrics for a specific version of this service
-			// step:				  Duration indicating desired step between two datapoints, in seconds (default 15)
+			// version:       When provided, filters metrics for a specific version of this service
+			// step:          Duration indicating desired step between two datapoints, in seconds (default 15)
 			// duration:      Duration indicating desired query period, in seconds (default 1800 = 30 minutes)
 			// rateInterval:  Interval used for rate and histogram calculation (default 1m)
-			// rateFunc:		  Rate: standard 'rate' or instant 'irate' (default is 'rate')
-			// filters[]:			List of metrics to fetch (empty by default). When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
+			// rateFunc:      Rate: standard 'rate' or instant 'irate' (default is 'rate')
+			// filters[]:     List of metrics to fetch (empty by default). When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
 			// byLabelsIn[]:  List of labels to use for grouping input metrics (empty by default). Example: response_code,source_version
 			// byLabelsOut[]: List of labels to use for grouping output metrics (empty by default). Example: response_code,destination_version
+			// includeIstio:  Include istio-system destinations in collected metrics (default false)
 
 			"ServiceMetrics",
 			"GET",
@@ -135,13 +136,14 @@ func NewRoutes() (r *Routes) {
 		},
 		{
 			// Supported query parameters:
-			// vendor:         cytoscape (default) | vizceral
-			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
-			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
-			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-			// duration:       Duration indicating desired query period (default 10m)
 			// appenders:      comma-separated list of desired appenders (default all)
+			// duration:       Duration indicating desired query period (default 10m)
+			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
+			// includeIstio    include istio-system services in graph (default false)
+			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
 			// namespaces:     comma-separated list of namespaces will override path param (path param 'all' for all namespaces)
+			// queryTime:      Unix timestamp in seconds is query range end time (default now)
+			// vendor:         cytoscape (default) | vizceral
 
 			"GraphNamespace",
 			"GET",
@@ -151,28 +153,17 @@ func NewRoutes() (r *Routes) {
 		},
 		{
 			// Supported query parameters:
-			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
-			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
-			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-			// duration:       Duration indicating desired query period (default 10m)
 			// appenders:      comma-separated list of desired appenders (default all)
+			// duration:       Duration indicating desired query period (default 10m)
+			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
+			// includeIstio    include istio-system services in graph (default false)
+			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
+			// queryTime:      Unix timestamp in seconds is query range end time (default now)
 
 			"GraphService",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/graph",
 			handlers.GraphService,
-			true,
-		},
-		{
-			// Supported query parameters:
-			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
-			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-			// duration:       Duration indicating desired query period (default 10m)
-
-			"GraphOverview",
-			"GET",
-			"/api/overview/graph",
-			handlers.GraphOverview,
 			true,
 		},
 		{

@@ -15,8 +15,8 @@
       },
       {
         "data": {
-          "id": "dbcb1a8f5bb7328294eebda1e370d3a3",
-          "service": "ingress.istio-system.svc.cluster.local",
+          "id": "a8b6f512ceed0f9209287424b216200c",
+          "service": "ingressgateway.istio-system.svc.cluster.local",
           "version": "unknown",
           "isRoot": "true"
         }
@@ -168,18 +168,18 @@
       },
       {
         "data": {
-          "id": "9f82022f17be0601a8b48369f84a870f",
-          "source": "ba113404e46b8aa41dc0e7cc339073fe",
+          "id": "5ed873ea280e0ad163c49af8d22afa8e",
+          "source": "a8b6f512ceed0f9209287424b216200c",
           "target": "32f13d185b9a6764d67f9f96f8796f6c",
-          "rate": "50.000"
+          "rate": "100.000"
         }
       },
       {
         "data": {
-          "id": "39674e931b9bb83275c5dc8b5dab3f24",
-          "source": "dbcb1a8f5bb7328294eebda1e370d3a3",
+          "id": "9f82022f17be0601a8b48369f84a870f",
+          "source": "ba113404e46b8aa41dc0e7cc339073fe",
           "target": "32f13d185b9a6764d67f9f96f8796f6c",
-          "rate": "100.000"
+          "rate": "50.000"
         }
       }
     ]
