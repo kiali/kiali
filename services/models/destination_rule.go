@@ -9,7 +9,7 @@ type DestinationRule struct {
 	Name            string      `json:"name"`
 	CreatedAt       string      `json:"createdAt"`
 	ResourceVersion string      `json:"resourceVersion"`
-	DestinationName interface{} `json:"destinationName"`
+	Host 			interface{} `json:"host"`
 	TrafficPolicy   interface{} `json:"trafficPolicy"`
 	Subsets         interface{} `json:"subsets"`
 }
@@ -26,7 +26,7 @@ func (dRule *DestinationRule) Parse(destinationRule kubernetes.IstioObject) {
 	dRule.Name = destinationRule.GetObjectMeta().Name
 	dRule.CreatedAt = formatTime(destinationRule.GetObjectMeta().CreationTimestamp.Time)
 	dRule.ResourceVersion = destinationRule.GetObjectMeta().ResourceVersion
-	dRule.DestinationName = destinationRule.GetSpec()["name"]
+	dRule.Host = destinationRule.GetSpec()["host"]
 	dRule.TrafficPolicy = destinationRule.GetSpec()["trafficPolicy"]
 	dRule.Subsets = destinationRule.GetSpec()["subsets"]
 }
