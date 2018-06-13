@@ -20,3 +20,7 @@ import:
   version: v3.2.0
 - package: github.com/hashicorp/go-version
   version: 23480c0665776210b5fbbac6eaaee40e3e6a96b7
+- package: github.com/go-swagger/go-swagger
+  version: 0.14.0
+- package: github.com/go-openapi/runtime
+  version: c0cae94704c76c8643896d8054080f91e920105b
