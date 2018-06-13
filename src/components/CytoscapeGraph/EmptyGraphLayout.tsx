@@ -6,6 +6,8 @@ type EmptyGraphLayoutProps = {
   elements: any;
   namespace: string;
   action: any;
+  isLoading: boolean;
+  isError: boolean;
 };
 
 const emptyStateStyle = style({
@@ -19,6 +21,23 @@ type EmptyGraphLayoutState = {};
 
 export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
   render() {
+    if (this.props.isError) {
+      return (
+        <EmptyState className={emptyStateStyle}>
+          <EmptyStateTitle>Error loading Service Graph</EmptyStateTitle>
+          <EmptyStateInfo>
+            Service Graph cannot be loaded. Please access to the Message Center for more details.
+          </EmptyStateInfo>
+        </EmptyState>
+      );
+    }
+    if (this.props.isLoading) {
+      return (
+        <EmptyState className={emptyStateStyle}>
+          <EmptyStateTitle>Loading Service Graph</EmptyStateTitle>
+        </EmptyState>
+      );
+    }
     if (
       !this.props.elements ||
       this.props.elements.length < 1 ||
