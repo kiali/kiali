@@ -345,6 +345,7 @@ export interface DestinationRule {
   name: string;
   createdAt: string;
   resourceVersion: string;
+  host?: string;
   trafficPolicy?: TrafficPolicy;
   subsets?: Subset[];
 }
