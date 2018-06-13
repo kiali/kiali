@@ -1,0 +1,12 @@
+package: github.com/openshift/api
+import:
+- package: k8s.io/gengo
+  repo:    git@github.com:openshift/kubernetes-gengo
+  version: openshift-3.9
+- package: k8s.io/code-generator
+  repo:    git@github.com:openshift/kubernetes-code-generator
+  version: release-1.9.1
+- package: k8s.io/apimachinery
+  version: kubernetes-1.9.1
+- package: k8s.io/api
+  version: kubernetes-1.9.1
