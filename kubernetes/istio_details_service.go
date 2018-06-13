@@ -349,14 +349,16 @@ func CheckDestinationRulemTLS(destinationRule IstioObject, namespace string, ser
 	if destinationRule == nil || destinationRule.GetSpec() == nil {
 		return false
 	}
-	if dName, ok := destinationRule.GetSpec()["name"]; ok && dName == serviceName {
-		if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok {
-			if dTrafficPolicy, ok := trafficPolicy.(map[string]interface{}); ok {
-				if mtls, ok := dTrafficPolicy["tls"]; ok {
-					if dmTLS, ok := mtls.(map[string]interface{}); ok {
-						if mode, ok := dmTLS["mode"]; ok {
-							if dmode, ok := mode.(string); ok {
-								return dmode == "ISTIO_MUTUAL"
+	if dHost, ok := destinationRule.GetSpec()["host"]; ok {
+		if host, ok := dHost.(string); ok && matchService(host, serviceName, namespace) {
+			if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok {
+				if dTrafficPolicy, ok := trafficPolicy.(map[string]interface{}); ok {
+					if mtls, ok := dTrafficPolicy["tls"]; ok {
+						if dmTLS, ok := mtls.(map[string]interface{}); ok {
+							if mode, ok := dmTLS["mode"]; ok {
+								if dmode, ok := mode.(string); ok {
+									return dmode == "ISTIO_MUTUAL"
+								}
 							}
 						}
 					}
