@@ -50,7 +50,7 @@ const (
 	EnvTokenSecret       = "TOKEN_SECRET"
 	EnvTokenExpirationAt = "TOKEN_EXPIRATION_AT"
 
-	IstioVersionSupported = ">= 0.7.1"
+	IstioVersionSupported = ">= 0.8"
 )
 
 // Global configuration for the application.
