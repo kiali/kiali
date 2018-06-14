@@ -9,7 +9,7 @@ type DestinationRule struct {
 	Name            string      `json:"name"`
 	CreatedAt       string      `json:"createdAt"`
 	ResourceVersion string      `json:"resourceVersion"`
-	Host 			interface{} `json:"host"`
+	Host            interface{} `json:"host"`
 	TrafficPolicy   interface{} `json:"trafficPolicy"`
 	Subsets         interface{} `json:"subsets"`
 }
