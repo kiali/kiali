@@ -1,5 +1,5 @@
-hash: 9ccc09ca3ae448865859caa8a8814c3ace3dcd1e1c915fa479bcc314e741a7f1
-updated: 2018-05-31T10:49:25.879641907+02:00
+hash: b42c1483b85f44daa474bc6859aaf4b9f31a37c9be44645c3ce902ae21a1f8e4
+updated: 2018-06-13T17:28:20.877893185-04:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 782f4967f2dc4564575ca782fe2d04090b5faca8
@@ -66,6 +66,8 @@ imports:
   - buffer
   - jlexer
   - jwriter
+- name: github.com/openshift/api
+  version: 0d921e363e951d89f583292c60d013c318df64dc
 - name: github.com/peterbourgon/diskv
   version: 5f041e8faa004a95c88a202771f4cc3e991971e6
 - name: github.com/pmezard/go-difflib
@@ -88,7 +90,7 @@ imports:
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/stretchr/objx
-  version: d1e4838ff99bdc9b78118344a62885513e090da5
+  version: 0ab728f62c7f6fcd754334f7931c2dd659dce1d1
 - name: github.com/stretchr/testify
   version: 12b6f73e6084dad08a7c6e575284b177ecafbc71
   subpackages:
