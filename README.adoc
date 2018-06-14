@@ -320,7 +320,7 @@ service_filter_label_name: VALUE
 ----
 
 |`PROMETHEUS_SERVICE_URL`
-|The URL used to access and query the Prometheus Server.
+|The URL used to access and query the Prometheus Server. It must be accessible from Kiali pod. (default is `http://prometheus.istio-system:9090`)
 [source,yaml]
 ----
 external_services:
