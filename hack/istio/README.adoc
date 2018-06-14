@@ -1,7 +1,7 @@
 == Installing Istio Bookinfo Demo
 
 [NOTE]
-Before attempting to install the https://istio.io/docs/guides/bookinfo.html[Istio Bookinfo Demo] make sure you have a running cluster (either OpenShift or Kubernetes) with  Istio deployed in it. Kiali has provided some link:..[hack scripts] to assist you if you want a quick way to start that up.
+Before attempting to install the https://istio.io/docs/guides/bookinfo.html[Istio Bookinfo Demo] make sure you have a running cluster (either OpenShift or Kubernetes) with Istio deployed in it. Kiali has provided some link:..[hack scripts] to assist you if you want a quick way to start that up.
 
 [NOTE]
 Use of this provided hack script is not required. It is provided only as a convenience. You can decide to install the Bookinfo Demo in whatever way you choose. This script only illustrates one way to do this.
@@ -14,13 +14,21 @@ oc adm policy add-cluster-role-to-user cluster-admin -z default admin
 oc login -u admin -p admin
 ```
 
-Then, simply run the script link:./install-bookinfo-demo.sh[] on a command line with no arguments.
-
-This script actually needs to download a copy of Istio.  If you want to install a specific version of Istio, pass the argument `-v x.y.z` where `x.y.z` is the version you want to install (e.g. `-v 0.8.0`). By default, it will install Istio in the `_output` directory. If you want it to go somewhere else, pass in the `-o` option specifying the parent directory where Istio is to be installed.
+Then simply run the script link:./install-bookinfo-demo.sh[] on a command line.
 
 If you are installing the Bookinfo Demo in Kubernetes, pass in the option `-c kubectl` to indicate the script should use that client tool. The default client tool that will be used is `istiooc`. You can optionally choose to use `-c oc` if you want general OpenShift `oc` client tool to be used. Whatever you pass into the `-c` option must either be a full path to the binary or must be an executable found in your PATH.
 
+This script needs a copy of Istio which contains the Bookinfo Demo files. If you already have Istio downloaded, pass in the `-id` (or `--istio-dir`) option telling the script where your Istio is installed (e.g. `-id /opt/istio-0.8.0`). Note that you do not have to pass this option in if you already downloaded Istio to the default location used by this script or the link:./download-istio.sh[] script (i.e. `../../_output`).
+
+If you do not yet have Istio downloaded, this script will download it using link:./download-istio.sh[] and put Istio under the `../../_output` directory (relative to the script's location - if you git cloned the Kiali source, this is where the output build files also go).
+
+=== download-istio.sh
+
+link:./download-istio.sh[] can be used to download Istio. By default it will store it in `../../_output` but you can tell it to put it anywhere via the `-o` (or `--output`) option (e.g. `-id /opt/istio`).
+
+If you want to download a specific version of Istio, pass the argument `-iv x.y.z` where `x.y.z` is the version you want to install (e.g. `-iv 0.8.0`).
+
 == Uninstalling Istio Bookinfo Demo
 
-All the Bookinfo Demo pods and services are installed in the "bookinfo" namespace. In order to uninstall it, simply delete that namespace via something like `oc delete namespace bookinfo`.
+All the Bookinfo Demo pods and services are installed in the "bookinfo" namespace. In order to uninstall it, simply delete that namespace via something like `kubectl delete namespace bookinfo` or `oc delete project bookinfo`.
 
