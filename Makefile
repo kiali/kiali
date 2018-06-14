@@ -3,7 +3,7 @@ SHELL=/bin/bash
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= 0.3.2.Alpha-SNAPSHOT
+VERSION ?= v0.3.2.Alpha-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Indicates which version of the UI console is to be embedded
@@ -17,46 +17,17 @@ CONSOLE_VERSION ?= latest
 CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 
 # Version label is used in the OpenShift/K8S resources to identify
-# their specific instances. These resources will have labels of
-# "app: kiali" and "version: ${VERSION_LABEL}" In this development
-# environment, setting the label names equal to the branch names
-# allows developers to build and deploy multiple Kiali instances
-# at the same time which is useful for debugging and testing.
-# Due to restrictions on allowed characters in label values,
-# we ensure only alphanumeric, underscore, dash, and dot are allowed.
-# Due to restrictions on allowed characters in names, we convert
-# uppercase characters to lowercase characters and
-# underscores/dots/spaces to dashes.
-# If we are deploying from a branch, we must ensure all the OS/k8s
-# names to be created are unique - the NAME_SUFFIX will be appended
-# to all names so they are unique.
-VERSION_LABEL ?= $(shell git rev-parse --abbrev-ref HEAD)
-ifneq ($(shell [[ ${VERSION_LABEL} =~ ^[a-zA-Z0-9]([-_.a-zA-Z0-9]*[a-zA-Z0-9])?$$ ]] && echo valid),valid)
-  $(error Your version label value '${VERSION_LABEL}' is invalid and cannot be used.)
-endif
-ifeq (${VERSION_LABEL},master)
-  NAME_SUFFIX ?=
-else
-  # note: we want to start suffix with a dash so it is between the name and the suffix
-  NAME_SUFFIX ?= $(shell echo -n "-${VERSION_LABEL}" | tr '[:upper:][:space:]_.' '[:lower:]---')
-  ifneq ($(shell [[ ${NAME_SUFFIX} =~ ^([-a-z0-9]*[a-z0-9])?$$ ]] && echo valid),valid)
-    $(error Your name suffix '${NAME_SUFFIX}' is invalid and cannot be used.)
-  endif
-endif
+# their specific instances. Kiali resources will have labels of
+# "app: kiali" and "version: ${VERSION_LABEL}"
+# The default is the VERSION itself.
+VERSION_LABEL ?= ${VERSION}
 
 # The minimum Go version that must be used to build the app.
 GO_VERSION_KIALI = 1.8.3
 
 # Identifies the docker image that will be built and deployed.
-# Note that if building from a non-master branch, the default
-# version will be the same name as the branch allowing you to
-# deploy different builds at the same time.
 DOCKER_NAME ?= kiali/kiali
-ifeq  ("${VERSION_LABEL}","master")
-  DOCKER_VERSION ?= dev
-else
-  DOCKER_VERSION ?= ${VERSION_LABEL}
-endif
+DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
 
 # Indicates the log level the app will use when started.
@@ -197,35 +168,37 @@ docker-push:
 	docker push ${DOCKER_TAG}
 
 .openshift-validate:
-	@oc get project ${NAMESPACE} > /dev/null
+	@$(eval OC ?= $(shell which istiooc 2>/dev/null || which oc))
+	@${OC} get project ${NAMESPACE} > /dev/null
 
 openshift-deploy: openshift-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to OpenShift project ${NAMESPACE}
-	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | oc create -n ${NAMESPACE} -f -
-	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | oc create -n ${NAMESPACE} -f -
+	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
+	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | ${OC} create -n ${NAMESPACE} -f -
 
 openshift-undeploy: .openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
-	oc delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,routerules --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
+	${OC} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,routerules --selector=app=kiali -n ${NAMESPACE}
 
 openshift-reload-image: .openshift-validate
 	@echo Refreshing image in OpenShift project ${NAMESPACE}
-	oc delete pod --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
+	${OC} delete pod --selector=app=kiali -n ${NAMESPACE}
 
 .k8s-validate:
-	@kubectl get namespace ${NAMESPACE} > /dev/null
+	@$(eval KUBECTL ?= $(shell which kubectl))
+	@${KUBECTL} get namespace ${NAMESPACE} > /dev/null
 
 k8s-deploy: k8s-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
-	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} envsubst | kubectl create -n ${NAMESPACE} -f -
-	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} NAME_SUFFIX=${NAME_SUFFIX} VERBOSE_MODE=${VERBOSE_MODE} envsubst | kubectl create -n ${NAMESPACE} -f -
+	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
+	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
 
-k8s-undeploy:
+k8s-undeploy: .k8s-validate
 	@echo Undeploying from Kubernetes namespace ${NAMESPACE}
-	kubectl delete all,secrets,sa,configmaps,deployments,ingresses,clusterroles,clusterrolebindings,routerules --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
+	${KUBECTL} delete all,secrets,sa,configmaps,deployments,ingresses,clusterroles,clusterrolebindings,routerules --selector=app=kiali -n ${NAMESPACE}
 
 k8s-reload-image: .k8s-validate
 	@echo Refreshing image in Kubernetes namespace ${NAMESPACE}
-	kubectl delete pod --selector=app=kiali --selector=version=${VERSION_LABEL} -n ${NAMESPACE}
+	${KUBECTL} delete pod --selector=app=kiali -n ${NAMESPACE}

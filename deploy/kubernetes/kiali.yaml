@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: kiali${NAME_SUFFIX}
+  name: kiali
   labels:
     app: kiali
     version: ${VERSION_LABEL}
@@ -9,7 +9,7 @@ metadata:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kiali${NAME_SUFFIX}
+  name: kiali
   labels:
     app: kiali
     version: ${VERSION_LABEL}
@@ -26,19 +26,19 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: kiali${NAME_SUFFIX}
+  name: kiali
   labels:
     app: kiali
     version: ${VERSION_LABEL}
 spec:
   backend:
-    serviceName: kiali${NAME_SUFFIX}
+    serviceName: kiali
     servicePort: 20001
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: kiali${NAME_SUFFIX}
+  name: kiali
   labels:
     app: kiali
     version: ${VERSION_LABEL}
@@ -55,12 +55,12 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      name: kiali${NAME_SUFFIX}
+      name: kiali
       labels:
         app: kiali
         version: ${VERSION_LABEL}
     spec:
-      serviceAccount: kiali${NAME_SUFFIX}
+      serviceAccount: kiali
       containers:
       - image: ${IMAGE_NAME}:${IMAGE_VERSION}
         name: kiali
@@ -81,12 +81,12 @@ spec:
       volumes:
       - name: kiali-configuration
         configMap:
-          name: kiali${NAME_SUFFIX}
+          name: kiali
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: kiali${NAME_SUFFIX}
+  name: kiali
   labels:
     app: kiali
     version: ${VERSION_LABEL}
@@ -154,15 +154,15 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: kiali${NAME_SUFFIX}
+  name: kiali
   labels:
     app: kiali
     version: ${VERSION_LABEL}
 roleRef:
   kind: ClusterRole
-  name: kiali${NAME_SUFFIX}
+  name: kiali
   apiGroup: rbac.authorization.k8s.io
 subjects:
 - kind: ServiceAccount
-  name: kiali${NAME_SUFFIX}
+  name: kiali
   namespace: ${NAMESPACE}

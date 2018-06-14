@@ -38,7 +38,6 @@ type NodeData struct {
 	Rate3xx            string         `json:"rate3XX,omitempty"`            // edge aggregate
 	Rate4xx            string         `json:"rate4XX,omitempty"`            // edge aggregate
 	Rate5xx            string         `json:"rate5XX,omitempty"`            // edge aggregate
-	RateSelfInvoke     string         `json:"rateSelfInvoke,omitempty"`     // rate of selfInvoke
 	HasCircuitBreaker  string         `json:"hasCB,omitempty"`              // true | false
 	HasRouteRule       string         `json:"hasRR,omitempty"`              // true | false
 	IsDead             string         `json:"isDead,omitempty"`             // true (has no pods) | false
@@ -201,25 +200,19 @@ func walk(sn *tree.ServiceNode, ndParent *NodeData, nodes *[]*NodeWrapper, edges
 	}
 
 	if ndParent != nil {
-		//TODO If we can find a graph layout that handles loop edges well then
-		// we can go back to allowing these but for now, flag the node text
-		if ndParent.Id == nd.Id {
-			nd.RateSelfInvoke = fmt.Sprintf("%.3f", sn.Metadata["rate"].(float64))
-		} else {
-			edgeId := edgeHash(ndParent.Id, nd.Id)
-			ed := EdgeData{
-				Id:     edgeId,
-				Source: ndParent.Id,
-				Target: nd.Id,
-			}
-			addTelemetry(&ed, sn, nd, o)
-			addTLS(&ed, sn, o)
-			// TODO: Add in the response code breakdowns and/or other metric info
-			ew := EdgeWrapper{
-				Data: &ed,
-			}
-			*edges = append(*edges, &ew)
+		edgeId := edgeHash(ndParent.Id, nd.Id)
+		ed := EdgeData{
+			Id:     edgeId,
+			Source: ndParent.Id,
+			Target: nd.Id,
 		}
+		addTelemetry(&ed, sn, nd, o)
+		addTLS(&ed, sn, o)
+		// TODO: Add in the response code breakdowns and/or other metric info
+		ew := EdgeWrapper{
+			Data: &ed,
+		}
+		*edges = append(*edges, &ew)
 	}
 
 	for _, c := range sn.Children {
