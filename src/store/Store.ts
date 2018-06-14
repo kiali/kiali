@@ -33,6 +33,7 @@ export interface MessageCenterState {
 
 export interface ServiceGraphState {
   isLoading: boolean;
+  isError: boolean;
   graphDataTimestamp: number;
   graphData: any;
   filterState: ServiceGraphFilterState;

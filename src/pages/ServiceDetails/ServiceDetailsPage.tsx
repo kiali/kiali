@@ -163,28 +163,32 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   }
 
   fetchBackend() {
-    API.getServiceDetail(authentication(), this.props.match.params.namespace, this.props.match.params.service)
-      .then(response => {
-        const details = response.data;
+    let promiseDetails = API.getServiceDetail(
+      authentication(),
+      this.props.match.params.namespace,
+      this.props.match.params.service
+    );
+    let promiseValidations = API.getServiceValidations(
+      authentication(),
+      this.props.match.params.namespace,
+      this.props.match.params.service
+    );
+    Promise.all([promiseDetails, promiseValidations])
+      .then(([resultDetails, resultValidations]) => {
+        const details = resultDetails.data;
         details.istioSidecar = hasIstioSidecar(details.pods);
-        this.setState({ serviceDetailsInfo: details });
-        return API.getServiceValidations(
-          authentication(),
-          this.props.match.params.namespace,
-          this.props.match.params.service
-        );
-      })
-      .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', error));
-      });
-    API.getServiceValidations(authentication(), this.props.match.params.namespace, this.props.match.params.service)
-      .then(response => {
         this.setState({
-          validations: response.data
+          serviceDetailsInfo: details,
+          validations: resultValidations.data
         });
       })
-      .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch Service Validations.', error));
+      .catch(([errorDetails, errorValidations]) => {
+        if (errorDetails) {
+          MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', errorDetails));
+        }
+        if (errorValidations) {
+          MessageCenter.add(API.getErrorMsg('Could not fetch Service Validations.', errorValidations));
+        }
       });
   }
 
