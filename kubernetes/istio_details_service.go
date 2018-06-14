@@ -350,7 +350,7 @@ func CheckDestinationRulemTLS(destinationRule IstioObject, namespace string, ser
 		return false
 	}
 	if dHost, ok := destinationRule.GetSpec()["host"]; ok {
-		if host, ok := dHost.(string); ok && matchService(host, serviceName, namespace) {
+		if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, namespace) {
 			if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok {
 				if dTrafficPolicy, ok := trafficPolicy.(map[string]interface{}); ok {
 					if mtls, ok := dTrafficPolicy["tls"]; ok {
