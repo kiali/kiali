@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Button, EmptyState, EmptyStateTitle, EmptyStateInfo, EmptyStateAction } from 'patternfly-react';
 import { style } from 'typestyle';
+import * as MessageCenter from '../../utils/MessageCenter';
 
 type EmptyGraphLayoutProps = {
   elements: any;
@@ -20,6 +21,10 @@ const emptyStateStyle = style({
 type EmptyGraphLayoutState = {};
 
 export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
+  toogleMessageCenter = () => {
+    MessageCenter.toggleMessageCenter();
+  };
+
   render() {
     if (this.props.isError) {
       return (
@@ -28,6 +33,11 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
           <EmptyStateInfo>
             Service Graph cannot be loaded. Please access to the Message Center for more details.
           </EmptyStateInfo>
+          <EmptyStateAction>
+            <Button bsStyle="primary" bsSize="large" onClick={this.toogleMessageCenter}>
+              Message Center
+            </Button>
+          </EmptyStateAction>
         </EmptyState>
       );
     }
