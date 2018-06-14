@@ -35,7 +35,6 @@ const decorateGraphData = (graphData: any) => {
       rate3XX: undefined,
       rate4XX: undefined,
       rate5XX: undefined,
-      rateSelfInvoke: undefined,
       hasCB: undefined,
       hasRR: undefined,
       isDead: undefined,
