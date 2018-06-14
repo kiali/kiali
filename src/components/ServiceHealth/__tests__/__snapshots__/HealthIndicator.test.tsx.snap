@@ -20,8 +20,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 1,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -62,8 +68,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -120,8 +132,14 @@ ShallowWrapper {
             },
           ],
           "envoy": Object {
-            "healthy": 1,
-            "total": 1,
+            "inbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
+            "outbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
           },
           "requests": Object {
             "requestCount": 0,
@@ -177,8 +195,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -235,8 +259,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -300,8 +330,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 1,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -343,8 +379,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -409,8 +451,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -479,8 +527,14 @@ ShallowWrapper {
                   },
                 ],
                 "envoy": Object {
-                  "healthy": 1,
-                  "total": 1,
+                  "inbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
+                  "outbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
                 },
                 "requests": Object {
                   "requestCount": 0,
@@ -545,8 +599,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -602,754 +662,6 @@ ShallowWrapper {
 }
 `;
 
-exports[`HealthIndicator renders both degraded 1`] = `
-ShallowWrapper {
-  "length": 1,
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthIndicator
-    health={
-      Object {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 10,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 10,
-          },
-        ],
-        "envoy": Object {
-          "healthy": 1,
-          "total": 10,
-        },
-        "requests": Object {
-          "requestCount": 0,
-          "requestErrorCount": 0,
-        },
-      }
-    }
-    id="svc"
-    mode={1}
-    rateInterval=""
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "host",
-    "props": Object {
-      "children": <HealthDetails
-        headline="Degraded"
-        health={
-          Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 10,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          }
-        }
-        id="svc"
-        placement={undefined}
-        rateInterval=""
-      >
-        <Icon
-          className="health-icon"
-          name="warning-triangle-o"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />
-      </HealthDetails>,
-    },
-    "ref": null,
-    "rendered": Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "class",
-      "props": Object {
-        "children": <Icon
-          className="health-icon"
-          name="warning-triangle-o"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />,
-        "headline": "Degraded",
-        "health": Object {
-          "deploymentStatuses": Array [
-            Object {
-              "available": 1,
-              "name": "A",
-              "replicas": 10,
-            },
-            Object {
-              "available": 2,
-              "name": "B",
-              "replicas": 10,
-            },
-          ],
-          "envoy": Object {
-            "healthy": 1,
-            "total": 10,
-          },
-          "requests": Object {
-            "requestCount": 0,
-            "requestErrorCount": 0,
-          },
-        },
-        "id": "svc",
-        "placement": undefined,
-        "rateInterval": "",
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "className": "health-icon",
-          "name": "warning-triangle-o",
-          "style": Object {
-            "fontSize": "18px",
-          },
-          "tabIndex": "0",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": [Function],
-    },
-    "type": "span",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": <HealthDetails
-          headline="Degraded"
-          health={
-            Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 10,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            }
-          }
-          id="svc"
-          placement={undefined}
-          rateInterval=""
-        >
-          <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "18px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />
-        </HealthDetails>,
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "children": <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "18px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />,
-          "headline": "Degraded",
-          "health": Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 10,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          },
-          "id": "svc",
-          "placement": undefined,
-          "rateInterval": "",
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "className": "health-icon",
-            "name": "warning-triangle-o",
-            "style": Object {
-              "fontSize": "18px",
-            },
-            "tabIndex": "0",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      "type": "span",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-      },
-    },
-  },
-}
-`;
-
-exports[`HealthIndicator renders both degraded 2`] = `
-ShallowWrapper {
-  "length": 1,
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthIndicator
-    health={
-      Object {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 10,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 10,
-          },
-        ],
-        "envoy": Object {
-          "healthy": 1,
-          "total": 10,
-        },
-        "requests": Object {
-          "requestCount": 0,
-          "requestErrorCount": 0,
-        },
-      }
-    }
-    id="svc"
-    mode={0}
-    rateInterval=""
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "host",
-    "props": Object {
-      "children": Array [
-        <HealthDetails
-          headline="Degraded"
-          health={
-            Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 10,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            }
-          }
-          id="svc"
-          placement={undefined}
-          rateInterval=""
-        >
-          <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "35px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />
-        </HealthDetails>,
-        <br />,
-        false,
-        <ul
-          style={
-            Object {
-              "padding": 0,
-            }
-          }
-        >
-          <li>
-            Envoy health degraded
-          </li>
-          <li>
-            Pod deployment degraded
-          </li>
-          <li>
-            Pod deployment degraded
-          </li>
-        </ul>,
-      ],
-      "style": Object {
-        "color": "#ec7a08",
-      },
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "children": <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "35px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />,
-          "headline": "Degraded",
-          "health": Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 10,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          },
-          "id": "svc",
-          "placement": undefined,
-          "rateInterval": "",
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "className": "health-icon",
-            "name": "warning-triangle-o",
-            "style": Object {
-              "fontSize": "35px",
-            },
-            "tabIndex": "0",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {},
-        "ref": null,
-        "rendered": null,
-        "type": "br",
-      },
-      false,
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": Array [
-            <li>
-              Envoy health degraded
-            </li>,
-            <li>
-              Pod deployment degraded
-            </li>,
-            <li>
-              Pod deployment degraded
-            </li>,
-          ],
-          "style": Object {
-            "padding": 0,
-          },
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": "0",
-            "nodeType": "host",
-            "props": Object {
-              "children": "Envoy health degraded",
-            },
-            "ref": null,
-            "rendered": "Envoy health degraded",
-            "type": "li",
-          },
-          Object {
-            "instance": null,
-            "key": "1",
-            "nodeType": "host",
-            "props": Object {
-              "children": "Pod deployment degraded",
-            },
-            "ref": null,
-            "rendered": "Pod deployment degraded",
-            "type": "li",
-          },
-          Object {
-            "instance": null,
-            "key": "2",
-            "nodeType": "host",
-            "props": Object {
-              "children": "Pod deployment degraded",
-            },
-            "ref": null,
-            "rendered": "Pod deployment degraded",
-            "type": "li",
-          },
-        ],
-        "type": "ul",
-      },
-    ],
-    "type": "div",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": Array [
-          <HealthDetails
-            headline="Degraded"
-            health={
-              Object {
-                "deploymentStatuses": Array [
-                  Object {
-                    "available": 1,
-                    "name": "A",
-                    "replicas": 10,
-                  },
-                  Object {
-                    "available": 2,
-                    "name": "B",
-                    "replicas": 10,
-                  },
-                ],
-                "envoy": Object {
-                  "healthy": 1,
-                  "total": 10,
-                },
-                "requests": Object {
-                  "requestCount": 0,
-                  "requestErrorCount": 0,
-                },
-              }
-            }
-            id="svc"
-            placement={undefined}
-            rateInterval=""
-          >
-            <Icon
-              className="health-icon"
-              name="warning-triangle-o"
-              style={
-                Object {
-                  "fontSize": "35px",
-                }
-              }
-              tabIndex="0"
-              type="pf"
-            />
-          </HealthDetails>,
-          <br />,
-          false,
-          <ul
-            style={
-              Object {
-                "padding": 0,
-              }
-            }
-          >
-            <li>
-              Envoy health degraded
-            </li>
-            <li>
-              Pod deployment degraded
-            </li>
-            <li>
-              Pod deployment degraded
-            </li>
-          </ul>,
-        ],
-        "style": Object {
-          "color": "#ec7a08",
-        },
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "children": <Icon
-              className="health-icon"
-              name="warning-triangle-o"
-              style={
-                Object {
-                  "fontSize": "35px",
-                }
-              }
-              tabIndex="0"
-              type="pf"
-            />,
-            "headline": "Degraded",
-            "health": Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 10,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            },
-            "id": "svc",
-            "placement": undefined,
-            "rateInterval": "",
-          },
-          "ref": null,
-          "rendered": Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "className": "health-icon",
-              "name": "warning-triangle-o",
-              "style": Object {
-                "fontSize": "35px",
-              },
-              "tabIndex": "0",
-              "type": "pf",
-            },
-            "ref": null,
-            "rendered": null,
-            "type": [Function],
-          },
-          "type": [Function],
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {},
-          "ref": null,
-          "rendered": null,
-          "type": "br",
-        },
-        false,
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": Array [
-              <li>
-                Envoy health degraded
-              </li>,
-              <li>
-                Pod deployment degraded
-              </li>,
-              <li>
-                Pod deployment degraded
-              </li>,
-            ],
-            "style": Object {
-              "padding": 0,
-            },
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": "0",
-              "nodeType": "host",
-              "props": Object {
-                "children": "Envoy health degraded",
-              },
-              "ref": null,
-              "rendered": "Envoy health degraded",
-              "type": "li",
-            },
-            Object {
-              "instance": null,
-              "key": "1",
-              "nodeType": "host",
-              "props": Object {
-                "children": "Pod deployment degraded",
-              },
-              "ref": null,
-              "rendered": "Pod deployment degraded",
-              "type": "li",
-            },
-            Object {
-              "instance": null,
-              "key": "2",
-              "nodeType": "host",
-              "props": Object {
-                "children": "Pod deployment degraded",
-              },
-              "ref": null,
-              "rendered": "Pod deployment degraded",
-              "type": "li",
-            },
-          ],
-          "type": "ul",
-        },
-      ],
-      "type": "div",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-      },
-    },
-  },
-}
-`;
-
 exports[`HealthIndicator renders deployments degraded 1`] = `
 ShallowWrapper {
   "length": 1,
@@ -1370,8 +682,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 1,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -1412,8 +730,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -1470,8 +794,14 @@ ShallowWrapper {
             },
           ],
           "envoy": Object {
-            "healthy": 1,
-            "total": 1,
+            "inbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
+            "outbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
           },
           "requests": Object {
             "requestCount": 0,
@@ -1527,8 +857,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -1585,8 +921,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -1650,8 +992,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 1,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -1693,8 +1041,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -1759,8 +1113,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -1829,8 +1189,14 @@ ShallowWrapper {
                   },
                 ],
                 "envoy": Object {
-                  "healthy": 1,
-                  "total": 1,
+                  "inbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
+                  "outbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
                 },
                 "requests": Object {
                   "requestCount": 0,
@@ -1895,8 +1261,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -1952,1322 +1324,6 @@ ShallowWrapper {
 }
 `;
 
-exports[`HealthIndicator renders deployments failure 1`] = `
-ShallowWrapper {
-  "length": 1,
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthIndicator
-    health={
-      Object {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 0,
-            "name": "A",
-            "replicas": 10,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
-        "envoy": Object {
-          "healthy": 1,
-          "total": 10,
-        },
-        "requests": Object {
-          "requestCount": 0,
-          "requestErrorCount": 0,
-        },
-      }
-    }
-    id="svc"
-    mode={1}
-    rateInterval=""
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "host",
-    "props": Object {
-      "children": <HealthDetails
-        headline="Failure"
-        health={
-          Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 0,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          }
-        }
-        id="svc"
-        placement={undefined}
-        rateInterval=""
-      >
-        <Icon
-          className="health-icon"
-          name="error-circle-o"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />
-      </HealthDetails>,
-    },
-    "ref": null,
-    "rendered": Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "class",
-      "props": Object {
-        "children": <Icon
-          className="health-icon"
-          name="error-circle-o"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />,
-        "headline": "Failure",
-        "health": Object {
-          "deploymentStatuses": Array [
-            Object {
-              "available": 0,
-              "name": "A",
-              "replicas": 10,
-            },
-            Object {
-              "available": 2,
-              "name": "B",
-              "replicas": 2,
-            },
-          ],
-          "envoy": Object {
-            "healthy": 1,
-            "total": 10,
-          },
-          "requests": Object {
-            "requestCount": 0,
-            "requestErrorCount": 0,
-          },
-        },
-        "id": "svc",
-        "placement": undefined,
-        "rateInterval": "",
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "className": "health-icon",
-          "name": "error-circle-o",
-          "style": Object {
-            "fontSize": "18px",
-          },
-          "tabIndex": "0",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": [Function],
-    },
-    "type": "span",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": <HealthDetails
-          headline="Failure"
-          health={
-            Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 0,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            }
-          }
-          id="svc"
-          placement={undefined}
-          rateInterval=""
-        >
-          <Icon
-            className="health-icon"
-            name="error-circle-o"
-            style={
-              Object {
-                "fontSize": "18px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />
-        </HealthDetails>,
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "children": <Icon
-            className="health-icon"
-            name="error-circle-o"
-            style={
-              Object {
-                "fontSize": "18px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />,
-          "headline": "Failure",
-          "health": Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 0,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          },
-          "id": "svc",
-          "placement": undefined,
-          "rateInterval": "",
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "className": "health-icon",
-            "name": "error-circle-o",
-            "style": Object {
-              "fontSize": "18px",
-            },
-            "tabIndex": "0",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      "type": "span",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-      },
-    },
-  },
-}
-`;
-
-exports[`HealthIndicator renders deployments failure 2`] = `
-ShallowWrapper {
-  "length": 1,
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthIndicator
-    health={
-      Object {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 0,
-            "name": "A",
-            "replicas": 10,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
-        "envoy": Object {
-          "healthy": 1,
-          "total": 10,
-        },
-        "requests": Object {
-          "requestCount": 0,
-          "requestErrorCount": 0,
-        },
-      }
-    }
-    id="svc"
-    mode={0}
-    rateInterval=""
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "host",
-    "props": Object {
-      "children": Array [
-        <HealthDetails
-          headline="Failure"
-          health={
-            Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 0,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            }
-          }
-          id="svc"
-          placement={undefined}
-          rateInterval=""
-        >
-          <Icon
-            className="health-icon"
-            name="error-circle-o"
-            style={
-              Object {
-                "fontSize": "35px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />
-        </HealthDetails>,
-        <br />,
-        false,
-        <ul
-          style={
-            Object {
-              "padding": 0,
-            }
-          }
-        >
-          <li>
-            Envoy health degraded
-          </li>
-          <li>
-            Pod deployment failure
-          </li>
-        </ul>,
-      ],
-      "style": Object {
-        "color": "#cc0000",
-      },
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "children": <Icon
-            className="health-icon"
-            name="error-circle-o"
-            style={
-              Object {
-                "fontSize": "35px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />,
-          "headline": "Failure",
-          "health": Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 0,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          },
-          "id": "svc",
-          "placement": undefined,
-          "rateInterval": "",
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "className": "health-icon",
-            "name": "error-circle-o",
-            "style": Object {
-              "fontSize": "35px",
-            },
-            "tabIndex": "0",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {},
-        "ref": null,
-        "rendered": null,
-        "type": "br",
-      },
-      false,
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": Array [
-            <li>
-              Envoy health degraded
-            </li>,
-            <li>
-              Pod deployment failure
-            </li>,
-          ],
-          "style": Object {
-            "padding": 0,
-          },
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": "0",
-            "nodeType": "host",
-            "props": Object {
-              "children": "Envoy health degraded",
-            },
-            "ref": null,
-            "rendered": "Envoy health degraded",
-            "type": "li",
-          },
-          Object {
-            "instance": null,
-            "key": "1",
-            "nodeType": "host",
-            "props": Object {
-              "children": "Pod deployment failure",
-            },
-            "ref": null,
-            "rendered": "Pod deployment failure",
-            "type": "li",
-          },
-        ],
-        "type": "ul",
-      },
-    ],
-    "type": "div",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": Array [
-          <HealthDetails
-            headline="Failure"
-            health={
-              Object {
-                "deploymentStatuses": Array [
-                  Object {
-                    "available": 0,
-                    "name": "A",
-                    "replicas": 10,
-                  },
-                  Object {
-                    "available": 2,
-                    "name": "B",
-                    "replicas": 2,
-                  },
-                ],
-                "envoy": Object {
-                  "healthy": 1,
-                  "total": 10,
-                },
-                "requests": Object {
-                  "requestCount": 0,
-                  "requestErrorCount": 0,
-                },
-              }
-            }
-            id="svc"
-            placement={undefined}
-            rateInterval=""
-          >
-            <Icon
-              className="health-icon"
-              name="error-circle-o"
-              style={
-                Object {
-                  "fontSize": "35px",
-                }
-              }
-              tabIndex="0"
-              type="pf"
-            />
-          </HealthDetails>,
-          <br />,
-          false,
-          <ul
-            style={
-              Object {
-                "padding": 0,
-              }
-            }
-          >
-            <li>
-              Envoy health degraded
-            </li>
-            <li>
-              Pod deployment failure
-            </li>
-          </ul>,
-        ],
-        "style": Object {
-          "color": "#cc0000",
-        },
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "children": <Icon
-              className="health-icon"
-              name="error-circle-o"
-              style={
-                Object {
-                  "fontSize": "35px",
-                }
-              }
-              tabIndex="0"
-              type="pf"
-            />,
-            "headline": "Failure",
-            "health": Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 0,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            },
-            "id": "svc",
-            "placement": undefined,
-            "rateInterval": "",
-          },
-          "ref": null,
-          "rendered": Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "className": "health-icon",
-              "name": "error-circle-o",
-              "style": Object {
-                "fontSize": "35px",
-              },
-              "tabIndex": "0",
-              "type": "pf",
-            },
-            "ref": null,
-            "rendered": null,
-            "type": [Function],
-          },
-          "type": [Function],
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {},
-          "ref": null,
-          "rendered": null,
-          "type": "br",
-        },
-        false,
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": Array [
-              <li>
-                Envoy health degraded
-              </li>,
-              <li>
-                Pod deployment failure
-              </li>,
-            ],
-            "style": Object {
-              "padding": 0,
-            },
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": "0",
-              "nodeType": "host",
-              "props": Object {
-                "children": "Envoy health degraded",
-              },
-              "ref": null,
-              "rendered": "Envoy health degraded",
-              "type": "li",
-            },
-            Object {
-              "instance": null,
-              "key": "1",
-              "nodeType": "host",
-              "props": Object {
-                "children": "Pod deployment failure",
-              },
-              "ref": null,
-              "rendered": "Pod deployment failure",
-              "type": "li",
-            },
-          ],
-          "type": "ul",
-        },
-      ],
-      "type": "div",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-      },
-    },
-  },
-}
-`;
-
-exports[`HealthIndicator renders envoy degraded 1`] = `
-ShallowWrapper {
-  "length": 1,
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthIndicator
-    health={
-      Object {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 1,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
-        "envoy": Object {
-          "healthy": 1,
-          "total": 10,
-        },
-        "requests": Object {
-          "requestCount": 0,
-          "requestErrorCount": 0,
-        },
-      }
-    }
-    id="svc"
-    mode={1}
-    rateInterval=""
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "host",
-    "props": Object {
-      "children": <HealthDetails
-        headline="Degraded"
-        health={
-          Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          }
-        }
-        id="svc"
-        placement={undefined}
-        rateInterval=""
-      >
-        <Icon
-          className="health-icon"
-          name="warning-triangle-o"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />
-      </HealthDetails>,
-    },
-    "ref": null,
-    "rendered": Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "class",
-      "props": Object {
-        "children": <Icon
-          className="health-icon"
-          name="warning-triangle-o"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />,
-        "headline": "Degraded",
-        "health": Object {
-          "deploymentStatuses": Array [
-            Object {
-              "available": 1,
-              "name": "A",
-              "replicas": 1,
-            },
-            Object {
-              "available": 2,
-              "name": "B",
-              "replicas": 2,
-            },
-          ],
-          "envoy": Object {
-            "healthy": 1,
-            "total": 10,
-          },
-          "requests": Object {
-            "requestCount": 0,
-            "requestErrorCount": 0,
-          },
-        },
-        "id": "svc",
-        "placement": undefined,
-        "rateInterval": "",
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "className": "health-icon",
-          "name": "warning-triangle-o",
-          "style": Object {
-            "fontSize": "18px",
-          },
-          "tabIndex": "0",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": [Function],
-    },
-    "type": "span",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": <HealthDetails
-          headline="Degraded"
-          health={
-            Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            }
-          }
-          id="svc"
-          placement={undefined}
-          rateInterval=""
-        >
-          <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "18px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />
-        </HealthDetails>,
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "children": <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "18px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />,
-          "headline": "Degraded",
-          "health": Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          },
-          "id": "svc",
-          "placement": undefined,
-          "rateInterval": "",
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "className": "health-icon",
-            "name": "warning-triangle-o",
-            "style": Object {
-              "fontSize": "18px",
-            },
-            "tabIndex": "0",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      "type": "span",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-      },
-    },
-  },
-}
-`;
-
-exports[`HealthIndicator renders envoy degraded 2`] = `
-ShallowWrapper {
-  "length": 1,
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthIndicator
-    health={
-      Object {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 1,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
-        "envoy": Object {
-          "healthy": 1,
-          "total": 10,
-        },
-        "requests": Object {
-          "requestCount": 0,
-          "requestErrorCount": 0,
-        },
-      }
-    }
-    id="svc"
-    mode={0}
-    rateInterval=""
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "host",
-    "props": Object {
-      "children": Array [
-        <HealthDetails
-          headline="Degraded"
-          health={
-            Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            }
-          }
-          id="svc"
-          placement={undefined}
-          rateInterval=""
-        >
-          <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "35px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />
-        </HealthDetails>,
-        <br />,
-        "Envoy health degraded",
-        false,
-      ],
-      "style": Object {
-        "color": "#ec7a08",
-      },
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "children": <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "35px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />,
-          "headline": "Degraded",
-          "health": Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          },
-          "id": "svc",
-          "placement": undefined,
-          "rateInterval": "",
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "className": "health-icon",
-            "name": "warning-triangle-o",
-            "style": Object {
-              "fontSize": "35px",
-            },
-            "tabIndex": "0",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {},
-        "ref": null,
-        "rendered": null,
-        "type": "br",
-      },
-      "Envoy health degraded",
-      false,
-    ],
-    "type": "div",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": Array [
-          <HealthDetails
-            headline="Degraded"
-            health={
-              Object {
-                "deploymentStatuses": Array [
-                  Object {
-                    "available": 1,
-                    "name": "A",
-                    "replicas": 1,
-                  },
-                  Object {
-                    "available": 2,
-                    "name": "B",
-                    "replicas": 2,
-                  },
-                ],
-                "envoy": Object {
-                  "healthy": 1,
-                  "total": 10,
-                },
-                "requests": Object {
-                  "requestCount": 0,
-                  "requestErrorCount": 0,
-                },
-              }
-            }
-            id="svc"
-            placement={undefined}
-            rateInterval=""
-          >
-            <Icon
-              className="health-icon"
-              name="warning-triangle-o"
-              style={
-                Object {
-                  "fontSize": "35px",
-                }
-              }
-              tabIndex="0"
-              type="pf"
-            />
-          </HealthDetails>,
-          <br />,
-          "Envoy health degraded",
-          false,
-        ],
-        "style": Object {
-          "color": "#ec7a08",
-        },
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "children": <Icon
-              className="health-icon"
-              name="warning-triangle-o"
-              style={
-                Object {
-                  "fontSize": "35px",
-                }
-              }
-              tabIndex="0"
-              type="pf"
-            />,
-            "headline": "Degraded",
-            "health": Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            },
-            "id": "svc",
-            "placement": undefined,
-            "rateInterval": "",
-          },
-          "ref": null,
-          "rendered": Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "className": "health-icon",
-              "name": "warning-triangle-o",
-              "style": Object {
-                "fontSize": "35px",
-              },
-              "tabIndex": "0",
-              "type": "pf",
-            },
-            "ref": null,
-            "rendered": null,
-            "type": [Function],
-          },
-          "type": [Function],
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {},
-          "ref": null,
-          "rendered": null,
-          "type": "br",
-        },
-        "Envoy health degraded",
-        false,
-      ],
-      "type": "div",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-      },
-    },
-  },
-}
-`;
-
 exports[`HealthIndicator renders envoy failure 1`] = `
 ShallowWrapper {
   "length": 1,
@@ -3288,8 +1344,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 0,
-          "total": 10,
+          "inbound": Object {
+            "healthy": 0,
+            "total": 10,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -3330,8 +1392,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 0,
-              "total": 10,
+              "inbound": Object {
+                "healthy": 0,
+                "total": 10,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -3388,8 +1456,14 @@ ShallowWrapper {
             },
           ],
           "envoy": Object {
-            "healthy": 0,
-            "total": 10,
+            "inbound": Object {
+              "healthy": 0,
+              "total": 10,
+            },
+            "outbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
           },
           "requests": Object {
             "requestCount": 0,
@@ -3445,8 +1519,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 0,
-                "total": 10,
+                "inbound": Object {
+                  "healthy": 0,
+                  "total": 10,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -3503,8 +1583,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 0,
-              "total": 10,
+              "inbound": Object {
+                "healthy": 0,
+                "total": 10,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -3568,8 +1654,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 0,
-          "total": 10,
+          "inbound": Object {
+            "healthy": 0,
+            "total": 10,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -3611,8 +1703,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 0,
-                "total": 10,
+                "inbound": Object {
+                  "healthy": 0,
+                  "total": 10,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -3690,8 +1788,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 0,
-              "total": 10,
+              "inbound": Object {
+                "healthy": 0,
+                "total": 10,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -3803,8 +1907,14 @@ ShallowWrapper {
                   },
                 ],
                 "envoy": Object {
-                  "healthy": 0,
-                  "total": 10,
+                  "inbound": Object {
+                    "healthy": 0,
+                    "total": 10,
+                  },
+                  "outbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
                 },
                 "requests": Object {
                   "requestCount": 0,
@@ -3882,8 +1992,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 0,
-                "total": 10,
+                "inbound": Object {
+                  "healthy": 0,
+                  "total": 10,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -3982,670 +2098,6 @@ ShallowWrapper {
 }
 `;
 
-exports[`HealthIndicator renders error rate degraded 1`] = `
-ShallowWrapper {
-  "length": 1,
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthIndicator
-    health={
-      Object {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 1,
-          },
-        ],
-        "envoy": Object {
-          "healthy": 1,
-          "total": 10,
-        },
-        "requests": Object {
-          "requestCount": 1.56,
-          "requestErrorCount": 0.1,
-        },
-      }
-    }
-    id="svc"
-    mode={1}
-    rateInterval=""
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "host",
-    "props": Object {
-      "children": <HealthDetails
-        headline="Degraded"
-        health={
-          Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 1.56,
-              "requestErrorCount": 0.1,
-            },
-          }
-        }
-        id="svc"
-        placement={undefined}
-        rateInterval=""
-      >
-        <Icon
-          className="health-icon"
-          name="warning-triangle-o"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />
-      </HealthDetails>,
-    },
-    "ref": null,
-    "rendered": Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "class",
-      "props": Object {
-        "children": <Icon
-          className="health-icon"
-          name="warning-triangle-o"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />,
-        "headline": "Degraded",
-        "health": Object {
-          "deploymentStatuses": Array [
-            Object {
-              "available": 1,
-              "name": "A",
-              "replicas": 1,
-            },
-          ],
-          "envoy": Object {
-            "healthy": 1,
-            "total": 10,
-          },
-          "requests": Object {
-            "requestCount": 1.56,
-            "requestErrorCount": 0.1,
-          },
-        },
-        "id": "svc",
-        "placement": undefined,
-        "rateInterval": "",
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "className": "health-icon",
-          "name": "warning-triangle-o",
-          "style": Object {
-            "fontSize": "18px",
-          },
-          "tabIndex": "0",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": [Function],
-    },
-    "type": "span",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": <HealthDetails
-          headline="Degraded"
-          health={
-            Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 1.56,
-                "requestErrorCount": 0.1,
-              },
-            }
-          }
-          id="svc"
-          placement={undefined}
-          rateInterval=""
-        >
-          <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "18px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />
-        </HealthDetails>,
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "children": <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "18px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />,
-          "headline": "Degraded",
-          "health": Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 1.56,
-              "requestErrorCount": 0.1,
-            },
-          },
-          "id": "svc",
-          "placement": undefined,
-          "rateInterval": "",
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "className": "health-icon",
-            "name": "warning-triangle-o",
-            "style": Object {
-              "fontSize": "18px",
-            },
-            "tabIndex": "0",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      "type": "span",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-      },
-    },
-  },
-}
-`;
-
-exports[`HealthIndicator renders error rate degraded 2`] = `
-ShallowWrapper {
-  "length": 1,
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthIndicator
-    health={
-      Object {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 1,
-          },
-        ],
-        "envoy": Object {
-          "healthy": 1,
-          "total": 10,
-        },
-        "requests": Object {
-          "requestCount": 1.56,
-          "requestErrorCount": 0.1,
-        },
-      }
-    }
-    id="svc"
-    mode={0}
-    rateInterval=""
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "host",
-    "props": Object {
-      "children": Array [
-        <HealthDetails
-          headline="Degraded"
-          health={
-            Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 1.56,
-                "requestErrorCount": 0.1,
-              },
-            }
-          }
-          id="svc"
-          placement={undefined}
-          rateInterval=""
-        >
-          <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "35px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />
-        </HealthDetails>,
-        <br />,
-        false,
-        <ul
-          style={
-            Object {
-              "padding": 0,
-            }
-          }
-        >
-          <li>
-            Envoy health degraded
-          </li>
-          <li>
-            Error rate degraded: 6.41%&gt;=0.1%
-          </li>
-        </ul>,
-      ],
-      "style": Object {
-        "color": "#ec7a08",
-      },
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "children": <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "35px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />,
-          "headline": "Degraded",
-          "health": Object {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-            ],
-            "envoy": Object {
-              "healthy": 1,
-              "total": 10,
-            },
-            "requests": Object {
-              "requestCount": 1.56,
-              "requestErrorCount": 0.1,
-            },
-          },
-          "id": "svc",
-          "placement": undefined,
-          "rateInterval": "",
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "className": "health-icon",
-            "name": "warning-triangle-o",
-            "style": Object {
-              "fontSize": "35px",
-            },
-            "tabIndex": "0",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {},
-        "ref": null,
-        "rendered": null,
-        "type": "br",
-      },
-      false,
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": Array [
-            <li>
-              Envoy health degraded
-            </li>,
-            <li>
-              Error rate degraded: 6.41%&gt;=0.1%
-            </li>,
-          ],
-          "style": Object {
-            "padding": 0,
-          },
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": "0",
-            "nodeType": "host",
-            "props": Object {
-              "children": "Envoy health degraded",
-            },
-            "ref": null,
-            "rendered": "Envoy health degraded",
-            "type": "li",
-          },
-          Object {
-            "instance": null,
-            "key": "1",
-            "nodeType": "host",
-            "props": Object {
-              "children": "Error rate degraded: 6.41%>=0.1%",
-            },
-            "ref": null,
-            "rendered": "Error rate degraded: 6.41%>=0.1%",
-            "type": "li",
-          },
-        ],
-        "type": "ul",
-      },
-    ],
-    "type": "div",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": Array [
-          <HealthDetails
-            headline="Degraded"
-            health={
-              Object {
-                "deploymentStatuses": Array [
-                  Object {
-                    "available": 1,
-                    "name": "A",
-                    "replicas": 1,
-                  },
-                ],
-                "envoy": Object {
-                  "healthy": 1,
-                  "total": 10,
-                },
-                "requests": Object {
-                  "requestCount": 1.56,
-                  "requestErrorCount": 0.1,
-                },
-              }
-            }
-            id="svc"
-            placement={undefined}
-            rateInterval=""
-          >
-            <Icon
-              className="health-icon"
-              name="warning-triangle-o"
-              style={
-                Object {
-                  "fontSize": "35px",
-                }
-              }
-              tabIndex="0"
-              type="pf"
-            />
-          </HealthDetails>,
-          <br />,
-          false,
-          <ul
-            style={
-              Object {
-                "padding": 0,
-              }
-            }
-          >
-            <li>
-              Envoy health degraded
-            </li>
-            <li>
-              Error rate degraded: 6.41%&gt;=0.1%
-            </li>
-          </ul>,
-        ],
-        "style": Object {
-          "color": "#ec7a08",
-        },
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "children": <Icon
-              className="health-icon"
-              name="warning-triangle-o"
-              style={
-                Object {
-                  "fontSize": "35px",
-                }
-              }
-              tabIndex="0"
-              type="pf"
-            />,
-            "headline": "Degraded",
-            "health": Object {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-              ],
-              "envoy": Object {
-                "healthy": 1,
-                "total": 10,
-              },
-              "requests": Object {
-                "requestCount": 1.56,
-                "requestErrorCount": 0.1,
-              },
-            },
-            "id": "svc",
-            "placement": undefined,
-            "rateInterval": "",
-          },
-          "ref": null,
-          "rendered": Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "className": "health-icon",
-              "name": "warning-triangle-o",
-              "style": Object {
-                "fontSize": "35px",
-              },
-              "tabIndex": "0",
-              "type": "pf",
-            },
-            "ref": null,
-            "rendered": null,
-            "type": [Function],
-          },
-          "type": [Function],
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {},
-          "ref": null,
-          "rendered": null,
-          "type": "br",
-        },
-        false,
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": Array [
-              <li>
-                Envoy health degraded
-              </li>,
-              <li>
-                Error rate degraded: 6.41%&gt;=0.1%
-              </li>,
-            ],
-            "style": Object {
-              "padding": 0,
-            },
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": "0",
-              "nodeType": "host",
-              "props": Object {
-                "children": "Envoy health degraded",
-              },
-              "ref": null,
-              "rendered": "Envoy health degraded",
-              "type": "li",
-            },
-            Object {
-              "instance": null,
-              "key": "1",
-              "nodeType": "host",
-              "props": Object {
-                "children": "Error rate degraded: 6.41%>=0.1%",
-              },
-              "ref": null,
-              "rendered": "Error rate degraded: 6.41%>=0.1%",
-              "type": "li",
-            },
-          ],
-          "type": "ul",
-        },
-      ],
-      "type": "div",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-      },
-    },
-  },
-}
-`;
-
 exports[`HealthIndicator renders error rate failure 1`] = `
 ShallowWrapper {
   "length": 1,
@@ -4661,8 +2113,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 10,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 10,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 10,
+          },
         },
         "requests": Object {
           "requestCount": 1.56,
@@ -4698,8 +2156,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 10,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 10,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 10,
+              },
             },
             "requests": Object {
               "requestCount": 1.56,
@@ -4751,8 +2215,14 @@ ShallowWrapper {
             },
           ],
           "envoy": Object {
-            "healthy": 1,
-            "total": 10,
+            "inbound": Object {
+              "healthy": 1,
+              "total": 10,
+            },
+            "outbound": Object {
+              "healthy": 1,
+              "total": 10,
+            },
           },
           "requests": Object {
             "requestCount": 1.56,
@@ -4803,8 +2273,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 10,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 10,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 10,
+                },
               },
               "requests": Object {
                 "requestCount": 1.56,
@@ -4856,8 +2332,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 10,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 10,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 10,
+              },
             },
             "requests": Object {
               "requestCount": 1.56,
@@ -4916,8 +2398,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 10,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 10,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 10,
+          },
         },
         "requests": Object {
           "requestCount": 1.56,
@@ -4954,8 +2442,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 10,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 10,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 10,
+                },
               },
               "requests": Object {
                 "requestCount": 1.56,
@@ -5028,8 +2522,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 10,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 10,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 10,
+              },
             },
             "requests": Object {
               "requestCount": 1.56,
@@ -5136,8 +2636,14 @@ ShallowWrapper {
                   },
                 ],
                 "envoy": Object {
-                  "healthy": 1,
-                  "total": 10,
+                  "inbound": Object {
+                    "healthy": 1,
+                    "total": 10,
+                  },
+                  "outbound": Object {
+                    "healthy": 1,
+                    "total": 10,
+                  },
                 },
                 "requests": Object {
                   "requestCount": 1.56,
@@ -5210,8 +2716,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 10,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 10,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 10,
+                },
               },
               "requests": Object {
                 "requestCount": 1.56,
@@ -5330,8 +2842,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 1,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -5372,8 +2890,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -5430,8 +2954,14 @@ ShallowWrapper {
             },
           ],
           "envoy": Object {
-            "healthy": 1,
-            "total": 1,
+            "inbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
+            "outbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
           },
           "requests": Object {
             "requestCount": 0,
@@ -5487,8 +3017,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -5545,8 +3081,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -5610,8 +3152,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 1,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -5653,8 +3201,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -5719,8 +3273,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -5789,8 +3349,14 @@ ShallowWrapper {
                   },
                 ],
                 "envoy": Object {
-                  "healthy": 1,
-                  "total": 1,
+                  "inbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
+                  "outbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
                 },
                 "requests": Object {
                   "requestCount": 0,
@@ -5855,8 +3421,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -5932,8 +3504,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 1,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -5974,8 +3552,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -6032,8 +3616,14 @@ ShallowWrapper {
             },
           ],
           "envoy": Object {
-            "healthy": 1,
-            "total": 1,
+            "inbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
+            "outbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
           },
           "requests": Object {
             "requestCount": 0,
@@ -6089,8 +3679,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -6147,8 +3743,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -6212,8 +3814,14 @@ ShallowWrapper {
           },
         ],
         "envoy": Object {
-          "healthy": 1,
-          "total": 1,
+          "inbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
+          "outbound": Object {
+            "healthy": 1,
+            "total": 1,
+          },
         },
         "requests": Object {
           "requestCount": 0,
@@ -6255,8 +3863,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
@@ -6321,8 +3935,14 @@ ShallowWrapper {
               },
             ],
             "envoy": Object {
-              "healthy": 1,
-              "total": 1,
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
             },
             "requests": Object {
               "requestCount": 0,
@@ -6391,8 +4011,14 @@ ShallowWrapper {
                   },
                 ],
                 "envoy": Object {
-                  "healthy": 1,
-                  "total": 1,
+                  "inbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
+                  "outbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
                 },
                 "requests": Object {
                   "requestCount": 0,
@@ -6457,8 +4083,14 @@ ShallowWrapper {
                 },
               ],
               "envoy": Object {
-                "healthy": 1,
-                "total": 1,
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
               },
               "requests": Object {
                 "requestCount": 0,
