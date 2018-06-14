@@ -31,7 +31,7 @@ ShallowWrapper {
       }
     }
     id="svc"
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -114,7 +114,7 @@ ShallowWrapper {
           </span>
            Error Rate:
         </strong>
-         No requests over last undefined
+         No requests over last 10 minutes
       </Popover>,
       "placement": "right",
       "rootClose": false,
@@ -202,7 +202,7 @@ ShallowWrapper {
             </span>
              Error Rate:
           </strong>
-           No requests over last undefined
+           No requests over last 10 minutes
         </Popover>,
         "placement": "right",
         "rootClose": false,
@@ -257,7 +257,7 @@ ShallowWrapper {
       }
     }
     id="svc"
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -340,7 +340,7 @@ ShallowWrapper {
           </span>
            Error Rate:
         </strong>
-         No requests over last undefined
+         No requests over last 10 minutes
       </Popover>,
       "placement": "right",
       "rootClose": false,
@@ -428,7 +428,7 @@ ShallowWrapper {
             </span>
              Error Rate:
           </strong>
-           No requests over last undefined
+           No requests over last 10 minutes
         </Popover>,
         "placement": "right",
         "rootClose": false,
@@ -483,7 +483,7 @@ ShallowWrapper {
       }
     }
     id="svc"
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -566,7 +566,7 @@ ShallowWrapper {
           </span>
            Error Rate:
         </strong>
-         No requests over last undefined
+         No requests over last 10 minutes
       </Popover>,
       "placement": "right",
       "rootClose": false,
@@ -654,7 +654,7 @@ ShallowWrapper {
             </span>
              Error Rate:
           </strong>
-           No requests over last undefined
+           No requests over last 10 minutes
         </Popover>,
         "placement": "right",
         "rootClose": false,

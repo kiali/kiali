@@ -101,8 +101,18 @@ export const getServiceMetrics = (
   return newRequest('get', `/api/namespaces/${namespace}/services/${service}/metrics`, params, {}, auth);
 };
 
-export const getServiceHealth = (auth: any, namespace: String, service: String): Promise<Response<Health>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/services/${service}/health`, {}, {}, auth);
+export const getServiceHealth = (
+  auth: any,
+  namespace: String,
+  service: String,
+  durationSeconds?: number
+): Promise<Response<Health>> => {
+  const params = durationSeconds
+    ? {
+        rateInterval: String(durationSeconds) + 's'
+      }
+    : {};
+  return newRequest('get', `/api/namespaces/${namespace}/services/${service}/health`, params, {}, auth);
 };
 
 export const getGrafanaInfo = (auth: any): Promise<Response<GrafanaInfo>> => {

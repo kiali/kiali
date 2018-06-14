@@ -14,6 +14,7 @@ import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
 import { shouldRefreshData } from './SummaryPanelCommon';
+import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -119,10 +120,20 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const outgoing = getAccumulatedTrafficRate(this.props.data.summaryTarget.edgesTo('*'));
 
     const isUnknown = service === 'unknown';
+    const health = node.data('health');
     return (
       <div className="panel panel-default" style={SummaryPanelNode.panelStyle}>
         <div className="panel-heading">
-          Service: {isUnknown ? 'unknown' : serviceHotLink}
+          {health && (
+            <HealthIndicator
+              id="graph-health-indicator"
+              mode={DisplayMode.SMALL}
+              health={health}
+              tooltipPlacement="left"
+              rateInterval={this.props.duration}
+            />
+          )}
+          <span> Service: {isUnknown ? 'unknown' : serviceHotLink}</span>
           <div style={{ paddingTop: '3px' }}>
             <Badge scale={0.9} style="plastic" leftText="namespace" rightText={namespace} color={PfColors.Green400} />
             <Badge

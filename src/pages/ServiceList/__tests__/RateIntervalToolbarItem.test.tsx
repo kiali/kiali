@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import RateIntervalToolbarItem from '../RateIntervalToolbarItem';
-import RateIntervals from '../../../types/RateIntervals';
+import * as RateIntervals from '../../../types/RateIntervals';
 
 describe('RateIntervalToolbarItem', () => {
   it('renders correctly', () => {
-    const wrapper = shallow(<RateIntervalToolbarItem rateIntervalSelected="10m" />);
+    const wrapper = shallow(<RateIntervalToolbarItem rateIntervalSelected={600} />);
     expect(wrapper).toBeDefined();
     expect(wrapper).toMatchSnapshot();
-    expect(wrapper.find('MenuItem').length).toBe(RateIntervals.length);
+    expect(wrapper.find('MenuItem').length).toBe(RateIntervals.tuples.length);
   });
 });

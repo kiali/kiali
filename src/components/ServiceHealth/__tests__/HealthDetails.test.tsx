@@ -12,7 +12,7 @@ describe('HealthDetails', () => {
       requests: { requestCount: 0, requestErrorCount: 0 }
     };
 
-    let wrapper = shallow(<HealthDetails id="svc" health={health} headline="" rateInterval="" />);
+    let wrapper = shallow(<HealthDetails id="svc" health={health} headline="" rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
   });
 
@@ -23,7 +23,7 @@ describe('HealthDetails', () => {
       requests: { requestCount: 0, requestErrorCount: 0 }
     };
 
-    let wrapper = shallow(<HealthDetails id="svc" health={health} headline="" rateInterval="" />);
+    let wrapper = shallow(<HealthDetails id="svc" health={health} headline="" rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
   });
 
@@ -34,7 +34,7 @@ describe('HealthDetails', () => {
       requests: { requestCount: 0, requestErrorCount: 0 }
     };
 
-    let wrapper = shallow(<HealthDetails id="svc" health={health} headline="" rateInterval="" />);
+    let wrapper = shallow(<HealthDetails id="svc" health={health} headline="" rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
   });
 });

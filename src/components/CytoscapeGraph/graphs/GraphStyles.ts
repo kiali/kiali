@@ -1,6 +1,7 @@
 import { PfColors } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { config } from '../../../config';
+import { FAILURE, DEGRADED } from '../../../utils/Health';
 
 export const DimClass = 'mousedim';
 
@@ -157,6 +158,20 @@ export class GraphStyles {
         selector: 'node.' + DimClass,
         style: {
           opacity: '0.3'
+        }
+      },
+      {
+        selector: 'node.' + DEGRADED.name,
+        style: {
+          'border-color': DEGRADED.color,
+          'border-width': '3px'
+        }
+      },
+      {
+        selector: 'node.' + FAILURE.name,
+        style: {
+          'border-color': FAILURE.color,
+          'border-width': '3px'
         }
       },
       {

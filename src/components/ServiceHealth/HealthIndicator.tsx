@@ -15,7 +15,7 @@ interface Props {
   health?: Health;
   mode: DisplayMode;
   tooltipPlacement?: string;
-  rateInterval: string;
+  rateInterval: number;
 }
 
 export class HealthIndicator extends React.PureComponent<Props, {}> {
