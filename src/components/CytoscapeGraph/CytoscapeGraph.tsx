@@ -18,6 +18,8 @@ import { authentication } from '../../utils/Authentication';
 import * as H from '../../utils/Health';
 import { NamespaceHealth } from '../../types/Health';
 
+import { makeURLFromParams } from '../Nav/NavUtils';
+
 type CytoscapeGraphType = {
   elements?: any;
   edgeLabelMode: EdgeLabelMode;
@@ -27,6 +29,7 @@ type CytoscapeGraphType = {
   showMissingSidecars: boolean;
   showTrafficAnimation: boolean;
   onClick: (event: CytoscapeClickEvent) => void;
+  onDoubleClick: (event: CytoscapeClickEvent) => void;
   onReady: (cytoscapeRef: any) => void;
   refresh: any;
 };
@@ -176,10 +179,43 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       }
     };
 
-    cy.on('tap', (evt: any) => {
+    const injectDoubleTap = tapEventCallback => {
+      let lastTap, tapTimeout;
+
+      return (evt: any) => {
+        const currentTap = evt.target;
+
+        tapTimeout = setTimeout(() => (lastTap = undefined), 350);
+
+        if (lastTap && currentTap === lastTap) {
+          clearTimeout(tapTimeout);
+          lastTap = undefined;
+
+          currentTap.trigger('doubleTap', evt);
+        } else {
+          lastTap = currentTap;
+
+          tapEventCallback(evt);
+        }
+      };
+    };
+
+    cy.on(
+      'tap',
+      injectDoubleTap((evt: any) => {
+        const cytoscapeEvent = getCytoscapeBaseEvent(evt);
+
+        if (cytoscapeEvent) {
+          this.handleTap(cytoscapeEvent);
+        }
+      })
+    );
+
+    cy.on('doubleTap', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
-      if (cytoscapeEvent) {
-        this.handleTap(cytoscapeEvent);
+
+      if (cytoscapeEvent && cytoscapeEvent.summaryType === 'node') {
+        this.handleDoubleTap(cytoscapeEvent);
       }
     });
 
@@ -189,12 +225,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         this.handleMouseIn(cytoscapeEvent);
       }
     });
+
     cy.on('mouseout', 'node,edge', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
       if (cytoscapeEvent) {
         this.handleMouseOut(cytoscapeEvent);
       }
     });
+
     cy.on('layoutstop', (evt: any) => {
       // Don't allow a large zoom if the graph has a few nodes (nodes would look too big).
       if (cy.zoom() > 2.5) {
@@ -202,6 +240,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         cy.center();
       }
     });
+
     cy.ready((evt: any) => {
       this.props.onReady(evt.cy);
       this.processGraphUpdate(cy);
@@ -281,6 +320,21 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.trafficRenderer.start();
     }
   }
+
+  private handleDoubleTap = (event: CytoscapeClickEvent) => {
+    if (!event.summaryTarget.data('isOutside')) {
+      return;
+    }
+
+    this.context.router.history.push(
+      makeURLFromParams({
+        namespace: { name: event.summaryTarget.data('service').split('.')[1] },
+        graphLayout: this.props.graphLayout,
+        graphDuration: this.props.graphDuration,
+        edgeLabelMode: this.props.edgeLabelMode
+      })
+    );
+  };
 
   private handleTap = (event: CytoscapeClickEvent) => {
     this.props.onClick(event);
