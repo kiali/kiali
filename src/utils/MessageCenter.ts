@@ -8,3 +8,7 @@ const DEFAULT_MESSAGE_TYPE = MessageType.ERROR;
 export const add = (content: string, group: string = DEFAULT_GROUP_ID, type: MessageType = DEFAULT_MESSAGE_TYPE) => {
   store.dispatch(MessageCenterActions.addMessage(content, group, type));
 };
+
+export const toggleMessageCenter = () => {
+  store.dispatch(MessageCenterActions.toggleMessageCenter());
+};

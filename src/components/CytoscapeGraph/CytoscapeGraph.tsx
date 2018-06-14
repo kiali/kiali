@@ -27,7 +27,11 @@ type CytoscapeGraphType = {
   refresh: any;
 };
 
-type CytoscapeGraphProps = CytoscapeGraphType & GraphParamsType;
+type CytoscapeGraphProps = CytoscapeGraphType &
+  GraphParamsType & {
+    isLoading: boolean;
+    isError: boolean;
+  };
 
 type CytoscapeGraphState = {};
 
@@ -72,7 +76,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.elements !== nextProps.elements ||
       this.props.graphLayout !== nextProps.graphLayout ||
-      this.props.showTrafficAnimation !== nextProps.showTrafficAnimation
+      this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
+      this.props.isError !== nextProps.isError
     );
   }
 
@@ -91,6 +96,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           elements={this.props.elements}
           namespace={this.props.namespace.name}
           action={this.props.refresh}
+          isLoading={this.props.isLoading}
+          isError={this.props.isError}
         >
           <CytoscapeReactWrapper
             ref={e => {
@@ -321,7 +328,9 @@ const mapStateToProps = (state: KialiAppState) => ({
   showRouteRules: state.serviceGraph.filterState.showRouteRules,
   showMissingSidecars: state.serviceGraph.filterState.showMissingSidecars,
   showTrafficAnimation: state.serviceGraph.filterState.showTrafficAnimation,
-  elements: state.serviceGraph.graphData
+  elements: state.serviceGraph.graphData,
+  isLoading: state.serviceGraph.isLoading,
+  isError: state.serviceGraph.isError
 });
 
 const mapDispatchToProps = (dispatch: any) => ({

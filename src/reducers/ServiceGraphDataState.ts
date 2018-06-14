@@ -22,6 +22,7 @@ const serviceGraphDataState = (state: ServiceGraphState = INITIAL_STATE, action)
   switch (action.type) {
     case ServiceGraphDataActionKeys.GET_GRAPH_DATA_START:
       newState.isLoading = true;
+      newState.isError = false;
       break;
     case ServiceGraphDataActionKeys.HANDLE_LEGEND:
       return {
@@ -30,12 +31,14 @@ const serviceGraphDataState = (state: ServiceGraphState = INITIAL_STATE, action)
       };
     case ServiceGraphDataActionKeys.GET_GRAPH_DATA_SUCCESS:
       newState.isLoading = false;
+      newState.isError = false;
       newState.graphDataTimestamp = action.timestamp;
       newState.graphData = action.graphData;
       break;
     case ServiceGraphDataActionKeys.GET_GRAPH_DATA_FAILURE:
       console.warn('ServiceGraphDataState reducer: failed to get graph data');
       newState.isLoading = false;
+      newState.isError = true;
       // newState.error = action.error; // Already handled in the action.
       break;
     case ServiceGraphActionKeys.SERVICE_GRAPH_SIDE_PANEL_SHOW_INFO:
