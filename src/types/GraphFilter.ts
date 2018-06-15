@@ -12,7 +12,8 @@ export enum EdgeLabelMode {
   HIDE = 'hide',
   REQUESTS_PER_SECOND = 'requestsPerSecond',
   REQUESTS_PERCENT_OF_TOTAL = 'requestsPercentOfTotal',
-  LATENCY_95TH_PERCENTILE = 'latency95thPercentile'
+  LATENCY_95TH_PERCENTILE = 'latency95thPercentile',
+  MTLS_ENABLED = 'security'
 }
 
 export namespace EdgeLabelMode {

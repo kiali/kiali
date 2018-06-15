@@ -25,6 +25,14 @@ export class GraphStyles {
       return PfColors.Green400;
     };
 
+    const getTLSValue = (ele: any, tlsValue: string, nonTlsValue: string): string => {
+      if (ele.data('enabledmTLS') && ele.data('edgeLabelMode') === EdgeLabelMode.MTLS_ENABLED) {
+        return tlsValue;
+      } else {
+        return nonTlsValue;
+      }
+    };
+
     return [
       {
         selector: 'node',
@@ -115,11 +123,20 @@ export class GraphStyles {
                 const percentRate = ele.data('percentRate') ? parseFloat(ele.data('percentRate')) : 0;
                 return percentRate > 0 ? percentRate.toFixed(0) + '%' : '';
               }
+              case EdgeLabelMode.MTLS_ENABLED: {
+                return ele.data('enabledmTLS') ? '\ue923' : '';
+              }
               default:
                 return '';
             }
           },
           'curve-style': 'bezier',
+          'font-family': (ele: any) => {
+            return getTLSValue(ele, 'PatternFlyIcons-webfont', 'inherit');
+          },
+          'text-rotation': (ele: any) => {
+            return getTLSValue(ele, '0deg', 'autorotate');
+          },
           'font-size': '7px',
           'line-color': (ele: any) => {
             return getEdgeColor(ele);
@@ -132,7 +149,6 @@ export class GraphStyles {
             return getEdgeColor(ele);
           },
           'text-margin-x': '6px',
-          'text-rotation': 'autorotate',
           width: 1
         }
       },
