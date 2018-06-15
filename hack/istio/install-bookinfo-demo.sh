@@ -1,33 +1,40 @@
 #!/bin/sh
 
-# ISTIO_VERSION is the name used by the getLatestIstio script - if empty, gets the latest version
-# CLIENT_EXE_NAME is going to either be "oc", "kubectl", or "istioctl" (which is the default since it will be installed via cluster-openshift.sh hack script).
-ISTIO_VERSION=
+##############################################################################
+# install-bookinfo-demo.sh
+#
+# Installs the Istio Bookinfo Sample Demo Application into your cluster
+# (either Kubernetes or OpenShift).
+#
+# If you do not yet have it, this script will download a copy of Istio.
+#
+# See --help for more details on options to this script.
+#
+##############################################################################
+
+# ISTIO_DIR is where the Istio download is installed and thus where the bookinfo demo files are found.
+# CLIENT_EXE_NAME is going to either be "oc", "kubectl", or "istiooc" (which is the default since it will be installed via cluster-openshift.sh hack script).
+ISTIO_DIR=
 CLIENT_EXE_NAME="istiooc"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
-    -v)
-      ISTIO_VERSION="$2"
+    -id|--istio-dir)
+      ISTIO_DIR="$2"
       shift;shift
       ;;
-    -c)
+    -c|--client-exe)
       CLIENT_EXE_NAME="$2"
       shift;shift
       ;;
-    -o)
-      OUTPUT_DIR="$2"
-      shift;shift
-      ;;
-    -h)
+    -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
-  -v : Version of Istio to download
-  -c : Cluster client executable name - valid values are "kubectl" or "oc" or "istiooc"
-  -o : Output directory where Istio is (or will be downloaded to if it doesn't exist)
-  -h : this message
+  -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
+  -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc" or "istiooc"
+  -h|--help : this message
 HELPMSG
       exit 1
       ;;
@@ -38,41 +45,34 @@ HELPMSG
   esac
 done
 
-# Go to the main output directory
-HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
-mkdir -p "$OUTPUT_DIR"
-cd "$OUTPUT_DIR"
-OUTPUT_DIR="$(pwd)" # remove the .. references
-echo "Output Directory: ${OUTPUT_DIR}"
-
-if [ "x${ISTIO_VERSION}" == "x" ]; then
-   VERSION_WE_WANT=$(curl https://api.github.com/repos/istio/istio/releases/latest 2> /dev/null |\
-         grep  "tag_name" | \
-         sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
-   echo "Will use the latest Istio version: $VERSION_WE_WANT"
-else
-   VERSION_WE_WANT="${ISTIO_VERSION}"
-   echo "Will use a specific Istio version: $VERSION_WE_WANT"
+if [ "${ISTIO_DIR}" == "" ]; then
+  # Go to the main output directory and try to find an Istio there.
+  # The bookinfo demo files rarely change - should be the same no matter what Istio version we find.
+  HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+  OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
+  ALL_ISTIOS=$(ls -d1 ${OUTPUT_DIR}/istio-*)
+  if [ "$?" != "0" ]; then
+    ${HACK_SCRIPT_DIR}/download-istio.sh
+    if [ "$?" != "0" ]; then
+      echo "ERROR: You do not have Istio installed and it cannot be downloaded"
+      exit 1
+    fi
+  fi
+  ISTIO_DIR=$(ls -d1 ${OUTPUT_DIR}/istio-* | head -n1)
 fi
 
-# See if the latest Istio is downloaded; if not, get it now.
-echo "Will look for Istio here: ${OUTPUT_DIR}/istio-${VERSION_WE_WANT}"
-if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
-   echo "Cannot find Istio ${VERSION_WE_WANT} - will download it now..."
-   export ISTIO_VERSION
-   curl -L https://git.io/getLatestIstio | sh -
+if [ ! -d "${ISTIO_DIR}" ]; then
+   echo "ERROR: Istio cannot be found at: ${ISTIO_DIR}"
+   exit 1
 fi
 
-cd "./istio-${VERSION_WE_WANT}/"
-ISTIO_DIR="$(pwd)"
 echo "Istio is found here: ${ISTIO_DIR}"
 if [[ -x "${ISTIO_DIR}/bin/istioctl" ]]; then
   echo "istioctl is found here: ${ISTIO_DIR}/bin/istioctl"
   ISTIOCTL="${ISTIO_DIR}/bin/istioctl"
   ${ISTIOCTL} version
 else
-  echo "WARNING: istioctl is NOT found at ${ISTIO_DIR}/bin/istioctl"
+  echo "ERROR: istioctl is NOT found at ${ISTIO_DIR}/bin/istioctl"
   exit 1
 fi
 
@@ -83,7 +83,6 @@ else
   echo "You must install the cluster client ${CLIENT_EXE_NAME} in your PATH before you can continue"
   exit 1
 fi
-
 
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
@@ -98,6 +97,8 @@ $ISTIOCTL kube-inject -f ${ISTIO_DIR}/samples/bookinfo/kube/bookinfo.yaml | $CLI
 # This is only if automatic injection of sidecars is enabled
 # $CLIENT_EXE apply -n bookinfo -f ${ISTIO_DIR}/samples/bookinfo/kube/bookinfo.yaml
 $ISTIOCTL create -n bookinfo -f ${ISTIO_DIR}/samples/bookinfo/routing/bookinfo-gateway.yaml
+
+sleep 4
 
 echo "Bookinfo Demo should be installed and starting up - here are the pods and services"
 $CLIENT_EXE get services -n bookinfo
