@@ -8,7 +8,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/graph/tree"
+	"github.com/kiali/kiali/graph"
 )
 
 func TestNonTrafficScenario(t *testing.T) {
@@ -16,31 +16,36 @@ func TestNonTrafficScenario(t *testing.T) {
 
 	config.Set(config.NewConfig())
 
-	// Empty trees
-	trees := make([]*tree.ServiceNode, 0)
+	// Empty trafficMap
+	trafficMap := graph.NewTrafficMap()
 	pods := mockPods()
 
-	addUnusedNodes(&trees, "testNamespace", pods)
+	addUnusedNodes(trafficMap, "testNamespace", pods)
 
-	assert.Equal(4, len(trees))
+	assert.Equal(4, len(trafficMap))
 
-	assert.Equal("customer.testNamespace.svc.cluster.local", trees[0].Name)
-	assert.Equal(float64(0), trees[0].Metadata["rate"])
-	assert.Equal("true", trees[0].Metadata["isUnused"])
+	id := graph.Id("customer.testNamespace.svc.cluster.local", "v1")
+	s, ok := trafficMap[id]
+	assert.Equal(true, ok)
+	assert.Equal("customer.testNamespace.svc.cluster.local", s.Name)
+	assert.Equal(true, s.Metadata["isUnused"])
 
-	assert.Equal("preference.testNamespace.svc.cluster.local", trees[1].Name)
-	assert.Equal(float64(0), trees[1].Metadata["rate"])
-	assert.Equal("true", trees[1].Metadata["isUnused"])
+	id = graph.Id("preference.testNamespace.svc.cluster.local", "v1")
+	s, ok = trafficMap[id]
+	assert.Equal("preference.testNamespace.svc.cluster.local", s.Name)
+	assert.Equal(true, s.Metadata["isUnused"])
 
-	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[2].Name)
-	assert.Equal("v1", trees[2].Version)
-	assert.Equal(float64(0), trees[2].Metadata["rate"])
-	assert.Equal("true", trees[2].Metadata["isUnused"])
+	id = graph.Id("recommendation.testNamespace.svc.cluster.local", "v1")
+	s, ok = trafficMap[id]
+	assert.Equal("recommendation.testNamespace.svc.cluster.local", s.Name)
+	assert.Equal("v1", s.Version)
+	assert.Equal(true, s.Metadata["isUnused"])
 
-	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[3].Name)
-	assert.Equal("v2", trees[3].Version)
-	assert.Equal(float64(0), trees[3].Metadata["rate"])
-	assert.Equal("true", trees[3].Metadata["isUnused"])
+	id = graph.Id("recommendation.testNamespace.svc.cluster.local", "v2")
+	s, ok = trafficMap[id]
+	assert.Equal("recommendation.testNamespace.svc.cluster.local", s.Name)
+	assert.Equal("v2", s.Version)
+	assert.Equal(true, s.Metadata["isUnused"])
 }
 
 func TestOneNodeTrafficScenario(t *testing.T) {
@@ -48,30 +53,39 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 
 	config.Set(config.NewConfig())
 
-	trees := oneNodeTraffic()
+	trafficMap := oneNodeTraffic()
 	pods := mockPods()
 
-	addUnusedNodes(&trees, "testNamespace", pods)
+	addUnusedNodes(trafficMap, "testNamespace", pods)
 
-	assert.Equal(4, len(trees))
-	assert.Equal(tree.UnknownService, trees[0].Name)
-	assert.Equal(1, len(trees[0].Children))
+	assert.Equal(5, len(trafficMap))
+	unknown, ok := trafficMap[graph.Id(graph.UnknownService, graph.UnknownVersion)]
+	assert.Equal(true, ok)
+	assert.Equal(graph.UnknownService, unknown.Name)
+	assert.Equal(1, len(unknown.Edges))
 
-	assert.Equal("customer.testNamespace.svc.cluster.local", trees[0].Children[0].Name)
-	assert.Equal(float64(0.8), trees[0].Children[0].Metadata["rate"])
-	assert.Equal(nil, trees[0].Metadata["isUnused"])
+	e := unknown.Edges[0]
+	customer := e.Dest
+	assert.Equal("customer.testNamespace.svc.cluster.local", customer.Name)
+	assert.Equal(float64(0.8), e.Metadata["rate"])
+	assert.Equal(nil, customer.Metadata["isUnused"])
 
-	assert.Equal("preference.testNamespace.svc.cluster.local", trees[1].Name)
-	assert.Equal(float64(0), trees[1].Metadata["rate"])
-	assert.Equal("true", trees[1].Metadata["isUnused"])
+	preference, okPref := trafficMap[graph.Id("preference.testNamespace.svc.cluster.local", "v1")]
+	assert.Equal(true, okPref)
+	assert.Equal("preference.testNamespace.svc.cluster.local", preference.Name)
+	assert.Equal(true, preference.Metadata["isUnused"])
 
-	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[2].Name)
-	assert.Equal("v1", trees[2].Version)
-	assert.Equal(float64(0), trees[2].Metadata["rate"])
+	recommendationV1, okRec1 := trafficMap[graph.Id("recommendation.testNamespace.svc.cluster.local", "v1")]
+	assert.Equal(true, okRec1)
+	assert.Equal("recommendation.testNamespace.svc.cluster.local", recommendationV1.Name)
+	assert.Equal("v1", recommendationV1.Version)
+	assert.Equal(true, preference.Metadata["isUnused"])
 
-	assert.Equal("recommendation.testNamespace.svc.cluster.local", trees[3].Name)
-	assert.Equal("v2", trees[3].Version)
-	assert.Equal(float64(0), trees[3].Metadata["rate"])
+	recommendationV2, okRec2 := trafficMap[graph.Id("recommendation.testNamespace.svc.cluster.local", "v2")]
+	assert.Equal(true, okRec2)
+	assert.Equal("recommendation.testNamespace.svc.cluster.local", recommendationV2.Name)
+	assert.Equal("v2", recommendationV2.Version)
+	assert.Equal(true, preference.Metadata["isUnused"])
 }
 
 func TestVersionWithNoTrafficScenario(t *testing.T) {
@@ -79,38 +93,42 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 
 	config.Set(config.NewConfig())
 
-	trees := v1Traffic()
+	trafficMap := v1Traffic()
 	pods := mockPods()
 
-	addUnusedNodes(&trees, "testNamespace", pods)
+	addUnusedNodes(trafficMap, "testNamespace", pods)
 
-	assert.Equal(1, len(trees))
-	assert.Equal(tree.UnknownService, trees[0].Name)
-	assert.Equal(1, len(trees[0].Children))
+	assert.Equal(5, len(trafficMap))
+	unknown, ok := trafficMap[graph.Id(graph.UnknownService, graph.UnknownVersion)]
+	assert.Equal(true, ok)
+	assert.Equal(graph.UnknownService, unknown.Name)
+	assert.Equal(1, len(unknown.Edges))
 
-	customer := trees[0].Children[0]
+	customer := unknown.Edges[0].Dest
 	assert.Equal("customer.testNamespace.svc.cluster.local", customer.Name)
-	assert.Equal(float64(0.8), customer.Metadata["rate"])
+	assert.Equal(float64(0.8), unknown.Edges[0].Metadata["rate"])
 	assert.Equal(nil, customer.Metadata["isUnused"])
-	assert.Equal(1, len(customer.Children))
+	assert.Equal(1, len(customer.Edges))
 
-	preference := customer.Children[0]
+	e := customer.Edges[0]
+	preference := e.Dest
 	assert.Equal("preference.testNamespace.svc.cluster.local", preference.Name)
-	assert.Equal(float64(0.8), preference.Metadata["rate"])
+	assert.Equal(float64(0.8), e.Metadata["rate"])
 	assert.Equal(nil, preference.Metadata["isUnused"])
+	assert.Equal(2, len(preference.Edges))
 
-	assert.Equal(2, len(preference.Children))
-	recommendationV1 := preference.Children[0]
+	e = preference.Edges[0]
+	recommendationV1 := e.Dest
 	assert.Equal("recommendation.testNamespace.svc.cluster.local", recommendationV1.Name)
 	assert.Equal("v1", recommendationV1.Version)
-	assert.Equal(float64(0.8), recommendationV1.Metadata["rate"])
+	assert.Equal(float64(0.8), e.Metadata["rate"])
 	assert.Equal(nil, recommendationV1.Metadata["isUnused"])
 
-	recommendationV2 := preference.Children[1]
+	e = preference.Edges[1]
+	recommendationV2 := e.Dest
 	assert.Equal("recommendation.testNamespace.svc.cluster.local", recommendationV2.Name)
 	assert.Equal("v2", recommendationV2.Version)
-	assert.Equal(float64(0), recommendationV2.Metadata["rate"])
-	assert.Equal("true", recommendationV2.Metadata["isUnused"])
+	assert.Equal(true, recommendationV2.Metadata["isUnused"])
 }
 
 func mockPods() *v1.PodList {
@@ -158,50 +176,47 @@ func mockPods() *v1.PodList {
 	return &pods
 }
 
-func oneNodeTraffic() []*tree.ServiceNode {
-	trees := make([]*tree.ServiceNode, 1)
+func oneNodeTraffic() map[string]*graph.ServiceNode {
+	trafficMap := make(map[string]*graph.ServiceNode)
 
-	n := tree.NewServiceNode(tree.UnknownService, tree.UnknownVersion)
-	trees[0] = &n
-	trees[0].Children = make([]*tree.ServiceNode, 1)
-	child := tree.NewServiceNode("customer.testNamespace.svc.cluster.local", "v1")
-	child.Metadata = make(map[string]interface{})
-	child.Metadata["rate"] = 0.8
-	child.Metadata["source_svc"] = tree.UnknownService
-	child.Metadata["source_ver"] = tree.UnknownVersion
-	trees[0].Children[0] = &child
+	unknown := graph.NewServiceNode(graph.UnknownService, graph.UnknownVersion)
+	customer := graph.NewServiceNode("customer.testNamespace.svc.cluster.local", "v1")
+	trafficMap[unknown.ID] = &unknown
+	trafficMap[customer.ID] = &customer
+	edge := unknown.AddEdge(&customer)
+	edge.Metadata["rate"] = 0.8
+	unknown.Metadata["rateOut"] = 0.8
+	customer.Metadata["rateIn"] = 0.8
 
-	return trees
+	return trafficMap
 }
 
-func v1Traffic() []*tree.ServiceNode {
-	trees := make([]*tree.ServiceNode, 1)
+func v1Traffic() map[string]*graph.ServiceNode {
+	trafficMap := make(map[string]*graph.ServiceNode)
 
-	unknown := tree.NewServiceNode(tree.UnknownService, tree.UnknownVersion)
-	trees[0] = &unknown
-	trees[0].Children = make([]*tree.ServiceNode, 1)
-	customer := tree.NewServiceNode("customer.testNamespace.svc.cluster.local", "v1")
-	customer.Metadata = make(map[string]interface{})
-	customer.Metadata["rate"] = 0.8
-	customer.Metadata["source_svc"] = tree.UnknownService
-	customer.Metadata["source_ver"] = tree.UnknownVersion
-	trees[0].Children[0] = &customer
+	unknown := graph.NewServiceNode(graph.UnknownService, graph.UnknownVersion)
+	customer := graph.NewServiceNode("customer.testNamespace.svc.cluster.local", "v1")
+	preference := graph.NewServiceNode("preference.testNamespace.svc.cluster.local", "v1")
+	recommendation := graph.NewServiceNode("recommendation.testNamespace.svc.cluster.local", "v1")
+	trafficMap[unknown.ID] = &unknown
+	trafficMap[customer.ID] = &customer
+	trafficMap[preference.ID] = &preference
+	trafficMap[recommendation.ID] = &recommendation
 
-	preference := tree.NewServiceNode("preference.testNamespace.svc.cluster.local", "v1")
-	preference.Metadata = make(map[string]interface{})
-	preference.Metadata["rate"] = 0.8
-	preference.Metadata["source_svc"] = "customer.testNamespace.svc.cluster.local"
-	preference.Metadata["source_ver"] = tree.UnknownVersion
-	customer.Children = make([]*tree.ServiceNode, 1)
-	customer.Children[0] = &preference
+	edge := unknown.AddEdge(&customer)
+	edge.Metadata["rate"] = 0.8
+	unknown.Metadata["rateOut"] = 0.8
+	customer.Metadata["rateIn"] = 0.8
 
-	recommendation := tree.NewServiceNode("recommendation.testNamespace.svc.cluster.local", "v1")
-	recommendation.Metadata = make(map[string]interface{})
-	recommendation.Metadata["rate"] = 0.8
-	recommendation.Metadata["source_svc"] = "preference.testNamespace.svc.cluster.local"
-	recommendation.Metadata["source_ver"] = tree.UnknownVersion
-	preference.Children = make([]*tree.ServiceNode, 1)
-	preference.Children[0] = &recommendation
+	edge = customer.AddEdge(&preference)
+	edge.Metadata["rate"] = 0.8
+	customer.Metadata["rateOut"] = 0.8
+	preference.Metadata["rateIn"] = 0.8
 
-	return trees
+	edge = preference.AddEdge(&recommendation)
+	edge.Metadata["rate"] = 0.8
+	preference.Metadata["rateOut"] = 0.8
+	recommendation.Metadata["rateIn"] = 0.8
+
+	return trafficMap
 }
