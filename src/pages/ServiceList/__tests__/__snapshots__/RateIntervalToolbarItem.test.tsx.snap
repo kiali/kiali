@@ -5,7 +5,7 @@ ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <RateIntervalToolbarItem
-    rateIntervalSelected="10m"
+    rateIntervalSelected={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -39,44 +39,110 @@ ShallowWrapper {
             bsClass="dropdown"
             disabled={false}
             divider={false}
-            eventKey="1m"
+            eventKey={60}
             header={false}
           >
-            Last 
-            1 minute
+            Last minute
           </MenuItem>
           <MenuItem
             active={false}
             bsClass="dropdown"
             disabled={false}
             divider={false}
-            eventKey="5m"
+            eventKey={300}
             header={false}
           >
-            Last 
-            5 minutes
+            Last 5 minutes
           </MenuItem>
           <MenuItem
             active={true}
             bsClass="dropdown"
             disabled={false}
             divider={false}
-            eventKey="10m"
+            eventKey={600}
             header={false}
           >
-            Last 
-            10 minutes
+            Last 10 minutes
           </MenuItem>
           <MenuItem
             active={false}
             bsClass="dropdown"
             disabled={false}
             divider={false}
-            eventKey="30m"
+            eventKey={1800}
             header={false}
           >
-            Last 
-            30 minutes
+            Last 30 minutes
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey={3600}
+            header={false}
+          >
+            Last hour
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey={10800}
+            header={false}
+          >
+            Last 3 hours
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey={21600}
+            header={false}
+          >
+            Last 6 hours
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey={43200}
+            header={false}
+          >
+            Last 12 hours
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey={86400}
+            header={false}
+          >
+            Last day
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey={604800}
+            header={false}
+          >
+            Last 7 days
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey={2592000}
+            header={false}
+          >
+            Last 30 days
           </MenuItem>
         </DropdownButton>,
       ],
@@ -109,44 +175,110 @@ ShallowWrapper {
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="1m"
+              eventKey={60}
               header={false}
             >
-              Last 
-              1 minute
+              Last minute
             </MenuItem>,
             <MenuItem
               active={false}
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="5m"
+              eventKey={300}
               header={false}
             >
-              Last 
-              5 minutes
+              Last 5 minutes
             </MenuItem>,
             <MenuItem
               active={true}
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="10m"
+              eventKey={600}
               header={false}
             >
-              Last 
-              10 minutes
+              Last 10 minutes
             </MenuItem>,
             <MenuItem
               active={false}
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="30m"
+              eventKey={1800}
               header={false}
             >
-              Last 
-              30 minutes
+              Last 30 minutes
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={3600}
+              header={false}
+            >
+              Last hour
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={10800}
+              header={false}
+            >
+              Last 3 hours
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={21600}
+              header={false}
+            >
+              Last 6 hours
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={43200}
+              header={false}
+            >
+              Last 12 hours
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={86400}
+              header={false}
+            >
+              Last day
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={604800}
+              header={false}
+            >
+              Last 7 days
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={2592000}
+              header={false}
+            >
+              Last 30 days
             </MenuItem>,
           ],
           "id": "rateIntervalDropDown",
@@ -157,94 +289,189 @@ ShallowWrapper {
         "rendered": Array [
           Object {
             "instance": null,
-            "key": "1m",
+            "key": "60",
             "nodeType": "class",
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": Array [
-                "Last ",
-                "1 minute",
-              ],
+              "children": "Last minute",
               "disabled": false,
               "divider": false,
-              "eventKey": "1m",
+              "eventKey": 60,
               "header": false,
             },
             "ref": null,
-            "rendered": Array [
-              "Last ",
-              "1 minute",
-            ],
+            "rendered": "Last minute",
             "type": [Function],
           },
           Object {
             "instance": null,
-            "key": "5m",
+            "key": "300",
             "nodeType": "class",
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": Array [
-                "Last ",
-                "5 minutes",
-              ],
+              "children": "Last 5 minutes",
               "disabled": false,
               "divider": false,
-              "eventKey": "5m",
+              "eventKey": 300,
               "header": false,
             },
             "ref": null,
-            "rendered": Array [
-              "Last ",
-              "5 minutes",
-            ],
+            "rendered": "Last 5 minutes",
             "type": [Function],
           },
           Object {
             "instance": null,
-            "key": "10m",
+            "key": "600",
             "nodeType": "class",
             "props": Object {
               "active": true,
               "bsClass": "dropdown",
-              "children": Array [
-                "Last ",
-                "10 minutes",
-              ],
+              "children": "Last 10 minutes",
               "disabled": false,
               "divider": false,
-              "eventKey": "10m",
+              "eventKey": 600,
               "header": false,
             },
             "ref": null,
-            "rendered": Array [
-              "Last ",
-              "10 minutes",
-            ],
+            "rendered": "Last 10 minutes",
             "type": [Function],
           },
           Object {
             "instance": null,
-            "key": "30m",
+            "key": "1800",
             "nodeType": "class",
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": Array [
-                "Last ",
-                "30 minutes",
-              ],
+              "children": "Last 30 minutes",
               "disabled": false,
               "divider": false,
-              "eventKey": "30m",
+              "eventKey": 1800,
               "header": false,
             },
             "ref": null,
-            "rendered": Array [
-              "Last ",
-              "30 minutes",
-            ],
+            "rendered": "Last 30 minutes",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "3600",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last hour",
+              "disabled": false,
+              "divider": false,
+              "eventKey": 3600,
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last hour",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "10800",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 3 hours",
+              "disabled": false,
+              "divider": false,
+              "eventKey": 10800,
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 3 hours",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "21600",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 6 hours",
+              "disabled": false,
+              "divider": false,
+              "eventKey": 21600,
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 6 hours",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "43200",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 12 hours",
+              "disabled": false,
+              "divider": false,
+              "eventKey": 43200,
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 12 hours",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "86400",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last day",
+              "disabled": false,
+              "divider": false,
+              "eventKey": 86400,
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last day",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "604800",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 7 days",
+              "disabled": false,
+              "divider": false,
+              "eventKey": 604800,
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 7 days",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "2592000",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 30 days",
+              "disabled": false,
+              "divider": false,
+              "eventKey": 2592000,
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 30 days",
             "type": [Function],
           },
         ],
@@ -279,44 +506,110 @@ ShallowWrapper {
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="1m"
+              eventKey={60}
               header={false}
             >
-              Last 
-              1 minute
+              Last minute
             </MenuItem>
             <MenuItem
               active={false}
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="5m"
+              eventKey={300}
               header={false}
             >
-              Last 
-              5 minutes
+              Last 5 minutes
             </MenuItem>
             <MenuItem
               active={true}
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="10m"
+              eventKey={600}
               header={false}
             >
-              Last 
-              10 minutes
+              Last 10 minutes
             </MenuItem>
             <MenuItem
               active={false}
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="30m"
+              eventKey={1800}
               header={false}
             >
-              Last 
-              30 minutes
+              Last 30 minutes
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={3600}
+              header={false}
+            >
+              Last hour
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={10800}
+              header={false}
+            >
+              Last 3 hours
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={21600}
+              header={false}
+            >
+              Last 6 hours
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={43200}
+              header={false}
+            >
+              Last 12 hours
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={86400}
+              header={false}
+            >
+              Last day
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={604800}
+              header={false}
+            >
+              Last 7 days
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey={2592000}
+              header={false}
+            >
+              Last 30 days
             </MenuItem>
           </DropdownButton>,
         ],
@@ -349,44 +642,110 @@ ShallowWrapper {
                 bsClass="dropdown"
                 disabled={false}
                 divider={false}
-                eventKey="1m"
+                eventKey={60}
                 header={false}
               >
-                Last 
-                1 minute
+                Last minute
               </MenuItem>,
               <MenuItem
                 active={false}
                 bsClass="dropdown"
                 disabled={false}
                 divider={false}
-                eventKey="5m"
+                eventKey={300}
                 header={false}
               >
-                Last 
-                5 minutes
+                Last 5 minutes
               </MenuItem>,
               <MenuItem
                 active={true}
                 bsClass="dropdown"
                 disabled={false}
                 divider={false}
-                eventKey="10m"
+                eventKey={600}
                 header={false}
               >
-                Last 
-                10 minutes
+                Last 10 minutes
               </MenuItem>,
               <MenuItem
                 active={false}
                 bsClass="dropdown"
                 disabled={false}
                 divider={false}
-                eventKey="30m"
+                eventKey={1800}
                 header={false}
               >
-                Last 
-                30 minutes
+                Last 30 minutes
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey={3600}
+                header={false}
+              >
+                Last hour
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey={10800}
+                header={false}
+              >
+                Last 3 hours
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey={21600}
+                header={false}
+              >
+                Last 6 hours
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey={43200}
+                header={false}
+              >
+                Last 12 hours
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey={86400}
+                header={false}
+              >
+                Last day
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey={604800}
+                header={false}
+              >
+                Last 7 days
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey={2592000}
+                header={false}
+              >
+                Last 30 days
               </MenuItem>,
             ],
             "id": "rateIntervalDropDown",
@@ -397,94 +756,189 @@ ShallowWrapper {
           "rendered": Array [
             Object {
               "instance": null,
-              "key": "1m",
+              "key": "60",
               "nodeType": "class",
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": Array [
-                  "Last ",
-                  "1 minute",
-                ],
+                "children": "Last minute",
                 "disabled": false,
                 "divider": false,
-                "eventKey": "1m",
+                "eventKey": 60,
                 "header": false,
               },
               "ref": null,
-              "rendered": Array [
-                "Last ",
-                "1 minute",
-              ],
+              "rendered": "Last minute",
               "type": [Function],
             },
             Object {
               "instance": null,
-              "key": "5m",
+              "key": "300",
               "nodeType": "class",
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": Array [
-                  "Last ",
-                  "5 minutes",
-                ],
+                "children": "Last 5 minutes",
                 "disabled": false,
                 "divider": false,
-                "eventKey": "5m",
+                "eventKey": 300,
                 "header": false,
               },
               "ref": null,
-              "rendered": Array [
-                "Last ",
-                "5 minutes",
-              ],
+              "rendered": "Last 5 minutes",
               "type": [Function],
             },
             Object {
               "instance": null,
-              "key": "10m",
+              "key": "600",
               "nodeType": "class",
               "props": Object {
                 "active": true,
                 "bsClass": "dropdown",
-                "children": Array [
-                  "Last ",
-                  "10 minutes",
-                ],
+                "children": "Last 10 minutes",
                 "disabled": false,
                 "divider": false,
-                "eventKey": "10m",
+                "eventKey": 600,
                 "header": false,
               },
               "ref": null,
-              "rendered": Array [
-                "Last ",
-                "10 minutes",
-              ],
+              "rendered": "Last 10 minutes",
               "type": [Function],
             },
             Object {
               "instance": null,
-              "key": "30m",
+              "key": "1800",
               "nodeType": "class",
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": Array [
-                  "Last ",
-                  "30 minutes",
-                ],
+                "children": "Last 30 minutes",
                 "disabled": false,
                 "divider": false,
-                "eventKey": "30m",
+                "eventKey": 1800,
                 "header": false,
               },
               "ref": null,
-              "rendered": Array [
-                "Last ",
-                "30 minutes",
-              ],
+              "rendered": "Last 30 minutes",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "3600",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last hour",
+                "disabled": false,
+                "divider": false,
+                "eventKey": 3600,
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last hour",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "10800",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 3 hours",
+                "disabled": false,
+                "divider": false,
+                "eventKey": 10800,
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 3 hours",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "21600",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 6 hours",
+                "disabled": false,
+                "divider": false,
+                "eventKey": 21600,
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 6 hours",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "43200",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 12 hours",
+                "disabled": false,
+                "divider": false,
+                "eventKey": 43200,
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 12 hours",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "86400",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last day",
+                "disabled": false,
+                "divider": false,
+                "eventKey": 86400,
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last day",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "604800",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 7 days",
+                "disabled": false,
+                "divider": false,
+                "eventKey": 604800,
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 7 days",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "2592000",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 30 days",
+                "disabled": false,
+                "divider": false,
+                "eventKey": 2592000,
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 30 days",
               "type": [Function],
             },
           ],

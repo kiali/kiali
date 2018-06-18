@@ -1,8 +1,15 @@
-const RateIntervals = [['1m', '1 minute'], ['5m', '5 minutes'], ['10m', '10 minutes'], ['30m', '30 minutes']];
+import { config } from '../config';
 
-const mapIntervals: { [key: string]: string } = {};
-RateIntervals.forEach(pair => (mapIntervals[pair[0]] = pair[1]));
+const mapIntervals: { [key: number]: string } = config().toolbar.intervalDuration;
+export const tuples: [number, string][] = Object.keys(mapIntervals).map(key => {
+  const tuple: [number, string] = [+key, mapIntervals[key]];
+  return tuple;
+});
 
-export const getName = (key: string): string => mapIntervals[key];
-
-export default RateIntervals;
+export const getName = (durationSeconds: number): string => {
+  const name = mapIntervals[durationSeconds];
+  if (name) {
+    return name;
+  }
+  return 'Last ' + durationSeconds + ' seconds';
+};

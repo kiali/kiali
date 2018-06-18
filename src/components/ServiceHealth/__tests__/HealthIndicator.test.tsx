@@ -7,11 +7,11 @@ import { Health } from '../../../types/Health';
 describe('HealthIndicator', () => {
   it('renders when empty', () => {
     // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" mode={DisplayMode.SMALL} rateInterval="" />);
+    let wrapper = shallow(<HealthIndicator id="svc" mode={DisplayMode.SMALL} rateInterval={600} />);
     expect(wrapper.html()).not.toContain('pficon');
 
     // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" mode={DisplayMode.LARGE} rateInterval="" />);
+    wrapper = shallow(<HealthIndicator id="svc" mode={DisplayMode.LARGE} rateInterval={600} />);
     expect(wrapper.html()).not.toContain('pficon');
   });
 
@@ -23,13 +23,13 @@ describe('HealthIndicator', () => {
     };
 
     // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval="" />);
+    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-ok');
 
     // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval="" />);
+    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     html = wrapper.html();
     expect(html).toContain('pficon-ok');
@@ -43,13 +43,13 @@ describe('HealthIndicator', () => {
     };
 
     // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval="" />);
+    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-warning');
 
     // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval="" />);
+    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     html = wrapper.html();
     expect(html).toContain('pficon-warning');
@@ -64,13 +64,13 @@ describe('HealthIndicator', () => {
     };
 
     // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval="" />);
+    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-error');
 
     // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval="" />);
+    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     html = wrapper.html();
     expect(html).toContain('pficon-error');
@@ -86,13 +86,13 @@ describe('HealthIndicator', () => {
     };
 
     // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval="" />);
+    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-ok');
 
     // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval="" />);
+    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     html = wrapper.html();
     expect(html).toContain('pficon-ok');
@@ -107,13 +107,13 @@ describe('HealthIndicator', () => {
     };
 
     // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval="" />);
+    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-error');
 
     // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval="" />);
+    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     html = wrapper.html();
     expect(html).toContain('pficon-error');
@@ -128,13 +128,13 @@ describe('HealthIndicator', () => {
     };
 
     // SMALL
-    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval="" />);
+    let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-error');
 
     // LARGE
-    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval="" />);
+    wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} rateInterval={600} />);
     expect(wrapper).toMatchSnapshot();
     html = wrapper.html();
     expect(html).toContain('pficon-error');

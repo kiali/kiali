@@ -13,6 +13,7 @@ import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
 import { shouldRefreshData } from './SummaryPanelCommon';
+import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -67,6 +68,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const namespace = group.data('service').split('.')[1];
     const service = group.data('service').split('.')[0];
     const serviceHotLink = <Link to={`/namespaces/${namespace}/services/${service}`}>{service}</Link>;
+    const health = group.data('health');
 
     const incoming = getAccumulatedTrafficRate(group.children());
     const outgoing = getAccumulatedTrafficRate(group.children().edgesTo('*'));
@@ -74,7 +76,16 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     return (
       <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
         <div className="panel-heading">
-          Versioned Service: {serviceHotLink}
+          {health && (
+            <HealthIndicator
+              id="graph-health-indicator"
+              mode={DisplayMode.SMALL}
+              health={health}
+              tooltipPlacement="left"
+              rateInterval={this.props.duration}
+            />
+          )}
+          <span> Versioned Group: {serviceHotLink}</span>
           <div style={{ paddingTop: '3px' }}>
             <Badge
               scale={0.9}

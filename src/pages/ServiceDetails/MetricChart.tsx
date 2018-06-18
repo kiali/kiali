@@ -5,6 +5,7 @@ import MetricsChartBase from './MetricsChartBase';
 type MetricChartProps = {
   series: TimeSeries[];
   familyName: string;
+  onExpandRequested?: () => void;
 };
 
 export default class MetricsChart extends MetricsChartBase<MetricChartProps> {

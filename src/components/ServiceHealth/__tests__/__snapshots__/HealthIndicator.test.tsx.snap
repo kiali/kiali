@@ -37,7 +37,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={1}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -85,7 +85,7 @@ ShallowWrapper {
         }
         id="svc"
         placement={undefined}
-        rateInterval=""
+        rateInterval={600}
       >
         <Icon
           className="health-icon"
@@ -148,7 +148,7 @@ ShallowWrapper {
         },
         "id": "svc",
         "placement": undefined,
-        "rateInterval": "",
+        "rateInterval": 600,
       },
       "ref": null,
       "rendered": Object {
@@ -212,7 +212,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -275,7 +275,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -347,7 +347,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={0}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -396,7 +396,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -467,7 +467,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -544,7 +544,7 @@ ShallowWrapper {
             }
             id="svc"
             placement={undefined}
-            rateInterval=""
+            rateInterval={600}
           >
             <Icon
               className="health-icon"
@@ -615,7 +615,7 @@ ShallowWrapper {
             },
             "id": "svc",
             "placement": undefined,
-            "rateInterval": "",
+            "rateInterval": 600,
           },
           "ref": null,
           "rendered": Object {
@@ -699,7 +699,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={1}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -747,7 +747,7 @@ ShallowWrapper {
         }
         id="svc"
         placement={undefined}
-        rateInterval=""
+        rateInterval={600}
       >
         <Icon
           className="health-icon"
@@ -810,7 +810,7 @@ ShallowWrapper {
         },
         "id": "svc",
         "placement": undefined,
-        "rateInterval": "",
+        "rateInterval": 600,
       },
       "ref": null,
       "rendered": Object {
@@ -874,7 +874,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -937,7 +937,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -1009,7 +1009,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={0}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -1058,7 +1058,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -1129,7 +1129,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -1206,7 +1206,7 @@ ShallowWrapper {
             }
             id="svc"
             placement={undefined}
-            rateInterval=""
+            rateInterval={600}
           >
             <Icon
               className="health-icon"
@@ -1277,7 +1277,7 @@ ShallowWrapper {
             },
             "id": "svc",
             "placement": undefined,
-            "rateInterval": "",
+            "rateInterval": 600,
           },
           "ref": null,
           "rendered": Object {
@@ -1361,7 +1361,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={1}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -1409,7 +1409,7 @@ ShallowWrapper {
         }
         id="svc"
         placement={undefined}
-        rateInterval=""
+        rateInterval={600}
       >
         <Icon
           className="health-icon"
@@ -1472,7 +1472,7 @@ ShallowWrapper {
         },
         "id": "svc",
         "placement": undefined,
-        "rateInterval": "",
+        "rateInterval": 600,
       },
       "ref": null,
       "rendered": Object {
@@ -1536,7 +1536,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -1599,7 +1599,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -1671,7 +1671,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={0}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -1720,7 +1720,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -1804,7 +1804,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -1924,7 +1924,7 @@ ShallowWrapper {
             }
             id="svc"
             placement={undefined}
-            rateInterval=""
+            rateInterval={600}
           >
             <Icon
               className="health-icon"
@@ -2008,7 +2008,7 @@ ShallowWrapper {
             },
             "id": "svc",
             "placement": undefined,
-            "rateInterval": "",
+            "rateInterval": 600,
           },
           "ref": null,
           "rendered": Object {
@@ -2130,7 +2130,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={1}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -2173,7 +2173,7 @@ ShallowWrapper {
         }
         id="svc"
         placement={undefined}
-        rateInterval=""
+        rateInterval={600}
       >
         <Icon
           className="health-icon"
@@ -2231,7 +2231,7 @@ ShallowWrapper {
         },
         "id": "svc",
         "placement": undefined,
-        "rateInterval": "",
+        "rateInterval": 600,
       },
       "ref": null,
       "rendered": Object {
@@ -2290,7 +2290,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -2348,7 +2348,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -2415,7 +2415,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={0}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -2459,7 +2459,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -2538,7 +2538,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -2653,7 +2653,7 @@ ShallowWrapper {
             }
             id="svc"
             placement={undefined}
-            rateInterval=""
+            rateInterval={600}
           >
             <Icon
               className="health-icon"
@@ -2732,7 +2732,7 @@ ShallowWrapper {
             },
             "id": "svc",
             "placement": undefined,
-            "rateInterval": "",
+            "rateInterval": 600,
           },
           "ref": null,
           "rendered": Object {
@@ -2859,7 +2859,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={1}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -2907,7 +2907,7 @@ ShallowWrapper {
         }
         id="svc"
         placement={undefined}
-        rateInterval=""
+        rateInterval={600}
       >
         <Icon
           className="health-icon"
@@ -2970,7 +2970,7 @@ ShallowWrapper {
         },
         "id": "svc",
         "placement": undefined,
-        "rateInterval": "",
+        "rateInterval": 600,
       },
       "ref": null,
       "rendered": Object {
@@ -3034,7 +3034,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -3097,7 +3097,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -3169,7 +3169,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={0}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -3218,7 +3218,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -3289,7 +3289,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -3366,7 +3366,7 @@ ShallowWrapper {
             }
             id="svc"
             placement={undefined}
-            rateInterval=""
+            rateInterval={600}
           >
             <Icon
               className="health-icon"
@@ -3437,7 +3437,7 @@ ShallowWrapper {
             },
             "id": "svc",
             "placement": undefined,
-            "rateInterval": "",
+            "rateInterval": 600,
           },
           "ref": null,
           "rendered": Object {
@@ -3521,7 +3521,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={1}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -3569,7 +3569,7 @@ ShallowWrapper {
         }
         id="svc"
         placement={undefined}
-        rateInterval=""
+        rateInterval={600}
       >
         <Icon
           className="health-icon"
@@ -3632,7 +3632,7 @@ ShallowWrapper {
         },
         "id": "svc",
         "placement": undefined,
-        "rateInterval": "",
+        "rateInterval": 600,
       },
       "ref": null,
       "rendered": Object {
@@ -3696,7 +3696,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -3759,7 +3759,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -3831,7 +3831,7 @@ ShallowWrapper {
     }
     id="svc"
     mode={0}
-    rateInterval=""
+    rateInterval={600}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -3880,7 +3880,7 @@ ShallowWrapper {
           }
           id="svc"
           placement={undefined}
-          rateInterval=""
+          rateInterval={600}
         >
           <Icon
             className="health-icon"
@@ -3951,7 +3951,7 @@ ShallowWrapper {
           },
           "id": "svc",
           "placement": undefined,
-          "rateInterval": "",
+          "rateInterval": 600,
         },
         "ref": null,
         "rendered": Object {
@@ -4028,7 +4028,7 @@ ShallowWrapper {
             }
             id="svc"
             placement={undefined}
-            rateInterval=""
+            rateInterval={600}
           >
             <Icon
               className="health-icon"
@@ -4099,7 +4099,7 @@ ShallowWrapper {
             },
             "id": "svc",
             "placement": undefined,
-            "rateInterval": "",
+            "rateInterval": 600,
           },
           "ref": null,
           "rendered": Object {

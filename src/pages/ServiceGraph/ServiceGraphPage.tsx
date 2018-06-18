@@ -34,8 +34,27 @@ const cytscapeGraphStyle = style({
   left: 220
 });
 
+const makeCancelablePromise = (promise: Promise<any>) => {
+  let hasCanceled = false;
+
+  const wrappedPromise = new Promise((resolve, reject) => {
+    promise.then(
+      val => (hasCanceled ? reject({ isCanceled: true }) : resolve(val)),
+      error => (hasCanceled ? reject({ isCanceled: true }) : reject(error))
+    );
+  });
+
+  return {
+    promise: wrappedPromise,
+    cancel() {
+      hasCanceled = true;
+    }
+  };
+};
+
 export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPageProps> {
   private pollTimeoutRef?: number;
+  private pollPromise?;
   constructor(props: ServiceGraphPageProps) {
     super(props);
   }
@@ -128,12 +147,17 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
     // possible that it will take much time as well. Instead wait for it to timeout/error to
     // try again.
     this.pollTimeoutRef = window.setTimeout(() => {
-      this.loadGraphDataFromBackend()
+      const promise = this.loadGraphDataFromBackend();
+      this.pollPromise = makeCancelablePromise(promise);
+
+      this.pollPromise.promise
         .then(() => {
           this.scheduleNextPollingIntervalFromProps();
         })
-        .catch(() => {
-          this.scheduleNextPollingIntervalFromProps();
+        .catch(error => {
+          if (!error.isCanceled) {
+            this.scheduleNextPollingIntervalFromProps();
+          }
         });
     }, pollInterval);
   }
@@ -142,6 +166,11 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
     if (this.pollTimeoutRef) {
       clearTimeout(this.pollTimeoutRef);
       this.pollTimeoutRef = undefined;
+    }
+
+    if (this.pollPromise) {
+      this.pollPromise.cancel();
+      this.pollPromise = undefined;
     }
   }
 }
