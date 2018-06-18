@@ -2225,3 +2225,2229 @@ ShallowWrapper {
   },
 }
 `;
+
+exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <ToolbarDropdown
+    disabled={false}
+    handleSelect={[MockFunction]}
+    id="graph_filter_interval_duration"
+    label="Last minute"
+    nameDropdown="graph_filter_interval_duration"
+    options={
+      Object {
+        "10800": "Last 3 hours",
+        "1800": "Last 30 minutes",
+        "21600": "Last 6 hours",
+        "2592000": "Last 30 days",
+        "300": "Last 5 minutes",
+        "3600": "Last hour",
+        "43200": "Last 12 hours",
+        "60": "Last minute",
+        "600": "Last 10 minutes",
+        "604800": "Last 7 days",
+        "86400": "Last day",
+      }
+    }
+    value={60}
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <label
+          style={
+            Object {
+              "paddingRight": "0.5em",
+            }
+          }
+        >
+          graph_filter_interval_duration
+          :
+        </label>,
+        <DropdownButton
+          id="graph_filter_interval_duration"
+          onSelect={[Function]}
+          title="Last minute"
+        >
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="60"
+            header={false}
+          >
+            Last minute
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="300"
+            header={false}
+          >
+            Last 5 minutes
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="600"
+            header={false}
+          >
+            Last 10 minutes
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="1800"
+            header={false}
+          >
+            Last 30 minutes
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="3600"
+            header={false}
+          >
+            Last hour
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="10800"
+            header={false}
+          >
+            Last 3 hours
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="21600"
+            header={false}
+          >
+            Last 6 hours
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="43200"
+            header={false}
+          >
+            Last 12 hours
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="86400"
+            header={false}
+          >
+            Last day
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="604800"
+            header={false}
+          >
+            Last 7 days
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="2592000"
+            header={false}
+          >
+            Last 30 days
+          </MenuItem>
+        </DropdownButton>,
+      ],
+      "className": "form-group",
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [
+            "graph_filter_interval_duration",
+            ":",
+          ],
+          "style": Object {
+            "paddingRight": "0.5em",
+          },
+        },
+        "ref": null,
+        "rendered": Array [
+          "graph_filter_interval_duration",
+          ":",
+        ],
+        "type": "label",
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "children": Array [
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="60"
+              header={false}
+            >
+              Last minute
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="300"
+              header={false}
+            >
+              Last 5 minutes
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="600"
+              header={false}
+            >
+              Last 10 minutes
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="1800"
+              header={false}
+            >
+              Last 30 minutes
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="3600"
+              header={false}
+            >
+              Last hour
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="10800"
+              header={false}
+            >
+              Last 3 hours
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="21600"
+              header={false}
+            >
+              Last 6 hours
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="43200"
+              header={false}
+            >
+              Last 12 hours
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="86400"
+              header={false}
+            >
+              Last day
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="604800"
+              header={false}
+            >
+              Last 7 days
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="2592000"
+              header={false}
+            >
+              Last 30 days
+            </MenuItem>,
+          ],
+          "id": "graph_filter_interval_duration",
+          "onSelect": [Function],
+          "title": "Last minute",
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": "60",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last minute",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "60",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last minute",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "300",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 5 minutes",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "300",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 5 minutes",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "600",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 10 minutes",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "600",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 10 minutes",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "1800",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 30 minutes",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "1800",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 30 minutes",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "3600",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last hour",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "3600",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last hour",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "10800",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 3 hours",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "10800",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 3 hours",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "21600",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 6 hours",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "21600",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 6 hours",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "43200",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 12 hours",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "43200",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 12 hours",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "86400",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last day",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "86400",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last day",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "604800",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 7 days",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "604800",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 7 days",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "2592000",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Last 30 days",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "2592000",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Last 30 days",
+            "type": [Function],
+          },
+        ],
+        "type": [Function],
+      },
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <label
+            style={
+              Object {
+                "paddingRight": "0.5em",
+              }
+            }
+          >
+            graph_filter_interval_duration
+            :
+          </label>,
+          <DropdownButton
+            id="graph_filter_interval_duration"
+            onSelect={[Function]}
+            title="Last minute"
+          >
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="60"
+              header={false}
+            >
+              Last minute
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="300"
+              header={false}
+            >
+              Last 5 minutes
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="600"
+              header={false}
+            >
+              Last 10 minutes
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="1800"
+              header={false}
+            >
+              Last 30 minutes
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="3600"
+              header={false}
+            >
+              Last hour
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="10800"
+              header={false}
+            >
+              Last 3 hours
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="21600"
+              header={false}
+            >
+              Last 6 hours
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="43200"
+              header={false}
+            >
+              Last 12 hours
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="86400"
+              header={false}
+            >
+              Last day
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="604800"
+              header={false}
+            >
+              Last 7 days
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="2592000"
+              header={false}
+            >
+              Last 30 days
+            </MenuItem>
+          </DropdownButton>,
+        ],
+        "className": "form-group",
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              "graph_filter_interval_duration",
+              ":",
+            ],
+            "style": Object {
+              "paddingRight": "0.5em",
+            },
+          },
+          "ref": null,
+          "rendered": Array [
+            "graph_filter_interval_duration",
+            ":",
+          ],
+          "type": "label",
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "children": Array [
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="60"
+                header={false}
+              >
+                Last minute
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="300"
+                header={false}
+              >
+                Last 5 minutes
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="600"
+                header={false}
+              >
+                Last 10 minutes
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="1800"
+                header={false}
+              >
+                Last 30 minutes
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="3600"
+                header={false}
+              >
+                Last hour
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="10800"
+                header={false}
+              >
+                Last 3 hours
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="21600"
+                header={false}
+              >
+                Last 6 hours
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="43200"
+                header={false}
+              >
+                Last 12 hours
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="86400"
+                header={false}
+              >
+                Last day
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="604800"
+                header={false}
+              >
+                Last 7 days
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="2592000"
+                header={false}
+              >
+                Last 30 days
+              </MenuItem>,
+            ],
+            "id": "graph_filter_interval_duration",
+            "onSelect": [Function],
+            "title": "Last minute",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": "60",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last minute",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "60",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last minute",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "300",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 5 minutes",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "300",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 5 minutes",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "600",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 10 minutes",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "600",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 10 minutes",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "1800",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 30 minutes",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "1800",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 30 minutes",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "3600",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last hour",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "3600",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last hour",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "10800",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 3 hours",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "10800",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 3 hours",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "21600",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 6 hours",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "21600",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 6 hours",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "43200",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 12 hours",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "43200",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 12 hours",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "86400",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last day",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "86400",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last day",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "604800",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 7 days",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "604800",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 7 days",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "2592000",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Last 30 days",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "2592000",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Last 30 days",
+              "type": [Function],
+            },
+          ],
+          "type": [Function],
+        },
+      ],
+      "type": "div",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
+
+exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 2`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <ToolbarDropdown
+    disabled={false}
+    handleSelect={[MockFunction]}
+    id="metrics_filter_poll_interval"
+    label="15 seconds"
+    nameDropdown="metrics_filter_poll_interval"
+    options={
+      Object {
+        "0": "Pause",
+        "10000": "10 seconds",
+        "15000": "15 seconds",
+        "30000": "30 seconds",
+        "300000": "5 minutes",
+        "5000": "5 seconds",
+        "60000": "1 minute",
+      }
+    }
+    value={15000}
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <label
+          style={
+            Object {
+              "paddingRight": "0.5em",
+            }
+          }
+        >
+          metrics_filter_poll_interval
+          :
+        </label>,
+        <DropdownButton
+          id="metrics_filter_poll_interval"
+          onSelect={[Function]}
+          title="15 seconds"
+        >
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="0"
+            header={false}
+          >
+            Pause
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="5000"
+            header={false}
+          >
+            5 seconds
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="10000"
+            header={false}
+          >
+            10 seconds
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="15000"
+            header={false}
+          >
+            15 seconds
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="30000"
+            header={false}
+          >
+            30 seconds
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="60000"
+            header={false}
+          >
+            1 minute
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="300000"
+            header={false}
+          >
+            5 minutes
+          </MenuItem>
+        </DropdownButton>,
+      ],
+      "className": "form-group",
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [
+            "metrics_filter_poll_interval",
+            ":",
+          ],
+          "style": Object {
+            "paddingRight": "0.5em",
+          },
+        },
+        "ref": null,
+        "rendered": Array [
+          "metrics_filter_poll_interval",
+          ":",
+        ],
+        "type": "label",
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "children": Array [
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="0"
+              header={false}
+            >
+              Pause
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="5000"
+              header={false}
+            >
+              5 seconds
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="10000"
+              header={false}
+            >
+              10 seconds
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="15000"
+              header={false}
+            >
+              15 seconds
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="30000"
+              header={false}
+            >
+              30 seconds
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="60000"
+              header={false}
+            >
+              1 minute
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="300000"
+              header={false}
+            >
+              5 minutes
+            </MenuItem>,
+          ],
+          "id": "metrics_filter_poll_interval",
+          "onSelect": [Function],
+          "title": "15 seconds",
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": "0",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Pause",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "0",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Pause",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "5000",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "5 seconds",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "5000",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "5 seconds",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "10000",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "10 seconds",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "10000",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "10 seconds",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "15000",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "15 seconds",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "15000",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "15 seconds",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "30000",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "30 seconds",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "30000",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "30 seconds",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "60000",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "1 minute",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "60000",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "1 minute",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "300000",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "5 minutes",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "300000",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "5 minutes",
+            "type": [Function],
+          },
+        ],
+        "type": [Function],
+      },
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <label
+            style={
+              Object {
+                "paddingRight": "0.5em",
+              }
+            }
+          >
+            metrics_filter_poll_interval
+            :
+          </label>,
+          <DropdownButton
+            id="metrics_filter_poll_interval"
+            onSelect={[Function]}
+            title="15 seconds"
+          >
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="0"
+              header={false}
+            >
+              Pause
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="5000"
+              header={false}
+            >
+              5 seconds
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="10000"
+              header={false}
+            >
+              10 seconds
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="15000"
+              header={false}
+            >
+              15 seconds
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="30000"
+              header={false}
+            >
+              30 seconds
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="60000"
+              header={false}
+            >
+              1 minute
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="300000"
+              header={false}
+            >
+              5 minutes
+            </MenuItem>
+          </DropdownButton>,
+        ],
+        "className": "form-group",
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              "metrics_filter_poll_interval",
+              ":",
+            ],
+            "style": Object {
+              "paddingRight": "0.5em",
+            },
+          },
+          "ref": null,
+          "rendered": Array [
+            "metrics_filter_poll_interval",
+            ":",
+          ],
+          "type": "label",
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "children": Array [
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="0"
+                header={false}
+              >
+                Pause
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="5000"
+                header={false}
+              >
+                5 seconds
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="10000"
+                header={false}
+              >
+                10 seconds
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="15000"
+                header={false}
+              >
+                15 seconds
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="30000"
+                header={false}
+              >
+                30 seconds
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="60000"
+                header={false}
+              >
+                1 minute
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="300000"
+                header={false}
+              >
+                5 minutes
+              </MenuItem>,
+            ],
+            "id": "metrics_filter_poll_interval",
+            "onSelect": [Function],
+            "title": "15 seconds",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": "0",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Pause",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "0",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Pause",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "5000",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "5 seconds",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "5000",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "5 seconds",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "10000",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "10 seconds",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "10000",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "10 seconds",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "15000",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "15 seconds",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "15000",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "15 seconds",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "30000",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "30 seconds",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "30000",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "30 seconds",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "60000",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "1 minute",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "60000",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "1 minute",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "300000",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "5 minutes",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "300000",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "5 minutes",
+              "type": [Function],
+            },
+          ],
+          "type": [Function],
+        },
+      ],
+      "type": "div",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
+
+exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 3`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <ToolbarDropdown
+    disabled={false}
+    handleSelect={[MockFunction]}
+    id="graph_filter_layouts"
+    label="Cola"
+    nameDropdown="graph_filter_layouts"
+    options={
+      Object {
+        "breadthfirst": "Breadthfirst",
+        "cola": "Cola",
+        "cose": "Cose",
+        "dagre": "Dagre",
+        "klay": "Klay",
+      }
+    }
+    value="cola"
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <label
+          style={
+            Object {
+              "paddingRight": "0.5em",
+            }
+          }
+        >
+          graph_filter_layouts
+          :
+        </label>,
+        <DropdownButton
+          id="graph_filter_layouts"
+          onSelect={[Function]}
+          title="Cola"
+        >
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="breadthfirst"
+            header={false}
+          >
+            Breadthfirst
+          </MenuItem>
+          <MenuItem
+            active={true}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="cola"
+            header={false}
+          >
+            Cola
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="cose"
+            header={false}
+          >
+            Cose
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="dagre"
+            header={false}
+          >
+            Dagre
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="klay"
+            header={false}
+          >
+            Klay
+          </MenuItem>
+        </DropdownButton>,
+      ],
+      "className": "form-group",
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [
+            "graph_filter_layouts",
+            ":",
+          ],
+          "style": Object {
+            "paddingRight": "0.5em",
+          },
+        },
+        "ref": null,
+        "rendered": Array [
+          "graph_filter_layouts",
+          ":",
+        ],
+        "type": "label",
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "children": Array [
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="breadthfirst"
+              header={false}
+            >
+              Breadthfirst
+            </MenuItem>,
+            <MenuItem
+              active={true}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="cola"
+              header={false}
+            >
+              Cola
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="cose"
+              header={false}
+            >
+              Cose
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="dagre"
+              header={false}
+            >
+              Dagre
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="klay"
+              header={false}
+            >
+              Klay
+            </MenuItem>,
+          ],
+          "id": "graph_filter_layouts",
+          "onSelect": [Function],
+          "title": "Cola",
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": "breadthfirst",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Breadthfirst",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "breadthfirst",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Breadthfirst",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "cola",
+            "nodeType": "class",
+            "props": Object {
+              "active": true,
+              "bsClass": "dropdown",
+              "children": "Cola",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "cola",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Cola",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "cose",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Cose",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "cose",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Cose",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "dagre",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Dagre",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "dagre",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Dagre",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "klay",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Klay",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "klay",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Klay",
+            "type": [Function],
+          },
+        ],
+        "type": [Function],
+      },
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <label
+            style={
+              Object {
+                "paddingRight": "0.5em",
+              }
+            }
+          >
+            graph_filter_layouts
+            :
+          </label>,
+          <DropdownButton
+            id="graph_filter_layouts"
+            onSelect={[Function]}
+            title="Cola"
+          >
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="breadthfirst"
+              header={false}
+            >
+              Breadthfirst
+            </MenuItem>
+            <MenuItem
+              active={true}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="cola"
+              header={false}
+            >
+              Cola
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="cose"
+              header={false}
+            >
+              Cose
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="dagre"
+              header={false}
+            >
+              Dagre
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="klay"
+              header={false}
+            >
+              Klay
+            </MenuItem>
+          </DropdownButton>,
+        ],
+        "className": "form-group",
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              "graph_filter_layouts",
+              ":",
+            ],
+            "style": Object {
+              "paddingRight": "0.5em",
+            },
+          },
+          "ref": null,
+          "rendered": Array [
+            "graph_filter_layouts",
+            ":",
+          ],
+          "type": "label",
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "children": Array [
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="breadthfirst"
+                header={false}
+              >
+                Breadthfirst
+              </MenuItem>,
+              <MenuItem
+                active={true}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="cola"
+                header={false}
+              >
+                Cola
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="cose"
+                header={false}
+              >
+                Cose
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="dagre"
+                header={false}
+              >
+                Dagre
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="klay"
+                header={false}
+              >
+                Klay
+              </MenuItem>,
+            ],
+            "id": "graph_filter_layouts",
+            "onSelect": [Function],
+            "title": "Cola",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": "breadthfirst",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Breadthfirst",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "breadthfirst",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Breadthfirst",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "cola",
+              "nodeType": "class",
+              "props": Object {
+                "active": true,
+                "bsClass": "dropdown",
+                "children": "Cola",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "cola",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Cola",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "cose",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Cose",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "cose",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Cose",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "dagre",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Dagre",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "dagre",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Dagre",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "klay",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Klay",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "klay",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Klay",
+              "type": [Function],
+            },
+          ],
+          "type": [Function],
+        },
+      ],
+      "type": "div",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;

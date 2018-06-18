@@ -38,6 +38,23 @@ describe('ToolbarDropdown', () => {
     });
   });
 
+  it('Render dropdowns correctly with controlled values and labels', () => {
+    data.forEach(dropdownType => {
+      const wrapper = shallow(
+        <ToolbarDropdown
+          id={dropdownType.id}
+          disabled={false}
+          handleSelect={jest.fn()}
+          nameDropdown={dropdownType.id}
+          value={dropdownType.default}
+          label={dropdownType.options[dropdownType.default]}
+          options={dropdownType.options}
+        />
+      );
+      expect(wrapper).toMatchSnapshot();
+    });
+  });
+
   it('changes trigger parent callback', () => {
     const wrapper = mount(
       <ToolbarDropdown
