@@ -74,7 +74,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       duration: +props.duration,
       step: props.step,
       rateInterval: props.rateInterval,
-      filters: ['request_count', 'request_error_count']
+      filters: ['request_count', 'request_error_count'],
+      includeIstio: props.namespace === 'istio-system'
     };
     API.getServiceMetrics(authentication(), namespace, service, options)
       .then(response => {

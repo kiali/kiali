@@ -74,7 +74,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     return (
       <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
         <div className="panel-heading">
-          Versioned Group: {serviceHotLink}
+          Versioned Service: {serviceHotLink}
           <div style={{ paddingTop: '3px' }}>
             <Badge
               scale={0.9}
@@ -122,7 +122,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       duration: +props.duration,
       step: props.step,
       rateInterval: props.rateInterval,
-      filters: ['request_count', 'request_error_count']
+      filters: ['request_count', 'request_error_count'],
+      includeIstio: props.namespace === 'istio-system'
     };
     API.getServiceMetrics(authentication(), namespace, service, options)
       .then(response => {
