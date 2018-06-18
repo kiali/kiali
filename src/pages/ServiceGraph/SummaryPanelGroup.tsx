@@ -183,11 +183,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       ));
   };
 
-  private renderBadgeSummary = (hasRR: string) => {
-    const displayRR = hasRR === 'true';
+  private renderBadgeSummary = (hasRR: boolean) => {
     return (
       <>
-        {displayRR && (
+        {hasRR && (
           <div>
             <Icon name="code-fork" type="fa" style={{ width: '10px' }} />
             Has Route Rule

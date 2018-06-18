@@ -27,7 +27,7 @@ export class GraphStyles {
     };
 
     const getTLSValue = (ele: any, tlsValue: string, nonTlsValue: string): string => {
-      if (ele.data('enabledmTLS') && ele.data('edgeLabelMode') === EdgeLabelMode.MTLS_ENABLED) {
+      if (ele.data('isMTLS') && ele.data('edgeLabelMode') === EdgeLabelMode.MTLS_ENABLED) {
         return tlsValue;
       } else {
         return nonTlsValue;
@@ -125,7 +125,7 @@ export class GraphStyles {
                 return percentRate > 0 ? percentRate.toFixed(0) + '%' : '';
               }
               case EdgeLabelMode.MTLS_ENABLED: {
-                return ele.data('enabledmTLS') ? '\ue923' : '';
+                return ele.data('isMTLS') ? '\ue923' : '';
               }
               default:
                 return '';

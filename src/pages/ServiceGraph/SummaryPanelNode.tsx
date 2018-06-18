@@ -145,7 +145,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               color={PfColors.Green400}
             />
           </div>
-          {this.renderBadgeSummary(node.data('hasCB'), node.data('hasRR'), node.data('hasMissingSidecars'))}
+          {this.renderBadgeSummary(node.data('hasCB'), node.data('hasRR'), node.data('hasMissingSC'))}
         </div>
         <div className="panel-body">
           {!isUnknown && (
@@ -194,25 +194,22 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     );
   };
 
-  private renderBadgeSummary = (hasCB: string, hasRR: string, hasMissingSC: string) => {
-    const displayCB = hasCB === 'true';
-    const displayRR = hasRR === 'true';
-    const displayMissingSC = hasMissingSC === 'true';
+  private renderBadgeSummary = (hasCB: boolean, hasRR: boolean, hasMissingSC: boolean) => {
     return (
       <>
-        {displayCB && (
+        {hasCB && (
           <div>
             <Icon name="bolt" type="fa" style={{ width: '10px' }} />
             Has Circuit Breaker
           </div>
         )}
-        {displayRR && (
+        {hasRR && (
           <div>
             <Icon name="code-fork" type="fa" style={{ width: '10px' }} />
             Has Route Rule
           </div>
         )}
-        {displayMissingSC && (
+        {hasMissingSC && (
           <div>
             <Icon name="blueprint" type="pf" style={{ width: '10px', fontSize: '0.7em' }} />
             Has Missing Sidecars

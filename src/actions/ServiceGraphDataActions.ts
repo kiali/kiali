@@ -41,7 +41,7 @@ const decorateGraphData = (graphData: any) => {
       isGroup: undefined,
       isRoot: undefined,
       isUnused: undefined,
-      hasMissingSidecars: undefined
+      hasMissingSC: undefined
     }
   };
   if (graphData) {

@@ -252,17 +252,17 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     // Create badges
     cy.nodes().forEach(ele => {
-      if (this.props.showCircuitBreakers && ele.data('hasCB') === 'true') {
+      if (this.props.showCircuitBreakers && ele.data('hasCB')) {
         cbBadge.buildBadge(ele);
       }
-      if (this.props.showRouteRules && ele.data('hasRR') === 'true') {
+      if (this.props.showRouteRules && ele.data('hasRR')) {
         if (ele.data('isGroup')) {
           rrGroupBadge.buildBadge(ele);
         } else {
           rrBadge.buildBadge(ele);
         }
       }
-      if (this.props.showMissingSidecars && ele.data('hasMissingSidecars') && !ele.data('isGroup')) {
+      if (this.props.showMissingSidecars && ele.data('hasMissingSC') && !ele.data('isGroup')) {
         msBadge.buildBadge(ele);
       }
     });
