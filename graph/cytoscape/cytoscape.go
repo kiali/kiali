@@ -54,15 +54,15 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 
 	// App Fields (not required by Cytoscape)
-	Rate        string `json:"rate,omitempty"`
-	Rate3xx     string `json:"rate3XX,omitempty"`
-	Rate4xx     string `json:"rate4XX,omitempty"`
-	Rate5xx     string `json:"rate5XX,omitempty"`
-	PercentErr  string `json:"percentErr,omitempty"`
-	PercentRate string `json:"percentRate,omitempty"` // percent of total parent requests
-	Latency     string `json:"latency,omitempty"`
-	IsMTLS      bool   `json:"isMTLS,omitempty"`   // true (mutual TLS connection) | false
-	IsUnused    bool   `json:"isUnused,omitempty"` // true | false
+	Rate         string `json:"rate,omitempty"`
+	Rate3xx      string `json:"rate3XX,omitempty"`
+	Rate4xx      string `json:"rate4XX,omitempty"`
+	Rate5xx      string `json:"rate5XX,omitempty"`
+	PercentErr   string `json:"percentErr,omitempty"`
+	PercentRate  string `json:"percentRate,omitempty"` // percent of total parent requests
+	ResponseTime string `json:"responseTime,omitempty"`
+	IsMTLS       bool   `json:"isMTLS,omitempty"`   // true (mutual TLS connection) | false
+	IsUnused     bool   `json:"isUnused,omitempty"` // true | false
 }
 
 type NodeWrapper struct {
@@ -255,9 +255,9 @@ func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
 			ed.PercentErr = fmt.Sprintf("%.3f", percentErr)
 		}
 
-		if val, ok := e.Metadata["latency"]; ok {
-			latency := val.(float64)
-			ed.Latency = fmt.Sprintf("%.3f", latency)
+		if val, ok := e.Metadata["responseTime"]; ok {
+			responseTime := val.(float64)
+			ed.ResponseTime = fmt.Sprintf("%.3f", responseTime)
 		}
 
 		percentRate := rate / e.Source.Metadata["rateOut"].(float64) * 100.0

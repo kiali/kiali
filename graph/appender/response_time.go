@@ -19,17 +19,17 @@ const (
 	TF              = "2006-01-02 15:04:05" // TF is the TimeFormat for printing timestamp
 )
 
-// LatencyAppender is responsible for adding latency information to the graph. Latency
+// ResponseTimeAppender is responsible for adding responseTime information to the graph. ResponseTime
 // is represented as a percentile value. The default is 95th percentile, which means that
 // 95% of requests executed in no more than the resulting milliseconds.
-type LatencyAppender struct {
+type ResponseTimeAppender struct {
 	Duration  time.Duration
 	Quantile  float64
 	QueryTime int64 // unix time in seconds
 }
 
 // AppendGraph implements Appender
-func (a LatencyAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string) {
+func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -40,15 +40,15 @@ func (a LatencyAppender) AppendGraph(trafficMap graph.TrafficMap, namespace stri
 	a.appendGraph(trafficMap, namespace, client)
 }
 
-func (a LatencyAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
+func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
 	quantile := a.Quantile
 	if a.Quantile <= 0.0 || a.Quantile >= 100.0 {
 		log.Warningf("Replacing invalid quantile [%.2f] with default [%.2f]", a.Quantile, DefaultQuantile)
 		quantile = DefaultQuantile
 	}
-	log.Warningf("Generating latency using quantile [%.2f]", quantile)
+	log.Warningf("Generating responseTime using quantile [%.2f]", quantile)
 
-	// query prometheus for the latency info in two queries. The first query gathers latency for
+	// query prometheus for the responseTime info in two queries. The first query gathers responseTime for
 	// requests originating outside of the namespace...
 	namespacePattern := fmt.Sprintf(".*\\\\.%v\\\\..*", namespace)
 	query := fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{source_service!~\"%v\",destination_service=~\"%v\",response_code=\"200\"}[%vs])) by (%s))",
@@ -60,7 +60,7 @@ func (a LatencyAppender) appendGraph(trafficMap graph.TrafficMap, namespace stri
 		"le,source_service,source_version,destination_service,destination_version")
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
 
-	// The second query gathers latency for requests originating inside of the namespace...
+	// The second query gathers responseTime for requests originating inside of the namespace...
 	query = fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{source_service=~\"%v\",response_code=\"200\"}[%vs])) by (%s))",
 		quantile,
 		"istio_request_duration_bucket",
@@ -69,24 +69,24 @@ func (a LatencyAppender) appendGraph(trafficMap graph.TrafficMap, namespace stri
 		"le,source_service,source_version,destination_service,destination_version")
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
 
-	// create map to quickly look up latency
-	latencyMap := make(map[string]float64)
-	populateLatencyMap(latencyMap, &outVector)
-	populateLatencyMap(latencyMap, &inVector)
+	// create map to quickly look up responseTime
+	responseTimeMap := make(map[string]float64)
+	populateResponseTimeMap(responseTimeMap, &outVector)
+	populateResponseTimeMap(responseTimeMap, &inVector)
 
-	applyLatency(trafficMap, latencyMap)
+	applyResponseTime(trafficMap, responseTimeMap)
 }
 
-func applyLatency(trafficMap graph.TrafficMap, latencyMap map[string]float64) {
+func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]float64) {
 	for _, s := range trafficMap {
 		for _, e := range s.Edges {
 			key := fmt.Sprintf("%s %s %s %s", e.Source.Name, e.Source.Version, e.Dest.Name, e.Dest.Version)
-			e.Metadata["latency"] = latencyMap[key]
+			e.Metadata["responseTime"] = responseTimeMap[key]
 		}
 	}
 }
 
-func populateLatencyMap(latencyMap map[string]float64, vector *model.Vector) {
+func populateResponseTimeMap(responseTimeMap map[string]float64, vector *model.Vector) {
 	for _, s := range *vector {
 		m := s.Metric
 		sourceSvc, sourceSvcOk := m["source_service"]
@@ -100,7 +100,7 @@ func populateLatencyMap(latencyMap map[string]float64, vector *model.Vector) {
 
 		key := fmt.Sprintf("%s %s %s %s", sourceSvc, sourceVer, destSvc, destVer)
 		val := float64(s.Value)
-		latencyMap[key] = val
+		responseTimeMap[key] = val
 	}
 }
 
