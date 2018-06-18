@@ -11,9 +11,9 @@ const TIMER_REQUEST_PER_SECOND_MAX = 750;
 const TIMER_TIME_BETWEEN_DOTS_MIN = 20;
 const TIMER_TIME_BETWEEN_DOTS_MAX = 2000;
 
-// Clamp latency from min to max
-const SPEED_LATENCY_MIN = 0;
-const SPEED_LATENCY_MAX = 10;
+// Clamp response time from min to max
+const SPEED_RESPONSE_TIME_MIN = 0;
+const SPEED_RESPONSE_TIME_MAX = 10;
 
 // Speed to travel trough an edge
 const SPEED_RATE_MIN = 0.1;
@@ -307,7 +307,7 @@ export default class TrafficRenderer {
     return edges.reduce((trafficEdges: TrafficEdgeHash, edge: any) => {
       const edgeId = edge.data('id');
       const timer = this.timerFromRate(edge.data('rate'));
-      const speed = this.speedFromLatency(edge.data('latency'));
+      const speed = this.speedFromResponseTime(edge.data('responseTime'));
       const errorRate = edge.data('percentErr') === undefined ? 0 : edge.data('percentErr') / 100;
       if (edgeId in this.trafficEdges) {
         const trafficEdge = this.trafficEdges[edgeId];
@@ -338,13 +338,13 @@ export default class TrafficRenderer {
     );
   }
 
-  private speedFromLatency(latency: number) {
-    // Consider NaN latency as "everything is going as fast as possible"
-    if (isNaN(latency)) {
+  private speedFromResponseTime(responseTime: number) {
+    // Consider NaN response time as "everything is going as fast as possible"
+    if (isNaN(responseTime)) {
       return SPEED_RATE_MAX;
     }
     // Normalize
-    const delta = clamp(latency, SPEED_LATENCY_MIN, SPEED_LATENCY_MAX) / SPEED_LATENCY_MAX;
+    const delta = clamp(responseTime, SPEED_RESPONSE_TIME_MIN, SPEED_RESPONSE_TIME_MAX) / SPEED_RESPONSE_TIME_MAX;
     // Scale
     return SPEED_RATE_MIN + (1 - delta) * (SPEED_RATE_MAX - SPEED_RATE_MIN);
   }

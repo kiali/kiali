@@ -113,10 +113,10 @@ export class GraphStyles {
                 }
                 return '';
               }
-              case EdgeLabelMode.LATENCY_95TH_PERCENTILE: {
-                const latency = ele.data('latency') ? parseFloat(ele.data('latency')) : 0;
-                if (latency > 0) {
-                  return latency < 1.0 ? (latency * 1000).toFixed(0) + 'ms' : latency.toFixed(2) + 's';
+              case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE: {
+                const responseTime = ele.data('responseTime') ? parseFloat(ele.data('responseTime')) : 0;
+                if (responseTime > 0) {
+                  return responseTime < 1.0 ? (responseTime * 1000).toFixed(0) + 'ms' : responseTime.toFixed(2) + 's';
                 }
                 return '';
               }
