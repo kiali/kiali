@@ -1,10 +1,9 @@
 import * as React from 'react';
 import { Col, Row, Icon } from 'patternfly-react';
 import LocalTime from '../../../components/Time/LocalTime';
-import Badge from '../../../components/Badge/Badge';
 import { Deployment } from '../../../types/ServiceInfo';
 import { ratioCheck, Status } from '../../../utils/Health';
-import { PfColors } from '../../../components/Pf/PfColors';
+import Label from '../../../components/Label/Label';
 
 interface ServiceInfoDeploymentsProps {
   deployments?: Deployment[];
@@ -23,16 +22,9 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
             {(this.props.deployments || []).map((deployment, u) => (
               <div className="card-pf-body" key={'deployments_' + u}>
                 <h3>{deployment.name}</h3>
-                <div key="labels">
+                <div key="labels" className="label-collection">
                   {Object.keys(deployment.labels || new Map()).map((key, i) => (
-                    <Badge
-                      key={'deployment_' + i}
-                      scale={0.8}
-                      style="plastic"
-                      color={PfColors.Green400}
-                      leftText={key}
-                      rightText={deployment.labels ? deployment.labels[key] : ''}
-                    />
+                    <Label key={'deployment_' + i} name={key} value={deployment.labels ? deployment.labels[key] : ''} />
                   ))}
                 </div>
                 <div>

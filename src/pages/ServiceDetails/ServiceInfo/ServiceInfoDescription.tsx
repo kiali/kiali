@@ -1,13 +1,11 @@
 import * as React from 'react';
 import { Col, Row } from 'patternfly-react';
-
-import Badge from '../../../components/Badge/Badge';
+import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
 import { HealthIndicator, DisplayMode } from '../../../components/ServiceHealth/HealthIndicator';
 import { Health } from '../../../types/Health';
 import { Endpoints, Port } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
-import { PfColors } from '../../../components/Pf/PfColors';
 
 import './ServiceInfoDescription.css';
 import { IstioLogo } from '../../../types/ServiceListComponent';
@@ -42,17 +40,13 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               <div className="progress-description">
                 <strong>Labels</strong>
               </div>
-              {Object.keys(this.props.labels || new Map()).map((key, i) => (
-                <div key={'label_' + i}>
-                  <Badge
-                    scale={0.8}
-                    style="plastic"
-                    color={PfColors.Blue}
-                    leftText={key}
-                    rightText={this.props.labels ? this.props.labels[key] : ''}
-                  />
-                </div>
-              ))}
+              <div className="label-collection">
+                {Object.keys(this.props.labels || new Map()).map((key, i) => (
+                  <div key={'label_' + i}>
+                    <Label name={key} value={this.props.labels ? this.props.labels[key] : ''} />
+                  </div>
+                ))}
+              </div>
               <div>
                 <strong>Type</strong> {this.props.type ? this.props.type : ''}
               </div>

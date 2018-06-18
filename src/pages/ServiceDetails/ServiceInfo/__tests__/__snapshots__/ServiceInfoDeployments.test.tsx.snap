@@ -95,20 +95,16 @@ ShallowWrapper {
             <h3>
               reviews-v2
             </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
+            <div
+              className="label-collection"
+            >
+              <Label
+                name="app"
+                value="reviews"
               />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v2"
-                scale={0.8}
-                style="plastic"
+              <Label
+                name="version"
+                value="v2"
               />
             </div>
             <div>
@@ -163,20 +159,16 @@ ShallowWrapper {
             <h3>
               reviews-v3
             </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
+            <div
+              className="label-collection"
+            >
+              <Label
+                name="app"
+                value="reviews"
               />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v3"
-                scale={0.8}
-                style="plastic"
+              <Label
+                name="version"
+                value="v3"
               />
             </div>
             <div>
@@ -231,20 +223,16 @@ ShallowWrapper {
             <h3>
               reviews-v1
             </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
+            <div
+              className="label-collection"
+            >
+              <Label
+                name="app"
+                value="reviews"
               />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v1"
-                scale={0.8}
-                style="plastic"
+              <Label
+                name="version"
+                value="v1"
               />
             </div>
             <div>
@@ -318,20 +306,16 @@ ShallowWrapper {
             <h3>
               reviews-v2
             </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
+            <div
+              className="label-collection"
+            >
+              <Label
+                name="app"
+                value="reviews"
               />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v2"
-                scale={0.8}
-                style="plastic"
+              <Label
+                name="version"
+                value="v2"
               />
             </div>
             <div>
@@ -386,20 +370,16 @@ ShallowWrapper {
             <h3>
               reviews-v3
             </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
+            <div
+              className="label-collection"
+            >
+              <Label
+                name="app"
+                value="reviews"
               />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v3"
-                scale={0.8}
-                style="plastic"
+              <Label
+                name="version"
+                value="v3"
               />
             </div>
             <div>
@@ -454,20 +434,16 @@ ShallowWrapper {
             <h3>
               reviews-v1
             </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
+            <div
+              className="label-collection"
+            >
+              <Label
+                name="app"
+                value="reviews"
               />
-              <Badge
-                color="#3f9c35"
-                leftText="version"
-                rightText="v1"
-                scale={0.8}
-                style="plastic"
+              <Label
+                name="version"
+                value="v1"
               />
             </div>
             <div>
@@ -534,20 +510,16 @@ ShallowWrapper {
               <h3>
                 reviews-v2
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v2"
-                  scale={0.8}
-                  style="plastic"
+                <Label
+                  name="version"
+                  value="v2"
                 />
               </div>
               <div>
@@ -602,20 +574,16 @@ ShallowWrapper {
               <h3>
                 reviews-v3
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v3"
-                  scale={0.8}
-                  style="plastic"
+                <Label
+                  name="version"
+                  value="v3"
                 />
               </div>
               <div>
@@ -670,20 +638,16 @@ ShallowWrapper {
               <h3>
                 reviews-v1
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v1"
-                  scale={0.8}
-                  style="plastic"
+                <Label
+                  name="version"
+                  value="v1"
                 />
               </div>
               <div>
@@ -750,20 +714,16 @@ ShallowWrapper {
                 <h3>
                   reviews-v2
                 </h3>,
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
+                <div
+                  className="label-collection"
+                >
+                  <Label
+                    name="app"
+                    value="reviews"
                   />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v2"
-                    scale={0.8}
-                    style="plastic"
+                  <Label
+                    name="version"
+                    value="v2"
                   />
                 </div>,
                 <div>
@@ -833,21 +793,16 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": Array [
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="app"
+                      value="reviews"
                     />,
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v2"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="version"
+                      value="v2"
                     />,
                   ],
+                  "className": "label-collection",
                 },
                 "ref": null,
                 "rendered": Array [
@@ -856,11 +811,8 @@ ShallowWrapper {
                     "key": "deployment_0",
                     "nodeType": "class",
                     "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "app",
-                      "rightText": "reviews",
-                      "scale": 0.8,
-                      "style": "plastic",
+                      "name": "app",
+                      "value": "reviews",
                     },
                     "ref": null,
                     "rendered": null,
@@ -871,11 +823,8 @@ ShallowWrapper {
                     "key": "deployment_1",
                     "nodeType": "class",
                     "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "version",
-                      "rightText": "v2",
-                      "scale": 0.8,
-                      "style": "plastic",
+                      "name": "version",
+                      "value": "v2",
                     },
                     "ref": null,
                     "rendered": null,
@@ -1101,20 +1050,16 @@ ShallowWrapper {
                 <h3>
                   reviews-v3
                 </h3>,
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
+                <div
+                  className="label-collection"
+                >
+                  <Label
+                    name="app"
+                    value="reviews"
                   />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v3"
-                    scale={0.8}
-                    style="plastic"
+                  <Label
+                    name="version"
+                    value="v3"
                   />
                 </div>,
                 <div>
@@ -1184,21 +1129,16 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": Array [
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="app"
+                      value="reviews"
                     />,
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v3"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="version"
+                      value="v3"
                     />,
                   ],
+                  "className": "label-collection",
                 },
                 "ref": null,
                 "rendered": Array [
@@ -1207,11 +1147,8 @@ ShallowWrapper {
                     "key": "deployment_0",
                     "nodeType": "class",
                     "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "app",
-                      "rightText": "reviews",
-                      "scale": 0.8,
-                      "style": "plastic",
+                      "name": "app",
+                      "value": "reviews",
                     },
                     "ref": null,
                     "rendered": null,
@@ -1222,11 +1159,8 @@ ShallowWrapper {
                     "key": "deployment_1",
                     "nodeType": "class",
                     "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "version",
-                      "rightText": "v3",
-                      "scale": 0.8,
-                      "style": "plastic",
+                      "name": "version",
+                      "value": "v3",
                     },
                     "ref": null,
                     "rendered": null,
@@ -1452,20 +1386,16 @@ ShallowWrapper {
                 <h3>
                   reviews-v1
                 </h3>,
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
+                <div
+                  className="label-collection"
+                >
+                  <Label
+                    name="app"
+                    value="reviews"
                   />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v1"
-                    scale={0.8}
-                    style="plastic"
+                  <Label
+                    name="version"
+                    value="v1"
                   />
                 </div>,
                 <div>
@@ -1535,21 +1465,16 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": Array [
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="app"
+                      value="reviews"
                     />,
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v1"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="version"
+                      value="v1"
                     />,
                   ],
+                  "className": "label-collection",
                 },
                 "ref": null,
                 "rendered": Array [
@@ -1558,11 +1483,8 @@ ShallowWrapper {
                     "key": "deployment_0",
                     "nodeType": "class",
                     "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "app",
-                      "rightText": "reviews",
-                      "scale": 0.8,
-                      "style": "plastic",
+                      "name": "app",
+                      "value": "reviews",
                     },
                     "ref": null,
                     "rendered": null,
@@ -1573,11 +1495,8 @@ ShallowWrapper {
                     "key": "deployment_1",
                     "nodeType": "class",
                     "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "version",
-                      "rightText": "v1",
-                      "scale": 0.8,
-                      "style": "plastic",
+                      "name": "version",
+                      "value": "v1",
                     },
                     "ref": null,
                     "rendered": null,
@@ -1826,20 +1745,16 @@ ShallowWrapper {
               <h3>
                 reviews-v2
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v2"
-                  scale={0.8}
-                  style="plastic"
+                <Label
+                  name="version"
+                  value="v2"
                 />
               </div>
               <div>
@@ -1894,20 +1809,16 @@ ShallowWrapper {
               <h3>
                 reviews-v3
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v3"
-                  scale={0.8}
-                  style="plastic"
+                <Label
+                  name="version"
+                  value="v3"
                 />
               </div>
               <div>
@@ -1962,20 +1873,16 @@ ShallowWrapper {
               <h3>
                 reviews-v1
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v1"
-                  scale={0.8}
-                  style="plastic"
+                <Label
+                  name="version"
+                  value="v1"
                 />
               </div>
               <div>
@@ -2049,20 +1956,16 @@ ShallowWrapper {
               <h3>
                 reviews-v2
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v2"
-                  scale={0.8}
-                  style="plastic"
+                <Label
+                  name="version"
+                  value="v2"
                 />
               </div>
               <div>
@@ -2117,20 +2020,16 @@ ShallowWrapper {
               <h3>
                 reviews-v3
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v3"
-                  scale={0.8}
-                  style="plastic"
+                <Label
+                  name="version"
+                  value="v3"
                 />
               </div>
               <div>
@@ -2185,20 +2084,16 @@ ShallowWrapper {
               <h3>
                 reviews-v1
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
-                <Badge
-                  color="#3f9c35"
-                  leftText="version"
-                  rightText="v1"
-                  scale={0.8}
-                  style="plastic"
+                <Label
+                  name="version"
+                  value="v1"
                 />
               </div>
               <div>
@@ -2265,20 +2160,16 @@ ShallowWrapper {
                 <h3>
                   reviews-v2
                 </h3>
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
+                <div
+                  className="label-collection"
+                >
+                  <Label
+                    name="app"
+                    value="reviews"
                   />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v2"
-                    scale={0.8}
-                    style="plastic"
+                  <Label
+                    name="version"
+                    value="v2"
                   />
                 </div>
                 <div>
@@ -2333,20 +2224,16 @@ ShallowWrapper {
                 <h3>
                   reviews-v3
                 </h3>
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
+                <div
+                  className="label-collection"
+                >
+                  <Label
+                    name="app"
+                    value="reviews"
                   />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v3"
-                    scale={0.8}
-                    style="plastic"
+                  <Label
+                    name="version"
+                    value="v3"
                   />
                 </div>
                 <div>
@@ -2401,20 +2288,16 @@ ShallowWrapper {
                 <h3>
                   reviews-v1
                 </h3>
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
+                <div
+                  className="label-collection"
+                >
+                  <Label
+                    name="app"
+                    value="reviews"
                   />
-                  <Badge
-                    color="#3f9c35"
-                    leftText="version"
-                    rightText="v1"
-                    scale={0.8}
-                    style="plastic"
+                  <Label
+                    name="version"
+                    value="v1"
                   />
                 </div>
                 <div>
@@ -2481,20 +2364,16 @@ ShallowWrapper {
                   <h3>
                     reviews-v2
                   </h3>,
-                  <div>
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
+                  <div
+                    className="label-collection"
+                  >
+                    <Label
+                      name="app"
+                      value="reviews"
                     />
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v2"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="version"
+                      value="v2"
                     />
                   </div>,
                   <div>
@@ -2564,21 +2443,16 @@ ShallowWrapper {
                   "nodeType": "host",
                   "props": Object {
                     "children": Array [
-                      <Badge
-                        color="#3f9c35"
-                        leftText="app"
-                        rightText="reviews"
-                        scale={0.8}
-                        style="plastic"
+                      <Label
+                        name="app"
+                        value="reviews"
                       />,
-                      <Badge
-                        color="#3f9c35"
-                        leftText="version"
-                        rightText="v2"
-                        scale={0.8}
-                        style="plastic"
+                      <Label
+                        name="version"
+                        value="v2"
                       />,
                     ],
+                    "className": "label-collection",
                   },
                   "ref": null,
                   "rendered": Array [
@@ -2587,11 +2461,8 @@ ShallowWrapper {
                       "key": "deployment_0",
                       "nodeType": "class",
                       "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "app",
-                        "rightText": "reviews",
-                        "scale": 0.8,
-                        "style": "plastic",
+                        "name": "app",
+                        "value": "reviews",
                       },
                       "ref": null,
                       "rendered": null,
@@ -2602,11 +2473,8 @@ ShallowWrapper {
                       "key": "deployment_1",
                       "nodeType": "class",
                       "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "version",
-                        "rightText": "v2",
-                        "scale": 0.8,
-                        "style": "plastic",
+                        "name": "version",
+                        "value": "v2",
                       },
                       "ref": null,
                       "rendered": null,
@@ -2832,20 +2700,16 @@ ShallowWrapper {
                   <h3>
                     reviews-v3
                   </h3>,
-                  <div>
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
+                  <div
+                    className="label-collection"
+                  >
+                    <Label
+                      name="app"
+                      value="reviews"
                     />
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v3"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="version"
+                      value="v3"
                     />
                   </div>,
                   <div>
@@ -2915,21 +2779,16 @@ ShallowWrapper {
                   "nodeType": "host",
                   "props": Object {
                     "children": Array [
-                      <Badge
-                        color="#3f9c35"
-                        leftText="app"
-                        rightText="reviews"
-                        scale={0.8}
-                        style="plastic"
+                      <Label
+                        name="app"
+                        value="reviews"
                       />,
-                      <Badge
-                        color="#3f9c35"
-                        leftText="version"
-                        rightText="v3"
-                        scale={0.8}
-                        style="plastic"
+                      <Label
+                        name="version"
+                        value="v3"
                       />,
                     ],
+                    "className": "label-collection",
                   },
                   "ref": null,
                   "rendered": Array [
@@ -2938,11 +2797,8 @@ ShallowWrapper {
                       "key": "deployment_0",
                       "nodeType": "class",
                       "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "app",
-                        "rightText": "reviews",
-                        "scale": 0.8,
-                        "style": "plastic",
+                        "name": "app",
+                        "value": "reviews",
                       },
                       "ref": null,
                       "rendered": null,
@@ -2953,11 +2809,8 @@ ShallowWrapper {
                       "key": "deployment_1",
                       "nodeType": "class",
                       "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "version",
-                        "rightText": "v3",
-                        "scale": 0.8,
-                        "style": "plastic",
+                        "name": "version",
+                        "value": "v3",
                       },
                       "ref": null,
                       "rendered": null,
@@ -3183,20 +3036,16 @@ ShallowWrapper {
                   <h3>
                     reviews-v1
                   </h3>,
-                  <div>
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
+                  <div
+                    className="label-collection"
+                  >
+                    <Label
+                      name="app"
+                      value="reviews"
                     />
-                    <Badge
-                      color="#3f9c35"
-                      leftText="version"
-                      rightText="v1"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="version"
+                      value="v1"
                     />
                   </div>,
                   <div>
@@ -3266,21 +3115,16 @@ ShallowWrapper {
                   "nodeType": "host",
                   "props": Object {
                     "children": Array [
-                      <Badge
-                        color="#3f9c35"
-                        leftText="app"
-                        rightText="reviews"
-                        scale={0.8}
-                        style="plastic"
+                      <Label
+                        name="app"
+                        value="reviews"
                       />,
-                      <Badge
-                        color="#3f9c35"
-                        leftText="version"
-                        rightText="v1"
-                        scale={0.8}
-                        style="plastic"
+                      <Label
+                        name="version"
+                        value="v1"
                       />,
                     ],
+                    "className": "label-collection",
                   },
                   "ref": null,
                   "rendered": Array [
@@ -3289,11 +3133,8 @@ ShallowWrapper {
                       "key": "deployment_0",
                       "nodeType": "class",
                       "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "app",
-                        "rightText": "reviews",
-                        "scale": 0.8,
-                        "style": "plastic",
+                        "name": "app",
+                        "value": "reviews",
                       },
                       "ref": null,
                       "rendered": null,
@@ -3304,11 +3145,8 @@ ShallowWrapper {
                       "key": "deployment_1",
                       "nodeType": "class",
                       "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "version",
-                        "rightText": "v1",
-                        "scale": 0.8,
-                        "style": "plastic",
+                        "name": "version",
+                        "value": "v1",
                       },
                       "ref": null,
                       "rendered": null,

@@ -91,13 +91,12 @@ ShallowWrapper {
                 </span>
               </OverlayTrigger>
             </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
+            <div
+              className="label-collection"
+            >
+              <Label
+                name="app"
+                value="reviews"
               />
             </div>
             <div>
@@ -160,13 +159,12 @@ ShallowWrapper {
                 </span>
               </OverlayTrigger>
             </h3>
-            <div>
-              <Badge
-                color="#3f9c35"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
+            <div
+              className="label-collection"
+            >
+              <Label
+                name="app"
+                value="reviews"
               />
             </div>
             <div>
@@ -222,13 +220,12 @@ ShallowWrapper {
                   </span>
                 </OverlayTrigger>
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
               </div>
               <div>
@@ -284,13 +281,12 @@ ShallowWrapper {
                     </span>
                   </OverlayTrigger>
                 </h3>,
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
+                <div
+                  className="label-collection"
+                >
+                  <Label
+                    name="app"
+                    value="reviews"
                   />
                 </div>,
                 <div>
@@ -388,14 +384,12 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": Array [
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="app"
+                      value="reviews"
                     />,
                   ],
+                  "className": "label-collection",
                 },
                 "ref": null,
                 "rendered": Array [
@@ -404,11 +398,8 @@ ShallowWrapper {
                     "key": "pod_0_0",
                     "nodeType": "class",
                     "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "app",
-                      "rightText": "reviews",
-                      "scale": 0.8,
-                      "style": "plastic",
+                      "name": "app",
+                      "value": "reviews",
                     },
                     "ref": null,
                     "rendered": null,
@@ -548,13 +539,12 @@ ShallowWrapper {
                   </span>
                 </OverlayTrigger>
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
               </div>
               <div>
@@ -617,13 +607,12 @@ ShallowWrapper {
                   </span>
                 </OverlayTrigger>
               </h3>
-              <div>
-                <Badge
-                  color="#3f9c35"
-                  leftText="app"
-                  rightText="reviews"
-                  scale={0.8}
-                  style="plastic"
+              <div
+                className="label-collection"
+              >
+                <Label
+                  name="app"
+                  value="reviews"
                 />
               </div>
               <div>
@@ -679,13 +668,12 @@ ShallowWrapper {
                     </span>
                   </OverlayTrigger>
                 </h3>
-                <div>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="app"
-                    rightText="reviews"
-                    scale={0.8}
-                    style="plastic"
+                <div
+                  className="label-collection"
+                >
+                  <Label
+                    name="app"
+                    value="reviews"
                   />
                 </div>
                 <div>
@@ -741,13 +729,12 @@ ShallowWrapper {
                       </span>
                     </OverlayTrigger>
                   </h3>,
-                  <div>
-                    <Badge
-                      color="#3f9c35"
-                      leftText="app"
-                      rightText="reviews"
-                      scale={0.8}
-                      style="plastic"
+                  <div
+                    className="label-collection"
+                  >
+                    <Label
+                      name="app"
+                      value="reviews"
                     />
                   </div>,
                   <div>
@@ -845,14 +832,12 @@ ShallowWrapper {
                   "nodeType": "host",
                   "props": Object {
                     "children": Array [
-                      <Badge
-                        color="#3f9c35"
-                        leftText="app"
-                        rightText="reviews"
-                        scale={0.8}
-                        style="plastic"
+                      <Label
+                        name="app"
+                        value="reviews"
                       />,
                     ],
+                    "className": "label-collection",
                   },
                   "ref": null,
                   "rendered": Array [
@@ -861,11 +846,8 @@ ShallowWrapper {
                       "key": "pod_0_0",
                       "nodeType": "class",
                       "props": Object {
-                        "color": "#3f9c35",
-                        "leftText": "app",
-                        "rightText": "reviews",
-                        "scale": 0.8,
-                        "style": "plastic",
+                        "name": "app",
+                        "value": "reviews",
                       },
                       "ref": null,
                       "rendered": null,

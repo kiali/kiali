@@ -79,14 +79,15 @@ ShallowWrapper {
               Labels
             </strong>
           </div>
-          <div>
-            <Badge
-              color="#0088ce"
-              leftText="app"
-              rightText="reviews"
-              scale={0.8}
-              style="plastic"
-            />
+          <div
+            className="label-collection"
+          >
+            <div>
+              <Label
+                name="app"
+                value="reviews"
+              />
+            </div>
           </div>
           <div>
             <strong>
@@ -267,14 +268,15 @@ ShallowWrapper {
                 Labels
               </strong>
             </div>
-            <div>
-              <Badge
-                color="#0088ce"
-                leftText="app"
-                rightText="reviews"
-                scale={0.8}
-                style="plastic"
-              />
+            <div
+              className="label-collection"
+            >
+              <div>
+                <Label
+                  name="app"
+                  value="reviews"
+                />
+              </div>
             </div>
             <div>
               <strong>

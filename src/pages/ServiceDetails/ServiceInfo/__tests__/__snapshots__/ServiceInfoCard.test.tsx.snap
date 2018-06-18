@@ -22,12 +22,9 @@ ShallowWrapper {
           }
         >
           <li>
-            <Badge
-              color="#3f9c35"
-              leftText="my_key"
-              rightText="my_value"
-              scale={0.8}
-              style="plastic"
+            <Label
+              name="my_key"
+              value="my_value"
             />
           </li>
         </ul>
@@ -83,12 +80,9 @@ ShallowWrapper {
               }
             >
               <li>
-                <Badge
-                  color="#3f9c35"
-                  leftText="my_key"
-                  rightText="my_value"
-                  scale={0.8}
-                  style="plastic"
+                <Label
+                  name="my_key"
+                  value="my_value"
                 />
               </li>
             </ul>
@@ -182,12 +176,9 @@ ShallowWrapper {
               }
             >
               <li>
-                <Badge
-                  color="#3f9c35"
-                  leftText="my_key"
-                  rightText="my_value"
-                  scale={0.8}
-                  style="plastic"
+                <Label
+                  name="my_key"
+                  value="my_value"
                 />
               </li>
             </ul>
@@ -214,12 +205,9 @@ ShallowWrapper {
                 }
               >
                 <li>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="my_key"
-                    rightText="my_value"
-                    scale={0.8}
-                    style="plastic"
+                  <Label
+                    name="my_key"
+                    value="my_value"
                   />
                 </li>
               </ul>,
@@ -256,12 +244,9 @@ ShallowWrapper {
               "nodeType": "host",
               "props": Object {
                 "children": <li>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="my_key"
-                    rightText="my_value"
-                    scale={0.8}
-                    style="plastic"
+                  <Label
+                    name="my_key"
+                    value="my_value"
                   />
                 </li>,
                 "style": Object {
@@ -274,12 +259,9 @@ ShallowWrapper {
                 "key": "pod_labels_badge_",
                 "nodeType": "host",
                 "props": Object {
-                  "children": <Badge
-                    color="#3f9c35"
-                    leftText="my_key"
-                    rightText="my_value"
-                    scale={0.8}
-                    style="plastic"
+                  "children": <Label
+                    name="my_key"
+                    value="my_value"
                   />,
                 },
                 "ref": null,
@@ -288,11 +270,8 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "class",
                   "props": Object {
-                    "color": "#3f9c35",
-                    "leftText": "my_key",
-                    "rightText": "my_value",
-                    "scale": 0.8,
-                    "style": "plastic",
+                    "name": "my_key",
+                    "value": "my_value",
                   },
                   "ref": null,
                   "rendered": null,
@@ -352,12 +331,9 @@ ShallowWrapper {
                 }
               >
                 <li>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="my_key"
-                    rightText="my_value"
-                    scale={0.8}
-                    style="plastic"
+                  <Label
+                    name="my_key"
+                    value="my_value"
                   />
                 </li>
               </ul>
@@ -451,12 +427,9 @@ ShallowWrapper {
                 }
               >
                 <li>
-                  <Badge
-                    color="#3f9c35"
-                    leftText="my_key"
-                    rightText="my_value"
-                    scale={0.8}
-                    style="plastic"
+                  <Label
+                    name="my_key"
+                    value="my_value"
                   />
                 </li>
               </ul>
@@ -483,12 +456,9 @@ ShallowWrapper {
                   }
                 >
                   <li>
-                    <Badge
-                      color="#3f9c35"
-                      leftText="my_key"
-                      rightText="my_value"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="my_key"
+                      value="my_value"
                     />
                   </li>
                 </ul>,
@@ -525,12 +495,9 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": <li>
-                    <Badge
-                      color="#3f9c35"
-                      leftText="my_key"
-                      rightText="my_value"
-                      scale={0.8}
-                      style="plastic"
+                    <Label
+                      name="my_key"
+                      value="my_value"
                     />
                   </li>,
                   "style": Object {
@@ -543,12 +510,9 @@ ShallowWrapper {
                   "key": "pod_labels_badge_",
                   "nodeType": "host",
                   "props": Object {
-                    "children": <Badge
-                      color="#3f9c35"
-                      leftText="my_key"
-                      rightText="my_value"
-                      scale={0.8}
-                      style="plastic"
+                    "children": <Label
+                      name="my_key"
+                      value="my_value"
                     />,
                   },
                   "ref": null,
@@ -557,11 +521,8 @@ ShallowWrapper {
                     "key": undefined,
                     "nodeType": "class",
                     "props": Object {
-                      "color": "#3f9c35",
-                      "leftText": "my_key",
-                      "rightText": "my_value",
-                      "scale": 0.8,
-                      "style": "plastic",
+                      "name": "my_key",
+                      "value": "my_value",
                     },
                     "ref": null,
                     "rendered": null,
