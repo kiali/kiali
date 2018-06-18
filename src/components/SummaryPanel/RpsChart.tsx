@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { AreaChart } from 'patternfly-react';
+import { AreaChart, Icon } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
+import { style } from 'typestyle';
 
 type RpsChartTypeProp = {
   label: string;
@@ -8,32 +9,47 @@ type RpsChartTypeProp = {
   dataErrors: [string, number][];
 };
 
+const sparklineAxisProps: any = {
+  x: {
+    show: false,
+    type: 'timeseries',
+    tick: {
+      fit: true,
+      count: 15,
+      multiline: false,
+      format: '%H:%M:%S'
+    }
+  },
+  y: { show: false }
+};
+
+const blockStyle = style({
+  marginTop: '0.5em',
+  marginBottom: '0.5em'
+});
+
 export default class RpsChart extends React.Component<RpsChartTypeProp, {}> {
   constructor(props: RpsChartTypeProp) {
     super(props);
   }
 
   render() {
-    const axis: any = {
-      x: {
-        show: false,
-        type: 'timeseries',
-        tick: {
-          fit: true,
-          count: 15,
-          multiline: false,
-          format: '%H:%M:%S'
-        }
-      },
-      y: { show: false }
-    };
+    return (
+      <div className={blockStyle}>
+        <div>
+          <strong>{this.props.label} min / max:</strong>
+        </div>
+        {this.thereIsTrafficData() ? this.renderMinMaxStats() : this.renderNoTrafficLegend()}
+        {this.renderSparkline()}
+      </div>
+    );
+  }
 
-    const chartData = {
-      x: 'x',
-      columns: (this.props.dataRps as [string, number][]).concat(this.props.dataErrors as [string, number][]),
-      type: 'area-spline'
-    };
+  private thereIsTrafficData = () => {
+    return this.props.dataRps.length > 0 && this.props.dataRps[0].length > 1;
+  };
 
+  private renderMinMaxStats = () => {
     let dataRps: any = [],
       dataErrors: any = [];
     if (this.props.dataRps.length > 0) {
@@ -66,24 +82,40 @@ export default class RpsChart extends React.Component<RpsChartTypeProp, {}> {
     }
 
     return (
-      <>
-        <div>
-          <strong>{this.props.label} min / max:</strong>
-        </div>
-        <div>
-          RPS: {minRps.toFixed(2)} / {maxRps.toFixed(2)} , %Error {minPctErr.toFixed(2)} / {maxPctErr.toFixed(2)}
-        </div>
-        {this.props.dataRps.length > 0 && (
-          <AreaChart
-            size={{ height: 45 }}
-            color={{ pattern: [PfColors.Blue, PfColors.Red100] }}
-            legend={{ show: false }}
-            grid={{ y: { show: false } }}
-            axis={axis}
-            data={chartData}
-          />
-        )}
-      </>
+      <div>
+        RPS: {minRps.toFixed(2)} / {maxRps.toFixed(2)} , %Error {minPctErr.toFixed(2)} / {maxPctErr.toFixed(2)}
+      </div>
     );
-  }
+  };
+
+  private renderSparkline = () => {
+    if (!this.thereIsTrafficData()) {
+      return null;
+    }
+
+    const chartData = {
+      x: 'x',
+      columns: (this.props.dataRps as [string, number][]).concat(this.props.dataErrors as [string, number][]),
+      type: 'area-spline'
+    };
+
+    return (
+      <AreaChart
+        size={{ height: 45 }}
+        color={{ pattern: [PfColors.Blue, PfColors.Red100] }}
+        legend={{ show: false }}
+        grid={{ y: { show: false } }}
+        axis={sparklineAxisProps}
+        data={chartData}
+      />
+    );
+  };
+
+  private renderNoTrafficLegend = () => {
+    return (
+      <div>
+        <Icon type="pf" name="info" /> No traffic logged.
+      </div>
+    );
+  };
 }
