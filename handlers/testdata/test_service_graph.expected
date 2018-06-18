@@ -6,7 +6,8 @@
         "data": {
           "id": "32f13d185b9a6764d67f9f96f8796f6c",
           "service": "productpage.bookinfo.svc.cluster.local",
-          "version": "v1"
+          "version": "v1",
+          "rateOut": "60.000"
         }
       },
       {
@@ -39,7 +40,8 @@
           "parent": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
           "version": "v2",
-          "rate": "40.000"
+          "rate": "40.000",
+          "rateOut": "40.000"
         }
       },
       {
@@ -48,7 +50,8 @@
           "parent": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
           "version": "v3",
-          "rate": "40.000"
+          "rate": "40.000",
+          "rateOut": "40.000"
         }
       }
     ],

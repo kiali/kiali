@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/graph/tree"
+	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -29,18 +29,18 @@ type LatencyAppender struct {
 }
 
 // AppendGraph implements Appender
-func (a LatencyAppender) AppendGraph(trees *[]*tree.ServiceNode, namespace string) {
-	if len(*trees) == 0 {
+func (a LatencyAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string) {
+	if len(trafficMap) == 0 {
 		return
 	}
 
 	client, err := prometheus.NewClient()
 	checkError(err)
 
-	a.appendGraph(trees, namespace, client)
+	a.appendGraph(trafficMap, namespace, client)
 }
 
-func (a LatencyAppender) appendGraph(trees *[]*tree.ServiceNode, namespace string, client *prometheus.Client) {
+func (a LatencyAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
 	quantile := a.Quantile
 	if a.Quantile <= 0.0 || a.Quantile >= 100.0 {
 		log.Warningf("Replacing invalid quantile [%.2f] with default [%.2f]", a.Quantile, DefaultQuantile)
@@ -74,21 +74,15 @@ func (a LatencyAppender) appendGraph(trees *[]*tree.ServiceNode, namespace strin
 	populateLatencyMap(latencyMap, &outVector)
 	populateLatencyMap(latencyMap, &inVector)
 
-	for _, tree := range *trees {
-		applyLatency(tree, latencyMap)
-	}
+	applyLatency(trafficMap, latencyMap)
 }
 
-func applyLatency(n *tree.ServiceNode, latencyMap map[string]float64) {
-	for _, c := range n.Children {
-		sourceSvc := n.Name
-		sourceVer := n.Version
-		destSvc := c.Name
-		destVer := c.Version
-		key := fmt.Sprintf("%s %s %s %s", sourceSvc, sourceVer, destSvc, destVer)
-		c.Metadata["latency"] = latencyMap[key]
-
-		applyLatency(c, latencyMap)
+func applyLatency(trafficMap graph.TrafficMap, latencyMap map[string]float64) {
+	for _, s := range trafficMap {
+		for _, e := range s.Edges {
+			key := fmt.Sprintf("%s %s %s %s", e.Source.Name, e.Source.Version, e.Dest.Name, e.Dest.Version)
+			e.Metadata["latency"] = latencyMap[key]
+		}
 	}
 }
 

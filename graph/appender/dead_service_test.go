@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/graph/tree"
+	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -74,69 +74,73 @@ func TestDeadService(t *testing.T) {
 
 	config.Set(config.NewConfig())
 
-	trees := testTree()
+	trafficMap := testTrafficMap()
 
-	assert.Equal(1, len(trees))
-	assert.Equal(tree.UnknownService, trees[0].Name)
-	assert.Equal(6, len(trees[0].Children))
+	assert.Equal(7, len(trafficMap))
+	unknownService, found := trafficMap[graph.Id(graph.UnknownService, graph.UnknownVersion)]
+	assert.Equal(true, found)
+	assert.Equal(graph.UnknownService, unknownService.Name)
+	assert.Equal(6, len(unknownService.Edges))
 
-	applyDeadServices(&trees[0], k8s)
+	applyDeadServices(trafficMap, k8s)
 
-	assert.Equal(1, len(trees))
-	assert.Equal(tree.UnknownService, trees[0].Name)
-	assert.Equal(5, len(trees[0].Children))
+	assert.Equal(6, len(trafficMap))
+	unknownService, found = trafficMap[graph.Id(graph.UnknownService, graph.UnknownVersion)]
+	assert.Equal(true, found)
+	assert.Equal(5, len(unknownService.Edges))
 
-	assert.Equal("testPodsWithTraffic.testNamespace.svc.cluster.local", trees[0].Children[0].Name)
-	assert.Equal("testPodsNoTraffic.testNamespace.svc.cluster.local", trees[0].Children[1].Name)
-	assert.Equal("testNoPodsWithTraffic.testNamespace.svc.cluster.local", trees[0].Children[2].Name)
-	assert.Equal("testNoPodsNoTraffic.testNamespace.svc.cluster.local", trees[0].Children[3].Name)
-	isDead, ok := trees[0].Children[3].Metadata["isDead"]
+	assert.Equal("testPodsWithTraffic.testNamespace.svc.cluster.local", unknownService.Edges[0].Dest.Name)
+	assert.Equal("testPodsNoTraffic.testNamespace.svc.cluster.local", unknownService.Edges[1].Dest.Name)
+	assert.Equal("testNoPodsWithTraffic.testNamespace.svc.cluster.local", unknownService.Edges[2].Dest.Name)
+	assert.Equal("testNoPodsNoTraffic.testNamespace.svc.cluster.local", unknownService.Edges[3].Dest.Name)
+	assert.Equal("testNoServiceWithTraffic.testNamespace.svc.cluster.local", unknownService.Edges[4].Dest.Name)
+
+	noPodsNoTraffic, ok := trafficMap[graph.Id("testNoPodsNoTraffic.testNamespace.svc.cluster.local", "v1")]
 	assert.Equal(true, ok)
-	assert.Equal("true", isDead)
-	assert.Equal("testNoServiceWithTraffic.testNamespace.svc.cluster.local", trees[0].Children[4].Name)
+	isDead, ok := noPodsNoTraffic.Metadata["isDead"]
+	assert.Equal(true, ok)
+	assert.Equal(true, isDead)
 }
 
-func testTree() []tree.ServiceNode {
-	trees := make([]tree.ServiceNode, 1)
+func testTrafficMap() map[string]*graph.ServiceNode {
+	trafficMap := make(map[string]*graph.ServiceNode)
 
-	trees[0] = tree.NewServiceNode(tree.UnknownService, tree.UnknownVersion)
-	trees[0].Children = make([]*tree.ServiceNode, 6)
+	s0 := graph.NewServiceNode(graph.UnknownService, graph.UnknownVersion)
+	s0.Metadata["rateOut"] = 2.4
+	s1 := graph.NewServiceNode("testPodsWithTraffic.testNamespace.svc.cluster.local", "v1")
+	s1.Metadata["rateIn"] = 0.8
+	s2 := graph.NewServiceNode("testPodsNoTraffic.testNamespace.svc.cluster.local", "v1")
+	s3 := graph.NewServiceNode("testNoPodsWithTraffic.testNamespace.svc.cluster.local", "v1")
+	s3.Metadata["rateIn"] = 0.8
+	s4 := graph.NewServiceNode("testNoPodsNoTraffic.testNamespace.svc.cluster.local", "v1")
+	s5 := graph.NewServiceNode("testNoServiceWithTraffic.testNamespace.svc.cluster.local", "v1")
+	s5.Metadata["rateIn"] = 0.8
+	s6 := graph.NewServiceNode("testNoServiceNoTraffic.testNamespace.svc.cluster.local", "v1")
+	trafficMap[s0.ID] = &s0
+	trafficMap[s1.ID] = &s1
+	trafficMap[s2.ID] = &s2
+	trafficMap[s3.ID] = &s3
+	trafficMap[s4.ID] = &s4
+	trafficMap[s5.ID] = &s5
+	trafficMap[s6.ID] = &s6
 
-	child0 := tree.NewServiceNode("testPodsWithTraffic.testNamespace.svc.cluster.local", "v1")
-	child0.Parent = &trees[0]
-	child0.Metadata = make(map[string]interface{})
-	child0.Metadata["rate"] = 0.8
-	trees[0].Children[0] = &child0
+	e := s0.AddEdge(&s1)
+	e.Metadata["rate"] = 0.8
 
-	child1 := tree.NewServiceNode("testPodsNoTraffic.testNamespace.svc.cluster.local", "v1")
-	child1.Parent = &trees[0]
-	child1.Metadata = make(map[string]interface{})
-	child1.Metadata["rate"] = 0.0
-	trees[0].Children[1] = &child1
+	e = s0.AddEdge(&s2)
+	e.Metadata["rate"] = 0.0
 
-	child2 := tree.NewServiceNode("testNoPodsWithTraffic.testNamespace.svc.cluster.local", "v1")
-	child2.Parent = &trees[0]
-	child2.Metadata = make(map[string]interface{})
-	child2.Metadata["rate"] = 0.8
-	trees[0].Children[2] = &child2
+	e = s0.AddEdge(&s3)
+	e.Metadata["rate"] = 0.8
 
-	child3 := tree.NewServiceNode("testNoPodsNoTraffic.testNamespace.svc.cluster.local", "v1")
-	child3.Parent = &trees[0]
-	child3.Metadata = make(map[string]interface{})
-	child3.Metadata["rate"] = 0.0
-	trees[0].Children[3] = &child3
+	e = s0.AddEdge(&s4)
+	e.Metadata["rate"] = 0.0
 
-	child4 := tree.NewServiceNode("testNoServiceWithTraffic.testNamespace.svc.cluster.local", "v1")
-	child4.Parent = &trees[0]
-	child4.Metadata = make(map[string]interface{})
-	child4.Metadata["rate"] = 0.8
-	trees[0].Children[4] = &child4
+	e = s0.AddEdge(&s5)
+	e.Metadata["rate"] = 0.8
 
-	child5 := tree.NewServiceNode("testNoServiceNoTraffic.testNamespace.svc.cluster.local", "v1")
-	child5.Parent = &trees[0]
-	child5.Metadata = make(map[string]interface{})
-	child5.Metadata["rate"] = 0.0
-	trees[0].Children[5] = &child5
+	e = s0.AddEdge(&s6)
+	e.Metadata["rate"] = 0.0
 
-	return trees
+	return trafficMap
 }

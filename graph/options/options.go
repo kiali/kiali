@@ -63,6 +63,9 @@ func NewOptions(r *http.Request) Options {
 		checkError(err)
 
 		for _, namespace := range namespaces {
+			// The istio-system namespace is only shown when explicitly requested. Note that the
+			// 'includeIstio' option doesn't apply here, that option affects what is done in
+			// non-istio-system namespaces.
 			if namespace.Name != NamespaceIstioSystem {
 				namespaceNames = append(namespaceNames, namespace.Name)
 			}
