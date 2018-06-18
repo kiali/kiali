@@ -6,9 +6,9 @@ describe('GraphFilterActions', () => {
   it('should toggle an edge label ', () => {
     const expectedAction = {
       type: ServiceGraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
-      payload: EdgeLabelMode.LATENCY_95TH_PERCENTILE
+      payload: EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE
     };
-    expect(serviceGraphFilterActions.setGraphEdgeLabelMode(EdgeLabelMode.LATENCY_95TH_PERCENTILE)).toEqual(
+    expect(serviceGraphFilterActions.setGraphEdgeLabelMode(EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE)).toEqual(
       expectedAction
     );
   });
