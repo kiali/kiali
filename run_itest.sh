@@ -12,9 +12,19 @@ APP_PID=$!
 
 # wait for app
 timeout 10s bash -c "until curl -I -L  --silent  --output /dev/null http://localhost:5003; do if [ "$?" -eq 0 ]; then continue; fi; sleep 1; done"
+mkdir -p itest_img
 
-yarn itest
+echo "Getting labels of https://api.github.com/repos/kiali/kiali-ui/pulls/${TRAVIS_PULL_REQUEST}"
+
+RAW_DATA=$(curl -s https://api.github.com/repos/kiali/kiali-ui/pulls/${TRAVIS_PULL_REQUEST})
+IFS=',' read -r -a labels <<< $(python2 getLabels.py "${RAW_DATA}")
+for label in "${labels[@]}"
+do
+    yarn itest -t "${label}"
+done
 
 kill -9 ${APP_PID}
 
-./take_test_screenshot.sh
+if [ -n "$labels" ]; then
+  ./take_test_screenshot.sh
+fi

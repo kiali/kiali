@@ -116,7 +116,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 health={this.props.health}
                 mode={DisplayMode.LARGE}
                 tooltipPlacement="left"
-                rateInterval="10m"
+                rateInterval={600}
               />
             </Col>
           </Row>

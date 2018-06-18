@@ -87,7 +87,7 @@ type ServiceListComponentState = {
   pagination: Pagination;
   currentSortField: SortField;
   isSortAscending: boolean;
-  rateInterval: string;
+  rateInterval: number;
 };
 
 type ServiceListComponentProps = {
@@ -95,7 +95,7 @@ type ServiceListComponentProps = {
 };
 
 const perPageOptions: number[] = [5, 10, 15];
-const defaultRateInterval = '10m';
+const defaultRateInterval = 600;
 
 class ServiceListComponent extends React.Component<ServiceListComponentProps, ServiceListComponentState> {
   constructor(props: ServiceListComponentProps) {
@@ -178,7 +178,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     });
   };
 
-  updateServices(rateInterval: string = defaultRateInterval) {
+  updateServices(rateInterval: number = defaultRateInterval) {
     const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
@@ -199,7 +199,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             namespaces.map(namespace => namespace.name),
             servicenameFilters,
             istioFilters,
-            rateInterval
+            rateInterval + 's'
           );
         })
         .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
@@ -380,7 +380,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     return <div>{serviceListComponent}</div>;
   }
 
-  private rateIntervalChangedHandler = (key: string) => {
+  private rateIntervalChangedHandler = (key: number) => {
     this.setState({
       rateInterval: key,
       loading: true

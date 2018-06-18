@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer';
+import puppeteer, { LoadEvent } from 'puppeteer';
 
 let testBrowser: puppeteer.Browser;
 let page: puppeteer.Page;
@@ -10,6 +10,29 @@ const password = 'admin';
 
 const getUrl = () => {
   return 'http://' + host + ':' + port;
+};
+
+const getPath = (key: string) => {
+  return { path: `itest_img/kiali_${key}_test.png` };
+};
+
+const kialiPages = {
+  graph: `${getUrl()}/console/service-graph/all`,
+  services: `${getUrl()}/console/services`,
+  services_review: `${getUrl()}/console/namespaces/istio-system/services/reviews`,
+  reviews_metrics: `${getUrl()}/console/namespaces/istio-system/services/reviews?tab=metrics`,
+  istio: `${getUrl()}/console/istio`,
+  istio_promhttp_rules: `${getUrl()}/console/namespaces/istio-system/istio/rules/promhttp`,
+  jaeger: `${getUrl()}/console/jaeger`
+};
+
+const kialiUrlPage = (key: string) => {
+  return kialiPages[key];
+};
+
+const waitToDoScreenshot = () => {
+  const loadEvents: LoadEvent[] = ['networkidle0', 'load', 'domcontentloaded'];
+  return { waitUntil: loadEvents };
 };
 
 jest.setTimeout(30000);
@@ -37,8 +60,46 @@ describe('browser_smoke', () => {
     testBrowser.close();
   });
 
-  it('should load the app', async () => {
-    await page.screenshot({ path: 'kiali-browser-test.png' });
+  it('kiali-bot-graph', async () => {
+    const kialiPage = 'graph';
+    await page.goto(kialiUrlPage(kialiPage), waitToDoScreenshot());
+    await page.screenshot(getPath(kialiPage));
+  });
+
+  it('kiali-bot-services', async () => {
+    const kialiPage = 'services';
+    await page.goto(kialiUrlPage(kialiPage), waitToDoScreenshot());
+    await page.screenshot(getPath(kialiPage));
+  });
+
+  it('kiali-bot-services-review', async () => {
+    const kialiPage = 'services_review';
+    await page.goto(kialiUrlPage(kialiPage), waitToDoScreenshot());
+    await page.screenshot(getPath(kialiPage));
+  });
+
+  it('kiali-bot-reviews-metrics', async () => {
+    const kialiPage = 'reviews_metrics';
+    await page.goto(kialiUrlPage(kialiPage), waitToDoScreenshot());
+    await page.screenshot(getPath(kialiPage));
+  });
+
+  it('kiali-bot-istio', async () => {
+    const kialiPage = 'istio';
+    await page.goto(kialiUrlPage(kialiPage), waitToDoScreenshot());
+    await page.screenshot(getPath(kialiPage));
+  });
+
+  it('kiali-bot-istio-promhttp-rules', async () => {
+    const kialiPage = 'istio_promhttp_rules';
+    await page.goto(kialiUrlPage(kialiPage), waitToDoScreenshot());
+    await page.screenshot(getPath(kialiPage));
+  });
+
+  it('kiali-bot-jaeger', async () => {
+    const kialiPage = 'jaeger';
+    await page.goto(kialiUrlPage(kialiPage), waitToDoScreenshot());
+    await page.screenshot(getPath(kialiPage));
   });
 
   afterAll(async () => {

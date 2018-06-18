@@ -10,7 +10,7 @@ interface Props {
   health: Health;
   headline: string;
   placement?: string;
-  rateInterval: string;
+  rateInterval: number;
 }
 
 export class HealthDetails extends React.PureComponent<Props, {}> {
@@ -73,7 +73,7 @@ export class HealthDetails extends React.PureComponent<Props, {}> {
           {this.renderStatus(reqErrorsRatio.status)}
           {' Error Rate:'}
         </strong>
-        {' ' + reqErrorsText + ' over last ' + getName(this.props.rateInterval)}
+        {' ' + reqErrorsText + ' over ' + getName(this.props.rateInterval).toLowerCase()}
       </Popover>
     );
   }

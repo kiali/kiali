@@ -8,7 +8,7 @@ import {
   severityToIconName,
   ObjectCheck
 } from '../../../../types/ServiceInfo';
-import { Row, Col, Table, Icon, OverlayTrigger, Popover } from 'patternfly-react';
+import { Row, Col, Table, Icon, OverlayTrigger, Popover, BulletChart, Tooltip } from 'patternfly-react';
 import Badge from '../../../../components/Badge/Badge';
 import { PfColors } from '../../../../components/Pf/PfColors';
 
@@ -19,6 +19,15 @@ interface RouteRuleRouteProps {
   route: DestinationWeight[];
   validations: { [key: string]: ObjectValidation };
 }
+
+const PFBlueColors = [
+  PfColors.Blue,
+  PfColors.Blue500,
+  PfColors.Blue600,
+  PfColors.Blue300,
+  PfColors.Blue200,
+  PfColors.Blue100
+];
 
 class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
   headerFormat = (label, { column }) => <Table.Heading className={column.property}>{label}</Table.Heading>;
@@ -74,16 +83,28 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
     }));
   }
 
+  bulletChartValues = () => {
+    return (this.props.route || []).map((routeItem, u) => ({
+      value: this.props.route.length === 1 ? 100 : routeItem.weight,
+      title: `${u}_${routeItem.weight}`,
+      color: PFBlueColors[u % PFBlueColors.length],
+      tooltipFunction: () => {
+        const badges = this.labelsFrom(routeItem.labels);
+        return (
+          <Tooltip id={`${u}_${routeItem.weight}`} key={`${u}_${routeItem.weight}`}>
+            {badges}
+          </Tooltip>
+        );
+      }
+    }));
+  };
   validation(): ObjectValidation {
     return this.props.validations[this.props.name];
   }
-
   statusFrom(validation: ObjectValidation, routeItem: DestinationWeight, index: number) {
     let checks = checkForPath(validation, 'spec/route[' + index + ']/weight/' + routeItem.weight);
     checks.push(...checkForPath(validation, 'spec/route[' + index + ']/labels'));
-
     let severity = highestSeverity(checks);
-
     let iconName = severity ? severityToIconName(severity) : 'ok';
     if (iconName !== 'ok') {
       return (
@@ -100,7 +121,6 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
       return '';
     }
   }
-
   infotipContent(checks: ObjectCheck[]) {
     return (
       <Popover id={this.props.name + '-weight-tooltip'}>
@@ -110,10 +130,10 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
       </Popover>
     );
   }
-
   labelsFrom(routeLabels: { [key: string]: string }) {
     return Object.keys(routeLabels || {}).map(key => (
       <Badge
+        key={key}
         scale={0.8}
         style="plastic"
         color={PfColors.Green400}
@@ -122,7 +142,6 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
       />
     ));
   }
-
   objectCheckToHtml(object: ObjectCheck) {
     return (
       <Row>
@@ -135,17 +154,27 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
       </Row>
     );
   }
-
   render() {
     return (
       <div style={{ marginTop: '30px' }}>
+        <div>
+          <BulletChart
+            id="bar-chart-1"
+            label="Load"
+            stacked={true}
+            thresholdWarning={-1}
+            thresholdError={-1}
+            details="Versions weight"
+            values={this.bulletChartValues()}
+            ranges={[{ value: 100 }]}
+          />
+        </div>
         <Table.PfProvider striped={true} bordered={true} hover={true} dataTable={true} columns={this.columns().columns}>
           <Table.Header headerRows={resolve.headerRows(this.columns())} />
-          <Table.Body rows={this.rows()} />
+          <Table.Body rows={this.rows()} rowKey="id" />
         </Table.PfProvider>
       </div>
     );
   }
 }
-
 export default RouteRuleRoute;
