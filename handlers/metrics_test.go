@@ -40,12 +40,12 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	assert.Equal(t, []string{"response_code"}, mq.ByLabelsOut)
 	assert.Equal(t, []string{"request_count", "request_size"}, mq.Filters)
 
-	// Check that start and end dates are normalized for step
-	// Interval [12:24:21, 12:41:01] should be converted to [12:24:20, 12:41:10]
+	// Check that start date is normalized for step
+	// Interval [12:24:21, 12:41:01] should be converted to [12:24:20, 12:41:01]
 	assert.Equal(t, time.Unix(1523363060, 0), mq.Start)
 	assert.Equal(t, 20, mq.Start.Second())
-	assert.Equal(t, time.Unix(1523364070, 0), mq.End)
-	assert.Equal(t, 10, mq.End.Second())
+	assert.Equal(t, time.Unix(1523364061, 0), mq.End)
+	assert.Equal(t, 1, mq.End.Second())
 }
 
 func TestExtractMetricsQueryParamsStepLimitCase(t *testing.T) {
