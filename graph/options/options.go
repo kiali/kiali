@@ -134,14 +134,14 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 	if csl == AppenderAll || strings.Contains(csl, "dead_service") {
 		appenders = append(appenders, appender.DeadServiceAppender{})
 	}
-	if csl == AppenderAll || strings.Contains(csl, "latency") {
+	if csl == AppenderAll || strings.Contains(csl, "response_time") {
 		quantile := appender.DefaultQuantile
-		if _, ok := params["latencyQuantile"]; ok {
-			if latencyQuantile, err := strconv.ParseFloat(params.Get("latencyQuantile"), 64); err == nil {
-				quantile = latencyQuantile
+		if _, ok := params["responseTimeQuantile"]; ok {
+			if responseTimeQuantile, err := strconv.ParseFloat(params.Get("responseTimeQuantile"), 64); err == nil {
+				quantile = responseTimeQuantile
 			}
 		}
-		a := appender.LatencyAppender{
+		a := appender.ResponseTimeAppender{
 			Duration:  o.Duration,
 			Quantile:  quantile,
 			QueryTime: o.QueryTime,
