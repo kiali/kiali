@@ -16,7 +16,7 @@ func (virtualService NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	for _, serviceName := range virtualService.ServiceNames {
-		if valid = kubernetes.FilterByHost(virtualService.VirtualService.GetSpec(), serviceName); valid {
+		if valid = kubernetes.FilterByHost(virtualService.VirtualService.GetSpec(), serviceName, virtualService.Namespace); valid {
 			break
 		}
 	}

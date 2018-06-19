@@ -60,7 +60,7 @@ func TestFilterByHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	assert.False(t, FilterByHost(nil, ""))
+	assert.False(t, FilterByHost(nil, "", ""))
 
 	spec := map[string]interface{}{
 		"hosts": []interface{}{
@@ -68,8 +68,8 @@ func TestFilterByHost(t *testing.T) {
 		},
 	}
 
-	assert.True(t, FilterByHost(spec, "host1"))
-	assert.False(t, FilterByHost(spec, "host2"))
+	assert.True(t, FilterByHost(spec, "host1", "test"))
+	assert.False(t, FilterByHost(spec, "host2", "test"))
 
 	spec = map[string]interface{}{
 		"hosts": []interface{}{
@@ -78,9 +78,9 @@ func TestFilterByHost(t *testing.T) {
 		},
 	}
 
-	assert.True(t, FilterByHost(spec, "host1"))
-	assert.True(t, FilterByHost(spec, "host2"))
-	assert.False(t, FilterByHost(spec, "host3"))
+	assert.True(t, FilterByHost(spec, "host1", "test"))
+	assert.True(t, FilterByHost(spec, "host2", "test"))
+	assert.False(t, FilterByHost(spec, "host3", "test"))
 }
 
 func TestCheckRouteRule(t *testing.T) {
@@ -428,6 +428,7 @@ func TestCheckDestinationRulemTLS(t *testing.T) {
 func TestShortHostname(t *testing.T) {
 	assert.True(t, CheckHostnameService("reviews", "reviews", "bookinfo"))
 	assert.False(t, CheckHostnameService("reviews", "ratings", "bookinfo"))
+	assert.True(t, CheckHostnameService("*", "reviews", "bookinfo"))
 }
 
 func TestFQDNHostname(t *testing.T) {

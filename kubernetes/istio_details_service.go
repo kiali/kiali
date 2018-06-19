@@ -159,7 +159,7 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	virtualServices := make([]IstioObject, 0)
 	for _, virtualService := range virtualServiceList.GetItems() {
 		appendVirtualService := serviceName == ""
-		if !appendVirtualService && FilterByHost(virtualService.GetSpec(), serviceName) {
+		if !appendVirtualService && FilterByHost(virtualService.GetSpec(), serviceName, namespace) {
 			appendVirtualService = true
 		}
 		if appendVirtualService {
@@ -255,7 +255,7 @@ func CheckVirtualService(virtualService IstioObject, namespace string, serviceNa
 	if virtualService == nil || virtualService.GetSpec() == nil || subsets == nil {
 		return false
 	}
-	if len(subsets) > 0 && FilterByHost(virtualService.GetSpec(), serviceName) {
+	if len(subsets) > 0 && FilterByHost(virtualService.GetSpec(), serviceName, namespace) {
 		if http, ok := virtualService.GetSpec()["http"]; ok && checkSubsetRoute(http, serviceName, subsets) {
 			return true
 		}
@@ -449,11 +449,11 @@ func FilterByDestination(spec map[string]interface{}, namespace string, serviceN
 	return false
 }
 
-func FilterByHost(spec map[string]interface{}, hostName string) bool {
+func FilterByHost(spec map[string]interface{}, serviceName string, namespace string) bool {
 	if hosts, ok := spec["hosts"]; ok {
 		if hostsArray, ok := hosts.([]interface{}); ok {
-			for _, host := range hostsArray {
-				if host == hostName {
+			for _, dHost := range hostsArray {
+				if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, namespace) {
 					return true
 				}
 			}
@@ -464,23 +464,20 @@ func FilterByHost(spec map[string]interface{}, hostName string) bool {
 
 // CheckHostnameService returns true when the hostname specifies the service passed by param.
 // It accepts the following hostname formats:
-// reviews, reviews.bookinfo.svc, reviews.bookinfo.svc.cluster.local,
+// *, reviews, reviews.bookinfo.svc, reviews.bookinfo.svc.cluster.local,
 // *.bookinfo.svc, *.bookinfo.svc.cluster.local
 func CheckHostnameService(hostname, service, namespace string) bool {
 	domainParts := strings.Split(hostname, ".")
-	match := false
 
-	if len(domainParts) > 2 {
-		// hostname is a FQDN/Wildcard (e.g. reviews.bookinfo.svc, *.bookinfo.svc)
-		match = domainParts[1] == namespace && domainParts[2] == "svc"
-
-		if match && domainParts[0] != "*" {
-			match = domainParts[0] == service
-		}
-	} else {
-		// hostname is a service name (e.g. reviews)
-		match = hostname == service
+	if len(domainParts) == 1 {
+		// hostname is a service name (e.g. reviews) or a wildcard
+		return hostname == service || hostname == "*"
 	}
 
-	return match
+	// hostname is a FQDN/Wildcard (e.g. reviews.bookinfo.svc, *.bookinfo.svc)
+	if len(domainParts) > 2 && domainParts[1] == namespace && domainParts[2] == "svc" {
+		return domainParts[0] == service || domainParts[0] == "*"
+	}
+
+	return false
 }
