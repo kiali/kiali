@@ -152,14 +152,14 @@ func TestCheckVirtualService(t *testing.T) {
 					"route": []interface{}{
 						map[string]interface{}{
 							"destination": map[string]interface{}{
-								"name":   "reviews",
+								"host":   "reviews",
 								"subset": "v2",
 							},
 							"weight": 50,
 						},
 						map[string]interface{}{
 							"destination": map[string]interface{}{
-								"name":   "reviews",
+								"host":   "reviews",
 								"subset": "v3",
 							},
 							"weight": 50,
@@ -186,14 +186,14 @@ func TestCheckVirtualService(t *testing.T) {
 					"route": []interface{}{
 						map[string]interface{}{
 							"destination": map[string]interface{}{
-								"name":   "reviews",
+								"host":   "reviews",
 								"subset": "v2",
 							},
 							"weight": 50,
 						},
 						map[string]interface{}{
 							"destination": map[string]interface{}{
-								"name":   "reviews",
+								"host":   "reviews",
 								"subset": "v3",
 							},
 							"weight": 50,
