@@ -412,7 +412,7 @@ func checkSubsetRoute(routes interface{}, serviceName string, subsets []string) 
 							if innerRoute, ok := dRoute.(map[string]interface{}); ok {
 								if destination, ok := innerRoute["destination"]; ok {
 									if dDestination, ok := destination.(map[string]interface{}); ok {
-										if dName, ok := dDestination["name"]; ok && dName == serviceName {
+										if dHost, ok := dDestination["host"]; ok && dHost == serviceName {
 											if dSubset, ok := dDestination["subset"]; ok {
 												for _, subsetName := range subsets {
 													if dSubset == subsetName {
