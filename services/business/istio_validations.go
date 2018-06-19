@@ -80,6 +80,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	istioDetails := kubernetes.IstioDetails{}
 	noServiceChecker.IstioDetails = &istioDetails
 	switch objectType {
+	case "gateways":
+		// Validations on Gateways are not yet in place
 	case "routerules":
 		if rr, err = in.k8s.GetRouteRule(namespace, object); err == nil {
 			pods, err := in.k8s.GetNamespacePods(namespace)

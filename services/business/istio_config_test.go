@@ -15,6 +15,7 @@ func TestGetIstioConfig(t *testing.T) {
 	assert := assert.New(t)
 	criteria := IstioConfigCriteria{
 		Namespace:                  "test",
+		IncludeGateways:            false,
 		IncludeRouteRules:          false,
 		IncludeDestinationPolicies: false,
 		IncludeVirtualServices:     false,
@@ -26,6 +27,19 @@ func TestGetIstioConfig(t *testing.T) {
 
 	istioconfigList, err := configService.GetIstioConfig(criteria)
 
+	assert.Equal(0, len(istioconfigList.Gateways))
+	assert.Equal(0, len(istioconfigList.RouteRules))
+	assert.Equal(0, len(istioconfigList.DestinationPolicies))
+	assert.Equal(0, len(istioconfigList.VirtualServices))
+	assert.Equal(0, len(istioconfigList.DestinationRules))
+	assert.Equal(0, len(istioconfigList.Rules))
+	assert.Nil(err)
+
+	criteria.IncludeGateways = true
+
+	istioconfigList, err = configService.GetIstioConfig(criteria)
+
+	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(0, len(istioconfigList.RouteRules))
 	assert.Equal(0, len(istioconfigList.DestinationPolicies))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
@@ -37,6 +51,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	istioconfigList, err = configService.GetIstioConfig(criteria)
 
+	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.RouteRules))
 	assert.Equal(0, len(istioconfigList.DestinationPolicies))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
@@ -48,6 +63,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	istioconfigList, err = configService.GetIstioConfig(criteria)
 
+	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.RouteRules))
 	assert.Equal(2, len(istioconfigList.DestinationPolicies))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
@@ -59,6 +75,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	istioconfigList, err = configService.GetIstioConfig(criteria)
 
+	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.RouteRules))
 	assert.Equal(2, len(istioconfigList.DestinationPolicies))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -70,6 +87,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	istioconfigList, err = configService.GetIstioConfig(criteria)
 
+	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.RouteRules))
 	assert.Equal(2, len(istioconfigList.DestinationPolicies))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -81,6 +99,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	istioconfigList, err = configService.GetIstioConfig(criteria)
 
+	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.RouteRules))
 	assert.Equal(2, len(istioconfigList.DestinationPolicies))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -94,7 +113,11 @@ func TestGetIstioConfigDetails(t *testing.T) {
 
 	configService := mockGetIstioConfigDetails()
 
-	istioConfigDetails, err := configService.GetIstioConfigDetails("test", "routerules", "reviews-rr")
+	istioConfigDetails, err := configService.GetIstioConfigDetails("test", "gateways", "gw-1")
+	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
+	assert.Nil(err)
+
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "routerules", "reviews-rr")
 	assert.Equal("reviews-rr", istioConfigDetails.RouteRule.Name)
 	assert.Nil(err)
 
@@ -120,6 +143,7 @@ func TestGetIstioConfigDetails(t *testing.T) {
 
 func mockGetIstioConfig() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetGateways", mock.AnythingOfType("string")).Return(fakeGetGateways(), nil)
 	k8s.On("GetRouteRules", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetRouteRules(), nil)
 	k8s.On("GetDestinationPolicies", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetDestinationPolicies(), nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetVirtualServices(), nil)
@@ -127,6 +151,64 @@ func mockGetIstioConfig() IstioConfigService {
 	k8s.On("GetIstioRules", mock.AnythingOfType("string")).Return(fakeGetIstioRules(), nil)
 
 	return IstioConfigService{k8s: k8s}
+}
+
+func fakeGetGateways() []kubernetes.IstioObject {
+	gw1 := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "gw-1",
+		},
+		Spec: map[string]interface{}{
+			"selector": map[string]interface{}{
+				"app": "my-gateway1-controller",
+			},
+			"servers": []interface{}{
+				map[string]interface{}{
+					"port": map[string]interface{}{
+						"number":   80,
+						"name":     "http",
+						"protocol": "HTTP",
+					},
+					"hosts": []interface{}{
+						"uk.bookinfo.com",
+						"eu.bookinfo.com",
+					},
+					"tls": map[string]interface{}{
+						"httpsRedirect": "true",
+					},
+				},
+			},
+		},
+	}
+
+	gw2 := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "gw-2",
+		},
+		Spec: map[string]interface{}{
+			"selector": map[string]interface{}{
+				"app": "my-gateway2-controller",
+			},
+			"servers": []interface{}{
+				map[string]interface{}{
+					"port": map[string]interface{}{
+						"number":   80,
+						"name":     "http",
+						"protocol": "HTTP",
+					},
+					"hosts": []interface{}{
+						"uk.bookinfo.com",
+						"eu.bookinfo.com",
+					},
+					"tls": map[string]interface{}{
+						"httpsRedirect": "true",
+					},
+				},
+			},
+		},
+	}
+
+	return []kubernetes.IstioObject{&gw1, &gw2}
 }
 
 func fakeGetRouteRules() []kubernetes.IstioObject {
@@ -431,6 +513,7 @@ func fakegetIstioRuleDetails() *kubernetes.IstioRuleDetails {
 
 func mockGetIstioConfigDetails() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetGateway", "test", "gw-1").Return(fakeGetGateways()[0], nil)
 	k8s.On("GetRouteRule", "test", "reviews-rr").Return(fakeGetRouteRules()[0], nil)
 	k8s.On("GetDestinationPolicy", "test", "reviews-dp").Return(fakeGetDestinationPolicies()[0], nil)
 	k8s.On("GetVirtualService", "test", "reviews").Return(fakeGetVirtualServices()[0], nil)

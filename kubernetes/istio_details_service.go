@@ -182,6 +182,38 @@ func (in *IstioClient) GetVirtualService(namespace string, virtualservice string
 	return virtualService.DeepCopyIstioObject(), nil
 }
 
+// GetGateways return all Gateways for a given namespace.
+// It returns an error on any problem.
+func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(gateways).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	gatewayList, ok := result.(*GatewayList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a GetGateways list", namespace)
+	}
+
+	gateways := make([]IstioObject, 0)
+	for _, gateway := range gatewayList.GetItems() {
+		gateways = append(gateways, gateway.DeepCopyIstioObject())
+	}
+	return gateways, nil
+}
+
+func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(gateways).SubResource(gateway).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	gatewayObject, ok := result.(*Gateway)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService object", namespace, gateway)
+	}
+	return gatewayObject.DeepCopyIstioObject(), nil
+}
+
 // GetDestinationRules returns all DestinationRules for a given namespace.
 // If serviceName param is provided it will filter all DestinationRules having a host defined on a particular service.
 // It returns an error on any problem.
