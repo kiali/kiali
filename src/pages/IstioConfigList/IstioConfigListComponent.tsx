@@ -61,6 +61,10 @@ const istioTypeFilter: FilterType = {
   filterType: 'select',
   filterValues: [
     {
+      id: 'Gateway',
+      title: 'Gateway'
+    },
+    {
       id: 'RouteRule',
       title: 'RouteRule'
     },
@@ -301,7 +305,11 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     let iconName = '';
     let iconType = '';
     let type = 'No type found';
-    if (istioItem.type === 'routerule') {
+    if (istioItem.type === 'gateway') {
+      iconName = 'route';
+      iconType = 'pf';
+      type = 'Gateway';
+    } else if (istioItem.type === 'routerule') {
       iconName = 'code-fork';
       iconType = 'fa';
       type = 'RouteRule';

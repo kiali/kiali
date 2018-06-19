@@ -5,6 +5,7 @@ export interface IstioConfigItem {
   namespace: string;
   type: string;
   name: string;
+  gateway?: Gateway;
   routeRule?: RouteRule;
   destinationPolicy?: DestinationPolicy;
   virtualService?: VirtualService;
@@ -15,11 +16,41 @@ export interface IstioConfigItem {
 
 export interface IstioConfigList {
   namespace: Namespace;
+  gateways: Gateway[];
   routeRules: RouteRule[];
   destinationPolicies: DestinationPolicy[];
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
   rules: IstioRule[];
+}
+
+export interface Gateway {
+  name: string;
+  createdAt: string;
+  resourceVersion: string;
+  servers?: Server[];
+  selector?: { [key: string]: string };
+}
+
+export interface Server {
+  port: Port;
+  hosts: string[];
+  tls: TLSOptions;
+}
+
+export interface Port {
+  number: number;
+  protocol: string;
+  name: string;
+}
+
+export interface TLSOptions {
+  httpsRedirect: boolean;
+  mode: string;
+  serverCertificate: string;
+  privateKey: string;
+  caCertificates: string;
+  subjectAltNames: string[];
 }
 
 export interface IstioRule {
@@ -40,11 +71,13 @@ export interface SortField {
 }
 
 export const dicIstioType = {
+  Gateway: 'gateways',
   RouteRule: 'routerules',
   DestinationPolicy: 'destinationpolicies',
   VirtualService: 'virtualservices',
   DestinationRule: 'destinationrules',
   Rule: 'rules',
+  gateways: 'Gateway',
   routerules: 'RouteRule',
   destinationpolicies: 'DestinationPolicy',
   virtualservices: 'VirtualService',
@@ -67,6 +100,7 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]) => {
   }
   let filtered: IstioConfigList = {
     namespace: unfiltered.namespace,
+    gateways: unfiltered.gateways.filter(gw => includeName(gw.name, names)),
     routeRules: unfiltered.routeRules.filter(rr => includeName(rr.name, names)),
     destinationPolicies: unfiltered.destinationPolicies.filter(dp => includeName(dp.name, names)),
     virtualServices: unfiltered.virtualServices.filter(vs => includeName(vs.name, names)),
@@ -105,6 +139,9 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
 
 export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[] => {
   let istioItems: IstioConfigItem[] = [];
+  istioConfigList.gateways.forEach(gw =>
+    istioItems.push({ namespace: istioConfigList.namespace.name, type: 'gateway', name: gw.name, gateway: gw })
+  );
   istioConfigList.routeRules.forEach(rr =>
     istioItems.push({ namespace: istioConfigList.namespace.name, type: 'routerule', name: rr.name, routeRule: rr })
   );
