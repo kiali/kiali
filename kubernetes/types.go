@@ -30,6 +30,16 @@ var (
 		collection   IstioObjectList
 		groupVersion *schema.GroupVersion
 	}{
+		gatewayLabel: {
+			object: &Gateway{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       gatewayType,
+					APIVersion: istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
+				},
+			},
+			collection:   &GatewayList{},
+			groupVersion: &istioNetworkingGroupVersion,
+		},
 		routeRuleLabel: {
 			object: &RouteRule{
 				TypeMeta: meta_v1.TypeMeta{

@@ -14,6 +14,7 @@ type IstioConfigService struct {
 
 type IstioConfigCriteria struct {
 	Namespace                  string
+	IncludeGateways            bool
 	IncludeRouteRules          bool
 	IncludeDestinationPolicies bool
 	IncludeVirtualServices     bool
@@ -29,15 +30,25 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 	}
 	istioConfigList := models.IstioConfigList{
 		Namespace:           models.Namespace{Name: criteria.Namespace},
+		Gateways:            models.Gateways{},
 		RouteRules:          models.RouteRules{},
 		DestinationPolicies: models.DestinationPolicies{},
 		VirtualServices:     models.VirtualServices{},
 		DestinationRules:    models.DestinationRules{},
 		Rules:               models.IstioRules{},
 	}
-	var rrErr, dpErr, vsErr, drErr, mrErr error
+	var ggErr, rrErr, dpErr, vsErr, drErr, mrErr error
 	var wg sync.WaitGroup
-	wg.Add(5)
+	wg.Add(6)
+
+	go func() {
+		defer wg.Done()
+		if criteria.IncludeGateways {
+			if gg, ggErr := in.k8s.GetGateways(criteria.Namespace); ggErr == nil {
+				(&istioConfigList.Gateways).Parse(gg)
+			}
+		}
+	}()
 
 	go func() {
 		defer wg.Done()
@@ -86,6 +97,10 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 
 	wg.Wait()
 
+	if ggErr != nil {
+		return models.IstioConfigList{}, ggErr
+	}
+
 	if rrErr != nil {
 		return models.IstioConfigList{}, rrErr
 	}
@@ -113,10 +128,15 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var rr, dp, vs, dr kubernetes.IstioObject
+	var gw, rr, dp, vs, dr kubernetes.IstioObject
 	var r *kubernetes.IstioRuleDetails
 	var err error
 	switch objectType {
+	case "gateways":
+		if gw, err = in.k8s.GetGateway(namespace, object); err == nil {
+			istioConfigDetail.Gateway = &models.Gateway{}
+			istioConfigDetail.Gateway.Parse(gw)
+		}
 	case "routerules":
 		if rr, err = in.k8s.GetRouteRule(namespace, object); err == nil {
 			istioConfigDetail.RouteRule = &models.RouteRule{}
