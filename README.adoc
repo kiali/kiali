@@ -28,11 +28,8 @@ You could also try to use our hack script to quickly install OpenShift, Istio, a
 
 ```
 wget https://raw.githubusercontent.com/kiali/kiali/master/hack/cluster-openshift.sh
-sh cluster-openshift.sh --istio-version 0.7.1 --kiali-enabled true up
+sh cluster-openshift.sh --kiali-enabled true up
 ```
-
-[NOTE]
-Notice the above command line forces the version of Istio to 0.7.1. Kiali will support Istio 0.8.0 in the very near future, but for now, we recommend using `--istio-version 0.7.1` if you just want to see what Kiali is all about.
 
 If you do not already have an Istio-enabled application to test with, you can install one using the link:hack/istio/README.adoc[Bookinfo Demo install script] provided here as a convenience.
 
@@ -128,7 +125,7 @@ make docker-build
 ==== Deploying Kiali to OpenShift
 
 [NOTE]
-Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 0.8+*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio[convenience script] provided to you to help quickly get Istio installed.
+Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 0.8+*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here].
 
 [NOTE]
 The following make targets assume that the `oc` command is available in the user's PATH and that the user is logged in. If you have `istiooc` instead, create a symlink in your PATH pointing `oc` to your `istiooc` binary.
@@ -183,7 +180,7 @@ make minikube-docker
 ==== Deploying Kiali to Kubernetes
 
 [NOTE]
-Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 0.8+*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here]. There is also a link:hack/istio[convenience script] provided to you to help quickly get Istio installed.
+Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 0.8+*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here].
 
 [NOTE]
 The following make targets assume that the `kubectl` command is available in the user's PATH.
