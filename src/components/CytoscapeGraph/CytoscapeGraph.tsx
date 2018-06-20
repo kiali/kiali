@@ -16,6 +16,7 @@ import { GraphParamsType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import { authentication } from '../../utils/Authentication';
 import * as H from '../../utils/Health';
+import { NamespaceHealth } from '../../types/Health';
 
 type CytoscapeGraphType = {
   elements?: any;
@@ -252,17 +253,17 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     // Create badges
     cy.nodes().forEach(ele => {
-      if (this.props.showCircuitBreakers && ele.data('hasCB') === 'true') {
+      if (this.props.showCircuitBreakers && ele.data('hasCB')) {
         cbBadge.buildBadge(ele);
       }
-      if (this.props.showRouteRules && ele.data('hasRR') === 'true') {
+      if (this.props.showRouteRules && ele.data('hasRR')) {
         if (ele.data('isGroup')) {
           rrGroupBadge.buildBadge(ele);
         } else {
           rrBadge.buildBadge(ele);
         }
       }
-      if (this.props.showMissingSidecars && ele.data('hasMissingSidecars') && !ele.data('isGroup')) {
+      if (this.props.showMissingSidecars && ele.data('hasMissingSC') && !ele.data('isGroup')) {
         msBadge.buildBadge(ele);
       }
     });
@@ -333,15 +334,26 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
     const duration = this.props.graphDuration.value;
+    // Keep a map of namespace x promises in order not to fetch several times the same data per namespace
+    const healthPerNamespace = new Map<String, Promise<NamespaceHealth>>();
     // Asynchronously fetch health
     cy.nodes().forEach(ele => {
       const fqService = ele.data('service');
       if (fqService && (ele.data('isGroup') || !ele.data('parent'))) {
         const serviceParts = fqService.split('.');
+        if (serviceParts.length < 2) {
+          // Ignore health for special nodes such as "unknown"
+          return;
+        }
         const service = serviceParts[0];
         const namespace = serviceParts[1];
-        API.getServiceHealth(authentication(), namespace, service, duration).then(r => {
-          const health = r.data;
+        let promise = healthPerNamespace.get(namespace);
+        if (!promise) {
+          promise = API.getNamespaceHealth(authentication(), namespace, duration).then(r => r.data);
+          healthPerNamespace.set(namespace, promise);
+        }
+        promise.then(nsHealth => {
+          const health = nsHealth[service];
           ele.data('health', health);
           const status = H.computeAggregatedHealth(health);
           ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);

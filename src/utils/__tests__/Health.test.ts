@@ -62,7 +62,7 @@ describe('Health', () => {
   });
   it('should aggregate without reporter', () => {
     const status = H.computeAggregatedHealth({
-      envoy: { healthy: 0, total: 1 },
+      envoy: { inbound: { healthy: 0, total: 1 }, outbound: { healthy: 1, total: 1 } },
       deploymentStatuses: [{ available: 0, replicas: 1, name: 'a' }],
       requests: { requestCount: 1, requestErrorCount: 1 }
     });
@@ -72,7 +72,7 @@ describe('Health', () => {
     const info: string[] = [];
     const status = H.computeAggregatedHealth(
       {
-        envoy: { healthy: 1, total: 1 },
+        envoy: { inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } },
         deploymentStatuses: [{ available: 1, replicas: 1, name: 'a' }, { available: 2, replicas: 2, name: 'b' }],
         requests: { requestCount: 5, requestErrorCount: 0 }
       },
@@ -85,7 +85,7 @@ describe('Health', () => {
     const info: string[] = [];
     const status = H.computeAggregatedHealth(
       {
-        envoy: { healthy: 1, total: 1 },
+        envoy: { inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } },
         deploymentStatuses: [{ available: 1, replicas: 1, name: 'a' }, { available: 1, replicas: 2, name: 'b' }],
         requests: { requestCount: 5, requestErrorCount: 0 }
       },
@@ -98,7 +98,7 @@ describe('Health', () => {
     const info: string[] = [];
     const status = H.computeAggregatedHealth(
       {
-        envoy: { healthy: 0, total: 1 },
+        envoy: { inbound: { healthy: 0, total: 1 }, outbound: { healthy: 1, total: 1 } },
         deploymentStatuses: [{ available: 1, replicas: 1, name: 'a' }, { available: 2, replicas: 2, name: 'b' }],
         requests: { requestCount: 5, requestErrorCount: 0 }
       },
@@ -111,7 +111,7 @@ describe('Health', () => {
     const info: string[] = [];
     const status = H.computeAggregatedHealth(
       {
-        envoy: { healthy: 1, total: 1 },
+        envoy: { inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } },
         deploymentStatuses: [{ available: 1, replicas: 1, name: 'a' }, { available: 2, replicas: 2, name: 'b' }],
         requests: { requestCount: 5, requestErrorCount: 1 }
       },
@@ -124,7 +124,7 @@ describe('Health', () => {
     const info: string[] = [];
     const status = H.computeAggregatedHealth(
       {
-        envoy: { healthy: 1, total: 3 },
+        envoy: { inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 3 } },
         deploymentStatuses: [{ available: 0, replicas: 0, name: 'a' }, { available: 0, replicas: 0, name: 'b' }],
         requests: { requestCount: 5, requestErrorCount: 1 }
       },

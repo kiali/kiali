@@ -26,6 +26,14 @@ export class GraphStyles {
       return PfColors.Green400;
     };
 
+    const getTLSValue = (ele: any, tlsValue: string, nonTlsValue: string): string => {
+      if (ele.data('isMTLS') && ele.data('edgeLabelMode') === EdgeLabelMode.MTLS_ENABLED) {
+        return tlsValue;
+      } else {
+        return nonTlsValue;
+      }
+    };
+
     return [
       {
         selector: 'node',
@@ -105,10 +113,10 @@ export class GraphStyles {
                 }
                 return '';
               }
-              case EdgeLabelMode.LATENCY_95TH_PERCENTILE: {
-                const latency = ele.data('latency') ? parseFloat(ele.data('latency')) : 0;
-                if (latency > 0) {
-                  return latency < 1.0 ? (latency * 1000).toFixed(0) + 'ms' : latency.toFixed(2) + 's';
+              case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE: {
+                const responseTime = ele.data('responseTime') ? parseFloat(ele.data('responseTime')) : 0;
+                if (responseTime > 0) {
+                  return responseTime < 1.0 ? (responseTime * 1000).toFixed(0) + 'ms' : responseTime.toFixed(2) + 's';
                 }
                 return '';
               }
@@ -116,11 +124,20 @@ export class GraphStyles {
                 const percentRate = ele.data('percentRate') ? parseFloat(ele.data('percentRate')) : 0;
                 return percentRate > 0 ? percentRate.toFixed(0) + '%' : '';
               }
+              case EdgeLabelMode.MTLS_ENABLED: {
+                return ele.data('isMTLS') ? '\ue923' : '';
+              }
               default:
                 return '';
             }
           },
           'curve-style': 'bezier',
+          'font-family': (ele: any) => {
+            return getTLSValue(ele, 'PatternFlyIcons-webfont', 'inherit');
+          },
+          'text-rotation': (ele: any) => {
+            return getTLSValue(ele, '0deg', 'autorotate');
+          },
           'font-size': '7px',
           'line-color': (ele: any) => {
             return getEdgeColor(ele);
@@ -133,7 +150,6 @@ export class GraphStyles {
             return getEdgeColor(ele);
           },
           'text-margin-x': '6px',
-          'text-rotation': 'autorotate',
           width: 1
         }
       },

@@ -52,23 +52,32 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   updateTypeFilter = () => this.updateFilters(true);
 
   fetchIstioObjectDetails = (props: IstioConfigId) => {
-    API.getIstioConfigDetail(authentication(), props.namespace, props.objectType, props.object)
-      .then(response => {
+    let promiseConfigDetails = API.getIstioConfigDetail(
+      authentication(),
+      props.namespace,
+      props.objectType,
+      props.object
+    );
+    let promiseConfigValidations = API.getIstioConfigValidations(
+      authentication(),
+      props.namespace,
+      props.objectType,
+      props.object
+    );
+    Promise.all([promiseConfigDetails, promiseConfigValidations])
+      .then(([resultConfigDetails, resultConfigValidations]) => {
         this.setState({
-          istioObjectDetails: response.data
+          istioObjectDetails: resultConfigDetails.data,
+          validations: resultConfigValidations.data
         });
       })
-      .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig details.', error));
-      });
-    API.getIstioConfigValidations(authentication(), props.namespace, props.objectType, props.object)
-      .then(response => {
-        this.setState({
-          validations: response.data
-        });
-      })
-      .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig validations.', error));
+      .catch(([errorConfigDetails, errorConfigValidations]) => {
+        if (errorConfigDetails) {
+          MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig details.', errorConfigDetails));
+        }
+        if (errorConfigValidations) {
+          MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig validations.', errorConfigValidations));
+        }
       });
   };
 
@@ -122,6 +131,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
             / {this.props.match.params.object}
           </h2>
         </div>
+        {this.state.istioObjectDetails && this.state.istioObjectDetails.gateway
+          ? this.renderEditor(this.state.istioObjectDetails.gateway)
+          : undefined}
         {this.state.istioObjectDetails && this.state.istioObjectDetails.routeRule
           ? this.renderEditor(this.state.istioObjectDetails.routeRule)
           : undefined}

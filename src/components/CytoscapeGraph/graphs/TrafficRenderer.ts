@@ -1,4 +1,4 @@
-import { clamp } from '../../../utils/MathUtils';
+import { clamp, quadraticBezier, linearInterpolation } from '../../../utils/MathUtils';
 import { DimClass } from './GraphStyles';
 import { PfColors } from '../../../components/Pf/PfColors';
 
@@ -11,9 +11,9 @@ const TIMER_REQUEST_PER_SECOND_MAX = 750;
 const TIMER_TIME_BETWEEN_DOTS_MIN = 20;
 const TIMER_TIME_BETWEEN_DOTS_MAX = 2000;
 
-// Clamp latency from min to max
-const SPEED_LATENCY_MIN = 0;
-const SPEED_LATENCY_MAX = 10;
+// Clamp response time from min to max
+const SPEED_RESPONSE_TIME_MIN = 0;
+const SPEED_RESPONSE_TIME_MAX = 10;
 
 // Speed to travel trough an edge
 const SPEED_RATE_MIN = 0.1;
@@ -193,9 +193,9 @@ export default class TrafficRenderer {
   private previousTimestamp;
   private trafficEdges: TrafficEdgeHash = {};
 
-  private layer;
-  private canvas;
-  private context;
+  private readonly layer;
+  private readonly canvas;
+  private readonly context;
 
   constructor(cy: any, edges: any) {
     this.layer = cy.cyCanvas();
@@ -269,13 +269,63 @@ export default class TrafficRenderer {
       return;
     }
     trafficEdge.getPoints().forEach((point: TrafficPoint) => {
-      // If there are curved edges, we will need to use edge.controlPoints or
-      // edge.segmentPoints to compute the path
-      const source = edge.sourceEndpoint();
-      const target = edge.targetEndpoint();
-      const x = source.x + (target.x - source.x) * point.delta;
-      const y = source.y + (target.y - source.y) * point.delta;
-      this.renderPoint(point, x, y, TRAFFIC_POINT_RADIO);
+      const controlPoints: Array<any> = [edge.sourceEndpoint()];
+      let rawControlPoints = edge.controlPoints();
+      // TODO: remove once this issue is fixed and released https://github.com/cytoscape/cytoscape.js/issues/2139
+      // Loops don't expose the controlPoints, use the internal data for the time being until the bug is solved
+      if (!rawControlPoints && edge.isLoop()) {
+        const internalControlPoints = edge._private.rscratch.ctrlpts;
+        if (internalControlPoints) {
+          rawControlPoints = [];
+          for (let i = 0; i < internalControlPoints.length; i += 2) {
+            rawControlPoints.push({
+              x: internalControlPoints[i],
+              y: internalControlPoints[i + 1]
+            });
+          }
+        }
+      }
+      if (rawControlPoints) {
+        for (let i = 0; i < rawControlPoints.length; ++i) {
+          controlPoints.push(rawControlPoints[i]);
+          // If there is a next point, we are going to use the midpoint for the next control point point
+          if (i + 1 < rawControlPoints.length) {
+            controlPoints.push({
+              x: (rawControlPoints[i].x + rawControlPoints[i + 1].x) / 2,
+              y: (rawControlPoints[i].y + rawControlPoints[i + 1].y) / 2
+            });
+          }
+        }
+      }
+      controlPoints.push(edge.targetEndpoint());
+
+      /*
+       * Control points are build so that if you have p0, p1, p2, p3, p4 points, you need to build 2 quadratic bezier:
+       * 1) p0 (t=0), p1 (t=0.5) and p2 (t=1) and 2) p2 (t=0), p3 (t=0.5) and p4 (t=1)
+       * p0 and p4 (or pn) are always the source and target of an edge.
+       * Commonly there is only 2 points for straight lines, 3  points for curves and 5 points for loops.
+       * Not going to generalize them now to avoid having a more complex code that is needed.
+       * https://github.com/cytoscape/cytoscape.js/issues/2139#issuecomment-398473432
+       */
+      let pointInGraph;
+      if (controlPoints.length === 2) {
+        pointInGraph = linearInterpolation(controlPoints[0], controlPoints[1], point.delta);
+      } else if (controlPoints.length === 3) {
+        pointInGraph = quadraticBezier(controlPoints[0], controlPoints[1], controlPoints[2], point.delta);
+      } else if (controlPoints.length === 5) {
+        // Find the local t depending the current step
+        if (point.delta < 0.5) {
+          // Normalize [0, 0.5)
+          pointInGraph = quadraticBezier(controlPoints[0], controlPoints[1], controlPoints[2], point.delta / 0.5);
+        } else {
+          // Normalize [0.5, 1]
+          pointInGraph = quadraticBezier(controlPoints[2], controlPoints[3], controlPoints[4], (point.delta - 0.5) * 2);
+        }
+      } else {
+        console.error('Unhandled case, number of control points:', controlPoints.length);
+        return;
+      }
+      this.renderPoint(point, pointInGraph.x, pointInGraph.y, TRAFFIC_POINT_RADIO);
     });
   }
 
@@ -307,7 +357,7 @@ export default class TrafficRenderer {
     return edges.reduce((trafficEdges: TrafficEdgeHash, edge: any) => {
       const edgeId = edge.data('id');
       const timer = this.timerFromRate(edge.data('rate'));
-      const speed = this.speedFromLatency(edge.data('latency'));
+      const speed = this.speedFromResponseTime(edge.data('responseTime'));
       const errorRate = edge.data('percentErr') === undefined ? 0 : edge.data('percentErr') / 100;
       if (edgeId in this.trafficEdges) {
         const trafficEdge = this.trafficEdges[edgeId];
@@ -338,13 +388,13 @@ export default class TrafficRenderer {
     );
   }
 
-  private speedFromLatency(latency: number) {
-    // Consider NaN latency as "everything is going as fast as possible"
-    if (isNaN(latency)) {
+  private speedFromResponseTime(responseTime: number) {
+    // Consider NaN response time as "everything is going as fast as possible"
+    if (isNaN(responseTime)) {
       return SPEED_RATE_MAX;
     }
     // Normalize
-    const delta = clamp(latency, SPEED_LATENCY_MIN, SPEED_LATENCY_MAX) / SPEED_LATENCY_MAX;
+    const delta = clamp(responseTime, SPEED_RESPONSE_TIME_MIN, SPEED_RESPONSE_TIME_MAX) / SPEED_RESPONSE_TIME_MAX;
     // Scale
     return SPEED_RATE_MIN + (1 - delta) * (SPEED_RATE_MAX - SPEED_RATE_MIN);
   }

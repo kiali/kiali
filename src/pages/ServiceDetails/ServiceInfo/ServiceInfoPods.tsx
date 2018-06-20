@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { Col, Row, OverlayTrigger, Tooltip } from 'patternfly-react';
-import Badge from '../../../components/Badge/Badge';
 import { Pod } from '../../../types/ServiceInfo';
-import { PfColors } from '../../../components/Pf/PfColors';
 import { PodsGroup, groupPods } from './ServiceInfoPodsGrouping';
+import Label from '../../../components/Label/Label';
 
 interface Props {
   pods?: Pod[];
@@ -43,16 +42,9 @@ class ServiceInfoPods extends React.Component<Props> {
                     group.commonPrefix + ' (1 replica)'
                   )}
                 </h3>
-                <div key="labels">
+                <div key="labels" className="label-collection">
                   {Object.keys(group.commonLabels).map((key, i) => (
-                    <Badge
-                      key={'pod_' + u + '_' + i}
-                      scale={0.8}
-                      style="plastic"
-                      color={PfColors.Green}
-                      leftText={key}
-                      rightText={group.commonLabels[key]}
-                    />
+                    <Label key={'pod_' + u + '_' + i} name={key} value={group.commonLabels[key]} />
                   ))}
                 </div>
                 <div>
@@ -72,11 +64,11 @@ class ServiceInfoPods extends React.Component<Props> {
                     )}
                   </span>
                 </div>
-                {group.createdBy && (
+                {group.createdBy.length > 0 && (
                   <div>
                     <span>
                       <strong>Created by: </strong>
-                      {group.createdBy.name + ' (' + group.createdBy.kind + ')'}
+                      {group.createdBy.map(ref => ref.name + ' (' + ref.kind + ')').join(', ')}
                     </span>
                   </div>
                 )}

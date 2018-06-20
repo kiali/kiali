@@ -89,13 +89,13 @@ describe('ServiceGraphFilterState reducer', () => {
         },
         {
           type: ServiceGraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
-          payload: EdgeLabelMode.LATENCY_95TH_PERCENTILE
+          payload: EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE
         }
       )
     ).toEqual({
       showLegend: false,
       showNodeLabels: true,
-      edgeLabelMode: EdgeLabelMode.LATENCY_95TH_PERCENTILE,
+      edgeLabelMode: EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE,
       showCircuitBreakers: false,
       showRouteRules: true,
       showMissingSidecars: true,

@@ -103,7 +103,9 @@ export const computeAggregatedHealth = (health?: Health, reporter?: (info: strin
     let statuses: Status[] = [];
     {
       // Envoy
-      const envoy = ratioCheck(health.envoy.healthy, health.envoy.total);
+      const inbound = ratioCheck(health.envoy.inbound.healthy, health.envoy.inbound.total);
+      const outbound = ratioCheck(health.envoy.outbound.healthy, health.envoy.outbound.total);
+      const envoy = mergeStatus(inbound, outbound);
       if (reporter && (envoy === FAILURE || envoy === DEGRADED)) {
         reporter('Envoy health ' + envoy.name.toLowerCase());
       }

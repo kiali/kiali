@@ -9,10 +9,10 @@ import {
   ObjectCheck
 } from '../../../../types/ServiceInfo';
 import { Row, Col, Table, Icon, OverlayTrigger, Popover, BulletChart, Tooltip } from 'patternfly-react';
-import Badge from '../../../../components/Badge/Badge';
 import { PfColors } from '../../../../components/Pf/PfColors';
 
 import './RouteRuleRoute.css';
+import Label from '../../../../components/Label/Label';
 
 interface RouteRuleRouteProps {
   name: string;
@@ -92,7 +92,7 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
         const badges = this.labelsFrom(routeItem.labels);
         return (
           <Tooltip id={`${u}_${routeItem.weight}`} key={`${u}_${routeItem.weight}`}>
-            {badges}
+            <div className="label-collection">{badges}</div>
           </Tooltip>
         );
       }
@@ -132,14 +132,7 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
   }
   labelsFrom(routeLabels: { [key: string]: string }) {
     return Object.keys(routeLabels || {}).map(key => (
-      <Badge
-        key={key}
-        scale={0.8}
-        style="plastic"
-        color={PfColors.Green400}
-        leftText={key}
-        rightText={routeLabels[key] ? routeLabels[key] : ''}
-      />
+      <Label key={key} name={key} value={routeLabels[key] ? routeLabels[key] : ''} />
     ));
   }
   objectCheckToHtml(object: ObjectCheck) {

@@ -6,7 +6,7 @@ export interface PodsGroup {
   commonLabels: { [key: string]: string };
   createdAtStart: number;
   createdAtEnd: number;
-  createdBy?: Reference;
+  createdBy: Reference[];
   istioContainers?: ContainerInfo[];
   istioInitContainers?: ContainerInfo[];
   numberOfPods: number;
@@ -14,7 +14,7 @@ export interface PodsGroup {
 
 const groupKey = (pod: Pod): string => {
   return JSON.stringify({
-    cb: pod.createdBy ? pod.createdBy.name : '',
+    cb: pod.createdBy.map(ref => ref.name).join(','),
     ic: pod.istioContainers ? pod.istioContainers.map(ctnr => ctnr.name + ctnr.image).join(',') : '',
     iic: pod.istioInitContainers ? pod.istioInitContainers.map(ctnr => ctnr.name + ctnr.image).join(',') : ''
   });
@@ -78,13 +78,5 @@ export const groupPods = (pods: Pod[]): PodsGroup[] => {
       });
     }
   });
-  return Array.from(allGroups.values()).sort((a, b) => {
-    if (a.createdBy) {
-      if (b.createdBy) {
-        return a.createdBy.name.localeCompare(b.createdBy.name);
-      }
-      return 1;
-    }
-    return -1;
-  });
+  return Array.from(allGroups.values()).sort((a, b) => a.commonPrefix.localeCompare(b.commonPrefix));
 };

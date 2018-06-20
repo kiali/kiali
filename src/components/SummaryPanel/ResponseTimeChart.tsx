@@ -2,16 +2,16 @@ import * as React from 'react';
 import { AreaChart } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
 
-type LatencyChartTypeProp = {
+type ResponseTimeChartTypeProp = {
   label: string;
-  latAvg: [string, number][];
-  latMed: [string, number][];
-  lat95: [string, number][];
-  lat99: [string, number][];
+  rtAvg: [string, number][];
+  rtMed: [string, number][];
+  rt95: [string, number][];
+  rt99: [string, number][];
 };
 
-export default class LatencyChart extends React.Component<LatencyChartTypeProp, {}> {
-  constructor(props: LatencyChartTypeProp) {
+export default class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp, {}> {
+  constructor(props: ResponseTimeChartTypeProp) {
     super(props);
   }
 
@@ -32,10 +32,10 @@ export default class LatencyChart extends React.Component<LatencyChartTypeProp, 
 
     const chartData = {
       x: 'x',
-      columns: (this.props.latAvg as [string, number][])
-        .concat(this.props.latMed as [string, number][])
-        .concat(this.props.lat95 as [string, number][])
-        .concat(this.props.lat99 as [string, number][]),
+      columns: (this.props.rtAvg as [string, number][])
+        .concat(this.props.rtMed as [string, number][])
+        .concat(this.props.rt95 as [string, number][])
+        .concat(this.props.rt99 as [string, number][]),
       type: 'area-spline',
       hide: ['Average', 'Median', '99th']
     };

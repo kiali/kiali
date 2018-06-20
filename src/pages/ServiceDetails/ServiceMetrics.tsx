@@ -125,8 +125,7 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
       .catch(error => {
         this.setState({
           grafanaLinkIn: undefined,
-          grafanaLinkOut: undefined,
-          alertDetails: API.getErrorMsg('Cannot retrieve Grafana info.', error)
+          grafanaLinkOut: undefined
         });
         console.error(error);
       });

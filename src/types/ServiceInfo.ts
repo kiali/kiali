@@ -21,7 +21,7 @@ export interface Pod {
   name: string;
   labels?: { [key: string]: string };
   createdAt: string;
-  createdBy?: Reference;
+  createdBy: Reference[];
   istioContainers?: ContainerInfo[];
   istioInitContainers?: ContainerInfo[];
 }
@@ -345,6 +345,7 @@ export interface DestinationRule {
   name: string;
   createdAt: string;
   resourceVersion: string;
+  host?: string;
   trafficPolicy?: TrafficPolicy;
   subsets?: Subset[];
 }

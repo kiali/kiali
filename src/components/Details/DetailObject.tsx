@@ -1,6 +1,5 @@
 import * as React from 'react';
-import Badge from '../Badge/Badge';
-import { PfColors } from '../../components/Pf/PfColors';
+import Label from '../Label/Label';
 
 interface DetailObjectProps {
   name: string;
@@ -26,7 +25,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
   }
 
   label(key: string, value: string) {
-    return <Badge scale={0.8} style="plastic" color={PfColors.Green400} leftText={key} rightText={value} />;
+    return <Label name={key} value={value} />;
   }
 
   checkLabel(name: string) {
@@ -40,7 +39,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
     let valueType = typeof value;
     if (valueType === 'string' || valueType === 'number' || valueType === 'boolean') {
       return (
-        <div>
+        <div className="label-collection">
           {isLabel ? (
             this.label(name, value)
           ) : (

@@ -7,7 +7,7 @@ import { Health } from '../../../types/Health';
 describe('HealthDetails', () => {
   it('renders healthy', () => {
     const health: Health = {
-      envoy: { healthy: 1, total: 1 },
+      envoy: { inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } },
       deploymentStatuses: [{ name: 'A', available: 1, replicas: 1 }, { name: 'B', available: 2, replicas: 2 }],
       requests: { requestCount: 0, requestErrorCount: 0 }
     };
@@ -18,7 +18,7 @@ describe('HealthDetails', () => {
 
   it('renders envoy degraded', () => {
     const health: Health = {
-      envoy: { healthy: 1, total: 10 },
+      envoy: { inbound: { healthy: 1, total: 10 }, outbound: { healthy: 1, total: 1 } },
       deploymentStatuses: [{ name: 'A', available: 1, replicas: 1 }, { name: 'B', available: 2, replicas: 2 }],
       requests: { requestCount: 0, requestErrorCount: 0 }
     };
@@ -29,7 +29,7 @@ describe('HealthDetails', () => {
 
   it('renders deployments failure', () => {
     const health: Health = {
-      envoy: { healthy: 1, total: 10 },
+      envoy: { inbound: { healthy: 1, total: 10 }, outbound: { healthy: 1, total: 1 } },
       deploymentStatuses: [{ name: 'A', available: 0, replicas: 10 }, { name: 'B', available: 2, replicas: 2 }],
       requests: { requestCount: 0, requestErrorCount: 0 }
     };

@@ -41,7 +41,7 @@ const decorateGraphData = (graphData: any) => {
       isGroup: undefined,
       isRoot: undefined,
       isUnused: undefined,
-      hasMissingSidecars: undefined
+      hasMissingSC: undefined
     }
   };
   if (graphData) {
@@ -85,7 +85,10 @@ export const ServiceGraphDataActions = {
     return dispatch => {
       dispatch(ServiceGraphDataActions.getGraphDataStart());
       const duration = graphDuration.value;
-      const restParams = { duration: duration + 's' };
+      let restParams = { duration: duration + 's' };
+      if (namespace.name === 'istio-system') {
+        restParams['includeIstio'] = true;
+      }
       return API.getGraphElements(authentication(), namespace, restParams).then(
         response => {
           const responseData: any = response['data'];
