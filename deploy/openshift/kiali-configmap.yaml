@@ -10,6 +10,3 @@ data:
     server:
       port: 20001
       static_content_root_directory: /opt/kiali/console
-      credentials:
-        username: admin
-        password: admin
