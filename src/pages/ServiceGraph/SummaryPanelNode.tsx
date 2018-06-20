@@ -65,7 +65,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   fetchRequestCountMetrics(props: SummaryPanelPropType) {
-    const namespace = props.data.summaryTarget.data('service').split('.')[1];
+    const namespace = props.data.summaryTarget.data('namespace');
     const service = props.data.summaryTarget.data('service').split('.')[0];
     const version = props.data.summaryTarget.data('version');
     const options: MetricsOptions = {
