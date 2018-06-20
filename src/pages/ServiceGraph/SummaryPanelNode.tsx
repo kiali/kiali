@@ -3,18 +3,17 @@ import * as API from '../../services/Api';
 
 import graphUtils from '../../utils/Graphing';
 import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
-import Badge from '../../components/Badge/Badge';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import MetricsOptions from '../../types/MetricsOptions';
 import { Metrics } from '../../types/Metrics';
-import { PfColors } from '../../components/Pf/PfColors';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
 import { shouldRefreshData } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
+import Label from '../../components/Label/Label';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -135,15 +134,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
             />
           )}
           <span> Service: {isUnknown ? 'unknown' : serviceHotLink}</span>
-          <div style={{ paddingTop: '3px' }}>
-            <Badge scale={0.9} style="plastic" leftText="namespace" rightText={namespace} color={PfColors.Green400} />
-            <Badge
-              scale={0.9}
-              style="plastic"
-              leftText="version"
-              rightText={this.props.data.summaryTarget.data('version')}
-              color={PfColors.Green400}
-            />
+          <div className="label-collection" style={{ paddingTop: '3px' }}>
+            <Label name="namespace" value={namespace} />
+            <Label name="version" value={this.props.data.summaryTarget.data('version')} />
           </div>
           {this.renderBadgeSummary(node.data('hasCB'), node.data('hasRR'), node.data('hasMissingSC'))}
         </div>

@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import Badge from '../../../../components/Badge/Badge';
 import PfInfoCard from '../../../../components/Pf/PfInfoCard';
-import { PfColors } from '../../../../components/Pf/PfColors';
+import Label from '../../../../components/Label/Label';
 
 const CardContent = (
   <div key="pod">
@@ -11,7 +10,7 @@ const CardContent = (
     </div>
     <ul style={{ listStyleType: 'none' }}>
       <li key="pod_labels_badge_">
-        <Badge scale={0.8} style="plastic" color={PfColors.Green400} leftText="my_key" rightText="my_value" />
+        <Label name="my_key" value="my_value" />
       </li>
     </ul>
   </div>

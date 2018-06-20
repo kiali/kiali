@@ -1,5 +1,4 @@
 import * as React from 'react';
-import Badge from '../../components/Badge/Badge';
 import RateTable from '../../components/SummaryPanel/RateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
@@ -8,11 +7,11 @@ import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import MetricsOptions from '../../types/MetricsOptions';
-import { PfColors } from '../../components/Pf/PfColors';
 import { authentication } from '../../utils/Authentication';
 import { Icon } from 'patternfly-react';
 import { Link } from 'react-router-dom';
 import { shouldRefreshData } from './SummaryPanelCommon';
+import Label from '../../components/Label/Label';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -92,11 +91,11 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const isUnknown = sourceServiceName === 'unknown';
     return (
       <div className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
-        <div className="panel-heading">
+        <div className="panel-heading label-collection">
           Source: {isUnknown ? 'unknown' : sourceLink}
           {this.renderLabels(sourceNamespace, sourceVersion)}
         </div>
-        <div className="panel-heading">
+        <div className="panel-heading label-collection">
           Destination: {destLink}
           {this.renderLabels(destNamespace, destVersion)}
         </div>
@@ -209,8 +208,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
   private renderLabels = (ns: string, ver: string) => (
     <div style={{ paddingTop: '3px' }}>
-      <Badge scale={0.9} style="plastic" leftText="namespace" rightText={ns} color={PfColors.Green400} />
-      <Badge scale={0.9} style="plastic" leftText="version" rightText={ver} color={PfColors.Green400} />
+      <Label name="namespace" value={ns} />
+      <Label name="version" value={ver} />
     </div>
   );
 

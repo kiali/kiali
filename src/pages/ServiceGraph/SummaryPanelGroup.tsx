@@ -1,5 +1,4 @@
 import * as React from 'react';
-import Badge from '../../components/Badge/Badge';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
@@ -8,12 +7,12 @@ import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import MetricsOptions from '../../types/MetricsOptions';
-import { PfColors } from '../../components/Pf/PfColors';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
 import { shouldRefreshData } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
+import Label from '../../components/Label/Label';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -86,15 +85,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
             />
           )}
           <span> Versioned Group: {serviceHotLink}</span>
-          <div style={{ paddingTop: '3px' }}>
-            <Badge
-              scale={0.9}
-              style="plastic"
-              leftText="namespace"
-              rightText={namespace}
-              key={namespace}
-              color={PfColors.Green400}
-            />
+          <div className="label-collection" style={{ paddingTop: '3px' }}>
+            <Label name="namespace" value={namespace} key={namespace} />
             {this.renderVersionBadges()}
           </div>
           {this.renderBadgeSummary(group.data('hasRR'))}
@@ -171,16 +163,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     return this.props.data.summaryTarget
       .children()
       .toArray()
-      .map((c, i) => (
-        <Badge
-          scale={0.9}
-          style="plastic"
-          leftText="version"
-          rightText={c.data('version')}
-          key={c.data('version')}
-          color={PfColors.Green400}
-        />
-      ));
+      .map((c, i) => <Label key={c.data('version')} name="version" value={c.data('version')} />);
   };
 
   private renderBadgeSummary = (hasRR: boolean) => {
