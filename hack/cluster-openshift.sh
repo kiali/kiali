@@ -18,9 +18,6 @@
 #
 ##############################################################################
 
-# TEMPORARY - REMOVE THIS LATER BUT FOR NOW DEFAULT TO 0.7.1
-ISTIO_VERSION=0.7.1
-
 debug() {
   if [ "$_VERBOSE" == "true" ]; then
     echo "DEBUG: $1"

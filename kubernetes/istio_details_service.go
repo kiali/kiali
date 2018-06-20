@@ -2,8 +2,10 @@ package kubernetes
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/config"
+	"strings"
 	"sync"
+
+	"github.com/kiali/kiali/config"
 )
 
 // GetIstioDetails returns Istio details for a given namespace,
@@ -157,7 +159,7 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	virtualServices := make([]IstioObject, 0)
 	for _, virtualService := range virtualServiceList.GetItems() {
 		appendVirtualService := serviceName == ""
-		if !appendVirtualService && FilterByHost(virtualService.GetSpec(), serviceName) {
+		if !appendVirtualService && FilterByHost(virtualService.GetSpec(), serviceName, namespace) {
 			appendVirtualService = true
 		}
 		if appendVirtualService {
@@ -180,6 +182,38 @@ func (in *IstioClient) GetVirtualService(namespace string, virtualservice string
 	return virtualService.DeepCopyIstioObject(), nil
 }
 
+// GetGateways return all Gateways for a given namespace.
+// It returns an error on any problem.
+func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(gateways).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	gatewayList, ok := result.(*GatewayList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a GetGateways list", namespace)
+	}
+
+	gateways := make([]IstioObject, 0)
+	for _, gateway := range gatewayList.GetItems() {
+		gateways = append(gateways, gateway.DeepCopyIstioObject())
+	}
+	return gateways, nil
+}
+
+func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(gateways).SubResource(gateway).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	gatewayObject, ok := result.(*Gateway)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService object", namespace, gateway)
+	}
+	return gatewayObject.DeepCopyIstioObject(), nil
+}
+
 // GetDestinationRules returns all DestinationRules for a given namespace.
 // If serviceName param is provided it will filter all DestinationRules having a host defined on a particular service.
 // It returns an error on any problem.
@@ -196,8 +230,8 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 	destinationRules := make([]IstioObject, 0)
 	for _, destinationRule := range destinationRuleList.Items {
 		appendDestinationRule := serviceName == ""
-		if name, ok := destinationRule.Spec["name"]; ok {
-			if name == serviceName {
+		if host, ok := destinationRule.Spec["host"]; ok {
+			if dHost, ok := host.(string); ok && CheckHostnameService(dHost, serviceName, namespace) {
 				appendDestinationRule = true
 			}
 		}
@@ -253,7 +287,7 @@ func CheckVirtualService(virtualService IstioObject, namespace string, serviceNa
 	if virtualService == nil || virtualService.GetSpec() == nil || subsets == nil {
 		return false
 	}
-	if len(subsets) > 0 && FilterByHost(virtualService.GetSpec(), serviceName) {
+	if len(subsets) > 0 && FilterByHost(virtualService.GetSpec(), serviceName, namespace) {
 		if http, ok := virtualService.GetSpec()["http"]; ok && checkSubsetRoute(http, serviceName, subsets) {
 			return true
 		}
@@ -283,16 +317,18 @@ func GetDestinationRulesSubsets(destinationRules []IstioObject, serviceName, ver
 	cfg := config.Get()
 	foundSubsets := make([]string, 0)
 	for _, destinationRule := range destinationRules {
-		if dName, ok := destinationRule.GetSpec()["name"]; ok && dName == serviceName {
-			if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
-				if dSubsets, ok := subsets.([]interface{}); ok {
-					for _, subset := range dSubsets {
-						if innerSubset, ok := subset.(map[string]interface{}); ok {
-							subsetName := innerSubset["name"]
-							if labels, ok := innerSubset["labels"]; ok {
-								if dLabels, ok := labels.(map[string]interface{}); ok {
-									if versionValue, ok := dLabels[cfg.VersionFilterLabelName]; ok && versionValue == version {
-										foundSubsets = append(foundSubsets, subsetName.(string))
+		if dHost, ok := destinationRule.GetSpec()["host"]; ok {
+			if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, destinationRule.GetObjectMeta().Namespace) {
+				if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
+					if dSubsets, ok := subsets.([]interface{}); ok {
+						for _, subset := range dSubsets {
+							if innerSubset, ok := subset.(map[string]interface{}); ok {
+								subsetName := innerSubset["name"]
+								if labels, ok := innerSubset["labels"]; ok {
+									if dLabels, ok := labels.(map[string]interface{}); ok {
+										if versionValue, ok := dLabels[cfg.VersionFilterLabelName]; ok && versionValue == version {
+											foundSubsets = append(foundSubsets, subsetName.(string))
+										}
 									}
 								}
 							}
@@ -314,20 +350,46 @@ func CheckDestinationRuleCircuitBreaker(destinationRule IstioObject, namespace s
 		return false
 	}
 	cfg := config.Get()
-	if dName, ok := destinationRule.GetSpec()["name"]; ok && dName == serviceName {
-		if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
-			return true
-		}
-		if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
-			if dSubsets, ok := subsets.([]interface{}); ok {
-				for _, subset := range dSubsets {
-					if innerSubset, ok := subset.(map[string]interface{}); ok {
-						if trafficPolicy, ok := innerSubset["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
-							if labels, ok := innerSubset["labels"]; ok {
-								if dLabels, ok := labels.(map[string]interface{}); ok && version != "" {
-									if versionValue, ok := dLabels[cfg.VersionFilterLabelName]; ok && versionValue == version {
-										return true
+	if dHost, ok := destinationRule.GetSpec()["host"]; ok {
+		if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, namespace) {
+			if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
+				return true
+			}
+			if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
+				if dSubsets, ok := subsets.([]interface{}); ok {
+					for _, subset := range dSubsets {
+						if innerSubset, ok := subset.(map[string]interface{}); ok {
+							if trafficPolicy, ok := innerSubset["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
+								if labels, ok := innerSubset["labels"]; ok {
+									if dLabels, ok := labels.(map[string]interface{}); ok && version != "" {
+										if versionValue, ok := dLabels[cfg.VersionFilterLabelName]; ok && versionValue == version {
+											return true
+										}
 									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
+func CheckDestinationRulemTLS(destinationRule IstioObject, namespace string, serviceName string) bool {
+	if destinationRule == nil || destinationRule.GetSpec() == nil {
+		return false
+	}
+	if dHost, ok := destinationRule.GetSpec()["host"]; ok {
+		if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, namespace) {
+			if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok {
+				if dTrafficPolicy, ok := trafficPolicy.(map[string]interface{}); ok {
+					if mtls, ok := dTrafficPolicy["tls"]; ok {
+						if dmTLS, ok := mtls.(map[string]interface{}); ok {
+							if mode, ok := dmTLS["mode"]; ok {
+								if dmode, ok := mode.(string); ok {
+									return dmode == "ISTIO_MUTUAL"
 								}
 							}
 						}
@@ -350,7 +412,7 @@ func checkSubsetRoute(routes interface{}, serviceName string, subsets []string) 
 							if innerRoute, ok := dRoute.(map[string]interface{}); ok {
 								if destination, ok := innerRoute["destination"]; ok {
 									if dDestination, ok := destination.(map[string]interface{}); ok {
-										if dName, ok := dDestination["name"]; ok && dName == serviceName {
+										if dHost, ok := dDestination["host"]; ok && dHost == serviceName {
 											if dSubset, ok := dDestination["subset"]; ok {
 												for _, subsetName := range subsets {
 													if dSubset == subsetName {
@@ -419,15 +481,35 @@ func FilterByDestination(spec map[string]interface{}, namespace string, serviceN
 	return false
 }
 
-func FilterByHost(spec map[string]interface{}, hostName string) bool {
+func FilterByHost(spec map[string]interface{}, serviceName string, namespace string) bool {
 	if hosts, ok := spec["hosts"]; ok {
 		if hostsArray, ok := hosts.([]interface{}); ok {
-			for _, host := range hostsArray {
-				if host == hostName {
+			for _, dHost := range hostsArray {
+				if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, namespace) {
 					return true
 				}
 			}
 		}
 	}
+	return false
+}
+
+// CheckHostnameService returns true when the hostname specifies the service passed by param.
+// It accepts the following hostname formats:
+// *, reviews, reviews.bookinfo.svc, reviews.bookinfo.svc.cluster.local,
+// *.bookinfo.svc, *.bookinfo.svc.cluster.local
+func CheckHostnameService(hostname, service, namespace string) bool {
+	domainParts := strings.Split(hostname, ".")
+
+	if len(domainParts) == 1 {
+		// hostname is a service name (e.g. reviews) or a wildcard
+		return hostname == service || hostname == "*"
+	}
+
+	// hostname is a FQDN/Wildcard (e.g. reviews.bookinfo.svc, *.bookinfo.svc)
+	if len(domainParts) > 2 && domainParts[1] == namespace && domainParts[2] == "svc" {
+		return domainParts[0] == service || domainParts[0] == "*"
+	}
+
 	return false
 }

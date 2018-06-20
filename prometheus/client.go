@@ -16,7 +16,7 @@ import (
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	GetServiceHealth(namespace string, servicename string) (int, int, error)
+	GetServiceHealth(namespace string, servicename string) (EnvoyHealth, error)
 	GetNamespaceServicesRequestRates(namespace string, ratesInterval string) (model.Vector, model.Vector, error)
 	GetServiceRequestRates(namespace, service string, ratesInterval string) (model.Vector, model.Vector, error)
 	GetSourceServices(namespace string, servicename string) (map[string][]string, error)
@@ -98,9 +98,9 @@ func (in *Client) GetServiceMetrics(query *ServiceMetricsQuery) Metrics {
 }
 
 // GetServiceHealth returns the Health related to the provided service identified by its namespace and service name.
-// Health tuple is [healthy, total, error] (using Envoy metrics).
-// When the health is unavailable, total number of replicas will be 0.
-func (in *Client) GetServiceHealth(namespace string, servicename string) (int, int, error) {
+// It reads Envoy metrics, inbound and outbound
+// When the health is unavailable, total number of members will be 0.
+func (in *Client) GetServiceHealth(namespace string, servicename string) (EnvoyHealth, error) {
 	return getServiceHealth(in.api, namespace, servicename)
 }
 

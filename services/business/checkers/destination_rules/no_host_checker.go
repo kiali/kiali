@@ -5,25 +5,27 @@ import (
 	"github.com/kiali/kiali/services/models"
 )
 
-type NoNameChecker struct {
+type NoHostChecker struct {
 	Namespace       string
 	ServiceNames    []string
 	DestinationRule kubernetes.IstioObject
 }
 
-func (destinationRule NoNameChecker) Check() ([]*models.IstioCheck, bool) {
+func (destinationRule NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	valid := false
 	validations := make([]*models.IstioCheck, 0)
 
 	for _, serviceName := range destinationRule.ServiceNames {
-		if name, ok := destinationRule.DestinationRule.GetSpec()["name"]; ok && name == serviceName {
-			valid = true
-			break
+		if host, ok := destinationRule.DestinationRule.GetSpec()["host"]; ok {
+			if dHost, ok := host.(string); ok && kubernetes.CheckHostnameService(dHost, serviceName, destinationRule.Namespace) {
+				valid = true
+				break
+			}
 		}
 	}
 
 	if !valid {
-		validation := models.BuildCheck("Name doesn't have a valid service", "error", "spec/name")
+		validation := models.BuildCheck("Host doesn't have a valid service", "error", "spec/host")
 		validations = append(validations, &validation)
 	}
 

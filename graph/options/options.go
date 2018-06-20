@@ -16,8 +16,9 @@ import (
 )
 
 const (
-	AppenderAll  string = "_all_"
-	NamespaceAll string = "all"
+	AppenderAll          string = "_all_"
+	NamespaceAll         string = "all"
+	NamespaceIstioSystem string = "istio-system"
 )
 
 // VendorOptions are those that are supplied to the vendor-specific generators.
@@ -28,13 +29,14 @@ type VendorOptions struct {
 
 // Options are all supported graph generation options.
 type Options struct {
-	Appenders  []appender.Appender
-	Duration   time.Duration
-	Metric     string
-	Namespaces []string
-	QueryTime  int64 // unix time in seconds
-	Service    string
-	Vendor     string
+	Appenders    []appender.Appender
+	Duration     time.Duration
+	IncludeIstio bool // include istio-system services. Ignored for istio-system ns. Default false.
+	Metric       string
+	Namespaces   []string
+	QueryTime    int64 // unix time in seconds
+	Service      string
+	Vendor       string
 	VendorOptions
 }
 
@@ -46,12 +48,13 @@ func NewOptions(r *http.Request) Options {
 
 	// query params
 	params := r.URL.Query()
-	groupByVersion, groupByVersionErr := strconv.ParseBool(params.Get("groupByVersion"))
 	duration, durationErr := time.ParseDuration(params.Get("duration"))
+	includeIstio, includeIstioErr := strconv.ParseBool(params.Get("includeIstio"))
+	groupByVersion, groupByVersionErr := strconv.ParseBool(params.Get("groupByVersion"))
 	metric := params.Get("metric")
-	vendor := params.Get("vendor")
 	queryTime, queryTimeErr := strconv.ParseInt(params.Get("queryTime"), 10, 64)
 	namespaces := params.Get("namespaces") // csl of namespaces. Overrides namespace path param if set
+	vendor := params.Get("vendor")
 
 	var namespaceNames []string
 	fetchNamespaces := namespaces == NamespaceAll || (namespaces == "" && (namespace == NamespaceAll))
@@ -60,7 +63,12 @@ func NewOptions(r *http.Request) Options {
 		checkError(err)
 
 		for _, namespace := range namespaces {
-			namespaceNames = append(namespaceNames, namespace.Name)
+			// The istio-system namespace is only shown when explicitly requested. Note that the
+			// 'includeIstio' option doesn't apply here, that option affects what is done in
+			// non-istio-system namespaces.
+			if namespace.Name != NamespaceIstioSystem {
+				namespaceNames = append(namespaceNames, namespace.Name)
+			}
 		}
 	} else if namespaces != "" {
 		namespaceNames = strings.Split(namespaces, ",")
@@ -71,11 +79,14 @@ func NewOptions(r *http.Request) Options {
 		namespaceNames = []string{}
 	}
 
-	if groupByVersionErr != nil {
-		groupByVersion = true
-	}
 	if durationErr != nil {
 		duration, _ = time.ParseDuration("10m")
+	}
+	if includeIstioErr != nil {
+		includeIstio = false
+	}
+	if groupByVersionErr != nil {
+		groupByVersion = true
 	}
 	if "" == metric {
 		metric = "istio_request_count"
@@ -88,12 +99,13 @@ func NewOptions(r *http.Request) Options {
 	}
 
 	options := Options{
-		Duration:   duration,
-		Metric:     metric,
-		Namespaces: namespaceNames,
-		QueryTime:  queryTime,
-		Service:    service,
-		Vendor:     vendor,
+		Duration:     duration,
+		IncludeIstio: includeIstio,
+		Metric:       metric,
+		Namespaces:   namespaceNames,
+		QueryTime:    queryTime,
+		Service:      service,
+		Vendor:       vendor,
 		VendorOptions: VendorOptions{
 			GroupByVersion: groupByVersion,
 			Timestamp:      queryTime,
@@ -122,14 +134,14 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 	if csl == AppenderAll || strings.Contains(csl, "dead_service") {
 		appenders = append(appenders, appender.DeadServiceAppender{})
 	}
-	if csl == AppenderAll || strings.Contains(csl, "latency") {
+	if csl == AppenderAll || strings.Contains(csl, "response_time") {
 		quantile := appender.DefaultQuantile
-		if _, ok := params["latencyQuantile"]; ok {
-			if latencyQuantile, err := strconv.ParseFloat(params.Get("latencyQuantile"), 64); err == nil {
-				quantile = latencyQuantile
+		if _, ok := params["responseTimeQuantile"]; ok {
+			if responseTimeQuantile, err := strconv.ParseFloat(params.Get("responseTimeQuantile"), 64); err == nil {
+				quantile = responseTimeQuantile
 			}
 		}
-		a := appender.LatencyAppender{
+		a := appender.ResponseTimeAppender{
 			Duration:  o.Duration,
 			Quantile:  quantile,
 			QueryTime: o.QueryTime,

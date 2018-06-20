@@ -59,8 +59,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	customerDr := validations[models.IstioValidationKey{"destinationrule", "customer-dr"}]
 	assert.False(customerDr.Valid)
 	assert.Equal(1, len(customerDr.Checks))
-	assert.Equal("spec/name", customerDr.Checks[0].Path)
-	assert.Equal("Name doesn't have a valid service", customerDr.Checks[0].Message)
+	assert.Equal("spec/host", customerDr.Checks[0].Path)
+	assert.Equal("Host doesn't have a valid service", customerDr.Checks[0].Message)
 
 	validations = NoServiceChecker{
 		Namespace:    "test",
@@ -159,7 +159,7 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 				Name: "customer-dr",
 			},
 			Spec: map[string]interface{}{
-				"name": "customer",
+				"host": "customer",
 				"subsets": []interface{}{
 					map[string]interface{}{
 						"name": "v1",

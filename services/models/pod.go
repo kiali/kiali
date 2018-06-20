@@ -14,7 +14,7 @@ type Pod struct {
 	Name                string            `json:"name"`
 	Labels              map[string]string `json:"labels"`
 	CreatedAt           string            `json:"createdAt"`
-	CreatedBy           Reference         `json:"createdBy"`
+	CreatedBy           []Reference       `json:"createdBy"`
 	IstioContainers     []*ContainerInfo  `json:"istioContainers"`
 	IstioInitContainers []*ContainerInfo  `json:"istioInitContainers"`
 }
@@ -58,16 +58,13 @@ func (pod *Pod) Parse(p *v1.Pod) {
 	pod.Name = p.Name
 	pod.Labels = p.Labels
 	pod.CreatedAt = formatTime(p.CreationTimestamp.Time)
-	// Parse some annotations
-	if jSon, ok := p.Annotations["kubernetes.io/created-by"]; ok {
-		var cby createdBy
-		err := json.Unmarshal([]byte(jSon), &cby)
-		if err == nil {
-			pod.CreatedBy = Reference{
-				Name: cby.Reference.Name,
-				Kind: cby.Reference.Kind}
-		}
+	for _, ref := range p.OwnerReferences {
+		pod.CreatedBy = append(pod.CreatedBy, Reference{
+			Name: ref.Name,
+			Kind: ref.Kind,
+		})
 	}
+	// Parse some annotations
 	if jSon, ok := p.Annotations["sidecar.istio.io/status"]; ok {
 		var scs sideCarStatus
 		err := json.Unmarshal([]byte(jSon), &scs)

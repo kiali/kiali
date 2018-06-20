@@ -125,6 +125,77 @@ func TestGetServiceMetrics(t *testing.T) {
 			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
 			ByLabelsOut:  []string{},
+			IncludeIstio: true,
+			Filters:      []string{}}})
+
+	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
+	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
+	rqCountIn := metrics.Metrics["request_count_in"]
+	assert.NotNil(t, rqCountIn)
+	rqCountOut := metrics.Metrics["request_count_out"]
+	assert.NotNil(t, rqCountOut)
+	rqErrorCountIn := metrics.Metrics["request_error_count_in"]
+	assert.NotNil(t, rqCountIn)
+	rqErrorCountOut := metrics.Metrics["request_error_count_out"]
+	assert.NotNil(t, rqCountOut)
+	rqSizeIn := metrics.Histograms["request_size_in"]
+	assert.NotNil(t, rqSizeIn)
+	rqSizeOut := metrics.Histograms["request_size_out"]
+	assert.NotNil(t, rqSizeOut)
+	rqDurationIn := metrics.Histograms["request_duration_in"]
+	assert.NotNil(t, rqDurationIn)
+	rqDurationOut := metrics.Histograms["request_duration_out"]
+	assert.NotNil(t, rqDurationOut)
+	rsSizeIn := metrics.Histograms["response_size_in"]
+	assert.NotNil(t, rsSizeIn)
+	rsSizeOut := metrics.Histograms["response_size_out"]
+	assert.NotNil(t, rsSizeOut)
+
+	assert.Equal(t, 2.5, float64(rqCountIn.Matrix[0].Values[0].Value))
+	assert.Equal(t, 1.5, float64(rqCountOut.Matrix[0].Values[0].Value))
+	assert.Equal(t, 4.5, float64(rqErrorCountIn.Matrix[0].Values[0].Value))
+	assert.Equal(t, 3.5, float64(rqErrorCountOut.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.35, float64(rqSizeOut.Average.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.2, float64(rqSizeOut.Median.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.3, float64(rqSizeOut.Percentile95.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.4, float64(rqSizeOut.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.5, float64(rqDurationOut.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.6, float64(rsSizeOut.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.7, float64(rqSizeIn.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.8, float64(rqDurationIn.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.9, float64(rsSizeIn.Percentile99.Matrix[0].Values[0].Value))
+}
+
+func TestGetServiceMetricsIncludeIstioFalse(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mockRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",destination_service!~\".*\\\\.istio-system\\\\..*\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",destination_service!~\".*\\\\.istio-system\\\\..*\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
+	mockRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\",destination_service!~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_duration", "{source_service=\"productpage.istio-system.svc.cluster.local\",destination_service!~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	mockHistogram(api, "istio_response_size", "{source_service=\"productpage.istio-system.svc.cluster.local\",destination_service!~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.6)
+	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
+		Namespace: "istio-system",
+		Service:   "productpage",
+		MetricsQuery: prometheus.MetricsQuery{
+			Range: v1.Range{
+				Start: time.Unix(1000, 0),
+				End:   time.Unix(2000, 0),
+				Step:  10,
+			},
+			Version:      "",
+			RateInterval: "5m",
+			RateFunc:     "rate",
+			ByLabelsIn:   []string{},
+			ByLabelsOut:  []string{},
 			Filters:      []string{}}})
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
@@ -189,6 +260,7 @@ func TestGetFilteredServiceMetrics(t *testing.T) {
 			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
 			ByLabelsOut:  []string{},
+			IncludeIstio: true,
 			Filters:      []string{"request_count", "request_size"}}})
 
 	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
@@ -225,6 +297,7 @@ func TestGetServiceMetricsInstantRates(t *testing.T) {
 			RateFunc:     "irate",
 			ByLabelsIn:   []string{},
 			ByLabelsOut:  []string{},
+			IncludeIstio: true,
 			Filters:      []string{"request_count"}}})
 
 	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
@@ -241,13 +314,17 @@ func TestGetServiceHealth(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_healthy", 0)
-	mockSingle(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", 1)
-	healthy, total, _ := client.GetServiceHealth("istio-system", "productpage")
+	mockSingle(api, "envoy_cluster_inbound_9080__productpage_istio_system_svc_cluster_local_membership_healthy", 0)
+	mockSingle(api, "envoy_cluster_inbound_9080__productpage_istio_system_svc_cluster_local_membership_total", 1)
+	mockSingle(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_healthy", 0)
+	mockSingle(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_total", 1)
+	health, _ := client.GetServiceHealth("istio-system", "productpage")
 
 	// Check health
-	assert.Equal(t, 0, healthy)
-	assert.Equal(t, 1, total)
+	assert.Equal(t, 0, health.Inbound.Healthy)
+	assert.Equal(t, 1, health.Inbound.Total)
+	assert.Equal(t, 0, health.Outbound.Healthy)
+	assert.Equal(t, 1, health.Outbound.Total)
 }
 
 func TestGetServiceMetricsUnavailable(t *testing.T) {
@@ -281,6 +358,7 @@ func TestGetServiceMetricsUnavailable(t *testing.T) {
 			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
 			ByLabelsOut:  []string{},
+			IncludeIstio: true,
 			Filters:      []string{}}})
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
@@ -305,13 +383,16 @@ func TestGetServiceHealthUnavailable(t *testing.T) {
 		return
 	}
 	// Mock everything to return empty data
-	mockQuery(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_healthy", &model.Vector{})
-	mockQuery(api, "envoy_cluster_out_productpage_istio_system_svc_cluster_local_http_membership_total", &model.Vector{})
-	_, total, err := client.GetServiceHealth("istio-system", "productpage")
+	mockQuery(api, "envoy_cluster_inbound_9080__productpage_istio_system_svc_cluster_local_membership_healthy", &model.Vector{})
+	mockQuery(api, "envoy_cluster_inbound_9080__productpage_istio_system_svc_cluster_local_membership_total", &model.Vector{})
+	mockQuery(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_healthy", &model.Vector{})
+	mockQuery(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_total", &model.Vector{})
+	h, err := client.GetServiceHealth("istio-system", "productpage")
 
 	// Check health unavailable
 	assert.Nil(t, err)
-	assert.Equal(t, 0, total)
+	assert.Equal(t, 0, h.Inbound.Total)
+	assert.Equal(t, 0, h.Outbound.Total)
 }
 
 func TestGetNamespaceMetrics(t *testing.T) {
@@ -344,6 +425,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 			RateFunc:     "rate",
 			ByLabelsIn:   []string{},
 			ByLabelsOut:  []string{},
+			IncludeIstio: true,
 			Filters:      []string{}}})
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")

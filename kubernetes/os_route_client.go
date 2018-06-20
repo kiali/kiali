@@ -75,6 +75,13 @@ func (in *OSRouteClient) GetRoute(namespace string, routeName string) (string, e
 	if !ok {
 		return "", errors.New("Missing host in Route spec")
 	}
-	// Manage https?
-	return "http://" + host, nil
+	protocol := "http"
+	tls, ok := spec.(map[string]interface{})["tls"]
+	if ok {
+		tlsTermination, ok := tls.(map[string]interface{})["termination"].(string)
+		if ok && len(tlsTermination) > 0 {
+			protocol = "https"
+		}
+	}
+	return protocol + "://" + host, nil
 }

@@ -4,114 +4,117 @@
     "nodes": [
       {
         "data": {
-          "id": "ef10172953f8ad2cd4135d73afe62c63",
-          "service": "productpage.istio-system.svc.cluster.local",
-          "version": "v1"
+          "id": "32f13d185b9a6764d67f9f96f8796f6c",
+          "service": "productpage.bookinfo.svc.cluster.local",
+          "version": "v1",
+          "rateOut": "60.000"
         }
       },
       {
         "data": {
-          "id": "5932332ea8128356e493d44620483e23",
-          "service": "ratings.istio-system.svc.cluster.local",
+          "id": "4bd6b4e52f760784b8cf5a9ae38241e2",
+          "service": "ratings.bookinfo.svc.cluster.local",
           "version": "v1",
           "rate": "40.000"
         }
       },
       {
         "data": {
-          "id": "98a1c1cea90d0a4af0f009d6d7a9814e",
-          "service": "reviews.istio-system.svc.cluster.local",
+          "id": "091c4c76cb13828352bbe375d51e3b01",
+          "service": "reviews.bookinfo.svc.cluster.local",
           "isGroup": "version"
         }
       },
       {
         "data": {
-          "id": "047fedf43d6b41f55d8c7c14a80a22ca",
-          "parent": "98a1c1cea90d0a4af0f009d6d7a9814e",
-          "service": "reviews.istio-system.svc.cluster.local",
+          "id": "09db1ec4064c7f4e77c2c65f0c8709ac",
+          "parent": "091c4c76cb13828352bbe375d51e3b01",
+          "service": "reviews.bookinfo.svc.cluster.local",
           "version": "v1",
           "rate": "20.000"
         }
       },
       {
         "data": {
-          "id": "c7a03b129bb359511003f1d560c092fd",
-          "parent": "98a1c1cea90d0a4af0f009d6d7a9814e",
-          "service": "reviews.istio-system.svc.cluster.local",
+          "id": "a30ebe6d7004dc26a24a989e27550aa2",
+          "parent": "091c4c76cb13828352bbe375d51e3b01",
+          "service": "reviews.bookinfo.svc.cluster.local",
           "version": "v2",
-          "rate": "40.000"
+          "rate": "40.000",
+          "rateOut": "40.000"
         }
       },
       {
         "data": {
-          "id": "ff0100c5e664424396c2f264bb30da25",
-          "parent": "98a1c1cea90d0a4af0f009d6d7a9814e",
-          "service": "reviews.istio-system.svc.cluster.local",
+          "id": "9b88963ddbd1603b0bbca88cfca29781",
+          "parent": "091c4c76cb13828352bbe375d51e3b01",
+          "service": "reviews.bookinfo.svc.cluster.local",
           "version": "v3",
-          "rate": "40.000"
+          "rate": "40.000",
+          "rateOut": "40.000"
         }
       }
     ],
     "edges": [
       {
         "data": {
-          "id": "fdbc06677bb0f6130f6ac1072fa92cb3",
-          "source": "c7a03b129bb359511003f1d560c092fd",
-          "target": "5932332ea8128356e493d44620483e23",
-          "rate": "20.000",
-          "percentRate": "50.000"
-        }
-      },
-      {
-        "data": {
-          "id": "c5d73d7c4bf5c144f0cc34645672a246",
-          "source": "c7a03b129bb359511003f1d560c092fd",
-          "target": "c7a03b129bb359511003f1d560c092fd",
-          "rate": "20.000",
-          "percentRate": "50.000"
-        }
-      },
-      {
-        "data": {
-          "id": "875b53697932c163844cd17ce454d962",
-          "source": "ef10172953f8ad2cd4135d73afe62c63",
-          "target": "047fedf43d6b41f55d8c7c14a80a22ca",
+          "id": "135f13040b3436024eadbbeae35f4bd9",
+          "source": "32f13d185b9a6764d67f9f96f8796f6c",
+          "target": "09db1ec4064c7f4e77c2c65f0c8709ac",
           "rate": "20.000",
           "percentRate": "33.333"
         }
       },
       {
         "data": {
-          "id": "7071b96e54595edd3e1ce226788facb3",
-          "source": "ef10172953f8ad2cd4135d73afe62c63",
-          "target": "c7a03b129bb359511003f1d560c092fd",
+          "id": "81825f8a8fd937464ecaad046abff476",
+          "source": "32f13d185b9a6764d67f9f96f8796f6c",
+          "target": "9b88963ddbd1603b0bbca88cfca29781",
           "rate": "20.000",
           "percentRate": "33.333"
         }
       },
       {
         "data": {
-          "id": "35ef6eb03cb34330034f87a98f62452f",
-          "source": "ef10172953f8ad2cd4135d73afe62c63",
-          "target": "ff0100c5e664424396c2f264bb30da25",
+          "id": "d05b899989813da4de1c3ce574cfd072",
+          "source": "32f13d185b9a6764d67f9f96f8796f6c",
+          "target": "a30ebe6d7004dc26a24a989e27550aa2",
           "rate": "20.000",
           "percentRate": "33.333"
         }
       },
       {
         "data": {
-          "id": "fa39bdc4937943a9e645dffd0117a2f9",
-          "source": "ff0100c5e664424396c2f264bb30da25",
-          "target": "5932332ea8128356e493d44620483e23",
+          "id": "2b61433d3ae75d11ea7ed3d002af2c60",
+          "source": "9b88963ddbd1603b0bbca88cfca29781",
+          "target": "4bd6b4e52f760784b8cf5a9ae38241e2",
           "rate": "20.000",
           "percentRate": "50.000"
         }
       },
       {
         "data": {
-          "id": "5f35c907109136e195feea6e66d97c39",
-          "source": "ff0100c5e664424396c2f264bb30da25",
-          "target": "ff0100c5e664424396c2f264bb30da25",
+          "id": "32695edf89b0c3db87effffa9409d575",
+          "source": "9b88963ddbd1603b0bbca88cfca29781",
+          "target": "9b88963ddbd1603b0bbca88cfca29781",
+          "rate": "20.000",
+          "percentRate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "9bdc27314a16a7e9c7d8fc0cd3c55827",
+          "source": "a30ebe6d7004dc26a24a989e27550aa2",
+          "target": "4bd6b4e52f760784b8cf5a9ae38241e2",
+          "rate": "20.000",
+          "percentRate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "2b9280fc4208f3f5d9197e741e7bdf87",
+          "source": "a30ebe6d7004dc26a24a989e27550aa2",
+          "target": "a30ebe6d7004dc26a24a989e27550aa2",
           "rate": "20.000",
           "percentRate": "50.000"
         }

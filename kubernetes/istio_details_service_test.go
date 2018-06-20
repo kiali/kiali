@@ -60,7 +60,7 @@ func TestFilterByHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	assert.False(t, FilterByHost(nil, ""))
+	assert.False(t, FilterByHost(nil, "", ""))
 
 	spec := map[string]interface{}{
 		"hosts": []interface{}{
@@ -68,8 +68,8 @@ func TestFilterByHost(t *testing.T) {
 		},
 	}
 
-	assert.True(t, FilterByHost(spec, "host1"))
-	assert.False(t, FilterByHost(spec, "host2"))
+	assert.True(t, FilterByHost(spec, "host1", "test"))
+	assert.False(t, FilterByHost(spec, "host2", "test"))
 
 	spec = map[string]interface{}{
 		"hosts": []interface{}{
@@ -78,9 +78,9 @@ func TestFilterByHost(t *testing.T) {
 		},
 	}
 
-	assert.True(t, FilterByHost(spec, "host1"))
-	assert.True(t, FilterByHost(spec, "host2"))
-	assert.False(t, FilterByHost(spec, "host3"))
+	assert.True(t, FilterByHost(spec, "host1", "test"))
+	assert.True(t, FilterByHost(spec, "host2", "test"))
+	assert.False(t, FilterByHost(spec, "host3", "test"))
 }
 
 func TestCheckRouteRule(t *testing.T) {
@@ -152,14 +152,14 @@ func TestCheckVirtualService(t *testing.T) {
 					"route": []interface{}{
 						map[string]interface{}{
 							"destination": map[string]interface{}{
-								"name":   "reviews",
+								"host":   "reviews",
 								"subset": "v2",
 							},
 							"weight": 50,
 						},
 						map[string]interface{}{
 							"destination": map[string]interface{}{
-								"name":   "reviews",
+								"host":   "reviews",
 								"subset": "v3",
 							},
 							"weight": 50,
@@ -186,14 +186,14 @@ func TestCheckVirtualService(t *testing.T) {
 					"route": []interface{}{
 						map[string]interface{}{
 							"destination": map[string]interface{}{
-								"name":   "reviews",
+								"host":   "reviews",
 								"subset": "v2",
 							},
 							"weight": 50,
 						},
 						map[string]interface{}{
 							"destination": map[string]interface{}{
-								"name":   "reviews",
+								"host":   "reviews",
 								"subset": "v3",
 							},
 							"weight": 50,
@@ -268,7 +268,7 @@ func TestGetDestinationRulesSubsets(t *testing.T) {
 
 	destinationRule1 := MockIstioObject{
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"subsets": []interface{}{
 				map[string]interface{}{
 					"name": "v1",
@@ -287,7 +287,7 @@ func TestGetDestinationRulesSubsets(t *testing.T) {
 	}
 	destinationRule2 := MockIstioObject{
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"trafficPolicy": map[string]interface{}{
 				"loadBalancer": map[string]interface{}{
 					"simple": "LEAST_CONN",
@@ -322,7 +322,7 @@ func TestCheckDestinationRuleCircuitBreaker(t *testing.T) {
 
 	destinationRule1 := MockIstioObject{
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"trafficPolicy": map[string]interface{}{
 				"connectionPool": map[string]interface{}{
 					"http": map[string]interface{}{
@@ -358,7 +358,7 @@ func TestCheckDestinationRuleCircuitBreaker(t *testing.T) {
 
 	destinationRule2 := MockIstioObject{
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"subsets": []interface{}{
 				map[string]interface{}{
 					"name": "v1",
@@ -391,4 +391,69 @@ func TestCheckDestinationRuleCircuitBreaker(t *testing.T) {
 	assert.False(t, CheckDestinationRuleCircuitBreaker(&destinationRule2, "", "reviews", "v1"))
 	assert.True(t, CheckDestinationRuleCircuitBreaker(&destinationRule2, "", "reviews", "v2"))
 	assert.False(t, CheckDestinationRuleCircuitBreaker(&destinationRule2, "", "reviews-bad", "v2"))
+}
+
+func TestCheckDestinationRulemTLS(t *testing.T) {
+	assert.False(t, CheckDestinationRulemTLS(nil, "", ""))
+
+	destinationRule := MockIstioObject{
+		Spec: map[string]interface{}{
+			"host": "reviews",
+			"trafficPolicy": map[string]interface{}{
+				"tls": map[string]interface{}{
+					"mode": "ISTIO_MUTUAL",
+				},
+			},
+		},
+	}
+
+	assert.True(t, CheckDestinationRulemTLS(&destinationRule, "", "reviews"))
+	assert.False(t, CheckDestinationRulemTLS(&destinationRule, "", "reviews-bad"))
+
+	destinationRule = MockIstioObject{
+		Spec: map[string]interface{}{
+			"host": "reviews",
+			"trafficPolicy": map[string]interface{}{
+				"tls": map[string]interface{}{
+					"mode": "DISABLE",
+				},
+			},
+		},
+	}
+
+	assert.False(t, CheckDestinationRulemTLS(&destinationRule, "", "reviews"))
+	assert.False(t, CheckDestinationRulemTLS(&destinationRule, "", "reviews-bad"))
+}
+
+func TestShortHostname(t *testing.T) {
+	assert.True(t, CheckHostnameService("reviews", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("reviews", "ratings", "bookinfo"))
+	assert.True(t, CheckHostnameService("*", "reviews", "bookinfo"))
+}
+
+func TestFQDNHostname(t *testing.T) {
+	assert.True(t, CheckHostnameService("reviews.bookinfo.svc", "reviews", "bookinfo"))
+	assert.True(t, CheckHostnameService("reviews.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+
+	assert.False(t, CheckHostnameService("reviews.foo.svc", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("reviews.foo.svc.cluster.local", "reviews", "bookinfo"))
+
+	assert.False(t, CheckHostnameService("ratings.bookinfo.svc", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("ratings.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+
+	assert.False(t, CheckHostnameService("ratings.foo.svc", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("ratings.foo.svc.cluster.local", "reviews", "bookinfo"))
+}
+
+func TestWildcardHostname(t *testing.T) {
+	assert.True(t, CheckHostnameService("*.bookinfo.svc", "reviews", "bookinfo"))
+	assert.True(t, CheckHostnameService("*.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+
+	assert.True(t, CheckHostnameService("*.bookinfo.svc", "ratings", "bookinfo"))
+	assert.True(t, CheckHostnameService("*.bookinfo.svc.cluster.local", "ratings", "bookinfo"))
+
+	assert.False(t, CheckHostnameService("*.foo.svc", "ratings", "bookinfo"))
+	assert.False(t, CheckHostnameService("*.foo.svc.cluster.local", "ratings", "bookinfo"))
+	assert.False(t, CheckHostnameService("*.foo.svc", "reviews", "bookinfo"))
+	assert.False(t, CheckHostnameService("*.foo.svc.cluster.local", "reviews", "bookinfo"))
 }

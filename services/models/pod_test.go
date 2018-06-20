@@ -17,8 +17,11 @@ func TestPodFullyParsing(t *testing.T) {
 			Name:              "details-v1-3618568057-dnkjp",
 			CreationTimestamp: meta_v1.NewTime(t1),
 			Labels:            map[string]string{"apps": "details", "version": "v1"},
-			Annotations: map[string]string{"kubernetes.io/created-by": "{\"kind\":\"SerializedReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"ReplicaSet\",\"namespace\":\"bookinfo\",\"name\":\"details-v1-3618568057\",\"uid\":\"\",\"apiVersion\":\"extensions\",\"resourceVersion\":\"9068\"}}",
-				"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+			OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+				Kind: "ReplicaSet",
+				Name: "details-v1-3618568057",
+			}},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
 		Spec: v1.PodSpec{
 			Containers: []v1.Container{
 				v1.Container{Name: "details", Image: "whatever"},
@@ -35,7 +38,7 @@ func TestPodFullyParsing(t *testing.T) {
 	assert.Equal("details-v1-3618568057-dnkjp", pod.Name)
 	assert.Equal("2018-03-08T17:44:00+03:00", pod.CreatedAt)
 	assert.Equal(map[string]string{"apps": "details", "version": "v1"}, pod.Labels)
-	assert.Equal(Reference{Name: "details-v1-3618568057", Kind: "ReplicaSet"}, pod.CreatedBy)
+	assert.Equal([]Reference{Reference{Name: "details-v1-3618568057", Kind: "ReplicaSet"}}, pod.CreatedBy)
 	assert.Len(pod.IstioContainers, 1)
 	assert.Equal("istio-proxy", pod.IstioContainers[0].Name)
 	assert.Equal("docker.io/istio/proxy:0.7.1", pod.IstioContainers[0].Image)
@@ -54,8 +57,11 @@ func TestPodParsingMissingImage(t *testing.T) {
 			Name:              "details-v1-3618568057-dnkjp",
 			CreationTimestamp: meta_v1.NewTime(t1),
 			Labels:            map[string]string{"apps": "details", "version": "v1"},
-			Annotations: map[string]string{"kubernetes.io/created-by": "{\"kind\":\"SerializedReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"ReplicaSet\",\"namespace\":\"bookinfo\",\"name\":\"details-v1-3618568057\",\"uid\":\"\",\"apiVersion\":\"extensions\",\"resourceVersion\":\"9068\"}}",
-				"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+			OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+				Kind: "ReplicaSet",
+				Name: "details-v1-3618568057",
+			}},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
 	}
 
 	pod := Pod{}
@@ -63,7 +69,7 @@ func TestPodParsingMissingImage(t *testing.T) {
 	assert.Equal("details-v1-3618568057-dnkjp", pod.Name)
 	assert.Equal("2018-03-08T17:44:00+03:00", pod.CreatedAt)
 	assert.Equal(map[string]string{"apps": "details", "version": "v1"}, pod.Labels)
-	assert.Equal(Reference{Name: "details-v1-3618568057", Kind: "ReplicaSet"}, pod.CreatedBy)
+	assert.Equal([]Reference{Reference{Name: "details-v1-3618568057", Kind: "ReplicaSet"}}, pod.CreatedBy)
 	assert.Len(pod.IstioContainers, 1)
 	assert.Equal("istio-proxy", pod.IstioContainers[0].Name)
 	assert.Equal("", pod.IstioContainers[0].Image)
@@ -89,7 +95,7 @@ func TestPodParsingMissingAnnotations(t *testing.T) {
 	assert.Equal("details-v1-3618568057-dnkjp", pod.Name)
 	assert.Equal("2018-03-08T17:44:00+03:00", pod.CreatedAt)
 	assert.Equal(map[string]string{"apps": "details", "version": "v1"}, pod.Labels)
-	assert.Equal(Reference{Name: "", Kind: ""}, pod.CreatedBy)
+	assert.Empty(pod.CreatedBy)
 	assert.Len(pod.IstioContainers, 0)
 	assert.Len(pod.IstioInitContainers, 0)
 }
@@ -102,8 +108,7 @@ func TestPodParsingInvalidAnnotations(t *testing.T) {
 			Name:              "details-v1-3618568057-dnkjp",
 			CreationTimestamp: meta_v1.NewTime(t1),
 			Labels:            map[string]string{"apps": "details", "version": "v1"},
-			Annotations: map[string]string{"kubernetes.io/created-by": "{whoops! bad json!",
-				"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[{\"badkey\": \"Ooops! Not expected!\"}]}"}},
+			Annotations:       map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[{\"badkey\": \"Ooops! Not expected!\"}]}"}},
 	}
 
 	pod := Pod{}
@@ -111,7 +116,7 @@ func TestPodParsingInvalidAnnotations(t *testing.T) {
 	assert.Equal("details-v1-3618568057-dnkjp", pod.Name)
 	assert.Equal("2018-03-08T17:44:00+03:00", pod.CreatedAt)
 	assert.Equal(map[string]string{"apps": "details", "version": "v1"}, pod.Labels)
-	assert.Equal(Reference{Name: "", Kind: ""}, pod.CreatedBy)
+	assert.Empty(pod.CreatedBy)
 	assert.Len(pod.IstioContainers, 0)
 	assert.Len(pod.IstioInitContainers, 0)
 }

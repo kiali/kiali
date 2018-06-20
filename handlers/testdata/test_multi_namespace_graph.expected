@@ -23,7 +23,8 @@
           "id": "ba113404e46b8aa41dc0e7cc339073fe",
           "service": "unknown",
           "version": "unknown",
-          "isRoot": "true"
+          "rateOut": "50.000",
+          "isRoot": true
         }
       }
     ],

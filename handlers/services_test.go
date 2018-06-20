@@ -275,7 +275,7 @@ func TestServiceHealth(t *testing.T) {
 	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
 		assert.Equal(t, "svc", args[1])
-	}).Return(1, 1, nil)
+	}).Return(prometheus.EnvoyHealth{}, nil)
 
 	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(model.Vector{}, model.Vector{}, nil)
 

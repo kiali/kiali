@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
@@ -24,7 +25,7 @@ func TestServiceListParsing(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	prom := new(prometheustest.PromClientMock)
 	k8s.On("GetServices", mock.AnythingOfType("string")).Return(fakeServiceList(), nil)
-	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(1, 1, nil)
+	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(prometheus.EnvoyHealth{Inbound: prometheus.EnvoyRatio{Healthy: 1, Total: 1}}, nil)
 	prom.On("GetNamespaceServicesRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeRequestCounters())
 	svc := setupServices(k8s, prom)
 
@@ -36,8 +37,8 @@ func TestServiceListParsing(t *testing.T) {
 	httpbinOverview := serviceList.Services[1]
 
 	assert.Equal("reviews", reviewsOverview.Name)
-	assert.Equal(1, reviewsOverview.Health.Envoy.Total)
-	assert.Equal(1, reviewsOverview.Health.Envoy.Healthy)
+	assert.Equal(1, reviewsOverview.Health.Envoy.Inbound.Total)
+	assert.Equal(1, reviewsOverview.Health.Envoy.Inbound.Healthy)
 	assert.Equal(int32(2), reviewsOverview.Health.DeploymentStatuses[0].AvailableReplicas)
 	assert.Equal(int32(3), reviewsOverview.Health.DeploymentStatuses[0].Replicas)
 	assert.Equal(int32(1), reviewsOverview.Health.DeploymentStatuses[1].AvailableReplicas)
@@ -46,8 +47,8 @@ func TestServiceListParsing(t *testing.T) {
 	assert.Equal(float64(1.6), reviewsOverview.Health.Requests.RequestErrorCount)
 
 	assert.Equal("httpbin", httpbinOverview.Name)
-	assert.Equal(1, httpbinOverview.Health.Envoy.Total)
-	assert.Equal(1, httpbinOverview.Health.Envoy.Healthy)
+	assert.Equal(1, httpbinOverview.Health.Envoy.Inbound.Total)
+	assert.Equal(1, httpbinOverview.Health.Envoy.Inbound.Healthy)
 	assert.Equal(int32(1), httpbinOverview.Health.DeploymentStatuses[0].AvailableReplicas)
 	assert.Equal(int32(1), httpbinOverview.Health.DeploymentStatuses[0].Replicas)
 	assert.Equal(float64(20.4), httpbinOverview.Health.Requests.RequestCount)
@@ -63,7 +64,7 @@ func TestSingleServiceHealthParsing(t *testing.T) {
 	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeServiceDetails(), nil)
 	k8s.On("GetIstioDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeIstioDetails(), nil)
 	prom.On("GetSourceServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(make(map[string][]string), nil)
-	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(1, 1, nil)
+	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(prometheus.EnvoyHealth{Inbound: prometheus.EnvoyRatio{Healthy: 1, Total: 1}}, nil)
 	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeServiceRequestCounters())
 	svc := setupServices(k8s, prom)
 
@@ -71,8 +72,8 @@ func TestSingleServiceHealthParsing(t *testing.T) {
 
 	assert.Equal("Namespace", service.Namespace.Name)
 	assert.Equal("httpbin", service.Name)
-	assert.Equal(1, service.Health.Envoy.Total)
-	assert.Equal(1, service.Health.Envoy.Healthy)
+	assert.Equal(1, service.Health.Envoy.Inbound.Total)
+	assert.Equal(1, service.Health.Envoy.Inbound.Healthy)
 	assert.Equal(int32(1), service.Health.DeploymentStatuses[0].AvailableReplicas)
 	assert.Equal(int32(1), service.Health.DeploymentStatuses[0].Replicas)
 	assert.Equal(float64(20.4), service.Health.Requests.RequestCount)
