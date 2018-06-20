@@ -94,8 +94,8 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
             disabled={this.props.disabled}
             handleSelect={this.updateDuration}
             nameDropdown={'Duration'}
-            initialValue={this.props.graphDuration.value}
-            initialLabel={String(GraphFilter.INTERVAL_DURATION[this.props.graphDuration.value])}
+            value={this.props.graphDuration.value}
+            label={String(GraphFilter.INTERVAL_DURATION[this.props.graphDuration.value])}
             options={GraphFilter.INTERVAL_DURATION}
           />
           <ToolbarDropdown
@@ -103,8 +103,8 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
             disabled={this.props.disabled}
             handleSelect={this.updateLayout}
             nameDropdown={'Layout'}
-            initialValue={this.props.graphLayout.name}
-            initialLabel={String(GraphFilter.GRAPH_LAYOUTS[this.props.graphLayout.name])}
+            value={this.props.graphLayout.name}
+            label={String(GraphFilter.GRAPH_LAYOUTS[this.props.graphLayout.name])}
             options={GraphFilter.GRAPH_LAYOUTS}
           />
           <ToolbarDropdown
@@ -112,8 +112,8 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
             disabled={this.props.disabled}
             handleSelect={this.updateEdges}
             nameDropdown={'Edge Labels'}
-            initialValue={this.props.edgeLabelMode}
-            initialLabel={GraphFilter.EDGE_LABEL_MODES[this.props.edgeLabelMode]}
+            value={this.props.edgeLabelMode}
+            label={GraphFilter.EDGE_LABEL_MODES[this.props.edgeLabelMode]}
             options={GraphFilter.EDGE_LABEL_MODES}
           />
           <FormGroup className={zeroPaddingLeft}>

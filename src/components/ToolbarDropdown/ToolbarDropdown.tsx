@@ -6,15 +6,17 @@ type ToolbarDropdownProps = {
   disabled: boolean;
   id?: string;
   nameDropdown?: string;
-  initialValue: number | string;
-  initialLabel: string | undefined;
+  value?: number | string;
+  initialValue?: number | string;
+  label?: string;
+  initialLabel?: string;
   handleSelect: PropTypes.func;
   options: PropTypes.Map<string | number, string>;
 };
 
 type ToolbarDropdownState = {
-  currentValue: number | string;
-  currentName: string | undefined;
+  currentValue?: number | string;
+  currentName?: string;
 };
 
 export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, ToolbarDropdownState> {
@@ -35,9 +37,13 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
     return (
       <div className="form-group">
         {this.props.nameDropdown && <label style={{ paddingRight: '0.5em' }}>{this.props.nameDropdown}:</label>}
-        <DropdownButton title={this.state.currentName} onSelect={this.onKeyChanged} id={this.props.id}>
+        <DropdownButton
+          title={this.props.label || this.state.currentName}
+          onSelect={this.onKeyChanged}
+          id={this.props.id}
+        >
           {Object.keys(this.props.options).map(key => (
-            <MenuItem key={key} active={key === this.state.currentValue} eventKey={key}>
+            <MenuItem key={key} active={key === (this.props.value || this.state.currentValue)} eventKey={key}>
               {this.props.options[key]}
             </MenuItem>
           ))}
