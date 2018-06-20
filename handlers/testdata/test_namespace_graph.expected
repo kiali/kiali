@@ -5,9 +5,10 @@
       {
         "data": {
           "id": "50c81fc80cd32ed8f2c2b5c1e698e9f8",
-          "namespace": "bookinfo",
           "service": "details.bookinfo.svc.cluster.local",
           "version": "v1",
+          "serviceName": "details",
+          "namespace": "bookinfo",
           "rate": "80.000",
           "rate3XX": "20.000",
           "rate4XX": "20.000",
@@ -16,36 +17,41 @@
       },
       {
         "data": {
-          "id": "dbcb1a8f5bb7328294eebda1e370d3a3",
-          "namespace": "istio-system",
-          "service": "ingress.istio-system.svc.cluster.local",
+          "id": "a8b6f512ceed0f9209287424b216200c",
+          "service": "ingressgateway.istio-system.svc.cluster.local",
           "version": "unknown",
-          "isRoot": "true"
+          "serviceName": "ingressgateway",
+          "namespace": "istio-system",
+          "rateOut": "100.000",
+          "isRoot": true
         }
       },
       {
         "data": {
           "id": "32f13d185b9a6764d67f9f96f8796f6c",
-          "namespace": "bookinfo",
           "service": "productpage.bookinfo.svc.cluster.local",
           "version": "v1",
-          "rate": "170.000"
+          "serviceName": "productpage",
+          "namespace": "bookinfo",
+          "rate": "170.000",
+          "rateOut": "160.000"
         }
       },
       {
         "data": {
           "id": "4bd6b4e52f760784b8cf5a9ae38241e2",
-          "namespace": "bookinfo",
           "service": "ratings.bookinfo.svc.cluster.local",
           "version": "v1",
+          "serviceName": "ratings",
+          "namespace": "bookinfo",
           "rate": "40.000"
         }
       },
       {
         "data": {
           "id": "091c4c76cb13828352bbe375d51e3b01",
-          "namespace": "",
           "service": "reviews.bookinfo.svc.cluster.local",
+          "namespace": "",
           "isGroup": "version"
         }
       },
@@ -53,9 +59,10 @@
         "data": {
           "id": "09db1ec4064c7f4e77c2c65f0c8709ac",
           "parent": "091c4c76cb13828352bbe375d51e3b01",
-          "namespace": "bookinfo",
           "service": "reviews.bookinfo.svc.cluster.local",
           "version": "v1",
+          "serviceName": "reviews",
+          "namespace": "bookinfo",
           "rate": "20.000"
         }
       },
@@ -63,29 +70,35 @@
         "data": {
           "id": "a30ebe6d7004dc26a24a989e27550aa2",
           "parent": "091c4c76cb13828352bbe375d51e3b01",
-          "namespace": "bookinfo",
           "service": "reviews.bookinfo.svc.cluster.local",
           "version": "v2",
-          "rate": "40.000"
+          "serviceName": "reviews",
+          "namespace": "bookinfo",
+          "rate": "40.000",
+          "rateOut": "40.000"
         }
       },
       {
         "data": {
           "id": "9b88963ddbd1603b0bbca88cfca29781",
           "parent": "091c4c76cb13828352bbe375d51e3b01",
-          "namespace": "bookinfo",
           "service": "reviews.bookinfo.svc.cluster.local",
           "version": "v3",
-          "rate": "40.000"
+          "serviceName": "reviews",
+          "namespace": "bookinfo",
+          "rate": "40.000",
+          "rateOut": "40.000"
         }
       },
       {
         "data": {
           "id": "ba113404e46b8aa41dc0e7cc339073fe",
-          "namespace": "unknown",
           "service": "unknown",
           "version": "unknown",
-          "isRoot": "true"
+          "serviceName": "unknown",
+          "namespace": "unknown",
+          "rateOut": "50.000",
+          "isRoot": true
         }
       }
     ],
@@ -177,18 +190,20 @@
       },
       {
         "data": {
-          "id": "9f82022f17be0601a8b48369f84a870f",
-          "source": "ba113404e46b8aa41dc0e7cc339073fe",
+          "id": "5ed873ea280e0ad163c49af8d22afa8e",
+          "source": "a8b6f512ceed0f9209287424b216200c",
           "target": "32f13d185b9a6764d67f9f96f8796f6c",
-          "rate": "50.000"
+          "rate": "100.000",
+          "isMTLS": true
         }
       },
       {
         "data": {
-          "id": "39674e931b9bb83275c5dc8b5dab3f24",
-          "source": "dbcb1a8f5bb7328294eebda1e370d3a3",
+          "id": "9f82022f17be0601a8b48369f84a870f",
+          "source": "ba113404e46b8aa41dc0e7cc339073fe",
           "target": "32f13d185b9a6764d67f9f96f8796f6c",
-          "rate": "100.000"
+          "rate": "50.000",
+          "isMTLS": true
         }
       }
     ]

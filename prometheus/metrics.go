@@ -27,6 +27,7 @@ type MetricsQuery struct {
 	Filters      []string
 	ByLabelsIn   []string
 	ByLabelsOut  []string
+	IncludeIstio bool
 }
 
 // FillDefaults fills the struct with default parameters
@@ -36,6 +37,7 @@ func (q *MetricsQuery) FillDefaults() {
 	q.Step = 15 * time.Second
 	q.RateInterval = "1m"
 	q.RateFunc = "rate"
+	q.IncludeIstio = false
 }
 
 // ServiceMetricsQuery contains fields used for querying a service metrics
@@ -72,44 +74,82 @@ type Histogram struct {
 	Percentile99 *Metric `json:"percentile99"`
 }
 
-// Returns <healthy, total, error>
-func getServiceHealth(api v1.API, namespace string, servicename string) (int, int, error) {
+// EnvoyHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster (ie. service)
+type EnvoyHealth struct {
+	Inbound  EnvoyRatio `json:"inbound"`
+	Outbound EnvoyRatio `json:"outbound"`
+}
+
+// EnvoyRatio is the number of healthy members versus total members
+type EnvoyRatio struct {
+	Healthy int `json:"healthy"`
+	Total   int `json:"total"`
+}
+
+func getServiceHealth(api v1.API, namespace string, servicename string) (EnvoyHealth, error) {
 	envoyClustername := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, ".", "_", -1)
 	queryPart := replaceInvalidCharacters(fmt.Sprintf("%s_%s_%s", servicename, namespace, envoyClustername))
 	now := time.Now()
+	ret := EnvoyHealth{}
 
-	var healthyVect, totalVect model.Vector
-	var healthyErr, totalErr error
+	// Note: metric names below probably depend on some istio configuration.
+	// They should anyway change soon in a more prometheus-friendly way,
+	// see https://github.com/istio/istio/issues/4854 and https://github.com/istio/istio/pull/5069
+
+	var healthyErrIn, totalErrIn, healthyErrOut, totalErrOut error
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(4)
+	// Inbound
 	go func() {
 		defer wg.Done()
-		healthyVect, healthyErr = fetchTimestamp(api, fmt.Sprintf("envoy_cluster_out_%s_http_membership_healthy", queryPart), now)
+		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_9080__%s_membership_healthy", queryPart), now)
+		healthyErrIn = err
+		if len(vec) > 0 {
+			ret.Inbound.Healthy = int(vec[0].Value)
+		}
 	}()
-
 	go func() {
 		defer wg.Done()
-		totalVect, totalErr = fetchTimestamp(api, fmt.Sprintf("envoy_cluster_out_%s_http_membership_total", queryPart), now)
+		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_9080__%s_membership_total", queryPart), now)
+		totalErrIn = err
+		if len(vec) > 0 {
+			ret.Inbound.Total = int(vec[0].Value)
+		}
 	}()
-
+	go func() {
+		defer wg.Done()
+		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_9080__%s_membership_healthy", queryPart), now)
+		healthyErrOut = err
+		if len(vec) > 0 {
+			ret.Outbound.Healthy = int(vec[0].Value)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_9080__%s_membership_total", queryPart), now)
+		totalErrOut = err
+		if len(vec) > 0 {
+			ret.Outbound.Total = int(vec[0].Value)
+		}
+	}()
 	wg.Wait()
-
-	if healthyErr != nil {
-		return 0, 0, healthyErr
-	} else if totalErr != nil {
-		return 0, 0, totalErr
-	} else if len(healthyVect) == 0 || len(totalVect) == 0 {
-		// Missing metrics
-		return 0, 0, nil
+	if healthyErrIn != nil {
+		return ret, healthyErrIn
+	} else if totalErrIn != nil {
+		return ret, totalErrIn
+	} else if healthyErrOut != nil {
+		return ret, healthyErrOut
+	} else if totalErrOut != nil {
+		return ret, totalErrOut
 	}
-	return int(healthyVect[0].Value), int(totalVect[0].Value), nil
+	return ret, nil
 }
 
 func getServiceMetrics(api v1.API, q *ServiceMetricsQuery) Metrics {
 	clustername := config.Get().ExternalServices.Istio.IstioIdentityDomain
 	destService := fmt.Sprintf("destination_service=\"%s.%s.%s\"", q.Service, q.Namespace, clustername)
 	srcService := fmt.Sprintf("source_service=\"%s.%s.%s\"", q.Service, q.Namespace, clustername)
-	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version)
+	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version, q.IncludeIstio)
 	groupingIn := joinLabels(q.ByLabelsIn)
 	groupingOut := joinLabels(q.ByLabelsOut)
 
@@ -123,14 +163,14 @@ func getNamespaceMetrics(api v1.API, q *NamespaceMetricsQuery) Metrics {
 	}
 	destService := fmt.Sprintf("destination_service=~\"%s\\\\.%s\\\\..*\"", svc, q.Namespace)
 	srcService := fmt.Sprintf("source_service=~\"%s\\\\.%s\\\\..*\"", svc, q.Namespace)
-	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version)
+	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version, q.IncludeIstio)
 	groupingIn := joinLabels(q.ByLabelsIn)
 	groupingOut := joinLabels(q.ByLabelsOut)
 
 	return fetchAllMetrics(api, &q.MetricsQuery, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut)
 }
 
-func buildLabelStrings(destServiceLabel, srcServiceLabel, version string) (string, string, string, string) {
+func buildLabelStrings(destServiceLabel, srcServiceLabel, version string, includeIstio bool) (string, string, string, string) {
 	versionLabelIn := ""
 	versionLabelOut := ""
 	if len(version) > 0 {
@@ -138,10 +178,16 @@ func buildLabelStrings(destServiceLabel, srcServiceLabel, version string) (strin
 		versionLabelOut = fmt.Sprintf(",source_version=\"%s\"", version)
 	}
 
+	// when filtering we still keep incoming istio traffic, it's typically ingressgateway. We
+	// only want to filter outgoing traffic to the istio infra services.
+	istioFilterOut := ""
+	if !includeIstio {
+		istioFilterOut = ",destination_service!~\".*\\\\.istio-system\\\\..*\""
+	}
 	labelsIn := fmt.Sprintf("{%s%s}", destServiceLabel, versionLabelIn)
-	labelsOut := fmt.Sprintf("{%s%s}", srcServiceLabel, versionLabelOut)
+	labelsOut := fmt.Sprintf("{%s%s%s}", srcServiceLabel, versionLabelOut, istioFilterOut)
 	labelsErrorIn := fmt.Sprintf("{%s%s,response_code=~\"[5|4].*\"}", destServiceLabel, versionLabelIn)
-	labelsErrorOut := fmt.Sprintf("{%s%s,response_code=~\"[5|4].*\"}", srcServiceLabel, versionLabelOut)
+	labelsErrorOut := fmt.Sprintf("{%s%s%s,response_code=~\"[5|4].*\"}", srcServiceLabel, versionLabelOut, istioFilterOut)
 
 	return labelsIn, labelsOut, labelsErrorIn, labelsErrorOut
 }

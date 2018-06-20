@@ -51,6 +51,7 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	defaultInclude := objects == ""
 	criteria := business.IstioConfigCriteria{}
 	criteria.Namespace = namespace
+	criteria.IncludeGateways = defaultInclude
 	criteria.IncludeRouteRules = defaultInclude
 	criteria.IncludeDestinationPolicies = defaultInclude
 	criteria.IncludeVirtualServices = defaultInclude
@@ -62,6 +63,9 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	}
 
 	types := strings.Split(objects, ",")
+	if checkType(types, "gateways") {
+		criteria.IncludeGateways = true
+	}
 	if checkType(types, "routerules") {
 		criteria.IncludeRouteRules = true
 	}
@@ -149,6 +153,7 @@ func IstioConfigValidations(w http.ResponseWriter, r *http.Request) {
 func checkObjectType(objectType string) bool {
 	switch objectType {
 	case
+		"gateways",
 		"routerules",
 		"destinationpolicies",
 		"virtualservices",

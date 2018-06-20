@@ -1,9 +1,7 @@
 package appender
 
 import (
-	"strings"
-
-	"github.com/kiali/kiali/graph/tree"
+	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/business/checkers"
 )
@@ -11,27 +9,24 @@ import (
 type SidecarsCheckAppender struct{}
 
 // AppendGraph implements Appender
-func (a SidecarsCheckAppender) AppendGraph(trees *[]*tree.ServiceNode, _ string) {
-	if len(*trees) == 0 {
+func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
+	if len(trafficMap) == 0 {
 		return
 	}
 
 	k8s, err := kubernetes.NewClient()
 	checkError(err)
 
-	for _, tree := range *trees {
-		a.applySidecarsChecks(tree, k8s)
-	}
+	a.applySidecarsChecks(trafficMap, k8s)
 }
 
-func (a SidecarsCheckAppender) applySidecarsChecks(n *tree.ServiceNode, k8s *kubernetes.IstioClient) {
-	if n.Name != tree.UnknownService {
-		split := strings.Split(n.Name, ".")
-		serviceName := split[0]
-		namespaceName := split[1]
-		serviceVersion := n.Version
+func (a SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, k8s *kubernetes.IstioClient) {
+	for _, s := range trafficMap {
+		if s.Name == graph.UnknownService {
+			return
+		}
 
-		pods, err := k8s.GetServicePods(namespaceName, serviceName, serviceVersion)
+		pods, err := k8s.GetServicePods(s.Namespace, s.ServiceName, s.Version)
 		checkError(err)
 
 		checker := checkers.PodChecker{Pods: pods.Items}
@@ -41,9 +36,6 @@ func (a SidecarsCheckAppender) applySidecarsChecks(n *tree.ServiceNode, k8s *kub
 		for _, check := range validations {
 			sidecarsOk = sidecarsOk && check.Valid
 		}
-		n.Metadata["hasMissingSidecars"] = !sidecarsOk
-	}
-	for _, child := range n.Children {
-		a.applySidecarsChecks(child, k8s)
+		s.Metadata["hasMissingSC"] = !sidecarsOk
 	}
 }

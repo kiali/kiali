@@ -1,7 +1,6 @@
 package checkers
 
 import (
-	"github.com/kiali/kiali/services/business/checkers/pods"
 	"github.com/kiali/kiali/services/models"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
@@ -56,12 +55,18 @@ func TestSidecarsCheckOneInvalidPod(t *testing.T) {
 func buildPodWithSidecar() v1.Pod {
 	return v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   "myPodWithSidecar",
-			Labels: map[string]string{"app": "srv"},
+			Name:        "myPodWithSidecar",
+			Labels:      map[string]string{"app": "srv"},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"},
 		},
 		Spec: v1.PodSpec{
 			Containers: []v1.Container{
-				{Name: "myContainer", Image: pods.SidecarContainerImage + ":1.5.0"},
+				v1.Container{Name: "details", Image: "whatever"},
+				v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+			},
+			InitContainers: []v1.Container{
+				v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+				v1.Container{Name: "enable-core-dump", Image: "alpine"},
 			},
 		},
 	}

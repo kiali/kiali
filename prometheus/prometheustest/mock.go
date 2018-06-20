@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/kiali/kiali/prometheus"
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
@@ -87,9 +88,9 @@ type PromClientMock struct {
 	mock.Mock
 }
 
-func (o *PromClientMock) GetServiceHealth(namespace, servicename string) (int, int, error) {
+func (o *PromClientMock) GetServiceHealth(namespace, servicename string) (prometheus.EnvoyHealth, error) {
 	args := o.Called(namespace, servicename)
-	return args.Int(0), args.Int(1), args.Error(2)
+	return args.Get(0).(prometheus.EnvoyHealth), args.Error(1)
 }
 
 func (o *PromClientMock) GetNamespaceServicesRequestRates(namespace, ratesInterval string) (model.Vector, model.Vector, error) {

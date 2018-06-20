@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/graph/tree"
+	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
@@ -42,13 +42,13 @@ func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector)
 	).Return(*ret, nil)
 }
 
-func TestLatency(t *testing.T) {
+func TestResponseTime(t *testing.T) {
 	assert := assert.New(t)
 
 	q0 := "round(histogram_quantile(0.95, sum(rate(istio_request_duration_bucket{source_service!~\".*\\\\.bookinfo\\\\..*\",destination_service=~\".*\\\\.bookinfo\\\\..*\",response_code=\"200\"}[60s])) by (le,source_service,source_version,destination_service,destination_version)),0.001)"
 	q0m0 := model.Metric{
 		"source_service":      "ingress.istio-system.svc.cluster.local",
-		"source_version":      tree.UnknownVersion,
+		"source_version":      graph.UnknownVersion,
 		"destination_service": "productpage.bookinfo.svc.cluster.local",
 		"destination_version": "v1"}
 	v0 := model.Vector{
@@ -99,83 +99,86 @@ func TestLatency(t *testing.T) {
 	mockQuery(api, q0, &v0)
 	mockQuery(api, q1, &v1)
 
-	trees := latencyTestTree()
-	assert.Equal(1, len(trees))
-	assert.Equal("ingress.istio-system.svc.cluster.local", trees[0].Name)
-	assert.Equal(1, len(trees[0].Children))
-	assert.Equal(nil, trees[0].Children[0].Metadata["latency"])
+	trafficMap := responseTimeTestTraffic()
+	ingressId := graph.Id("ingress.istio-system.svc.cluster.local", graph.UnknownVersion)
+	ingress, ok := trafficMap[ingressId]
+	assert.Equal(true, ok)
+	assert.Equal("ingress.istio-system.svc.cluster.local", ingress.Name)
+	assert.Equal(1, len(ingress.Edges))
+	assert.Equal(nil, ingress.Edges[0].Metadata["responseTime"])
 
 	duration, _ := time.ParseDuration("60s")
-	appender := LatencyAppender{
+	appender := ResponseTimeAppender{
 		Duration:  duration,
 		Quantile:  0.95,
 		QueryTime: time.Now().Unix(),
 	}
 
-	appender.appendGraph(&trees, "bookinfo", client)
+	appender.appendGraph(trafficMap, "bookinfo", client)
 
-	ingress := trees[0]
-	assert.Equal("ingress.istio-system.svc.cluster.local", trees[0].Name)
-	assert.Equal(nil, ingress.Metadata["latency"])
-	productpage := ingress.Children[0]
+	ingress, ok = trafficMap[ingressId]
+	assert.Equal(true, ok)
+	assert.Equal("ingress.istio-system.svc.cluster.local", ingress.Name)
+	assert.Equal(1, len(ingress.Edges))
+	assert.Equal(10.0, ingress.Edges[0].Metadata["responseTime"])
+
+	productpage := ingress.Edges[0].Dest
 	assert.Equal("productpage.bookinfo.svc.cluster.local", productpage.Name)
 	assert.Equal("v1", productpage.Version)
-	assert.Equal(10.0, productpage.Metadata["latency"])
-	reviews1 := productpage.Children[0]
+	assert.Equal(nil, productpage.Metadata["responseTime"])
+	assert.Equal(2, len(productpage.Edges))
+	assert.Equal(20.0, productpage.Edges[0].Metadata["responseTime"])
+	assert.Equal(20.0, productpage.Edges[1].Metadata["responseTime"])
+
+	reviews1 := productpage.Edges[0].Dest
 	assert.Equal("reviews.bookinfo.svc.cluster.local", reviews1.Name)
 	assert.Equal("v1", reviews1.Version)
-	assert.Equal(20.0, reviews1.Metadata["latency"])
-	reviews2 := productpage.Children[1]
+	assert.Equal(nil, reviews1.Metadata["responseTime"])
+	assert.Equal(1, len(reviews1.Edges))
+	assert.Equal(30.0, reviews1.Edges[0].Metadata["responseTime"])
+
+	reviews2 := productpage.Edges[1].Dest
 	assert.Equal("reviews.bookinfo.svc.cluster.local", reviews2.Name)
 	assert.Equal("v2", reviews2.Version)
-	assert.Equal(20.0, reviews2.Metadata["latency"])
-	ratingsPath1 := reviews1.Children[0]
+	assert.Equal(nil, reviews2.Metadata["responseTime"])
+	assert.Equal(1, len(reviews2.Edges))
+	assert.Equal(30.0, reviews2.Edges[0].Metadata["responseTime"])
+
+	ratingsPath1 := reviews1.Edges[0].Dest
 	assert.Equal("ratings.bookinfo.svc.cluster.local", ratingsPath1.Name)
 	assert.Equal("v1", ratingsPath1.Version)
-	assert.Equal(30.0, ratingsPath1.Metadata["latency"])
-	ratingsPath2 := reviews2.Children[0]
+	assert.Equal(nil, ratingsPath1.Metadata["responseTime"])
+	assert.Equal(0, len(ratingsPath1.Edges))
+
+	ratingsPath2 := reviews2.Edges[0].Dest
 	assert.Equal("ratings.bookinfo.svc.cluster.local", ratingsPath2.Name)
 	assert.Equal("v1", ratingsPath2.Version)
-	assert.Equal(30.0, ratingsPath2.Metadata["latency"])
-	assert.NotEqual(ratingsPath1, ratingsPath2)
+	assert.Equal(nil, ratingsPath2.Metadata["responseTime"])
+	assert.Equal(0, len(ratingsPath2.Edges))
+
+	assert.Equal(ratingsPath1, ratingsPath2)
 }
 
-func latencyTestTree() []*tree.ServiceNode {
-	ingress := tree.NewServiceNode("ingress.istio-system.svc.cluster.local", tree.UnknownVersion)
-	productpage := tree.NewServiceNode("productpage.bookinfo.svc.cluster.local", "v1")
-	reviewsV1 := tree.NewServiceNode("reviews.bookinfo.svc.cluster.local", "v1")
-	reviewsV2 := tree.NewServiceNode("reviews.bookinfo.svc.cluster.local", "v2")
-	ratingsPath1 := tree.NewServiceNode("ratings.bookinfo.svc.cluster.local", "v1")
-	ratingsPath2 := tree.NewServiceNode("ratings.bookinfo.svc.cluster.local", "v1")
+func responseTimeTestTraffic() graph.TrafficMap {
+	ingress := graph.NewServiceNode("ingress.istio-system.svc.cluster.local", graph.UnknownVersion)
+	productpage := graph.NewServiceNode("productpage.bookinfo.svc.cluster.local", "v1")
+	reviewsV1 := graph.NewServiceNode("reviews.bookinfo.svc.cluster.local", "v1")
+	reviewsV2 := graph.NewServiceNode("reviews.bookinfo.svc.cluster.local", "v2")
+	ratingsPath1 := graph.NewServiceNode("ratings.bookinfo.svc.cluster.local", "v1")
+	ratingsPath2 := graph.NewServiceNode("ratings.bookinfo.svc.cluster.local", "v1")
+	trafficMap := graph.NewTrafficMap()
+	trafficMap[ingress.ID] = &ingress
+	trafficMap[productpage.ID] = &productpage
+	trafficMap[reviewsV1.ID] = &reviewsV1
+	trafficMap[reviewsV2.ID] = &reviewsV2
+	trafficMap[ratingsPath1.ID] = &ratingsPath1
+	trafficMap[ratingsPath2.ID] = &ratingsPath2
 
-	ingress.Metadata = make(map[string]interface{})
-	ingress.Children = make([]*tree.ServiceNode, 1)
-	ingress.Children[0] = &productpage
+	ingress.AddEdge(&productpage)
+	productpage.AddEdge(&reviewsV1)
+	productpage.AddEdge(&reviewsV2)
+	reviewsV1.AddEdge(&ratingsPath1)
+	reviewsV2.AddEdge(&ratingsPath2)
 
-	productpage.Metadata = make(map[string]interface{})
-	productpage.Parent = &ingress
-	productpage.Children = make([]*tree.ServiceNode, 2)
-	productpage.Children[0] = &reviewsV1
-	productpage.Children[1] = &reviewsV2
-
-	reviewsV1.Metadata = make(map[string]interface{})
-	reviewsV1.Parent = &productpage
-	reviewsV1.Children = make([]*tree.ServiceNode, 1)
-	reviewsV1.Children[0] = &ratingsPath1
-
-	reviewsV2.Metadata = make(map[string]interface{})
-	reviewsV2.Parent = &productpage
-	reviewsV2.Children = make([]*tree.ServiceNode, 1)
-	reviewsV2.Children[0] = &ratingsPath2
-
-	ratingsPath1.Parent = &reviewsV1
-	ratingsPath1.Metadata = make(map[string]interface{})
-
-	ratingsPath2.Parent = &reviewsV2
-	ratingsPath2.Metadata = make(map[string]interface{})
-
-	trees := make([]*tree.ServiceNode, 1)
-	trees[0] = &ingress
-
-	return trees
+	return trafficMap
 }

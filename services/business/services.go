@@ -2,10 +2,7 @@ package business
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/prometheus/common/model"
-	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -27,51 +24,30 @@ func (in *SvcService) GetServiceList(namespace, rateInterval string) (*models.Se
 	if err != nil {
 		return nil, err
 	}
-
-	// Fetch services requests rates
-	inRates, outRates, _ := in.prom.GetNamespaceServicesRequestRates(namespace, rateInterval)
+	nsHealth := in.health.getNamespaceHealth(namespace, kubernetesServices, rateInterval)
 
 	// Convert to Kiali model
-	return in.buildServiceList(models.Namespace{Name: namespace}, kubernetesServices, inRates, outRates), nil
+	return in.buildServiceList(models.Namespace{Name: namespace}, kubernetesServices, nsHealth), nil
 }
 
-func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernetes.ServiceList, inRates, outRates model.Vector) *models.ServiceList {
+func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernetes.ServiceList, nsHealth NamespaceHealth) *models.ServiceList {
 	services := make([]models.ServiceOverview, len(sl.Services.Items))
 
 	// Convert each k8s service into our model
 	for i, item := range sl.Services.Items {
 		sPods := kubernetes.FilterPodsForService(&item, sl.Pods)
-		depls := kubernetes.FilterDeploymentsForService(&item, sPods, sl.Deployments)
-		services[i] = in.castServiceOverview(&item, sPods, depls)
-	}
-
-	// Fill with collected request rates
-	// Note: we must match each service with inRates and outRates separately, else we would generate duplicates
-	processRequestRates(services, inRates, "destination_service")
-	processRequestRates(services, outRates, "source_service")
-
-	// Finally complete missing health information
-	for idx := range services {
-		s := &services[idx]
-		// rateinterval not necessary here since we already fetched the request rates
-		// mark request health as fetched
-		s.Health.Requests.Fetched = true
-		in.health.fillMissingParts(namespace.Name, s.Name, "", &s.Health)
+		hasSideCar := hasIstioSideCar(sPods)
+		overview := models.ServiceOverview{
+			Name:         item.Name,
+			IstioSidecar: hasSideCar,
+		}
+		if health, ok := nsHealth[item.Name]; ok {
+			overview.Health = *health
+		}
+		services[i] = overview
 	}
 
 	return &models.ServiceList{Namespace: namespace, Services: services}
-}
-
-func (in *SvcService) castServiceOverview(s *v1.Service, pods []v1.Pod, deployments []v1beta1.Deployment) models.ServiceOverview {
-	hasSideCar := hasIstioSideCar(pods)
-	statuses := castDeploymentsStatuses(deployments)
-	health := models.Health{
-		DeploymentStatuses: statuses,
-		DeploymentsFetched: true}
-	return models.ServiceOverview{
-		Name:         s.Name,
-		IstioSidecar: hasSideCar,
-		Health:       health}
 }
 
 func hasIstioSideCar(pods []v1.Pod) bool {
@@ -83,21 +59,6 @@ func hasIstioSideCar(pods []v1.Pod) bool {
 		}
 	}
 	return false
-}
-
-// processRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the service list.
-func processRequestRates(services []models.ServiceOverview, rates model.Vector, matchLabel model.LabelName) {
-	// Sum rates per service
-	for _, sample := range rates {
-		serviceName := strings.SplitN(string(sample.Metric[matchLabel]), ".", 2)[0]
-		for idx := range services {
-			service := &services[idx]
-			if service.Name == serviceName {
-				sumRequestCounters(service.Name, &service.Health.Requests, sample)
-				break
-			}
-		}
-	}
 }
 
 // GetService returns a single service

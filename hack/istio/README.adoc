@@ -32,3 +32,10 @@ If you want to download a specific version of Istio, pass the argument `-iv x.y.
 
 All the Bookinfo Demo pods and services are installed in the "bookinfo" namespace. In order to uninstall it, simply delete that namespace via something like `kubectl delete namespace bookinfo` or `oc delete project bookinfo`.
 
+== Creating Test Resources
+
+In this directory are also some example .yaml files you can use to create things like circuit breakers and http-delay route rules. Once your bookinfo demo is installed, you can add these Istio resources by using istioctl. For example:
+
+```
+istioctl create -f bookinfo-reviews-v1-cb.yaml
+```

@@ -6,10 +6,10 @@ import (
 	"testing"
 )
 
-func TestValidName(t *testing.T) {
+func TestValidHost(t *testing.T) {
 	assert := assert.New(t)
 
-	validations, valid := NoNameChecker{
+	validations, valid := NoHostChecker{
 		Namespace:       "test-namespace",
 		ServiceNames:    []string{"reviews", "other"},
 		DestinationRule: fakeNameDestinationRule(),
@@ -19,11 +19,11 @@ func TestValidName(t *testing.T) {
 	assert.Empty(validations)
 }
 
-func TestNoValidName(t *testing.T) {
+func TestNoValidHost(t *testing.T) {
 	assert := assert.New(t)
 
 	// reviews is not part of service names
-	validations, valid := NoNameChecker{
+	validations, valid := NoHostChecker{
 		Namespace:       "test-namespace",
 		ServiceNames:    []string{"details", "other"},
 		DestinationRule: fakeNameDestinationRule(),
@@ -32,14 +32,14 @@ func TestNoValidName(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal("error", validations[0].Severity)
-	assert.Equal("Name doesn't have a valid service", validations[0].Message)
-	assert.Equal("spec/name", validations[0].Path)
+	assert.Equal("Host doesn't have a valid service", validations[0].Message)
+	assert.Equal("spec/host", validations[0].Path)
 }
 
 func fakeNameDestinationRule() kubernetes.IstioObject {
 	destinationRule := kubernetes.DestinationRule{
 		Spec: map[string]interface{}{
-			"name": "reviews",
+			"host": "reviews",
 			"subsets": []interface{}{
 				map[string]interface{}{
 					"name": "v1",
