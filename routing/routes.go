@@ -128,6 +128,13 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 		{
+			"NamespaceHealth",
+			"GET",
+			"/api/namespaces/{namespace}/health",
+			handlers.NamespaceHealth,
+			true,
+		},
+		{
 			"NamespaceValidations",
 			"GET",
 			"/api/namespaces/{namespace}/istio_validations",
