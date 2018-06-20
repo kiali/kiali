@@ -4,6 +4,8 @@ export interface Health {
   requests: RequestHealth;
 }
 
+export type NamespaceHealth = { [service: string]: Health };
+
 export interface EnvoyHealth {
   inbound: EnvoyRatio;
   outbound: EnvoyRatio;
