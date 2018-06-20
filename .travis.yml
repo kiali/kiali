@@ -51,5 +51,4 @@ after_success:
 branches:
   only:
   - master
-  - istio-0.8
   - /^(\d+\.){2}(\d+){1}(\.[a-zA-Z\d]+)?$/
