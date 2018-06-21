@@ -173,6 +173,13 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_version": "v3",
 		"response_code":       "200",
 		"connection_mtls":     "false"}
+	q1m12 := model.Metric{
+		"source_service":      "reviews.bookinfo.svc.cluster.local",
+		"source_version":      "v3",
+		"destination_service": "pricing.bankapp.svc.cluster.local",
+		"destination_version": "v1",
+		"response_code":       "200",
+		"connection_mtls":     "false"}
 
 	v1 := model.Vector{
 		&model.Sample{
@@ -210,6 +217,9 @@ func TestNamespaceGraph(t *testing.T) {
 			Value:  20},
 		&model.Sample{
 			Metric: q1m11,
+			Value:  20},
+		&model.Sample{
+			Metric: q1m12,
 			Value:  20}}
 
 	client, api, err := setupMocked()
