@@ -40,15 +40,22 @@ export class GraphStyles {
         css: {
           // color: PfColors.Black,
           content: (ele: any) => {
+            const service = ele.data('serviceName') || ele.data('service').split('.')[0];
+            const namespace = ele.data('namespace');
             const version = ele.data('version');
+
             if (!ele.data('showNodeLabels')) {
               return '';
             }
+
+            if (ele.data('isOutside')) {
+              return `${service}\n${namespace}`;
+            }
+
             if (ele.data('parent')) {
               return version;
             }
-            const name = ele.data('service') || ele.data('id');
-            const service = name.split('.')[0];
+
             return version && version !== 'unknown' ? service + '\n' + version : service;
           },
           'background-color': PfColors.Black200,
@@ -77,6 +84,12 @@ export class GraphStyles {
         selector: 'node[isRoot]',
         style: {
           shape: 'diamond'
+        }
+      },
+      {
+        selector: 'node[isOutside]',
+        style: {
+          shape: 'pentagon'
         }
       },
       {
