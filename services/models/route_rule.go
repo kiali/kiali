@@ -4,10 +4,33 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
+// RouteRules routeRules
+//
+// This is used for returning an array of RouteRule
+//
+// swagger:model routeRules
+// An array of routeRule
+// swagger:allOf
 type RouteRules []RouteRule
+
+// RouteRule routeRule
+//
+// This is used for returning a RouteRule
+//
+// swagger:model routeRule
 type RouteRule struct {
-	Name             string      `json:"name"`
-	CreatedAt        string      `json:"createdAt"`
+	// The name of the routeRule
+	//
+	// required: true
+	// example: details-default
+	Name string `json:"name"`
+	// The created time
+	//
+	// required: true
+	// example: 2018-06-20T07:39:52Z
+	CreatedAt string `json:"createdAt"`
+	// required: true
+	// example: 1507
 	ResourceVersion  string      `json:"resourceVersion"`
 	Destination      interface{} `json:"destination"`
 	Precedence       interface{} `json:"precedence"`

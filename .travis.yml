@@ -26,13 +26,15 @@ env:
 # Therefore, the dep-X targets are commmented out here. Uncomment these if the project
 # decided to no longer commit vendor dependencies into the source tree.
 # See: https://github.com/golang/dep/blob/master/docs/FAQ.md#should-i-commit-my-vendor-directory
-#install:
+install:
+ - make swagger-install
 #- make dep-install
 #- make dep-update
 
 script:
   - if [ ! -z "$(gofmt -l ${GO_FILES})" ]; then echo "These files need to be formatted:" "$(gofmt -l ${GO_FILES})";echo "Diff files:"; gofmt -d ${GO_FILES}; exit 1; fi # Gofmt Linter
   - make clean build test-race
+  - make swagger-validate
 
 # Push the docker images to docker hub
 # If a tag build, use the tag as docker version; otherwise, use branch name as docker version (where master==latest)

@@ -1,3 +1,18 @@
+// Kiali
+//
+// Kiali project, observability for the Istio service mesh
+//
+//     Schemes: http
+//     BasePath: /api
+//     Version: 0.2.0.Alpha
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+// swagger:meta
 package main
 
 import (

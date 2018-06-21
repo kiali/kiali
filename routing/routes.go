@@ -25,6 +25,19 @@ func NewRoutes() (r *Routes) {
 	r = new(Routes)
 
 	r.Routes = []Route{
+		// swagger:route GET / Root
+		// ---
+		// Handler to get the status of Kiali
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http
+		// responses:
+		//      200: statusInfo
 		{
 			"Root",
 			"GET",
@@ -32,6 +45,23 @@ func NewRoutes() (r *Routes) {
 			handlers.Root,
 			false,
 		},
+		// swagger:route GET /token GetToken
+		// ---
+		// Handler to get the authentication token
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http
+		//
+		//	   Security:
+		//     authorization: user, password
+		//
+		// responses:
+		//      200: tokenGenerated
 		{ // Request the token
 			"Status",
 			"GET",
@@ -39,13 +69,41 @@ func NewRoutes() (r *Routes) {
 			handlers.GetToken,
 			true,
 		},
-		{ // another way to get to root, both show status
+		// swagger:route GET /status getStatus
+		// ---
+		// Handler to get the status of Kiali
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http
+		//
+		// responses:
+		//      200: statusInfo
+		{
 			"Status",
 			"GET",
 			"/api/status",
 			handlers.Root,
 			false,
 		},
+		// swagger:route GET /namespaces/{namespace}/istio istioConfigList
+		// ---
+		// Handler to get the list of Istio Config of a namespace
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http
+		//
+		//     responses:
+		//       200: istioConfigList
 		{
 			"IstioConfigList",
 			"GET",

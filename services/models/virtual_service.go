@@ -4,10 +4,32 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
+// VirtualServices virtualServices
+//
+// This is used for returning an array of VirtualServices
+//
+// swagger:model virtualServices
+// An array of virtualService
+// swagger:allOf
 type VirtualServices []VirtualService
+
+// VirtualService virtualService
+//
+// This is used for returning a VirtualService
+//
+// swagger:model virtualService
 type VirtualService struct {
-	Name            string      `json:"name"`
-	CreatedAt       string      `json:"createdAt"`
+	// The name of the virtualService
+	//
+	// required: true
+	Name string `json:"name"`
+	// The creation date of the virtualService
+	//
+	// required: true
+	CreatedAt string `json:"createdAt"`
+	// The resource version of the virtualService
+	//
+	// required: true
 	ResourceVersion string      `json:"resourceVersion"`
 	Hosts           interface{} `json:"hosts"`
 	Gateways        interface{} `json:"gateways"`
