@@ -3,7 +3,7 @@ SHELL=/bin/bash
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v0.3.2.Alpha-SNAPSHOT
+VERSION ?= v0.4.0
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Indicates which version of the UI console is to be embedded
