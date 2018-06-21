@@ -32,6 +32,7 @@ type NodeData struct {
 	// App Fields (not required by Cytoscape)
 	Service      string         `json:"service"`
 	Namespace    string         `json:"namespace"`
+	ServiceName  string         `json:"serviceName"`
 	Version      string         `json:"version,omitempty"`
 	Rate         string         `json:"rate,omitempty"`         // edge aggregate
 	Rate3xx      string         `json:"rate3XX,omitempty"`      // edge aggregate
@@ -99,9 +100,9 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 
 	buildConfig(trafficMap, &nodes, &edges, o)
 
-	// Add composite nodes that group together different versions of the same service
+	// Add compound nodes that group together different versions of the same service
 	if o.GroupByVersion {
-		addCompositeNodes(&nodes)
+		addCompoundNodes(&nodes)
 	}
 
 	// sort nodes and edges for better json presentation (and predictable testing)
@@ -139,10 +140,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		nodeId := nodeHash(id)
 
 		nd := &NodeData{
-			Id:        nodeId,
-			Service:   s.Name,
-			Namespace: s.Namespace,
-			Version:   s.Version,
+			Id:          nodeId,
+			Service:     s.Name,
+			Namespace:   s.Namespace,
+			ServiceName: s.ServiceName,
+			Version:     s.Version,
 		}
 
 		addServiceTelemetry(s, nd)
@@ -293,39 +295,41 @@ func add(current string, val float64) string {
 	return fmt.Sprintf("%.3f", sum)
 }
 
-// addCompositeNodes generates additional nodes to group multiple versions of the
+// addCompoundNodes generates additional nodes to group multiple versions of the
 // same service.
-func addCompositeNodes(nodes *[]*NodeWrapper) {
+func addCompoundNodes(nodes *[]*NodeWrapper) {
 	grouped := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
 		grouped[nw.Data.Service] = append(grouped[nw.Data.Service], nw.Data)
 	}
 
-	for k, v := range grouped {
-		if len(v) > 1 {
-			// create the composite grouping all versions of the service
+	for k, members := range grouped {
+		if len(members) > 1 {
+			// create the compound grouping all versions of the service
 			nodeId := nodeHash(k)
 			nd := NodeData{
-				Id:      nodeId,
-				Service: k,
-				IsGroup: "version",
+				Id:          nodeId,
+				Service:     k,
+				Namespace:   members[0].Namespace,
+				ServiceName: members[0].ServiceName,
+				IsGroup:     "version",
 			}
 
 			nw := NodeWrapper{
 				Data: &nd,
 			}
 
-			// assign each service version node to the composite parent
+			// assign each service version node to the compound parent
 			hasRouteRule := false
 			nd.HasMissingSC = false
 
-			for _, n := range v {
+			for _, n := range members {
 				n.Parent = nodeId
 
 				nd.HasMissingSC = nd.HasMissingSC || n.HasMissingSC
 
-				// If there is a route rule defined in version node, move it to composite parent
+				// If there is a route rule defined in version node, move it to compound parent
 				if n.HasRR {
 					n.HasRR = false
 					hasRouteRule = true
@@ -336,7 +340,7 @@ func addCompositeNodes(nodes *[]*NodeWrapper) {
 				nd.HasRR = true
 			}
 
-			// add the composite node to the list of nodes
+			// add the compound node to the list of nodes
 			*nodes = append(*nodes, &nw)
 		}
 	}

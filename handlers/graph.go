@@ -92,26 +92,32 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 		mergeTrafficMaps(trafficMap, namespaceTrafficMap)
 	}
 
+	// The appenders can add/remove/alter services. After the manipulations are complete
+	// we can make some final adjustments:
+	// - mark the roots (i.e. traffic generators, a service with only outgoing traffic.)
+	// - mark the outsiders (i.e. terminal services (no children) and not in the requested namespaces)
 	for _, s := range trafficMap {
-		// Check if the node is in one of the requested namespaces.
-		found := false
-		for _, namespace := range o.Namespaces {
-			if s.Namespace == namespace {
-				found = true
-				break
-			}
-		}
-
-		s.Metadata["isOutside"] = !found && s.ServiceName != "unknown"
-
-		// now that the services are final, make one pass to set the roots (i.e. traffic generators).
-		// A root is defined as a service with only outgoing traffic.
 		if s.Metadata["rate"].(float64) == 0.0 && s.Metadata["rateOut"].(float64) > 0.0 {
 			s.Metadata["isRoot"] = true
+		}
+		if isOutside(s, o.Namespaces) {
+			s.Metadata["isOutside"] = true
 		}
 	}
 
 	return trafficMap
+}
+
+func isOutside(s *graph.ServiceNode, namespaces []string) bool {
+	if len(s.Edges) > 0 {
+		return false
+	}
+	for _, ns := range namespaces {
+		if s.Namespace == ns {
+			return false
+		}
+	}
+	return true
 }
 
 // buildNamespaceTrafficMap returns a map of all namespace services (key=id).  All

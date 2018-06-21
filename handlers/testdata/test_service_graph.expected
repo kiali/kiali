@@ -7,6 +7,7 @@
           "id": "32f13d185b9a6764d67f9f96f8796f6c",
           "service": "productpage.bookinfo.svc.cluster.local",
           "namespace": "bookinfo",
+          "serviceName": "productpage",
           "version": "v1",
           "rateOut": "60.000"
         }
@@ -16,6 +17,7 @@
           "id": "4bd6b4e52f760784b8cf5a9ae38241e2",
           "service": "ratings.bookinfo.svc.cluster.local",
           "namespace": "bookinfo",
+          "serviceName": "ratings",
           "version": "v1",
           "rate": "40.000"
         }
@@ -24,7 +26,8 @@
         "data": {
           "id": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
-          "namespace": "",
+          "namespace": "bookinfo",
+          "serviceName": "reviews",
           "isGroup": "version"
         }
       },
@@ -34,6 +37,7 @@
           "parent": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
           "namespace": "bookinfo",
+          "serviceName": "reviews",
           "version": "v1",
           "rate": "20.000"
         }
@@ -44,6 +48,7 @@
           "parent": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
           "namespace": "bookinfo",
+          "serviceName": "reviews",
           "version": "v2",
           "rate": "40.000",
           "rateOut": "40.000"
@@ -55,6 +60,7 @@
           "parent": "091c4c76cb13828352bbe375d51e3b01",
           "service": "reviews.bookinfo.svc.cluster.local",
           "namespace": "bookinfo",
+          "serviceName": "reviews",
           "version": "v3",
           "rate": "40.000",
           "rateOut": "40.000"
