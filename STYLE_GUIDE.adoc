@@ -1,8 +1,17 @@
-= Style Code Guide
+= Code Style Guide
 :toc: macro
 :toc-title:
 
 toc::[]
+
+== Backend - Go
+
+The backend is written in link:https://golang.org/[Go]. If you are not familiar with it, you can take link:https://tour.golang.org/welcome/1[a Tour of Go].
+
+In Kiali we use link:https://golang.org/cmd/gofmt/[gofmt] as part of our build process to keep a consistent formatting.
+
+While we haven't automated static code analysers, it is still a good idea to check that new pieces of code are correct with tools such as link:https://github.com/golang/lint[golint] or link:https://golang.org/cmd/vet/[govet].
+
 === Imports
 
 If you need any library you should import them in the following format
@@ -29,3 +38,7 @@ import (
 	"github.com/kiali/kiali/log"
 )
 ----
+
+== Frontend - TypeScript
+
+Check the link:https://github.com/kiali/kiali-ui/blob/master/STYLE_GUIDE.adoc[dedicated guide] in _kiali-ui_.
