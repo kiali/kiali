@@ -15,6 +15,7 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeDestinationPolicies)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
+	assert.True(t, criteria.IncludeServiceEntries)
 	assert.True(t, criteria.IncludeRules)
 
 	objects = "gateways"
@@ -25,6 +26,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationPolicies)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
 	assert.False(t, criteria.IncludeRules)
 
 	objects = "routerules"
@@ -35,6 +37,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationPolicies)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
 	assert.False(t, criteria.IncludeRules)
 
 	objects = "destinationpolicies"
@@ -45,6 +48,7 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeDestinationPolicies)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
 	assert.False(t, criteria.IncludeRules)
 
 	objects = "virtualservices"
@@ -55,6 +59,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationPolicies)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
 	assert.False(t, criteria.IncludeRules)
 
 	objects = "destinationrules"
@@ -65,6 +70,18 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationPolicies)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.IncludeRules)
+
+	objects = "serviceentries"
+	criteria = parseCriteria(namespace, objects)
+
+	assert.False(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeRouteRules)
+	assert.False(t, criteria.IncludeDestinationPolicies)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.True(t, criteria.IncludeServiceEntries)
 	assert.False(t, criteria.IncludeRules)
 
 	objects = "rules"
@@ -75,6 +92,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationPolicies)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
 	assert.True(t, criteria.IncludeRules)
 
 	objects = "virtualservices,rules"
@@ -85,6 +103,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationPolicies)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
 	assert.True(t, criteria.IncludeRules)
 
 	objects = "routerules,virtualservices"
@@ -95,6 +114,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationPolicies)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
 	assert.False(t, criteria.IncludeRules)
 
 	objects = "notsupported"
@@ -105,6 +125,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationPolicies)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
 	assert.False(t, criteria.IncludeRules)
 
 	objects = "notsupported,rules"
@@ -115,5 +136,6 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationPolicies)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
 	assert.True(t, criteria.IncludeRules)
 }

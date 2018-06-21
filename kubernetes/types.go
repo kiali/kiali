@@ -80,6 +80,16 @@ var (
 			collection:   &DestinationRuleList{},
 			groupVersion: &istioNetworkingGroupVersion,
 		},
+		serviceentryLabel: {
+			object: &ServiceEntry{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       serviceentryType,
+					APIVersion: istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
+				},
+			},
+			collection:   &ServiceEntryList{},
+			groupVersion: &istioNetworkingGroupVersion,
+		},
 		ruleLabel: {
 			object: &rule{
 				TypeMeta: meta_v1.TypeMeta{

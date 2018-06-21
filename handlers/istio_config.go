@@ -56,6 +56,7 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	criteria.IncludeDestinationPolicies = defaultInclude
 	criteria.IncludeVirtualServices = defaultInclude
 	criteria.IncludeDestinationRules = defaultInclude
+	criteria.IncludeServiceEntries = defaultInclude
 	criteria.IncludeRules = defaultInclude
 
 	if defaultInclude {
@@ -77,6 +78,9 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	}
 	if checkType(types, "destinationrules") {
 		criteria.IncludeDestinationRules = true
+	}
+	if checkType(types, "serviceentries") {
+		criteria.IncludeServiceEntries = true
 	}
 	if checkType(types, "rules") {
 		criteria.IncludeRules = true
@@ -158,6 +162,7 @@ func checkObjectType(objectType string) bool {
 		"destinationpolicies",
 		"virtualservices",
 		"destinationrules",
+		"serviceentries",
 		"rules":
 		return true
 	}

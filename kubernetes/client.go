@@ -44,6 +44,8 @@ type IstioClientInterface interface {
 	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
 	GetGateways(namespace string) ([]IstioObject, error)
 	GetGateway(namespace string, gateway string) (IstioObject, error)
+	GetServiceEntries(namespace string) ([]IstioObject, error)
+	GetServiceEntry(namespace string, serviceEntryName string) (IstioObject, error)
 	GetRouteRules(namespace string, serviceName string) ([]IstioObject, error)
 	GetRouteRule(namespace string, routerule string) (IstioObject, error)
 	GetDestinationPolicies(namespace string, serviceName string) ([]IstioObject, error)

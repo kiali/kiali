@@ -7,6 +7,7 @@ type IstioConfigList struct {
 	DestinationPolicies DestinationPolicies `json:"destinationPolicies"`
 	VirtualServices     VirtualServices     `json:"virtualServices"`
 	DestinationRules    DestinationRules    `json:"destinationRules"`
+	ServiceEntries      ServiceEntries      `json:"serviceEntries"`
 	Rules               IstioRules          `json:"rules"`
 }
 
@@ -18,5 +19,6 @@ type IstioConfigDetails struct {
 	DestinationPolicy *DestinationPolicy `json:"destinationPolicy"`
 	VirtualService    *VirtualService    `json:"virtualService"`
 	DestinationRule   *DestinationRule   `json:"destinationRule"`
+	ServiceEntry      *ServiceEntry      `json:"serviceEntry"`
 	Rule              *IstioRuleDetails  `json:"rule"`
 }
