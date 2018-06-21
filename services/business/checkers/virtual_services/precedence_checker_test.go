@@ -25,7 +25,6 @@ func TestCheckerString(t *testing.T) {
 
 	validations, valid := PrecedenceChecker{fakeString()}.Check()
 
-	// wrong weight'ed route rule
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
@@ -40,7 +39,6 @@ func TestCheckerNegative(t *testing.T) {
 	// Setup mocks
 	validations, valid := PrecedenceChecker{fakeNegative()}.Check()
 
-	// wrong weight'ed route rule
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
@@ -76,7 +74,7 @@ func fakeString() kubernetes.IstioObject {
 }
 
 func fakeNegative() kubernetes.IstioObject {
-	routeRule := (&kubernetes.VirtualService{
+	virtualService := (&kubernetes.VirtualService{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "reviews-negative",
 		},
@@ -85,5 +83,5 @@ func fakeNegative() kubernetes.IstioObject {
 		},
 	}).DeepCopyIstioObject()
 
-	return routeRule
+	return virtualService
 }
