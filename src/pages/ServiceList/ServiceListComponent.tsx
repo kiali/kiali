@@ -1,6 +1,15 @@
 import * as React from 'react';
 import { AxiosError } from 'axios';
-import { ListView, ListViewItem, ListViewIcon, Paginator, Sort } from 'patternfly-react';
+import {
+  Button,
+  Icon,
+  ListView,
+  ListViewItem,
+  ListViewIcon,
+  Paginator,
+  Sort,
+  ToolbarRightContent
+} from 'patternfly-react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
@@ -83,7 +92,6 @@ const istioFilter: FilterType = {
 };
 
 type ServiceListComponentState = {
-  loading: boolean;
   services: ServiceItem[];
   pagination: Pagination;
   currentSortField: SortField;
@@ -105,7 +113,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.rateInterval = defaultRateInterval;
 
     this.state = {
-      loading: true,
       services: [],
       pagination: { page: 1, perPage: 10, perPageOptions: perPageOptions },
       currentSortField: sortFields[0],
@@ -119,7 +126,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
 
   handleError = (error: string) => {
     this.props.onError(error);
-    this.setState({ loading: false });
   };
 
   handleAxiosError(message: string, error: AxiosError) {
@@ -131,7 +137,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   pageSet = (page: number) => {
     this.setState(prevState => {
       return {
-        loading: prevState.loading,
         services: prevState.services,
         pagination: {
           page: page,
@@ -145,7 +150,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   pageSelect = (perPage: number) => {
     this.setState(prevState => {
       return {
-        loading: prevState.loading,
         services: prevState.services,
         pagination: {
           page: 1,
@@ -175,7 +179,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   };
 
   updateServices = () => {
-    this.setState({ loading: true });
     const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
@@ -220,7 +223,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         updatedServices = sortServices(updatedServices, this.state.currentSortField, this.state.isSortAscending);
         this.setState(prevState => {
           return {
-            loading: false,
             services: updatedServices,
             pagination: {
               page: 1,
@@ -358,6 +360,11 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             rateIntervalSelected={this.rateInterval}
             onRateIntervalChanged={this.rateIntervalChangedHandler}
           />
+          <ToolbarRightContent>
+            <Button onClick={this.updateServices}>
+              <Icon name="refresh" />
+            </Button>
+          </ToolbarRightContent>
         </NamespaceFilter>
         <ListView>{serviceList}</ListView>
         <Paginator

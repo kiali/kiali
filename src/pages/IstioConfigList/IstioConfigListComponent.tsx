@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ListView, ListViewItem, ListViewIcon, Sort } from 'patternfly-react';
+import { Button, Icon, ListView, ListViewItem, ListViewIcon, Sort, ToolbarRightContent } from 'patternfly-react';
 import { AxiosError } from 'axios';
 import { NamespaceFilter, NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { Paginator } from 'patternfly-react';
@@ -113,7 +113,6 @@ const configValidationFilter: FilterType = {
 };
 
 type IstioConfigListComponentState = {
-  loading: boolean;
   istioItems: IstioConfigItem[];
   pagination: Pagination;
   currentSortField: SortField;
@@ -129,14 +128,7 @@ const perPageOptions: number[] = [5, 10, 15];
 class IstioConfigListComponent extends React.Component<IstioConfigListComponentProps, IstioConfigListComponentState> {
   constructor(props: IstioConfigListComponentProps) {
     super(props);
-    this.filterChange = this.filterChange.bind(this);
-    this.handleError = this.handleError.bind(this);
-    this.pageSet = this.pageSet.bind(this);
-    this.pageSelect = this.pageSelect.bind(this);
-    this.updateSortField = this.updateSortField.bind(this);
-    this.updateSortDirection = this.updateSortDirection.bind(this);
     this.state = {
-      loading: true,
       istioItems: [],
       pagination: { page: 1, perPage: 10, perPageOptions: perPageOptions },
       currentSortField: sortFields[0],
@@ -145,19 +137,12 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
   }
 
   componentDidMount() {
-    this.setState({ loading: true });
     this.updateIstioConfig();
   }
 
-  filterChange() {
-    this.setState({ loading: true });
-    this.updateIstioConfig();
-  }
-
-  handleError(error: string) {
+  handleError = (error: string) => {
     this.props.onError(error);
-    this.setState({ loading: false });
-  }
+  };
 
   handleAxiosError(message: string, error: AxiosError) {
     const errMsg = API.getErrorMsg(message, error);
@@ -165,10 +150,9 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     this.handleError(errMsg);
   }
 
-  pageSet(page: number) {
+  pageSet = (page: number) => {
     this.setState(prevState => {
       return {
-        loading: prevState.loading,
         istioItems: prevState.istioItems,
         pagination: {
           page: page,
@@ -177,12 +161,11 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
         }
       };
     });
-  }
+  };
 
-  pageSelect(perPage: number) {
+  pageSelect = (perPage: number) => {
     this.setState(prevState => {
       return {
-        loading: prevState.loading,
         istioItems: prevState.istioItems,
         pagination: {
           page: 1,
@@ -191,27 +174,27 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
         }
       };
     });
-  }
+  };
 
-  updateSortField(sortField: SortField) {
+  updateSortField = (sortField: SortField) => {
     this.setState(prevState => {
       return {
         currentSortField: sortField,
         istioItems: sortIstioItems(prevState.istioItems, sortField, prevState.isSortAscending)
       };
     });
-  }
+  };
 
-  updateSortDirection() {
+  updateSortDirection = () => {
     this.setState(prevState => {
       return {
         isSortAscending: !prevState.isSortAscending,
         istioItems: sortIstioItems(prevState.istioItems, prevState.currentSortField, !prevState.isSortAscending)
       };
     });
-  }
+  };
 
-  updateIstioConfig() {
+  updateIstioConfig = () => {
     const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
@@ -241,7 +224,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     } else {
       this.fetchIstioConfig(namespacesSelected, istioTypeFilters, istioNameFilters, configValidationFilters);
     }
-  }
+  };
 
   updateValidation(istioItems: IstioConfigItem[], namespaceValidation: NamespaceValidations): IstioConfigItem[] {
     istioItems.forEach(istioItem => {
@@ -275,7 +258,6 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
         istioItems = sortIstioItems(istioItems, this.state.currentSortField, this.state.isSortAscending);
         this.setState(prevState => {
           return {
-            loading: false,
             istioItems: istioItems,
             pagination: {
               page: 1,
@@ -392,7 +374,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       <>
         <NamespaceFilter
           initialFilters={[istioTypeFilter, istioNameFilter, configValidationFilter]}
-          onFilterChange={this.filterChange}
+          onFilterChange={this.updateIstioConfig}
           onError={this.handleError}
         >
           <Sort>
@@ -407,6 +389,11 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
               onClick={this.updateSortDirection}
             />
           </Sort>
+          <ToolbarRightContent>
+            <Button onClick={this.updateIstioConfig}>
+              <Icon name="refresh" />
+            </Button>
+          </ToolbarRightContent>
         </NamespaceFilter>
         <ListView>{istioList}</ListView>
         <Paginator
