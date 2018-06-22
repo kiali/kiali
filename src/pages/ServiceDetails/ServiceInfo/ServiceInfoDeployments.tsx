@@ -23,7 +23,7 @@ class ServiceInfoDeployments extends React.Component<ServiceInfoDeploymentsProps
               <div className="card-pf-body" key={'deployments_' + u}>
                 <h3>{deployment.name}</h3>
                 <div key="labels" className="label-collection">
-                  {Object.keys(deployment.labels || new Map()).map((key, i) => (
+                  {Object.keys(deployment.labels || {}).map((key, i) => (
                     <Label key={'deployment_' + i} name={key} value={deployment.labels ? deployment.labels[key] : ''} />
                   ))}
                 </div>

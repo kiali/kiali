@@ -41,7 +41,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 <strong>Labels</strong>
               </div>
               <div className="label-collection">
-                {Object.keys(this.props.labels || new Map()).map((key, i) => (
+                {Object.keys(this.props.labels || {}).map((key, i) => (
                   <div key={'label_' + i}>
                     <Label name={key} value={this.props.labels ? this.props.labels[key] : ''} />
                   </div>
