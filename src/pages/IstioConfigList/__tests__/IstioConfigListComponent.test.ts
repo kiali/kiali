@@ -16,6 +16,7 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     destinationPolicies: [],
     virtualServices: [],
     destinationRules: [],
+    serviceEntries: [],
     rules: []
   };
   names.forEach(name => {
@@ -24,7 +25,8 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     testData.destinationPolicies.push({ name: name + '2', createdAt: 't2', resourceVersion: 'r2' });
     testData.virtualServices.push({ name: name + '3', createdAt: 't3', resourceVersion: 'r3' });
     testData.destinationRules.push({ name: name + '4', createdAt: 't4', resourceVersion: 'r4' });
-    testData.rules.push({ name: name + '5', match: '', actions: [] });
+    testData.serviceEntries.push({ name: name + '5', createdAt: 't5', resourceVersion: 'r5' });
+    testData.rules.push({ name: name + '6', match: '', actions: [] });
   });
   return testData;
 };
@@ -40,12 +42,14 @@ describe('IstioConfigListComponent#filterByName', () => {
     expect(filtered.destinationPolicies.length).toBe(2);
     expect(filtered.virtualServices.length).toBe(2);
     expect(filtered.destinationRules.length).toBe(2);
+    expect(filtered.serviceEntries.length).toBe(2);
     expect(filtered.rules.length).toBe(2);
     expect(filtered.routeRules[0].name).toBe('white1');
     expect(filtered.destinationPolicies[0].name).toBe('white2');
     expect(filtered.virtualServices[0].name).toBe('white3');
     expect(filtered.destinationRules[0].name).toBe('white4');
-    expect(filtered.rules[0].name).toBe('white5');
+    expect(filtered.serviceEntries[0].name).toBe('white5');
+    expect(filtered.rules[0].name).toBe('white6');
 
     filtered = filterByName(unfiltered, ['bad']);
     expect(filtered).toBeDefined();
@@ -54,6 +58,7 @@ describe('IstioConfigListComponent#filterByName', () => {
     expect(filtered.destinationPolicies.length).toBe(0);
     expect(filtered.virtualServices.length).toBe(0);
     expect(filtered.destinationRules.length).toBe(0);
+    expect(filtered.serviceEntries.length).toBe(0);
     expect(filtered.rules.length).toBe(0);
   });
 });
@@ -62,7 +67,7 @@ describe('IstioConfigListComponent#toIstioItems', () => {
   it('should convert IstioConfigList in IstioConfigItems', () => {
     let istioItems = toIstioItems(unfiltered);
     expect(istioItems).toBeDefined();
-    expect(istioItems.length).toBe(18);
+    expect(istioItems.length).toBe(21);
     expect(istioItems[0].gateway).toBeDefined();
     expect(istioItems[0].destinationPolicy).toBeUndefined();
     expect(istioItems[3].routeRule).toBeDefined();
@@ -83,24 +88,24 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     let isAscending = true;
     let sorted = sortIstioItems(istioItems, sortField, isAscending);
     expect(sorted).toBeDefined();
-    expect(sorted.length).toBe(18);
+    expect(sorted.length).toBe(21);
     let first = sorted[0];
     expect(first.gateway).toBeDefined();
     expect(first.gateway!.name).toBe('blue0');
     let second = sorted[1];
     expect(second.routeRule).toBeDefined();
     expect(second.routeRule!.name).toBe('blue1');
-    let last = sorted[17];
+    let last = sorted[20];
     expect(last.rule).toBeDefined();
-    expect(last.rule!.name).toBe('white5');
+    expect(last.rule!.name).toBe('white6');
 
     // Descending
     sorted = sortIstioItems(istioItems, sortField, !isAscending);
     expect(sorted).toBeDefined();
-    expect(sorted.length).toBe(18);
+    expect(sorted.length).toBe(21);
     first = sorted[0];
     expect(first.rule).toBeDefined();
-    expect(first.rule!.name).toBe('white5');
+    expect(first.rule!.name).toBe('white6');
   });
 
   it('should sort IstioConfigItems by Istio Type', () => {

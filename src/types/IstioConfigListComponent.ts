@@ -10,6 +10,7 @@ export interface IstioConfigItem {
   destinationPolicy?: DestinationPolicy;
   virtualService?: VirtualService;
   destinationRule?: DestinationRule;
+  serviceEntry?: ServiceEntry;
   rule?: IstioRule;
   validation?: ObjectValidation;
 }
@@ -21,6 +22,7 @@ export interface IstioConfigList {
   destinationPolicies: DestinationPolicy[];
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
+  serviceEntries: ServiceEntry[];
   rules: IstioRule[];
 }
 
@@ -53,6 +55,24 @@ export interface TLSOptions {
   subjectAltNames: string[];
 }
 
+export interface ServiceEntry {
+  name: string;
+  createdAt: string;
+  resourceVersion: string;
+  hosts?: string[];
+  addresses?: string[];
+  ports?: Port[];
+  location?: string;
+  resolution?: string;
+  endpoints?: Endpoint[];
+}
+
+export interface Endpoint {
+  address: string;
+  ports: { [key: string]: number };
+  labels: { [key: string]: string };
+}
+
 export interface IstioRule {
   name: string;
   match: string;
@@ -76,12 +96,14 @@ export const dicIstioType = {
   DestinationPolicy: 'destinationpolicies',
   VirtualService: 'virtualservices',
   DestinationRule: 'destinationrules',
+  ServiceEntry: 'serviceentries',
   Rule: 'rules',
   gateways: 'Gateway',
   routerules: 'RouteRule',
   destinationpolicies: 'DestinationPolicy',
   virtualservices: 'VirtualService',
   destinationrules: 'DestinationRule',
+  serviceentries: 'ServiceEntry',
   rules: 'Rule'
 };
 
@@ -105,6 +127,7 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]) => {
     destinationPolicies: unfiltered.destinationPolicies.filter(dp => includeName(dp.name, names)),
     virtualServices: unfiltered.virtualServices.filter(vs => includeName(vs.name, names)),
     destinationRules: unfiltered.destinationRules.filter(dr => includeName(dr.name, names)),
+    serviceEntries: unfiltered.serviceEntries.filter(se => includeName(se.name, names)),
     rules: unfiltered.rules.filter(r => includeName(r.name, names))
   };
   return filtered;
@@ -167,6 +190,14 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
       type: 'destinationrule',
       name: dr.name,
       destinationRule: dr
+    })
+  );
+  istioConfigList.serviceEntries.forEach(se =>
+    istioItems.push({
+      namespace: istioConfigList.namespace.name,
+      type: 'serviceentry',
+      name: se.name,
+      serviceEntry: se
     })
   );
   istioConfigList.rules.forEach(r =>
