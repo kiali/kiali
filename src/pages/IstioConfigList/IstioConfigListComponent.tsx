@@ -81,6 +81,10 @@ const istioTypeFilter: FilterType = {
       title: 'DestinationRule'
     },
     {
+      id: 'ServiceEntry',
+      title: 'ServiceEntry'
+    },
+    {
       id: 'Rule',
       title: 'Rule'
     }
@@ -325,6 +329,10 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       iconName = 'network';
       iconType = 'pf';
       type = 'DestinationRule';
+    } else if (istioItem.type === 'serviceentry') {
+      iconName = 'services';
+      iconType = 'pf';
+      type = 'ServiceEntry';
     } else if (istioItem.type === 'rule') {
       iconName = 'migration';
       iconType = 'pf';

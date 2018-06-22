@@ -71,13 +71,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           validations: resultConfigValidations.data
         });
       })
-      .catch(([errorConfigDetails, errorConfigValidations]) => {
-        if (errorConfigDetails) {
-          MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig details.', errorConfigDetails));
-        }
-        if (errorConfigValidations) {
-          MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig validations.', errorConfigValidations));
-        }
+      .catch(error => {
+        MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig details.', error));
       });
   };
 
@@ -145,6 +140,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           : undefined}
         {this.state.istioObjectDetails && this.state.istioObjectDetails.destinationRule
           ? this.renderEditor(this.state.istioObjectDetails.destinationRule)
+          : undefined}
+        {this.state.istioObjectDetails && this.state.istioObjectDetails.serviceEntry
+          ? this.renderEditor(this.state.istioObjectDetails.serviceEntry)
           : undefined}
         {this.state.istioObjectDetails && this.state.istioObjectDetails.rule ? (
           <IstioRuleInfo

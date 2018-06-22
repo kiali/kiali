@@ -182,13 +182,8 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
           validations: resultValidations.data
         });
       })
-      .catch(([errorDetails, errorValidations]) => {
-        if (errorDetails) {
-          MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', errorDetails));
-        }
-        if (errorValidations) {
-          MessageCenter.add(API.getErrorMsg('Could not fetch Service Validations.', errorValidations));
-        }
+      .catch(error => {
+        MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', error));
       });
   }
 
