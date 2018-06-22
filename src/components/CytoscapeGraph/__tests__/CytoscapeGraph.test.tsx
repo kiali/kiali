@@ -18,6 +18,10 @@ const testReadyHandler = () => {
   console.log('ready');
 };
 
+const testDoubleClickHandler = () => {
+  console.log('double click');
+};
+
 describe('CytoscapeGraph component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
@@ -32,6 +36,7 @@ describe('CytoscapeGraph component test', () => {
         graphDuration={myDuration}
         edgeLabelMode={myEdgeLabelMode}
         onClick={testClickHandler}
+        onDoubleClick={testDoubleClickHandler}
         onReady={testReadyHandler}
         refresh={testClickHandler}
         showNodeLabels={true}
