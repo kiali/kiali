@@ -108,6 +108,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 			istioDetails.DestinationRules = []kubernetes.IstioObject{dr}
 			objectCheckers = []ObjectChecker{noServiceChecker}
 		}
+	case "serviceentries":
+		// Validations on ServiceEntries are not yet in place
 	case "rules":
 		// Validations on Istio Rules are not yet in place
 	default:

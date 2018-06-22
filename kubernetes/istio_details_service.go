@@ -191,7 +191,7 @@ func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
 	}
 	gatewayList, ok := result.(*GatewayList)
 	if !ok {
-		return nil, fmt.Errorf("%s doesn't return a GetGateways list", namespace)
+		return nil, fmt.Errorf("%s doesn't return a Gateway list", namespace)
 	}
 
 	gateways := make([]IstioObject, 0)
@@ -209,9 +209,41 @@ func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject
 
 	gatewayObject, ok := result.(*Gateway)
 	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService object", namespace, gateway)
+		return nil, fmt.Errorf("%s/%s doesn't return a Gateway object", namespace, gateway)
 	}
 	return gatewayObject.DeepCopyIstioObject(), nil
+}
+
+// GetServiceEntries return all ServiceEntry objects for a given namespace.
+// It returns an error on any problem.
+func (in *IstioClient) GetServiceEntries(namespace string) ([]IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(serviceentries).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	serviceEntriesList, ok := result.(*ServiceEntryList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a ServiceEntry list", namespace)
+	}
+
+	serviceEntries := make([]IstioObject, 0)
+	for _, serviceEntry := range serviceEntriesList.GetItems() {
+		serviceEntries = append(serviceEntries, serviceEntry.DeepCopyIstioObject())
+	}
+	return serviceEntries, nil
+}
+
+func (in *IstioClient) GetServiceEntry(namespace string, serviceEntryName string) (IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(serviceentries).SubResource(serviceEntryName).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	serviceEntry, ok := result.(*ServiceEntry)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a ServiceEntry object", namespace, serviceEntry)
+	}
+	return serviceEntry.DeepCopyIstioObject(), nil
 }
 
 // GetDestinationRules returns all DestinationRules for a given namespace.

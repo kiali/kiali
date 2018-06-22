@@ -19,6 +19,7 @@ type IstioConfigCriteria struct {
 	IncludeDestinationPolicies bool
 	IncludeVirtualServices     bool
 	IncludeDestinationRules    bool
+	IncludeServiceEntries      bool
 	IncludeRules               bool
 }
 
@@ -35,16 +36,19 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 		DestinationPolicies: models.DestinationPolicies{},
 		VirtualServices:     models.VirtualServices{},
 		DestinationRules:    models.DestinationRules{},
+		ServiceEntries:      models.ServiceEntries{},
 		Rules:               models.IstioRules{},
 	}
-	var ggErr, rrErr, dpErr, vsErr, drErr, mrErr error
+	var gg, rr, dp, vs, dr, se []kubernetes.IstioObject
+	var mr *kubernetes.IstioRules
+	var ggErr, rrErr, dpErr, vsErr, drErr, seErr, mrErr error
 	var wg sync.WaitGroup
-	wg.Add(6)
+	wg.Add(7)
 
 	go func() {
 		defer wg.Done()
 		if criteria.IncludeGateways {
-			if gg, ggErr := in.k8s.GetGateways(criteria.Namespace); ggErr == nil {
+			if gg, ggErr = in.k8s.GetGateways(criteria.Namespace); ggErr == nil {
 				(&istioConfigList.Gateways).Parse(gg)
 			}
 		}
@@ -53,7 +57,7 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 	go func() {
 		defer wg.Done()
 		if criteria.IncludeRouteRules {
-			if rr, rrErr := in.k8s.GetRouteRules(criteria.Namespace, ""); rrErr == nil {
+			if rr, rrErr = in.k8s.GetRouteRules(criteria.Namespace, ""); rrErr == nil {
 				(&istioConfigList.RouteRules).Parse(rr)
 			}
 		}
@@ -62,7 +66,7 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 	go func() {
 		defer wg.Done()
 		if criteria.IncludeDestinationPolicies {
-			if dp, dpErr := in.k8s.GetDestinationPolicies(criteria.Namespace, ""); dpErr == nil {
+			if dp, dpErr = in.k8s.GetDestinationPolicies(criteria.Namespace, ""); dpErr == nil {
 				(&istioConfigList.DestinationPolicies).Parse(dp)
 			}
 		}
@@ -71,7 +75,7 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 	go func() {
 		defer wg.Done()
 		if criteria.IncludeVirtualServices {
-			if vs, vsErr := in.k8s.GetVirtualServices(criteria.Namespace, ""); vsErr == nil {
+			if vs, vsErr = in.k8s.GetVirtualServices(criteria.Namespace, ""); vsErr == nil {
 				(&istioConfigList.VirtualServices).Parse(vs)
 			}
 		}
@@ -80,7 +84,7 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 	go func() {
 		defer wg.Done()
 		if criteria.IncludeDestinationRules {
-			if dr, drErr := in.k8s.GetDestinationRules(criteria.Namespace, ""); drErr == nil {
+			if dr, drErr = in.k8s.GetDestinationRules(criteria.Namespace, ""); drErr == nil {
 				(&istioConfigList.DestinationRules).Parse(dr)
 			}
 		}
@@ -88,8 +92,17 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 
 	go func() {
 		defer wg.Done()
+		if criteria.IncludeServiceEntries {
+			if se, seErr = in.k8s.GetServiceEntries(criteria.Namespace); seErr == nil {
+				(&istioConfigList.ServiceEntries).Parse(se)
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
 		if criteria.IncludeRules {
-			if mr, mrErr := in.k8s.GetIstioRules(criteria.Namespace); mrErr == nil {
+			if mr, mrErr = in.k8s.GetIstioRules(criteria.Namespace); mrErr == nil {
 				istioConfigList.Rules = models.CastIstioRulesCollection(mr)
 			}
 		}
@@ -117,6 +130,10 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 		return models.IstioConfigList{}, drErr
 	}
 
+	if seErr != nil {
+		return models.IstioConfigList{}, seErr
+	}
+
 	if mrErr != nil {
 		return models.IstioConfigList{}, mrErr
 	}
@@ -128,7 +145,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var gw, rr, dp, vs, dr kubernetes.IstioObject
+	var gw, rr, dp, vs, dr, se kubernetes.IstioObject
 	var r *kubernetes.IstioRuleDetails
 	var err error
 	switch objectType {
@@ -156,6 +173,11 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 		if dr, err = in.k8s.GetDestinationRule(namespace, object); err == nil {
 			istioConfigDetail.DestinationRule = &models.DestinationRule{}
 			istioConfigDetail.DestinationRule.Parse(dr)
+		}
+	case "serviceentries":
+		if se, err = in.k8s.GetServiceEntry(namespace, object); err == nil {
+			istioConfigDetail.ServiceEntry = &models.ServiceEntry{}
+			istioConfigDetail.ServiceEntry.Parse(se)
 		}
 	case "rules":
 		if r, err = in.k8s.GetIstioRuleDetails(namespace, object); err == nil {

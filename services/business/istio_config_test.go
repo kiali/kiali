@@ -20,6 +20,7 @@ func TestGetIstioConfig(t *testing.T) {
 		IncludeDestinationPolicies: false,
 		IncludeVirtualServices:     false,
 		IncludeDestinationRules:    false,
+		IncludeServiceEntries:      false,
 		IncludeRules:               false,
 	}
 
@@ -32,6 +33,7 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(0, len(istioconfigList.DestinationPolicies))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
 	assert.Equal(0, len(istioconfigList.DestinationRules))
+	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Nil(err)
 
@@ -44,6 +46,7 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(0, len(istioconfigList.DestinationPolicies))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
 	assert.Equal(0, len(istioconfigList.DestinationRules))
+	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Nil(err)
 
@@ -56,6 +59,7 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(0, len(istioconfigList.DestinationPolicies))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
 	assert.Equal(0, len(istioconfigList.DestinationRules))
+	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Nil(err)
 
@@ -68,6 +72,7 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(2, len(istioconfigList.DestinationPolicies))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
 	assert.Equal(0, len(istioconfigList.DestinationRules))
+	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Nil(err)
 
@@ -80,6 +85,7 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(2, len(istioconfigList.DestinationPolicies))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
 	assert.Equal(0, len(istioconfigList.DestinationRules))
+	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Nil(err)
 
@@ -92,6 +98,20 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(2, len(istioconfigList.DestinationPolicies))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
 	assert.Equal(2, len(istioconfigList.DestinationRules))
+	assert.Equal(0, len(istioconfigList.ServiceEntries))
+	assert.Equal(0, len(istioconfigList.Rules))
+	assert.Nil(err)
+
+	criteria.IncludeServiceEntries = true
+
+	istioconfigList, err = configService.GetIstioConfig(criteria)
+
+	assert.Equal(2, len(istioconfigList.Gateways))
+	assert.Equal(2, len(istioconfigList.RouteRules))
+	assert.Equal(2, len(istioconfigList.DestinationPolicies))
+	assert.Equal(2, len(istioconfigList.VirtualServices))
+	assert.Equal(2, len(istioconfigList.DestinationRules))
+	assert.Equal(1, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Nil(err)
 
@@ -104,6 +124,7 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(2, len(istioconfigList.DestinationPolicies))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
 	assert.Equal(2, len(istioconfigList.DestinationRules))
+	assert.Equal(1, len(istioconfigList.ServiceEntries))
 	assert.Equal(1, len(istioconfigList.Rules))
 	assert.Nil(err)
 }
@@ -137,6 +158,10 @@ func TestGetIstioConfigDetails(t *testing.T) {
 	assert.Equal("checkfromcustomer", istioConfigDetails.Rule.Name)
 	assert.Nil(err)
 
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "serviceentries", "googleapis")
+	assert.Equal("googleapis", istioConfigDetails.ServiceEntry.Name)
+	assert.Nil(err)
+
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules-bad", "stdio")
 	assert.Error(err)
 }
@@ -148,6 +173,7 @@ func mockGetIstioConfig() IstioConfigService {
 	k8s.On("GetDestinationPolicies", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetDestinationPolicies(), nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetVirtualServices(), nil)
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetDestinationRules(), nil)
+	k8s.On("GetServiceEntries", mock.AnythingOfType("string")).Return(fakeGetServiceEntries(), nil)
 	k8s.On("GetIstioRules", mock.AnythingOfType("string")).Return(fakeGetIstioRules(), nil)
 
 	return IstioConfigService{k8s: k8s}
@@ -442,6 +468,27 @@ func fakeGetDestinationRules() []kubernetes.IstioObject {
 	return []kubernetes.IstioObject{&destinationRule1, &destinationRule2}
 }
 
+func fakeGetServiceEntries() []kubernetes.IstioObject {
+	serviceEntry := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "googleapis",
+		},
+		Spec: map[string]interface{}{
+			"hosts": []interface{}{
+				"*.googleapis.com",
+			},
+			"ports": []interface{}{
+				map[string]interface{}{
+					"number":   443,
+					"name":     "https",
+					"protocol": "http",
+				},
+			},
+		},
+	}
+	return []kubernetes.IstioObject{&serviceEntry}
+}
+
 func fakeGetIstioRules() *kubernetes.IstioRules {
 	stdioRule := kubernetes.MockIstioObject{}
 	stdioRule.Name = "stdio"
@@ -518,6 +565,7 @@ func mockGetIstioConfigDetails() IstioConfigService {
 	k8s.On("GetDestinationPolicy", "test", "reviews-dp").Return(fakeGetDestinationPolicies()[0], nil)
 	k8s.On("GetVirtualService", "test", "reviews").Return(fakeGetVirtualServices()[0], nil)
 	k8s.On("GetDestinationRule", "test", "reviews-dr").Return(fakeGetDestinationRules()[0], nil)
+	k8s.On("GetServiceEntry", "test", "googleapis").Return(fakeGetServiceEntries()[0], nil)
 	k8s.On("GetIstioRuleDetails", "test", "checkfromcustomer").Return(fakegetIstioRuleDetails(), nil)
 
 	return IstioConfigService{k8s: k8s}
