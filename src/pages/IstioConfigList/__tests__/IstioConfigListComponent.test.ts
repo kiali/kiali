@@ -118,21 +118,21 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     let isAscending = true;
     let sorted = sortIstioItems(istioItems, sortField, isAscending);
     expect(sorted).toBeDefined();
-    expect(sorted.length).toBe(18);
+    expect(sorted.length).toBe(21);
     let first = sorted[0];
     expect(first.destinationPolicy).toBeDefined();
     expect(first.destinationPolicy!.name).toBe('blue2');
     let second = sorted[1];
     expect(second.destinationPolicy).toBeDefined();
     expect(second.destinationPolicy!.name).toBe('red2');
-    let last = sorted[17];
+    let last = sorted[20];
     expect(last.virtualService).toBeDefined();
     expect(last.virtualService!.name).toBe('white3');
 
     // Descending
     sorted = sortIstioItems(istioItems, sortField, !isAscending);
     expect(sorted).toBeDefined();
-    expect(sorted.length).toBe(18);
+    expect(sorted.length).toBe(21);
     first = sorted[0];
     expect(first.virtualService).toBeDefined();
     expect(first.virtualService!.name).toBe('white3');
