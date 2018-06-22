@@ -1,7 +1,7 @@
 name: details
 createdAt: '2018-06-01T11:16:45+02:00'
 resourceVersion: '2447'
-destinationName: details
+host: details
 trafficPolicy: ~
 subsets:
   - labels:

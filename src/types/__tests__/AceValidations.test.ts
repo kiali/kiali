@@ -40,9 +40,9 @@ const destinationRuleValidations: Validations = {
       valid: false,
       checks: [
         {
-          message: 'Name doesnt have a valid service',
+          message: 'Host doesnt have a valid service',
           severity: 'error',
-          path: 'spec/name'
+          path: 'spec/host'
         }
       ]
     }
@@ -186,7 +186,7 @@ describe('#parseAceValidations in DestinationRule', () => {
       expect(annotation.column).toBe(0);
       expect(annotation.row).toBe(3);
       expect(annotation.type).toBe('error');
-      expect(annotation.text).toBe('Name doesnt have a valid service');
+      expect(annotation.text).toBe('Host doesnt have a valid service');
     });
   });
 });
