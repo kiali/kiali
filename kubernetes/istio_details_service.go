@@ -214,7 +214,7 @@ func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject
 	return gatewayObject.DeepCopyIstioObject(), nil
 }
 
-// GetServiceEntries return all Gateways for a given namespace.
+// GetServiceEntries return all ServiceEntry objects for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetServiceEntries(namespace string) ([]IstioObject, error) {
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(serviceentries).Do().Get()
