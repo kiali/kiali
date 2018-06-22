@@ -113,7 +113,7 @@ Valid options:
   -iov|--istiooc-version <version>
       The version of the istiooc binary to use.
       If one does not exist in the bin directory, it will be downloaded there.
-      Default: istio-3.9-0.8.0-alpha2
+      Default: istio-3.9-0.8.0-alpha3
   -iop|--istiooc-platform (linux|darwin)
       The platform indicator to determine what istiooc binary executable to download.
       Default: linux
@@ -131,7 +131,7 @@ Valid options:
       Used only for the 'up' command.
   -kv|--kiali-version <version>
       The Kiali version to be installed in OpenShift.
-      Default: 0.3.1.Alpha
+      Default: v0.4.0
       Used only for the 'up' command.
   -p|--persistence-dir <dir>
       When set, OpenShift will persist data to this directory.
@@ -172,8 +172,7 @@ OPENSHIFT_IP_ADDRESS=${OPENSHIFT_IP_ADDRESS:-`echo $(ip -f inet addr | grep 'sta
 
 # The version is the tag from the openshift-istio/origin release builds.
 # The platform is either "linux" or "darwin".
-#OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.7.1-alpha8}"
-OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.8.0-alpha2}"
+OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.8.0-alpha3}"
 OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-linux}"
 
 # If you want to persist data across restarts of OpenShift, set to the persistence directory.
@@ -185,7 +184,7 @@ OPENSHIFT_PERSISTENCE_DIR="${OPENSHIFT_PERSISTENCE_DIR=/var/lib/origin/persisten
 # If that is set to false, the other KIALI_ environment variables will be ignored.
 # This is ONLY supported in OS_ISTIO_OC_DOWNLOAD_PLATFORM versions of istio-3.9-0.8.0.alpha2 or higher.
 KIALI_ENABLED="${KIALI_ENABLED:-false}"
-KIALI_VERSION="${KIALI_VERSION:-0.3.1.Alpha}"
+KIALI_VERSION="${KIALI_VERSION:-v0.4.0}"
 KIALI_USERNAME="${KIALI_USERNAME:-admin}"
 KIALI_PASSWORD="${KIALI_PASSWORD:-admin}"
 
