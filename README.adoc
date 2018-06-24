@@ -501,6 +501,12 @@ If you git cloned the Kiali UI repository in directory `/my/git/repo` and have b
 CONSOLE_VERSION=local CONSOLE_LOCAL_DIR=/my/git/repo make docker-build
 ----
 
-== Style Code Guide
+== Contributing
 
-See the link:./STYLE_GUIDE.adoc[STYLE CODE GUIDE file].
+All contributions are welcome - Kiali uses the Apache 2 license and does not require any contributor agreement to submit patches. Please link:https://github.com/kiali/kiali/issues[open issues] for any bugs or problems you encounter or to suggest new features. Ask questions on the Kiali IRC channel (_#kiali_ on freenode) or the Google Groups: link:++https://groups.google.com/forum/#!forum/kiali-users++[kiali-users] or link:++https://groups.google.com/forum/#!forum/kiali-dev++[kiali-dev]. Get involved by submitting pull requests on GitHub.
+
+To setup your environment, check instructions in the link:#building[Building] and link:#running[Running] sections.
+
+=== Code Style Guide
+
+See the link:./STYLE_GUIDE.adoc[Backend Style Guide] and the link:https://github.com/kiali/kiali-ui/blob/master/STYLE_GUIDE.adoc[Frontend Style Guide].
