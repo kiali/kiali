@@ -56,6 +56,10 @@ type IstioClientInterface interface {
 	GetDestinationRule(namespace string, destinationrule string) (IstioObject, error)
 	GetIstioRules(namespace string) (*IstioRules, error)
 	GetIstioRuleDetails(namespace string, istiorule string) (*IstioRuleDetails, error)
+	GetQuotaSpecs(namespace string) ([]IstioObject, error)
+	GetQuotaSpec(namespace string, quotaSpecName string) (IstioObject, error)
+	GetQuotaSpecBindings(namespace string) ([]IstioObject, error)
+	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)
 }
 
 // IstioClient is the client struct for Kubernetes and Istio APIs

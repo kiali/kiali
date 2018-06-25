@@ -120,3 +120,23 @@ func (o *K8SClientMock) GetIstioRuleDetails(namespace string, istiorule string) 
 	args := o.Called(namespace, istiorule)
 	return args.Get(0).(*kubernetes.IstioRuleDetails), args.Error(1)
 }
+
+func (o *K8SClientMock) GetQuotaSpecs(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetQuotaSpec(namespace string, quotaSpecName string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace, quotaSpecName)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetQuotaSpecBindings(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace, quotaSpecBindingName)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}

@@ -22,6 +22,7 @@ func TestGetIstioConfig(t *testing.T) {
 		IncludeDestinationRules:    false,
 		IncludeServiceEntries:      false,
 		IncludeRules:               false,
+		IncludeQuotaSpecs:          false,
 	}
 
 	configService := mockGetIstioConfig()
@@ -35,6 +36,8 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(0, len(istioconfigList.DestinationRules))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
+	assert.Equal(0, len(istioconfigList.QuotaSpecs))
+	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
 	assert.Nil(err)
 
 	criteria.IncludeGateways = true
@@ -48,6 +51,8 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(0, len(istioconfigList.DestinationRules))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
+	assert.Equal(0, len(istioconfigList.QuotaSpecs))
+	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
 	assert.Nil(err)
 
 	criteria.IncludeRouteRules = true
@@ -61,6 +66,8 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(0, len(istioconfigList.DestinationRules))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
+	assert.Equal(0, len(istioconfigList.QuotaSpecs))
+	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
 	assert.Nil(err)
 
 	criteria.IncludeDestinationPolicies = true
@@ -74,6 +81,8 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(0, len(istioconfigList.DestinationRules))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
+	assert.Equal(0, len(istioconfigList.QuotaSpecs))
+	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
 	assert.Nil(err)
 
 	criteria.IncludeVirtualServices = true
@@ -87,6 +96,8 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(0, len(istioconfigList.DestinationRules))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
+	assert.Equal(0, len(istioconfigList.QuotaSpecs))
+	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
 	assert.Nil(err)
 
 	criteria.IncludeDestinationRules = true
@@ -100,6 +111,8 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(2, len(istioconfigList.DestinationRules))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
+	assert.Equal(0, len(istioconfigList.QuotaSpecs))
+	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
 	assert.Nil(err)
 
 	criteria.IncludeServiceEntries = true
@@ -113,6 +126,8 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(2, len(istioconfigList.DestinationRules))
 	assert.Equal(1, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
+	assert.Equal(0, len(istioconfigList.QuotaSpecs))
+	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
 	assert.Nil(err)
 
 	criteria.IncludeRules = true
@@ -126,6 +141,38 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(2, len(istioconfigList.DestinationRules))
 	assert.Equal(1, len(istioconfigList.ServiceEntries))
 	assert.Equal(1, len(istioconfigList.Rules))
+	assert.Equal(0, len(istioconfigList.QuotaSpecs))
+	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
+	assert.Nil(err)
+
+	criteria.IncludeQuotaSpecs = true
+
+	istioconfigList, err = configService.GetIstioConfig(criteria)
+
+	assert.Equal(2, len(istioconfigList.Gateways))
+	assert.Equal(2, len(istioconfigList.RouteRules))
+	assert.Equal(2, len(istioconfigList.DestinationPolicies))
+	assert.Equal(2, len(istioconfigList.VirtualServices))
+	assert.Equal(2, len(istioconfigList.DestinationRules))
+	assert.Equal(1, len(istioconfigList.ServiceEntries))
+	assert.Equal(1, len(istioconfigList.Rules))
+	assert.Equal(1, len(istioconfigList.QuotaSpecs))
+	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
+	assert.Nil(err)
+
+	criteria.IncludeQuotaSpecBindings = true
+
+	istioconfigList, err = configService.GetIstioConfig(criteria)
+
+	assert.Equal(2, len(istioconfigList.Gateways))
+	assert.Equal(2, len(istioconfigList.RouteRules))
+	assert.Equal(2, len(istioconfigList.DestinationPolicies))
+	assert.Equal(2, len(istioconfigList.VirtualServices))
+	assert.Equal(2, len(istioconfigList.DestinationRules))
+	assert.Equal(1, len(istioconfigList.ServiceEntries))
+	assert.Equal(1, len(istioconfigList.Rules))
+	assert.Equal(1, len(istioconfigList.QuotaSpecs))
+	assert.Equal(1, len(istioconfigList.QuotaSpecBindings))
 	assert.Nil(err)
 }
 
@@ -175,6 +222,8 @@ func mockGetIstioConfig() IstioConfigService {
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetDestinationRules(), nil)
 	k8s.On("GetServiceEntries", mock.AnythingOfType("string")).Return(fakeGetServiceEntries(), nil)
 	k8s.On("GetIstioRules", mock.AnythingOfType("string")).Return(fakeGetIstioRules(), nil)
+	k8s.On("GetQuotaSpecs", mock.AnythingOfType("string")).Return(fakeGetQuotaSpecs(), nil)
+	k8s.On("GetQuotaSpecBindings", mock.AnythingOfType("string")).Return(fakeGetQuotaSpecBindings(), nil)
 
 	return IstioConfigService{k8s: k8s}
 }
@@ -547,15 +596,60 @@ func fakeCheckFromCustomerActions() []*kubernetes.IstioRuleAction {
 		Handler:   &handler,
 		Instances: []kubernetes.IstioObject{&instance},
 	})
-
 	return actions
 }
 
-func fakegetIstioRuleDetails() *kubernetes.IstioRuleDetails {
+func fakeGetIstioRuleDetails() *kubernetes.IstioRuleDetails {
 	istioRulesDetails := kubernetes.IstioRuleDetails{}
 	istioRulesDetails.Rule = fakeCheckFromCustomerRule()
 	istioRulesDetails.Actions = fakeCheckFromCustomerActions()
 	return &istioRulesDetails
+}
+
+func fakeGetQuotaSpecs() []kubernetes.IstioObject {
+	quotaSpec := kubernetes.MockIstioObject{}
+	quotaSpec.Name = "request-count"
+	quotaSpec.Spec = map[string]interface{}{
+		"rules": []interface{}{
+			map[string]interface{}{
+				"quotas": []interface{}{
+					map[string]interface{}{
+						"charge": 1,
+						"quota":  "RequestCount",
+					},
+				},
+			},
+		},
+	}
+	return []kubernetes.IstioObject{&quotaSpec}
+}
+
+func fakeGetQuotaSpecBindings() []kubernetes.IstioObject {
+	quotaSpec := kubernetes.MockIstioObject{}
+	quotaSpec.Name = "request-count"
+	quotaSpec.Spec = map[string]interface{}{
+		"quotaSpecs": []interface{}{
+			map[string]interface{}{
+				"name":      "request-count",
+				"namespace": "istio-system",
+			},
+		},
+		"services": []interface{}{
+			map[string]interface{}{
+				"name": "ratings",
+			},
+			map[string]interface{}{
+				"name": "reviews",
+			},
+			map[string]interface{}{
+				"name": "details",
+			},
+			map[string]interface{}{
+				"name": "productpage",
+			},
+		},
+	}
+	return []kubernetes.IstioObject{&quotaSpec}
 }
 
 func mockGetIstioConfigDetails() IstioConfigService {
@@ -566,7 +660,9 @@ func mockGetIstioConfigDetails() IstioConfigService {
 	k8s.On("GetVirtualService", "test", "reviews").Return(fakeGetVirtualServices()[0], nil)
 	k8s.On("GetDestinationRule", "test", "reviews-dr").Return(fakeGetDestinationRules()[0], nil)
 	k8s.On("GetServiceEntry", "test", "googleapis").Return(fakeGetServiceEntries()[0], nil)
-	k8s.On("GetIstioRuleDetails", "test", "checkfromcustomer").Return(fakegetIstioRuleDetails(), nil)
+	k8s.On("GetIstioRuleDetails", "test", "checkfromcustomer").Return(fakeGetIstioRuleDetails(), nil)
+	k8s.On("GetQuotaSpec", "test", "request-count").Return(fakeGetQuotaSpecs()[0], nil)
+	k8s.On("GetQuotaSpecBinding", "test", "request-count").Return(fakeGetQuotaSpecBindings()[0], nil)
 
 	return IstioConfigService{k8s: k8s}
 }
