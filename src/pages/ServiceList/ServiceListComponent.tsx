@@ -16,6 +16,7 @@ import PropTypes from 'prop-types';
 import { NamespaceFilter, NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { PfColors } from '../../components/Pf/PfColors';
 import * as API from '../../services/Api';
+import { Health } from '../../types/Health';
 import Namespace from '../../types/Namespace';
 import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import { Pagination } from '../../types/Pagination';
@@ -26,6 +27,8 @@ import { getRequestErrorsRatio } from '../../utils/Health';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import ItemDescription from './ItemDescription';
 import './ServiceListComponent.css';
+
+type ServiceItemHealth = ServiceItem & { health: Health };
 
 // Exported for test
 export const sortFields: SortField[] = [
@@ -61,17 +64,37 @@ export const sortFields: SortField[] = [
   {
     title: 'Error Rate',
     isNumeric: true,
-    compare: (a: ServiceItem, b: ServiceItem) => {
-      const ratioA = a.health ? getRequestErrorsRatio(a.health.requests).value : -1;
-      const ratioB = b.health ? getRequestErrorsRatio(b.health.requests).value : -1;
+    compare: (a: ServiceItemHealth, b: ServiceItemHealth) => {
+      const ratioA = getRequestErrorsRatio(a.health.requests).value;
+      const ratioB = getRequestErrorsRatio(b.health.requests).value;
       return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioA - ratioB;
     }
   }
 ];
 
 // Exported for test
-export const sortServices = (services: ServiceItem[], sortField: SortField, isAscending: boolean): ServiceItem[] => {
-  return services.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+export const sortServices = (
+  services: ServiceItem[],
+  sortField: SortField,
+  isAscending: boolean
+): Promise<ServiceItem[]> => {
+  if (sortField.title === 'Error Rate') {
+    // In the case of error rate sorting, we may not have all health promises ready yet
+    // So we need to get them all before actually sorting
+    const allHealthPromises: Promise<ServiceItemHealth>[] = services.map(item => {
+      return item.healthPromise.then(health => {
+        const withHealth: any = item;
+        withHealth.health = health;
+        return withHealth;
+      });
+    });
+    return Promise.all(allHealthPromises).then(arr => {
+      return arr.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+    });
+  }
+  // Default case: sorting is done synchronously
+  const sorted = services.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+  return Promise.resolve(sorted);
 };
 
 const serviceNameFilter: FilterType = {
@@ -160,20 +183,20 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   };
 
   updateSortField = (sortField: SortField) => {
-    this.setState(prevState => {
-      return {
+    sortServices(this.state.services, sortField, this.state.isSortAscending).then(sorted => {
+      this.setState({
         currentSortField: sortField,
-        services: sortServices(prevState.services, sortField, prevState.isSortAscending)
-      };
+        services: sorted
+      });
     });
   };
 
   updateSortDirection = () => {
-    this.setState(prevState => {
-      return {
-        isSortAscending: !prevState.isSortAscending,
-        services: sortServices(prevState.services, prevState.currentSortField, !prevState.isSortAscending)
-      };
+    sortServices(this.state.services, this.state.currentSortField, !this.state.isSortAscending).then(sorted => {
+      this.setState({
+        isSortAscending: !this.state.isSortAscending,
+        services: sorted
+      });
     });
   };
 
@@ -220,16 +243,15 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             updatedServices.push(overviewToItem(overview, namespace, healthProm));
           });
         });
-        updatedServices = sortServices(updatedServices, this.state.currentSortField, this.state.isSortAscending);
-        this.setState(prevState => {
-          return {
-            services: updatedServices,
+        sortServices(updatedServices, this.state.currentSortField, this.state.isSortAscending).then(sorted => {
+          this.setState({
+            services: sorted,
             pagination: {
               page: 1,
-              perPage: prevState.pagination.perPage,
+              perPage: this.state.pagination.perPage,
               perPageOptions: perPageOptions
             }
-          };
+          });
         });
       })
       .catch(servicesError => this.handleAxiosError('Could not fetch service list.', servicesError));

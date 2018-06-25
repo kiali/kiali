@@ -14,7 +14,6 @@ export interface ServiceList {
 export interface ServiceItem extends ServiceOverview {
   namespace: string;
   healthPromise: Promise<Health>;
-  health?: Health;
 }
 
 export const overviewToItem = (
@@ -22,14 +21,12 @@ export const overviewToItem = (
   namespace: string,
   healthPromise: Promise<Health>
 ): ServiceItem => {
-  const item: ServiceItem = {
+  return {
     name: overview.name,
     istioSidecar: overview.istioSidecar,
     namespace: namespace,
     healthPromise: healthPromise
   };
-  healthPromise.then(h => (item.health = h));
-  return item;
 };
 
 export const IstioLogo = require('../assets/img/istio-logo.svg');
