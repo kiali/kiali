@@ -15,7 +15,7 @@ type swaggIstioConfigList struct {
 
 // IstioConfigList istioConfigList
 //
-// This is used for returning a response of IstioConfigList
+// This type is used for returning a response of IstioConfigList
 //
 // swagger:model IstioConfigList
 type IstioConfigList struct {

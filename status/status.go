@@ -16,6 +16,7 @@ type swaggStatusInfoResp struct {
 	// in:body
 	Body struct {
 		// HTTP status code
+		// example: 200
 		// default: 200
 		Code int `json:"code"`
 		// StatusInfo model

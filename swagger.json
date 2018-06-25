@@ -6,19 +6,20 @@
     "application/json"
   ],
   "schemes": [
-    "http"
+    "http",
+    "https"
   ],
   "swagger": "2.0",
   "info": {
     "description": "Kiali project, observability for the Istio service mesh",
     "title": "Kiali",
-    "version": "0.2.0.Alpha"
+    "version": "_"
   },
   "basePath": "/api",
   "paths": {
     "/": {
       "get": {
-        "description": "Handler to get the status of Kiali",
+        "description": "Endpoint to get the status of Kiali",
         "consumes": [
           "application/json"
         ],
@@ -26,19 +27,29 @@
           "application/json"
         ],
         "schemes": [
-          "http"
+          "http",
+          "https"
         ],
         "operationId": "Root",
         "responses": {
           "200": {
             "$ref": "#/responses/statusInfo"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
           }
         }
       }
     },
     "/namespaces/{namespace}/istio": {
       "get": {
-        "description": "Handler to get the list of Istio Config of a namespace",
+        "description": "Endpoint to get the list of Istio Config of a namespace",
         "consumes": [
           "application/json"
         ],
@@ -46,7 +57,8 @@
           "application/json"
         ],
         "schemes": [
-          "http"
+          "http",
+          "https"
         ],
         "operationId": "istioConfigList",
         "parameters": [
@@ -62,13 +74,22 @@
         "responses": {
           "200": {
             "$ref": "#/responses/istioConfigList"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
           }
         }
       }
     },
     "/status": {
       "get": {
-        "description": "Handler to get the status of Kiali",
+        "description": "Endpoint to get the status of Kiali",
         "consumes": [
           "application/json"
         ],
@@ -76,12 +97,22 @@
           "application/json"
         ],
         "schemes": [
-          "http"
+          "http",
+          "https"
         ],
         "operationId": "getStatus",
         "responses": {
           "200": {
             "$ref": "#/responses/statusInfo"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -96,7 +127,7 @@
             ]
           }
         ],
-        "description": "Handler to get the authentication token",
+        "description": "Endpoint to get the authentication token",
         "consumes": [
           "application/json"
         ],
@@ -104,20 +135,63 @@
           "application/json"
         ],
         "schemes": [
-          "http"
+          "http",
+          "https"
         ],
         "operationId": "GetToken",
         "responses": {
           "200": {
             "$ref": "#/responses/tokenGenerated"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
           }
         }
       }
     }
   },
   "definitions": {
+    "Gateway": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "resourceVersion": {
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selector": {
+          "type": "object",
+          "x-go-name": "Selector"
+        },
+        "servers": {
+          "type": "object",
+          "x-go-name": "Servers"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Gateways": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Gateway"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "IstioConfigList": {
-      "description": "This is used for returning a response of IstioConfigList",
+      "description": "This type is used for returning a response of IstioConfigList",
       "type": "object",
       "title": "IstioConfigList istioConfigList",
       "required": [
@@ -130,6 +204,9 @@
         "destinationRules": {
           "$ref": "#/definitions/destinationRules"
         },
+        "gateways": {
+          "$ref": "#/definitions/Gateways"
+        },
         "namespace": {
           "$ref": "#/definitions/namespace"
         },
@@ -139,8 +216,60 @@
         "rules": {
           "$ref": "#/definitions/istioRules"
         },
+        "serviceEntries": {
+          "$ref": "#/definitions/ServiceEntries"
+        },
         "virtualServices": {
           "$ref": "#/definitions/virtualServices"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "ServiceEntries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ServiceEntry"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "ServiceEntry": {
+      "type": "object",
+      "properties": {
+        "addresses": {
+          "type": "object",
+          "x-go-name": "Addresses"
+        },
+        "createdAt": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "endpoints": {
+          "type": "object",
+          "x-go-name": "Endpoints"
+        },
+        "hosts": {
+          "type": "object",
+          "x-go-name": "Hosts"
+        },
+        "location": {
+          "type": "object",
+          "x-go-name": "Location"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "ports": {
+          "type": "object",
+          "x-go-name": "Ports"
+        },
+        "resolution": {
+          "type": "object",
+          "x-go-name": "Resolution"
+        },
+        "resourceVersion": {
+          "type": "string",
+          "x-go-name": "ResourceVersion"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -207,7 +336,7 @@
       "x-go-package": "github.com/kiali/kiali/config"
     },
     "destinationPolicies": {
-      "description": "This is used for returning an array of DestinationPolicies",
+      "description": "This type is used for returning an array of DestinationPolicies",
       "type": "array",
       "title": "DestinationPolicies destinationPolicies",
       "items": {
@@ -217,7 +346,7 @@
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
     "destinationPolicy": {
-      "description": "This is used for returning a DestinationPolicy",
+      "description": "This type is used for returning a DestinationPolicy",
       "type": "object",
       "title": "DestinationPolicy destinationPolicy",
       "required": [
@@ -233,6 +362,7 @@
         "createdAt": {
           "description": "The creation date of the destinationPolicy",
           "type": "string",
+          "pattern": "\\w[\\w-]+",
           "x-go-name": "CreatedAt"
         },
         "destination": {
@@ -338,7 +468,7 @@
       "x-go-package": "github.com/kiali/kiali/status"
     },
     "istioRule": {
-      "description": "This is used for returning a IstioRule",
+      "description": "This type type is used for returning a IstioRule",
       "type": "object",
       "title": "IstioRule istioRule",
       "required": [
@@ -363,7 +493,7 @@
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
     "istioRules": {
-      "description": "This is used for returning an array of IstioRules",
+      "description": "This type type is used for returning an array of IstioRules",
       "type": "array",
       "title": "IstioRules istioRules",
       "items": {
@@ -373,9 +503,8 @@
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
     "namespace": {
-      "description": "It is used to describe a set of objects.",
+      "description": "A Namespace provide a scope for names\nThis type is used to describe a set of objects.",
       "type": "object",
-      "title": "A Namespace is the main classification in kiali.",
       "required": [
         "name"
       ],
@@ -391,7 +520,7 @@
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
     "routeRule": {
-      "description": "This is used for returning a RouteRule",
+      "description": "This type is used for returning a RouteRule",
       "type": "object",
       "title": "RouteRule routeRule",
       "required": [
@@ -482,7 +611,7 @@
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
     "routeRules": {
-      "description": "This is used for returning an array of RouteRule",
+      "description": "This type is used for returning an array of RouteRule",
       "type": "array",
       "title": "RouteRules routeRules",
       "items": {
@@ -492,7 +621,7 @@
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
     "virtualService": {
-      "description": "This is used for returning a VirtualService",
+      "description": "This type is used for returning a VirtualService",
       "type": "object",
       "title": "VirtualService virtualService",
       "required": [
@@ -537,7 +666,7 @@
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
     "virtualServices": {
-      "description": "This is used for returning an array of VirtualServices",
+      "description": "This type is used for returning an array of VirtualServices",
       "type": "array",
       "title": "VirtualServices virtualServices",
       "items": {
@@ -548,6 +677,46 @@
     }
   },
   "responses": {
+    "genericError": {
+      "description": "A GenericError is the default error message that is generated.",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 400,
+            "x-go-name": "Code",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
+      }
+    },
+    "internalError": {
+      "description": "A Internal is the error message that means something has gone wrong",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 500,
+            "x-go-name": "Code",
+            "example": 500
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
+      }
+    },
     "istioConfigList": {
       "description": "HTTP status code 200 and IstioConfigList model in data",
       "schema": {
@@ -566,6 +735,26 @@
         }
       }
     },
+    "notFoundError": {
+      "description": "A NotFoundError is the error message that is generated when server could not find what was requested.",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 404,
+            "x-go-name": "Code",
+            "example": 404
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
+      }
+    },
     "statusInfo": {
       "description": "HTTP status code 200 and statusInfo model in data",
       "schema": {
@@ -576,7 +765,8 @@
             "type": "integer",
             "format": "int64",
             "default": 200,
-            "x-go-name": "Code"
+            "x-go-name": "Code",
+            "example": 200
           },
           "data": {
             "$ref": "#/definitions/StatusInfo"

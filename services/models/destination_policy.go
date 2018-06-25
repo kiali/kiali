@@ -6,16 +6,16 @@ import (
 
 // DestinationPolicies destinationPolicies
 //
-// This is used for returning an array of DestinationPolicies
+// This type is used for returning an array of DestinationPolicies
 //
 // swagger:model destinationPolicies
-// An array of destinationPolicie
+// An array of destinationPolicy
 // swagger:allOf
 type DestinationPolicies []DestinationPolicy
 
 // DestinationPolicy destinationPolicy
 //
-// This is used for returning a DestinationPolicy
+// This type is used for returning a DestinationPolicy
 //
 // swagger:model destinationPolicy
 type DestinationPolicy struct {
@@ -26,6 +26,7 @@ type DestinationPolicy struct {
 	// The creation date of the destinationPolicy
 	//
 	// required: true
+	// pattern: \w[\w-]+
 	CreatedAt string `json:"createdAt"`
 	// The resource version of the destinationPolicy
 	//

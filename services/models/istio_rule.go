@@ -11,7 +11,7 @@ type IstioRuleList struct {
 
 // IstioRules istioRules
 //
-// This is used for returning an array of IstioRules
+// This type type is used for returning an array of IstioRules
 //
 // swagger:model istioRules
 // An array of istioRule
@@ -20,7 +20,7 @@ type IstioRules []IstioRule
 
 // IstioRule istioRule
 //
-// This is used for returning a IstioRule
+// This type type is used for returning a IstioRule
 //
 // swagger:model istioRule
 type IstioRule struct {

@@ -2,9 +2,9 @@
 //
 // Kiali project, observability for the Istio service mesh
 //
-//     Schemes: http
+//     Schemes: http, https
 //     BasePath: /api
-//     Version: 0.2.0.Alpha
+//     Version: _
 //
 //     Consumes:
 //     - application/json

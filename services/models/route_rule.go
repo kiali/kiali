@@ -6,7 +6,7 @@ import (
 
 // RouteRules routeRules
 //
-// This is used for returning an array of RouteRule
+// This type is used for returning an array of RouteRule
 //
 // swagger:model routeRules
 // An array of routeRule
@@ -15,7 +15,7 @@ type RouteRules []RouteRule
 
 // RouteRule routeRule
 //
-// This is used for returning a RouteRule
+// This type is used for returning a RouteRule
 //
 // swagger:model routeRule
 type RouteRule struct {

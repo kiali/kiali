@@ -6,8 +6,8 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-// A Namespace is the main classification in kiali.
-// It is used to describe a set of objects.
+// A Namespace provide a scope for names.
+// This type used to describe a set of objects.
 //
 // swagger:parameters istioConfigList
 type NamespaceParam struct {
@@ -18,8 +18,8 @@ type NamespaceParam struct {
 	Name string `json:"namespace"`
 }
 
-// A Namespace is the main classification in kiali.
-// It is used to describe a set of objects.
+// A Namespace provide a scope for names
+// This type is used to describe a set of objects.
 //
 // swagger:model namespace
 type Namespace struct {

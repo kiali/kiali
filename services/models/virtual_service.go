@@ -6,7 +6,7 @@ import (
 
 // VirtualServices virtualServices
 //
-// This is used for returning an array of VirtualServices
+// This type is used for returning an array of VirtualServices
 //
 // swagger:model virtualServices
 // An array of virtualService
@@ -15,7 +15,7 @@ type VirtualServices []VirtualService
 
 // VirtualService virtualService
 //
-// This is used for returning a VirtualService
+// This type is used for returning a VirtualService
 //
 // swagger:model virtualService
 type VirtualService struct {
