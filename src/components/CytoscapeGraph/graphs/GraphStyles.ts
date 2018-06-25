@@ -34,6 +34,12 @@ export class GraphStyles {
       }
     };
 
+    const nodeSelectedStyle = {
+      'background-color': PfColors.Blue50,
+      'border-color': PfColors.Blue200,
+      'border-width': '2px'
+    };
+
     return [
       {
         selector: 'node',
@@ -74,11 +80,7 @@ export class GraphStyles {
       },
       {
         selector: 'node:selected',
-        style: {
-          'background-color': PfColors.Blue50,
-          'border-color': PfColors.Blue200,
-          'border-width': '2px'
-        }
+        style: nodeSelectedStyle
       },
       {
         selector: 'node[isRoot]',
@@ -202,6 +204,14 @@ export class GraphStyles {
           'border-color': FAILURE.color,
           'border-width': '3px'
         }
+      },
+      {
+        selector: 'node:selected.' + DEGRADED.name,
+        style: nodeSelectedStyle
+      },
+      {
+        selector: 'node:selected.' + FAILURE.name,
+        style: nodeSelectedStyle
       },
       {
         selector: 'edge.' + DimClass,
