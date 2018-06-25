@@ -156,6 +156,8 @@ rules:
   resources:
   - virtualservices
   - destinationrules
+  - serviceentries
+  - gateways
   verbs:
   - get
   - list
