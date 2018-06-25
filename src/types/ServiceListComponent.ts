@@ -3,7 +3,6 @@ import { Health } from './Health';
 
 export interface ServiceOverview {
   name: string;
-  health: Health;
   istioSidecar: boolean;
 }
 
@@ -14,15 +13,23 @@ export interface ServiceList {
 
 export interface ServiceItem extends ServiceOverview {
   namespace: string;
+  healthPromise: Promise<Health>;
+  health?: Health;
 }
 
-export const overviewToItem = (overview: ServiceOverview, namespace: string): ServiceItem => {
-  return {
+export const overviewToItem = (
+  overview: ServiceOverview,
+  namespace: string,
+  healthPromise: Promise<Health>
+): ServiceItem => {
+  const item: ServiceItem = {
     name: overview.name,
-    health: overview.health,
     istioSidecar: overview.istioSidecar,
-    namespace: namespace
+    namespace: namespace,
+    healthPromise: healthPromise
   };
+  healthPromise.then(h => (item.health = h));
+  return item;
 };
 
 export const IstioLogo = require('../assets/img/istio-logo.svg');

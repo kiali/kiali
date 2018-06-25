@@ -24,7 +24,6 @@ export class HealthIndicator extends React.PureComponent<Props, {}> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { showDetails: false };
     this.updateHealth(props.health);
   }
 

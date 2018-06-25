@@ -2,7 +2,6 @@ import axios, { AxiosError } from 'axios';
 import Namespace from '../types/Namespace';
 import MetricsOptions from '../types/MetricsOptions';
 import { Metrics } from '../types/Metrics';
-import ServiceListOptions from '../types/ServiceListOptions';
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
 import { IstioConfigList } from '../types/IstioConfigListComponent';
 import { NamespaceValidations, ServiceDetailsInfo, Validations } from '../types/ServiceInfo';
@@ -88,12 +87,8 @@ export const getIstioConfigDetail = (
   return newRequest('get', `/api/namespaces/${namespace}/istio/${objectType}/${object}`, {}, {}, auth);
 };
 
-export const getServices = (
-  auth: string,
-  namespace: String,
-  params?: ServiceListOptions
-): Promise<Response<ServiceList>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/services`, params, {}, auth);
+export const getServices = (auth: string, namespace: String): Promise<Response<ServiceList>> => {
+  return newRequest('get', `/api/namespaces/${namespace}/services`, {}, {}, auth);
 };
 
 export const getServiceMetrics = (
