@@ -46,7 +46,12 @@ export default class RpsChart extends React.Component<RpsChartTypeProp, {}> {
   }
 
   private thereIsTrafficData = () => {
-    return this.props.dataRps.length > 0 && this.props.dataRps[0].length > 1;
+    const dataRps: any = this.props.dataRps;
+    return (
+      dataRps.length > 0 &&
+      dataRps[0].length > 1 &&
+      dataRps[1].slice(1).reduce((accum, val) => accum + parseFloat(val), 0) > 0
+    );
   };
 
   private renderMinMaxStats = () => {
