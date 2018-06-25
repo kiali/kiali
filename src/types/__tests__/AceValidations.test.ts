@@ -23,7 +23,7 @@ const destinationPolicyValidations: Validations = {
       valid: false,
       checks: [
         {
-          message: 'Destination doesnt have a valid service',
+          message: "Destination doesn't have a valid service",
           severity: 'error',
           path: 'spec/destination'
         }
@@ -40,7 +40,7 @@ const destinationRuleValidations: Validations = {
       valid: false,
       checks: [
         {
-          message: 'Host doesnt have a valid service',
+          message: "Host doesn't have a valid service",
           severity: 'error',
           path: 'spec/host'
         }
@@ -57,7 +57,7 @@ const routeRuleValidations: Validations = {
       valid: false,
       checks: [
         {
-          message: 'Destination doesnt have a valid service',
+          message: "Destination doesn't have a valid service",
           severity: 'error',
           path: 'spec/destination'
         },
@@ -121,7 +121,7 @@ const virtualServicesValidations: Validations = {
       valid: false,
       checks: [
         {
-          message: 'Hosts doesnt have a valid service',
+          message: "Hosts doesn't have a valid service",
           severity: 'error',
           path: 'spec/hosts'
         }
@@ -157,7 +157,7 @@ describe('#parseAceValidations in DestinationPolicy', () => {
       expect(annotation.column).toBe(0);
       expect(annotation.row).toBe(4);
       expect(annotation.type).toBe('error');
-      expect(annotation.text).toBe('Destination doesnt have a valid service');
+      expect(annotation.text).toBe("Destination doesn't have a valid service");
     });
   });
 });
@@ -186,7 +186,7 @@ describe('#parseAceValidations in DestinationRule', () => {
       expect(annotation.column).toBe(0);
       expect(annotation.row).toBe(3);
       expect(annotation.type).toBe('error');
-      expect(annotation.text).toBe('Host doesnt have a valid service');
+      expect(annotation.text).toBe("Host doesn't have a valid service");
     });
   });
 });
@@ -217,7 +217,7 @@ describe('#parseAceValidations in RouteRule', () => {
       expect(annotation.column).toBe(0);
       expect(annotation.row).toBe(3);
       expect(annotation.type).toBe('error');
-      expect(annotation.text).toBe('Destination doesnt have a valid service');
+      expect(annotation.text).toBe("Destination doesn't have a valid service");
 
       /*
         Check it marks lines 7-8:
@@ -383,7 +383,7 @@ describe('#parseAceValidations in VirtualService', () => {
       expect(annotation.column).toBe(0);
       expect(annotation.row).toBe(3);
       expect(annotation.type).toBe('error');
-      expect(annotation.text).toBe('Hosts doesnt have a valid service');
+      expect(annotation.text).toBe("Hosts doesn't have a valid service");
     });
   });
 });
