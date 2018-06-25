@@ -103,11 +103,11 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
     Potential paths:
       - <empty, no path>
       - spec/destination
-      - spec/name (this is used for destination Rules which maps spec/name into destinationName)
+      - spec/hosts
+      - spec/host
       - spec/precedence/<value>
       - spec/route[<nWeight>]/weight/<value>
       - spec/route[<nLabel>]/labels
-      - spec/hosts
 
     For this version we are going to mark the first element block.
     In future iterations we can add more granularity and try to mark just the offending word.
@@ -116,9 +116,10 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
     let path = check.path;
     if (path.startsWith('spec/destination')) {
       aceMarker = parseMarker(yaml, 'destination:');
-    } else if (path.startsWith('spec/name')) {
-      // This usecase comes from Destination Rule, the spec/name in the original yaml object is brought into kiali as destinationName field
-      aceMarker = parseMarker(yaml, 'destinationName:');
+    } else if (path.startsWith('spec/hosts')) {
+      aceMarker = parseMarker(yaml, 'hosts:');
+    } else if (path.startsWith('spec/host')) {
+      aceMarker = parseMarker(yaml, 'host:');
     } else if (path.startsWith('spec/precedence')) {
       aceMarker = parseMarker(yaml, 'precedence:');
     } else if (path.startsWith('spec/route[')) {
@@ -128,8 +129,6 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
       let occurrences = indexPos + 1;
       let searchFor = check.path.endsWith('labels') ? 'labels:' : 'weight:';
       aceMarker = parseMarker(yaml, searchFor, occurrences);
-    } else if (path.startsWith('spec/hosts')) {
-      aceMarker = parseMarker(yaml, 'hosts:');
     }
   }
 
