@@ -149,6 +149,14 @@ func getServiceMetrics(api v1.API, q *ServiceMetricsQuery) Metrics {
 	clustername := config.Get().ExternalServices.Istio.IstioIdentityDomain
 	destService := fmt.Sprintf("destination_service=\"%s.%s.%s\"", q.Service, q.Namespace, clustername)
 	srcService := fmt.Sprintf("source_service=\"%s.%s.%s\"", q.Service, q.Namespace, clustername)
+	if q.Service == "unknown" {
+		destService = "destination_service=\"unknown\""
+		srcService = "source_service=\"unknown\""
+		if q.Namespace != "unknown" {
+			destService += fmt.Sprintf(",source_service=~\".*\\\\.%s\\\\.%s\"", q.Namespace, clustername)
+			srcService += fmt.Sprintf(",destination_service=~\".*\\\\.%s\\\\.%s\"", q.Namespace, clustername)
+		}
+	}
 	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version, q.IncludeIstio)
 	groupingIn := joinLabels(q.ByLabelsIn)
 	groupingOut := joinLabels(q.ByLabelsOut)
