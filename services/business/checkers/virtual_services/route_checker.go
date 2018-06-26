@@ -18,13 +18,19 @@ type RouteChecker struct{ kubernetes.IstioObject }
 // 3. Sum of all weights are 100 (if only one weight, then it assumes that is 100).
 // 4. All the route has to have weight label.
 func (route RouteChecker) Check() ([]*models.IstioCheck, bool) {
+	checks, valid := route.checkRoutesFor("http")
+	tcpChecks, tcpValid := route.checkRoutesFor("tcp")
+	return append(checks, tcpChecks...), valid && tcpValid
+}
+
+func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	var weightSum int
 	var weightCount int
 	var valid = true
 
-	http := route.GetSpec()["http"]
+	http := route.GetSpec()[kind]
 	if http == nil {
 		return validations, valid
 	}
@@ -36,13 +42,13 @@ func (route RouteChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	for i := 0; i < slice.Len(); i++ {
-		httpRoute, ok := slice.Index(i).Interface().(map[string]interface{})
-		if !ok || httpRoute["route"] == nil {
+		route, ok := slice.Index(i).Interface().(map[string]interface{})
+		if !ok || route["route"] == nil {
 			continue
 		}
 
 		// Getting a []DestinationWeight
-		destinationWeights := reflect.ValueOf(httpRoute["route"])
+		destinationWeights := reflect.ValueOf(route["route"])
 		if destinationWeights.Kind() != reflect.Slice {
 			return validations, valid
 		}
@@ -58,14 +64,14 @@ func (route RouteChecker) Check() ([]*models.IstioCheck, bool) {
 			if err != nil {
 				valid = false
 				validation := models.BuildCheck("Weight must be a number",
-					"error", "spec/http["+strconv.Itoa(i)+"]/route["+strconv.Itoa(j)+"]/weight/"+destinationWeight["weight"].(string))
+					"error", "spec/"+kind+"["+strconv.Itoa(i)+"]/route["+strconv.Itoa(j)+"]/weight/"+destinationWeight["weight"].(string))
 				validations = append(validations, &validation)
 			}
 
 			if weight > 100 || weight < 0 {
 				valid = false
 				validation := models.BuildCheck("Weight should be between 0 and 100",
-					"error", "spec/http["+strconv.Itoa(i)+"]/route["+strconv.Itoa(i)+"]/weight/"+strconv.Itoa(weight))
+					"error", "spec/"+kind+"["+strconv.Itoa(i)+"]/route["+strconv.Itoa(j)+"]/weight/"+strconv.Itoa(weight))
 				validations = append(validations, &validation)
 			}
 
@@ -75,14 +81,14 @@ func (route RouteChecker) Check() ([]*models.IstioCheck, bool) {
 		if weightCount > 0 && weightSum != 100 {
 			valid = false
 			validation := models.BuildCheck("Weight sum should be 100", "error",
-				"spec/http["+strconv.Itoa(i)+"]/route")
+				"spec/"+kind+"["+strconv.Itoa(i)+"]/route")
 			validations = append(validations, &validation)
 		}
 
 		if weightCount > 0 && weightCount != destinationWeights.Len() {
 			valid = false
 			validation := models.BuildCheck("All routes should have weight", "error",
-				"spec/http["+strconv.Itoa(i)+"]/route")
+				"spec/"+kind+"["+strconv.Itoa(i)+"]/route")
 			validations = append(validations, &validation)
 		}
 	}

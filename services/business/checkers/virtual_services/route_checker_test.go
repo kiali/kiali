@@ -31,7 +31,7 @@ func TestServiceMultipleChecks(t *testing.T) {
 	assert.Len(validations, 2)
 	assert.Equal(validations[0].Message, "Weight should be between 0 and 100")
 	assert.Equal(validations[0].Severity, "error")
-	assert.Equal(validations[0].Path, "spec/http[0]/route[0]/weight/155")
+	assert.Equal(validations[0].Path, "spec/http[0]/route[1]/weight/145")
 
 	assert.Equal(validations[1].Message, "Weight sum should be 100")
 	assert.Equal(validations[1].Severity, "error")
@@ -195,14 +195,14 @@ func fakeMultipleChecks() kubernetes.IstioObject {
 				{
 					"route": []map[string]interface{}{
 						{
-							"weight": uint64(155),
+							"weight": uint64(55),
 							"destination": map[string]string{
 								"subset": "v1",
 								"host":   "reviews",
 							},
 						},
 						{
-							"weight": uint64(45),
+							"weight": uint64(145),
 							"destination": map[string]string{
 								"subset": "v1",
 								"host":   "reviews",
