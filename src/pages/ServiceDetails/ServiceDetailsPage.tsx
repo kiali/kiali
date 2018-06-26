@@ -162,7 +162,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     }
   }
 
-  fetchBackend() {
+  fetchBackend = () => {
     let promiseDetails = API.getServiceDetail(
       authentication(),
       this.props.match.params.namespace,
@@ -185,7 +185,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', error));
       });
-  }
+  };
 
   render() {
     const urlParams = new URLSearchParams(this.props.location.search);
@@ -271,6 +271,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
                     service={this.props.match.params.service}
                     serviceDetails={this.state.serviceDetailsInfo}
                     validations={this.state.validations}
+                    onRefresh={this.fetchBackend}
                   />
                 </TabPane>
                 <TabPane eventKey="metrics" mountOnEnter={true} unmountOnExit={true}>
