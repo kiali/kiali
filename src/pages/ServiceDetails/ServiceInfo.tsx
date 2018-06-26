@@ -1,4 +1,18 @@
 import * as React from 'react';
+import {
+  Button,
+  Col,
+  Icon,
+  Nav,
+  NavItem,
+  Row,
+  TabContainer,
+  TabContent,
+  TabPane,
+  ToastNotification,
+  ToastNotificationList
+} from 'patternfly-react';
+
 import ServiceId from '../../types/ServiceId';
 import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
 import ServiceInfoPods from './ServiceInfo/ServiceInfoPods';
@@ -7,24 +21,13 @@ import ServiceInfoRouteRules from './ServiceInfo/ServiceInfoRouteRules';
 import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
 import ServiceInfoDestinationPolicies from './ServiceInfo/ServiceInfoDestinationPolicies';
 import { RouteRule, ServiceDetailsInfo, severityToIconName, Validations } from '../../types/ServiceInfo';
-import {
-  ToastNotification,
-  ToastNotificationList,
-  Col,
-  Icon,
-  Row,
-  TabContainer,
-  TabContent,
-  TabPane,
-  Nav,
-  NavItem
-} from 'patternfly-react';
 import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
   validations: Validations;
+  onRefresh: () => void;
 }
 
 type ServiceInfoState = {
@@ -138,6 +141,9 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
+              <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
+                <Icon name="refresh" />
+              </Button>
               <ServiceInfoDescription
                 name={this.props.serviceDetails.name}
                 createdAt={this.props.serviceDetails.createdAt}

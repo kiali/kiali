@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Col, Row } from 'patternfly-react';
+import { Button, Col, Icon, Row } from 'patternfly-react';
 import { Link, RouteComponentProps } from 'react-router-dom';
 import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { ActiveFilter } from '../../types/NamespaceFilter';
@@ -51,7 +51,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   updateTypeFilter = () => this.updateFilters(true);
 
-  fetchIstioObjectDetails = (props: IstioConfigId) => {
+  fetchIstioObjectDetails = () => {
+    this.fetchIstioObjectDetailsFromProps(this.props.match.params);
+  };
+
+  fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {
     let promiseConfigDetails = API.getIstioConfigDetail(
       authentication(),
       props.namespace,
@@ -77,11 +81,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   componentDidMount() {
-    this.fetchIstioObjectDetails(this.props.match.params);
+    this.fetchIstioObjectDetails();
   }
 
   componentWillReceiveProps(nextProps: RouteComponentProps<IstioConfigId>) {
-    this.fetchIstioObjectDetails(nextProps.match.params);
+    this.fetchIstioObjectDetailsFromProps(nextProps.match.params);
   }
 
   renderEditor(routingObject: any) {
@@ -91,6 +95,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       <div className="container-fluid container-cards-pf">
         <Row className="row-cards-pf">
           <Col>
+            <Button onClick={this.fetchIstioObjectDetails} style={{ float: 'right' }}>
+              <Icon name="refresh" />
+            </Button>
             <h1>{this.props.match.params.objectType + ': ' + this.props.match.params.object}</h1>
             <AceEditor
               mode="yaml"
@@ -148,6 +155,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           <IstioRuleInfo
             namespace={this.state.istioObjectDetails.namespace.name}
             rule={this.state.istioObjectDetails.rule}
+            onRefresh={this.fetchIstioObjectDetails}
             search={this.props.location.search}
           />
         ) : (

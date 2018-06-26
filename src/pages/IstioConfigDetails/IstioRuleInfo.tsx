@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Col, Row } from 'patternfly-react';
+import { Button, Col, Icon, Row } from 'patternfly-react';
 import IstioRuleDetailsDescription from './IstioRuleDestailsDescription';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
@@ -12,6 +12,7 @@ const yaml = require('js-yaml');
 interface IstioRuleInfoProps {
   namespace: string;
   rule: IstioRuleDetails;
+  onRefresh: () => void;
   search?: string;
 }
 
@@ -133,6 +134,9 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">
             <Col>
+              <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
+                <Icon name="refresh" />
+              </Button>
               <h1>{parsedSearch.type + ': ' + parsedSearch.name}</h1>
               <AceEditor
                 mode="yaml"

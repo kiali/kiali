@@ -31,7 +31,13 @@ describe('#ServiceInfo render correctly with data', () => {
       };
 
       const wrapper = shallow(
-        <ServiceInfo namespace="istio-system" service="reviews" serviceDetails={serviceDetailsInfo} validations={{}} />
+        <ServiceInfo
+          namespace="istio-system"
+          service="reviews"
+          serviceDetails={serviceDetailsInfo}
+          validations={{}}
+          onRefresh={jest.fn()}
+        />
       );
       expect(wrapper).toBeDefined();
       expect(wrapper).toMatchSnapshot();
