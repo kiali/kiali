@@ -1,6 +1,5 @@
 import * as GraphData from '../__mockData__/getGraphElements';
 import { AxiosError } from 'axios';
-import ServiceListOptions from '../../types/ServiceListOptions';
 
 const fs = require('fs');
 
@@ -21,7 +20,7 @@ export const getNamespaces = () => {
   return mockPromiseFromFile(`./src/services/__mockData__/getNamespaces.json`);
 };
 
-export const getServices = (namespace: String, params?: ServiceListOptions) => {
+export const getServices = (namespace: String) => {
   return mockPromiseFromFile(`./src/services/__mockData__/getServices.json`);
 };
 

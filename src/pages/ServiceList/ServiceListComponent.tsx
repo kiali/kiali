@@ -14,19 +14,21 @@ import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 import { NamespaceFilter, NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
-import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
-import * as API from '../../services/Api';
-import Namespace from '../../types/Namespace';
-import { Pagination } from '../../types/Pagination';
-import { IstioLogo, ServiceItem, ServiceList, SortField, overviewToItem } from '../../types/ServiceListComponent';
-import { getRequestErrorsRatio } from '../../utils/Health';
-import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
-
-import ServiceErrorRate from './ServiceErrorRate';
-import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import { PfColors } from '../../components/Pf/PfColors';
+import * as API from '../../services/Api';
+import { Health } from '../../types/Health';
+import Namespace from '../../types/Namespace';
+import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
+import { Pagination } from '../../types/Pagination';
+import { IstioLogo, ServiceItem, ServiceOverview, SortField, overviewToItem } from '../../types/ServiceListComponent';
 import { authentication } from '../../utils/Authentication';
+import { getRequestErrorsRatio } from '../../utils/Health';
+
+import RateIntervalToolbarItem from './RateIntervalToolbarItem';
+import ItemDescription from './ItemDescription';
 import './ServiceListComponent.css';
+
+type ServiceItemHealth = ServiceItem & { health: Health };
 
 // Exported for test
 export const sortFields: SortField[] = [
@@ -62,17 +64,37 @@ export const sortFields: SortField[] = [
   {
     title: 'Error Rate',
     isNumeric: true,
-    compare: (a: ServiceItem, b: ServiceItem) => {
-      const ratioA = getRequestErrorsRatio(a.health.requests);
-      const ratioB = getRequestErrorsRatio(b.health.requests);
-      return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioA.value - ratioB.value;
+    compare: (a: ServiceItemHealth, b: ServiceItemHealth) => {
+      const ratioA = getRequestErrorsRatio(a.health.requests).value;
+      const ratioB = getRequestErrorsRatio(b.health.requests).value;
+      return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioA - ratioB;
     }
   }
 ];
 
 // Exported for test
-export const sortServices = (services: ServiceItem[], sortField: SortField, isAscending: boolean): ServiceItem[] => {
-  return services.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+export const sortServices = (
+  services: ServiceItem[],
+  sortField: SortField,
+  isAscending: boolean
+): Promise<ServiceItem[]> => {
+  if (sortField.title === 'Error Rate') {
+    // In the case of error rate sorting, we may not have all health promises ready yet
+    // So we need to get them all before actually sorting
+    const allHealthPromises: Promise<ServiceItemHealth>[] = services.map(item => {
+      return item.healthPromise.then(health => {
+        const withHealth: any = item;
+        withHealth.health = health;
+        return withHealth;
+      });
+    });
+    return Promise.all(allHealthPromises).then(arr => {
+      return arr.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+    });
+  }
+  // Default case: sorting is done synchronously
+  const sorted = services.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+  return Promise.resolve(sorted);
 };
 
 const serviceNameFilter: FilterType = {
@@ -161,20 +183,20 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   };
 
   updateSortField = (sortField: SortField) => {
-    this.setState(prevState => {
-      return {
+    sortServices(this.state.services, sortField, this.state.isSortAscending).then(sorted => {
+      this.setState({
         currentSortField: sortField,
-        services: sortServices(prevState.services, sortField, prevState.isSortAscending)
-      };
+        services: sorted
+      });
     });
   };
 
   updateSortDirection = () => {
-    this.setState(prevState => {
-      return {
-        isSortAscending: !prevState.isSortAscending,
-        services: sortServices(prevState.services, prevState.currentSortField, !prevState.isSortAscending)
-      };
+    sortServices(this.state.services, this.state.currentSortField, !this.state.isSortAscending).then(sorted => {
+      this.setState({
+        isSortAscending: !this.state.isSortAscending,
+        services: sorted
+      });
     });
   };
 
@@ -204,32 +226,32 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   };
 
   fetchServices(namespaces: string[], servicenameFilters: string[], istioFilters: string[]) {
-    const promises = namespaces.map(ns =>
-      API.getServices(authentication(), ns, { rateInterval: this.rateInterval + 's' })
-    );
+    const promises = namespaces.map(ns => API.getServices(authentication(), ns));
     Promise.all(promises)
       .then(servicesResponse => {
         let updatedServices: ServiceItem[] = [];
         servicesResponse.forEach(serviceResponse => {
-          const serviceList: ServiceList = serviceResponse.data;
-          const namespace = serviceList.namespace;
-          serviceList.services.forEach(overview => {
-            updatedServices.push(overviewToItem(overview, namespace.name));
+          const namespace = serviceResponse.data.namespace.name;
+          let serviceList = serviceResponse.data.services;
+          if (servicenameFilters.length > 0 || istioFilters.length > 0) {
+            serviceList = serviceList.filter(service => this.isFiltered(service, servicenameFilters, istioFilters));
+          }
+          serviceList.forEach(overview => {
+            const healthProm = API.getServiceHealth(authentication(), namespace, overview.name, this.rateInterval).then(
+              r => r.data
+            );
+            updatedServices.push(overviewToItem(overview, namespace, healthProm));
           });
         });
-        if (servicenameFilters.length > 0 || istioFilters.length > 0) {
-          updatedServices = this.filterServices(updatedServices, servicenameFilters, istioFilters);
-        }
-        updatedServices = sortServices(updatedServices, this.state.currentSortField, this.state.isSortAscending);
-        this.setState(prevState => {
-          return {
-            services: updatedServices,
+        sortServices(updatedServices, this.state.currentSortField, this.state.isSortAscending).then(sorted => {
+          this.setState({
+            services: sorted,
             pagination: {
               page: 1,
-              perPage: prevState.pagination.perPage,
+              perPage: this.state.pagination.perPage,
               perPageOptions: perPageOptions
             }
-          };
+          });
         });
       })
       .catch(servicesError => this.handleAxiosError('Could not fetch service list.', servicesError));
@@ -251,7 +273,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     return cleanArray;
   }
 
-  isFiltered(service: ServiceItem, servicenameFilters: string[], istioFilters: string[]) {
+  isFiltered(service: ServiceOverview, servicenameFilters: string[], istioFilters: string[]) {
     let serviceNameFiltered = true;
     if (servicenameFilters.length > 0) {
       serviceNameFiltered = false;
@@ -276,13 +298,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     return serviceNameFiltered && istioFiltered;
   }
 
-  filterServices(services: ServiceItem[], servicenameFilters: string[], istioFilters: string[]) {
-    let filteredServices: ServiceItem[] = services.filter(service =>
-      this.isFiltered(service, servicenameFilters, istioFilters)
-    );
-    return filteredServices;
-  }
-
   render() {
     let serviceList: any = [];
     let pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
@@ -292,26 +307,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     for (let i = pageStart; i < pageEnd; i++) {
       const serviceItem = this.state.services[i];
       const to = '/namespaces/' + serviceItem.namespace + '/services/' + serviceItem.name;
-      const serviceDescriptor = (
-        <table style={{ width: '30em', tableLayout: 'fixed' }}>
-          <tbody>
-            <tr>
-              <td>
-                <strong>Health: </strong>
-                <HealthIndicator
-                  id={serviceItem.name}
-                  health={serviceItem.health}
-                  mode={DisplayMode.SMALL}
-                  rateInterval={this.rateInterval}
-                />
-              </td>
-              <td>
-                <ServiceErrorRate requestHealth={serviceItem.health.requests} />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      );
 
       serviceList.push(
         <Link key={to} to={to} style={{ color: PfColors.Black }}>
@@ -320,11 +315,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             heading={
               <div className="ServiceList-Heading">
                 <div className="ServiceList-IstioLogo">
-                  {serviceItem.istioSidecar ? (
-                    <img className="IstioLogo" src={IstioLogo} alt="Istio sidecar" />
-                  ) : (
-                    undefined
-                  )}
+                  {serviceItem.istioSidecar && <img className="IstioLogo" src={IstioLogo} alt="Istio sidecar" />}
                 </div>
                 <div className="ServiceList-Title">
                   {serviceItem.name}
@@ -332,7 +323,9 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
                 </div>
               </div>
             }
-            description={serviceDescriptor}
+            // Prettier makes irrelevant line-breaking clashing with tslint
+            // prettier-ignore
+            description={<ItemDescription item={serviceItem} rateInterval={this.rateInterval} />}
           />
         </Link>
       );

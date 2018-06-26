@@ -3,7 +3,6 @@ import { Health } from './Health';
 
 export interface ServiceOverview {
   name: string;
-  health: Health;
   istioSidecar: boolean;
 }
 
@@ -14,14 +13,19 @@ export interface ServiceList {
 
 export interface ServiceItem extends ServiceOverview {
   namespace: string;
+  healthPromise: Promise<Health>;
 }
 
-export const overviewToItem = (overview: ServiceOverview, namespace: string): ServiceItem => {
+export const overviewToItem = (
+  overview: ServiceOverview,
+  namespace: string,
+  healthPromise: Promise<Health>
+): ServiceItem => {
   return {
     name: overview.name,
-    health: overview.health,
     istioSidecar: overview.istioSidecar,
-    namespace: namespace
+    namespace: namespace,
+    healthPromise: healthPromise
   };
 };
 

@@ -1,13 +1,13 @@
 import { sortFields, sortServices } from '../ServiceListComponent';
 import { ServiceItem } from '../../../types/ServiceListComponent';
-import { RequestHealth } from '../../../types/Health';
+import { Health, RequestHealth } from '../../../types/Health';
 
-const makeService = (name: string, reqCount: number, errCount: number): ServiceItem => {
+const makeService = (name: string, reqCount: number, errCount: number): ServiceItem & { health: Health } => {
   const reqErrs: RequestHealth = {
     requestCount: reqCount,
     requestErrorCount: errCount
   };
-  return { name: name, health: { requests: reqErrs } } as ServiceItem;
+  return { name: name, health: { requests: reqErrs } } as ServiceItem & { health: Health };
 };
 
 describe('SortField#compare', () => {
@@ -34,14 +34,18 @@ describe('SortField#compare', () => {
 describe('ServiceListComponent#sortServices', () => {
   const sortField = sortFields.find(s => s.title === 'Service Name')!;
   const services = [makeService('A', 0, 0), makeService('B', 0, 0)];
-  it('should sort ascending', () => {
-    const sorted = sortServices(services, sortField, true);
-    expect(sorted[0].name).toBe('A');
-    expect(sorted[1].name).toBe('B');
+  it('should sort ascending', done => {
+    sortServices(services, sortField, true).then(sorted => {
+      expect(sorted[0].name).toBe('A');
+      expect(sorted[1].name).toBe('B');
+      done();
+    });
   });
-  it('should sort descending', () => {
-    const sorted = sortServices(services, sortField, false);
-    expect(sorted[0].name).toBe('B');
-    expect(sorted[1].name).toBe('A');
+  it('should sort descending', done => {
+    sortServices(services, sortField, false).then(sorted => {
+      expect(sorted[0].name).toBe('B');
+      expect(sorted[1].name).toBe('A');
+      done();
+    });
   });
 });
