@@ -50,6 +50,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 func (in VirtualServiceChecker) enabledCheckersFor(object kubernetes.IstioObject) []Checker {
 	return []Checker{
 		virtual_services.PrecedenceChecker{object},
+		virtual_services.RouteChecker{object},
 		virtual_services.VersionPresenceChecker{in.Namespace, in.PodList,
 			in.DestinationRules, object},
 	}
