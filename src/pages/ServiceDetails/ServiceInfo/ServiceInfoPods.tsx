@@ -13,10 +13,18 @@ class ServiceInfoPods extends React.Component<Props> {
 
   constructor(props: Props) {
     super(props);
+    this.groups = this.updateGroups(props);
+  }
+
+  componentWillReceiveProps(nextProps: Props) {
+    this.groups = this.updateGroups(nextProps);
+  }
+
+  updateGroups(props: Props) {
     if (props.pods) {
-      this.groups = groupPods(props.pods);
+      return groupPods(props.pods);
     } else {
-      this.groups = [];
+      return [];
     }
   }
 
