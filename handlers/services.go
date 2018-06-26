@@ -23,16 +23,10 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-
 	namespace := params["namespace"]
-	queryParams := r.URL.Query()
-	ratesInterval := defaultHealthRateInterval
-	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
-		ratesInterval = rateIntervals[0]
-	}
 
 	// Fetch and build services
-	serviceList, err := business.Svc.GetServiceList(namespace, ratesInterval)
+	serviceList, err := business.Svc.GetServiceList(namespace)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return

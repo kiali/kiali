@@ -18,33 +18,28 @@ type SvcService struct {
 }
 
 // GetServiceList returns a list of all services for a given Namespace
-func (in *SvcService) GetServiceList(namespace, rateInterval string) (*models.ServiceList, error) {
+func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, error) {
 	// Fetch services list
 	kubernetesServices, err := in.k8s.GetServices(namespace)
 	if err != nil {
 		return nil, err
 	}
-	nsHealth := in.health.getNamespaceHealth(namespace, kubernetesServices, rateInterval)
 
 	// Convert to Kiali model
-	return in.buildServiceList(models.Namespace{Name: namespace}, kubernetesServices, nsHealth), nil
+	return in.buildServiceList(models.Namespace{Name: namespace}, kubernetesServices), nil
 }
 
-func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernetes.ServiceList, nsHealth NamespaceHealth) *models.ServiceList {
+func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernetes.ServiceList) *models.ServiceList {
 	services := make([]models.ServiceOverview, len(sl.Services.Items))
 
 	// Convert each k8s service into our model
 	for i, item := range sl.Services.Items {
 		sPods := kubernetes.FilterPodsForService(&item, sl.Pods)
 		hasSideCar := hasIstioSideCar(sPods)
-		overview := models.ServiceOverview{
+		services[i] = models.ServiceOverview{
 			Name:         item.Name,
 			IstioSidecar: hasSideCar,
 		}
-		if health, ok := nsHealth[item.Name]; ok {
-			overview.Health = *health
-		}
-		services[i] = overview
 	}
 
 	return &models.ServiceList{Namespace: namespace, Services: services}

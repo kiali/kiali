@@ -6,7 +6,6 @@ import (
 
 type ServiceOverview struct {
 	Name         string `json:"name"`
-	Health       Health `json:"health"`
 	IstioSidecar bool   `json:"istioSidecar"`
 }
 

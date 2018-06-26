@@ -23,13 +23,12 @@ func TestServiceListParsing(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	prom := new(prometheustest.PromClientMock)
 	k8s.On("GetServices", mock.AnythingOfType("string")).Return(fakeServiceList(), nil)
-	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(prometheus.EnvoyHealth{Inbound: prometheus.EnvoyRatio{Healthy: 1, Total: 1}}, nil)
-	prom.On("GetNamespaceServicesRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeRequestCounters())
-	svc := setupServices(k8s, prom)
+	conf := config.NewConfig()
+	config.Set(conf)
+	svc := SvcService{k8s: k8s}
 
-	serviceList, _ := svc.GetServiceList("Namespace", "1m")
+	serviceList, _ := svc.GetServiceList("Namespace")
 
 	assert.Equal("Namespace", serviceList.Namespace.Name)
 	assert.Len(serviceList.Services, 2)
@@ -37,22 +36,7 @@ func TestServiceListParsing(t *testing.T) {
 	httpbinOverview := serviceList.Services[1]
 
 	assert.Equal("reviews", reviewsOverview.Name)
-	assert.Equal(1, reviewsOverview.Health.Envoy.Inbound.Total)
-	assert.Equal(1, reviewsOverview.Health.Envoy.Inbound.Healthy)
-	assert.Equal(int32(2), reviewsOverview.Health.DeploymentStatuses[0].AvailableReplicas)
-	assert.Equal(int32(3), reviewsOverview.Health.DeploymentStatuses[0].Replicas)
-	assert.Equal(int32(1), reviewsOverview.Health.DeploymentStatuses[1].AvailableReplicas)
-	assert.Equal(int32(2), reviewsOverview.Health.DeploymentStatuses[1].Replicas)
-	assert.Equal(float64(6.6), reviewsOverview.Health.Requests.RequestCount)
-	assert.Equal(float64(1.6), reviewsOverview.Health.Requests.RequestErrorCount)
-
 	assert.Equal("httpbin", httpbinOverview.Name)
-	assert.Equal(1, httpbinOverview.Health.Envoy.Inbound.Total)
-	assert.Equal(1, httpbinOverview.Health.Envoy.Inbound.Healthy)
-	assert.Equal(int32(1), httpbinOverview.Health.DeploymentStatuses[0].AvailableReplicas)
-	assert.Equal(int32(1), httpbinOverview.Health.DeploymentStatuses[0].Replicas)
-	assert.Equal(float64(20.4), httpbinOverview.Health.Requests.RequestCount)
-	assert.Equal(float64(1.4), httpbinOverview.Health.Requests.RequestErrorCount)
 }
 
 func TestSingleServiceHealthParsing(t *testing.T) {
@@ -266,19 +250,6 @@ var sampleUnknownToReviews500 = model.Sample{
 	},
 	Value:     model.SampleValue(1.6),
 	Timestamp: t1,
-}
-
-func fakeRequestCounters() (model.Vector, model.Vector, error) {
-	in := model.Vector{
-		&sampleHttpbinToReviews200,
-		&sampleUnknownToHttpbin200,
-		&sampleUnknownToHttpbin404,
-		&sampleUnknownToReviews500,
-	}
-	out := model.Vector{
-		&sampleHttpbinToReviews200,
-	}
-	return in, out, nil
 }
 
 func fakeServiceRequestCounters() (model.Vector, model.Vector, error) {
