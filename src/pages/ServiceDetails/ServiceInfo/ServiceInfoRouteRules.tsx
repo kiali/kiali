@@ -25,9 +25,12 @@ class ServiceInfoRouteRules extends React.Component<ServiceInfoRouteRulesProps> 
   rawConfig(rule: RouteRule, i: number) {
     return (
       <div className="card-pf-body" key={'ruleconfig' + i}>
-        <h3>
-          <Link to={this.props.editorLink + '?routerule=' + rule.name}>{rule.name}</Link>
-        </h3>
+        <h3>{rule.name}</h3>
+        <div>
+          <Link to={this.props.editorLink + '?routerule=' + rule.name}>
+            Show Yaml <Icon name="angle-double-right" />
+          </Link>
+        </div>
         {this.globalStatus(rule)}
         <div>
           <strong>Created at</strong>: <LocalTime time={rule.createdAt} />

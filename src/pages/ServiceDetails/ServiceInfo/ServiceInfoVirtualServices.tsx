@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Col, Row } from 'patternfly-react';
+import { Col, Row, Icon } from 'patternfly-react';
 import { EditorLink, VirtualService } from '../../../types/ServiceInfo';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
@@ -22,11 +22,12 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
             {(this.props.virtualServices || []).map((virtualService, i) => (
               <div className="card-pf-body" key={'virtualService' + i}>
                 <div>
-                  <h3>
-                    <Link to={this.props.editorLink + '?virtualservice=' + virtualService.name}>
-                      {virtualService.name}
-                    </Link>
-                  </h3>
+                  <h3>{virtualService.name}</h3>
+                </div>
+                <div>
+                  <Link to={this.props.editorLink + '?virtualservice=' + virtualService.name}>
+                    Show Yaml <Icon name="angle-double-right" />
+                  </Link>
                 </div>
                 <div>
                   <strong>Created at</strong>: <LocalTime time={virtualService.createdAt} />

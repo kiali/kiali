@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Col, Row } from 'patternfly-react';
+import { Col, Row, Icon } from 'patternfly-react';
 import { DestinationPolicy, EditorLink } from '../../../types/ServiceInfo';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
@@ -23,9 +23,12 @@ class ServiceInfoDestinationPolicies extends React.Component<ServiceInfoDestinat
               return (
                 <div className="card-pf-body" key={'rule' + i}>
                   <div>
-                    <h3>
-                      <Link to={this.props.editorLink + '?destinationpolicy=' + dPolicy.name}>{dPolicy.name}</Link>
-                    </h3>
+                    <h3>{dPolicy.name}</h3>
+                  </div>
+                  <div>
+                    <Link to={this.props.editorLink + '?destinationpolicy=' + dPolicy.name}>
+                      Show Yaml <Icon name="angle-double-right" />
+                    </Link>
                   </div>
                   <div>
                     <strong>Created at</strong>

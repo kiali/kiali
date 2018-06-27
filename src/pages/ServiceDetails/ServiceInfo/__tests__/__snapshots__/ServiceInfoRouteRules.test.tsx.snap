@@ -88,13 +88,20 @@ ShallowWrapper {
                 className="card-pf-body"
               >
                 <h3>
+                  reviews-default
+                </h3>
+                <div>
                   <Link
                     replace={false}
                     to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                   >
-                    reviews-default
+                    Show Yaml 
+                    <Icon
+                      name="angle-double-right"
+                      type="fa"
+                    />
                   </Link>
-                </h3>
+                </div>
                 
                 <div>
                   <strong>
@@ -161,13 +168,20 @@ ShallowWrapper {
                 className="card-pf-body"
               >
                 <h3>
+                  reviews-test-v2
+                </h3>
+                <div>
                   <Link
                     replace={false}
                     to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                   >
-                    reviews-test-v2
+                    Show Yaml 
+                    <Icon
+                      name="angle-double-right"
+                      type="fa"
+                    />
                   </Link>
-                </h3>
+                </div>
                 
                 <div>
                   <strong>
@@ -253,13 +267,20 @@ ShallowWrapper {
                 className="card-pf-body"
               >
                 <h3>
+                  reviews-default
+                </h3>
+                <div>
                   <Link
                     replace={false}
                     to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                   >
-                    reviews-default
+                    Show Yaml 
+                    <Icon
+                      name="angle-double-right"
+                      type="fa"
+                    />
                   </Link>
-                </h3>
+                </div>
                 
                 <div>
                   <strong>
@@ -326,13 +347,20 @@ ShallowWrapper {
                 className="card-pf-body"
               >
                 <h3>
+                  reviews-test-v2
+                </h3>
+                <div>
                   <Link
                     replace={false}
                     to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                   >
-                    reviews-test-v2
+                    Show Yaml 
+                    <Icon
+                      name="angle-double-right"
+                      type="fa"
+                    />
                   </Link>
-                </h3>
+                </div>
                 
                 <div>
                   <strong>
@@ -411,13 +439,20 @@ ShallowWrapper {
                   className="card-pf-body"
                 >
                   <h3>
+                    reviews-default
+                  </h3>
+                  <div>
                     <Link
                       replace={false}
                       to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                     >
-                      reviews-default
+                      Show Yaml 
+                      <Icon
+                        name="angle-double-right"
+                        type="fa"
+                      />
                     </Link>
-                  </h3>
+                  </div>
                   
                   <div>
                     <strong>
@@ -484,13 +519,20 @@ ShallowWrapper {
                   className="card-pf-body"
                 >
                   <h3>
+                    reviews-test-v2
+                  </h3>
+                  <div>
                     <Link
                       replace={false}
                       to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                     >
-                      reviews-test-v2
+                      Show Yaml 
+                      <Icon
+                        name="angle-double-right"
+                        type="fa"
+                      />
                     </Link>
-                  </h3>
+                  </div>
                   
                   <div>
                     <strong>
@@ -568,13 +610,20 @@ ShallowWrapper {
                     className="card-pf-body"
                   >
                     <h3>
+                      reviews-default
+                    </h3>
+                    <div>
                       <Link
                         replace={false}
                         to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                       >
-                        reviews-default
+                        Show Yaml 
+                        <Icon
+                          name="angle-double-right"
+                          type="fa"
+                        />
                       </Link>
-                    </h3>
+                    </div>
                     
                     <div>
                       <strong>
@@ -639,13 +688,20 @@ ShallowWrapper {
                     className="card-pf-body"
                   >
                     <h3>
+                      reviews-default
+                    </h3>
+                    <div>
                       <Link
                         replace={false}
                         to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                       >
-                        reviews-default
+                        Show Yaml 
+                        <Icon
+                          name="angle-double-right"
+                          type="fa"
+                        />
                       </Link>
-                    </h3>
+                    </div>
                     
                     <div>
                       <strong>
@@ -685,13 +741,20 @@ ShallowWrapper {
                   "props": Object {
                     "children": Array [
                       <h3>
+                        reviews-default
+                      </h3>,
+                      <div>
                         <Link
                           replace={false}
                           to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                         >
-                          reviews-default
+                          Show Yaml 
+                          <Icon
+                            name="angle-double-right"
+                            type="fa"
+                          />
                         </Link>
-                      </h3>,
+                      </div>,
                       "",
                       <div>
                         <strong>
@@ -735,11 +798,26 @@ ShallowWrapper {
                       "key": undefined,
                       "nodeType": "host",
                       "props": Object {
+                        "children": "reviews-default",
+                      },
+                      "ref": null,
+                      "rendered": "reviews-default",
+                      "type": "h3",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
                         "children": <Link
                           replace={false}
                           to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                         >
-                          reviews-default
+                          Show Yaml 
+                          <Icon
+                            name="angle-double-right"
+                            type="fa"
+                          />
                         </Link>,
                       },
                       "ref": null,
@@ -748,15 +826,35 @@ ShallowWrapper {
                         "key": undefined,
                         "nodeType": "class",
                         "props": Object {
-                          "children": "reviews-default",
+                          "children": Array [
+                            "Show Yaml ",
+                            <Icon
+                              name="angle-double-right"
+                              type="fa"
+                            />,
+                          ],
                           "replace": false,
                           "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-default",
                         },
                         "ref": null,
-                        "rendered": "reviews-default",
+                        "rendered": Array [
+                          "Show Yaml ",
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "function",
+                            "props": Object {
+                              "name": "angle-double-right",
+                              "type": "fa",
+                            },
+                            "ref": null,
+                            "rendered": null,
+                            "type": [Function],
+                          },
+                        ],
                         "type": [Function],
                       },
-                      "type": "h3",
+                      "type": "div",
                     },
                     "",
                     Object {
@@ -947,13 +1045,20 @@ ShallowWrapper {
                     className="card-pf-body"
                   >
                     <h3>
+                      reviews-test-v2
+                    </h3>
+                    <div>
                       <Link
                         replace={false}
                         to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                       >
-                        reviews-test-v2
+                        Show Yaml 
+                        <Icon
+                          name="angle-double-right"
+                          type="fa"
+                        />
                       </Link>
-                    </h3>
+                    </div>
                     
                     <div>
                       <strong>
@@ -1018,13 +1123,20 @@ ShallowWrapper {
                     className="card-pf-body"
                   >
                     <h3>
+                      reviews-test-v2
+                    </h3>
+                    <div>
                       <Link
                         replace={false}
                         to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                       >
-                        reviews-test-v2
+                        Show Yaml 
+                        <Icon
+                          name="angle-double-right"
+                          type="fa"
+                        />
                       </Link>
-                    </h3>
+                    </div>
                     
                     <div>
                       <strong>
@@ -1064,13 +1176,20 @@ ShallowWrapper {
                   "props": Object {
                     "children": Array [
                       <h3>
+                        reviews-test-v2
+                      </h3>,
+                      <div>
                         <Link
                           replace={false}
                           to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                         >
-                          reviews-test-v2
+                          Show Yaml 
+                          <Icon
+                            name="angle-double-right"
+                            type="fa"
+                          />
                         </Link>
-                      </h3>,
+                      </div>,
                       "",
                       <div>
                         <strong>
@@ -1114,11 +1233,26 @@ ShallowWrapper {
                       "key": undefined,
                       "nodeType": "host",
                       "props": Object {
+                        "children": "reviews-test-v2",
+                      },
+                      "ref": null,
+                      "rendered": "reviews-test-v2",
+                      "type": "h3",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
                         "children": <Link
                           replace={false}
                           to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                         >
-                          reviews-test-v2
+                          Show Yaml 
+                          <Icon
+                            name="angle-double-right"
+                            type="fa"
+                          />
                         </Link>,
                       },
                       "ref": null,
@@ -1127,15 +1261,35 @@ ShallowWrapper {
                         "key": undefined,
                         "nodeType": "class",
                         "props": Object {
-                          "children": "reviews-test-v2",
+                          "children": Array [
+                            "Show Yaml ",
+                            <Icon
+                              name="angle-double-right"
+                              type="fa"
+                            />,
+                          ],
                           "replace": false,
                           "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2",
                         },
                         "ref": null,
-                        "rendered": "reviews-test-v2",
+                        "rendered": Array [
+                          "Show Yaml ",
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "function",
+                            "props": Object {
+                              "name": "angle-double-right",
+                              "type": "fa",
+                            },
+                            "ref": null,
+                            "rendered": null,
+                            "type": [Function],
+                          },
+                        ],
                         "type": [Function],
                       },
-                      "type": "h3",
+                      "type": "div",
                     },
                     "",
                     Object {
@@ -1350,13 +1504,20 @@ ShallowWrapper {
                   className="card-pf-body"
                 >
                   <h3>
+                    reviews-default
+                  </h3>
+                  <div>
                     <Link
                       replace={false}
                       to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                     >
-                      reviews-default
+                      Show Yaml 
+                      <Icon
+                        name="angle-double-right"
+                        type="fa"
+                      />
                     </Link>
-                  </h3>
+                  </div>
                   
                   <div>
                     <strong>
@@ -1423,13 +1584,20 @@ ShallowWrapper {
                   className="card-pf-body"
                 >
                   <h3>
+                    reviews-test-v2
+                  </h3>
+                  <div>
                     <Link
                       replace={false}
                       to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                     >
-                      reviews-test-v2
+                      Show Yaml 
+                      <Icon
+                        name="angle-double-right"
+                        type="fa"
+                      />
                     </Link>
-                  </h3>
+                  </div>
                   
                   <div>
                     <strong>
@@ -1515,13 +1683,20 @@ ShallowWrapper {
                   className="card-pf-body"
                 >
                   <h3>
+                    reviews-default
+                  </h3>
+                  <div>
                     <Link
                       replace={false}
                       to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                     >
-                      reviews-default
+                      Show Yaml 
+                      <Icon
+                        name="angle-double-right"
+                        type="fa"
+                      />
                     </Link>
-                  </h3>
+                  </div>
                   
                   <div>
                     <strong>
@@ -1588,13 +1763,20 @@ ShallowWrapper {
                   className="card-pf-body"
                 >
                   <h3>
+                    reviews-test-v2
+                  </h3>
+                  <div>
                     <Link
                       replace={false}
                       to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                     >
-                      reviews-test-v2
+                      Show Yaml 
+                      <Icon
+                        name="angle-double-right"
+                        type="fa"
+                      />
                     </Link>
-                  </h3>
+                  </div>
                   
                   <div>
                     <strong>
@@ -1673,13 +1855,20 @@ ShallowWrapper {
                     className="card-pf-body"
                   >
                     <h3>
+                      reviews-default
+                    </h3>
+                    <div>
                       <Link
                         replace={false}
                         to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                       >
-                        reviews-default
+                        Show Yaml 
+                        <Icon
+                          name="angle-double-right"
+                          type="fa"
+                        />
                       </Link>
-                    </h3>
+                    </div>
                     
                     <div>
                       <strong>
@@ -1746,13 +1935,20 @@ ShallowWrapper {
                     className="card-pf-body"
                   >
                     <h3>
+                      reviews-test-v2
+                    </h3>
+                    <div>
                       <Link
                         replace={false}
                         to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                       >
-                        reviews-test-v2
+                        Show Yaml 
+                        <Icon
+                          name="angle-double-right"
+                          type="fa"
+                        />
                       </Link>
-                    </h3>
+                    </div>
                     
                     <div>
                       <strong>
@@ -1830,13 +2026,20 @@ ShallowWrapper {
                       className="card-pf-body"
                     >
                       <h3>
+                        reviews-default
+                      </h3>
+                      <div>
                         <Link
                           replace={false}
                           to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                         >
-                          reviews-default
+                          Show Yaml 
+                          <Icon
+                            name="angle-double-right"
+                            type="fa"
+                          />
                         </Link>
-                      </h3>
+                      </div>
                       
                       <div>
                         <strong>
@@ -1901,13 +2104,20 @@ ShallowWrapper {
                       className="card-pf-body"
                     >
                       <h3>
+                        reviews-default
+                      </h3>
+                      <div>
                         <Link
                           replace={false}
                           to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                         >
-                          reviews-default
+                          Show Yaml 
+                          <Icon
+                            name="angle-double-right"
+                            type="fa"
+                          />
                         </Link>
-                      </h3>
+                      </div>
                       
                       <div>
                         <strong>
@@ -1947,13 +2157,20 @@ ShallowWrapper {
                     "props": Object {
                       "children": Array [
                         <h3>
+                          reviews-default
+                        </h3>,
+                        <div>
                           <Link
                             replace={false}
                             to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                           >
-                            reviews-default
+                            Show Yaml 
+                            <Icon
+                              name="angle-double-right"
+                              type="fa"
+                            />
                           </Link>
-                        </h3>,
+                        </div>,
                         "",
                         <div>
                           <strong>
@@ -1997,11 +2214,26 @@ ShallowWrapper {
                         "key": undefined,
                         "nodeType": "host",
                         "props": Object {
+                          "children": "reviews-default",
+                        },
+                        "ref": null,
+                        "rendered": "reviews-default",
+                        "type": "h3",
+                      },
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
                           "children": <Link
                             replace={false}
                             to="/namespaces/test_namespace/services/test_services?routerule=reviews-default"
                           >
-                            reviews-default
+                            Show Yaml 
+                            <Icon
+                              name="angle-double-right"
+                              type="fa"
+                            />
                           </Link>,
                         },
                         "ref": null,
@@ -2010,15 +2242,35 @@ ShallowWrapper {
                           "key": undefined,
                           "nodeType": "class",
                           "props": Object {
-                            "children": "reviews-default",
+                            "children": Array [
+                              "Show Yaml ",
+                              <Icon
+                                name="angle-double-right"
+                                type="fa"
+                              />,
+                            ],
                             "replace": false,
                             "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-default",
                           },
                           "ref": null,
-                          "rendered": "reviews-default",
+                          "rendered": Array [
+                            "Show Yaml ",
+                            Object {
+                              "instance": null,
+                              "key": undefined,
+                              "nodeType": "function",
+                              "props": Object {
+                                "name": "angle-double-right",
+                                "type": "fa",
+                              },
+                              "ref": null,
+                              "rendered": null,
+                              "type": [Function],
+                            },
+                          ],
                           "type": [Function],
                         },
-                        "type": "h3",
+                        "type": "div",
                       },
                       "",
                       Object {
@@ -2209,13 +2461,20 @@ ShallowWrapper {
                       className="card-pf-body"
                     >
                       <h3>
+                        reviews-test-v2
+                      </h3>
+                      <div>
                         <Link
                           replace={false}
                           to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                         >
-                          reviews-test-v2
+                          Show Yaml 
+                          <Icon
+                            name="angle-double-right"
+                            type="fa"
+                          />
                         </Link>
-                      </h3>
+                      </div>
                       
                       <div>
                         <strong>
@@ -2280,13 +2539,20 @@ ShallowWrapper {
                       className="card-pf-body"
                     >
                       <h3>
+                        reviews-test-v2
+                      </h3>
+                      <div>
                         <Link
                           replace={false}
                           to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                         >
-                          reviews-test-v2
+                          Show Yaml 
+                          <Icon
+                            name="angle-double-right"
+                            type="fa"
+                          />
                         </Link>
-                      </h3>
+                      </div>
                       
                       <div>
                         <strong>
@@ -2326,13 +2592,20 @@ ShallowWrapper {
                     "props": Object {
                       "children": Array [
                         <h3>
+                          reviews-test-v2
+                        </h3>,
+                        <div>
                           <Link
                             replace={false}
                             to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                           >
-                            reviews-test-v2
+                            Show Yaml 
+                            <Icon
+                              name="angle-double-right"
+                              type="fa"
+                            />
                           </Link>
-                        </h3>,
+                        </div>,
                         "",
                         <div>
                           <strong>
@@ -2376,11 +2649,26 @@ ShallowWrapper {
                         "key": undefined,
                         "nodeType": "host",
                         "props": Object {
+                          "children": "reviews-test-v2",
+                        },
+                        "ref": null,
+                        "rendered": "reviews-test-v2",
+                        "type": "h3",
+                      },
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
                           "children": <Link
                             replace={false}
                             to="/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2"
                           >
-                            reviews-test-v2
+                            Show Yaml 
+                            <Icon
+                              name="angle-double-right"
+                              type="fa"
+                            />
                           </Link>,
                         },
                         "ref": null,
@@ -2389,15 +2677,35 @@ ShallowWrapper {
                           "key": undefined,
                           "nodeType": "class",
                           "props": Object {
-                            "children": "reviews-test-v2",
+                            "children": Array [
+                              "Show Yaml ",
+                              <Icon
+                                name="angle-double-right"
+                                type="fa"
+                              />,
+                            ],
                             "replace": false,
                             "to": "/namespaces/test_namespace/services/test_services?routerule=reviews-test-v2",
                           },
                           "ref": null,
-                          "rendered": "reviews-test-v2",
+                          "rendered": Array [
+                            "Show Yaml ",
+                            Object {
+                              "instance": null,
+                              "key": undefined,
+                              "nodeType": "function",
+                              "props": Object {
+                                "name": "angle-double-right",
+                                "type": "fa",
+                              },
+                              "ref": null,
+                              "rendered": null,
+                              "type": [Function],
+                            },
+                          ],
                           "type": [Function],
                         },
-                        "type": "h3",
+                        "type": "div",
                       },
                       "",
                       Object {
