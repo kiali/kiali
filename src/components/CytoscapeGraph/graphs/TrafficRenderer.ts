@@ -425,25 +425,11 @@ export default class TrafficRenderer {
 
   private edgeControlPoints(edge: any) {
     const controlPoints: Array<Point> = [edge.sourceEndpoint()];
-    let rawControlPoints = edge.controlPoints();
-    // TODO KIALI-992: remove once this issue is fixed and released https://github.com/cytoscape/cytoscape.js/issues/2139
-    // Loops don't expose the controlPoints, use the internal data for the time being until the bug is solved
-    if (!rawControlPoints && edge.isLoop()) {
-      const internalControlPoints = edge._private.rscratch.ctrlpts;
-      if (internalControlPoints) {
-        rawControlPoints = [];
-        for (let i = 0; i < internalControlPoints.length; i += 2) {
-          rawControlPoints.push({
-            x: internalControlPoints[i],
-            y: internalControlPoints[i + 1]
-          });
-        }
-      }
-    }
+    const rawControlPoints = edge.controlPoints();
     if (rawControlPoints) {
       for (let i = 0; i < rawControlPoints.length; ++i) {
         controlPoints.push(rawControlPoints[i]);
-        // If there is a next point, we are going to use the midpoint for the next control point point
+        // If there is a next point, we are going to use the midpoint for the next point
         if (i + 1 < rawControlPoints.length) {
           controlPoints.push({
             x: (rawControlPoints[i].x + rawControlPoints[i + 1].x) / 2,

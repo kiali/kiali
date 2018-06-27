@@ -2345,9 +2345,9 @@ cytoscape-popper@1.0.1:
   dependencies:
     popper.js "^1.0.0"
 
-cytoscape@3.2.12:
-  version "3.2.12"
-  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.2.12.tgz#0b04a334f4e09f27d460c54e8dcfa0c711f69eb2"
+cytoscape@3.2.14:
+  version "3.2.14"
+  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.2.14.tgz#78ad92e0195541228b78a6252cea2a0b0b12f59e"
   dependencies:
     heap "^0.2.6"
     lodash.debounce "^4.0.8"
