@@ -112,6 +112,10 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		// Validations on ServiceEntries are not yet in place
 	case "rules":
 		// Validations on Istio Rules are not yet in place
+	case "quotaspecs":
+		// Validations on QuotaSpecs are not yet in place
+	case "quotaspecbindings":
+		// Validations on QuotaSpecBindings are not yet in place
 	default:
 		err = fmt.Errorf("Object type not found: %v", objectType)
 	}
