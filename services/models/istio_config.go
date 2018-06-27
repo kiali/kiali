@@ -30,6 +30,8 @@ type IstioConfigList struct {
 	DestinationRules    DestinationRules    `json:"destinationRules"`
 	ServiceEntries      ServiceEntries      `json:"serviceEntries"`
 	Rules               IstioRules          `json:"rules"`
+	QuotaSpecs          QuotaSpecs          `json:"quotaSpecs"`
+	QuotaSpecBindings   QuotaSpecBindings   `json:"quotaSpecBindings"`
 }
 
 type IstioConfigDetails struct {
@@ -42,4 +44,6 @@ type IstioConfigDetails struct {
 	DestinationRule   *DestinationRule   `json:"destinationRule"`
 	ServiceEntry      *ServiceEntry      `json:"serviceEntry"`
 	Rule              *IstioRuleDetails  `json:"rule"`
+	QuotaSpec         *QuotaSpec         `json:"quotaSpec"`
+	QuotaSpecBinding  *QuotaSpecBinding  `json:"quotaSpecBinding"`
 }

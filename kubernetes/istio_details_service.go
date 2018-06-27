@@ -286,6 +286,70 @@ func (in *IstioClient) GetDestinationRule(namespace string, destinationrule stri
 	return destinationRule.DeepCopyIstioObject(), nil
 }
 
+// GetQuotaSpecs returns all QuotaSpecs objects for a given namespace.
+// It returns an error on any problem.
+func (in *IstioClient) GetQuotaSpecs(namespace string) ([]IstioObject, error) {
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(quotaspecs).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	quotaSpecList, ok := result.(*QuotaSpecList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a QuotaSpecList list", namespace)
+	}
+
+	quotaSpecs := make([]IstioObject, 0)
+	for _, qs := range quotaSpecList.GetItems() {
+		quotaSpecs = append(quotaSpecs, qs.DeepCopyIstioObject())
+	}
+	return quotaSpecs, nil
+}
+
+func (in *IstioClient) GetQuotaSpec(namespace string, quotaSpecName string) (IstioObject, error) {
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(quotaspecs).SubResource(quotaSpecName).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	quotaSpec, ok := result.(*QuotaSpec)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a QuotaSpec object", namespace, quotaSpecName)
+	}
+	return quotaSpec.DeepCopyIstioObject(), nil
+}
+
+// GetQuotaSpecBindings returns all QuotaSpecBindings objects for a given namespace.
+// It returns an error on any problem.
+func (in *IstioClient) GetQuotaSpecBindings(namespace string) ([]IstioObject, error) {
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(quotaspecbindings).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	quotaSpecBindingList, ok := result.(*QuotaSpecBindingList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a QuotaSpecBindingList list", namespace)
+	}
+
+	quotaSpecBindings := make([]IstioObject, 0)
+	for _, qs := range quotaSpecBindingList.GetItems() {
+		quotaSpecBindings = append(quotaSpecBindings, qs.DeepCopyIstioObject())
+	}
+	return quotaSpecBindings, nil
+}
+
+func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error) {
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(quotaspecbindings).SubResource(quotaSpecBindingName).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	quotaSpecBinding, ok := result.(*QuotaSpecBinding)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a QuotaSpecBinding object", namespace, quotaSpecBindingName)
+	}
+	return quotaSpecBinding.DeepCopyIstioObject(), nil
+}
+
 // CheckRouteRule returns true if the routeRule object includes a destination defined by namespace, serviceName and version parameters.
 // It returns false otherwise.
 func CheckRouteRule(routeRule IstioObject, namespace string, serviceName string, version string) bool {

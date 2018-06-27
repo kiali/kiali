@@ -58,6 +58,8 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	criteria.IncludeDestinationRules = defaultInclude
 	criteria.IncludeServiceEntries = defaultInclude
 	criteria.IncludeRules = defaultInclude
+	criteria.IncludeQuotaSpecs = defaultInclude
+	criteria.IncludeQuotaSpecBindings = defaultInclude
 
 	if defaultInclude {
 		return criteria
@@ -84,6 +86,12 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	}
 	if checkType(types, "rules") {
 		criteria.IncludeRules = true
+	}
+	if checkType(types, "quotaspecs") {
+		criteria.IncludeQuotaSpecs = true
+	}
+	if checkType(types, "quotaspecbindings") {
+		criteria.IncludeQuotaSpecBindings = true
 	}
 	return criteria
 }
@@ -163,7 +171,9 @@ func checkObjectType(objectType string) bool {
 		"virtualservices",
 		"destinationrules",
 		"serviceentries",
-		"rules":
+		"rules",
+		"quotaspecs",
+		"quotaspecbindings":
 		return true
 	}
 	return false

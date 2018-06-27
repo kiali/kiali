@@ -21,6 +21,8 @@ type IstioConfigCriteria struct {
 	IncludeDestinationRules    bool
 	IncludeServiceEntries      bool
 	IncludeRules               bool
+	IncludeQuotaSpecs          bool
+	IncludeQuotaSpecBindings   bool
 }
 
 // GetIstioConfig returns a list of Istio routing objects (RouteRule, DestinationPolicy, VirtualService, DestinationRule)
@@ -38,12 +40,14 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 		DestinationRules:    models.DestinationRules{},
 		ServiceEntries:      models.ServiceEntries{},
 		Rules:               models.IstioRules{},
+		QuotaSpecs:          models.QuotaSpecs{},
+		QuotaSpecBindings:   models.QuotaSpecBindings{},
 	}
-	var gg, rr, dp, vs, dr, se []kubernetes.IstioObject
+	var gg, rr, dp, vs, dr, se, qs, qb []kubernetes.IstioObject
 	var mr *kubernetes.IstioRules
-	var ggErr, rrErr, dpErr, vsErr, drErr, seErr, mrErr error
+	var ggErr, rrErr, dpErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr error
 	var wg sync.WaitGroup
-	wg.Add(7)
+	wg.Add(9)
 
 	go func() {
 		defer wg.Done()
@@ -108,34 +112,30 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 		}
 	}()
 
+	go func() {
+		defer wg.Done()
+		if criteria.IncludeQuotaSpecs {
+			if qs, qsErr = in.k8s.GetQuotaSpecs(criteria.Namespace); qsErr == nil {
+				(&istioConfigList.QuotaSpecs).Parse(qs)
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if criteria.IncludeQuotaSpecBindings {
+			if qb, qbErr = in.k8s.GetQuotaSpecBindings(criteria.Namespace); qbErr == nil {
+				(&istioConfigList.QuotaSpecBindings).Parse(qb)
+			}
+		}
+	}()
+
 	wg.Wait()
 
-	if ggErr != nil {
-		return models.IstioConfigList{}, ggErr
-	}
-
-	if rrErr != nil {
-		return models.IstioConfigList{}, rrErr
-	}
-
-	if dpErr != nil {
-		return models.IstioConfigList{}, dpErr
-	}
-
-	if vsErr != nil {
-		return models.IstioConfigList{}, vsErr
-	}
-
-	if drErr != nil {
-		return models.IstioConfigList{}, drErr
-	}
-
-	if seErr != nil {
-		return models.IstioConfigList{}, seErr
-	}
-
-	if mrErr != nil {
-		return models.IstioConfigList{}, mrErr
+	for _, genErr := range []error{ggErr, rrErr, dpErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr} {
+		if genErr != nil {
+			return models.IstioConfigList{}, genErr
+		}
 	}
 
 	return istioConfigList, nil
@@ -145,7 +145,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var gw, rr, dp, vs, dr, se kubernetes.IstioObject
+	var gw, rr, dp, vs, dr, se, qs, qb kubernetes.IstioObject
 	var r *kubernetes.IstioRuleDetails
 	var err error
 	switch objectType {
@@ -183,7 +183,18 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 		if r, err = in.k8s.GetIstioRuleDetails(namespace, object); err == nil {
 			istioConfigDetail.ObjectType = "rules"
 			istioConfigDetail.Rule = models.CastIstioRuleDetails(r)
-
+		}
+	case "quotaspecs":
+		if qs, err = in.k8s.GetQuotaSpec(namespace, object); err == nil {
+			istioConfigDetail.ObjectType = "quotaspecs"
+			istioConfigDetail.QuotaSpec = &models.QuotaSpec{}
+			istioConfigDetail.QuotaSpec.Parse(qs)
+		}
+	case "quotaspecbindings":
+		if qb, err = in.k8s.GetQuotaSpecBinding(namespace, object); err == nil {
+			istioConfigDetail.ObjectType = "quotaspecbindings"
+			istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
+			istioConfigDetail.QuotaSpecBinding.Parse(qb)
 		}
 	default:
 		err = fmt.Errorf("Object type not found: %v", objectType)

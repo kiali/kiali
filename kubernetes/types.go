@@ -342,6 +342,27 @@ var (
 			collection:   &servicecontrolreportList{},
 			groupVersion: &istioConfigGroupVersion,
 		},
+		// QuotaSpec and QuotaSpecBinding
+		quotaspecLabel: {
+			object: &QuotaSpec{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       quotaspecType,
+					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+				},
+			},
+			collection:   &QuotaSpecList{},
+			groupVersion: &istioConfigGroupVersion,
+		},
+		quotaspecbindingLabel: {
+			object: &QuotaSpecBinding{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       quotaspecbindingType,
+					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+				},
+			},
+			collection:   &QuotaSpecBindingList{},
+			groupVersion: &istioConfigGroupVersion,
+		},
 	}
 	// A map to get the plural for a Istio type using the singlar type
 	// Used for fetch istio actions details, so only applied to handlers (adapters) and instances (templates) types
