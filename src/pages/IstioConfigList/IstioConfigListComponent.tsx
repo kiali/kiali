@@ -87,6 +87,14 @@ const istioTypeFilter: FilterType = {
     {
       id: 'Rule',
       title: 'Rule'
+    },
+    {
+      id: 'QuotaSpec',
+      title: 'QuotaSpec'
+    },
+    {
+      id: 'QuotaSpecBinding',
+      title: 'QuotaSpecBinding'
     }
   ]
 };
@@ -319,6 +327,14 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       iconName = 'migration';
       iconType = 'pf';
       type = 'Rule';
+    } else if (istioItem.type === 'quotaspec') {
+      iconName = 'process-automation';
+      iconType = 'pf';
+      type = 'QuotaSpec';
+    } else if (istioItem.type === 'quotaspecbinding') {
+      iconName = 'integration';
+      iconType = 'pf';
+      type = 'QuotaSpecBinding';
     }
     to = to + '/' + dicIstioType[type] + '/' + name;
 

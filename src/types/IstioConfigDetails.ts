@@ -2,7 +2,7 @@ import Namespace from './Namespace';
 import { DestinationPolicy, DestinationRule, RouteRule, VirtualService } from './ServiceInfo';
 import { RuleAction } from './IstioRuleInfo';
 import { AceOptions } from 'react-ace';
-import { Gateway, ServiceEntry } from './IstioConfigListComponent';
+import { Gateway, QuotaSpec, QuotaSpecBinding, ServiceEntry } from './IstioConfigListComponent';
 
 export interface IstioConfigId {
   namespace: string;
@@ -26,6 +26,8 @@ export interface IstioConfigDetails {
   destinationRule: DestinationRule;
   serviceEntry: ServiceEntry;
   rule: IstioRuleDetails;
+  quotaSpec: QuotaSpec;
+  quotaSpecBinding: QuotaSpecBinding;
 }
 
 export const aceOptions: AceOptions = {

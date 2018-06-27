@@ -12,6 +12,8 @@ export interface IstioConfigItem {
   destinationRule?: DestinationRule;
   serviceEntry?: ServiceEntry;
   rule?: IstioRule;
+  quotaSpec?: QuotaSpec;
+  quotaSpecBinding?: QuotaSpecBinding;
   validation?: ObjectValidation;
 }
 
@@ -24,6 +26,8 @@ export interface IstioConfigList {
   destinationRules: DestinationRule[];
   serviceEntries: ServiceEntry[];
   rules: IstioRule[];
+  quotaSpecs: QuotaSpec[];
+  quotaSpecBindings: QuotaSpecBinding[];
 }
 
 export interface Gateway {
@@ -33,7 +37,6 @@ export interface Gateway {
   servers?: Server[];
   selector?: { [key: string]: string };
 }
-
 export interface Server {
   port: Port;
   hosts: string[];
@@ -84,6 +87,48 @@ export interface IstioRuleActionItem {
   instances: string[];
 }
 
+export interface QuotaSpec {
+  name: string;
+  createdAt: string;
+  resourceVersion: string;
+  rules?: MatchQuota[];
+}
+
+export interface MatchQuota {
+  match?: Match;
+  quotas?: Quota;
+}
+
+export interface Match {
+  clause: { [attributeName: string]: { [matchType: string]: string } };
+}
+
+export interface Quota {
+  quota: string;
+  charge: number;
+}
+
+export interface QuotaSpecBinding {
+  name: string;
+  createdAt: string;
+  resourceVersion: string;
+  quotaSpecs?: QuotaSpecRef[];
+  services?: IstioService[];
+}
+
+export interface QuotaSpecRef {
+  name: string;
+  namespace?: string;
+}
+
+export interface IstioService {
+  name: string;
+  namespace?: string;
+  domain?: string;
+  service?: string;
+  labels?: { [key: string]: string };
+}
+
 export interface SortField {
   id: string;
   title: string;
@@ -98,13 +143,17 @@ export const dicIstioType = {
   DestinationRule: 'destinationrules',
   ServiceEntry: 'serviceentries',
   Rule: 'rules',
+  QuotaSpec: 'quotaspecs',
+  QuotaSpecBinding: 'quotaspecbindings',
   gateways: 'Gateway',
   routerules: 'RouteRule',
   destinationpolicies: 'DestinationPolicy',
   virtualservices: 'VirtualService',
   destinationrules: 'DestinationRule',
   serviceentries: 'ServiceEntry',
-  rules: 'Rule'
+  rules: 'Rule',
+  quotaspecs: 'QuotaSpec',
+  quotaspecbindings: 'QuotaSpecBinding'
 };
 
 const includeName = (name: string, names: string[]) => {
@@ -128,7 +177,9 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]) => {
     virtualServices: unfiltered.virtualServices.filter(vs => includeName(vs.name, names)),
     destinationRules: unfiltered.destinationRules.filter(dr => includeName(dr.name, names)),
     serviceEntries: unfiltered.serviceEntries.filter(se => includeName(se.name, names)),
-    rules: unfiltered.rules.filter(r => includeName(r.name, names))
+    rules: unfiltered.rules.filter(r => includeName(r.name, names)),
+    quotaSpecs: unfiltered.quotaSpecs.filter(qs => includeName(qs.name, names)),
+    quotaSpecBindings: unfiltered.quotaSpecBindings.filter(qsb => includeName(qsb.name, names))
   };
   return filtered;
 };
@@ -202,6 +253,17 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
   );
   istioConfigList.rules.forEach(r =>
     istioItems.push({ namespace: istioConfigList.namespace.name, type: 'rule', name: r.name, rule: r })
+  );
+  istioConfigList.quotaSpecs.forEach(qs =>
+    istioItems.push({ namespace: istioConfigList.namespace.name, type: 'quotaspec', name: qs.name, quotaSpec: qs })
+  );
+  istioConfigList.quotaSpecBindings.forEach(qsb =>
+    istioItems.push({
+      namespace: istioConfigList.namespace.name,
+      type: 'quotaspecbinding',
+      name: qsb.name,
+      quotaSpecBinding: qsb
+    })
   );
   return istioItems;
 };
