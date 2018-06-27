@@ -1,0 +1,796 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "Kiali project, observability for the Istio service mesh",
+    "title": "Kiali",
+    "version": "_"
+  },
+  "basePath": "/api",
+  "paths": {
+    "/": {
+      "get": {
+        "description": "Endpoint to get the status of Kiali",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "Root",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/statusInfo"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/istio": {
+      "get": {
+        "description": "Endpoint to get the list of Istio Config of a namespace",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "istioConfigList",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/istioConfigList"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
+    "/status": {
+      "get": {
+        "description": "Endpoint to get the status of Kiali",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "getStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/statusInfo"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
+    "/token": {
+      "get": {
+        "security": [
+          {
+            "authorization": [
+              "user",
+              "password"
+            ]
+          }
+        ],
+        "description": "Endpoint to get the authentication token",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "GetToken",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/tokenGenerated"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Gateway": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "resourceVersion": {
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selector": {
+          "type": "object",
+          "x-go-name": "Selector"
+        },
+        "servers": {
+          "type": "object",
+          "x-go-name": "Servers"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Gateways": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Gateway"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "IstioConfigList": {
+      "description": "This type is used for returning a response of IstioConfigList",
+      "type": "object",
+      "title": "IstioConfigList istioConfigList",
+      "required": [
+        "namespace"
+      ],
+      "properties": {
+        "destinationPolicies": {
+          "$ref": "#/definitions/destinationPolicies"
+        },
+        "destinationRules": {
+          "$ref": "#/definitions/destinationRules"
+        },
+        "gateways": {
+          "$ref": "#/definitions/Gateways"
+        },
+        "namespace": {
+          "$ref": "#/definitions/namespace"
+        },
+        "routeRules": {
+          "$ref": "#/definitions/routeRules"
+        },
+        "rules": {
+          "$ref": "#/definitions/istioRules"
+        },
+        "serviceEntries": {
+          "$ref": "#/definitions/ServiceEntries"
+        },
+        "virtualServices": {
+          "$ref": "#/definitions/virtualServices"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "ServiceEntries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ServiceEntry"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "ServiceEntry": {
+      "type": "object",
+      "properties": {
+        "addresses": {
+          "type": "object",
+          "x-go-name": "Addresses"
+        },
+        "createdAt": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "endpoints": {
+          "type": "object",
+          "x-go-name": "Endpoints"
+        },
+        "hosts": {
+          "type": "object",
+          "x-go-name": "Hosts"
+        },
+        "location": {
+          "type": "object",
+          "x-go-name": "Location"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "ports": {
+          "type": "object",
+          "x-go-name": "Ports"
+        },
+        "resolution": {
+          "type": "object",
+          "x-go-name": "Resolution"
+        },
+        "resourceVersion": {
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "StatusInfo": {
+      "description": "This is used for returning a response of Kiali Status",
+      "type": "object",
+      "title": "StatusInfo statusInfo",
+      "required": [
+        "status",
+        "externalServices"
+      ],
+      "properties": {
+        "externalServices": {
+          "description": "An array of external services installed",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/externalServiceInfo"
+          },
+          "x-go-name": "ExternalServices"
+        },
+        "status": {
+          "description": "The state of Kiali\nA hash of key,values with versions of Kiali and state",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Status"
+        },
+        "warningMessages": {
+          "description": "An array of warningMessages",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "Istio version 0.7.1 is not supported, the version should be 0.8.0"
+          },
+          "x-go-name": "WarningMessages"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/status"
+    },
+    "TokenGenerated": {
+      "description": "This is used for returning the token",
+      "type": "object",
+      "title": "TokenGenerated tokenGenerated",
+      "required": [
+        "token",
+        "expired_at"
+      ],
+      "properties": {
+        "expired_at": {
+          "description": "The expired time for the token\nA string with the Datetime when the token will be expired",
+          "type": "string",
+          "x-go-name": "ExpiredAt",
+          "example": "2018-06-20 19:40:54.116369887 +0000 UTC m=+43224.838320603"
+        },
+        "token": {
+          "description": "The authentication token\nA string with the authentication token for the user",
+          "type": "string",
+          "x-go-name": "Token",
+          "example": "zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/config"
+    },
+    "destinationPolicies": {
+      "description": "This type is used for returning an array of DestinationPolicies",
+      "type": "array",
+      "title": "DestinationPolicies destinationPolicies",
+      "items": {
+        "$ref": "#/definitions/destinationPolicy"
+      },
+      "x-go-name": "DestinationPolicies",
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "destinationPolicy": {
+      "description": "This type is used for returning a DestinationPolicy",
+      "type": "object",
+      "title": "DestinationPolicy destinationPolicy",
+      "required": [
+        "name",
+        "createdAt",
+        "resourceVersion"
+      ],
+      "properties": {
+        "circuitBreaker": {
+          "type": "object",
+          "x-go-name": "CircuitBreaker"
+        },
+        "createdAt": {
+          "description": "The creation date of the destinationPolicy",
+          "type": "string",
+          "pattern": "\\w[\\w-]+",
+          "x-go-name": "CreatedAt"
+        },
+        "destination": {
+          "type": "object",
+          "x-go-name": "Destination"
+        },
+        "loadbalancing": {
+          "type": "object",
+          "x-go-name": "LoadBalancing"
+        },
+        "name": {
+          "description": "The name of the destinationPolicy",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "resourceVersion": {
+          "description": "The resource version of the destinationPolicy",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "source": {
+          "type": "object",
+          "x-go-name": "Source"
+        }
+      },
+      "x-go-name": "DestinationPolicy",
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "destinationRule": {
+      "description": "This is used for returning a DestinationRule",
+      "type": "object",
+      "title": "DestinationRule destinationRule",
+      "required": [
+        "name",
+        "createdAt",
+        "resourceVersion"
+      ],
+      "properties": {
+        "createdAt": {
+          "description": "The creation date of the destinationRule",
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "host": {
+          "type": "object",
+          "x-go-name": "Host"
+        },
+        "name": {
+          "description": "The name of the destinationRule",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "resourceVersion": {
+          "description": "The resource version of the destinationRule",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "subsets": {
+          "type": "object",
+          "x-go-name": "Subsets"
+        },
+        "trafficPolicy": {
+          "type": "object",
+          "x-go-name": "TrafficPolicy"
+        }
+      },
+      "x-go-name": "DestinationRule",
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "destinationRules": {
+      "description": "This is used for returning an array of DestinationRules",
+      "type": "array",
+      "title": "DestinationRules destinationRules",
+      "items": {
+        "$ref": "#/definitions/destinationRule"
+      },
+      "x-go-name": "DestinationRules",
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "externalServiceInfo": {
+      "description": "This is used for returning a response of Kiali Status",
+      "type": "object",
+      "title": "Status response model",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "description": "The name of the service",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "Istio"
+        },
+        "version": {
+          "description": "The installed version of the service",
+          "type": "string",
+          "x-go-name": "Version",
+          "example": "0.8.0"
+        }
+      },
+      "x-go-name": "ExternalServiceInfo",
+      "x-go-package": "github.com/kiali/kiali/status"
+    },
+    "istioRule": {
+      "description": "This type type is used for returning a IstioRule",
+      "type": "object",
+      "title": "IstioRule istioRule",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "actions": {
+          "type": "object",
+          "x-go-name": "Actions"
+        },
+        "match": {
+          "type": "object",
+          "x-go-name": "Match"
+        },
+        "name": {
+          "description": "The name of the istioRule",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-name": "IstioRule",
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "istioRules": {
+      "description": "This type type is used for returning an array of IstioRules",
+      "type": "array",
+      "title": "IstioRules istioRules",
+      "items": {
+        "$ref": "#/definitions/istioRule"
+      },
+      "x-go-name": "IstioRules",
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "namespace": {
+      "description": "A Namespace provide a scope for names\nThis type is used to describe a set of objects.",
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "The id of the namespace.",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "istio-system"
+        }
+      },
+      "x-go-name": "Namespace",
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "routeRule": {
+      "description": "This type is used for returning a RouteRule",
+      "type": "object",
+      "title": "RouteRule routeRule",
+      "required": [
+        "name",
+        "createdAt",
+        "resourceVersion"
+      ],
+      "properties": {
+        "appendHeaders": {
+          "type": "object",
+          "x-go-name": "AppendHeaders"
+        },
+        "corsPolicy": {
+          "type": "object",
+          "x-go-name": "CorsPolicy"
+        },
+        "createdAt": {
+          "description": "The created time",
+          "type": "string",
+          "x-go-name": "CreatedAt",
+          "example": "2018-06-20T07:39:52Z"
+        },
+        "destination": {
+          "type": "object",
+          "x-go-name": "Destination"
+        },
+        "httpFault": {
+          "type": "object",
+          "x-go-name": "HttpFault"
+        },
+        "httpReqRetries": {
+          "type": "object",
+          "x-go-name": "HttpReqRetries"
+        },
+        "httpReqTimeout": {
+          "type": "object",
+          "x-go-name": "HttpReqTimeout"
+        },
+        "l4Fault": {
+          "type": "object",
+          "x-go-name": "L4Fault"
+        },
+        "match": {
+          "type": "object",
+          "x-go-name": "Match"
+        },
+        "mirror": {
+          "type": "object",
+          "x-go-name": "Mirror"
+        },
+        "name": {
+          "description": "The name of the routeRule",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "details-default"
+        },
+        "precedence": {
+          "type": "object",
+          "x-go-name": "Precedence"
+        },
+        "redirect": {
+          "type": "object",
+          "x-go-name": "Redirect"
+        },
+        "resourceVersion": {
+          "type": "string",
+          "x-go-name": "ResourceVersion",
+          "example": "1507"
+        },
+        "rewrite": {
+          "type": "object",
+          "x-go-name": "Rewrite"
+        },
+        "route": {
+          "type": "object",
+          "x-go-name": "Route"
+        },
+        "routeWarning": {
+          "type": "string",
+          "x-go-name": "RouteWarning"
+        },
+        "websocketUpgrade": {
+          "type": "object",
+          "x-go-name": "WebsocketUpgrade"
+        }
+      },
+      "x-go-name": "RouteRule",
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "routeRules": {
+      "description": "This type is used for returning an array of RouteRule",
+      "type": "array",
+      "title": "RouteRules routeRules",
+      "items": {
+        "$ref": "#/definitions/routeRule"
+      },
+      "x-go-name": "RouteRules",
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "virtualService": {
+      "description": "This type is used for returning a VirtualService",
+      "type": "object",
+      "title": "VirtualService virtualService",
+      "required": [
+        "name",
+        "createdAt",
+        "resourceVersion"
+      ],
+      "properties": {
+        "createdAt": {
+          "description": "The creation date of the virtualService",
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "gateways": {
+          "type": "object",
+          "x-go-name": "Gateways"
+        },
+        "hosts": {
+          "type": "object",
+          "x-go-name": "Hosts"
+        },
+        "http": {
+          "type": "object",
+          "x-go-name": "Http"
+        },
+        "name": {
+          "description": "The name of the virtualService",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "resourceVersion": {
+          "description": "The resource version of the virtualService",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "tcp": {
+          "type": "object",
+          "x-go-name": "Tcp"
+        }
+      },
+      "x-go-name": "VirtualService",
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "virtualServices": {
+      "description": "This type is used for returning an array of VirtualServices",
+      "type": "array",
+      "title": "VirtualServices virtualServices",
+      "items": {
+        "$ref": "#/definitions/virtualService"
+      },
+      "x-go-name": "VirtualServices",
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    }
+  },
+  "responses": {
+    "genericError": {
+      "description": "A GenericError is the default error message that is generated.",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 400,
+            "x-go-name": "Code",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
+      }
+    },
+    "internalError": {
+      "description": "A Internal is the error message that means something has gone wrong",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 500,
+            "x-go-name": "Code",
+            "example": 500
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
+      }
+    },
+    "istioConfigList": {
+      "description": "HTTP status code 200 and IstioConfigList model in data",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int64",
+            "default": 200,
+            "x-go-name": "Code"
+          },
+          "data": {
+            "$ref": "#/definitions/IstioConfigList"
+          }
+        }
+      }
+    },
+    "notFoundError": {
+      "description": "A NotFoundError is the error message that is generated when server could not find what was requested.",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 404,
+            "x-go-name": "Code",
+            "example": 404
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
+      }
+    },
+    "statusInfo": {
+      "description": "HTTP status code 200 and statusInfo model in data",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int64",
+            "default": 200,
+            "x-go-name": "Code",
+            "example": 200
+          },
+          "data": {
+            "$ref": "#/definitions/StatusInfo"
+          }
+        }
+      }
+    },
+    "tokenGenerated": {
+      "description": "HTTP status code 200 and tokenGenerated model in data",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int64",
+            "default": 200,
+            "x-go-name": "Code"
+          },
+          "data": {
+            "$ref": "#/definitions/TokenGenerated"
+          }
+        }
+      }
+    }
+  }
+}

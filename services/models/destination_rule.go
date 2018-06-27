@@ -4,10 +4,32 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
+// DestinationRules destinationRules
+//
+// This is used for returning an array of DestinationRules
+//
+// swagger:model destinationRules
+// An array of destinationRule
+// swagger:allOf
 type DestinationRules []DestinationRule
+
+// DestinationRule destinationRule
+//
+// This is used for returning a DestinationRule
+//
+// swagger:model destinationRule
 type DestinationRule struct {
-	Name            string      `json:"name"`
-	CreatedAt       string      `json:"createdAt"`
+	// The name of the destinationRule
+	//
+	// required: true
+	Name string `json:"name"`
+	// The creation date of the destinationRule
+	//
+	// required: true
+	CreatedAt string `json:"createdAt"`
+	// The resource version of the destinationRule
+	//
+	// required: true
 	ResourceVersion string      `json:"resourceVersion"`
 	Host            interface{} `json:"host"`
 	TrafficPolicy   interface{} `json:"trafficPolicy"`

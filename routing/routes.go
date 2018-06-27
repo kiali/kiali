@@ -20,11 +20,69 @@ type Routes struct {
 	Routes []Route
 }
 
+// A GenericError is the default error message that is generated.
+//
+// swagger:response genericError
+type GenericError struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 400
+		// default: 400
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
+// A NotFoundError is the error message that is generated when server could not find what was requested.
+//
+// swagger:response notFoundError
+type NotFoundError struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 404
+		// default: 404
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
+// A Internal is the error message that means something has gone wrong
+//
+// swagger:response internalError
+type InternalError struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 500
+		// default: 500
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
 // NewRoutes creates and returns all the API routes
 func NewRoutes() (r *Routes) {
 	r = new(Routes)
 
 	r.Routes = []Route{
+		// swagger:route GET / Root
+		// ---
+		// Endpoint to get the status of Kiali
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: statusInfo
 		{
 			"Root",
 			"GET",
@@ -32,6 +90,26 @@ func NewRoutes() (r *Routes) {
 			handlers.Root,
 			false,
 		},
+		// swagger:route GET /token GetToken
+		// ---
+		// Endpoint to get the authentication token
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		//	   Security:
+		//     authorization: user, password
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: tokenGenerated
 		{ // Request the token
 			"Status",
 			"GET",
@@ -39,13 +117,48 @@ func NewRoutes() (r *Routes) {
 			handlers.GetToken,
 			true,
 		},
-		{ // another way to get to root, both show status
+		// swagger:route GET /status getStatus
+		// ---
+		// Endpoint to get the status of Kiali
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: statusInfo
+		{
 			"Status",
 			"GET",
 			"/api/status",
 			handlers.Root,
 			false,
 		},
+		// swagger:route GET /namespaces/{namespace}/istio istioConfigList
+		// ---
+		// Endpoint to get the list of Istio Config of a namespace
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: istioConfigList
+		//
 		{
 			"IstioConfigList",
 			"GET",

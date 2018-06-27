@@ -9,8 +9,24 @@ type IstioRuleList struct {
 	Rules     []IstioRule `json:"rules"`
 }
 
+// IstioRules istioRules
+//
+// This type type is used for returning an array of IstioRules
+//
+// swagger:model istioRules
+// An array of istioRule
+// swagger:allOf
 type IstioRules []IstioRule
+
+// IstioRule istioRule
+//
+// This type type is used for returning a IstioRule
+//
+// swagger:model istioRule
 type IstioRule struct {
+	// The name of the istioRule
+	//
+	// required: true
 	Name    string      `json:"name"`
 	Match   interface{} `json:"match"`
 	Actions interface{} `json:"actions"`
