@@ -10,7 +10,7 @@ const INITIAL_STATE: LoginState = {
   logging: false
 };
 
-// This Reducer allows changes to the 'serviceGraphDataState' portion of Redux Store
+// This Reducer allows changes to the 'LoginState' portion of Redux Store
 const LoginState = (state: LoginState = INITIAL_STATE, action) => {
   switch (action.type) {
     case LoginActionKeys.LOGIN_REQUEST:

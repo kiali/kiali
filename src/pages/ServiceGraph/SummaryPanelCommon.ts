@@ -1,4 +1,5 @@
 import { SummaryPanelPropType } from '../../types/Graph';
+import { Health, healthNotAvailable } from '../../types/Health';
 
 export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType) => {
   return (
@@ -9,4 +10,21 @@ export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: Su
     // Check if the target changed
     prevProps.data.summaryTarget !== nextProps.data.summaryTarget
   );
+};
+
+type HealthState = {
+  health?: Health;
+  healthLoading: boolean;
+};
+
+export const updateHealth = (summaryTarget: any, stateSetter: (hs: HealthState) => void) => {
+  const healthPromise = summaryTarget.data('healthPromise');
+  if (healthPromise) {
+    stateSetter({ health: undefined, healthLoading: true });
+    healthPromise
+      .then(h => stateSetter({ health: h, healthLoading: false }))
+      .catch(err => stateSetter({ health: healthNotAvailable(), healthLoading: false }));
+  } else {
+    stateSetter({ health: undefined, healthLoading: false });
+  }
 };

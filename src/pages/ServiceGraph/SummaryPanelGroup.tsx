@@ -10,9 +10,10 @@ import MetricsOptions from '../../types/MetricsOptions';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
-import { shouldRefreshData } from './SummaryPanelCommon';
+import { shouldRefreshData, updateHealth } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
 import Label from '../../components/Label/Label';
+import { Health } from '../../types/Health';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -20,6 +21,8 @@ type SummaryPanelGroupState = {
   requestCountOut: [string, number][];
   errorCountIn: [string, number][];
   errorCountOut: [string, number][];
+  healthLoading: boolean;
+  health?: Health;
 };
 
 export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelGroupState> {
@@ -42,18 +45,21 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       requestCountIn: [],
       requestCountOut: [],
       errorCountIn: [],
-      errorCountOut: []
+      errorCountOut: [],
+      healthLoading: false
     };
   }
 
   componentDidMount() {
     this._isMounted = true;
     this.updateRpsCharts(this.props);
+    updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
     if (shouldRefreshData(prevProps, this.props)) {
       this.updateRpsCharts(this.props);
+      updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
     }
   }
 
@@ -67,7 +73,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const namespace = group.data('service').split('.')[1];
     const service = group.data('service').split('.')[0];
     const serviceHotLink = <Link to={`/namespaces/${namespace}/services/${service}`}>{service}</Link>;
-    const health = group.data('health');
 
     const incoming = getAccumulatedTrafficRate(group.children());
     const outgoing = getAccumulatedTrafficRate(group.children().edgesTo('*'));
@@ -75,14 +80,19 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     return (
       <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
         <div className="panel-heading">
-          {health && (
-            <HealthIndicator
-              id="graph-health-indicator"
-              mode={DisplayMode.SMALL}
-              health={health}
-              tooltipPlacement="left"
-              rateInterval={this.props.duration}
-            />
+          {this.state.healthLoading ? (
+            // Remove glitch while health is being reloaded
+            <span style={{ width: 18, height: 17, display: 'inline-block' }} />
+          ) : (
+            this.state.health && (
+              <HealthIndicator
+                id="graph-health-indicator"
+                mode={DisplayMode.SMALL}
+                health={this.state.health}
+                tooltipPlacement="left"
+                rateInterval={this.props.duration}
+              />
+            )
           )}
           <span> Versioned Group: {serviceHotLink}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>

@@ -4,6 +4,17 @@ export interface Health {
   requests: RequestHealth;
 }
 
+export const healthNotAvailable = (): Health => {
+  return {
+    envoy: {
+      inbound: { healthy: 0, total: 0 },
+      outbound: { healthy: 0, total: 0 }
+    },
+    deploymentStatuses: [],
+    requests: { requestCount: 0, requestErrorCount: 0 }
+  };
+};
+
 export type NamespaceHealth = { [service: string]: Health };
 
 export interface EnvoyHealth {

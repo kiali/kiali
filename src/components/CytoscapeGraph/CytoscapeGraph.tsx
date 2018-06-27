@@ -406,15 +406,20 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           promise = API.getNamespaceHealth(authentication(), namespace, duration).then(r => r.data);
           healthPerNamespace.set(namespace, promise);
         }
-        promise.then(nsHealth => {
-          const health = nsHealth[service];
-          ele.data('health', health);
-          const status = H.computeAggregatedHealth(health);
-          ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
-          if (status === H.DEGRADED || status === H.FAILURE) {
-            ele.addClass(status.name);
-          }
-        });
+        ele.data('healthPromise', promise.then(nsHealth => nsHealth[service]));
+        promise
+          .then(nsHealth => {
+            const health = nsHealth[service];
+            const status = H.computeAggregatedHealth(health);
+            ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
+            if (status === H.DEGRADED || status === H.FAILURE) {
+              ele.addClass(status.name);
+            }
+          })
+          .catch(err => {
+            ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
+            console.error(API.getErrorMsg('Could not fetch health', err));
+          });
       }
     });
   }
