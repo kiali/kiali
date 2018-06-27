@@ -83,9 +83,6 @@ export class GraphHighlighter {
     this.cy
       .elements()
       .difference(toHighlight)
-      .filter((ele: any) => {
-        return !ele.isParent();
-      })
       .addClass(DIM_CLASS);
   };
 
@@ -113,21 +110,30 @@ export class GraphHighlighter {
     return undefined;
   }
 
+  includeParentNodes(nodes: any) {
+    return nodes.reduce((all, current) => {
+      all = all.add(current);
+      if (current.isChild()) {
+        all = all.add(current.parent());
+      }
+      return all;
+    }, this.cy.collection());
+  }
+
   // return the children and children relations, including edges
   getGroupHighlight(groupBox: any) {
-    return groupBox.children().reduce((prev, child) => {
-      if (!prev) {
-        prev = this.cy.collection();
-      }
-      return prev.add(child.closedNeighborhood());
-    });
+    return this.includeParentNodes(
+      groupBox.children().reduce((prev, child) => {
+        return prev.add(child.closedNeighborhood());
+      }, this.cy.collection())
+    );
   }
 
   getNodeHighlight(node: any) {
-    return node.closedNeighborhood();
+    return this.includeParentNodes(node.closedNeighborhood());
   }
 
   getEdgeHighlight(edge: any) {
-    return edge.connectedNodes().add(edge);
+    return this.includeParentNodes(edge.connectedNodes().add(edge));
   }
 }
