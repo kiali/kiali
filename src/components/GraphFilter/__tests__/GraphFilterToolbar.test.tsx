@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 
 import { GraphParamsType } from '../../../types/Graph';
-import { Duration, Layout, EdgeLabelMode } from '../../../types/GraphFilter';
+import { Duration, EdgeLabelMode } from '../../../types/GraphFilter';
 import Namespace from '../../../types/Namespace';
 
 import GraphFilterToolbar from '../GraphFilterToolbar';
@@ -21,11 +21,6 @@ describe('ServiceGraphPage test', () => {
 
     const toolbar = wrapper.instance() as GraphFilterToolbar;
     toolbar.handleFilterChange = onParamsChangeMockFn;
-
-    const newLayout: Layout = { name: 'Cola' };
-    toolbar.handleLayoutChange(newLayout); // simulate layout change
-    const EXPECT1 = Object.assign({}, PARAMS, { graphLayout: newLayout });
-    expect(onParamsChangeMockFn).toHaveBeenLastCalledWith(EXPECT1);
 
     const newDuration: Duration = { value: 1800 };
     toolbar.handleDurationChange(newDuration); // simulate duration change
