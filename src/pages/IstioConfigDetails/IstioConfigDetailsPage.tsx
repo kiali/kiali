@@ -23,9 +23,12 @@ interface IstioConfigDetailsState {
 }
 
 class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioConfigId>, IstioConfigDetailsState> {
+  aceEditorRef: React.RefObject<AceEditor>;
+
   constructor(props: RouteComponentProps<IstioConfigId>) {
     super(props);
     this.state = {};
+    this.aceEditorRef = React.createRef();
   }
 
   updateFilters = (addObjectTypeFilter: boolean) => {
@@ -84,6 +87,14 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     this.fetchIstioObjectDetails();
   }
 
+  componentDidUpdate() {
+    // Hack to force redisplay of annotations after update
+    // See https://github.com/securingsincity/react-ace/issues/300
+    if (this.aceEditorRef.current) {
+      this.aceEditorRef.current!['editor'].onChangeAnnotation();
+    }
+  }
+
   componentWillReceiveProps(nextProps: RouteComponentProps<IstioConfigId>) {
     this.fetchIstioObjectDetailsFromProps(nextProps.match.params);
   }
@@ -100,6 +111,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
             </Button>
             <h1>{this.props.match.params.objectType + ': ' + this.props.match.params.object}</h1>
             <AceEditor
+              ref={this.aceEditorRef}
               mode="yaml"
               theme="eclipse"
               readOnly={true}
