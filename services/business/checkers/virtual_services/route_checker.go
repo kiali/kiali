@@ -1,8 +1,8 @@
 package virtual_services
 
 import (
+	"fmt"
 	"reflect"
-	"strconv"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
@@ -18,17 +18,14 @@ type RouteChecker struct{ kubernetes.IstioObject }
 // 3. Sum of all weights are 100 (if only one weight, then it assumes that is 100).
 // 4. All the route has to have weight label.
 func (route RouteChecker) Check() ([]*models.IstioCheck, bool) {
-	checks, valid := route.checkRoutesFor("http")
+	httpChecks, httpValid := route.checkRoutesFor("http")
 	tcpChecks, tcpValid := route.checkRoutesFor("tcp")
-	return append(checks, tcpChecks...), valid && tcpValid
+	return append(httpChecks, tcpChecks...), httpValid && tcpValid
 }
 
 func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
-
-	var weightSum int
-	var weightCount int
-	var valid = true
+	weightSum, weightCount, valid := 0, 0, true
 
 	http := route.GetSpec()[kind]
 	if http == nil {
@@ -41,11 +38,13 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 		return validations, valid
 	}
 
-	for i := 0; i < slice.Len(); i++ {
-		route, ok := slice.Index(i).Interface().(map[string]interface{})
+	for routeIdx := 0; routeIdx < slice.Len(); routeIdx++ {
+		route, ok := slice.Index(routeIdx).Interface().(map[string]interface{})
 		if !ok || route["route"] == nil {
 			continue
 		}
+
+		weightCount, weightSum = 0, 0
 
 		// Getting a []DestinationWeight
 		destinationWeights := reflect.ValueOf(route["route"])
@@ -53,8 +52,8 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 			return validations, valid
 		}
 
-		for j := 0; j < destinationWeights.Len(); j++ {
-			destinationWeight, ok := destinationWeights.Index(j).Interface().(map[string]interface{})
+		for destWeightIdx := 0; destWeightIdx < destinationWeights.Len(); destWeightIdx++ {
+			destinationWeight, ok := destinationWeights.Index(destWeightIdx).Interface().(map[string]interface{})
 			if !ok || destinationWeight["weight"] == nil {
 				continue
 			}
@@ -63,15 +62,18 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 			weight, err := intutil.Convert(destinationWeight["weight"])
 			if err != nil {
 				valid = false
-				validation := models.BuildCheck("Weight must be a number",
-					"error", "spec/"+kind+"["+strconv.Itoa(i)+"]/route["+strconv.Itoa(j)+"]/weight/"+destinationWeight["weight"].(string))
+				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight/%d",
+					kind, routeIdx, destWeightIdx, destinationWeight["weight"])
+				validation := models.BuildCheck("Weight must be a number", "error", path)
 				validations = append(validations, &validation)
 			}
 
 			if weight > 100 || weight < 0 {
 				valid = false
+				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight/%d",
+					kind, routeIdx, destWeightIdx, weight)
 				validation := models.BuildCheck("Weight should be between 0 and 100",
-					"error", "spec/"+kind+"["+strconv.Itoa(i)+"]/route["+strconv.Itoa(j)+"]/weight/"+strconv.Itoa(weight))
+					"error", path)
 				validations = append(validations, &validation)
 			}
 
@@ -80,15 +82,15 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 
 		if weightCount > 0 && weightSum != 100 {
 			valid = false
-			validation := models.BuildCheck("Weight sum should be 100", "error",
-				"spec/"+kind+"["+strconv.Itoa(i)+"]/route")
+			path := fmt.Sprintf("spec/%s[%d]/route", kind, routeIdx)
+			validation := models.BuildCheck("Weight sum should be 100", "error", path)
 			validations = append(validations, &validation)
 		}
 
 		if weightCount > 0 && weightCount != destinationWeights.Len() {
 			valid = false
-			validation := models.BuildCheck("All routes should have weight", "error",
-				"spec/"+kind+"["+strconv.Itoa(i)+"]/route")
+			path := fmt.Sprintf("spec/%s[%d]/route", kind, routeIdx)
+			validation := models.BuildCheck("All routes should have weight", "error", path)
 			validations = append(validations, &validation)
 		}
 	}

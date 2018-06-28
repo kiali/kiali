@@ -89,6 +89,26 @@ func TestOneRouteWithoutWeight(t *testing.T) {
 	assert.Equal(validations[1].Path, "spec/http[0]/route")
 }
 
+func TestSecondHTTPRouteHasNoWeight(t *testing.T) {
+	assert := assert.New(t)
+
+	// Setup mocks
+	validations, valid := RouteChecker{fake2HTTPRoutes()}.Check()
+
+	// wrong weight'ed route rule
+	assert.False(valid)
+	assert.NotEmpty(validations)
+	assert.Len(validations, 2)
+
+	assert.Equal(validations[0].Message, "Weight sum should be 100")
+	assert.Equal(validations[0].Severity, "error")
+	assert.Equal(validations[0].Path, "spec/http[0]/route")
+
+	assert.Equal(validations[1].Message, "All routes should have weight")
+	assert.Equal(validations[1].Severity, "error")
+	assert.Equal(validations[1].Path, "spec/http[0]/route")
+}
+
 func fakeIstioObjects() kubernetes.IstioObject {
 	validVirtualService := (&kubernetes.VirtualService{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -222,6 +242,36 @@ func fakeOneRouteWithoutWeight() kubernetes.IstioObject {
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "reviews-well",
 		},
+		Spec: map[string]interface{}{"http": []map[string]interface{}{
+			{
+				"route": []map[string]interface{}{
+					{
+						"weight": uint64(55),
+						"destination": map[string]string{
+							"subset": "v1",
+							"host":   "reviews",
+						},
+					},
+					{
+						"destination": map[string]string{
+							"subset": "v1",
+							"host":   "reviews",
+						},
+					},
+				},
+			},
+		},
+		},
+	}).DeepCopyIstioObject()
+
+	return validVirtualService
+}
+
+func fake2HTTPRoutes() kubernetes.IstioObject {
+	validVirtualService := (&kubernetes.VirtualService{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "reviews-well",
+		},
 		Spec: map[string]interface{}{
 			"http": []map[string]interface{}{
 				{
@@ -233,6 +283,16 @@ func fakeOneRouteWithoutWeight() kubernetes.IstioObject {
 								"host":   "reviews",
 							},
 						},
+						{
+							"destination": map[string]string{
+								"subset": "v1",
+								"host":   "reviews",
+							},
+						},
+					},
+				},
+				{
+					"route": []map[string]interface{}{
 						{
 							"destination": map[string]string{
 								"subset": "v1",

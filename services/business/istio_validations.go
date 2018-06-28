@@ -34,8 +34,8 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 
 	objectCheckers := []ObjectChecker{
 		checkers.RouteRuleChecker{namespace, pods.Items, istioDetails.RouteRules},
-		checkers.VirtualServiceChecker{namespace, pods.Items,
-			istioDetails.DestinationRules, istioDetails.VirtualServices},
+		checkers.VirtualServiceChecker{namespace, istioDetails.DestinationRules,
+			istioDetails.VirtualServices},
 		&checkers.PodChecker{Pods: pods.Items},
 	}
 
@@ -63,8 +63,8 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 
 	objectCheckers := []ObjectChecker{
 		checkers.RouteRuleChecker{Namespace: namespace, PodList: pods.Items, RouteRules: istioDetails.RouteRules},
-		checkers.VirtualServiceChecker{namespace, pods.Items,
-			istioDetails.DestinationRules, istioDetails.VirtualServices},
+		checkers.VirtualServiceChecker{namespace, istioDetails.DestinationRules,
+			istioDetails.VirtualServices},
 		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: istioDetails, ServiceList: serviceList},
 	}
 

@@ -4,42 +4,24 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 func prepareTestForVirtualService(istioObject kubernetes.IstioObject) models.IstioValidations {
 	istioObjects := []kubernetes.IstioObject{istioObject}
 
 	// Setup mocks
-	podList := []v1.Pod{
-		fakePodsForLabels("bookinfo", map[string]string{"app": "reviews", "version": "v1", "stage": "production"}),
-		fakePodsForLabels("bookinfo", map[string]string{"app": "reviews", "version": "v2", "stage": "production"}),
-	}
-
 	destinationList := []kubernetes.IstioObject{
 		fakeDestinationRule("reviews"),
 	}
 
-	virtualServiceChecker := VirtualServiceChecker{"bookinfo",
-		podList, destinationList, istioObjects}
+	virtualServiceChecker := VirtualServiceChecker{"bookinfo", destinationList, istioObjects}
 
 	return virtualServiceChecker.Check()
-}
-
-func fakePodsForLabels(namespace string, labels labels.Set) v1.Pod {
-	return v1.Pod{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "reviews-12345-hello",
-			Namespace: namespace,
-			Labels:    labels,
-		},
-	}
 }
 
 func fakeDestinationRule(hostName string) kubernetes.IstioObject {
@@ -120,22 +102,16 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	podList := []v1.Pod{
-		fakePodsForLabels("bookinfo", map[string]string{"app": "reviews", "version": "v1", "stage": "production"}),
-		fakePodsForLabels("bookinfo", map[string]string{"app": "reviews", "version": "v2", "stage": "production"}),
-	}
-
 	destinationList := []kubernetes.IstioObject{
 		fakeDestinationRule("reviews"),
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{"bookinfo",
-		podList, destinationList, fakeVirtualServiceMultipleIstioObjects()}
+		destinationList, fakeVirtualServiceMultipleIstioObjects()}
 
 	validations := virtualServiceChecker.Check()
 	assert.NotEmpty(validations)
 
-	// Precedence is incorrect
 	validation, ok := validations[models.IstioValidationKey{"virtualservice", "reviews-mixed"}]
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-mixed")
@@ -143,13 +119,12 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	assert.Equal(validation.Valid, false)
 	assert.Len(validation.Checks, 3)
 
-	// Negative precedence
-	validation, ok = validations[models.IstioValidationKey{"virtualservice", "reviews-precedence"}]
+	validation, ok = validations[models.IstioValidationKey{"virtualservice", "reviews-multiple"}]
 	assert.True(ok)
-	assert.Equal(validation.Name, "reviews-precedence")
+	assert.Equal(validation.Name, "reviews-multiple")
 	assert.Equal(validation.ObjectType, "virtualservice")
 	assert.Equal(validation.Valid, false)
-	assert.Len(validation.Checks, 1)
+	assert.Len(validation.Checks, 2)
 }
 
 func fakeVirtualServices() kubernetes.IstioObject {
@@ -185,57 +160,23 @@ func fakeVirtualServicesMultipleChecks() kubernetes.IstioObject {
 	validVirtualService := (&kubernetes.VirtualService{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "reviews-multiple",
-			Namespace: "otherbookinfo",
-		},
-		Spec: map[string]interface{}{
-			"http": []map[string]interface{}{
-				{
-					"route": []map[string]interface{}{
-						{
-							"destination": map[string]interface{}{
-								"host":   "reviews",
-								"subset": "v1",
-							},
-							"weight": uint64(55),
-						},
-						{
-							"destination": map[string]interface{}{
-								"host":   "reviews",
-								"subset": "v2",
-							},
-							"weight": uint64(45),
-						},
-					},
-				},
-			},
-		},
-	}).DeepCopyIstioObject()
-
-	return validVirtualService
-}
-
-func fakeVirtualServiceWrongPrecedence() kubernetes.IstioObject {
-	validVirtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "reviews-precedence",
 			Namespace: "bookinfo",
 		},
 		Spec: map[string]interface{}{
-			"precedence": "abc",
 			"http": []map[string]interface{}{
 				{
 					"route": []map[string]interface{}{
 						{
 							"destination": map[string]interface{}{
 								"host":   "reviews",
-								"subset": "v1",
+								"subset": "v4",
 							},
 							"weight": uint64(55),
 						},
 						{
 							"destination": map[string]interface{}{
 								"host":   "reviews",
-								"subset": "v2",
+								"subset": "v5",
 							},
 							"weight": uint64(45),
 						},
@@ -252,19 +193,18 @@ func fakeVirtualServiceMixedChecker() kubernetes.IstioObject {
 	validVirtualService := (&kubernetes.VirtualService{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "reviews-mixed",
-			Namespace: "mistaken",
+			Namespace: "bookinfo",
 		},
 		Spec: map[string]interface{}{
-			"precedence": "abc",
 			"http": []map[string]interface{}{
 				{
 					"route": []map[string]interface{}{
 						{
 							"destination": map[string]interface{}{
 								"host":   "reviews",
-								"subset": "v1",
+								"subset": "v4",
 							},
-							"weight": uint64(55),
+							"weight": uint64(155),
 						},
 						{
 							"destination": map[string]interface{}{
@@ -283,5 +223,5 @@ func fakeVirtualServiceMixedChecker() kubernetes.IstioObject {
 }
 
 func fakeVirtualServiceMultipleIstioObjects() []kubernetes.IstioObject {
-	return []kubernetes.IstioObject{fakeVirtualServiceMixedChecker(), fakeVirtualServiceWrongPrecedence()}
+	return []kubernetes.IstioObject{fakeVirtualServiceMixedChecker(), fakeVirtualServicesMultipleChecks()}
 }

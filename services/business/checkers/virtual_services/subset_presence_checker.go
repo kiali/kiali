@@ -1,24 +1,22 @@
 package virtual_services
 
 import (
-	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
-	"strconv"
-	"strings"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
-type VersionPresenceChecker struct {
+type SubsetPresenceChecker struct {
 	Namespace        string
-	PodList          []v1.Pod
 	DestinationRules []kubernetes.IstioObject
 	VirtualService   kubernetes.IstioObject
 }
 
-func (checker VersionPresenceChecker) Check() ([]*models.IstioCheck, bool) {
+func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 	valid := true
 	validations := make([]*models.IstioCheck, 0)
 
@@ -33,8 +31,8 @@ func (checker VersionPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 		return validations, valid
 	}
 
-	for i := 0; i < slice.Len(); i++ {
-		httpRoute, ok := slice.Index(i).Interface().(map[string]interface{})
+	for routeIdx := 0; routeIdx < slice.Len(); routeIdx++ {
+		httpRoute, ok := slice.Index(routeIdx).Interface().(map[string]interface{})
 		if !ok || httpRoute["route"] == nil {
 			continue
 		}
@@ -45,12 +43,12 @@ func (checker VersionPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 			return validations, valid
 		}
 
-		for j := 0; j < destinationWeights.Len(); j++ {
-			destinationWeight, ok := destinationWeights.Index(j).Interface().(map[string]interface{})
+		for destWeightIdx := 0; destWeightIdx < destinationWeights.Len(); destWeightIdx++ {
+			destinationWeight, ok := destinationWeights.Index(destWeightIdx).Interface().(map[string]interface{})
 			if !ok || destinationWeight["destination"] == nil {
 				valid = false
-				validation := models.BuildCheck("Destination field is mandatory", "error",
-					"spec/http["+strconv.Itoa(i)+"]/route["+strconv.Itoa(j)+"]")
+				path := fmt.Sprintf("spec/http[%d]/route[%d]", routeIdx, destWeightIdx)
+				validation := models.BuildCheck("Destination field is mandatory", "error", path)
 				validations = append(validations, &validation)
 				continue
 			}
@@ -70,17 +68,10 @@ func (checker VersionPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 				continue
 			}
 
-			// Are there pods for that host and subset
-			subsetSelector := checker.getSelector(host, subset)
-			if subsetSelector == nil {
+			if !checker.subsetPresent(host, subset) {
 				valid = false
-				validation := models.BuildCheck("Subset not found", "warning",
-					"spec/http["+strconv.Itoa(i)+"]/route["+strconv.Itoa(j)+"]/destination")
-				validations = append(validations, &validation)
-			} else if !checker.hasMatchingPod(subsetSelector) {
-				valid = false
-				validation := models.BuildCheck("No pods found for this selector", "warning",
-					"spec/http["+strconv.Itoa(i)+"]/route["+strconv.Itoa(j)+"]/destination")
+				path := fmt.Sprintf("spec/http[%d]/route[%d]/destination", routeIdx, destWeightIdx)
+				validation := models.BuildCheck("Subset not found", "warning", path)
 				validations = append(validations, &validation)
 			}
 		}
@@ -89,35 +80,16 @@ func (checker VersionPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 	return validations, valid
 }
 
-func (checker VersionPresenceChecker) hasMatchingPod(selector labels.Selector) bool {
-	podFound := false
-
-	for _, pod := range checker.PodList {
-		podFound = selector.Matches(labels.Set(pod.ObjectMeta.Labels)) &&
-			pod.ObjectMeta.Namespace == checker.VirtualService.GetObjectMeta().Namespace
-		if podFound {
-			break
-		}
-	}
-
-	return podFound
-}
-
-func (checker VersionPresenceChecker) getSelector(host string, subset string) labels.Selector {
+func (checker SubsetPresenceChecker) subsetPresent(host string, subset string) bool {
 	destinationRule, ok := checker.getDestinationRule(host)
-	if !ok {
-		return nil
+	if !ok || destinationRule == nil {
+		return false
 	}
 
-	labels, ok := GetSubsetLabel(destinationRule, subset)
-	if !ok {
-		return nil
-	}
-
-	return labels
+	return hasSubsetDefined(destinationRule, subset)
 }
 
-func (checker VersionPresenceChecker) getDestinationRule(virtualServiceHost string) (kubernetes.IstioObject, bool) {
+func (checker SubsetPresenceChecker) getDestinationRule(virtualServiceHost string) (kubernetes.IstioObject, bool) {
 	for _, destinationRule := range checker.DestinationRules {
 		host, ok := destinationRule.GetSpec()["host"]
 		if !ok {
@@ -144,7 +116,7 @@ func (checker VersionPresenceChecker) getDestinationRule(virtualServiceHost stri
 	return nil, false
 }
 
-func GetSubsetLabel(destinationRule kubernetes.IstioObject, subsetTarget string) (labels.Selector, bool) {
+func hasSubsetDefined(destinationRule kubernetes.IstioObject, subsetTarget string) bool {
 	if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
 		if dSubsets, ok := subsets.([]interface{}); ok {
 			for _, subset := range dSubsets {
@@ -152,8 +124,8 @@ func GetSubsetLabel(destinationRule kubernetes.IstioObject, subsetTarget string)
 					subsetName := innerSubset["name"].(string)
 					if subsetName == subsetTarget {
 						if labels, ok := innerSubset["labels"]; ok {
-							if dLabels, ok := labels.(map[string]interface{}); ok {
-								return ParseLabels(dLabels), true
+							if _, ok := labels.(map[string]interface{}); ok {
+								return true
 							}
 						}
 					}
@@ -161,7 +133,7 @@ func GetSubsetLabel(destinationRule kubernetes.IstioObject, subsetTarget string)
 			}
 		}
 	}
-	return nil, false
+	return false
 }
 
 func ParseLabels(rawLabels map[string]interface{}) labels.Selector {
