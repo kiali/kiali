@@ -161,6 +161,12 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         ) : (
           undefined
         )}
+        {this.state.istioObjectDetails && this.state.istioObjectDetails.quotaSpec
+          ? this.renderEditor(this.state.istioObjectDetails.quotaSpec)
+          : undefined}
+        {this.state.istioObjectDetails && this.state.istioObjectDetails.quotaSpecBinding
+          ? this.renderEditor(this.state.istioObjectDetails.quotaSpecBinding)
+          : undefined}
       </div>
     );
   }
