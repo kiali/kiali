@@ -9,6 +9,13 @@ import { GlobalActionKeys } from '../actions/GlobalActions';
 import history from './History';
 import { PersistGate } from 'redux-persist/lib/integration/react';
 
+const turnOffLoadingSpinner = () => {
+  let state = store.getState();
+  if (state && state.globalState.isLoading) {
+    store.dispatch({ type: GlobalActionKeys.LOADING_SPINNER_OFF });
+  }
+};
+
 // intercept all Axios requests and dispatch the LOADING_SPINNER_ON Action
 axios.interceptors.request.use(
   request => {
@@ -28,13 +35,12 @@ axios.interceptors.request.use(
 // intercept all Axios responses and dispatch the LOADING_SPINNER_OFF Action
 axios.interceptors.response.use(
   response => {
-    let state = store.getState();
-    if (state && state.globalState.isLoading) {
-      store.dispatch({ type: GlobalActionKeys.LOADING_SPINNER_OFF });
-    }
+    turnOffLoadingSpinner();
     return response;
   },
   error => {
+    // The response was rejected, turn off the spinning
+    turnOffLoadingSpinner();
     return Promise.reject(error);
   }
 );
