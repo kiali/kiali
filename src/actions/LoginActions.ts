@@ -42,7 +42,7 @@ export const LoginActions = {
           );
         },
         error => {
-          if (error.response.status === HTTP_CODES.UNAUTHORIZED) {
+          if (error.response && error.response.status === HTTP_CODES.UNAUTHORIZED) {
             dispatch(LoginActions.logoutSuccess());
           }
         }
