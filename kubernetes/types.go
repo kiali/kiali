@@ -40,16 +40,6 @@ var (
 			collection:   &GatewayList{},
 			groupVersion: &istioNetworkingGroupVersion,
 		},
-		routeRuleLabel: {
-			object: &RouteRule{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       routeRuleType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &RouteRuleList{},
-			groupVersion: &istioConfigGroupVersion,
-		},
 		virtualServiceLabel: {
 			object: &VirtualService{
 				TypeMeta: meta_v1.TypeMeta{
@@ -59,16 +49,6 @@ var (
 			},
 			collection:   &VirtualServiceList{},
 			groupVersion: &istioNetworkingGroupVersion,
-		},
-		destinationPolicyLabel: {
-			object: &DestinationPolicy{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       destinationPolicyType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &DestinationPolicyList{},
-			groupVersion: &istioConfigGroupVersion,
 		},
 		destinationRuleLabel: {
 			object: &DestinationRule{
@@ -433,10 +413,8 @@ type ServiceDetails struct {
 // IstioDetails is a wrapper to group all Istio objects related to a Service.
 // Used to fetch all Istio information in a single operation instead to invoke individual APIs per each group.
 type IstioDetails struct {
-	RouteRules          []IstioObject `json:"routerules"`
-	DestinationPolicies []IstioObject `json:"destinationpolicies"`
-	VirtualServices     []IstioObject `json:"virtualservices"`
-	DestinationRules    []IstioObject `json:"destinationrules"`
+	VirtualServices  []IstioObject `json:"virtualservices"`
+	DestinationRules []IstioObject `json:"destinationrules"`
 }
 
 // IstioRules is a wrapper to group all mixer rules related to a Namespace.

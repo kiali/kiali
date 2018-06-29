@@ -33,12 +33,8 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.NotEmpty(validations[models.IstioValidationKey{"routerule", "reviews-rr"}])
-	assert.NotEmpty(validations[models.IstioValidationKey{"destinationpolicy", "details-dp"}])
 	assert.NotEmpty(validations[models.IstioValidationKey{"virtualservice", "product-vs"}])
 	assert.NotEmpty(validations[models.IstioValidationKey{"destinationrule", "customer-dr"}])
-	assert.True(validations[models.IstioValidationKey{"routerule", "reviews-rr"}].Valid)
-	assert.True(validations[models.IstioValidationKey{"destinationpolicy", "details-dp"}].Valid)
 	assert.True(validations[models.IstioValidationKey{"virtualservice", "product-vs"}].Valid)
 	assert.True(validations[models.IstioValidationKey{"destinationrule", "customer-dr"}].Valid)
 }
@@ -53,8 +49,6 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{"routerule", "reviews-rr"}].Valid)
-	assert.True(validations[models.IstioValidationKey{"destinationpolicy", "details-dp"}].Valid)
 	assert.True(validations[models.IstioValidationKey{"virtualservice", "product-vs"}].Valid)
 	customerDr := validations[models.IstioValidationKey{"destinationrule", "customer-dr"}]
 	assert.False(customerDr.Valid)
@@ -69,8 +63,6 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{"routerule", "reviews-rr"}].Valid)
-	assert.True(validations[models.IstioValidationKey{"destinationpolicy", "details-dp"}].Valid)
 	assert.True(validations[models.IstioValidationKey{"destinationrule", "customer-dr"}].Valid)
 	productVs := validations[models.IstioValidationKey{"virtualservice", "product-vs"}]
 	assert.False(productVs.Valid)
@@ -85,14 +77,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{"routerule", "reviews-rr"}].Valid)
-	assert.True(validations[models.IstioValidationKey{"virtualservice", "product-vs"}].Valid)
 	assert.True(validations[models.IstioValidationKey{"destinationrule", "customer-dr"}].Valid)
-	detailsDp := validations[models.IstioValidationKey{"destinationpolicy", "details-dp"}]
-	assert.False(detailsDp.Valid)
-	assert.Equal(1, len(detailsDp.Checks))
-	assert.Equal("spec/destination", detailsDp.Checks[0].Path)
-	assert.Equal("Destination doesn't have a valid service", detailsDp.Checks[0].Message)
 
 	validations = NoServiceChecker{
 		Namespace:    "test",
@@ -101,44 +86,11 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{"virtualservice", "product-vs"}].Valid)
-	assert.True(validations[models.IstioValidationKey{"destinationpolicy", "details-dp"}].Valid)
 	assert.True(validations[models.IstioValidationKey{"destinationrule", "customer-dr"}].Valid)
-	reviewsRr := validations[models.IstioValidationKey{"routerule", "reviews-rr"}]
-	assert.False(reviewsRr.Valid)
-	assert.Equal(1, len(reviewsRr.Checks))
-	assert.Equal("spec/destination", reviewsRr.Checks[0].Path)
-	assert.Equal("Destination doesn't have a valid service", reviewsRr.Checks[0].Message)
 }
 
 func fakeIstioDetails() *kubernetes.IstioDetails {
 	istioDetails := kubernetes.IstioDetails{}
-
-	istioDetails.RouteRules = []kubernetes.IstioObject{
-		&kubernetes.RouteRule{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "reviews-rr",
-			},
-			Spec: map[string]interface{}{
-				"destination": map[string]interface{}{
-					"name": "reviews",
-				},
-			},
-		},
-	}
-
-	istioDetails.DestinationPolicies = []kubernetes.IstioObject{
-		&kubernetes.DestinationPolicy{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "details-dp",
-			},
-			Spec: map[string]interface{}{
-				"destination": map[string]interface{}{
-					"name": "details",
-				},
-			},
-		},
-	}
 
 	istioDetails.VirtualServices = []kubernetes.IstioObject{
 		&kubernetes.VirtualService{

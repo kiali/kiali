@@ -128,25 +128,31 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 }
 
 func fakeVirtualServices() kubernetes.IstioObject {
-	validRouteRule := (&kubernetes.RouteRule{
+	validRouteRule := (&kubernetes.VirtualService{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "reviews-well",
 		},
 		Spec: map[string]interface{}{
-			"destination": map[string]interface{}{
-				"name": "reviews",
+			"hosts": []interface{}{
+				"reviews.prod.svc.cluster.local",
 			},
-			"route": []map[string]interface{}{
+			"http": []map[string]interface{}{
 				{
-					"weight": uint64(55),
-					"labels": map[string]interface{}{
-						"version": "v1",
-					},
-				},
-				{
-					"weight": uint64(45),
-					"labels": map[string]interface{}{
-						"version": "v1",
+					"route": []map[string]interface{}{
+						{
+							"destination": map[string]interface{}{
+								"host":   "reviews",
+								"subset": "v1",
+							},
+							"weight": uint64(55),
+						},
+						{
+							"destination": map[string]interface{}{
+								"host":   "reviews",
+								"subset": "v2",
+							},
+							"weight": uint64(45),
+						},
 					},
 				},
 			},

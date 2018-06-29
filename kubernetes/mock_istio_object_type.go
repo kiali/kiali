@@ -17,7 +17,7 @@ type MockIstioObject struct {
 type MockIstioObjectList struct {
 	meta_v1.TypeMeta `json:",inline"`
 	meta_v1.ListMeta `json:"metadata"`
-	Items            []RouteRule `json:"items"`
+	Items            []MockIstioObject `json:"items"`
 }
 
 // GetSpec from a wrapper
@@ -92,7 +92,7 @@ func (in *MockIstioObjectList) DeepCopyInto(out *MockIstioObjectList) {
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
-		*out = make([]RouteRule, len(*in))
+		*out = make([]MockIstioObject, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

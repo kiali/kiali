@@ -9,24 +9,14 @@ import (
 )
 
 // GetIstioDetails returns Istio details for a given namespace,
-// on this version it collects the RouterRules, DestinationPolicies, VirtualService and DestinationRules defined for a namespace.
+// on this version it collects the VirtualServices and DestinationRules defined for a namespace.
 // If serviceName param is provided, it filters all the Istio objects pointing to a particular service.
 // It returns an error on any problem.
 func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error) {
-	var routeRules, destinationPolicies, virtualServices, destinationRules []IstioObject
-	var routeRulesErr, destinationPoliciesErr, virtualServicesErr, destinationRulesErr error
+	var virtualServices, destinationRules []IstioObject
+	var virtualServicesErr, destinationRulesErr error
 	var wg sync.WaitGroup
-	wg.Add(4)
-
-	go func() {
-		defer wg.Done()
-		routeRules, routeRulesErr = in.GetRouteRules(namespace, serviceName)
-	}()
-
-	go func() {
-		defer wg.Done()
-		destinationPolicies, destinationPoliciesErr = in.GetDestinationPolicies(namespace, serviceName)
-	}()
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
@@ -42,16 +32,6 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 
 	var istioDetails = IstioDetails{}
 
-	istioDetails.RouteRules = routeRules
-	if routeRulesErr != nil {
-		return nil, routeRulesErr
-	}
-
-	istioDetails.DestinationPolicies = destinationPolicies
-	if destinationPoliciesErr != nil {
-		return nil, destinationPoliciesErr
-	}
-
 	istioDetails.VirtualServices = virtualServices
 	if virtualServicesErr != nil {
 		return nil, virtualServicesErr
@@ -63,84 +43,6 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 	}
 
 	return &istioDetails, nil
-}
-
-// GetRouteRules returns all RouteRules for a given namespace.
-// If serviceName param is provided it will filter all RouteRules having a destination pointing to particular service.
-// It returns an error on any problem.
-func (in *IstioClient) GetRouteRules(namespace string, serviceName string) ([]IstioObject, error) {
-	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(routeRules).Do().Get()
-	if err != nil {
-		return nil, err
-	}
-	rulesList, ok := result.(*RouteRuleList)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return a RouteRule list", namespace, serviceName)
-	}
-
-	routerRules := make([]IstioObject, 0)
-	for _, rule := range rulesList.GetItems() {
-		appendRule := serviceName == ""
-		if !appendRule && FilterByDestination(rule.GetSpec(), namespace, serviceName, "") {
-			appendRule = true
-		}
-		if appendRule {
-			routerRules = append(routerRules, rule.DeepCopyIstioObject())
-		}
-	}
-	return routerRules, nil
-}
-
-func (in *IstioClient) GetRouteRule(namespace string, routerule string) (IstioObject, error) {
-	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(routeRules).SubResource(routerule).Do().Get()
-	if err != nil {
-		return nil, err
-	}
-
-	routeRule, ok := result.(*RouteRule)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return a RouteRule object", namespace, routerule)
-	}
-	return routeRule.DeepCopyIstioObject(), nil
-}
-
-// GetDestinationPolicies returns all DestinationPolicies for a given namespace.
-// If serviceName param is provided it will filter all DestinationPolicies having a destination pointing to a particular service.
-// It returns an error on any problem.
-func (in *IstioClient) GetDestinationPolicies(namespace string, serviceName string) ([]IstioObject, error) {
-	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(destinationPolicies).Do().Get()
-	if err != nil {
-		return nil, err
-	}
-	destinationPolicyList, ok := result.(*DestinationPolicyList)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return a DestinationPolicy list", namespace, serviceName)
-	}
-
-	destinationPolicies := make([]IstioObject, 0)
-	for _, policy := range destinationPolicyList.Items {
-		appendPolicy := serviceName == ""
-		if !appendPolicy && FilterByDestination(policy.GetSpec(), namespace, serviceName, "") {
-			appendPolicy = true
-		}
-		if appendPolicy {
-			destinationPolicies = append(destinationPolicies, policy.DeepCopyIstioObject())
-		}
-	}
-	return destinationPolicies, nil
-}
-
-func (in *IstioClient) GetDestinationPolicy(namespace string, destinationpolicy string) (IstioObject, error) {
-	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(destinationPolicies).SubResource(destinationpolicy).Do().Get()
-	if err != nil {
-		return nil, err
-	}
-
-	destinationPolicy, ok := result.(*DestinationPolicy)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return a DestinationPolicy object", namespace, destinationpolicy)
-	}
-	return destinationPolicy.DeepCopyIstioObject(), nil
 }
 
 // GetVirtualServices return all VirtualServices for a given namespace.
@@ -350,33 +252,6 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 	return quotaSpecBinding.DeepCopyIstioObject(), nil
 }
 
-// CheckRouteRule returns true if the routeRule object includes a destination defined by namespace, serviceName and version parameters.
-// It returns false otherwise.
-func CheckRouteRule(routeRule IstioObject, namespace string, serviceName string, version string) bool {
-	if routeRule == nil || routeRule.GetSpec() == nil {
-		return false
-	}
-	if FilterByDestination(routeRule.GetSpec(), namespace, serviceName, version) {
-		// RouteRule defines a version in the DestinationWeight
-		if routes, ok := routeRule.GetSpec()["route"]; ok {
-			if dRoutes, ok := routes.([]interface{}); ok {
-				for _, route := range dRoutes {
-					if dRoute, ok := route.(map[string]interface{}); ok {
-						if labels, ok := dRoute["labels"]; ok {
-							if dLabels, ok := labels.(map[string]interface{}); ok {
-								if versionValue, ok := dLabels["version"]; ok && versionValue == version {
-									return true
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return false
-}
-
 // CheckVirtualService returns true if virtualService object has defined a route on a service for any subset passed as parameter.
 // It returns false otherwise.
 func CheckVirtualService(virtualService IstioObject, namespace string, serviceName string, subsets []string) bool {
@@ -392,20 +267,6 @@ func CheckVirtualService(virtualService IstioObject, namespace string, serviceNa
 		}
 	}
 	return false
-}
-
-// CheckDestinationPolicyCircuitBreaker returns true if the destinationPolicy object includes a circuitBreaker defined
-// on a destination defined by namespace, serviceName and version parameters.
-// It returns false otherwise.
-func CheckDestinationPolicyCircuitBreaker(destinationPolicy IstioObject, namespace string, serviceName string, version string) bool {
-	if destinationPolicy == nil || destinationPolicy.GetSpec() == nil {
-		return false
-	}
-	_, hasCircuitBreaker := destinationPolicy.GetSpec()["circuitBreaker"]
-	if !hasCircuitBreaker {
-		return false
-	}
-	return FilterByDestination(destinationPolicy.GetSpec(), namespace, serviceName, version)
 }
 
 // GetDestinationRulesSubsets returns an array of subset names where a specific version is defined for a given service
