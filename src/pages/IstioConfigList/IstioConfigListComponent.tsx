@@ -22,6 +22,7 @@ import { PfColors } from '../../components/Pf/PfColors';
 import { authentication } from '../../utils/Authentication';
 import { NamespaceValidations } from '../../types/ServiceInfo';
 import { ConfigIndicator } from '../../components/ConfigValidation/ConfigIndicator';
+import { removeDuplicatesArray } from '../../utils/Common';
 
 const sortFields: SortField[] = [
   {
@@ -216,6 +217,12 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     let configValidationFilters: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Config')
       .map(activeFilter => activeFilter.value);
+
+    /** Remove duplicates  */
+    namespacesSelected = removeDuplicatesArray(namespacesSelected);
+    istioTypeFilters = removeDuplicatesArray(istioTypeFilters);
+    istioNameFilters = removeDuplicatesArray(istioNameFilters);
+    configValidationFilters = removeDuplicatesArray(configValidationFilters);
 
     if (namespacesSelected.length === 0) {
       API.getNamespaces(authentication())

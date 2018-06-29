@@ -23,7 +23,7 @@ import { Pagination } from '../../types/Pagination';
 import { IstioLogo, ServiceItem, ServiceOverview, SortField, overviewToItem } from '../../types/ServiceListComponent';
 import { authentication } from '../../utils/Authentication';
 import { getRequestErrorsRatio } from '../../utils/Health';
-
+import { removeDuplicatesArray } from '../../utils/Common';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import ItemDescription from './ItemDescription';
 import './ServiceListComponent.css';
@@ -211,7 +211,11 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     let istioFilters: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Istio Sidecar')
       .map(activeFilter => activeFilter.value);
-    istioFilters = this.cleanIstioFilters(istioFilters);
+
+    /** Remove Duplicates */
+    namespacesSelected = removeDuplicatesArray(namespacesSelected);
+    servicenameFilters = removeDuplicatesArray(servicenameFilters);
+    istioFilters = this.cleanIstioFilters(removeDuplicatesArray(istioFilters));
 
     if (namespacesSelected.length === 0) {
       API.getNamespaces(authentication())
