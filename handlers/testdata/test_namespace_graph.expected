@@ -23,7 +23,7 @@
           "serviceName": "ingressgateway",
           "version": "unknown",
           "rateOut": "100.000",
-          "isRoot": true
+          "isOutside": true
         }
       },
       {
