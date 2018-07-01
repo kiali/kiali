@@ -22,7 +22,7 @@ class UserDropdown extends React.Component<UserProps, UserState> {
           </Dropdown.Toggle>
           <Dropdown.Menu>
             <MenuItem id="usermenu_logout" onClick={() => this.handleLogout()}>
-              <Icon type="pf" name="key" /> Logout
+              Logout
             </MenuItem>
           </Dropdown.Menu>
         </Dropdown>
