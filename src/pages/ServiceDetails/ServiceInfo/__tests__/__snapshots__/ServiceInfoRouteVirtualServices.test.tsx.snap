@@ -1,0 +1,2452 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`#ServiceInfoVirtualServices render correctly with data should render service virtual services 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <ServiceInfoVirtualServices
+    editorLink="/namespaces/test_namespace/services/test_services"
+    validations={Object {}}
+    virtualServices={
+      Array [
+        Object {
+          "createdAt": "2018-03-14T10:17:52Z",
+          "gateways": Array [
+            "reviews",
+          ],
+          "hosts": Array [
+            "rewiews",
+          ],
+          "http": Array [
+            Object {
+              "route": Array [
+                Object {
+                  "destination": Object {
+                    "host": "reviews",
+                    "subset": "v1",
+                  },
+                  "weight": 55,
+                },
+                Object {
+                  "destination": Object {
+                    "host": "reviews",
+                    "subset": "v3",
+                  },
+                  "weight": 55,
+                },
+              ],
+            },
+          ],
+          "name": "reviews-default",
+          "resourceVersion": "1234",
+          "tcp": Array [
+            Object {
+              "match": Array [],
+              "route": Array [
+                Object {
+                  "destination": Object {
+                    "host": "reviews",
+                    "subset": "v1",
+                  },
+                  "weight": 55,
+                },
+                Object {
+                  "destination": Object {
+                    "host": "reviews",
+                    "subset": "v2",
+                  },
+                  "weight": 55,
+                },
+              ],
+            },
+          ],
+        },
+      ]
+    }
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <Row
+          bsClass="row"
+          className="row-cards-pf"
+          componentClass="div"
+        >
+          <Row
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
+          >
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={3}
+              md={3}
+              sm={12}
+              xs={12}
+            >
+              <div
+                className="card-pf-body"
+              >
+                <h3>
+                  reviews-default
+                </h3>
+                <div>
+                  <Link
+                    replace={false}
+                    to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                  >
+                    Show Yaml 
+                    <Icon
+                      name="angle-double-right"
+                      type="fa"
+                    />
+                  </Link>
+                </div>
+                <div>
+                  <strong>
+                    Created at
+                  </strong>
+                  : 
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </div>
+                <div>
+                  <strong>
+                    Resource Version
+                  </strong>
+                  : 
+                  1234
+                </div>
+                <DetailObject
+                  detail={
+                    Array [
+                      "rewiews",
+                    ]
+                  }
+                  name="Hosts"
+                />
+                <DetailObject
+                  detail={
+                    Array [
+                      "reviews",
+                    ]
+                  }
+                  name="Gateways"
+                />
+              </div>
+            </Col>
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={9}
+              md={9}
+              sm={12}
+              xs={12}
+            >
+              <Row
+                bsClass="row"
+                className="card-pf-body"
+                componentClass="div"
+              >
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                >
+                  <Row
+                    bsClass="row"
+                    componentClass="div"
+                  >
+                    <VirtualServiceRoute
+                      kind="HTTP"
+                      name="reviews-default"
+                      routes={
+                        Array [
+                          Object {
+                            "route": Array [
+                              Object {
+                                "destination": Object {
+                                  "host": "reviews",
+                                  "subset": "v1",
+                                },
+                                "weight": 55,
+                              },
+                              Object {
+                                "destination": Object {
+                                  "host": "reviews",
+                                  "subset": "v3",
+                                },
+                                "weight": 55,
+                              },
+                            ],
+                          },
+                        ]
+                      }
+                      validations={Object {}}
+                    />
+                  </Row>
+                  <Row
+                    bsClass="row"
+                    componentClass="div"
+                  >
+                    <VirtualServiceRoute
+                      kind="TCP"
+                      name="reviews-default"
+                      routes={
+                        Array [
+                          Object {
+                            "match": Array [],
+                            "route": Array [
+                              Object {
+                                "destination": Object {
+                                  "host": "reviews",
+                                  "subset": "v1",
+                                },
+                                "weight": 55,
+                              },
+                              Object {
+                                "destination": Object {
+                                  "host": "reviews",
+                                  "subset": "v2",
+                                },
+                                "weight": 55,
+                              },
+                            ],
+                          },
+                        ]
+                      }
+                      validations={Object {}}
+                    />
+                  </Row>
+                </Col>
+              </Row>
+            </Col>
+          </Row>
+        </Row>,
+      ],
+      "className": "card-pf",
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": "virtualservice0",
+        "nodeType": "class",
+        "props": Object {
+          "bsClass": "row",
+          "children": <Row
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
+          >
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={3}
+              md={3}
+              sm={12}
+              xs={12}
+            >
+              <div
+                className="card-pf-body"
+              >
+                <h3>
+                  reviews-default
+                </h3>
+                <div>
+                  <Link
+                    replace={false}
+                    to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                  >
+                    Show Yaml 
+                    <Icon
+                      name="angle-double-right"
+                      type="fa"
+                    />
+                  </Link>
+                </div>
+                <div>
+                  <strong>
+                    Created at
+                  </strong>
+                  : 
+                  <LocalTime
+                    time="2018-03-14T10:17:52Z"
+                  />
+                </div>
+                <div>
+                  <strong>
+                    Resource Version
+                  </strong>
+                  : 
+                  1234
+                </div>
+                <DetailObject
+                  detail={
+                    Array [
+                      "rewiews",
+                    ]
+                  }
+                  name="Hosts"
+                />
+                <DetailObject
+                  detail={
+                    Array [
+                      "reviews",
+                    ]
+                  }
+                  name="Gateways"
+                />
+              </div>
+            </Col>
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={9}
+              md={9}
+              sm={12}
+              xs={12}
+            >
+              <Row
+                bsClass="row"
+                className="card-pf-body"
+                componentClass="div"
+              >
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                >
+                  <Row
+                    bsClass="row"
+                    componentClass="div"
+                  >
+                    <VirtualServiceRoute
+                      kind="HTTP"
+                      name="reviews-default"
+                      routes={
+                        Array [
+                          Object {
+                            "route": Array [
+                              Object {
+                                "destination": Object {
+                                  "host": "reviews",
+                                  "subset": "v1",
+                                },
+                                "weight": 55,
+                              },
+                              Object {
+                                "destination": Object {
+                                  "host": "reviews",
+                                  "subset": "v3",
+                                },
+                                "weight": 55,
+                              },
+                            ],
+                          },
+                        ]
+                      }
+                      validations={Object {}}
+                    />
+                  </Row>
+                  <Row
+                    bsClass="row"
+                    componentClass="div"
+                  >
+                    <VirtualServiceRoute
+                      kind="TCP"
+                      name="reviews-default"
+                      routes={
+                        Array [
+                          Object {
+                            "match": Array [],
+                            "route": Array [
+                              Object {
+                                "destination": Object {
+                                  "host": "reviews",
+                                  "subset": "v1",
+                                },
+                                "weight": 55,
+                              },
+                              Object {
+                                "destination": Object {
+                                  "host": "reviews",
+                                  "subset": "v2",
+                                },
+                                "weight": 55,
+                              },
+                            ],
+                          },
+                        ]
+                      }
+                      validations={Object {}}
+                    />
+                  </Row>
+                </Col>
+              </Row>
+            </Col>
+          </Row>,
+          "className": "row-cards-pf",
+          "componentClass": "div",
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "bsClass": "row",
+            "children": Array [
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={3}
+                md={3}
+                sm={12}
+                xs={12}
+              >
+                <div
+                  className="card-pf-body"
+                >
+                  <h3>
+                    reviews-default
+                  </h3>
+                  <div>
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                    >
+                      Show Yaml 
+                      <Icon
+                        name="angle-double-right"
+                        type="fa"
+                      />
+                    </Link>
+                  </div>
+                  <div>
+                    <strong>
+                      Created at
+                    </strong>
+                    : 
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </div>
+                  <div>
+                    <strong>
+                      Resource Version
+                    </strong>
+                    : 
+                    1234
+                  </div>
+                  <DetailObject
+                    detail={
+                      Array [
+                        "rewiews",
+                      ]
+                    }
+                    name="Hosts"
+                  />
+                  <DetailObject
+                    detail={
+                      Array [
+                        "reviews",
+                      ]
+                    }
+                    name="Gateways"
+                  />
+                </div>
+              </Col>,
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={9}
+                md={9}
+                sm={12}
+                xs={12}
+              >
+                <Row
+                  bsClass="row"
+                  className="card-pf-body"
+                  componentClass="div"
+                >
+                  <Col
+                    bsClass="col"
+                    componentClass="div"
+                  >
+                    <Row
+                      bsClass="row"
+                      componentClass="div"
+                    >
+                      <VirtualServiceRoute
+                        kind="HTTP"
+                        name="reviews-default"
+                        routes={
+                          Array [
+                            Object {
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v3",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ]
+                        }
+                        validations={Object {}}
+                      />
+                    </Row>
+                    <Row
+                      bsClass="row"
+                      componentClass="div"
+                    >
+                      <VirtualServiceRoute
+                        kind="TCP"
+                        name="reviews-default"
+                        routes={
+                          Array [
+                            Object {
+                              "match": Array [],
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v2",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ]
+                        }
+                        validations={Object {}}
+                      />
+                    </Row>
+                  </Col>
+                </Row>
+              </Col>,
+            ],
+            "className": "row-cards-pf",
+            "componentClass": "div",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "col",
+                "children": <div
+                  className="card-pf-body"
+                >
+                  <h3>
+                    reviews-default
+                  </h3>
+                  <div>
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                    >
+                      Show Yaml 
+                      <Icon
+                        name="angle-double-right"
+                        type="fa"
+                      />
+                    </Link>
+                  </div>
+                  <div>
+                    <strong>
+                      Created at
+                    </strong>
+                    : 
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </div>
+                  <div>
+                    <strong>
+                      Resource Version
+                    </strong>
+                    : 
+                    1234
+                  </div>
+                  <DetailObject
+                    detail={
+                      Array [
+                        "rewiews",
+                      ]
+                    }
+                    name="Hosts"
+                  />
+                  <DetailObject
+                    detail={
+                      Array [
+                        "reviews",
+                      ]
+                    }
+                    name="Gateways"
+                  />
+                </div>,
+                "componentClass": "div",
+                "lg": 3,
+                "md": 3,
+                "sm": 12,
+                "xs": 12,
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": "virtualServiceConfig0",
+                "nodeType": "host",
+                "props": Object {
+                  "children": Array [
+                    <h3>
+                      reviews-default
+                    </h3>,
+                    <div>
+                      <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                      >
+                        Show Yaml 
+                        <Icon
+                          name="angle-double-right"
+                          type="fa"
+                        />
+                      </Link>
+                    </div>,
+                    <div>
+                      <strong>
+                        Created at
+                      </strong>
+                      : 
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </div>,
+                    <div>
+                      <strong>
+                        Resource Version
+                      </strong>
+                      : 
+                      1234
+                    </div>,
+                    <DetailObject
+                      detail={
+                        Array [
+                          "rewiews",
+                        ]
+                      }
+                      name="Hosts"
+                    />,
+                    <DetailObject
+                      detail={
+                        Array [
+                          "reviews",
+                        ]
+                      }
+                      name="Gateways"
+                    />,
+                  ],
+                  "className": "card-pf-body",
+                },
+                "ref": null,
+                "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": "reviews-default",
+                    },
+                    "ref": null,
+                    "rendered": "reviews-default",
+                    "type": "h3",
+                  },
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                      >
+                        Show Yaml 
+                        <Icon
+                          name="angle-double-right"
+                          type="fa"
+                        />
+                      </Link>,
+                    },
+                    "ref": null,
+                    "rendered": Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "children": Array [
+                          "Show Yaml ",
+                          <Icon
+                            name="angle-double-right"
+                            type="fa"
+                          />,
+                        ],
+                        "replace": false,
+                        "to": "/namespaces/test_namespace/services/test_services?virtualservice=reviews-default",
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        "Show Yaml ",
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "function",
+                          "props": Object {
+                            "name": "angle-double-right",
+                            "type": "fa",
+                          },
+                          "ref": null,
+                          "rendered": null,
+                          "type": [Function],
+                        },
+                      ],
+                      "type": [Function],
+                    },
+                    "type": "div",
+                  },
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <strong>
+                          Created at
+                        </strong>,
+                        ": ",
+                        <LocalTime
+                          time="2018-03-14T10:17:52Z"
+                        />,
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": "Created at",
+                        },
+                        "ref": null,
+                        "rendered": "Created at",
+                        "type": "strong",
+                      },
+                      ": ",
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "time": "2018-03-14T10:17:52Z",
+                        },
+                        "ref": null,
+                        "rendered": null,
+                        "type": [Function],
+                      },
+                    ],
+                    "type": "div",
+                  },
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": Array [
+                        <strong>
+                          Resource Version
+                        </strong>,
+                        ": ",
+                        "1234",
+                      ],
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": "Resource Version",
+                        },
+                        "ref": null,
+                        "rendered": "Resource Version",
+                        "type": "strong",
+                      },
+                      ": ",
+                      "1234",
+                    ],
+                    "type": "div",
+                  },
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "detail": Array [
+                        "rewiews",
+                      ],
+                      "name": "Hosts",
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "detail": Array [
+                        "reviews",
+                      ],
+                      "name": "Gateways",
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                ],
+                "type": "div",
+              },
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "col",
+                "children": <Row
+                  bsClass="row"
+                  className="card-pf-body"
+                  componentClass="div"
+                >
+                  <Col
+                    bsClass="col"
+                    componentClass="div"
+                  >
+                    <Row
+                      bsClass="row"
+                      componentClass="div"
+                    >
+                      <VirtualServiceRoute
+                        kind="HTTP"
+                        name="reviews-default"
+                        routes={
+                          Array [
+                            Object {
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v3",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ]
+                        }
+                        validations={Object {}}
+                      />
+                    </Row>
+                    <Row
+                      bsClass="row"
+                      componentClass="div"
+                    >
+                      <VirtualServiceRoute
+                        kind="TCP"
+                        name="reviews-default"
+                        routes={
+                          Array [
+                            Object {
+                              "match": Array [],
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v2",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ]
+                        }
+                        validations={Object {}}
+                      />
+                    </Row>
+                  </Col>
+                </Row>,
+                "componentClass": "div",
+                "lg": 9,
+                "md": 9,
+                "sm": 12,
+                "xs": 12,
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": "virtualServiceWeights0",
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "row",
+                  "children": <Col
+                    bsClass="col"
+                    componentClass="div"
+                  >
+                    <Row
+                      bsClass="row"
+                      componentClass="div"
+                    >
+                      <VirtualServiceRoute
+                        kind="HTTP"
+                        name="reviews-default"
+                        routes={
+                          Array [
+                            Object {
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v3",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ]
+                        }
+                        validations={Object {}}
+                      />
+                    </Row>
+                    <Row
+                      bsClass="row"
+                      componentClass="div"
+                    >
+                      <VirtualServiceRoute
+                        kind="TCP"
+                        name="reviews-default"
+                        routes={
+                          Array [
+                            Object {
+                              "match": Array [],
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v2",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ]
+                        }
+                        validations={Object {}}
+                      />
+                    </Row>
+                  </Col>,
+                  "className": "card-pf-body",
+                  "componentClass": "div",
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": Array [
+                      <Row
+                        bsClass="row"
+                        componentClass="div"
+                      >
+                        <VirtualServiceRoute
+                          kind="HTTP"
+                          name="reviews-default"
+                          routes={
+                            Array [
+                              Object {
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v3",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                          validations={Object {}}
+                        />
+                      </Row>,
+                      <Row
+                        bsClass="row"
+                        componentClass="div"
+                      >
+                        <VirtualServiceRoute
+                          kind="TCP"
+                          name="reviews-default"
+                          routes={
+                            Array [
+                              Object {
+                                "match": Array [],
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v2",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                          validations={Object {}}
+                        />
+                      </Row>,
+                    ],
+                    "componentClass": "div",
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "bsClass": "row",
+                        "children": <VirtualServiceRoute
+                          kind="HTTP"
+                          name="reviews-default"
+                          routes={
+                            Array [
+                              Object {
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v3",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                          validations={Object {}}
+                        />,
+                        "componentClass": "div",
+                      },
+                      "ref": null,
+                      "rendered": Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "kind": "HTTP",
+                          "name": "reviews-default",
+                          "routes": Array [
+                            Object {
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v3",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ],
+                          "validations": Object {},
+                        },
+                        "ref": null,
+                        "rendered": null,
+                        "type": [Function],
+                      },
+                      "type": [Function],
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "bsClass": "row",
+                        "children": <VirtualServiceRoute
+                          kind="TCP"
+                          name="reviews-default"
+                          routes={
+                            Array [
+                              Object {
+                                "match": Array [],
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v2",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                          validations={Object {}}
+                        />,
+                        "componentClass": "div",
+                      },
+                      "ref": null,
+                      "rendered": Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "kind": "TCP",
+                          "name": "reviews-default",
+                          "routes": Array [
+                            Object {
+                              "match": Array [],
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v2",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ],
+                          "validations": Object {},
+                        },
+                        "ref": null,
+                        "rendered": null,
+                        "type": [Function],
+                      },
+                      "type": [Function],
+                    },
+                  ],
+                  "type": [Function],
+                },
+                "type": [Function],
+              },
+              "type": [Function],
+            },
+          ],
+          "type": [Function],
+        },
+        "type": [Function],
+      },
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <Row
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
+          >
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={3}
+                md={3}
+                sm={12}
+                xs={12}
+              >
+                <div
+                  className="card-pf-body"
+                >
+                  <h3>
+                    reviews-default
+                  </h3>
+                  <div>
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                    >
+                      Show Yaml 
+                      <Icon
+                        name="angle-double-right"
+                        type="fa"
+                      />
+                    </Link>
+                  </div>
+                  <div>
+                    <strong>
+                      Created at
+                    </strong>
+                    : 
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </div>
+                  <div>
+                    <strong>
+                      Resource Version
+                    </strong>
+                    : 
+                    1234
+                  </div>
+                  <DetailObject
+                    detail={
+                      Array [
+                        "rewiews",
+                      ]
+                    }
+                    name="Hosts"
+                  />
+                  <DetailObject
+                    detail={
+                      Array [
+                        "reviews",
+                      ]
+                    }
+                    name="Gateways"
+                  />
+                </div>
+              </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={9}
+                md={9}
+                sm={12}
+                xs={12}
+              >
+                <Row
+                  bsClass="row"
+                  className="card-pf-body"
+                  componentClass="div"
+                >
+                  <Col
+                    bsClass="col"
+                    componentClass="div"
+                  >
+                    <Row
+                      bsClass="row"
+                      componentClass="div"
+                    >
+                      <VirtualServiceRoute
+                        kind="HTTP"
+                        name="reviews-default"
+                        routes={
+                          Array [
+                            Object {
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v3",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ]
+                        }
+                        validations={Object {}}
+                      />
+                    </Row>
+                    <Row
+                      bsClass="row"
+                      componentClass="div"
+                    >
+                      <VirtualServiceRoute
+                        kind="TCP"
+                        name="reviews-default"
+                        routes={
+                          Array [
+                            Object {
+                              "match": Array [],
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v2",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ]
+                        }
+                        validations={Object {}}
+                      />
+                    </Row>
+                  </Col>
+                </Row>
+              </Col>
+            </Row>
+          </Row>,
+        ],
+        "className": "card-pf",
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": "virtualservice0",
+          "nodeType": "class",
+          "props": Object {
+            "bsClass": "row",
+            "children": <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={3}
+                md={3}
+                sm={12}
+                xs={12}
+              >
+                <div
+                  className="card-pf-body"
+                >
+                  <h3>
+                    reviews-default
+                  </h3>
+                  <div>
+                    <Link
+                      replace={false}
+                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                    >
+                      Show Yaml 
+                      <Icon
+                        name="angle-double-right"
+                        type="fa"
+                      />
+                    </Link>
+                  </div>
+                  <div>
+                    <strong>
+                      Created at
+                    </strong>
+                    : 
+                    <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />
+                  </div>
+                  <div>
+                    <strong>
+                      Resource Version
+                    </strong>
+                    : 
+                    1234
+                  </div>
+                  <DetailObject
+                    detail={
+                      Array [
+                        "rewiews",
+                      ]
+                    }
+                    name="Hosts"
+                  />
+                  <DetailObject
+                    detail={
+                      Array [
+                        "reviews",
+                      ]
+                    }
+                    name="Gateways"
+                  />
+                </div>
+              </Col>
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={9}
+                md={9}
+                sm={12}
+                xs={12}
+              >
+                <Row
+                  bsClass="row"
+                  className="card-pf-body"
+                  componentClass="div"
+                >
+                  <Col
+                    bsClass="col"
+                    componentClass="div"
+                  >
+                    <Row
+                      bsClass="row"
+                      componentClass="div"
+                    >
+                      <VirtualServiceRoute
+                        kind="HTTP"
+                        name="reviews-default"
+                        routes={
+                          Array [
+                            Object {
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v3",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ]
+                        }
+                        validations={Object {}}
+                      />
+                    </Row>
+                    <Row
+                      bsClass="row"
+                      componentClass="div"
+                    >
+                      <VirtualServiceRoute
+                        kind="TCP"
+                        name="reviews-default"
+                        routes={
+                          Array [
+                            Object {
+                              "match": Array [],
+                              "route": Array [
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v1",
+                                  },
+                                  "weight": 55,
+                                },
+                                Object {
+                                  "destination": Object {
+                                    "host": "reviews",
+                                    "subset": "v2",
+                                  },
+                                  "weight": 55,
+                                },
+                              ],
+                            },
+                          ]
+                        }
+                        validations={Object {}}
+                      />
+                    </Row>
+                  </Col>
+                </Row>
+              </Col>
+            </Row>,
+            "className": "row-cards-pf",
+            "componentClass": "div",
+          },
+          "ref": null,
+          "rendered": Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "row",
+              "children": Array [
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={3}
+                  md={3}
+                  sm={12}
+                  xs={12}
+                >
+                  <div
+                    className="card-pf-body"
+                  >
+                    <h3>
+                      reviews-default
+                    </h3>
+                    <div>
+                      <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                      >
+                        Show Yaml 
+                        <Icon
+                          name="angle-double-right"
+                          type="fa"
+                        />
+                      </Link>
+                    </div>
+                    <div>
+                      <strong>
+                        Created at
+                      </strong>
+                      : 
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </div>
+                    <div>
+                      <strong>
+                        Resource Version
+                      </strong>
+                      : 
+                      1234
+                    </div>
+                    <DetailObject
+                      detail={
+                        Array [
+                          "rewiews",
+                        ]
+                      }
+                      name="Hosts"
+                    />
+                    <DetailObject
+                      detail={
+                        Array [
+                          "reviews",
+                        ]
+                      }
+                      name="Gateways"
+                    />
+                  </div>
+                </Col>,
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={9}
+                  md={9}
+                  sm={12}
+                  xs={12}
+                >
+                  <Row
+                    bsClass="row"
+                    className="card-pf-body"
+                    componentClass="div"
+                  >
+                    <Col
+                      bsClass="col"
+                      componentClass="div"
+                    >
+                      <Row
+                        bsClass="row"
+                        componentClass="div"
+                      >
+                        <VirtualServiceRoute
+                          kind="HTTP"
+                          name="reviews-default"
+                          routes={
+                            Array [
+                              Object {
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v3",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                          validations={Object {}}
+                        />
+                      </Row>
+                      <Row
+                        bsClass="row"
+                        componentClass="div"
+                      >
+                        <VirtualServiceRoute
+                          kind="TCP"
+                          name="reviews-default"
+                          routes={
+                            Array [
+                              Object {
+                                "match": Array [],
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v2",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                          validations={Object {}}
+                        />
+                      </Row>
+                    </Col>
+                  </Row>
+                </Col>,
+              ],
+              "className": "row-cards-pf",
+              "componentClass": "div",
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": <div
+                    className="card-pf-body"
+                  >
+                    <h3>
+                      reviews-default
+                    </h3>
+                    <div>
+                      <Link
+                        replace={false}
+                        to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                      >
+                        Show Yaml 
+                        <Icon
+                          name="angle-double-right"
+                          type="fa"
+                        />
+                      </Link>
+                    </div>
+                    <div>
+                      <strong>
+                        Created at
+                      </strong>
+                      : 
+                      <LocalTime
+                        time="2018-03-14T10:17:52Z"
+                      />
+                    </div>
+                    <div>
+                      <strong>
+                        Resource Version
+                      </strong>
+                      : 
+                      1234
+                    </div>
+                    <DetailObject
+                      detail={
+                        Array [
+                          "rewiews",
+                        ]
+                      }
+                      name="Hosts"
+                    />
+                    <DetailObject
+                      detail={
+                        Array [
+                          "reviews",
+                        ]
+                      }
+                      name="Gateways"
+                    />
+                  </div>,
+                  "componentClass": "div",
+                  "lg": 3,
+                  "md": 3,
+                  "sm": 12,
+                  "xs": 12,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": "virtualServiceConfig0",
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      <h3>
+                        reviews-default
+                      </h3>,
+                      <div>
+                        <Link
+                          replace={false}
+                          to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                        >
+                          Show Yaml 
+                          <Icon
+                            name="angle-double-right"
+                            type="fa"
+                          />
+                        </Link>
+                      </div>,
+                      <div>
+                        <strong>
+                          Created at
+                        </strong>
+                        : 
+                        <LocalTime
+                          time="2018-03-14T10:17:52Z"
+                        />
+                      </div>,
+                      <div>
+                        <strong>
+                          Resource Version
+                        </strong>
+                        : 
+                        1234
+                      </div>,
+                      <DetailObject
+                        detail={
+                          Array [
+                            "rewiews",
+                          ]
+                        }
+                        name="Hosts"
+                      />,
+                      <DetailObject
+                        detail={
+                          Array [
+                            "reviews",
+                          ]
+                        }
+                        name="Gateways"
+                      />,
+                    ],
+                    "className": "card-pf-body",
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "reviews-default",
+                      },
+                      "ref": null,
+                      "rendered": "reviews-default",
+                      "type": "h3",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": <Link
+                          replace={false}
+                          to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                        >
+                          Show Yaml 
+                          <Icon
+                            name="angle-double-right"
+                            type="fa"
+                          />
+                        </Link>,
+                      },
+                      "ref": null,
+                      "rendered": Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "children": Array [
+                            "Show Yaml ",
+                            <Icon
+                              name="angle-double-right"
+                              type="fa"
+                            />,
+                          ],
+                          "replace": false,
+                          "to": "/namespaces/test_namespace/services/test_services?virtualservice=reviews-default",
+                        },
+                        "ref": null,
+                        "rendered": Array [
+                          "Show Yaml ",
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "function",
+                            "props": Object {
+                              "name": "angle-double-right",
+                              "type": "fa",
+                            },
+                            "ref": null,
+                            "rendered": null,
+                            "type": [Function],
+                          },
+                        ],
+                        "type": [Function],
+                      },
+                      "type": "div",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": Array [
+                          <strong>
+                            Created at
+                          </strong>,
+                          ": ",
+                          <LocalTime
+                            time="2018-03-14T10:17:52Z"
+                          />,
+                        ],
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "host",
+                          "props": Object {
+                            "children": "Created at",
+                          },
+                          "ref": null,
+                          "rendered": "Created at",
+                          "type": "strong",
+                        },
+                        ": ",
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "time": "2018-03-14T10:17:52Z",
+                          },
+                          "ref": null,
+                          "rendered": null,
+                          "type": [Function],
+                        },
+                      ],
+                      "type": "div",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": Array [
+                          <strong>
+                            Resource Version
+                          </strong>,
+                          ": ",
+                          "1234",
+                        ],
+                      },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "host",
+                          "props": Object {
+                            "children": "Resource Version",
+                          },
+                          "ref": null,
+                          "rendered": "Resource Version",
+                          "type": "strong",
+                        },
+                        ": ",
+                        "1234",
+                      ],
+                      "type": "div",
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "detail": Array [
+                          "rewiews",
+                        ],
+                        "name": "Hosts",
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "detail": Array [
+                          "reviews",
+                        ],
+                        "name": "Gateways",
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                  ],
+                  "type": "div",
+                },
+                "type": [Function],
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": <Row
+                    bsClass="row"
+                    className="card-pf-body"
+                    componentClass="div"
+                  >
+                    <Col
+                      bsClass="col"
+                      componentClass="div"
+                    >
+                      <Row
+                        bsClass="row"
+                        componentClass="div"
+                      >
+                        <VirtualServiceRoute
+                          kind="HTTP"
+                          name="reviews-default"
+                          routes={
+                            Array [
+                              Object {
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v3",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                          validations={Object {}}
+                        />
+                      </Row>
+                      <Row
+                        bsClass="row"
+                        componentClass="div"
+                      >
+                        <VirtualServiceRoute
+                          kind="TCP"
+                          name="reviews-default"
+                          routes={
+                            Array [
+                              Object {
+                                "match": Array [],
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v2",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                          validations={Object {}}
+                        />
+                      </Row>
+                    </Col>
+                  </Row>,
+                  "componentClass": "div",
+                  "lg": 9,
+                  "md": 9,
+                  "sm": 12,
+                  "xs": 12,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": "virtualServiceWeights0",
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "row",
+                    "children": <Col
+                      bsClass="col"
+                      componentClass="div"
+                    >
+                      <Row
+                        bsClass="row"
+                        componentClass="div"
+                      >
+                        <VirtualServiceRoute
+                          kind="HTTP"
+                          name="reviews-default"
+                          routes={
+                            Array [
+                              Object {
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v3",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                          validations={Object {}}
+                        />
+                      </Row>
+                      <Row
+                        bsClass="row"
+                        componentClass="div"
+                      >
+                        <VirtualServiceRoute
+                          kind="TCP"
+                          name="reviews-default"
+                          routes={
+                            Array [
+                              Object {
+                                "match": Array [],
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v2",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ]
+                          }
+                          validations={Object {}}
+                        />
+                      </Row>
+                    </Col>,
+                    "className": "card-pf-body",
+                    "componentClass": "div",
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "bsClass": "col",
+                      "children": Array [
+                        <Row
+                          bsClass="row"
+                          componentClass="div"
+                        >
+                          <VirtualServiceRoute
+                            kind="HTTP"
+                            name="reviews-default"
+                            routes={
+                              Array [
+                                Object {
+                                  "route": Array [
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v1",
+                                      },
+                                      "weight": 55,
+                                    },
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v3",
+                                      },
+                                      "weight": 55,
+                                    },
+                                  ],
+                                },
+                              ]
+                            }
+                            validations={Object {}}
+                          />
+                        </Row>,
+                        <Row
+                          bsClass="row"
+                          componentClass="div"
+                        >
+                          <VirtualServiceRoute
+                            kind="TCP"
+                            name="reviews-default"
+                            routes={
+                              Array [
+                                Object {
+                                  "match": Array [],
+                                  "route": Array [
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v1",
+                                      },
+                                      "weight": 55,
+                                    },
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v2",
+                                      },
+                                      "weight": 55,
+                                    },
+                                  ],
+                                },
+                              ]
+                            }
+                            validations={Object {}}
+                          />
+                        </Row>,
+                      ],
+                      "componentClass": "div",
+                    },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "bsClass": "row",
+                          "children": <VirtualServiceRoute
+                            kind="HTTP"
+                            name="reviews-default"
+                            routes={
+                              Array [
+                                Object {
+                                  "route": Array [
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v1",
+                                      },
+                                      "weight": 55,
+                                    },
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v3",
+                                      },
+                                      "weight": 55,
+                                    },
+                                  ],
+                                },
+                              ]
+                            }
+                            validations={Object {}}
+                          />,
+                          "componentClass": "div",
+                        },
+                        "ref": null,
+                        "rendered": Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "kind": "HTTP",
+                            "name": "reviews-default",
+                            "routes": Array [
+                              Object {
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v3",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ],
+                            "validations": Object {},
+                          },
+                          "ref": null,
+                          "rendered": null,
+                          "type": [Function],
+                        },
+                        "type": [Function],
+                      },
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "bsClass": "row",
+                          "children": <VirtualServiceRoute
+                            kind="TCP"
+                            name="reviews-default"
+                            routes={
+                              Array [
+                                Object {
+                                  "match": Array [],
+                                  "route": Array [
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v1",
+                                      },
+                                      "weight": 55,
+                                    },
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v2",
+                                      },
+                                      "weight": 55,
+                                    },
+                                  ],
+                                },
+                              ]
+                            }
+                            validations={Object {}}
+                          />,
+                          "componentClass": "div",
+                        },
+                        "ref": null,
+                        "rendered": Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "kind": "TCP",
+                            "name": "reviews-default",
+                            "routes": Array [
+                              Object {
+                                "match": Array [],
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                    "weight": 55,
+                                  },
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v2",
+                                    },
+                                    "weight": 55,
+                                  },
+                                ],
+                              },
+                            ],
+                            "validations": Object {},
+                          },
+                          "ref": null,
+                          "rendered": null,
+                          "type": [Function],
+                        },
+                        "type": [Function],
+                      },
+                    ],
+                    "type": [Function],
+                  },
+                  "type": [Function],
+                },
+                "type": [Function],
+              },
+            ],
+            "type": [Function],
+          },
+          "type": [Function],
+        },
+      ],
+      "type": "div",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;

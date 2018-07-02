@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as resolve from 'table-resolver';
 import {
   checkForPath,
-  DestinationWeight,
+  DestinationWeightV1Alpha1,
   highestSeverity,
   ObjectValidation,
   severityToIconName,
@@ -16,7 +16,7 @@ import Label from '../../../../components/Label/Label';
 
 interface RouteRuleRouteProps {
   name: string;
-  route: DestinationWeight[];
+  route: DestinationWeightV1Alpha1[];
   validations: { [key: string]: ObjectValidation };
 }
 
@@ -101,7 +101,7 @@ class RouteRuleRoute extends React.Component<RouteRuleRouteProps> {
   validation(): ObjectValidation {
     return this.props.validations[this.props.name];
   }
-  statusFrom(validation: ObjectValidation, routeItem: DestinationWeight, index: number) {
+  statusFrom(validation: ObjectValidation, routeItem: DestinationWeightV1Alpha1, index: number) {
     let checks = checkForPath(validation, 'spec/route[' + index + ']/weight/' + routeItem.weight);
     checks.push(...checkForPath(validation, 'spec/route[' + index + ']/labels'));
     let severity = highestSeverity(checks);

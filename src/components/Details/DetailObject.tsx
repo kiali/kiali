@@ -1,10 +1,18 @@
 import * as React from 'react';
 import Label from '../Label/Label';
+import { Icon } from 'patternfly-react';
 
 interface DetailObjectProps {
   name: string;
   detail: any;
   labels?: string[];
+  exclude?: string[];
+  validation?: Validation;
+}
+
+interface Validation {
+  message: string;
+  icon: string;
 }
 
 class DetailObject extends React.Component<DetailObjectProps> {
@@ -35,7 +43,17 @@ class DetailObject extends React.Component<DetailObjectProps> {
     return this.props.labels.indexOf(name) > -1;
   }
 
-  buildList(name: string, value: any, isLabel: boolean): any {
+  canDisplay(name: string) {
+    return this.props.exclude == null || !this.props.exclude.includes(name);
+  }
+
+  // buildList returns a recursive list of all items within value. It shows a validation
+  // only for the first iteration (when depth is 0)
+  buildList(name: string, value: any, isLabel: boolean, depth: number): any {
+    if (!this.canDisplay(name)) {
+      return '';
+    }
+
     let valueType = typeof value;
     if (valueType === 'string' || valueType === 'number' || valueType === 'boolean') {
       return (
@@ -61,14 +79,14 @@ class DetailObject extends React.Component<DetailObjectProps> {
           childrenList.push(<li key={listKey + '_i' + i}>{v}</li>);
         } else {
           Object.keys(v).forEach((key, j) => {
-            let childList = this.buildList(key, v[key], checkLabel);
+            let childList = this.buildList(key, v[key], checkLabel, depth + 1);
             childrenList.push(<li key={listKey + '_i' + i + '_j' + j}>{childList}</li>);
           });
         }
       });
     } else {
       Object.keys(value).forEach((key, k) => {
-        let childList = this.buildList(key, value[key], checkLabel);
+        let childList = this.buildList(key, value[key], checkLabel, depth + 1);
         childrenList.push(<li key={listKey + '_k' + k}>{childList}</li>);
       });
     }
@@ -76,6 +94,15 @@ class DetailObject extends React.Component<DetailObjectProps> {
     return (
       <div>
         <strong className="text-capitalize">{name}</strong>
+        {depth === 0 && !!this.props.validation && this.props.validation.message ? (
+          <div>
+            <p style={{ color: 'red' }}>
+              <Icon type="pf" name={this.props.validation.icon} /> {this.props.validation.message}
+            </p>
+          </div>
+        ) : (
+          undefined
+        )}
         <ul style={{ listStyleType: 'none' }}>{childrenList}</ul>
       </div>
     );
@@ -84,7 +111,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
   render() {
     let findLabels = typeof this.props.labels !== 'undefined' && this.props.labels.length > 0;
 
-    let objectList = this.buildList(this.props.name, this.props.detail, findLabels);
+    let objectList = this.buildList(this.props.name, this.props.detail, findLabels, 0);
     return <div>{objectList}</div>;
   }
 }

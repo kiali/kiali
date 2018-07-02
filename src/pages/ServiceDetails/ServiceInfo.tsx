@@ -216,7 +216,11 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                     </TabPane>
                     <TabPane eventKey={5}>
                       {(virtualServices.length > 0 || this.props.serviceDetails.istioSidecar) && (
-                        <ServiceInfoVirtualServices virtualServices={virtualServices} editorLink={editorLink} />
+                        <ServiceInfoVirtualServices
+                          virtualServices={virtualServices}
+                          editorLink={editorLink}
+                          validations={this.props.validations!['virtualservice']}
+                        />
                       )}
                     </TabPane>
                     <TabPane eventKey={6}>

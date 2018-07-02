@@ -67,7 +67,7 @@ export interface RouteRule {
   destination?: IstioService;
   precedence?: number;
   match?: MatchCondition;
-  route?: DestinationWeight[];
+  route?: DestinationWeightV1Alpha1[];
   redirect?: HTTPRedirect;
   rewrite?: HTTPRewrite;
   websocketUpgrade?: string;
@@ -110,8 +110,13 @@ export interface StringMatch {
   regex?: string;
 }
 
-export interface DestinationWeight {
+export interface DestinationWeightV1Alpha1 {
   labels: { [key: string]: string };
+  weight?: number;
+}
+
+export interface DestinationWeight {
+  destination: Destination;
   weight?: number;
 }
 
@@ -235,9 +240,9 @@ export interface PortSelector {
 }
 
 export interface Destination {
-  name: string;
-  subset: string;
-  port: PortSelector;
+  host: string;
+  subset?: string;
+  port?: PortSelector;
 }
 
 export interface HTTPMatchRequest {
@@ -252,21 +257,21 @@ export interface HTTPMatchRequest {
 }
 
 export interface HTTPRoute {
-  match: HTTPMatchRequest[];
-  route: DestinationWeight[];
-  redirect: HTTPRedirect;
-  rewrite: HTTPRewrite;
-  websocketUpgrade: boolean;
-  timeout: string;
-  retries: HTTPRetry;
-  mirror: Destination;
-  corsPolicy: CorsPolicy;
-  appendHeaders: { [key: string]: string };
+  match?: HTTPMatchRequest[];
+  route?: DestinationWeight[];
+  redirect?: HTTPRedirect;
+  rewrite?: HTTPRewrite;
+  websocketUpgrade?: boolean;
+  timeout?: string;
+  retries?: HTTPRetry;
+  mirror?: Destination;
+  corsPolicy?: CorsPolicy;
+  appendHeaders?: { [key: string]: string };
 }
 
 export interface TCPRoute {
-  match: L4MatchAttributes[];
-  route: DestinationWeight[];
+  match?: L4MatchAttributes[];
+  route?: DestinationWeight[];
 }
 
 export interface VirtualService {
