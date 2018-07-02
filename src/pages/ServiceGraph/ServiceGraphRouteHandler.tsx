@@ -32,31 +32,22 @@ export default class ServiceGraphRouteHandler extends React.Component<
     router: PropTypes.object
   };
 
-  readonly graphParamsDefaults: GraphParamsType = {
+  static readonly graphParamsDefaults: GraphParamsType = {
     graphDuration: { value: config().toolbar.defaultDuration },
     graphLayout: LayoutDictionary.getLayout({ name: '' }),
     edgeLabelMode: EdgeLabelMode.HIDE,
     namespace: { name: 'all' }
   };
 
-  constructor(routeProps: RouteComponentProps<ServiceGraphURLProps>) {
-    super(routeProps);
-    const previousParamsStr = sessionStorage.getItem(SESSION_KEY);
-    const graphParams: GraphParamsType = previousParamsStr
-      ? this.ensureGraphParamsDefaults(JSON.parse(previousParamsStr))
-      : {
-          namespace: { name: routeProps.match.params.namespace },
-          ...this.parseProps(routeProps.location.search)
-        };
-    this.state = graphParams;
-  }
-
-  parseProps = (queryString: string) => {
+  static parseProps = (queryString: string) => {
     const urlParams = new URLSearchParams(queryString);
     const _duration = urlParams.get('duration')
       ? { value: urlParams.get('duration') }
-      : this.graphParamsDefaults.graphDuration;
-    const _edgeLabelMode = EdgeLabelMode.fromString(urlParams.get('edges'), this.graphParamsDefaults.edgeLabelMode);
+      : ServiceGraphRouteHandler.graphParamsDefaults.graphDuration;
+    const _edgeLabelMode = EdgeLabelMode.fromString(
+      urlParams.get('edges'),
+      ServiceGraphRouteHandler.graphParamsDefaults.edgeLabelMode
+    );
     return {
       graphDuration: _duration,
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
@@ -64,21 +55,18 @@ export default class ServiceGraphRouteHandler extends React.Component<
     };
   };
 
-  componentDidMount() {
-    // Note: `history.replace` simply changes the address bar text, not re-navigation
-    this.context.router.history.replace(makeURLFromParams(this.state));
-  }
+  static getDerivedStateFromProps(props: RouteComponentProps<ServiceGraphURLProps>, currentState: GraphParamsType) {
+    const nextNamespace = { name: props.match.params.namespace };
+    const {
+      graphDuration: nextDuration,
+      graphLayout: nextLayout,
+      edgeLabelMode: nextEdgeLabelMode
+    } = ServiceGraphRouteHandler.parseProps(props.location.search);
 
-  componentWillReceiveProps(nextProps: RouteComponentProps<ServiceGraphURLProps>) {
-    const nextNamespace = { name: nextProps.match.params.namespace };
-    const { graphDuration: nextDuration, graphLayout: nextLayout, edgeLabelMode: nextEdgeLabelMode } = this.parseProps(
-      nextProps.location.search
-    );
-
-    const layoutHasChanged = nextLayout.name !== this.state.graphLayout.name;
-    const namespaceHasChanged = nextNamespace.name !== this.state.namespace.name;
-    const durationHasChanged = nextDuration.value !== this.state.graphDuration.value;
-    const edgeLabelModeChanged = nextEdgeLabelMode !== this.state.edgeLabelMode;
+    const layoutHasChanged = nextLayout.name !== currentState.graphLayout.name;
+    const namespaceHasChanged = nextNamespace.name !== currentState.namespace.name;
+    const durationHasChanged = nextDuration.value !== currentState.graphDuration.value;
+    const edgeLabelModeChanged = nextEdgeLabelMode !== currentState.edgeLabelMode;
 
     if (layoutHasChanged || namespaceHasChanged || durationHasChanged || edgeLabelModeChanged) {
       const newParams: GraphParamsType = {
@@ -88,8 +76,26 @@ export default class ServiceGraphRouteHandler extends React.Component<
         edgeLabelMode: nextEdgeLabelMode
       };
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(newParams));
-      this.setState({ ...newParams });
+      return { ...newParams };
     }
+    return null;
+  }
+
+  constructor(routeProps: RouteComponentProps<ServiceGraphURLProps>) {
+    super(routeProps);
+    const previousParamsStr = sessionStorage.getItem(SESSION_KEY);
+    const graphParams: GraphParamsType = previousParamsStr
+      ? this.ensureGraphParamsDefaults(JSON.parse(previousParamsStr))
+      : {
+          namespace: { name: routeProps.match.params.namespace },
+          ...ServiceGraphRouteHandler.parseProps(routeProps.location.search)
+        };
+    this.state = graphParams;
+  }
+
+  componentDidMount() {
+    // Note: `history.replace` simply changes the address bar text, not re-navigation
+    this.context.router.history.replace(makeURLFromParams(this.state));
   }
 
   render() {
@@ -98,6 +104,6 @@ export default class ServiceGraphRouteHandler extends React.Component<
 
   // Set default values in case we have an old state that is missing something
   private ensureGraphParamsDefaults(graphParams: any): GraphParamsType {
-    return { ...this.graphParamsDefaults, ...graphParams };
+    return { ...ServiceGraphRouteHandler.graphParamsDefaults, ...graphParams };
   }
 }

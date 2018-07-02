@@ -18,22 +18,24 @@ interface Props {
   rateInterval: number;
 }
 
-export class HealthIndicator extends React.PureComponent<Props, {}> {
+interface HealthState {
   globalStatus: H.Status;
   info: string[];
+}
+
+export class HealthIndicator extends React.PureComponent<Props, HealthState> {
+  static updateHealth = (health?: Health) => {
+    let infoArr: string[] = [];
+    return { info: infoArr, globalStatus: H.computeAggregatedHealth(health, info => infoArr.push(info)) };
+  };
+
+  static getDerivedStateFromProps(props: Props, state: HealthState) {
+    return HealthIndicator.updateHealth(props.health);
+  }
 
   constructor(props: Props) {
     super(props);
-    this.updateHealth(props.health);
-  }
-
-  componentWillReceiveProps(nextProps: Props) {
-    this.updateHealth(nextProps.health);
-  }
-
-  updateHealth(health?: Health) {
-    this.info = [];
-    this.globalStatus = H.computeAggregatedHealth(health, info => this.info.push(info));
+    this.state = HealthIndicator.updateHealth(props.health);
   }
 
   render() {
@@ -48,24 +50,24 @@ export class HealthIndicator extends React.PureComponent<Props, {}> {
   }
 
   renderSmall(health: Health) {
-    return <span>{this.renderIndicator(health, '18px', '12px', this.globalStatus.name)}</span>;
+    return <span>{this.renderIndicator(health, '18px', '12px', this.state.globalStatus.name)}</span>;
   }
 
   renderLarge(health: Health) {
     return (
-      <div style={{ color: this.globalStatus.color }}>
-        {this.renderIndicator(health, '35px', '24px', this.globalStatus.name)}
+      <div style={{ color: this.state.globalStatus.color }}>
+        {this.renderIndicator(health, '35px', '24px', this.state.globalStatus.name)}
         <br />
-        {this.info.length === 1 && this.info[0]}
-        {this.info.length > 1 && (
-          <ul style={{ padding: 0 }}>{this.info.map((line, idx) => <li key={idx}>{line}</li>)}</ul>
+        {this.state.info.length === 1 && this.state.info[0]}
+        {this.state.info.length > 1 && (
+          <ul style={{ padding: 0 }}>{this.state.info.map((line, idx) => <li key={idx}>{line}</li>)}</ul>
         )}
       </div>
     );
   }
 
   renderIndicator(health: Health, iconSize: string, textSize: string, title: string) {
-    if (this.globalStatus.icon) {
+    if (this.state.globalStatus.icon) {
       return (
         <HealthDetails
           id={this.props.id}
@@ -76,7 +78,7 @@ export class HealthIndicator extends React.PureComponent<Props, {}> {
         >
           <Icon
             type="pf"
-            name={this.globalStatus.icon}
+            name={this.state.globalStatus.icon}
             style={{ fontSize: iconSize }}
             className="health-icon"
             tabIndex="0"
@@ -84,7 +86,9 @@ export class HealthIndicator extends React.PureComponent<Props, {}> {
         </HealthDetails>
       );
     } else {
-      return <span style={{ color: this.globalStatus.color, fontSize: textSize }}>{this.globalStatus.text}</span>;
+      return (
+        <span style={{ color: this.state.globalStatus.color, fontSize: textSize }}>{this.state.globalStatus.text}</span>
+      );
     }
   }
 }

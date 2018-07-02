@@ -22,9 +22,9 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
     this.onItemChanged(this.props.item);
   }
 
-  componentWillReceiveProps(nextProps: Props) {
-    if (this.props.item.healthPromise !== nextProps.item.healthPromise) {
-      this.onItemChanged(nextProps.item);
+  componentDidUpdate(prevProps: Props) {
+    if (this.props.item.healthPromise !== prevProps.item.healthPromise) {
+      this.onItemChanged(this.props.item);
     }
   }
 
