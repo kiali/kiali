@@ -5,14 +5,18 @@ import './App.css';
 import Navigation from '../containers/NavigationContainer';
 import { store, persistor } from '../store/ConfigStore';
 import axios from 'axios';
-import { GlobalActionKeys } from '../actions/GlobalActions';
+import { globalActions } from '../actions/GlobalActions';
 import history from './History';
 import { PersistGate } from 'redux-persist/lib/integration/react';
 
+const getIsLoadingState = () => {
+  const state = store.getState();
+  return state && state.globalState.isLoading;
+};
+
 const turnOffLoadingSpinner = () => {
-  let state = store.getState();
-  if (state && state.globalState.isLoading) {
-    store.dispatch({ type: GlobalActionKeys.LOADING_SPINNER_OFF });
+  if (getIsLoadingState()) {
+    store.dispatch(globalActions.loadingSpinnerOff());
   }
 };
 
@@ -20,9 +24,8 @@ const turnOffLoadingSpinner = () => {
 axios.interceptors.request.use(
   request => {
     // dispatch an action to turn spinner on
-    let state = store.getState();
-    if (state && !state.globalState.isLoading) {
-      store.dispatch({ type: GlobalActionKeys.LOADING_SPINNER_ON });
+    if (!getIsLoadingState()) {
+      store.dispatch(globalActions.loadingSpinnerOn());
     }
     return request;
   },
