@@ -376,8 +376,6 @@ export interface ServiceDetailsInfo {
   istioSidecar: boolean;
   pods?: Pod[];
   deployments?: Deployment[];
-  routeRules?: RouteRule[];
-  destinationPolicies?: DestinationPolicy[];
   virtualServices?: VirtualService[];
   destinationRules?: DestinationRule[];
   dependencies?: { [key: string]: string[] };

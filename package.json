@@ -1,6 +1,7 @@
 {
   "name": "@kiali/kiali-ui",
   "version": "0.2.10",
+  "proxy": "http://localhost:8000",
   "bugs": {
     "url": "https://issues.jboss.org/projects/KIALI/issues/"
   },

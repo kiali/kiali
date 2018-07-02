@@ -22,8 +22,6 @@ describe('#ServiceInfo render correctly with data', () => {
         istioSidecar: hasIstioSidecar(data.deployments),
         deployments: data.deployments,
         dependencies: data.dependencies,
-        routeRules: data.routeRules,
-        destinationPolicies: data.destinationPolicies,
         virtualServices: data.virtualServices,
         destinationRules: data.destinationRules,
         ip: data.ip,
@@ -42,10 +40,10 @@ describe('#ServiceInfo render correctly with data', () => {
       expect(wrapper).toBeDefined();
       expect(wrapper).toMatchSnapshot();
       expect(wrapper.find('ServiceInfoDescription').length === 1).toBeTruthy();
-      expect(wrapper.find('ServiceInfoDeployments').length === 1).toBeFalsy();
+      expect(wrapper.find('ServiceInfoDeployments').length === 1).toBeTruthy();
       expect(wrapper.find('ServiceInfoRoutes').length === 1).toBeFalsy();
-      expect(wrapper.find('ServiceInfoRouteRules').length === 1).toBeTruthy();
-      expect(wrapper.find('ServiceInfoDestinationPolicies').length === 1).toBeFalsy();
+      expect(wrapper.find('ServiceInfoVirtualServices').length === 1).toBeTruthy();
+      expect(wrapper.find('ServiceInfoDestinationRules').length === 1).toBeTruthy();
     });
   });
 });

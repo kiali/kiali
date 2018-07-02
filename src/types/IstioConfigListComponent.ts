@@ -1,13 +1,11 @@
 import Namespace from './Namespace';
-import { DestinationPolicy, DestinationRule, ObjectValidation, RouteRule, VirtualService } from './ServiceInfo';
+import { DestinationRule, ObjectValidation, VirtualService } from './ServiceInfo';
 
 export interface IstioConfigItem {
   namespace: string;
   type: string;
   name: string;
   gateway?: Gateway;
-  routeRule?: RouteRule;
-  destinationPolicy?: DestinationPolicy;
   virtualService?: VirtualService;
   destinationRule?: DestinationRule;
   serviceEntry?: ServiceEntry;
@@ -20,8 +18,6 @@ export interface IstioConfigItem {
 export interface IstioConfigList {
   namespace: Namespace;
   gateways: Gateway[];
-  routeRules: RouteRule[];
-  destinationPolicies: DestinationPolicy[];
   virtualServices: VirtualService[];
   destinationRules: DestinationRule[];
   serviceEntries: ServiceEntry[];
@@ -137,8 +133,6 @@ export interface SortField {
 
 export const dicIstioType = {
   Gateway: 'gateways',
-  RouteRule: 'routerules',
-  DestinationPolicy: 'destinationpolicies',
   VirtualService: 'virtualservices',
   DestinationRule: 'destinationrules',
   ServiceEntry: 'serviceentries',
@@ -146,8 +140,6 @@ export const dicIstioType = {
   QuotaSpec: 'quotaspecs',
   QuotaSpecBinding: 'quotaspecbindings',
   gateways: 'Gateway',
-  routerules: 'RouteRule',
-  destinationpolicies: 'DestinationPolicy',
   virtualservices: 'VirtualService',
   destinationrules: 'DestinationRule',
   serviceentries: 'ServiceEntry',
@@ -172,8 +164,6 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]) => {
   let filtered: IstioConfigList = {
     namespace: unfiltered.namespace,
     gateways: unfiltered.gateways.filter(gw => includeName(gw.name, names)),
-    routeRules: unfiltered.routeRules.filter(rr => includeName(rr.name, names)),
-    destinationPolicies: unfiltered.destinationPolicies.filter(dp => includeName(dp.name, names)),
     virtualServices: unfiltered.virtualServices.filter(vs => includeName(vs.name, names)),
     destinationRules: unfiltered.destinationRules.filter(dr => includeName(dr.name, names)),
     serviceEntries: unfiltered.serviceEntries.filter(se => includeName(se.name, names)),
@@ -215,17 +205,6 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
   let istioItems: IstioConfigItem[] = [];
   istioConfigList.gateways.forEach(gw =>
     istioItems.push({ namespace: istioConfigList.namespace.name, type: 'gateway', name: gw.name, gateway: gw })
-  );
-  istioConfigList.routeRules.forEach(rr =>
-    istioItems.push({ namespace: istioConfigList.namespace.name, type: 'routerule', name: rr.name, routeRule: rr })
-  );
-  istioConfigList.destinationPolicies.forEach(dp =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'destinationpolicy',
-      name: dp.name,
-      destinationPolicy: dp
-    })
   );
   istioConfigList.virtualServices.forEach(vs =>
     istioItems.push({

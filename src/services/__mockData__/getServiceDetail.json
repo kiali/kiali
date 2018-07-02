@@ -1,13 +1,15 @@
 {
   "name": "reviews",
+  "createdAt": "2018-06-29T16:43:18+02:00",
+  "resourceVersion": "2652",
   "namespace": {
-    "name": "istio-system"
+    "name": "bookinfo"
   },
   "labels": {
     "app": "reviews"
   },
   "type": "ClusterIP",
-  "ip": "172.30.78.33",
+  "ip": "172.30.196.248",
   "ports": [
     {
       "name": "http",
@@ -20,18 +22,18 @@
       "addresses": [
         {
           "kind": "Pod",
-          "name": "reviews-v2-4140793682-qrpm9",
-          "ip": "172.17.0.11"
+          "name": "reviews-v3-5f5bcb6765-hj46f",
+          "ip": "172.17.0.20"
         },
         {
           "kind": "Pod",
-          "name": "reviews-v3-3651831602-zn9g6",
-          "ip": "172.17.0.14"
+          "name": "reviews-v2-d896b68c-jnxgm",
+          "ip": "172.17.0.21"
         },
         {
           "kind": "Pod",
-          "name": "reviews-v1-401049526-tfstp",
-          "ip": "172.17.0.16"
+          "name": "reviews-v1-5d6696bcf7-2sls7",
+          "ip": "172.17.0.22"
         }
       ],
       "ports": [
@@ -43,71 +45,252 @@
       ]
     }
   ],
-  "pods": [
+  "virtualServices": [
     {
-      "name": "reviews-v2-4140793682-qrpm9",
-      "labels": {
-        "app": "reviews",
-        "pod-template-hash": "4140793682",
-        "version": "v2"
-      }
-    },
-    {
-      "name": "reviews-v3-3651831602-zn9g6",
-      "labels": {
-        "app": "reviews",
-        "pod-template-hash": "3651831602",
-        "version": "v3"
-      }
-    },
-    {
-      "name": "reviews-v1-401049526-tfstp",
-      "labels": {
-        "app": "reviews",
-        "pod-template-hash": "401049526",
-        "version": "v1"
-      }
+      "name": "reviews",
+      "createdAt": "2018-07-02T13:44:01+02:00",
+      "resourceVersion": "393057",
+      "hosts": ["reviews"],
+      "gateways": null,
+      "http": [
+        {
+          "route": [
+            {
+              "destination": {
+                "host": "reviews",
+                "subset": "v1"
+              }
+            }
+          ]
+        }
+      ],
+      "tcp": null
     }
   ],
-  "routeRules": [
+  "destinationRules": [
     {
-      "name": "reviews-default",
-      "destination": {
-        "name": "reviews"
-      },
-      "precedence": 1,
-      "route": [
+      "name": "reviews",
+      "createdAt": "2018-07-02T13:44:01+02:00",
+      "resourceVersion": "393061",
+      "host": "reviews",
+      "trafficPolicy": null,
+      "subsets": [
         {
           "labels": {
             "version": "v1"
-          }
-        }
-      ],
-      "match": null
-    },
-    {
-      "name": "reviews-test-v2",
-      "destination": {
-        "name": "reviews"
-      },
-      "precedence": 2,
-      "route": [
+          },
+          "name": "v1"
+        },
         {
           "labels": {
             "version": "v2"
-          }
+          },
+          "name": "v2"
+        },
+        {
+          "labels": {
+            "version": "v3"
+          },
+          "name": "v3"
+        }
+      ]
+    }
+  ],
+  "dependencies": {},
+  "pods": [
+    {
+      "name": "reviews-v1-5d6696bcf7-2sls7",
+      "labels": {
+        "app": "reviews",
+        "pod-template-hash": "1822526793",
+        "version": "v1"
+      },
+      "createdAt": "2018-06-29T16:43:18+02:00",
+      "createdBy": [
+        {
+          "name": "reviews-v1-5d6696bcf7",
+          "kind": "ReplicaSet"
         }
       ],
-      "match": {
-        "request": {
-          "headers": {
-            "cookie": {
-              "regex": "^(.*?;)?(user=jason)(;.*)?$"
-            }
-          }
+      "istioContainers": [
+        {
+          "name": "istio-proxy",
+          "image": "openshiftistio/proxyv2-centos7:0.8.0"
         }
+      ],
+      "istioInitContainers": [
+        {
+          "name": "istio-init",
+          "image": "openshiftistio/proxy-init-centos7:0.8.0"
+        }
+      ]
+    },
+    {
+      "name": "reviews-v2-d896b68c-jnxgm",
+      "labels": {
+        "app": "reviews",
+        "pod-template-hash": "84526247",
+        "version": "v2"
+      },
+      "createdAt": "2018-06-29T16:43:18+02:00",
+      "createdBy": [
+        {
+          "name": "reviews-v2-d896b68c",
+          "kind": "ReplicaSet"
+        }
+      ],
+      "istioContainers": [
+        {
+          "name": "istio-proxy",
+          "image": "openshiftistio/proxyv2-centos7:0.8.0"
+        }
+      ],
+      "istioInitContainers": [
+        {
+          "name": "istio-init",
+          "image": "openshiftistio/proxy-init-centos7:0.8.0"
+        }
+      ]
+    },
+    {
+      "name": "reviews-v3-5f5bcb6765-hj46f",
+      "labels": {
+        "app": "reviews",
+        "pod-template-hash": "1916762321",
+        "version": "v3"
+      },
+      "createdAt": "2018-06-29T16:43:18+02:00",
+      "createdBy": [
+        {
+          "name": "reviews-v3-5f5bcb6765",
+          "kind": "ReplicaSet"
+        }
+      ],
+      "istioContainers": [
+        {
+          "name": "istio-proxy",
+          "image": "openshiftistio/proxyv2-centos7:0.8.0"
+        }
+      ],
+      "istioInitContainers": [
+        {
+          "name": "istio-init",
+          "image": "openshiftistio/proxy-init-centos7:0.8.0"
+        }
+      ]
+    }
+  ],
+  "deployments": [
+    {
+      "name": "reviews-v1",
+      "templateAnnotations": {
+        "sidecar.istio.io/status":
+          "{\"version\":\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\",\"initContainers\":[\"istio-init\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"],\"imagePullSecrets\":null}"
+      },
+      "labels": {
+        "app": "reviews",
+        "version": "v1"
+      },
+      "createdAt": "2018-06-29T16:43:18+02:00",
+      "resourceVersion": "2836",
+      "replicas": 1,
+      "availableReplicas": 1,
+      "unavailableReplicas": 0,
+      "autoscaler": {
+        "name": "",
+        "labels": null,
+        "createdAt": "",
+        "minReplicas": 0,
+        "maxReplicas": 0,
+        "targetCPUUtilizationPercentage": 0,
+        "currentReplicas": 0,
+        "desiredReplicas": 0
+      }
+    },
+    {
+      "name": "reviews-v2",
+      "templateAnnotations": {
+        "sidecar.istio.io/status":
+          "{\"version\":\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\",\"initContainers\":[\"istio-init\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"],\"imagePullSecrets\":null}"
+      },
+      "labels": {
+        "app": "reviews",
+        "version": "v2"
+      },
+      "createdAt": "2018-06-29T16:43:18+02:00",
+      "resourceVersion": "2856",
+      "replicas": 1,
+      "availableReplicas": 1,
+      "unavailableReplicas": 0,
+      "autoscaler": {
+        "name": "",
+        "labels": null,
+        "createdAt": "",
+        "minReplicas": 0,
+        "maxReplicas": 0,
+        "targetCPUUtilizationPercentage": 0,
+        "currentReplicas": 0,
+        "desiredReplicas": 0
+      }
+    },
+    {
+      "name": "reviews-v3",
+      "templateAnnotations": {
+        "sidecar.istio.io/status":
+          "{\"version\":\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\",\"initContainers\":[\"istio-init\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"],\"imagePullSecrets\":null}"
+      },
+      "labels": {
+        "app": "reviews",
+        "version": "v3"
+      },
+      "createdAt": "2018-06-29T16:43:18+02:00",
+      "resourceVersion": "2849",
+      "replicas": 1,
+      "availableReplicas": 1,
+      "unavailableReplicas": 0,
+      "autoscaler": {
+        "name": "",
+        "labels": null,
+        "createdAt": "",
+        "minReplicas": 0,
+        "maxReplicas": 0,
+        "targetCPUUtilizationPercentage": 0,
+        "currentReplicas": 0,
+        "desiredReplicas": 0
       }
     }
   ],
-  "dependencies": {}
+  "health": {
+    "envoy": {
+      "inbound": {
+        "healthy": 1,
+        "total": 1
+      },
+      "outbound": {
+        "healthy": 3,
+        "total": 3
+      }
+    },
+    "deploymentStatuses": [
+      {
+        "name": "reviews-v1",
+        "replicas": 1,
+        "available": 1
+      },
+      {
+        "name": "reviews-v2",
+        "replicas": 1,
+        "available": 1
+      },
+      {
+        "name": "reviews-v3",
+        "replicas": 1,
+        "available": 1
+      }
+    ],
+    "requests": {
+      "requestCount": 0,
+      "requestErrorCount": 0
+    }
+  }
 }
