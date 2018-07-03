@@ -10,6 +10,8 @@ import dagre from 'cytoscape-dagre';
 import coseBilkent from 'cytoscape-cose-bilkent';
 import klay from 'cytoscape-klay';
 import popper from 'cytoscape-popper';
+import panzoom from 'cytoscape-panzoom';
+import 'cytoscape-panzoom/cytoscape.js-panzoom.css';
 
 cytoscape.use(canvas);
 cytoscape.use(cycola);
@@ -17,6 +19,7 @@ cytoscape.use(dagre);
 cytoscape.use(coseBilkent);
 cytoscape.use(klay);
 cytoscape.use(popper);
+panzoom(cytoscape);
 
 type CytoscapeReactWrapperProps = {
   elements: any;
@@ -38,6 +41,7 @@ type CytoscapeReactWrapperState = {};
  */
 export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapperProps, CytoscapeReactWrapperState> {
   cy: any;
+  panzoom: any;
   divParentRef: any;
 
   constructor(props: CytoscapeReactWrapperProps) {
@@ -87,10 +91,14 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
     );
 
     this.cy = cytoscape(opts);
+    this.panzoom = this.cy.panzoom();
   }
 
   destroy() {
     if (this.cy) {
+      this.panzoom.destroy();
+      this.panzoom = null;
+
       this.cy.destroy();
       this.cy = null;
     }

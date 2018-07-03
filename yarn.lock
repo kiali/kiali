@@ -2339,6 +2339,12 @@ cytoscape-klay@3.1.1:
   dependencies:
     klayjs "^0.4.1"
 
+cytoscape-panzoom@2.5.2:
+  version "2.5.2"
+  resolved "https://registry.yarnpkg.com/cytoscape-panzoom/-/cytoscape-panzoom-2.5.2.tgz#e78d3b9e5bc1a3da3669565a76d96b99b5a70a05"
+  dependencies:
+    jquery "^1.4 || ^2.0 || ^3.0"
+
 cytoscape-popper@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/cytoscape-popper/-/cytoscape-popper-1.0.1.tgz#09fd147ab0b4d2749aec8d5d5214173c4ec3810d"
@@ -4978,7 +4984,7 @@ jquery-match-height@^0.7.2:
   version "0.7.2"
   resolved "https://registry.yarnpkg.com/jquery-match-height/-/jquery-match-height-0.7.2.tgz#f8d9f3ba5314daab109cf07408674be204be5f0e"
 
-"jquery@>= 2.1.x", jquery@>=1.7, jquery@>=1.7.0, "jquery@>=1.7.1 <4.0.0", jquery@>=1.8, "jquery@^1.8.3 || ^2.0 || ^3.0":
+"jquery@>= 2.1.x", jquery@>=1.7, jquery@>=1.7.0, "jquery@>=1.7.1 <4.0.0", jquery@>=1.8, "jquery@^1.4 || ^2.0 || ^3.0", "jquery@^1.8.3 || ^2.0 || ^3.0":
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.3.1.tgz#958ce29e81c9790f31be7792df5d4d95fc57fbca"
 
