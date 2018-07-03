@@ -479,7 +479,7 @@ func TestGetNamespaceServicesRequestRates(t *testing.T) {
 			Value:     model.SampleValue(1),
 			Metric:    model.Metric{"source_service": "a.istio-system.svc.cluster.local"}},
 	}
-	mockQuery(api, `rate(istio_request_count{source_service=~".*\\.istio-system\\..*"}[5m])`, &vectorQ1)
+	mockQuery(api, `rate(istio_request_count{source_service=~".*\\.istio-system\\..*",destination_service!~".*\\.istio-system\\..*"}[5m])`, &vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{

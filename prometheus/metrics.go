@@ -147,14 +147,14 @@ func getServiceHealth(api v1.API, namespace string, servicename string) (EnvoyHe
 
 func getServiceMetrics(api v1.API, q *ServiceMetricsQuery) Metrics {
 	clustername := config.Get().ExternalServices.Istio.IstioIdentityDomain
-	destService := fmt.Sprintf("destination_service=\"%s.%s.%s\"", q.Service, q.Namespace, clustername)
-	srcService := fmt.Sprintf("source_service=\"%s.%s.%s\"", q.Service, q.Namespace, clustername)
+	destService := fmt.Sprintf(`destination_service="%s.%s.%s"`, q.Service, q.Namespace, clustername)
+	srcService := fmt.Sprintf(`source_service="%s.%s.%s"`, q.Service, q.Namespace, clustername)
 	if q.Service == "unknown" {
-		destService = "destination_service=\"unknown\""
-		srcService = "source_service=\"unknown\""
+		destService = `destination_service="unknown"`
+		srcService = `source_service="unknown"`
 		if q.Namespace != "unknown" {
-			destService += fmt.Sprintf(",source_service=~\".*\\\\.%s\\\\.%s\"", q.Namespace, clustername)
-			srcService += fmt.Sprintf(",destination_service=~\".*\\\\.%s\\\\.%s\"", q.Namespace, clustername)
+			destService += fmt.Sprintf(`,source_service=~".*\\.%s\\.%s"`, q.Namespace, clustername)
+			srcService += fmt.Sprintf(`,destination_service=~".*\\.%s\\.%s"`, q.Namespace, clustername)
 		}
 	}
 	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version, q.IncludeIstio)
@@ -169,8 +169,8 @@ func getNamespaceMetrics(api v1.API, q *NamespaceMetricsQuery) Metrics {
 	if "" == svc {
 		svc = ".*"
 	}
-	destService := fmt.Sprintf("destination_service=~\"%s\\\\.%s\\\\..*\"", svc, q.Namespace)
-	srcService := fmt.Sprintf("source_service=~\"%s\\\\.%s\\\\..*\"", svc, q.Namespace)
+	destService := fmt.Sprintf(`destination_service=~"%s\\.%s\\..*"`, svc, q.Namespace)
+	srcService := fmt.Sprintf(`source_service=~"%s\\.%s\\..*"`, svc, q.Namespace)
 	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version, q.IncludeIstio)
 	groupingIn := joinLabels(q.ByLabelsIn)
 	groupingOut := joinLabels(q.ByLabelsOut)
@@ -182,20 +182,20 @@ func buildLabelStrings(destServiceLabel, srcServiceLabel, version string, includ
 	versionLabelIn := ""
 	versionLabelOut := ""
 	if len(version) > 0 {
-		versionLabelIn = fmt.Sprintf(",destination_version=\"%s\"", version)
-		versionLabelOut = fmt.Sprintf(",source_version=\"%s\"", version)
+		versionLabelIn = fmt.Sprintf(`,destination_version="%s"`, version)
+		versionLabelOut = fmt.Sprintf(`,source_version="%s"`, version)
 	}
 
 	// when filtering we still keep incoming istio traffic, it's typically ingressgateway. We
 	// only want to filter outgoing traffic to the istio infra services.
 	istioFilterOut := ""
 	if !includeIstio {
-		istioFilterOut = ",destination_service!~\".*\\\\.istio-system\\\\..*\""
+		istioFilterOut = `,destination_service!~".*\\.istio-system\\..*"`
 	}
 	labelsIn := fmt.Sprintf("{%s%s}", destServiceLabel, versionLabelIn)
 	labelsOut := fmt.Sprintf("{%s%s%s}", srcServiceLabel, versionLabelOut, istioFilterOut)
-	labelsErrorIn := fmt.Sprintf("{%s%s,response_code=~\"[5|4].*\"}", destServiceLabel, versionLabelIn)
-	labelsErrorOut := fmt.Sprintf("{%s%s%s,response_code=~\"[5|4].*\"}", srcServiceLabel, versionLabelOut, istioFilterOut)
+	labelsErrorIn := fmt.Sprintf(`{%s%s,response_code=~"[5|4].*"}`, destServiceLabel, versionLabelIn)
+	labelsErrorOut := fmt.Sprintf(`{%s%s%s,response_code=~"[5|4].*"}`, srcServiceLabel, versionLabelOut, istioFilterOut)
 
 	return labelsIn, labelsOut, labelsErrorIn, labelsErrorOut
 }
@@ -371,7 +371,8 @@ func getNamespaceServicesRequestRates(api v1.API, namespace string, ratesInterva
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
 	}
-	lblOut := fmt.Sprintf(`source_service=~".*\\.%s\\..*"`, namespace)
+	// Note: connections to Istio infra (istio-system) is filtered out from health
+	lblOut := fmt.Sprintf(`source_service=~".*\\.%s\\..*",destination_service!~".*\\.istio-system\\..*"`, namespace)
 	out, err := getRequestRatesForLabel(api, time.Now(), lblOut, ratesInterval)
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
@@ -385,7 +386,8 @@ func getServiceRequestRates(api v1.API, namespace, service string, ratesInterval
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
 	}
-	lblOut := fmt.Sprintf(`source_service=~"%s\\.%s\\..*"`, service, namespace)
+	// Note: connections to Istio infra (istio-system) is filtered out from health
+	lblOut := fmt.Sprintf(`source_service=~"%s\\.%s\\..*",destination_service!~".*\\.istio-system\\..*"`, service, namespace)
 	out, err := getRequestRatesForLabel(api, time.Now(), lblOut, ratesInterval)
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
