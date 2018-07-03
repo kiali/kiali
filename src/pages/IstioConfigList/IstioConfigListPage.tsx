@@ -15,10 +15,10 @@ class IstioConfigListPage extends React.Component<IstioConfigListProps, IstioCon
 
   render() {
     return (
-      <div className="container-fluid container-pf-nav-pf-vertical">
+      <>
         <h2>Istio Config</h2>
         <IstioConfigListComponent onError={this.handleError} />
-      </div>
+      </>
     );
   }
 }

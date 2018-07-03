@@ -189,7 +189,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     }
     let to = '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
     return (
-      <div className="container-fluid container-pf-nav-pf-vertical">
+      <>
         <div className="page-header">
           <h2>
             Service{' '}
@@ -260,7 +260,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
             </div>
           </TabContainer>
         )}
-      </div>
+      </>
     );
   }
 

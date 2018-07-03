@@ -15,10 +15,10 @@ class ServiceListPage extends React.Component<ServiceListProps, ServiceListState
 
   render() {
     return (
-      <div className="container-fluid container-pf-nav-pf-vertical">
+      <>
         <h2>Services</h2>
         <ServiceListComponent onError={this.handleError} />
-      </div>
+      </>
     );
   }
 }
