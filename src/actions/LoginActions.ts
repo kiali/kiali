@@ -2,6 +2,7 @@ import { createAction } from 'typesafe-actions';
 import * as API from '../services/Api';
 import { Token } from '../store/Store';
 import { HTTP_CODES } from '../types/Common';
+import { HelpDropdownActions } from './HelpDropdownActions';
 
 export enum LoginActionKeys {
   LOGIN_REQUEST = 'LOGIN_REQUEST',
@@ -56,6 +57,7 @@ export const LoginActions = {
       API.login(username, password).then(
         token => {
           dispatch(LoginActions.loginSuccess(token['data'], username));
+          dispatch(HelpDropdownActions.refresh());
         },
         error => {
           dispatch(LoginActions.loginFailure(error));

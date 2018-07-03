@@ -9,7 +9,7 @@ import MessageCenter from '../../containers/MessageCenterContainer';
 
 import IstioConfigPage from '../../pages/IstioConfigList/IstioConfigListPage';
 import IstioConfigDetailsPage from '../../pages/IstioConfigDetails/IstioConfigDetailsPage';
-import HelpDropdown from './HelpDropdown';
+import HelpDropdown from '../../containers/HelpDropdownContainer';
 import UserDropdown from '../../containers/UserDropdownContainer';
 import ServiceDetailsPage from '../../pages/ServiceDetails/ServiceDetailsPage';
 import ServiceGraphRouteHandler from '../../pages/ServiceGraph/ServiceGraphRouteHandler';

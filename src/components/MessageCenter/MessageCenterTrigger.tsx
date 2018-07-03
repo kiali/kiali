@@ -10,15 +10,20 @@ type PropsType = {
 
 export default class MessageCenterTrigger extends React.PureComponent<PropsType, StateType> {
   render() {
+    let icon;
+    if (this.props.newMessagesCount > 0) {
+      icon = (
+        <div>
+          <PfReact.Icon name="warning-triangle-o" type="pf" /> {this.props.newMessagesCount} open issues
+        </div>
+      );
+    } else {
+      icon = <PfReact.Icon name="bell" />;
+    }
     return (
       <li className="drawer-pf-trigger">
         <a className="nav-item-iconic" onClick={this.props.toggleMessageCenter}>
-          <PfReact.Icon name="bell" />
-          {this.props.newMessagesCount > 0 && (
-            <PfReact.Badge className={'pf-badge-bodered' + (this.props.badgeDanger ? ' badge-danger' : '')}>
-              {this.props.newMessagesCount}
-            </PfReact.Badge>
-          )}
+          {icon}
         </a>
       </li>
     );

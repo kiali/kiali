@@ -56,6 +56,17 @@ export interface LoginState {
   logged: boolean;
   logging: boolean;
 }
+
+export interface Component {
+  name: string;
+  version: string;
+}
+
+export interface StatusState {
+  status: { [key: string]: string };
+  components: Component[];
+  warningMessages: string[];
+}
 // @todo: Add namespaces interface
 
 // This defines the Kiali Global Application State
@@ -63,6 +74,7 @@ export interface KialiAppState {
   // Global state === across multiple pages
   // could also be session state
   globalState: GlobalState;
+  statusState: StatusState;
   // page settings
   authentication: LoginState;
   messageCenter: MessageCenterState;
