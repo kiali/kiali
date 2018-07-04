@@ -36,7 +36,8 @@ var (
 type IstioClientInterface interface {
 	GetNamespaces() (*v1.NamespaceList, error)
 	GetService(namespace string, serviceName string) (*v1.Service, error)
-	GetServices(namespaceName string) (*ServiceList, error)
+	GetFullServices(namespace string) (*ServiceList, error)
+	GetServices(namespace string) (*v1.ServiceList, error)
 	GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error)
 	GetPods(namespace, labelSelector string) (*v1.PodList, error)
 	GetNamespacePods(namespace string) (*v1.PodList, error)

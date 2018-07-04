@@ -60,7 +60,6 @@ func TestServiceMultipleChecks(t *testing.T) {
 	assert.Equal(checks[1].Message, "Weight sum should be 100")
 	assert.Equal(checks[1].Severity, "error")
 	assert.Equal(checks[1].Path, "")
-
 }
 
 func TestServiceOver100RouteRule(t *testing.T) {
@@ -403,7 +402,7 @@ func fakeCombinedIstioDetails() *kubernetes.IstioDetails {
 	return &istioDetails
 }
 
-func fakeCombinedServices(services []string) *kubernetes.ServiceList {
+func fakeCombinedServices(services []string) *v1.ServiceList {
 	items := []v1.Service{}
 
 	for _, service := range services {
@@ -413,13 +412,9 @@ func fakeCombinedServices(services []string) *kubernetes.ServiceList {
 			},
 		})
 	}
-
-	serviceList := kubernetes.ServiceList{
-		Services: &v1.ServiceList{
-			Items: items,
-		},
+	return &v1.ServiceList{
+		Items: items,
 	}
-	return &serviceList
 }
 
 func fakePods() *v1.PodList {

@@ -150,7 +150,7 @@ func TestNamespaceHealth(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/ns/health"
 
-	k8s.On("GetServices", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+	k8s.On("GetFullServices", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
 	}).Return(fakeServiceList(), nil)
 
@@ -169,7 +169,7 @@ func TestNamespaceHealth(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetServices", 1)
+	k8s.AssertNumberOfCalls(t, "GetFullServices", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceHealth", 2)
 }
 

@@ -21,9 +21,14 @@ func (o *K8SClientMock) GetService(namespace string, serviceName string) (*v1.Se
 	return args.Get(0).(*v1.Service), args.Error(1)
 }
 
-func (o *K8SClientMock) GetServices(namespace string) (*kubernetes.ServiceList, error) {
+func (o *K8SClientMock) GetFullServices(namespace string) (*kubernetes.ServiceList, error) {
 	args := o.Called(namespace)
 	return args.Get(0).(*kubernetes.ServiceList), args.Error(1)
+}
+
+func (o *K8SClientMock) GetServices(namespace string) (*v1.ServiceList, error) {
+	args := o.Called(namespace)
+	return args.Get(0).(*v1.ServiceList), args.Error(1)
 }
 
 func (o *K8SClientMock) GetPods(namespace, labelSelector string) (*v1.PodList, error) {

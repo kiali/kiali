@@ -31,7 +31,7 @@ func (in *HealthService) GetServiceHealth(namespace, service, rateInterval strin
 
 // GetNamespaceHealth returns a health for all services in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceHealth(namespace, rateInterval string) (NamespaceHealth, error) {
-	serviceList, err := in.k8s.GetServices(namespace)
+	serviceList, err := in.k8s.GetFullServices(namespace)
 	if err != nil {
 		return nil, err
 	}

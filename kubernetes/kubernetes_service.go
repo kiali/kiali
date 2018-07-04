@@ -58,9 +58,9 @@ func (in *IstioClient) GetNamespaces() (*v1.NamespaceList, error) {
 	return namespaces, nil
 }
 
-// GetServices returns a list of services for a given namespace.
+// GetFullServices returns a list of services for a given namespace, along with its pods and deployments.
 // It returns an error on any problem.
-func (in *IstioClient) GetServices(namespace string) (*ServiceList, error) {
+func (in *IstioClient) GetFullServices(namespace string) (*ServiceList, error) {
 	var err error
 	servicesChan, podsChan, deploymentsChan := make(chan servicesResponse), make(chan podsResponse), make(chan deploymentsResponse)
 
@@ -86,6 +86,12 @@ func (in *IstioClient) GetServices(namespace string) (*ServiceList, error) {
 	}
 
 	return services, err
+}
+
+// GetServices returns a list of services for a given namespace.
+// It returns an error on any problem.
+func (in *IstioClient) GetServices(namespace string) (*v1.ServiceList, error) {
+	return in.k8s.CoreV1().Services(namespace).List(emptyListOptions)
 }
 
 // GetDeployments returns a list of deployments for a given namespace.
