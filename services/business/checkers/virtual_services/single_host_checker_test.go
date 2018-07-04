@@ -126,6 +126,34 @@ func TestShortHostNameIncludedIntoWildCard(t *testing.T) {
 	presentValidationTest(t, validations, "virtual-2")
 }
 
+func TestMultipleHostsFailing(t *testing.T) {
+	vss := []kubernetes.IstioObject{
+		buildVirtualService("virtual-1", "reviews"),
+		buildVirtualServiceMultipleHosts("virtual-2", []string{"reviews",
+			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
+	}
+	validations := SingleHostChecker{
+		Namespace:       "bookinfo",
+		VirtualServices: vss,
+	}.Check()
+
+	presentValidationTest(t, validations, "virtual-2")
+}
+
+func TestMultipleHostsPassing(t *testing.T) {
+	vss := []kubernetes.IstioObject{
+		buildVirtualService("virtual-1", "reviews"),
+		buildVirtualServiceMultipleHosts("virtual-2", []string{"ratings",
+			"mongo.backup.svc.cluster.local", "mongo.staging.svc.cluster.local"}),
+	}
+	validations := SingleHostChecker{
+		Namespace:       "bookinfo",
+		VirtualServices: vss,
+	}.Check()
+
+	noValidationResult(t, validations)
+}
+
 func buildVirtualService(name, host string) kubernetes.IstioObject {
 	vs := (&kubernetes.VirtualService{
 
@@ -137,6 +165,21 @@ func buildVirtualService(name, host string) kubernetes.IstioObject {
 			"hosts": []interface{}{
 				host,
 			},
+		},
+	}).DeepCopyIstioObject()
+
+	return vs
+}
+
+func buildVirtualServiceMultipleHosts(name string, hosts []string) kubernetes.IstioObject {
+	vs := (&kubernetes.VirtualService{
+
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      name,
+			Namespace: "bookinfo",
+		},
+		Spec: map[string]interface{}{
+			"hosts": hosts,
 		},
 	}).DeepCopyIstioObject()
 

@@ -25,18 +25,20 @@ func (in SingleHostChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	for _, vs := range in.VirtualServices {
-		if host, ok := getHost(vs); ok {
-			if len(hostCounter) > 0 {
-				if isSameHost(hostCounter, host) {
-					multipleVirtualServiceCheck(vs, validations)
-				} else if isNamespaceWildcard(hostCounter, host) {
-					multipleVirtualServiceCheck(vs, validations)
-				} else if isFullWildcard(hostCounter, host) {
-					multipleVirtualServiceCheck(vs, validations)
+		if hosts, ok := getHost(vs); ok {
+			for _, host := range hosts {
+				if len(hostCounter) > 0 {
+					if isSameHost(hostCounter, host) {
+						multipleVirtualServiceCheck(vs, validations)
+					} else if isNamespaceWildcard(hostCounter, host) {
+						multipleVirtualServiceCheck(vs, validations)
+					} else if isFullWildcard(hostCounter, host) {
+						multipleVirtualServiceCheck(vs, validations)
+					}
 				}
-			}
 
-			storeHost(hostCounter, host)
+				storeHost(hostCounter, host)
+			}
 		}
 	}
 
@@ -106,33 +108,29 @@ func isFullWildcard(hostCounter map[string]map[string]map[string]bool, host Host
 	return false
 }
 
-func getHost(virtualService kubernetes.IstioObject) (Host, bool) {
-	host := Host{}
+func getHost(virtualService kubernetes.IstioObject) ([]Host, bool) {
 	hosts := virtualService.GetSpec()["hosts"]
 	if hosts == nil {
-		return host, false
+		return []Host{}, false
 	}
 
-	// Getting a []HTTPRoute
 	slice := reflect.ValueOf(hosts)
 	if slice.Kind() != reflect.Slice {
-		return host, false
+		return []Host{}, false
 	}
 
-	for hostIdx := 0; hostIdx < slice.Len(); hostIdx++ {
-		if hostIdx > 1 {
-			break
-		}
+	targetHosts := make([]Host, 0, slice.Len())
 
+	for hostIdx := 0; hostIdx < slice.Len(); hostIdx++ {
 		hostName, ok := slice.Index(hostIdx).Interface().(string)
 		if !ok {
 			continue
 		}
 
-		host = formatHostForSearch(hostName, virtualService.GetObjectMeta().Namespace)
+		targetHosts = append(targetHosts, formatHostForSearch(hostName, virtualService.GetObjectMeta().Namespace))
 	}
 
-	return host, true
+	return targetHosts, true
 }
 
 // Convert host to Host struct for searching
