@@ -8,19 +8,15 @@ interface Props {
   pods?: Pod[];
 }
 
-class ServiceInfoPods extends React.Component<Props> {
+interface ServiceInfoPodsState {
   groups: PodsGroup[];
-
-  constructor(props: Props) {
-    super(props);
-    this.groups = this.updateGroups(props);
+}
+class ServiceInfoPods extends React.Component<Props, ServiceInfoPodsState> {
+  static getDerivedStateFromProps(props: Props, currentState: ServiceInfoPodsState) {
+    return { groups: ServiceInfoPods.updateGroups(props) };
   }
 
-  componentWillReceiveProps(nextProps: Props) {
-    this.groups = this.updateGroups(nextProps);
-  }
-
-  updateGroups(props: Props) {
+  static updateGroups(props: Props) {
     if (props.pods) {
       return groupPods(props.pods);
     } else {
@@ -28,12 +24,17 @@ class ServiceInfoPods extends React.Component<Props> {
     }
   }
 
+  constructor(props: Props) {
+    super(props);
+    this.state = { groups: ServiceInfoPods.updateGroups(props) };
+  }
+
   render() {
     return (
       <div className="card-pf">
         <Row className="row-cards-pf">
           <Col xs={12} sm={12} md={12} lg={12}>
-            {(this.groups || []).map((group, u) => (
+            {(this.state.groups || []).map((group, u) => (
               <div className="card-pf-body" key={'pods_' + u}>
                 <h3>
                   {group.numberOfPods > 1 ? (

@@ -59,13 +59,13 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {
-    let promiseConfigDetails = API.getIstioConfigDetail(
+    const promiseConfigDetails = API.getIstioConfigDetail(
       authentication(),
       props.namespace,
       props.objectType,
       props.object
     );
-    let promiseConfigValidations = API.getIstioConfigValidations(
+    const promiseConfigValidations = API.getIstioConfigValidations(
       authentication(),
       props.namespace,
       props.objectType,
@@ -87,16 +87,16 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     this.fetchIstioObjectDetails();
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: RouteComponentProps<IstioConfigId>) {
     // Hack to force redisplay of annotations after update
     // See https://github.com/securingsincity/react-ace/issues/300
     if (this.aceEditorRef.current) {
       this.aceEditorRef.current!['editor'].onChangeAnnotation();
     }
-  }
 
-  componentWillReceiveProps(nextProps: RouteComponentProps<IstioConfigId>) {
-    this.fetchIstioObjectDetailsFromProps(nextProps.match.params);
+    if (this.props.match.params !== prevProps.match.params) {
+      this.fetchIstioObjectDetailsFromProps(this.props.match.params);
+    }
   }
 
   renderEditor(routingObject: any) {
