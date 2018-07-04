@@ -126,7 +126,7 @@ Valid options:
       Default: istio-3.9-0.8.0-alpha4
   -iop|--istiooc-platform (linux|darwin)
       The platform indicator to determine what istiooc binary executable to download.
-      Default: linux
+      Default: linux (darwin if Mac is detected)
   -ke|--kiali-enabled (true|false)
       When set to true, Kiali will be installed in OpenShift.
       Default: false
@@ -183,7 +183,14 @@ OPENSHIFT_IP_ADDRESS=${OPENSHIFT_IP_ADDRESS:-`echo $(ip -f inet addr | grep 'sta
 # The version is the tag from the openshift-istio/origin release builds.
 # The platform is either "linux" or "darwin".
 OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.8.0-alpha4}"
-OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-linux}"
+DEFAULT_OS_VERSION=linux
+DETECTED_OS_VERSION=`uname | tr '[:upper:]' '[:lower:]'`
+if [ "${DETECTED_OS_VERSION}" = "linux" -o "${DETECTED_OS_VERSION}" = "darwin" ]
+then
+  DEFAULT_OS_VERSION=${DETECTED_OS_VERSION}
+  echo set default version to ${DEFAULT_OS_VERSION}
+fi
+OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-${DEFAULT_OS_VERSION}}"
 
 # If you want to persist data across restarts of OpenShift, set to the persistence directory.
 # If you set this to "" then no persistence will be used
