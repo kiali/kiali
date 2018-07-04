@@ -49,7 +49,6 @@ export const fetchNamespacesIfNeeded = () => {
   // This is useful for avoiding a network request if
   // a cached value is already available.
   return (dispatch, getState) => {
-    console.debug('fetchNamespacesIfNeeded()');
     if (shouldFetchNamespaces(getState())) {
       // Dispatch a thunk from thunk!
       const auth = 'Bearer ' + getState().authentication.token.token;
