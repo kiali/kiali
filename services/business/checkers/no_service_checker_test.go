@@ -181,7 +181,7 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	return &istioDetails
 }
 
-func fakeServiceDetails(services []string) *kubernetes.ServiceList {
+func fakeServiceDetails(services []string) *v1.ServiceList {
 	items := []v1.Service{}
 
 	for _, service := range services {
@@ -192,10 +192,7 @@ func fakeServiceDetails(services []string) *kubernetes.ServiceList {
 		})
 	}
 
-	serviceList := kubernetes.ServiceList{
-		Services: &v1.ServiceList{
-			Items: items,
-		},
+	return &v1.ServiceList{
+		Items: items,
 	}
-	return &serviceList
 }

@@ -9,12 +9,13 @@ import (
 	"github.com/kiali/kiali/services/business/checkers/route_rules"
 	"github.com/kiali/kiali/services/business/checkers/virtual_services"
 	"github.com/kiali/kiali/services/models"
+	"k8s.io/api/core/v1"
 )
 
 type NoServiceChecker struct {
 	Namespace    string
 	IstioDetails *kubernetes.IstioDetails
-	ServiceList  *kubernetes.ServiceList
+	ServiceList  *v1.ServiceList
 }
 
 func (in NoServiceChecker) Check() models.IstioValidations {
@@ -178,10 +179,10 @@ func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace s
 	drvalidationsc <- drvalidations
 }
 
-func getServiceNames(serviceList *kubernetes.ServiceList) []string {
+func getServiceNames(serviceList *v1.ServiceList) []string {
 	serviceNames := make([]string, 0)
-	if serviceList != nil && serviceList.Services != nil {
-		for _, item := range serviceList.Services.Items {
+	if serviceList != nil {
+		for _, item := range serviceList.Items {
 			serviceNames = append(serviceNames, item.Name)
 		}
 	}
