@@ -7,7 +7,7 @@ import configureMockStore from 'redux-mock-store';
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);
 
-describe('MessageCenterAtions', () => {
+describe('MessageCenterActions', () => {
   it('should add a message', () => {
     const expectedAction = {
       type: MessageCenterActionKeys.ADD_MESSAGE,
