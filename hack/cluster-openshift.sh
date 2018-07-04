@@ -288,7 +288,7 @@ fi
 
 # Download the oc client if we do not have it yet
 if [[ -f "${OS_ISTIO_OC_EXE_PATH}" ]]; then
-  _existingVersion=$(${OS_ISTIO_OC_EXE_PATH} version | head -n 1 | sed -n "s/^.* \(\S*\)+.*$/\1/p")
+  _existingVersion=$(${OS_ISTIO_OC_EXE_PATH} --request-timeout=2s version | head -n 1 | sed -n "s/^oc \([A-Za-z0-9.-]*\)\+[a-z0-9 ]*$/\1/p")
   if [ "$_existingVersion" != "${OS_ISTIO_OC_DOWNLOAD_VERSION}" ]; then
     echo "===== WARNING ====="
     echo "You already have the client binary but it does not match the version you want."
