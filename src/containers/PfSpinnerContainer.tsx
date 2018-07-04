@@ -15,7 +15,7 @@ const spinnerStyle = style({
 });
 
 const mapStateToProps = (state: KialiAppState) => ({
-  isLoading: state.globalState.isLoading
+  isLoading: state.globalState.loadingCounter > 0
 });
 
 export const PfSpinner: React.SFC<PfSpinnerProps> = props => {

@@ -2,20 +2,11 @@
 import { createAction } from 'typesafe-actions';
 
 export enum GlobalActionKeys {
-  // Toggle Actions
-  TOGGLE_LOADING_SPINNER = 'TOGGLE_LOADING_SPINNER',
-  SET_LOADING_SPINNER = 'SET_LOADING_SPINNER',
-  LOADING_SPINNER_OFF = 'LOADING_SPINNER_OFF',
-  LOADING_SPINNER_ON = 'LOADING_SPINNER_ON'
+  INCREMENT_LOADING_COUNTER = 'INCREMENT_LOADING_COUNTER',
+  DECREMENT_LOADING_COUNTER = 'DECREMENT_LOADING_COUNTER'
 }
 
 export const globalActions = {
-  // Toggle actions
-  toggleLoadingSpinner: createAction(GlobalActionKeys.TOGGLE_LOADING_SPINNER),
-  setLoadingSpinner: createAction(GlobalActionKeys.SET_LOADING_SPINNER, (isLoading: boolean) => ({
-    type: GlobalActionKeys.SET_LOADING_SPINNER,
-    payload: isLoading
-  })),
-  loadingSpinnerOn: createAction(GlobalActionKeys.LOADING_SPINNER_ON),
-  loadingSpinnerOff: createAction(GlobalActionKeys.LOADING_SPINNER_OFF)
+  incrementLoadingCounter: createAction(GlobalActionKeys.INCREMENT_LOADING_COUNTER),
+  decrementLoadingCounter: createAction(GlobalActionKeys.DECREMENT_LOADING_COUNTER)
 };
