@@ -2,10 +2,11 @@ package virtual_services
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/services/models"
 	"reflect"
 	"strings"
+
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/services/models"
 )
 
 type SingleHostChecker struct {
@@ -19,19 +20,19 @@ type Host struct {
 	Cluster   string
 }
 
-func (in SingleHostChecker) Check() ([]*models.IstioCheck, bool) {
+func (in SingleHostChecker) Check() models.IstioValidations {
 	hostCounter := make(map[string]map[string]map[string]bool)
-	validations := make([]*models.IstioCheck, 0)
+	validations := models.IstioValidations{}
 
 	for _, vs := range in.VirtualServices {
 		if host, ok := getHost(vs); ok {
 			if len(hostCounter) > 0 {
 				if isSameHost(hostCounter, host) {
-					return multipleVirtualServiceCheck(), false
+					multipleVirtualServiceCheck(vs, validations)
 				} else if isNamespaceWildcard(hostCounter, host) {
-					return multipleVirtualServiceCheck(), false
+					multipleVirtualServiceCheck(vs, validations)
 				} else if isFullWildcard(hostCounter, host) {
-					return multipleVirtualServiceCheck(), false
+					multipleVirtualServiceCheck(vs, validations)
 				}
 			}
 
@@ -39,14 +40,24 @@ func (in SingleHostChecker) Check() ([]*models.IstioCheck, bool) {
 		}
 	}
 
-	return validations, true
+	return validations
 }
 
-func multipleVirtualServiceCheck() []*models.IstioCheck {
-	validation := models.BuildCheck("More than one Virtual Service for same host",
+func multipleVirtualServiceCheck(virtualService kubernetes.IstioObject, validations models.IstioValidations) {
+	virtualServiceName := virtualService.GetObjectMeta().Name
+	key := models.IstioValidationKey{Name: virtualServiceName, ObjectType: "virtualservice"}
+	checks := models.BuildCheck("More than one Virtual Service for same host",
 		"warning", "spec/hosts")
-	return []*models.IstioCheck{&validation}
+	rrValidation := &models.IstioValidation{
+		Name:       virtualServiceName,
+		ObjectType: "virtualservice",
+		Valid:      false,
+		Checks: []*models.IstioCheck{
+			&checks,
+		},
+	}
 
+	validations.MergeValidations(models.IstioValidations{key: rrValidation})
 }
 
 func storeHost(hostCounter map[string]map[string]map[string]bool, host Host) {

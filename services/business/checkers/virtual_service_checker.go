@@ -6,12 +6,12 @@ import (
 	"github.com/kiali/kiali/services/models"
 )
 
-const virtualCheckerType = "virtualservice"
+const VirtualCheckerType = "virtualservice"
 
 type VirtualServiceChecker struct {
 	Namespace        string
 	DestinationRules []kubernetes.IstioObject
-	VirtualService   []kubernetes.IstioObject
+	VirtualServices  []kubernetes.IstioObject
 }
 
 // An Object Checker runs all checkers for an specific object type (i.e.: pod, route rule,...)
@@ -30,13 +30,13 @@ func (in VirtualServiceChecker) Check() models.IstioValidations {
 // Runs individual checks for each virtual service
 func (in VirtualServiceChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
-	validationsChan := make(chan models.IstioValidations, len(in.VirtualService))
+	validationsChan := make(chan models.IstioValidations, len(in.VirtualServices))
 
-	for _, virtualService := range in.VirtualService {
+	for _, virtualService := range in.VirtualServices {
 		go in.runChecks(virtualService, validationsChan)
 	}
 
-	for i := 0; i < len(in.VirtualService); i++ {
+	for i := 0; i < len(in.VirtualServices); i++ {
 		validations.MergeValidations(<-validationsChan)
 	}
 	return validations
@@ -44,16 +44,26 @@ func (in VirtualServiceChecker) runIndividualChecks() models.IstioValidations {
 
 // runGroupChecks runs group checks for all virtual services
 func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
-	return models.IstioValidations{}
+	validations := models.IstioValidations{}
+
+	enabledCheckers := []GroupChecker{
+		virtual_services.SingleHostChecker{in.Namespace, in.VirtualServices},
+	}
+
+	for _, checker := range enabledCheckers {
+		validations = validations.MergeValidations(checker.Check())
+	}
+
+	return validations
 }
 
 // runChecks runs all the individual checks for a single virtual service and appends the result into validations.
 func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject, validationChan chan models.IstioValidations) {
 	virtualServiceName := virtualService.GetObjectMeta().Name
-	key := models.IstioValidationKey{Name: virtualServiceName, ObjectType: virtualCheckerType}
+	key := models.IstioValidationKey{Name: virtualServiceName, ObjectType: VirtualCheckerType}
 	rrValidation := &models.IstioValidation{
 		Name:       virtualServiceName,
-		ObjectType: virtualCheckerType,
+		ObjectType: VirtualCheckerType,
 		Valid:      true,
 	}
 
