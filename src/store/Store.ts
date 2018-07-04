@@ -3,7 +3,7 @@ import { EdgeLabelMode, PollIntervalInMs } from '../types/GraphFilter';
 // Store is the Redux Data store
 
 export interface GlobalState {
-  readonly isLoading: boolean;
+  readonly loadingCounter: number;
 }
 
 // Various pages are described here with their various sections

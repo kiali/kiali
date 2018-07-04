@@ -3,20 +3,16 @@ import { updateState } from '../utils/Reducer';
 import { GlobalActionKeys } from '../actions/GlobalActions';
 
 const INITIAL_GLOBAL_STATE: GlobalState = {
-  isLoading: false
+  loadingCounter: 0
 };
 
 // This Reducer allows changes to the 'globalState' portion of Redux Store
 const globalState = (state: GlobalState = INITIAL_GLOBAL_STATE, action) => {
   switch (action.type) {
-    case GlobalActionKeys.TOGGLE_LOADING_SPINNER:
-      return updateState(state, { isLoading: !state.isLoading });
-    case GlobalActionKeys.LOADING_SPINNER_ON:
-      return updateState(state, { isLoading: true });
-    case GlobalActionKeys.LOADING_SPINNER_OFF:
-      return updateState(state, { isLoading: false });
-    case GlobalActionKeys.SET_LOADING_SPINNER:
-      return updateState(state, { isLoading: action.payload });
+    case GlobalActionKeys.INCREMENT_LOADING_COUNTER:
+      return updateState(state, { loadingCounter: state.loadingCounter + 1 });
+    case GlobalActionKeys.DECREMENT_LOADING_COUNTER:
+      return updateState(state, { loadingCounter: Math.max(0, state.loadingCounter - 1) });
     default:
       return state;
   }

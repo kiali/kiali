@@ -11,22 +11,20 @@ import { PersistGate } from 'redux-persist/lib/integration/react';
 
 const getIsLoadingState = () => {
   const state = store.getState();
-  return state && state.globalState.isLoading;
+  return state && state.globalState.loadingCounter > 0;
 };
 
-const turnOffLoadingSpinner = () => {
+const decrementLoadingCounter = () => {
   if (getIsLoadingState()) {
-    store.dispatch(globalActions.loadingSpinnerOff());
+    store.dispatch(globalActions.decrementLoadingCounter());
   }
 };
 
-// intercept all Axios requests and dispatch the LOADING_SPINNER_ON Action
+// intercept all Axios requests and dispatch the INCREMENT_LOADING_COUNTER Action
 axios.interceptors.request.use(
   request => {
     // dispatch an action to turn spinner on
-    if (!getIsLoadingState()) {
-      store.dispatch(globalActions.loadingSpinnerOn());
-    }
+    store.dispatch(globalActions.incrementLoadingCounter());
     return request;
   },
   error => {
@@ -35,15 +33,15 @@ axios.interceptors.request.use(
   }
 );
 
-// intercept all Axios responses and dispatch the LOADING_SPINNER_OFF Action
+// intercept all Axios responses and dispatch the DECREMENT_LOADING_COUNTER Action
 axios.interceptors.response.use(
   response => {
-    turnOffLoadingSpinner();
+    decrementLoadingCounter();
     return response;
   },
   error => {
     // The response was rejected, turn off the spinning
-    turnOffLoadingSpinner();
+    decrementLoadingCounter();
     return Promise.reject(error);
   }
 );

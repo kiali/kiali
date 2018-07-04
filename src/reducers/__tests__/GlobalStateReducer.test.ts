@@ -4,7 +4,7 @@ import { GlobalActionKeys } from '../../actions/GlobalActions';
 describe('GlobalState reducer', () => {
   it('should return the initial state', () => {
     expect(globalState(undefined, {})).toEqual({
-      isLoading: false
+      loadingCounter: 0
     });
   });
 
@@ -12,14 +12,14 @@ describe('GlobalState reducer', () => {
     expect(
       globalState(
         {
-          isLoading: false
+          loadingCounter: 0
         },
         {
-          type: GlobalActionKeys.LOADING_SPINNER_ON
+          type: GlobalActionKeys.INCREMENT_LOADING_COUNTER
         }
       )
     ).toEqual({
-      isLoading: true
+      loadingCounter: 1
     });
   });
 
@@ -27,45 +27,44 @@ describe('GlobalState reducer', () => {
     expect(
       globalState(
         {
-          isLoading: true
+          loadingCounter: 1
         },
         {
-          type: GlobalActionKeys.LOADING_SPINNER_OFF
+          type: GlobalActionKeys.DECREMENT_LOADING_COUNTER
         }
       )
     ).toEqual({
-      isLoading: false
+      loadingCounter: 0
     });
   });
 
-  it('should turn Toggle Loading spinner ', () => {
+  it('should increment counter', () => {
     expect(
       globalState(
         {
-          isLoading: true
+          loadingCounter: 1
         },
         {
-          type: GlobalActionKeys.TOGGLE_LOADING_SPINNER
+          type: GlobalActionKeys.INCREMENT_LOADING_COUNTER
         }
       )
     ).toEqual({
-      isLoading: false
+      loadingCounter: 2
     });
   });
 
-  it('should set Toggle Loading spinner ', () => {
+  it('should decrement counter', () => {
     expect(
       globalState(
         {
-          isLoading: true
+          loadingCounter: 2
         },
         {
-          type: GlobalActionKeys.SET_LOADING_SPINNER,
-          payload: false
+          type: GlobalActionKeys.DECREMENT_LOADING_COUNTER
         }
       )
     ).toEqual({
-      isLoading: false
+      loadingCounter: 1
     });
   });
 });
