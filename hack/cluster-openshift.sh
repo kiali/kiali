@@ -223,6 +223,12 @@ else
   DOCKER_SUDO=sudo
 fi
 
+# Use curl command if available, otherwise try wget
+DOWNLOADER="wget -O"
+if which curl > /dev/null ; then
+  DOWNLOADER="curl -L -o"
+fi
+
 # Determine where to get the binary executable and its full path and how to execute it.
 # This download URL is where to the binary is on the github release page.
 OS_ISTIO_OC_DOWNLOAD_LOCATION="https://github.com/openshift-istio/origin/releases/download/${OS_ISTIO_OC_DOWNLOAD_VERSION}/istiooc_${OS_ISTIO_OC_DOWNLOAD_PLATFORM}"
@@ -296,7 +302,7 @@ if [[ -f "${OS_ISTIO_OC_EXE_PATH}" ]]; then
   fi
 else
    echo "Downloading binary to ${OS_ISTIO_OC_EXE_PATH}"
-   wget -O ${OS_ISTIO_OC_EXE_PATH} ${OS_ISTIO_OC_DOWNLOAD_LOCATION}
+   eval ${DOWNLOADER} ${OS_ISTIO_OC_EXE_PATH} ${OS_ISTIO_OC_DOWNLOAD_LOCATION}
    if [ "$?" != "0" ]; then
      echo "===== WARNING ====="
      echo "Could not download the client binary for the version you want."
