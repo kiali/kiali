@@ -41,7 +41,6 @@ type CytoscapeReactWrapperState = {};
  */
 export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapperProps, CytoscapeReactWrapperState> {
   cy: any;
-  panzoom: any;
   divParentRef: any;
 
   constructor(props: CytoscapeReactWrapperProps) {
@@ -93,14 +92,13 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
     );
 
     this.cy = cytoscape(opts);
-    this.panzoom = this.cy.panzoom();
+    // Receives object with default init values or 'destroy' command and returns cy instance
+    this.cy.panzoom();
   }
 
   destroy() {
     if (this.cy) {
-      this.panzoom.destroy();
-      this.panzoom = null;
-
+      this.cy.panzoom('destroy');
       this.cy.destroy();
       this.cy = null;
     }
