@@ -8,7 +8,7 @@ const INITIAL_STATE: ServiceGraphFilterState = {
   showLegend: false,
   showNodeLabels: true,
   showCircuitBreakers: false,
-  showRouteRules: true,
+  showVirtualServices: true,
   showMissingSidecars: true,
   showTrafficAnimation: false,
   // @ todo: add disableLayers back in later
@@ -28,8 +28,8 @@ const serviceGraphFilterState = (state: ServiceGraphFilterState = INITIAL_STATE,
       return updateState(state, { edgeLabelMode: action.payload });
     case ServiceGraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS:
       return updateState(state, { showCircuitBreakers: !state.showCircuitBreakers });
-    case ServiceGraphFilterActionKeys.TOGGLE_GRAPH_ROUTE_RULES:
-      return updateState(state, { showRouteRules: !state.showRouteRules });
+    case ServiceGraphFilterActionKeys.TOGGLE_GRAPH_VIRTUAL_SERVICES:
+      return updateState(state, { showVirtualServices: !state.showVirtualServices });
     case ServiceGraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS:
       return updateState(state, { showMissingSidecars: !state.showMissingSidecars });
     case ServiceGraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION:

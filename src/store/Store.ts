@@ -12,7 +12,7 @@ export interface ServiceGraphFilterState {
   readonly showLegend: boolean;
   readonly showNodeLabels: boolean;
   readonly showCircuitBreakers: boolean;
-  readonly showRouteRules: boolean;
+  readonly showVirtualServices: boolean;
   readonly showMissingSidecars: boolean;
   readonly showTrafficAnimation: boolean;
   // disable the service graph layers toolbar

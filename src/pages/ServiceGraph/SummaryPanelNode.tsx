@@ -148,7 +148,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
             <Label name="namespace" value={namespace} />
             <Label name="version" value={this.props.data.summaryTarget.data('version')} />
           </div>
-          {this.renderBadgeSummary(node.data('hasCB'), node.data('hasRR'), node.data('hasMissingSC'))}
+          {this.renderBadgeSummary(node.data('hasCB'), node.data('hasVS'), node.data('hasMissingSC'))}
         </div>
         <div className="panel-body">
           {!isUnknown && (
@@ -197,7 +197,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     );
   };
 
-  private renderBadgeSummary = (hasCB: boolean, hasRR: boolean, hasMissingSC: boolean) => {
+  private renderBadgeSummary = (hasCB: boolean, hasVS: boolean, hasMissingSC: boolean) => {
     return (
       <>
         {hasCB && (
@@ -206,10 +206,10 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
             Has Circuit Breaker
           </div>
         )}
-        {hasRR && (
+        {hasVS && (
           <div>
             <Icon name="code-fork" type="fa" style={{ width: '10px' }} />
-            Has Route Rule
+            Has Virtual Service
           </div>
         )}
         {hasMissingSC && (

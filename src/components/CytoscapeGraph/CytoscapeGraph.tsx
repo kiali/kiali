@@ -25,7 +25,7 @@ type CytoscapeGraphType = {
   edgeLabelMode: EdgeLabelMode;
   showNodeLabels: boolean;
   showCircuitBreakers: boolean;
-  showRouteRules: boolean;
+  showVirtualServices: boolean;
   showMissingSidecars: boolean;
   showTrafficAnimation: boolean;
   onClick: (event: CytoscapeClickEvent) => void;
@@ -79,7 +79,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
       this.props.showNodeLabels !== nextProps.showNodeLabels ||
       this.props.showCircuitBreakers !== nextProps.showCircuitBreakers ||
-      this.props.showRouteRules !== nextProps.showRouteRules ||
+      this.props.showVirtualServices !== nextProps.showVirtualServices ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.elements !== nextProps.elements ||
       this.props.graphLayout !== nextProps.graphLayout ||
@@ -267,13 +267,13 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     // We must destroy all badges before updating the json, or else we will lose all the
     // references to removed nodes
     const cbBadge = new GraphBadge.CircuitBreakerBadge();
-    const rrBadge = new GraphBadge.RouteRuleBadge();
-    const rrGroupBadge = new GraphBadge.RouteRuleGroupBadge();
+    const vsBadge = new GraphBadge.VirtualServiceBadge();
+    const vsGroupBadge = new GraphBadge.VirtualServiceGroupBadge();
     const msBadge = new GraphBadge.MissingSidecarsBadge();
     cy.nodes().forEach(ele => {
       cbBadge.destroyBadge(ele);
-      rrBadge.destroyBadge(ele);
-      rrGroupBadge.destroyBadge(ele);
+      vsBadge.destroyBadge(ele);
+      vsGroupBadge.destroyBadge(ele);
       msBadge.destroyBadge(ele);
     });
 
@@ -295,11 +295,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       if (this.props.showCircuitBreakers && ele.data('hasCB')) {
         cbBadge.buildBadge(ele);
       }
-      if (this.props.showRouteRules && ele.data('hasRR')) {
+      if (this.props.showVirtualServices && ele.data('hasVS')) {
         if (ele.data('isGroup')) {
-          rrGroupBadge.buildBadge(ele);
+          vsGroupBadge.buildBadge(ele);
         } else {
-          rrBadge.buildBadge(ele);
+          vsBadge.buildBadge(ele);
         }
       }
       if (this.props.showMissingSidecars && ele.data('hasMissingSC') && !ele.data('isGroup')) {
@@ -428,7 +428,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 const mapStateToProps = (state: KialiAppState) => ({
   showNodeLabels: state.serviceGraph.filterState.showNodeLabels,
   showCircuitBreakers: state.serviceGraph.filterState.showCircuitBreakers,
-  showRouteRules: state.serviceGraph.filterState.showRouteRules,
+  showVirtualServices: state.serviceGraph.filterState.showVirtualServices,
   showMissingSidecars: state.serviceGraph.filterState.showMissingSidecars,
   showTrafficAnimation: state.serviceGraph.filterState.showTrafficAnimation,
   elements: state.serviceGraph.graphData,
