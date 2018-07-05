@@ -3,6 +3,9 @@ import * as API from '../services/Api';
 import { Token } from '../store/Store';
 import { HTTP_CODES } from '../types/Common';
 import { HelpDropdownActions } from './HelpDropdownActions';
+import { config } from '../config';
+
+const toMilliSeconds = (hours: number) => hours * 3600 * 1000;
 
 export enum LoginActionKeys {
   LOGIN_REQUEST = 'LOGIN_REQUEST',
@@ -18,7 +21,8 @@ export const LoginActions = {
     type: LoginActionKeys.LOGIN_SUCCESS,
     token: token,
     username: username,
-    logged: true
+    logged: true,
+    sessionTimeOut: new Date().getTime() + toMilliSeconds(config().sessionTimeOut)
   })),
   loginFailure: createAction(LoginActionKeys.LOGIN_FAILURE, (error: any) => ({
     type: LoginActionKeys.LOGIN_FAILURE,
@@ -33,21 +37,38 @@ export const LoginActions = {
   checkCredentials: () => {
     return (dispatch, getState) => {
       const actualState = getState() || {};
-      const token =
-        actualState['authentication']['token'] !== undefined ? getState().authentication.token.token || '' : '';
-      const auth = `Bearer ${token}`;
-      API.getNamespaces(auth).then(
-        status => {
-          dispatch(
-            LoginActions.loginSuccess(actualState['authentication']['token'], actualState['authentication']['username'])
+      /** Check if there is a token in session */
+      if (actualState['authentication']['token'] === undefined) {
+        /** Logout user */
+        dispatch(LoginActions.logoutSuccess());
+      } else {
+        /** Check the session timeout */
+        if (new Date().getTime() > getState().authentication.sessionTimeOut) {
+          dispatch(LoginActions.logoutSuccess());
+        } else {
+          /** Get the token storage in redux-store */
+          const token = getState().authentication.token.token;
+          /** Check if the token is valid */
+          const auth = `Bearer ${token}`;
+          API.getNamespaces(auth).then(
+            status => {
+              /** Login success */
+              dispatch(
+                LoginActions.loginSuccess(
+                  actualState['authentication']['token'],
+                  actualState['authentication']['username']
+                )
+              );
+            },
+            error => {
+              /** Logout user */
+              if (error.response && error.response.status === HTTP_CODES.UNAUTHORIZED) {
+                dispatch(LoginActions.logoutSuccess());
+              }
+            }
           );
-        },
-        error => {
-          if (error.response && error.response.status === HTTP_CODES.UNAUTHORIZED) {
-            dispatch(LoginActions.logoutSuccess());
-          }
         }
-      );
+      }
     };
   },
   // action creator that performs the async request

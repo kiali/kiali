@@ -7,7 +7,8 @@ const INITIAL_STATE: LoginState = {
   error: false,
   message: '',
   logged: false,
-  logging: false
+  logging: false,
+  sessionTimeOut: undefined
 };
 
 // This Reducer allows changes to the 'LoginState' portion of Redux Store
@@ -21,7 +22,8 @@ const LoginState = (state: LoginState = INITIAL_STATE, action) => {
       return Object.assign({}, INITIAL_STATE, {
         logged: true,
         token: action.token,
-        username: action.username
+        username: action.username,
+        sessionTimeOut: action.sessionTimeOut
       });
     case LoginActionKeys.LOGIN_FAILURE:
       let message = 'Error connecting to Kiali';

@@ -49,12 +49,13 @@ export interface Token {
   expired_at: string;
 }
 export interface LoginState {
-  token: Token | undefined;
-  username: string | undefined;
+  token?: Token;
+  username?: string;
   error: any;
   message: string;
   logged: boolean;
   logging: boolean;
+  sessionTimeOut?: Date;
 }
 
 export interface Component {

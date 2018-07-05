@@ -18,6 +18,7 @@ describe('LoginActions', () => {
       type: LoginActionKeys.LOGIN_SUCCESS,
       token: { token: token, expired_at: expiredAt },
       username: username,
+      sessionTimeOut: NaN,
       logged: true
     };
     expect(LoginActions.loginSuccess({ token: token, expired_at: expiredAt }, username)).toEqual(expectedAction);

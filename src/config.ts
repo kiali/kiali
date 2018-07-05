@@ -3,8 +3,13 @@ import deepFreeze from 'deep-freeze';
 export const config = () => {
   return deepFreeze({
     version: '0.1',
+    /** TimeOut in Hours */
+    sessionTimeOutHoursAt: 3,
+    /** Toolbar Configuration */
     toolbar: {
+      /** Duration default in 1 minute */
       defaultDuration: 60,
+      /** Options in interval duration */
       intervalDuration: {
         60: 'Last minute',
         300: 'Last 5 minutes',
@@ -18,7 +23,9 @@ export const config = () => {
         604800: 'Last 7 days',
         2592000: 'Last 30 days'
       },
+      /** By default refresh is 15 seconds */
       defaultPollInterval: 15000,
+      /** Options in refresh */
       pollInterval: {
         0: 'Pause',
         5000: '5 seconds',
@@ -28,6 +35,7 @@ export const config = () => {
         60000: '1 minute',
         300000: '5 minutes'
       },
+      /** Graphs layouts types */
       graphLayouts: {
         breadthfirst: 'Breadthfirst',
         cola: 'Cola',
@@ -36,6 +44,7 @@ export const config = () => {
         klay: 'Klay'
       }
     },
+    /** Threshold limits */
     threshold: {
       percentErrorSevere: 2.0,
       percentErrorWarn: 0.1
@@ -43,6 +52,7 @@ export const config = () => {
   });
 };
 
+/** Social networks in Login Page */
 export const socialLinks = [
   {
     url: 'https://github.com/kiali',

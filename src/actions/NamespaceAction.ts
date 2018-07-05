@@ -51,6 +51,9 @@ export const fetchNamespacesIfNeeded = () => {
   return (dispatch, getState) => {
     if (shouldFetchNamespaces(getState())) {
       // Dispatch a thunk from thunk!
+      if (getState()['authentication']['token'] === undefined) {
+        return Promise.resolve();
+      }
       const auth = 'Bearer ' + getState().authentication.token.token;
       return dispatch(asyncFetchNamespaces(auth));
     } else {
