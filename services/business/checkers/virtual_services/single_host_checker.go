@@ -53,7 +53,7 @@ func multipleVirtualServiceCheck(virtualService kubernetes.IstioObject, validati
 	rrValidation := &models.IstioValidation{
 		Name:       virtualServiceName,
 		ObjectType: "virtualservice",
-		Valid:      false,
+		Valid:      true,
 		Checks: []*models.IstioCheck{
 			&checks,
 		},

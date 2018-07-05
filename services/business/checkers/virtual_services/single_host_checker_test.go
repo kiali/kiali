@@ -202,7 +202,7 @@ func presentValidationTest(t *testing.T, validations models.IstioValidations, se
 	validation, ok := validations[models.IstioValidationKey{"virtualservice", serviceName}]
 	assert.True(ok)
 
-	assert.False(validation.Valid)
+	assert.True(validation.Valid)
 	assert.NotEmpty(validation.Checks)
 	assert.Equal("warning", validation.Checks[0].Severity)
 	assert.Equal("More than one Virtual Service for same host", validation.Checks[0].Message)
