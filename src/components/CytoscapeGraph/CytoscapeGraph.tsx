@@ -62,6 +62,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private trafficRenderer: TrafficRender;
   private cytoscapeReactWrapperRef: any;
   private updateLayout: boolean;
+  private resetSelection: boolean;
   private cy: any;
 
   constructor(props: CytoscapeGraphProps) {
@@ -72,9 +73,12 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
     this.updateLayout =
       this.props.graphLayout !== nextProps.graphLayout ||
+      this.props.namespace.name !== nextProps.namespace.name ||
       (this.props.elements !== nextProps.elements &&
         this.elementsNeedRelayout(this.props.elements, nextProps.elements));
+    this.resetSelection = this.props.namespace.name !== nextProps.namespace.name;
     return (
+      this.props.namespace.name !== nextProps.namespace.name ||
       this.props.graphLayout !== nextProps.graphLayout ||
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
       this.props.showNodeLabels !== nextProps.showNodeLabels ||
@@ -190,8 +194,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         if (lastTap && currentTap === lastTap) {
           clearTimeout(tapTimeout);
           lastTap = undefined;
-
-          currentTap.trigger('doubleTap', evt);
+          currentTap.trigger('doubleTap');
         } else {
           lastTap = currentTap;
 
@@ -207,6 +210,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
         if (cytoscapeEvent) {
           this.handleTap(cytoscapeEvent);
+          this.selectTarget(evt.target);
         }
       })
     );
@@ -260,6 +264,13 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.trafficRenderer.stop();
 
     const isTheGraphSelected = cy.$(':selected').length === 0;
+    if (this.resetSelection) {
+      if (!isTheGraphSelected) {
+        this.selectTarget(null);
+        this.handleTap({ summaryType: 'graph', summaryTarget: cy });
+      }
+      this.resetSelection = false;
+    }
 
     cy.startBatch();
 
@@ -280,8 +291,12 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     // update the entire set of nodes and edges to keep the graph up-to-date
     cy.json({ elements: this.props.elements });
 
-    // update the layout if needed
+    // update the layout if needed and reset to default values
     if (this.updateLayout) {
+      // Reset all the nodes positions from previous layouts to avoid the next layout to use these as suggestions
+      cy.nodes().forEach(node => {
+        node.position({ x: 0, y: 0 });
+      });
       cy.layout(LayoutDictionary.getLayout(this.props.graphLayout)).run();
       this.updateLayout = false;
     }
@@ -309,6 +324,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     cy.endBatch();
 
+    // We opt-in for manual selection to be able to control when to select a node/edge
+    // https://github.com/cytoscape/cytoscape.js/issues/1145#issuecomment-153083828
+    cy.nodes().unselectify();
+    cy.edges().unselectify();
+
     // Verify our current selection is still valid, if not, select the graph
     if (!isTheGraphSelected && cy.$(':selected').length === 0) {
       this.handleTap({ summaryType: 'graph', summaryTarget: cy });
@@ -320,6 +340,23 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.trafficRenderer.start();
     }
   }
+
+  private selectTarget = (target: any) => {
+    if (!target) {
+      target = this.cy;
+    }
+    this.cy
+      .$(':selected')
+      .selectify()
+      .unselect()
+      .unselectify();
+    if (target !== this.cy) {
+      target
+        .selectify()
+        .select()
+        .unselectify();
+    }
+  };
 
   private handleDoubleTap = (event: CytoscapeClickEvent) => {
     if (!event.summaryTarget.data('isOutside')) {
