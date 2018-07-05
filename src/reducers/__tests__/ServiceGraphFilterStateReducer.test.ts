@@ -8,7 +8,7 @@ describe('ServiceGraphFilterState reducer', () => {
       showLegend: false,
       showNodeLabels: true,
       edgeLabelMode: EdgeLabelMode.HIDE,
-      showCircuitBreakers: false,
+      showCircuitBreakers: true,
       showVirtualServices: true,
       showMissingSidecars: true,
       showTrafficAnimation: false,

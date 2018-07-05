@@ -7,7 +7,7 @@ import { config } from '../config';
 const INITIAL_STATE: ServiceGraphFilterState = {
   showLegend: false,
   showNodeLabels: true,
-  showCircuitBreakers: false,
+  showCircuitBreakers: true,
   showVirtualServices: true,
   showMissingSidecars: true,
   showTrafficAnimation: false,
