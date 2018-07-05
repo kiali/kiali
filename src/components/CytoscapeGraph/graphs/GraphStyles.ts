@@ -188,7 +188,7 @@ export class GraphStyles {
       {
         selector: 'node.' + DimClass,
         style: {
-          opacity: '0.3'
+          opacity: '0.6'
         }
       },
       {
