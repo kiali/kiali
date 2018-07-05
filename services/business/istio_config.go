@@ -23,7 +23,7 @@ type IstioConfigCriteria struct {
 	IncludeQuotaSpecBindings bool
 }
 
-// GetIstioConfig returns a list of Istio routing objects (RouteRule, DestinationPolicy, VirtualService, DestinationRule)
+// GetIstioConfig returns a list of Istio routing objects
 // and Mixer Rules per a given Namespace.
 func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
 	if criteria.Namespace == "" {

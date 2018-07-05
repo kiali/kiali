@@ -123,8 +123,6 @@ rules:
   - get
 - apiGroups: ["config.istio.io"]
   resources:
-  - routerules
-  - destinationpolicies
   - rules
   - circonuses
   - deniers

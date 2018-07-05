@@ -128,7 +128,7 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 }
 
 func fakeVirtualServices() kubernetes.IstioObject {
-	validRouteRule := (&kubernetes.VirtualService{
+	validVirtualService := (&kubernetes.VirtualService{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "reviews-well",
 		},
@@ -159,7 +159,7 @@ func fakeVirtualServices() kubernetes.IstioObject {
 		},
 	}).DeepCopyIstioObject()
 
-	return validRouteRule
+	return validVirtualService
 }
 
 func fakeVirtualServicesMultipleChecks() kubernetes.IstioObject {
