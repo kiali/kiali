@@ -1,0 +1,26 @@
+= Some Service Meshes Demos
+
+The following list gathers some service meshes examples that are used or have been used to test or demo Kiali. There is no guarantee that all of them are still working at any time, they may (or may not) be supported by their respective owners.
+
+== Bookinfo
+
+From the standard Istio tutorial.
+
+See link:hack/istio/README.adoc[install notes].
+
+== Red Hat Istio Tutorial
+
+link:https://github.com/redhat-developer-demos/istio-tutorial[Full tutorial instructions] or link:https://learn.openshift.com/servicemesh[the interactive way] (using Katacoda).
+
+== Kiali Test Meshes
+
+These ones are used for Kiali testing: 
+link:https://github.com/kiali/kiali-test-mesh[kiali-test-mesh].
+
+== Petsiogram
+
+A fictional pet photo sharing app: link:https://github.com/vnugent/petsiogram[Petsiogram].
+
+== Mesh Arena
+
+A dummy football/soccer simulation with microservices: link:https://github.com/jotak/demo-mesh-arena[Mesh Arena].
