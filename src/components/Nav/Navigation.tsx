@@ -37,12 +37,13 @@ const istioConfigRx = /\/namespaces\/(.*)\/istio\/(.*)/g;
 type PropsType = {
   location: any;
   authenticated: boolean;
+  navCollapsed: boolean;
   checkCredentials: () => void;
+  setNavCollapsed: (collapse: boolean) => void;
 };
 
 type StateType = {
   selectedItem: string;
-  navCollapsed: boolean;
 };
 
 class Navigation extends React.Component<PropsType, StateType> {
@@ -90,8 +91,7 @@ class Navigation extends React.Component<PropsType, StateType> {
     // handle initial path from the browser
     const selected = Navigation.parsePath(props.location.pathname);
     this.state = {
-      selectedItem: `/${selected}/`,
-      navCollapsed: false
+      selectedItem: `/${selected}/`
     };
     this.props.checkCredentials();
   }
@@ -110,7 +110,7 @@ class Navigation extends React.Component<PropsType, StateType> {
       // keep track of path as user clicks on nav bar
       this.setState({ selectedItem: event.activePath });
     } else if ('navCollapsed' in event) {
-      this.setState({ navCollapsed: event.navCollapsed });
+      this.props.setNavCollapsed(this.props.navCollapsed);
     }
   };
 
@@ -123,7 +123,7 @@ class Navigation extends React.Component<PropsType, StateType> {
         <VerticalNav
           setControlledState={this.setControlledState}
           activePath={this.state.selectedItem}
-          navCollapsed={this.state.navCollapsed}
+          navCollapsed={this.props.navCollapsed}
         >
           <VerticalNav.Masthead title="Kiali">
             <VerticalNav.Brand iconImg={pfLogo} titleImg={pfBrand} />
