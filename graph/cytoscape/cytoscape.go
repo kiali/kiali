@@ -215,14 +215,14 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 }
 
 func addServiceTelemetry(s *graph.ServiceNode, nd *NodeData) {
-	rate := s.Metadata["rate"].(float64)
+	rate := getRate(s.Metadata, "rate")
 
 	if rate > 0.0 {
 		nd.Rate = fmt.Sprintf("%.3f", rate)
 
-		rate3xx := s.Metadata["rate3xx"].(float64)
-		rate4xx := s.Metadata["rate4xx"].(float64)
-		rate5xx := s.Metadata["rate5xx"].(float64)
+		rate3xx := getRate(s.Metadata, "rate3xx")
+		rate4xx := getRate(s.Metadata, "rate4xx")
+		rate5xx := getRate(s.Metadata, "rate5xx")
 
 		if rate3xx > 0.0 {
 			nd.Rate3xx = fmt.Sprintf("%.3f", rate3xx)
@@ -235,20 +235,27 @@ func addServiceTelemetry(s *graph.ServiceNode, nd *NodeData) {
 		}
 	}
 
-	rateOut := s.Metadata["rateOut"].(float64)
+	rateOut := getRate(s.Metadata, "rateOut")
 
 	if rateOut > 0.0 {
 		nd.RateOut = fmt.Sprintf("%.3f", rateOut)
 	}
 }
 
+func getRate(md map[string]interface{}, k string) float64 {
+	if rate, ok := md[k]; ok {
+		return rate.(float64)
+	}
+	return 0.0
+}
+
 func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
-	rate := e.Metadata["rate"].(float64)
+	rate := getRate(e.Metadata, "rate")
 
 	if rate > 0.0 {
-		rate3xx := e.Metadata["rate3xx"].(float64)
-		rate4xx := e.Metadata["rate4xx"].(float64)
-		rate5xx := e.Metadata["rate5xx"].(float64)
+		rate3xx := getRate(e.Metadata, "rate3xx")
+		rate4xx := getRate(e.Metadata, "rate4xx")
+		rate5xx := getRate(e.Metadata, "rate5xx")
 		rateErr := rate4xx + rate5xx
 		percentErr := rateErr / rate * 100.0
 
@@ -271,7 +278,7 @@ func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
 			ed.ResponseTime = fmt.Sprintf("%.3f", responseTime)
 		}
 
-		percentRate := rate / e.Source.Metadata["rateOut"].(float64) * 100.0
+		percentRate := rate / getRate(e.Source.Metadata, "rateOut") * 100.0
 		if percentRate < 100.0 {
 			ed.PercentRate = fmt.Sprintf("%.3f", percentRate)
 		}

@@ -95,7 +95,7 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 	// The appenders can add/remove/alter services. After the manipulations are complete
 	// we can make some final adjustments:
 	// - mark the outsiders (i.e. services not in the requested namespaces)
-	// - mark the insider traffic generators (i.e. inside the namespaces with only outgoing traffic.)
+	// - mark the insider traffic generators (i.e. inside the namespace and only outgoing edges)
 	for _, s := range trafficMap {
 		if isOutside(s, o.Namespaces) {
 			s.Metadata["isOutside"] = true
@@ -120,7 +120,11 @@ func isOutside(s *graph.ServiceNode, namespaces []string) bool {
 }
 
 func isRoot(s *graph.ServiceNode) bool {
-	return s.Metadata["rate"].(float64) == 0.0 && s.Metadata["rateOut"].(float64) > 0.0
+	if len(s.Edges) == 0 {
+		return false
+	}
+	_, hasRateIn := s.Metadata["rate"]
+	return !hasRateIn
 }
 
 // buildNamespaceTrafficMap returns a map of all namespace services (key=id).  All
@@ -193,11 +197,6 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		}
 		if nil == edge {
 			edge = source.AddEdge(dest)
-			edge.Metadata["rate"] = 0.0
-			edge.Metadata["rate2xx"] = 0.0
-			edge.Metadata["rate3xx"] = 0.0
-			edge.Metadata["rate4xx"] = 0.0
-			edge.Metadata["rate5xx"] = 0.0
 		}
 
 		val := float64(s.Value)
@@ -212,17 +211,25 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		case strings.HasPrefix(string(code), "5"):
 			ck = "rate5xx"
 		}
-		edge.Metadata[ck] = edge.Metadata[ck].(float64) + val
-		edge.Metadata["rate"] = edge.Metadata["rate"].(float64) + val
+		addToRate(edge.Metadata, ck, val)
+		addToRate(edge.Metadata, "rate", val)
 
 		// we set MTLS true if any TS for this edge has MTLS
 		if mtls == "true" {
 			edge.Metadata["isMTLS"] = true
 		}
 
-		source.Metadata["rateOut"] = source.Metadata["rateOut"].(float64) + val
-		dest.Metadata[ck] = dest.Metadata[ck].(float64) + val
-		dest.Metadata["rate"] = dest.Metadata["rate"].(float64) + val
+		addToRate(source.Metadata, "rateOut", val)
+		addToRate(dest.Metadata, ck, val)
+		addToRate(dest.Metadata, "rate", val)
+	}
+}
+
+func addToRate(md map[string]interface{}, k string, v float64) {
+	if curr, ok := md[k]; ok {
+		md[k] = curr.(float64) + v
+	} else {
+		md[k] = v
 	}
 }
 
@@ -232,19 +239,13 @@ func addService(trafficMap graph.TrafficMap, name, version string) (*graph.Servi
 	if !found {
 		newSvc := graph.NewServiceNodeWithId(id, name, version)
 		svc = &newSvc
-		svc.Metadata["rate"] = 0.0
-		svc.Metadata["rate2xx"] = 0.0
-		svc.Metadata["rate3xx"] = 0.0
-		svc.Metadata["rate4xx"] = 0.0
-		svc.Metadata["rate5xx"] = 0.0
-		svc.Metadata["rateOut"] = 0.0
 		trafficMap[id] = svc
 	}
 	return svc, !found
 }
 
 // mergeTrafficMaps ensures that we only have unique services by removing duplicate
-// services and merging their edges.  When also ned to avoid duplicate edges, it can
+// services and merging their edges.  When also need to avoid duplicate edges, it can
 // happen when an terminal node of one namespace is a root node of another:
 //   ns1 graph: unknown -> ns1:A -> ns2:B
 //   ns2 graph:   ns1:A -> ns2:B -> ns2:C
