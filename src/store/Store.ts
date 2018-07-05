@@ -67,6 +67,14 @@ export interface StatusState {
   components: Component[];
   warningMessages: string[];
 }
+
+export interface InterfaceSettings {
+  navCollapse: boolean;
+}
+
+export interface UserSettings {
+  interface: InterfaceSettings;
+}
 // @todo: Add namespaces interface
 
 // This defines the Kiali Global Application State
@@ -75,9 +83,11 @@ export interface KialiAppState {
   // could also be session state
   globalState: GlobalState;
   statusState: StatusState;
-  // page settings
+  /** Page Settings */
   authentication: LoginState;
   messageCenter: MessageCenterState;
   namespaces: any;
   serviceGraph: ServiceGraphState;
+  /** User Settings */
+  userSettings: UserSettings;
 }

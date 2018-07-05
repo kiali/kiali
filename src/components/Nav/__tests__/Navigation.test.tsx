@@ -6,7 +6,13 @@ import { VerticalNav } from 'patternfly-react';
 
 const _tester = (path: string, expectedMenuPath: string) => {
   const wrapper = shallow(
-    <Navigation location={{ pathname: path }} authenticated={true} checkCredentials={jest.fn()} />
+    <Navigation
+      location={{ pathname: path }}
+      authenticated={true}
+      checkCredentials={jest.fn()}
+      navCollapsed={false}
+      setNavCollapsed={jest.fn()}
+    />
   );
   const navWrapper = wrapper.find(VerticalNav);
   expect(navWrapper.prop('activePath')).toEqual(`/${expectedMenuPath}/`);
