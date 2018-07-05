@@ -2,31 +2,26 @@ import { NamespaceActionKeys } from '../actions/NamespaceAction';
 
 const INITIAL_STATE = {
   isFetching: false,
-  didInvalidate: false,
-  items: []
+  items: [] as Array<string>
 };
 
 const namespaces = (state = INITIAL_STATE, action) => {
   switch (action.type) {
-    case NamespaceActionKeys.NAMESPACE_RELOAD:
+    case NamespaceActionKeys.NAMESPACE_REQUEST_STARTED:
       return Object.assign({}, state, {
-        didInvalidate: true
-      });
-
-    case NamespaceActionKeys.NAMESPACE_START:
-      return Object.assign({}, state, {
-        isFetching: true,
-        didInvalidate: false
+        isFetching: true
       });
 
     case NamespaceActionKeys.NAMESPACE_SUCCESS:
       return Object.assign({}, state, {
         isFetching: false,
-        didInvalidate: false,
         items: action.list,
         lastUpdated: action.receivedAt
       });
-
+    case NamespaceActionKeys.NAMESPACE_FAILED:
+      return Object.assign({}, state, {
+        isFetching: false
+      });
     default:
       return state;
   }

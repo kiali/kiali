@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { fetchNamespacesIfNeeded } from '../actions/NamespaceAction';
+import { NamespaceActions } from '../actions/NamespaceAction';
 import { NamespaceDropdown } from '../components/NamespaceDropdown';
 
 const mapStateToProps = state => {
@@ -12,7 +12,7 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => {
   return {
     refresh: () => {
-      dispatch(fetchNamespacesIfNeeded());
+      dispatch(NamespaceActions.fetchNamespacesIfNeeded());
     }
   };
 };
