@@ -1,6 +1,16 @@
 import * as React from 'react';
 import { Col, Icon, Row } from 'patternfly-react';
-import { EditorLink, ObjectValidation, VirtualService } from '../../../types/ServiceInfo';
+import {
+  checkForPath,
+  EditorLink,
+  globalChecks,
+  highestSeverity,
+  ObjectValidation,
+  severityToColor,
+  severityToIconName,
+  validationToSeverity,
+  VirtualService
+} from '../../../types/ServiceInfo';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Link } from 'react-router-dom';
@@ -16,6 +26,48 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
     super(props);
   }
 
+  validation(virtualService: VirtualService): ObjectValidation {
+    return this.props.validations[virtualService.name];
+  }
+
+  globalStatus(rule: VirtualService) {
+    let validation = this.validation(rule);
+    let checks = globalChecks(validation);
+    let severity = validationToSeverity(validation);
+    let iconName = severityToIconName(severity);
+    let color = severityToColor(severity);
+    let message = checks.map(check => check.message).join(',');
+
+    if (!message.length) {
+      if (validation && !validation.valid) {
+        message = 'Not all checks passed!';
+      }
+    }
+
+    if (message.length) {
+      return (
+        <div>
+          <p style={{ color: color }}>
+            <Icon type="pf" name={iconName} /> {message}
+          </p>
+        </div>
+      );
+    } else {
+      return '';
+    }
+  }
+
+  hostStatusMessage(virtualService: VirtualService) {
+    let checks = checkForPath(this.validation(virtualService), 'spec/hosts');
+    let severity = highestSeverity(checks);
+
+    return {
+      message: checks.map(check => check.message).join(','),
+      icon: severityToIconName(severity),
+      color: severityToColor(severity)
+    };
+  }
+
   rawConfig(virtualService: VirtualService, i: number) {
     return (
       <div className="card-pf-body" key={'virtualServiceConfig' + i}>
@@ -24,6 +76,7 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
           <Link to={this.props.editorLink + '?virtualservice=' + virtualService.name}>
             Show Yaml <Icon name="angle-double-right" />
           </Link>
+          {this.globalStatus(virtualService)}
         </div>
         <div>
           <strong>Created at</strong>: <LocalTime time={virtualService.createdAt} />
@@ -32,7 +85,11 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
           <strong>Resource Version</strong>: {virtualService.resourceVersion}
         </div>
         {virtualService.hosts && virtualService.hosts.length > 0 ? (
-          <DetailObject name="Hosts" detail={virtualService.hosts} />
+          <DetailObject
+            name="Hosts"
+            detail={virtualService.hosts}
+            validation={this.hostStatusMessage(virtualService)}
+          />
         ) : (
           undefined
         )}

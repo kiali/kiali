@@ -3,6 +3,7 @@ import { shallow } from 'enzyme';
 import { Icon } from 'patternfly-react';
 import { default as DetailObject } from '../DetailObject';
 import { DestinationWeight } from '../../../types/ServiceInfo';
+import { PfColors } from '../../Pf/PfColors';
 
 describe('DetailObject test', () => {
   const detail: DestinationWeight = {
@@ -60,7 +61,8 @@ describe('DetailObject test', () => {
   it('prints an alert message', () => {
     const validation = {
       message: 'Not all checks passed',
-      icon: 'error-circle-o'
+      icon: 'error-circle-o',
+      color: PfColors.Red400
     };
 
     mockRandom();
@@ -79,7 +81,8 @@ describe('DetailObject test', () => {
   it("doesn't print any alert message", () => {
     const validation = {
       message: '',
-      icon: 'error-circle-o'
+      icon: 'error-circle-o',
+      color: PfColors.Red400
     };
 
     mockRandom();

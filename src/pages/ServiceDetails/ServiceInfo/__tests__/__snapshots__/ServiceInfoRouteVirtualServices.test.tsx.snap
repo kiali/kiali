@@ -112,6 +112,7 @@ ShallowWrapper {
                       type="fa"
                     />
                   </Link>
+                  
                 </div>
                 <div>
                   <strong>
@@ -136,6 +137,13 @@ ShallowWrapper {
                     ]
                   }
                   name="Hosts"
+                  validation={
+                    Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "message": "",
+                    }
+                  }
                 />
                 <DetailObject
                   detail={
@@ -275,6 +283,7 @@ ShallowWrapper {
                       type="fa"
                     />
                   </Link>
+                  
                 </div>
                 <div>
                   <strong>
@@ -299,6 +308,13 @@ ShallowWrapper {
                     ]
                   }
                   name="Hosts"
+                  validation={
+                    Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "message": "",
+                    }
+                  }
                 />
                 <DetailObject
                   detail={
@@ -432,6 +448,7 @@ ShallowWrapper {
                         type="fa"
                       />
                     </Link>
+                    
                   </div>
                   <div>
                     <strong>
@@ -456,6 +473,13 @@ ShallowWrapper {
                       ]
                     }
                     name="Hosts"
+                    validation={
+                      Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "message": "",
+                      }
+                    }
                   />
                   <DetailObject
                     detail={
@@ -581,6 +605,7 @@ ShallowWrapper {
                         type="fa"
                       />
                     </Link>
+                    
                   </div>
                   <div>
                     <strong>
@@ -605,6 +630,13 @@ ShallowWrapper {
                       ]
                     }
                     name="Hosts"
+                    validation={
+                      Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "message": "",
+                      }
+                    }
                   />
                   <DetailObject
                     detail={
@@ -642,6 +674,7 @@ ShallowWrapper {
                           type="fa"
                         />
                       </Link>
+                      
                     </div>,
                     <div>
                       <strong>
@@ -666,6 +699,13 @@ ShallowWrapper {
                         ]
                       }
                       name="Hosts"
+                      validation={
+                        Object {
+                          "color": "#3f9c35",
+                          "icon": "ok",
+                          "message": "",
+                        }
+                      }
                     />,
                     <DetailObject
                       detail={
@@ -696,51 +736,57 @@ ShallowWrapper {
                     "key": undefined,
                     "nodeType": "host",
                     "props": Object {
-                      "children": <Link
-                        replace={false}
-                        to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
-                      >
-                        Show Yaml 
-                        <Icon
-                          name="angle-double-right"
-                          type="fa"
-                        />
-                      </Link>,
-                    },
-                    "ref": null,
-                    "rendered": Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "class",
-                      "props": Object {
-                        "children": Array [
-                          "Show Yaml ",
+                      "children": Array [
+                        <Link
+                          replace={false}
+                          to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                        >
+                          Show Yaml 
                           <Icon
                             name="angle-double-right"
                             type="fa"
-                          />,
-                        ],
-                        "replace": false,
-                        "to": "/namespaces/test_namespace/services/test_services?virtualservice=reviews-default",
-                      },
-                      "ref": null,
-                      "rendered": Array [
-                        "Show Yaml ",
-                        Object {
-                          "instance": null,
-                          "key": undefined,
-                          "nodeType": "function",
-                          "props": Object {
-                            "name": "angle-double-right",
-                            "type": "fa",
-                          },
-                          "ref": null,
-                          "rendered": null,
-                          "type": [Function],
-                        },
+                          />
+                        </Link>,
+                        "",
                       ],
-                      "type": [Function],
                     },
+                    "ref": null,
+                    "rendered": Array [
+                      Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "children": Array [
+                            "Show Yaml ",
+                            <Icon
+                              name="angle-double-right"
+                              type="fa"
+                            />,
+                          ],
+                          "replace": false,
+                          "to": "/namespaces/test_namespace/services/test_services?virtualservice=reviews-default",
+                        },
+                        "ref": null,
+                        "rendered": Array [
+                          "Show Yaml ",
+                          Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "function",
+                            "props": Object {
+                              "name": "angle-double-right",
+                              "type": "fa",
+                            },
+                            "ref": null,
+                            "rendered": null,
+                            "type": [Function],
+                          },
+                        ],
+                        "type": [Function],
+                      },
+                      "",
+                    ],
                     "type": "div",
                   },
                   Object {
@@ -826,6 +872,11 @@ ShallowWrapper {
                         "rewiews",
                       ],
                       "name": "Hosts",
+                      "validation": Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "message": "",
+                      },
                     },
                     "ref": null,
                     "rendered": null,
@@ -1297,6 +1348,7 @@ ShallowWrapper {
                         type="fa"
                       />
                     </Link>
+                    
                   </div>
                   <div>
                     <strong>
@@ -1321,6 +1373,13 @@ ShallowWrapper {
                       ]
                     }
                     name="Hosts"
+                    validation={
+                      Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "message": "",
+                      }
+                    }
                   />
                   <DetailObject
                     detail={
@@ -1460,6 +1519,7 @@ ShallowWrapper {
                         type="fa"
                       />
                     </Link>
+                    
                   </div>
                   <div>
                     <strong>
@@ -1484,6 +1544,13 @@ ShallowWrapper {
                       ]
                     }
                     name="Hosts"
+                    validation={
+                      Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "message": "",
+                      }
+                    }
                   />
                   <DetailObject
                     detail={
@@ -1617,6 +1684,7 @@ ShallowWrapper {
                           type="fa"
                         />
                       </Link>
+                      
                     </div>
                     <div>
                       <strong>
@@ -1641,6 +1709,13 @@ ShallowWrapper {
                         ]
                       }
                       name="Hosts"
+                      validation={
+                        Object {
+                          "color": "#3f9c35",
+                          "icon": "ok",
+                          "message": "",
+                        }
+                      }
                     />
                     <DetailObject
                       detail={
@@ -1766,6 +1841,7 @@ ShallowWrapper {
                           type="fa"
                         />
                       </Link>
+                      
                     </div>
                     <div>
                       <strong>
@@ -1790,6 +1866,13 @@ ShallowWrapper {
                         ]
                       }
                       name="Hosts"
+                      validation={
+                        Object {
+                          "color": "#3f9c35",
+                          "icon": "ok",
+                          "message": "",
+                        }
+                      }
                     />
                     <DetailObject
                       detail={
@@ -1827,6 +1910,7 @@ ShallowWrapper {
                             type="fa"
                           />
                         </Link>
+                        
                       </div>,
                       <div>
                         <strong>
@@ -1851,6 +1935,13 @@ ShallowWrapper {
                           ]
                         }
                         name="Hosts"
+                        validation={
+                          Object {
+                            "color": "#3f9c35",
+                            "icon": "ok",
+                            "message": "",
+                          }
+                        }
                       />,
                       <DetailObject
                         detail={
@@ -1881,51 +1972,57 @@ ShallowWrapper {
                       "key": undefined,
                       "nodeType": "host",
                       "props": Object {
-                        "children": <Link
-                          replace={false}
-                          to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
-                        >
-                          Show Yaml 
-                          <Icon
-                            name="angle-double-right"
-                            type="fa"
-                          />
-                        </Link>,
-                      },
-                      "ref": null,
-                      "rendered": Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "class",
-                        "props": Object {
-                          "children": Array [
-                            "Show Yaml ",
+                        "children": Array [
+                          <Link
+                            replace={false}
+                            to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default"
+                          >
+                            Show Yaml 
                             <Icon
                               name="angle-double-right"
                               type="fa"
-                            />,
-                          ],
-                          "replace": false,
-                          "to": "/namespaces/test_namespace/services/test_services?virtualservice=reviews-default",
-                        },
-                        "ref": null,
-                        "rendered": Array [
-                          "Show Yaml ",
-                          Object {
-                            "instance": null,
-                            "key": undefined,
-                            "nodeType": "function",
-                            "props": Object {
-                              "name": "angle-double-right",
-                              "type": "fa",
-                            },
-                            "ref": null,
-                            "rendered": null,
-                            "type": [Function],
-                          },
+                            />
+                          </Link>,
+                          "",
                         ],
-                        "type": [Function],
                       },
+                      "ref": null,
+                      "rendered": Array [
+                        Object {
+                          "instance": null,
+                          "key": undefined,
+                          "nodeType": "class",
+                          "props": Object {
+                            "children": Array [
+                              "Show Yaml ",
+                              <Icon
+                                name="angle-double-right"
+                                type="fa"
+                              />,
+                            ],
+                            "replace": false,
+                            "to": "/namespaces/test_namespace/services/test_services?virtualservice=reviews-default",
+                          },
+                          "ref": null,
+                          "rendered": Array [
+                            "Show Yaml ",
+                            Object {
+                              "instance": null,
+                              "key": undefined,
+                              "nodeType": "function",
+                              "props": Object {
+                                "name": "angle-double-right",
+                                "type": "fa",
+                              },
+                              "ref": null,
+                              "rendered": null,
+                              "type": [Function],
+                            },
+                          ],
+                          "type": [Function],
+                        },
+                        "",
+                      ],
                       "type": "div",
                     },
                     Object {
@@ -2011,6 +2108,11 @@ ShallowWrapper {
                           "rewiews",
                         ],
                         "name": "Hosts",
+                        "validation": Object {
+                          "color": "#3f9c35",
+                          "icon": "ok",
+                          "message": "",
+                        },
                       },
                       "ref": null,
                       "rendered": null,

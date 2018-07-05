@@ -13,6 +13,7 @@ interface DetailObjectProps {
 interface Validation {
   message: string;
   icon: string;
+  color: string;
 }
 
 class DetailObject extends React.Component<DetailObjectProps> {
@@ -96,7 +97,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
         <strong className="text-capitalize">{name}</strong>
         {depth === 0 && !!this.props.validation && this.props.validation.message ? (
           <div>
-            <p style={{ color: 'red' }}>
+            <p style={{ color: this.props.validation.color }}>
               <Icon type="pf" name={this.props.validation.icon} /> {this.props.validation.message}
             </p>
           </div>

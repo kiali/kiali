@@ -21,6 +21,7 @@ ShallowWrapper {
     name="nodejs"
     validation={
       Object {
+        "color": "#470000",
         "icon": "error-circle-o",
         "message": "",
       }
@@ -7269,6 +7270,7 @@ ShallowWrapper {
     name="nodejs"
     validation={
       Object {
+        "color": "#470000",
         "icon": "error-circle-o",
         "message": "Not all checks passed",
       }
@@ -7296,7 +7298,7 @@ ShallowWrapper {
           <p
             style={
               Object {
-                "color": "red",
+                "color": "#470000",
               }
             }
           >
@@ -7453,7 +7455,7 @@ ShallowWrapper {
             <p
               style={
                 Object {
-                  "color": "red",
+                  "color": "#470000",
                 }
               }
             >
@@ -7616,7 +7618,7 @@ ShallowWrapper {
             "children": <p
               style={
                 Object {
-                  "color": "red",
+                  "color": "#470000",
                 }
               }
             >
@@ -7643,7 +7645,7 @@ ShallowWrapper {
                 "Not all checks passed",
               ],
               "style": Object {
-                "color": "red",
+                "color": "#470000",
               },
             },
             "ref": null,
@@ -8785,7 +8787,7 @@ ShallowWrapper {
             <p
               style={
                 Object {
-                  "color": "red",
+                  "color": "#470000",
                 }
               }
             >
@@ -8942,7 +8944,7 @@ ShallowWrapper {
               <p
                 style={
                   Object {
-                    "color": "red",
+                    "color": "#470000",
                   }
                 }
               >
@@ -9105,7 +9107,7 @@ ShallowWrapper {
               "children": <p
                 style={
                   Object {
-                    "color": "red",
+                    "color": "#470000",
                   }
                 }
               >
@@ -9132,7 +9134,7 @@ ShallowWrapper {
                   "Not all checks passed",
                 ],
                 "style": Object {
-                  "color": "red",
+                  "color": "#470000",
                 },
               },
               "ref": null,

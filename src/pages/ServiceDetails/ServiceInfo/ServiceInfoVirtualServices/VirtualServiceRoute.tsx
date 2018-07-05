@@ -4,15 +4,13 @@ import {
   checkForPath,
   Destination,
   DestinationWeight,
-  globalChecks,
   highestSeverity,
   HTTPRoute,
   ObjectCheck,
   ObjectValidation,
+  severityToColor,
   severityToIconName,
-  TCPRoute,
-  validationToIconName,
-  VirtualService
+  TCPRoute
 } from '../../../../types/ServiceInfo';
 import { BulletChart, Col, Icon, OverlayTrigger, Popover, Row, Table, Tooltip } from 'patternfly-react';
 import DetailObject from '../../../../components/Details/DetailObject';
@@ -286,40 +284,17 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
     );
   }
 
-  globalStatus(virtualService: VirtualService) {
-    let validation = this.validation();
-    let checks = globalChecks(validation);
-    let iconName = validationToIconName(validation);
-    let message = checks.map(check => check.message).join(',');
-
-    if (!message.length) {
-      if (validation && !validation.valid) {
-        message = 'Not all checks passed!';
-      }
-    }
-
-    if (message.length) {
-      return (
-        <div>
-          <p style={{ color: 'red' }}>
-            <Icon type="pf" name={iconName} /> {message}
-          </p>
-        </div>
-      );
-    } else {
-      return '';
-    }
-  }
-
   routeStatusMessage(route: HTTPRoute | TCPRoute, routeIndex: number) {
     let checks = checkForPath(
       this.validation(),
       'spec/' + this.props.kind.toLowerCase() + '[' + routeIndex + ']/route'
     );
+    let severity = highestSeverity(checks);
 
     return {
       message: checks.map(check => check.message).join(','),
-      icon: severityToIconName(highestSeverity(checks))
+      icon: severityToIconName(severity),
+      color: severityToColor(severity)
     };
   }
 
