@@ -30,7 +30,7 @@ func fetchNamespaceInfo(namespaceName string, istioClient *kubernetes.IstioClien
 
 func addRouteBadges(trafficMap graph.TrafficMap, namespaceName string, istioDetails *kubernetes.IstioDetails) {
 	applyCircuitBreakers(trafficMap, namespaceName, istioDetails)
-	applyRouteRules(trafficMap, namespaceName, istioDetails)
+	applyVirtualServices(trafficMap, namespaceName, istioDetails)
 }
 
 func applyCircuitBreakers(trafficMap graph.TrafficMap, namespaceName string, istioDetails *kubernetes.IstioDetails) {
@@ -45,12 +45,12 @@ func applyCircuitBreakers(trafficMap graph.TrafficMap, namespaceName string, ist
 	}
 }
 
-func applyRouteRules(trafficMap graph.TrafficMap, namespaceName string, istioDetails *kubernetes.IstioDetails) {
+func applyVirtualServices(trafficMap graph.TrafficMap, namespaceName string, istioDetails *kubernetes.IstioDetails) {
 	for _, s := range trafficMap {
 		subsets := kubernetes.GetDestinationRulesSubsets(istioDetails.DestinationRules, s.ServiceName, s.Version)
 		for _, virtualService := range istioDetails.VirtualServices {
 			if kubernetes.CheckVirtualService(virtualService, namespaceName, s.ServiceName, subsets) {
-				s.Metadata["hasRR"] = true
+				s.Metadata["hasVS"] = true
 				break
 			}
 		}

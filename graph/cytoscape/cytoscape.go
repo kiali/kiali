@@ -41,7 +41,7 @@ type NodeData struct {
 	RateOut      string         `json:"rateOut,omitempty"`      // edge aggregate
 	HasCB        bool           `json:"hasCB,omitempty"`        // true (has circuit breaker) | false
 	HasMissingSC bool           `json:"hasMissingSC,omitempty"` // true (has missing sidecar) | false
-	HasRR        bool           `json:"hasRR,omitempty"`        // true (has route rule) | false
+	HasVS        bool           `json:"hasVS,omitempty"`        // true (has route rule) | false
 	Health       *models.Health `json:"health,omitempty"`
 	IsDead       bool           `json:"isDead,omitempty"`    // true (has no pods) | false
 	IsGroup      string         `json:"isGroup,omitempty"`   // set to the grouping type, current values: [ 'version' ]
@@ -169,9 +169,9 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			nd.HasCB = val.(bool)
 		}
 
-		// node may have a route rule
-		if val, ok := s.Metadata["hasRR"]; ok {
-			nd.HasRR = val.(bool)
+		// node may have a virtual service
+		if val, ok := s.Metadata["hasVS"]; ok {
+			nd.HasVS = val.(bool)
 		}
 
 		// set sidecars checks, if available
@@ -321,7 +321,7 @@ func addCompoundNodes(nodes *[]*NodeWrapper) {
 			}
 
 			// assign each service version node to the compound parent
-			hasRouteRule := false
+			hasVirtualService := false
 			nd.HasMissingSC = false
 
 			for _, n := range members {
@@ -329,15 +329,15 @@ func addCompoundNodes(nodes *[]*NodeWrapper) {
 
 				nd.HasMissingSC = nd.HasMissingSC || n.HasMissingSC
 
-				// If there is a route rule defined in version node, move it to compound parent
-				if n.HasRR {
-					n.HasRR = false
-					hasRouteRule = true
+				// If there is a virtual service defined in version node, move it to compound parent
+				if n.HasVS {
+					n.HasVS = false
+					hasVirtualService = true
 				}
 			}
 
-			if hasRouteRule {
-				nd.HasRR = true
+			if hasVirtualService {
+				nd.HasVS = true
 			}
 
 			// add the compound node to the list of nodes
