@@ -66,26 +66,6 @@ func (o *K8SClientMock) GetGateway(namespace string, gateway string) (kubernetes
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetRouteRules(namespace string, serviceName string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace, serviceName)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetRouteRule(namespace string, routerule string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, routerule)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetDestinationPolicies(namespace string, serviceName string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace, serviceName)
-	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
-}
-
-func (o *K8SClientMock) GetDestinationPolicy(namespace string, destinationpolicy string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace, destinationpolicy)
-	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
-}
-
 func (o *K8SClientMock) GetVirtualServices(namespace string, serviceName string) ([]kubernetes.IstioObject, error) {
 	args := o.Called(namespace, serviceName)
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)

@@ -13,65 +13,43 @@ type IstioConfigService struct {
 }
 
 type IstioConfigCriteria struct {
-	Namespace                  string
-	IncludeGateways            bool
-	IncludeRouteRules          bool
-	IncludeDestinationPolicies bool
-	IncludeVirtualServices     bool
-	IncludeDestinationRules    bool
-	IncludeServiceEntries      bool
-	IncludeRules               bool
-	IncludeQuotaSpecs          bool
-	IncludeQuotaSpecBindings   bool
+	Namespace                string
+	IncludeGateways          bool
+	IncludeVirtualServices   bool
+	IncludeDestinationRules  bool
+	IncludeServiceEntries    bool
+	IncludeRules             bool
+	IncludeQuotaSpecs        bool
+	IncludeQuotaSpecBindings bool
 }
 
-// GetIstioConfig returns a list of Istio routing objects (RouteRule, DestinationPolicy, VirtualService, DestinationRule)
+// GetIstioConfig returns a list of Istio routing objects
 // and Mixer Rules per a given Namespace.
 func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
 	if criteria.Namespace == "" {
 		return models.IstioConfigList{}, fmt.Errorf("GetIstioConfig needs a non null Namespace")
 	}
 	istioConfigList := models.IstioConfigList{
-		Namespace:           models.Namespace{Name: criteria.Namespace},
-		Gateways:            models.Gateways{},
-		RouteRules:          models.RouteRules{},
-		DestinationPolicies: models.DestinationPolicies{},
-		VirtualServices:     models.VirtualServices{},
-		DestinationRules:    models.DestinationRules{},
-		ServiceEntries:      models.ServiceEntries{},
-		Rules:               models.IstioRules{},
-		QuotaSpecs:          models.QuotaSpecs{},
-		QuotaSpecBindings:   models.QuotaSpecBindings{},
+		Namespace:         models.Namespace{Name: criteria.Namespace},
+		Gateways:          models.Gateways{},
+		VirtualServices:   models.VirtualServices{},
+		DestinationRules:  models.DestinationRules{},
+		ServiceEntries:    models.ServiceEntries{},
+		Rules:             models.IstioRules{},
+		QuotaSpecs:        models.QuotaSpecs{},
+		QuotaSpecBindings: models.QuotaSpecBindings{},
 	}
-	var gg, rr, dp, vs, dr, se, qs, qb []kubernetes.IstioObject
+	var gg, vs, dr, se, qs, qb []kubernetes.IstioObject
 	var mr *kubernetes.IstioRules
-	var ggErr, rrErr, dpErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr error
+	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr error
 	var wg sync.WaitGroup
-	wg.Add(9)
+	wg.Add(7)
 
 	go func() {
 		defer wg.Done()
 		if criteria.IncludeGateways {
 			if gg, ggErr = in.k8s.GetGateways(criteria.Namespace); ggErr == nil {
 				(&istioConfigList.Gateways).Parse(gg)
-			}
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if criteria.IncludeRouteRules {
-			if rr, rrErr = in.k8s.GetRouteRules(criteria.Namespace, ""); rrErr == nil {
-				(&istioConfigList.RouteRules).Parse(rr)
-			}
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if criteria.IncludeDestinationPolicies {
-			if dp, dpErr = in.k8s.GetDestinationPolicies(criteria.Namespace, ""); dpErr == nil {
-				(&istioConfigList.DestinationPolicies).Parse(dp)
 			}
 		}
 	}()
@@ -132,7 +110,7 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 
 	wg.Wait()
 
-	for _, genErr := range []error{ggErr, rrErr, dpErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr} {
+	for _, genErr := range []error{ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr} {
 		if genErr != nil {
 			return models.IstioConfigList{}, genErr
 		}
@@ -145,7 +123,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var gw, rr, dp, vs, dr, se, qs, qb kubernetes.IstioObject
+	var gw, vs, dr, se, qs, qb kubernetes.IstioObject
 	var r *kubernetes.IstioRuleDetails
 	var err error
 	switch objectType {
@@ -153,16 +131,6 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 		if gw, err = in.k8s.GetGateway(namespace, object); err == nil {
 			istioConfigDetail.Gateway = &models.Gateway{}
 			istioConfigDetail.Gateway.Parse(gw)
-		}
-	case "routerules":
-		if rr, err = in.k8s.GetRouteRule(namespace, object); err == nil {
-			istioConfigDetail.RouteRule = &models.RouteRule{}
-			istioConfigDetail.RouteRule.Parse(rr)
-		}
-	case "destinationpolicies":
-		if dp, err = in.k8s.GetDestinationPolicy(namespace, object); err == nil {
-			istioConfigDetail.DestinationPolicy = &models.DestinationPolicy{}
-			istioConfigDetail.DestinationPolicy.Parse(dp)
 		}
 	case "virtualservices":
 		if vs, err = in.k8s.GetVirtualService(namespace, object); err == nil {

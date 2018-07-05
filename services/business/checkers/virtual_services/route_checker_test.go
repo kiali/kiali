@@ -142,7 +142,7 @@ func fakeIstioObjects() kubernetes.IstioObject {
 }
 
 func fakeUnder100VirtualService() kubernetes.IstioObject {
-	routeRule := (&kubernetes.VirtualService{
+	virtualService := (&kubernetes.VirtualService{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "reviews-100-minus",
 		},
@@ -170,11 +170,11 @@ func fakeUnder100VirtualService() kubernetes.IstioObject {
 		},
 	}).DeepCopyIstioObject()
 
-	return routeRule
+	return virtualService
 }
 
 func fakeOver100VirtualService() kubernetes.IstioObject {
-	routeRule := (&kubernetes.VirtualService{
+	virtualService := (&kubernetes.VirtualService{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "reviews-100-plus",
 		},
@@ -202,11 +202,11 @@ func fakeOver100VirtualService() kubernetes.IstioObject {
 		},
 	}).DeepCopyIstioObject()
 
-	return routeRule
+	return virtualService
 }
 
 func fakeMultipleChecks() kubernetes.IstioObject {
-	routeRule := (&kubernetes.VirtualService{
+	virtualService := (&kubernetes.VirtualService{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "reviews-multiple",
 		},
@@ -234,7 +234,7 @@ func fakeMultipleChecks() kubernetes.IstioObject {
 		},
 	}).DeepCopyIstioObject()
 
-	return routeRule
+	return virtualService
 }
 
 func fakeOneRouteWithoutWeight() kubernetes.IstioObject {

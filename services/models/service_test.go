@@ -87,67 +87,6 @@ func TestServiceDetailParsing(t *testing.T) {
 			CurrentCPUUtilizationPercentage: 30}})
 
 	// Istio Details
-	assert.Equal(service.RouteRules, RouteRules{
-		RouteRule{
-			CreatedAt:       "2018-03-08T17:46:00+03:00",
-			ResourceVersion: "1234",
-			Destination: map[string]string{
-				"name":      "reviews",
-				"namespace": "tutorial"},
-			Precedence: 1,
-			Route: map[string]map[string]string{
-				"labels": {
-					"name":      "version",
-					"namespace": "v1"}},
-			HttpFault: map[string]map[string]string{
-				"abort": {
-					"percent":    "50",
-					"httpStatus": "503",
-				},
-			}},
-		RouteRule{
-			CreatedAt:       "2018-03-08T17:46:00+03:00",
-			ResourceVersion: "1234",
-			Destination: map[string]string{
-				"name":      "reviews",
-				"namespace": "tutorial"},
-			Precedence: 1,
-			Route: map[string]map[string]string{
-				"labels": {
-					"name":      "version",
-					"namespace": "v3"}}}})
-
-	assert.Equal(service.DestinationPolicies, DestinationPolicies{
-		DestinationPolicy{
-			CreatedAt:       "2018-03-08T17:47:00+03:00",
-			ResourceVersion: "1234",
-			Source: map[string]string{
-				"name": "recommendation"},
-			Destination: map[string]string{
-				"name":      "reviews",
-				"namespace": "tutorial"},
-			LoadBalancing: map[string]string{
-				"name": "RANDOM"},
-		},
-		DestinationPolicy{
-			CreatedAt:       "2018-03-08T17:47:00+03:00",
-			ResourceVersion: "1234",
-			Destination: map[string]interface{}{
-				"name":      "reviews",
-				"namespace": "tutorial",
-				"labels": map[string]string{
-					"version": "v2"}},
-			CircuitBreaker: map[string]interface{}{
-				"simpleCb": map[string]interface{}{
-					"maxConnections":               1,
-					"httpMaxPendingRequests":       1,
-					"sleepWindow":                  "2m",
-					"httpDetectionInterval":        "1s",
-					"httpMaxEjectionPercent":       100,
-					"httpConsecutiveErrors":        1,
-					"httpMaxRequestsPerConnection": 1,
-				}},
-		}})
 
 	assert.Equal(service.VirtualServices, VirtualServices{
 		VirtualService{
@@ -405,91 +344,7 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 }
 
 func fakeIstioDetails() *kubernetes.IstioDetails {
-	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:46 +0300")
 	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:47 +0300")
-
-	route1 := kubernetes.MockIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			CreationTimestamp: meta_v1.NewTime(t1),
-			ResourceVersion:   "1234",
-		},
-		Spec: map[string]interface{}{
-			"destination": map[string]string{
-				"name":      "reviews",
-				"namespace": "tutorial"},
-			"precedence": 1,
-			"route": map[string]map[string]string{
-				"labels": map[string]string{
-					"name":      "version",
-					"namespace": "v1"}},
-			"httpFault": map[string]map[string]string{
-				"abort": map[string]string{
-					"percent":    "50",
-					"httpStatus": "503",
-				}}},
-	}
-	route2 := kubernetes.MockIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			CreationTimestamp: meta_v1.NewTime(t1),
-			ResourceVersion:   "1234",
-		},
-		Spec: map[string]interface{}{
-			"destination": map[string]string{
-				"name":      "reviews",
-				"namespace": "tutorial"},
-			"precedence": 1,
-			"route": map[string]map[string]string{
-				"labels": map[string]string{
-					"name":      "version",
-					"namespace": "v3"}}},
-	}
-	routes := []kubernetes.IstioObject{&route1, &route2}
-	policy1 := kubernetes.MockIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			CreationTimestamp: meta_v1.NewTime(t2),
-			ResourceVersion:   "1234",
-		},
-		Spec: map[string]interface{}{
-			"source": map[string]string{
-				"name": "recommendation",
-			},
-			"destination": map[string]string{
-				"name":      "reviews",
-				"namespace": "tutorial",
-			},
-			"loadBalancing": map[string]string{
-				"name": "RANDOM",
-			},
-		},
-	}
-	policy2 := kubernetes.MockIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			CreationTimestamp: meta_v1.NewTime(t2),
-			ResourceVersion:   "1234",
-		},
-		Spec: map[string]interface{}{
-			"destination": map[string]interface{}{
-				"name":      "reviews",
-				"namespace": "tutorial",
-				"labels": map[string]string{
-					"version": "v2",
-				},
-			},
-			"circuitBreaker": map[string]interface{}{
-				"simpleCb": map[string]interface{}{
-					"maxConnections":               1,
-					"httpMaxPendingRequests":       1,
-					"sleepWindow":                  "2m",
-					"httpDetectionInterval":        "1s",
-					"httpMaxEjectionPercent":       100,
-					"httpConsecutiveErrors":        1,
-					"httpMaxRequestsPerConnection": 1,
-				},
-			},
-		},
-	}
-
-	policies := []kubernetes.IstioObject{&policy1, &policy2}
 
 	virtualService1 := kubernetes.MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -628,7 +483,7 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	}
 	destinationRules := []kubernetes.IstioObject{&destinationRule1, &destinationRule2}
 
-	return &kubernetes.IstioDetails{routes, policies, virtualServices, destinationRules}
+	return &kubernetes.IstioDetails{virtualServices, destinationRules}
 }
 
 func fakePrometheusDetails() map[string][]string {

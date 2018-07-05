@@ -52,8 +52,6 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	criteria := business.IstioConfigCriteria{}
 	criteria.Namespace = namespace
 	criteria.IncludeGateways = defaultInclude
-	criteria.IncludeRouteRules = defaultInclude
-	criteria.IncludeDestinationPolicies = defaultInclude
 	criteria.IncludeVirtualServices = defaultInclude
 	criteria.IncludeDestinationRules = defaultInclude
 	criteria.IncludeServiceEntries = defaultInclude
@@ -68,12 +66,6 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	types := strings.Split(objects, ",")
 	if checkType(types, "gateways") {
 		criteria.IncludeGateways = true
-	}
-	if checkType(types, "routerules") {
-		criteria.IncludeRouteRules = true
-	}
-	if checkType(types, "destinationpolicies") {
-		criteria.IncludeDestinationPolicies = true
 	}
 	if checkType(types, "virtualservices") {
 		criteria.IncludeVirtualServices = true
@@ -166,8 +158,6 @@ func checkObjectType(objectType string) bool {
 	switch objectType {
 	case
 		"gateways",
-		"routerules",
-		"destinationpolicies",
 		"virtualservices",
 		"destinationrules",
 		"serviceentries",

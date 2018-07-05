@@ -83,56 +83,6 @@ func TestFilterByHost(t *testing.T) {
 	assert.False(t, FilterByHost(spec, "host3", "test"))
 }
 
-func TestCheckRouteRule(t *testing.T) {
-	conf := config.NewConfig()
-	config.Set(conf)
-
-	assert.False(t, CheckRouteRule(nil, "", "", ""))
-
-	route1 := MockIstioObject{
-		Spec: map[string]interface{}{
-			"destination": map[string]interface{}{
-				"name":      "reviews",
-				"namespace": "tutorial",
-			},
-			"precedence": 1,
-			"route": []interface{}{
-				map[string]interface{}{
-					"labels": map[string]interface{}{
-						"version": "v1",
-					},
-				},
-			},
-		},
-	}
-
-	assert.True(t, CheckRouteRule(&route1, "tutorial", "reviews", "v1"))
-	assert.False(t, CheckRouteRule(&route1, "tutorial-bad", "reviews", "v1"))
-	assert.False(t, CheckRouteRule(&route1, "tutorial", "reviews-bad", "v1"))
-	assert.False(t, CheckRouteRule(&route1, "tutorial", "reviews", "v2"))
-
-	route2 := MockIstioObject{
-		Spec: map[string]interface{}{
-			"destination": map[string]interface{}{
-				"name": "reviews",
-			},
-			"precedence": 1,
-			"route": []interface{}{
-				map[string]interface{}{
-					"labels": map[string]interface{}{
-						"version": "v1",
-					},
-				},
-			},
-		},
-	}
-
-	assert.True(t, CheckRouteRule(&route2, "tutorial", "reviews", "v1"))
-	assert.True(t, CheckRouteRule(&route2, "tutorial-bad", "reviews", "v1"))
-	assert.False(t, CheckRouteRule(&route2, "tutorial", "reviews-bad", "v1"))
-	assert.False(t, CheckRouteRule(&route2, "tutorial", "reviews", "v2"))
-}
-
 func TestCheckVirtualService(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -206,58 +156,6 @@ func TestCheckVirtualService(t *testing.T) {
 
 	assert.True(t, CheckVirtualService(&virtualService, "", "reviews", []string{"v1", "v2", "v3"}))
 	assert.False(t, CheckVirtualService(&virtualService, "", "reviews", []string{"v1"}))
-}
-
-func TestCheckDestinationPolicyCircuitBreaker(t *testing.T) {
-	conf := config.NewConfig()
-	config.Set(conf)
-
-	assert.False(t, CheckDestinationPolicyCircuitBreaker(nil, "", "", ""))
-
-	circuitBreaker := MockIstioObject{
-		Spec: map[string]interface{}{
-			"destination": map[string]interface{}{
-				"name":      "reviews",
-				"namespace": "tutorial",
-				"labels": map[string]interface{}{
-					"version": "v2",
-				},
-			},
-			"circuitBreaker": map[string]interface{}{
-				"simpleCb": map[string]interface{}{
-					"maxConnections":               1,
-					"httpMaxPendingRequests":       1,
-					"sleepWindow":                  "2m",
-					"httpDetectionInterval":        "1s",
-					"httpMaxEjectionPercent":       100,
-					"httpConsecutiveErrors":        1,
-					"httpMaxRequestsPerConnection": 1,
-				},
-			},
-		},
-	}
-
-	assert.True(t, CheckDestinationPolicyCircuitBreaker(&circuitBreaker, "tutorial", "reviews", "v2"))
-	assert.False(t, CheckDestinationPolicyCircuitBreaker(&circuitBreaker, "tutorial", "reviews", "v2-bad"))
-	assert.False(t, CheckDestinationPolicyCircuitBreaker(&circuitBreaker, "tutorial", "reviews-bad", "v2"))
-	assert.False(t, CheckDestinationPolicyCircuitBreaker(&circuitBreaker, "tutorial-bad", "reviews", "v2"))
-
-	loadBalancer := MockIstioObject{
-		Spec: map[string]interface{}{
-			"source": map[string]string{
-				"name": "recommendation",
-			},
-			"destination": map[string]string{
-				"name":      "reviews",
-				"namespace": "tutorial",
-			},
-			"loadBalancing": map[string]string{
-				"name": "RANDOM",
-			},
-		},
-	}
-
-	assert.False(t, CheckDestinationPolicyCircuitBreaker(&loadBalancer, "tutorial", "reviews", ""))
 }
 
 func TestGetDestinationRulesSubsets(t *testing.T) {

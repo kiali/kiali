@@ -33,10 +33,9 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	}
 
 	objectCheckers := []ObjectChecker{
-		checkers.RouteRuleChecker{namespace, pods.Items, istioDetails.RouteRules},
 		checkers.VirtualServiceChecker{namespace, istioDetails.DestinationRules,
 			istioDetails.VirtualServices},
-		&checkers.PodChecker{Pods: pods.Items},
+		checkers.PodChecker{Pods: pods.Items},
 	}
 
 	// Get groupal validations for same kind istio objects
@@ -55,14 +54,7 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 		return nil, err
 	}
 
-	pods, err := in.k8s.GetNamespacePods(namespace)
-	if err != nil {
-		log.Warningf("Cannot get pods for namespace %v.", namespace)
-		return nil, err
-	}
-
 	objectCheckers := []ObjectChecker{
-		checkers.RouteRuleChecker{Namespace: namespace, PodList: pods.Items, RouteRules: istioDetails.RouteRules},
 		checkers.VirtualServiceChecker{namespace, istioDetails.DestinationRules,
 			istioDetails.VirtualServices},
 		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: istioDetails, ServiceList: serviceList},
@@ -78,7 +70,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	}
 
 	// Get only the given Istio Object
-	var rr, dp, vs, dr kubernetes.IstioObject
+	var vs, dr kubernetes.IstioObject
 	var objectCheckers []ObjectChecker
 	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, ServiceList: serviceList}
 	istioDetails := kubernetes.IstioDetails{}
@@ -86,26 +78,14 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	switch objectType {
 	case "gateways":
 		// Validations on Gateways are not yet in place
-	case "routerules":
-		if rr, err = in.k8s.GetRouteRule(namespace, object); err == nil {
-			pods, err := in.k8s.GetNamespacePods(namespace)
-			if err != nil {
-				log.Warningf("Cannot get pods for namespace %v.", namespace)
-				return nil, err
-			}
-			routeRuleChecker := checkers.RouteRuleChecker{Namespace: namespace, PodList: pods.Items, RouteRules: []kubernetes.IstioObject{rr}}
-			istioDetails.RouteRules = []kubernetes.IstioObject{rr}
-			objectCheckers = []ObjectChecker{routeRuleChecker, noServiceChecker}
-		}
-	case "destinationpolicies":
-		if dp, err = in.k8s.GetDestinationPolicy(namespace, object); err == nil {
-			istioDetails.DestinationPolicies = []kubernetes.IstioObject{dp}
-			objectCheckers = []ObjectChecker{noServiceChecker}
-		}
 	case "virtualservices":
 		if vs, err = in.k8s.GetVirtualService(namespace, object); err == nil {
-			istioDetails.VirtualServices = []kubernetes.IstioObject{vs}
-			objectCheckers = []ObjectChecker{noServiceChecker}
+			if drs, err := in.k8s.GetDestinationRules(namespace, ""); err == nil {
+				istioDetails.VirtualServices = []kubernetes.IstioObject{vs}
+				istioDetails.DestinationRules = drs
+				virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualService: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
+				objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
+			}
 		}
 	case "destinationrules":
 		if dr, err = in.k8s.GetDestinationRule(namespace, object); err == nil {

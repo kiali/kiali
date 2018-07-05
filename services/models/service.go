@@ -15,23 +15,21 @@ type ServiceList struct {
 }
 
 type Service struct {
-	Name                string              `json:"name"`
-	CreatedAt           string              `json:"createdAt"`
-	ResourceVersion     string              `json:"resourceVersion"`
-	Namespace           Namespace           `json:"namespace"`
-	Labels              map[string]string   `json:"labels"`
-	Type                string              `json:"type"`
-	Ip                  string              `json:"ip"`
-	Ports               Ports               `json:"ports"`
-	Endpoints           Endpoints           `json:"endpoints"`
-	RouteRules          RouteRules          `json:"routeRules"`
-	DestinationPolicies DestinationPolicies `json:"destinationPolicies"`
-	VirtualServices     VirtualServices     `json:"virtualServices"`
-	DestinationRules    DestinationRules    `json:"destinationRules"`
-	Dependencies        map[string][]string `json:"dependencies"`
-	Pods                Pods                `json:"pods"`
-	Deployments         Deployments         `json:"deployments"`
-	Health              Health              `json:"health"`
+	Name             string              `json:"name"`
+	CreatedAt        string              `json:"createdAt"`
+	ResourceVersion  string              `json:"resourceVersion"`
+	Namespace        Namespace           `json:"namespace"`
+	Labels           map[string]string   `json:"labels"`
+	Type             string              `json:"type"`
+	Ip               string              `json:"ip"`
+	Ports            Ports               `json:"ports"`
+	Endpoints        Endpoints           `json:"endpoints"`
+	VirtualServices  VirtualServices     `json:"virtualServices"`
+	DestinationRules DestinationRules    `json:"destinationRules"`
+	Dependencies     map[string][]string `json:"dependencies"`
+	Pods             Pods                `json:"pods"`
+	Deployments      Deployments         `json:"deployments"`
+	Health           Health              `json:"health"`
 }
 
 func (s *Service) SetServiceDetails(serviceDetails *kubernetes.ServiceDetails, istioDetails *kubernetes.IstioDetails, prometheusDetails map[string][]string) {
@@ -57,8 +55,6 @@ func (s *Service) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails
 }
 
 func (s *Service) setIstioDetails(istioDetails *kubernetes.IstioDetails) {
-	(&s.RouteRules).Parse(istioDetails.RouteRules)
-	(&s.DestinationPolicies).Parse(istioDetails.DestinationPolicies)
 	(&s.VirtualServices).Parse(istioDetails.VirtualServices)
 	(&s.DestinationRules).Parse(istioDetails.DestinationRules)
 }

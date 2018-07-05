@@ -11,20 +11,20 @@ func TestIstioValidationsMarshal(t *testing.T) {
 	assert := assert.New(t)
 
 	validations := IstioValidations{
-		IstioValidationKey{"routerule", "foo"}: &IstioValidation{
+		IstioValidationKey{"virtualservice", "foo"}: &IstioValidation{
 			Name:       "foo",
-			ObjectType: "routerule",
+			ObjectType: "virtualservice",
 			Valid:      true,
 		},
-		IstioValidationKey{"routerule", "bar"}: &IstioValidation{
+		IstioValidationKey{"virtualservice", "bar"}: &IstioValidation{
 			Name:       "bar",
-			ObjectType: "routerule",
+			ObjectType: "virtualservice",
 			Valid:      false,
 		},
 	}
 	b, err := json.Marshal(validations)
 	assert.Empty(err)
-	assert.Equal(string(b), `{"routerule":{"bar":{"name":"bar","objectType":"routerule","valid":false,"checks":null},"foo":{"name":"foo","objectType":"routerule","valid":true,"checks":null}}}`)
+	assert.Equal(string(b), `{"virtualservice":{"bar":{"name":"bar","objectType":"virtualservice","valid":false,"checks":null},"foo":{"name":"foo","objectType":"virtualservice","valid":true,"checks":null}}}`)
 }
 
 func TestNamespaceValidationsMarshall(t *testing.T) {
@@ -32,19 +32,19 @@ func TestNamespaceValidationsMarshall(t *testing.T) {
 
 	validations := NamespaceValidations{
 		"bookinfo": IstioValidations{
-			IstioValidationKey{"routerule", "foo"}: &IstioValidation{
+			IstioValidationKey{"virtualservice", "foo"}: &IstioValidation{
 				Name:       "foo",
-				ObjectType: "routerule",
+				ObjectType: "virtualservice",
 				Valid:      true,
 			},
-			IstioValidationKey{"routerule", "bar"}: &IstioValidation{
+			IstioValidationKey{"virtualservice", "bar"}: &IstioValidation{
 				Name:       "bar",
-				ObjectType: "routerule",
+				ObjectType: "virtualservice",
 				Valid:      false,
 			},
 		},
 	}
 	b, err := json.Marshal(validations)
 	assert.Empty(err)
-	assert.Equal(string(b), `{"bookinfo":{"routerule":{"bar":{"name":"bar","objectType":"routerule","valid":false,"checks":null},"foo":{"name":"foo","objectType":"routerule","valid":true,"checks":null}}}}`)
+	assert.Equal(string(b), `{"bookinfo":{"virtualservice":{"bar":{"name":"bar","objectType":"virtualservice","valid":false,"checks":null},"foo":{"name":"foo","objectType":"virtualservice","valid":true,"checks":null}}}}`)
 }
