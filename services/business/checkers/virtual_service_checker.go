@@ -1,8 +1,6 @@
 package checkers
 
 import (
-	"sync"
-
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/business/checkers/virtual_services"
 	"github.com/kiali/kiali/services/models"
@@ -32,23 +30,14 @@ func (in VirtualServiceChecker) Check() models.IstioValidations {
 // Runs individual checks for each virtual service
 func (in VirtualServiceChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
-	validationsChan := make(chan models.IstioValidations)
-
-	var wg sync.WaitGroup
-	wg.Add(len(in.VirtualService))
+	validationsChan := make(chan models.IstioValidations, len(in.VirtualService))
 
 	for _, virtualService := range in.VirtualService {
-		go in.runChecks(virtualService, validationsChan, &wg)
+		go in.runChecks(virtualService, validationsChan)
 	}
 
-	go func() {
-		wg.Wait()
-		// Closing the channel stop the range loop below
-		close(validationsChan)
-	}()
-
-	for v := range validationsChan {
-		validations.MergeValidations(v)
+	for i := 0; i < len(in.VirtualService); i++ {
+		validations.MergeValidations(<-validationsChan)
 	}
 	return validations
 }
@@ -59,11 +48,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single virtual service and appends the result into validations.
-func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject,
-	validationChan chan models.IstioValidations, wg *sync.WaitGroup) {
-
-	defer (*wg).Done()
-
+func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject, validationChan chan models.IstioValidations) {
 	virtualServiceName := virtualService.GetObjectMeta().Name
 	key := models.IstioValidationKey{Name: virtualServiceName, ObjectType: virtualCheckerType}
 	rrValidation := &models.IstioValidation{
