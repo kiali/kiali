@@ -55,15 +55,16 @@ describe('#GetGraphElements using Promises', () => {
 
 describe('#GetServiceDetail using Promises', () => {
   it('should load service detail data', () => {
-    return API.getServiceDetail('istio-system', 'reviews').then(({ data }) => {
+    return API.getServiceDetail('bookinfo', 'reviews').then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.name).toEqual('reviews');
-      expect(data.namespace.name).toEqual('istio-system');
+      expect(data.namespace.name).toEqual('bookinfo');
       expect(data.labels).toBeInstanceOf(Object);
       expect(data.ports).toBeInstanceOf(Array);
       expect(data.endpoints).toBeInstanceOf(Array);
       expect(data.pods).toBeInstanceOf(Array);
-      expect(data.routeRules).toBeInstanceOf(Array);
+      expect(data.virtualServices).toBeInstanceOf(Array);
+      expect(data.destinationRules).toBeInstanceOf(Array);
       expect(data.dependencies).toBeInstanceOf(Object);
     });
   });

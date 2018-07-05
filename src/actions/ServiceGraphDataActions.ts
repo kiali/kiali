@@ -36,7 +36,7 @@ const decorateGraphData = (graphData: any) => {
       rate4XX: undefined,
       rate5XX: undefined,
       hasCB: undefined,
-      hasRR: undefined,
+      hasVS: undefined,
       isDead: undefined,
       isGroup: undefined,
       isRoot: undefined,

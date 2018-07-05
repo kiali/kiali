@@ -128,13 +128,13 @@ export class CircuitBreakerBadge extends GraphBadge {
   }
 }
 
-export class RouteRuleBadge extends GraphBadge {
+export class VirtualServiceBadge extends GraphBadge {
   constructor() {
     super(ROUTE_BADGE, PfColors.Purple300, 'top', true);
   }
 }
 
-export class RouteRuleGroupBadge extends GraphBadge {
+export class VirtualServiceGroupBadge extends GraphBadge {
   constructor() {
     super(ROUTE_BADGE, PfColors.Purple300, 'top', false);
   }

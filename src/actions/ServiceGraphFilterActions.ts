@@ -7,7 +7,7 @@ export enum ServiceGraphFilterActionKeys {
   TOGGLE_LEGEND = 'TOGGLE_LEGEND',
   TOGGLE_GRAPH_NODE_LABEL = 'TOGGLE_GRAPH_NODE_LABEL',
   TOGGLE_GRAPH_CIRCUIT_BREAKERS = 'TOGGLE_GRAPH_CIRCUIT_BREAKERS',
-  TOGGLE_GRAPH_ROUTE_RULES = 'TOGGLE_GRAPH_ROUTE_RULES',
+  TOGGLE_GRAPH_VIRTUAL_SERVICES = 'TOGGLE_GRAPH_VIRTUAL_SERVICES',
   TOGGLE_GRAPH_MISSING_SIDECARS = 'TOGGLE_GRAPH_MISSING_SIDECARS',
   TOGGLE_TRAFFIC_ANIMATION = 'TOGGLE_TRAFFIC_ANIMATION',
   SET_GRAPH_EDGE_LABEL_MODE = 'SET_GRAPH_EDGE_LABEL_MODE',
@@ -28,7 +28,7 @@ export const serviceGraphFilterActions = {
       payload: edgeLabelMode
     })
   ),
-  toggleGraphRouteRules: createAction(ServiceGraphFilterActionKeys.TOGGLE_GRAPH_ROUTE_RULES),
+  toggleGraphVirtualServices: createAction(ServiceGraphFilterActionKeys.TOGGLE_GRAPH_VIRTUAL_SERVICES),
   toggleGraphCircuitBreakers: createAction(ServiceGraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS),
   toggleGraphMissingSidecars: createAction(ServiceGraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS),
   toggleTrafficAnimation: createAction(ServiceGraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION),

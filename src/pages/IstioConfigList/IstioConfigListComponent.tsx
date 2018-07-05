@@ -66,14 +66,6 @@ const istioTypeFilter: FilterType = {
       title: 'Gateway'
     },
     {
-      id: 'RouteRule',
-      title: 'RouteRule'
-    },
-    {
-      id: 'DestinationPolicy',
-      title: 'DestinationPolicy'
-    },
-    {
       id: 'VirtualService',
       title: 'VirtualService'
     },
@@ -310,14 +302,6 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       iconName = 'route';
       iconType = 'pf';
       type = 'Gateway';
-    } else if (istioItem.type === 'routerule') {
-      iconName = 'code-fork';
-      iconType = 'fa';
-      type = 'RouteRule';
-    } else if (istioItem.type === 'destinationpolicy') {
-      iconName = 'network';
-      iconType = 'pf';
-      type = 'DestinationPolicy';
     } else if (istioItem.type === 'virtualservice') {
       iconName = 'code-fork';
       iconType = 'fa';

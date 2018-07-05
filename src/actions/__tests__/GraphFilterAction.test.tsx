@@ -34,11 +34,11 @@ describe('GraphFilterActions', () => {
     expect(serviceGraphFilterActions.toggleGraphCircuitBreakers()).toEqual(expectedAction);
   });
 
-  it('should toggle a route rule', () => {
+  it('should toggle a virtual service', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_ROUTE_RULES
+      type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_VIRTUAL_SERVICES
     };
-    expect(serviceGraphFilterActions.toggleGraphRouteRules()).toEqual(expectedAction);
+    expect(serviceGraphFilterActions.toggleGraphVirtualServices()).toEqual(expectedAction);
   });
 
   it('should toggle missing sidecars', () => {

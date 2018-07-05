@@ -99,7 +99,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
             <Label name="namespace" value={namespace} key={namespace} />
             {this.renderVersionBadges()}
           </div>
-          {this.renderBadgeSummary(group.data('hasRR'))}
+          {this.renderBadgeSummary(group.data('hasVS'))}
         </div>
         <div className="panel-body">
           <p style={{ textAlign: 'right' }}>
@@ -176,13 +176,13 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       .map((c, i) => <Label key={c.data('version')} name="version" value={c.data('version')} />);
   };
 
-  private renderBadgeSummary = (hasRR: boolean) => {
+  private renderBadgeSummary = (hasVS: boolean) => {
     return (
       <>
-        {hasRR && (
+        {hasVS && (
           <div>
             <Icon name="code-fork" type="fa" style={{ width: '10px' }} />
-            Has Route Rule
+            Has Virtual Service
           </div>
         )}
       </>

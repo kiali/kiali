@@ -11,7 +11,7 @@ interface ServiceGraphDispatch {
   toggleLegend(): void;
   toggleGraphNodeLabels(): void;
   toggleGraphCircuitBreakers(): void;
-  toggleGraphRouteRules(): void;
+  toggleGraphVirtualServices(): void;
   toggleGraphMissingSidecars(): void;
   toggleTrafficAnimation(): void;
 }
@@ -24,7 +24,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showLegend: state.serviceGraph.filterState.showLegend,
   showNodeLabels: state.serviceGraph.filterState.showNodeLabels,
   showCircuitBreakers: state.serviceGraph.filterState.showCircuitBreakers,
-  showRouteRules: state.serviceGraph.filterState.showRouteRules,
+  showVirtualServices: state.serviceGraph.filterState.showVirtualServices,
   showMissingSidecars: state.serviceGraph.filterState.showMissingSidecars,
   showTrafficAnimation: state.serviceGraph.filterState.showTrafficAnimation
 });
@@ -36,7 +36,7 @@ const mapDispatchToProps = (dispatch: any) => {
     toggleGraphNodeLabels: bindActionCreators(serviceGraphFilterActions.toggleGraphNodeLabel, dispatch),
     setGraphEdgeLabelMode: bindActionCreators(serviceGraphFilterActions.setGraphEdgeLabelMode, dispatch),
     toggleGraphCircuitBreakers: bindActionCreators(serviceGraphFilterActions.toggleGraphCircuitBreakers, dispatch),
-    toggleGraphRouteRules: bindActionCreators(serviceGraphFilterActions.toggleGraphRouteRules, dispatch),
+    toggleGraphVirtualServices: bindActionCreators(serviceGraphFilterActions.toggleGraphVirtualServices, dispatch),
     toggleGraphMissingSidecars: bindActionCreators(serviceGraphFilterActions.toggleGraphMissingSidecars, dispatch),
     toggleTrafficAnimation: bindActionCreators(serviceGraphFilterActions.toggleTrafficAnimation, dispatch)
   };
@@ -56,7 +56,7 @@ export const GraphLayers: React.SFC<GraphLayersProps> = props => {
   const {
     showLegend,
     showCircuitBreakers,
-    showRouteRules,
+    showVirtualServices,
     showNodeLabels,
     showMissingSidecars,
     showTrafficAnimation
@@ -65,7 +65,7 @@ export const GraphLayers: React.SFC<GraphLayersProps> = props => {
   const {
     toggleLegend,
     toggleGraphCircuitBreakers,
-    toggleGraphRouteRules,
+    toggleGraphVirtualServices,
     toggleGraphNodeLabels,
     toggleGraphMissingSidecars,
     toggleTrafficAnimation
@@ -85,10 +85,10 @@ export const GraphLayers: React.SFC<GraphLayersProps> = props => {
       onChange: toggleGraphCircuitBreakers
     },
     {
-      id: 'filterRR',
-      labelText: 'Route Rules',
-      value: showRouteRules,
-      onChange: toggleGraphRouteRules
+      id: 'filterVS',
+      labelText: 'Virtual Services',
+      value: showVirtualServices,
+      onChange: toggleGraphVirtualServices
     },
     {
       id: 'filterNodes',

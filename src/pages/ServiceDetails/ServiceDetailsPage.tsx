@@ -70,23 +70,11 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       return false;
     }
     // Check we have the right parameter
-    let validateTypes = ['routerule', 'destinationpolicy', 'virtualservice', 'destinationrule'];
+    let validateTypes = ['virtualservice', 'destinationrule'];
     if (parsed.type && validateTypes.indexOf(parsed.type) < 0) {
       return false;
     }
-    if (parsed.type === 'routerule' && this.state.serviceDetailsInfo.routeRules) {
-      for (let i = 0; i < this.state.serviceDetailsInfo.routeRules.length; i++) {
-        if (parsed.name === this.state.serviceDetailsInfo.routeRules[i].name) {
-          return true;
-        }
-      }
-    } else if (parsed.type === 'destinationpolicy' && this.state.serviceDetailsInfo.destinationPolicies) {
-      for (let i = 0; i < this.state.serviceDetailsInfo.destinationPolicies.length; i++) {
-        if (parsed.name === this.state.serviceDetailsInfo.destinationPolicies[i].name) {
-          return true;
-        }
-      }
-    } else if (parsed.type === 'virtualservice' && this.state.serviceDetailsInfo.virtualServices) {
+    if (parsed.type === 'virtualservice' && this.state.serviceDetailsInfo.virtualServices) {
       for (let i = 0; i < this.state.serviceDetailsInfo.virtualServices.length; i++) {
         if (parsed.name === this.state.serviceDetailsInfo.virtualServices[i].name) {
           return true;
@@ -103,7 +91,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   }
 
   // Helper method to extract search urls with format
-  // ?routerule=name or ?destinationpolicy=name or ?virtualservice=name or ?destinationrule=name
+  // ?virtualservice=name or ?destinationrule=name
   parseSearch(): ParsedSearch {
     let parsed: ParsedSearch = {};
     if (this.props.location.search) {
@@ -121,19 +109,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   }
 
   editorContent(parsed: ParsedSearch) {
-    if (parsed.type === 'routerule' && this.state.serviceDetailsInfo.routeRules) {
-      for (let i = 0; i < this.state.serviceDetailsInfo.routeRules.length; i++) {
-        if (parsed.name === this.state.serviceDetailsInfo.routeRules[i].name) {
-          return yaml.safeDump(this.state.serviceDetailsInfo.routeRules[i], safeDumpOptions);
-        }
-      }
-    } else if (parsed.type === 'destinationpolicy' && this.state.serviceDetailsInfo.destinationPolicies) {
-      for (let i = 0; i < this.state.serviceDetailsInfo.destinationPolicies.length; i++) {
-        if (parsed.name === this.state.serviceDetailsInfo.destinationPolicies[i].name) {
-          return yaml.safeDump(this.state.serviceDetailsInfo.destinationPolicies[i], safeDumpOptions);
-        }
-      }
-    } else if (parsed.type === 'virtualservice' && this.state.serviceDetailsInfo.virtualServices) {
+    if (parsed.type === 'virtualservice' && this.state.serviceDetailsInfo.virtualServices) {
       for (let i = 0; i < this.state.serviceDetailsInfo.virtualServices.length; i++) {
         if (parsed.name === this.state.serviceDetailsInfo.virtualServices[i].name) {
           return yaml.safeDump(this.state.serviceDetailsInfo.virtualServices[i], safeDumpOptions);
