@@ -83,7 +83,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 			if drs, err := in.k8s.GetDestinationRules(namespace, ""); err == nil {
 				istioDetails.VirtualServices = []kubernetes.IstioObject{vs}
 				istioDetails.DestinationRules = drs
-				virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualService: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
+				virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
 				objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
 			}
 		}

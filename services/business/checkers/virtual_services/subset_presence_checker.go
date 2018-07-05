@@ -7,7 +7,6 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 type SubsetPresenceChecker struct {
@@ -134,12 +133,4 @@ func hasSubsetDefined(destinationRule kubernetes.IstioObject, subsetTarget strin
 		}
 	}
 	return false
-}
-
-func ParseLabels(rawLabels map[string]interface{}) labels.Selector {
-	routeLabels := map[string]string{}
-	for key, value := range rawLabels {
-		routeLabels[key] = value.(string)
-	}
-	return labels.Set(routeLabels).AsSelector()
 }
