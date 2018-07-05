@@ -49,7 +49,7 @@ describe('#Test Methods return a Promise', () => {
   });
 
   it('#getStatus', () => {
-    const result = API.getStatus(authentication());
+    const result = API.getStatus();
     evaluatePromise(result);
   });
 

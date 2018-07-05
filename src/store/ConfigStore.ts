@@ -12,7 +12,7 @@ declare const window;
 const persistConfig = {
   key: 'root',
   storage: storage,
-  whitelist: ['authentication']
+  whitelist: ['authentication', 'statusState']
 };
 
 const composeEnhancers =
