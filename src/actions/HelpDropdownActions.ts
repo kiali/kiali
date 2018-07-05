@@ -19,10 +19,8 @@ export const HelpDropdownActions = {
     })
   ),
   refresh: () => {
-    return (dispatch, getState) => {
-      const state = getState();
-
-      API.getStatus('Bearer ' + state.authentication.token.token).then(
+    return dispatch => {
+      API.getStatus().then(
         status => {
           dispatch(
             HelpDropdownActions.statusRefresh(

@@ -14,21 +14,32 @@ interface Response<T> {
   data: T;
 }
 
+/**  Headers Definitions */
+
 const loginHeaders = { 'X-Auth-Type-Kiali-UI': '1' };
-const authHeader = (auth: string) => {
-  return { Authorization: auth };
+
+const authHeader = (auth: string) => ({ Authorization: auth });
+
+/**  Helpers to Requests */
+
+const getHeaders = (auth?: string) => {
+  if (auth === undefined) {
+    return { ...loginHeaders };
+  }
+  return { ...loginHeaders, ...authHeader(auth) };
 };
+
 const basicAuth = (username: string, password: string) => {
   return { username: username, password: password };
 };
 
-let newRequest = <T>(method: string, url: string, queryParams: any, data: any, auth: string) => {
+let newRequest = <T>(method: string, url: string, queryParams: any, data: any, auth?: string) => {
   return new Promise<Response<T>>((resolve, reject) => {
     axios({
       method: method,
       url: url,
       data: data,
-      headers: { ...loginHeaders, ...authHeader(auth) },
+      headers: getHeaders(auth),
       params: queryParams
     })
       .then(response => {
@@ -40,12 +51,13 @@ let newRequest = <T>(method: string, url: string, queryParams: any, data: any, a
   });
 };
 
+/** Requests */
 export const login = (username: string, password: string) => {
   return new Promise((resolve, reject) => {
     axios({
       method: 'get',
       url: '/api/token',
-      headers: loginHeaders,
+      headers: getHeaders(),
       auth: basicAuth(username, password)
     })
       .then(response => {
@@ -57,8 +69,8 @@ export const login = (username: string, password: string) => {
   });
 };
 
-export const getStatus = (auth: string) => {
-  return newRequest('get', '/api/status', {}, {}, auth);
+export const getStatus = () => {
+  return newRequest('get', '/api/status', {}, {});
 };
 
 export const getNamespaces = (auth: string): Promise<Response<Namespace[]>> => {
