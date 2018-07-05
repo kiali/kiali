@@ -62,7 +62,7 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 			weight, err := intutil.Convert(destinationWeight["weight"])
 			if err != nil {
 				valid = false
-				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight/%d",
+				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight/%s",
 					kind, routeIdx, destWeightIdx, destinationWeight["weight"])
 				validation := models.BuildCheck("Weight must be a number", "error", path)
 				validations = append(validations, &validation)

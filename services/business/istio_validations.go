@@ -80,8 +80,12 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		// Validations on Gateways are not yet in place
 	case "virtualservices":
 		if vs, err = in.k8s.GetVirtualService(namespace, object); err == nil {
-			istioDetails.VirtualServices = []kubernetes.IstioObject{vs}
-			objectCheckers = []ObjectChecker{noServiceChecker}
+			if drs, err := in.k8s.GetDestinationRules(namespace, ""); err == nil {
+				istioDetails.VirtualServices = []kubernetes.IstioObject{vs}
+				istioDetails.DestinationRules = drs
+				virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualService: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
+				objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
+			}
 		}
 	case "destinationrules":
 		if dr, err = in.k8s.GetDestinationRule(namespace, object); err == nil {
