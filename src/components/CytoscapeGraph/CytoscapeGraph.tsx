@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import ReactResizeDetector from 'react-resize-detector';
 
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
@@ -38,6 +39,7 @@ type CytoscapeGraphProps = CytoscapeGraphType &
   GraphParamsType & {
     isLoading: boolean;
     isError: boolean;
+    containerClassName?: string;
   };
 
 type CytoscapeGraphState = {};
@@ -106,7 +108,15 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
   render() {
     return (
-      <div id="cytoscape-container" style={{ marginRight: '25em', height: '100%' }}>
+      <div id="cytoscape-container" className={this.props.containerClassName}>
+        <ReactResizeDetector
+          handleWidth={true}
+          handleHeight={true}
+          skipOnMount={true}
+          refreshMode={'throttle'}
+          refreshRate={100}
+          onResize={this.onResize}
+        />
         <EmptyGraphLayout
           elements={this.props.elements}
           namespace={this.props.namespace.name}
@@ -134,6 +144,12 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.cytoscapeReactWrapperRef = cyRef;
     this.cyInitialization(this.getCy());
   }
+
+  private onResize = () => {
+    if (this.cy) {
+      this.cy.resize();
+    }
+  };
 
   private turnEdgeLabelsTo = (cy: any, value: EdgeLabelMode) => {
     cy.edges().forEach(edge => {

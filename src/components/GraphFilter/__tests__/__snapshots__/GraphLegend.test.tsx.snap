@@ -28,7 +28,7 @@ ShallowWrapper {
         aggregated={false}
         aggregatedMini={false}
         cardRef={null}
-        className="f1lq7yal"
+        className="fdd14id"
         matchHeight={false}
       >
         <CardBody
@@ -119,7 +119,7 @@ ShallowWrapper {
             label="No Traffic yet"
           />
         </CardBody>,
-        "className": "f1lq7yal",
+        "className": "fdd14id",
         "matchHeight": false,
       },
       "ref": null,
@@ -246,7 +246,7 @@ ShallowWrapper {
           aggregated={false}
           aggregatedMini={false}
           cardRef={null}
-          className="f1lq7yal"
+          className="fdd14id"
           matchHeight={false}
         >
           <CardBody
@@ -337,7 +337,7 @@ ShallowWrapper {
               label="No Traffic yet"
             />
           </CardBody>,
-          "className": "f1lq7yal",
+          "className": "fdd14id",
           "matchHeight": false,
         },
         "ref": null,

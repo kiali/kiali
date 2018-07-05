@@ -48,7 +48,7 @@ export default class GraphLegend extends React.Component<GraphLegendProps, Graph
 
   render() {
     const dragHandlers = {};
-    const cardStyle = style({ zIndex: 10, width: '20%', height: '100%' });
+    const cardStyle = style({ zIndex: 10, width: '20em', position: 'absolute' });
     return (
       <Draggable defaultPosition={{ x: 20, y: 500 }} {...dragHandlers}>
         <Card accented={false} className={cardStyle}>

@@ -28,11 +28,7 @@ type SummaryPanelStateType = {
 
 export default class SummaryPanelNode extends React.Component<SummaryPanelPropType, SummaryPanelStateType> {
   static readonly panelStyle = {
-    position: 'absolute' as 'absolute',
     width: '25em',
-    top: 0,
-    right: 0,
-    bottom: 0,
     overflowY: 'auto' as 'auto'
   };
 

@@ -70,7 +70,9 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
   }
 
   render() {
-    const styleContainer = { height: '100%', width: '100%', display: 'block' };
+    const styleContainer = {
+      height: '100%'
+    };
     return <div id="cy" className="graph" style={styleContainer} ref={this.divParentRef} />;
   }
 

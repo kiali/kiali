@@ -1,4 +1,5 @@
 import * as React from 'react';
+import FlexView from 'react-flexview';
 
 import Namespace from '../../types/Namespace';
 import { GraphParamsType, SummaryData } from '../../types/Graph';
@@ -26,13 +27,12 @@ type ServiceGraphPageProps = GraphParamsType & {
 };
 const NUMBER_OF_DATAPOINTS = 30;
 
-const cytscapeGraphStyle = style({
-  position: 'absolute',
-  right: 20,
-  bottom: 0,
-  top: 170,
-  left: 220
+const containerStyle = style({
+  minHeight: '350px',
+  height: 'calc(100vh - 60px)' // View height minus top bar height
 });
+
+const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: 0 });
 
 const makeCancelablePromise = (promise: Promise<any>) => {
   let hasCanceled = false;
@@ -96,30 +96,36 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
     };
     return (
       <PfContainerNavVertical>
-        <h2>Service Graph</h2>
-        <GraphFilterToolbar
-          isLoading={this.props.isLoading}
-          handleRefreshClick={this.handleRefreshClick}
-          {...graphParams}
-        />
-        <div className={cytscapeGraphStyle}>
-          <CytoscapeGraph
-            {...graphParams}
-            isLoading={this.props.isLoading}
-            elements={this.props.graphData}
-            refresh={this.handleRefreshClick}
-          />
-          {this.props.summaryData ? (
-            <SummaryPanel
-              data={this.props.summaryData}
-              namespace={this.props.namespace.name}
-              queryTime={this.props.graphTimestamp}
-              duration={this.props.graphDuration.value}
-              {...computePrometheusQueryInterval(this.props.graphDuration.value, NUMBER_OF_DATAPOINTS)}
+        <FlexView className={containerStyle} column={true}>
+          <h2>Service Graph</h2>
+          <div>
+            {/* Use empty div to reset the flex, this component doesn't seem to like that. It renders all its contents in the center */}
+            <GraphFilterToolbar
+              isLoading={this.props.isLoading}
+              handleRefreshClick={this.handleRefreshClick}
+              {...graphParams}
             />
-          ) : null}
-        </div>
-        {this.props.showLegend && <GraphLegend closeLegend={this.props.toggleLegend} />}
+          </div>
+          <FlexView grow={true}>
+            <CytoscapeGraph
+              {...graphParams}
+              isLoading={this.props.isLoading}
+              elements={this.props.graphData}
+              refresh={this.handleRefreshClick}
+              containerClassName={cytoscapeGraphContainerStyle}
+            />
+            {this.props.summaryData ? (
+              <SummaryPanel
+                data={this.props.summaryData}
+                namespace={this.props.namespace.name}
+                queryTime={this.props.graphTimestamp}
+                duration={this.props.graphDuration.value}
+                {...computePrometheusQueryInterval(this.props.graphDuration.value, NUMBER_OF_DATAPOINTS)}
+              />
+            ) : null}
+            {this.props.showLegend && <GraphLegend closeLegend={this.props.toggleLegend} />}
+          </FlexView>
+        </FlexView>
       </PfContainerNavVertical>
     );
   }
