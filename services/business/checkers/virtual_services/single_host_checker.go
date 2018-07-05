@@ -1,7 +1,6 @@
 package virtual_services
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -21,23 +20,32 @@ type Host struct {
 }
 
 func (in SingleHostChecker) Check() models.IstioValidations {
-	hostCounter := make(map[string]map[string]map[string]bool)
+	hostCounter := make(map[string]map[string]map[string][]*kubernetes.IstioObject)
 	validations := models.IstioValidations{}
 
 	for _, vs := range in.VirtualServices {
 		if hosts, ok := getHost(vs); ok {
 			for _, host := range hosts {
-				if len(hostCounter) > 0 {
-					if isSameHost(hostCounter, host) {
-						multipleVirtualServiceCheck(vs, validations)
-					} else if isNamespaceWildcard(hostCounter, host) {
-						multipleVirtualServiceCheck(vs, validations)
-					} else if isFullWildcard(hostCounter, host) {
-						multipleVirtualServiceCheck(vs, validations)
+				storeHost(hostCounter, vs, host)
+			}
+		}
+	}
+
+	for _, clusterCounter := range hostCounter {
+		for _, namespaceCounter := range clusterCounter {
+			isNamespaceWildcard := len(namespaceCounter["*"]) > 0
+			for _, serviceCounter := range namespaceCounter {
+				targetSameHost := len(serviceCounter) > 1
+				otherServiceHosts := len(namespaceCounter) > 1
+				for _, virtualService := range serviceCounter {
+					// Marking virtualService as invalid if:
+					// - there is more than one virtual service per a host
+					// - there is one virtual service with wildcard and there are other virtual services pointing
+					//   a host for that namespace
+					if targetSameHost || isNamespaceWildcard && otherServiceHosts {
+						multipleVirtualServiceCheck(*virtualService, validations)
 					}
 				}
-
-				storeHost(hostCounter, host)
 			}
 		}
 	}
@@ -62,50 +70,25 @@ func multipleVirtualServiceCheck(virtualService kubernetes.IstioObject, validati
 	validations.MergeValidations(models.IstioValidations{key: rrValidation})
 }
 
-func storeHost(hostCounter map[string]map[string]map[string]bool, host Host) {
+func storeHost(hostCounter map[string]map[string]map[string][]*kubernetes.IstioObject, vs kubernetes.IstioObject, host Host) {
+	vsList := []*kubernetes.IstioObject{&vs}
+
 	if hostCounter[host.Cluster] == nil {
-		hostCounter[host.Cluster] = map[string]map[string]bool{
+		hostCounter[host.Cluster] = map[string]map[string][]*kubernetes.IstioObject{
 			host.Namespace: {
-				host.Service: true,
+				host.Service: vsList,
 			},
 		}
 	} else if hostCounter[host.Cluster][host.Namespace] == nil {
-		hostCounter[host.Cluster][host.Namespace] = map[string]bool{
-			host.Service: true,
+		hostCounter[host.Cluster][host.Namespace] = map[string][]*kubernetes.IstioObject{
+			host.Service: vsList,
 		}
-	} else if hostCounter[host.Cluster][host.Namespace] != nil {
-		hostCounter[host.Cluster][host.Namespace][host.Service] = true
-	} else if hostCounter[host.Cluster][host.Namespace][host.Service] {
-		fmt.Errorf("SHOULDNT HAPPEN")
+	} else if _, ok := hostCounter[host.Cluster][host.Namespace][host.Service]; !ok {
+		hostCounter[host.Cluster][host.Namespace][host.Service] = vsList
+	} else {
+		hostCounter[host.Cluster][host.Namespace][host.Service] = append(hostCounter[host.Cluster][host.Namespace][host.Service], &vs)
 
 	}
-}
-
-func isSameHost(hostCounter map[string]map[string]map[string]bool, host Host) bool {
-	return hostCounter[host.Cluster] != nil && hostCounter[host.Cluster][host.Namespace] != nil &&
-		hostCounter[host.Cluster][host.Namespace][host.Service]
-}
-
-func isNamespaceWildcard(hostCounter map[string]map[string]map[string]bool, host Host) bool {
-	if host.Service == "*" && host.Namespace != "*" {
-		return hostCounter[host.Cluster] != nil &&
-			hostCounter[host.Cluster][host.Namespace] != nil &&
-			len(hostCounter[host.Cluster][host.Namespace]) > 0
-	} else if host.Service != "*" {
-		return hostCounter[host.Cluster] != nil &&
-			hostCounter[host.Cluster][host.Namespace] != nil &&
-			hostCounter[host.Cluster][host.Namespace]["*"]
-	}
-
-	return false
-}
-
-func isFullWildcard(hostCounter map[string]map[string]map[string]bool, host Host) bool {
-	if host.Service == "*" && host.Namespace == "*" {
-		return len(hostCounter) > 0
-	}
-
-	return false
 }
 
 func getHost(virtualService kubernetes.IstioObject) ([]Host, bool) {

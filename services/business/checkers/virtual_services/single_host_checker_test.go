@@ -59,6 +59,7 @@ func TestRepeatingSimpleHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
+	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
 }
 
@@ -85,6 +86,7 @@ func TestRepeatingFQDNWildcardHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
+	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
 }
 
@@ -98,6 +100,7 @@ func TestIncludedIntoWildCard(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
+	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
 
 	// Same test, with different order of appearance
@@ -123,6 +126,7 @@ func TestShortHostNameIncludedIntoWildCard(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
+	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
 }
 
@@ -137,6 +141,7 @@ func TestMultipleHostsFailing(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
+	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
 }
 
