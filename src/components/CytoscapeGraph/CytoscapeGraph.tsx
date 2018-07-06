@@ -64,12 +64,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private trafficRenderer: TrafficRender;
   private cytoscapeReactWrapperRef: any;
   private updateLayout: boolean;
+  private refit: boolean;
   private resetSelection: boolean;
   private cy: any;
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
     this.updateLayout = false;
+    this.refit = false;
   }
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
@@ -177,6 +179,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
     this.cy = cy;
+    this.refit = true;
 
     this.graphHighlighter = new GraphHighlighter(cy);
     this.trafficRenderer = new TrafficRender(cy, cy.edges());
@@ -255,10 +258,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     cy.on('layoutstop', (evt: any) => {
       // Don't allow a large zoom if the graph has a few nodes (nodes would look too big).
-      if (cy.zoom() > 2.5) {
-        cy.zoom(2.5);
-        cy.center();
-      }
+      this.safeFit(cy);
     });
 
     cy.ready((evt: any) => {
@@ -270,6 +270,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.trafficRenderer.stop();
       this.cy = undefined;
     });
+  }
+
+  private safeFit(cy: any) {
+    cy.fit();
+    if (cy.zoom() > 2.5) {
+      cy.zoom(2.5);
+      cy.center();
+    }
   }
 
   private processGraphUpdate(cy: any) {
@@ -314,6 +322,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         node.position({ x: 0, y: 0 });
       });
       cy.layout(LayoutDictionary.getLayout(this.props.graphLayout)).run();
+      this.refit = true;
       this.updateLayout = false;
     }
 
@@ -339,6 +348,12 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     });
 
     cy.endBatch();
+
+    // We need to fit outside of the batch operation for it to take effect on the new nodes
+    if (this.refit) {
+      this.safeFit(cy);
+      this.refit = false;
+    }
 
     // We opt-in for manual selection to be able to control when to select a node/edge
     // https://github.com/cytoscape/cytoscape.js/issues/1145#issuecomment-153083828
