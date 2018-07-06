@@ -15,7 +15,7 @@ If you need `istiooc` downloaded, the script will download the Linux binary by d
 If you want a specific version of `istiooc`, you can specify it via `istiooc-version`.
 You can see the versions available at: https://github.com/openshift-istio/origin/releases
 
-If you wish to install a version of Kiali, you can do so by passing in `--kiali-enabled true`. If you wish to install a specific version of Kiali, you can define that via `--kiali-version VERSION` where VERSION identifies the version string (e.g. 0.3.1.Alpha). The default credentials to log into Kiali will be `admin`/`admin` unless you specify something else via `--kiali-username` and `--kiali-password`.
+If you wish to install a version of Kiali, you can do so by passing in `--kiali-enabled true`. If you wish to install a specific version of Kiali, you can define that via `--kiali-version VERSION` where VERSION identifies the version string (e.g. v0.5.0). The default credentials to log into Kiali will be `admin`/`admin` unless you specify something else via `--kiali-username` and `--kiali-password`.
 (NOTE: this does not work when using older versions of `istiooc` and older Istio versions via the `--istio-version` option).
 
 Execute `cluster-openshift.sh --help` for information on other command line options available.

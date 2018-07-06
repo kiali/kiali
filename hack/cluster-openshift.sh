@@ -113,7 +113,7 @@ Valid options:
   -iov|--istiooc-version <version>
       The version of the istiooc binary to use.
       If one does not exist in the bin directory, it will be downloaded there.
-      Default: istio-3.9-0.8.0-alpha3
+      Default: istio-3.9-0.8.0-alpha4
   -iop|--istiooc-platform (linux|darwin)
       The platform indicator to determine what istiooc binary executable to download.
       Default: linux
@@ -172,7 +172,7 @@ OPENSHIFT_IP_ADDRESS=${OPENSHIFT_IP_ADDRESS:-`echo $(ip -f inet addr | grep 'sta
 
 # The version is the tag from the openshift-istio/origin release builds.
 # The platform is either "linux" or "darwin".
-OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.8.0-alpha3}"
+OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.8.0-alpha4}"
 OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-linux}"
 
 # If you want to persist data across restarts of OpenShift, set to the persistence directory.
