@@ -5,8 +5,6 @@ import { HTTP_CODES } from '../types/Common';
 import { HelpDropdownActions } from './HelpDropdownActions';
 import { config } from '../config';
 
-const toMilliSeconds = (hours: number) => hours * 3600 * 1000;
-
 export enum LoginActionKeys {
   LOGIN_REQUEST = 'LOGIN_REQUEST',
   LOGIN_SUCCESS = 'LOGIN_SUCCESS',
@@ -22,7 +20,7 @@ export const LoginActions = {
     token: token,
     username: username,
     logged: true,
-    sessionTimeOut: new Date().getTime() + toMilliSeconds(config().sessionTimeOut)
+    sessionTimeOut: new Date().getTime() + config().sessionTimeOut
   })),
   loginFailure: createAction(LoginActionKeys.LOGIN_FAILURE, (error: any) => ({
     type: LoginActionKeys.LOGIN_FAILURE,

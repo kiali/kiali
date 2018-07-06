@@ -12,3 +12,12 @@ export const HTTP_CODES = {
   SERVICE_UNAVAILABLE: 503,
   GATEWAY_TIMEOUT: 504
 };
+
+export const MILLISECONDS = 1000;
+
+export const UNIT_TIME = {
+  SECOND: 1,
+  MINUTE: 60,
+  HOUR: 3600,
+  DAY: 24 * 3600
+};

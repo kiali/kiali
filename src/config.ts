@@ -1,14 +1,15 @@
 import deepFreeze from 'deep-freeze';
+import { UNIT_TIME, MILLISECONDS } from './types/Common';
 
 export const config = () => {
   return deepFreeze({
     version: '0.1',
-    /** TimeOut in Hours */
-    sessionTimeOutHoursAt: 3,
+    /** TimeOut in Minutes default 30 minutes */
+    sessionTimeOut: 30 * UNIT_TIME.MINUTE * MILLISECONDS,
     /** Toolbar Configuration */
     toolbar: {
       /** Duration default in 1 minute */
-      defaultDuration: 60,
+      defaultDuration: 1 * UNIT_TIME.MINUTE,
       /** Options in interval duration */
       intervalDuration: {
         60: 'Last minute',
@@ -24,7 +25,7 @@ export const config = () => {
         2592000: 'Last 30 days'
       },
       /** By default refresh is 15 seconds */
-      defaultPollInterval: 15000,
+      defaultPollInterval: 15 * MILLISECONDS,
       /** Options in refresh */
       pollInterval: {
         0: 'Pause',

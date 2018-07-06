@@ -18,10 +18,13 @@ describe('LoginActions', () => {
       type: LoginActionKeys.LOGIN_SUCCESS,
       token: { token: token, expired_at: expiredAt },
       username: username,
-      sessionTimeOut: NaN,
       logged: true
     };
-    expect(LoginActions.loginSuccess({ token: token, expired_at: expiredAt }, username)).toEqual(expectedAction);
+    const result = LoginActions.loginSuccess({ token: token, expired_at: expiredAt }, username);
+    expect(result.type).toEqual(expectedAction.type);
+    expect(result.token).toEqual(expectedAction.token);
+    expect(result.username).toEqual(expectedAction.username);
+    expect(result.logged).toEqual(expectedAction.logged);
   });
 
   it('Login action failure', () => {
