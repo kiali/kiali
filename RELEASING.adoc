@@ -10,6 +10,10 @@ Before running these steps, it is assumed the link:https://github.com/kiali/kial
 
 1) Tag the Kiali-UI master branch in this repo: https://github.com/kiali/kiali-ui
 
+NOTE: You must have write permissions to the public GitHub repository in order to be able to do this.
+
+For example,
+
 ```
 $ git tag v1.0.0
 $ git push origin v1.0.0
@@ -20,8 +24,9 @@ $ git push origin v1.0.0
 == Kiali
 
 1) Update the link:Makefile[]
-1b) The VERSION variable should be set to the new version string of the upcoming release
-1c) The CONSOLE_VERSION variable should be set to the kiali-ui npm version string corresponding to the console version to be used
+
+* The VERSION variable should be set to the new version string of the upcoming release.
+* The CONSOLE_VERSION variable should be set to the kiali-ui npm version string corresponding to the console version to be used.
 
 For example,
 
