@@ -147,13 +147,15 @@ class Navigation extends React.Component<PropsType, StateType> {
             </PfContainerNavVertical>
           )}
         >
-          <Route path="/service-graph/:namespace" component={ServiceGraphRouteHandler} />
-          <Route path={servicesPath} component={ServiceListPage} />
-          <Route path={servicesJaegerPath} component={ServiceJaegerPage} />
-          <Route path="/namespaces/:namespace/services/:service" component={ServiceDetailsPage} />
-          <Route path={istioConfigPath} component={IstioConfigPage} />
-          <Route path="/namespaces/:namespace/istio/:objectType/:object" component={IstioConfigDetailsPage} />
-          <Redirect to={serviceGraphPath} />
+          <PfContainerNavVertical>
+            <Route path="/service-graph/:namespace" component={ServiceGraphRouteHandler} />
+            <Route path={servicesPath} component={ServiceListPage} />
+            <Route path={servicesJaegerPath} component={ServiceJaegerPage} />
+            <Route path="/namespaces/:namespace/services/:service" component={ServiceDetailsPage} />
+            <Route path={istioConfigPath} component={IstioConfigPage} />
+            <Route path="/namespaces/:namespace/istio/:objectType/:object" component={IstioConfigDetailsPage} />
+            <Redirect to={serviceGraphPath} />
+          </PfContainerNavVertical>
         </SwitchErrorBoundary>
       </>
     ) : (

@@ -131,7 +131,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   render() {
     return (
-      <div className="container-fluid container-pf-nav-pf-vertical">
+      <>
         <div className="page-header">
           <h2>
             Istio Config{' '}
@@ -179,7 +179,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         {this.state.istioObjectDetails && this.state.istioObjectDetails.quotaSpecBinding
           ? this.renderEditor(this.state.istioObjectDetails.quotaSpecBinding)
           : undefined}
-      </div>
+      </>
     );
   }
 }

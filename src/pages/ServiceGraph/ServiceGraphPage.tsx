@@ -8,7 +8,6 @@ import { Duration, PollIntervalInMs } from '../../types/GraphFilter';
 import SummaryPanel from './SummaryPanel';
 import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
 import GraphFilterToolbar from '../../components/GraphFilter/GraphFilterToolbar';
-import PfContainerNavVertical from '../../components/Pf/PfContainerNavVertical';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import { style } from 'typestyle';
 
@@ -95,7 +94,7 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
       graphDuration: this.props.graphDuration
     };
     return (
-      <PfContainerNavVertical>
+      <>
         <FlexView className={containerStyle} column={true}>
           <h2>Service Graph</h2>
           <div>
@@ -126,7 +125,7 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
             {this.props.showLegend && <GraphLegend closeLegend={this.props.toggleLegend} />}
           </FlexView>
         </FlexView>
-      </PfContainerNavVertical>
+      </>
     );
   }
 

@@ -7,8 +7,6 @@ import { authentication } from '../../utils/Authentication';
 import { RouteComponentProps } from 'react-router-dom';
 
 type ServiceJaegerState = {
-  height: string;
-  width: string;
   jaegerURL: string;
   error: boolean;
 };
@@ -30,13 +28,10 @@ const EmptyStatePage = () => (
 class ServiceJaegerPage extends React.Component<RouteComponentProps<{}>, ServiceJaegerState> {
   constructor(props: RouteComponentProps<{}>) {
     super(props);
-    this.state = { width: '0 px', jaegerURL: '', height: '0 px', error: false };
+    this.state = { jaegerURL: '', error: false };
   }
 
   componentDidMount() {
-    this.updateWindowDimensions();
-    window.addEventListener('resize', this.updateWindowDimensions);
-
     API.getJaegerInfo(authentication())
       .then(response => {
         let data = response['data'];
@@ -51,14 +46,6 @@ class ServiceJaegerPage extends React.Component<RouteComponentProps<{}>, Service
       });
   }
 
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.updateWindowDimensions);
-  }
-
-  updateWindowDimensions = () => {
-    this.setState({ width: window.innerWidth - 300 + 'px', height: window.innerHeight - 100 + 'px' });
-  };
-
   render() {
     let frameUrl = this.state.jaegerURL;
     const urlParams = new URLSearchParams(this.props.location.search);
@@ -68,20 +55,12 @@ class ServiceJaegerPage extends React.Component<RouteComponentProps<{}>, Service
     }
 
     return (
-      <div className="container-fluid container-pf-nav-pf-vertical">
+      <>
         {this.state.error ? <EmptyStatePage /> : null}
-        <div className="container-fluid container-cards-pf">
-          <Iframe
-            url={frameUrl}
-            width={this.state.width}
-            height={this.state.height}
-            id="jaegerUI"
-            display="block"
-            allowFullScreen={true}
-            style={{ verticalOverflow: false }}
-          />
+        <div className="container-fluid container-cards-pf" style={{ height: 'calc(100vh - 100px)' }}>
+          <Iframe url={frameUrl} position="inherit" allowFullScreen={true} />
         </div>
-      </div>
+      </>
     );
   }
 }
