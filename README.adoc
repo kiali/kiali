@@ -33,6 +33,8 @@ sh cluster-openshift.sh --kiali-enabled true up
 
 If you do not already have an Istio-enabled application to test with, you can install one using the link:hack/istio/README.adoc[Bookinfo Demo install script] provided here as a convenience.
 
+There are other demo applications to choose from as well: link:./DEMOS.adoc[see some examples].
+
 === Docker Image
 
 Kiali is published as a docker image on https://hub.docker.com/r/kiali/kiali[Docker hub at kiali/kiali]
