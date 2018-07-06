@@ -54,13 +54,14 @@ $ git push <your remote repo name> master
 
 At this point, Travis will run the test suite, build the binary, and push the "latest" docker image to link:https://hub.docker.com/r/kiali/kiali[DockerHub].
 
-4) Once Travis is "green" (which confirms all tests have passed and the latest image has been pushed to DockerHub), you can now tag the release.
+4) Once Travis is "green" (which confirms all tests have passed and the latest image has been pushed to DockerHub), you can now pull the master branch (to pull in the PR merge commit) and tag the release.
 
 NOTE: You must have write permissions to the public GitHub repository in order to be able to do this.
 
 For example,
 
 ```
+$ git pull
 $ git tag v1.0.0
 $ git push origin v1.0.0
 ```
