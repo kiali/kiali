@@ -2,20 +2,33 @@
 
 This document gives the steps required to perform a release of Kiali. This document is only useful to Kiali release managers.
 
-NOTE: There are two methods of producing release images here. The Kiali team will decide which one they want to use.
-
 The steps to perform a release are very simple and easy to execute thanks to the way link:.travis.yml[Travis] is setup.
 
-Before running these steps, it is assumed the link:https://github.com/kiali/kiali/tree/master[master] branch is all up to date and includes all code that is to be released and that your local `master` branch is up to date with this remote `master` branch.
+Before running these steps, it is assumed the link:https://github.com/kiali/kiali/tree/master[kiali master] branch and the link:https://github.com/kiali/kiali-ui/tree/master[kiali-ui master] branch are all up to date and include all code that is to be released and that your local `master` branches are up to date with the remote `master` branches.
 
-== Option #1: Using A Release Tag
+== Kiali-UI
 
-NOTE: You must announce to the committers that a release is in progress and that they must not merge pull requests into master while you are performing these steps.
-
-1) Update the link:Makefile[] so the VERSION variable is set to the new version string of the upcoming release. For example,
+1) Tag the Kiali-UI master branch in this repo: https://github.com/kiali/kiali-ui
 
 ```
-VERSION ?= 1.0.0.Final
+$ git tag v1.0.0
+$ git push origin v1.0.0
+```
+
+2) Go to https://www.npmjs.com/package/@kiali/kiali-ui and find the version of the UI that should be built for this release. We will put this console version number in Kiali's Makefile - see below.
+
+== Kiali
+
+1) Update the link:Makefile[]
+1b) The VERSION variable should be set to the new version string of the upcoming release
+1c) The CONSOLE_VERSION variable should be set to the kiali-ui npm version string corresponding to the console version to be used
+
+For example,
+
+```
+VERSION ?= v1.0.0
+...
+CONSOLE_VERSION ?= 0.2.11
 ```
 
 2) Commit that change to your private GitHub repository:
@@ -37,47 +50,19 @@ NOTE: You must have write permissions to the public GitHub repository in order t
 For example,
 
 ```
-$ git tag 1.0.0.Final
-$ git push origin 1.0.0.Final
+$ git tag v1.0.0
+$ git push origin v1.0.0
 ```
 
-Once the tag has been pushed, Travis will immediately run another build, but this time will tag the docker image with the same version string as the git tag name. In the example above, the docker image pushed to DockerHub will not be tagged with "latest" but will instead be tagged with "1.0.0.Final."
+Once the tag has been pushed, Travis will immediately run another build, but this time will tag the docker image with the same version string as the git tag name. In the example above, the docker image pushed to DockerHub will not be tagged with "latest" but will instead be tagged with "v1.0.0".
 
 You can let the committers know that the release has been completed and PRs can begin to be merged again. Though, it would be best to wait for this notification to go out until after you bump up the version string to the next snapshot version (see "Prepare For The Next Release" below).
 
-== Option #2: Using A Release Branch
-
-1) Create a local branch off of master with the name of the branch being the new version string of the upcoming release. For example,
-
-```
-git checkout -b 1.0.0.Final origin/master
-```
-
-2) Update the link:Makefile[] so the VERSION variable is set to the new version string of the upcoming release. For example,
-
-```
-VERSION ?= 1.0.0.Final
-```
-
-3) Commit that change and push the new branch to the public GitHub repository.
-
-NOTE: You must have write permissions to the public GitHub repository in order to be able to do this.
-
-For example,
-
-```
-$ git add Makefile
-$ git commit -m "New release"
-$ git push origin 1.0.0.Final
-```
-
 At this point, Travis will run the test suite, build the binary, and push the versioned docker image to link:https://hub.docker.com/r/kiali/kiali[DockerHub]. In the example above, the docker image pushed to DockerHub will not be tagged with "latest" but will instead be tagged with "1.0.0.Final."
-
-There will now also be a remote branch whose name is the version string of the release. Should any emergency patches need to be delivered for this release, create a new versioned branch off of this release branch (e.g. `git checkout -b 1.0.1.Final origin/1.0.0.Final`) at which time you can then release a new versioned release from that new branch by simply committing and pushing to that new branch.
 
 == Prepare For The Next Release
 
-Now that the release is done, you will want to bump up the version with a new version so any future master ("latest") builds will be given the new future version. Preferrably you should use a version with "SNAPSHOT" in it to indicate it is not a release but instead a work in progress (e.g. `1.0.1.Final-SNAPSHOT`). So create a PR with that change to Makefile and have someone review and merge that PR into the public GitHub repository's `master` branch.
+Now that the release is done, you will want to bump up the version with a new version so any future master ("latest") builds will be given the new future version. Preferrably you should use a version with "SNAPSHOT" in it to indicate it is not a release but instead a work in progress (e.g. `v1.0.1-SNAPSHOT`). Also, make sure you change the CONSOLE_VERSION to "latest" in the Makefile. So create a PR with those changes to Makefile and have someone review and merge that PR into the public GitHub repository's `master` branch.
 
 == Finished Product
 
@@ -91,4 +76,4 @@ If the Travis build is a tag build, then the tag name is passed to all Makefiles
 
 If the Travis build is a branch build (that is, not triggered by a tag), the name of the branch is set to the DOCKER_VERSION variable with the exception of the `master` branch. If the branch name is `master`, the DOCKER_VERSION is set to "latest".  Again, the value of the DOCKER_VERSION variable is then used by the Makefile to tag the docker images.
 
-Note that only tags or branches in the format `\#.#.#[.Label]` will trigger release tag/branch builds.
+Note that only tags or branches in the format `v\#.#.#[.Label]` will trigger release tag/branch builds.
