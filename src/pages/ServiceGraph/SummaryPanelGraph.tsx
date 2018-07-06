@@ -22,6 +22,7 @@ type SummaryPanelGraphState = {
 export default class SummaryPanelGraph extends React.Component<SummaryPanelPropType, SummaryPanelGraphState> {
   static readonly panelStyle = {
     width: '25em',
+    minWidth: '25em',
     overflowY: 'auto' as 'auto'
   };
 

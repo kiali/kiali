@@ -26,6 +26,7 @@ type SummaryPanelEdgeState = {
 export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
   static readonly panelStyle = {
     width: '25em',
+    minWidth: '25em',
     overflowY: 'auto' as 'auto'
   };
 

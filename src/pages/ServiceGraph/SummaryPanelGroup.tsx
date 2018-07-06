@@ -28,6 +28,7 @@ type SummaryPanelGroupState = {
 export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelGroupState> {
   static readonly panelStyle = {
     width: '25em',
+    minWidth: '25em',
     overflowY: 'auto' as 'auto'
   };
 
