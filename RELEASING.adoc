@@ -2,9 +2,11 @@
 
 This document gives the steps required to perform a release of Kiali. This document is only useful to Kiali release managers.
 
-The steps to perform a release are very simple and easy to execute thanks to the way link:.travis.yml[Travis] is setup.
+The steps to perform a release are relatively simple thanks to the way link:.travis.yml[Travis] is setup.
 
 Before running these steps, it is assumed the link:https://github.com/kiali/kiali/tree/master[kiali master] branch and the link:https://github.com/kiali/kiali-ui/tree/master[kiali-ui master] branch are all up to date and include all code that is to be released and that your local `master` branches are up to date with the remote `master` branches.
+
+For the steps below, it is assumed the image version being released is v1.0.0. Obviously, this version string for the docker image will change as new images are released.
 
 == Kiali-UI
 
@@ -19,7 +21,11 @@ $ git tag v1.0.0
 $ git push origin v1.0.0
 ```
 
+Note that this is the same version string that will also tag the kiali repo - this is to ensure they are in-sync and can be used to link the kiali and kiali-ui repo at the time of the release. In other words, this is not the kiali-ui version string that we are getting in the next step.
+
 2) Go to https://www.npmjs.com/package/@kiali/kiali-ui and find the version of the UI that should be built for this release. We will put this console version number in Kiali's Makefile - see below.
+
+_Finally, it is still undetermined how future releases are going to be done with respect to kiali-ui and its own version string. It is possible kiali-ui and kiali repos will be combined into one and thus both kiali and the kiali-ui version strings will be united as a single version string. Today, the version string of kiali-ui as it is seen in the NPM repository is determined within the kiali-ui travis configuration file. This may change in the future. But for now, we need to go to the NPM repository to get the version string of kiali-ui that is to be pulled into the kiali image._
 
 == Kiali
 
