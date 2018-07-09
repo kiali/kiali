@@ -131,7 +131,7 @@ Valid options:
       Used only for the 'up' command.
   -kv|--kiali-version <version>
       The Kiali version to be installed in OpenShift.
-      Default: v0.4.0
+      Default: v0.5.0
       Used only for the 'up' command.
   -p|--persistence-dir <dir>
       When set, OpenShift will persist data to this directory.
@@ -184,7 +184,7 @@ OPENSHIFT_PERSISTENCE_DIR="${OPENSHIFT_PERSISTENCE_DIR=/var/lib/origin/persisten
 # If that is set to false, the other KIALI_ environment variables will be ignored.
 # This is ONLY supported in OS_ISTIO_OC_DOWNLOAD_PLATFORM versions of istio-3.9-0.8.0.alpha2 or higher.
 KIALI_ENABLED="${KIALI_ENABLED:-false}"
-KIALI_VERSION="${KIALI_VERSION:-v0.4.0}"
+KIALI_VERSION="${KIALI_VERSION:-v0.5.0}"
 KIALI_USERNAME="${KIALI_USERNAME:-admin}"
 KIALI_PASSWORD="${KIALI_PASSWORD:-admin}"
 
