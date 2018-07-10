@@ -7,6 +7,7 @@ import (
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
 )
@@ -24,6 +25,9 @@ func TestNoCrashOnNil(t *testing.T) {
 }
 
 func TestAllIstioObjectWithServices(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	assert := assert.New(t)
 
 	validations := NoServiceChecker{
@@ -40,6 +44,9 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 }
 
 func TestDetectObjectWithoutService(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	assert := assert.New(t)
 
 	validations := NoServiceChecker{
@@ -66,9 +73,11 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.True(validations[models.IstioValidationKey{"destinationrule", "customer-dr"}].Valid)
 	productVs := validations[models.IstioValidationKey{"virtualservice", "product-vs"}]
 	assert.False(productVs.Valid)
-	assert.Equal(1, len(productVs.Checks))
-	assert.Equal("spec/hosts", productVs.Checks[0].Path)
-	assert.Equal("Hosts doesn't have a valid service", productVs.Checks[0].Message)
+	assert.Equal(2, len(productVs.Checks))
+	assert.Equal("spec/http", productVs.Checks[0].Path)
+	assert.Equal("Route doesn't have a valid service", productVs.Checks[0].Message)
+	assert.Equal("spec/tcp", productVs.Checks[1].Path)
+	assert.Equal("Route doesn't have a valid service", productVs.Checks[1].Message)
 
 	validations = NoServiceChecker{
 		Namespace:    "test",
@@ -100,6 +109,30 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 			Spec: map[string]interface{}{
 				"hosts": []interface{}{
 					"product",
+				},
+				"http": []interface{}{
+					map[string]interface{}{
+						"route": []interface{}{
+							map[string]interface{}{
+								"destination": map[string]interface{}{
+									"host":   "product",
+									"subset": "v1",
+								},
+							},
+						},
+					},
+				},
+				"tcp": []interface{}{
+					map[string]interface{}{
+						"route": []interface{}{
+							map[string]interface{}{
+								"destination": map[string]interface{}{
+									"host":   "product",
+									"subset": "v1",
+								},
+							},
+						},
+					},
 				},
 			},
 		},

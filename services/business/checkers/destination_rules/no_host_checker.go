@@ -17,7 +17,7 @@ func (destinationRule NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 
 	for _, serviceName := range destinationRule.ServiceNames {
 		if host, ok := destinationRule.DestinationRule.GetSpec()["host"]; ok {
-			if dHost, ok := host.(string); ok && kubernetes.CheckHostnameService(dHost, serviceName, destinationRule.Namespace) {
+			if dHost, ok := host.(string); ok && kubernetes.FilterByHost(dHost, serviceName, destinationRule.Namespace) {
 				valid = true
 				break
 			}

@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/kiali/kiali/config"
@@ -61,7 +60,8 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	virtualServices := make([]IstioObject, 0)
 	for _, virtualService := range virtualServiceList.GetItems() {
 		appendVirtualService := serviceName == ""
-		if !appendVirtualService && FilterByHost(virtualService.GetSpec(), serviceName, namespace) {
+		routeProtocols := []string{"http", "tcp"}
+		if !appendVirtualService && FilterByRoute(virtualService.GetSpec(), routeProtocols, serviceName, namespace) {
 			appendVirtualService = true
 		}
 		if appendVirtualService {
@@ -165,7 +165,7 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 	for _, destinationRule := range destinationRuleList.Items {
 		appendDestinationRule := serviceName == ""
 		if host, ok := destinationRule.Spec["host"]; ok {
-			if dHost, ok := host.(string); ok && CheckHostnameService(dHost, serviceName, namespace) {
+			if dHost, ok := host.(string); ok && FilterByHost(dHost, serviceName, namespace) {
 				appendDestinationRule = true
 			}
 		}
@@ -258,13 +258,9 @@ func CheckVirtualService(virtualService IstioObject, namespace string, serviceNa
 	if virtualService == nil || virtualService.GetSpec() == nil || subsets == nil {
 		return false
 	}
-	if len(subsets) > 0 && FilterByHost(virtualService.GetSpec(), serviceName, namespace) {
-		if http, ok := virtualService.GetSpec()["http"]; ok && checkSubsetRoute(http, serviceName, subsets) {
-			return true
-		}
-		if tcp, ok := virtualService.GetSpec()["tcp"]; ok && checkSubsetRoute(tcp, serviceName, subsets) {
-			return true
-		}
+	routeProtocols := []string{"http", "tcp"}
+	if len(subsets) > 0 && FilterByRouteAndSubset(virtualService.GetSpec(), routeProtocols, serviceName, namespace, subsets) {
+		return true
 	}
 	return false
 }
@@ -275,7 +271,7 @@ func GetDestinationRulesSubsets(destinationRules []IstioObject, serviceName, ver
 	foundSubsets := make([]string, 0)
 	for _, destinationRule := range destinationRules {
 		if dHost, ok := destinationRule.GetSpec()["host"]; ok {
-			if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, destinationRule.GetObjectMeta().Namespace) {
+			if host, ok := dHost.(string); ok && FilterByHost(host, serviceName, destinationRule.GetObjectMeta().Namespace) {
 				if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
 					if dSubsets, ok := subsets.([]interface{}); ok {
 						for _, subset := range dSubsets {
@@ -308,7 +304,7 @@ func CheckDestinationRuleCircuitBreaker(destinationRule IstioObject, namespace s
 	}
 	cfg := config.Get()
 	if dHost, ok := destinationRule.GetSpec()["host"]; ok {
-		if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, namespace) {
+		if host, ok := dHost.(string); ok && FilterByHost(host, serviceName, namespace) {
 			if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
 				return true
 			}
@@ -339,7 +335,7 @@ func CheckDestinationRulemTLS(destinationRule IstioObject, namespace string, ser
 		return false
 	}
 	if dHost, ok := destinationRule.GetSpec()["host"]; ok {
-		if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, namespace) {
+		if host, ok := dHost.(string); ok && FilterByHost(host, serviceName, namespace) {
 			if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok {
 				if dTrafficPolicy, ok := trafficPolicy.(map[string]interface{}); ok {
 					if mtls, ok := dTrafficPolicy["tls"]; ok {
@@ -347,38 +343,6 @@ func CheckDestinationRulemTLS(destinationRule IstioObject, namespace string, ser
 							if mode, ok := dmTLS["mode"]; ok {
 								if dmode, ok := mode.(string); ok {
 									return dmode == "ISTIO_MUTUAL"
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return false
-}
-
-// Helper method to check if exist a route with a destination and a subset defined for a httpRoute or tcpRoute in a VirtualService
-func checkSubsetRoute(routes interface{}, serviceName string, subsets []string) bool {
-	if httpTcpRoutes, ok := routes.([]interface{}); ok {
-		for _, httpTcpRoute := range httpTcpRoutes {
-			if dHttpTcpRoute, ok := httpTcpRoute.(map[string]interface{}); ok {
-				if route, ok := dHttpTcpRoute["route"]; ok {
-					if dRoutes, ok := route.([]interface{}); ok {
-						for _, dRoute := range dRoutes {
-							if innerRoute, ok := dRoute.(map[string]interface{}); ok {
-								if destination, ok := innerRoute["destination"]; ok {
-									if dDestination, ok := destination.(map[string]interface{}); ok {
-										if dHost, ok := dDestination["host"]; ok && dHost == serviceName {
-											if dSubset, ok := dDestination["subset"]; ok {
-												for _, subsetName := range subsets {
-													if dSubset == subsetName {
-														return true
-													}
-												}
-											}
-										}
-									}
 								}
 							}
 						}
@@ -438,12 +402,58 @@ func FilterByDestination(spec map[string]interface{}, namespace string, serviceN
 	return false
 }
 
-func FilterByHost(spec map[string]interface{}, serviceName string, namespace string) bool {
-	if hosts, ok := spec["hosts"]; ok {
-		if hostsArray, ok := hosts.([]interface{}); ok {
-			for _, dHost := range hostsArray {
-				if host, ok := dHost.(string); ok && CheckHostnameService(host, serviceName, namespace) {
-					return true
+func FilterByHost(host string, serviceName string, namespace string) bool {
+	// Check single name
+	if host == serviceName {
+		return true
+	}
+	// Check service.namespace
+	if host == fmt.Sprintf("%s.%s", serviceName, namespace) {
+		return true
+	}
+	// Check the FQDN. <service>.<namespace>.svc
+	if host == fmt.Sprintf("%s.%s.%s", serviceName, namespace, "svc") {
+		return true
+	}
+
+	// Check the FQDN. <service>.<namespace>.svc.<zone>
+	if host == fmt.Sprintf("%s.%s.%s", serviceName, namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain) {
+		return true
+	}
+
+	// Note, FQDN names are defined from Kubernetes registry specification [1]
+	// [1] https://github.com/kubernetes/dns/blob/master/docs/specification.md
+
+	return false
+}
+
+func FilterByRoute(spec map[string]interface{}, protocols []string, service string, namespace string) bool {
+	if len(protocols) == 0 {
+		return false
+	}
+	for _, protocol := range protocols {
+		if prot, ok := spec[protocol]; ok {
+			if aHttp, ok := prot.([]interface{}); ok {
+				for _, httpRoute := range aHttp {
+					if mHttpRoute, ok := httpRoute.(map[string]interface{}); ok {
+						if route, ok := mHttpRoute["route"]; ok {
+							if aDestinationWeight, ok := route.([]interface{}); ok {
+								for _, destination := range aDestinationWeight {
+									if mDestination, ok := destination.(map[string]interface{}); ok {
+										if destinationW, ok := mDestination["destination"]; ok {
+											if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
+												if host, ok := mDestinationW["host"]; ok {
+													if sHost, ok := host.(string); ok && FilterByHost(sHost, service, namespace) {
+														return true
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 		}
@@ -451,22 +461,47 @@ func FilterByHost(spec map[string]interface{}, serviceName string, namespace str
 	return false
 }
 
-// CheckHostnameService returns true when the hostname specifies the service passed by param.
-// It accepts the following hostname formats:
-// *, reviews, reviews.bookinfo.svc, reviews.bookinfo.svc.cluster.local,
-// *.bookinfo.svc, *.bookinfo.svc.cluster.local
-func CheckHostnameService(hostname, service, namespace string) bool {
-	domainParts := strings.Split(hostname, ".")
-
-	if len(domainParts) == 1 {
-		// hostname is a service name (e.g. reviews) or a wildcard
-		return hostname == service || hostname == "*"
+func FilterByRouteAndSubset(spec map[string]interface{}, protocols []string, service string, namespace string, subsets []string) bool {
+	if len(protocols) == 0 {
+		return false
 	}
-
-	// hostname is a FQDN/Wildcard (e.g. reviews.bookinfo.svc, *.bookinfo.svc)
-	if len(domainParts) > 2 && domainParts[1] == namespace && domainParts[2] == "svc" {
-		return domainParts[0] == service || domainParts[0] == "*"
+	for _, protocol := range protocols {
+		if prot, ok := spec[protocol]; ok {
+			if aHttp, ok := prot.([]interface{}); ok {
+				for _, httpRoute := range aHttp {
+					if mHttpRoute, ok := httpRoute.(map[string]interface{}); ok {
+						if route, ok := mHttpRoute["route"]; ok {
+							if aDestinationWeight, ok := route.([]interface{}); ok {
+								for _, destination := range aDestinationWeight {
+									if mDestination, ok := destination.(map[string]interface{}); ok {
+										if destinationW, ok := mDestination["destination"]; ok {
+											if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
+												if host, ok := mDestinationW["host"]; ok {
+													if sHost, ok := host.(string); ok {
+														if FilterByHost(sHost, service, namespace) {
+															// Check service + name is found on a route
+															if subset, ok := mDestinationW["subset"]; ok {
+																if sSubset, ok := subset.(string); ok {
+																	for _, checkSubset := range subsets {
+																		if sSubset == checkSubset {
+																			return true
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
-
 	return false
 }

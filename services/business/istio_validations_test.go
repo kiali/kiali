@@ -23,7 +23,6 @@ func TestGetNamespaceValidations(t *testing.T) {
 		[]string{"details", "product", "customer"}, fakePods())
 
 	validations, _ := vs.GetNamespaceValidations("test")
-
 	assert.NotEmpty(validations)
 	assert.True(validations["test"][models.IstioValidationKey{"virtualservice", "product-vs"}].Valid)
 	assert.True(validations["test"][models.IstioValidationKey{"destinationrule", "customer-dr"}].Valid)
@@ -73,11 +72,51 @@ func fakeCombinedIstioDetails() *kubernetes.IstioDetails {
 				"hosts": []interface{}{
 					"product",
 				},
+				"http": []interface{}{
+					map[string]interface{}{
+						"route": []interface{}{
+							map[string]interface{}{
+								"destination": map[string]interface{}{
+									"host":   "product",
+									"subset": "v1",
+								},
+							},
+						},
+					},
+				},
+				"tcp": []interface{}{
+					map[string]interface{}{
+						"route": []interface{}{
+							map[string]interface{}{
+								"destination": map[string]interface{}{
+									"host":   "product",
+									"subset": "v1",
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
 
 	istioDetails.DestinationRules = []kubernetes.IstioObject{
+		&kubernetes.DestinationRule{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "product-dr",
+			},
+			Spec: map[string]interface{}{
+				"host": "product",
+				"subsets": []interface{}{
+					map[string]interface{}{
+						"name": "v1",
+						"labels": map[string]interface{}{
+							"version": "v1",
+						},
+					},
+				},
+			},
+		},
 		&kubernetes.DestinationRule{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "customer-dr",
