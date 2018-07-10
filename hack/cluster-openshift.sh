@@ -56,6 +56,10 @@ while [[ $# -gt 0 ]]; do
       OPENSHIFT_IP_ADDRESS="$2"
       shift;shift
       ;;
+    -ie|--istio-enabled)
+      ISTIO_ENABLED="$2"
+      shift;shift
+      ;;
     -iv|--istio-version)
       ISTIO_VERSION="$2"
       shift;shift
@@ -98,6 +102,8 @@ while [[ $# -gt 0 ]]; do
 $0 [option...] command
 
 Valid options:
+  -v|--verbose
+      Enable logging of debug messages from this script.
   -b|--bin-dir <dir>
       Directory where the OpenShift binaries are or will be stored when downloaded.
       Default: ${HOME}/bin
@@ -105,6 +111,10 @@ Valid options:
   -a|--address <address>
       The public IP or named address bound to by the OpenShift cluster.
       Default: $(echo $(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/'))
+      Used only for the 'up' command.
+  -ie|--istio-enabled (true|false)
+      When set to true, Istio will be installed in OpenShift.
+      Default: true
       Used only for the 'up' command.
   -iv|--istio-version <version>
       The version of Istio that the istiooc binary will install.
@@ -180,6 +190,9 @@ OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-linux}"
 # Note: ${v=d} is used on purpose so we do not persist if the directory was explicitly set to "".
 OPENSHIFT_PERSISTENCE_DIR="${OPENSHIFT_PERSISTENCE_DIR=/var/lib/origin/persistent.data}"
 
+# If ISTIO_ENABLED=true, then the istiooc command will install a version of Istio for you.
+ISTIO_ENABLED="${ISTIO_ENABLED:-true}"
+
 # If you set KIALI_ENABLED=true, then the istiooc command will install a version of Kiali for you.
 # If that is set to false, the other KIALI_ environment variables will be ignored.
 # This is ONLY supported in OS_ISTIO_OC_DOWNLOAD_PLATFORM versions of istio-3.9-0.8.0.alpha2 or higher.
@@ -215,9 +228,13 @@ if [ "${OPENSHIFT_PERSISTENCE_DIR}" != "" ]; then
   OPENSHIFT_PERSISTENCE_ARGS="--use-existing-config --host-data-dir=${OPENSHIFT_PERSISTENCE_DIR}"
 fi
 
-# If Istio version is explicitly defined, set the proper istiooc arguments that will be needed.
-if [ "${ISTIO_VERSION}" != "" ]; then
-  ISTIO_VERSION_ARGS="--istio-version=${ISTIO_VERSION}"
+# If Istio is to be installed, set the proper istiooc arguments that will be needed.
+if [ "${ISTIO_ENABLED}" == "true" ]; then
+  ISTIO_ARGS="--istio"
+  # If Istio version is explicitly defined, set the proper istiooc arguments that will be needed.
+  if [ "${ISTIO_VERSION}" != "" ]; then
+    ISTIO_ARGS="${ISTIO_ARGS} --istio-version=${ISTIO_VERSION}"
+  fi
 fi
 
 # If Kiali is to be installed, set the proper istiooc arguments that will be needed.
@@ -244,7 +261,7 @@ debug "ENVIRONMENT:
   OS_ISTIO_OC_EXE_PATH=$OS_ISTIO_OC_EXE_PATH
   OS_ISTIO_OC_COMMAND=$OS_ISTIO_OC_COMMAND
   ISTIO_VERSION=$ISTIO_VERSION
-  ISTIO_VERSION_ARGS=$ISTIO_VERSION_ARGS
+  ISTIO_ARGS=$ISTIO_ARGS
   OPENSHIFT_PERSISTENCE_ARGS=$OPENSHIFT_PERSISTENCE_ARGS
   KIALI_ARGS=$KIALI_ARGS
   CLUSTER_OPTIONS=$CLUSTER_OPTIONS
@@ -321,8 +338,8 @@ if [ "$_CMD" = "up" ]; then
   fi
 
   echo "Starting the OpenShift cluster..."
-  debug "${OS_ISTIO_OC_COMMAND} cluster up --istio ${ISTIO_VERSION_ARGS} ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${KIALI_ARGS} ${CLUSTER_OPTIONS}"
-  ${OS_ISTIO_OC_COMMAND} cluster up --istio ${ISTIO_VERSION_ARGS} ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${KIALI_ARGS} ${CLUSTER_OPTIONS}
+  debug "${OS_ISTIO_OC_COMMAND} cluster up ${ISTIO_ARGS} ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${KIALI_ARGS} ${CLUSTER_OPTIONS}"
+  ${OS_ISTIO_OC_COMMAND} cluster up ${ISTIO_ARGS} ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${KIALI_ARGS} ${CLUSTER_OPTIONS}
 
   if [ "$?" != "0" ]; then
     echo "ERROR: failed to start OpenShift"
