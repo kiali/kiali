@@ -109,7 +109,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		return models.IstioValidations{}, err
 	}
 
-	return runObjectCheckers(objectCheckers), nil
+	return runObjectCheckers(objectCheckers).FilterByKey(models.ObjectTypeSingular[objectType], object), nil
 }
 
 func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
