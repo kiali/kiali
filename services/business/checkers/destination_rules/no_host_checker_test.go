@@ -1,9 +1,12 @@
 package destination_rules
 
 import (
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 )
 
 func TestValidHost(t *testing.T) {
@@ -20,6 +23,9 @@ func TestValidHost(t *testing.T) {
 }
 
 func TestNoValidHost(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	assert := assert.New(t)
 
 	// reviews is not part of service names

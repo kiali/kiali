@@ -107,7 +107,7 @@ func (checker SubsetPresenceChecker) getDestinationRule(virtualServiceHost strin
 			namespace = domainParts[1]
 		}
 
-		if kubernetes.CheckHostnameService(virtualServiceHost, serviceName, namespace) {
+		if kubernetes.FilterByHost(virtualServiceHost, serviceName, namespace) {
 			return destinationRule, true
 		}
 	}

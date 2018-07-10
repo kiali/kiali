@@ -1,6 +1,7 @@
 package virtual_services
 
 import (
+	"fmt"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
 )
@@ -15,15 +16,24 @@ func (virtualService NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	valid := false
 	validations := make([]*models.IstioCheck, 0)
 
+	routeProtocols := []string{"http", "tcp"}
 	for _, serviceName := range virtualService.ServiceNames {
-		if valid = kubernetes.FilterByHost(virtualService.VirtualService.GetSpec(), serviceName, virtualService.Namespace); valid {
+		if valid = kubernetes.FilterByRoute(virtualService.VirtualService.GetSpec(), routeProtocols, serviceName, virtualService.Namespace); valid {
 			break
 		}
 	}
 
 	if !valid {
-		validation := models.BuildCheck("Hosts doesn't have a valid service", "error", "spec/hosts")
-		validations = append(validations, &validation)
+		for _, protocol := range routeProtocols {
+			if _, ok := virtualService.VirtualService.GetSpec()[protocol]; ok {
+				validation := models.BuildCheck("Route doesn't have a valid service", "error", fmt.Sprintf("spec/%s", protocol))
+				validations = append(validations, &validation)
+			}
+		}
+		if len(validations) == 0 {
+			validation := models.BuildCheck("VirtualService doesn't define any protocol", "error", "")
+			validations = append(validations, &validation)
+		}
 	}
 
 	return validations, valid

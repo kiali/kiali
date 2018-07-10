@@ -60,27 +60,16 @@ func TestFilterByHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	assert.False(t, FilterByHost(nil, "", ""))
+	assert.True(t, FilterByHost("reviews", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews-bad", "reviews", "bookinfo"))
 
-	spec := map[string]interface{}{
-		"hosts": []interface{}{
-			"host1",
-		},
-	}
+	assert.True(t, FilterByHost("reviews.bookinfo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews-bad.bookinfo", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews.bookinfo-bad", "reviews", "bookinfo"))
 
-	assert.True(t, FilterByHost(spec, "host1", "test"))
-	assert.False(t, FilterByHost(spec, "host2", "test"))
-
-	spec = map[string]interface{}{
-		"hosts": []interface{}{
-			"host1",
-			"host2",
-		},
-	}
-
-	assert.True(t, FilterByHost(spec, "host1", "test"))
-	assert.True(t, FilterByHost(spec, "host2", "test"))
-	assert.False(t, FilterByHost(spec, "host3", "test"))
+	assert.True(t, FilterByHost("reviews.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews-bad.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews.bookinfo-bad.svc.cluster.local", "reviews", "bookinfo"))
 }
 
 func TestCheckVirtualService(t *testing.T) {
@@ -292,6 +281,9 @@ func TestCheckDestinationRuleCircuitBreaker(t *testing.T) {
 }
 
 func TestCheckDestinationRulemTLS(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	assert.False(t, CheckDestinationRulemTLS(nil, "", ""))
 
 	destinationRule := MockIstioObject{
@@ -323,35 +315,19 @@ func TestCheckDestinationRulemTLS(t *testing.T) {
 	assert.False(t, CheckDestinationRulemTLS(&destinationRule, "", "reviews-bad"))
 }
 
-func TestShortHostname(t *testing.T) {
-	assert.True(t, CheckHostnameService("reviews", "reviews", "bookinfo"))
-	assert.False(t, CheckHostnameService("reviews", "ratings", "bookinfo"))
-	assert.True(t, CheckHostnameService("*", "reviews", "bookinfo"))
-}
-
 func TestFQDNHostname(t *testing.T) {
-	assert.True(t, CheckHostnameService("reviews.bookinfo.svc", "reviews", "bookinfo"))
-	assert.True(t, CheckHostnameService("reviews.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+	conf := config.NewConfig()
+	config.Set(conf)
 
-	assert.False(t, CheckHostnameService("reviews.foo.svc", "reviews", "bookinfo"))
-	assert.False(t, CheckHostnameService("reviews.foo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.True(t, FilterByHost("reviews.bookinfo.svc", "reviews", "bookinfo"))
+	assert.True(t, FilterByHost("reviews.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
 
-	assert.False(t, CheckHostnameService("ratings.bookinfo.svc", "reviews", "bookinfo"))
-	assert.False(t, CheckHostnameService("ratings.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews.foo.svc", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("reviews.foo.svc.cluster.local", "reviews", "bookinfo"))
 
-	assert.False(t, CheckHostnameService("ratings.foo.svc", "reviews", "bookinfo"))
-	assert.False(t, CheckHostnameService("ratings.foo.svc.cluster.local", "reviews", "bookinfo"))
-}
+	assert.False(t, FilterByHost("ratings.bookinfo.svc", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("ratings.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
 
-func TestWildcardHostname(t *testing.T) {
-	assert.True(t, CheckHostnameService("*.bookinfo.svc", "reviews", "bookinfo"))
-	assert.True(t, CheckHostnameService("*.bookinfo.svc.cluster.local", "reviews", "bookinfo"))
-
-	assert.True(t, CheckHostnameService("*.bookinfo.svc", "ratings", "bookinfo"))
-	assert.True(t, CheckHostnameService("*.bookinfo.svc.cluster.local", "ratings", "bookinfo"))
-
-	assert.False(t, CheckHostnameService("*.foo.svc", "ratings", "bookinfo"))
-	assert.False(t, CheckHostnameService("*.foo.svc.cluster.local", "ratings", "bookinfo"))
-	assert.False(t, CheckHostnameService("*.foo.svc", "reviews", "bookinfo"))
-	assert.False(t, CheckHostnameService("*.foo.svc.cluster.local", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("ratings.foo.svc", "reviews", "bookinfo"))
+	assert.False(t, FilterByHost("ratings.foo.svc.cluster.local", "reviews", "bookinfo"))
 }
