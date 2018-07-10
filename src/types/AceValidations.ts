@@ -226,7 +226,7 @@ export const parseAceValidations = (yaml: string, validations?: Validations): Ac
 
   let objectValidations = getObjectValidations(validations);
   objectValidations.forEach(objectValidation => {
-    if (!objectValidation.valid && objectValidation.checks) {
+    if (objectValidation.checks) {
       objectValidation.checks.forEach(check => {
         let aceCheck = parseCheck(yaml, check);
         aceValidations.markers.push(aceCheck.marker);
