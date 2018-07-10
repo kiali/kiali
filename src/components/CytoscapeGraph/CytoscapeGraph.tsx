@@ -313,6 +313,9 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       cy.nodes().forEach(node => {
         node.position({ x: 0, y: 0 });
       });
+      // Enable labels when doing a relayout, layouts can be told to take into account the labels to avoid
+      // overlap, but we need to have them enabled (nodeDimensionsIncludeLabels: true)
+      this.turnNodeLabelsTo(cy, true);
       cy.layout(LayoutDictionary.getLayout(this.props.graphLayout)).run();
       this.updateLayout = false;
     }

@@ -4,7 +4,8 @@ export class DagreGraph implements GraphType {
   static getLayout() {
     return {
       name: 'dagre',
-      rankDir: 'LR'
+      rankDir: 'LR',
+      nodeDimensionsIncludeLabels: true
     };
   }
 }

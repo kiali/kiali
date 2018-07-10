@@ -6,7 +6,8 @@ export class BreadthFirstGraph implements GraphType {
       name: 'breadthfirst',
       directed: 'true',
       maximalAdjustments: 2,
-      spacingFactor: 1
+      spacingFactor: 1,
+      nodeDimensionsIncludeLabels: true
     };
   }
 }
