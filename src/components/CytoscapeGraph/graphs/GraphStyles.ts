@@ -54,15 +54,20 @@ export class GraphStyles {
               return '';
             }
 
-            if (ele.data('isOutside')) {
-              return `${service}\n${namespace}`;
-            }
-
             if (ele.data('parent')) {
               return version;
             }
 
-            return version && version !== 'unknown' ? service + '\n' + version : service;
+            let content = service;
+            if (version && version !== 'unknown') {
+              content += `\n${version}`;
+            }
+
+            if (ele.data('isOutside')) {
+              content += `\n${namespace}`;
+            }
+
+            return content;
           },
           'background-color': PfColors.Black200,
           'border-color': PfColors.Black400,
