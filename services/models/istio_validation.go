@@ -31,8 +31,29 @@ type IstioCheck struct {
 	Path     string `json:"path"`     // String that describes where in the yaml file is the check located
 }
 
+var ObjectTypeSingular = map[string]string{
+	"gateways":          "gateway",
+	"virtualservices":   "virtualservice",
+	"destinationrules":  "destinationrule",
+	"serviceentries":    "serviceentry",
+	"rules":             "rule",
+	"quotaspecs":        "quotaspec",
+	"quotaspecbindings": "quotaspecbinding",
+}
+
 func BuildCheck(message, severity, path string) IstioCheck {
 	return IstioCheck{Message: message, Severity: severity, Path: path}
+}
+
+func (iv IstioValidations) FilterByKey(objectType, name string) IstioValidations {
+	fiv := IstioValidations{}
+	for k, v := range iv {
+		if k.Name == name && k.ObjectType == objectType {
+			fiv[k] = v
+		}
+	}
+
+	return fiv
 }
 
 func (iv IstioValidations) MergeValidations(validations IstioValidations) IstioValidations {

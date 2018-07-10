@@ -70,7 +70,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	}
 
 	// Get only the given Istio Object
-	var vs, dr kubernetes.IstioObject
+	var dr kubernetes.IstioObject
+	var vss []kubernetes.IstioObject
 	var objectCheckers []ObjectChecker
 	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, ServiceList: serviceList}
 	istioDetails := kubernetes.IstioDetails{}
@@ -79,9 +80,9 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	case "gateways":
 		// Validations on Gateways are not yet in place
 	case "virtualservices":
-		if vs, err = in.k8s.GetVirtualService(namespace, object); err == nil {
+		if vss, err = in.k8s.GetVirtualServices(namespace, ""); err == nil {
 			if drs, err := in.k8s.GetDestinationRules(namespace, ""); err == nil {
-				istioDetails.VirtualServices = []kubernetes.IstioObject{vs}
+				istioDetails.VirtualServices = vss
 				istioDetails.DestinationRules = drs
 				virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
 				objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
@@ -108,7 +109,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		return models.IstioValidations{}, err
 	}
 
-	return runObjectCheckers(objectCheckers), nil
+	return runObjectCheckers(objectCheckers).FilterByKey(models.ObjectTypeSingular[objectType], object), nil
 }
 
 func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {

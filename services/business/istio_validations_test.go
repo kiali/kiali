@@ -55,7 +55,7 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 	k8s.On("GetIstioDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(istioObjects, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string")).Return(fakeCombinedServices(services), nil)
 	k8s.On("GetNamespacePods", mock.AnythingOfType("string")).Return(podList, nil)
-	k8s.On("GetVirtualService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().VirtualServices[0], nil)
+	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().VirtualServices, nil)
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().DestinationRules, nil)
 
 	return IstioValidationsService{k8s: k8s}
