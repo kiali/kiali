@@ -1,13 +1,11 @@
 import serviceGraphFilterState from '../ServiceGraphFilterState';
 import { ServiceGraphFilterActionKeys } from '../../actions/ServiceGraphFilterActions';
-import { EdgeLabelMode } from '../../types/GraphFilter';
 
 describe('ServiceGraphFilterState reducer', () => {
   it('should return the initial state', () => {
     expect(serviceGraphFilterState(undefined, {})).toEqual({
       showLegend: false,
       showNodeLabels: true,
-      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: true,
       showVirtualServices: true,
       showMissingSidecars: true,
@@ -22,7 +20,6 @@ describe('ServiceGraphFilterState reducer', () => {
         {
           showLegend: false,
           showNodeLabels: true,
-          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
@@ -36,7 +33,6 @@ describe('ServiceGraphFilterState reducer', () => {
     ).toEqual({
       showLegend: true,
       showNodeLabels: true,
-      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showVirtualServices: true,
       showMissingSidecars: true,
@@ -51,7 +47,6 @@ describe('ServiceGraphFilterState reducer', () => {
         {
           showLegend: false,
           showNodeLabels: true,
-          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
@@ -65,7 +60,6 @@ describe('ServiceGraphFilterState reducer', () => {
     ).toEqual({
       showLegend: false,
       showNodeLabels: false,
-      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showVirtualServices: true,
       showMissingSidecars: true,
@@ -74,42 +68,12 @@ describe('ServiceGraphFilterState reducer', () => {
     });
   });
 
-  it('should handle TOGGLE_GRAPH_EDGE_LABEL', () => {
-    expect(
-      serviceGraphFilterState(
-        {
-          showLegend: false,
-          showNodeLabels: true,
-          edgeLabelMode: EdgeLabelMode.HIDE,
-          showCircuitBreakers: false,
-          showVirtualServices: true,
-          showMissingSidecars: true,
-          showTrafficAnimation: false,
-          refreshRate: 15000
-        },
-        {
-          type: ServiceGraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
-          payload: EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE
-        }
-      )
-    ).toEqual({
-      showLegend: false,
-      showNodeLabels: true,
-      edgeLabelMode: EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE,
-      showCircuitBreakers: false,
-      showVirtualServices: true,
-      showMissingSidecars: true,
-      showTrafficAnimation: false,
-      refreshRate: 15000
-    });
-  });
   it('should handle TOGGLE_GRAPH_CIRCUIT_BREAKERS', () => {
     expect(
       serviceGraphFilterState(
         {
           showLegend: false,
           showNodeLabels: true,
-          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
@@ -123,7 +87,6 @@ describe('ServiceGraphFilterState reducer', () => {
     ).toEqual({
       showLegend: false,
       showNodeLabels: true,
-      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: true,
       showVirtualServices: true,
       showMissingSidecars: true,
@@ -137,7 +100,6 @@ describe('ServiceGraphFilterState reducer', () => {
         {
           showLegend: false,
           showNodeLabels: true,
-          edgeLabelMode: EdgeLabelMode.HIDE,
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
@@ -151,7 +113,6 @@ describe('ServiceGraphFilterState reducer', () => {
     ).toEqual({
       showLegend: false,
       showNodeLabels: true,
-      edgeLabelMode: EdgeLabelMode.HIDE,
       showCircuitBreakers: false,
       showVirtualServices: false,
       showMissingSidecars: true,
@@ -168,7 +129,6 @@ describe('ServiceGraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
-          edgeLabelMode: EdgeLabelMode.HIDE,
           showTrafficAnimation: false,
           refreshRate: 15000
         },
@@ -182,7 +142,6 @@ describe('ServiceGraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showVirtualServices: true,
       showMissingSidecars: false,
-      edgeLabelMode: EdgeLabelMode.HIDE,
       showTrafficAnimation: false,
       refreshRate: 15000
     });
@@ -196,7 +155,6 @@ describe('ServiceGraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
-          edgeLabelMode: EdgeLabelMode.HIDE,
           showTrafficAnimation: false,
           refreshRate: 15000
         },
@@ -210,7 +168,6 @@ describe('ServiceGraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showVirtualServices: true,
       showMissingSidecars: true,
-      edgeLabelMode: EdgeLabelMode.HIDE,
       showTrafficAnimation: true,
       refreshRate: 15000
     });
@@ -224,7 +181,6 @@ describe('ServiceGraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
-          edgeLabelMode: EdgeLabelMode.HIDE,
           showTrafficAnimation: false,
           refreshRate: 15000
         },
@@ -239,7 +195,6 @@ describe('ServiceGraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showVirtualServices: true,
       showMissingSidecars: true,
-      edgeLabelMode: EdgeLabelMode.HIDE,
       showTrafficAnimation: false,
       refreshRate: 10000
     });

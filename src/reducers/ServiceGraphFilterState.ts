@@ -1,7 +1,6 @@
 import { ServiceGraphFilterState } from '../store/Store';
 import { ServiceGraphFilterActionKeys } from '../actions/ServiceGraphFilterActions';
 import { updateState } from '../utils/Reducer';
-import { EdgeLabelMode } from '../types/GraphFilter';
 import { config } from '../config';
 
 const INITIAL_STATE: ServiceGraphFilterState = {
@@ -13,7 +12,7 @@ const INITIAL_STATE: ServiceGraphFilterState = {
   showTrafficAnimation: false,
   // @ todo: add disableLayers back in later
   // disableLayers: false
-  edgeLabelMode: EdgeLabelMode.HIDE,
+  // edgeLabelMode: EdgeLabelMode.HIDE,
   refreshRate: config().toolbar.defaultPollInterval
 };
 

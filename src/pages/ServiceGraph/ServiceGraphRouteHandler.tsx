@@ -6,7 +6,7 @@ import { GraphParamsType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import * as LayoutDictionary from '../../components/CytoscapeGraph/graphs/LayoutDictionary';
 import ServiceGraphPage from '../../containers/ServiceGraphPageContainer';
-import { makeURLFromParams } from '../../components/Nav/NavUtils';
+import { makeServiceGraphUrlFromParams } from '../../components/Nav/NavUtils';
 import { config } from '../../config';
 
 const URLSearchParams = require('url-search-params');
@@ -95,7 +95,7 @@ export default class ServiceGraphRouteHandler extends React.Component<
 
   componentDidMount() {
     // Note: `history.replace` simply changes the address bar text, not re-navigation
-    this.context.router.history.replace(makeURLFromParams(this.state));
+    this.context.router.history.replace(makeServiceGraphUrlFromParams(this.state));
   }
 
   render() {

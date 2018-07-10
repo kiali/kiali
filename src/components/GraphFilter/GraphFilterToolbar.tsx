@@ -2,11 +2,11 @@ import * as React from 'react';
 import { PropTypes } from 'prop-types';
 
 import { GraphParamsType } from '../../types/Graph';
-import { Duration, Layout, EdgeLabelMode } from '../../types/GraphFilter';
+import { Duration } from '../../types/GraphFilter';
 import Namespace from '../../types/Namespace';
 import GraphFilterToolbarType from '../../types/GraphFilterToolbar';
 
-import { makeURLFromParams } from '../../components/Nav/NavUtils';
+import { makeServiceGraphUrlFromParams } from '../Nav/NavUtils';
 
 import GraphFilter from './GraphFilter';
 
@@ -26,22 +26,13 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     return (
       <GraphFilter
         disabled={this.props.isLoading}
-        onLayoutChange={this.handleLayoutChange}
         onDurationChange={this.handleDurationChange}
         onNamespaceChange={this.handleNamespaceChange}
-        onEdgeLabelModeChange={this.handleEdgeLabelModeChange}
         onRefresh={this.props.handleRefreshClick}
         {...graphParams}
       />
     );
   }
-
-  handleLayoutChange = (graphLayout: Layout) => {
-    this.handleFilterChange({
-      ...this.getGraphParams(),
-      graphLayout
-    });
-  };
 
   handleDurationChange = (graphDuration: Duration) => {
     this.handleFilterChange({
@@ -57,15 +48,8 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     });
   };
 
-  handleEdgeLabelModeChange = (edgeLabelMode: EdgeLabelMode) => {
-    this.handleFilterChange({
-      ...this.getGraphParams(),
-      edgeLabelMode
-    });
-  };
-
   handleFilterChange = (params: GraphParamsType) => {
-    this.context.router.history.push(makeURLFromParams(params));
+    this.context.router.history.push(makeServiceGraphUrlFromParams(params));
   };
 
   private getGraphParams: () => GraphParamsType = () => {

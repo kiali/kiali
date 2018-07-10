@@ -19,7 +19,7 @@ import { authentication } from '../../utils/Authentication';
 import * as H from '../../utils/Health';
 import { NamespaceHealth } from '../../types/Health';
 
-import { makeURLFromParams } from '../Nav/NavUtils';
+import { makeServiceGraphUrlFromParams } from '../Nav/NavUtils';
 
 type CytoscapeGraphType = {
   elements?: any;
@@ -395,7 +395,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     this.context.router.history.push(
-      makeURLFromParams({
+      makeServiceGraphUrlFromParams({
         namespace: { name: event.summaryTarget.data('service').split('.')[1] },
         graphLayout: this.props.graphLayout,
         graphDuration: this.props.graphDuration,
