@@ -178,7 +178,14 @@ OPENSHIFT_BIN_PATH="${OPENSHIFT_BIN_PATH:=${HOME}/bin}"
 # This is the IP address where OpenShift will bind its master.
 # This should be a valid IP address for the machine where OpenShift is installed.
 # NOTE: Do not use any IP address within the loopback range of 127.0.0.x.
-OPENSHIFT_IP_ADDRESS=${OPENSHIFT_IP_ADDRESS:-`echo $(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/')`}
+if which ip > /dev/null ; then
+  OPENSHIFT_IP_ADDRESS=${OPENSHIFT_IP_ADDRESS:-`echo $(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/')`}
+else
+  if [ ! "$OPENSHIFT_IP_ADDRESS" ] ; then
+    echo "ERROR: can't detect IP address please specify with --address argument"
+    exit 1
+  fi
+fi
 
 # The version is the tag from the openshift-istio/origin release builds.
 # The platform is either "linux" or "darwin".
