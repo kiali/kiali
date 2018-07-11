@@ -26,12 +26,12 @@ func (virtualService NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	if !valid {
 		for _, protocol := range routeProtocols {
 			if _, ok := virtualService.VirtualService.GetSpec()[protocol]; ok {
-				validation := models.BuildCheck("Route doesn't have a valid service", "error", fmt.Sprintf("spec/%s", protocol))
+				validation := models.BuildCheck("DestinationWeight on route doesn't have a valid service (host not found)", "error", fmt.Sprintf("spec/%s", protocol))
 				validations = append(validations, &validation)
 			}
 		}
 		if len(validations) == 0 {
-			validation := models.BuildCheck("VirtualService doesn't define any protocol", "error", "")
+			validation := models.BuildCheck("VirtualService doesn't define any route protocol", "error", "")
 			validations = append(validations, &validation)
 		}
 	}

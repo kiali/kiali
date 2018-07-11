@@ -75,9 +75,9 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.False(productVs.Valid)
 	assert.Equal(2, len(productVs.Checks))
 	assert.Equal("spec/http", productVs.Checks[0].Path)
-	assert.Equal("Route doesn't have a valid service", productVs.Checks[0].Message)
+	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", productVs.Checks[0].Message)
 	assert.Equal("spec/tcp", productVs.Checks[1].Path)
-	assert.Equal("Route doesn't have a valid service", productVs.Checks[1].Message)
+	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", productVs.Checks[1].Message)
 
 	validations = NoServiceChecker{
 		Namespace:    "test",
