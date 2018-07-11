@@ -183,7 +183,8 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
   let filterByValid = configFilters.indexOf('Valid') > -1;
   let filterByNotValid = configFilters.indexOf('Not Valid') > -1;
   let filterByNotValidated = configFilters.indexOf('Not Validated') > -1;
-  if (filterByValid && filterByNotValid && filterByNotValidated) {
+  let filterByWarning = configFilters.indexOf('Warning') > -1;
+  if (filterByValid && filterByNotValid && filterByNotValidated && filterByWarning) {
     return unfiltered;
   }
 
@@ -195,6 +196,13 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
       filtered.push(item);
     }
     if (filterByNotValidated && !item.validation) {
+      filtered.push(item);
+    }
+    if (
+      filterByWarning &&
+      item.validation &&
+      (item.validation.checks || []).filter(i => i.severity === 'warning').length > 0
+    ) {
       filtered.push(item);
     }
   });

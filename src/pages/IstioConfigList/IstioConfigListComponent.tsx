@@ -103,6 +103,10 @@ const configValidationFilter: FilterType = {
       title: 'Valid'
     },
     {
+      id: 'warning',
+      title: 'Warning'
+    },
+    {
       id: 'notvalid',
       title: 'Not Valid'
     },

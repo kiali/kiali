@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { ObjectValidation } from '../../types/ServiceInfo';
 import { PfColors } from '../Pf/PfColors';
-import { Icon, OverlayTrigger, Popover } from 'patternfly-react';
+import { Icon, OverlayTrigger, Popover, ListGroup, ListGroupItem } from 'patternfly-react';
+import { style } from 'typestyle';
 
 interface Props {
   id: string;
@@ -20,6 +21,12 @@ export const NOT_VALID: Validation = {
   icon: 'error-circle-o'
 };
 
+export const WARNING: Validation = {
+  name: 'Warning',
+  color: PfColors.Gold100,
+  icon: 'warning-triangle-o'
+};
+
 export const VALID: Validation = {
   name: 'Valid',
   color: PfColors.Green400,
@@ -28,17 +35,54 @@ export const VALID: Validation = {
 
 export const ICON_SIZE = '18px';
 
+const tooltipListStyle = style({
+  border: 0,
+  padding: '0 0 0 0',
+  margin: '0 0 0 0'
+});
+
 export class ConfigIndicator extends React.PureComponent<Props, {}> {
+  numberOfChecks = (type: string) => (this.props.validation.checks || []).filter(i => i.severity === type).length;
+
+  getTypeMessage = (type: string) => {
+    const numberType = this.numberOfChecks(type);
+    return numberType > 0
+      ? numberType > 1
+        ? `${numberType} ${type}s found`
+        : `${numberType} ${type} found`
+      : undefined;
+  };
+
   getValid() {
-    return this.props.validation.valid ? VALID : NOT_VALID;
+    return this.props.validation.valid ? VALID : this.numberOfChecks('error') > 0 ? NOT_VALID : WARNING;
   }
 
   tooltipContent() {
-    let numChecks = this.props.validation.checks ? this.props.validation.checks.length : 0;
+    const numChecks = this.props.validation.checks ? this.props.validation.checks.length : 0;
+
+    let issuesMessages: string[] = [];
+    if (numChecks === 0) {
+      issuesMessages.push('No issues found');
+    } else {
+      const errMessage = this.getTypeMessage('error');
+      if (errMessage) {
+        issuesMessages.push(errMessage);
+      }
+      const warnMessage = this.getTypeMessage('warning');
+      if (warnMessage) {
+        issuesMessages.push(warnMessage);
+      }
+    }
 
     return (
       <Popover id={this.props.id + '-config-validation'} title={this.getValid().name}>
-        {numChecks === 0 ? 'No issues found' : numChecks === 1 ? '1 issue found' : numChecks + ' issues found'}
+        <ListGroup className={tooltipListStyle}>
+          {issuesMessages.map(cat => (
+            <ListGroupItem className={tooltipListStyle} key={cat}>
+              {cat}
+            </ListGroupItem>
+          ))}
+        </ListGroup>
       </Popover>
     );
   }
