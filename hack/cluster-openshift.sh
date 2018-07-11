@@ -27,6 +27,16 @@ debug() {
 # Change to the directory where this script is and set our env
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
+# set the default openshift address here so that it can be used for the usage text
+#
+# This is the IP address where OpenShift will bind its master.
+# This should be a valid IP address for the machine where OpenShift is installed.
+if which ip > /dev/null ; then
+  DEFAULT_OPENSHIFT_IP_ADDRESS=`echo $(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/')`
+else
+  DEFAULT_OPENSHIFT_IP_ADDRESS="127.0.0.1"
+fi
+
 # process command line args to override environment
 _CMD=""
 while [[ $# -gt 0 ]]; do
@@ -110,7 +120,7 @@ Valid options:
   -h|--help : this message
   -a|--address <address>
       The public IP or named address bound to by the OpenShift cluster.
-      Default: $(echo $(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/'))
+      Default: ${DEFAULT_OPENSHIFT_IP_ADDRESS}
       Used only for the 'up' command.
   -ie|--istio-enabled (true|false)
       When set to true, Istio will be installed in OpenShift.
@@ -177,14 +187,9 @@ OPENSHIFT_BIN_PATH="${OPENSHIFT_BIN_PATH:=${HOME}/bin}"
 
 # This is the IP address where OpenShift will bind its master.
 # This should be a valid IP address for the machine where OpenShift is installed.
-# NOTE: Do not use any IP address within the loopback range of 127.0.0.x.
-if which ip > /dev/null ; then
-  OPENSHIFT_IP_ADDRESS=${OPENSHIFT_IP_ADDRESS:-`echo $(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/')`}
-else
-  if [ ! "$OPENSHIFT_IP_ADDRESS" ] ; then
-    echo "ERROR: can't detect IP address please specify with --address argument"
-    exit 1
-  fi
+
+if [ ! "$OPENSHIFT_IP_ADDRESS" ] ; then
+  OPENSHIFT_IP_ADDRESS=${DEFAULT_OPENSHIFT_IP_ADDRESS}
 fi
 
 # The version is the tag from the openshift-istio/origin release builds.
@@ -192,10 +197,9 @@ fi
 OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.8.0-alpha4}"
 DEFAULT_OS_VERSION=linux
 DETECTED_OS_VERSION=`uname | tr '[:upper:]' '[:lower:]'`
-if [ "${DETECTED_OS_VERSION}" = "linux" -o "${DETECTED_OS_VERSION}" = "darwin" ]
-then
+if [ "${DETECTED_OS_VERSION}" = "linux" -o "${DETECTED_OS_VERSION}" = "darwin" ] ; then
   DEFAULT_OS_VERSION=${DETECTED_OS_VERSION}
-  echo set default version to ${DEFAULT_OS_VERSION}
+  debug "he operating system has been detected as ${DEFAULT_OS_VERSION}"
 fi
 OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-${DEFAULT_OS_VERSION}}"
 
@@ -228,20 +232,6 @@ if groups ${USER} | grep >/dev/null 2>&1 '\bdocker\b'; then
   DOCKER_SUDO=
 else
   DOCKER_SUDO=sudo
-fi
-
-# Use curl command if available, otherwise try wget
-if which wget > /dev/null ; then
-  DOWNLOADER="wget -O"
-fi
-if [ ! "$DOWNLOADER" ] ; then
-  if which curl > /dev/null ; then
-    DOWNLOADER="curl -L -o"
-  fi
-fi
-if [ ! "$DOWNLOADER" ] ; then
-  echo "ERROR: You must install either curl or wget to allow downloading"
-  exit 1
 fi
 
 # Determine where to get the binary executable and its full path and how to execute it.
@@ -317,6 +307,21 @@ if [[ -f "${OS_ISTIO_OC_EXE_PATH}" ]]; then
   fi
 else
    echo "Downloading binary to ${OS_ISTIO_OC_EXE_PATH}"
+
+   # Use curl command if available, otherwise try wget
+   if which wget > /dev/null ; then
+     DOWNLOADER="wget -O"
+   fi
+   if [ ! "$DOWNLOADER" ] ; then
+     if which curl > /dev/null ; then
+       DOWNLOADER="curl -L -o"
+     fi
+   fi
+   if [ ! "$DOWNLOADER" ] ; then
+     echo "ERROR: You must install either curl or wget to allow downloading"
+     exit 1
+   fi
+
    eval ${DOWNLOADER} ${OS_ISTIO_OC_EXE_PATH} ${OS_ISTIO_OC_DOWNLOAD_LOCATION}
    if [ "$?" != "0" ]; then
      echo "===== WARNING ====="
