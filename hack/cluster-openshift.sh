@@ -224,9 +224,17 @@ else
 fi
 
 # Use curl command if available, otherwise try wget
-DOWNLOADER="wget -O"
-if which curl > /dev/null ; then
-  DOWNLOADER="curl -L -o"
+if which wget > /dev/null ; then
+  DOWNLOADER="wget -O"
+fi
+if [ ! "$DOWNLOADER" ] ; then
+  if which curl > /dev/null ; then
+    DOWNLOADER="curl -L -o"
+  fi
+fi
+if [ ! "$DOWNLOADER" ] ; then
+  echo "ERROR: You must install either curl or wget to allow downloading"
+  exit 1
 fi
 
 # Determine where to get the binary executable and its full path and how to execute it.
