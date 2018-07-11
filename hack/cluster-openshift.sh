@@ -203,6 +203,11 @@ if [ "${DETECTED_OS_VERSION}" = "linux" -o "${DETECTED_OS_VERSION}" = "darwin" ]
 fi
 OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-${DEFAULT_OS_VERSION}}"
 
+# if sed is gnu-sed then set option to work in posix mode to be compatible with non-gnu-sed versions
+if sed --posix 's/ / /' < /dev/null > /dev/null 2>&1 ; then
+  SEDOPTIONS="--posix"
+fi
+
 # If you want to persist data across restarts of OpenShift, set to the persistence directory.
 # If you set this to "" then no persistence will be used
 # Note: ${v=d} is used on purpose so we do not persist if the directory was explicitly set to "".
@@ -293,7 +298,7 @@ fi
 
 # Download the oc client if we do not have it yet
 if [[ -f "${OS_ISTIO_OC_EXE_PATH}" ]]; then
-  _existingVersion=$(${OS_ISTIO_OC_EXE_PATH} --request-timeout=2s version | head -n 1 | sed -n "s/^oc \([A-Za-z0-9.-]*\)\+[a-z0-9 ]*$/\1/p")
+  _existingVersion=$(${OS_ISTIO_OC_EXE_PATH} --request-timeout=2s version | head -n 1 | sed ${SEDOPTIONS}  "s/^oc \([A-Za-z0-9.-]*\)\+[a-z0-9 ]*$/\1/")
   if [ "$_existingVersion" != "${OS_ISTIO_OC_DOWNLOAD_VERSION}" ]; then
     echo "===== WARNING ====="
     echo "You already have the client binary but it does not match the version you want."
