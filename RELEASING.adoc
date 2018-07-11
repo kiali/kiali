@@ -25,7 +25,7 @@ Note that this is the same version string that will also tag the kiali repo - th
 
 2) Go to https://www.npmjs.com/package/@kiali/kiali-ui and find the version of the UI that should be built for this release. We will put this console version number in Kiali's Makefile - see below.
 
-_Finally, it is still undetermined how future releases are going to be done with respect to kiali-ui and its own version string. It is possible kiali-ui and kiali repos will be combined into one and thus both kiali and the kiali-ui version strings will be united as a single version string. Today, the version string of kiali-ui as it is seen in the NPM repository is determined within the kiali-ui travis configuration file. This may change in the future. But for now, we need to go to the NPM repository to get the version string of kiali-ui that is to be pulled into the kiali image._
+3) Update `package.json` on kiali-ui repo to the correct version, and create a pull request for the release.
 
 == Kiali
 
