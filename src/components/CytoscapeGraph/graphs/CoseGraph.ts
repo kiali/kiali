@@ -4,7 +4,8 @@ export class CoseGraph implements GraphType {
   static getLayout() {
     return {
       name: 'cose',
-      animate: false
+      animate: false,
+      nodeDimensionsIncludeLabels: true
     };
   }
 }
