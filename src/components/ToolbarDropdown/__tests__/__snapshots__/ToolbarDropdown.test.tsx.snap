@@ -48,7 +48,6 @@ ShallowWrapper {
           }
         >
           graph_filter_interval_duration
-          :
         </label>,
         <DropdownButton
           id="graph_filter_interval_duration"
@@ -176,19 +175,13 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "host",
         "props": Object {
-          "children": Array [
-            "graph_filter_interval_duration",
-            ":",
-          ],
+          "children": "graph_filter_interval_duration",
           "style": Object {
             "paddingRight": "0.5em",
           },
         },
         "ref": null,
-        "rendered": Array [
-          "graph_filter_interval_duration",
-          ":",
-        ],
+        "rendered": "graph_filter_interval_duration",
         "type": "label",
       },
       Object {
@@ -522,7 +515,6 @@ ShallowWrapper {
             }
           >
             graph_filter_interval_duration
-            :
           </label>,
           <DropdownButton
             id="graph_filter_interval_duration"
@@ -650,19 +642,13 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "host",
           "props": Object {
-            "children": Array [
-              "graph_filter_interval_duration",
-              ":",
-            ],
+            "children": "graph_filter_interval_duration",
             "style": Object {
               "paddingRight": "0.5em",
             },
           },
           "ref": null,
-          "rendered": Array [
-            "graph_filter_interval_duration",
-            ":",
-          ],
+          "rendered": "graph_filter_interval_duration",
           "type": "label",
         },
         Object {
@@ -1036,7 +1022,6 @@ ShallowWrapper {
           }
         >
           metrics_filter_poll_interval
-          :
         </label>,
         <DropdownButton
           id="metrics_filter_poll_interval"
@@ -1124,19 +1109,13 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "host",
         "props": Object {
-          "children": Array [
-            "metrics_filter_poll_interval",
-            ":",
-          ],
+          "children": "metrics_filter_poll_interval",
           "style": Object {
             "paddingRight": "0.5em",
           },
         },
         "ref": null,
-        "rendered": Array [
-          "metrics_filter_poll_interval",
-          ":",
-        ],
+        "rendered": "metrics_filter_poll_interval",
         "type": "label",
       },
       Object {
@@ -1362,7 +1341,6 @@ ShallowWrapper {
             }
           >
             metrics_filter_poll_interval
-            :
           </label>,
           <DropdownButton
             id="metrics_filter_poll_interval"
@@ -1450,19 +1428,13 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "host",
           "props": Object {
-            "children": Array [
-              "metrics_filter_poll_interval",
-              ":",
-            ],
+            "children": "metrics_filter_poll_interval",
             "style": Object {
               "paddingRight": "0.5em",
             },
           },
           "ref": null,
-          "rendered": Array [
-            "metrics_filter_poll_interval",
-            ":",
-          ],
+          "rendered": "metrics_filter_poll_interval",
           "type": "label",
         },
         Object {
@@ -1726,7 +1698,6 @@ ShallowWrapper {
           }
         >
           graph_filter_layouts
-          :
         </label>,
         <DropdownButton
           id="graph_filter_layouts"
@@ -1794,19 +1765,13 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "host",
         "props": Object {
-          "children": Array [
-            "graph_filter_layouts",
-            ":",
-          ],
+          "children": "graph_filter_layouts",
           "style": Object {
             "paddingRight": "0.5em",
           },
         },
         "ref": null,
-        "rendered": Array [
-          "graph_filter_layouts",
-          ":",
-        ],
+        "rendered": "graph_filter_layouts",
         "type": "label",
       },
       Object {
@@ -1978,7 +1943,6 @@ ShallowWrapper {
             }
           >
             graph_filter_layouts
-            :
           </label>,
           <DropdownButton
             id="graph_filter_layouts"
@@ -2046,19 +2010,13 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "host",
           "props": Object {
-            "children": Array [
-              "graph_filter_layouts",
-              ":",
-            ],
+            "children": "graph_filter_layouts",
             "style": Object {
               "paddingRight": "0.5em",
             },
           },
           "ref": null,
-          "rendered": Array [
-            "graph_filter_layouts",
-            ":",
-          ],
+          "rendered": "graph_filter_layouts",
           "type": "label",
         },
         Object {
@@ -2274,7 +2232,6 @@ ShallowWrapper {
           }
         >
           graph_filter_interval_duration
-          :
         </label>,
         <DropdownButton
           id="graph_filter_interval_duration"
@@ -2402,19 +2359,13 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "host",
         "props": Object {
-          "children": Array [
-            "graph_filter_interval_duration",
-            ":",
-          ],
+          "children": "graph_filter_interval_duration",
           "style": Object {
             "paddingRight": "0.5em",
           },
         },
         "ref": null,
-        "rendered": Array [
-          "graph_filter_interval_duration",
-          ":",
-        ],
+        "rendered": "graph_filter_interval_duration",
         "type": "label",
       },
       Object {
@@ -2748,7 +2699,6 @@ ShallowWrapper {
             }
           >
             graph_filter_interval_duration
-            :
           </label>,
           <DropdownButton
             id="graph_filter_interval_duration"
@@ -2876,19 +2826,13 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "host",
           "props": Object {
-            "children": Array [
-              "graph_filter_interval_duration",
-              ":",
-            ],
+            "children": "graph_filter_interval_duration",
             "style": Object {
               "paddingRight": "0.5em",
             },
           },
           "ref": null,
-          "rendered": Array [
-            "graph_filter_interval_duration",
-            ":",
-          ],
+          "rendered": "graph_filter_interval_duration",
           "type": "label",
         },
         Object {
@@ -3262,7 +3206,6 @@ ShallowWrapper {
           }
         >
           metrics_filter_poll_interval
-          :
         </label>,
         <DropdownButton
           id="metrics_filter_poll_interval"
@@ -3350,19 +3293,13 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "host",
         "props": Object {
-          "children": Array [
-            "metrics_filter_poll_interval",
-            ":",
-          ],
+          "children": "metrics_filter_poll_interval",
           "style": Object {
             "paddingRight": "0.5em",
           },
         },
         "ref": null,
-        "rendered": Array [
-          "metrics_filter_poll_interval",
-          ":",
-        ],
+        "rendered": "metrics_filter_poll_interval",
         "type": "label",
       },
       Object {
@@ -3588,7 +3525,6 @@ ShallowWrapper {
             }
           >
             metrics_filter_poll_interval
-            :
           </label>,
           <DropdownButton
             id="metrics_filter_poll_interval"
@@ -3676,19 +3612,13 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "host",
           "props": Object {
-            "children": Array [
-              "metrics_filter_poll_interval",
-              ":",
-            ],
+            "children": "metrics_filter_poll_interval",
             "style": Object {
               "paddingRight": "0.5em",
             },
           },
           "ref": null,
-          "rendered": Array [
-            "metrics_filter_poll_interval",
-            ":",
-          ],
+          "rendered": "metrics_filter_poll_interval",
           "type": "label",
         },
         Object {
@@ -3952,7 +3882,6 @@ ShallowWrapper {
           }
         >
           graph_filter_layouts
-          :
         </label>,
         <DropdownButton
           id="graph_filter_layouts"
@@ -4020,19 +3949,13 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "host",
         "props": Object {
-          "children": Array [
-            "graph_filter_layouts",
-            ":",
-          ],
+          "children": "graph_filter_layouts",
           "style": Object {
             "paddingRight": "0.5em",
           },
         },
         "ref": null,
-        "rendered": Array [
-          "graph_filter_layouts",
-          ":",
-        ],
+        "rendered": "graph_filter_layouts",
         "type": "label",
       },
       Object {
@@ -4204,7 +4127,6 @@ ShallowWrapper {
             }
           >
             graph_filter_layouts
-            :
           </label>,
           <DropdownButton
             id="graph_filter_layouts"
@@ -4272,19 +4194,13 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "host",
           "props": Object {
-            "children": Array [
-              "graph_filter_layouts",
-              ":",
-            ],
+            "children": "graph_filter_layouts",
             "style": Object {
               "paddingRight": "0.5em",
             },
           },
           "ref": null,
-          "rendered": Array [
-            "graph_filter_layouts",
-            ":",
-          ],
+          "rendered": "graph_filter_layouts",
           "type": "label",
         },
         Object {

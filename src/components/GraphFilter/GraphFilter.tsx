@@ -85,7 +85,7 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
               options={GraphFilter.INTERVAL_DURATION}
             />
           </span>
-          <GraphRefreshContainer id="refresh-button" handleRefresh={this.handleRefresh} />
+          <GraphRefreshContainer id="graph_refresh_container" handleRefresh={this.handleRefresh} />
         </Toolbar>
       </>
     );

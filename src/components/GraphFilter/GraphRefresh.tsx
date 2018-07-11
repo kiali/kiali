@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { PollIntervalInMs } from '../../types/GraphFilter';
-import { SplitButton, MenuItem, Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
+import { Button, MenuItem, Icon, DropdownButton } from 'patternfly-react';
 
 type GraphRefreshProps = {
   id: string;
@@ -15,27 +15,26 @@ type GraphRefreshProps = {
 const GraphRefresh: React.SFC<GraphRefreshProps> = props => {
   return (
     <>
-      <OverlayTrigger
-        overlay={<Tooltip id={`${props.id}_tooltip`}>{props.options[props.selected]}</Tooltip>}
-        placement="top"
-        trigger={['hover', 'focus']}
-        rootClose={false}
-      >
-        <SplitButton id={`${props.id}`} title={<Icon name="refresh" />} onClick={props.handleRefresh} pullRight={true}>
-          {Object.keys(props.options).map((key: any) => {
-            return (
-              <MenuItem
-                key={key}
-                eventKey={key}
-                active={Number(key) === props.selected}
-                onSelect={value => props.onSelect(Number(value))}
-              >
-                {props.options[key]}
-              </MenuItem>
-            );
-          })}
-        </SplitButton>
-      </OverlayTrigger>
+      <label style={{ paddingRight: '0.5em' }}>Refreshing</label>
+      <DropdownButton id="graph_refresh_dropdown" title={props.options[props.selected]} onSelect={props.handleRefresh}>
+        {Object.keys(props.options).map((key: any) => {
+          return (
+            <MenuItem
+              key={key}
+              eventKey={key}
+              active={Number(key) === props.selected}
+              onSelect={value => props.onSelect(Number(value))}
+            >
+              {props.options[key]}
+            </MenuItem>
+          );
+        })}
+      </DropdownButton>
+      <span style={{ paddingLeft: '0.5em' }}>
+        <Button id="refresh_button" onClick={props.handleRefresh}>
+          <Icon name="refresh" />
+        </Button>
+      </span>
     </>
   );
 };
