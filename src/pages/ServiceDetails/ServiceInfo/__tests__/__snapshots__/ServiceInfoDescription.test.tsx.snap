@@ -107,7 +107,7 @@ ShallowWrapper {
             <strong>
               Istio Sidecar
             </strong>
-             Undeployed
+             Not deployed
           </div>
           <div>
             <strong>
@@ -296,7 +296,7 @@ ShallowWrapper {
               <strong>
                 Istio Sidecar
               </strong>
-               Undeployed
+               Not deployed
             </div>
             <div>
               <strong>
