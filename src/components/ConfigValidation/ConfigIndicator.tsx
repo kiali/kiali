@@ -54,7 +54,9 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
   };
 
   getValid() {
-    return this.props.validation.valid ? VALID : this.numberOfChecks('error') > 0 ? NOT_VALID : WARNING;
+    const warnIssues = this.numberOfChecks('warning');
+    const errIssues = this.numberOfChecks('error');
+    return warnIssues === 0 && errIssues === 0 ? VALID : errIssues > 0 ? NOT_VALID : WARNING;
   }
 
   tooltipContent() {
