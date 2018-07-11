@@ -330,11 +330,13 @@ func addCompoundNodes(nodes *[]*NodeWrapper) {
 			// assign each service version node to the compound parent
 			hasVirtualService := false
 			nd.HasMissingSC = false
+			nd.IsOutside = false
 
 			for _, n := range members {
 				n.Parent = nodeId
 
 				nd.HasMissingSC = nd.HasMissingSC || n.HasMissingSC
+				nd.IsOutside = nd.IsOutside || n.IsOutside
 
 				// If there is a virtual service defined in version node, move it to compound parent
 				if n.HasVS {
