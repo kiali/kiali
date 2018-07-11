@@ -395,7 +395,12 @@ elif [ "$_CMD" = "down" ];then
   echo "Will shutdown the OpenShift cluster"
   ${OS_ISTIO_OC_COMMAND} cluster down
   echo "SUDO ACCESS: unmounting openshift local volumes"
-  mount | grep "openshift.local.volumes" | awk '{ print $3}' | xargs -l -r sudo umount
+  mount | grep "openshift.local.volumes" | awk '{ print $3}' | while read FILESYSTEM
+  do
+    if [ "${FILESYSTEM}" ] ; then
+      sudo umount "${FILESYSTEM}"
+    fi
+  done  
   # only purge these if we do not want persistence
   if [ "${OPENSHIFT_PERSISTENCE_ARGS}" == "" ]; then
     echo "SUDO ACCESS: Purging /var/lib/origin files"
