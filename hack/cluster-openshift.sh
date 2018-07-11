@@ -199,7 +199,7 @@ DEFAULT_OS_VERSION=linux
 DETECTED_OS_VERSION=`uname | tr '[:upper:]' '[:lower:]'`
 if [ "${DETECTED_OS_VERSION}" = "linux" -o "${DETECTED_OS_VERSION}" = "darwin" ] ; then
   DEFAULT_OS_VERSION=${DETECTED_OS_VERSION}
-  debug "he operating system has been detected as ${DEFAULT_OS_VERSION}"
+  debug "The operating system has been detected as ${DEFAULT_OS_VERSION}"
 fi
 OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-${DEFAULT_OS_VERSION}}"
 
@@ -308,7 +308,7 @@ if [[ -f "${OS_ISTIO_OC_EXE_PATH}" ]]; then
 else
    echo "Downloading binary to ${OS_ISTIO_OC_EXE_PATH}"
 
-   # Use curl command if available, otherwise try wget
+   # Use wget command if available, otherwise try curl
    if which wget > /dev/null ; then
      DOWNLOADER="wget -O"
    fi
