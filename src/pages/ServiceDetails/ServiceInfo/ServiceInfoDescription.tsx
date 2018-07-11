@@ -61,7 +61,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                     <img className="IstioLogo" src={IstioLogo} alt="Istio sidecar" />
                   </span>
                 ) : (
-                  ' Undeployed'
+                  ' Not deployed'
                 )}
               </div>
               <div>

@@ -110,7 +110,7 @@ const istioFilter: FilterType = {
   title: 'Istio Sidecar',
   placeholder: 'Filter by Istio Sidecar',
   filterType: 'select',
-  filterValues: [{ id: 'deployed', title: 'Deployed' }, { id: 'undeployed', title: 'Undeployed' }]
+  filterValues: [{ id: 'deployed', title: 'Deployed' }, { id: 'not_deployed', title: 'Not Deployed' }]
 };
 
 type ServiceListComponentState = {
@@ -294,7 +294,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       if (istioFilters[0] === 'Deployed') {
         istioFiltered = service.istioSidecar;
       }
-      if (istioFilters[0] === 'Undeployed') {
+      if (istioFilters[0] === 'Not Deployed') {
         istioFiltered = !service.istioSidecar;
       }
     }
