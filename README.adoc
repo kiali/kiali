@@ -257,6 +257,20 @@ identity:
   private_key_file: VALUE
 ----
 
+|`ISTIO_NAMESPACE`
+| The namespace where Istio is installed. (Default: istio-system)
+[source,yaml]
+----
+istio_namespace: VALUE
+----
+
+|`KIALI_SERVICE`
+| The name of the service of Kiali. (Default: kiali)
+[source,yaml]
+----
+kiali_service: VALUE
+----
+
 |`SERVER_ADDRESS`
 |Where the http server is bound to.
 [source,yaml]

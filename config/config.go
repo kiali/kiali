@@ -49,7 +49,9 @@ const (
 
 	EnvTokenSecret       = "TOKEN_SECRET"
 	EnvTokenExpirationAt = "TOKEN_EXPIRATION_AT"
+	EnvIstioNamespace    = "ISTIO_NAMESPACE"
 
+	EnvKialiService       = "KIALI_SERVICE"
 	IstioVersionSupported = ">= 0.8"
 )
 
@@ -111,6 +113,8 @@ type Config struct {
 	VersionFilterLabelName string            `yaml:"version_filter_label_name,omitempty"`
 	ExternalServices       ExternalServices  `yaml:"external_services,omitempty"`
 	Token                  Token             `yaml:"token,omitempty"`
+	KialiService           string            `yaml:"kiali_service,omitempty"`
+	IstioNamespace         string            `yaml:"istio_namespace,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -122,6 +126,8 @@ func NewConfig() (c *Config) {
 	c.InCluster = getDefaultBool(EnvInCluster, true)
 	c.ServiceFilterLabelName = strings.TrimSpace(getDefaultString(EnvServiceFilterLabelName, "app"))
 	c.VersionFilterLabelName = strings.TrimSpace(getDefaultString(EnvVersionFilterLabelName, "version"))
+	c.KialiService = strings.TrimSpace(getDefaultString(EnvKialiService, "kiali"))
+	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
 
 	// Server configuration
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))

@@ -4,21 +4,49 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"strings"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/services/models"
 )
 
+/** Proxy solution Jaeger*/
+func ProxyJaeger(w http.ResponseWriter, r *http.Request) {
+	url, err := url.Parse(fmt.Sprintf("http://%s/", config.Get().ExternalServices.Jaeger.Service))
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	proxy := httputil.ReverseProxy{Director: func(r *http.Request) {
+		r.URL.Scheme = url.Scheme
+		r.URL.Host = url.Host
+		r.URL.Path = strings.Replace(r.URL.Path, "/api/jaeger", "", -1)
+		r.Host = url.Host
+	}}
+	proxy.ServeHTTP(w, r)
+}
+
+/** End solution */
+
 // GetjaegerInfo provides the jaeger URLo, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Jaeger service in namespace istio-system
 func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
+	conf := config.Get()
 	info, code, err := getJaegerInfo(getOpenshiftRouteURL, getService)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, code, err.Error())
 		return
 	}
+	/** Request the proxy solution */
+	urlKiali, _ := getOpenshiftRouteURL(conf.IstioNamespace, conf.KialiService)
+	url, _ := url.Parse(urlKiali)
+
+	info.URL = fmt.Sprintf("%s://%s:%s", url.Scheme, url.Host, "32439")
+	/** End Request proxy solution */
 	RespondWithJSON(w, code, info)
 }
 

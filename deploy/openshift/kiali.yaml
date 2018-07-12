@@ -24,6 +24,25 @@ spec:
     version: ${VERSION_LABEL}
 ---
 apiVersion: v1
+kind: Service
+metadata:
+  name: kiali-jaeger
+  labels:
+    app: kiali
+    version: ${VERSION_LABEL}
+spec:
+  type: NodePort
+  ports:
+  - name: jaeger
+    nodePort: 32439
+    port: 20002
+    protocol: TCP
+    targetPort: 20002
+  selector:
+    app: kiali
+    version: ${VERSION_LABEL}
+---
+apiVersion: v1
 kind: Route
 metadata:
   name: kiali
@@ -33,6 +52,7 @@ metadata:
 spec:
   to:
     kind: Service
+    targetPort: 20001
     name: kiali
 ---
 apiVersion: extensions/v1beta1
