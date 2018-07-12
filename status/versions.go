@@ -62,20 +62,23 @@ func validateVersion(istioReq string, installedVersion string) bool {
 }
 
 func istioVersion() (*ExternalServiceInfo, error) {
-	product := ExternalServiceInfo{}
+	product := ExternalServiceInfo{Name: "Istio", Version: "Unknown"}
 	istioConfig := config.Get().ExternalServices.Istio
 	resp, err := http.Get(istioConfig.UrlServiceVersion)
 	if err == nil {
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
-			product.Name = "Istio"
-			version := expVersion.FindStringSubmatch(string(body))
-			if product.Version = "Unknown"; version != nil {
+			rawVersion := string(body)
+			version := expVersion.FindStringSubmatch(rawVersion)
+			if version != nil {
 				product.Version = version[0]
-			}
-			if !validateVersion(config.IstioVersionSupported, product.Version) {
-				info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
+				if !validateVersion(config.IstioVersionSupported, product.Version) {
+					info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
+				}
+			} else {
+				product.Version = rawVersion
+				info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not recognized, thus not supported.")
 			}
 			return &product, nil
 		}
