@@ -7,6 +7,7 @@ import { style } from 'typestyle';
 interface Props {
   id: string;
   validation: ObjectValidation;
+  size?: string;
 }
 
 interface Validation {
@@ -33,7 +34,17 @@ export const VALID: Validation = {
   icon: 'ok'
 };
 
-export const ICON_SIZE = '18px';
+export const SMALL_SIZE = '12px';
+export const MEDIUM_SIZE = '18px';
+export const BIG_SIZE = '35px';
+export const INHERITED_SIZE = 'inherited';
+
+const sizeMapper = new Map<string, string>([
+  ['small', SMALL_SIZE],
+  ['medium', MEDIUM_SIZE],
+  ['big', BIG_SIZE],
+  ['inherited', INHERITED_SIZE]
+]);
 
 const tooltipListStyle = style({
   border: 0,
@@ -57,6 +68,10 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
     const warnIssues = this.numberOfChecks('warning');
     const errIssues = this.numberOfChecks('error');
     return warnIssues === 0 && errIssues === 0 ? VALID : errIssues > 0 ? NOT_VALID : WARNING;
+  }
+
+  size() {
+    return sizeMapper.get(this.props.size || 'inherited') || INHERITED_SIZE;
   }
 
   tooltipContent() {
@@ -92,7 +107,6 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
   render() {
     return (
       <span>
-        <strong>Config: </strong>{' '}
         <OverlayTrigger
           placement={'right'}
           overlay={this.tooltipContent()}
@@ -103,7 +117,7 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
             <Icon
               type="pf"
               name={this.getValid().icon}
-              style={{ fontSize: ICON_SIZE }}
+              style={{ fontSize: this.size() }}
               className="health-icon"
               tabIndex="0"
             />

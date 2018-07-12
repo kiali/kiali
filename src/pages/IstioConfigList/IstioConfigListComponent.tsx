@@ -340,7 +340,8 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
             <td>{type}</td>
             {istioItem.validation ? (
               <td>
-                <ConfigIndicator id={index + '-config-validation'} validation={istioItem.validation} />
+                <strong>Config: </strong>{' '}
+                <ConfigIndicator id={index + '-config-validation'} validation={istioItem.validation} size="medium" />
               </td>
             ) : (
               undefined
