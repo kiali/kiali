@@ -86,63 +86,67 @@ type EnvoyRatio struct {
 	Total   int `json:"total"`
 }
 
-func getServiceHealth(api v1.API, namespace string, servicename string) (EnvoyHealth, error) {
+func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) (EnvoyHealth, error) {
 	envoyClustername := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, ".", "_", -1)
 	queryPart := replaceInvalidCharacters(fmt.Sprintf("%s_%s_%s", servicename, namespace, envoyClustername))
 	now := time.Now()
 	ret := EnvoyHealth{}
+	mux := &sync.Mutex{}
+	var anyErr error
 
 	// Note: metric names below probably depend on some istio configuration.
 	// They should anyway change soon in a more prometheus-friendly way,
 	// see https://github.com/istio/istio/issues/4854 and https://github.com/istio/istio/pull/5069
 
-	var healthyErrIn, totalErrIn, healthyErrOut, totalErrOut error
 	var wg sync.WaitGroup
-	wg.Add(4)
-	// Inbound
-	go func() {
-		defer wg.Done()
-		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_9080__%s_membership_healthy", queryPart), now)
-		healthyErrIn = err
-		if len(vec) > 0 {
-			ret.Inbound.Healthy = int(vec[0].Value)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_9080__%s_membership_total", queryPart), now)
-		totalErrIn = err
-		if len(vec) > 0 {
-			ret.Inbound.Total = int(vec[0].Value)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_9080__%s_membership_healthy", queryPart), now)
-		healthyErrOut = err
-		if len(vec) > 0 {
-			ret.Outbound.Healthy = int(vec[0].Value)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_9080__%s_membership_total", queryPart), now)
-		totalErrOut = err
-		if len(vec) > 0 {
-			ret.Outbound.Total = int(vec[0].Value)
-		}
-	}()
-	wg.Wait()
-	if healthyErrIn != nil {
-		return ret, healthyErrIn
-	} else if totalErrIn != nil {
-		return ret, totalErrIn
-	} else if healthyErrOut != nil {
-		return ret, healthyErrOut
-	} else if totalErrOut != nil {
-		return ret, totalErrOut
+	wg.Add(2 * len(ports))
+
+	for _, _port := range ports {
+		// Inbound
+		go func(port int) {
+			defer wg.Done()
+			healthy, err1 := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_%d__%s_membership_healthy", port, queryPart), now)
+			total, err2 := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_%d__%s_membership_total", port, queryPart), now)
+			mux.Lock()
+			if err1 != nil {
+				anyErr = err1
+			}
+			if err2 != nil {
+				anyErr = err2
+			}
+			if len(healthy) > 0 {
+				ret.Inbound.Healthy += int(healthy[0].Value)
+			}
+			if len(total) > 0 {
+				ret.Inbound.Total += int(total[0].Value)
+			}
+			mux.Unlock()
+		}(int(_port))
+
+		// Outbound
+		go func(port int) {
+			defer wg.Done()
+			healthy, err1 := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_%d__%s_membership_healthy", port, queryPart), now)
+			total, err2 := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_%d__%s_membership_total", port, queryPart), now)
+			mux.Lock()
+			if err1 != nil {
+				anyErr = err1
+			}
+			if err2 != nil {
+				anyErr = err2
+			}
+			if len(healthy) > 0 {
+				ret.Outbound.Healthy += int(healthy[0].Value)
+			}
+			if len(total) > 0 {
+				ret.Outbound.Total += int(total[0].Value)
+			}
+			mux.Unlock()
+		}(int(_port))
 	}
-	return ret, nil
+
+	wg.Wait()
+	return ret, anyErr
 }
 
 func getServiceMetrics(api v1.API, q *ServiceMetricsQuery) Metrics {

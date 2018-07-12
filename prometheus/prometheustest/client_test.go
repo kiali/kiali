@@ -318,13 +318,17 @@ func TestGetServiceHealth(t *testing.T) {
 	mockSingle(api, "envoy_cluster_inbound_9080__productpage_istio_system_svc_cluster_local_membership_total", 1)
 	mockSingle(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_healthy", 0)
 	mockSingle(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_total", 1)
-	health, _ := client.GetServiceHealth("istio-system", "productpage")
+	mockSingle(api, "envoy_cluster_inbound_8080__productpage_istio_system_svc_cluster_local_membership_healthy", 1)
+	mockSingle(api, "envoy_cluster_inbound_8080__productpage_istio_system_svc_cluster_local_membership_total", 2)
+	mockSingle(api, "envoy_cluster_outbound_8080__productpage_istio_system_svc_cluster_local_membership_healthy", 3)
+	mockSingle(api, "envoy_cluster_outbound_8080__productpage_istio_system_svc_cluster_local_membership_total", 4)
+	health, _ := client.GetServiceHealth("istio-system", "productpage", []int32{9080, 8080})
 
 	// Check health
-	assert.Equal(t, 0, health.Inbound.Healthy)
-	assert.Equal(t, 1, health.Inbound.Total)
-	assert.Equal(t, 0, health.Outbound.Healthy)
-	assert.Equal(t, 1, health.Outbound.Total)
+	assert.Equal(t, 1, health.Inbound.Healthy)
+	assert.Equal(t, 3, health.Inbound.Total)
+	assert.Equal(t, 3, health.Outbound.Healthy)
+	assert.Equal(t, 5, health.Outbound.Total)
 }
 
 func TestGetServiceMetricsUnavailable(t *testing.T) {
@@ -387,7 +391,7 @@ func TestGetServiceHealthUnavailable(t *testing.T) {
 	mockQuery(api, "envoy_cluster_inbound_9080__productpage_istio_system_svc_cluster_local_membership_total", &model.Vector{})
 	mockQuery(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_healthy", &model.Vector{})
 	mockQuery(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_total", &model.Vector{})
-	h, err := client.GetServiceHealth("istio-system", "productpage")
+	h, err := client.GetServiceHealth("istio-system", "productpage", []int32{9080})
 
 	// Check health unavailable
 	assert.Nil(t, err)
