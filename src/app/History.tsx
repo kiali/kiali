@@ -1,3 +1,5 @@
 import { createBrowserHistory } from 'history';
-const history = createBrowserHistory({ basename: '/console' });
+import { baseName } from '../routes';
+
+const history = createBrowserHistory({ basename: baseName });
 export default history;

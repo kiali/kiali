@@ -3,6 +3,7 @@ import { shallow } from 'enzyme';
 
 import Navigation, { servicesTitle, istioConfigTitle } from '../Navigation';
 import { VerticalNav } from 'patternfly-react';
+import { routes } from '../../../routes';
 
 const _tester = (path: string, expectedMenuPath: string) => {
   const wrapper = shallow(
@@ -14,13 +15,18 @@ const _tester = (path: string, expectedMenuPath: string) => {
       setNavCollapsed={jest.fn()}
     />
   );
-  const navWrapper = wrapper.find(VerticalNav);
-  expect(navWrapper.prop('activePath')).toEqual(`/${expectedMenuPath}/`);
+
+  const navWrapper = wrapper.find(VerticalNav.Item).findWhere(el => el.key() === path);
+  expect(navWrapper.props()['active']).toBeTruthy();
 };
 
 describe('Navigation test', () => {
   it('should select menu item according to browser url', () => {
     _tester('/services', servicesTitle);
     _tester('/istio', istioConfigTitle);
+  });
+
+  it('should have only one redirect', () => {
+    expect(routes.filter(path => path.redirect === true)).toHaveLength(1);
   });
 });
