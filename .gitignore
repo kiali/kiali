@@ -29,6 +29,7 @@ package-lock.json
 
 # compiled patternfly assets
 src/**/*.css
+src/**/*.css.map
 !src/index.css
 !src/css/.gitkeep
 src/img/*
