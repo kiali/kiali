@@ -13,15 +13,15 @@ The summary of the process is the following:
 * Create the Release PR
 * Tag Git Repo
 * Notify Istio and Openshift Istio Teams for changes:
-  * Istio Helm Charts
-  * Istio Ansible Installer
-  * Openshift Istio Ansible Installer (istiooc)
+** Istio Helm Charts
+** Istio Ansible Installer
+** Openshift Istio Ansible Installer (istiooc)
 * Update JIRA issues included with the release
 * Send out notifications (twitter, mailing lists, IRC)
 
 == Creating a new JIRA issue
 
-Create a new issue on link:https://issues.jboss.org[JIRA] detailing the
+Create a new issue on link:https://issues.jboss.org/browse/KIALI[JIRA] detailing the
 release, and add sub-tasks if necessary.
 
 == Updating Docs
@@ -93,6 +93,10 @@ index c1f7f80..1d05ff3 100644
  # Version label is used in the OpenShift/K8S resources to identify
 ----
 
+One thing to keep in mind is that CONSOLE_VERSION comes from the npm
+repository, and may not be the same as VERSION. You can get the console version
+link:https://www.npmjs.com/package/@kiali/kiali-ui?activeTab=versions[here].
+
 == Creating the release PR
 
 [source, bash]
@@ -129,10 +133,8 @@ begin to be merged again. Though, it would be best to wait for this
 notification to go out until after you bump up the version string to the next
 snapshot version (see "Prepare For The Next Release" below).
 
-At this point, Travis will run the test suite, build the binary, and push the
-versioned docker image to link:https://hub.docker.com/r/kiali/kiali[DockerHub].
-In the example above, the docker image pushed to DockerHub will not be tagged
-with "latest" but will instead be tagged with "1.0.0.Final."
+Note that, in the example above, the docker image pushed to DockerHub will not
+be tagged with "latest" but will instead be tagged with "1.0.0.Final."
 
 == Notify Istio and Openshift Istio Teams for changes
 
@@ -172,6 +174,37 @@ Send a message on our channel at Freenode, #kiali.
 Post a message on our twitter,
 link:https://www.twitter.com/KialiProject[@KialiProject]. If you don't know
 who's responsible for the account, ask on IRC.
+
+== Preparing for the Next Release
+
+After the release happens, you'll need to prepare Kiali for the next one. This means changing the Makefile to the defaults:
+
+[source, diff]
+----
+diff --git a/Makefile b/Makefile
+index c1f7f80..4a8af40 100644
+--- a/Makefile
++++ b/Makefile
+@@ -3,7 +3,7 @@ SHELL=/bin/bash
+ 
+ # Identifies the current build.
+ # These will be embedded in the app and displayed when it starts.
+-VERSION ?= v1.0.0
++VERSION ?= v1.1.0
+ COMMIT_HASH ?= $(shell git rev-parse HEAD)
+ 
+ # Indicates which version of the UI console is to be embedded
+@@ -13,7 +13,7 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
+ # WARNING: If you have previously run the 'docker' target but
+ # later want to change the CONSOLE_VERSION then you must run
+ # the 'clean' target first before re-running the 'docker' target.
+-CONSOLE_VERSION ?= v1.0.0-SNAPSHOT.Something
++CONSOLE_VERSION ?= latest
+ CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
+ 
+ # Version label is used in the OpenShift/K8S resources to identify
+----
+
 
 == Finished Product
 
