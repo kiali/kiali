@@ -27,6 +27,16 @@ debug() {
 # Change to the directory where this script is and set our env
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
+# set the default openshift address here so that it can be used for the usage text
+#
+# This is the IP address where OpenShift will bind its master.
+# This should be a valid IP address for the machine where OpenShift is installed.
+if which ip > /dev/null ; then
+  DEFAULT_OPENSHIFT_IP_ADDRESS=`echo $(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/')`
+else
+  DEFAULT_OPENSHIFT_IP_ADDRESS="127.0.0.1"
+fi
+
 # process command line args to override environment
 _CMD=""
 while [[ $# -gt 0 ]]; do
@@ -110,7 +120,7 @@ Valid options:
   -h|--help : this message
   -a|--address <address>
       The public IP or named address bound to by the OpenShift cluster.
-      Default: $(echo $(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/'))
+      Default: ${DEFAULT_OPENSHIFT_IP_ADDRESS}
       Used only for the 'up' command.
   -ie|--istio-enabled (true|false)
       When set to true, Istio will be installed in OpenShift.
@@ -126,7 +136,7 @@ Valid options:
       Default: istio-3.9-0.8.0-alpha4
   -iop|--istiooc-platform (linux|darwin)
       The platform indicator to determine what istiooc binary executable to download.
-      Default: linux
+      Default: linux (darwin if Mac is detected)
   -ke|--kiali-enabled (true|false)
       When set to true, Kiali will be installed in OpenShift.
       Default: false
@@ -177,13 +187,26 @@ OPENSHIFT_BIN_PATH="${OPENSHIFT_BIN_PATH:=${HOME}/bin}"
 
 # This is the IP address where OpenShift will bind its master.
 # This should be a valid IP address for the machine where OpenShift is installed.
-# NOTE: Do not use any IP address within the loopback range of 127.0.0.x.
-OPENSHIFT_IP_ADDRESS=${OPENSHIFT_IP_ADDRESS:-`echo $(ip -f inet addr | grep 'state UP' -A1 | tail -n1 | awk '{print $2}' | cut -f1 -d'/')`}
+
+if [ ! "$OPENSHIFT_IP_ADDRESS" ] ; then
+  OPENSHIFT_IP_ADDRESS=${DEFAULT_OPENSHIFT_IP_ADDRESS}
+fi
 
 # The version is the tag from the openshift-istio/origin release builds.
 # The platform is either "linux" or "darwin".
 OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.8.0-alpha4}"
-OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-linux}"
+DEFAULT_OS_VERSION=linux
+DETECTED_OS_VERSION=`uname | tr '[:upper:]' '[:lower:]'`
+if [ "${DETECTED_OS_VERSION}" = "linux" -o "${DETECTED_OS_VERSION}" = "darwin" ] ; then
+  DEFAULT_OS_VERSION=${DETECTED_OS_VERSION}
+  debug "The operating system has been detected as ${DEFAULT_OS_VERSION}"
+fi
+OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-${DEFAULT_OS_VERSION}}"
+
+# if sed is gnu-sed then set option to work in posix mode to be compatible with non-gnu-sed versions
+if sed --posix 's/ / /' < /dev/null > /dev/null 2>&1 ; then
+  SEDOPTIONS="--posix"
+fi
 
 # If you want to persist data across restarts of OpenShift, set to the persistence directory.
 # If you set this to "" then no persistence will be used
@@ -275,7 +298,7 @@ fi
 
 # Download the oc client if we do not have it yet
 if [[ -f "${OS_ISTIO_OC_EXE_PATH}" ]]; then
-  _existingVersion=$(${OS_ISTIO_OC_EXE_PATH} version | head -n 1 | sed -n "s/^.* \(\S*\)+.*$/\1/p")
+  _existingVersion=$(${OS_ISTIO_OC_EXE_PATH} --request-timeout=2s version | head -n 1 | sed ${SEDOPTIONS}  "s/^oc \([A-Za-z0-9.-]*\)\+[a-z0-9 ]*$/\1/")
   if [ "$_existingVersion" != "${OS_ISTIO_OC_DOWNLOAD_VERSION}" ]; then
     echo "===== WARNING ====="
     echo "You already have the client binary but it does not match the version you want."
@@ -289,7 +312,22 @@ if [[ -f "${OS_ISTIO_OC_EXE_PATH}" ]]; then
   fi
 else
    echo "Downloading binary to ${OS_ISTIO_OC_EXE_PATH}"
-   wget -O ${OS_ISTIO_OC_EXE_PATH} ${OS_ISTIO_OC_DOWNLOAD_LOCATION}
+
+   # Use wget command if available, otherwise try curl
+   if which wget > /dev/null ; then
+     DOWNLOADER="wget -O"
+   fi
+   if [ ! "$DOWNLOADER" ] ; then
+     if which curl > /dev/null ; then
+       DOWNLOADER="curl -L -o"
+     fi
+   fi
+   if [ ! "$DOWNLOADER" ] ; then
+     echo "ERROR: You must install either curl or wget to allow downloading"
+     exit 1
+   fi
+
+   eval ${DOWNLOADER} ${OS_ISTIO_OC_EXE_PATH} ${OS_ISTIO_OC_DOWNLOAD_LOCATION}
    if [ "$?" != "0" ]; then
      echo "===== WARNING ====="
      echo "Could not download the client binary for the version you want."
@@ -367,7 +405,12 @@ elif [ "$_CMD" = "down" ];then
   echo "Will shutdown the OpenShift cluster"
   ${OS_ISTIO_OC_COMMAND} cluster down
   echo "SUDO ACCESS: unmounting openshift local volumes"
-  mount | grep "openshift.local.volumes" | awk '{ print $3}' | xargs -l -r sudo umount
+  mount | grep "openshift.local.volumes" | awk '{ print $3}' | while read FILESYSTEM
+  do
+    if [ "${FILESYSTEM}" ] ; then
+      sudo umount "${FILESYSTEM}"
+    fi
+  done  
   # only purge these if we do not want persistence
   if [ "${OPENSHIFT_PERSISTENCE_ARGS}" == "" ]; then
     echo "SUDO ACCESS: Purging /var/lib/origin files"
