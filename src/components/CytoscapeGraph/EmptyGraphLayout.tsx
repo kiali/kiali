@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Button, EmptyState, EmptyStateTitle, EmptyStateInfo, EmptyStateAction } from 'patternfly-react';
 import { style } from 'typestyle';
 import * as MessageCenter from '../../utils/MessageCenter';
+import * as _ from 'lodash';
 
 type EmptyGraphLayoutProps = {
   elements: any;
@@ -24,6 +25,19 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
   toogleMessageCenter = () => {
     MessageCenter.toggleMessageCenter();
   };
+
+  shouldComponentUpdate(nextProps: EmptyGraphLayoutProps) {
+    // Update if we are going from having no elements to having elements or vice versa
+    if (_.isEmpty(this.props.elements) !== _.isEmpty(nextProps.elements)) {
+      return true;
+    }
+    // Do not update if we have elements and the namespace didn't change, as this means we are refreshing
+    if (!_.isEmpty(nextProps.elements) && this.props.namespace === nextProps.namespace) {
+      return false;
+    }
+
+    return true;
+  }
 
   render() {
     if (this.props.isError) {
