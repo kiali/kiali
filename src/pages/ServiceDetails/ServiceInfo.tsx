@@ -18,7 +18,7 @@ import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
 import ServiceInfoPods from './ServiceInfo/ServiceInfoPods';
 import ServiceInfoDeployments from './ServiceInfo/ServiceInfoDeployments';
 import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
-import { ServiceDetailsInfo, severityToIconName, Validations } from '../../types/ServiceInfo';
+import { ServiceDetailsInfo, severityToIconName, validationToSeverity, Validations } from '../../types/ServiceInfo';
 import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 
@@ -80,12 +80,23 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     const virtualServices = this.props.serviceDetails.virtualServices || [];
     const destinationRules = this.props.serviceDetails.destinationRules || [];
     const validationChecks = this.validationChecks();
-    const errorIcon: any = (
+    const getSeverityIcon: any = (severity: string = 'error') => (
       <span>
         {' '}
-        <Icon type="pf" name={severityToIconName('error')} />
+        <Icon type="pf" name={severityToIconName(severity)} />
       </span>
     );
+
+    const getValidationIcon = (keys: string[], type: string) => {
+      let severity = 'warning';
+      keys.map(key => {
+        const validations = this.props.validations![type][key];
+        if (validationToSeverity(validations) === 'error') {
+          severity = 'error';
+        }
+      });
+      return getSeverityIcon(severity);
+    };
 
     const editorLink = '/namespaces/' + this.props.namespace + '/services/' + this.props.service;
     return (
@@ -130,11 +141,21 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                     <NavItem eventKey={2}>{'Source Services (' + Object.keys(dependencies).length + ')'}</NavItem>
                     <NavItem eventKey={3}>
                       {'Virtual Services (' + virtualServices.length + ')'}
-                      {validationChecks.hasVirtualServiceChecks ? errorIcon : undefined}
+                      {validationChecks.hasVirtualServiceChecks
+                        ? getValidationIcon(
+                            (this.props.serviceDetails.virtualServices || []).map(a => a.name),
+                            'virtualservice'
+                          )
+                        : undefined}
                     </NavItem>
                     <NavItem eventKey={4}>
                       {'Destination Rules (' + destinationRules.length + ')'}
-                      {validationChecks.hasDestinationRuleChecks ? errorIcon : undefined}
+                      {validationChecks.hasDestinationRuleChecks
+                        ? getValidationIcon(
+                            (this.props.serviceDetails.destinationRules || []).map(a => a.name),
+                            'destinationrule'
+                          )
+                        : undefined}
                     </NavItem>
                   </Nav>
                   <TabContent>

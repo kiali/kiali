@@ -459,18 +459,20 @@ export const highestSeverity = (checks: ObjectCheck[]): string => {
   return severity;
 };
 
+const numberOfChecks = (type: string, object: ObjectValidation) =>
+  (object ? object.checks || [] : []).filter(i => i.severity === type).length;
+
 export const validationToSeverity = (object: ObjectValidation): string => {
-  let severity = 'correct';
+  const warnChecks = numberOfChecks('warning', object);
+  const errChecks = numberOfChecks('error', object);
 
-  if (object) {
-    if (!object.valid) {
-      severity = 'error';
-    } else if (object.checks) {
-      severity = 'warning';
-    }
-  }
-
-  return severity;
+  return object && object.valid
+    ? 'correct'
+    : object && !object.valid && errChecks > 0
+      ? 'error'
+      : object && !object.valid && warnChecks > 0
+        ? 'warning'
+        : 'correct';
 };
 
 export const validationToIconName = (object: ObjectValidation): string => {
