@@ -97,6 +97,7 @@ func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) 
 	now := time.Now()
 
 	inboundHealthyChan, inboundTotalChan, outboundHealthyChan, outboundTotalChan := make(chan model.SampleValue, len(ports)), make(chan model.SampleValue, len(ports)), make(chan model.SampleValue, len(ports)), make(chan model.SampleValue, len(ports))
+	done := make(chan bool)
 	errChan := make(chan error)
 
 	// Note: metric names below probably depend on some istio configuration.
@@ -106,48 +107,40 @@ func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) 
 	for _, _port := range ports {
 		// Inbound
 		go func(port int) {
+			defer func() { done <- true }()
 			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_%d__%s_membership_healthy", port, queryPart), now)
 			if err != nil {
 				errChan <- err
-			}
-			if len(vec) > 0 {
+			} else if len(vec) > 0 {
 				inboundHealthyChan <- vec[0].Value
-			} else {
-				inboundHealthyChan <- 0
 			}
 		}(int(_port))
 		go func(port int) {
+			defer func() { done <- true }()
 			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_%d__%s_membership_total", port, queryPart), now)
 			if err != nil {
 				errChan <- err
-			}
-			if len(vec) > 0 {
+			} else if len(vec) > 0 {
 				inboundTotalChan <- vec[0].Value
-			} else {
-				inboundTotalChan <- 0
 			}
 		}(int(_port))
 		// Outbound
 		go func(port int) {
+			defer func() { done <- true }()
 			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_%d__%s_membership_healthy", port, queryPart), now)
 			if err != nil {
 				errChan <- err
-			}
-			if len(vec) > 0 {
+			} else if len(vec) > 0 {
 				outboundHealthyChan <- vec[0].Value
-			} else {
-				outboundHealthyChan <- 0
 			}
 		}(int(_port))
 		go func(port int) {
+			defer func() { done <- true }()
 			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_%d__%s_membership_total", port, queryPart), now)
 			if err != nil {
 				errChan <- err
-			}
-			if len(vec) > 0 {
+			} else if len(vec) > 0 {
 				outboundTotalChan <- vec[0].Value
-			} else {
-				outboundTotalChan <- 0
 			}
 		}(int(_port))
 	}
@@ -157,17 +150,15 @@ func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) 
 		select {
 		case v := <-inboundHealthyChan:
 			ret.Inbound.Healthy += int(v)
-			count++
 		case v := <-inboundTotalChan:
 			ret.Inbound.Total += int(v)
-			count++
 		case v := <-outboundHealthyChan:
 			ret.Outbound.Healthy += int(v)
-			count++
 		case v := <-outboundTotalChan:
 			ret.Outbound.Total += int(v)
-			count++
 		case err = <-errChan:
+		case <-done:
+			count++
 		}
 	}
 	return ret, err
