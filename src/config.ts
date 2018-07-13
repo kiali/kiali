@@ -38,11 +38,9 @@ export const config = () => {
       },
       /** Graphs layouts types */
       graphLayouts: {
-        breadthfirst: 'Breadthfirst',
         cola: 'Cola',
         cose: 'Cose',
-        dagre: 'Dagre',
-        klay: 'Klay'
+        dagre: 'Dagre'
       }
     },
     /** Threshold limits */

@@ -1669,11 +1669,9 @@ ShallowWrapper {
     nameDropdown="graph_filter_layouts"
     options={
       Object {
-        "breadthfirst": "Breadthfirst",
         "cola": "Cola",
         "cose": "Cose",
         "dagre": "Dagre",
-        "klay": "Klay",
       }
     }
   />,
@@ -1705,16 +1703,6 @@ ShallowWrapper {
           title="Cola"
         >
           <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="breadthfirst"
-            header={false}
-          >
-            Breadthfirst
-          </MenuItem>
-          <MenuItem
             active={true}
             bsClass="dropdown"
             disabled={false}
@@ -1744,16 +1732,6 @@ ShallowWrapper {
           >
             Dagre
           </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="klay"
-            header={false}
-          >
-            Klay
-          </MenuItem>
         </DropdownButton>,
       ],
       "className": "form-group",
@@ -1780,16 +1758,6 @@ ShallowWrapper {
         "nodeType": "function",
         "props": Object {
           "children": Array [
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="breadthfirst"
-              header={false}
-            >
-              Breadthfirst
-            </MenuItem>,
             <MenuItem
               active={true}
               bsClass="dropdown"
@@ -1820,16 +1788,6 @@ ShallowWrapper {
             >
               Dagre
             </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="klay"
-              header={false}
-            >
-              Klay
-            </MenuItem>,
           ],
           "id": "graph_filter_layouts",
           "onSelect": [Function],
@@ -1837,23 +1795,6 @@ ShallowWrapper {
         },
         "ref": null,
         "rendered": Array [
-          Object {
-            "instance": null,
-            "key": "breadthfirst",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Breadthfirst",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "breadthfirst",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Breadthfirst",
-            "type": [Function],
-          },
           Object {
             "instance": null,
             "key": "cola",
@@ -1905,23 +1846,6 @@ ShallowWrapper {
             "rendered": "Dagre",
             "type": [Function],
           },
-          Object {
-            "instance": null,
-            "key": "klay",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Klay",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "klay",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Klay",
-            "type": [Function],
-          },
         ],
         "type": [Function],
       },
@@ -1949,16 +1873,6 @@ ShallowWrapper {
             onSelect={[Function]}
             title="Cola"
           >
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="breadthfirst"
-              header={false}
-            >
-              Breadthfirst
-            </MenuItem>
             <MenuItem
               active={true}
               bsClass="dropdown"
@@ -1989,16 +1903,6 @@ ShallowWrapper {
             >
               Dagre
             </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="klay"
-              header={false}
-            >
-              Klay
-            </MenuItem>
           </DropdownButton>,
         ],
         "className": "form-group",
@@ -2025,16 +1929,6 @@ ShallowWrapper {
           "nodeType": "function",
           "props": Object {
             "children": Array [
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="breadthfirst"
-                header={false}
-              >
-                Breadthfirst
-              </MenuItem>,
               <MenuItem
                 active={true}
                 bsClass="dropdown"
@@ -2065,16 +1959,6 @@ ShallowWrapper {
               >
                 Dagre
               </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="klay"
-                header={false}
-              >
-                Klay
-              </MenuItem>,
             ],
             "id": "graph_filter_layouts",
             "onSelect": [Function],
@@ -2082,23 +1966,6 @@ ShallowWrapper {
           },
           "ref": null,
           "rendered": Array [
-            Object {
-              "instance": null,
-              "key": "breadthfirst",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Breadthfirst",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "breadthfirst",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Breadthfirst",
-              "type": [Function],
-            },
             Object {
               "instance": null,
               "key": "cola",
@@ -2148,23 +2015,6 @@ ShallowWrapper {
               },
               "ref": null,
               "rendered": "Dagre",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "klay",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Klay",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "klay",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Klay",
               "type": [Function],
             },
           ],
@@ -3852,11 +3702,9 @@ ShallowWrapper {
     nameDropdown="graph_filter_layouts"
     options={
       Object {
-        "breadthfirst": "Breadthfirst",
         "cola": "Cola",
         "cose": "Cose",
         "dagre": "Dagre",
-        "klay": "Klay",
       }
     }
     value="cola"
@@ -3889,16 +3737,6 @@ ShallowWrapper {
           title="Cola"
         >
           <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="breadthfirst"
-            header={false}
-          >
-            Breadthfirst
-          </MenuItem>
-          <MenuItem
             active={true}
             bsClass="dropdown"
             disabled={false}
@@ -3928,16 +3766,6 @@ ShallowWrapper {
           >
             Dagre
           </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="klay"
-            header={false}
-          >
-            Klay
-          </MenuItem>
         </DropdownButton>,
       ],
       "className": "form-group",
@@ -3964,16 +3792,6 @@ ShallowWrapper {
         "nodeType": "function",
         "props": Object {
           "children": Array [
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="breadthfirst"
-              header={false}
-            >
-              Breadthfirst
-            </MenuItem>,
             <MenuItem
               active={true}
               bsClass="dropdown"
@@ -4004,16 +3822,6 @@ ShallowWrapper {
             >
               Dagre
             </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="klay"
-              header={false}
-            >
-              Klay
-            </MenuItem>,
           ],
           "id": "graph_filter_layouts",
           "onSelect": [Function],
@@ -4021,23 +3829,6 @@ ShallowWrapper {
         },
         "ref": null,
         "rendered": Array [
-          Object {
-            "instance": null,
-            "key": "breadthfirst",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Breadthfirst",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "breadthfirst",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Breadthfirst",
-            "type": [Function],
-          },
           Object {
             "instance": null,
             "key": "cola",
@@ -4089,23 +3880,6 @@ ShallowWrapper {
             "rendered": "Dagre",
             "type": [Function],
           },
-          Object {
-            "instance": null,
-            "key": "klay",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Klay",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "klay",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Klay",
-            "type": [Function],
-          },
         ],
         "type": [Function],
       },
@@ -4133,16 +3907,6 @@ ShallowWrapper {
             onSelect={[Function]}
             title="Cola"
           >
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="breadthfirst"
-              header={false}
-            >
-              Breadthfirst
-            </MenuItem>
             <MenuItem
               active={true}
               bsClass="dropdown"
@@ -4173,16 +3937,6 @@ ShallowWrapper {
             >
               Dagre
             </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="klay"
-              header={false}
-            >
-              Klay
-            </MenuItem>
           </DropdownButton>,
         ],
         "className": "form-group",
@@ -4209,16 +3963,6 @@ ShallowWrapper {
           "nodeType": "function",
           "props": Object {
             "children": Array [
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="breadthfirst"
-                header={false}
-              >
-                Breadthfirst
-              </MenuItem>,
               <MenuItem
                 active={true}
                 bsClass="dropdown"
@@ -4249,16 +3993,6 @@ ShallowWrapper {
               >
                 Dagre
               </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="klay"
-                header={false}
-              >
-                Klay
-              </MenuItem>,
             ],
             "id": "graph_filter_layouts",
             "onSelect": [Function],
@@ -4266,23 +4000,6 @@ ShallowWrapper {
           },
           "ref": null,
           "rendered": Array [
-            Object {
-              "instance": null,
-              "key": "breadthfirst",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Breadthfirst",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "breadthfirst",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Breadthfirst",
-              "type": [Function],
-            },
             Object {
               "instance": null,
               "key": "cola",
@@ -4332,23 +4049,6 @@ ShallowWrapper {
               },
               "ref": null,
               "rendered": "Dagre",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "klay",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Klay",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "klay",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Klay",
               "type": [Function],
             },
           ],
