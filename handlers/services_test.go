@@ -14,7 +14,10 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"k8s.io/api/apps/v1beta1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
@@ -22,9 +25,16 @@ import (
 	"github.com/kiali/kiali/services/business"
 )
 
+var detailsForLabels = kubernetes.ServiceDetails{
+	Deployments: &v1beta1.DeploymentList{
+		Items: []v1beta1.Deployment{
+			v1beta1.Deployment{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Labels: map[string]string{"app": "svc"}}}}}}
+
 // TestServiceMetricsDefault is unit test (testing request handling, not the prometheus client behaviour)
 func TestServiceMetricsDefault(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, k8s, api := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/services/svc/metrics"
@@ -32,11 +42,13 @@ func TestServiceMetricsDefault(t *testing.T) {
 	delta := 15 * time.Second
 	var histogramSentinel, gaugeSentinel uint32
 
+	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&detailsForLabels, nil)
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
 		assert.IsType(t, v1.Range{}, args[2])
 		r := args[2].(v1.Range)
-		assert.Contains(t, query, "svc.ns.svc.cluster.local")
+		assert.Contains(t, query, "_app=\"svc\"")
+		assert.Contains(t, query, "_namespace=\"ns\"")
 		assert.Contains(t, query, "[1m]")
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
@@ -65,7 +77,7 @@ func TestServiceMetricsDefault(t *testing.T) {
 }
 
 func TestServiceMetricsWithParams(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, k8s, api := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -88,6 +100,7 @@ func TestServiceMetricsWithParams(t *testing.T) {
 	delta := 2 * time.Second
 	var histogramSentinel, gaugeSentinel uint32
 
+	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&detailsForLabels, nil)
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
 		assert.IsType(t, v1.Range{}, args[2])
@@ -97,7 +110,7 @@ func TestServiceMetricsWithParams(t *testing.T) {
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
 			assert.Contains(t, query, " by (le,response_code)")
-			assert.Contains(t, query, "istio_request_size")
+			assert.Contains(t, query, "istio_request_bytes")
 			atomic.AddUint32(&histogramSentinel, 1)
 		} else {
 			assert.Contains(t, query, " by (response_code)")
@@ -123,7 +136,7 @@ func TestServiceMetricsWithParams(t *testing.T) {
 }
 
 func TestServiceMetricsBadQueryTime(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, k8s, api := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -137,6 +150,7 @@ func TestServiceMetricsBadQueryTime(t *testing.T) {
 	q.Add("duration", "1000")
 	req.URL.RawQuery = q.Encode()
 
+	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&detailsForLabels, nil)
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		// Make sure there's no client call and we fail fast
 		t.Error("Unexpected call to client while having bad request")
@@ -154,7 +168,7 @@ func TestServiceMetricsBadQueryTime(t *testing.T) {
 }
 
 func TestServiceMetricsBadDuration(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, k8s, api := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -167,6 +181,7 @@ func TestServiceMetricsBadDuration(t *testing.T) {
 	q.Add("duration", "abc")
 	req.URL.RawQuery = q.Encode()
 
+	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&detailsForLabels, nil)
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		// Make sure there's no client call and we fail fast
 		t.Error("Unexpected call to client while having bad request")
@@ -184,7 +199,7 @@ func TestServiceMetricsBadDuration(t *testing.T) {
 }
 
 func TestServiceMetricsBadStep(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, k8s, api := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -197,6 +212,7 @@ func TestServiceMetricsBadStep(t *testing.T) {
 	q.Add("duration", "1000")
 	req.URL.RawQuery = q.Encode()
 
+	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&detailsForLabels, nil)
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		// Make sure there's no client call and we fail fast
 		t.Error("Unexpected call to client while having bad request")
@@ -214,7 +230,7 @@ func TestServiceMetricsBadStep(t *testing.T) {
 }
 
 func TestServiceMetricsBadRateFunc(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, k8s, api := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -226,6 +242,7 @@ func TestServiceMetricsBadRateFunc(t *testing.T) {
 	q.Add("rateFunc", "invalid rate func")
 	req.URL.RawQuery = q.Encode()
 
+	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&detailsForLabels, nil)
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		// Make sure there's no client call and we fail fast
 		t.Error("Unexpected call to client while having bad request")
@@ -242,22 +259,28 @@ func TestServiceMetricsBadRateFunc(t *testing.T) {
 	assert.Contains(t, string(actual), "query parameter 'rateFunc' must be either 'rate' or 'irate'")
 }
 
-func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
-	client, api, err := setupMocked()
+func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromAPIMock) {
+	config.Set(config.NewConfig())
+	k8s := new(kubetest.K8SClientMock)
+	api := new(prometheustest.PromAPIMock)
+	prom, err := prometheus.NewClient()
 	if err != nil {
 		t.Fatal(err)
 	}
+	prom.Inject(api)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			getServiceMetrics(w, r, func() (*prometheus.Client, error) {
-				return client, nil
+				return prom, nil
 			})
 		}))
 
 	ts := httptest.NewServer(mr)
-	return ts, api
+	business.SetWithBackends(k8s, prom)
+	return ts, k8s, api
+	// return nil, ts, api
 }
 
 // TestServiceHealth is unit test (testing request handling, not the prometheus client behaviour)

@@ -1,7 +1,6 @@
 package prometheustest
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -101,32 +100,30 @@ func TestGetServiceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
-	mockRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
-	mockRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
-	mockHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_response_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.6)
-	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
-		Namespace: "istio-system",
-		Service:   "productpage",
-		MetricsQuery: prometheus.MetricsQuery{
-			Range: v1.Range{
-				Start: time.Unix(1000, 0),
-				End:   time.Unix(2000, 0),
-				Step:  10,
-			},
-			Version:      "",
-			RateInterval: "5m",
-			RateFunc:     "rate",
-			ByLabelsIn:   []string{},
-			ByLabelsOut:  []string{},
-			IncludeIstio: true,
-			Filters:      []string{}}})
+	mockRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockHistogram(api, "istio_request_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_duration_seconds", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	mockHistogram(api, "istio_response_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.6)
+	mockHistogram(api, "istio_request_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration_seconds", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+		Namespace: "bookinfo",
+		Apps:      []string{"productpage"},
+		Range: v1.Range{
+			Start: time.Unix(1000, 0),
+			End:   time.Unix(2000, 0),
+			Step:  10,
+		},
+		RateInterval: "5m",
+		RateFunc:     "rate",
+		ByLabelsIn:   []string{},
+		ByLabelsOut:  []string{},
+		IncludeIstio: true,
+		Filters:      []string{}})
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
@@ -172,31 +169,29 @@ func TestGetServiceMetricsIncludeIstioFalse(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",destination_service!~\".*\\\\.istio-system\\\\..*\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
-	mockRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",destination_service!~\".*\\\\.istio-system\\\\..*\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
-	mockRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
-	mockHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\",destination_service!~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration", "{source_service=\"productpage.istio-system.svc.cluster.local\",destination_service!~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_response_size", "{source_service=\"productpage.istio-system.svc.cluster.local\",destination_service!~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.6)
-	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
-		Namespace: "istio-system",
-		Service:   "productpage",
-		MetricsQuery: prometheus.MetricsQuery{
-			Range: v1.Range{
-				Start: time.Unix(1000, 0),
-				End:   time.Unix(2000, 0),
-				Step:  10,
-			},
-			Version:      "",
-			RateInterval: "5m",
-			RateFunc:     "rate",
-			ByLabelsIn:   []string{},
-			ByLabelsOut:  []string{},
-			Filters:      []string{}}})
+	mockRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\",destination_namespace!=\"istio-system\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\",destination_namespace!=\"istio-system\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockHistogram(api, "istio_request_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\",destination_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_duration_seconds", "{source_app=\"productpage\",source_namespace=\"bookinfo\",destination_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	mockHistogram(api, "istio_response_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\",destination_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.6)
+	mockHistogram(api, "istio_request_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration_seconds", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+		Namespace: "bookinfo",
+		Apps:      []string{"productpage"},
+		Range: v1.Range{
+			Start: time.Unix(1000, 0),
+			End:   time.Unix(2000, 0),
+			Step:  10,
+		},
+		RateInterval: "5m",
+		RateFunc:     "rate",
+		ByLabelsIn:   []string{},
+		ByLabelsOut:  []string{},
+		Filters:      []string{}})
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
@@ -242,26 +237,24 @@ func TestGetFilteredServiceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)", 2.5)
-	mockHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
-		Namespace: "istio-system",
-		Service:   "productpage",
-		MetricsQuery: prometheus.MetricsQuery{
-			Range: v1.Range{
-				Start: time.Unix(1000, 0),
-				End:   time.Unix(2000, 0),
-				Step:  10,
-			},
-			Version:      "",
-			RateInterval: "5m",
-			RateFunc:     "rate",
-			ByLabelsIn:   []string{},
-			ByLabelsOut:  []string{},
-			IncludeIstio: true,
-			Filters:      []string{"request_count", "request_size"}}})
+	mockRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
+	mockHistogram(api, "istio_request_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+		Namespace: "bookinfo",
+		Apps:      []string{"productpage"},
+		Range: v1.Range{
+			Start: time.Unix(1000, 0),
+			End:   time.Unix(2000, 0),
+			Step:  10,
+		},
+		RateInterval: "5m",
+		RateFunc:     "rate",
+		ByLabelsIn:   []string{},
+		ByLabelsOut:  []string{},
+		IncludeIstio: true,
+		Filters:      []string{"request_count", "request_size"}})
 
 	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
 	assert.Equal(t, 2, len(metrics.Histograms), "Should have 2 histograms")
@@ -281,24 +274,22 @@ func TestGetServiceMetricsInstantRates(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(irate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[1m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(irate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[1m])), 0.001)", 2.5)
-	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
-		Namespace: "istio-system",
-		Service:   "productpage",
-		MetricsQuery: prometheus.MetricsQuery{
-			Range: v1.Range{
-				Start: time.Unix(1000, 0),
-				End:   time.Unix(2000, 0),
-				Step:  10,
-			},
-			Version:      "",
-			RateInterval: "1m",
-			RateFunc:     "irate",
-			ByLabelsIn:   []string{},
-			ByLabelsOut:  []string{},
-			IncludeIstio: true,
-			Filters:      []string{"request_count"}}})
+	mockRange(api, "round(sum(irate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\"}[1m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(irate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[1m])), 0.001)", 2.5)
+	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+		Namespace: "bookinfo",
+		Apps:      []string{"productpage"},
+		Range: v1.Range{
+			Start: time.Unix(1000, 0),
+			End:   time.Unix(2000, 0),
+			Step:  10,
+		},
+		RateInterval: "1m",
+		RateFunc:     "irate",
+		ByLabelsIn:   []string{},
+		ByLabelsOut:  []string{},
+		IncludeIstio: true,
+		Filters:      []string{"request_count"}})
 
 	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
 	assert.Equal(t, 0, len(metrics.Histograms), "Should have no histogram")
@@ -338,32 +329,30 @@ func TestGetServiceMetricsUnavailable(t *testing.T) {
 		return
 	}
 	// Mock everything to return empty data
-	mockEmptyRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
-	mockEmptyRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m])), 0.001)")
-	mockEmptyRange(api, "round(sum(rate(istio_request_count{source_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
-	mockEmptyRange(api, "round(sum(rate(istio_request_count{destination_service=\"productpage.istio-system.svc.cluster.local\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
-	mockEmptyHistogram(api, "istio_request_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
-	mockEmptyHistogram(api, "istio_request_duration", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
-	mockEmptyHistogram(api, "istio_response_size", "{source_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
-	mockEmptyHistogram(api, "istio_request_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
-	mockEmptyHistogram(api, "istio_request_duration", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
-	mockEmptyHistogram(api, "istio_response_size", "{destination_service=\"productpage.istio-system.svc.cluster.local\"}[5m]")
-	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
-		Namespace: "istio-system",
-		Service:   "productpage",
-		MetricsQuery: prometheus.MetricsQuery{
-			Range: v1.Range{
-				Start: time.Unix(1000, 0),
-				End:   time.Unix(2000, 0),
-				Step:  10,
-			},
-			Version:      "",
-			RateInterval: "5m",
-			RateFunc:     "rate",
-			ByLabelsIn:   []string{},
-			ByLabelsOut:  []string{},
-			IncludeIstio: true,
-			Filters:      []string{}}})
+	mockEmptyRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
+	mockEmptyHistogram(api, "istio_request_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]")
+	mockEmptyHistogram(api, "istio_request_duration_seconds", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]")
+	mockEmptyHistogram(api, "istio_response_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]")
+	mockEmptyHistogram(api, "istio_request_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]")
+	mockEmptyHistogram(api, "istio_request_duration_seconds", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]")
+	mockEmptyHistogram(api, "istio_response_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]")
+	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+		Namespace: "bookinfo",
+		Apps:      []string{"productpage"},
+		Range: v1.Range{
+			Start: time.Unix(1000, 0),
+			End:   time.Unix(2000, 0),
+			Step:  10,
+		},
+		RateInterval: "5m",
+		RateFunc:     "rate",
+		ByLabelsIn:   []string{},
+		ByLabelsOut:  []string{},
+		IncludeIstio: true,
+		Filters:      []string{}})
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
@@ -405,32 +394,29 @@ func TestGetNamespaceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_request_count{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(rate(istio_request_count{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m])), 0.001)", 2.5)
-	mockRange(api, "round(sum(rate(istio_request_count{source_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
-	mockRange(api, "round(sum(rate(istio_request_count{destination_service=~\".*\\\\.istio-system\\\\..*\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
-	mockHistogram(api, "istio_request_size", "{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration", "{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_response_size", "{source_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.6)
-	mockHistogram(api, "istio_request_size", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_response_size", "{destination_service=~\".*\\\\.istio-system\\\\..*\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetNamespaceMetrics(&prometheus.NamespaceMetricsQuery{
-		Namespace:      "istio-system",
-		ServicePattern: "",
-		MetricsQuery: prometheus.MetricsQuery{
-			Range: v1.Range{
-				Start: time.Unix(1000, 0),
-				End:   time.Unix(2000, 0),
-				Step:  10,
-			},
-			Version:      "",
-			RateInterval: "5m",
-			RateFunc:     "rate",
-			ByLabelsIn:   []string{},
-			ByLabelsOut:  []string{},
-			IncludeIstio: true,
-			Filters:      []string{}}})
+	mockRange(api, "round(sum(rate(istio_requests_total{source_namespace=\"bookinfo\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{destination_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{source_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{destination_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockHistogram(api, "istio_request_bytes", "{source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_duration_seconds", "{source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	mockHistogram(api, "istio_response_bytes", "{source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.6)
+	mockHistogram(api, "istio_request_bytes", "{destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration_seconds", "{destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_bytes", "{destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+		Namespace: "bookinfo",
+		Range: v1.Range{
+			Start: time.Unix(1000, 0),
+			End:   time.Unix(2000, 0),
+			Step:  10,
+		},
+		RateInterval: "5m",
+		RateFunc:     "rate",
+		ByLabelsIn:   []string{},
+		ByLabelsOut:  []string{},
+		IncludeIstio: true,
+		Filters:      []string{}})
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
@@ -575,47 +561,4 @@ func setupExternal() (*prometheus.Client, error) {
 	conf.ExternalServices.PrometheusServiceURL = "http://prometheus-istio-system.127.0.0.1.nip.io"
 	config.Set(conf)
 	return prometheus.NewClient()
-}
-
-// Fake test / runnable function for manual test against actual server.
-func TestAgainstLiveGetSourceServices(t *testing.T) {
-	client, err := setupExternal()
-	if err != nil {
-		fmt.Printf("TestAgainstLive / Client error: %v\n", err)
-		return
-	}
-	sources, err := client.GetSourceServices("istio-system", "productpage")
-	if err != nil {
-		fmt.Printf("TestAgainstLive / GetSourceServices error: %v\n", err)
-		return
-	}
-	for dest, origin := range sources {
-		fmt.Printf("To: %s, From: %s \n", dest, origin)
-	}
-}
-
-// Fake test / runnable function for manual test against actual server.
-func TestAgainstLiveGetServiceMetrics(t *testing.T) {
-	client, err := setupExternal()
-	if err != nil {
-		fmt.Printf("TestAgainstLive / Client error: %v\n", err)
-		return
-	}
-	fmt.Printf("Metrics: \n")
-	metrics := client.GetServiceMetrics(&prometheus.ServiceMetricsQuery{
-		Namespace: "tutorial",
-		Service:   "preference",
-		MetricsQuery: prometheus.MetricsQuery{
-			Range: v1.Range{
-				Start: time.Unix(1000, 0),
-				End:   time.Unix(2000, 0),
-				Step:  10,
-			},
-			Version:      "",
-			RateInterval: "5m",
-			RateFunc:     "rate",
-			ByLabelsIn:   []string{},
-			ByLabelsOut:  []string{},
-			Filters:      []string{}}})
-	fmt.Printf("TestAgainstLive / GetServiceMetrics: %v\n", metrics)
 }

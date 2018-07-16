@@ -83,3 +83,19 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 	s.SetServiceDetails(serviceDetails, istioDetails, prometheusDetails)
 	return &s, nil
 }
+
+// GetApps returns a list of "app" label values used for the Deployments covered by this service
+func (in *SvcService) GetApps(namespace, service string) ([]string, error) {
+	serviceDetails, err := in.k8s.GetServiceDetails(namespace, service)
+	if err != nil {
+		return nil, fmt.Errorf("GetApps: %s", err.Error())
+	}
+
+	var apps []string
+	for _, depl := range serviceDetails.Deployments.Items {
+		if app, ok := depl.Labels["app"]; ok {
+			apps = append(apps, app)
+		}
+	}
+	return apps, nil
+}

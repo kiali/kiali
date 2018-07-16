@@ -79,7 +79,8 @@ func NamespaceIstioValidations(w http.ResponseWriter, r *http.Request) {
 func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error)) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
-	params, err := extractNamespaceMetricsQuery(r, namespace, "")
+	params := prometheus.MetricsQuery{Namespace: namespace}
+	err := extractMetricsQueryParams(r, &params)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -90,6 +91,6 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promClientSuppl
 		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
 		return
 	}
-	metrics := prometheusClient.GetNamespaceMetrics(params)
+	metrics := prometheusClient.GetMetrics(&params)
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
