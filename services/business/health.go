@@ -56,7 +56,7 @@ func (in *HealthService) getNamespaceHealth(namespace string, sl *kubernetes.Ser
 	}
 
 	// Fetch services requests rates
-	inRates, outRates, _ := in.prom.GetNamespaceServicesRequestRates(namespace, rateInterval)
+	inRates, outRates, _ := in.prom.GetNamespaceRequestRates(namespace, rateInterval)
 
 	// Fill with collected request rates
 	// Note: we must match each service with inRates and outRates separately, else we would generate duplicates
@@ -104,9 +104,15 @@ func fillRequestRates(allHealth NamespaceHealth, inRates, outRates model.Vector)
 
 func (in *HealthService) fillMissingParts(namespace, serviceName string, details *kubernetes.ServiceDetails, rateInterval string, health *models.Health) {
 	var ports []int32
+	var apps []string
 	if details != nil {
 		for _, port := range details.Service.Spec.Ports {
 			ports = append(ports, port.Port)
+		}
+		for _, depl := range details.Deployments.Items {
+			if app, ok := depl.Labels["app"]; ok {
+				apps = append(apps, app)
+			}
 		}
 	}
 
@@ -126,14 +132,14 @@ func (in *HealthService) fillMissingParts(namespace, serviceName string, details
 
 	// Request errors
 	health.Requests.FillIfMissing(func() (float64, float64) {
-		rqHealth := in.getRequestsHealth(namespace, serviceName, rateInterval)
+		rqHealth := in.getRequestsHealth(namespace, apps, rateInterval)
 		return rqHealth.RequestErrorCount, rqHealth.RequestCount
 	})
 }
 
-func (in *HealthService) getRequestsHealth(namespace, service, rateInterval string) models.RequestHealth {
+func (in *HealthService) getRequestsHealth(namespace string, apps []string, rateInterval string) models.RequestHealth {
 	rqHealth := models.RequestHealth{}
-	inbound, outbound, _ := in.prom.GetServiceRequestRates(namespace, service, rateInterval)
+	inbound, outbound, _ := in.prom.GetAppsRequestRates(namespace, apps, rateInterval)
 	all := append(inbound, outbound...)
 	for _, sample := range all {
 		sumRequestCounters(&rqHealth, sample)

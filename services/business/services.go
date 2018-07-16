@@ -71,7 +71,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		return nil, fmt.Errorf("Istio details: %s", err.Error())
 	}
 
-	prometheusDetails, err := in.prom.GetSourceServices(namespace, service)
+	prometheusDetails, err := in.prom.GetSourceWorkloads(namespace, service)
 	if err != nil {
 		return nil, fmt.Errorf("Source services: %s", err.Error())
 	}
