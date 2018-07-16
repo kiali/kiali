@@ -272,7 +272,7 @@ func TestServiceHealth(t *testing.T) {
 		assert.Equal(t, "svc", args[1])
 	}).Return((*kubernetes.ServiceDetails)(nil), nil)
 
-	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
 		assert.Equal(t, "svc", args[1])
 	}).Return(prometheus.EnvoyHealth{}, nil)

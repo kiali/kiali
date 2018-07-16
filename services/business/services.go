@@ -63,6 +63,9 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		return nil, fmt.Errorf("Service details: %s", err.Error())
 	}
 
+	health := models.Health{}
+	in.health.fillMissingParts(namespace, service, serviceDetails, interval, &health)
+
 	istioDetails, err := in.k8s.GetIstioDetails(namespace, service)
 	if err != nil {
 		return nil, fmt.Errorf("Istio details: %s", err.Error())
@@ -72,12 +75,6 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 	if err != nil {
 		return nil, fmt.Errorf("Source services: %s", err.Error())
 	}
-
-	statuses := castDeploymentsStatuses(serviceDetails.Deployments.Items)
-	health := models.Health{
-		DeploymentStatuses: statuses,
-		DeploymentsFetched: true}
-	in.health.fillMissingParts(namespace, service, interval, &health)
 
 	s := models.Service{
 		Namespace: models.Namespace{Name: namespace},

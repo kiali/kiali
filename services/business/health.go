@@ -25,7 +25,8 @@ type NamespaceHealth map[string]*models.Health
 func (in *HealthService) GetServiceHealth(namespace, service, rateInterval string) models.Health {
 	// Fill all parts
 	health := models.Health{}
-	in.fillMissingParts(namespace, service, rateInterval, &health)
+	details, _ := in.k8s.GetServiceDetails(namespace, service)
+	in.fillMissingParts(namespace, service, details, rateInterval, &health)
 	return health
 }
 
@@ -40,15 +41,18 @@ func (in *HealthService) GetNamespaceHealth(namespace, rateInterval string) (Nam
 
 func (in *HealthService) getNamespaceHealth(namespace string, sl *kubernetes.ServiceList, rateInterval string) NamespaceHealth {
 	allHealth := make(NamespaceHealth)
+	serviceDetailsMap := make(map[string]*kubernetes.ServiceDetails)
 
-	// Extract deployment statuses
+	// Prepare all data
 	for _, item := range sl.Services.Items {
+		allHealth[item.Name] = &models.Health{}
 		sPods := kubernetes.FilterPodsForService(&item, sl.Pods)
 		depls := kubernetes.FilterDeploymentsForService(&item, sPods, sl.Deployments)
-		statuses := castDeploymentsStatuses(depls)
-		allHealth[item.Name] = &models.Health{
-			DeploymentStatuses: statuses,
-			DeploymentsFetched: true}
+		serviceDetailsMap[item.Name] = &kubernetes.ServiceDetails{
+			Service:     &item,
+			Deployments: &v1beta1.DeploymentList{Items: depls},
+			Pods:        sPods,
+		}
 	}
 
 	// Fetch services requests rates
@@ -64,15 +68,15 @@ func (in *HealthService) getNamespaceHealth(namespace string, sl *kubernetes.Ser
 	// Finally complete missing health information
 	for s, h := range allHealth {
 		service, health := s, h
+		details := serviceDetailsMap[service]
 		go func() {
 			defer wg.Done()
 			// rateinterval not necessary here since we already fetched the request rates
-			in.fillMissingParts(namespace, service, "", health)
+			in.fillMissingParts(namespace, service, details, "", health)
 		}()
 	}
 
 	wg.Wait()
-
 	return allHealth
 }
 
@@ -98,10 +102,16 @@ func fillRequestRates(allHealth NamespaceHealth, inRates, outRates model.Vector)
 	}
 }
 
-func (in *HealthService) fillMissingParts(namespace, service, rateInterval string, health *models.Health) {
+func (in *HealthService) fillMissingParts(namespace, serviceName string, details *kubernetes.ServiceDetails, rateInterval string, health *models.Health) {
+	var ports []int32
+	if details != nil {
+		for _, port := range details.Service.Spec.Ports {
+			ports = append(ports, port.Port)
+		}
+	}
+
 	// Pod statuses
 	health.FillDeploymentStatusesIfMissing(func() []models.DeploymentStatus {
-		details, _ := in.k8s.GetServiceDetails(namespace, service)
 		if details != nil {
 			return castDeploymentsStatuses(details.Deployments.Items)
 		}
@@ -110,13 +120,13 @@ func (in *HealthService) fillMissingParts(namespace, service, rateInterval strin
 
 	// Envoy health
 	health.Envoy.FillIfMissing(func() prometheus.EnvoyHealth {
-		health, _ := in.prom.GetServiceHealth(namespace, service)
+		health, _ := in.prom.GetServiceHealth(namespace, serviceName, ports)
 		return health
 	})
 
 	// Request errors
 	health.Requests.FillIfMissing(func() (float64, float64) {
-		rqHealth := in.getRequestsHealth(namespace, service, rateInterval)
+		rqHealth := in.getRequestsHealth(namespace, serviceName, rateInterval)
 		return rqHealth.RequestErrorCount, rqHealth.RequestCount
 	})
 }

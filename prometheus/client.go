@@ -16,10 +16,10 @@ import (
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	GetServiceHealth(namespace string, servicename string) (EnvoyHealth, error)
-	GetNamespaceServicesRequestRates(namespace string, ratesInterval string) (model.Vector, model.Vector, error)
-	GetServiceRequestRates(namespace, service string, ratesInterval string) (model.Vector, model.Vector, error)
-	GetSourceServices(namespace string, servicename string) (map[string][]string, error)
+	GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyHealth, error)
+	GetNamespaceServicesRequestRates(namespace, ratesInterval string) (model.Vector, model.Vector, error)
+	GetServiceRequestRates(namespace, service, ratesInterval string) (model.Vector, model.Vector, error)
+	GetSourceServices(namespace, servicename string) (map[string][]string, error)
 }
 
 // Client for Prometheus API.
@@ -100,8 +100,8 @@ func (in *Client) GetServiceMetrics(query *ServiceMetricsQuery) Metrics {
 // GetServiceHealth returns the Health related to the provided service identified by its namespace and service name.
 // It reads Envoy metrics, inbound and outbound
 // When the health is unavailable, total number of members will be 0.
-func (in *Client) GetServiceHealth(namespace string, servicename string) (EnvoyHealth, error) {
-	return getServiceHealth(in.api, namespace, servicename)
+func (in *Client) GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyHealth, error) {
+	return getServiceHealth(in.api, namespace, servicename, ports)
 }
 
 // GetNamespaceMetrics returns the Metrics described by the optional service pattern ("" for all), and optional

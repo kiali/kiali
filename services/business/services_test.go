@@ -48,7 +48,7 @@ func TestSingleServiceHealthParsing(t *testing.T) {
 	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeServiceDetails(), nil)
 	k8s.On("GetIstioDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeIstioDetails(), nil)
 	prom.On("GetSourceServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(make(map[string][]string), nil)
-	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(prometheus.EnvoyHealth{Inbound: prometheus.EnvoyRatio{Healthy: 1, Total: 1}}, nil)
+	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Return(prometheus.EnvoyHealth{Inbound: prometheus.EnvoyRatio{Healthy: 1, Total: 1}}, nil)
 	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeServiceRequestCounters())
 	svc := setupServices(k8s, prom)
 

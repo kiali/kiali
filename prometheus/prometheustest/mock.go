@@ -88,8 +88,8 @@ type PromClientMock struct {
 	mock.Mock
 }
 
-func (o *PromClientMock) GetServiceHealth(namespace, servicename string) (prometheus.EnvoyHealth, error) {
-	args := o.Called(namespace, servicename)
+func (o *PromClientMock) GetServiceHealth(namespace, servicename string, ports []int32) (prometheus.EnvoyHealth, error) {
+	args := o.Called(namespace, servicename, ports)
 	return args.Get(0).(prometheus.EnvoyHealth), args.Error(1)
 }
 

@@ -86,63 +86,82 @@ type EnvoyRatio struct {
 	Total   int `json:"total"`
 }
 
-func getServiceHealth(api v1.API, namespace string, servicename string) (EnvoyHealth, error) {
+func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) (EnvoyHealth, error) {
+	ret := EnvoyHealth{}
+	if len(ports) == 0 {
+		return ret, nil
+	}
+
 	envoyClustername := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, ".", "_", -1)
 	queryPart := replaceInvalidCharacters(fmt.Sprintf("%s_%s_%s", servicename, namespace, envoyClustername))
 	now := time.Now()
-	ret := EnvoyHealth{}
+
+	inboundHealthyChan, inboundTotalChan, outboundHealthyChan, outboundTotalChan := make(chan model.SampleValue, len(ports)), make(chan model.SampleValue, len(ports)), make(chan model.SampleValue, len(ports)), make(chan model.SampleValue, len(ports))
+	done := make(chan bool)
+	errChan := make(chan error)
 
 	// Note: metric names below probably depend on some istio configuration.
 	// They should anyway change soon in a more prometheus-friendly way,
 	// see https://github.com/istio/istio/issues/4854 and https://github.com/istio/istio/pull/5069
 
-	var healthyErrIn, totalErrIn, healthyErrOut, totalErrOut error
-	var wg sync.WaitGroup
-	wg.Add(4)
-	// Inbound
-	go func() {
-		defer wg.Done()
-		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_9080__%s_membership_healthy", queryPart), now)
-		healthyErrIn = err
-		if len(vec) > 0 {
-			ret.Inbound.Healthy = int(vec[0].Value)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_9080__%s_membership_total", queryPart), now)
-		totalErrIn = err
-		if len(vec) > 0 {
-			ret.Inbound.Total = int(vec[0].Value)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_9080__%s_membership_healthy", queryPart), now)
-		healthyErrOut = err
-		if len(vec) > 0 {
-			ret.Outbound.Healthy = int(vec[0].Value)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_9080__%s_membership_total", queryPart), now)
-		totalErrOut = err
-		if len(vec) > 0 {
-			ret.Outbound.Total = int(vec[0].Value)
-		}
-	}()
-	wg.Wait()
-	if healthyErrIn != nil {
-		return ret, healthyErrIn
-	} else if totalErrIn != nil {
-		return ret, totalErrIn
-	} else if healthyErrOut != nil {
-		return ret, healthyErrOut
-	} else if totalErrOut != nil {
-		return ret, totalErrOut
+	for _, _port := range ports {
+		// Inbound
+		go func(port int) {
+			defer func() { done <- true }()
+			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_%d__%s_membership_healthy", port, queryPart), now)
+			if err != nil {
+				errChan <- err
+			} else if len(vec) > 0 {
+				inboundHealthyChan <- vec[0].Value
+			}
+		}(int(_port))
+		go func(port int) {
+			defer func() { done <- true }()
+			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_%d__%s_membership_total", port, queryPart), now)
+			if err != nil {
+				errChan <- err
+			} else if len(vec) > 0 {
+				inboundTotalChan <- vec[0].Value
+			}
+		}(int(_port))
+		// Outbound
+		go func(port int) {
+			defer func() { done <- true }()
+			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_%d__%s_membership_healthy", port, queryPart), now)
+			if err != nil {
+				errChan <- err
+			} else if len(vec) > 0 {
+				outboundHealthyChan <- vec[0].Value
+			}
+		}(int(_port))
+		go func(port int) {
+			defer func() { done <- true }()
+			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_%d__%s_membership_total", port, queryPart), now)
+			if err != nil {
+				errChan <- err
+			} else if len(vec) > 0 {
+				outboundTotalChan <- vec[0].Value
+			}
+		}(int(_port))
 	}
-	return ret, nil
+
+	var err error
+	for count := 0; count < len(ports)*4; {
+		select {
+		case v := <-inboundHealthyChan:
+			ret.Inbound.Healthy += int(v)
+		case v := <-inboundTotalChan:
+			ret.Inbound.Total += int(v)
+		case v := <-outboundHealthyChan:
+			ret.Outbound.Healthy += int(v)
+		case v := <-outboundTotalChan:
+			ret.Outbound.Total += int(v)
+		case err = <-errChan:
+		case <-done:
+			count++
+		}
+	}
+	return ret, err
 }
 
 func getServiceMetrics(api v1.API, q *ServiceMetricsQuery) Metrics {
