@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/api"
@@ -17,9 +16,9 @@ import (
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
 	GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyHealth, error)
-	GetNamespaceServicesRequestRates(namespace, ratesInterval string) (model.Vector, model.Vector, error)
-	GetServiceRequestRates(namespace, service, ratesInterval string) (model.Vector, model.Vector, error)
-	GetSourceServices(namespace, servicename string) (map[string][]string, error)
+	GetNamespaceRequestRates(namespace, ratesInterval string) (model.Vector, model.Vector, error)
+	GetAppsRequestRates(namespace string, apps []string, ratesInterval string) (model.Vector, model.Vector, error)
+	GetSourceWorkloads(namespace, servicename string) (map[string][]Workload, error)
 }
 
 // Client for Prometheus API.
@@ -28,6 +27,14 @@ type Client struct {
 	ClientInterface
 	p8s api.Client
 	api v1.API
+}
+
+// Workload describes a workload with contextual information
+type Workload struct {
+	Namespace string
+	App       string
+	Workload  string
+	Version   string
 }
 
 // NewClient creates a new client to the Prometheus API.
@@ -49,34 +56,34 @@ func (in *Client) Inject(api v1.API) {
 	in.api = api
 }
 
-// GetSourceServices returns a map of list of source services for a given service identified by its namespace and service name.
-// Returned map has a destination version as a key and a list of "<origin service>/<origin version>" pairs as values.
-// Destination service is not included in the map as it is passed as argument.
+// GetSourceWorkloads returns a map of list of source workloads for a given service
+// identified by its namespace and service name.
+// Returned map has a destination version as a key and a list of workloads as values.
 // It returns an error on any problem.
-func (in *Client) GetSourceServices(namespace string, servicename string) (map[string][]string, error) {
-	query := fmt.Sprintf("istio_request_count{destination_service=\"%s.%s.%s\"}",
-		servicename, namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain)
+func (in *Client) GetSourceWorkloads(namespace string, servicename string) (map[string][]Workload, error) {
+	query := fmt.Sprintf("istio_requests_total{reporter=\"source\",destination_service_name=\"%s\",destination_service_namespace=\"%s\"}",
+		servicename, namespace)
 	result, err := in.api.Query(context.Background(), query, time.Now())
 	if err != nil {
 		return nil, err
 	}
-	routes := make(map[string][]string)
+	routes := make(map[string][]Workload)
 	switch result.Type() {
 	case model.ValVector:
 		matrix := result.(model.Vector)
 		for _, sample := range matrix {
 			metric := sample.Metric
-			index := fmt.Sprintf("%s", metric["destination_version"])
-			sourceService := string(metric["source_service"])
-			// sourceService is in the form "service.namespace.istio_identity_domain". We want to keep only "service.namespace".
-			if i := strings.Index(sourceService, "."+config.Get().ExternalServices.Istio.IstioIdentityDomain); i > 0 {
-				sourceService = sourceService[:i]
+			index := string(metric["destination_version"])
+			source := Workload{
+				Namespace: string(metric["source_workload_namespace"]),
+				App:       string(metric["source_app"]),
+				Workload:  string(metric["source_workload"]),
+				Version:   string(metric["source_version"]),
 			}
-			source := fmt.Sprintf("%s/%s", sourceService, metric["source_version"])
 			if arr, ok := routes[index]; ok {
 				found := false
 				for _, s := range arr {
-					if s == source {
+					if s.Workload == source.Workload {
 						found = true
 						break
 					}
@@ -85,7 +92,7 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 					routes[index] = append(arr, source)
 				}
 			} else {
-				routes[index] = []string{source}
+				routes[index] = []Workload{source}
 			}
 		}
 	}
@@ -104,18 +111,18 @@ func (in *Client) GetServiceHealth(namespace, servicename string, ports []int32)
 	return getServiceHealth(in.api, namespace, servicename, ports)
 }
 
-// GetNamespaceServicesRequestRates queries Prometheus to fetch request counters rates over a time interval
+// GetNamespaceRequestRates queries Prometheus to fetch request counters rates over a time interval
 // for each service, both in and out.
 // Returns (in, out, error)
-func (in *Client) GetNamespaceServicesRequestRates(namespace string, ratesInterval string) (model.Vector, model.Vector, error) {
-	return getNamespaceServicesRequestRates(in.api, namespace, ratesInterval)
+func (in *Client) GetNamespaceRequestRates(namespace string, ratesInterval string) (model.Vector, model.Vector, error) {
+	return getNamespaceRequestRates(in.api, namespace, ratesInterval)
 }
 
-// GetServiceRequestRates queries Prometheus to fetch request counters rates over a time interval
-// for a given service, both in and out.
+// GetAppsRequestRates queries Prometheus to fetch request counters rates over a time interval
+// for a given list of apps, both in and out.
 // Returns (in, out, error)
-func (in *Client) GetServiceRequestRates(namespace, service string, ratesInterval string) (model.Vector, model.Vector, error) {
-	return getServiceRequestRates(in.api, namespace, service, ratesInterval)
+func (in *Client) GetAppsRequestRates(namespace string, apps []string, ratesInterval string) (model.Vector, model.Vector, error) {
+	return getAppsRequestRates(in.api, namespace, apps, ratesInterval)
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client

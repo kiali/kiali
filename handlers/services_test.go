@@ -300,7 +300,7 @@ func TestServiceHealth(t *testing.T) {
 		assert.Equal(t, "svc", args[1])
 	}).Return(prometheus.EnvoyHealth{}, nil)
 
-	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(model.Vector{}, model.Vector{}, nil)
+	prom.On("GetAppsRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("[]string"), mock.AnythingOfType("string")).Return(model.Vector{}, model.Vector{}, nil)
 
 	resp, err := http.Get(url)
 	if err != nil {
