@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { Button, Col, Icon, Row } from 'patternfly-react';
-import IstioRuleDetailsDescription from './IstioRuleDestailsDescription';
+import { ListView, ListViewItem, Row, Col, Table, Card, CardTitle, CardBody, Icon, Button } from 'patternfly-react';
+import * as resolve from 'table-resolver';
+import './IstioRuleInfo.css';
+import { aceOptions, safeDumpOptions, IstioRuleDetails } from '../../types/IstioConfigDetails';
+import { Link } from 'react-router-dom';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
-import './IstioRuleInfo.css';
-import { aceOptions, IstioRuleDetails, safeDumpOptions } from '../../types/IstioConfigDetails';
 
 const yaml = require('js-yaml');
 
@@ -24,6 +25,18 @@ interface ParsedSearch {
 class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
   constructor(props: IstioRuleInfoProps) {
     super(props);
+  }
+
+  headerFormat = (label, { column }) => <Table.Heading className={column.property}>{label}</Table.Heading>;
+  cellFormat = (value, { column }) => {
+    const props = column.cell.props;
+    const className = props ? props.align : '';
+
+    return <Table.Cell className={className}>{value}</Table.Cell>;
+  };
+
+  getPathname(): string {
+    return '/namespaces/' + this.props.namespace + '/istio/rules/' + this.props.rule.name;
   }
 
   // Handlers and Instances have a type attached to the name with '.'
@@ -84,16 +97,7 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
     if (this.validateParams(parsed)) {
       return parsed;
     }
-    if (this.props.rule.actions.length > 0) {
-      let defaultAction = this.props.rule.actions[0];
-      if (defaultAction.handler) {
-        return {
-          type: 'handler',
-          name: defaultAction.handler.name + '.' + defaultAction.handler.adapter
-        };
-      }
-    }
-    return parsed;
+    return {};
   }
 
   editorContent(parsedSearch: ParsedSearch) {
@@ -121,22 +125,133 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
     return '';
   }
 
+  columns() {
+    return {
+      columns: [
+        {
+          property: 'instanceName',
+          header: {
+            label: 'Instance Name',
+            formatters: [this.headerFormat]
+          },
+          cell: {
+            formatters: [this.cellFormat]
+          }
+        },
+        {
+          property: 'instanceTemplate',
+          header: {
+            label: 'Template',
+            formatters: [this.headerFormat]
+          },
+          cell: {
+            formatters: [this.cellFormat]
+          }
+        },
+
+        {
+          property: 'instanceActions',
+          header: {
+            label: 'Actions',
+            formatters: [this.headerFormat]
+          },
+          cell: {
+            formatters: [this.cellFormat]
+          }
+        }
+      ]
+    };
+  }
+
+  renderInstances(): any[] {
+    let instances: any[] = [];
+    this.props.rule.actions.forEach(rAction => {
+      let rActionDescription: any = (
+        <div>
+          <div>
+            <strong>Handler Name:</strong> {rAction.handler.name}
+          </div>
+          <div>
+            <strong>Adapter:</strong> {rAction.handler.adapter}
+          </div>
+        </div>
+      );
+      let handlerLink: any = (
+        <Link
+          id={rAction.handler.name + '.' + rAction.handler.adapter}
+          to={{
+            pathname: this.getPathname(),
+            search: '?handler=' + rAction.handler.name + '.' + rAction.handler.adapter
+          }}
+        >
+          Show YAML
+        </Link>
+      );
+      instances.push(
+        <ListViewItem
+          key={rAction}
+          heading={'Action'}
+          description={rActionDescription}
+          hideCloseIcon={true}
+          actions={handlerLink}
+          additionalInfo={[
+            <ListView.InfoItem key="1">
+              <Icon type="fa" name="cube" /> {rAction.instances.length}{' '}
+              {rAction.instances.length === 1 ? 'Instance' : 'Instances'}
+            </ListView.InfoItem>
+          ]}
+        >
+          <Row>
+            <Col xs={12}>
+              <Table.PfProvider
+                columns={this.columns().columns}
+                striped={true}
+                bordered={true}
+                hover={true}
+                dataTable={true}
+              >
+                <Table.Header headerRows={resolve.headerRows(this.columns())} />
+                <Table.Body
+                  rows={rAction.instances.map(instance => ({
+                    id: instance.name + '.' + instance.template,
+                    instanceName: instance.name,
+                    instanceTemplate: instance.template,
+                    instanceActions: (
+                      <Link
+                        id={instance.name + '.' + instance.template}
+                        to={{
+                          pathname: this.getPathname(),
+                          search: '?instance=' + instance.name + '.' + instance.template
+                        }}
+                      >
+                        Show YAML
+                      </Link>
+                    )
+                  }))}
+                  rowKey="id"
+                />
+              </Table.PfProvider>
+            </Col>
+          </Row>
+        </ListViewItem>
+      );
+    });
+    return instances;
+  }
+
   render() {
     let parsedSearch = this.parseSearch();
-    return (
-      <div>
-        <IstioRuleDetailsDescription
-          namespace={this.props.namespace}
-          name={this.props.rule.name}
-          match={this.props.rule.match}
-          actions={this.props.rule.actions}
-        />
+    if (parsedSearch.type && parsedSearch.name) {
+      return (
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">
             <Col>
-              <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
-                <Icon name="refresh" />
-              </Button>
+              <div style={{ float: 'right' }}>
+                <Link to={{ pathname: this.getPathname() }}>Back to Rule</Link>{' '}
+                <Button onClick={this.props.onRefresh}>
+                  <Icon name="refresh" />
+                </Button>
+              </div>
               <h1>{parsedSearch.type + ': ' + parsedSearch.name}</h1>
               <AceEditor
                 mode="yaml"
@@ -151,6 +266,21 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
             </Col>
           </Row>
         </div>
+      );
+    }
+    return (
+      <div>
+        <Card>
+          <CardTitle>
+            <strong>Rule: </strong>
+            {this.props.rule.name}
+          </CardTitle>
+          <CardBody>
+            <strong>Match: </strong>
+            {this.props.rule.match ? this.props.rule.match : '<Empty>'}
+            <ListView>{this.renderInstances()}</ListView>
+          </CardBody>
+        </Card>
       </div>
     );
   }
