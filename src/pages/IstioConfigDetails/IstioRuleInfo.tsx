@@ -135,10 +135,7 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
             formatters: [this.headerFormat]
           },
           cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-center'
-            }
+            formatters: [this.cellFormat]
           }
         },
         {
@@ -148,10 +145,7 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
             formatters: [this.headerFormat]
           },
           cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-center'
-            }
+            formatters: [this.cellFormat]
           }
         },
 
@@ -162,10 +156,7 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
             formatters: [this.headerFormat]
           },
           cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-center'
-            }
+            formatters: [this.cellFormat]
           }
         }
       ]
