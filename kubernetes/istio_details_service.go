@@ -143,7 +143,7 @@ func (in *IstioClient) GetServiceEntry(namespace string, serviceEntryName string
 
 	serviceEntry, ok := result.(*ServiceEntry)
 	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return a ServiceEntry object", namespace, serviceEntry)
+		return nil, fmt.Errorf("%s/%v doesn't return a ServiceEntry object", namespace, serviceEntry)
 	}
 	return serviceEntry.DeepCopyIstioObject(), nil
 }
