@@ -21,13 +21,15 @@ var (
 // MetricsQuery is a common struct for ServiceMetricsQuery and NamespaceMetricsQuery
 type MetricsQuery struct {
 	v1.Range
-	Version      string
 	RateInterval string
 	RateFunc     string
 	Filters      []string
 	ByLabelsIn   []string
 	ByLabelsOut  []string
 	IncludeIstio bool
+	Namespace    string
+	Apps         []string
+	Workload     string
 }
 
 // FillDefaults fills the struct with default parameters
@@ -38,20 +40,6 @@ func (q *MetricsQuery) FillDefaults() {
 	q.RateInterval = "1m"
 	q.RateFunc = "rate"
 	q.IncludeIstio = false
-}
-
-// ServiceMetricsQuery contains fields used for querying a service metrics
-type ServiceMetricsQuery struct {
-	MetricsQuery
-	Namespace string
-	Service   string
-}
-
-// NamespaceMetricsQuery contains fields used for querying namespace metrics
-type NamespaceMetricsQuery struct {
-	MetricsQuery
-	Namespace      string
-	ServicePattern string
 }
 
 // Metrics contains health, all simple metrics and histograms data
@@ -164,71 +152,48 @@ func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) 
 	return ret, err
 }
 
-func getServiceMetrics(api v1.API, q *ServiceMetricsQuery) Metrics {
-	clustername := config.Get().ExternalServices.Istio.IstioIdentityDomain
-	destService := fmt.Sprintf(`destination_service="%s.%s.%s"`, q.Service, q.Namespace, clustername)
-	srcService := fmt.Sprintf(`source_service="%s.%s.%s"`, q.Service, q.Namespace, clustername)
-	if q.Service == "unknown" {
-		destService = `destination_service="unknown"`
-		srcService = `source_service="unknown"`
-		if q.Namespace != "unknown" {
-			destService += fmt.Sprintf(`,source_service=~".*\\.%s\\.%s"`, q.Namespace, clustername)
-			srcService += fmt.Sprintf(`,destination_service=~".*\\.%s\\.%s"`, q.Namespace, clustername)
-		}
-	}
-	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version, q.IncludeIstio)
-	groupingIn := joinLabels(q.ByLabelsIn)
-	groupingOut := joinLabels(q.ByLabelsOut)
+func getMetrics(api v1.API, q *MetricsQuery) Metrics {
+	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(q)
+	groupingIn := strings.Join(q.ByLabelsIn, ",")
+	groupingOut := strings.Join(q.ByLabelsOut, ",")
 
-	return fetchAllMetrics(api, &q.MetricsQuery, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut)
+	return fetchAllMetrics(api, q, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut)
 }
 
-func getNamespaceMetrics(api v1.API, q *NamespaceMetricsQuery) Metrics {
-	svc := q.ServicePattern
-	if "" == svc {
-		svc = ".*"
+func buildLabelStrings(q *MetricsQuery) (string, string, string, string) {
+	var labelsIn []string
+	var labelsOut []string
+	if q.Workload != "" {
+		labelsIn = append(labelsIn, fmt.Sprintf(`destination_workload="%s"`, q.Workload))
+		labelsOut = append(labelsOut, fmt.Sprintf(`source_workload="%s"`, q.Workload))
 	}
-	destService := fmt.Sprintf(`destination_service=~"%s\\.%s\\..*"`, svc, q.Namespace)
-	srcService := fmt.Sprintf(`source_service=~"%s\\.%s\\..*"`, svc, q.Namespace)
-	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(destService, srcService, q.Version, q.IncludeIstio)
-	groupingIn := joinLabels(q.ByLabelsIn)
-	groupingOut := joinLabels(q.ByLabelsOut)
-
-	return fetchAllMetrics(api, &q.MetricsQuery, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut)
-}
-
-func buildLabelStrings(destServiceLabel, srcServiceLabel, version string, includeIstio bool) (string, string, string, string) {
-	versionLabelIn := ""
-	versionLabelOut := ""
-	if len(version) > 0 {
-		versionLabelIn = fmt.Sprintf(`,destination_version="%s"`, version)
-		versionLabelOut = fmt.Sprintf(`,source_version="%s"`, version)
+	if len(q.Apps) == 1 {
+		labelsIn = append(labelsIn, fmt.Sprintf(`destination_app="%s"`, q.Apps[0]))
+		labelsOut = append(labelsOut, fmt.Sprintf(`source_app="%s"`, q.Apps[0]))
+	} else if len(q.Apps) > 1 {
+		apps := strings.Join(q.Apps, "|")
+		labelsIn = append(labelsIn, fmt.Sprintf(`destination_app=~"%s"`, apps))
+		labelsOut = append(labelsOut, fmt.Sprintf(`source_app=~"%s"`, apps))
+	}
+	if q.Namespace != "" {
+		labelsIn = append(labelsIn, fmt.Sprintf(`destination_namespace="%s"`, q.Namespace))
+		labelsOut = append(labelsOut, fmt.Sprintf(`source_namespace="%s"`, q.Namespace))
 	}
 
 	// when filtering we still keep incoming istio traffic, it's typically ingressgateway. We
 	// only want to filter outgoing traffic to the istio infra services.
-	istioFilterOut := ""
-	if !includeIstio {
-		istioFilterOut = `,destination_service!~".*\\.istio-system\\..*"`
+	if !q.IncludeIstio {
+		labelsOut = append(labelsOut, `destination_namespace!="istio-system"`)
 	}
-	labelsIn := fmt.Sprintf("{%s%s}", destServiceLabel, versionLabelIn)
-	labelsOut := fmt.Sprintf("{%s%s%s}", srcServiceLabel, versionLabelOut, istioFilterOut)
-	labelsErrorIn := fmt.Sprintf(`{%s%s,response_code=~"[5|4].*"}`, destServiceLabel, versionLabelIn)
-	labelsErrorOut := fmt.Sprintf(`{%s%s%s,response_code=~"[5|4].*"}`, srcServiceLabel, versionLabelOut, istioFilterOut)
+	fullIn := "{" + strings.Join(labelsIn, ",") + "}"
+	fullOut := "{" + strings.Join(labelsOut, ",") + "}"
 
-	return labelsIn, labelsOut, labelsErrorIn, labelsErrorOut
-}
+	labelsIn = append(labelsIn, `response_code=~"[5|4].*"`)
+	labelsOut = append(labelsOut, `response_code=~"[5|4].*"`)
+	errorIn := "{" + strings.Join(labelsIn, ",") + "}"
+	errorOut := "{" + strings.Join(labelsOut, ",") + "}"
 
-func joinLabels(labels []string) string {
-	str := ""
-	if len(labels) > 0 {
-		sep := ""
-		for _, lbl := range labels {
-			str = str + sep + lbl
-			sep = ","
-		}
-	}
-	return str
+	return fullIn, fullOut, errorIn, errorOut
 }
 
 func fetchAllMetrics(api v1.API, q *MetricsQuery, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut string) Metrics {

@@ -39,7 +39,7 @@ func TestNamespaceMetricsDefault(t *testing.T) {
 		query := args[1].(string)
 		assert.IsType(t, v1.Range{}, args[2])
 		r := args[2].(v1.Range)
-		assert.Contains(t, query, ".*\\\\.ns\\\\..*")
+		assert.Contains(t, query, "_namespace=\"ns\"")
 		assert.Contains(t, query, "[1m]")
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
@@ -100,7 +100,7 @@ func TestNamespaceMetricsWithParams(t *testing.T) {
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
 			assert.Contains(t, query, " by (le,response_code)")
-			assert.Contains(t, query, "istio_request_size")
+			assert.Contains(t, query, "istio_request_bytes")
 			atomic.AddUint32(&histogramSentinel, 1)
 		} else {
 			assert.Contains(t, query, " by (response_code)")
