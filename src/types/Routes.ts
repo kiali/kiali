@@ -1,11 +1,9 @@
 import { PropTypes } from 'prop-types';
 
-export interface Route {
+export interface MenuItem {
   iconClass: string;
   title: string;
   to: string;
-  redirect?: boolean;
-  component: PropTypes.object;
   pathsActive?: RegExp[];
 }
 

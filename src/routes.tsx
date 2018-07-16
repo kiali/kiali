@@ -4,7 +4,7 @@ import IstioConfigPage from './pages/IstioConfigList/IstioConfigListPage';
 import ServiceJaegerPage from './pages/ServiceJaeger/ServiceJaegerPage';
 import ServiceDetailsPage from './pages/ServiceDetails/ServiceDetailsPage';
 import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetailsPage';
-import { Route, Path } from './types/Routes';
+import { MenuItem, Path } from './types/Routes';
 
 const baseName = '/console';
 
@@ -13,36 +13,33 @@ export const kialiRoute = (route: string) => baseName + route;
  * Return array of objects that describe vertical menu
  * @return {array}
  */
-const routes: Route[] = [
+const navItems: MenuItem[] = [
   {
     iconClass: 'fa pficon-topology',
     title: 'Graph',
     to: kialiRoute('/service-graph/all'),
-    redirect: true,
-    component: ServiceGraphRouteHandler,
-    pathsActive: [/\/service-graph\/(.*)\//]
+    pathsActive: [/\/service-graph\/(.*)/]
   },
   {
     iconClass: 'fa pficon-service',
     title: 'Services',
     to: kialiRoute('/services'),
-    component: ServiceListPage,
     pathsActive: [/\/namespaces\/(.*)\/services\/(.*)/]
   },
   {
     iconClass: 'fa pficon-template',
     title: 'Istio Config',
     to: kialiRoute('/istio'),
-    component: IstioConfigPage,
     pathsActive: [/\/namespaces\/(.*)\/istio\/(.*)/]
   },
   {
     iconClass: 'fa fa-paw',
     title: 'Distributed Tracing',
-    to: kialiRoute('/jaeger'),
-    component: ServiceJaegerPage
+    to: kialiRoute('/jaeger')
   }
 ];
+
+const defaultRoute = kialiRoute('/service-graph/all');
 
 const pathRoutes: Path[] = [
   {
@@ -56,7 +53,19 @@ const pathRoutes: Path[] = [
   {
     path: kialiRoute('/namespaces/:namespace/istio/:objectType/:object'),
     component: IstioConfigDetailsPage
+  },
+  {
+    path: kialiRoute('/services'),
+    component: ServiceListPage
+  },
+  {
+    path: kialiRoute('/istio'),
+    component: IstioConfigPage
+  },
+  {
+    path: kialiRoute('/jaeger'),
+    component: ServiceJaegerPage
   }
 ];
 
-export { baseName, routes, pathRoutes };
+export { baseName, defaultRoute, navItems, pathRoutes };

@@ -137,31 +137,35 @@ describe('ServiceMetrics', () => {
     mounted = mount(<ServiceMetrics namespace="ns" service="svc" />);
   });
 
-  it('mounts and loads full metrics', done => {
-    const allMocksDone = [
-      mockMetrics({
-        metrics: {
-          request_count_in: createMetric('m1'),
-          request_count_out: createMetric('m2')
-        },
-        histograms: {
-          request_size_in: createHistogram('m3'),
-          request_size_out: createHistogram('m4'),
-          request_duration_in: createHistogram('m5'),
-          request_duration_out: createHistogram('m6'),
-          response_size_in: createHistogram('m7'),
-          response_size_out: createHistogram('m8')
-        }
-      })
-        .then(() => {
-          mounted!.update();
-          expect(mounted!.find('Spinner').map(div => div.getElement().props.loading)).toEqual([]);
-          expect(mounted!.find('LineChart')).toHaveLength(8);
+  it(
+    'mounts and loads full metrics',
+    done => {
+      const allMocksDone = [
+        mockMetrics({
+          metrics: {
+            request_count_in: createMetric('m1'),
+            request_count_out: createMetric('m2')
+          },
+          histograms: {
+            request_size_in: createHistogram('m3'),
+            request_size_out: createHistogram('m4'),
+            request_duration_in: createHistogram('m5'),
+            request_duration_out: createHistogram('m6'),
+            response_size_in: createHistogram('m7'),
+            response_size_out: createHistogram('m8')
+          }
         })
-        .catch(err => done.fail(err)),
-      mockGrafanaInfo({})
-    ];
-    Promise.all(allMocksDone).then(() => done());
-    mounted = mount(<ServiceMetrics namespace="ns" service="svc" />);
-  });
+          .then(() => {
+            mounted!.update();
+            expect(mounted!.find('Spinner').map(div => div.getElement().props.loading)).toEqual([]);
+            expect(mounted!.find('LineChart')).toHaveLength(8);
+          })
+          .catch(err => done.fail(err)),
+        mockGrafanaInfo({})
+      ];
+      Promise.all(allMocksDone).then(() => done());
+      mounted = mount(<ServiceMetrics namespace="ns" service="svc" />);
+    },
+    10000
+  ); // Increase timeout for this test
 });

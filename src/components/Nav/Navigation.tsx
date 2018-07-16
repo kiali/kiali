@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { VerticalNav } from 'patternfly-react';
 import PropTypes from 'prop-types';
-import { routes } from '../../routes';
+import { navItems } from '../../routes';
 import RenderPage from './RenderPage';
 import { matchPath } from 'react-router';
 import _ from 'lodash';
@@ -56,20 +56,20 @@ class Navigation extends React.Component<PropsType> {
 
   renderMenuItems() {
     const { location } = this.props;
-    const activeItem = routes.find(item => {
+    const activeItem = navItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
       if (!isRoute && item.pathsActive) {
         isRoute = _.filter(item.pathsActive, path => path.test(location.pathname)).length > 0;
       }
       return isRoute;
     });
-    return routes.map(item => {
+    return navItems.map(item => {
       return (
         <VerticalNav.Item
           key={item.to}
           title={item.title}
           iconClass={item.iconClass}
-          active={item === activeItem || (!activeItem && item.redirect)}
+          active={item === activeItem}
           onClick={() => this.context.router.history.push(item.to)}
         />
       );
