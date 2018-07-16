@@ -189,6 +189,7 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
       );
       instances.push(
         <ListViewItem
+          key={rAction}
           heading={'Action'}
           description={rActionDescription}
           hideCloseIcon={true}
@@ -212,7 +213,7 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
                 <Table.Header headerRows={resolve.headerRows(this.columns())} />
                 <Table.Body
                   rows={rAction.instances.map(instance => ({
-                    id: instance,
+                    id: instance.name + '.' + instance.template,
                     instanceName: instance.name,
                     instanceTemplate: instance.template,
                     instanceActions: (
