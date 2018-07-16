@@ -40,6 +40,9 @@ VERBOSE_MODE ?= 4
 # For OpenShift, this is the name of the project.
 NAMESPACE ?= istio-system
 
+# Use default go1.8 GOPATH if it isn't user defined
+GOPATH ?= ${HOME}/go
+
 # Environment variables set when running the Go compiler.
 GO_BUILD_ENVVARS = \
 	GOOS=linux \
