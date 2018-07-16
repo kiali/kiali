@@ -1,0 +1,92 @@
+= Releasing Kiali UI
+
+This document covers the specifics of releasing Kiali UI, and is meant as a
+guide for Kiali release managers.
+
+The main document covering core can be found link:https://github.com/kiali/kiali/blob/master/RELEASING.adoc[here].
+
+== Requirements
+
+You must have write permissions to the public GitHub repository in order to be
+able to push the tags, but that's pretty much it. Most of our release process
+is done automatically by Travis.
+
+This document also uses 1.0.0 as the new version, just as an example.
+
+== Preparing for a new version
+
+After a release, the first step for a new "batch" of modifications is to update
+link:package.json[] with the new version, and creating a PR for it:
+
+[source, diff]
+----
+diff --git a/package.json b/package.json
+index 7f699b1..08bc0a8 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@kiali/kiali-ui",
+-  "version": "0.5.1",
++  "version": "1.0.0",
+   "bugs": {
+     "url": "https://issues.jboss.org/projects/KIALI/issues/"
+   },
+----
+
+This is to signal to everyone that everything that goes into master from that
+point forward belongs to that version. Note that this is supposed to be the
+same version that is going to be released for the core, so they are in sync.
+
+The versioning scheme that we are following is similar to
+link:http://semver.org[semver], but not as strict, given both that we are not
+1.0 yet and that we are the end product, in the sense that nothing should
+depend on us to do anything. For now, and that might change in the future, our
+API is private and we make no guarantees that compatibility is going to be
+maintaned.
+
+For our versioning scheme, the `major` part means a major release, and that's
+decided in advance by the team. The `minor` means new features are included
+with the release, and the `patch` version covers only bugfixes.
+
+The UI and the core might be out of sync in `patch` versions, but they should
+be in sync for `minor`. That means that, if the UI is 0.5.10, then any core
+version on 0.5.X should work with it, but that are no guarantees that it will
+work with core 0.4.X or core 0.6.X.
+
+Of course, that's a soft limitation, and your mileage may vary. Sometimes it
+might work just fine, we just don't give any guarantees that it will.
+
+== Creating the Tag
+
+After the work that goes into a new version is done, the next step is to create
+the tag and push it. Everything else will be taken care by Travis.
+
+Note that only tags or branches in the format `v\#.#.#[.Label]` will trigger
+release tag/branch builds.
+
+[source, bash]
+----
+$ git tag v1.0.0 <hash-of-last-commit-of-release>
+$ git push origin v1.0.0
+----
+
+== Creating a Hotfix
+
+Sometimes there's the need of adding a hotfix to an already released version.
+That's what the `patch` number on the version is.
+
+The first step is to create a new branch for the version:
+
+[source, bash]
+----
+$ git checkout -b v1.0.1 v1.0.0
+$ git push origin v1.0.1
+----
+
+Then we cherry-pick the commits that we need, or create PRs targeting this
+branch. Note that commits pushed to this branch might need to be mirrored on
+master, else those commits will be lost.
+
+After the fixes have been added, create the tag (as seen on the last step), and
+that's it.
