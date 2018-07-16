@@ -14,6 +14,7 @@ import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
 import { Validations } from '../../types/ServiceInfo';
 import { parseAceValidations } from '../../types/AceValidations';
+import { kialiRoute } from '../../routes';
 
 const yaml = require('js-yaml');
 
@@ -130,16 +131,17 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   }
 
   render() {
+    const istioRoute = kialiRoute('/istio');
     return (
       <>
         <div className="page-header">
           <h2>
             Istio Config{' '}
-            <Link to="/istio" onClick={this.updateNamespaceFilter}>
+            <Link to={istioRoute} onClick={this.updateNamespaceFilter}>
               {this.props.match.params.namespace}
             </Link>{' '}
             /{' '}
-            <Link to="/istio" onClick={this.updateTypeFilter}>
+            <Link to={istioRoute} onClick={this.updateTypeFilter}>
               {this.props.match.params.objectType}
             </Link>{' '}
             / {this.props.match.params.object}

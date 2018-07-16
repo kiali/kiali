@@ -13,7 +13,6 @@ class RenderPage extends React.Component {
         if (item.redirect === true) {
           redirectRoot = <Redirect from="/" to={item.to} />;
         }
-
         return <Route key={index} path={item.to} component={item.component} />;
       }),
       redirectRoot,

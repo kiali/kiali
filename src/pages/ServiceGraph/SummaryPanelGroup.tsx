@@ -14,6 +14,7 @@ import { shouldRefreshData, updateHealth } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
+import { kialiRoute } from '../../routes';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -69,7 +70,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
     const namespace = group.data('service').split('.')[1];
     const service = group.data('service').split('.')[0];
-    const serviceHotLink = <Link to={`/namespaces/${namespace}/services/${service}`}>{service}</Link>;
+    const serviceHotLink = <Link to={kialiRoute(`/namespaces/${namespace}/services/${service}`)}>{service}</Link>;
 
     const incoming = getAccumulatedTrafficRate(group.children());
     const outgoing = getAccumulatedTrafficRate(group.children().edgesTo('*'));
@@ -101,7 +102,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         <div className="panel-body">
           <p style={{ textAlign: 'right' }}>
             <Link
-              to={`/namespaces/${namespace}/services/${service}?tab=metrics&groupings=local+version%2Cresponse+code`}
+              to={kialiRoute(
+                `/namespaces/${namespace}/services/${service}?tab=metrics&groupings=local+version%2Cresponse+code`
+              )}
             >
               View detailed charts <Icon name="angle-double-right" />
             </Link>

@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 
 import Navigation, { servicesTitle, istioConfigTitle } from '../Navigation';
 import { VerticalNav } from 'patternfly-react';
-import { routes } from '../../../routes';
+import { kialiRoute, routes } from '../../../routes';
 
 const _tester = (path: string, expectedMenuPath: string) => {
   const wrapper = shallow(
@@ -22,8 +22,8 @@ const _tester = (path: string, expectedMenuPath: string) => {
 
 describe('Navigation test', () => {
   it('should select menu item according to browser url', () => {
-    _tester('/services', servicesTitle);
-    _tester('/istio', istioConfigTitle);
+    _tester(kialiRoute('/services'), servicesTitle);
+    _tester(kialiRoute('/istio'), istioConfigTitle);
   });
 
   it('should have only one redirect', () => {

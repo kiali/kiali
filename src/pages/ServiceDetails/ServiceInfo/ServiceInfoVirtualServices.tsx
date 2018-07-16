@@ -6,6 +6,7 @@ import { EditorLink, ObjectValidation, VirtualService } from '../../../types/Ser
 import './ServiceInfoVirtualServices.css';
 import LocalTime from '../../../components/Time/LocalTime';
 import { ConfigIndicator } from '../../../components/ConfigValidation/ConfigIndicator';
+import { kialiRoute } from '../../../routes';
 
 interface ServiceInfoVirtualServicesProps extends EditorLink {
   virtualServices?: VirtualService[];
@@ -90,11 +91,15 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
   }
 
   nameLink(virtualService: VirtualService) {
-    return <Link to={this.props.editorLink + '?virtualservice=' + virtualService.name}>{virtualService.name}</Link>;
+    return (
+      <Link to={kialiRoute(this.props.editorLink + '?virtualservice=' + virtualService.name)}>
+        {virtualService.name}
+      </Link>
+    );
   }
 
   showYAML(virtualService: VirtualService) {
-    return <Link to={this.props.editorLink + '?virtualservice=' + virtualService.name}>View YAML</Link>;
+    return <Link to={kialiRoute(this.props.editorLink + '?virtualservice=' + virtualService.name)}>View YAML</Link>;
   }
 
   rows() {

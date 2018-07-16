@@ -15,6 +15,7 @@ import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
 import { parseAceValidations } from '../../types/AceValidations';
+import { kialiRoute } from '../../routes';
 
 const yaml = require('js-yaml');
 
@@ -193,13 +194,13 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         <div className="page-header">
           <h2>
             Service{' '}
-            <Link to="/services" onClick={this.updateFilter}>
+            <Link to={kialiRoute('/services')} onClick={this.updateFilter}>
               {this.props.match.params.namespace}
             </Link>{' '}
             /
             {editorVisible ? (
               <span>
-                <Link to={to}>{' ' + this.props.match.params.service}</Link> / {parsedSearch.type}
+                <Link to={kialiRoute(to)}>{' ' + this.props.match.params.service}</Link> / {parsedSearch.type}
               </span>
             ) : (
               <span>{' ' + this.props.match.params.service}</span>
@@ -276,7 +277,9 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   };
 
   private navigateToJaeger = () => {
-    this.props.history.push('/jaeger?path=' + encodeURIComponent(`/search?service=${this.props.match.params.service}`));
+    this.props.history.push(
+      kialiRoute('/jaeger?path=' + encodeURIComponent(`/search?service=${this.props.match.params.service}`))
+    );
   };
 }
 

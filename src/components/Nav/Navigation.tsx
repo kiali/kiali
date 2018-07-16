@@ -63,7 +63,6 @@ class Navigation extends React.Component<PropsType> {
       }
       return isRoute;
     });
-
     return routes.map(item => {
       return (
         <VerticalNav.Item
