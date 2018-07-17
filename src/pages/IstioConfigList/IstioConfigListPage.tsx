@@ -1,6 +1,7 @@
 import * as React from 'react';
 import IstioConfigListComponent from './IstioConfigListComponent';
 import * as MessageCenter from '../../utils/MessageCenter';
+import { Breadcrumb } from 'patternfly-react';
 
 type IstioConfigListState = {};
 
@@ -16,7 +17,9 @@ class IstioConfigListPage extends React.Component<IstioConfigListProps, IstioCon
   render() {
     return (
       <>
-        <h2>Istio Config</h2>
+        <Breadcrumb title={true}>
+          <Breadcrumb.Item active={true}>Istio Config</Breadcrumb.Item>
+        </Breadcrumb>
         <IstioConfigListComponent onError={this.handleError} />
       </>
     );

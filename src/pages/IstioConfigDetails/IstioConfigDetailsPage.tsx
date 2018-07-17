@@ -1,9 +1,15 @@
 import * as React from 'react';
-import { Button, Col, Icon, Row } from 'patternfly-react';
+import { Button, Col, Icon, Row, Breadcrumb } from 'patternfly-react';
 import { Link, RouteComponentProps } from 'react-router-dom';
 import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { ActiveFilter } from '../../types/NamespaceFilter';
-import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '../../types/IstioConfigDetails';
+import {
+  aceOptions,
+  IstioConfigDetails,
+  IstioConfigId,
+  IstioRuleDetails,
+  safeDumpOptions
+} from '../../types/IstioConfigDetails';
 import { dicIstioType } from '../../types/IstioConfigListComponent';
 import * as MessageCenter from '../../utils/MessageCenter';
 import * as API from '../../services/Api';
@@ -17,6 +23,11 @@ import { parseAceValidations } from '../../types/AceValidations';
 import { kialiRoute } from '../../routes';
 
 const yaml = require('js-yaml');
+
+export interface ParsedSearch {
+  type?: string;
+  name?: string;
+}
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
@@ -55,6 +66,10 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   updateTypeFilter = () => this.updateFilters(true);
 
+  cleanFilter = () => {
+    NamespaceFilterSelected.setSelected([]);
+  };
+
   fetchIstioObjectDetails = () => {
     this.fetchIstioObjectDetailsFromProps(this.props.match.params);
   };
@@ -82,6 +97,68 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig details.', error));
       });
+  };
+
+  // Handlers and Instances have a type attached to the name with '.'
+  // i.e. handler=myhandler.kubernetes
+  validateRuleParams = (parsed: ParsedSearch, rule: IstioRuleDetails): boolean => {
+    if (!parsed.type || !parsed.name || rule.actions.length === 0) {
+      return false;
+    }
+    let validationType = ['handler', 'instance'];
+    if (parsed.type && validationType.indexOf(parsed.type) < 0) {
+      return false;
+    }
+    let splitName = parsed.name.split('.');
+    if (splitName.length !== 2) {
+      return false;
+    }
+    // i.e. handler=myhandler.kubernetes
+    // innerName == myhandler
+    // innerType == kubernetes
+    let innerName = splitName[0];
+    let innerType = splitName[1];
+
+    for (let i = 0; i < rule.actions.length; i++) {
+      if (
+        parsed.type === 'handler' &&
+        rule.actions[i].handler.name === innerName &&
+        rule.actions[i].handler.adapter === innerType
+      ) {
+        return true;
+      }
+      if (parsed.type === 'instance') {
+        for (let j = 0; j < rule.actions[i].instances.length; j++) {
+          if (rule.actions[i].instances[j].name === innerName && rule.actions[i].instances[j].template === innerType) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  // Helper method to extract search urls with format
+  // ?handler=name.handlertype or ?instance=name.instancetype
+  // Those url are expected to be received on this page.
+  parseRuleSearchParams = (): ParsedSearch => {
+    let parsed: ParsedSearch = {};
+    if (this.props.location.search) {
+      let firstParams = this.props.location.search
+        .split('&')[0]
+        .replace('?', '')
+        .split('=');
+      parsed.type = firstParams[0];
+      parsed.name = firstParams[1];
+      if (
+        this.state.istioObjectDetails &&
+        this.state.istioObjectDetails.rule &&
+        this.validateRuleParams(parsed, this.state.istioObjectDetails.rule)
+      ) {
+        return parsed;
+      }
+    }
+    return {};
   };
 
   componentDidMount() {
@@ -132,21 +209,44 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   render() {
     const istioRoute = kialiRoute('/istio');
+    const parsedRuleParams = this.parseRuleSearchParams();
+    let titleBreadcrumb: any[] = [];
+    if (!parsedRuleParams.type && !parsedRuleParams.name) {
+      titleBreadcrumb.push(
+        <Breadcrumb.Item active={true}>Istio Object: {this.props.match.params.object}</Breadcrumb.Item>
+      );
+    } else if (parsedRuleParams.type && parsedRuleParams.name) {
+      titleBreadcrumb.push(
+        <Breadcrumb.Item>
+          <Link to={this.props.location.pathname}>Istio Object: {this.props.match.params.object}</Link>
+        </Breadcrumb.Item>
+      );
+      titleBreadcrumb.push(
+        <Breadcrumb.Item active={true}>
+          {dicIstioType[parsedRuleParams.type]}: {parsedRuleParams.name}
+        </Breadcrumb.Item>
+      );
+    }
     return (
       <>
-        <div className="page-header">
-          <h2>
-            Istio Config{' '}
+        <Breadcrumb title={true}>
+          <Breadcrumb.Item>
+            <Link to={istioRoute} onClick={this.cleanFilter}>
+              Istio Config
+            </Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>
             <Link to={istioRoute} onClick={this.updateNamespaceFilter}>
-              {this.props.match.params.namespace}
-            </Link>{' '}
-            /{' '}
+              Namespace: {this.props.match.params.namespace}
+            </Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>
             <Link to={istioRoute} onClick={this.updateTypeFilter}>
-              {this.props.match.params.objectType}
-            </Link>{' '}
-            / {this.props.match.params.object}
-          </h2>
-        </div>
+              Istio Object Type: {dicIstioType[this.props.match.params.objectType]}
+            </Link>
+          </Breadcrumb.Item>
+          {titleBreadcrumb}
+        </Breadcrumb>
         {this.state.istioObjectDetails && this.state.istioObjectDetails.gateway
           ? this.renderEditor(this.state.istioObjectDetails.gateway)
           : undefined}
@@ -170,7 +270,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
             namespace={this.state.istioObjectDetails.namespace.name}
             rule={this.state.istioObjectDetails.rule}
             onRefresh={this.fetchIstioObjectDetails}
-            search={this.props.location.search}
+            parsedSearch={parsedRuleParams}
           />
         ) : (
           undefined
