@@ -144,12 +144,16 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   parseRuleSearchParams = (): ParsedSearch => {
     let parsed: ParsedSearch = {};
     if (this.props.location.search) {
-      let firstParams = this.props.location.search
-        .split('&')[0]
-        .replace('?', '')
-        .split('=');
-      parsed.type = firstParams[0];
-      parsed.name = firstParams[1];
+      let urlParams = new URLSearchParams(this.props.location.search);
+      let handler = urlParams.get('handler');
+      let instance = urlParams.get('instance');
+      if (handler) {
+        parsed.type = 'handler';
+        parsed.name = handler;
+      } else if (instance) {
+        parsed.type = 'instance';
+        parsed.name = instance;
+      }
       if (
         this.state.istioObjectDetails &&
         this.state.istioObjectDetails.rule &&
@@ -213,16 +217,18 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     let titleBreadcrumb: any[] = [];
     if (!parsedRuleParams.type && !parsedRuleParams.name) {
       titleBreadcrumb.push(
-        <Breadcrumb.Item active={true}>Istio Object: {this.props.match.params.object}</Breadcrumb.Item>
+        <Breadcrumb.Item key={'breadcrumb_' + this.props.match.params.object} active={true}>
+          Istio Object: {this.props.match.params.object}
+        </Breadcrumb.Item>
       );
     } else if (parsedRuleParams.type && parsedRuleParams.name) {
       titleBreadcrumb.push(
-        <Breadcrumb.Item>
+        <Breadcrumb.Item key={'breadcrumb_' + this.props.match.params.object}>
           <Link to={this.props.location.pathname}>Istio Object: {this.props.match.params.object}</Link>
         </Breadcrumb.Item>
       );
       titleBreadcrumb.push(
-        <Breadcrumb.Item active={true}>
+        <Breadcrumb.Item key={'breadcrumb_' + parsedRuleParams.type + '_' + parsedRuleParams.name} active={true}>
           {dicIstioType[parsedRuleParams.type]}: {parsedRuleParams.name}
         </Breadcrumb.Item>
       );
