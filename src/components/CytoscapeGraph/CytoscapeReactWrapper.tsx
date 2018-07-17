@@ -8,7 +8,6 @@ import cytoscape from 'cytoscape';
 import cycola from 'cytoscape-cola';
 import dagre from 'cytoscape-dagre';
 import coseBilkent from 'cytoscape-cose-bilkent';
-import klay from 'cytoscape-klay';
 import popper from 'cytoscape-popper';
 import panzoom from 'cytoscape-panzoom';
 import 'cytoscape-panzoom/cytoscape.js-panzoom.css';
@@ -17,7 +16,6 @@ cytoscape.use(canvas);
 cytoscape.use(cycola);
 cytoscape.use(dagre);
 cytoscape.use(coseBilkent);
-cytoscape.use(klay);
 cytoscape.use(popper);
 panzoom(cytoscape);
 

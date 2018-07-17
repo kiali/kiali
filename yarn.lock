@@ -2333,12 +2333,6 @@ cytoscape-dagre@2.2.1:
   dependencies:
     dagre "^0.7.4"
 
-cytoscape-klay@3.1.1:
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/cytoscape-klay/-/cytoscape-klay-3.1.1.tgz#d39c0b838ac5e162acc2ddd0f669804ed6c00284"
-  dependencies:
-    klayjs "^0.4.1"
-
 cytoscape-panzoom@2.5.2:
   version "2.5.2"
   resolved "https://registry.yarnpkg.com/cytoscape-panzoom/-/cytoscape-panzoom-2.5.2.tgz#e78d3b9e5bc1a3da3669565a76d96b99b5a70a05"
@@ -5162,10 +5156,6 @@ klaw@^1.0.0:
   resolved "https://registry.yarnpkg.com/klaw/-/klaw-1.3.1.tgz#4088433b46b3b1ba259d78785d8e96f73ba02439"
   optionalDependencies:
     graceful-fs "^4.1.9"
-
-klayjs@^0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/klayjs/-/klayjs-0.4.1.tgz#5bf9fadc7a3e44b94082bba501e7d803076dcfc2"
 
 latest-version@^3.0.0:
   version "3.1.0"
