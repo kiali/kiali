@@ -181,7 +181,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     }
   }
 
-  renderEditor(routingObject: any) {
+  renderEditor = (routingObject: any) => {
     const yamlSource = yaml.safeDump(routingObject, safeDumpOptions);
     const aceValidations = parseAceValidations(yamlSource, this.state.validations);
     return (
@@ -209,11 +209,10 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         </Row>
       </div>
     );
-  }
+  };
 
-  render() {
+  renderBreadcrumbs = (parsedRuleParams: ParsedSearch): any => {
     const istioRoute = kialiRoute('/istio');
-    const parsedRuleParams = this.parseRuleSearchParams();
     let titleBreadcrumb: any[] = [];
     if (!parsedRuleParams.type && !parsedRuleParams.name) {
       titleBreadcrumb.push(
@@ -234,25 +233,32 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       );
     }
     return (
+      <Breadcrumb title={true}>
+        <Breadcrumb.Item>
+          <Link to={istioRoute} onClick={this.cleanFilter}>
+            Istio Config
+          </Link>
+        </Breadcrumb.Item>
+        <Breadcrumb.Item>
+          <Link to={istioRoute} onClick={this.updateNamespaceFilter}>
+            Namespace: {this.props.match.params.namespace}
+          </Link>
+        </Breadcrumb.Item>
+        <Breadcrumb.Item>
+          <Link to={istioRoute} onClick={this.updateTypeFilter}>
+            Istio Object Type: {dicIstioType[this.props.match.params.objectType]}
+          </Link>
+        </Breadcrumb.Item>
+        {titleBreadcrumb}
+      </Breadcrumb>
+    );
+  };
+
+  render() {
+    const parsedRuleParams = this.parseRuleSearchParams();
+    return (
       <>
-        <Breadcrumb title={true}>
-          <Breadcrumb.Item>
-            <Link to={istioRoute} onClick={this.cleanFilter}>
-              Istio Config
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to={istioRoute} onClick={this.updateNamespaceFilter}>
-              Namespace: {this.props.match.params.namespace}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to={istioRoute} onClick={this.updateTypeFilter}>
-              Istio Object Type: {dicIstioType[this.props.match.params.objectType]}
-            </Link>
-          </Breadcrumb.Item>
-          {titleBreadcrumb}
-        </Breadcrumb>
+        {this.renderBreadcrumbs(parsedRuleParams)}
         {this.state.istioObjectDetails && this.state.istioObjectDetails.gateway
           ? this.renderEditor(this.state.istioObjectDetails.gateway)
           : undefined}

@@ -168,6 +168,30 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       });
   };
 
+  renderBreadcrumbs = (urlParams: URLSearchParams) => {
+    let to = '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
+    return (
+      <Breadcrumb title={true}>
+        <Breadcrumb.Item>
+          <Link to={kialiRoute('/services')} onClick={this.cleanFilter}>
+            Services
+          </Link>
+        </Breadcrumb.Item>
+        <Breadcrumb.Item>
+          <Link to={kialiRoute('/services')} onClick={this.updateFilter}>
+            Namespace: {this.props.match.params.namespace}
+          </Link>
+        </Breadcrumb.Item>
+        <Breadcrumb.Item>
+          <Link to={kialiRoute(to)}>Service: {this.props.match.params.service}</Link>
+        </Breadcrumb.Item>
+        <Breadcrumb.Item active={true}>
+          Service {(urlParams.get('tab') || 'info') === 'info' ? 'Info' : 'Metrics'}
+        </Breadcrumb.Item>
+      </Breadcrumb>
+    );
+  };
+
   render() {
     const urlParams = new URLSearchParams(this.props.location.search);
     let parsedSearch = this.parseSearch();
@@ -192,27 +216,9 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         aceAnnotations = aceValidations.annotations;
       }
     }
-    let to = '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
     return (
       <>
-        <Breadcrumb title={true}>
-          <Breadcrumb.Item>
-            <Link to={kialiRoute('/services')} onClick={this.cleanFilter}>
-              Services
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to={kialiRoute('/services')} onClick={this.updateFilter}>
-              Namespace: {this.props.match.params.namespace}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to={kialiRoute(to)}>Service: {this.props.match.params.service}</Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item active={true}>
-            Service {(urlParams.get('tab') || 'info') === 'info' ? 'Info' : 'Metrics'}
-          </Breadcrumb.Item>
-        </Breadcrumb>
+        {this.renderBreadcrumbs(urlParams)}
         {editorVisible ? (
           <div className="container-fluid container-cards-pf">
             <Row className="row-cards-pf">
