@@ -92,7 +92,7 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 	return routes, nil
 }
 
-// GetMetrics returns the Metrics related to the provided service identified by its namespace and service name.
+// GetMetrics returns the Metrics related to the provided query options.
 func (in *Client) GetMetrics(query *MetricsQuery) Metrics {
 	return getMetrics(in.api, query)
 }
