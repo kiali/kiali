@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { GraphStyles } from './graphs/GraphStyles';
-import * as LayoutDictionary from './graphs/LayoutDictionary';
 
 import canvas from 'cytoscape-canvas';
 import cytoscape from 'cytoscape';
@@ -19,10 +18,7 @@ cytoscape.use(coseBilkent);
 cytoscape.use(popper);
 panzoom(cytoscape);
 
-type CytoscapeReactWrapperProps = {
-  elements: any;
-  layout: any;
-};
+type CytoscapeReactWrapperProps = {};
 
 type CytoscapeReactWrapperState = {};
 
@@ -82,9 +78,7 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
         container: this.divParentRef.current,
         boxSelectionEnabled: false,
         autounselectify: true,
-        style: GraphStyles.styles(),
-        elements: this.props.elements,
-        layout: LayoutDictionary.getLayout(this.props.layout)
+        style: GraphStyles.styles()
       },
       GraphStyles.options()
     );

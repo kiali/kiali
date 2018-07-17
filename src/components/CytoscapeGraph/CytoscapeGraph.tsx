@@ -64,14 +64,12 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private trafficRenderer: TrafficRender;
   private cytoscapeReactWrapperRef: any;
   private updateLayout: boolean;
-  private refit: boolean;
   private resetSelection: boolean;
   private cy: any;
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
     this.updateLayout = false;
-    this.refit = false;
   }
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
@@ -130,8 +128,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
             ref={e => {
               this.setCytoscapeReactWrapperRef(e);
             }}
-            elements={this.props.elements}
-            layout={this.props.graphLayout}
           />
         </EmptyGraphLayout>
       </div>
@@ -179,7 +175,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
     this.cy = cy;
-    this.refit = true;
+    this.updateLayout = true;
 
     this.graphHighlighter = new GraphHighlighter(cy);
     this.trafficRenderer = new TrafficRender(cy, cy.edges());
@@ -325,8 +321,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       // overlap, but we need to have them enabled (nodeDimensionsIncludeLabels: true)
       this.turnNodeLabelsTo(cy, true);
       cy.layout(LayoutDictionary.getLayout(this.props.graphLayout)).run();
-      this.refit = true;
-      this.updateLayout = false;
     }
 
     // Create and destroy labels
@@ -353,9 +347,9 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     cy.endBatch();
 
     // We need to fit outside of the batch operation for it to take effect on the new nodes
-    if (this.refit) {
+    if (this.updateLayout) {
       this.safeFit(cy);
-      this.refit = false;
+      this.updateLayout = false;
     }
 
     // We opt-in for manual selection to be able to control when to select a node/edge

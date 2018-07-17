@@ -9,9 +9,13 @@ import { Duration, PollIntervalInMs } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
 import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
+import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
+import EmptyGraphLayout from '../../components/CytoscapeGraph/EmptyGraphLayout';
 import GraphFilterToolbar from '../../components/GraphFilter/GraphFilterToolbar';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import { style } from 'typestyle';
+
+import * as MessageCenterUtils from '../../utils/MessageCenter';
 
 import GraphLegend from '../../components/GraphFilter/GraphLegend';
 
@@ -53,11 +57,21 @@ const makeCancelablePromise = (promise: Promise<any>) => {
   };
 };
 
+const ServiceGraphErrorBoundaryFallback = () => {
+  return (
+    <div className={cytoscapeGraphContainerStyle}>
+      <EmptyGraphLayout isError={true} />
+    </div>
+  );
+};
+
 export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPageProps> {
   private pollTimeoutRef?: number;
   private pollPromise?;
+  private errorBoundaryRef: any;
   constructor(props: ServiceGraphPageProps) {
     super(props);
+    this.errorBoundaryRef = React.createRef();
   }
 
   componentDidMount() {
@@ -81,6 +95,13 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
       this.scheduleNextPollingInterval(0);
     } else if (pollIntervalChanged) {
       this.scheduleNextPollingIntervalFromProps();
+    }
+    if (
+      prevProps.graphLayout.name !== this.props.graphLayout.name ||
+      prevProps.graphData !== this.props.graphData ||
+      namespaceHasChanged
+    ) {
+      this.errorBoundaryRef.current.cleanError();
     }
   }
 
@@ -110,13 +131,19 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
             />
           </div>
           <FlexView grow={true}>
-            <CytoscapeGraph
-              {...graphParams}
-              isLoading={this.props.isLoading}
-              elements={this.props.graphData}
-              refresh={this.handleRefreshClick}
-              containerClassName={cytoscapeGraphContainerStyle}
-            />
+            <ErrorBoundary
+              ref={this.errorBoundaryRef}
+              onError={this.notifyError}
+              fallBackComponent={<ServiceGraphErrorBoundaryFallback />}
+            >
+              <CytoscapeGraph
+                {...graphParams}
+                isLoading={this.props.isLoading}
+                elements={this.props.graphData}
+                refresh={this.handleRefreshClick}
+                containerClassName={cytoscapeGraphContainerStyle}
+              />
+            </ErrorBoundary>
             {this.props.summaryData ? (
               <SummaryPanel
                 data={this.props.summaryData}
@@ -182,4 +209,8 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
       this.pollPromise = undefined;
     }
   }
+
+  private notifyError = (error: Error, componentStack: string) => {
+    MessageCenterUtils.add('There was an error when rendering the service graph, please try a different layout');
+  };
 }

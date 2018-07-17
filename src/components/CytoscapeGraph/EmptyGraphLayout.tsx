@@ -4,10 +4,10 @@ import { style } from 'typestyle';
 import * as MessageCenter from '../../utils/MessageCenter';
 
 type EmptyGraphLayoutProps = {
-  elements: any;
-  namespace: string;
-  action: any;
-  isLoading: boolean;
+  elements?: any;
+  namespace?: string;
+  action?: any;
+  isLoading?: boolean;
   isError: boolean;
 };
 
