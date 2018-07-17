@@ -18,7 +18,7 @@ var (
 	invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 )
 
-// MetricsQuery is a common struct for ServiceMetricsQuery and NamespaceMetricsQuery
+// MetricsQuery holds query parameters for a typical metrics query
 type MetricsQuery struct {
 	v1.Range
 	RateInterval string
@@ -161,8 +161,8 @@ func getMetrics(api v1.API, q *MetricsQuery) Metrics {
 }
 
 func buildLabelStrings(q *MetricsQuery) (string, string, string, string) {
-	var labelsIn []string
-	var labelsOut []string
+	labelsIn := []string{`reporter="server"`}
+	labelsOut := []string{`reporter="client"`}
 	if q.Workload != "" {
 		labelsIn = append(labelsIn, fmt.Sprintf(`destination_workload="%s"`, q.Workload))
 		labelsOut = append(labelsOut, fmt.Sprintf(`source_workload="%s"`, q.Workload))
