@@ -1,8 +1,5 @@
-// TrafficMap is a map of app Nodes, each optionally holding Edge data. Metadata
-// is a general purpose map for holding any desired node or edge information.
-// Each app node should have a unique namespace+workload.  Note that it is feasible
-// but likely unusual to have two nodes with the same name+version in the same
-// namespace.
+// Graph package provides support for the graph handlers such as supported path
+// variables and query params, as well as types for graph processing.
 package graph
 
 import (
@@ -10,9 +7,13 @@ import (
 )
 
 const (
-	UnknownApp       string = "unknown"
-	UnknownNamespace string = "unknown"
-	UnknownVersion   string = "unknown"
+	GraphTypeApp          string = "app"
+	GraphTypeAppPreferred string = "appPreferred"
+	GraphTypeWorkload     string = "workload"
+	UnknownApp            string = "unknown"
+	UnknownNamespace      string = "unknown"
+	UnknownVersion        string = "unknown"
+	UnknownWorkload       string = "unknown"
 )
 
 type Node struct {
@@ -31,13 +32,14 @@ type Edge struct {
 	Metadata map[string]interface{} // app-specific data
 }
 
+// TrafficMap is a map of app Nodes, each optionally holding Edge data. Metadata
+// is a general purpose map for holding any desired node or edge information.
+// Each app node should have a unique namespace+workload.  Note that it is feasible
+// but likely unusual to have two nodes with the same name+version in the same
+// namespace.
 type TrafficMap map[string]*Node
 
-func NewNode(namespace, workload, app, version string) Node {
-	return NewNodeWithId(Id(namespace, workload), namespace, workload, app, version)
-}
-
-func NewNodeWithId(id, namespace, workload, app, version string) Node {
+func NewNode(id, namespace, workload, app, version string) Node {
 	return Node{
 		ID:        id,
 		Namespace: namespace,
@@ -67,6 +69,25 @@ func NewTrafficMap() TrafficMap {
 	return make(map[string]*Node)
 }
 
-func Id(namespace, workload string) string {
-	return fmt.Sprintf("%v_%v", namespace, workload)
+func Id(namespace, workload, app, version, graphType string, versioned bool) string {
+	switch graphType {
+	case GraphTypeApp:
+		if versioned {
+			return fmt.Sprintf("%v_%v_%v", namespace, app, version)
+		}
+		return fmt.Sprintf("%v_%v", namespace, app)
+	case GraphTypeAppPreferred:
+		if app != UnknownApp {
+			if versioned {
+				return fmt.Sprintf("%v_%v_%v", namespace, app, version)
+			}
+			return fmt.Sprintf("%v_%v", namespace, app)
+		} else {
+			return fmt.Sprintf("%v_%v", namespace, workload)
+		}
+	case GraphTypeWorkload:
+		return fmt.Sprintf("%v_%v", namespace, workload)
+	default:
+		panic(fmt.Sprintf("Unrecognized graphFormat [%s]", graphType))
+	}
 }
