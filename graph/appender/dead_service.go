@@ -33,13 +33,14 @@ func applyDeadServices(trafficMap graph.TrafficMap, istioClient kubernetes.Istio
 			continue
 		}
 		// remove if there is no backing service, flag if there are no pods
-		istioService, err := istioClient.GetService(s.Namespace, s.ServiceName)
+		// TODO: FIX s.ServiceName --> s.App to compile
+		istioService, err := istioClient.GetService(s.Namespace, s.App)
 		if err != nil || istioService == nil {
-			log.Debugf("Removing dead service: %s (%s)", s.Name, s.Version)
+			log.Debugf("Removing dead service: %s (%s)", s.App, s.Version)
 			delete(trafficMap, id)
 			numRemoved++
 		} else {
-			servicePods, err := istioClient.GetServicePods(s.Namespace, s.ServiceName, s.Version)
+			servicePods, err := istioClient.GetServicePods(s.Namespace, s.App, s.Version)
 			if err != nil || servicePods == nil || len(servicePods.Items) == 0 {
 				s.Metadata["isDead"] = true
 			}

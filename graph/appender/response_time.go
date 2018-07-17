@@ -78,9 +78,10 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 }
 
 func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]float64) {
+	// TODO FIX Name --> Workload to compile
 	for _, s := range trafficMap {
 		for _, e := range s.Edges {
-			key := fmt.Sprintf("%s %s %s %s", e.Source.Name, e.Source.Version, e.Dest.Name, e.Dest.Version)
+			key := fmt.Sprintf("%s %s %s %s", e.Source.Workload, e.Source.Version, e.Dest.Workload, e.Dest.Version)
 			e.Metadata["responseTime"] = responseTimeMap[key]
 		}
 	}

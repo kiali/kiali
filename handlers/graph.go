@@ -1,34 +1,34 @@
 package handlers
 
-// Graph.go provides handlers for service-graph request endpoints.   The handlers return configuration
+// Graph.go provides handlers for graph request endpoints.   The handlers return configuration
 // for a specified vendor (default cytoscape).  The configuration format is vendor-specific, typically
-// JSON, and provides what is necessary to allow the vendor's graphing tool to render the service graph.
+// JSON, and provides what is necessary to allow the vendor's graphing tool to render the graph.
 //
 // The algorithm is three-pass:
-//   First Pass: Query Prometheus (istio-request-count metric) to retrieve the source-destination
-//               service dependencies. Build a traffic map to provide a full representation of nodes
-//               and edges.
+//   First Pass: Query Prometheus (istio-requests-total metric) to retrieve the source-destination
+//               dependencies. Build a traffic map to provide a full representation of nodes and edges.
 //
-//   Second Pass: Apply any requested appenders to append information to the graph.
+//   Second Pass: Apply any requested appenders to alter or append to the graph.
 //
 //   Third Pass: Supply the traffic map to a vendor-specific config generator that
 //               constructs the vendor-specific output.
 //
 // The current Handlers:
 //   GraphNamespace:  Generate a graph for all services in a namespace (whether source or destination)
-//   GraphService:    Generate a graph centered on versions of a specified service, limited to
-//                    requesting and requested services.
+//   GraphWorkload:    Generate a graph centered on a specified workload, limited to
+//                    requesting and requested nodes.
 //
 // The handlers accept the following query parameters (some handlers may ignore some parameters):
 //   appenders:      Comma-separated list of appenders to run from [circuit_breaker, unused_service] (default all)
 //                   Note, appenders may support appender-specific query parameters
 //   duration:       time.Duration indicating desired query range duration, (default 10m)
-//   groupByVersion: If supported by vendor, visually group versions of the same service (default true)
+//   groupBy:        If supported by vendor, visually group by a specified node attribute (default version)
 //   includeIstio:   Include istio-system (infra) services (default false)
 //   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
 //   namespaces:     Comma-separated list of namespace names to use in the graph. Will override namespace path param
 //   queryTime:      Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
 //   vendor:         cytoscape | vizceral (default cytoscape)
+//   versioned:      Include versioned nodes if true, otherwise versionless (default true)
 //
 // * Error% is the percentage of requests with response code != 2XX
 // * See the vendor-specific config generators for more details about the specific vendor.
@@ -53,7 +53,7 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-// GraphNamespace is a REST http.HandlerFunc handling namespace-wide servicegraph
+// GraphNamespace is a REST http.HandlerFunc handling namespace-wide graph
 // config generation.
 func GraphNamespace(w http.ResponseWriter, r *http.Request) {
 	defer handlePanic(w)
@@ -92,9 +92,9 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 		mergeTrafficMaps(trafficMap, namespaceTrafficMap)
 	}
 
-	// The appenders can add/remove/alter services. After the manipulations are complete
+	// The appenders can add/remove/alter nodes. After the manipulations are complete
 	// we can make some final adjustments:
-	// - mark the outsiders (i.e. services not in the requested namespaces)
+	// - mark the outsiders (i.e. nodes not in the requested namespaces)
 	// - mark the insider traffic generators (i.e. inside the namespace and only outgoing edges)
 	for _, s := range trafficMap {
 		if isOutside(s, o.Namespaces) {
@@ -107,7 +107,7 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 	return trafficMap
 }
 
-func isOutside(s *graph.ServiceNode, namespaces []string) bool {
+func isOutside(s *graph.Node, namespaces []string) bool {
 	if s.Namespace == graph.UnknownNamespace {
 		return false
 	}
@@ -119,7 +119,7 @@ func isOutside(s *graph.ServiceNode, namespaces []string) bool {
 	return true
 }
 
-func isRoot(s *graph.ServiceNode) bool {
+func isRoot(s *graph.Node) bool {
 	if len(s.Edges) == 0 {
 		return false
 	}
@@ -127,17 +127,27 @@ func isRoot(s *graph.ServiceNode) bool {
 	return !hasRateIn
 }
 
-// buildNamespaceTrafficMap returns a map of all namespace services (key=id).  All
-// services either directly send and/or receive requests from a service in the namespace.
+// buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
+// nodes either directly send and/or receive requests from a node in the namespace.
 func buildNamespaceTrafficMap(namespace string, o options.Options, client *prometheus.Client) graph.TrafficMap {
-	// query prometheus for request traffic in two queries. The first query gathers traffic for
-	// requests originating outside of the namespace...
-	namespacePattern := fmt.Sprintf(".*\\\\.%v\\\\..*", namespace)
-	groupBy := "source_service,source_version,destination_service,destination_version,response_code,connection_mtls"
-	query := fmt.Sprintf("sum(rate(%v{source_service!~\"%v\",destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
+	// query prometheus for request traffic in three queries:
+	// 1) query for traffic originating from "unknown" (i.e. the internet)
+	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code,connection_security_policy"
+	query := fmt.Sprintf("sum(rate(%v{reporter=\"destination\",source_workload=\"unknown\",destination_service_namespace=\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
 		o.Metric,
-		namespacePattern,          // regex for namespace-constrained service
-		namespacePattern,          // regex for namespace-constrained service
+		namespace,
+		"[2345][0-9][0-9]",        // regex for valid response_codes
+		int(o.Duration.Seconds()), // range duration for the query
+		groupBy)
+
+	// fetch the unknown originating request traffic time-series
+	unkVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+
+	// 2) query for traffic originating from a workload outside of the namespace
+	query = fmt.Sprintf("sum(rate(%v{reporter=\"source\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
+		o.Metric,
+		namespace,
+		namespace,
 		"[2345][0-9][0-9]",        // regex for valid response_codes
 		int(o.Duration.Seconds()), // range duration for the query
 		groupBy)
@@ -145,10 +155,10 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 	// fetch the externally originating request traffic time-series
 	extVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
-	// The second query gathers traffic for requests originating inside of the namespace...
-	query = fmt.Sprintf("sum(rate(%v{source_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
+	// 3) query for traffic originating from a workload inside of the namespace
+	query = fmt.Sprintf("sum(rate(%v{reporter=\"source\",source_workload_namespace=\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
 		o.Metric,
-		namespacePattern,          // regex for namespace-constrained service
+		namespace,
 		"[2345][0-9][0-9]",        // regex for valid response_codes
 		int(o.Duration.Seconds()), // range duration for the query
 		groupBy)
@@ -158,6 +168,7 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 
 	// create map to aggregate traffic by response code
 	trafficMap := graph.NewTrafficMap()
+	populateTrafficMap(trafficMap, &unkVector, o)
 	populateTrafficMap(trafficMap, &extVector, o)
 	populateTrafficMap(trafficMap, &intVector, o)
 
@@ -167,26 +178,63 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o options.Options) {
 	for _, s := range *vector {
 		m := s.Metric
-		sourceSvc, sourceSvcOk := m["source_service"]
-		sourceVer, sourceVerOk := m["source_version"]
-		destSvc, destSvcOk := m["destination_service"]
-		destVer, destVerOk := m["destination_version"]
-		code, codeOk := m["response_code"]
-		mtls, mtlsOk := m["connection_mtls"]
+		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
+		lSourceWl, sourceWlOk := m["source_workload"]
+		lSourceApp, sourceAppOk := m["source_app"]
+		lSourceVer, sourceVerOk := m["source_version"]
+		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
+		lDestSvcName, destSvcNameOk := m["destination_service_name"]
+		lDestWl, destWlOk := m["destination_workload"]
+		lDestApp, destAppOk := m["destination_app"]
+		lDestVer, destVerOk := m["destination_version"]
+		lCode, codeOk := m["response_code"]
+		lCsp, cspOk := m["connection_security_policy"]
 
-		if !sourceSvcOk || !sourceVerOk || !destSvcOk || !destVerOk || !codeOk || !mtlsOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlOk || !destAppOk || !destVerOk || !codeOk || !cspOk {
 			log.Warningf("Skipping %v, missing expected TS labels", m.String())
 			continue
 		}
 
-		source, _ := addService(trafficMap, string(sourceSvc), string(sourceVer))
+		sourceWlNs := string(lSourceWlNs)
+		sourceWl := string(lSourceWl)
+		sourceApp := string(lSourceApp)
+		sourceVer := string(lSourceVer)
+		destSvcNs := string(lDestSvcNs)
+		destSvcName := string(lDestSvcName)
+		destWl := string(lDestWl)
+		destApp := string(lDestApp)
+		destVer := string(lDestVer)
+		code := string(lCode)
+		csp := string(lCsp)
+
+		// For source-side failures (Fault injection, open circuit breakers, etc) the
+		// destination_workload will be unknown (because the request never made it to the
+		// destination proxy.  But we still want to record the request in some
+		// way. So, depending on the graph type and labeling, assign the destination
+		// service name (i.e. the requested service) to the most applicable destination field.
+		if destApp == graph.UnknownApp {
+			switch o.GraphType {
+			case options.GraphTypeApp:
+				destApp = destSvcName
+			case options.GraphTypeWorkload:
+				destWl = destSvcName
+			case options.GraphTypeAppPreferred:
+				if sourceApp != graph.UnknownApp {
+					destApp = destSvcName
+				} else {
+					destWl = destSvcName
+				}
+			}
+		}
+
+		source, _ := addNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, o)
 
 		// Don't include an istio-system destination (kiali-915) unless asked to do so
-		if !o.IncludeIstio && strings.Contains(string(destSvc), options.NamespaceIstioSystem) {
+		if !o.IncludeIstio && destSvcNs == options.NamespaceIstioSystem {
 			continue
 		}
 
-		dest, _ := addService(trafficMap, string(destSvc), string(destVer))
+		dest, _ := addNode(trafficMap, destSvcNs, destWl, destApp, destVer, o)
 
 		var edge *graph.Edge
 		for _, e := range source.Edges {
@@ -215,7 +263,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		addToRate(edge.Metadata, "rate", val)
 
 		// we set MTLS true if any TS for this edge has MTLS
-		if mtls == "true" {
+		if csp == "mutual_tls" {
 			edge.Metadata["isMTLS"] = true
 		}
 
@@ -233,43 +281,66 @@ func addToRate(md map[string]interface{}, k string, v float64) {
 	}
 }
 
-func addService(trafficMap graph.TrafficMap, name, version string) (*graph.ServiceNode, bool) {
-	id := graph.Id(name, version)
-	svc, found := trafficMap[id]
-	if !found {
-		newSvc := graph.NewServiceNodeWithId(id, name, version)
-		svc = &newSvc
-		trafficMap[id] = svc
+func addNode(trafficMap graph.TrafficMap, namespace, workload, app, version string, o options.Options) (*graph.Node, bool) {
+	var idPart string
+	switch o.VendorOptions.GraphType {
+	case options.GraphTypeApp:
+		idPart = app
+		if o.VendorOptions.Versioned {
+			idPart = idPart + "_" + version
+		}
+	case options.GraphTypeAppPreferred:
+		if app != graph.UnknownApp {
+			idPart = app
+			if o.VendorOptions.Versioned {
+				idPart = idPart + "_" + version
+			}
+		} else {
+			idPart = workload
+		}
+	case options.GraphTypeWorkload:
+		idPart = workload
+	default:
+		panic(fmt.Sprintf("Unrecognized graphFormat [%s]", o.GraphType))
 	}
-	return svc, !found
+
+	id := graph.Id(namespace, idPart)
+	node, found := trafficMap[id]
+	if !found {
+		newNode := graph.NewNodeWithId(id, namespace, workload, app, version)
+		node = &newNode
+		trafficMap[id] = node
+	}
+	return node, !found
 }
 
-// mergeTrafficMaps ensures that we only have unique services by removing duplicate
-// services and merging their edges.  When also need to avoid duplicate edges, it can
+// mergeTrafficMaps ensures that we only have unique nodes by removing duplicate
+// nodes and merging their edges.  When also need to avoid duplicate edges, it can
 // happen when an terminal node of one namespace is a root node of another:
 //   ns1 graph: unknown -> ns1:A -> ns2:B
 //   ns2 graph:   ns1:A -> ns2:B -> ns2:C
 func mergeTrafficMaps(trafficMap, nsTrafficMap graph.TrafficMap) {
-	for nsId, nsService := range nsTrafficMap {
-		if service, isDup := trafficMap[nsId]; isDup {
-			for _, nsEdge := range nsService.Edges {
+	for nsId, nsNode := range nsTrafficMap {
+		if node, isDup := trafficMap[nsId]; isDup {
+			for _, nsEdge := range nsNode.Edges {
 				isDupEdge := false
-				for _, e := range service.Edges {
+				for _, e := range node.Edges {
 					if nsEdge.Dest.ID == e.Dest.ID {
 						isDupEdge = true
 						break
 					}
 				}
 				if !isDupEdge {
-					service.Edges = append(service.Edges, nsEdge)
+					node.Edges = append(node.Edges, nsEdge)
 				}
 			}
 		} else {
-			trafficMap[nsId] = nsService
+			trafficMap[nsId] = nsNode
 		}
 	}
 }
 
+// TODO: This handler needs to be replaced with something relevant to Istio 1.0, currently returns empty map
 // GraphService is a REST http.HandlerFunc handling service-specific servicegraph config generation.
 func GraphService(w http.ResponseWriter, r *http.Request) {
 	defer handlePanic(w)
@@ -280,6 +351,7 @@ func GraphService(w http.ResponseWriter, r *http.Request) {
 	graphService(w, r, client)
 }
 
+// TODO: This handler needs to be replaced with something relevant to Istio 1.0, currently returns empty map
 // graphService provides a testing hook that can supply a mock client
 func graphService(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
 	o := options.NewOptions(r)
@@ -297,40 +369,8 @@ func graphService(w http.ResponseWriter, r *http.Request, client *prometheus.Cli
 	generateGraph(trafficMap, w, o)
 }
 
-// buildServiceTrafficMap returns a map of all relevant services (key=id).  All
-// services either directly send and/or receive requests from the service.
 func buildServiceTrafficMap(o options.Options, client *prometheus.Client) graph.TrafficMap {
-	// query prometheus for request traffic in two queries. The first query gathers incoming traffic
-	// for the service
-	servicePattern := fmt.Sprintf("%v\\\\.%v\\\\..*", o.Service, o.Namespaces[0])
-	groupBy := "source_service,source_version,destination_service,destination_version,response_code,connection_mtls"
-	query := fmt.Sprintf("sum(rate(%v{destination_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
-		o.Metric,
-		servicePattern,            // regex for namespace-constrained service
-		"[2345][0-9][0-9]",        // regex for valid response_codes
-		int(o.Duration.Seconds()), // range duration for the query
-		groupBy)
-
-	// fetch the incoming request traffic time-series
-	inVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
-
-	// The second query gathers traffic for requests originating from the service...
-	query = fmt.Sprintf("sum(rate(%v{source_service=~\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
-		o.Metric,
-		servicePattern,            // regex for namespace-constrained service
-		"[2345][0-9][0-9]",        // regex for valid response_codes
-		int(o.Duration.Seconds()), // range duration for the query
-		groupBy)
-
-	// fetch the outgoingrequest traffic time-series
-	outVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
-
-	// create map to aggregate traffic by response code
-	trafficMap := graph.NewTrafficMap()
-	populateTrafficMap(trafficMap, &inVector, o)
-	populateTrafficMap(trafficMap, &outVector, o)
-
-	return trafficMap
+	return graph.NewTrafficMap()
 }
 
 func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options.Options) {
@@ -397,7 +437,7 @@ func handlePanic(w http.ResponseWriter) {
 }
 
 // some debugging utils
-//func ids(r *[]graph.ServiceNode) []string {
+//func ids(r *[]graph.Node) []string {
 //	s := []string{}
 //	for _, r := range *r {
 //		s = append(s, r.ID)
@@ -405,7 +445,7 @@ func handlePanic(w http.ResponseWriter) {
 //	return s
 //}
 
-//func keys(m map[string]*graph.ServiceNode) []string {
+//func keys(m map[string]*graph.Node) []string {
 //	s := []string{}
 //	for k := range m {
 //		s = append(s, k)

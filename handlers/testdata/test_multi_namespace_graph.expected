@@ -4,31 +4,37 @@
     "nodes": [
       {
         "data": {
-          "id": "80c2e74be9c24effcaf63df866f8f02d",
-          "service": "customer.tutorial.svc.cluster.local",
+          "id": "80d19073f075021e8b906b9640390368",
           "namespace": "tutorial",
-          "serviceName": "customer",
+          "workload": "customer-v1",
+          "app": "customer",
           "version": "v1",
+          "service": "customer.tutorial",
+          "serviceName": "customer",
           "rate": "50.000"
         }
       },
       {
         "data": {
-          "id": "32f13d185b9a6764d67f9f96f8796f6c",
-          "service": "productpage.bookinfo.svc.cluster.local",
+          "id": "55b1084a0b117505f1249ac8900fa976",
           "namespace": "bookinfo",
-          "serviceName": "productpage",
+          "workload": "productpage-v1",
+          "app": "productpage",
           "version": "v1",
+          "service": "productpage.bookinfo",
+          "serviceName": "productpage",
           "rate": "50.000"
         }
       },
       {
         "data": {
           "id": "ba113404e46b8aa41dc0e7cc339073fe",
-          "service": "unknown",
           "namespace": "unknown",
-          "serviceName": "unknown",
+          "workload": "unknown",
+          "app": "unknown",
           "version": "unknown",
+          "service": "unknown.unknown",
+          "serviceName": "unknown",
           "rateOut": "50.000",
           "isRoot": true
         }
@@ -37,17 +43,17 @@
     "edges": [
       {
         "data": {
-          "id": "9f82022f17be0601a8b48369f84a870f",
+          "id": "bcb22543f306422ba7a329c84f2bea89",
           "source": "ba113404e46b8aa41dc0e7cc339073fe",
-          "target": "32f13d185b9a6764d67f9f96f8796f6c",
+          "target": "55b1084a0b117505f1249ac8900fa976",
           "rate": "50.000"
         }
       },
       {
         "data": {
-          "id": "88ea5efca009742e150fa3cfd3bdbda9",
+          "id": "88009c02d995a02e939dd2601e2ac0fe",
           "source": "ba113404e46b8aa41dc0e7cc339073fe",
-          "target": "80c2e74be9c24effcaf63df866f8f02d",
+          "target": "80d19073f075021e8b906b9640390368",
           "rate": "50.000"
         }
       }

@@ -25,10 +25,11 @@ func (a HealthAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
 
 func (a HealthAppender) applyHealth(trafficMap graph.TrafficMap, business *business.Layer) {
 	for _, s := range trafficMap {
-		if s.Name != graph.UnknownService && s.Metadata["isHealthIndicator"] == true {
+		// TODO FIX s.ServiceName, s.Name --> s.App to compile
+		if s.App != graph.UnknownApp && s.Metadata["isHealthIndicator"] == true {
 			// TODO: Health is not version specific, perhaps it should be, or at least the
-			// parts where it is possible. For example, envoy is not version-sepcific
-			health := business.Health.GetServiceHealth(s.Namespace, s.ServiceName, "10m")
+			// parts where it is possible. For example, envoy is not version-specific
+			health := business.Health.GetServiceHealth(s.Namespace, s.App, "10m")
 
 			s.Metadata["health"] = &health
 		}
