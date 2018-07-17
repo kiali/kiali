@@ -1,6 +1,7 @@
 import * as React from 'react';
 import ServiceListComponent from './ServiceListComponent';
 import * as MessageCenter from '../../utils/MessageCenter';
+import { Breadcrumb } from 'patternfly-react';
 
 type ServiceListState = {};
 
@@ -16,7 +17,9 @@ class ServiceListPage extends React.Component<ServiceListProps, ServiceListState
   render() {
     return (
       <>
-        <h2>Services</h2>
+        <Breadcrumb title={true}>
+          <Breadcrumb.Item active={true}>Services</Breadcrumb.Item>
+        </Breadcrumb>
         <ServiceListComponent onError={this.handleError} />
       </>
     );

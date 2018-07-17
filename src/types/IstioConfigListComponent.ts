@@ -145,7 +145,9 @@ export const dicIstioType = {
   serviceentries: 'ServiceEntry',
   rules: 'Rule',
   quotaspecs: 'QuotaSpec',
-  quotaspecbindings: 'QuotaSpecBinding'
+  quotaspecbindings: 'QuotaSpecBinding',
+  instance: 'Instance',
+  handler: 'Handler'
 };
 
 const includeName = (name: string, names: string[]) => {

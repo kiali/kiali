@@ -4,7 +4,7 @@ import { Col, Row } from 'patternfly-react';
 import ServiceInfo from './ServiceInfo';
 import ServiceMetrics from './ServiceMetrics';
 import ServiceId from '../../types/ServiceId';
-import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
+import { Nav, NavItem, TabContainer, TabContent, TabPane, Breadcrumb } from 'patternfly-react';
 import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
@@ -56,6 +56,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       }
     };
   }
+
+  cleanFilter = () => {
+    NamespaceFilterSelected.setSelected([]);
+  };
 
   updateFilter = () => {
     const activeFilter: ActiveFilter = {
@@ -164,6 +168,30 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       });
   };
 
+  renderBreadcrumbs = (urlParams: URLSearchParams) => {
+    let to = '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
+    return (
+      <Breadcrumb title={true}>
+        <Breadcrumb.Item>
+          <Link to={kialiRoute('/services')} onClick={this.cleanFilter}>
+            Services
+          </Link>
+        </Breadcrumb.Item>
+        <Breadcrumb.Item>
+          <Link to={kialiRoute('/services')} onClick={this.updateFilter}>
+            Namespace: {this.props.match.params.namespace}
+          </Link>
+        </Breadcrumb.Item>
+        <Breadcrumb.Item>
+          <Link to={kialiRoute(to)}>Service: {this.props.match.params.service}</Link>
+        </Breadcrumb.Item>
+        <Breadcrumb.Item active={true}>
+          Service {(urlParams.get('tab') || 'info') === 'info' ? 'Info' : 'Metrics'}
+        </Breadcrumb.Item>
+      </Breadcrumb>
+    );
+  };
+
   render() {
     const urlParams = new URLSearchParams(this.props.location.search);
     let parsedSearch = this.parseSearch();
@@ -188,25 +216,9 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         aceAnnotations = aceValidations.annotations;
       }
     }
-    let to = '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
     return (
       <>
-        <div className="page-header">
-          <h2>
-            Service{' '}
-            <Link to={kialiRoute('/services')} onClick={this.updateFilter}>
-              {this.props.match.params.namespace}
-            </Link>{' '}
-            /
-            {editorVisible ? (
-              <span>
-                <Link to={kialiRoute(to)}>{' ' + this.props.match.params.service}</Link> / {parsedSearch.type}
-              </span>
-            ) : (
-              <span>{' ' + this.props.match.params.service}</span>
-            )}
-          </h2>
-        </div>
+        {this.renderBreadcrumbs(urlParams)}
         {editorVisible ? (
           <div className="container-fluid container-cards-pf">
             <Row className="row-cards-pf">

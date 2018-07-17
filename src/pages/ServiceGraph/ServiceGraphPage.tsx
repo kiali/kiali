@@ -1,6 +1,8 @@
 import * as React from 'react';
 import FlexView from 'react-flexview';
 
+import { Breadcrumb } from 'patternfly-react';
+
 import Namespace from '../../types/Namespace';
 import { GraphParamsType, SummaryData } from '../../types/Graph';
 import { Duration, PollIntervalInMs } from '../../types/GraphFilter';
@@ -96,7 +98,9 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
     return (
       <>
         <FlexView className={containerStyle} column={true}>
-          <h2>Service Graph</h2>
+          <Breadcrumb title={true}>
+            <Breadcrumb.Item active={true}>Service Graph</Breadcrumb.Item>
+          </Breadcrumb>
           <div>
             {/* Use empty div to reset the flex, this component doesn't seem to like that. It renders all its contents in the center */}
             <GraphFilterToolbar
