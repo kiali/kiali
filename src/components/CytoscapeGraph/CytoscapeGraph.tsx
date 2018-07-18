@@ -50,6 +50,16 @@ type CytoscapeGraphProps = CytoscapeGraphType &
 
 type CytoscapeGraphState = {};
 
+type Position = {
+  x: number;
+  y: number;
+};
+
+type InitialValues = {
+  position?: Position;
+  zoom?: number;
+};
+
 // @todo: Move this class to 'containers' folder -- but it effects many other things
 // exporting this class for testing
 export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, CytoscapeGraphState> {
@@ -62,11 +72,16 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private cytoscapeReactWrapperRef: any;
   private updateLayout: boolean;
   private resetSelection: boolean;
+  private initialValues: InitialValues;
   private cy: any;
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
     this.updateLayout = false;
+    this.initialValues = {
+      position: undefined,
+      zoom: undefined
+    };
   }
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
@@ -106,14 +121,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   render() {
     return (
       <div id="cytoscape-container" className={this.props.containerClassName}>
-        <ReactResizeDetector
-          handleWidth={true}
-          handleHeight={true}
-          skipOnMount={true}
-          refreshMode={'throttle'}
-          refreshRate={100}
-          onResize={this.onResize}
-        />
+        <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={this.onResize} />
         <EmptyGraphLayout
           elements={this.props.elements}
           namespace={this.props.namespace.name}
@@ -143,6 +151,17 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private onResize = () => {
     if (this.cy) {
       this.cy.resize();
+      const currentPosition = this.cy.pan();
+      const currentZoom = this.cy.zoom();
+      if (
+        this.initialValues.position &&
+        this.initialValues.position.x === currentPosition.x &&
+        this.initialValues.position.y === currentPosition.y &&
+        this.initialValues.zoom === currentZoom
+      ) {
+        // There was a resize, but we are in the initial pan/zoom state, we can fit again.
+        this.safeFit(this.cy);
+      }
     }
   };
 
@@ -271,6 +290,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       cy.zoom(2.5);
       cy.center();
     }
+    this.initialValues.position = { ...cy.pan() };
+    this.initialValues.zoom = cy.zoom();
   }
 
   private processGraphUpdate(cy: any) {
