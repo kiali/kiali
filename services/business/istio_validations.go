@@ -114,20 +114,10 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 
 func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
 	objectTypeValidations := models.IstioValidations{}
-	validationsChannels := make([]chan models.IstioValidations, len(objectCheckers))
 
 	// Run checks for each IstioObject type
-	for i, objectChecker := range objectCheckers {
-		validationsChannels[i] = make(chan models.IstioValidations)
-		go func(channel chan models.IstioValidations, checker ObjectChecker) {
-			channel <- checker.Check()
-			close(channel)
-		}(validationsChannels[i], objectChecker)
-	}
-
-	// Receive validations and merge them into one object
-	for _, validation := range validationsChannels {
-		objectTypeValidations.MergeValidations(<-validation)
+	for _, objectChecker := range objectCheckers {
+		objectTypeValidations.MergeValidations(objectChecker.Check())
 	}
 	return objectTypeValidations
 }
