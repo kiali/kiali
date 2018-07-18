@@ -8,6 +8,7 @@ import {
   IstioConfigDetails,
   IstioConfigId,
   IstioRuleDetails,
+  ParsedSearch,
   safeDumpOptions
 } from '../../types/IstioConfigDetails';
 import { dicIstioType } from '../../types/IstioConfigListComponent';
@@ -20,14 +21,8 @@ import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
 import { Validations } from '../../types/ServiceInfo';
 import { parseAceValidations } from '../../types/AceValidations';
-import { kialiRoute } from '../../routes';
 
 const yaml = require('js-yaml');
-
-export interface ParsedSearch {
-  type?: string;
-  name?: string;
-}
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
@@ -212,7 +207,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   renderBreadcrumbs = (parsedRuleParams: ParsedSearch): any => {
-    const istioRoute = kialiRoute('/istio');
     let titleBreadcrumb: any[] = [];
     if (!parsedRuleParams.type && !parsedRuleParams.name) {
       titleBreadcrumb.push(
@@ -235,17 +229,17 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item>
-          <Link to={istioRoute} onClick={this.cleanFilter}>
+          <Link to="/istio" onClick={this.cleanFilter}>
             Istio Config
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
-          <Link to={istioRoute} onClick={this.updateNamespaceFilter}>
+          <Link to="/istio" onClick={this.updateNamespaceFilter}>
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
-          <Link to={istioRoute} onClick={this.updateTypeFilter}>
+          <Link to="/istio" onClick={this.updateTypeFilter}>
             Istio Object Type: {dicIstioType[this.props.match.params.objectType]}
           </Link>
         </Breadcrumb.Item>

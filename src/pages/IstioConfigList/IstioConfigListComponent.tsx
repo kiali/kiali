@@ -23,7 +23,6 @@ import { authentication } from '../../utils/Authentication';
 import { NamespaceValidations } from '../../types/ServiceInfo';
 import { ConfigIndicator } from '../../components/ConfigValidation/ConfigIndicator';
 import { removeDuplicatesArray } from '../../utils/Common';
-import { kialiRoute } from '../../routes';
 
 const sortFields: SortField[] = [
   {
@@ -355,7 +354,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     return (
       <Link
         key={'istioItemItem_' + index + '_' + istioItem.namespace + '_' + name}
-        to={kialiRoute(to)}
+        to={to}
         style={{ color: PfColors.Black }}
       >
         <ListViewItem

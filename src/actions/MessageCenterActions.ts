@@ -1,6 +1,9 @@
 import { MessageType } from '../types/MessageCenter';
 import { createAction } from 'typesafe-actions';
 
+const DEFAULT_GROUP_ID = 'default';
+const DEFAULT_MESSAGE_TYPE = MessageType.ERROR;
+
 export const enum MessageCenterActionKeys {
   ADD_MESSAGE = 'ADD_MESSAGE',
   REMOVE_MESSAGE = 'REMOVE_MESSAGE',
@@ -19,7 +22,7 @@ const toNumberArray = (n: numberOrNumberArray) => (Array.isArray(n) ? n : [n]);
 export const MessageCenterActions = {
   addMessage: createAction(
     MessageCenterActionKeys.ADD_MESSAGE,
-    (content: string, groupId: string, messageType: MessageType) => ({
+    (content: string, groupId: string = DEFAULT_GROUP_ID, messageType: MessageType = DEFAULT_MESSAGE_TYPE) => ({
       type: MessageCenterActionKeys.ADD_MESSAGE,
       content,
       groupId,

@@ -1,4 +1,4 @@
-import { CytoscapeClickEvent, CytoscapeMouseInEvent, CytoscapeMouseOutEvent } from '../CytoscapeGraph';
+import { CytoscapeClickEvent, CytoscapeMouseInEvent, CytoscapeMouseOutEvent } from '../../../types/Graph';
 import { DimClass } from './GraphStyles';
 
 const DIM_CLASS: string = DimClass;

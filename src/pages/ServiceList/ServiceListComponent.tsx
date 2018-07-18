@@ -27,7 +27,6 @@ import { removeDuplicatesArray } from '../../utils/Common';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import ItemDescription from './ItemDescription';
 import './ServiceListComponent.css';
-import { kialiRoute } from '../../routes';
 
 type ServiceItemHealth = ServiceItem & { health: Health };
 
@@ -314,7 +313,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       const to = '/namespaces/' + serviceItem.namespace + '/services/' + serviceItem.name;
 
       serviceList.push(
-        <Link key={kialiRoute(to)} to={kialiRoute(to)} style={{ color: PfColors.Black }}>
+        <Link key={to} to={to} style={{ color: PfColors.Black }}>
           <ListViewItem
             leftContent={<ListViewIcon type="pf" name="service" />}
             heading={

@@ -6,11 +6,13 @@ import { bindActionCreators } from 'redux';
 import { serviceGraphFilterActions } from '../actions/ServiceGraphFilterActions';
 import { KialiAppState, ServiceGraphFilterState } from '../store/Store';
 import { style } from 'typestyle';
-import GraphFilter from '../components/GraphFilter/GraphFilter';
 import { EdgeLabelMode, Layout } from '../types/GraphFilter';
 import { GraphParamsType } from '../types/Graph';
 import { makeServiceGraphUrlFromParams } from '../components/Nav/NavUtils';
 import EdgeLabelRadioGroup from '../components/ToolbarDropdown/EdgeLabelRadioGroup';
+import { config } from '../config';
+
+const GRAPH_LAYOUTS = config().toolbar.graphLayouts;
 
 interface ServiceGraphDispatch {
   // Dispatch methods
@@ -175,9 +177,9 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       height: '1em'
     });
 
-    const layoutItems = Object.keys(GraphFilter.GRAPH_LAYOUTS).map((layoutKey: string) => (
+    const layoutItems = Object.keys(GRAPH_LAYOUTS).map((layoutKey: string) => (
       <MenuItem active={layoutKey === graphParams.graphLayout.name} key={layoutKey} eventKey={layoutKey}>
-        {GraphFilter.GRAPH_LAYOUTS[layoutKey]}
+        {GRAPH_LAYOUTS[layoutKey]}
       </MenuItem>
     ));
 
@@ -189,7 +191,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
         <div>
           <DropdownButton
             id="graph_filter_layout"
-            title={GraphFilter.GRAPH_LAYOUTS[graphParams.graphLayout.name]}
+            title={GRAPH_LAYOUTS[graphParams.graphLayout.name]}
             onSelect={this.handleLayoutChange}
           >
             {layoutItems}

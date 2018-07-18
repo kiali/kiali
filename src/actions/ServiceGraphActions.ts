@@ -1,5 +1,5 @@
 import { createAction } from 'typesafe-actions';
-import { CytoscapeClickEvent } from '../components/CytoscapeGraph/CytoscapeGraph';
+import { CytoscapeClickEvent } from '../types/Graph';
 
 export enum ServiceGraphActionKeys {
   SERVICE_GRAPH_SIDE_PANEL_SHOW_INFO = 'SERVICE_GRAPH_SIDE_PANEL_SHOW_INFO'

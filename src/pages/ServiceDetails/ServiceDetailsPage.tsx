@@ -15,7 +15,6 @@ import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
 import { parseAceValidations } from '../../types/AceValidations';
-import { kialiRoute } from '../../routes';
 
 const yaml = require('js-yaml');
 
@@ -173,17 +172,17 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item>
-          <Link to={kialiRoute('/services')} onClick={this.cleanFilter}>
+          <Link to="/services" onClick={this.cleanFilter}>
             Services
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
-          <Link to={kialiRoute('/services')} onClick={this.updateFilter}>
+          <Link to="/services" onClick={this.updateFilter}>
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
-          <Link to={kialiRoute(to)}>Service: {this.props.match.params.service}</Link>
+          <Link to={to}>Service: {this.props.match.params.service}</Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item active={true}>
           Service {(urlParams.get('tab') || 'info') === 'info' ? 'Info' : 'Metrics'}
@@ -289,9 +288,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   };
 
   private navigateToJaeger = () => {
-    this.props.history.push(
-      kialiRoute('/jaeger?path=' + encodeURIComponent(`/search?service=${this.props.match.params.service}`))
-    );
+    this.props.history.push('/jaeger?path=' + encodeURIComponent(`/search?service=${this.props.match.params.service}`));
   };
 }
 

@@ -6,9 +6,6 @@ import ServiceDetailsPage from './pages/ServiceDetails/ServiceDetailsPage';
 import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetailsPage';
 import { MenuItem, Path } from './types/Routes';
 
-const baseName = '/console';
-
-export const kialiRoute = (route: string) => baseName + route;
 /**
  * Return array of objects that describe vertical menu
  * @return {array}
@@ -17,55 +14,55 @@ const navItems: MenuItem[] = [
   {
     iconClass: 'fa pficon-topology',
     title: 'Graph',
-    to: kialiRoute('/service-graph/all'),
-    pathsActive: [/\/service-graph\/(.*)/]
+    to: '/service-graph/all',
+    pathsActive: [/^\/service-graph\/(.*)/]
   },
   {
     iconClass: 'fa pficon-service',
     title: 'Services',
-    to: kialiRoute('/services'),
-    pathsActive: [/\/namespaces\/(.*)\/services\/(.*)/]
+    to: '/services',
+    pathsActive: [/^\/namespaces\/(.*)\/services\/(.*)/]
   },
   {
     iconClass: 'fa pficon-template',
     title: 'Istio Config',
-    to: kialiRoute('/istio'),
-    pathsActive: [/\/namespaces\/(.*)\/istio\/(.*)/]
+    to: '/istio',
+    pathsActive: [/^\/namespaces\/(.*)\/istio\/(.*)/]
   },
   {
     iconClass: 'fa fa-paw',
     title: 'Distributed Tracing',
-    to: kialiRoute('/jaeger')
+    to: '/jaeger'
   }
 ];
 
-const defaultRoute = kialiRoute('/service-graph/all');
+const defaultRoute = '/service-graph/all';
 
 const pathRoutes: Path[] = [
   {
-    path: kialiRoute('/service-graph/:namespace'),
+    path: '/service-graph/:namespace',
     component: ServiceGraphRouteHandler
   },
   {
-    path: kialiRoute('/namespaces/:namespace/services/:service'),
+    path: '/namespaces/:namespace/services/:service',
     component: ServiceDetailsPage
   },
   {
-    path: kialiRoute('/namespaces/:namespace/istio/:objectType/:object'),
+    path: '/namespaces/:namespace/istio/:objectType/:object',
     component: IstioConfigDetailsPage
   },
   {
-    path: kialiRoute('/services'),
+    path: '/services',
     component: ServiceListPage
   },
   {
-    path: kialiRoute('/istio'),
+    path: '/istio',
     component: IstioConfigPage
   },
   {
-    path: kialiRoute('/jaeger'),
+    path: '/jaeger',
     component: ServiceJaegerPage
   }
 ];
 
-export { baseName, defaultRoute, navItems, pathRoutes };
+export { defaultRoute, navItems, pathRoutes };

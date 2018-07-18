@@ -24,3 +24,12 @@ export interface GraphParamsType {
   graphLayout: Layout;
   edgeLabelMode: EdgeLabelMode;
 }
+
+export interface CytoscapeBaseEvent {
+  summaryType: string; // what the summary panel should show. One of: graph, node, edge, or group
+  summaryTarget: any; // the cytoscape element that was the target of the event
+}
+
+export interface CytoscapeClickEvent extends CytoscapeBaseEvent {}
+export interface CytoscapeMouseInEvent extends CytoscapeBaseEvent {}
+export interface CytoscapeMouseOutEvent extends CytoscapeBaseEvent {}

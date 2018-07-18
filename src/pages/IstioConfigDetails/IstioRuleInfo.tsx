@@ -2,13 +2,11 @@ import * as React from 'react';
 import { ListView, ListViewItem, Row, Col, Table, Card, CardTitle, CardBody, Icon, Button } from 'patternfly-react';
 import * as resolve from 'table-resolver';
 import './IstioRuleInfo.css';
-import { aceOptions, safeDumpOptions, IstioRuleDetails } from '../../types/IstioConfigDetails';
+import { aceOptions, safeDumpOptions, IstioRuleDetails, ParsedSearch } from '../../types/IstioConfigDetails';
 import { Link } from 'react-router-dom';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
-import { kialiRoute } from '../../routes';
-import { ParsedSearch } from './IstioConfigDetailsPage';
 import { dicIstioType } from '../../types/IstioConfigListComponent';
 
 const yaml = require('js-yaml');
@@ -34,7 +32,7 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
   };
 
   getPathname(): string {
-    return kialiRoute('/namespaces/' + this.props.namespace + '/istio/rules/' + this.props.rule.name);
+    return '/namespaces/' + this.props.namespace + '/istio/rules/' + this.props.rule.name;
   }
 
   editorContent(parsedSearch: ParsedSearch) {

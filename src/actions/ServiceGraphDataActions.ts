@@ -2,17 +2,11 @@ import { createAction } from 'typesafe-actions';
 import Namespace from '../types/Namespace';
 import { Duration } from '../types/GraphFilter';
 import * as API from '../services/Api';
-import * as MessageCenter from '../utils/MessageCenter';
 import { authentication } from '../utils/Authentication';
+import { MessageCenterActions } from './MessageCenterActions';
+import { ServiceGraphDataActionKeys } from './ServiceGraphDataActionKeys';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
-
-export enum ServiceGraphDataActionKeys {
-  GET_GRAPH_DATA_START = 'GET_GRAPH_DATA_START',
-  GET_GRAPH_DATA_SUCCESS = 'GET_GRAPH_DATA_SUCCESS',
-  GET_GRAPH_DATA_FAILURE = 'GET_GRAPH_DATA_FAILURE',
-  HANDLE_LEGEND = 'HANDLE_LEGEND'
-}
 
 // When updating the cytoscape graph, the element data expects to have all the changes
 // non provided values are taken as "this didn't change", similar as setState does.
@@ -104,7 +98,7 @@ export const ServiceGraphDataActions = {
           } else {
             emsg = 'Cannot load the graph: ' + error.toString();
           }
-          MessageCenter.add(emsg);
+          dispatch(MessageCenterActions.addMessage(emsg));
           dispatch(ServiceGraphDataActions.getGraphDataFailure(emsg));
         }
       );

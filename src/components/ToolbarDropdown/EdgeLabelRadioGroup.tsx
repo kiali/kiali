@@ -1,9 +1,15 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import { style } from 'typestyle';
+import * as _ from 'lodash';
 
-import GraphFilter from '../GraphFilter/GraphFilter';
 import { GraphParamsType } from '../../types/Graph';
+import { EdgeLabelMode } from '../../types/GraphFilter';
+
+const EDGE_LABEL_MODES = EdgeLabelMode.getValues().reduce((map, edgeLabelMode) => {
+  map[edgeLabelMode] = _.capitalize(_.startCase(edgeLabelMode));
+  return map;
+}, {});
 
 type EdgeLabelRadioGroupProps = {
   graphParams: GraphParamsType;
@@ -33,7 +39,7 @@ export class EdgeLabelRadioGroup extends React.Component<EdgeLabelRadioGroupProp
   render() {
     const radioButtonStyle = style({ marginLeft: 5 });
 
-    const edgeItems = Object.keys(GraphFilter.EDGE_LABEL_MODES).map((edgeLabelModeKey: any) => (
+    const edgeItems = Object.keys(EDGE_LABEL_MODES).map((edgeLabelModeKey: any) => (
       <div key={edgeLabelModeKey}>
         <label className={radioButtonStyle}>
           <input
@@ -43,7 +49,7 @@ export class EdgeLabelRadioGroup extends React.Component<EdgeLabelRadioGroupProp
             checked={edgeLabelModeKey === this.state.edgeValue}
             onChange={this.onEdgeChanged}
           />
-          <span className={radioButtonStyle}>{GraphFilter.EDGE_LABEL_MODES[edgeLabelModeKey]}</span>
+          <span className={radioButtonStyle}>{EDGE_LABEL_MODES[edgeLabelModeKey]}</span>
         </label>
       </div>
     ));

@@ -13,7 +13,13 @@ import CytoscapeReactWrapper from './CytoscapeReactWrapper';
 import { ServiceGraphActions } from '../../actions/ServiceGraphActions';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
-import { GraphParamsType } from '../../types/Graph';
+import {
+  CytoscapeBaseEvent,
+  CytoscapeClickEvent,
+  CytoscapeMouseInEvent,
+  CytoscapeMouseOutEvent,
+  GraphParamsType
+} from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import { authentication } from '../../utils/Authentication';
 import * as H from '../../utils/Health';
@@ -43,15 +49,6 @@ type CytoscapeGraphProps = CytoscapeGraphType &
   };
 
 type CytoscapeGraphState = {};
-
-interface CytoscapeBaseEvent {
-  summaryType: string; // what the summary panel should show. One of: graph, node, edge, or group
-  summaryTarget: any; // the cytoscape element that was the target of the event
-}
-
-export interface CytoscapeClickEvent extends CytoscapeBaseEvent {}
-export interface CytoscapeMouseInEvent extends CytoscapeBaseEvent {}
-export interface CytoscapeMouseOutEvent extends CytoscapeBaseEvent {}
 
 // @todo: Move this class to 'containers' folder -- but it effects many other things
 // exporting this class for testing

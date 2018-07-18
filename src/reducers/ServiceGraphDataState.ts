@@ -1,5 +1,5 @@
 import { ServiceGraphState } from '../store/Store';
-import { ServiceGraphDataActionKeys } from '../actions/ServiceGraphDataActions';
+import { ServiceGraphDataActionKeys } from '../actions/ServiceGraphDataActionKeys';
 import { ServiceGraphActionKeys } from '../actions/ServiceGraphActions';
 import FilterStateReducer from './ServiceGraphFilterState';
 

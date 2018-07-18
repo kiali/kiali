@@ -12,7 +12,6 @@ import { Icon } from 'patternfly-react';
 import { Link } from 'react-router-dom';
 import { shouldRefreshData } from './SummaryPanelCommon';
 import Label from '../../components/Label/Label';
-import { kialiRoute } from '../../routes';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -82,11 +81,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const rate4xx = this.safeRate(edge.data('rate4XX'));
     const rate5xx = this.safeRate(edge.data('rate5XX'));
     const sourceLink = (
-      <Link to={kialiRoute(`/namespaces/${sourceNamespace}/services/${sourceServiceName}`)}>{sourceServiceName}</Link>
+      <Link to={`/namespaces/${sourceNamespace}/services/${sourceServiceName}`}>{sourceServiceName}</Link>
     );
-    const destLink = (
-      <Link to={kialiRoute(`/namespaces/${destNamespace}/services/${destServiceName}`)}>{destServiceName}</Link>
-    );
+    const destLink = <Link to={`/namespaces/${destNamespace}/services/${destServiceName}`}>{destServiceName}</Link>;
 
     const isUnknown = sourceServiceName === 'unknown';
     return (

@@ -1,5 +1,5 @@
 {
-    "extends": ["tslint-react"],
+    "extends": ["tslint-react", "tslint-no-circular-imports"],
     "rules": {
         "align": [
             true,

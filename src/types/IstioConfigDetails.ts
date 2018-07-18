@@ -41,3 +41,8 @@ export const safeDumpOptions = {
     '!!null': 'canonical' // dump null as ~
   }
 };
+
+export interface ParsedSearch {
+  type?: string;
+  name?: string;
+}

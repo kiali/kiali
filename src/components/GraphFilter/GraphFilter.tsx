@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Toolbar, FormGroup } from 'patternfly-react';
 
-import { Duration, EdgeLabelMode } from '../../types/GraphFilter';
+import { Duration } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
 import { config } from '../../config';
@@ -10,7 +10,6 @@ import { GraphParamsType } from '../../types/Graph';
 import Namespace from '../../types/Namespace';
 import GraphRefreshContainer from '../../containers/GraphRefreshContainer';
 
-import * as _ from 'lodash';
 import GraphSettingsContainer from '../../containers/GraphSettingsContainer';
 
 export interface GraphFilterProps extends GraphParamsType {
@@ -33,11 +32,6 @@ const namespaceStyle = style({
 export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
   // GraphFilter should be minimal and used for assembling those filtering components.
   static readonly INTERVAL_DURATION = config().toolbar.intervalDuration;
-  static readonly GRAPH_LAYOUTS = config().toolbar.graphLayouts;
-  static readonly EDGE_LABEL_MODES = EdgeLabelMode.getValues().reduce((map, edgeLabelMode) => {
-    map[edgeLabelMode] = _.capitalize(_.startCase(edgeLabelMode));
-    return map;
-  }, {});
 
   constructor(props: GraphFilterProps) {
     super(props);
