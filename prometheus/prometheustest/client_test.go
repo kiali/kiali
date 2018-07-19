@@ -100,16 +100,16 @@ func TestGetServiceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
-	mockHistogram(api, "istio_request_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration_seconds", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_response_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.6)
-	mockHistogram(api, "istio_request_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration_seconds", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_response_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.6)
+	mockHistogram(api, "istio_request_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
 	metrics := client.GetMetrics(&prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		Apps:      []string{"productpage"},
@@ -169,16 +169,16 @@ func TestGetServiceMetricsIncludeIstioFalse(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\",destination_namespace!=\"istio-system\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\",destination_namespace!=\"istio-system\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
-	mockHistogram(api, "istio_request_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\",destination_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration_seconds", "{source_app=\"productpage\",source_namespace=\"bookinfo\",destination_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_response_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\",destination_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.6)
-	mockHistogram(api, "istio_request_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration_seconds", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_response_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.6)
+	mockHistogram(api, "istio_request_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
 	metrics := client.GetMetrics(&prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		Apps:      []string{"productpage"},
@@ -237,10 +237,10 @@ func TestGetFilteredServiceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
-	mockHistogram(api, "istio_request_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
+	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	metrics := client.GetMetrics(&prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		Apps:      []string{"productpage"},
@@ -274,8 +274,8 @@ func TestGetServiceMetricsInstantRates(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(irate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\"}[1m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(irate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[1m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(irate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[1m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(irate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[1m])), 0.001)", 2.5)
 	metrics := client.GetMetrics(&prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		Apps:      []string{"productpage"},
@@ -329,16 +329,16 @@ func TestGetServiceMetricsUnavailable(t *testing.T) {
 		return
 	}
 	// Mock everything to return empty data
-	mockEmptyRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m])), 0.001)")
-	mockEmptyRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m])), 0.001)")
-	mockEmptyRange(api, "round(sum(rate(istio_requests_total{source_app=\"productpage\",source_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
-	mockEmptyRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
-	mockEmptyHistogram(api, "istio_request_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]")
-	mockEmptyHistogram(api, "istio_request_duration_seconds", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]")
-	mockEmptyHistogram(api, "istio_response_bytes", "{source_app=\"productpage\",source_namespace=\"bookinfo\"}[5m]")
-	mockEmptyHistogram(api, "istio_request_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]")
-	mockEmptyHistogram(api, "istio_request_duration_seconds", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]")
-	mockEmptyHistogram(api, "istio_response_bytes", "{destination_app=\"productpage\",destination_namespace=\"bookinfo\"}[5m]")
+	mockEmptyRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
+	mockEmptyRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)")
+	mockEmptyHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]")
+	mockEmptyHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]")
+	mockEmptyHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]")
+	mockEmptyHistogram(api, "istio_request_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]")
+	mockEmptyHistogram(api, "istio_request_duration_seconds", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]")
+	mockEmptyHistogram(api, "istio_response_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]")
 	metrics := client.GetMetrics(&prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		Apps:      []string{"productpage"},
@@ -394,16 +394,16 @@ func TestGetNamespaceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_requests_total{source_namespace=\"bookinfo\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{destination_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{source_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{destination_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
-	mockHistogram(api, "istio_request_bytes", "{source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration_seconds", "{source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_response_bytes", "{source_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.6)
-	mockHistogram(api, "istio_request_bytes", "{destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration_seconds", "{destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_response_bytes", "{destination_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 1.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_workload_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
+	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.6)
+	mockHistogram(api, "istio_request_bytes", "{reporter=\"destination\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"destination\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_bytes", "{reporter=\"destination\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
 	metrics := client.GetMetrics(&prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		Range: v1.Range{
