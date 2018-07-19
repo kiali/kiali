@@ -30,15 +30,11 @@ func (in VirtualServiceChecker) Check() models.IstioValidations {
 // Runs individual checks for each virtual service
 func (in VirtualServiceChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
-	validationsChan := make(chan models.IstioValidations, len(in.VirtualServices))
 
 	for _, virtualService := range in.VirtualServices {
-		go in.runChecks(virtualService, validationsChan)
+		validations.MergeValidations(in.runChecks(virtualService))
 	}
 
-	for i := 0; i < len(in.VirtualServices); i++ {
-		validations.MergeValidations(<-validationsChan)
-	}
 	return validations
 }
 
@@ -58,7 +54,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single virtual service and appends the result into validations.
-func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject, validationChan chan models.IstioValidations) {
+func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject) models.IstioValidations {
 	virtualServiceName := virtualService.GetObjectMeta().Name
 	key := models.IstioValidationKey{Name: virtualServiceName, ObjectType: VirtualCheckerType}
 	rrValidation := &models.IstioValidation{
@@ -78,5 +74,5 @@ func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject,
 		rrValidation.Valid = rrValidation.Valid && validChecker
 	}
 
-	validationChan <- models.IstioValidations{key: rrValidation}
+	return models.IstioValidations{key: rrValidation}
 }

@@ -21,24 +21,19 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 		return validations
 	}
 
-	nbValidations := len(in.IstioDetails.VirtualServices) + len(in.IstioDetails.DestinationRules)
-	validationsc := make(chan models.IstioValidations, nbValidations)
 	serviceNames := getServiceNames(in.ServiceList)
 
 	for _, virtualService := range in.IstioDetails.VirtualServices {
-		go runVirtualServiceCheck(virtualService, in.Namespace, serviceNames, validationsc)
+		validations.MergeValidations(runVirtualServiceCheck(virtualService, in.Namespace, serviceNames))
 	}
 	for _, destinationRule := range in.IstioDetails.DestinationRules {
-		go runDestinationRuleCheck(destinationRule, in.Namespace, serviceNames, validationsc)
+		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, serviceNames))
 	}
 
-	for i := 0; i < nbValidations; i++ {
-		validations.MergeValidations(<-validationsc)
-	}
 	return validations
 }
 
-func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string, validationsc chan models.IstioValidations) {
+func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string) models.IstioValidations {
 	result, valid := virtual_services.NoHostChecker{
 		Namespace:      namespace,
 		ServiceNames:   serviceNames,
@@ -54,10 +49,10 @@ func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace str
 		Checks:     result,
 		Valid:      valid,
 	}
-	validationsc <- vsvalidations
+	return vsvalidations
 }
 
-func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, serviceNames []string, drvalidationsc chan models.IstioValidations) {
+func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, serviceNames []string) models.IstioValidations {
 	result, valid := destination_rules.NoHostChecker{
 		Namespace:       namespace,
 		ServiceNames:    serviceNames,
@@ -73,7 +68,7 @@ func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace s
 		Checks:     result,
 		Valid:      valid,
 	}
-	drvalidationsc <- drvalidations
+	return drvalidations
 }
 
 func getServiceNames(serviceList *v1.ServiceList) []string {
