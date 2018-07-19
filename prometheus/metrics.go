@@ -161,8 +161,8 @@ func getMetrics(api v1.API, q *MetricsQuery) Metrics {
 }
 
 func buildLabelStrings(q *MetricsQuery) (string, string, string, string) {
-	labelsIn := []string{`reporter="server"`}
-	labelsOut := []string{`reporter="client"`}
+	labelsIn := []string{`reporter="destination"`}
+	labelsOut := []string{`reporter="source"`}
 	if q.Workload != "" {
 		labelsIn = append(labelsIn, fmt.Sprintf(`destination_workload="%s"`, q.Workload))
 		labelsOut = append(labelsOut, fmt.Sprintf(`source_workload="%s"`, q.Workload))
@@ -176,14 +176,14 @@ func buildLabelStrings(q *MetricsQuery) (string, string, string, string) {
 		labelsOut = append(labelsOut, fmt.Sprintf(`source_app=~"%s"`, apps))
 	}
 	if q.Namespace != "" {
-		labelsIn = append(labelsIn, fmt.Sprintf(`destination_namespace="%s"`, q.Namespace))
-		labelsOut = append(labelsOut, fmt.Sprintf(`source_namespace="%s"`, q.Namespace))
+		labelsIn = append(labelsIn, fmt.Sprintf(`destination_workload_namespace="%s"`, q.Namespace))
+		labelsOut = append(labelsOut, fmt.Sprintf(`source_workload_namespace="%s"`, q.Namespace))
 	}
 
 	// when filtering we still keep incoming istio traffic, it's typically ingressgateway. We
 	// only want to filter outgoing traffic to the istio infra services.
 	if !q.IncludeIstio {
-		labelsOut = append(labelsOut, `destination_namespace!="istio-system"`)
+		labelsOut = append(labelsOut, `destination_workload_namespace!="istio-system"`)
 	}
 	fullIn := "{" + strings.Join(labelsIn, ",") + "}"
 	fullOut := "{" + strings.Join(labelsOut, ",") + "}"
