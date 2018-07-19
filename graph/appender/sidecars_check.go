@@ -22,11 +22,12 @@ func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, _ string
 
 func (a SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, k8s *kubernetes.IstioClient) {
 	for _, s := range trafficMap {
-		if s.Name == graph.UnknownService {
+		// TODO FIX s.ServiceName, s.Name --> s.App to compile
+		if s.App == graph.UnknownApp {
 			return
 		}
 
-		pods, err := k8s.GetServicePods(s.Namespace, s.ServiceName, s.Version)
+		pods, err := k8s.GetServicePods(s.Namespace, s.App, s.Version)
 		checkError(err)
 
 		checker := checkers.PodChecker{Pods: pods.Items}

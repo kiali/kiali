@@ -46,18 +46,19 @@ func addUnusedNodes(trafficMap graph.TrafficMap, namespaceName string, pods *v1.
 	}
 }
 
-func buildStaticNodeList(namespaceName string, pods *v1.PodList) []*graph.ServiceNode {
-	nonTrafficList := make([]*graph.ServiceNode, 0)
+func buildStaticNodeList(namespaceName string, pods *v1.PodList) []*graph.Node {
+	nonTrafficList := make([]*graph.Node, 0)
 	resolvedServices := make(map[string]bool)
 	appLabel := config.Get().ServiceFilterLabelName
 	versionLabel := config.Get().VersionFilterLabelName
 	identityDomain := config.Get().ExternalServices.Istio.IstioIdentityDomain
+	// FIX this...
 	for _, pod := range pods.Items {
 		app := pod.GetObjectMeta().GetLabels()[appLabel]
 		version := pod.GetObjectMeta().GetLabels()[versionLabel]
 		srvId := fmt.Sprintf("%s.%s.%s.%s", app, namespaceName, identityDomain, version)
 		if _, ok := resolvedServices[srvId]; !ok {
-			staticNode := graph.NewServiceNode(fmt.Sprintf("%s.%s.%s", app, namespaceName, identityDomain), version)
+			staticNode := graph.NewNode(namespaceName, app, app, version)
 			staticNode.Metadata = map[string]interface{}{"rate": 0.0, "rateOut": 0.0, "isUnused": true}
 			nonTrafficList = append(nonTrafficList, &staticNode)
 			resolvedServices[srvId] = true
@@ -72,7 +73,7 @@ func buildNodeSet(nodeSet *map[string]struct{}, trafficMap graph.TrafficMap) {
 	}
 }
 
-func buildDefaultTrafficMap(trafficMap graph.TrafficMap, staticNodeList *[]*graph.ServiceNode) {
+func buildDefaultTrafficMap(trafficMap graph.TrafficMap, staticNodeList *[]*graph.Node) {
 	if len(*staticNodeList) == 0 {
 		return
 	}
@@ -82,7 +83,7 @@ func buildDefaultTrafficMap(trafficMap graph.TrafficMap, staticNodeList *[]*grap
 	}
 }
 
-func addNodeToTrafficMap(trafficMap graph.TrafficMap, node *graph.ServiceNode) {
+func addNodeToTrafficMap(trafficMap graph.TrafficMap, node *graph.Node) {
 	// Add a "sibling" edge to any service with an edge to a service of the same name (presumably different version)
 	for _, s := range trafficMap {
 		findAndAddSibling(s, node)
@@ -92,10 +93,11 @@ func addNodeToTrafficMap(trafficMap graph.TrafficMap, node *graph.ServiceNode) {
 	trafficMap[node.ID] = node
 }
 
-func findAndAddSibling(parent, node *graph.ServiceNode) {
+func findAndAddSibling(parent, node *graph.Node) {
 	found := -1
+	// TODO FIX s.ServiceName, s.Name --> s.App to compile
 	for i := 0; i < len(parent.Edges); i++ {
-		if parent.Edges[i].Dest.Name == node.Name {
+		if parent.Edges[i].Dest.App == node.App {
 			found = i
 			break
 		}

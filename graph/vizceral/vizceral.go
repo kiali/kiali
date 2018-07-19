@@ -109,9 +109,10 @@ func NewConfig(namespace string, trafficMap graph.TrafficMap, o options.VendorOp
 }
 
 func buildConfig(trafficMap graph.TrafficMap, nodes *[]Node, connections *[]Connection, volume *float64, o options.VendorOptions) {
+	// TODO FIX sn.Name sn.ServiceName -> sn.App
 	for _, sn := range trafficMap {
-		name := fmt.Sprintf("%v (%v)", sn.Name, sn.Version)
-		displayName := fmt.Sprintf("%v (%v)", sn.ServiceName, sn.Version)
+		name := fmt.Sprintf("%v (%v)", sn.App, sn.Version)
+		displayName := fmt.Sprintf("%v (%v)", sn.App, sn.Version)
 		n := Node{
 			Renderer:    "focusedChild",
 			Name:        name,
@@ -119,7 +120,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]Node, connections *[]Conn
 			Notices: []Notice{
 				{
 					Title: "Prometheus Graph",
-					Link:  linkPromGraph(sn.Name, sn.Version),
+					Link:  linkPromGraph(sn.App, sn.Version),
 				}},
 		}
 		*nodes = append(*nodes, n)
@@ -131,7 +132,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]Node, connections *[]Conn
 			if isUnused {
 				source = "orphan"
 			} else {
-				source = fmt.Sprintf("%v (%v)", sn.Name, sn.Version)
+				source = fmt.Sprintf("%v (%v)", sn.App, sn.Version)
 			}
 			rate := 0.0
 			normal := 0.0
@@ -146,7 +147,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]Node, connections *[]Conn
 			}
 			c = Connection{
 				Source: source,
-				Target: e.Dest.Name,
+				Target: e.Dest.App,
 				Metrics: Metrics{
 					Normal:  normal,
 					Warning: warning,

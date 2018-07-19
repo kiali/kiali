@@ -35,8 +35,9 @@ func addRouteBadges(trafficMap graph.TrafficMap, namespaceName string, istioDeta
 
 func applyCircuitBreakers(trafficMap graph.TrafficMap, namespaceName string, istioDetails *kubernetes.IstioDetails) {
 	for _, s := range trafficMap {
+		// TODO FIX s.ServiceName, s.Name --> s.App to compile
 		for _, destinationRule := range istioDetails.DestinationRules {
-			if kubernetes.CheckDestinationRuleCircuitBreaker(destinationRule, namespaceName, s.ServiceName, s.Version) {
+			if kubernetes.CheckDestinationRuleCircuitBreaker(destinationRule, namespaceName, s.App, s.Version) {
 				s.Metadata["hasCB"] = true
 				break
 			}
@@ -46,10 +47,11 @@ func applyCircuitBreakers(trafficMap graph.TrafficMap, namespaceName string, ist
 }
 
 func applyVirtualServices(trafficMap graph.TrafficMap, namespaceName string, istioDetails *kubernetes.IstioDetails) {
+	// TODO FIX s.ServiceName, s.Name --> s.App to compile
 	for _, s := range trafficMap {
-		subsets := kubernetes.GetDestinationRulesSubsets(istioDetails.DestinationRules, s.ServiceName, s.Version)
+		subsets := kubernetes.GetDestinationRulesSubsets(istioDetails.DestinationRules, s.App, s.Version)
 		for _, virtualService := range istioDetails.VirtualServices {
-			if kubernetes.CheckVirtualService(virtualService, namespaceName, s.ServiceName, subsets) {
+			if kubernetes.CheckVirtualService(virtualService, namespaceName, s.App, subsets) {
 				s.Metadata["hasVS"] = true
 				break
 			}

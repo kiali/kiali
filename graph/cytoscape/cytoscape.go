@@ -30,10 +30,15 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	Service      string         `json:"service"`
-	Namespace    string         `json:"namespace"`
-	ServiceName  string         `json:"serviceName"`
-	Version      string         `json:"version,omitempty"`
+	Namespace string `json:"namespace"`
+	Workload  string `json:"workload"`
+	App       string `json:"app"`
+	Version   string `json:"version,omitempty"`
+
+	// TODO: Remove when UI is updated
+	Service     string `json:"service"`
+	ServiceName string `json:"serviceName"`
+
 	Rate         string         `json:"rate,omitempty"`         // edge aggregate
 	Rate3xx      string         `json:"rate3XX,omitempty"`      // edge aggregate
 	Rate4xx      string         `json:"rate4XX,omitempty"`      // edge aggregate
@@ -101,7 +106,7 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 	buildConfig(trafficMap, &nodes, &edges, o)
 
 	// Add compound nodes that group together different versions of the same service
-	if o.GroupByVersion {
+	if o.GroupBy == options.GroupByVersion {
 		addCompoundNodes(&nodes)
 	}
 
@@ -139,12 +144,43 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 	for id, s := range trafficMap {
 		nodeId := nodeHash(id)
 
+		var service string
+		var serviceName string
+		version := s.Version
+		switch o.GraphType {
+		case options.GraphTypeApp:
+			service = s.App + "." + s.Namespace
+			serviceName = s.App
+			if !o.Versioned {
+				version = ""
+			}
+		case options.GraphTypeAppPreferred:
+			if s.App != graph.UnknownApp {
+				service = s.App + "." + s.Namespace
+				serviceName = s.App
+			} else {
+				service = s.Workload + "." + s.Namespace
+				serviceName = s.Workload
+			}
+			if !o.Versioned {
+				version = ""
+			}
+		case options.GraphTypeWorkload:
+			service = s.Workload + "." + s.Namespace
+			serviceName = s.Workload
+		default:
+			panic(fmt.Sprintf("Unrecognized graphFormat [%s]", o.GraphType))
+		}
+
 		nd := &NodeData{
-			Id:          nodeId,
-			Service:     s.Name,
-			Namespace:   s.Namespace,
-			ServiceName: s.ServiceName,
-			Version:     s.Version,
+			Id:        nodeId,
+			Namespace: s.Namespace,
+			Workload:  s.Workload,
+			App:       s.App,
+			Version:   version,
+
+			Service:     service,
+			ServiceName: serviceName,
 		}
 
 		addServiceTelemetry(s, nd)
@@ -214,7 +250,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 	}
 }
 
-func addServiceTelemetry(s *graph.ServiceNode, nd *NodeData) {
+func addServiceTelemetry(s *graph.Node, nd *NodeData) {
 	rate := getRate(s.Metadata, "rate")
 
 	if rate > 0.0 {
@@ -320,7 +356,7 @@ func addCompoundNodes(nodes *[]*NodeWrapper) {
 				Service:     k,
 				Namespace:   members[0].Namespace,
 				ServiceName: members[0].ServiceName,
-				IsGroup:     "version",
+				IsGroup:     options.GroupByVersion,
 			}
 
 			nw := NodeWrapper{
