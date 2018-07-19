@@ -1,67 +1,61 @@
-// TrafficMap is a map of ServiceNodes, each optionally holding Edge data. Metadata
-// is a general purpose map for holding any desired service or edge information.
-// Each Service node should have a unique name+version
+// TrafficMap is a map of app Nodes, each optionally holding Edge data. Metadata
+// is a general purpose map for holding any desired node or edge information.
+// Each app node should have a unique namespace+workload.  Note that it is feasible
+// but likely unusual to have two nodes with the same name+version in the same
+// namespace.
 package graph
 
 import (
 	"fmt"
-	"strings"
 )
 
 const (
-	UnknownNamespace = "unknown"
-	UnknownService   = "unknown"
-	UnknownVersion   = "unknown"
+	UnknownApp       string = "unknown"
+	UnknownNamespace string = "unknown"
+	UnknownVersion   string = "unknown"
 )
 
-type ServiceNode struct {
-	ID          string                 // unique identifier for the service node
-	Name        string                 // full service name
-	Version     string                 // service version
-	ServiceName string                 // short service name
-	Namespace   string                 // namespace name
-	Edges       []*Edge                // children services nodes
-	Metadata    map[string]interface{} // app-specific data
+type Node struct {
+	ID        string                 // unique identifier for the node
+	Namespace string                 // Namespace
+	Workload  string                 // Workload (deployment) name
+	App       string                 // Workload app
+	Version   string                 // Workload version
+	Edges     []*Edge                // child nodes
+	Metadata  map[string]interface{} // app-specific data
 }
 
 type Edge struct {
-	Source   *ServiceNode
-	Dest     *ServiceNode
+	Source   *Node
+	Dest     *Node
 	Metadata map[string]interface{} // app-specific data
 }
 
-type TrafficMap map[string]*ServiceNode
+type TrafficMap map[string]*Node
 
-func NewServiceNode(name, version string) ServiceNode {
-	return NewServiceNodeWithId(Id(name, version), name, version)
+func NewNode(namespace, workload, app, version string) Node {
+	return NewNodeWithId(Id(namespace, workload), namespace, workload, app, version)
 }
 
-func NewServiceNodeWithId(id, name, version string) ServiceNode {
-	split := strings.Split(name, ".")
-	serviceName := split[0]
-	namespace := UnknownNamespace
-	if len(split) > 1 {
-		namespace = split[1]
-	}
-
-	return ServiceNode{
-		ID:          id,
-		Name:        name,
-		Version:     version,
-		ServiceName: serviceName,
-		Namespace:   namespace,
-		Edges:       []*Edge{},
-		Metadata:    make(map[string]interface{}),
+func NewNodeWithId(id, namespace, workload, app, version string) Node {
+	return Node{
+		ID:        id,
+		Namespace: namespace,
+		Workload:  workload,
+		App:       app,
+		Version:   version,
+		Edges:     []*Edge{},
+		Metadata:  make(map[string]interface{}),
 	}
 }
 
-func (s *ServiceNode) AddEdge(dest *ServiceNode) *Edge {
+func (s *Node) AddEdge(dest *Node) *Edge {
 	e := NewEdge(s, dest)
 	s.Edges = append(s.Edges, &e)
 	return &e
 }
 
-func NewEdge(source, dest *ServiceNode) Edge {
+func NewEdge(source, dest *Node) Edge {
 	return Edge{
 		Source:   source,
 		Dest:     dest,
@@ -70,9 +64,9 @@ func NewEdge(source, dest *ServiceNode) Edge {
 }
 
 func NewTrafficMap() TrafficMap {
-	return make(map[string]*ServiceNode)
+	return make(map[string]*Node)
 }
 
-func Id(name, version string) string {
-	return fmt.Sprintf("%v_%v", name, version)
+func Id(namespace, workload string) string {
+	return fmt.Sprintf("%v_%v", namespace, workload)
 }
