@@ -92,9 +92,9 @@ func (in *Client) GetSourceServices(namespace string, servicename string) (map[s
 	return routes, nil
 }
 
-// GetServiceMetrics returns the Metrics related to the provided service identified by its namespace and service name.
-func (in *Client) GetServiceMetrics(query *ServiceMetricsQuery) Metrics {
-	return getServiceMetrics(in.api, query)
+// GetMetrics returns the Metrics related to the provided query options.
+func (in *Client) GetMetrics(query *MetricsQuery) Metrics {
+	return getMetrics(in.api, query)
 }
 
 // GetServiceHealth returns the Health related to the provided service identified by its namespace and service name.
@@ -102,12 +102,6 @@ func (in *Client) GetServiceMetrics(query *ServiceMetricsQuery) Metrics {
 // When the health is unavailable, total number of members will be 0.
 func (in *Client) GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyHealth, error) {
 	return getServiceHealth(in.api, namespace, servicename, ports)
-}
-
-// GetNamespaceMetrics returns the Metrics described by the optional service pattern ("" for all), and optional
-// version, for the given namespace. Use GetServiceMetrics if you don't need pattern matching.
-func (in *Client) GetNamespaceMetrics(query *NamespaceMetricsQuery) Metrics {
-	return getNamespaceMetrics(in.api, query)
 }
 
 // GetNamespaceServicesRequestRates queries Prometheus to fetch request counters rates over a time interval
