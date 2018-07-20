@@ -8,8 +8,9 @@ _explantation of what it does_
 
 ** Backwards in compatible? **
 
-[ ] Is your change introducing backwards incompatible changes?
-_describe the incomabibilities if appropriate_
+[ ] Is your pull-request introducing changes in behaviour?
+
+_Describe the changes if appropriate. E.g. a new link, a change on what a click does, etc_
 
 ** Screenshot **
 
