@@ -26,6 +26,8 @@ type ResponseTimeAppender struct {
 	Duration  time.Duration
 	Quantile  float64
 	QueryTime int64 // unix time in seconds
+	GraphType string
+	Versioned bool
 }
 
 // AppendGraph implements Appender
@@ -48,60 +50,98 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 	}
 	log.Warningf("Generating responseTime using quantile [%.2f]", quantile)
 
-	// query prometheus for the responseTime info in two queries. The first query gathers responseTime for
-	// requests originating outside of the namespace...
-	namespacePattern := fmt.Sprintf(".*\\\\.%v\\\\..*", namespace)
-	query := fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{source_service!~\"%v\",destination_service=~\"%v\",response_code=\"200\"}[%vs])) by (%s))",
+	// query prometheus for the responseTime info in three queries:
+	// 1) query for responseTime originating from "unknown" (i.e. the internet)
+	groupBy := "le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version"
+	query := fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{reporter=\"destination\",source_workload=\"unknown\",destination_service_namespace=\"%v\",response_code=\"200\"}[%vs])) by (%s))",
 		quantile,
-		"istio_request_duration_bucket",
-		namespacePattern,          // regex for namespace-constrained service
-		namespacePattern,          // regex for namespace-constrained service
+		"istio_request_duration_seconds_bucket",
+		namespace,
 		int(a.Duration.Seconds()), // range duration for the query
-		"le,source_service,source_version,destination_service,destination_version")
+		groupBy)
+	unkVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
+
+	// 2) query for responseTime originating from a workload outside of the namespace
+	query = fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{reporter=\"source\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\",response_code=\"200\"}[%vs])) by (%s))",
+		quantile,
+		"istio_request_duration_seconds_bucket",
+		namespace,
+		namespace,
+		int(a.Duration.Seconds()), // range duration for the query
+		groupBy)
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
 
-	// The second query gathers responseTime for requests originating inside of the namespace...
-	query = fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{source_service=~\"%v\",response_code=\"200\"}[%vs])) by (%s))",
+	// 3) query for responseTime originating from a workload inside of the namespace
+	query = fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{reporter=\"source\",source_workload_namespace=\"%v\",response_code=\"200\"}[%vs])) by (%s))",
 		quantile,
-		"istio_request_duration_bucket",
-		namespacePattern,          // regex for namespace-constrained service
+		"istio_request_duration_seconds_bucket",
+		namespace,
 		int(a.Duration.Seconds()), // range duration for the query
-		"le,source_service,source_version,destination_service,destination_version")
+		groupBy)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
 
 	// create map to quickly look up responseTime
 	responseTimeMap := make(map[string]float64)
-	populateResponseTimeMap(responseTimeMap, &outVector)
-	populateResponseTimeMap(responseTimeMap, &inVector)
+	a.populateResponseTimeMap(responseTimeMap, &unkVector)
+	a.populateResponseTimeMap(responseTimeMap, &outVector)
+	a.populateResponseTimeMap(responseTimeMap, &inVector)
 
 	applyResponseTime(trafficMap, responseTimeMap)
 }
 
 func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]float64) {
-	// TODO FIX Name --> Workload to compile
 	for _, s := range trafficMap {
 		for _, e := range s.Edges {
-			key := fmt.Sprintf("%s %s %s %s", e.Source.Workload, e.Source.Version, e.Dest.Workload, e.Dest.Version)
+			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
 			e.Metadata["responseTime"] = responseTimeMap[key]
 		}
 	}
 }
 
-func populateResponseTimeMap(responseTimeMap map[string]float64, vector *model.Vector) {
+func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string]float64, vector *model.Vector) {
+	//groupBy := "le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_workload,destination_app,destination_version"
 	for _, s := range *vector {
 		m := s.Metric
-		sourceSvc, sourceSvcOk := m["source_service"]
+		sourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
+		sourceWl, sourceWlOk := m["source_workload"]
+		sourceApp, sourceAppOk := m["source_app"]
 		sourceVer, sourceVerOk := m["source_version"]
-		destSvc, destSvcOk := m["destination_service"]
+		destSvcNs, destSvcNsOk := m["destination_service_namespace"]
+		destSvcName, destSvcNameOk := m["destination_service_namespace"]
+		destWl, destWlOk := m["destination_workload"]
+		destApp, destAppOk := m["destination_app"]
 		destVer, destVerOk := m["destination_version"]
-		if !sourceSvcOk || !sourceVerOk || !destSvcOk || !destVerOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlOk || !destAppOk || !destVerOk {
 			log.Warningf("Skipping %v, missing expected labels", m.String())
 			continue
 		}
 
-		key := fmt.Sprintf("%s %s %s %s", sourceSvc, sourceVer, destSvc, destVer)
+		// For source-side failures (Fault injection, open circuit breakers, etc) the
+		// destination_workload will be unknown (because the request never made it to the
+		// destination proxy.  But we still want to record the request in some
+		// way. So, depending on the graph type and labeling, assign the destination
+		// service name (i.e. the requested service) to the most applicable destination field.
+		// note: this code is duplicated in graph.go for any changes/fixes
+		if string(destWl) == graph.UnknownWorkload {
+			switch a.GraphType {
+			case graph.GraphTypeApp:
+				destApp = destSvcName
+			case graph.GraphTypeWorkload:
+				destWl = destSvcName
+			case graph.GraphTypeAppPreferred:
+				if string(sourceApp) != graph.UnknownApp {
+					destApp = destSvcName
+				} else {
+					destWl = destSvcName
+				}
+			}
+		}
+
+		sourceId := graph.Id(string(sourceWlNs), string(sourceWl), string(sourceApp), string(sourceVer), a.GraphType, a.Versioned)
+		destId := graph.Id(string(destSvcNs), string(destWl), string(destApp), string(destVer), a.GraphType, a.Versioned)
+		key := fmt.Sprintf("%s %s", sourceId, destId)
 		val := float64(s.Value)
-		responseTimeMap[key] = val
+		responseTimeMap[key] += val
 	}
 }
 

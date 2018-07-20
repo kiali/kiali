@@ -148,13 +148,13 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		var serviceName string
 		version := s.Version
 		switch o.GraphType {
-		case options.GraphTypeApp:
+		case graph.GraphTypeApp:
 			service = s.App + "." + s.Namespace
 			serviceName = s.App
 			if !o.Versioned {
 				version = ""
 			}
-		case options.GraphTypeAppPreferred:
+		case graph.GraphTypeAppPreferred:
 			if s.App != graph.UnknownApp {
 				service = s.App + "." + s.Namespace
 				serviceName = s.App
@@ -165,7 +165,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			if !o.Versioned {
 				version = ""
 			}
-		case options.GraphTypeWorkload:
+		case graph.GraphTypeWorkload:
 			service = s.Workload + "." + s.Namespace
 			serviceName = s.Workload
 		default:

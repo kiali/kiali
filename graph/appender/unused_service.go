@@ -58,10 +58,11 @@ func buildStaticNodeList(namespaceName string, pods *v1.PodList) []*graph.Node {
 		version := pod.GetObjectMeta().GetLabels()[versionLabel]
 		srvId := fmt.Sprintf("%s.%s.%s.%s", app, namespaceName, identityDomain, version)
 		if _, ok := resolvedServices[srvId]; !ok {
-			staticNode := graph.NewNode(namespaceName, app, app, version)
-			staticNode.Metadata = map[string]interface{}{"rate": 0.0, "rateOut": 0.0, "isUnused": true}
-			nonTrafficList = append(nonTrafficList, &staticNode)
-			resolvedServices[srvId] = true
+			// TODO Fix this node creation after we know exactly what we are creating...
+			// staticNode := graph.NewNode(namespaceName, app, app, version)
+			// staticNode.Metadata = map[string]interface{}{"rate": 0.0, "rateOut": 0.0, "isUnused": true}
+			//nonTrafficList = append(nonTrafficList, &staticNode)
+			//resolvedServices[srvId] = true
 		}
 	}
 	return nonTrafficList
