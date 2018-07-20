@@ -93,10 +93,10 @@ else
   $CLIENT_EXE create namespace bookinfo
 fi
 
-$ISTIOCTL kube-inject -f ${ISTIO_DIR}/samples/bookinfo/kube/bookinfo.yaml | $CLIENT_EXE apply -n bookinfo -f -
+$ISTIOCTL kube-inject -f ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo.yaml | $CLIENT_EXE apply -n bookinfo -f -
 # This is only if automatic injection of sidecars is enabled
 # $CLIENT_EXE apply -n bookinfo -f ${ISTIO_DIR}/samples/bookinfo/kube/bookinfo.yaml
-$ISTIOCTL create -n bookinfo -f ${ISTIO_DIR}/samples/bookinfo/routing/bookinfo-gateway.yaml
+$ISTIOCTL create -n bookinfo -f ${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml
 
 sleep 4
 
