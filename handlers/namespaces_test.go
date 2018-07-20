@@ -159,7 +159,7 @@ func TestNamespaceHealth(t *testing.T) {
 		assert.Contains(t, []string{"reviews", "httpbin"}, args[1])
 	}).Return(prometheus.EnvoyHealth{}, nil)
 
-	prom.On("GetNamespaceServicesRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(model.Vector{}, model.Vector{}, nil)
+	prom.On("GetNamespaceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(model.Vector{}, model.Vector{}, nil)
 
 	resp, err := http.Get(url)
 	if err != nil {

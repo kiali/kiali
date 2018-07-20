@@ -93,17 +93,17 @@ func (o *PromClientMock) GetServiceHealth(namespace, servicename string, ports [
 	return args.Get(0).(prometheus.EnvoyHealth), args.Error(1)
 }
 
-func (o *PromClientMock) GetNamespaceServicesRequestRates(namespace, ratesInterval string) (model.Vector, model.Vector, error) {
+func (o *PromClientMock) GetNamespaceRequestRates(namespace, ratesInterval string) (model.Vector, model.Vector, error) {
 	args := o.Called(namespace, ratesInterval)
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) GetServiceRequestRates(namespace, service, ratesInterval string) (model.Vector, model.Vector, error) {
-	args := o.Called(namespace, ratesInterval)
+func (o *PromClientMock) GetAppsRequestRates(namespace string, apps []string, ratesInterval string) (model.Vector, model.Vector, error) {
+	args := o.Called(namespace, apps, ratesInterval)
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) GetSourceServices(namespace, servicename string) (map[string][]string, error) {
+func (o *PromClientMock) GetSourceWorkloads(namespace, servicename string) (map[string][]prometheus.Workload, error) {
 	args := o.Called(namespace, servicename)
-	return args.Get(0).(map[string][]string), args.Error(1)
+	return args.Get(0).(map[string][]prometheus.Workload), args.Error(1)
 }
