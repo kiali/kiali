@@ -178,9 +178,6 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 	if csl == AppenderAll || strings.Contains(csl, "sidecars_check") {
 		//appenders = append(appenders, appender.SidecarsCheckAppender{})
 	}
-	if csl == AppenderAll || strings.Contains(csl, "health") {
-		//appenders = append(appenders, appender.HealthAppender{})
-	}
 
 	return appenders
 }
