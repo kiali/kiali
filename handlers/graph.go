@@ -212,13 +212,14 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		// destination proxy.  But we still want to record the request in some
 		// way. So, depending on the graph type and labeling, assign the destination
 		// service name (i.e. the requested service) to the most applicable destination field.
-		if destApp == graph.UnknownApp {
+		// note: this code is duplicated in response_time.go for any changes/fixes
+		if destWl == graph.UnknownWorkload {
 			switch o.GraphType {
-			case options.GraphTypeApp:
+			case graph.GraphTypeApp:
 				destApp = destSvcName
-			case options.GraphTypeWorkload:
+			case graph.GraphTypeWorkload:
 				destWl = destSvcName
-			case options.GraphTypeAppPreferred:
+			case graph.GraphTypeAppPreferred:
 				if sourceApp != graph.UnknownApp {
 					destApp = destSvcName
 				} else {
@@ -282,32 +283,10 @@ func addToRate(md map[string]interface{}, k string, v float64) {
 }
 
 func addNode(trafficMap graph.TrafficMap, namespace, workload, app, version string, o options.Options) (*graph.Node, bool) {
-	var idPart string
-	switch o.VendorOptions.GraphType {
-	case options.GraphTypeApp:
-		idPart = app
-		if o.VendorOptions.Versioned {
-			idPart = idPart + "_" + version
-		}
-	case options.GraphTypeAppPreferred:
-		if app != graph.UnknownApp {
-			idPart = app
-			if o.VendorOptions.Versioned {
-				idPart = idPart + "_" + version
-			}
-		} else {
-			idPart = workload
-		}
-	case options.GraphTypeWorkload:
-		idPart = workload
-	default:
-		panic(fmt.Sprintf("Unrecognized graphFormat [%s]", o.GraphType))
-	}
-
-	id := graph.Id(namespace, idPart)
+	id := graph.Id(namespace, workload, app, version, o.VendorOptions.GraphType, o.VendorOptions.Versioned)
 	node, found := trafficMap[id]
 	if !found {
-		newNode := graph.NewNodeWithId(id, namespace, workload, app, version)
+		newNode := graph.NewNode(id, namespace, workload, app, version)
 		node = &newNode
 		trafficMap[id] = node
 	}

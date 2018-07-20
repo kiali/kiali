@@ -1,5 +1,4 @@
-// Package options holds the currently supported path variables and query params
-// for the graph handlers. See graph package for details.
+// Options package holds the option settings for a single graph generation.
 package options
 
 import (
@@ -11,24 +10,22 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/appender"
 	"github.com/kiali/kiali/services/models"
 )
 
 const (
-	AppenderAll           string = "_all_"
-	GraphTypeApp          string = "app"
-	GraphTypeAppPreferred string = "appPreferred"
-	GraphTypeWorkload     string = "workload"
-	GroupByVersion        string = "version"
-	NamespaceAll          string = "all"
-	NamespaceIstioSystem  string = "istio-system"
-	defaultDuration       string = "10m"
-	defaultGraphType      string = GraphTypeAppPreferred
-	defaultGroupBy        string = GroupByVersion
-	defaultMetric         string = "istio_requests_total"
-	defaultVendor         string = "cytoscape"
-	defaultVersioned      bool   = true
+	AppenderAll          string = "_all_"
+	GroupByVersion       string = "version"
+	NamespaceAll         string = "all"
+	NamespaceIstioSystem string = "istio-system"
+	defaultDuration      string = "10m"
+	defaultGraphType     string = graph.GraphTypeAppPreferred
+	defaultGroupBy       string = GroupByVersion
+	defaultMetric        string = "istio_requests_total"
+	defaultVendor        string = "cytoscape"
+	defaultVersioned     bool   = true
 )
 
 // VendorOptions are those that are supplied to the vendor-specific generators.
@@ -157,18 +154,20 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		//appenders = append(appenders, appender.DeadServiceAppender{})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "response_time") {
-		//		quantile := appender.DefaultQuantile
-		//		if _, ok := params["responseTimeQuantile"]; ok {
-		//			if responseTimeQuantile, err := strconv.ParseFloat(params.Get("responseTimeQuantile"), 64); err == nil {
-		//				quantile = responseTimeQuantile
-		//			}
-		//		}
-		//		a := appender.ResponseTimeAppender{
-		//			Duration:  o.Duration,
-		//			Quantile:  quantile,
-		//			QueryTime: o.QueryTime,
-		//		}
-		//appenders = append(appenders, a)
+		quantile := appender.DefaultQuantile
+		if _, ok := params["responseTimeQuantile"]; ok {
+			if responseTimeQuantile, err := strconv.ParseFloat(params.Get("responseTimeQuantile"), 64); err == nil {
+				quantile = responseTimeQuantile
+			}
+		}
+		a := appender.ResponseTimeAppender{
+			Duration:  o.Duration,
+			Quantile:  quantile,
+			QueryTime: o.QueryTime,
+			GraphType: o.GraphType,
+			Versioned: o.Versioned,
+		}
+		appenders = append(appenders, a)
 	}
 	if csl == AppenderAll || strings.Contains(csl, "unused_service") {
 		//		appenders = append(appenders, appender.UnusedServiceAppender{})
