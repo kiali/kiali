@@ -17,7 +17,7 @@
 ##############################################################################
 
 # The version used by the getLatestIstio script - if empty, gets the latest version
-ISTIO_VERSION=
+ISTIO_VERSION=1.0.0-snapshot.1
 
 # process command line args
 while [[ $# -gt 0 ]]; do
