@@ -107,22 +107,34 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
     );
   }
 
+  typeIstioObject() {
+    if ('tcp' in this.props.object && 'http' in this.props.object) {
+      return 'VirtualService';
+    }
+    return 'DestinationRule';
+  }
+
   overviewTab() {
-    const virtualService: VirtualService = this.props.object as VirtualService;
-    return (
-      <TabPane eventKey="overview">
-        <VirtualServiceDetail virtualService={virtualService} validations={this.props.validations['virtualservice']} />
-      </TabPane>
-    );
+    const istioObj: VirtualService | DestinationRule = this.props.object as VirtualService | DestinationRule;
+    if (this.typeIstioObject() === 'VirtualService') {
+      return (
+        <TabPane eventKey="overview">
+          <VirtualServiceDetail virtualService={istioObj} validations={this.props.validations['virtualservice']} />
+        </TabPane>
+      );
+    }
+    return;
   }
 
   renderTabNav() {
     return (
       <>
         <Nav bsClass="nav nav-tabs nav-tabs-pf">
-          <NavItem eventKey="overview">
-            <div>Overview</div>
-          </NavItem>
+          {this.typeIstioObject() === 'VirtualService' && (
+            <NavItem eventKey="overview">
+              <div>Overview</div>
+            </NavItem>
+          )}
           <NavItem eventKey="yaml">
             <div>YAML</div>
           </NavItem>
