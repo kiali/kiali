@@ -18,11 +18,19 @@ export interface SummaryPanelPropType {
   rateInterval: string;
 }
 
+export enum GraphType {
+  APP = 'app',
+  APP_PREFERRED = 'appPreferred',
+  WORKLOAD = 'workload'
+}
+
 export interface GraphParamsType {
   namespace: Namespace;
   graphDuration: Duration;
   graphLayout: Layout;
   edgeLabelMode: EdgeLabelMode;
+  graphType: GraphType;
+  versioned: boolean;
 }
 
 export interface CytoscapeBaseEvent {

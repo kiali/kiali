@@ -414,7 +414,9 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         namespace: { name: event.summaryTarget.data('service').split('.')[1] },
         graphLayout: this.props.graphLayout,
         graphDuration: this.props.graphDuration,
-        edgeLabelMode: this.props.edgeLabelMode
+        edgeLabelMode: this.props.edgeLabelMode,
+        graphType: this.props.graphType,
+        versioned: this.props.versioned
       })
     );
   };

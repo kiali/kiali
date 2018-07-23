@@ -7,6 +7,7 @@ import ServiceGraphPage from '../pages/ServiceGraph/ServiceGraphPage';
 import { ServiceGraphDataActions } from '../actions/ServiceGraphDataActions';
 import { serviceGraphFilterActions } from '../actions/ServiceGraphFilterActions';
 import { bindActionCreators } from 'redux';
+import { GraphType } from '../types/Graph';
 
 const mapStateToProps = (state: KialiAppState) => ({
   graphTimestamp: state.serviceGraph.graphDataTimestamp,
@@ -23,8 +24,8 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
-  fetchGraphData: (namespace: Namespace, graphDuration: Duration) =>
-    dispatch(ServiceGraphDataActions.fetchGraphData(namespace, graphDuration)),
+  fetchGraphData: (namespace: Namespace, graphDuration: Duration, graphType: GraphType, versioned: boolean) =>
+    dispatch(ServiceGraphDataActions.fetchGraphData(namespace, graphDuration, graphType, versioned)),
   toggleLegend: () => bindActionCreators(serviceGraphFilterActions.toggleLegend, dispatch)
 });
 
