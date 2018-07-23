@@ -46,21 +46,30 @@ export class GraphStyles {
         css: {
           // color: PfColors.Black,
           content: (ele: any) => {
-            const service = ele.data('serviceName') || ele.data('service').split('.')[0];
             const namespace = ele.data('namespace');
+            const app = ele.data('app');
             const version = ele.data('version');
+            const workload = ele.data('workload');
 
             if (!ele.data('showNodeLabels')) {
               return '';
             }
 
             if (ele.data('parent')) {
-              return version;
+              if (app) {
+                return version;
+              } else {
+                return workload;
+              }
             }
 
-            let content = service;
-            if (version && version !== 'unknown') {
-              content += `\n${version}`;
+            // use the workload name unless app label was defined
+            let content = workload;
+            if (app || app !== 'unknown') {
+              content = app;
+              if (version && version !== 'unknown') {
+                content += `\n${version}`;
+              }
             }
 
             if (ele.data('isOutside')) {
