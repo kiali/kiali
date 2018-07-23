@@ -23,7 +23,7 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
               <div className="card-pf-body" key={'destinationRule' + i}>
                 <h3>{destinationRule.name}</h3>
                 <div>
-                  <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.name}>
+                  <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.name + '&detail=yaml'}>
                     Show Yaml <Icon name="angle-double-right" />
                   </Link>
                 </div>
