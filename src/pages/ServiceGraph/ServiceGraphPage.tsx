@@ -4,7 +4,7 @@ import FlexView from 'react-flexview';
 import { Breadcrumb } from 'patternfly-react';
 
 import Namespace from '../../types/Namespace';
-import { GraphParamsType, SummaryData } from '../../types/Graph';
+import { GraphParamsType, SummaryData, GraphType } from '../../types/Graph';
 import { Duration, PollIntervalInMs } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
@@ -25,7 +25,7 @@ type ServiceGraphPageProps = GraphParamsType & {
   isLoading: boolean;
   showLegend: boolean;
   isReady: boolean;
-  fetchGraphData: (namespace: Namespace, graphDuration: Duration) => any;
+  fetchGraphData: (namespace: Namespace, graphDuration: Duration, graphType: GraphType, versioned: boolean) => any;
   toggleLegend: () => void;
   summaryData: SummaryData | null;
   pollInterval: PollIntervalInMs;
@@ -114,7 +114,9 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
       namespace: this.props.namespace,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
-      graphDuration: this.props.graphDuration
+      graphDuration: this.props.graphDuration,
+      graphType: this.props.graphType,
+      versioned: this.props.versioned
     };
     return (
       <>
@@ -161,10 +163,13 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
   }
 
   /** Fetch graph data */
-  private loadGraphDataFromBackend = (namespace?: Namespace, graphDuration?: Duration) => {
-    namespace = namespace ? namespace : this.props.namespace;
-    graphDuration = graphDuration ? graphDuration : this.props.graphDuration;
-    return this.props.fetchGraphData(namespace, graphDuration);
+  private loadGraphDataFromBackend = () => {
+    return this.props.fetchGraphData(
+      this.props.namespace,
+      this.props.graphDuration,
+      this.props.graphType,
+      this.props.versioned
+    );
   };
 
   private scheduleNextPollingIntervalFromProps() {

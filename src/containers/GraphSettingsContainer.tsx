@@ -97,7 +97,9 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       namespace: this.props.namespace,
       graphLayout: this.props.graphLayout,
       graphDuration: this.props.graphDuration,
-      edgeLabelMode: this.props.edgeLabelMode
+      edgeLabelMode: this.props.edgeLabelMode,
+      graphType: this.props.graphType,
+      versioned: this.props.versioned
     };
 
     // map or dispatchers for redux
@@ -232,7 +234,9 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       namespace: this.props.namespace,
       graphDuration: this.props.graphDuration,
       graphLayout: this.props.graphLayout,
-      edgeLabelMode: this.props.edgeLabelMode
+      edgeLabelMode: this.props.edgeLabelMode,
+      graphType: this.props.graphType,
+      versioned: this.props.versioned
     };
   };
 }
