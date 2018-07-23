@@ -150,8 +150,8 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 	// To reduce processing, next run appenders that don't apply to unused services
 	// Add orphan (unused) services
 	// Run remaining appenders
-	if csl == AppenderAll || strings.Contains(csl, "dead_service") {
-		//appenders = append(appenders, appender.DeadServiceAppender{})
+	if csl == AppenderAll || strings.Contains(csl, "dead_node") {
+		appenders = append(appenders, appender.DeadNodeAppender{})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "response_time") {
 		quantile := appender.DefaultQuantile

@@ -106,6 +106,12 @@ func (in *IstioClient) GetService(namespace, serviceName string) (*v1.Service, e
 	return in.k8s.CoreV1().Services(namespace).Get(serviceName, emptyGetOptions)
 }
 
+// GetDeployment returns the definition of a specific deployment.
+// It returns an error on any problem.
+func (in *IstioClient) GetDeployment(namespace, deploymentName string) (*v1beta1.Deployment, error) {
+	return in.k8s.AppsV1beta1().Deployments(namespace).Get(deploymentName, emptyGetOptions)
+}
+
 // GetPods returns the pods definitions for a given set of labels.
 // It returns an error on any problem.
 func (in *IstioClient) GetPods(namespace, labelSelector string) (*v1.PodList, error) {

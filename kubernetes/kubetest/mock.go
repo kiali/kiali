@@ -2,6 +2,7 @@ package kubetest
 
 import (
 	"github.com/stretchr/testify/mock"
+	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -14,6 +15,11 @@ type K8SClientMock struct {
 func (o *K8SClientMock) GetNamespaces() (*v1.NamespaceList, error) {
 	args := o.Called()
 	return args.Get(0).(*v1.NamespaceList), args.Error(1)
+}
+
+func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error) {
+	args := o.Called(namespace, deploymentName)
+	return args.Get(0).(*v1beta1.Deployment), args.Error(1)
 }
 
 func (o *K8SClientMock) GetService(namespace string, serviceName string) (*v1.Service, error) {

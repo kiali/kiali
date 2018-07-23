@@ -99,7 +99,6 @@ func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]f
 }
 
 func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string]float64, vector *model.Vector) {
-	//groupBy := "le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_workload,destination_app,destination_version"
 	for _, s := range *vector {
 		m := s.Metric
 		sourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
