@@ -9,6 +9,6 @@ _Please describe what the code change is about_
 
 ** Backwards incompatible? **
 
-[ ] Is your change introducing backwards incompatible changes?
+- [ ] Is your change introducing backwards incompatible changes?
 
-_describe the incomabibilities if appropriate_
+_describe the changes if appropriate_
