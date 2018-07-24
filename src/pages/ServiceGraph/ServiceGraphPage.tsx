@@ -37,7 +37,7 @@ const containerStyle = style({
   height: 'calc(100vh - 60px)' // View height minus top bar height
 });
 
-const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0 });
+const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
 
 const makeCancelablePromise = (promise: Promise<any>) => {
   let hasCanceled = false;
