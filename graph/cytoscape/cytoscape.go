@@ -105,9 +105,9 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 
 	buildConfig(trafficMap, &nodes, &edges, o)
 
-	// Add compound nodes that group together different versions of the same service
-	if o.GroupBy == options.GroupByVersion {
-		addCompoundNodes(&nodes)
+	// Add compound nodes that group together different versions of the same node
+	if o.GraphType != graph.GraphTypeWorkload && o.Versioned && o.GroupBy == options.GroupByVersion {
+		groupByVersion(&nodes)
 	}
 
 	// sort nodes and edges for better json presentation (and predictable testing)
@@ -340,7 +340,7 @@ func add(current string, val float64) string {
 
 // addCompoundNodes generates additional nodes to group multiple versions of the
 // same service.
-func addCompoundNodes(nodes *[]*NodeWrapper) {
+func groupByVersion(nodes *[]*NodeWrapper) {
 	grouped := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
