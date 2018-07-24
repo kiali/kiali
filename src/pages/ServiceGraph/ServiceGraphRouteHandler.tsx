@@ -53,10 +53,9 @@ export default class ServiceGraphRouteHandler extends React.Component<
       urlParams.get('edges'),
       ServiceGraphRouteHandler.graphParamsDefaults.edgeLabelMode
     );
-    const urlParamGraphType = urlParams.get('graphType') ? urlParams.get('graphType').toUpperCase() : '';
     const _graphType = Enum.fromValue(
       GraphType,
-      urlParamGraphType,
+      urlParams.get('graphType'),
       ServiceGraphRouteHandler.graphParamsDefaults.graphType
     );
     const _versioned = urlParams.get('versioned')

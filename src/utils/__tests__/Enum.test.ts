@@ -26,7 +26,7 @@ describe('Enum.fromValue', () => {
     expect(Enum.fromValue(StringEnum, 'A', StringEnum.B)).toEqual(StringEnum.A);
   });
   it('works for integer enums', () => {
-    expect(Enum.fromValue(IntegerEnum, 1, StringEnum.B)).toEqual(IntegerEnum.A);
+    expect(Enum.fromValue(IntegerEnum, 1, IntegerEnum.B)).toEqual(IntegerEnum.A);
   });
   it('works for mixed enums', () => {
     expect(Enum.fromValue(MixedEnum, 'A', MixedEnum.F)).toEqual(MixedEnum.A);
