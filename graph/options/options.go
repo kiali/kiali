@@ -179,7 +179,10 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		//appenders = append(appenders, appender.IstioAppender{})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "sidecars_check") {
-		//appenders = append(appenders, appender.SidecarsCheckAppender{})
+		appenders = append(appenders, appender.SidecarsCheckAppender{
+			GraphType: o.GraphType,
+			Versioned: o.Versioned,
+		})
 	}
 
 	return appenders
