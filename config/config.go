@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
@@ -44,15 +44,15 @@ const (
 	EnvJaegerServiceNamespace = "JAEGER_SERVICE_NAMESPACE"
 	EnvJaegerService          = "JAEGER_SERVICE"
 
-	EnvServiceFilterLabelName = "SERVICE_FILTER_LABEL_NAME"
-	EnvVersionFilterLabelName = "VERSION_FILTER_LABEL_NAME"
+	EnvAppLabelName     = "APP_LABEL_NAME"
+	EnvVersionLabelName = "VERSION_LABEL_NAME"
 
 	EnvTokenSecret       = "TOKEN_SECRET"
 	EnvTokenExpirationAt = "TOKEN_EXPIRATION_AT"
 	EnvIstioNamespace    = "ISTIO_NAMESPACE"
 
 	EnvKialiService       = "KIALI_SERVICE"
-	IstioVersionSupported = ">= 0.8"
+	IstioVersionSupported = ">= 1.0"
 )
 
 // Global configuration for the application.
@@ -106,15 +106,15 @@ type Token struct {
 
 // Config defines full YAML configuration.
 type Config struct {
-	Identity               security.Identity `yaml:",omitempty"`
-	Server                 Server            `yaml:",omitempty"`
-	InCluster              bool              `yaml:"in_cluster,omitempty"`
-	ServiceFilterLabelName string            `yaml:"service_filter_label_name,omitempty"`
-	VersionFilterLabelName string            `yaml:"version_filter_label_name,omitempty"`
-	ExternalServices       ExternalServices  `yaml:"external_services,omitempty"`
-	Token                  Token             `yaml:"token,omitempty"`
-	KialiService           string            `yaml:"kiali_service,omitempty"`
-	IstioNamespace         string            `yaml:"istio_namespace,omitempty"`
+	Identity         security.Identity `yaml:",omitempty"`
+	Server           Server            `yaml:",omitempty"`
+	InCluster        bool              `yaml:"in_cluster,omitempty"`
+	AppLabelName     string            `yaml:"app_label_name,omitempty"`
+	VersionLabelName string            `yaml:"version_label_name,omitempty"`
+	ExternalServices ExternalServices  `yaml:"external_services,omitempty"`
+	Token            Token             `yaml:"token,omitempty"`
+	KialiService     string            `yaml:"kiali_service,omitempty"`
+	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -124,8 +124,8 @@ func NewConfig() (c *Config) {
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
 	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")
 	c.InCluster = getDefaultBool(EnvInCluster, true)
-	c.ServiceFilterLabelName = strings.TrimSpace(getDefaultString(EnvServiceFilterLabelName, "app"))
-	c.VersionFilterLabelName = strings.TrimSpace(getDefaultString(EnvVersionFilterLabelName, "version"))
+	c.AppLabelName = strings.TrimSpace(getDefaultString(EnvAppLabelName, "app"))
+	c.VersionLabelName = strings.TrimSpace(getDefaultString(EnvVersionLabelName, "version"))
 	c.KialiService = strings.TrimSpace(getDefaultString(EnvKialiService, "kiali"))
 	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
 
