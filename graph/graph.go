@@ -77,7 +77,7 @@ func Id(namespace, workload, app, version, graphType string, versioned bool) str
 		}
 		return fmt.Sprintf("%v_%v", namespace, app)
 	case GraphTypeAppPreferred:
-		if app != UnknownApp {
+		if app != UnknownApp && (!versioned || version != UnknownVersion) {
 			if versioned {
 				return fmt.Sprintf("%v_%v_%v", namespace, app, version)
 			}
