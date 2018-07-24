@@ -30,6 +30,11 @@ external_services:
 # Default is true (which matches Kiali default configuration to run inside a pod running on kubernetes)
 # in_cluster: true
 
-# Uncomment service_filter_label_name to set up a different lable name for grouping all resources of a service.
+# Uncomment app_label_name to set up a different label name for grouping all resources of an app.
 # Default is "app"
-# service_filter_label_name: service
+# app_label_name: app
+
+# Uncomment service_label_name to set up a different label name for grouping all resources of an app version.
+# Default is "version"
+# version_label_name: version
+

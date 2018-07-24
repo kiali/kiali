@@ -169,8 +169,11 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		}
 		appenders = append(appenders, a)
 	}
-	if csl == AppenderAll || strings.Contains(csl, "unused_service") {
-		//		appenders = append(appenders, appender.UnusedServiceAppender{})
+	if csl == AppenderAll || strings.Contains(csl, "unused_node") {
+		appenders = append(appenders, appender.UnusedNodeAppender{
+			GraphType: o.GraphType,
+			Versioned: o.Versioned,
+		})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "istio") {
 		//appenders = append(appenders, appender.IstioAppender{})

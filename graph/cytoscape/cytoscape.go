@@ -344,7 +344,7 @@ func addCompoundNodes(nodes *[]*NodeWrapper) {
 	grouped := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
-		grouped[nw.Data.Service] = append(grouped[nw.Data.Service], nw.Data)
+		grouped[nw.Data.App] = append(grouped[nw.Data.App], nw.Data)
 	}
 
 	for k, members := range grouped {
@@ -354,8 +354,11 @@ func addCompoundNodes(nodes *[]*NodeWrapper) {
 			nd := NodeData{
 				Id:          nodeId,
 				Service:     k,
-				Namespace:   members[0].Namespace,
 				ServiceName: members[0].ServiceName,
+				Namespace:   members[0].Namespace,
+				Workload:    graph.UnknownWorkload,
+				App:         k,
+				Version:     graph.UnknownVersion,
 				IsGroup:     options.GroupByVersion,
 			}
 

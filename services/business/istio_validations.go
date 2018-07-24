@@ -3,6 +3,7 @@ package business
 import (
 	"fmt"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/services/business/checkers"
@@ -26,7 +27,8 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		return nil, err
 	}
 
-	pods, err := in.k8s.GetServicePods(namespace, service, "")
+	appLabel := config.Get().AppLabelName
+	pods, err := in.k8s.GetPods(namespace, appLabel+"="+service)
 	if err != nil {
 		log.Warningf("Cannot get pods for service %v.%v.", namespace, service)
 		return nil, err

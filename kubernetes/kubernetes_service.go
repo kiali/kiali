@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"fmt"
 
-	"github.com/kiali/kiali/config"
 	"k8s.io/api/apps/v1beta1"
 	autoscalingV1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/core/v1"
@@ -190,18 +189,6 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 		Items: FilterDeploymentsForService(service, servicePods, deployments)}
 
 	return &serviceDetails, nil
-}
-
-// GetServicePods returns the list of pods associated to a given service. namespace is required.
-// A selector is generated using the canonical labels for serviceName (required)
-// and serviceVersion (optional). An error is returned on any problem.
-func (in *IstioClient) GetServicePods(namespace, serviceName, serviceVersion string) (*v1.PodList, error) {
-	cfg := config.Get()
-	selector := labels.Set{cfg.ServiceFilterLabelName: serviceName}
-	if "" != serviceVersion {
-		selector[cfg.VersionFilterLabelName] = serviceVersion
-	}
-	return in.GetPods(namespace, selector.String())
 }
 
 func filterAutoscalersByDeployments(deploymentNames []string, al *autoscalingV1.HorizontalPodAutoscalerList) *autoscalingV1.HorizontalPodAutoscalerList {
