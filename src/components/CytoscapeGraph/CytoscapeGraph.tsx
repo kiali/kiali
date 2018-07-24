@@ -18,7 +18,9 @@ import {
   CytoscapeClickEvent,
   CytoscapeMouseInEvent,
   CytoscapeMouseOutEvent,
-  GraphParamsType
+  GraphParamsType,
+  CytoscapeGlobalScratchNamespace,
+  CytoscapeGlobalScratchData
 } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import { authentication } from '../../utils/Authentication';
@@ -85,7 +87,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.showVirtualServices !== nextProps.showVirtualServices ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.elements !== nextProps.elements ||
-      this.props.graphLayout !== nextProps.graphLayout ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.isError !== nextProps.isError
     );
@@ -146,16 +147,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
   };
 
-  private turnEdgeLabelsTo = (cy: any, value: EdgeLabelMode) => {
-    cy.edges().forEach(edge => {
-      edge.data('edgeLabelMode', value);
-    });
-  };
-
   private turnNodeLabelsTo = (cy: any, value: boolean) => {
-    cy.nodes().forEach(node => {
-      node.data('showNodeLabels', value);
-    });
+    cy.scratch(CytoscapeGlobalScratchNamespace).showNodeLabels = value;
   };
 
   private cyInitialization(cy: any) {
@@ -289,6 +282,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.resetSelection = false;
     }
 
+    const globalScratchData: CytoscapeGlobalScratchData = {
+      edgeLabelMode: this.props.edgeLabelMode,
+      graphType: this.props.graphType,
+      showNodeLabels: this.props.showNodeLabels,
+      versioned: this.props.versioned
+    };
+    cy.scratch(CytoscapeGlobalScratchNamespace, globalScratchData);
+
     cy.startBatch();
 
     // Destroy badges
@@ -321,7 +322,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     // Create and destroy labels
-    this.turnEdgeLabelsTo(cy, this.props.edgeLabelMode);
     this.turnNodeLabelsTo(cy, this.props.showNodeLabels);
 
     // Create badges
