@@ -2,6 +2,7 @@ import { PfColors } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { config } from '../../../config';
 import { FAILURE, DEGRADED } from '../../../utils/Health';
+import { GraphType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
 
 export const DimClass = 'mousedim';
 
@@ -11,6 +12,10 @@ export class GraphStyles {
   }
 
   static styles() {
+    const getCyGlobalData = (ele: any): CytoscapeGlobalScratchData => {
+      return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
+    };
+
     const getEdgeColor = (ele: any): string => {
       const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
       if (rate === 0 || ele.data('isUnused')) {
@@ -27,7 +32,7 @@ export class GraphStyles {
     };
 
     const getTLSValue = (ele: any, tlsValue: string, nonTlsValue: string): string => {
-      if (ele.data('isMTLS') && ele.data('edgeLabelMode') === EdgeLabelMode.MTLS_ENABLED) {
+      if (ele.data('isMTLS') && getCyGlobalData(ele).edgeLabelMode === EdgeLabelMode.MTLS_ENABLED) {
         return tlsValue;
       } else {
         return nonTlsValue;
@@ -51,12 +56,14 @@ export class GraphStyles {
             const version = ele.data('version');
             const workload = ele.data('workload');
 
-            if (!ele.data('showNodeLabels')) {
+            if (!getCyGlobalData(ele).showNodeLabels) {
               return '';
             }
 
             if (ele.data('parent')) {
-              if (app) {
+              // technically, we should never get in here if graph type is workload
+              // since workload graphs do not have composite nodes (there are no groups).
+              if (getCyGlobalData(ele).graphType !== GraphType.WORKLOAD) {
                 return version;
               } else {
                 return workload;
@@ -65,7 +72,7 @@ export class GraphStyles {
 
             // use the workload name unless app label was defined
             let content = workload;
-            if (app || app !== 'unknown') {
+            if (getCyGlobalData(ele).graphType !== GraphType.WORKLOAD && (app || app !== 'unknown')) {
               content = app;
               if (version && version !== 'unknown') {
                 content += `\n${version}`;
@@ -132,7 +139,7 @@ export class GraphStyles {
         selector: 'edge',
         css: {
           content: (ele: any) => {
-            const edgeLabelMode = ele.data('edgeLabelMode');
+            const edgeLabelMode = getCyGlobalData(ele).edgeLabelMode;
             switch (edgeLabelMode) {
               case EdgeLabelMode.REQUESTS_PER_SECOND: {
                 const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
