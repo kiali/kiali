@@ -101,43 +101,35 @@ func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]f
 func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string]float64, vector *model.Vector) {
 	for _, s := range *vector {
 		m := s.Metric
-		sourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
-		sourceWl, sourceWlOk := m["source_workload"]
-		sourceApp, sourceAppOk := m["source_app"]
-		sourceVer, sourceVerOk := m["source_version"]
-		destSvcNs, destSvcNsOk := m["destination_service_namespace"]
-		destSvcName, destSvcNameOk := m["destination_service_namespace"]
-		destWl, destWlOk := m["destination_workload"]
-		destApp, destAppOk := m["destination_app"]
-		destVer, destVerOk := m["destination_version"]
+		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
+		lSourceWl, sourceWlOk := m["source_workload"]
+		lSourceApp, sourceAppOk := m["source_app"]
+		lSourceVer, sourceVerOk := m["source_version"]
+		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
+		lDestSvcName, destSvcNameOk := m["destination_service_namespace"]
+		lDestWl, destWlOk := m["destination_workload"]
+		lDestApp, destAppOk := m["destination_app"]
+		lDestVer, destVerOk := m["destination_version"]
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlOk || !destAppOk || !destVerOk {
 			log.Warningf("Skipping %v, missing expected labels", m.String())
 			continue
 		}
 
-		// For source-side failures (Fault injection, open circuit breakers, etc) the
-		// destination_workload will be unknown (because the request never made it to the
-		// destination proxy.  But we still want to record the request in some
-		// way. So, depending on the graph type and labeling, assign the destination
-		// service name (i.e. the requested service) to the most applicable destination field.
-		// note: this code is duplicated in graph.go for any changes/fixes
-		if string(destWl) == graph.UnknownWorkload {
-			switch a.GraphType {
-			case graph.GraphTypeApp:
-				destApp = destSvcName
-			case graph.GraphTypeWorkload:
-				destWl = destSvcName
-			case graph.GraphTypeAppPreferred:
-				if string(sourceApp) != graph.UnknownApp {
-					destApp = destSvcName
-				} else {
-					destWl = destSvcName
-				}
-			}
-		}
+		sourceWlNs := string(lSourceWlNs)
+		sourceWl := string(lSourceWl)
+		sourceApp := string(lSourceApp)
+		sourceVer := string(lSourceVer)
+		destSvcNs := string(lDestSvcNs)
+		destSvcName := string(lDestSvcName)
+		destWl := string(lDestWl)
+		destApp := string(lDestApp)
+		destVer := string(lDestVer)
 
-		sourceId := graph.Id(string(sourceWlNs), string(sourceWl), string(sourceApp), string(sourceVer), a.GraphType, a.Versioned)
-		destId := graph.Id(string(destSvcNs), string(destWl), string(destApp), string(destVer), a.GraphType, a.Versioned)
+		// handle any changes to dest field values given telemetry and graph type
+		destApp, destWl = graph.DestFields(sourceApp, destApp, destWl, destSvcName, a.GraphType)
+
+		sourceId := graph.Id(sourceWlNs, sourceWl, sourceApp, sourceVer, a.GraphType, a.Versioned)
+		destId := graph.Id(destSvcNs, destWl, destApp, destVer, a.GraphType, a.Versioned)
 		key := fmt.Sprintf("%s %s", sourceId, destId)
 		val := float64(s.Value)
 		responseTimeMap[key] += val

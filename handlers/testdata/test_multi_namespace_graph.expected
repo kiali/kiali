@@ -9,8 +9,6 @@
           "workload": "customer-v1",
           "app": "customer",
           "version": "v1",
-          "service": "customer.tutorial",
-          "serviceName": "customer",
           "rate": "50.000"
         }
       },
@@ -21,8 +19,6 @@
           "workload": "productpage-v1",
           "app": "productpage",
           "version": "v1",
-          "service": "productpage.bookinfo",
-          "serviceName": "productpage",
           "rate": "50.000"
         }
       },
@@ -33,8 +29,6 @@
           "workload": "unknown",
           "app": "unknown",
           "version": "unknown",
-          "service": "unknown.unknown",
-          "serviceName": "unknown",
           "rateOut": "50.000",
           "isRoot": true
         }

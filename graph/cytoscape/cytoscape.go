@@ -9,7 +9,7 @@
 //
 // Algorithm: Process the graph structure adding nodes and edges, decorating each
 //            with information provided.  An optional second pass generates compound
-//            nodes for for versioned services.
+//            nodes for version grouping.
 //
 package cytoscape
 
@@ -34,10 +34,6 @@ type NodeData struct {
 	Workload  string `json:"workload"`
 	App       string `json:"app"`
 	Version   string `json:"version,omitempty"`
-
-	// TODO: Remove when UI is updated
-	Service     string `json:"service"`
-	ServiceName string `json:"serviceName"`
 
 	Rate         string         `json:"rate,omitempty"`         // edge aggregate
 	Rate3xx      string         `json:"rate3XX,omitempty"`      // edge aggregate
@@ -113,12 +109,16 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 	// sort nodes and edges for better json presentation (and predictable testing)
 	sort.Slice(nodes, func(i, j int) bool {
 		switch {
-		case nodes[i].Data.Service < nodes[j].Data.Service:
+		case nodes[i].Data.App < nodes[j].Data.App:
 			return true
-		case nodes[i].Data.Service > nodes[j].Data.Service:
+		case nodes[i].Data.App > nodes[j].Data.App:
+			return false
+		case nodes[i].Data.Version < nodes[j].Data.Version:
+			return true
+		case nodes[i].Data.Version > nodes[j].Data.Version:
 			return false
 		default:
-			return nodes[i].Data.Version < nodes[j].Data.Version
+			return nodes[i].Data.Workload < nodes[j].Data.Workload
 		}
 	})
 	sort.Slice(edges, func(i, j int) bool {
@@ -141,87 +141,56 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 }
 
 func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, o options.VendorOptions) {
-	for id, s := range trafficMap {
+	for id, n := range trafficMap {
 		nodeId := nodeHash(id)
 
-		var service string
-		var serviceName string
-		version := s.Version
-		switch o.GraphType {
-		case graph.GraphTypeApp:
-			service = s.App + "." + s.Namespace
-			serviceName = s.App
-			if !o.Versioned {
-				version = ""
-			}
-		case graph.GraphTypeAppPreferred:
-			if s.App != graph.UnknownApp {
-				service = s.App + "." + s.Namespace
-				serviceName = s.App
-			} else {
-				service = s.Workload + "." + s.Namespace
-				serviceName = s.Workload
-			}
-			if !o.Versioned {
-				version = ""
-			}
-		case graph.GraphTypeWorkload:
-			service = s.Workload + "." + s.Namespace
-			serviceName = s.Workload
-		default:
-			panic(fmt.Sprintf("Unrecognized graphFormat [%s]", o.GraphType))
+		version := n.Version
+		if o.GraphType == graph.GraphTypeApp && !o.Versioned {
+			version = ""
 		}
 
 		nd := &NodeData{
 			Id:        nodeId,
-			Namespace: s.Namespace,
-			Workload:  s.Workload,
-			App:       s.App,
+			Namespace: n.Namespace,
+			Workload:  n.Workload,
+			App:       n.App,
 			Version:   version,
-
-			Service:     service,
-			ServiceName: serviceName,
 		}
 
-		addServiceTelemetry(s, nd)
+		addNodeTelemetry(n, nd)
 
-		// node may be dead (service defined but no pods running)
-		if val, ok := s.Metadata["isDead"]; ok {
+		// node may have deployment but no pods running)
+		if val, ok := n.Metadata["isDead"]; ok {
 			nd.IsDead = val.(bool)
 		}
 
 		// node may be a root
-		if val, ok := s.Metadata["isRoot"]; ok {
+		if val, ok := n.Metadata["isRoot"]; ok {
 			nd.IsRoot = val.(bool)
 		}
 
-		// node may be an unused service
-		if val, ok := s.Metadata["isUnused"]; ok {
+		// node may be unused
+		if val, ok := n.Metadata["isUnused"]; ok {
 			nd.IsUnused = val.(bool)
 		}
 
 		// node may have a circuit breaker
-		if val, ok := s.Metadata["hasCB"]; ok {
+		if val, ok := n.Metadata["hasCB"]; ok {
 			nd.HasCB = val.(bool)
 		}
 
 		// node may have a virtual service
-		if val, ok := s.Metadata["hasVS"]; ok {
+		if val, ok := n.Metadata["hasVS"]; ok {
 			nd.HasVS = val.(bool)
 		}
 
 		// set sidecars checks, if available
-		if val, ok := s.Metadata["hasMissingSC"]; ok {
+		if val, ok := n.Metadata["hasMissingSC"]; ok {
 			nd.HasMissingSC = val.(bool)
 		}
 
-		// set health, if available
-		if val, ok := s.Metadata["health"]; ok {
-			nd.Health = val.(*models.Health)
-		}
-
 		// check if node is on another namespace
-		if val, ok := s.Metadata["isOutside"]; ok {
+		if val, ok := n.Metadata["isOutside"]; ok {
 			nd.IsOutside = val.(bool)
 		}
 
@@ -231,8 +200,8 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		*nodes = append(*nodes, &nw)
 
-		for _, e := range s.Edges {
-			sourceIdHash := nodeHash(s.ID)
+		for _, e := range n.Edges {
+			sourceIdHash := nodeHash(n.ID)
 			destIdHash := nodeHash(e.Dest.ID)
 			edgeId := edgeHash(sourceIdHash, destIdHash)
 			ed := EdgeData{
@@ -250,7 +219,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 	}
 }
 
-func addServiceTelemetry(s *graph.Node, nd *NodeData) {
+func addNodeTelemetry(s *graph.Node, nd *NodeData) {
 	rate := getRate(s.Metadata, "rate")
 
 	if rate > 0.0 {
@@ -338,8 +307,7 @@ func add(current string, val float64) string {
 	return fmt.Sprintf("%.3f", sum)
 }
 
-// addCompoundNodes generates additional nodes to group multiple versions of the
-// same service.
+// groupByVersion adds compound nodes to group multiple versions of the same app
 func groupByVersion(nodes *[]*NodeWrapper) {
 	grouped := make(map[string][]*NodeData)
 
@@ -349,24 +317,22 @@ func groupByVersion(nodes *[]*NodeWrapper) {
 
 	for k, members := range grouped {
 		if len(members) > 1 {
-			// create the compound grouping all versions of the service
+			// create the compound grouping all versions of the app
 			nodeId := nodeHash(k)
 			nd := NodeData{
-				Id:          nodeId,
-				Service:     k,
-				ServiceName: members[0].ServiceName,
-				Namespace:   members[0].Namespace,
-				Workload:    graph.UnknownWorkload,
-				App:         k,
-				Version:     graph.UnknownVersion,
-				IsGroup:     options.GroupByVersion,
+				Id:        nodeId,
+				Namespace: members[0].Namespace,
+				Workload:  graph.UnknownWorkload,
+				App:       k,
+				Version:   graph.UnknownVersion,
+				IsGroup:   options.GroupByVersion,
 			}
 
 			nw := NodeWrapper{
 				Data: &nd,
 			}
 
-			// assign each service version node to the compound parent
+			// assign each app version node to the compound parent
 			hasVirtualService := false
 			nd.HasMissingSC = false
 			nd.IsOutside = false

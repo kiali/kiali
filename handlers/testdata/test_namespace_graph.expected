@@ -9,8 +9,6 @@
           "workload": "details-v1",
           "app": "details",
           "version": "v1",
-          "service": "details.bookinfo",
-          "serviceName": "details",
           "rate": "80.000",
           "rate3XX": "20.000",
           "rate4XX": "20.000",
@@ -19,13 +17,11 @@
       },
       {
         "data": {
-          "id": "0bd19eb74ec5d245222f346992fb9160",
+          "id": "9c28d242b4cf249bba203d1d7ffb9e67",
           "namespace": "istio-system",
           "workload": "ingressgateway-unknown",
           "app": "ingressgateway",
           "version": "unknown",
-          "service": "ingressgateway.istio-system",
-          "serviceName": "ingressgateway",
           "rateOut": "100.000",
           "isOutside": true
         }
@@ -37,8 +33,6 @@
           "workload": "pricing-v1",
           "app": "pricing",
           "version": "v1",
-          "service": "pricing.bankapp",
-          "serviceName": "pricing",
           "rate": "20.000",
           "isOutside": true
         }
@@ -50,8 +44,6 @@
           "workload": "productpage-v1",
           "app": "productpage",
           "version": "v1",
-          "service": "productpage.bookinfo",
-          "serviceName": "productpage",
           "rate": "170.000",
           "rateOut": "160.000"
         }
@@ -63,45 +55,38 @@
           "workload": "ratings-v1",
           "app": "ratings",
           "version": "v1",
-          "service": "ratings.bookinfo",
-          "serviceName": "ratings",
           "rate": "40.000"
         }
       },
       {
         "data": {
-          "id": "6320efe386bc4fbe51ee63f53222b153",
+          "id": "74dcb1cec50854d2f880279f3dd19da9",
           "namespace": "bookinfo",
-          "workload": "",
-          "app": "",
-          "service": "reviews.bookinfo",
-          "serviceName": "reviews",
+          "workload": "unknown",
+          "app": "reviews",
+          "version": "unknown",
           "isGroup": "version"
         }
       },
       {
         "data": {
           "id": "bd98c170ddd24d26a179e1f6fffc8a17",
-          "parent": "6320efe386bc4fbe51ee63f53222b153",
+          "parent": "74dcb1cec50854d2f880279f3dd19da9",
           "namespace": "bookinfo",
           "workload": "reviews-v1",
           "app": "reviews",
           "version": "v1",
-          "service": "reviews.bookinfo",
-          "serviceName": "reviews",
           "rate": "20.000"
         }
       },
       {
         "data": {
           "id": "997529b52a5607c765b50e8eb76b6f49",
-          "parent": "6320efe386bc4fbe51ee63f53222b153",
+          "parent": "74dcb1cec50854d2f880279f3dd19da9",
           "namespace": "bookinfo",
           "workload": "reviews-v2",
           "app": "reviews",
           "version": "v2",
-          "service": "reviews.bookinfo",
-          "serviceName": "reviews",
           "rate": "40.000",
           "rateOut": "40.000"
         }
@@ -109,13 +94,11 @@
       {
         "data": {
           "id": "dae7902908557dd4b212b11cfc544518",
-          "parent": "6320efe386bc4fbe51ee63f53222b153",
+          "parent": "74dcb1cec50854d2f880279f3dd19da9",
           "namespace": "bookinfo",
           "workload": "reviews-v3",
           "app": "reviews",
           "version": "v3",
-          "service": "reviews.bookinfo",
-          "serviceName": "reviews",
           "rate": "40.000",
           "rateOut": "60.000"
         }
@@ -127,23 +110,12 @@
           "workload": "unknown",
           "app": "unknown",
           "version": "unknown",
-          "service": "unknown.unknown",
-          "serviceName": "unknown",
           "rateOut": "50.000",
           "isRoot": true
         }
       }
     ],
     "edges": [
-      {
-        "data": {
-          "id": "5b0eae1febc26a48e8c7ff7c9da17ff6",
-          "source": "0bd19eb74ec5d245222f346992fb9160",
-          "target": "55b1084a0b117505f1249ac8900fa976",
-          "rate": "100.000",
-          "isMTLS": true
-        }
-      },
       {
         "data": {
           "id": "42a84073d75bccc05f3c28677d5cf884",
@@ -209,6 +181,15 @@
           "target": "997529b52a5607c765b50e8eb76b6f49",
           "rate": "20.000",
           "percentRate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "52d7a8d6c2a9a256702a3a2af32c2334",
+          "source": "9c28d242b4cf249bba203d1d7ffb9e67",
+          "target": "55b1084a0b117505f1249ac8900fa976",
+          "rate": "100.000",
+          "isMTLS": true
         }
       },
       {
