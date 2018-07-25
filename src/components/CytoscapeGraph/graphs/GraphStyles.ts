@@ -72,7 +72,7 @@ export class GraphStyles {
 
             // use the workload name unless app label was defined
             let content = workload;
-            if (getCyGlobalData(ele).graphType !== GraphType.WORKLOAD && (app || app !== 'unknown')) {
+            if (getCyGlobalData(ele).graphType !== GraphType.WORKLOAD && app && app !== 'unknown') {
               content = app;
               if (version && version !== 'unknown') {
                 content += `\n${version}`;
