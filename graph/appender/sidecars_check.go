@@ -44,20 +44,21 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		var err error
 		switch a.GraphType {
 		case graph.GraphTypeApp:
-			podLabels = a.getAppLabels(appLabel, n.App, versionLabel, n.Version)
-		case graph.GraphTypeWorkload:
-			podLabels, err = a.getWorkloadLabels(n.Namespace, n.Workload, k8s)
-			if err != nil {
-				continue
-			}
-		case graph.GraphTypeAppPreferred:
-			if n.App != graph.UnknownApp && (!a.Versioned || n.Version != graph.UnknownVersion) {
+			appLabelOk := n.App != graph.UnknownApp
+			versionLabelOk := !a.Versioned || n.Version != graph.UnknownVersion
+			isAppNode := appLabelOk && versionLabelOk
+			if isAppNode {
 				podLabels = a.getAppLabels(appLabel, n.App, versionLabel, n.Version)
 			} else {
 				podLabels, err = a.getWorkloadLabels(n.Namespace, n.Workload, k8s)
 				if err != nil {
 					continue
 				}
+			}
+		case graph.GraphTypeWorkload:
+			podLabels, err = a.getWorkloadLabels(n.Namespace, n.Workload, k8s)
+			if err != nil {
+				continue
 			}
 		}
 
