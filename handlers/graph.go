@@ -207,26 +207,8 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		code := string(lCode)
 		csp := string(lCsp)
 
-		// For source-side failures (Fault injection, open circuit breakers, etc) the
-		// destination_workload will be unknown (because the request never made it to the
-		// destination proxy.  But we still want to record the request in some
-		// way. So, depending on the graph type and labeling, assign the destination
-		// service name (i.e. the requested service) to the most applicable destination field.
-		// note: this code is duplicated in response_time.go for any changes/fixes
-		if destWl == graph.UnknownWorkload {
-			switch o.GraphType {
-			case graph.GraphTypeApp:
-				destApp = destSvcName
-			case graph.GraphTypeWorkload:
-				destWl = destSvcName
-			case graph.GraphTypeAppPreferred:
-				if sourceApp != graph.UnknownApp {
-					destApp = destSvcName
-				} else {
-					destWl = destSvcName
-				}
-			}
-		}
+		// handle any changes to dest field values given telemetry and graph type
+		destApp, destWl = graph.DestFields(sourceApp, destApp, destWl, destSvcName, o.GraphType)
 
 		source, _ := addNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, o)
 

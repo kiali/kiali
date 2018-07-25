@@ -7,13 +7,12 @@ import (
 )
 
 const (
-	GraphTypeApp          string = "app"
-	GraphTypeAppPreferred string = "appPreferred"
-	GraphTypeWorkload     string = "workload"
-	UnknownApp            string = "unknown"
-	UnknownNamespace      string = "unknown"
-	UnknownVersion        string = "unknown"
-	UnknownWorkload       string = "unknown"
+	GraphTypeApp      string = "app"
+	GraphTypeWorkload string = "workload"
+	UnknownApp        string = "unknown"
+	UnknownNamespace  string = "unknown"
+	UnknownVersion    string = "unknown"
+	UnknownWorkload   string = "unknown"
 )
 
 type Node struct {
@@ -72,12 +71,10 @@ func NewTrafficMap() TrafficMap {
 func Id(namespace, workload, app, version, graphType string, versioned bool) string {
 	switch graphType {
 	case GraphTypeApp:
-		if versioned {
-			return fmt.Sprintf("%v_%v_%v", namespace, app, version)
-		}
-		return fmt.Sprintf("%v_%v", namespace, app)
-	case GraphTypeAppPreferred:
-		if app != UnknownApp && (!versioned || version != UnknownVersion) {
+		appLabelOk := app != UnknownApp
+		versionLabelOk := !versioned || version != UnknownVersion
+		isAppNode := appLabelOk && versionLabelOk
+		if isAppNode {
 			if versioned {
 				return fmt.Sprintf("%v_%v_%v", namespace, app, version)
 			}
@@ -90,4 +87,30 @@ func Id(namespace, workload, app, version, graphType string, versioned bool) str
 	default:
 		panic(fmt.Sprintf("Unrecognized graphFormat [%s]", graphType))
 	}
+}
+
+// DestFields returns the proper destination field values given the original
+// telemetry values and the current graph settings. For source-side failures
+// (Fault injection, open circuit breakers, etc) the destination_workload will be
+// unknown (because the request never made it to the destination proxy.  But we
+// still want to record the request in some way. So, depending on the graph type and
+// labeling, assign the destination_service_name (i.e. the requested service) to the
+// most applicable destination field.
+func DestFields(sourceApp, destApp, destWl, destSvcName string, graphType string) (finalDestApp, finalDestWl string) {
+	finalDestApp = destApp
+	finalDestWl = destWl
+	if destWl == UnknownWorkload {
+		switch graphType {
+		case GraphTypeApp:
+			if sourceApp != UnknownApp {
+				finalDestApp = destSvcName
+			} else {
+				finalDestWl = destSvcName
+			}
+		case GraphTypeWorkload:
+			finalDestWl = destSvcName
+		}
+	}
+
+	return finalDestApp, finalDestWl
 }

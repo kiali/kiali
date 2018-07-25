@@ -21,7 +21,7 @@ const (
 	NamespaceAll         string = "all"
 	NamespaceIstioSystem string = "istio-system"
 	defaultDuration      string = "10m"
-	defaultGraphType     string = graph.GraphTypeAppPreferred
+	defaultGraphType     string = graph.GraphTypeApp
 	defaultGroupBy       string = GroupByVersion
 	defaultMetric        string = "istio_requests_total"
 	defaultVendor        string = "cytoscape"
