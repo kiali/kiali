@@ -61,12 +61,13 @@ export class GraphStyles {
             }
 
             if (ele.data('parent')) {
-              // technically, we should never get in here if graph type is workload
-              // since workload graphs do not have composite nodes (there are no groups).
-              if (getCyGlobalData(ele).graphType !== GraphType.WORKLOAD) {
-                return version;
-              } else {
+              // Technically, we should never get in here if graph type is workload since workload
+              // graphs do not have composite nodes (i.e. there are no groups). But in case we ever
+              // change the semantics, make sure workload graph node names are always workload names.
+              if (getCyGlobalData(ele).graphType === GraphType.WORKLOAD) {
                 return workload;
+              } else {
+                return version;
               }
             }
 

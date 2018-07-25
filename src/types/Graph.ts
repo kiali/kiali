@@ -20,7 +20,6 @@ export interface SummaryPanelPropType {
 
 export enum GraphType {
   APP = 'app',
-  APP_PREFERRED = 'appPreferred',
   WORKLOAD = 'workload'
 }
 

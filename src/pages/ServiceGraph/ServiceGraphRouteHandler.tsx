@@ -39,7 +39,7 @@ export default class ServiceGraphRouteHandler extends React.Component<
     graphLayout: LayoutDictionary.getLayout({ name: '' }),
     edgeLabelMode: EdgeLabelMode.HIDE,
     namespace: { name: 'all' },
-    graphType: GraphType.APP_PREFERRED,
+    graphType: GraphType.APP,
     versioned: true
   };
 
