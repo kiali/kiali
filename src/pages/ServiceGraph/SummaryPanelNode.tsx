@@ -11,7 +11,7 @@ import { Metrics } from '../../types/Metrics';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
-import { shouldRefreshData, updateHealth } from './SummaryPanelCommon';
+import { shouldRefreshData, updateHealth, nodeData } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
@@ -69,8 +69,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   fetchRequestCountMetrics(props: SummaryPanelPropType) {
     const namespace = props.data.summaryTarget.data('namespace');
-    const service = props.data.summaryTarget.data('service').split('.')[0];
-    const version = props.data.summaryTarget.data('version');
+    const { app, version } = nodeData(props.data.summaryTarget);
     const options: MetricsOptions = {
       version: version,
       queryTime: props.queryTime,
@@ -80,7 +79,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       filters: ['request_count', 'request_error_count'],
       includeIstio: props.namespace === 'istio-system'
     };
-    API.getServiceMetrics(authentication(), namespace, service, options)
+    API.getServiceMetrics(authentication(), namespace, app, options)
       .then(response => {
         if (!this._isMounted) {
           console.log('SummaryPanelNode: Ignore fetch, component not mounted.');
@@ -113,16 +112,13 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   render() {
     const node = this.props.data.summaryTarget;
-
-    const serviceSplit = node.data('service').split('.');
-    const namespace = serviceSplit.length < 2 ? 'unknown' : serviceSplit[1];
-    const service = serviceSplit[0];
-    const serviceHotLink = <Link to={`/namespaces/${namespace}/services/${service}`}>{service}</Link>;
+    const { namespace, app } = nodeData(node);
+    const serviceHotLink = <Link to={`/namespaces/${namespace}/services/${app}`}>{app}</Link>;
 
     const incoming = getTrafficRate(node);
     const outgoing = getAccumulatedTrafficRate(this.props.data.summaryTarget.edgesTo('*'));
 
-    const isUnknown = service === 'unknown';
+    const isUnknown = app === 'unknown';
     return (
       <div className="panel panel-default" style={SummaryPanelNode.panelStyle}>
         <div className="panel-heading">
@@ -150,9 +146,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         <div className="panel-body">
           {!isUnknown && (
             <p style={{ textAlign: 'right' }}>
-              <Link
-                to={`/namespaces/${namespace}/services/${service}?tab=metrics&groupings=local+version%2Cresponse+code`}
-              >
+              <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>
                 View detailed charts <Icon name="angle-double-right" />
               </Link>
             </p>

@@ -20,7 +20,8 @@ import {
   CytoscapeMouseOutEvent,
   GraphParamsType,
   CytoscapeGlobalScratchNamespace,
-  CytoscapeGlobalScratchData
+  CytoscapeGlobalScratchData,
+  GraphType
 } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import { authentication } from '../../utils/Authentication';
@@ -390,7 +391,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     this.context.router.history.push(
       makeServiceGraphUrlFromParams({
-        namespace: { name: event.summaryTarget.data('service').split('.')[1] },
+        namespace: { name: event.summaryTarget.data('namespace') },
         graphLayout: this.props.graphLayout,
         graphDuration: this.props.graphDuration,
         edgeLabelMode: this.props.edgeLabelMode,
@@ -456,34 +457,38 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     const healthPerNamespace = new Map<String, Promise<NamespaceHealth>>();
     // Asynchronously fetch health
     cy.nodes().forEach(ele => {
-      const fqService = ele.data('service');
-      if (fqService && (ele.data('isGroup') || !ele.data('parent'))) {
-        const serviceParts = fqService.split('.');
-        if (serviceParts.length < 2) {
-          // Ignore health for special nodes such as "unknown"
-          return;
-        }
-        const service = serviceParts[0];
-        const namespace = serviceParts[1];
+      const namespace = ele.data('namespace');
+      const app = ele.data('app');
+      const workload = ele.data('workload');
+
+      if ((workload !== 'unknown' || app !== 'unknown') && (ele.data('isGroup') || !ele.data('parent'))) {
+        const appBasedHealth = this.props.graphType === GraphType.APP && app !== 'unknown';
         let promise = healthPerNamespace.get(namespace);
         if (!promise) {
           promise = API.getNamespaceHealth(authentication(), namespace, duration).then(r => r.data);
           healthPerNamespace.set(namespace, promise);
         }
-        ele.data('healthPromise', promise.then(nsHealth => nsHealth[service]));
-        promise
-          .then(nsHealth => {
-            const health = nsHealth[service];
-            const status = H.computeAggregatedHealth(health);
-            ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
-            if (status === H.DEGRADED || status === H.FAILURE) {
-              ele.addClass(status.name);
-            }
-          })
-          .catch(err => {
-            ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
-            console.error(API.getErrorMsg('Could not fetch health', err));
-          });
+        if (appBasedHealth) {
+          ele.data('healthPromise', promise.then(nsHealth => nsHealth[app]));
+          promise
+            .then(nsHealth => {
+              const health = nsHealth[app];
+              const status = H.computeAggregatedHealth(health);
+              ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
+              if (status === H.DEGRADED || status === H.FAILURE) {
+                ele.addClass(status.name);
+              }
+            })
+            .catch(err => {
+              ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
+              console.error(API.getErrorMsg('Could not fetch health', err));
+            });
+        } else {
+          // TODO: Workload health needs a change on the getNamespaceHealth service to
+          // provide an easier way to search by workload.
+          // We must take into consideration that graphType might be APP but we don't
+          // have the app data and need to fallback to workload.
+        }
       }
     });
   }
