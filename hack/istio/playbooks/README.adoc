@@ -1,0 +1,55 @@
+== Requirements
+
+- pip
+- openshift-python (pip install openshift) (openshift should be 0.6.2+)
+- ansible 2.5+
+
+
+== Installing Bookinfo without Traffic Generator
+
+[NOTE]
+This playbook support both Istio 0.8 and Istio 1.0 - check your istioctl version before installing.
+
+- All the Bookinfo Demo pods and services are installed in the "bookinfo" namespace.
+
+- In order to uninstall it, simply delete that namespace via something like `kubectl delete namespace bookinfo` or
+`oc delete project bookinfo`.
+
+- In order quick install, you may use the following command for istio 0.8.0 version
+
+```
+ansible-playbook bookinfo.yml -e istio_version=0.8
+```
+- For 1.0 version, you may use
+
+```
+ansible-playbook bookinfo.yml -e istio_version=1.0
+```
+
+- If you want to include traffic generator to bookinfo project, see sections below
+
+== Installing Bookinfo with Kiali Traffic Generator
+
+[NOTE]
+The variable `-e traffic_generator=true` must be present on the command line, if you want traffic generator to be deployed
+
+[NOTE]
+Rate is the number of request per seconds that traffic generator will hit the application and this variable is mandatory. It is recommend to use `-e rate=1`
+
+[NOTE]
+You must choose between Ingress Route or Openshift Route there is a traffic generator included
+
+=== Kiali Traffic Generator with Ingress Route
+- If you want to use ingress route (all traffic is going to hit ingress-gateway), you may use the following command:
+
+```
+ansible-playbook bookinfo.yml -e istio_version=1.0 -e ingress_route=true -e traffic_generator=true -e rate=1 -vv
+```
+
+=== Kiali Traffic Generator with Openshift Route
+
+- If you want to use openshift route (kiali will report as "unknown"), you may use the following command:
+
+```
+ansible-playbook bookinfo.yml -e istio_version=1.0 -e ingress_route=false -e traffic_generator=true -e rate=1 -vv
+```
