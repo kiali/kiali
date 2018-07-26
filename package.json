@@ -40,6 +40,10 @@
     "typestyle": "2.0.1",
     "url-search-params": "0.10.0"
   },
+  "script-comments": [
+    "When adding new scripts, please be careful to using `npm run` instead of `yarn` for the tasks.",
+    "Some build environments we use do not include npm access, and installing yarn is not possible."
+  ],
   "scripts": {
     "copy-fonts": "cp -r node_modules/patternfly/dist/fonts src/",
     "copy-img": "cp -r node_modules/patternfly/dist/img src/",
