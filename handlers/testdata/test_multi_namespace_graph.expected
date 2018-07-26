@@ -4,20 +4,20 @@
     "nodes": [
       {
         "data": {
-          "id": "80d19073f075021e8b906b9640390368",
-          "namespace": "tutorial",
-          "workload": "customer-v1",
-          "app": "customer",
+          "id": "55b1084a0b117505f1249ac8900fa976",
+          "namespace": "bookinfo",
+          "workload": "productpage-v1",
+          "app": "productpage",
           "version": "v1",
           "rate": "50.000"
         }
       },
       {
         "data": {
-          "id": "55b1084a0b117505f1249ac8900fa976",
-          "namespace": "bookinfo",
-          "workload": "productpage-v1",
-          "app": "productpage",
+          "id": "80d19073f075021e8b906b9640390368",
+          "namespace": "tutorial",
+          "workload": "customer-v1",
+          "app": "customer",
           "version": "v1",
           "rate": "50.000"
         }

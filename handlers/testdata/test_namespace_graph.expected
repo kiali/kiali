@@ -4,6 +4,27 @@
     "nodes": [
       {
         "data": {
+          "id": "8267f17e93292819fa1f65f2d9b1778f",
+          "namespace": "bankapp",
+          "workload": "pricing-v1",
+          "app": "pricing",
+          "version": "v1",
+          "rate": "20.000",
+          "isOutside": true
+        }
+      },
+      {
+        "data": {
+          "id": "74dcb1cec50854d2f880279f3dd19da9",
+          "namespace": "bookinfo",
+          "workload": "unknown",
+          "app": "reviews",
+          "version": "unknown",
+          "isGroup": "version"
+        }
+      },
+      {
+        "data": {
           "id": "7fa01b3260d1a147c4b1580460c9cec2",
           "namespace": "bookinfo",
           "workload": "details-v1",
@@ -13,28 +34,6 @@
           "rate3XX": "20.000",
           "rate4XX": "20.000",
           "rate5XX": "20.000"
-        }
-      },
-      {
-        "data": {
-          "id": "9c28d242b4cf249bba203d1d7ffb9e67",
-          "namespace": "istio-system",
-          "workload": "ingressgateway-unknown",
-          "app": "ingressgateway",
-          "version": "unknown",
-          "rateOut": "100.000",
-          "isOutside": true
-        }
-      },
-      {
-        "data": {
-          "id": "8267f17e93292819fa1f65f2d9b1778f",
-          "namespace": "bankapp",
-          "workload": "pricing-v1",
-          "app": "pricing",
-          "version": "v1",
-          "rate": "20.000",
-          "isOutside": true
         }
       },
       {
@@ -56,16 +55,6 @@
           "app": "ratings",
           "version": "v1",
           "rate": "40.000"
-        }
-      },
-      {
-        "data": {
-          "id": "74dcb1cec50854d2f880279f3dd19da9",
-          "namespace": "bookinfo",
-          "workload": "unknown",
-          "app": "reviews",
-          "version": "unknown",
-          "isGroup": "version"
         }
       },
       {
@@ -101,6 +90,17 @@
           "version": "v3",
           "rate": "40.000",
           "rateOut": "60.000"
+        }
+      },
+      {
+        "data": {
+          "id": "9c28d242b4cf249bba203d1d7ffb9e67",
+          "namespace": "istio-system",
+          "workload": "ingressgateway-unknown",
+          "app": "ingressgateway",
+          "version": "unknown",
+          "rateOut": "100.000",
+          "isOutside": true
         }
       },
       {

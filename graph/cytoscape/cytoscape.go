@@ -107,16 +107,17 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 	}
 
 	// sort nodes and edges for better json presentation (and predictable testing)
+	// kiali-1258 compound/isGroup/parent nodes must come before the child references
 	sort.Slice(nodes, func(i, j int) bool {
 		switch {
-		case nodes[i].Data.App < nodes[j].Data.App:
-			return true
-		case nodes[i].Data.App > nodes[j].Data.App:
-			return false
-		case nodes[i].Data.Version < nodes[j].Data.Version:
-			return true
-		case nodes[i].Data.Version > nodes[j].Data.Version:
-			return false
+		case nodes[i].Data.Namespace != nodes[j].Data.Namespace:
+			return nodes[i].Data.Namespace < nodes[j].Data.Namespace
+		case nodes[i].Data.IsGroup != nodes[j].Data.IsGroup:
+			return nodes[i].Data.IsGroup > nodes[j].Data.IsGroup
+		case nodes[i].Data.App != nodes[j].Data.App:
+			return nodes[i].Data.App < nodes[j].Data.App
+		case nodes[i].Data.Version != nodes[j].Data.Version:
+			return nodes[i].Data.Version < nodes[j].Data.Version
 		default:
 			return nodes[i].Data.Workload < nodes[j].Data.Workload
 		}
