@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Col, Icon, Row } from 'patternfly-react';
 import {
   checkForPath,
-  EditorLink,
   globalChecks,
   highestSeverity,
   ObjectValidation,
@@ -10,19 +9,18 @@ import {
   severityToIconName,
   validationToSeverity,
   VirtualService
-} from '../../../types/ServiceInfo';
-import LocalTime from '../../../components/Time/LocalTime';
-import DetailObject from '../../../components/Details/DetailObject';
-import { Link } from 'react-router-dom';
-import VirtualServiceRoute from './ServiceInfoVirtualServices/VirtualServiceRoute';
+} from '../../../../types/ServiceInfo';
+import LocalTime from '../../../../components/Time/LocalTime';
+import DetailObject from '../../../../components/Details/DetailObject';
+import VirtualServiceRoute from './VirtualServiceRoute';
 
-interface ServiceInfoVirtualServicesProps extends EditorLink {
-  virtualServices?: VirtualService[];
+interface VirtualServiceProps {
+  virtualService: VirtualService;
   validations: { [key: string]: ObjectValidation };
 }
 
-class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServicesProps> {
-  constructor(props: ServiceInfoVirtualServicesProps) {
+class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
+  constructor(props: VirtualServiceProps) {
     super(props);
   }
 
@@ -68,16 +66,11 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
     };
   }
 
-  rawConfig(virtualService: VirtualService, i: number) {
+  rawConfig(virtualService: VirtualService) {
     return (
-      <div className="card-pf-body" key={'virtualServiceConfig' + i}>
-        <h3>{virtualService.name}</h3>
-        <div>
-          <Link to={this.props.editorLink + '?virtualservice=' + virtualService.name}>
-            Show Yaml <Icon name="angle-double-right" />
-          </Link>
-          {this.globalStatus(virtualService)}
-        </div>
+      <div className="card-pf-body" key={'virtualServiceConfig'}>
+        <h4>VirtualService: {virtualService.name}</h4>
+        <div>{this.globalStatus(virtualService)}</div>
         <div>
           <strong>Created at</strong>: <LocalTime time={virtualService.createdAt} />
         </div>
@@ -102,31 +95,31 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
     );
   }
 
-  weights(virtualService: VirtualService, i: number) {
+  weights(virtualService: VirtualService) {
     return (
-      <Row className="card-pf-body" key={'virtualServiceWeights' + i}>
+      <Row className="card-pf-body" key={'virtualServiceWeights'}>
         <Col>
           {virtualService.http && virtualService.http.length > 0 ? (
-            <Row>
+            <>
               <VirtualServiceRoute
                 name={virtualService.name}
                 kind="HTTP"
                 routes={virtualService.http}
                 validations={this.props.validations}
               />
-            </Row>
+            </>
           ) : (
             undefined
           )}
           {virtualService.tcp && virtualService.tcp.length > 0 ? (
-            <Row>
+            <>
               <VirtualServiceRoute
                 name={virtualService.name}
                 kind="TCP"
                 routes={virtualService.tcp}
                 validations={this.props.validations}
               />
-            </Row>
+            </>
           ) : (
             undefined
           )}
@@ -137,22 +130,16 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
 
   render() {
     return (
-      <div className="card-pf">
-        {(this.props.virtualServices || []).map((virtualService, i) => (
-          <Row className={'row-cards-pf'} key={'virtualservice' + i}>
-            <Row className="row-cards-pf">
-              <Col xs={12} sm={12} md={3} lg={3}>
-                {this.rawConfig(virtualService, i)}
-              </Col>
-              <Col xs={12} sm={12} md={9} lg={9}>
-                {this.weights(virtualService, i)}
-              </Col>
-            </Row>
-          </Row>
-        ))}
-      </div>
+      <Row className="row-cards-pf">
+        <Col xs={12} sm={12} md={3} lg={3}>
+          {this.rawConfig(this.props.virtualService)}
+        </Col>
+        <Col xs={12} sm={12} md={9} lg={9}>
+          {this.weights(this.props.virtualService)}
+        </Col>
+      </Row>
     );
   }
 }
 
-export default ServiceInfoVirtualServices;
+export default VirtualServiceDetail;

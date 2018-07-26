@@ -1,22 +1,16 @@
 import * as React from 'react';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { Col, Row } from 'patternfly-react';
-import ServiceInfo from './ServiceInfo';
-import ServiceMetrics from './ServiceMetrics';
+import { Breadcrumb, Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import ServiceId from '../../types/ServiceId';
-import { Nav, NavItem, TabContainer, TabContent, TabPane, Breadcrumb } from 'patternfly-react';
 import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import { hasIstioSidecar, ServiceDetailsInfo, Validations } from '../../types/ServiceInfo';
-import AceEditor, { AceOptions, Annotation, Marker } from 'react-ace';
-import 'brace/mode/yaml';
-import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
-import { parseAceValidations } from '../../types/AceValidations';
-
-const yaml = require('js-yaml');
+import IstioObjectDetails from './IstioObjectDetails';
+import ServiceMetrics from './ServiceMetrics';
+import ServiceInfo from './ServiceInfo';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -27,18 +21,6 @@ interface ParsedSearch {
   type?: string;
   name?: string;
 }
-
-const aceOptions: AceOptions = {
-  readOnly: true,
-  showPrintMargin: false,
-  autoScrollEditorIntoView: true
-};
-
-const safeDumpOptions = {
-  styles: {
-    '!!null': 'canonical' // dump null as ~
-  }
-};
 
 class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, ServiceDetailsState> {
   constructor(props: RouteComponentProps<ServiceId>) {
@@ -54,6 +36,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         ip: ''
       }
     };
+  }
+
+  servicePageURL() {
+    return '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
   }
 
   cleanFilter = () => {
@@ -112,21 +98,38 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     return {};
   }
 
-  editorContent(parsed: ParsedSearch) {
+  searchObject(parsed: ParsedSearch) {
     if (parsed.type === 'virtualservice' && this.state.serviceDetailsInfo.virtualServices) {
       for (let i = 0; i < this.state.serviceDetailsInfo.virtualServices.length; i++) {
         if (parsed.name === this.state.serviceDetailsInfo.virtualServices[i].name) {
-          return yaml.safeDump(this.state.serviceDetailsInfo.virtualServices[i], safeDumpOptions);
+          return this.state.serviceDetailsInfo.virtualServices[i];
         }
       }
     } else if (parsed.type === 'destinationrule' && this.state.serviceDetailsInfo.destinationRules) {
       for (let i = 0; i < this.state.serviceDetailsInfo.destinationRules.length; i++) {
         if (parsed.name === this.state.serviceDetailsInfo.destinationRules[i].name) {
-          return yaml.safeDump(this.state.serviceDetailsInfo.destinationRules[i], safeDumpOptions);
+          return this.state.serviceDetailsInfo.destinationRules[i];
         }
       }
     }
-    return '';
+    return undefined;
+  }
+
+  searchValidation(parsedSearch: ParsedSearch) {
+    let vals: Validations = {};
+
+    if (
+      this.state.validations &&
+      parsedSearch.type &&
+      parsedSearch.name &&
+      this.state.validations[parsedSearch.type] &&
+      this.state.validations[parsedSearch.type][parsedSearch.name]
+    ) {
+      vals[parsedSearch.type] = {};
+      vals[parsedSearch.type][parsedSearch.name] = this.state.validations[parsedSearch.type][parsedSearch.name];
+    }
+
+    return vals;
   }
 
   componentDidMount() {
@@ -167,8 +170,11 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       });
   };
 
-  renderBreadcrumbs = (urlParams: URLSearchParams) => {
-    let to = '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
+  renderBreadcrumbs = (parsedSearch: ParsedSearch, showingDetails: boolean) => {
+    const urlParams = new URLSearchParams(this.props.location.search);
+    const parsedSearchTypeHuman = parsedSearch.type === 'virtualservice' ? 'Virtual Service' : 'Destination Rule';
+    const to = this.servicePageURL();
+    const toDetails = to + '?' + parsedSearch.type + '=' + parsedSearch.name;
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item>
@@ -184,62 +190,46 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         <Breadcrumb.Item>
           <Link to={to}>Service: {this.props.match.params.service}</Link>
         </Breadcrumb.Item>
-        <Breadcrumb.Item active={true}>
-          Service {(urlParams.get('tab') || 'info') === 'info' ? 'Info' : 'Metrics'}
-        </Breadcrumb.Item>
+        {!showingDetails ? (
+          <Breadcrumb.Item active={true}>
+            Service {(urlParams.get('tab') || 'info') === 'info' ? 'Info' : 'Metrics'}
+          </Breadcrumb.Item>
+        ) : (
+          <>
+            <Breadcrumb.Item>
+              <Link to={to}>Service Info</Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Item>
+              <Link to={toDetails}>
+                {parsedSearchTypeHuman}: {parsedSearch.name}
+              </Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Item active={true}>
+              {parsedSearchTypeHuman} {(urlParams.get('detail') || 'overview') === 'overview' ? 'Overview' : 'YAML'}
+            </Breadcrumb.Item>
+          </>
+        )}
       </Breadcrumb>
     );
   };
 
   render() {
-    const urlParams = new URLSearchParams(this.props.location.search);
-    let parsedSearch = this.parseSearch();
-    let editorVisible = parsedSearch.name && parsedSearch.type;
-    let yamlEditor = '';
-    let aceMarkers: Array<Marker> = [];
-    let aceAnnotations: Array<Annotation> = [];
-    if (editorVisible) {
-      yamlEditor = this.editorContent(parsedSearch);
-      if (
-        this.state.validations &&
-        parsedSearch.type &&
-        parsedSearch.name &&
-        this.state.validations[parsedSearch.type] &&
-        this.state.validations[parsedSearch.type][parsedSearch.name]
-      ) {
-        let vals: Validations = {};
-        vals[parsedSearch.type] = {};
-        vals[parsedSearch.type][parsedSearch.name] = this.state.validations[parsedSearch.type][parsedSearch.name];
-        let aceValidations = parseAceValidations(yamlEditor, vals);
-        aceMarkers = aceValidations.markers;
-        aceAnnotations = aceValidations.annotations;
-      }
-    }
+    const parsedSearch = this.parseSearch();
+    const istioObject = this.searchObject(parsedSearch);
+    const editorVisible = parsedSearch.name && parsedSearch.type;
     return (
       <>
-        {this.renderBreadcrumbs(urlParams)}
-        {editorVisible ? (
-          <div className="container-fluid container-cards-pf">
-            <Row className="row-cards-pf">
-              <Col>
-                <h1>{parsedSearch.type + ': ' + parsedSearch.name}</h1>
-                <AceEditor
-                  mode="yaml"
-                  theme="eclipse"
-                  readOnly={true}
-                  width={'100%'}
-                  height={'50vh'}
-                  className={'istio-ace-editor'}
-                  setOptions={aceOptions}
-                  value={yamlEditor}
-                  markers={aceMarkers}
-                  annotations={aceAnnotations}
-                />
-              </Col>
-            </Row>
-          </div>
+        {this.renderBreadcrumbs(parsedSearch, !!(editorVisible && istioObject))}
+        {editorVisible && istioObject ? (
+          <IstioObjectDetails
+            object={istioObject}
+            validations={this.searchValidation(parsedSearch)}
+            onSelectTab={this.tabSelectHandler}
+            activeTab={this.activeTab}
+            servicePageURL={this.servicePageURL()}
+          />
         ) : (
-          <TabContainer id="basic-tabs" activeKey={urlParams.get('tab') || 'info'} onSelect={this.mainTabSelectHandler}>
+          <TabContainer id="basic-tabs" activeKey={this.activeTab('tab', 'info')} onSelect={this.mainTabSelectHandler}>
             <div>
               <Nav bsClass="nav nav-tabs nav-tabs-pf">
                 <NavItem eventKey="info">
@@ -276,15 +266,23 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     );
   }
 
-  private mainTabSelectHandler = (tabKey?: string) => {
+  private tabSelectHandler = (tabName: string, tabKey?: string) => {
     if (!tabKey) {
       return;
     }
 
     const urlParams = new URLSearchParams(this.props.location.search);
-    urlParams.set('tab', tabKey);
+    urlParams.set(tabName, tabKey);
 
     this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
+  };
+
+  private mainTabSelectHandler = (tabKey?: string) => {
+    this.tabSelectHandler('tab', tabKey);
+  };
+
+  private activeTab = (tabName: string, whenEmpty: string): string => {
+    return new URLSearchParams(this.props.location.search).get(tabName) || whenEmpty;
   };
 
   private navigateToJaeger = () => {
