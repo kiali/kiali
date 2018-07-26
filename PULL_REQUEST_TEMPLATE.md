@@ -1,5 +1,6 @@
 ** Describe the change **
-_explantation of what it does_
+
+_explanation of what it does_
 
 ** Issue reference **
 
