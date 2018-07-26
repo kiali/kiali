@@ -128,8 +128,8 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		// handle any changes to dest field values given telemetry and graph type
 		destApp, destWl = graph.DestFields(sourceApp, destApp, destWl, destSvcName, a.GraphType)
 
-		sourceId := graph.Id(sourceWlNs, sourceWl, sourceApp, sourceVer, a.GraphType, a.Versioned)
-		destId := graph.Id(destSvcNs, destWl, destApp, destVer, a.GraphType, a.Versioned)
+		sourceId, _ := graph.Id(sourceWlNs, sourceWl, sourceApp, sourceVer, a.GraphType, a.Versioned)
+		destId, _ := graph.Id(destSvcNs, destWl, destApp, destVer, a.GraphType, a.Versioned)
 		key := fmt.Sprintf("%s %s", sourceId, destId)
 		val := float64(s.Value)
 		responseTimeMap[key] += val

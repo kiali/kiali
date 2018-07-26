@@ -22,6 +22,7 @@ package handlers
 //   appenders:      Comma-separated list of appenders to run from [circuit_breaker, unused_service] (default all)
 //                   Note, appenders may support appender-specific query parameters
 //   duration:       time.Duration indicating desired query range duration, (default 10m)
+//   graphType:      Determines how to present the telemetry data. app | workload (default workload)
 //   groupBy:        If supported by vendor, visually group by a specified node attribute (default version)
 //   includeIstio:   Include istio-system (infra) services (default false)
 //   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
@@ -219,6 +220,8 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 
 		dest, _ := addNode(trafficMap, destSvcNs, destWl, destApp, destVer, o)
 
+		addToDestServices(dest.Metadata, destSvcName)
+
 		var edge *graph.Edge
 		for _, e := range source.Edges {
 			if dest.ID == e.Dest.ID {
@@ -264,11 +267,20 @@ func addToRate(md map[string]interface{}, k string, v float64) {
 	}
 }
 
+func addToDestServices(md map[string]interface{}, destService string) {
+	destServices, ok := md["destServices"]
+	if !ok {
+		destServices = make(map[string]bool)
+		md["destServices"] = destServices
+	}
+	destServices.(map[string]bool)[destService] = true
+}
+
 func addNode(trafficMap graph.TrafficMap, namespace, workload, app, version string, o options.Options) (*graph.Node, bool) {
-	id := graph.Id(namespace, workload, app, version, o.VendorOptions.GraphType, o.VendorOptions.Versioned)
+	id, isWorkload := graph.Id(namespace, workload, app, version, o.VendorOptions.GraphType, o.VendorOptions.Versioned)
 	node, found := trafficMap[id]
 	if !found {
-		newNode := graph.NewNode(id, namespace, workload, app, version)
+		newNode := graph.NewNodeExplicit(id, namespace, workload, app, version, isWorkload, o.VendorOptions.Versioned)
 		node = &newNode
 		trafficMap[id] = node
 	}
