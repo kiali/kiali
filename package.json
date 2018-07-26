@@ -47,14 +47,14 @@
     "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json}\"",
     "lint": "tslint --project ./tsconfig.json",
     "lintfix": "tslint --fix --project ./tsconfig.json",
-    "start": "yarn copy-fonts && yarn copy-img && yarn build-css && yarn prettier && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts-ts start",
-    "build": "yarn copy-fonts && yarn copy-img && yarn build-css && yarn prettier && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts-ts build",
+    "start": "npm run copy-fonts && npm run copy-img && npm run build-css && npm run prettier && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts-ts start",
+    "build": "npm run copy-fonts && npm run copy-img && npm run build-css && npm run prettier && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts-ts build",
     "kiali": "node  ./src/__itests__/Kiali.app.standalone.ts",
-    "test": "yarn prettier && react-scripts-ts test --env=jsdom __tests__",
+    "test": "npm run prettier && react-scripts-ts test --env=jsdom __tests__",
     "itest": "export CI=true && react-scripts-ts test  __itests__",
     "eject": "react-scripts-ts eject",
     "set-snapshot-version": "npm-snapshot",
-    "precommit": "yarn prettier --list-different || (echo 'Above file(s) were modified by prettier, check them before commiting' && false)"
+    "precommit": "npm run prettier --list-different || (echo 'Above file(s) were modified by prettier, check them before commiting' && false)"
   },
   "devDependencies": {
     "@types/enzyme": "3.1.10",
