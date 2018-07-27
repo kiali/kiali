@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kiali-traffic-generator
+  labels:
+    app: kiali-traffic-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kiali-traffic-generator
+  template:
+    metadata:
+      labels:
+        app: kiali-traffic-generator
+    spec:
+      containers:
+      - image: kiali/kiali-test-mesh-traffic-generator:latest
+        name: kiali-traffic-generator
+        imagePullPolicy: Always
+        restartPolicy: Never
+        env:
+        - name: DURATION
+          valueFrom:
+            configMapKeyRef:
+              name: traffic-generator-config
+              key: duration
+
+        - name: ROUTE
+          valueFrom:
+            configMapKeyRef:
+              name: traffic-generator-config
+              key: route
+
+        - name: RATE
+          valueFrom:
+            configMapKeyRef:
+              name: traffic-generator-config
+              key: rate
