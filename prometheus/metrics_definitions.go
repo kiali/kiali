@@ -29,7 +29,16 @@ var (
 		kialiMetric{
 			name:      "response_size",
 			istioName: "istio_response_bytes",
-			isHisto:   true}}
+			isHisto:   true},
+		kialiMetric{
+			name:      "tcp_sent",
+			istioName: "istio_tcp_sent_bytes_total",
+			isHisto:   false},
+		kialiMetric{
+			name:      "tcp_received",
+			istioName: "istio_tcp_received_bytes_total",
+			isHisto:   false},
+	}
 )
 
 func (in *kialiMetric) labelsToUse(labelsIn, labelsOut, labelsErrorIn, labelsErrorOut string) (string, string) {
