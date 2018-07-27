@@ -18,19 +18,6 @@ type TokenClaim struct {
 	jwt.StandardClaims
 }
 
-// HTTP status code 200 and tokenGenerated model in data
-// swagger:response tokenGenerated
-type swaggTokenGeneratedResp struct {
-	// in:body
-	Body struct {
-		// HTTP status code
-		// default: 200
-		Code int `json:"code"`
-		// StatusInfo model
-		Data TokenGenerated `json:"data"`
-	}
-}
-
 // TokenGenerated tokenGenerated
 //
 // This is used for returning the token

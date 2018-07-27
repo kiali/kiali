@@ -20,48 +20,6 @@ type Routes struct {
 	Routes []Route
 }
 
-// A GenericError is the default error message that is generated.
-//
-// swagger:response genericError
-type GenericError struct {
-	// in: body
-	Body struct {
-		// HTTP status code
-		// example: 400
-		// default: 400
-		Code    int32 `json:"code"`
-		Message error `json:"message"`
-	} `json:"body"`
-}
-
-// A NotFoundError is the error message that is generated when server could not find what was requested.
-//
-// swagger:response notFoundError
-type NotFoundError struct {
-	// in: body
-	Body struct {
-		// HTTP status code
-		// example: 404
-		// default: 404
-		Code    int32 `json:"code"`
-		Message error `json:"message"`
-	} `json:"body"`
-}
-
-// A Internal is the error message that means something has gone wrong
-//
-// swagger:response internalError
-type InternalError struct {
-	// in: body
-	Body struct {
-		// HTTP status code
-		// example: 500
-		// default: 500
-		Code    int32 `json:"code"`
-		Message error `json:"message"`
-	} `json:"body"`
-}
-
 // NewRoutes creates and returns all the API routes
 func NewRoutes() (r *Routes) {
 	r = new(Routes)
@@ -173,6 +131,24 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigDetails,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object}/istio_validations validations objectValidations
+		// ---
+		// Endpoint to get the list of istio object validations for a service
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: typeValidationsResponse
+		//
 		{
 			"IstioConfigValidation",
 			"GET",
@@ -226,6 +202,24 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceHealth,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/services/{service}/istio_validations validations serviceValidations
+		// ---
+		// Endpoint to get the list of istio object validations for a service
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: typeValidationsResponse
+		//
 		{
 			"ServiceValidations",
 			"GET",
@@ -247,6 +241,24 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceHealth,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/istio_validations validations namespaceValidations
+		// ---
+		// Endpoint to get the list of istio object validations for a namespace
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: namespaceValidationsResponse
+		//
 		{
 			"NamespaceValidations",
 			"GET",
