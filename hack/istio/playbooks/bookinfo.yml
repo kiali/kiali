@@ -48,14 +48,40 @@
     - name: Give the scc-to-user to Bookinfo
       shell: "oc adm policy add-scc-to-user privileged -z default -n bookinfo"
 
-    - name: Deploy Bookinfo and Bookinfo gateway
+    - name: Deploy Bookinfo
       shell: "curl {{item}}  | istioctl kube-inject -f - | oc apply -n bookinfo -f -  "
       with_items:
         - "{{ istio_bookinfo_deployment_path }}"
+
+
+    - name: Deploy Bookinfo Gateway
+      shell: "curl {{item}}  | oc apply -n bookinfo -f -  "
+      with_items:
         - "{{ istio_bookinfo_gateway_path }}"
 
     - name: Expose Openshift Route for Bookinfo (useful when you trying to deploy with external traffic)
       shell: "oc expose svc productpage -n bookinfo"
+
+    - name: Wait until all pods are running on bookinfo
+      openshift_raw:
+        definition:
+          apiVersion: v1
+          kind: Deployment
+          metadata:
+            name: "{{item}}"
+            namespace: bookinfo
+      register: replicaResult
+      until: (replicaResult.result.status.ready_replicas is defined and replicaResult.result.status.ready_replicas == 1) or
+           (replicaResult.result.status.readyReplicas is defined and replicaResult.result.status.readyReplicas == 1)
+      with_items:
+        - productpage-v1
+        - details-v1
+        - ratings-v1
+        - reviews-v1
+        - reviews-v2
+        - reviews-v3
+      retries: 100
+      delay: 10
 
     - name: Get Openshift Route
       shell: oc get route productpage -o jsonpath='{.spec.host}{"\n"}' -n bookinfo
@@ -74,13 +100,13 @@
       when: duration is not defined
 
     - name: Deploy Kiali Traffic Generator Configmap to Openshift Route
-      shell: "cat files/traffic-generator-configmap.yml | DURATION='0s' ROUTE='http://{{ openshift_route ['stdout'] }}/productpage' RATE='{{rate}}'  envsubst | oc apply -n bookinfo -f -"
+      shell: "curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE='http://{{ openshift_route ['stdout'] }}/productpage' RATE='{{rate}}'  envsubst | oc apply -n bookinfo -f -"
       when: ingress_route is defined and ingress_route == 'false' and traffic_generator is defined and traffic_generator == 'true'
 
     - name: Deploy Kiali Traffic Generator Configmap to Ingress Route
-      shell: "cat files/traffic-generator-configmap.yml | DURATION='0' ROUTE='http://{{ internal_route ['stdout'] }}/productpage' RATE='{{rate}}'  envsubst | oc apply -n bookinfo -f -"
+      shell: "curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0' ROUTE='http://{{ internal_route ['stdout'] }}/productpage' RATE='{{rate}}'  envsubst | oc apply -n bookinfo -f -"
       when: ingress_route is defined and ingress_route == 'true' and traffic_generator is defined and traffic_generator == 'true'
 
     - name: Deploy Kiali Traffic Generator
-      shell: "cat files/traffic-generator-deployment.yml | istioctl kube-inject -f -  | oc apply -n bookinfo -f -"
+      shell: "curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | oc apply -n bookinfo -f -"
       when: traffic_generator is defined and traffic_generator == 'true'
