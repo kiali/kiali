@@ -18,12 +18,12 @@ This playbook support both Istio 0.8 and Istio 1.0 - check your istioctl version
 - In order quick install, you may use the following command for istio 0.8.0 version
 
 ```
-ansible-playbook bookinfo.yml -e istio_version=0.8
+ansible-playbook bookinfo.yml -e istio_version=0.8.0
 ```
 - For 1.0 version, you may use
 
 ```
-ansible-playbook bookinfo.yml -e istio_version=1.0
+ansible-playbook bookinfo.yml -e istio_version=1.0.0
 ```
 
 - If you want to include traffic generator to bookinfo project, see sections below
@@ -43,7 +43,7 @@ You must choose between Ingress Route or Openshift Route there is a traffic gene
 - If you want to use ingress route (all traffic is going to hit ingress-gateway), you may use the following command:
 
 ```
-ansible-playbook bookinfo.yml -e istio_version=1.0 -e ingress_route=true -e traffic_generator=true -e rate=1 -vv
+ansible-playbook bookinfo.yml -e istio_version=1.0.0 -e ingress_route=true -e traffic_generator=true -e rate=1 -vv
 ```
 
 === Kiali Traffic Generator with Openshift Route
@@ -51,5 +51,5 @@ ansible-playbook bookinfo.yml -e istio_version=1.0 -e ingress_route=true -e traf
 - If you want to use openshift route (kiali will report as "unknown"), you may use the following command:
 
 ```
-ansible-playbook bookinfo.yml -e istio_version=1.0 -e ingress_route=false -e traffic_generator=true -e rate=1 -vv
+ansible-playbook bookinfo.yml -e istio_version=1.0.0 -e ingress_route=false -e traffic_generator=true -e rate=1 -vv
 ```
