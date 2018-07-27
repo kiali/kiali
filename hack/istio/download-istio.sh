@@ -19,7 +19,7 @@
 # The version used by the getLatestIstio script - if empty, gets the latest version
 # TODO when Istio 1.0 is released, remove the version string (right side) - we
 # want this set to empty string so by default we pick up the latest version.
-ISTIO_VERSION=1.0.0-snapshot.1
+ISTIO_VERSION=1.0.0-snapshot.2
 
 # process command line args
 while [[ $# -gt 0 ]]; do
