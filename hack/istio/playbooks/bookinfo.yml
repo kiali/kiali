@@ -32,7 +32,7 @@
         - "bookinfo"
 
     - name: Create Bookinfo Project
-      k8s:
+      openshift_raw:
         api_version: v1
         kind: Project
         name: "{{ item }}"
