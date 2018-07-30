@@ -176,7 +176,7 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "istio") {
-		//appenders = append(appenders, appender.IstioAppender{})
+		appenders = append(appenders, appender.IstioAppender{})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "sidecars_check") {
 		appenders = append(appenders, appender.SidecarsCheckAppender{

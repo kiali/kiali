@@ -9,6 +9,9 @@
           "workload": "productpage-v1",
           "app": "productpage",
           "version": "v1",
+          "destServices": {
+            "productpage": true
+          },
           "rate": "50.000"
         }
       },
@@ -19,6 +22,9 @@
           "workload": "customer-v1",
           "app": "customer",
           "version": "v1",
+          "destServices": {
+            "customer": true
+          },
           "rate": "50.000"
         }
       },
@@ -27,10 +33,9 @@
           "id": "ba113404e46b8aa41dc0e7cc339073fe",
           "namespace": "unknown",
           "workload": "unknown",
-          "app": "unknown",
-          "version": "unknown",
           "rateOut": "50.000",
-          "isRoot": true
+          "isRoot": true,
+          "isWorkload": true
         }
       }
     ],

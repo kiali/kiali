@@ -42,24 +42,13 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		// get the pods for the node, either by app+version labels, or workload deployment
 		var podLabels string
 		var err error
-		switch a.GraphType {
-		case graph.GraphTypeApp:
-			appLabelOk := n.App != graph.UnknownApp
-			versionLabelOk := !a.Versioned || n.Version != graph.UnknownVersion
-			isAppNode := appLabelOk && versionLabelOk
-			if isAppNode {
-				podLabels = a.getAppLabels(appLabel, n.App, versionLabel, n.Version)
-			} else {
-				podLabels, err = a.getWorkloadLabels(n.Namespace, n.Workload, k8s)
-				if err != nil {
-					continue
-				}
-			}
-		case graph.GraphTypeWorkload:
+		if n.IsWorkload {
 			podLabels, err = a.getWorkloadLabels(n.Namespace, n.Workload, k8s)
 			if err != nil {
 				continue
 			}
+		} else {
+			podLabels = a.getAppLabels(appLabel, n.App, versionLabel, n.Version)
 		}
 
 		pods, err := k8s.GetPods(n.Namespace, podLabels)

@@ -86,7 +86,8 @@ func TestDeadNode(t *testing.T) {
 	trafficMap := testTrafficMap()
 
 	assert.Equal(7, len(trafficMap))
-	unknownNode, found := trafficMap[graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "appPreferred", true)]
+	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, graph.GraphTypeApp, true)
+	unknownNode, found := trafficMap[id]
 	assert.Equal(true, found)
 	assert.Equal(graph.UnknownWorkload, unknownNode.Workload)
 	assert.Equal(6, len(unknownNode.Edges))
@@ -94,7 +95,7 @@ func TestDeadNode(t *testing.T) {
 	applyDeadNodes(trafficMap, k8s)
 
 	assert.Equal(6, len(trafficMap))
-	unknownNode, found = trafficMap[graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, graph.GraphTypeAppPreferred, true)]
+	unknownNode, found = trafficMap[id]
 	assert.Equal(true, found)
 	assert.Equal(5, len(unknownNode.Edges))
 
@@ -104,7 +105,8 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal("testNoPodsNoTraffic-v1", unknownNode.Edges[3].Dest.Workload)
 	assert.Equal("testNoDeploymentWithTraffic-v1", unknownNode.Edges[4].Dest.Workload)
 
-	noPodsNoTraffic, ok := trafficMap[graph.Id("testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", graph.GraphTypeAppPreferred, true)]
+	id, _ = graph.Id("testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", graph.GraphTypeApp, true)
+	noPodsNoTraffic, ok := trafficMap[id]
 	assert.Equal(true, ok)
 	isDead, ok := noPodsNoTraffic.Metadata["isDead"]
 	assert.Equal(true, ok)
@@ -114,30 +116,23 @@ func TestDeadNode(t *testing.T) {
 func testTrafficMap() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	id := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, graph.GraphTypeAppPreferred, true)
-	n0 := graph.NewNode(id, graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion)
+	n0 := graph.NewNode(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, graph.GraphTypeApp, true)
 	n0.Metadata["rateOut"] = 2.4
 
-	id = graph.Id("testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", graph.GraphTypeAppPreferred, true)
-	n1 := graph.NewNode(id, "testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1")
+	n1 := graph.NewNode("testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", graph.GraphTypeApp, true)
 	n1.Metadata["rate"] = 0.8
 
-	id = graph.Id("testNamespace", "testPodsNoTraffic-v1", "testPodsNoTraffic", "v1", graph.GraphTypeAppPreferred, true)
-	n2 := graph.NewNode(id, "testNamespace", "testPodsNoTraffic-v1", "testPodsNoTraffic", "v1")
+	n2 := graph.NewNode("testNamespace", "testPodsNoTraffic-v1", "testPodsNoTraffic", "v1", graph.GraphTypeApp, true)
 
-	id = graph.Id("testNamespace", "testNoPodsWithTraffic-v1", "testNoPodsWithTraffic", "v1", graph.GraphTypeAppPreferred, true)
-	n3 := graph.NewNode(id, "testNamespace", "testNoPodsWithTraffic-v1", "testNoPodsWithTraffic", "v1")
+	n3 := graph.NewNode("testNamespace", "testNoPodsWithTraffic-v1", "testNoPodsWithTraffic", "v1", graph.GraphTypeApp, true)
 	n3.Metadata["rate"] = 0.8
 
-	id = graph.Id("testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", graph.GraphTypeAppPreferred, true)
-	n4 := graph.NewNode(id, "testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1")
+	n4 := graph.NewNode("testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", graph.GraphTypeApp, true)
 
-	id = graph.Id("testNamespace", "testNoDeploymentWithTraffic-v1", "testNoDeploymentWithTraffic", "v1", graph.GraphTypeAppPreferred, true)
-	n5 := graph.NewNode(id, "testNamespace", "testNoDeploymentWithTraffic-v1", "testNoDeploymentWithTraffic", "v1")
+	n5 := graph.NewNode("testNamespace", "testNoDeploymentWithTraffic-v1", "testNoDeploymentWithTraffic", "v1", graph.GraphTypeApp, true)
 	n5.Metadata["rate"] = 0.8
 
-	id = graph.Id("testNamespace", "testNoDeploymentNoTraffic-v1", "testNoDeploymentNoTraffic", "v1", graph.GraphTypeAppPreferred, true)
-	n6 := graph.NewNode(id, "testNamespace", "testNoDeploymentNoTraffic-v1", "testNoDeploymentNoTraffic", "v1")
+	n6 := graph.NewNode("testNamespace", "testNoDeploymentNoTraffic-v1", "testNoDeploymentNoTraffic", "v1", graph.GraphTypeApp, true)
 
 	trafficMap[n0.ID] = &n0
 	trafficMap[n1.ID] = &n1

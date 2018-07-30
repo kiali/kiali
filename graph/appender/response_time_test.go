@@ -124,7 +124,7 @@ func TestResponseTime(t *testing.T) {
 	mockQuery(api, q2, &v2)
 
 	trafficMap := responseTimeTestTraffic()
-	ingressId := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, graph.GraphTypeAppPreferred, true)
+	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, graph.GraphTypeApp, true)
 	ingress, ok := trafficMap[ingressId]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -136,7 +136,7 @@ func TestResponseTime(t *testing.T) {
 		Duration:  duration,
 		Quantile:  0.95,
 		QueryTime: time.Now().Unix(),
-		GraphType: graph.GraphTypeAppPreferred,
+		GraphType: graph.GraphTypeApp,
 		Versioned: true,
 	}
 
@@ -186,17 +186,12 @@ func TestResponseTime(t *testing.T) {
 }
 
 func responseTimeTestTraffic() graph.TrafficMap {
-	id := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, graph.GraphTypeAppPreferred, true)
-	ingress := graph.NewNode(id, "istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion)
-	id = graph.Id("bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeAppPreferred, true)
-	productpage := graph.NewNode(id, "bookinfo", "productpage-v1", "productpage", "v1")
-	id = graph.Id("bookinfo", "reviews-v1", "reviews", "v1", graph.GraphTypeAppPreferred, true)
-	reviewsV1 := graph.NewNode(id, "bookinfo", "reviews-v1", "reviews", "v1")
-	id = graph.Id("bookinfo", "reviews-v2", "reviews", "v2", graph.GraphTypeAppPreferred, true)
-	reviewsV2 := graph.NewNode(id, "bookinfo", "reviews-v2", "reviews", "v2")
-	id = graph.Id("bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeAppPreferred, true)
-	ratingsPath1 := graph.NewNode(id, "bookinfo", "ratings-v1", "ratings", "v1")
-	ratingsPath2 := graph.NewNode(id, "bookinfo", "ratings-v1", "ratings", "v1")
+	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, graph.GraphTypeApp, true)
+	productpage := graph.NewNode("bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeApp, true)
+	reviewsV1 := graph.NewNode("bookinfo", "reviews-v1", "reviews", "v1", graph.GraphTypeApp, true)
+	reviewsV2 := graph.NewNode("bookinfo", "reviews-v2", "reviews", "v2", graph.GraphTypeApp, true)
+	ratingsPath1 := graph.NewNode("bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeApp, true)
+	ratingsPath2 := graph.NewNode("bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeApp, true)
 	trafficMap := graph.NewTrafficMap()
 	trafficMap[ingress.ID] = &ingress
 	trafficMap[productpage.ID] = &productpage

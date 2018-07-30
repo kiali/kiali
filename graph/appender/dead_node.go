@@ -33,6 +33,11 @@ func applyDeadNodes(trafficMap graph.TrafficMap, istioClient kubernetes.IstioCli
 		if (hasRate && rate.(float64) > 0) || (hasRateOut && rateOut.(float64) > 0) {
 			continue
 		}
+		// a node w/o a valid be dead, it may represent some other sort of data
+		if n.Workload == "" || n.Workload == graph.UnknownWorkload {
+			continue
+		}
+
 		// Remove if backing deployment is not defined, flag if there are no pods
 		// Note that in the future a workload could feasibly be back by something
 		// other than a deployment; we may need to query the workload name againts

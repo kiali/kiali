@@ -16,13 +16,14 @@ const (
 )
 
 type Node struct {
-	ID        string                 // unique identifier for the node
-	Namespace string                 // Namespace
-	Workload  string                 // Workload (deployment) name
-	App       string                 // Workload app
-	Version   string                 // Workload version
-	Edges     []*Edge                // child nodes
-	Metadata  map[string]interface{} // app-specific data
+	ID         string                 // unique identifier for the node
+	IsWorkload bool                   // true for workload node, false for app node
+	Namespace  string                 // Namespace
+	Workload   string                 // Workload (deployment) name
+	App        string                 // Workload app
+	Version    string                 // Workload version
+	Edges      []*Edge                // child nodes
+	Metadata   map[string]interface{} // app-specific data
 }
 
 type Edge struct {
@@ -38,15 +39,39 @@ type Edge struct {
 // namespace.
 type TrafficMap map[string]*Node
 
-func NewNode(id, namespace, workload, app, version string) Node {
+func NewNode(namespace, workload, app, version, graphType string, versioned bool) Node {
+	id, isWorkload := Id(namespace, workload, app, version, graphType, versioned)
+
+	return NewNodeExplicit(id, namespace, workload, app, version, isWorkload, versioned)
+}
+
+func NewNodeExplicit(id, namespace, workload, app, version string, isWorkload, versioned bool) Node {
+	// trim unnecessary fields
+	if isWorkload {
+		if app == UnknownApp {
+			app = ""
+		}
+		if version == UnknownVersion {
+			version = ""
+		}
+	} else {
+		if workload == UnknownWorkload {
+			workload = ""
+		}
+	}
+	if !versioned {
+		version = ""
+	}
+
 	return Node{
-		ID:        id,
-		Namespace: namespace,
-		Workload:  workload,
-		App:       app,
-		Version:   version,
-		Edges:     []*Edge{},
-		Metadata:  make(map[string]interface{}),
+		ID:         id,
+		IsWorkload: isWorkload,
+		Namespace:  namespace,
+		Workload:   workload,
+		App:        app,
+		Version:    version,
+		Edges:      []*Edge{},
+		Metadata:   make(map[string]interface{}),
 	}
 }
 
@@ -68,22 +93,26 @@ func NewTrafficMap() TrafficMap {
 	return make(map[string]*Node)
 }
 
-func Id(namespace, workload, app, version, graphType string, versioned bool) string {
+func Id(namespace, workload, app, version, graphType string, versioned bool) (id string, isWorkload bool) {
 	switch graphType {
 	case GraphTypeApp:
-		appLabelOk := app != UnknownApp
-		versionLabelOk := !versioned || version != UnknownVersion
-		isAppNode := appLabelOk && versionLabelOk
+		workloadOk := workload != "" && workload != UnknownWorkload
+		appOk := app != "" && app != UnknownApp
+		versionOk := !versioned || (version != "" && version != UnknownVersion)
+		isAppNode := appOk && (versionOk || !workloadOk)
 		if isAppNode {
 			if versioned {
-				return fmt.Sprintf("%v_%v_%v", namespace, app, version)
+				if !versionOk {
+					version = UnknownVersion
+				}
+				return fmt.Sprintf("%v_%v_%v", namespace, app, version), false
 			}
-			return fmt.Sprintf("%v_%v", namespace, app)
+			return fmt.Sprintf("%v_%v_versionless", namespace, app), false
 		} else {
-			return fmt.Sprintf("%v_%v", namespace, workload)
+			return fmt.Sprintf("%v_%v", namespace, workload), true
 		}
 	case GraphTypeWorkload:
-		return fmt.Sprintf("%v_%v", namespace, workload)
+		return fmt.Sprintf("%v_%v", namespace, workload), true
 	default:
 		panic(fmt.Sprintf("Unrecognized graphFormat [%s]", graphType))
 	}

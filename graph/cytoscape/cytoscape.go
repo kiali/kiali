@@ -30,25 +30,26 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	Namespace string `json:"namespace"`
-	Workload  string `json:"workload"`
-	App       string `json:"app"`
-	Version   string `json:"version,omitempty"`
-
-	Rate         string         `json:"rate,omitempty"`         // edge aggregate
-	Rate3xx      string         `json:"rate3XX,omitempty"`      // edge aggregate
-	Rate4xx      string         `json:"rate4XX,omitempty"`      // edge aggregate
-	Rate5xx      string         `json:"rate5XX,omitempty"`      // edge aggregate
-	RateOut      string         `json:"rateOut,omitempty"`      // edge aggregate
-	HasCB        bool           `json:"hasCB,omitempty"`        // true (has circuit breaker) | false
-	HasMissingSC bool           `json:"hasMissingSC,omitempty"` // true (has missing sidecar) | false
-	HasVS        bool           `json:"hasVS,omitempty"`        // true (has route rule) | false
-	Health       *models.Health `json:"health,omitempty"`
-	IsDead       bool           `json:"isDead,omitempty"`    // true (has no pods) | false
-	IsGroup      string         `json:"isGroup,omitempty"`   // set to the grouping type, current values: [ 'version' ]
-	IsOutside    bool           `json:"isOutside,omitempty"` // true | false
-	IsRoot       bool           `json:"isRoot,omitempty"`    // true | false
-	IsUnused     bool           `json:"isUnused,omitempty"`  // true | false
+	Namespace    string          `json:"namespace"`
+	Workload     string          `json:"workload,omitempty"`
+	App          string          `json:"app,omitempty"`
+	Version      string          `json:"version,omitempty"`
+	DestServices map[string]bool `json:"destServices,omitempty"`
+	Rate         string          `json:"rate,omitempty"`         // edge aggregate
+	Rate3xx      string          `json:"rate3XX,omitempty"`      // edge aggregate
+	Rate4xx      string          `json:"rate4XX,omitempty"`      // edge aggregate
+	Rate5xx      string          `json:"rate5XX,omitempty"`      // edge aggregate
+	RateOut      string          `json:"rateOut,omitempty"`      // edge aggregate
+	HasCB        bool            `json:"hasCB,omitempty"`        // true (has circuit breaker) | false
+	HasMissingSC bool            `json:"hasMissingSC,omitempty"` // true (has missing sidecar) | false
+	HasVS        bool            `json:"hasVS,omitempty"`        // true (has route rule) | false
+	Health       *models.Health  `json:"health,omitempty"`
+	IsDead       bool            `json:"isDead,omitempty"`     // true (has no pods) | false
+	IsGroup      string          `json:"isGroup,omitempty"`    // set to the grouping type, current values: [ 'version' ]
+	IsOutside    bool            `json:"isOutside,omitempty"`  // true | false
+	IsRoot       bool            `json:"isRoot,omitempty"`     // true | false
+	IsUnused     bool            `json:"isUnused,omitempty"`   // true | false
+	IsWorkload   bool            `json:"isWorkload,omitempty"` // true | false
 }
 
 type EdgeData struct {
@@ -102,7 +103,7 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 	buildConfig(trafficMap, &nodes, &edges, o)
 
 	// Add compound nodes that group together different versions of the same node
-	if o.GraphType != graph.GraphTypeWorkload && o.Versioned && o.GroupBy == options.GroupByVersion {
+	if o.GraphType == graph.GraphTypeApp && o.Versioned && o.GroupBy == options.GroupByVersion {
 		groupByVersion(&nodes)
 	}
 
@@ -145,17 +146,13 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 	for id, n := range trafficMap {
 		nodeId := nodeHash(id)
 
-		version := n.Version
-		if o.GraphType == graph.GraphTypeApp && !o.Versioned {
-			version = ""
-		}
-
 		nd := &NodeData{
-			Id:        nodeId,
-			Namespace: n.Namespace,
-			Workload:  n.Workload,
-			App:       n.App,
-			Version:   version,
+			Id:         nodeId,
+			Namespace:  n.Namespace,
+			Workload:   n.Workload,
+			App:        n.App,
+			Version:    n.Version,
+			IsWorkload: n.IsWorkload,
 		}
 
 		addNodeTelemetry(n, nd)
@@ -193,6 +190,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// check if node is on another namespace
 		if val, ok := n.Metadata["isOutside"]; ok {
 			nd.IsOutside = val.(bool)
+		}
+
+		// node may have destination service info
+		if val, ok := n.Metadata["destServices"]; ok {
+			nd.DestServices = val.(map[string]bool)
 		}
 
 		nw := NodeWrapper{
@@ -313,7 +315,9 @@ func groupByVersion(nodes *[]*NodeWrapper) {
 	grouped := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
-		grouped[nw.Data.App] = append(grouped[nw.Data.App], nw.Data)
+		if !nw.Data.IsWorkload {
+			grouped[nw.Data.App] = append(grouped[nw.Data.App], nw.Data)
+		}
 	}
 
 	for k, members := range grouped {
@@ -323,9 +327,9 @@ func groupByVersion(nodes *[]*NodeWrapper) {
 			nd := NodeData{
 				Id:        nodeId,
 				Namespace: members[0].Namespace,
-				Workload:  graph.UnknownWorkload,
+				Workload:  "",
 				App:       k,
-				Version:   graph.UnknownVersion,
+				Version:   "",
 				IsGroup:   options.GroupByVersion,
 			}
 

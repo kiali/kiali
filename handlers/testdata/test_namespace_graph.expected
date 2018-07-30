@@ -9,6 +9,9 @@
           "workload": "pricing-v1",
           "app": "pricing",
           "version": "v1",
+          "destServices": {
+            "pricing": true
+          },
           "rate": "20.000",
           "isOutside": true
         }
@@ -17,9 +20,7 @@
         "data": {
           "id": "74dcb1cec50854d2f880279f3dd19da9",
           "namespace": "bookinfo",
-          "workload": "unknown",
           "app": "reviews",
-          "version": "unknown",
           "isGroup": "version"
         }
       },
@@ -30,6 +31,9 @@
           "workload": "details-v1",
           "app": "details",
           "version": "v1",
+          "destServices": {
+            "details": true
+          },
           "rate": "80.000",
           "rate3XX": "20.000",
           "rate4XX": "20.000",
@@ -43,6 +47,9 @@
           "workload": "productpage-v1",
           "app": "productpage",
           "version": "v1",
+          "destServices": {
+            "productpage": true
+          },
           "rate": "170.000",
           "rateOut": "160.000"
         }
@@ -54,6 +61,9 @@
           "workload": "ratings-v1",
           "app": "ratings",
           "version": "v1",
+          "destServices": {
+            "ratings": true
+          },
           "rate": "40.000"
         }
       },
@@ -65,6 +75,9 @@
           "workload": "reviews-v1",
           "app": "reviews",
           "version": "v1",
+          "destServices": {
+            "reviews": true
+          },
           "rate": "20.000"
         }
       },
@@ -76,6 +89,9 @@
           "workload": "reviews-v2",
           "app": "reviews",
           "version": "v2",
+          "destServices": {
+            "reviews": true
+          },
           "rate": "40.000",
           "rateOut": "40.000"
         }
@@ -88,6 +104,9 @@
           "workload": "reviews-v3",
           "app": "reviews",
           "version": "v3",
+          "destServices": {
+            "reviews": true
+          },
           "rate": "40.000",
           "rateOut": "60.000"
         }
@@ -98,9 +117,9 @@
           "namespace": "istio-system",
           "workload": "ingressgateway-unknown",
           "app": "ingressgateway",
-          "version": "unknown",
           "rateOut": "100.000",
-          "isOutside": true
+          "isOutside": true,
+          "isWorkload": true
         }
       },
       {
@@ -108,10 +127,9 @@
           "id": "ba113404e46b8aa41dc0e7cc339073fe",
           "namespace": "unknown",
           "workload": "unknown",
-          "app": "unknown",
-          "version": "unknown",
           "rateOut": "50.000",
-          "isRoot": true
+          "isRoot": true,
+          "isWorkload": true
         }
       }
     ],
