@@ -10,20 +10,6 @@ const (
 	StateRunning   = "running"
 )
 
-// HTTP status code 200 and statusInfo model in data
-// swagger:response statusInfo
-type swaggStatusInfoResp struct {
-	// in:body
-	Body struct {
-		// HTTP status code
-		// example: 200
-		// default: 200
-		Code int `json:"code"`
-		// StatusInfo model
-		Data StatusInfo `json:"data"`
-	}
-}
-
 // StatusInfo statusInfo
 //
 // This is used for returning a response of Kiali Status

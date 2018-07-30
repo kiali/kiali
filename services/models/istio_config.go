@@ -1,18 +1,5 @@
 package models
 
-// HTTP status code 200 and IstioConfigList model in data
-// swagger:response istioConfigList
-type swaggIstioConfigList struct {
-	// in:body
-	Body struct {
-		// HTTP status code
-		// default: 200
-		Code int `json:"code"`
-		// IstioConfigList model
-		Data IstioConfigList `json:"data"`
-	}
-}
-
 // IstioConfigList istioConfigList
 //
 // This type is used for returning a response of IstioConfigList

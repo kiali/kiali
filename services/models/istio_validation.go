@@ -17,18 +17,43 @@ type IstioValidationKey struct {
 type IstioValidations map[IstioValidationKey]*IstioValidation
 
 // IstioValidation represents a list of checks associated to an Istio object.
+// swagger:model
 type IstioValidation struct {
-	Name       string        `json:"name"`       // Name of the object itself
-	ObjectType string        `json:"objectType"` // Type of the object
-	Valid      bool          `json:"valid"`      // Represents validity of the object: in case of warning, validity remainds as true
-	Checks     []*IstioCheck `json:"checks"`     // Array of checks
+	// Name of the object itself
+	// required: true
+	// example: reviews
+	Name string `json:"name"`
+
+	// Type of the object
+	// required: true
+	// example: virtualservice
+	ObjectType string `json:"objectType"`
+
+	// Represents validity of the object: in case of warning, validity remains as true
+	// required: true
+	// example: false
+	Valid bool `json:"valid"`
+
+	// Array of checks. It might be empty.
+	Checks []*IstioCheck `json:"checks"`
 }
 
 // IstioCheck represents an individual check.
+// swagger:model
 type IstioCheck struct {
-	Message  string `json:"message"`  // Description of the check
-	Severity string `json:"severity"` // Indicates the level of importance: error or warning
-	Path     string `json:"path"`     // String that describes where in the yaml file is the check located
+	// Description of the check
+	// required: true
+	// example: Weight sum should be 100
+	Message string `json:"message"`
+
+	// Indicates the level of importance: error or warning
+	// required: true
+	// example: error
+	Severity string `json:"severity"`
+
+	// String that describes where in the yaml file is the check located
+	// example: spec/http[0]/route
+	Path string `json:"path"`
 }
 
 var ObjectTypeSingular = map[string]string{

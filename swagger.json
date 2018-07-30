@@ -87,6 +87,160 @@
         }
       }
     },
+    "/namespaces/{namespace}/istio/{object_type}/{object}/istio_validations": {
+      "get": {
+        "description": "Endpoint to get the list of istio object validations for a service",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "validations"
+        ],
+        "operationId": "objectValidations",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The type of the istio object",
+            "name": "object_type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the istio object",
+            "name": "object",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/typeValidationsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/istio_validations": {
+      "get": {
+        "description": "Endpoint to get the list of istio object validations for a namespace",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "validations"
+        ],
+        "operationId": "namespaceValidations",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/namespaceValidationsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/services/{service}/istio_validations": {
+      "get": {
+        "description": "Endpoint to get the list of istio object validations for a service",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "validations"
+        ],
+        "operationId": "serviceValidations",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the service",
+            "name": "service",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/typeValidationsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/status": {
       "get": {
         "description": "Endpoint to get the status of Kiali",
@@ -190,6 +344,35 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
+    "IstioCheck": {
+      "type": "object",
+      "title": "IstioCheck represents an individual check.",
+      "required": [
+        "message",
+        "severity"
+      ],
+      "properties": {
+        "message": {
+          "description": "Description of the check",
+          "type": "string",
+          "x-go-name": "Message",
+          "example": "Weight sum should be 100"
+        },
+        "path": {
+          "description": "String that describes where in the yaml file is the check located",
+          "type": "string",
+          "x-go-name": "Path",
+          "example": "spec/http[0]/route"
+        },
+        "severity": {
+          "description": "Indicates the level of importance: error or warning",
+          "type": "string",
+          "x-go-name": "Severity",
+          "example": "error"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "IstioConfigList": {
       "description": "This type is used for returning a response of IstioConfigList",
       "type": "object",
@@ -198,9 +381,6 @@
         "namespace"
       ],
       "properties": {
-        "destinationPolicies": {
-          "$ref": "#/definitions/destinationPolicies"
-        },
         "destinationRules": {
           "$ref": "#/definitions/destinationRules"
         },
@@ -210,8 +390,11 @@
         "namespace": {
           "$ref": "#/definitions/namespace"
         },
-        "routeRules": {
-          "$ref": "#/definitions/routeRules"
+        "quotaSpecBindings": {
+          "$ref": "#/definitions/QuotaSpecBindings"
+        },
+        "quotaSpecs": {
+          "$ref": "#/definitions/QuotaSpecs"
         },
         "rules": {
           "$ref": "#/definitions/istioRules"
@@ -222,6 +405,122 @@
         "virtualServices": {
           "$ref": "#/definitions/virtualServices"
         }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "IstioValidation": {
+      "type": "object",
+      "title": "IstioValidation represents a list of checks associated to an Istio object.",
+      "required": [
+        "name",
+        "objectType",
+        "valid"
+      ],
+      "properties": {
+        "checks": {
+          "description": "Array of checks. It might be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioCheck"
+          },
+          "x-go-name": "Checks"
+        },
+        "name": {
+          "description": "Name of the object itself",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "reviews"
+        },
+        "objectType": {
+          "description": "Type of the object",
+          "type": "string",
+          "x-go-name": "ObjectType",
+          "example": "virtualservice"
+        },
+        "valid": {
+          "description": "Represents validity of the object: in case of warning, validity remains as true",
+          "type": "boolean",
+          "x-go-name": "Valid",
+          "example": false
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "NameIstioValidation": {
+      "description": "List of validations grouped by object name",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/IstioValidation"
+      },
+      "x-go-package": "github.com/kiali/kiali"
+    },
+    "NamespaceValidations": {
+      "description": "List of validations grouped by namespace",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/TypedIstioValidations"
+      },
+      "x-go-package": "github.com/kiali/kiali"
+    },
+    "QuotaSpec": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "resourceVersion": {
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "rules": {
+          "type": "object",
+          "x-go-name": "Rules"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "QuotaSpecBinding": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "quotaSpecs": {
+          "type": "object",
+          "x-go-name": "QuotaSpecs"
+        },
+        "resourceVersion": {
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "services": {
+          "type": "object",
+          "x-go-name": "Services"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "QuotaSpecBindings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/QuotaSpecBinding"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "QuotaSpecs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/QuotaSpec"
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
@@ -335,61 +634,13 @@
       },
       "x-go-package": "github.com/kiali/kiali/config"
     },
-    "destinationPolicies": {
-      "description": "This type is used for returning an array of DestinationPolicies",
-      "type": "array",
-      "title": "DestinationPolicies destinationPolicies",
-      "items": {
-        "$ref": "#/definitions/destinationPolicy"
-      },
-      "x-go-name": "DestinationPolicies",
-      "x-go-package": "github.com/kiali/kiali/services/models"
-    },
-    "destinationPolicy": {
-      "description": "This type is used for returning a DestinationPolicy",
+    "TypedIstioValidations": {
+      "description": "List of validations grouped by object type",
       "type": "object",
-      "title": "DestinationPolicy destinationPolicy",
-      "required": [
-        "name",
-        "createdAt",
-        "resourceVersion"
-      ],
-      "properties": {
-        "circuitBreaker": {
-          "type": "object",
-          "x-go-name": "CircuitBreaker"
-        },
-        "createdAt": {
-          "description": "The creation date of the destinationPolicy",
-          "type": "string",
-          "pattern": "\\w[\\w-]+",
-          "x-go-name": "CreatedAt"
-        },
-        "destination": {
-          "type": "object",
-          "x-go-name": "Destination"
-        },
-        "loadbalancing": {
-          "type": "object",
-          "x-go-name": "LoadBalancing"
-        },
-        "name": {
-          "description": "The name of the destinationPolicy",
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "resourceVersion": {
-          "description": "The resource version of the destinationPolicy",
-          "type": "string",
-          "x-go-name": "ResourceVersion"
-        },
-        "source": {
-          "type": "object",
-          "x-go-name": "Source"
-        }
+      "additionalProperties": {
+        "$ref": "#/definitions/NameIstioValidation"
       },
-      "x-go-name": "DestinationPolicy",
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali"
     },
     "destinationRule": {
       "description": "This is used for returning a DestinationRule",
@@ -519,107 +770,6 @@
       "x-go-name": "Namespace",
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
-    "routeRule": {
-      "description": "This type is used for returning a RouteRule",
-      "type": "object",
-      "title": "RouteRule routeRule",
-      "required": [
-        "name",
-        "createdAt",
-        "resourceVersion"
-      ],
-      "properties": {
-        "appendHeaders": {
-          "type": "object",
-          "x-go-name": "AppendHeaders"
-        },
-        "corsPolicy": {
-          "type": "object",
-          "x-go-name": "CorsPolicy"
-        },
-        "createdAt": {
-          "description": "The created time",
-          "type": "string",
-          "x-go-name": "CreatedAt",
-          "example": "2018-06-20T07:39:52Z"
-        },
-        "destination": {
-          "type": "object",
-          "x-go-name": "Destination"
-        },
-        "httpFault": {
-          "type": "object",
-          "x-go-name": "HttpFault"
-        },
-        "httpReqRetries": {
-          "type": "object",
-          "x-go-name": "HttpReqRetries"
-        },
-        "httpReqTimeout": {
-          "type": "object",
-          "x-go-name": "HttpReqTimeout"
-        },
-        "l4Fault": {
-          "type": "object",
-          "x-go-name": "L4Fault"
-        },
-        "match": {
-          "type": "object",
-          "x-go-name": "Match"
-        },
-        "mirror": {
-          "type": "object",
-          "x-go-name": "Mirror"
-        },
-        "name": {
-          "description": "The name of the routeRule",
-          "type": "string",
-          "x-go-name": "Name",
-          "example": "details-default"
-        },
-        "precedence": {
-          "type": "object",
-          "x-go-name": "Precedence"
-        },
-        "redirect": {
-          "type": "object",
-          "x-go-name": "Redirect"
-        },
-        "resourceVersion": {
-          "type": "string",
-          "x-go-name": "ResourceVersion",
-          "example": "1507"
-        },
-        "rewrite": {
-          "type": "object",
-          "x-go-name": "Rewrite"
-        },
-        "route": {
-          "type": "object",
-          "x-go-name": "Route"
-        },
-        "routeWarning": {
-          "type": "string",
-          "x-go-name": "RouteWarning"
-        },
-        "websocketUpgrade": {
-          "type": "object",
-          "x-go-name": "WebsocketUpgrade"
-        }
-      },
-      "x-go-name": "RouteRule",
-      "x-go-package": "github.com/kiali/kiali/services/models"
-    },
-    "routeRules": {
-      "description": "This type is used for returning an array of RouteRule",
-      "type": "array",
-      "title": "RouteRules routeRules",
-      "items": {
-        "$ref": "#/definitions/routeRule"
-      },
-      "x-go-name": "RouteRules",
-      "x-go-package": "github.com/kiali/kiali/services/models"
-    },
     "virtualService": {
       "description": "This type is used for returning a VirtualService",
       "type": "object",
@@ -720,19 +870,13 @@
     "istioConfigList": {
       "description": "HTTP status code 200 and IstioConfigList model in data",
       "schema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "description": "HTTP status code",
-            "type": "integer",
-            "format": "int64",
-            "default": 200,
-            "x-go-name": "Code"
-          },
-          "data": {
-            "$ref": "#/definitions/IstioConfigList"
-          }
-        }
+        "$ref": "#/definitions/IstioConfigList"
+      }
+    },
+    "namespaceValidationsResponse": {
+      "description": "Listing all istio validations for object in the namespace",
+      "schema": {
+        "$ref": "#/definitions/NamespaceValidations"
       }
     },
     "notFoundError": {
@@ -758,38 +902,19 @@
     "statusInfo": {
       "description": "HTTP status code 200 and statusInfo model in data",
       "schema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "description": "HTTP status code",
-            "type": "integer",
-            "format": "int64",
-            "default": 200,
-            "x-go-name": "Code",
-            "example": 200
-          },
-          "data": {
-            "$ref": "#/definitions/StatusInfo"
-          }
-        }
+        "$ref": "#/definitions/StatusInfo"
       }
     },
     "tokenGenerated": {
       "description": "HTTP status code 200 and tokenGenerated model in data",
       "schema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "description": "HTTP status code",
-            "type": "integer",
-            "format": "int64",
-            "default": 200,
-            "x-go-name": "Code"
-          },
-          "data": {
-            "$ref": "#/definitions/TokenGenerated"
-          }
-        }
+        "$ref": "#/definitions/TokenGenerated"
+      }
+    },
+    "typeValidationsResponse": {
+      "description": "Listing all istio validations for object in the namespace",
+      "schema": {
+        "$ref": "#/definitions/TypedIstioValidations"
       }
     }
   }
