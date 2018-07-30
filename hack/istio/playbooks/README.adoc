@@ -10,10 +10,15 @@
 [NOTE]
 This playbook support both Istio 0.8 and Istio 1.0 - check your istioctl version before installing.
 
-- All the Bookinfo Demo pods and services are installed in the "bookinfo" namespace.
+[NOTE]
+All the Bookinfo Demo pods and services are installed in the "bookinfo" namespace by default. If you want to define a different namespace from bookinfo, please set -e bookinfo_namespace='your_namespace'
+
+[NOTE]
+If you want to use the renamed files, please set -e renamed=true
+
 
 - In order to uninstall it, simply delete that namespace via something like `kubectl delete namespace bookinfo` or
-`oc delete project bookinfo`.
+`oc delete project bookinfo` (or namespace that you used)
 
 - In order quick install, you may use the following command for istio 0.8.0 version
 
