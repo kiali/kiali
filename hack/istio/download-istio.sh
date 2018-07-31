@@ -17,9 +17,7 @@
 ##############################################################################
 
 # The version used by the getLatestIstio script - if empty, gets the latest version
-# TODO when Istio 1.0 is released, remove the version string (right side) - we
-# want this set to empty string so by default we pick up the latest version.
-ISTIO_VERSION=1.0.0-snapshot.2
+ISTIO_VERSION=
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -36,7 +34,7 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
-  -iv|--istio-version <#.#.#>: Version of Istio to download.
+  -iv|--istio-version <#.#.#>: Version of Istio to download. (default will be the latest version)
   -o|--output <dir> : Output directory where Istio is (or will be downloaded to if it doesn't exist).
   -h|--help : This message.
 HELPMSG
