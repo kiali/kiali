@@ -58,9 +58,6 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) erro
 	if lblsout, ok := queryParams["byLabelsOut[]"]; ok && len(lblsout) > 0 {
 		q.ByLabelsOut = lblsout
 	}
-	if includeIstio, err := strconv.ParseBool(queryParams.Get("includeIstio")); err == nil {
-		q.IncludeIstio = includeIstio
-	}
 
 	// Adjust start & end times to be a multiple of step
 	stepInSecs := int64(q.Step.Seconds())

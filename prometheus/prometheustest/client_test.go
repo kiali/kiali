@@ -88,7 +88,7 @@ func TestGetSourceWorkloads(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockQuery(api, "istio_requests_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"istio-system\"}", &vector)
+	mockQuery(api, "istio_requests_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"istio-system\"}", &vector)
 	sources, err := client.GetSourceWorkloads("istio-system", "productpage")
 	if err != nil {
 		t.Error(err)
@@ -128,91 +128,6 @@ func TestGetServiceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.6)
-	mockHistogram(api, "istio_request_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_response_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetMetrics(&prometheus.MetricsQuery{
-		Namespace: "bookinfo",
-		Apps:      []string{"productpage"},
-		Range: v1.Range{
-			Start: time.Unix(1000, 0),
-			End:   time.Unix(2000, 0),
-			Step:  10,
-		},
-		RateInterval: "5m",
-		RateFunc:     "rate",
-		ByLabelsIn:   []string{},
-		ByLabelsOut:  []string{},
-		IncludeIstio: true,
-		Filters:      []string{}})
-
-	assert.Equal(t, 8, len(metrics.Metrics), "Should have 8 simple metrics")
-	assert.Equal(t, 6, len(metrics.Histograms), "Should have 6 histograms")
-	rqCountIn := metrics.Metrics["request_count_in"]
-	assert.NotNil(t, rqCountIn)
-	rqCountOut := metrics.Metrics["request_count_out"]
-	assert.NotNil(t, rqCountOut)
-	rqErrorCountIn := metrics.Metrics["request_error_count_in"]
-	assert.NotNil(t, rqCountIn)
-	rqErrorCountOut := metrics.Metrics["request_error_count_out"]
-	assert.NotNil(t, rqCountOut)
-	rqSizeIn := metrics.Histograms["request_size_in"]
-	assert.NotNil(t, rqSizeIn)
-	rqSizeOut := metrics.Histograms["request_size_out"]
-	assert.NotNil(t, rqSizeOut)
-	rqDurationIn := metrics.Histograms["request_duration_in"]
-	assert.NotNil(t, rqDurationIn)
-	rqDurationOut := metrics.Histograms["request_duration_out"]
-	assert.NotNil(t, rqDurationOut)
-	rsSizeIn := metrics.Histograms["response_size_in"]
-	assert.NotNil(t, rsSizeIn)
-	rsSizeOut := metrics.Histograms["response_size_out"]
-	assert.NotNil(t, rsSizeOut)
-	tcpRecIn := metrics.Metrics["tcp_received_in"]
-	assert.NotNil(t, tcpRecIn)
-	tcpRecOut := metrics.Metrics["tcp_received_out"]
-	assert.NotNil(t, tcpRecOut)
-	tcpSentIn := metrics.Metrics["tcp_sent_in"]
-	assert.NotNil(t, tcpSentIn)
-	tcpSentOut := metrics.Metrics["tcp_sent_out"]
-	assert.NotNil(t, tcpSentOut)
-
-	assert.Equal(t, 2.5, float64(rqCountIn.Matrix[0].Values[0].Value))
-	assert.Equal(t, 1.5, float64(rqCountOut.Matrix[0].Values[0].Value))
-	assert.Equal(t, 4.5, float64(rqErrorCountIn.Matrix[0].Values[0].Value))
-	assert.Equal(t, 3.5, float64(rqErrorCountOut.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.35, float64(rqSizeOut.Average.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.2, float64(rqSizeOut.Median.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.3, float64(rqSizeOut.Percentile95.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.4, float64(rqSizeOut.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.5, float64(rqDurationOut.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.6, float64(rsSizeOut.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.7, float64(rqSizeIn.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.8, float64(rqDurationIn.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.9, float64(rsSizeIn.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 11.0, float64(tcpRecIn.Matrix[0].Values[0].Value))
-	assert.Equal(t, 10.0, float64(tcpRecOut.Matrix[0].Values[0].Value))
-	assert.Equal(t, 13.0, float64(tcpSentIn.Matrix[0].Values[0].Value))
-	assert.Equal(t, 12.0, float64(tcpSentOut.Matrix[0].Values[0].Value))
-}
-
-func TestGetServiceMetricsIncludeIstioFalse(t *testing.T) {
-	client, api, err := setupMocked()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
-	mockRange(api, "round(sum(rate(istio_tcp_received_bytes_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\"}[5m])), 0.001)", 10)
-	mockRange(api, "round(sum(rate(istio_tcp_received_bytes_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 11)
-	mockRange(api, "round(sum(rate(istio_tcp_sent_bytes_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\"}[5m])), 0.001)", 12)
-	mockRange(api, "round(sum(rate(istio_tcp_sent_bytes_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 13)
-	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.5)
-	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",destination_workload_namespace!=\"istio-system\"}[5m]", 0.35, 0.2, 0.3, 0.6)
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
@@ -302,7 +217,6 @@ func TestGetFilteredServiceMetrics(t *testing.T) {
 		RateFunc:     "rate",
 		ByLabelsIn:   []string{},
 		ByLabelsOut:  []string{},
-		IncludeIstio: true,
 		Filters:      []string{"request_count", "request_size"}})
 
 	assert.Equal(t, 2, len(metrics.Metrics), "Should have 2 simple metrics")
@@ -337,7 +251,6 @@ func TestGetServiceMetricsInstantRates(t *testing.T) {
 		RateFunc:     "irate",
 		ByLabelsIn:   []string{},
 		ByLabelsOut:  []string{},
-		IncludeIstio: true,
 		Filters:      []string{"request_count"},
 	})
 
@@ -395,7 +308,6 @@ func TestGetServiceMetricsUnavailable(t *testing.T) {
 		RateFunc:     "rate",
 		ByLabelsIn:   []string{},
 		ByLabelsOut:  []string{},
-		IncludeIstio: true,
 		Filters:      []string{"request_count", "request_size"},
 	})
 
@@ -464,7 +376,6 @@ func TestGetNamespaceMetrics(t *testing.T) {
 		RateFunc:     "rate",
 		ByLabelsIn:   []string{},
 		ByLabelsOut:  []string{},
-		IncludeIstio: true,
 		Filters:      []string{}})
 
 	assert.Equal(t, 8, len(metrics.Metrics), "Should have 8 simple metrics")
@@ -531,7 +442,7 @@ func TestGetNamespaceRequestRates(t *testing.T) {
 			Metric:    model.Metric{"source_service": "a.istio-system.svc.cluster.local"},
 		},
 	}
-	mockQuery(api, `rate(istio_requests_total{reporter="source",source_workload_namespace="istio-system",destination_workload_namespace!="istio-system"}[5m])`, &vectorQ1)
+	mockQuery(api, `rate(istio_requests_total{reporter="destination",destination_service_namespace="istio-system",source_workload_namespace!="istio-system"}[5m])`, &vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
@@ -539,7 +450,7 @@ func TestGetNamespaceRequestRates(t *testing.T) {
 			Value:     model.SampleValue(1),
 			Metric:    model.Metric{"source_service": "a.istio-system.svc.cluster.local"}},
 	}
-	mockQuery(api, `rate(istio_requests_total{reporter="destination",destination_workload_namespace="istio-system"}[5m])`, &vectorQ2)
+	mockQuery(api, `rate(istio_requests_total{reporter="destination",source_workload_namespace="istio-system"}[5m])`, &vectorQ2)
 
 	in, out, err := client.GetNamespaceRequestRates("istio-system", "5m")
 	assert.Equal(t, 1, in.Len())

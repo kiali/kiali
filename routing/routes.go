@@ -211,7 +211,6 @@ func NewRoutes() (r *Routes) {
 			// filters[]:     List of metrics to fetch (empty by default). When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
 			// byLabelsIn[]:  List of labels to use for grouping input metrics (empty by default). Example: response_code,source_version
 			// byLabelsOut[]: List of labels to use for grouping output metrics (empty by default). Example: response_code,destination_version
-			// includeIstio:  Include istio-system destinations in collected metrics (default false)
 
 			"ServiceMetrics",
 			"GET",
@@ -228,7 +227,6 @@ func NewRoutes() (r *Routes) {
 			// filters[]:     List of metrics to fetch (empty by default). When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
 			// byLabelsIn[]:  List of labels to use for grouping input metrics (empty by default). Example: response_code,source_version
 			// byLabelsOut[]: List of labels to use for grouping output metrics (empty by default). Example: response_code,destination_version
-			// includeIstio:  Include istio-system destinations in collected metrics (default false)
 			"WorkloadMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/metrics",
@@ -272,34 +270,19 @@ func NewRoutes() (r *Routes) {
 		},
 		{
 			// Supported query parameters:
-			// appenders:      comma-separated list of desired appenders (default all)
+			// appenders:      Comma-separated list of desired appenders (default all)
 			// duration:       Duration indicating desired query period (default 10m)
-			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
-			// includeIstio    include istio-system services in graph (default false)
+			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
+			// includeIstio:   Include istio-system destinations in graph (default false)
 			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
-			// namespaces:     comma-separated list of namespaces will override path param (path param 'all' for all namespaces)
+			// namespaces:     Comma-separated list of namespaces will override path param (path param 'all' for all namespaces)
 			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-			// vendor:         cytoscape (default) | vizceral
+			// vendor:         Graph format: cytoscape (default) | vizceral
 
 			"GraphNamespace",
 			"GET",
 			"/api/namespaces/{namespace}/graph",
 			handlers.GraphNamespace,
-			true,
-		},
-		{
-			// Supported query parameters:
-			// appenders:      comma-separated list of desired appenders (default all)
-			// duration:       Duration indicating desired query period (default 10m)
-			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
-			// includeIstio    include istio-system services in graph (default false)
-			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
-			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-
-			"GraphService",
-			"GET",
-			"/api/namespaces/{namespace}/services/{service}/graph",
-			handlers.GraphService,
 			true,
 		},
 		{

@@ -61,8 +61,12 @@ func (in *Client) Inject(api v1.API) {
 // Returned map has a destination version as a key and a list of workloads as values.
 // It returns an error on any problem.
 func (in *Client) GetSourceWorkloads(namespace string, servicename string) (map[string][]Workload, error) {
-	query := fmt.Sprintf("istio_requests_total{reporter=\"source\",destination_service_name=\"%s\",destination_service_namespace=\"%s\"}",
-		servicename, namespace)
+	reporter := "source"
+	if config.Get().IstioNamespace == namespace {
+		reporter = "destination"
+	}
+	query := fmt.Sprintf("istio_requests_total{reporter=\"%s\",destination_service_name=\"%s\",destination_service_namespace=\"%s\"}",
+		reporter, servicename, namespace)
 	result, err := in.api.Query(context.Background(), query, time.Now())
 	if err != nil {
 		return nil, err

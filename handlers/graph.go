@@ -46,6 +46,7 @@ import (
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/cytoscape"
 	"github.com/kiali/kiali/graph/options"
@@ -173,6 +174,39 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 	populateTrafficMap(trafficMap, &extVector, o)
 	populateTrafficMap(trafficMap, &intVector, o)
 
+	// istio component telemetry is only reported destination-side, so we must perform additional queries
+	if o.IncludeIstio {
+		istioNamespace := config.Get().IstioNamespace
+
+		// 4) if the target namespace is istioNamespace re-query for traffic originating from a workload outside of the namespace
+		if namespace == istioNamespace {
+			query = fmt.Sprintf("sum(rate(%v{reporter=\"destination\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
+				o.Metric,
+				namespace,
+				namespace,
+				"[2345][0-9][0-9]",        // regex for valid response_codes
+				int(o.Duration.Seconds()), // range duration for the query
+				groupBy)
+
+			// fetch the externally originating request traffic time-series
+			extIstioVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+			populateTrafficMap(trafficMap, &extIstioVector, o)
+		}
+
+		// 5) supplemental query for traffic originating from a workload inside of the namespace with istioSystem destination
+		query = fmt.Sprintf("sum(rate(%v{reporter=\"destination\",source_workload_namespace=\"%v\",destination_service_namespace=\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
+			o.Metric,
+			namespace,
+			istioNamespace,
+			"[2345][0-9][0-9]",        // regex for valid response_codes
+			int(o.Duration.Seconds()), // range duration for the query
+			groupBy)
+
+		// fetch the internally originating request traffic time-series
+		intIstioVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+		populateTrafficMap(trafficMap, &intIstioVector, o)
+	}
+
 	return trafficMap
 }
 
@@ -212,12 +246,6 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		destApp, destWl = graph.DestFields(sourceApp, destApp, destWl, destSvcName, o.GraphType)
 
 		source, _ := addNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, o)
-
-		// Don't include an istio-system destination (kiali-915) unless asked to do so
-		if !o.IncludeIstio && destSvcNs == options.NamespaceIstioSystem {
-			continue
-		}
-
 		dest, _ := addNode(trafficMap, destSvcNs, destWl, destApp, destVer, o)
 
 		addToDestServices(dest.Metadata, destSvcName)
@@ -313,39 +341,6 @@ func mergeTrafficMaps(trafficMap, nsTrafficMap graph.TrafficMap) {
 	}
 }
 
-// TODO: This handler needs to be replaced with something relevant to Istio 1.0, currently returns empty map
-// GraphService is a REST http.HandlerFunc handling service-specific servicegraph config generation.
-func GraphService(w http.ResponseWriter, r *http.Request) {
-	defer handlePanic(w)
-
-	client, err := prometheus.NewClient()
-	checkError(err)
-
-	graphService(w, r, client)
-}
-
-// TODO: This handler needs to be replaced with something relevant to Istio 1.0, currently returns empty map
-// graphService provides a testing hook that can supply a mock client
-func graphService(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
-	o := options.NewOptions(r)
-
-	switch o.Vendor {
-	case "cytoscape":
-	default:
-		checkError(errors.New(fmt.Sprintf("Vendor [%v] does not support Service Graphs", o.Vendor)))
-	}
-
-	log.Debugf("Build roots (root services nodes) for [%v] service graph with options [%+v]", o.Vendor, o)
-
-	trafficMap := buildServiceTrafficMap(o, client)
-
-	generateGraph(trafficMap, w, o)
-}
-
-func buildServiceTrafficMap(o options.Options, client *prometheus.Client) graph.TrafficMap {
-	return graph.NewTrafficMap()
-}
-
 func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options.Options) {
 	log.Debugf("Generating config for [%v] service graph...", o.Vendor)
 
@@ -370,7 +365,7 @@ func promQuery(query string, queryTime time.Time, api v1.API) model.Vector {
 
 	// wrap with a round() to be in line with metrics api
 	query = fmt.Sprintf("round(%s,0.001)", query)
-	log.Debugf("Executing query %s&time=%v (now=%v, %v)\n", query, queryTime.Format(TF), time.Now().Format(TF), queryTime.Unix())
+	log.Debugf("Executing query %s@time=%v (now=%v, %v)\n", query, queryTime.Format(TF), time.Now().Format(TF), queryTime.Unix())
 
 	value, err := api.Query(ctx, query, queryTime)
 	checkError(err)
