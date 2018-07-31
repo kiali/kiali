@@ -1,5 +1,5 @@
 import Namespace from './Namespace';
-import { Health } from './Health';
+import { ServiceHealth } from './Health';
 
 export interface ServiceOverview {
   name: string;
@@ -13,13 +13,13 @@ export interface ServiceList {
 
 export interface ServiceItem extends ServiceOverview {
   namespace: string;
-  healthPromise: Promise<Health>;
+  healthPromise: Promise<ServiceHealth>;
 }
 
 export const overviewToItem = (
   overview: ServiceOverview,
   namespace: string,
-  healthPromise: Promise<Health>
+  healthPromise: Promise<ServiceHealth>
 ): ServiceItem => {
   return {
     name: overview.name,

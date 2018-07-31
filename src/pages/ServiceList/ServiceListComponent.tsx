@@ -16,19 +16,18 @@ import PropTypes from 'prop-types';
 import { NamespaceFilter, NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { PfColors } from '../../components/Pf/PfColors';
 import * as API from '../../services/Api';
-import { Health } from '../../types/Health';
+import { getRequestErrorsRatio, ServiceHealth } from '../../types/Health';
 import Namespace from '../../types/Namespace';
 import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import { Pagination } from '../../types/Pagination';
 import { IstioLogo, ServiceItem, ServiceOverview, SortField, overviewToItem } from '../../types/ServiceListComponent';
 import { authentication } from '../../utils/Authentication';
-import { getRequestErrorsRatio } from '../../utils/Health';
 import { removeDuplicatesArray } from '../../utils/Common';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import ItemDescription from './ItemDescription';
 import './ServiceListComponent.css';
 
-type ServiceItemHealth = ServiceItem & { health: Health };
+type ServiceItemHealth = ServiceItem & { health: ServiceHealth };
 
 // Exported for test
 export const sortFields: SortField[] = [
@@ -241,9 +240,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             serviceList = serviceList.filter(service => this.isFiltered(service, servicenameFilters, istioFilters));
           }
           serviceList.forEach(overview => {
-            const healthProm = API.getServiceHealth(authentication(), namespace, overview.name, this.rateInterval).then(
-              r => r.data
-            );
+            const healthProm = API.getServiceHealth(authentication(), namespace, overview.name, this.rateInterval);
             updatedServices.push(overviewToItem(overview, namespace, healthProm));
           });
         });
@@ -329,7 +326,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             }
             // Prettier makes irrelevant line-breaking clashing with tslint
             // prettier-ignore
-            description={<ItemDescription item={serviceItem} rateInterval={this.rateInterval} />}
+            description={<ItemDescription item={serviceItem} />}
           />
         </Link>
       );

@@ -4,10 +4,10 @@ import MetricsOptions from '../types/MetricsOptions';
 import { Metrics } from '../types/Metrics';
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
 import { IstioConfigList } from '../types/IstioConfigListComponent';
-import { NamespaceValidations, ServiceDetailsInfo, Validations } from '../types/ServiceInfo';
+import { NamespaceValidations, ServiceDetailsInfo, Validations, hasIstioSidecar } from '../types/ServiceInfo';
 import JaegerInfo from '../types/JaegerInfo';
 import GrafanaInfo from '../types/GrafanaInfo';
-import { Health, NamespaceHealth } from '../types/Health';
+import { AppHealth, ServiceHealth, WorkloadHealth, NamespaceAppHealth, NamespaceWorkloadHealth } from '../types/Health';
 import { ServiceList } from '../types/ServiceListComponent';
 
 interface Response<T> {
@@ -17,7 +17,6 @@ interface Response<T> {
 /**  Headers Definitions */
 
 const loginHeaders = { 'X-Auth-Type-Kiali-UI': '1' };
-
 const authHeader = (auth: string) => ({ Authorization: auth });
 
 /**  Helpers to Requests */
@@ -116,19 +115,71 @@ export const getServiceHealth = (
   auth: string,
   namespace: String,
   service: String,
-  durationSec?: number
-): Promise<Response<Health>> => {
+  durationSec: number
+): Promise<ServiceHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest('get', `/api/namespaces/${namespace}/services/${service}/health`, params, {}, auth);
+  return newRequest('get', `/api/namespaces/${namespace}/services/${service}/health`, params, {}, auth).then(response =>
+    ServiceHealth.fromJson(response.data, durationSec)
+  );
 };
 
-export const getNamespaceHealth = (
+export const getAppHealth = (auth: string, namespace: String, app: String, durationSec: number): Promise<AppHealth> => {
+  const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
+  return newRequest('get', `/api/namespaces/${namespace}/apps/${app}/health`, params, {}, auth).then(response =>
+    AppHealth.fromJson(response.data, durationSec)
+  );
+};
+
+export const getWorkloadHealth = (
   auth: string,
   namespace: String,
-  durationSec?: number
-): Promise<Response<NamespaceHealth>> => {
+  workload: String,
+  durationSec: number
+): Promise<WorkloadHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest('get', `/api/namespaces/${namespace}/health`, params, {}, auth);
+  return newRequest('get', `/api/namespaces/${namespace}/workloads/${workload}/health`, params, {}, auth).then(
+    response => WorkloadHealth.fromJson(response.data, durationSec)
+  );
+};
+
+export const getNamespaceAppHealth = (
+  auth: string,
+  namespace: String,
+  durationSec: number
+): Promise<NamespaceAppHealth> => {
+  const params: any = {
+    type: 'app'
+  };
+  if (durationSec) {
+    params.rateInterval = String(durationSec) + 's';
+  }
+  return newRequest('get', `/api/namespaces/${namespace}/health`, params, {}, auth).then(response => {
+    const ret: NamespaceAppHealth = {};
+    Object.keys(response.data).forEach(k => {
+      ret[k] = AppHealth.fromJson(response.data[k], durationSec);
+    });
+    return ret;
+  });
+};
+
+export const getNamespaceWorkloadHealth = (
+  auth: string,
+  namespace: String,
+  durationSec: number
+): Promise<NamespaceWorkloadHealth> => {
+  const params: any = {
+    type: 'workload'
+  };
+  if (durationSec) {
+    params.rateInterval = String(durationSec) + 's';
+  }
+  return newRequest('get', `/api/namespaces/${namespace}/health`, params, {}, auth).then(response => {
+    const ret: NamespaceWorkloadHealth = {};
+    Object.keys(response.data).forEach(k => {
+      ret[k] = WorkloadHealth.fromJson(response.data[k], durationSec);
+    });
+    return ret;
+  });
 };
 
 export const getGrafanaInfo = (auth: string): Promise<Response<GrafanaInfo>> => {
@@ -143,12 +194,18 @@ export const getGraphElements = (auth: string, namespace: Namespace, params: any
   return newRequest('get', `/api/namespaces/${namespace.name}/graph`, params, {}, auth);
 };
 
-export const getServiceDetail = (
-  auth: string,
-  namespace: String,
-  service: String
-): Promise<Response<ServiceDetailsInfo>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/services/${service}`, {}, {}, auth);
+export const getServiceDetail = (auth: string, namespace: String, service: String): Promise<ServiceDetailsInfo> => {
+  return newRequest('get', `/api/namespaces/${namespace}/services/${service}`, {}, {}, auth).then(
+    (r: Response<ServiceDetailsInfo>) => {
+      const info: ServiceDetailsInfo = r.data;
+      info.istioSidecar = hasIstioSidecar(info.pods);
+      if (info.health) {
+        // Default rate interval in backend = 600s
+        info.health = ServiceHealth.fromJson(info.health, 600);
+      }
+      return info;
+    }
+  );
 };
 
 export const getServiceValidations = (
