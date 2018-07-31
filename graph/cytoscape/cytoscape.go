@@ -21,7 +21,6 @@ import (
 
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/options"
-	"github.com/kiali/kiali/services/models"
 )
 
 type NodeData struct {
@@ -45,7 +44,6 @@ type NodeData struct {
 	HasCB        bool            `json:"hasCB,omitempty"`        // true (has circuit breaker) | false
 	HasMissingSC bool            `json:"hasMissingSC,omitempty"` // true (has missing sidecar) | false
 	HasVS        bool            `json:"hasVS,omitempty"`        // true (has route rule) | false
-	Health       *models.Health  `json:"health,omitempty"`
 	IsDead       bool            `json:"isDead,omitempty"`    // true (has no pods) | false
 	IsGroup      string          `json:"isGroup,omitempty"`   // set to the grouping type, current values: [ 'version' ]
 	IsOutside    bool            `json:"isOutside,omitempty"` // true | false

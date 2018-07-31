@@ -428,7 +428,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	assert.Equal(t, 12.0, float64(tcpSentOut.Matrix[0].Values[0].Value))
 }
 
-func TestGetNamespaceRequestRates(t *testing.T) {
+func TestGetAllRequestRates(t *testing.T) {
 	client, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
@@ -439,20 +439,51 @@ func TestGetNamespaceRequestRates(t *testing.T) {
 		&model.Sample{
 			Timestamp: model.Now(),
 			Value:     model.SampleValue(1),
-			Metric:    model.Metric{"source_service": "a.istio-system.svc.cluster.local"},
+			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	mockQuery(api, `rate(istio_requests_total{reporter="destination",destination_service_namespace="istio-system",source_workload_namespace!="istio-system"}[5m])`, &vectorQ1)
+	mockQuery(api, `rate(istio_requests_total{reporter="destination",destination_workload_namespace="ns"}[5m])`, &vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
 			Timestamp: model.Now(),
+			Value:     model.SampleValue(2),
+			Metric:    model.Metric{"foo": "bar"}},
+	}
+	mockQuery(api, `rate(istio_requests_total{reporter="source",source_workload_namespace="ns"}[5m])`, &vectorQ2)
+
+	in, out, err := client.GetAllRequestRates("ns", "5m")
+	assert.Equal(t, 1, in.Len())
+	assert.Equal(t, 1, out.Len())
+	assert.Equal(t, vectorQ1, in)
+	assert.Equal(t, vectorQ2, out)
+}
+
+func TestGetAllRequestRatesIstioSystem(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	vectorQ1 := model.Vector{
+		&model.Sample{
+			Timestamp: model.Now(),
 			Value:     model.SampleValue(1),
-			Metric:    model.Metric{"source_service": "a.istio-system.svc.cluster.local"}},
+			Metric:    model.Metric{"foo": "bar"},
+		},
+	}
+	mockQuery(api, `rate(istio_requests_total{reporter="destination",destination_workload_namespace="istio-system"}[5m])`, &vectorQ1)
+
+	vectorQ2 := model.Vector{
+		&model.Sample{
+			Timestamp: model.Now(),
+			Value:     model.SampleValue(2),
+			Metric:    model.Metric{"foo": "bar"}},
 	}
 	mockQuery(api, `rate(istio_requests_total{reporter="destination",source_workload_namespace="istio-system"}[5m])`, &vectorQ2)
 
-	in, out, err := client.GetNamespaceRequestRates("istio-system", "5m")
+	in, out, err := client.GetAllRequestRates("istio-system", "5m")
 	assert.Equal(t, 1, in.Len())
 	assert.Equal(t, 1, out.Len())
 	assert.Equal(t, vectorQ1, in)

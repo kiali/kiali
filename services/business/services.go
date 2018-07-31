@@ -63,8 +63,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		return nil, fmt.Errorf("Service details: %s", err.Error())
 	}
 
-	health := models.Health{}
-	in.health.fillMissingParts(namespace, service, serviceDetails, interval, &health)
+	health := in.health.getServiceHealth(namespace, service, interval, serviceDetails)
 
 	istioDetails, err := in.k8s.GetIstioDetails(namespace, service)
 	if err != nil {

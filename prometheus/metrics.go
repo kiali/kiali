@@ -60,8 +60,8 @@ type Histogram struct {
 	Percentile99 *Metric `json:"percentile99"`
 }
 
-// EnvoyHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster (ie. service)
-type EnvoyHealth struct {
+// EnvoyServiceHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster (ie. service)
+type EnvoyServiceHealth struct {
 	Inbound  EnvoyRatio `json:"inbound"`
 	Outbound EnvoyRatio `json:"outbound"`
 }
@@ -72,8 +72,8 @@ type EnvoyRatio struct {
 	Total   int `json:"total"`
 }
 
-func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) (EnvoyHealth, error) {
-	ret := EnvoyHealth{}
+func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) (EnvoyServiceHealth, error) {
+	ret := EnvoyServiceHealth{}
 	if len(ports) == 0 {
 		return ret, nil
 	}
@@ -346,20 +346,17 @@ func replaceInvalidCharacters(metricName string) string {
 	return invalidLabelCharRE.ReplaceAllString(metricName, "_")
 }
 
-func getNamespaceRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, model.Vector, error) {
-	reporter := "source"
+func getAllRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, model.Vector, error) {
+	outReporter := "source"
 	if config.Get().IstioNamespace == namespace {
-		reporter = "destination"
+		outReporter = "destination"
 	}
-
-	// traffic originating outside the namespace to destinations inside the namespace
-	lblIn := fmt.Sprintf(`reporter="%s",destination_service_namespace="%s",source_workload_namespace!="%s"`, reporter, namespace, namespace)
+	lblIn := fmt.Sprintf(`reporter="destination",destination_workload_namespace="%s"`, namespace)
 	in, err := getRequestRatesForLabel(api, time.Now(), lblIn, ratesInterval)
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
 	}
-	// traffic originating inside the namespace to destinations inside or outside the namespace
-	lblOut := fmt.Sprintf(`reporter="%s",source_workload_namespace="%s"`, reporter, namespace)
+	lblOut := fmt.Sprintf(`reporter="%s",source_workload_namespace="%s"`, outReporter, namespace)
 	out, err := getRequestRatesForLabel(api, time.Now(), lblOut, ratesInterval)
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
@@ -367,24 +364,22 @@ func getNamespaceRequestRates(api v1.API, namespace string, ratesInterval string
 	return in, out, nil
 }
 
-func getAppsRequestRates(api v1.API, namespace string, apps []string, ratesInterval string) (model.Vector, model.Vector, error) {
-	lblIn := fmt.Sprintf(`reporter="destination",destination_workload_namespace="%s"`, namespace)
+func getServiceRequestRates(api v1.API, namespace, service, ratesInterval string) (model.Vector, error) {
+	lbl := fmt.Sprintf(`reporter="destination",destination_service_name="%s",destination_service_namespace="%s"`, service, namespace)
+	in, err := getRequestRatesForLabel(api, time.Now(), lbl, ratesInterval)
+	if err != nil {
+		return model.Vector{}, err
+	}
+	return in, nil
+}
+
+func getItemRequestRates(api v1.API, namespace, item, itemLabelSuffix, ratesInterval string) (model.Vector, model.Vector, error) {
+	lblIn := fmt.Sprintf(`reporter="destination",destination_workload_namespace="%s",destination_%s="%s"`, namespace, itemLabelSuffix, item)
 	outReporter := "source"
 	if config.Get().IstioNamespace == namespace {
 		outReporter = "destination"
 	}
-	lblOut := fmt.Sprintf(`reporter="%s",source_workload_namespace="%s"`, outReporter, namespace)
-	if len(apps) == 1 {
-		lblIn += fmt.Sprintf(`,destination_app="%s"`, apps[0])
-		lblOut += fmt.Sprintf(`,source_app="%s"`, apps[0])
-	} else if len(apps) > 1 {
-		strApps := strings.Join(apps, "|")
-		lblIn += fmt.Sprintf(`,destination_app=~"%s"`, strApps)
-		lblOut += fmt.Sprintf(`,source_app=~"%s"`, strApps)
-	} else {
-		// no app => no result
-		return model.Vector{}, model.Vector{}, nil
-	}
+	lblOut := fmt.Sprintf(`reporter="%s",source_workload_namespace="%s",source_%s="%s"`, outReporter, namespace, itemLabelSuffix, item)
 	in, err := getRequestRatesForLabel(api, time.Now(), lblIn, ratesInterval)
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
