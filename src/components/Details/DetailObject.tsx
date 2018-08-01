@@ -63,7 +63,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
             this.label(name, value)
           ) : (
             <span>
-              <span className="text-capitalize">[{name}]</span> {value}
+              <span className="text-capitalize">{name ? `[${name}]` : name}</span> {value}
             </span>
           )}
         </div>
