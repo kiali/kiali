@@ -2,13 +2,13 @@ package business
 
 import (
 	"testing"
+	"time"
 
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"k8s.io/api/apps/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 )
 
 func setupDeploymentService(k8s *kubetest.K8SClientMock) DeploymentService {

@@ -47,6 +47,46 @@
         }
       }
     },
+    "/namespaces/{namespace}/deployments": {
+      "get": {
+        "description": "Endpoint to get the list of deployments for a namespace",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "deploymentList",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/deploymentListResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/istio": {
       "get": {
         "description": "Endpoint to get the list of Istio Config of a namespace",
@@ -311,6 +351,149 @@
     }
   },
   "definitions": {
+    "Autoscaler": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "currentCPUUtilizationPercentage": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "CurrentCPUUtilizationPercentage"
+        },
+        "currentReplicas": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "CurrentReplicas"
+        },
+        "desiredReplicas": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "DesiredReplicas"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "lastScaleTime": {
+          "type": "string",
+          "x-go-name": "LastScaleTime"
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "MaxReplicas"
+        },
+        "minReplicas": {
+          "description": "Spec",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "MinReplicas"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "observedGeneration": {
+          "description": "Status",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ObservedGeneration"
+        },
+        "targetCPUUtilizationPercentage": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "TargetCPUUtilizationPercentage"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Deployment": {
+      "type": "object",
+      "required": [
+        "name",
+        "templateAnnotations",
+        "labels",
+        "createdAt",
+        "resourceVersion",
+        "replicas",
+        "availableReplicas",
+        "unavailableReplicas"
+      ],
+      "properties": {
+        "autoscaler": {
+          "$ref": "#/definitions/Autoscaler"
+        },
+        "availableReplicas": {
+          "description": "Number of available replicas",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "AvailableReplicas",
+          "example": 1
+        },
+        "createdAt": {
+          "description": "Creation timestamp (in RFC3339 format)",
+          "type": "string",
+          "x-go-name": "CreatedAt",
+          "example": "2018-07-31T12:24:17Z"
+        },
+        "labels": {
+          "description": "Kubernetes labels",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "name": {
+          "description": "Deployment name",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "reviews"
+        },
+        "replicas": {
+          "description": "Number of desired replicas",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "Replicas",
+          "example": 2
+        },
+        "resourceVersion": {
+          "description": "Kubernetes ResourceVersion",
+          "type": "string",
+          "x-go-name": "ResourceVersion",
+          "example": "192892127"
+        },
+        "templateAnnotations": {
+          "description": "Kubernetes annotations",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "TemplateAnnotations"
+        },
+        "unavailableReplicas": {
+          "description": "Number of unavailable replicas",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "UnavailableReplicas",
+          "example": 1
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Deployments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Deployment"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "Gateway": {
       "type": "object",
       "properties": {
@@ -827,6 +1010,12 @@
     }
   },
   "responses": {
+    "deploymentListResponse": {
+      "description": "Listing all deployments in the namespace",
+      "schema": {
+        "$ref": "#/definitions/Deployments"
+      }
+    },
     "genericError": {
       "description": "A GenericError is the default error message that is generated.",
       "schema": {
