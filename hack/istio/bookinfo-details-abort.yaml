@@ -3,7 +3,6 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: details-abort-vs
-  namespace: bookinfo
 spec:
   hosts:
   - details
@@ -25,7 +24,6 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: details-abort-dr
-  namespace: bookinfo
 spec:
   host: details
   subsets:
