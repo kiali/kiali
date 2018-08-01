@@ -5,6 +5,7 @@ import (
 	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/kubernetes"
+	"k8s.io/api/apps/v1beta1"
 )
 
 type K8SClientMock struct {
@@ -29,6 +30,11 @@ func (o *K8SClientMock) GetFullServices(namespace string) (*kubernetes.ServiceLi
 func (o *K8SClientMock) GetServices(namespace string) (*v1.ServiceList, error) {
 	args := o.Called(namespace)
 	return args.Get(0).(*v1.ServiceList), args.Error(1)
+}
+
+func (o *K8SClientMock) GetDeployments(namespace string) (*v1beta1.DeploymentList, error) {
+	args := o.Called(namespace)
+	return args.Get(0).(*v1beta1.DeploymentList), args.Error(1)
 }
 
 func (o *K8SClientMock) GetPods(namespace, labelSelector string) (*v1.PodList, error) {

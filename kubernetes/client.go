@@ -39,6 +39,7 @@ type IstioClientInterface interface {
 	GetFullServices(namespace string) (*ServiceList, error)
 	GetServices(namespace string) (*v1.ServiceList, error)
 	GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error)
+	GetDeployments(namespace string) (*v1beta1.DeploymentList, error)
 	GetPods(namespace, labelSelector string) (*v1.PodList, error)
 	GetNamespacePods(namespace string) (*v1.PodList, error)
 	GetServicePods(namespace string, serviceName string, serviceVersion string) (*v1.PodList, error)
