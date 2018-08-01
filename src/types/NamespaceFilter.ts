@@ -23,6 +23,7 @@ export interface NamespaceFilterProps {
   onFilterChange: PropTypes.func;
   onError: PropTypes.func;
   initialFilters: FilterType[];
+  initialActiveFilters?: ActiveFilter[];
 }
 
 export interface NamespaceFilterState {

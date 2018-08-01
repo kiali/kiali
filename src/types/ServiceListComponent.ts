@@ -33,6 +33,7 @@ export const IstioLogo = require('../assets/img/istio-logo.svg');
 
 export interface SortField {
   title: string;
+  param: string;
   isNumeric: boolean;
   compare: (a: ServiceItem, b: ServiceItem) => number;
 }

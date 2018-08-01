@@ -5,8 +5,27 @@ ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <ServiceInfo
+    activeTab={
+      [MockFunction] {
+        "calls": Array [
+          Array [
+            "list",
+            "pods",
+          ],
+        ],
+      }
+    }
     namespace="istio-system"
     onRefresh={[MockFunction]}
+    onSelectTab={
+      [MockFunction] {
+        "calls": Array [
+          Array [
+            "list",
+          ],
+        ],
+      }
+    }
     service="reviews"
     serviceDetails={
       Object {
@@ -373,8 +392,9 @@ ShallowWrapper {
               xs={12}
             >
               <Uncontrolled(TabContainer)
-                defaultActiveKey={0}
+                activeKey={undefined}
                 id="service-tabs"
+                onSelect={undefined}
               >
                 <div>
                   <Nav
@@ -387,35 +407,35 @@ ShallowWrapper {
                     <NavItem
                       active={false}
                       disabled={false}
-                      eventKey={0}
+                      eventKey="pods"
                     >
                       Pods (0)
                     </NavItem>
                     <NavItem
                       active={false}
                       disabled={false}
-                      eventKey={1}
+                      eventKey="deployments"
                     >
                       Deployments (3)
                     </NavItem>
                     <NavItem
                       active={false}
                       disabled={false}
-                      eventKey={2}
+                      eventKey="sources"
                     >
                       Source Services (0)
                     </NavItem>
                     <NavItem
                       active={false}
                       disabled={false}
-                      eventKey={3}
+                      eventKey="virtualservices"
                     >
                       Virtual Services (1)
                     </NavItem>
                     <NavItem
                       active={false}
                       disabled={false}
-                      eventKey={4}
+                      eventKey="destinationrules"
                     >
                       Destination Rules (1)
                     </NavItem>
@@ -429,11 +449,11 @@ ShallowWrapper {
                   >
                     <TabPane
                       bsClass="tab-pane"
-                      eventKey={0}
+                      eventKey="pods"
                     />
                     <TabPane
                       bsClass="tab-pane"
-                      eventKey={1}
+                      eventKey="deployments"
                     >
                       <ServiceInfoDeployments
                         deployments={
@@ -519,11 +539,11 @@ ShallowWrapper {
                     </TabPane>
                     <TabPane
                       bsClass="tab-pane"
-                      eventKey={2}
+                      eventKey="sources"
                     />
                     <TabPane
                       bsClass="tab-pane"
-                      eventKey={3}
+                      eventKey="virtualservices"
                     >
                       <ServiceInfoVirtualServices
                         editorLink="/namespaces/istio-system/services/reviews"
@@ -558,7 +578,7 @@ ShallowWrapper {
                     </TabPane>
                     <TabPane
                       bsClass="tab-pane"
-                      eventKey={4}
+                      eventKey="destinationrules"
                     >
                       <ServiceInfoDestinationRules
                         destinationRules={
@@ -746,8 +766,9 @@ ShallowWrapper {
                 xs={12}
               >
                 <Uncontrolled(TabContainer)
-                  defaultActiveKey={0}
+                  activeKey={undefined}
                   id="service-tabs"
+                  onSelect={undefined}
                 >
                   <div>
                     <Nav
@@ -760,35 +781,35 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={0}
+                        eventKey="pods"
                       >
                         Pods (0)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={1}
+                        eventKey="deployments"
                       >
                         Deployments (3)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={2}
+                        eventKey="sources"
                       >
                         Source Services (0)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={3}
+                        eventKey="virtualservices"
                       >
                         Virtual Services (1)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={4}
+                        eventKey="destinationrules"
                       >
                         Destination Rules (1)
                       </NavItem>
@@ -802,11 +823,11 @@ ShallowWrapper {
                     >
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={0}
+                        eventKey="pods"
                       />
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={1}
+                        eventKey="deployments"
                       >
                         <ServiceInfoDeployments
                           deployments={
@@ -892,11 +913,11 @@ ShallowWrapper {
                       </TabPane>
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={2}
+                        eventKey="sources"
                       />
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={3}
+                        eventKey="virtualservices"
                       >
                         <ServiceInfoVirtualServices
                           editorLink="/namespaces/istio-system/services/reviews"
@@ -931,7 +952,7 @@ ShallowWrapper {
                       </TabPane>
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={4}
+                        eventKey="destinationrules"
                       >
                         <ServiceInfoDestinationRules
                           destinationRules={
@@ -1364,8 +1385,9 @@ ShallowWrapper {
                 xs={12}
               >
                 <Uncontrolled(TabContainer)
-                  defaultActiveKey={0}
+                  activeKey={undefined}
                   id="service-tabs"
+                  onSelect={undefined}
                 >
                   <div>
                     <Nav
@@ -1378,35 +1400,35 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={0}
+                        eventKey="pods"
                       >
                         Pods (0)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={1}
+                        eventKey="deployments"
                       >
                         Deployments (3)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={2}
+                        eventKey="sources"
                       >
                         Source Services (0)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={3}
+                        eventKey="virtualservices"
                       >
                         Virtual Services (1)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={4}
+                        eventKey="destinationrules"
                       >
                         Destination Rules (1)
                       </NavItem>
@@ -1420,11 +1442,11 @@ ShallowWrapper {
                     >
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={0}
+                        eventKey="pods"
                       />
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={1}
+                        eventKey="deployments"
                       >
                         <ServiceInfoDeployments
                           deployments={
@@ -1510,11 +1532,11 @@ ShallowWrapper {
                       </TabPane>
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={2}
+                        eventKey="sources"
                       />
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={3}
+                        eventKey="virtualservices"
                       >
                         <ServiceInfoVirtualServices
                           editorLink="/namespaces/istio-system/services/reviews"
@@ -1549,7 +1571,7 @@ ShallowWrapper {
                       </TabPane>
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={4}
+                        eventKey="destinationrules"
                       >
                         <ServiceInfoDestinationRules
                           destinationRules={
@@ -1601,8 +1623,9 @@ ShallowWrapper {
               "props": Object {
                 "bsClass": "col",
                 "children": <Uncontrolled(TabContainer)
-                  defaultActiveKey={0}
+                  activeKey={undefined}
                   id="service-tabs"
+                  onSelect={undefined}
                 >
                   <div>
                     <Nav
@@ -1615,35 +1638,35 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={0}
+                        eventKey="pods"
                       >
                         Pods (0)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={1}
+                        eventKey="deployments"
                       >
                         Deployments (3)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={2}
+                        eventKey="sources"
                       >
                         Source Services (0)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={3}
+                        eventKey="virtualservices"
                       >
                         Virtual Services (1)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={4}
+                        eventKey="destinationrules"
                       >
                         Destination Rules (1)
                       </NavItem>
@@ -1657,11 +1680,11 @@ ShallowWrapper {
                     >
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={0}
+                        eventKey="pods"
                       />
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={1}
+                        eventKey="deployments"
                       >
                         <ServiceInfoDeployments
                           deployments={
@@ -1747,11 +1770,11 @@ ShallowWrapper {
                       </TabPane>
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={2}
+                        eventKey="sources"
                       />
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={3}
+                        eventKey="virtualservices"
                       >
                         <ServiceInfoVirtualServices
                           editorLink="/namespaces/istio-system/services/reviews"
@@ -1786,7 +1809,7 @@ ShallowWrapper {
                       </TabPane>
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={4}
+                        eventKey="destinationrules"
                       >
                         <ServiceInfoDestinationRules
                           destinationRules={
@@ -1838,6 +1861,7 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "class",
                 "props": Object {
+                  "activeKey": undefined,
                   "children": <div>
                     <Nav
                       bsClass="nav nav-tabs nav-tabs-pf"
@@ -1849,35 +1873,35 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={0}
+                        eventKey="pods"
                       >
                         Pods (0)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={1}
+                        eventKey="deployments"
                       >
                         Deployments (3)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={2}
+                        eventKey="sources"
                       >
                         Source Services (0)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={3}
+                        eventKey="virtualservices"
                       >
                         Virtual Services (1)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={4}
+                        eventKey="destinationrules"
                       >
                         Destination Rules (1)
                       </NavItem>
@@ -1891,11 +1915,11 @@ ShallowWrapper {
                     >
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={0}
+                        eventKey="pods"
                       />
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={1}
+                        eventKey="deployments"
                       >
                         <ServiceInfoDeployments
                           deployments={
@@ -1981,11 +2005,11 @@ ShallowWrapper {
                       </TabPane>
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={2}
+                        eventKey="sources"
                       />
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={3}
+                        eventKey="virtualservices"
                       >
                         <ServiceInfoVirtualServices
                           editorLink="/namespaces/istio-system/services/reviews"
@@ -2020,7 +2044,7 @@ ShallowWrapper {
                       </TabPane>
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={4}
+                        eventKey="destinationrules"
                       >
                         <ServiceInfoDestinationRules
                           destinationRules={
@@ -2059,8 +2083,8 @@ ShallowWrapper {
                       </TabPane>
                     </TabContent>
                   </div>,
-                  "defaultActiveKey": 0,
                   "id": "service-tabs",
+                  "onSelect": undefined,
                 },
                 "ref": null,
                 "rendered": Object {
@@ -2079,35 +2103,35 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={0}
+                          eventKey="pods"
                         >
                           Pods (0)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={1}
+                          eventKey="deployments"
                         >
                           Deployments (3)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={2}
+                          eventKey="sources"
                         >
                           Source Services (0)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={3}
+                          eventKey="virtualservices"
                         >
                           Virtual Services (1)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={4}
+                          eventKey="destinationrules"
                         >
                           Destination Rules (1)
                         </NavItem>
@@ -2121,11 +2145,11 @@ ShallowWrapper {
                       >
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={0}
+                          eventKey="pods"
                         />
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={1}
+                          eventKey="deployments"
                         >
                           <ServiceInfoDeployments
                             deployments={
@@ -2211,11 +2235,11 @@ ShallowWrapper {
                         </TabPane>
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={2}
+                          eventKey="sources"
                         />
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={3}
+                          eventKey="virtualservices"
                         >
                           <ServiceInfoVirtualServices
                             editorLink="/namespaces/istio-system/services/reviews"
@@ -2250,7 +2274,7 @@ ShallowWrapper {
                         </TabPane>
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={4}
+                          eventKey="destinationrules"
                         >
                           <ServiceInfoDestinationRules
                             destinationRules={
@@ -2302,35 +2326,35 @@ ShallowWrapper {
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey={0}
+                            eventKey="pods"
                           >
                             Pods (0)
                           </NavItem>,
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey={1}
+                            eventKey="deployments"
                           >
                             Deployments (3)
                           </NavItem>,
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey={2}
+                            eventKey="sources"
                           >
                             Source Services (0)
                           </NavItem>,
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey={3}
+                            eventKey="virtualservices"
                           >
                             Virtual Services (1)
                           </NavItem>,
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey={4}
+                            eventKey="destinationrules"
                           >
                             Destination Rules (1)
                           </NavItem>,
@@ -2350,7 +2374,7 @@ ShallowWrapper {
                             "active": false,
                             "children": "Pods (0)",
                             "disabled": false,
-                            "eventKey": 0,
+                            "eventKey": "pods",
                           },
                           "ref": null,
                           "rendered": "Pods (0)",
@@ -2364,7 +2388,7 @@ ShallowWrapper {
                             "active": false,
                             "children": "Deployments (3)",
                             "disabled": false,
-                            "eventKey": 1,
+                            "eventKey": "deployments",
                           },
                           "ref": null,
                           "rendered": "Deployments (3)",
@@ -2378,7 +2402,7 @@ ShallowWrapper {
                             "active": false,
                             "children": "Source Services (0)",
                             "disabled": false,
-                            "eventKey": 2,
+                            "eventKey": "sources",
                           },
                           "ref": null,
                           "rendered": "Source Services (0)",
@@ -2395,7 +2419,7 @@ ShallowWrapper {
                               undefined,
                             ],
                             "disabled": false,
-                            "eventKey": 3,
+                            "eventKey": "virtualservices",
                           },
                           "ref": null,
                           "rendered": Array [
@@ -2415,7 +2439,7 @@ ShallowWrapper {
                               undefined,
                             ],
                             "disabled": false,
-                            "eventKey": 4,
+                            "eventKey": "destinationrules",
                           },
                           "ref": null,
                           "rendered": Array [
@@ -2437,11 +2461,11 @@ ShallowWrapper {
                         "children": Array [
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey={0}
+                            eventKey="pods"
                           />,
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey={1}
+                            eventKey="deployments"
                           >
                             <ServiceInfoDeployments
                               deployments={
@@ -2527,11 +2551,11 @@ ShallowWrapper {
                           </TabPane>,
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey={2}
+                            eventKey="sources"
                           />,
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey={3}
+                            eventKey="virtualservices"
                           >
                             <ServiceInfoVirtualServices
                               editorLink="/namespaces/istio-system/services/reviews"
@@ -2566,7 +2590,7 @@ ShallowWrapper {
                           </TabPane>,
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey={4}
+                            eventKey="destinationrules"
                           >
                             <ServiceInfoDestinationRules
                               destinationRules={
@@ -2617,7 +2641,7 @@ ShallowWrapper {
                           "props": Object {
                             "bsClass": "tab-pane",
                             "children": false,
-                            "eventKey": 0,
+                            "eventKey": "pods",
                           },
                           "ref": null,
                           "rendered": false,
@@ -2710,7 +2734,7 @@ ShallowWrapper {
                                 ]
                               }
                             />,
-                            "eventKey": 1,
+                            "eventKey": "deployments",
                           },
                           "ref": null,
                           "rendered": Object {
@@ -2809,7 +2833,7 @@ ShallowWrapper {
                           "props": Object {
                             "bsClass": "tab-pane",
                             "children": false,
-                            "eventKey": 2,
+                            "eventKey": "sources",
                           },
                           "ref": null,
                           "rendered": false,
@@ -2851,7 +2875,7 @@ ShallowWrapper {
                                 ]
                               }
                             />,
-                            "eventKey": 3,
+                            "eventKey": "virtualservices",
                           },
                           "ref": null,
                           "rendered": Object {
@@ -2932,7 +2956,7 @@ ShallowWrapper {
                               }
                               editorLink="/namespaces/istio-system/services/reviews"
                             />,
-                            "eventKey": 4,
+                            "eventKey": "destinationrules",
                           },
                           "ref": null,
                           "rendered": Object {
@@ -3140,8 +3164,9 @@ ShallowWrapper {
                 xs={12}
               >
                 <Uncontrolled(TabContainer)
-                  defaultActiveKey={0}
+                  activeKey={undefined}
                   id="service-tabs"
+                  onSelect={undefined}
                 >
                   <div>
                     <Nav
@@ -3154,35 +3179,35 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={0}
+                        eventKey="pods"
                       >
                         Pods (0)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={1}
+                        eventKey="deployments"
                       >
                         Deployments (3)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={2}
+                        eventKey="sources"
                       >
                         Source Services (0)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={3}
+                        eventKey="virtualservices"
                       >
                         Virtual Services (1)
                       </NavItem>
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey={4}
+                        eventKey="destinationrules"
                       >
                         Destination Rules (1)
                       </NavItem>
@@ -3196,11 +3221,11 @@ ShallowWrapper {
                     >
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={0}
+                        eventKey="pods"
                       />
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={1}
+                        eventKey="deployments"
                       >
                         <ServiceInfoDeployments
                           deployments={
@@ -3286,11 +3311,11 @@ ShallowWrapper {
                       </TabPane>
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={2}
+                        eventKey="sources"
                       />
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={3}
+                        eventKey="virtualservices"
                       >
                         <ServiceInfoVirtualServices
                           editorLink="/namespaces/istio-system/services/reviews"
@@ -3325,7 +3350,7 @@ ShallowWrapper {
                       </TabPane>
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey={4}
+                        eventKey="destinationrules"
                       >
                         <ServiceInfoDestinationRules
                           destinationRules={
@@ -3513,8 +3538,9 @@ ShallowWrapper {
                   xs={12}
                 >
                   <Uncontrolled(TabContainer)
-                    defaultActiveKey={0}
+                    activeKey={undefined}
                     id="service-tabs"
+                    onSelect={undefined}
                   >
                     <div>
                       <Nav
@@ -3527,35 +3553,35 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={0}
+                          eventKey="pods"
                         >
                           Pods (0)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={1}
+                          eventKey="deployments"
                         >
                           Deployments (3)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={2}
+                          eventKey="sources"
                         >
                           Source Services (0)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={3}
+                          eventKey="virtualservices"
                         >
                           Virtual Services (1)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={4}
+                          eventKey="destinationrules"
                         >
                           Destination Rules (1)
                         </NavItem>
@@ -3569,11 +3595,11 @@ ShallowWrapper {
                       >
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={0}
+                          eventKey="pods"
                         />
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={1}
+                          eventKey="deployments"
                         >
                           <ServiceInfoDeployments
                             deployments={
@@ -3659,11 +3685,11 @@ ShallowWrapper {
                         </TabPane>
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={2}
+                          eventKey="sources"
                         />
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={3}
+                          eventKey="virtualservices"
                         >
                           <ServiceInfoVirtualServices
                             editorLink="/namespaces/istio-system/services/reviews"
@@ -3698,7 +3724,7 @@ ShallowWrapper {
                         </TabPane>
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={4}
+                          eventKey="destinationrules"
                         >
                           <ServiceInfoDestinationRules
                             destinationRules={
@@ -4131,8 +4157,9 @@ ShallowWrapper {
                   xs={12}
                 >
                   <Uncontrolled(TabContainer)
-                    defaultActiveKey={0}
+                    activeKey={undefined}
                     id="service-tabs"
+                    onSelect={undefined}
                   >
                     <div>
                       <Nav
@@ -4145,35 +4172,35 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={0}
+                          eventKey="pods"
                         >
                           Pods (0)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={1}
+                          eventKey="deployments"
                         >
                           Deployments (3)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={2}
+                          eventKey="sources"
                         >
                           Source Services (0)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={3}
+                          eventKey="virtualservices"
                         >
                           Virtual Services (1)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={4}
+                          eventKey="destinationrules"
                         >
                           Destination Rules (1)
                         </NavItem>
@@ -4187,11 +4214,11 @@ ShallowWrapper {
                       >
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={0}
+                          eventKey="pods"
                         />
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={1}
+                          eventKey="deployments"
                         >
                           <ServiceInfoDeployments
                             deployments={
@@ -4277,11 +4304,11 @@ ShallowWrapper {
                         </TabPane>
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={2}
+                          eventKey="sources"
                         />
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={3}
+                          eventKey="virtualservices"
                         >
                           <ServiceInfoVirtualServices
                             editorLink="/namespaces/istio-system/services/reviews"
@@ -4316,7 +4343,7 @@ ShallowWrapper {
                         </TabPane>
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={4}
+                          eventKey="destinationrules"
                         >
                           <ServiceInfoDestinationRules
                             destinationRules={
@@ -4368,8 +4395,9 @@ ShallowWrapper {
                 "props": Object {
                   "bsClass": "col",
                   "children": <Uncontrolled(TabContainer)
-                    defaultActiveKey={0}
+                    activeKey={undefined}
                     id="service-tabs"
+                    onSelect={undefined}
                   >
                     <div>
                       <Nav
@@ -4382,35 +4410,35 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={0}
+                          eventKey="pods"
                         >
                           Pods (0)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={1}
+                          eventKey="deployments"
                         >
                           Deployments (3)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={2}
+                          eventKey="sources"
                         >
                           Source Services (0)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={3}
+                          eventKey="virtualservices"
                         >
                           Virtual Services (1)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={4}
+                          eventKey="destinationrules"
                         >
                           Destination Rules (1)
                         </NavItem>
@@ -4424,11 +4452,11 @@ ShallowWrapper {
                       >
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={0}
+                          eventKey="pods"
                         />
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={1}
+                          eventKey="deployments"
                         >
                           <ServiceInfoDeployments
                             deployments={
@@ -4514,11 +4542,11 @@ ShallowWrapper {
                         </TabPane>
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={2}
+                          eventKey="sources"
                         />
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={3}
+                          eventKey="virtualservices"
                         >
                           <ServiceInfoVirtualServices
                             editorLink="/namespaces/istio-system/services/reviews"
@@ -4553,7 +4581,7 @@ ShallowWrapper {
                         </TabPane>
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={4}
+                          eventKey="destinationrules"
                         >
                           <ServiceInfoDestinationRules
                             destinationRules={
@@ -4605,6 +4633,7 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "class",
                   "props": Object {
+                    "activeKey": undefined,
                     "children": <div>
                       <Nav
                         bsClass="nav nav-tabs nav-tabs-pf"
@@ -4616,35 +4645,35 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={0}
+                          eventKey="pods"
                         >
                           Pods (0)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={1}
+                          eventKey="deployments"
                         >
                           Deployments (3)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={2}
+                          eventKey="sources"
                         >
                           Source Services (0)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={3}
+                          eventKey="virtualservices"
                         >
                           Virtual Services (1)
                         </NavItem>
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey={4}
+                          eventKey="destinationrules"
                         >
                           Destination Rules (1)
                         </NavItem>
@@ -4658,11 +4687,11 @@ ShallowWrapper {
                       >
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={0}
+                          eventKey="pods"
                         />
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={1}
+                          eventKey="deployments"
                         >
                           <ServiceInfoDeployments
                             deployments={
@@ -4748,11 +4777,11 @@ ShallowWrapper {
                         </TabPane>
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={2}
+                          eventKey="sources"
                         />
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={3}
+                          eventKey="virtualservices"
                         >
                           <ServiceInfoVirtualServices
                             editorLink="/namespaces/istio-system/services/reviews"
@@ -4787,7 +4816,7 @@ ShallowWrapper {
                         </TabPane>
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey={4}
+                          eventKey="destinationrules"
                         >
                           <ServiceInfoDestinationRules
                             destinationRules={
@@ -4826,8 +4855,8 @@ ShallowWrapper {
                         </TabPane>
                       </TabContent>
                     </div>,
-                    "defaultActiveKey": 0,
                     "id": "service-tabs",
+                    "onSelect": undefined,
                   },
                   "ref": null,
                   "rendered": Object {
@@ -4846,35 +4875,35 @@ ShallowWrapper {
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey={0}
+                            eventKey="pods"
                           >
                             Pods (0)
                           </NavItem>
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey={1}
+                            eventKey="deployments"
                           >
                             Deployments (3)
                           </NavItem>
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey={2}
+                            eventKey="sources"
                           >
                             Source Services (0)
                           </NavItem>
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey={3}
+                            eventKey="virtualservices"
                           >
                             Virtual Services (1)
                           </NavItem>
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey={4}
+                            eventKey="destinationrules"
                           >
                             Destination Rules (1)
                           </NavItem>
@@ -4888,11 +4917,11 @@ ShallowWrapper {
                         >
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey={0}
+                            eventKey="pods"
                           />
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey={1}
+                            eventKey="deployments"
                           >
                             <ServiceInfoDeployments
                               deployments={
@@ -4978,11 +5007,11 @@ ShallowWrapper {
                           </TabPane>
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey={2}
+                            eventKey="sources"
                           />
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey={3}
+                            eventKey="virtualservices"
                           >
                             <ServiceInfoVirtualServices
                               editorLink="/namespaces/istio-system/services/reviews"
@@ -5017,7 +5046,7 @@ ShallowWrapper {
                           </TabPane>
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey={4}
+                            eventKey="destinationrules"
                           >
                             <ServiceInfoDestinationRules
                               destinationRules={
@@ -5069,35 +5098,35 @@ ShallowWrapper {
                             <NavItem
                               active={false}
                               disabled={false}
-                              eventKey={0}
+                              eventKey="pods"
                             >
                               Pods (0)
                             </NavItem>,
                             <NavItem
                               active={false}
                               disabled={false}
-                              eventKey={1}
+                              eventKey="deployments"
                             >
                               Deployments (3)
                             </NavItem>,
                             <NavItem
                               active={false}
                               disabled={false}
-                              eventKey={2}
+                              eventKey="sources"
                             >
                               Source Services (0)
                             </NavItem>,
                             <NavItem
                               active={false}
                               disabled={false}
-                              eventKey={3}
+                              eventKey="virtualservices"
                             >
                               Virtual Services (1)
                             </NavItem>,
                             <NavItem
                               active={false}
                               disabled={false}
-                              eventKey={4}
+                              eventKey="destinationrules"
                             >
                               Destination Rules (1)
                             </NavItem>,
@@ -5117,7 +5146,7 @@ ShallowWrapper {
                               "active": false,
                               "children": "Pods (0)",
                               "disabled": false,
-                              "eventKey": 0,
+                              "eventKey": "pods",
                             },
                             "ref": null,
                             "rendered": "Pods (0)",
@@ -5131,7 +5160,7 @@ ShallowWrapper {
                               "active": false,
                               "children": "Deployments (3)",
                               "disabled": false,
-                              "eventKey": 1,
+                              "eventKey": "deployments",
                             },
                             "ref": null,
                             "rendered": "Deployments (3)",
@@ -5145,7 +5174,7 @@ ShallowWrapper {
                               "active": false,
                               "children": "Source Services (0)",
                               "disabled": false,
-                              "eventKey": 2,
+                              "eventKey": "sources",
                             },
                             "ref": null,
                             "rendered": "Source Services (0)",
@@ -5162,7 +5191,7 @@ ShallowWrapper {
                                 undefined,
                               ],
                               "disabled": false,
-                              "eventKey": 3,
+                              "eventKey": "virtualservices",
                             },
                             "ref": null,
                             "rendered": Array [
@@ -5182,7 +5211,7 @@ ShallowWrapper {
                                 undefined,
                               ],
                               "disabled": false,
-                              "eventKey": 4,
+                              "eventKey": "destinationrules",
                             },
                             "ref": null,
                             "rendered": Array [
@@ -5204,11 +5233,11 @@ ShallowWrapper {
                           "children": Array [
                             <TabPane
                               bsClass="tab-pane"
-                              eventKey={0}
+                              eventKey="pods"
                             />,
                             <TabPane
                               bsClass="tab-pane"
-                              eventKey={1}
+                              eventKey="deployments"
                             >
                               <ServiceInfoDeployments
                                 deployments={
@@ -5294,11 +5323,11 @@ ShallowWrapper {
                             </TabPane>,
                             <TabPane
                               bsClass="tab-pane"
-                              eventKey={2}
+                              eventKey="sources"
                             />,
                             <TabPane
                               bsClass="tab-pane"
-                              eventKey={3}
+                              eventKey="virtualservices"
                             >
                               <ServiceInfoVirtualServices
                                 editorLink="/namespaces/istio-system/services/reviews"
@@ -5333,7 +5362,7 @@ ShallowWrapper {
                             </TabPane>,
                             <TabPane
                               bsClass="tab-pane"
-                              eventKey={4}
+                              eventKey="destinationrules"
                             >
                               <ServiceInfoDestinationRules
                                 destinationRules={
@@ -5384,7 +5413,7 @@ ShallowWrapper {
                             "props": Object {
                               "bsClass": "tab-pane",
                               "children": false,
-                              "eventKey": 0,
+                              "eventKey": "pods",
                             },
                             "ref": null,
                             "rendered": false,
@@ -5477,7 +5506,7 @@ ShallowWrapper {
                                   ]
                                 }
                               />,
-                              "eventKey": 1,
+                              "eventKey": "deployments",
                             },
                             "ref": null,
                             "rendered": Object {
@@ -5576,7 +5605,7 @@ ShallowWrapper {
                             "props": Object {
                               "bsClass": "tab-pane",
                               "children": false,
-                              "eventKey": 2,
+                              "eventKey": "sources",
                             },
                             "ref": null,
                             "rendered": false,
@@ -5618,7 +5647,7 @@ ShallowWrapper {
                                   ]
                                 }
                               />,
-                              "eventKey": 3,
+                              "eventKey": "virtualservices",
                             },
                             "ref": null,
                             "rendered": Object {
@@ -5699,7 +5728,7 @@ ShallowWrapper {
                                 }
                                 editorLink="/namespaces/istio-system/services/reviews"
                               />,
-                              "eventKey": 4,
+                              "eventKey": "destinationrules",
                             },
                             "ref": null,
                             "rendered": Object {

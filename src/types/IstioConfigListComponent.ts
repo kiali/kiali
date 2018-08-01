@@ -129,6 +129,7 @@ export interface SortField {
   id: string;
   title: string;
   isNumeric: boolean;
+  param: string;
 }
 
 export const dicIstioType = {

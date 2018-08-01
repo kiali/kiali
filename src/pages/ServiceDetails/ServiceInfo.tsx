@@ -26,6 +26,8 @@ interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
   validations: Validations;
   onRefresh: () => void;
+  onSelectTab: (tabName: string, tabKey?: string) => void;
+  activeTab: (tabName: string, whenEmpty: string) => string;
 }
 
 type ServiceInfoState = {
@@ -37,6 +39,8 @@ interface ValidationChecks {
   hasVirtualServiceChecks: boolean;
   hasDestinationRuleChecks: boolean;
 }
+
+const tabName = 'list';
 
 class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
   constructor(props: ServiceDetails) {
@@ -133,13 +137,19 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
           </Row>
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
-              <TabContainer id="service-tabs" defaultActiveKey={0}>
+              <TabContainer
+                id="service-tabs"
+                activeKey={this.props.activeTab(tabName, 'pods')}
+                onSelect={this.props.onSelectTab(tabName)}
+              >
                 <div>
                   <Nav bsClass="nav nav-tabs nav-tabs-pf">
-                    <NavItem eventKey={0}>{'Pods (' + pods.length + ')'}</NavItem>
-                    <NavItem eventKey={1}>{'Deployments (' + deployments.length + ')'}</NavItem>
-                    <NavItem eventKey={2}>{'Source Services (' + Object.keys(dependencies).length + ')'}</NavItem>
-                    <NavItem eventKey={3}>
+                    <NavItem eventKey={'pods'}>{'Pods (' + pods.length + ')'}</NavItem>
+                    <NavItem eventKey={'deployments'}>{'Deployments (' + deployments.length + ')'}</NavItem>
+                    <NavItem eventKey={'sources'}>
+                      {'Source Services (' + Object.keys(dependencies).length + ')'}
+                    </NavItem>
+                    <NavItem eventKey={'virtualservices'}>
                       {'Virtual Services (' + virtualServices.length + ')'}
                       {validationChecks.hasVirtualServiceChecks
                         ? getValidationIcon(
@@ -148,7 +158,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                           )
                         : undefined}
                     </NavItem>
-                    <NavItem eventKey={4}>
+                    <NavItem eventKey={'destinationrules'}>
                       {'Destination Rules (' + destinationRules.length + ')'}
                       {validationChecks.hasDestinationRuleChecks
                         ? getValidationIcon(
@@ -159,20 +169,20 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                     </NavItem>
                   </Nav>
                   <TabContent>
-                    <TabPane eventKey={0}>
+                    <TabPane eventKey={'pods'}>
                       {(pods.length > 0 || this.props.serviceDetails.istioSidecar) && <ServiceInfoPods pods={pods} />}
                     </TabPane>
-                    <TabPane eventKey={1}>
+                    <TabPane eventKey={'deployments'}>
                       {(deployments.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoDeployments deployments={deployments} />
                       )}
                     </TabPane>
-                    <TabPane eventKey={2}>
+                    <TabPane eventKey={'sources'}>
                       {(Object.keys(dependencies).length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoRoutes dependencies={dependencies} />
                       )}
                     </TabPane>
-                    <TabPane eventKey={3}>
+                    <TabPane eventKey={'virtualservices'}>
                       {(virtualServices.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoVirtualServices
                           virtualServices={virtualServices}
@@ -181,7 +191,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                         />
                       )}
                     </TabPane>
-                    <TabPane eventKey={4}>
+                    <TabPane eventKey={'destinationrules'}>
                       {(destinationRules.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoDestinationRules destinationRules={destinationRules} editorLink={editorLink} />
                       )}

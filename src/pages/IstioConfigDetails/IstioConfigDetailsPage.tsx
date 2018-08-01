@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Col, Icon, Row, Breadcrumb } from 'patternfly-react';
+import { Breadcrumb, Button, Col, Icon, Row } from 'patternfly-react';
 import { Link, RouteComponentProps } from 'react-router-dom';
 import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 import { ActiveFilter } from '../../types/NamespaceFilter';
@@ -54,6 +54,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       };
       activeFilters.push(objectTypeFilter);
     }
+
     NamespaceFilterSelected.setSelected(activeFilters);
   };
 

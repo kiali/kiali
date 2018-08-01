@@ -35,6 +35,8 @@ describe('#ServiceInfo render correctly with data', () => {
           serviceDetails={serviceDetailsInfo}
           validations={{}}
           onRefresh={jest.fn()}
+          onSelectTab={jest.fn()}
+          activeTab={jest.fn()}
         />
       );
       expect(wrapper).toBeDefined();

@@ -22,19 +22,23 @@ export namespace NamespaceFilterSelected {
   };
 }
 
+export const defaultNamespaceFilter = {
+  id: 'namespace',
+  title: 'Namespace',
+  placeholder: 'Filter by Namespace',
+  filterType: 'select',
+  filterValues: []
+};
+
 export class NamespaceFilter extends React.Component<NamespaceFilterProps, NamespaceFilterState> {
   constructor(props: NamespaceFilterProps) {
     super(props);
 
-    let namespaceFilter = {
-      id: 'namespace',
-      title: 'Namespace',
-      placeholder: 'Filter by Namespace',
-      filterType: 'select',
-      filterValues: []
-    };
+    let initialFilters = this.initialFilterList(defaultNamespaceFilter);
 
-    let initialFilters = this.initialFilterList(namespaceFilter);
+    if (this.props.initialActiveFilters && this.props.initialActiveFilters.length > 0) {
+      NamespaceFilterSelected.setSelected(this.props.initialActiveFilters);
+    }
 
     this.state = {
       currentFilterType: initialFilters[0],
@@ -50,6 +54,30 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
 
   componentDidMount() {
     this.updateNamespaces();
+  }
+
+  componentDidUpdate(prevProps: NamespaceFilterProps, prevState: NamespaceFilterState, snapshot: any) {
+    const filtersExists = (prevProps.initialActiveFilters || []).every(prevFilter => {
+      return (
+        (this.props.initialActiveFilters || []).findIndex(filter => {
+          return (
+            filter.label === prevFilter.label &&
+            filter.category === prevFilter.category &&
+            filter.value === prevFilter.value
+          );
+        }) > -1
+      );
+    });
+
+    if (
+      this.props.initialActiveFilters &&
+      prevProps.initialActiveFilters &&
+      (!filtersExists || prevProps.initialActiveFilters.length !== this.props.initialActiveFilters.length)
+    ) {
+      this.setState({
+        activeFilters: this.props.initialActiveFilters
+      });
+    }
   }
 
   updateNamespaces() {

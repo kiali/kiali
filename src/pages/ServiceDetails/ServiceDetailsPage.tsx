@@ -229,7 +229,11 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
             servicePageURL={this.servicePageURL()}
           />
         ) : (
-          <TabContainer id="basic-tabs" activeKey={this.activeTab('tab', 'info')} onSelect={this.mainTabSelectHandler}>
+          <TabContainer
+            id="basic-tabs"
+            activeKey={this.activeTab('tab', 'info')}
+            onSelect={this.tabSelectHandler('tab')}
+          >
             <div>
               <Nav bsClass="nav nav-tabs nav-tabs-pf">
                 <NavItem eventKey="info">
@@ -250,6 +254,8 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
                     serviceDetails={this.state.serviceDetailsInfo}
                     validations={this.state.validations}
                     onRefresh={this.fetchBackend}
+                    activeTab={this.activeTab}
+                    onSelectTab={this.tabSelectHandler}
                   />
                 </TabPane>
                 <TabPane eventKey="metrics" mountOnEnter={true} unmountOnExit={true}>
@@ -266,23 +272,21 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     );
   }
 
-  private tabSelectHandler = (tabName: string, tabKey?: string) => {
-    if (!tabKey) {
-      return;
-    }
-
-    const urlParams = new URLSearchParams(this.props.location.search);
-    urlParams.set(tabName, tabKey);
-
-    this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
-  };
-
-  private mainTabSelectHandler = (tabKey?: string) => {
-    this.tabSelectHandler('tab', tabKey);
-  };
-
-  private activeTab = (tabName: string, whenEmpty: string): string => {
+  private activeTab = (tabName: string, whenEmpty: string) => {
     return new URLSearchParams(this.props.location.search).get(tabName) || whenEmpty;
+  };
+
+  private tabSelectHandler = (tabName: string) => {
+    return (tabKey?: string) => {
+      if (!tabKey) {
+        return;
+      }
+
+      const urlParams = new URLSearchParams(this.props.location.search);
+      urlParams.set(tabName, tabKey);
+
+      this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
+    };
   };
 
   private navigateToJaeger = () => {

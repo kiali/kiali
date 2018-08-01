@@ -84,7 +84,8 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     let sortField: SortField = {
       id: 'istioname',
       title: 'Istio Name',
-      isNumeric: false
+      isNumeric: false,
+      param: 'in'
     };
     let isAscending = true;
     let sorted = sortIstioItems(istioItems, sortField, isAscending);
@@ -114,7 +115,8 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     let sortField: SortField = {
       id: 'istiotype',
       title: 'Istio Type',
-      isNumeric: false
+      isNumeric: false,
+      param: 'it'
     };
     let isAscending = true;
     let sorted = sortIstioItems(istioItems, sortField, isAscending);
