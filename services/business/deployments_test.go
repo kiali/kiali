@@ -23,23 +23,15 @@ func TestDeploymentListHandler(t *testing.T) {
 	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
 	svc := setupDeploymentService(k8s)
 
-	services, _ := svc.GetDeploymentList("Namespace")
+	deploymentList, _ := svc.GetDeploymentList("Namespace")
+	deployments := deploymentList.Deployments
 
-	assert.Equal(3, len(services))
-	assert.Equal("httpbin-v1", services[0].Name)
-	assert.Equal(int32(1), services[0].Replicas)
-	assert.Equal(int32(1), services[0].AvailableReplicas)
-	assert.Equal(int32(0), services[0].UnavailableReplicas)
+	assert.Equal("Namespace", deploymentList.Namespace.Name)
 
-	assert.Equal("httpbin-v2", services[1].Name)
-	assert.Equal(int32(2), services[1].Replicas)
-	assert.Equal(int32(1), services[1].AvailableReplicas)
-	assert.Equal(int32(1), services[1].UnavailableReplicas)
-
-	assert.Equal("httpbin-v3", services[2].Name)
-	assert.Equal(int32(2), services[2].Replicas)
-	assert.Equal(int32(0), services[2].AvailableReplicas)
-	assert.Equal(int32(2), services[2].UnavailableReplicas)
+	assert.Equal(3, len(deployments))
+	assert.Equal("httpbin-v1", deployments[0].Name)
+	assert.Equal("httpbin-v2", deployments[1].Name)
+	assert.Equal("httpbin-v3", deployments[2].Name)
 }
 
 func fakeDeploymentList() *v1beta1.DeploymentList {

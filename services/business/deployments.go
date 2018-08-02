@@ -11,13 +11,13 @@ type DeploymentService struct {
 }
 
 // ServiceList is the API handler to fetch the list of deployments in a given namespace
-func (in *DeploymentService) GetDeploymentList(namespace string) (models.Deployments, error) {
+func (in *DeploymentService) GetDeploymentList(namespace string) (models.DeploymentList, error) {
 	deployments, err := in.k8s.GetDeployments(namespace)
 	if err != nil {
-		return nil, err
+		return models.DeploymentList{}, err
 	}
 
-	models := &models.Deployments{}
-	models.Parse(deployments)
+	models := &models.DeploymentList{}
+	models.Parse(namespace, deployments)
 	return *models, nil
 }

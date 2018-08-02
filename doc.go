@@ -141,7 +141,7 @@ type ServiceValidationResponse struct {
 // swagger:response deploymentListResponse
 type DeploymentListResponse struct {
 	// in:body
-	Body models.Deployments
+	Body models.DeploymentList
 }
 
 //////////////////
