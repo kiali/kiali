@@ -47,6 +47,46 @@
         }
       }
     },
+    "/namespaces/{namespace}/deployments": {
+      "get": {
+        "description": "Endpoint to get the list of deployments for a namespace",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "deploymentList",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/deploymentListResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/istio": {
       "get": {
         "description": "Endpoint to get the list of Istio Config of a namespace",
@@ -311,6 +351,42 @@
     }
   },
   "definitions": {
+    "DeploymentList": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "deployments"
+      ],
+      "properties": {
+        "deployments": {
+          "description": "Deployments for a given namespace",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DeploymentOverview"
+          },
+          "x-go-name": "Deployments"
+        },
+        "namespace": {
+          "$ref": "#/definitions/namespace"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "DeploymentOverview": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "description": "Name of the deployment",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "reviews-v1"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "Gateway": {
       "type": "object",
       "properties": {
@@ -827,6 +903,12 @@
     }
   },
   "responses": {
+    "deploymentListResponse": {
+      "description": "Listing all deployments in the namespace",
+      "schema": {
+        "$ref": "#/definitions/DeploymentList"
+      }
+    },
     "genericError": {
       "description": "A GenericError is the default error message that is generated.",
       "schema": {
