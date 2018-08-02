@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
@@ -23,11 +24,12 @@ const (
 // is represented as a percentile value. The default is 95th percentile, which means that
 // 95% of requests executed in no more than the resulting milliseconds.
 type ResponseTimeAppender struct {
-	Duration  time.Duration
-	Quantile  float64
-	QueryTime int64 // unix time in seconds
-	GraphType string
-	Versioned bool
+	Duration     time.Duration
+	GraphType    string
+	IncludeIstio bool
+	Quantile     float64
+	QueryTime    int64 // unix time in seconds
+	Versioned    bool
 }
 
 // AppendGraph implements Appender
@@ -85,6 +87,39 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 	a.populateResponseTimeMap(responseTimeMap, &unkVector)
 	a.populateResponseTimeMap(responseTimeMap, &outVector)
 	a.populateResponseTimeMap(responseTimeMap, &inVector)
+
+	// istio component telemetry is only reported destination-side, so we must perform additional queries
+	if a.IncludeIstio {
+		istioNamespace := config.Get().IstioNamespace
+
+		// 4) if the target namespace is istioNamespace re-query for traffic originating from a workload outside of the namespace
+		if namespace == istioNamespace {
+			query = fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{reporter=\"destination\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\",response_code=\"200\"}[%vs])) by (%s))",
+				quantile,
+				"istio_request_duration_seconds_bucket",
+				namespace,
+				namespace,
+				int(a.Duration.Seconds()), // range duration for the query
+				groupBy)
+
+			// fetch the externally originating request traffic time-series
+			outIstioVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
+			a.populateResponseTimeMap(responseTimeMap, &outIstioVector)
+		}
+
+		// 5) supplemental query for traffic originating from a workload inside of the namespace with istioSystem destination
+		query = fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{reporter=\"destination\",source_workload_namespace=\"%v\",destination_service_namespace=\"%v\",response_code=\"200\"}[%vs])) by (%s))",
+			quantile,
+			"istio_request_duration_seconds_bucket",
+			namespace,
+			istioNamespace,
+			int(a.Duration.Seconds()), // range duration for the query
+			groupBy)
+
+		// fetch the internally originating request traffic time-series
+		inIstioVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
+		a.populateResponseTimeMap(responseTimeMap, &inIstioVector)
+	}
 
 	applyResponseTime(trafficMap, responseTimeMap)
 }

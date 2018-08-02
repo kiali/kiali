@@ -161,11 +161,12 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 			}
 		}
 		a := appender.ResponseTimeAppender{
-			Duration:  o.Duration,
-			Quantile:  quantile,
-			QueryTime: o.QueryTime,
-			GraphType: o.GraphType,
-			Versioned: o.Versioned,
+			Duration:     o.Duration,
+			Quantile:     quantile,
+			GraphType:    o.GraphType,
+			IncludeIstio: o.IncludeIstio,
+			QueryTime:    o.QueryTime,
+			Versioned:    o.Versioned,
 		}
 		appenders = append(appenders, a)
 	}

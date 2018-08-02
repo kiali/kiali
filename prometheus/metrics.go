@@ -26,7 +26,6 @@ type MetricsQuery struct {
 	Filters      []string
 	ByLabelsIn   []string
 	ByLabelsOut  []string
-	IncludeIstio bool
 	Namespace    string
 	Apps         []string
 	Workload     string
@@ -39,7 +38,6 @@ func (q *MetricsQuery) FillDefaults() {
 	q.Step = 15 * time.Second
 	q.RateInterval = "1m"
 	q.RateFunc = "rate"
-	q.IncludeIstio = false
 }
 
 // Metrics contains health, all simple metrics and histograms data
@@ -163,6 +161,10 @@ func getMetrics(api v1.API, q *MetricsQuery) Metrics {
 func buildLabelStrings(q *MetricsQuery) (string, string, string, string) {
 	labelsIn := []string{`reporter="destination"`}
 	labelsOut := []string{`reporter="source"`}
+	if config.Get().IstioNamespace == q.Namespace {
+		labelsOut = []string{`reporter="destination"`}
+	}
+
 	if q.Workload != "" {
 		labelsIn = append(labelsIn, fmt.Sprintf(`destination_workload="%s"`, q.Workload))
 		labelsOut = append(labelsOut, fmt.Sprintf(`source_workload="%s"`, q.Workload))
@@ -180,11 +182,6 @@ func buildLabelStrings(q *MetricsQuery) (string, string, string, string) {
 		labelsOut = append(labelsOut, fmt.Sprintf(`source_workload_namespace="%s"`, q.Namespace))
 	}
 
-	// when filtering we still keep incoming istio traffic, it's typically ingressgateway. We
-	// only want to filter outgoing traffic to the istio infra services.
-	if !q.IncludeIstio {
-		labelsOut = append(labelsOut, `destination_workload_namespace!="istio-system"`)
-	}
 	fullIn := "{" + strings.Join(labelsIn, ",") + "}"
 	fullOut := "{" + strings.Join(labelsOut, ",") + "}"
 
@@ -350,13 +347,19 @@ func replaceInvalidCharacters(metricName string) string {
 }
 
 func getNamespaceRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, model.Vector, error) {
-	lblIn := fmt.Sprintf(`reporter="destination",destination_workload_namespace="%s"`, namespace)
+	reporter := "source"
+	if config.Get().IstioNamespace == namespace {
+		reporter = "destination"
+	}
+
+	// traffic originating outside the namespace to destinations inside the namespace
+	lblIn := fmt.Sprintf(`reporter="%s",destination_service_namespace="%s",source_workload_namespace!="%s"`, reporter, namespace, namespace)
 	in, err := getRequestRatesForLabel(api, time.Now(), lblIn, ratesInterval)
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
 	}
-	// Note: connections to Istio infra (istio-system) is filtered out from health
-	lblOut := fmt.Sprintf(`reporter="source",source_workload_namespace="%s",destination_workload_namespace!="istio-system"`, namespace)
+	// traffic originating inside the namespace to destinations inside or outside the namespace
+	lblOut := fmt.Sprintf(`reporter="%s",source_workload_namespace="%s"`, reporter, namespace)
 	out, err := getRequestRatesForLabel(api, time.Now(), lblOut, ratesInterval)
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
@@ -366,7 +369,11 @@ func getNamespaceRequestRates(api v1.API, namespace string, ratesInterval string
 
 func getAppsRequestRates(api v1.API, namespace string, apps []string, ratesInterval string) (model.Vector, model.Vector, error) {
 	lblIn := fmt.Sprintf(`reporter="destination",destination_workload_namespace="%s"`, namespace)
-	lblOut := fmt.Sprintf(`reporter="source",source_workload_namespace="%s"`, namespace)
+	outReporter := "source"
+	if config.Get().IstioNamespace == namespace {
+		outReporter = "destination"
+	}
+	lblOut := fmt.Sprintf(`reporter="%s",source_workload_namespace="%s"`, outReporter, namespace)
 	if len(apps) == 1 {
 		lblIn += fmt.Sprintf(`,destination_app="%s"`, apps[0])
 		lblOut += fmt.Sprintf(`,source_app="%s"`, apps[0])
@@ -382,8 +389,6 @@ func getAppsRequestRates(api v1.API, namespace string, apps []string, ratesInter
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
 	}
-	// Note: connections to Istio infra (istio-system) is filtered out from health
-	lblOut += `,destination_workload_namespace!="istio-system"`
 	out, err := getRequestRatesForLabel(api, time.Now(), lblOut, ratesInterval)
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
