@@ -20,7 +20,8 @@ import {
   CytoscapeMouseOutEvent,
   GraphParamsType,
   CytoscapeGlobalScratchNamespace,
-  CytoscapeGlobalScratchData
+  CytoscapeGlobalScratchData,
+  NodeType
 } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import * as H from '../../types/Health';
@@ -477,18 +478,10 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     // Asynchronously fetch health
     cy.nodes().forEach(ele => {
       const namespace = ele.data('namespace');
-      const app = ele.data('app');
-      const workload = ele.data('workload');
-
-      if (app !== undefined && app !== 'unknown' && (ele.data('isGroup') || !ele.data('parent'))) {
-        // App-based health
-        let promise = appHealthPerNamespace.get(namespace);
-        if (!promise) {
-          promise = API.getNamespaceAppHealth(authentication(), namespace, duration);
-          appHealthPerNamespace.set(namespace, promise);
-        }
-        this.updateNodeHealth(ele, promise, app);
-      } else if (workload !== undefined && workload !== 'unknown') {
+      const nodeType = ele.data('nodeType');
+      const isInAppBox = nodeType === NodeType.APP && ele.data('parent');
+      if (nodeType === NodeType.WORKLOAD || isInAppBox) {
+        const workload = ele.data('workload');
         // Workload-based health
         let promise = wkldHealthPerNamespace.get(namespace);
         if (!promise) {
@@ -496,6 +489,15 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           wkldHealthPerNamespace.set(namespace, promise);
         }
         this.updateNodeHealth(ele, promise, workload);
+      } else if (nodeType === NodeType.APP) {
+        const app = ele.data('app');
+        // App-based health
+        let promise = appHealthPerNamespace.get(namespace);
+        if (!promise) {
+          promise = API.getNamespaceAppHealth(authentication(), namespace, duration);
+          appHealthPerNamespace.set(namespace, promise);
+        }
+        this.updateNodeHealth(ele, promise, app);
       }
     });
   }

@@ -19,7 +19,9 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 1, replicas: 1 }, { name: 'B', available: 2, replicas: 2 }],
-      { requestCount: 0, requestErrorCount: 0 }, 600);
+      { requestCount: 0, requestErrorCount: 0 },
+      600
+    );
 
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
@@ -38,7 +40,9 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 1, replicas: 10 }, { name: 'B', available: 2, replicas: 2 }],
-      { requestCount: 0, requestErrorCount: 0 }, 600);
+      { requestCount: 0, requestErrorCount: 0 },
+      600
+    );
 
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
@@ -58,7 +62,9 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 0, total: 10 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 1, replicas: 10 }, { name: 'B', available: 2, replicas: 2 }],
-      { requestCount: 0, requestErrorCount: 0 }, 600);
+      { requestCount: 0, requestErrorCount: 0 },
+      600
+    );
 
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
@@ -79,7 +85,9 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 0, replicas: 0 }, { name: 'B', available: 2, replicas: 2 }],
-      { requestCount: 0, requestErrorCount: 0 }, 600);
+      { requestCount: 0, requestErrorCount: 0 },
+      600
+    );
 
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
@@ -99,7 +107,9 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 0, replicas: 0 }, { name: 'B', available: 0, replicas: 0 }],
-      { requestCount: 0, requestErrorCount: 0 }, 600);
+      { requestCount: 0, requestErrorCount: 0 },
+      600
+    );
 
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
@@ -119,7 +129,9 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 10 }, outbound: { healthy: 1, total: 10 } }],
       [{ name: 'A', available: 1, replicas: 1 }],
-      { requestCount: 1.56, requestErrorCount: 1.1 }, 600);
+      { requestCount: 1.56, requestErrorCount: 1.1 },
+      600
+    );
 
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
