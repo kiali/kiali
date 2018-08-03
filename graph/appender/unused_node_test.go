@@ -21,13 +21,12 @@ func TestNonTrafficScenario(t *testing.T) {
 	deployments := mockDeployments()
 
 	a := UnusedNodeAppender{
-		graph.GraphTypeApp,
-		true,
+		graph.GraphTypeVersionedApp,
 	}
 	a.addUnusedNodes(trafficMap, "testNamespace", deployments)
 	assert.Equal(4, len(trafficMap))
 
-	id, _ := graph.Id("testNamespace", "customer-v1", "customer", "v1", a.GraphType, a.Versioned)
+	id, _ := graph.Id("testNamespace", "customer-v1", "customer", "v1", "customer", a.GraphType)
 	n, ok := trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("customer-v1", n.Workload)
@@ -35,7 +34,7 @@ func TestNonTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(true, n.Metadata["isUnused"])
 
-	id, _ = graph.Id("testNamespace", "preference-v1", "preference", "v1", a.GraphType, a.Versioned)
+	id, _ = graph.Id("testNamespace", "preference-v1", "preference", "v1", "preference", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("preference-v1", n.Workload)
@@ -43,7 +42,7 @@ func TestNonTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(true, n.Metadata["isUnused"])
 
-	id, _ = graph.Id("testNamespace", "recommendation-v1", "recommendation", "v1", a.GraphType, a.Versioned)
+	id, _ = graph.Id("testNamespace", "recommendation-v1", "recommendation", "v1", "recommendation", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("recommendation-v1", n.Workload)
@@ -51,7 +50,7 @@ func TestNonTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(true, n.Metadata["isUnused"])
 
-	id, _ = graph.Id("testNamespace", "recommendation-v2", "recommendation", "v2", a.GraphType, a.Versioned)
+	id, _ = graph.Id("testNamespace", "recommendation-v2", "recommendation", "v2", "recommendation", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("recommendation-v2", n.Workload)
@@ -66,8 +65,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	a := UnusedNodeAppender{
-		graph.GraphTypeApp,
-		true,
+		graph.GraphTypeVersionedApp,
 	}
 
 	trafficMap := a.oneNodeTraffic()
@@ -76,7 +74,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	a.addUnusedNodes(trafficMap, "testNamespace", deployments)
 
 	assert.Equal(5, len(trafficMap))
-	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, a.GraphType, a.Versioned)
+	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", a.GraphType)
 	unknown, ok := trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal(graph.UnknownWorkload, unknown.Workload)
@@ -90,7 +88,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(nil, n.Metadata["isUnused"])
 
-	id, _ = graph.Id("testNamespace", "preference-v1", "preference", "v1", a.GraphType, a.Versioned)
+	id, _ = graph.Id("testNamespace", "preference-v1", "preference", "v1", "preference", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("preference-v1", n.Workload)
@@ -98,7 +96,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(true, n.Metadata["isUnused"])
 
-	id, _ = graph.Id("testNamespace", "recommendation-v1", "recommendation", "v1", a.GraphType, a.Versioned)
+	id, _ = graph.Id("testNamespace", "recommendation-v1", "recommendation", "v1", "recommendation", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("recommendation-v1", n.Workload)
@@ -106,7 +104,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	assert.Equal("v1", n.Version)
 	assert.Equal(true, n.Metadata["isUnused"])
 
-	id, _ = graph.Id("testNamespace", "recommendation-v2", "recommendation", "v2", a.GraphType, a.Versioned)
+	id, _ = graph.Id("testNamespace", "recommendation-v2", "recommendation", "v2", "recommendation", a.GraphType)
 	n, ok = trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal("recommendation-v2", n.Workload)
@@ -121,8 +119,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	a := UnusedNodeAppender{
-		graph.GraphTypeApp,
-		true,
+		graph.GraphTypeVersionedApp,
 	}
 
 	trafficMap := a.v1Traffic()
@@ -131,7 +128,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	a.addUnusedNodes(trafficMap, "testNamespace", deployments)
 
 	assert.Equal(5, len(trafficMap))
-	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, a.GraphType, a.Versioned)
+	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", a.GraphType)
 	unknown, ok := trafficMap[id]
 	assert.Equal(true, ok)
 	assert.Equal(graph.UnknownWorkload, unknown.Workload)
@@ -206,8 +203,8 @@ func mockDeployments() *v1beta1.DeploymentList {
 func (a *UnusedNodeAppender) oneNodeTraffic() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	unknown := graph.NewNode(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, a.GraphType, a.Versioned)
-	customer := graph.NewNode("testNamespace", "customer-v1", "customer", "v1", a.GraphType, a.Versioned)
+	unknown := graph.NewNode(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", a.GraphType)
+	customer := graph.NewNode("testNamespace", "customer-v1", "customer", "v1", "customer", a.GraphType)
 	trafficMap[unknown.ID] = &unknown
 	trafficMap[customer.ID] = &customer
 	edge := unknown.AddEdge(&customer)
@@ -221,10 +218,10 @@ func (a *UnusedNodeAppender) oneNodeTraffic() map[string]*graph.Node {
 func (a *UnusedNodeAppender) v1Traffic() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	unknown := graph.NewNode(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, a.GraphType, a.Versioned)
-	customer := graph.NewNode("testNamespace", "customer-v1", "customer", "v1", a.GraphType, a.Versioned)
-	preference := graph.NewNode("testNamespace", "preference-v1", "preference", "v1", a.GraphType, a.Versioned)
-	recommendation := graph.NewNode("testNamespace", "recommendation-v1", "recommendation", "v1", a.GraphType, a.Versioned)
+	unknown := graph.NewNode(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", a.GraphType)
+	customer := graph.NewNode("testNamespace", "customer-v1", "customer", "v1", "customer", a.GraphType)
+	preference := graph.NewNode("testNamespace", "preference-v1", "preference", "v1", "preference", a.GraphType)
+	recommendation := graph.NewNode("testNamespace", "recommendation-v1", "recommendation", "v1", "recommendation", a.GraphType)
 	trafficMap[unknown.ID] = &unknown
 	trafficMap[customer.ID] = &customer
 	trafficMap[preference.ID] = &preference

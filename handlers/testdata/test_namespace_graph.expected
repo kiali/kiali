@@ -1,14 +1,14 @@
 {
   "timestamp": 1523364075,
+  "graphType": "app",
   "elements": {
     "nodes": [
       {
         "data": {
-          "id": "8267f17e93292819fa1f65f2d9b1778f",
+          "id": "66bce9783dc2dbb5fecb178b0108484e",
+          "nodeType": "app",
           "namespace": "bankapp",
-          "workload": "pricing-v1",
           "app": "pricing",
-          "version": "v1",
           "destServices": {
             "pricing": true
           },
@@ -18,19 +18,10 @@
       },
       {
         "data": {
-          "id": "74dcb1cec50854d2f880279f3dd19da9",
+          "id": "6cdb3cf3ee9a17772f13b295368e112a",
+          "nodeType": "app",
           "namespace": "bookinfo",
-          "app": "reviews",
-          "isGroup": "version"
-        }
-      },
-      {
-        "data": {
-          "id": "7fa01b3260d1a147c4b1580460c9cec2",
-          "namespace": "bookinfo",
-          "workload": "details-v1",
           "app": "details",
-          "version": "v1",
           "destServices": {
             "details": true
           },
@@ -42,11 +33,10 @@
       },
       {
         "data": {
-          "id": "55b1084a0b117505f1249ac8900fa976",
+          "id": "2c22af42b0c750749399ed2838c56054",
+          "nodeType": "app",
           "namespace": "bookinfo",
-          "workload": "productpage-v1",
           "app": "productpage",
-          "version": "v1",
           "destServices": {
             "productpage": true
           },
@@ -56,11 +46,10 @@
       },
       {
         "data": {
-          "id": "6be47a95604b4c62aa30a5c036156952",
+          "id": "c219903556c3afdb05eda7e610aba628",
+          "nodeType": "app",
           "namespace": "bookinfo",
-          "workload": "ratings-v1",
           "app": "ratings",
-          "version": "v1",
           "destServices": {
             "ratings": true
           },
@@ -69,85 +58,73 @@
       },
       {
         "data": {
-          "id": "bd98c170ddd24d26a179e1f6fffc8a17",
-          "parent": "74dcb1cec50854d2f880279f3dd19da9",
+          "id": "37ddc91db761d432f3fff1943802cad7",
+          "nodeType": "app",
           "namespace": "bookinfo",
-          "workload": "reviews-v1",
           "app": "reviews",
-          "version": "v1",
           "destServices": {
             "reviews": true
           },
-          "rate": "20.000"
+          "rate": "100.000",
+          "rateOut": "100.000"
         }
       },
       {
         "data": {
-          "id": "997529b52a5607c765b50e8eb76b6f49",
-          "parent": "74dcb1cec50854d2f880279f3dd19da9",
-          "namespace": "bookinfo",
-          "workload": "reviews-v2",
-          "app": "reviews",
-          "version": "v2",
-          "destServices": {
-            "reviews": true
-          },
-          "rate": "40.000",
-          "rateOut": "40.000"
-        }
-      },
-      {
-        "data": {
-          "id": "dae7902908557dd4b212b11cfc544518",
-          "parent": "74dcb1cec50854d2f880279f3dd19da9",
-          "namespace": "bookinfo",
-          "workload": "reviews-v3",
-          "app": "reviews",
-          "version": "v3",
-          "destServices": {
-            "reviews": true
-          },
-          "rate": "40.000",
-          "rateOut": "60.000"
-        }
-      },
-      {
-        "data": {
-          "id": "9c28d242b4cf249bba203d1d7ffb9e67",
+          "id": "19950ddefadd370bf5434953c1944c80",
+          "nodeType": "app",
           "namespace": "istio-system",
-          "workload": "ingressgateway-unknown",
           "app": "ingressgateway",
           "rateOut": "100.000",
-          "isOutside": true,
-          "isWorkload": true
+          "isOutside": true
         }
       },
       {
         "data": {
-          "id": "ba113404e46b8aa41dc0e7cc339073fe",
+          "id": "5c33c02dc744d0d03513a364935660b7",
+          "nodeType": "unknown",
           "namespace": "unknown",
           "workload": "unknown",
+          "app": "unknown",
+          "version": "unknown",
           "rateOut": "50.000",
-          "isRoot": true,
-          "isWorkload": true
+          "isRoot": true
         }
       }
     ],
     "edges": [
       {
         "data": {
-          "id": "42a84073d75bccc05f3c28677d5cf884",
-          "source": "55b1084a0b117505f1249ac8900fa976",
-          "target": "55b1084a0b117505f1249ac8900fa976",
+          "id": "27371b83763afee92cf29adef487d844",
+          "source": "19950ddefadd370bf5434953c1944c80",
+          "target": "2c22af42b0c750749399ed2838c56054",
+          "rate": "100.000",
+          "isMTLS": true
+        }
+      },
+      {
+        "data": {
+          "id": "e4bbf3d92788d59cf068bc4ef80629f5",
+          "source": "2c22af42b0c750749399ed2838c56054",
+          "target": "2c22af42b0c750749399ed2838c56054",
           "rate": "20.000",
           "percentRate": "12.500"
         }
       },
       {
         "data": {
-          "id": "cf8a83a6508dbb9e8c26c8e211ce49a7",
-          "source": "55b1084a0b117505f1249ac8900fa976",
-          "target": "7fa01b3260d1a147c4b1580460c9cec2",
+          "id": "6ea64c772fbc440bce9306cb06919143",
+          "source": "2c22af42b0c750749399ed2838c56054",
+          "target": "37ddc91db761d432f3fff1943802cad7",
+          "rate": "60.000",
+          "percentRate": "37.500"
+        }
+      },
+      {
+        "data": {
+          "id": "4fa8419f0227769ceb054eab86fe33f9",
+          "source": "2c22af42b0c750749399ed2838c56054",
+          "target": "6cdb3cf3ee9a17772f13b295368e112a",
           "rate": "80.000",
           "rate3XX": "20.000",
           "rate4XX": "20.000",
@@ -158,92 +135,38 @@
       },
       {
         "data": {
-          "id": "e783b5f010dbe9f22f66dcfbe9299aea",
-          "source": "55b1084a0b117505f1249ac8900fa976",
-          "target": "997529b52a5607c765b50e8eb76b6f49",
+          "id": "3609dd39b2e93d3eb4f921d64e7bc430",
+          "source": "37ddc91db761d432f3fff1943802cad7",
+          "target": "37ddc91db761d432f3fff1943802cad7",
+          "rate": "40.000",
+          "percentRate": "40.000"
+        }
+      },
+      {
+        "data": {
+          "id": "725fdb0f9f3633b4da2aac68601b000e",
+          "source": "37ddc91db761d432f3fff1943802cad7",
+          "target": "66bce9783dc2dbb5fecb178b0108484e",
           "rate": "20.000",
-          "percentRate": "12.500"
+          "percentRate": "20.000"
         }
       },
       {
         "data": {
-          "id": "7dc945bb4784f7652b6d1bed23e558ab",
-          "source": "55b1084a0b117505f1249ac8900fa976",
-          "target": "bd98c170ddd24d26a179e1f6fffc8a17",
-          "rate": "20.000",
-          "percentRate": "12.500"
+          "id": "979c7a2119351f897d70c74dbed2265c",
+          "source": "37ddc91db761d432f3fff1943802cad7",
+          "target": "c219903556c3afdb05eda7e610aba628",
+          "rate": "40.000",
+          "percentRate": "40.000"
         }
       },
       {
         "data": {
-          "id": "36ed7690e814ed2724ba26fb599298c1",
-          "source": "55b1084a0b117505f1249ac8900fa976",
-          "target": "dae7902908557dd4b212b11cfc544518",
-          "rate": "20.000",
-          "percentRate": "12.500"
-        }
-      },
-      {
-        "data": {
-          "id": "2a63fcde315f50d04a906612f50f6748",
-          "source": "997529b52a5607c765b50e8eb76b6f49",
-          "target": "6be47a95604b4c62aa30a5c036156952",
-          "rate": "20.000",
-          "percentRate": "50.000"
-        }
-      },
-      {
-        "data": {
-          "id": "bf1dde8c8e642fd97ab4418e6bb3713b",
-          "source": "997529b52a5607c765b50e8eb76b6f49",
-          "target": "997529b52a5607c765b50e8eb76b6f49",
-          "rate": "20.000",
-          "percentRate": "50.000"
-        }
-      },
-      {
-        "data": {
-          "id": "52d7a8d6c2a9a256702a3a2af32c2334",
-          "source": "9c28d242b4cf249bba203d1d7ffb9e67",
-          "target": "55b1084a0b117505f1249ac8900fa976",
-          "rate": "100.000",
-          "isMTLS": true
-        }
-      },
-      {
-        "data": {
-          "id": "bcb22543f306422ba7a329c84f2bea89",
-          "source": "ba113404e46b8aa41dc0e7cc339073fe",
-          "target": "55b1084a0b117505f1249ac8900fa976",
+          "id": "423f97a4c2e70e194b7295c6055efd76",
+          "source": "5c33c02dc744d0d03513a364935660b7",
+          "target": "2c22af42b0c750749399ed2838c56054",
           "rate": "50.000",
           "isMTLS": true
-        }
-      },
-      {
-        "data": {
-          "id": "6e3bbe62f6a252dcc8151a5d0ecffc4a",
-          "source": "dae7902908557dd4b212b11cfc544518",
-          "target": "6be47a95604b4c62aa30a5c036156952",
-          "rate": "20.000",
-          "percentRate": "33.333"
-        }
-      },
-      {
-        "data": {
-          "id": "6da320f3e9fed6fde92a59c72bbe1259",
-          "source": "dae7902908557dd4b212b11cfc544518",
-          "target": "8267f17e93292819fa1f65f2d9b1778f",
-          "rate": "20.000",
-          "percentRate": "33.333"
-        }
-      },
-      {
-        "data": {
-          "id": "01a294f497e9500bf77bf3f41a482cc7",
-          "source": "dae7902908557dd4b212b11cfc544518",
-          "target": "dae7902908557dd4b212b11cfc544518",
-          "rate": "20.000",
-          "percentRate": "33.333"
         }
       }
     ]
