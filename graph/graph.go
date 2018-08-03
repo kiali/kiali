@@ -7,23 +7,29 @@ import (
 )
 
 const (
-	GraphTypeApp      string = "app"
-	GraphTypeWorkload string = "workload"
-	UnknownApp        string = "unknown"
-	UnknownNamespace  string = "unknown"
-	UnknownVersion    string = "unknown"
-	UnknownWorkload   string = "unknown"
+	GraphTypeApp          string = "app"
+	GraphTypeVersionedApp string = "versionedApp"
+	GraphTypeWorkload     string = "workload"
+	NodeTypeApp           string = "app"
+	NodeTypeService       string = "service"
+	NodeTypeUnknown       string = "unknown" // The special "unknown" traffic gen node
+	NodeTypeWorkload      string = "workload"
+	UnknownApp            string = "unknown"
+	UnknownNamespace      string = "unknown"
+	UnknownVersion        string = "unknown"
+	UnknownWorkload       string = "unknown"
 )
 
 type Node struct {
-	ID         string                 // unique identifier for the node
-	IsWorkload bool                   // true for workload node, false for app node
-	Namespace  string                 // Namespace
-	Workload   string                 // Workload (deployment) name
-	App        string                 // Workload app
-	Version    string                 // Workload version
-	Edges      []*Edge                // child nodes
-	Metadata   map[string]interface{} // app-specific data
+	ID        string                 // unique identifier for the node
+	NodeType  string                 // Node type
+	Namespace string                 // Namespace
+	Workload  string                 // Workload (deployment) name
+	App       string                 // Workload app label value
+	Version   string                 // Workload version label value
+	Service   string                 // Service name
+	Edges     []*Edge                // child nodes
+	Metadata  map[string]interface{} // app-specific data
 }
 
 type Edge struct {
@@ -39,39 +45,44 @@ type Edge struct {
 // namespace.
 type TrafficMap map[string]*Node
 
-func NewNode(namespace, workload, app, version, graphType string, versioned bool) Node {
-	id, isWorkload := Id(namespace, workload, app, version, graphType, versioned)
+func NewNode(namespace, workload, app, version, service, graphType string) Node {
+	id, nodeType := Id(namespace, workload, app, version, service, graphType)
 
-	return NewNodeExplicit(id, namespace, workload, app, version, isWorkload, versioned)
+	return NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, graphType)
 }
 
-func NewNodeExplicit(id, namespace, workload, app, version string, isWorkload, versioned bool) Node {
+func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, graphType string) Node {
 	// trim unnecessary fields
-	if isWorkload {
-		if app == UnknownApp {
-			app = ""
-		}
-		if version == UnknownVersion {
+	switch nodeType {
+	case NodeTypeWorkload:
+		app = ""
+		version = ""
+		service = ""
+	case NodeTypeApp:
+		// note: we keep workload for a versioned app node because app+version labeling
+		// should be backed by a single workload and it can be useful to use the workload
+		// name as opposed to the label values.
+		if graphType != GraphTypeVersionedApp {
+			workload = ""
 			version = ""
 		}
-	} else {
-		if workload == UnknownWorkload {
-			workload = ""
-		}
-	}
-	if !versioned {
+		service = ""
+	case NodeTypeService:
+		app = ""
+		workload = ""
 		version = ""
 	}
 
 	return Node{
-		ID:         id,
-		IsWorkload: isWorkload,
-		Namespace:  namespace,
-		Workload:   workload,
-		App:        app,
-		Version:    version,
-		Edges:      []*Edge{},
-		Metadata:   make(map[string]interface{}),
+		ID:        id,
+		NodeType:  nodeType,
+		Namespace: namespace,
+		Workload:  workload,
+		App:       app,
+		Version:   version,
+		Service:   service,
+		Edges:     []*Edge{},
+		Metadata:  make(map[string]interface{}),
 	}
 }
 
@@ -93,53 +104,54 @@ func NewTrafficMap() TrafficMap {
 	return make(map[string]*Node)
 }
 
-func Id(namespace, workload, app, version, graphType string, versioned bool) (id string, isWorkload bool) {
-	switch graphType {
-	case GraphTypeApp:
-		workloadOk := workload != "" && workload != UnknownWorkload
-		appOk := app != "" && app != UnknownApp
-		versionOk := !versioned || (version != "" && version != UnknownVersion)
-		isAppNode := appOk && (versionOk || !workloadOk)
-		if isAppNode {
-			if versioned {
-				if !versionOk {
-					version = UnknownVersion
-				}
-				return fmt.Sprintf("%v_%v_%v", namespace, app, version), false
-			}
-			return fmt.Sprintf("%v_%v_versionless", namespace, app), false
+func Id(namespace, workload, app, version, service, graphType string) (id, nodeType string) {
+	// first, check for the special-case "unknown" node
+	if UnknownWorkload == workload && UnknownApp == app && "" == service {
+		return fmt.Sprintf("source-unknown"), NodeTypeUnknown
+	}
+
+	// It is possible that a request is made for an unknown destination. For example, an Ingress
+	// request to an unknown path. In this case everything is unknown.
+	if UnknownNamespace == namespace && UnknownWorkload == workload && UnknownApp == app && UnknownApp == service {
+		return fmt.Sprintf("dest-unknown"), NodeTypeService
+	}
+
+	workloadOk := workload != "" && workload != UnknownWorkload
+	appOk := app != "" && app != UnknownApp
+	serviceOk := service != "" && service != UnknownApp
+
+	if !workloadOk && !appOk && !serviceOk {
+		panic(fmt.Sprintf("Failed ID gen: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))
+	}
+
+	// handle workload graph nodes
+	if graphType == GraphTypeWorkload {
+		// workload graph nodes are type workload or service
+		if !workloadOk && !serviceOk {
+			panic(fmt.Sprintf("Failed ID gen: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))
+		}
+		if !workloadOk {
+			return fmt.Sprintf("svc_%v_%v", namespace, service), NodeTypeService
+		}
+		return fmt.Sprintf("wl_%v_%v", namespace, workload), NodeTypeWorkload
+	}
+
+	// handle app nodes
+	if appOk {
+		// For a versionedApp graph we use workload as the Id, it allows us some protection against labeling
+		// anti-patterns. For versionless we  just use the app label to aggregate versions/workloads into one node
+		if graphType == GraphTypeVersionedApp {
+			return fmt.Sprintf("app_%v_%v", namespace, workload), NodeTypeApp
 		} else {
-			return fmt.Sprintf("%v_%v", namespace, workload), true
-		}
-	case GraphTypeWorkload:
-		return fmt.Sprintf("%v_%v", namespace, workload), true
-	default:
-		panic(fmt.Sprintf("Unrecognized graphFormat [%s]", graphType))
-	}
-}
-
-// DestFields returns the proper destination field values given the original
-// telemetry values and the current graph settings. For source-side failures
-// (Fault injection, open circuit breakers, etc) the destination_workload will be
-// unknown (because the request never made it to the destination proxy.  But we
-// still want to record the request in some way. So, depending on the graph type and
-// labeling, assign the destination_service_name (i.e. the requested service) to the
-// most applicable destination field.
-func DestFields(sourceApp, destApp, destWl, destSvcName string, graphType string) (finalDestApp, finalDestWl string) {
-	finalDestApp = destApp
-	finalDestWl = destWl
-	if destWl == UnknownWorkload {
-		switch graphType {
-		case GraphTypeApp:
-			if sourceApp != UnknownApp {
-				finalDestApp = destSvcName
-			} else {
-				finalDestWl = destSvcName
-			}
-		case GraphTypeWorkload:
-			finalDestWl = destSvcName
+			return fmt.Sprintf("app_%v_%v", namespace, app), NodeTypeApp
 		}
 	}
 
-	return finalDestApp, finalDestWl
+	// fall back to service if applicable
+	if serviceOk {
+		return fmt.Sprintf("svc_%v_%v", namespace, service), NodeTypeService
+	}
+
+	// fall back to workload as a last resort in the app graph
+	return fmt.Sprintf("wl_%v_%v", namespace, workload), NodeTypeWorkload
 }

@@ -12,10 +12,7 @@ import (
 	"github.com/kiali/kiali/services/business/checkers"
 )
 
-type SidecarsCheckAppender struct {
-	GraphType string
-	Versioned bool
-}
+type SidecarsCheckAppender struct{}
 
 // AppendGraph implements Appender
 func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
@@ -42,15 +39,17 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		// get the pods for the node, either by app+version labels, or workload deployment
 		var podLabels string
 		var err error
-		if n.IsWorkload {
+		switch n.NodeType {
+		case graph.NodeTypeWorkload:
 			podLabels, err = a.getWorkloadLabels(n.Namespace, n.Workload, k8s)
 			if err != nil {
 				continue
 			}
-		} else {
+		case graph.NodeTypeApp:
 			podLabels = a.getAppLabels(appLabel, n.App, versionLabel, n.Version)
+		default:
+			continue
 		}
-
 		pods, err := k8s.GetPods(n.Namespace, podLabels)
 		checkError(err)
 
@@ -72,7 +71,8 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 }
 
 func (a *SidecarsCheckAppender) getAppLabels(appLabel, app, versionLabel, version string) string {
-	if a.Versioned {
+	versionOk := version != "" && version != graph.UnknownVersion
+	if versionOk {
 		return fmt.Sprintf("%s=%s,%s=%s", appLabel, app, versionLabel, version)
 	}
 	return fmt.Sprintf("%s=%s", appLabel, app)

@@ -25,7 +25,6 @@ const (
 	defaultGroupBy       string = GroupByVersion
 	defaultMetric        string = "istio_requests_total"
 	defaultVendor        string = "cytoscape"
-	defaultVersioned     bool   = true
 )
 
 // VendorOptions are those that are supplied to the vendor-specific generators.
@@ -33,7 +32,6 @@ type VendorOptions struct {
 	GraphType string
 	GroupBy   string
 	Timestamp int64
-	Versioned bool
 }
 
 // Options are all supported graph generation options.
@@ -65,7 +63,6 @@ func NewOptions(r *http.Request) Options {
 	queryTime, queryTimeErr := strconv.ParseInt(params.Get("queryTime"), 10, 64)
 	namespaces := params.Get("namespaces") // csl of namespaces. Overrides namespace path param if set
 	vendor := params.Get("vendor")
-	versioned, versionedErr := strconv.ParseBool(params.Get("versioned"))
 
 	var namespaceNames []string
 	fetchNamespaces := namespaces == NamespaceAll || (namespaces == "" && (namespace == NamespaceAll))
@@ -111,9 +108,6 @@ func NewOptions(r *http.Request) Options {
 	if "" == vendor {
 		vendor = defaultVendor
 	}
-	if versionedErr != nil {
-		versioned = defaultVersioned
-	}
 
 	options := Options{
 		Duration:     duration,
@@ -127,7 +121,6 @@ func NewOptions(r *http.Request) Options {
 			GraphType: graphType,
 			GroupBy:   groupBy,
 			Timestamp: queryTime,
-			Versioned: versioned,
 		},
 	}
 
@@ -166,24 +159,19 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 			GraphType:    o.GraphType,
 			IncludeIstio: o.IncludeIstio,
 			QueryTime:    o.QueryTime,
-			Versioned:    o.Versioned,
 		}
 		appenders = append(appenders, a)
 	}
 	if csl == AppenderAll || strings.Contains(csl, "unused_node") {
 		appenders = append(appenders, appender.UnusedNodeAppender{
 			GraphType: o.GraphType,
-			Versioned: o.Versioned,
 		})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "istio") {
 		appenders = append(appenders, appender.IstioAppender{})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "sidecars_check") {
-		appenders = append(appenders, appender.SidecarsCheckAppender{
-			GraphType: o.GraphType,
-			Versioned: o.Versioned,
-		})
+		appenders = append(appenders, appender.SidecarsCheckAppender{})
 	}
 
 	return appenders
