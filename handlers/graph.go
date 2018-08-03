@@ -22,14 +22,13 @@ package handlers
 //   appenders:      Comma-separated list of appenders to run from [circuit_breaker, unused_service] (default all)
 //                   Note, appenders may support appender-specific query parameters
 //   duration:       time.Duration indicating desired query range duration, (default 10m)
-//   graphType:      Determines how to present the telemetry data. app | workload (default workload)
+//   graphType:      Determines how to present the telemetry data. app | versionedApp | workload (default workload)
 //   groupBy:        If supported by vendor, visually group by a specified node attribute (default version)
 //   includeIstio:   Include istio-system (infra) services (default false)
 //   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
 //   namespaces:     Comma-separated list of namespace names to use in the graph. Will override namespace path param
 //   queryTime:      Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
 //   vendor:         cytoscape | vizceral (default cytoscape)
-//   versioned:      Include versioned nodes if true, otherwise versionless (default true)
 //
 // * Error% is the percentage of requests with response code != 2XX
 // * See the vendor-specific config generators for more details about the specific vendor.
@@ -242,11 +241,8 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		code := string(lCode)
 		csp := string(lCsp)
 
-		// handle any changes to dest field values given telemetry and graph type
-		destApp, destWl = graph.DestFields(sourceApp, destApp, destWl, destSvcName, o.GraphType)
-
-		source, _ := addNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, o)
-		dest, _ := addNode(trafficMap, destSvcNs, destWl, destApp, destVer, o)
+		source, _ := addSourceNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, o)
+		dest, _ := addDestNode(trafficMap, destSvcNs, destWl, destApp, destVer, destSvcName, o)
 
 		addToDestServices(dest.Metadata, destSvcName)
 
@@ -304,11 +300,22 @@ func addToDestServices(md map[string]interface{}, destService string) {
 	destServices.(map[string]bool)[destService] = true
 }
 
-func addNode(trafficMap graph.TrafficMap, namespace, workload, app, version string, o options.Options) (*graph.Node, bool) {
-	id, isWorkload := graph.Id(namespace, workload, app, version, o.VendorOptions.GraphType, o.VendorOptions.Versioned)
+func addSourceNode(trafficMap graph.TrafficMap, namespace, workload, app, version string, o options.Options) (*graph.Node, bool) {
+	id, nodeType := graph.Id(namespace, workload, app, version, "", o.VendorOptions.GraphType)
 	node, found := trafficMap[id]
 	if !found {
-		newNode := graph.NewNodeExplicit(id, namespace, workload, app, version, isWorkload, o.VendorOptions.Versioned)
+		newNode := graph.NewNodeExplicit(id, namespace, workload, app, version, "", nodeType, o.VendorOptions.GraphType)
+		node = &newNode
+		trafficMap[id] = node
+	}
+	return node, !found
+}
+
+func addDestNode(trafficMap graph.TrafficMap, namespace, workload, app, version, service string, o options.Options) (*graph.Node, bool) {
+	id, nodeType := graph.Id(namespace, workload, app, version, service, o.VendorOptions.GraphType)
+	node, found := trafficMap[id]
+	if !found {
+		newNode := graph.NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, o.VendorOptions.GraphType)
 		node = &newNode
 		trafficMap[id] = node
 	}

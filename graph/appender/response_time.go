@@ -29,7 +29,6 @@ type ResponseTimeAppender struct {
 	IncludeIstio bool
 	Quantile     float64
 	QueryTime    int64 // unix time in seconds
-	Versioned    bool
 }
 
 // AppendGraph implements Appender
@@ -160,11 +159,8 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 
-		// handle any changes to dest field values given telemetry and graph type
-		destApp, destWl = graph.DestFields(sourceApp, destApp, destWl, destSvcName, a.GraphType)
-
-		sourceId, _ := graph.Id(sourceWlNs, sourceWl, sourceApp, sourceVer, a.GraphType, a.Versioned)
-		destId, _ := graph.Id(destSvcNs, destWl, destApp, destVer, a.GraphType, a.Versioned)
+		sourceId, _ := graph.Id(sourceWlNs, sourceWl, sourceApp, sourceVer, "", a.GraphType)
+		destId, _ := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, a.GraphType)
 		key := fmt.Sprintf("%s %s", sourceId, destId)
 		val := float64(s.Value)
 		responseTimeMap[key] += val

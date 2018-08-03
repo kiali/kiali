@@ -30,11 +30,13 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
+	NodeType     string          `json:"nodeType"`
 	Namespace    string          `json:"namespace"`
 	Workload     string          `json:"workload,omitempty"`
 	App          string          `json:"app,omitempty"`
 	Version      string          `json:"version,omitempty"`
-	DestServices map[string]bool `json:"destServices,omitempty"`
+	Service      string          `json:"service,omitempty"`      // requested service for NodeTypeService
+	DestServices map[string]bool `json:"destServices,omitempty"` // requested services for [dest] node
 	Rate         string          `json:"rate,omitempty"`         // edge aggregate
 	Rate3xx      string          `json:"rate3XX,omitempty"`      // edge aggregate
 	Rate4xx      string          `json:"rate4XX,omitempty"`      // edge aggregate
@@ -44,12 +46,11 @@ type NodeData struct {
 	HasMissingSC bool            `json:"hasMissingSC,omitempty"` // true (has missing sidecar) | false
 	HasVS        bool            `json:"hasVS,omitempty"`        // true (has route rule) | false
 	Health       *models.Health  `json:"health,omitempty"`
-	IsDead       bool            `json:"isDead,omitempty"`     // true (has no pods) | false
-	IsGroup      string          `json:"isGroup,omitempty"`    // set to the grouping type, current values: [ 'version' ]
-	IsOutside    bool            `json:"isOutside,omitempty"`  // true | false
-	IsRoot       bool            `json:"isRoot,omitempty"`     // true | false
-	IsUnused     bool            `json:"isUnused,omitempty"`   // true | false
-	IsWorkload   bool            `json:"isWorkload,omitempty"` // true | false
+	IsDead       bool            `json:"isDead,omitempty"`    // true (has no pods) | false
+	IsGroup      string          `json:"isGroup,omitempty"`   // set to the grouping type, current values: [ 'version' ]
+	IsOutside    bool            `json:"isOutside,omitempty"` // true | false
+	IsRoot       bool            `json:"isRoot,omitempty"`    // true | false
+	IsUnused     bool            `json:"isUnused,omitempty"`  // true | false
 }
 
 type EdgeData struct {
@@ -85,6 +86,7 @@ type Elements struct {
 
 type Config struct {
 	Timestamp int64    `json:"timestamp"`
+	GraphType string   `json:"graphType"`
 	Elements  Elements `json:"elements"`
 }
 
@@ -103,7 +105,7 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 	buildConfig(trafficMap, &nodes, &edges, o)
 
 	// Add compound nodes that group together different versions of the same node
-	if o.GraphType == graph.GraphTypeApp && o.Versioned && o.GroupBy == options.GroupByVersion {
+	if o.GraphType == graph.GraphTypeVersionedApp && o.GroupBy == options.GroupByVersion {
 		groupByVersion(&nodes)
 	}
 
@@ -137,6 +139,7 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 	elements := Elements{nodes, edges}
 	result = Config{
 		Timestamp: o.Timestamp,
+		GraphType: o.GraphType,
 		Elements:  elements,
 	}
 	return result
@@ -147,12 +150,13 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		nodeId := nodeHash(id)
 
 		nd := &NodeData{
-			Id:         nodeId,
-			Namespace:  n.Namespace,
-			Workload:   n.Workload,
-			App:        n.App,
-			Version:    n.Version,
-			IsWorkload: n.IsWorkload,
+			Id:        nodeId,
+			NodeType:  n.NodeType,
+			Namespace: n.Namespace,
+			Workload:  n.Workload,
+			App:       n.App,
+			Version:   n.Version,
+			Service:   n.Service,
 		}
 
 		addNodeTelemetry(n, nd)
@@ -315,7 +319,7 @@ func groupByVersion(nodes *[]*NodeWrapper) {
 	grouped := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
-		if !nw.Data.IsWorkload {
+		if graph.NodeTypeApp == nw.Data.NodeType {
 			grouped[nw.Data.App] = append(grouped[nw.Data.App], nw.Data)
 		}
 	}
@@ -326,8 +330,8 @@ func groupByVersion(nodes *[]*NodeWrapper) {
 			nodeId := nodeHash(k)
 			nd := NodeData{
 				Id:        nodeId,
+				NodeType:  graph.NodeTypeApp,
 				Namespace: members[0].Namespace,
-				Workload:  "",
 				App:       k,
 				Version:   "",
 				IsGroup:   options.GroupByVersion,

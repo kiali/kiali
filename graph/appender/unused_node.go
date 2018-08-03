@@ -11,7 +11,6 @@ import (
 
 type UnusedNodeAppender struct {
 	GraphType string
-	Versioned bool
 }
 
 // AppendGraph implements Appender
@@ -56,11 +55,11 @@ func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, n
 		if v, ok := labels[versionLabel]; ok {
 			version = v
 		}
-		id, isWorkload := graph.Id(namespace, d.Name, app, version, a.GraphType, a.Versioned)
+		id, nodeType := graph.Id(namespace, d.Name, app, version, "", a.GraphType)
 		if _, found := trafficMap[id]; !found {
 			if _, found = unusedTrafficMap[id]; !found {
 				log.Debugf("Adding unused node for deployment [%s] with labels [%v]", d.Name, labels)
-				node := graph.NewNodeExplicit(id, namespace, d.Name, app, version, isWorkload, a.Versioned)
+				node := graph.NewNodeExplicit(id, namespace, d.Name, app, version, "", nodeType, a.GraphType)
 				node.Metadata = map[string]interface{}{"rate": 0.0, "rateOut": 0.0, "isUnused": true}
 				unusedTrafficMap[id] = &node
 			}

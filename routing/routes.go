@@ -272,6 +272,7 @@ func NewRoutes() (r *Routes) {
 			// Supported query parameters:
 			// appenders:      Comma-separated list of desired appenders (default all)
 			// duration:       Duration indicating desired query period (default 10m)
+			// graphType:      Graph type for the telemetry data: app | versionedApp | workload (default workload)
 			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
 			// includeIstio:   Include istio-system destinations in graph (default false)
 			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
