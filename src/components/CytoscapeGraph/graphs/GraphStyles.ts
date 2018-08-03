@@ -2,7 +2,7 @@ import { PfColors } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { config } from '../../../config';
 import { FAILURE, DEGRADED } from '../../../utils/Health';
-import { GraphType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
+import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
 
 export const DimClass = 'mousedim';
 
@@ -51,33 +51,45 @@ export class GraphStyles {
         css: {
           // color: PfColors.Black,
           content: (ele: any) => {
+            const nodeType = ele.data('nodeType');
             const namespace = ele.data('namespace');
             const app = ele.data('app');
             const version = ele.data('version');
             const workload = ele.data('workload');
+            const service = ele.data('service');
 
             if (!getCyGlobalData(ele).showNodeLabels) {
               return '';
             }
 
             if (ele.data('parent')) {
-              // Technically, we should never get in here if graph type is workload since workload
-              // graphs do not have composite nodes (i.e. there are no groups). But in case we ever
-              // change the semantics, make sure workload graph node names are always workload names.
-              if (getCyGlobalData(ele).graphType === GraphType.WORKLOAD) {
-                return workload;
-              } else {
-                return version;
+              if (nodeType !== NodeType.APP) {
+                return 'error/unknown';
               }
+              return version;
             }
 
-            // use the workload name unless app label was defined
-            let content = workload;
-            if (getCyGlobalData(ele).graphType !== GraphType.WORKLOAD && app && app !== 'unknown') {
-              content = app;
-              if (version && version !== 'unknown') {
-                content += `\n${version}`;
-              }
+            let content = '';
+            switch (nodeType) {
+              case NodeType.APP:
+                if (getCyGlobalData(ele).graphType === GraphType.APP
+                  || ele.data('isGroup')) {
+                  content = app;
+                } else {
+                  content = app + `\n${version}`;
+                }
+                break;
+              case NodeType.SERVICE:
+                content = service;
+                break;
+              case NodeType.UNKNOWN:
+                content = 'unknown';
+                break;
+              case NodeType.WORKLOAD:
+                content = workload;
+                break;
+              default:
+                content = 'error';
             }
 
             if (ele.data('isOutside')) {
@@ -114,6 +126,12 @@ export class GraphStyles {
         selector: 'node[isOutside]',
         style: {
           shape: 'pentagon'
+        }
+      },
+      {
+        selector: 'node[nodeType="service"]',
+        style: {
+          shape: 'octagon'
         }
       },
       {

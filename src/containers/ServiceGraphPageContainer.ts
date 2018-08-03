@@ -24,8 +24,8 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
-  fetchGraphData: (namespace: Namespace, graphDuration: Duration, graphType: GraphType, versioned: boolean) =>
-    dispatch(ServiceGraphDataActions.fetchGraphData(namespace, graphDuration, graphType, versioned)),
+  fetchGraphData: (namespace: Namespace, graphDuration: Duration, graphType: GraphType) =>
+    dispatch(ServiceGraphDataActions.fetchGraphData(namespace, graphDuration, graphType)),
   toggleLegend: () => bindActionCreators(serviceGraphFilterActions.toggleLegend, dispatch)
 });
 

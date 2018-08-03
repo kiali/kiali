@@ -307,8 +307,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     const globalScratchData: CytoscapeGlobalScratchData = {
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,
-      showNodeLabels: this.props.showNodeLabels,
-      versioned: this.props.versioned
+      showNodeLabels: this.props.showNodeLabels
     };
     cy.scratch(CytoscapeGlobalScratchNamespace, globalScratchData);
 
@@ -416,8 +415,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         graphLayout: this.props.graphLayout,
         graphDuration: this.props.graphDuration,
         edgeLabelMode: this.props.edgeLabelMode,
-        graphType: this.props.graphType,
-        versioned: this.props.versioned
+        graphType: this.props.graphType
       })
     );
   };
@@ -483,7 +481,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       const workload = ele.data('workload');
 
       if ((workload !== 'unknown' || app !== 'unknown') && (ele.data('isGroup') || !ele.data('parent'))) {
-        const appBasedHealth = this.props.graphType === GraphType.APP && app !== 'unknown';
+        const isAppGraph = this.props.graphType === GraphType.APP || this.props.graphType === GraphType.VERSIONED_APP;
+        const appBasedHealth = isAppGraph && app !== 'unknown';
         let promise = healthPerNamespace.get(namespace);
         if (!promise) {
           promise = API.getNamespaceHealth(authentication(), namespace, duration).then(r => r.data);
