@@ -25,7 +25,7 @@ type ServiceGraphPageProps = GraphParamsType & {
   isLoading: boolean;
   showLegend: boolean;
   isReady: boolean;
-  fetchGraphData: (namespace: Namespace, graphDuration: Duration, graphType: GraphType, versioned: boolean) => any;
+  fetchGraphData: (namespace: Namespace, graphDuration: Duration, graphType: GraphType) => any;
   toggleLegend: () => void;
   summaryData: SummaryData | null;
   pollInterval: PollIntervalInMs;
@@ -115,8 +115,7 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
       graphDuration: this.props.graphDuration,
-      graphType: this.props.graphType,
-      versioned: this.props.versioned
+      graphType: this.props.graphType
     };
     return (
       <>
@@ -164,12 +163,7 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
 
   /** Fetch graph data */
   private loadGraphDataFromBackend = () => {
-    return this.props.fetchGraphData(
-      this.props.namespace,
-      this.props.graphDuration,
-      this.props.graphType,
-      this.props.versioned
-    );
+    return this.props.fetchGraphData(this.props.namespace, this.props.graphDuration, this.props.graphType);
   };
 
   private scheduleNextPollingIntervalFromProps() {

@@ -20,6 +20,14 @@ export interface SummaryPanelPropType {
 
 export enum GraphType {
   APP = 'app',
+  VERSIONED_APP = 'versionedApp',
+  WORKLOAD = 'workload'
+}
+
+export enum NodeType {
+  APP = 'app',
+  SERVICE = 'service',
+  UNKNOWN = 'unknown',
   WORKLOAD = 'workload'
 }
 
@@ -29,7 +37,6 @@ export interface GraphParamsType {
   graphLayout: Layout;
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
-  versioned: boolean;
 }
 
 // This data is stored in the _global scratch area in the cy graph
@@ -40,7 +47,6 @@ export type CytoscapeGlobalScratchData = {
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
   showNodeLabels: boolean;
-  versioned: boolean;
 };
 
 export interface CytoscapeBaseEvent {

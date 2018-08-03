@@ -39,8 +39,7 @@ export default class ServiceGraphRouteHandler extends React.Component<
     graphLayout: LayoutDictionary.getLayout({ name: '' }),
     edgeLabelMode: EdgeLabelMode.HIDE,
     namespace: { name: 'all' },
-    graphType: GraphType.APP,
-    versioned: true
+    graphType: GraphType.VERSIONED_APP
   };
 
   static parseProps = (queryString: string) => {
@@ -58,16 +57,12 @@ export default class ServiceGraphRouteHandler extends React.Component<
       urlParams.get('graphType'),
       ServiceGraphRouteHandler.graphParamsDefaults.graphType
     );
-    const _versioned = urlParams.get('versioned')
-      ? urlParams.get('versioned') !== 'false'
-      : ServiceGraphRouteHandler.graphParamsDefaults.versioned;
 
     return {
       graphDuration: _duration,
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
       edgeLabelMode: _edgeLabelMode,
-      graphType: _graphType,
-      versioned: _versioned
+      graphType: _graphType
     };
   };
 
@@ -77,8 +72,7 @@ export default class ServiceGraphRouteHandler extends React.Component<
       graphDuration: nextDuration,
       graphLayout: nextLayout,
       edgeLabelMode: nextEdgeLabelMode,
-      graphType: nextGraphType,
-      versioned: nextVersioned
+      graphType: nextGraphType
     } = ServiceGraphRouteHandler.parseProps(props.location.search);
 
     const layoutHasChanged = nextLayout.name !== currentState.graphLayout.name;
@@ -86,23 +80,14 @@ export default class ServiceGraphRouteHandler extends React.Component<
     const durationHasChanged = nextDuration.value !== currentState.graphDuration.value;
     const edgeLabelModeChanged = nextEdgeLabelMode !== currentState.edgeLabelMode;
     const graphTypeChanged = nextGraphType !== currentState.graphType;
-    const versionedChanged = nextVersioned !== currentState.versioned;
 
-    if (
-      layoutHasChanged ||
-      namespaceHasChanged ||
-      durationHasChanged ||
-      edgeLabelModeChanged ||
-      graphTypeChanged ||
-      versionedChanged
-    ) {
+    if (layoutHasChanged || namespaceHasChanged || durationHasChanged || edgeLabelModeChanged || graphTypeChanged) {
       const newParams: GraphParamsType = {
         namespace: nextNamespace,
         graphDuration: nextDuration,
         graphLayout: nextLayout,
         edgeLabelMode: nextEdgeLabelMode,
-        graphType: nextGraphType,
-        versioned: nextVersioned
+        graphType: nextGraphType
       };
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(newParams));
       return { ...newParams };
