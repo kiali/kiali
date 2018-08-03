@@ -55,6 +55,7 @@ func TestResponseTime(t *testing.T) {
 		"source_app":                    "ingressgateway",
 		"source_version":                model.LabelValue(graph.UnknownVersion),
 		"destination_service_namespace": "bookinfo",
+		"destination_service_name":      "productpage",
 		"destination_workload":          "productpage-v1",
 		"destination_app":               "productpage",
 		"destination_version":           "v1"}
@@ -70,6 +71,7 @@ func TestResponseTime(t *testing.T) {
 		"source_app":                    "productpage",
 		"source_version":                "v1",
 		"destination_service_namespace": "bookinfo",
+		"destination_service_name":      "reviews",
 		"destination_workload":          "reviews-v1",
 		"destination_app":               "reviews",
 		"destination_version":           "v1"}
@@ -79,6 +81,7 @@ func TestResponseTime(t *testing.T) {
 		"source_app":                    "productpage",
 		"source_version":                "v1",
 		"destination_service_namespace": "bookinfo",
+		"destination_service_name":      "reviews",
 		"destination_workload":          "reviews-v2",
 		"destination_app":               "reviews",
 		"destination_version":           "v2"}
@@ -88,6 +91,7 @@ func TestResponseTime(t *testing.T) {
 		"source_app":                    "reviews",
 		"source_version":                "v1",
 		"destination_service_namespace": "bookinfo",
+		"destination_service_name":      "ratings",
 		"destination_workload":          "ratings-v1",
 		"destination_app":               "ratings",
 		"destination_version":           "v1"}
@@ -97,6 +101,7 @@ func TestResponseTime(t *testing.T) {
 		"source_app":                    "reviews",
 		"source_version":                "v2",
 		"destination_service_namespace": "bookinfo",
+		"destination_service_name":      "ratings",
 		"destination_workload":          "ratings-v1",
 		"destination_app":               "ratings",
 		"destination_version":           "v1"}
@@ -124,7 +129,7 @@ func TestResponseTime(t *testing.T) {
 	mockQuery(api, q2, &v2)
 
 	trafficMap := responseTimeTestTraffic()
-	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, graph.GraphTypeApp, true)
+	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressId]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -134,11 +139,10 @@ func TestResponseTime(t *testing.T) {
 	duration, _ := time.ParseDuration("60s")
 	appender := ResponseTimeAppender{
 		Duration:     duration,
-		GraphType:    graph.GraphTypeApp,
+		GraphType:    graph.GraphTypeVersionedApp,
 		IncludeIstio: false,
 		Quantile:     0.95,
 		QueryTime:    time.Now().Unix(),
-		Versioned:    true,
 	}
 
 	appender.appendGraph(trafficMap, "bookinfo", client)
@@ -187,12 +191,12 @@ func TestResponseTime(t *testing.T) {
 }
 
 func responseTimeTestTraffic() graph.TrafficMap {
-	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, graph.GraphTypeApp, true)
-	productpage := graph.NewNode("bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeApp, true)
-	reviewsV1 := graph.NewNode("bookinfo", "reviews-v1", "reviews", "v1", graph.GraphTypeApp, true)
-	reviewsV2 := graph.NewNode("bookinfo", "reviews-v2", "reviews", "v2", graph.GraphTypeApp, true)
-	ratingsPath1 := graph.NewNode("bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeApp, true)
-	ratingsPath2 := graph.NewNode("bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeApp, true)
+	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	productpage := graph.NewNode("bookinfo", "productpage-v1", "productpage", "v1", "productpage", graph.GraphTypeVersionedApp)
+	reviewsV1 := graph.NewNode("bookinfo", "reviews-v1", "reviews", "v1", "reviews", graph.GraphTypeVersionedApp)
+	reviewsV2 := graph.NewNode("bookinfo", "reviews-v2", "reviews", "v2", "reviews", graph.GraphTypeVersionedApp)
+	ratingsPath1 := graph.NewNode("bookinfo", "ratings-v1", "ratings", "v1", "ratings", graph.GraphTypeVersionedApp)
+	ratingsPath2 := graph.NewNode("bookinfo", "ratings-v1", "ratings", "v1", "ratings", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
 	trafficMap[ingress.ID] = &ingress
 	trafficMap[productpage.ID] = &productpage
