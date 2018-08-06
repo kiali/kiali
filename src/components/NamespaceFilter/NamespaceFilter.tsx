@@ -36,7 +36,7 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
 
     let initialFilters = this.initialFilterList(defaultNamespaceFilter);
 
-    if (this.props.initialActiveFilters && this.props.initialActiveFilters.length > 0) {
+    if (!!this.props.initialActiveFilters) {
       NamespaceFilterSelected.setSelected(this.props.initialActiveFilters);
     }
 

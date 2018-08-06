@@ -22,10 +22,14 @@ export namespace ListPage {
       }
 
       params.forEach((param: URLParameter) => {
-        if (action === ACTION_APPEND) {
-          urlParams.append(param.name, param.value);
-        } else if (!action || action === ACTION_SET) {
-          urlParams.set(param.name, param.value);
+        if (param.value === '') {
+          urlParams.delete(param.name);
+        } else {
+          if (action === ACTION_APPEND) {
+            urlParams.append(param.name, param.value);
+          } else if (!action || action === ACTION_SET) {
+            urlParams.set(param.name, param.value);
+          }
         }
       });
 

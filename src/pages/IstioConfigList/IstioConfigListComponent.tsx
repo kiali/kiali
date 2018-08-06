@@ -27,6 +27,7 @@ import { authentication } from '../../utils/Authentication';
 import { NamespaceValidations } from '../../types/ServiceInfo';
 import { ConfigIndicator } from '../../components/ConfigValidation/ConfigIndicator';
 import { removeDuplicatesArray } from '../../utils/Common';
+import { URLParameter } from '../../types/Parameters';
 
 export const sortFields: SortField[] = [
   {
@@ -223,18 +224,27 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
   }
 
   setActiveFiltersToURL() {
-    const params = NamespaceFilterSelected.getSelected().map(activeFilter => {
-      let filterId = (
-        availableFilters.find(filter => {
+    const params = NamespaceFilterSelected.getSelected()
+      .map(activeFilter => {
+        const availableFilter = availableFilters.find(filter => {
           return filter.title === activeFilter.category;
-        }) || availableFilters[2]
-      ).id;
+        });
 
-      return {
-        name: filterId,
-        value: activeFilter.value
-      };
-    });
+        if (typeof availableFilter === 'undefined') {
+          NamespaceFilterSelected.setSelected(
+            NamespaceFilterSelected.getSelected().filter(nfs => {
+              return nfs.category === activeFilter.category;
+            })
+          );
+          return null;
+        }
+
+        return {
+          name: availableFilter.id,
+          value: activeFilter.value
+        };
+      })
+      .filter(filter => filter !== null);
 
     this.props.onParamChange(params, 'append');
   }
@@ -255,28 +265,26 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
   }
 
   onFilterChange = (filters: ActiveFilter[]) => {
-    if (filters.length > 0) {
-      let params = filters.map(activeFilter => {
-        let filterId = (
-          availableFilters.find(filter => {
-            return filter.title === activeFilter.category;
-          }) || availableFilters[2]
-        ).id;
+    let params: URLParameter[] = [];
 
-        return {
-          name: filterId,
-          value: activeFilter.value
-        };
+    availableFilters.forEach(availableFilter => {
+      params.push({ name: availableFilter.id, value: '' });
+    });
+
+    filters.forEach(activeFilter => {
+      let filterId = (
+        availableFilters.find(filter => {
+          return filter.title === activeFilter.category;
+        }) || availableFilters[2]
+      ).id;
+
+      params.push({
+        name: filterId,
+        value: activeFilter.value
       });
+    });
 
-      this.props.onParamChange(params, 'append');
-    } else {
-      this.props.onParamDelete(
-        availableFilters.map(filter => {
-          return filter.id;
-        })
-      );
-    }
+    this.props.onParamChange(params, 'append');
 
     this.updateIstioConfig();
   };
