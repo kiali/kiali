@@ -319,8 +319,9 @@ func groupByVersion(nodes *[]*NodeWrapper) {
 	grouped := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
-		if graph.NodeTypeApp == nw.Data.NodeType {
-			grouped[nw.Data.App] = append(grouped[nw.Data.App], nw.Data)
+		if nw.Data.NodeType == graph.NodeTypeApp {
+			k := fmt.Sprintf("box_%s_%s", nw.Data.Namespace, nw.Data.App)
+			grouped[k] = append(grouped[k], nw.Data)
 		}
 	}
 
@@ -332,7 +333,7 @@ func groupByVersion(nodes *[]*NodeWrapper) {
 				Id:        nodeId,
 				NodeType:  graph.NodeTypeApp,
 				Namespace: members[0].Namespace,
-				App:       k,
+				App:       members[0].App,
 				Version:   "",
 				IsGroup:   options.GroupByVersion,
 			}
