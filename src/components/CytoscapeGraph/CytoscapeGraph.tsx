@@ -8,7 +8,7 @@ import * as LayoutDictionary from './graphs/LayoutDictionary';
 import * as GraphBadge from './graphs/GraphBadge';
 import TrafficRender from './graphs/TrafficRenderer';
 import EmptyGraphLayout from './EmptyGraphLayout';
-import CytoscapeReactWrapper from './CytoscapeReactWrapper';
+import { CytoscapeReactWrapper, PanZoomOptions } from './CytoscapeReactWrapper';
 
 import { ServiceGraphActions } from '../../actions/ServiceGraphActions';
 import * as API from '../../services/Api';
@@ -279,7 +279,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   }
 
   private safeFit(cy: any) {
-    cy.fit();
+    cy.fit('', PanZoomOptions.fitPadding);
     if (cy.zoom() > 2.5) {
       cy.zoom(2.5);
       cy.center();

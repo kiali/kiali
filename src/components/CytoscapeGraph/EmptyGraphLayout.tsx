@@ -43,10 +43,8 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
     if (this.props.isError) {
       return (
         <EmptyState className={emptyStateStyle}>
-          <EmptyStateTitle>Error loading Service Graph</EmptyStateTitle>
-          <EmptyStateInfo>
-            Service Graph cannot be loaded. Please access to the Message Center for more details.
-          </EmptyStateInfo>
+          <EmptyStateTitle>Error loading Graph</EmptyStateTitle>
+          <EmptyStateInfo>Graph cannot be loaded. Please access to the Message Center for more details.</EmptyStateInfo>
           <EmptyStateAction>
             <Button bsStyle="primary" bsSize="large" onClick={this.toogleMessageCenter}>
               Message Center
@@ -58,7 +56,7 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
     if (this.props.isLoading) {
       return (
         <EmptyState className={emptyStateStyle}>
-          <EmptyStateTitle>Loading Service Graph</EmptyStateTitle>
+          <EmptyStateTitle>Loading Graph</EmptyStateTitle>
         </EmptyState>
       );
     }
@@ -70,11 +68,11 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
     ) {
       return (
         <EmptyState className={emptyStateStyle}>
-          <EmptyStateTitle>Empty Service Graph</EmptyStateTitle>
+          <EmptyStateTitle>Empty Graph</EmptyStateTitle>
           <EmptyStateInfo>
-            There is currently no service graph available for namespace <b>{this.props.namespace}</b>. This could either
-            mean there are no service mesh available in this namespace or that nothing has accessed the service mesh.
-            Please try accessing something in the service mesh and click 'Refresh'.
+            There is currently no graph available for namespace <b>{this.props.namespace}</b>. This could either mean
+            there are no service mesh available in this namespace or that nothing has accessed the service mesh. Please
+            try accessing something in the service mesh and click 'Refresh'.
           </EmptyStateInfo>
           <EmptyStateAction>
             <Button bsStyle="primary" bsSize="large" onClick={this.props.action}>

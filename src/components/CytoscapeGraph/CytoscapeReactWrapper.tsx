@@ -11,6 +11,10 @@ import popper from 'cytoscape-popper';
 import panzoom from 'cytoscape-panzoom';
 import 'cytoscape-panzoom/cytoscape.js-panzoom.css';
 
+export const PanZoomOptions = {
+  fitPadding: 25
+};
+
 cytoscape.use(canvas);
 cytoscape.use(cycola);
 cytoscape.use(dagre);
@@ -85,7 +89,7 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
 
     this.cy = cytoscape(opts);
     // Receives object with default init values or 'destroy' command and returns cy instance
-    this.cy.panzoom();
+    this.cy.panzoom(PanZoomOptions);
   }
 
   destroy() {

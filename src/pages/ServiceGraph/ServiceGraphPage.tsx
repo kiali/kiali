@@ -121,7 +121,7 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
       <>
         <FlexView className={containerStyle} column={true}>
           <Breadcrumb title={true}>
-            <Breadcrumb.Item active={true}>Service Graph</Breadcrumb.Item>
+            <Breadcrumb.Item active={true}>Graph</Breadcrumb.Item>
           </Breadcrumb>
           <div>
             {/* Use empty div to reset the flex, this component doesn't seem to like that. It renders all its contents in the center */}
@@ -210,6 +210,6 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
   }
 
   private notifyError = (error: Error, componentStack: string) => {
-    MessageCenterUtils.add('There was an error when rendering the service graph, please try a different layout');
+    MessageCenterUtils.add('There was an error when rendering the graph, please try a different layout');
   };
 }
