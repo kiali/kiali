@@ -475,6 +475,54 @@
         }
       }
     },
+    "/namespaces/{namespace}/workloads/{workload}": {
+      "get": {
+        "description": "Endpoint to get the workload details",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "workloadDetails",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the workload",
+            "name": "workload",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/workloadDetails"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/status": {
       "get": {
         "description": "Endpoint to get the status of Kiali",
@@ -565,6 +613,83 @@
         },
         "requests": {
           "$ref": "#/definitions/RequestHealth"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Autoscaler": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "currentCPUUtilizationPercentage": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "CurrentCPUUtilizationPercentage"
+        },
+        "currentReplicas": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "CurrentReplicas"
+        },
+        "desiredReplicas": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "DesiredReplicas"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "lastScaleTime": {
+          "type": "string",
+          "x-go-name": "LastScaleTime"
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "MaxReplicas"
+        },
+        "minReplicas": {
+          "description": "Spec",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "MinReplicas"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "observedGeneration": {
+          "description": "Status",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ObservedGeneration"
+        },
+        "targetCPUUtilizationPercentage": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "TargetCPUUtilizationPercentage"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "ContainerInfo": {
+      "description": "ContainerInfo holds container name and image",
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "x-go-name": "Image"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -796,6 +921,83 @@
       },
       "x-go-package": "github.com/kiali/kiali"
     },
+    "Pod": {
+      "description": "Pod holds a subset of v1.Pod data that is meaningful in Kiali",
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "createdBy": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Reference"
+          },
+          "x-go-name": "CreatedBy"
+        },
+        "istioContainers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContainerInfo"
+          },
+          "x-go-name": "IstioContainers"
+        },
+        "istioInitContainers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContainerInfo"
+          },
+          "x-go-name": "IstioInitContainers"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Pods": {
+      "description": "Pods alias for list of Pod structs",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Pod"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Port": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "Port"
+        },
+        "protocol": {
+          "type": "string",
+          "x-go-name": "Protocol"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Ports": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Port"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "QuotaSpec": {
       "type": "object",
       "properties": {
@@ -858,6 +1060,21 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
+    "Reference": {
+      "description": "Reference holds some information on the pod creator",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "RequestHealth": {
       "description": "RequestHealth holds several stats about recent request errors",
       "type": "object",
@@ -871,6 +1088,45 @@
           "type": "number",
           "format": "double",
           "x-go-name": "RequestErrorCount"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Service": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
+        "ip": {
+          "type": "string",
+          "x-go-name": "Ip"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "$ref": "#/definitions/namespace"
+        },
+        "ports": {
+          "$ref": "#/definitions/Ports"
+        },
+        "resourceVersion": {
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -934,6 +1190,13 @@
         "requests": {
           "$ref": "#/definitions/RequestHealth"
         }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Services": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Service"
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
@@ -1005,6 +1268,86 @@
         "$ref": "#/definitions/NameIstioValidation"
       },
       "x-go-package": "github.com/kiali/kiali"
+    },
+    "Workload": {
+      "type": "object",
+      "required": [
+        "name",
+        "templateAnnotations",
+        "labels",
+        "createdAt",
+        "resourceVersion",
+        "replicas",
+        "availableReplicas",
+        "unavailableReplicas"
+      ],
+      "properties": {
+        "autoscaler": {
+          "$ref": "#/definitions/Autoscaler"
+        },
+        "availableReplicas": {
+          "description": "Number of available replicas",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "AvailableReplicas",
+          "example": 1
+        },
+        "createdAt": {
+          "description": "Creation timestamp (in RFC3339 format)",
+          "type": "string",
+          "x-go-name": "CreatedAt",
+          "example": "2018-07-31T12:24:17Z"
+        },
+        "labels": {
+          "description": "Kubernetes labels",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "name": {
+          "description": "Workload name",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "reviews"
+        },
+        "pods": {
+          "$ref": "#/definitions/Pods"
+        },
+        "replicas": {
+          "description": "Number of desired replicas",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "Replicas",
+          "example": 2
+        },
+        "resourceVersion": {
+          "description": "Kubernetes ResourceVersion",
+          "type": "string",
+          "x-go-name": "ResourceVersion",
+          "example": "192892127"
+        },
+        "services": {
+          "$ref": "#/definitions/Services"
+        },
+        "templateAnnotations": {
+          "description": "Kubernetes annotations",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "TemplateAnnotations"
+        },
+        "unavailableReplicas": {
+          "description": "Number of unavailable replicas",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "UnavailableReplicas",
+          "example": 1
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
     },
     "WorkloadHealth": {
       "description": "WorkloadHealth contains aggregated health from various sources, for a given workload",
@@ -1394,6 +1737,12 @@
       "description": "Listing all istio validations for object in the namespace",
       "schema": {
         "$ref": "#/definitions/TypedIstioValidations"
+      }
+    },
+    "workloadDetails": {
+      "description": "Listing all the information related to a workload",
+      "schema": {
+        "$ref": "#/definitions/Workload"
       }
     },
     "workloadHealthResponse": {

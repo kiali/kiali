@@ -422,6 +422,14 @@ type ServiceDetails struct {
 	Pods        []v1.Pod                                   `json:"pods"`
 }
 
+// DeploymentDetails is a wrapper to group full Deployment description, Services and Pods.
+// Used to fetch all details in a single operation instead to invoke individual APIs per each group.
+type DeploymentDetails struct {
+	Deployment *v1beta1.Deployment `json:"deployment"`
+	Pods       *v1.PodList         `json:"pods"`
+	Services   *v1.ServiceList     `json:"services"`
+}
+
 // IstioDetails is a wrapper to group all Istio objects related to a Service.
 // Used to fetch all Istio information in a single operation instead to invoke individual APIs per each group.
 type IstioDetails struct {

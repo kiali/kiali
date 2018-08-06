@@ -50,7 +50,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernete
 }
 
 // GetService returns a single service
-func (in *SvcService) GetService(namespace, service, interval string) (*models.Service, error) {
+func (in *SvcService) GetService(namespace, service, interval string) (*models.ServiceDetails, error) {
 	serviceDetails, err := in.k8s.GetServiceDetails(namespace, service)
 	if err != nil {
 		return nil, fmt.Errorf("Service details: %s", err.Error())
@@ -68,7 +68,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		return nil, fmt.Errorf("Source services: %s", err.Error())
 	}
 
-	s := models.Service{
+	s := models.ServiceDetails{
 		Namespace: models.Namespace{Name: namespace},
 		Name:      service,
 		Health:    health}
