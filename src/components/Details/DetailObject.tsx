@@ -86,7 +86,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
         }
       });
     } else {
-      Object.keys(value).forEach((key, k) => {
+      Object.keys(value || {}).forEach((key, k) => {
         let childList = this.buildList(key, value[key], checkLabel, depth + 1);
         childrenList.push(<li key={listKey + '_k' + k}>{childList}</li>);
       });
