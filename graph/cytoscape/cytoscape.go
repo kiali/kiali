@@ -44,11 +44,11 @@ type NodeData struct {
 	HasCB        bool            `json:"hasCB,omitempty"`        // true (has circuit breaker) | false
 	HasMissingSC bool            `json:"hasMissingSC,omitempty"` // true (has missing sidecar) | false
 	HasVS        bool            `json:"hasVS,omitempty"`        // true (has route rule) | false
-	IsDead       bool            `json:"isDead,omitempty"`    // true (has no pods) | false
-	IsGroup      string          `json:"isGroup,omitempty"`   // set to the grouping type, current values: [ 'version' ]
-	IsOutside    bool            `json:"isOutside,omitempty"` // true | false
-	IsRoot       bool            `json:"isRoot,omitempty"`    // true | false
-	IsUnused     bool            `json:"isUnused,omitempty"`  // true | false
+	IsDead       bool            `json:"isDead,omitempty"`       // true (has no pods) | false
+	IsGroup      string          `json:"isGroup,omitempty"`      // set to the grouping type, current values: [ 'version' ]
+	IsOutside    bool            `json:"isOutside,omitempty"`    // true | false
+	IsRoot       bool            `json:"isRoot,omitempty"`       // true | false
+	IsUnused     bool            `json:"isUnused,omitempty"`     // true | false
 }
 
 type EdgeData struct {
