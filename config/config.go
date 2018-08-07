@@ -32,13 +32,15 @@ const (
 	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
 	EnvServerCORSAllowAll               = "SERVER_CORS_ALLOW_ALL"
 
-	EnvGrafanaDisplayLink      = "GRAFANA_DISPLAY_LINK"
-	EnvGrafanaURL              = "GRAFANA_URL"
-	EnvGrafanaServiceNamespace = "GRAFANA_SERVICE_NAMESPACE"
-	EnvGrafanaService          = "GRAFANA_SERVICE"
-	EnvGrafanaDashboard        = "GRAFANA_DASHBOARD"
-	EnvGrafanaVarServiceSource = "GRAFANA_VAR_SERVICE_SOURCE"
-	EnvGrafanaVarServiceDest   = "GRAFANA_VAR_SERVICE_DEST"
+	EnvGrafanaDisplayLink              = "GRAFANA_DISPLAY_LINK"
+	EnvGrafanaURL                      = "GRAFANA_URL"
+	EnvGrafanaServiceNamespace         = "GRAFANA_SERVICE_NAMESPACE"
+	EnvGrafanaService                  = "GRAFANA_SERVICE"
+	EnvGrafanaWorkloadDashboardPattern = "GRAFANA_WORKLOAD_DASHBOARD_PATTERN"
+	EnvGrafanaServiceDashboardPattern  = "GRAFANA_SERVICE_DASHBOARD_PATTERN"
+	EnvGrafanaVarNamespace             = "GRAFANA_VAR_NAMESPACE"
+	EnvGrafanaVarService               = "GRAFANA_VAR_SERVICE"
+	EnvGrafanaVarWorkload              = "GRAFANA_VAR_WORKLOAD"
 
 	EnvJaegerURL              = "JAEGER_URL"
 	EnvJaegerServiceNamespace = "JAEGER_SERVICE_NAMESPACE"
@@ -69,13 +71,15 @@ type Server struct {
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	DisplayLink      bool   `yaml:"display_link"`
-	URL              string `yaml:"url"`
-	ServiceNamespace string `yaml:"service_namespace"`
-	Service          string `yaml:"service"`
-	Dashboard        string `yaml:"dashboard"`
-	VarServiceSource string `yaml:"var_service_source"`
-	VarServiceDest   string `yaml:"var_service_dest"`
+	DisplayLink              bool   `yaml:"display_link"`
+	URL                      string `yaml:"url"`
+	ServiceNamespace         string `yaml:"service_namespace"`
+	Service                  string `yaml:"service"`
+	WorkloadDashboardPattern string `yaml:"workload_dashboard_pattern"`
+	ServiceDashboardPattern  string `yaml:"service_dashboard_pattern"`
+	VarNamespace             string `yaml:"var_namespace"`
+	VarService               string `yaml:"var_service"`
+	VarWorkload              string `yaml:"var_workload"`
 }
 
 // JaegerConfig describes configuration used for jaeger links
@@ -147,9 +151,11 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
 	c.ExternalServices.Grafana.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaServiceNamespace, "istio-system"))
 	c.ExternalServices.Grafana.Service = strings.TrimSpace(getDefaultString(EnvGrafanaService, "grafana"))
-	c.ExternalServices.Grafana.Dashboard = strings.TrimSpace(getDefaultString(EnvGrafanaDashboard, "istio-dashboard"))
-	c.ExternalServices.Grafana.VarServiceSource = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceSource, "var-source"))
-	c.ExternalServices.Grafana.VarServiceDest = strings.TrimSpace(getDefaultString(EnvGrafanaVarServiceDest, "var-http_destination"))
+	c.ExternalServices.Grafana.WorkloadDashboardPattern = strings.TrimSpace(getDefaultString(EnvGrafanaWorkloadDashboardPattern, "Istio%20Workload%20Dashboard"))
+	c.ExternalServices.Grafana.ServiceDashboardPattern = strings.TrimSpace(getDefaultString(EnvGrafanaServiceDashboardPattern, "Istio%20Service%20Dashboard"))
+	c.ExternalServices.Grafana.VarNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaVarNamespace, "var-namespace"))
+	c.ExternalServices.Grafana.VarService = strings.TrimSpace(getDefaultString(EnvGrafanaVarService, "var-service"))
+	c.ExternalServices.Grafana.VarWorkload = strings.TrimSpace(getDefaultString(EnvGrafanaVarWorkload, "var-workload"))
 
 	// Jaeger Configuration
 	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
