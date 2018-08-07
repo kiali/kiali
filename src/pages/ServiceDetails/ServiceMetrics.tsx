@@ -34,8 +34,11 @@ type ServiceMetricsState = {
   requestDurationOut?: Histogram;
   responseSizeIn?: Histogram;
   responseSizeOut?: Histogram;
-  grafanaLinkIn?: string;
-  grafanaLinkOut?: string;
+  tcpReceivedIn?: MetricGroup;
+  tcpReceivedOut?: MetricGroup;
+  tcpSentIn?: MetricGroup;
+  tcpSentOut?: MetricGroup;
+  grafanaLink?: string;
   pollMetrics?: number;
 };
 
@@ -44,10 +47,14 @@ const chartDefinitions = {
   requestDurationIn: { familyName: 'Request duration (seconds)', isInput: true, component: HistogramChart },
   requestSizeIn: { familyName: 'Request size (bytes)', isInput: true, component: HistogramChart },
   responseSizeIn: { familyName: 'Response size (bytes)', isInput: true, component: HistogramChart },
+  tcpReceivedIn: { familyName: 'TCP received (bps)', isInput: true, component: MetricChart },
+  tcpSentIn: { familyName: 'TCP sent (bps)', isInput: true, component: MetricChart },
   requestCountOut: { familyName: 'Request volume (ops)', isInput: false, component: MetricChart },
   requestDurationOut: { familyName: 'Request duration (seconds)', isInput: false, component: HistogramChart },
   requestSizeOut: { familyName: 'Request size (bytes)', isInput: false, component: HistogramChart },
-  responseSizeOut: { familyName: 'Response size (bytes)', isInput: false, component: HistogramChart }
+  responseSizeOut: { familyName: 'Response size (bytes)', isInput: false, component: HistogramChart },
+  tcpSentOut: { familyName: 'TCP sent (bps)', isInput: false, component: MetricChart },
+  tcpReceivedOut: { familyName: 'TCP received (bps)', isInput: false, component: MetricChart }
 };
 
 class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
@@ -70,7 +77,14 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
 
   onOptionsChanged = (options: MetricsOptions) => {
     this.options = options;
-    options.filters = ['request_count', 'request_size', 'request_duration', 'response_size'];
+    options.filters = [
+      'request_count',
+      'request_size',
+      'request_duration',
+      'response_size',
+      'tcp_received',
+      'tcp_sent'
+    ];
     const intervalOpts = computePrometheusQueryInterval(options.duration!);
     options.step = intervalOpts.step;
     options.rateInterval = intervalOpts.rateInterval;
@@ -100,7 +114,11 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
           requestDurationIn: metrics.histograms['request_duration_in'],
           requestDurationOut: metrics.histograms['request_duration_out'],
           responseSizeIn: metrics.histograms['response_size_in'],
-          responseSizeOut: metrics.histograms['response_size_out']
+          responseSizeOut: metrics.histograms['response_size_out'],
+          tcpReceivedIn: metrics.metrics['tcp_received_in'],
+          tcpReceivedOut: metrics.metrics['tcp_received_out'],
+          tcpSentIn: metrics.metrics['tcp_sent_in'],
+          tcpSentOut: metrics.metrics['tcp_sent_out']
         });
       })
       .catch(error => {
@@ -115,27 +133,22 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         const info: GrafanaInfo = response['data'];
         if (info) {
           this.setState({
-            grafanaLinkIn: this.getGrafanaLink(info, false),
-            grafanaLinkOut: this.getGrafanaLink(info, true)
+            grafanaLink: this.getGrafanaLink(info)
           });
         } else {
-          this.setState({ grafanaLinkIn: undefined, grafanaLinkOut: undefined });
+          this.setState({ grafanaLink: undefined });
         }
       })
       .catch(error => {
-        this.setState({
-          grafanaLinkIn: undefined,
-          grafanaLinkOut: undefined
-        });
+        this.setState({ grafanaLink: undefined });
         console.error(error);
       });
   }
 
-  getGrafanaLink(info: GrafanaInfo, isSource: boolean): string {
-    const varName = isSource ? info.varServiceSource : info.varServiceDest;
-    return `${info.url}/dashboard/db/${info.dashboard}?${varName}=${this.props.service}.${this.props.namespace}.${
-      info.variablesSuffix
-    }`;
+  getGrafanaLink(info: GrafanaInfo): string {
+    return `${info.url}${info.serviceDashboardPath}?${info.varService}=${this.props.service}.${
+      this.props.namespace
+    }.svc.cluster.local`;
   }
 
   dismissAlert = () => this.setState({ alertDetails: undefined });
@@ -181,13 +194,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
                   chartKey => chartDefinitions[chartKey].isInput && this.renderNormalChart(chartKey)
                 )}
               </div>
-              {this.state.grafanaLinkIn && (
-                <span id="grafana-in-link">
-                  <a href={this.state.grafanaLinkIn} target="_blank">
-                    View in Grafana
-                  </a>
-                </span>
-              )}
             </div>
           </div>
           <div className="col-xs-6">
@@ -201,15 +207,15 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
                   chartKey => !chartDefinitions[chartKey].isInput && this.renderNormalChart(chartKey)
                 )}
               </ul>
-              {this.state.grafanaLinkOut && (
-                <span id="grafana-out-link">
-                  <a href={this.state.grafanaLinkOut} target="_blank">
-                    View in Grafana
-                  </a>
-                </span>
-              )}
             </div>
           </div>
+          {this.state.grafanaLink && (
+            <span id="grafana-link">
+              <a href={this.state.grafanaLink} target="_blank">
+                View in Grafana
+              </a>
+            </span>
+          )}
         </div>
       </div>
     );

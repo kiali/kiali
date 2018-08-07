@@ -2,12 +2,13 @@ import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { PropTypes } from 'prop-types';
 
-import { GraphParamsType } from '../../types/Graph';
+import { GraphParamsType, GraphType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import * as LayoutDictionary from '../../components/CytoscapeGraph/graphs/LayoutDictionary';
 import ServiceGraphPage from '../../containers/ServiceGraphPageContainer';
 import { makeServiceGraphUrlFromParams } from '../../components/Nav/NavUtils';
 import { config } from '../../config';
+import * as Enum from '../../utils/Enum';
 
 const URLSearchParams = require('url-search-params');
 
@@ -19,6 +20,7 @@ type ServiceGraphURLProps = {
   duration: string;
   namespace: string;
   layout: string;
+  graphType: string;
 };
 
 /**
@@ -36,7 +38,8 @@ export default class ServiceGraphRouteHandler extends React.Component<
     graphDuration: { value: config().toolbar.defaultDuration },
     graphLayout: LayoutDictionary.getLayout({ name: '' }),
     edgeLabelMode: EdgeLabelMode.HIDE,
-    namespace: { name: 'all' }
+    namespace: { name: 'all' },
+    graphType: GraphType.VERSIONED_APP
   };
 
   static parseProps = (queryString: string) => {
@@ -44,14 +47,22 @@ export default class ServiceGraphRouteHandler extends React.Component<
     const _duration = urlParams.get('duration')
       ? { value: urlParams.get('duration') }
       : ServiceGraphRouteHandler.graphParamsDefaults.graphDuration;
-    const _edgeLabelMode = EdgeLabelMode.fromString(
+    const _edgeLabelMode = Enum.fromValue(
+      EdgeLabelMode,
       urlParams.get('edges'),
       ServiceGraphRouteHandler.graphParamsDefaults.edgeLabelMode
     );
+    const _graphType = Enum.fromValue(
+      GraphType,
+      urlParams.get('graphType'),
+      ServiceGraphRouteHandler.graphParamsDefaults.graphType
+    );
+
     return {
       graphDuration: _duration,
       graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
-      edgeLabelMode: _edgeLabelMode
+      edgeLabelMode: _edgeLabelMode,
+      graphType: _graphType
     };
   };
 
@@ -60,20 +71,23 @@ export default class ServiceGraphRouteHandler extends React.Component<
     const {
       graphDuration: nextDuration,
       graphLayout: nextLayout,
-      edgeLabelMode: nextEdgeLabelMode
+      edgeLabelMode: nextEdgeLabelMode,
+      graphType: nextGraphType
     } = ServiceGraphRouteHandler.parseProps(props.location.search);
 
     const layoutHasChanged = nextLayout.name !== currentState.graphLayout.name;
     const namespaceHasChanged = nextNamespace.name !== currentState.namespace.name;
     const durationHasChanged = nextDuration.value !== currentState.graphDuration.value;
     const edgeLabelModeChanged = nextEdgeLabelMode !== currentState.edgeLabelMode;
+    const graphTypeChanged = nextGraphType !== currentState.graphType;
 
-    if (layoutHasChanged || namespaceHasChanged || durationHasChanged || edgeLabelModeChanged) {
+    if (layoutHasChanged || namespaceHasChanged || durationHasChanged || edgeLabelModeChanged || graphTypeChanged) {
       const newParams: GraphParamsType = {
         namespace: nextNamespace,
         graphDuration: nextDuration,
         graphLayout: nextLayout,
-        edgeLabelMode: nextEdgeLabelMode
+        edgeLabelMode: nextEdgeLabelMode,
+        graphType: nextGraphType
       };
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(newParams));
       return { ...newParams };

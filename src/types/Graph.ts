@@ -18,12 +18,36 @@ export interface SummaryPanelPropType {
   rateInterval: string;
 }
 
+export enum GraphType {
+  APP = 'app',
+  VERSIONED_APP = 'versionedApp',
+  WORKLOAD = 'workload'
+}
+
+export enum NodeType {
+  APP = 'app',
+  SERVICE = 'service',
+  UNKNOWN = 'unknown',
+  WORKLOAD = 'workload'
+}
+
 export interface GraphParamsType {
   namespace: Namespace;
   graphDuration: Duration;
   graphLayout: Layout;
   edgeLabelMode: EdgeLabelMode;
+  graphType: GraphType;
 }
+
+// This data is stored in the _global scratch area in the cy graph
+// for use by code that needs access to it.
+// We can add more props to this scratch data as the need arises.
+export const CytoscapeGlobalScratchNamespace = '_global';
+export type CytoscapeGlobalScratchData = {
+  edgeLabelMode: EdgeLabelMode;
+  graphType: GraphType;
+  showNodeLabels: boolean;
+};
 
 export interface CytoscapeBaseEvent {
   summaryType: string; // what the summary panel should show. One of: graph, node, edge, or group

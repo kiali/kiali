@@ -5,6 +5,7 @@ import { CytoscapeGraph } from '../CytoscapeGraph';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
 import { Duration, Layout, EdgeLabelMode } from '../../../types/GraphFilter';
 import EmptyGraphLayout from '../EmptyGraphLayout';
+import { GraphType } from '../../../types/Graph';
 
 jest.mock('../../../services/Api');
 
@@ -46,6 +47,7 @@ describe('CytoscapeGraph component test', () => {
         showTrafficAnimation={false}
         isLoading={false}
         isError={false}
+        graphType={GraphType.VERSIONED_APP}
       />
     );
     const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayout);

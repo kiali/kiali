@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 
-import { GraphParamsType } from '../../../types/Graph';
+import { GraphParamsType, GraphType } from '../../../types/Graph';
 import { Duration, EdgeLabelMode } from '../../../types/GraphFilter';
 import Namespace from '../../../types/Namespace';
 
@@ -11,7 +11,9 @@ const PARAMS: GraphParamsType = {
   namespace: { name: 'itsio-system' },
   graphDuration: { value: 60 },
   graphLayout: { name: 'Cose' },
-  edgeLabelMode: EdgeLabelMode.HIDE
+  edgeLabelMode: EdgeLabelMode.HIDE,
+  // TODO: GraphType not yet added into the UI
+  graphType: GraphType.VERSIONED_APP
 };
 
 describe('ServiceGraphPage test', () => {

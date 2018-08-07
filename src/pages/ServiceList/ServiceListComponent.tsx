@@ -20,20 +20,19 @@ import {
 } from '../../components/NamespaceFilter/NamespaceFilter';
 import { PfColors } from '../../components/Pf/PfColors';
 import * as API from '../../services/Api';
-import { Health } from '../../types/Health';
+import { getRequestErrorsRatio, ServiceHealth } from '../../types/Health';
 import Namespace from '../../types/Namespace';
 import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import { Pagination } from '../../types/Pagination';
 import { IstioLogo, overviewToItem, ServiceItem, ServiceOverview, SortField } from '../../types/ServiceListComponent';
 import { authentication } from '../../utils/Authentication';
-import { getRequestErrorsRatio } from '../../utils/Health';
 import { removeDuplicatesArray } from '../../utils/Common';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import ItemDescription from './ItemDescription';
 import './ServiceListComponent.css';
 import { URLParameter } from '../../types/Parameters';
 
-type ServiceItemHealth = ServiceItem & { health: Health };
+type ServiceItemHealth = ServiceItem & { health: ServiceHealth };
 
 // Exported for test
 export const sortFields: SortField[] = [
@@ -390,7 +389,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
               namespace,
               overview.name,
               this.state.rateInterval
-            ).then(r => r.data);
+            );
             updatedServices.push(overviewToItem(overview, namespace, healthProm));
           });
         });
@@ -476,7 +475,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             }
             // Prettier makes irrelevant line-breaking clashing with tslint
             // prettier-ignore
-            description={<ItemDescription item={serviceItem} rateInterval={this.state.rateInterval} />}
+            description={<ItemDescription item={serviceItem} />}
           />
         </Link>
       );

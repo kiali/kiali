@@ -74,7 +74,7 @@ describe('#Test Methods return a Promise', () => {
   });
 
   it('#getServiceHealth', () => {
-    const result = API.getServiceHealth(authentication(), 'istio-system', 'book-info');
+    const result = API.getServiceHealth(authentication(), 'istio-system', 'book-info', 60);
     evaluatePromise(result);
   });
 

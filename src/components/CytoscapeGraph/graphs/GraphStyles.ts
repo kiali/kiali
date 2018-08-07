@@ -1,7 +1,8 @@
 import { PfColors } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { config } from '../../../config';
-import { FAILURE, DEGRADED } from '../../../utils/Health';
+import { FAILURE, DEGRADED } from '../../../types/Health';
+import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
 
 export const DimClass = 'mousedim';
 
@@ -11,6 +12,10 @@ export class GraphStyles {
   }
 
   static styles() {
+    const getCyGlobalData = (ele: any): CytoscapeGlobalScratchData => {
+      return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
+    };
+
     const getEdgeColor = (ele: any): string => {
       const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
       if (rate === 0 || ele.data('isUnused')) {
@@ -27,7 +32,7 @@ export class GraphStyles {
     };
 
     const getTLSValue = (ele: any, tlsValue: string, nonTlsValue: string): string => {
-      if (ele.data('isMTLS') && ele.data('edgeLabelMode') === EdgeLabelMode.MTLS_ENABLED) {
+      if (ele.data('isMTLS') && getCyGlobalData(ele).edgeLabelMode === EdgeLabelMode.MTLS_ENABLED) {
         return tlsValue;
       } else {
         return nonTlsValue;
@@ -46,21 +51,44 @@ export class GraphStyles {
         css: {
           // color: PfColors.Black,
           content: (ele: any) => {
-            const service = ele.data('serviceName') || ele.data('service').split('.')[0];
+            const nodeType = ele.data('nodeType');
             const namespace = ele.data('namespace');
+            const app = ele.data('app');
             const version = ele.data('version');
+            const workload = ele.data('workload');
+            const service = ele.data('service');
 
-            if (!ele.data('showNodeLabels')) {
+            if (!getCyGlobalData(ele).showNodeLabels) {
               return '';
             }
 
             if (ele.data('parent')) {
+              if (nodeType !== NodeType.APP) {
+                return 'error/unknown';
+              }
               return version;
             }
 
-            let content = service;
-            if (version && version !== 'unknown') {
-              content += `\n${version}`;
+            let content = '';
+            switch (nodeType) {
+              case NodeType.APP:
+                if (getCyGlobalData(ele).graphType === GraphType.APP || ele.data('isGroup')) {
+                  content = app;
+                } else {
+                  content = app + `\n${version}`;
+                }
+                break;
+              case NodeType.SERVICE:
+                content = service;
+                break;
+              case NodeType.UNKNOWN:
+                content = 'unknown';
+                break;
+              case NodeType.WORKLOAD:
+                content = workload;
+                break;
+              default:
+                content = 'error';
             }
 
             if (ele.data('isOutside')) {
@@ -100,6 +128,12 @@ export class GraphStyles {
         }
       },
       {
+        selector: 'node[nodeType="service"]',
+        style: {
+          shape: 'octagon'
+        }
+      },
+      {
         // version group
         selector: '$node > node',
         css: {
@@ -123,7 +157,7 @@ export class GraphStyles {
         selector: 'edge',
         css: {
           content: (ele: any) => {
-            const edgeLabelMode = ele.data('edgeLabelMode');
+            const edgeLabelMode = getCyGlobalData(ele).edgeLabelMode;
             switch (edgeLabelMode) {
               case EdgeLabelMode.REQUESTS_PER_SECOND: {
                 const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;

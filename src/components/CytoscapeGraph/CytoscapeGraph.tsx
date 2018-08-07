@@ -8,7 +8,7 @@ import * as LayoutDictionary from './graphs/LayoutDictionary';
 import * as GraphBadge from './graphs/GraphBadge';
 import TrafficRender from './graphs/TrafficRenderer';
 import EmptyGraphLayout from './EmptyGraphLayout';
-import CytoscapeReactWrapper from './CytoscapeReactWrapper';
+import { CytoscapeReactWrapper, PanZoomOptions } from './CytoscapeReactWrapper';
 
 import { ServiceGraphActions } from '../../actions/ServiceGraphActions';
 import * as API from '../../services/Api';
@@ -18,12 +18,15 @@ import {
   CytoscapeClickEvent,
   CytoscapeMouseInEvent,
   CytoscapeMouseOutEvent,
-  GraphParamsType
+  GraphParamsType,
+  CytoscapeGlobalScratchNamespace,
+  CytoscapeGlobalScratchData,
+  NodeType
 } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
+import * as H from '../../types/Health';
 import { authentication } from '../../utils/Authentication';
-import * as H from '../../utils/Health';
-import { NamespaceHealth } from '../../types/Health';
+import { NamespaceAppHealth, NamespaceWorkloadHealth } from '../../types/Health';
 
 import { makeServiceGraphUrlFromParams } from '../Nav/NavUtils';
 
@@ -50,6 +53,16 @@ type CytoscapeGraphProps = CytoscapeGraphType &
 
 type CytoscapeGraphState = {};
 
+type Position = {
+  x: number;
+  y: number;
+};
+
+type InitialValues = {
+  position?: Position;
+  zoom?: number;
+};
+
 // @todo: Move this class to 'containers' folder -- but it effects many other things
 // exporting this class for testing
 export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, CytoscapeGraphState> {
@@ -62,11 +75,16 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private cytoscapeReactWrapperRef: any;
   private updateLayout: boolean;
   private resetSelection: boolean;
+  private initialValues: InitialValues;
   private cy: any;
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
     this.updateLayout = false;
+    this.initialValues = {
+      position: undefined,
+      zoom: undefined
+    };
   }
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
@@ -85,7 +103,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.showVirtualServices !== nextProps.showVirtualServices ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.elements !== nextProps.elements ||
-      this.props.graphLayout !== nextProps.graphLayout ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.isError !== nextProps.isError
     );
@@ -106,14 +123,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   render() {
     return (
       <div id="cytoscape-container" className={this.props.containerClassName}>
-        <ReactResizeDetector
-          handleWidth={true}
-          handleHeight={true}
-          skipOnMount={true}
-          refreshMode={'throttle'}
-          refreshRate={100}
-          onResize={this.onResize}
-        />
+        <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={this.onResize} />
         <EmptyGraphLayout
           elements={this.props.elements}
           namespace={this.props.namespace.name}
@@ -143,19 +153,22 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private onResize = () => {
     if (this.cy) {
       this.cy.resize();
+      const currentPosition = this.cy.pan();
+      const currentZoom = this.cy.zoom();
+      if (
+        this.initialValues.position &&
+        this.initialValues.position.x === currentPosition.x &&
+        this.initialValues.position.y === currentPosition.y &&
+        this.initialValues.zoom === currentZoom
+      ) {
+        // There was a resize, but we are in the initial pan/zoom state, we can fit again.
+        this.safeFit(this.cy);
+      }
     }
   };
 
-  private turnEdgeLabelsTo = (cy: any, value: EdgeLabelMode) => {
-    cy.edges().forEach(edge => {
-      edge.data('edgeLabelMode', value);
-    });
-  };
-
   private turnNodeLabelsTo = (cy: any, value: boolean) => {
-    cy.nodes().forEach(node => {
-      node.data('showNodeLabels', value);
-    });
+    cy.scratch(CytoscapeGlobalScratchNamespace).showNodeLabels = value;
   };
 
   private cyInitialization(cy: any) {
@@ -266,11 +279,13 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   }
 
   private safeFit(cy: any) {
-    cy.fit();
+    cy.fit('', PanZoomOptions.fitPadding);
     if (cy.zoom() > 2.5) {
       cy.zoom(2.5);
       cy.center();
     }
+    this.initialValues.position = { ...cy.pan() };
+    this.initialValues.zoom = cy.zoom();
   }
 
   private processGraphUpdate(cy: any) {
@@ -288,6 +303,13 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       }
       this.resetSelection = false;
     }
+
+    const globalScratchData: CytoscapeGlobalScratchData = {
+      edgeLabelMode: this.props.edgeLabelMode,
+      graphType: this.props.graphType,
+      showNodeLabels: this.props.showNodeLabels
+    };
+    cy.scratch(CytoscapeGlobalScratchNamespace, globalScratchData);
 
     cy.startBatch();
 
@@ -321,7 +343,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     // Create and destroy labels
-    this.turnEdgeLabelsTo(cy, this.props.edgeLabelMode);
     this.turnNodeLabelsTo(cy, this.props.showNodeLabels);
 
     // Create badges
@@ -390,10 +411,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     this.context.router.history.push(
       makeServiceGraphUrlFromParams({
-        namespace: { name: event.summaryTarget.data('service').split('.')[1] },
+        namespace: { name: event.summaryTarget.data('namespace') },
         graphLayout: this.props.graphLayout,
         graphDuration: this.props.graphDuration,
-        edgeLabelMode: this.props.edgeLabelMode
+        edgeLabelMode: this.props.edgeLabelMode,
+        graphType: this.props.graphType
       })
     );
   };
@@ -451,39 +473,50 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
     const duration = this.props.graphDuration.value;
     // Keep a map of namespace x promises in order not to fetch several times the same data per namespace
-    const healthPerNamespace = new Map<String, Promise<NamespaceHealth>>();
+    const appHealthPerNamespace = new Map<String, Promise<NamespaceAppHealth>>();
+    const wkldHealthPerNamespace = new Map<String, Promise<NamespaceWorkloadHealth>>();
     // Asynchronously fetch health
     cy.nodes().forEach(ele => {
-      const fqService = ele.data('service');
-      if (fqService && (ele.data('isGroup') || !ele.data('parent'))) {
-        const serviceParts = fqService.split('.');
-        if (serviceParts.length < 2) {
-          // Ignore health for special nodes such as "unknown"
-          return;
-        }
-        const service = serviceParts[0];
-        const namespace = serviceParts[1];
-        let promise = healthPerNamespace.get(namespace);
+      const namespace = ele.data('namespace');
+      const nodeType = ele.data('nodeType');
+      const isInAppBox = nodeType === NodeType.APP && ele.data('parent');
+      if (nodeType === NodeType.WORKLOAD || isInAppBox) {
+        const workload = ele.data('workload');
+        // Workload-based health
+        let promise = wkldHealthPerNamespace.get(namespace);
         if (!promise) {
-          promise = API.getNamespaceHealth(authentication(), namespace, duration).then(r => r.data);
-          healthPerNamespace.set(namespace, promise);
+          promise = API.getNamespaceWorkloadHealth(authentication(), namespace, duration);
+          wkldHealthPerNamespace.set(namespace, promise);
         }
-        ele.data('healthPromise', promise.then(nsHealth => nsHealth[service]));
-        promise
-          .then(nsHealth => {
-            const health = nsHealth[service];
-            const status = H.computeAggregatedHealth(health);
-            ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
-            if (status === H.DEGRADED || status === H.FAILURE) {
-              ele.addClass(status.name);
-            }
-          })
-          .catch(err => {
-            ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
-            console.error(API.getErrorMsg('Could not fetch health', err));
-          });
+        this.updateNodeHealth(ele, promise, workload);
+      } else if (nodeType === NodeType.APP) {
+        const app = ele.data('app');
+        // App-based health
+        let promise = appHealthPerNamespace.get(namespace);
+        if (!promise) {
+          promise = API.getNamespaceAppHealth(authentication(), namespace, duration);
+          appHealthPerNamespace.set(namespace, promise);
+        }
+        this.updateNodeHealth(ele, promise, app);
       }
     });
+  }
+
+  private updateNodeHealth(ele: any, promise: Promise<H.NamespaceAppHealth | H.NamespaceWorkloadHealth>, key: string) {
+    ele.data('healthPromise', promise.then(nsHealth => nsHealth[key]));
+    promise
+      .then(nsHealth => {
+        const health = nsHealth[key];
+        const status = health.getGlobalStatus();
+        ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
+        if (status === H.DEGRADED || status === H.FAILURE) {
+          ele.addClass(status.name);
+        }
+      })
+      .catch(err => {
+        ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
+        console.error(API.getErrorMsg('Could not fetch health', err));
+      });
   }
 }
 

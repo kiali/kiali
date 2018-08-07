@@ -28,3 +28,12 @@ export const updateHealth = (summaryTarget: any, stateSetter: (hs: HealthState) 
     stateSetter({ health: undefined, healthLoading: false });
   }
 };
+
+export const nodeData = (node: any) => {
+  return {
+    namespace: node.data('namespace'),
+    app: node.data('app'),
+    version: node.data('version'),
+    workload: node.data('workload')
+  };
+};

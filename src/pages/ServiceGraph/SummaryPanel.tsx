@@ -9,8 +9,15 @@ type SummaryPanelState = {
   // stateless
 };
 
-export default class SummaryPanel extends React.Component<SummaryPanelPropType, SummaryPanelState> {
+type MainSummaryPanelPropType = SummaryPanelPropType & {
+  isPageVisible: boolean;
+};
+
+export default class SummaryPanel extends React.Component<MainSummaryPanelPropType, SummaryPanelState> {
   render() {
+    if (!this.props.isPageVisible) {
+      return null;
+    }
     return (
       <>
         {this.props.data.summaryType === 'edge' ? (
