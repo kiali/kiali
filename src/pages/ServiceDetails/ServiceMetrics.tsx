@@ -38,8 +38,7 @@ type ServiceMetricsState = {
   tcpReceivedOut?: MetricGroup;
   tcpSentIn?: MetricGroup;
   tcpSentOut?: MetricGroup;
-  grafanaLinkIn?: string;
-  grafanaLinkOut?: string;
+  grafanaLink?: string;
   pollMetrics?: number;
 };
 
@@ -134,27 +133,22 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
         const info: GrafanaInfo = response['data'];
         if (info) {
           this.setState({
-            grafanaLinkIn: this.getGrafanaLink(info, false),
-            grafanaLinkOut: this.getGrafanaLink(info, true)
+            grafanaLink: this.getGrafanaLink(info)
           });
         } else {
-          this.setState({ grafanaLinkIn: undefined, grafanaLinkOut: undefined });
+          this.setState({ grafanaLink: undefined });
         }
       })
       .catch(error => {
-        this.setState({
-          grafanaLinkIn: undefined,
-          grafanaLinkOut: undefined
-        });
+        this.setState({ grafanaLink: undefined });
         console.error(error);
       });
   }
 
-  getGrafanaLink(info: GrafanaInfo, isSource: boolean): string {
-    const varName = isSource ? info.varServiceSource : info.varServiceDest;
-    return `${info.url}/dashboard/db/${info.dashboard}?${varName}=${this.props.service}.${this.props.namespace}.${
-      info.variablesSuffix
-    }`;
+  getGrafanaLink(info: GrafanaInfo): string {
+    return `${info.url}${info.serviceDashboardPath}?${info.varService}=${this.props.service}.${
+      this.props.namespace
+    }.svc.cluster.local`;
   }
 
   dismissAlert = () => this.setState({ alertDetails: undefined });
@@ -200,13 +194,6 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
                   chartKey => chartDefinitions[chartKey].isInput && this.renderNormalChart(chartKey)
                 )}
               </div>
-              {this.state.grafanaLinkIn && (
-                <span id="grafana-in-link">
-                  <a href={this.state.grafanaLinkIn} target="_blank">
-                    View in Grafana
-                  </a>
-                </span>
-              )}
             </div>
           </div>
           <div className="col-xs-6">
@@ -220,15 +207,15 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
                   chartKey => !chartDefinitions[chartKey].isInput && this.renderNormalChart(chartKey)
                 )}
               </ul>
-              {this.state.grafanaLinkOut && (
-                <span id="grafana-out-link">
-                  <a href={this.state.grafanaLinkOut} target="_blank">
-                    View in Grafana
-                  </a>
-                </span>
-              )}
             </div>
           </div>
+          {this.state.grafanaLink && (
+            <span id="grafana-link">
+              <a href={this.state.grafanaLink} target="_blank">
+                View in Grafana
+              </a>
+            </span>
+          )}
         </div>
       </div>
     );
