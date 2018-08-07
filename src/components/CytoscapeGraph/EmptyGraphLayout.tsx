@@ -30,6 +30,11 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
     const currentIsEmpty = _.isEmpty(this.props.elements.nodes);
     const nextIsEmpty = _.isEmpty(nextProps.elements.nodes);
 
+    // Update if we have elements and we are not loading
+    if (nextProps.isLoading === false && !nextIsEmpty) {
+      return true;
+    }
+
     // Update if we are going from having no elements to having elements or vice versa
     if (currentIsEmpty !== nextIsEmpty) {
       return true;
