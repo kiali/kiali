@@ -252,9 +252,26 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 	return quotaSpecBinding.DeepCopyIstioObject(), nil
 }
 
-// CheckVirtualService returns true if virtualService object has defined a route on a service for any subset passed as parameter.
+// CheckVirtualService returns true if virtualService object is defined for the service.
 // It returns false otherwise.
-func CheckVirtualService(virtualService IstioObject, namespace string, serviceName string, subsets []string) bool {
+func CheckVirtualService(virtualService IstioObject, namespace string, serviceName string) bool {
+	if virtualService == nil || virtualService.GetSpec() == nil || serviceName == "" {
+		return false
+	}
+	if hosts, ok := virtualService.GetSpec()["hosts"]; ok {
+		for _, host := range hosts.([]interface{}) {
+			if FilterByHost(host.(string), serviceName, namespace) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// CheckVirtualServiceSubset returns true if virtualService object has defined a route on a service for any subset passed as parameter.
+// It returns false otherwise.
+// TODO: Is this used?
+func CheckVirtualServiceSubset(virtualService IstioObject, namespace string, serviceName string, subsets []string) bool {
 	if virtualService == nil || virtualService.GetSpec() == nil || subsets == nil {
 		return false
 	}
@@ -279,7 +296,7 @@ func GetDestinationRulesSubsets(destinationRules []IstioObject, serviceName, ver
 								subsetName := innerSubset["name"]
 								if labels, ok := innerSubset["labels"]; ok {
 									if dLabels, ok := labels.(map[string]interface{}); ok {
-										if versionValue, ok := dLabels[cfg.VersionFilterLabelName]; ok && versionValue == version {
+										if versionValue, ok := dLabels[cfg.VersionLabelName]; ok && versionValue == version {
 											foundSubsets = append(foundSubsets, subsetName.(string))
 										}
 									}
@@ -315,7 +332,7 @@ func CheckDestinationRuleCircuitBreaker(destinationRule IstioObject, namespace s
 							if trafficPolicy, ok := innerSubset["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
 								if labels, ok := innerSubset["labels"]; ok {
 									if dLabels, ok := labels.(map[string]interface{}); ok && version != "" {
-										if versionValue, ok := dLabels[cfg.VersionFilterLabelName]; ok && versionValue == version {
+										if versionValue, ok := dLabels[cfg.VersionLabelName]; ok && versionValue == version {
 											return true
 										}
 									}
@@ -365,7 +382,7 @@ func FilterByDestination(spec map[string]interface{}, namespace string, serviceN
 
 		if dLabels, ok := dest["labels"]; ok && version != "" {
 			if labels, ok := dLabels.(map[string]interface{}); ok {
-				if versionValue, ok := labels[cfg.VersionFilterLabelName]; ok && versionValue == version {
+				if versionValue, ok := labels[cfg.VersionLabelName]; ok && versionValue == version {
 					return true
 				}
 				return false

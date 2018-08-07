@@ -16,6 +16,7 @@
 # CLIENT_EXE_NAME is going to either be "oc", "kubectl", or "istiooc" (which is the default since it will be installed via cluster-openshift.sh hack script).
 ISTIO_DIR=
 CLIENT_EXE_NAME="istiooc"
+NAMESPACE="bookinfo"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -29,11 +30,26 @@ while [[ $# -gt 0 ]]; do
       CLIENT_EXE_NAME="$2"
       shift;shift
       ;;
+    -n|--namespace)
+      NAMESPACE="$2"
+      shift;shift
+      ;;
+    -b|--bookinfo.yaml)
+      BOOKINFO_YAML="$2"
+      shift;shift
+      ;;
+    -g|--gateway.yaml)
+      GATEWAY_YAML="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc" or "istiooc"
+  -n|--namespace <name>: Install the demo in this namespace (default: bookinfo)
+  -b|--bookinfo.yaml <file>: A custom yaml file to deploy the bookinfo demo
+  -g|--gateway.yaml <file>: A custom yaml file to deploy the bookinfo-gateway resources
   -h|--help : this message
 HELPMSG
       exit 1
@@ -86,23 +102,32 @@ fi
 
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
-  $CLIENT_EXE new-project bookinfo
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n bookinfo
-  $CLIENT_EXE adm policy add-scc-to-user privileged -z default -n bookinfo
+  $CLIENT_EXE new-project ${NAMESPACE}
+  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE}
+  $CLIENT_EXE adm policy add-scc-to-user privileged -z default -n ${NAMESPACE}
 else
-  $CLIENT_EXE create namespace bookinfo
+  $CLIENT_EXE create namespace ${NAMESPACE}
 fi
 
-$ISTIOCTL kube-inject -f ${ISTIO_DIR}/samples/bookinfo/kube/bookinfo.yaml | $CLIENT_EXE apply -n bookinfo -f -
+if [ "${BOOKINFO_YAML}" == "" ]; then
+  BOOKINFO_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo.yaml"
+fi
+
+if [ "${GATEWAY_YAML}" == "" ]; then
+  GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml"
+fi
+
+$ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
 # This is only if automatic injection of sidecars is enabled
-# $CLIENT_EXE apply -n bookinfo -f ${ISTIO_DIR}/samples/bookinfo/kube/bookinfo.yaml
-$ISTIOCTL create -n bookinfo -f ${ISTIO_DIR}/samples/bookinfo/routing/bookinfo-gateway.yaml
+# $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
+
+$ISTIOCTL create -n ${NAMESPACE} -f ${GATEWAY_YAML}
 
 sleep 4
 
 echo "Bookinfo Demo should be installed and starting up - here are the pods and services"
-$CLIENT_EXE get services -n bookinfo
-$CLIENT_EXE get pods -n bookinfo
+$CLIENT_EXE get services -n ${NAMESPACE}
+$CLIENT_EXE get pods -n ${NAMESPACE}
 
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then

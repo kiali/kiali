@@ -11,18 +11,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta1"
-	kube_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
-	"github.com/kiali/kiali/services/business"
 )
 
 // TestNamespaceMetricsDefault is unit test (testing request handling, not the prometheus client behaviour)
@@ -39,7 +32,7 @@ func TestNamespaceMetricsDefault(t *testing.T) {
 		query := args[1].(string)
 		assert.IsType(t, v1.Range{}, args[2])
 		r := args[2].(v1.Range)
-		assert.Contains(t, query, ".*\\\\.ns\\\\..*")
+		assert.Contains(t, query, "_namespace=\"ns\"")
 		assert.Contains(t, query, "[1m]")
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
@@ -100,7 +93,7 @@ func TestNamespaceMetricsWithParams(t *testing.T) {
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
 			assert.Contains(t, query, " by (le,response_code)")
-			assert.Contains(t, query, "istio_request_size")
+			assert.Contains(t, query, "istio_request_bytes")
 			atomic.AddUint32(&histogramSentinel, 1)
 		} else {
 			assert.Contains(t, query, " by (response_code)")
@@ -141,147 +134,4 @@ func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 
 	ts := httptest.NewServer(mr)
 	return ts, api
-}
-
-// TestNamespaceHealth is unit test (testing request handling, not the prometheus client behaviour)
-func TestNamespaceHealth(t *testing.T) {
-	ts, k8s, prom := setupNamespaceHealthEndpoint(t)
-	defer ts.Close()
-
-	url := ts.URL + "/api/namespaces/ns/health"
-
-	k8s.On("GetFullServices", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return(fakeServiceList(), nil)
-
-	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-		assert.Contains(t, []string{"reviews", "httpbin"}, args[1])
-	}).Return(prometheus.EnvoyHealth{}, nil)
-
-	prom.On("GetNamespaceServicesRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(model.Vector{}, model.Vector{}, nil)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-
-	assert.NotEmpty(t, actual)
-	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetFullServices", 1)
-	prom.AssertNumberOfCalls(t, "GetServiceHealth", 2)
-}
-
-func setupNamespaceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
-	k8s := new(kubetest.K8SClientMock)
-	prom := new(prometheustest.PromClientMock)
-	business.SetWithBackends(k8s, prom)
-
-	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/health", NamespaceHealth)
-
-	ts := httptest.NewServer(mr)
-	return ts, k8s, prom
-}
-
-func fakeServiceList() *kubernetes.ServiceList {
-	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:45 +0300")
-
-	return &kubernetes.ServiceList{
-		Services: &kube_v1.ServiceList{
-			Items: []kube_v1.Service{
-				kube_v1.Service{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "reviews",
-						Namespace: "tutorial",
-						Labels: map[string]string{
-							"app":     "reviews",
-							"version": "v1"}},
-					Spec: kube_v1.ServiceSpec{
-						ClusterIP: "fromservice",
-						Type:      "ClusterIP",
-						Selector:  map[string]string{"app": "reviews"},
-						Ports: []kube_v1.ServicePort{
-							{
-								Name:     "http",
-								Protocol: "TCP",
-								Port:     3001},
-							{
-								Name:     "http",
-								Protocol: "TCP",
-								Port:     3000}}}},
-				kube_v1.Service{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "httpbin",
-						Namespace: "tutorial",
-						Labels: map[string]string{
-							"app":     "httpbin",
-							"version": "v1"}},
-					Spec: kube_v1.ServiceSpec{
-						ClusterIP: "fromservice",
-						Type:      "ClusterIP",
-						Selector:  map[string]string{"app": "httpbin"},
-						Ports: []kube_v1.ServicePort{
-							{
-								Name:     "http",
-								Protocol: "TCP",
-								Port:     3001},
-							{
-								Name:     "http",
-								Protocol: "TCP",
-								Port:     3000}}}},
-			}},
-		Pods: &kube_v1.PodList{
-			Items: []kube_v1.Pod{
-				kube_v1.Pod{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:   "reviews-v1",
-						Labels: map[string]string{"app": "reviews", "version": "v1"}}},
-				kube_v1.Pod{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:   "reviews-v2",
-						Labels: map[string]string{"app": "reviews", "version": "v2"}}},
-				kube_v1.Pod{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:   "httpbin-v1",
-						Labels: map[string]string{"app": "httpbin", "version": "v1"}}},
-			}},
-		Deployments: &v1beta1.DeploymentList{
-			Items: []v1beta1.Deployment{
-				v1beta1.Deployment{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:              "reviews-v1",
-						CreationTimestamp: meta_v1.NewTime(t1)},
-					Status: v1beta1.DeploymentStatus{
-						Replicas:            3,
-						AvailableReplicas:   2,
-						UnavailableReplicas: 1},
-					Spec: v1beta1.DeploymentSpec{
-						Selector: &meta_v1.LabelSelector{
-							MatchLabels: map[string]string{"app": "reviews", "version": "v1"}}}},
-				v1beta1.Deployment{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:              "reviews-v2",
-						CreationTimestamp: meta_v1.NewTime(t1)},
-					Status: v1beta1.DeploymentStatus{
-						Replicas:            2,
-						AvailableReplicas:   1,
-						UnavailableReplicas: 1},
-					Spec: v1beta1.DeploymentSpec{
-						Selector: &meta_v1.LabelSelector{
-							MatchLabels: map[string]string{"app": "reviews", "version": "v2"}}}},
-				v1beta1.Deployment{
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:              "httpbin-v1",
-						CreationTimestamp: meta_v1.NewTime(t2)},
-					Status: v1beta1.DeploymentStatus{
-						Replicas:            1,
-						AvailableReplicas:   1,
-						UnavailableReplicas: 0},
-					Spec: v1beta1.DeploymentSpec{
-						Selector: &meta_v1.LabelSelector{
-							MatchLabels: map[string]string{"app": "httpbin", "version": "v1"}}}},
-			}}}
 }

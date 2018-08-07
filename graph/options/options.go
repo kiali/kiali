@@ -1,5 +1,4 @@
-// Package options holds the currently supported path variables and query params
-// for the graph handlers. See graph package for details.
+// Options package holds the option settings for a single graph generation.
 package options
 
 import (
@@ -11,20 +10,28 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/appender"
 	"github.com/kiali/kiali/services/models"
 )
 
 const (
 	AppenderAll          string = "_all_"
+	GroupByVersion       string = "version"
 	NamespaceAll         string = "all"
 	NamespaceIstioSystem string = "istio-system"
+	defaultDuration      string = "10m"
+	defaultGraphType     string = graph.GraphTypeApp
+	defaultGroupBy       string = GroupByVersion
+	defaultMetric        string = "istio_requests_total"
+	defaultVendor        string = "cytoscape"
 )
 
 // VendorOptions are those that are supplied to the vendor-specific generators.
 type VendorOptions struct {
-	GroupByVersion bool
-	Timestamp      int64
+	GraphType string
+	GroupBy   string
+	Timestamp int64
 }
 
 // Options are all supported graph generation options.
@@ -35,7 +42,7 @@ type Options struct {
 	Metric       string
 	Namespaces   []string
 	QueryTime    int64 // unix time in seconds
-	Service      string
+	Workload     string
 	Vendor       string
 	VendorOptions
 }
@@ -44,13 +51,14 @@ func NewOptions(r *http.Request) Options {
 	// path variables
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
-	service := vars["service"]
+	workload := vars["workload"]
 
 	// query params
 	params := r.URL.Query()
 	duration, durationErr := time.ParseDuration(params.Get("duration"))
 	includeIstio, includeIstioErr := strconv.ParseBool(params.Get("includeIstio"))
-	groupByVersion, groupByVersionErr := strconv.ParseBool(params.Get("groupByVersion"))
+	graphType := params.Get("graphType")
+	groupBy := params.Get("groupBy")
 	metric := params.Get("metric")
 	queryTime, queryTimeErr := strconv.ParseInt(params.Get("queryTime"), 10, 64)
 	namespaces := params.Get("namespaces") // csl of namespaces. Overrides namespace path param if set
@@ -80,22 +88,25 @@ func NewOptions(r *http.Request) Options {
 	}
 
 	if durationErr != nil {
-		duration, _ = time.ParseDuration("10m")
+		duration, _ = time.ParseDuration(defaultDuration)
 	}
 	if includeIstioErr != nil {
 		includeIstio = false
 	}
-	if groupByVersionErr != nil {
-		groupByVersion = true
+	if "" == graphType {
+		graphType = defaultGraphType
+	}
+	if "" == groupBy {
+		groupBy = defaultGroupBy
 	}
 	if "" == metric {
-		metric = "istio_request_count"
+		metric = defaultMetric
 	}
 	if queryTimeErr != nil {
 		queryTime = time.Now().Unix()
 	}
 	if "" == vendor {
-		vendor = "cytoscape"
+		vendor = defaultVendor
 	}
 
 	options := Options{
@@ -104,11 +115,12 @@ func NewOptions(r *http.Request) Options {
 		Metric:       metric,
 		Namespaces:   namespaceNames,
 		QueryTime:    queryTime,
-		Service:      service,
 		Vendor:       vendor,
+		Workload:     workload,
 		VendorOptions: VendorOptions{
-			GroupByVersion: groupByVersion,
-			Timestamp:      queryTime,
+			GraphType: graphType,
+			GroupBy:   groupBy,
+			Timestamp: queryTime,
 		},
 	}
 
@@ -128,11 +140,11 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 
 	// The appender order is important
 	// To reduce processing, filter dead services first
-	// To reduce processing, next run appenders that don't apply to orphan services
+	// To reduce processing, next run appenders that don't apply to unused services
 	// Add orphan (unused) services
 	// Run remaining appenders
-	if csl == AppenderAll || strings.Contains(csl, "dead_service") {
-		appenders = append(appenders, appender.DeadServiceAppender{})
+	if csl == AppenderAll || strings.Contains(csl, "dead_node") {
+		appenders = append(appenders, appender.DeadNodeAppender{})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "response_time") {
 		quantile := appender.DefaultQuantile
@@ -142,23 +154,24 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 			}
 		}
 		a := appender.ResponseTimeAppender{
-			Duration:  o.Duration,
-			Quantile:  quantile,
-			QueryTime: o.QueryTime,
+			Duration:     o.Duration,
+			Quantile:     quantile,
+			GraphType:    o.GraphType,
+			IncludeIstio: o.IncludeIstio,
+			QueryTime:    o.QueryTime,
 		}
 		appenders = append(appenders, a)
 	}
-	if csl == AppenderAll || strings.Contains(csl, "unused_service") {
-		appenders = append(appenders, appender.UnusedServiceAppender{})
+	if csl == AppenderAll || strings.Contains(csl, "unused_node") {
+		appenders = append(appenders, appender.UnusedNodeAppender{
+			GraphType: o.GraphType,
+		})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "istio") {
 		appenders = append(appenders, appender.IstioAppender{})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "sidecars_check") {
 		appenders = append(appenders, appender.SidecarsCheckAppender{})
-	}
-	if csl == AppenderAll || strings.Contains(csl, "health") {
-		appenders = append(appenders, appender.HealthAppender{})
 	}
 
 	return appenders

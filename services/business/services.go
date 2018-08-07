@@ -63,15 +63,14 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		return nil, fmt.Errorf("Service details: %s", err.Error())
 	}
 
-	health := models.Health{}
-	in.health.fillMissingParts(namespace, service, serviceDetails, interval, &health)
+	health := in.health.getServiceHealth(namespace, service, interval, serviceDetails)
 
 	istioDetails, err := in.k8s.GetIstioDetails(namespace, service)
 	if err != nil {
 		return nil, fmt.Errorf("Istio details: %s", err.Error())
 	}
 
-	prometheusDetails, err := in.prom.GetSourceServices(namespace, service)
+	prometheusDetails, err := in.prom.GetSourceWorkloads(namespace, service)
 	if err != nil {
 		return nil, fmt.Errorf("Source services: %s", err.Error())
 	}
@@ -82,4 +81,20 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		Health:    health}
 	s.SetServiceDetails(serviceDetails, istioDetails, prometheusDetails)
 	return &s, nil
+}
+
+// GetApps returns a list of "app" label values used for the Deployments covered by this service
+func (in *SvcService) GetApps(namespace, service string) ([]string, error) {
+	serviceDetails, err := in.k8s.GetServiceDetails(namespace, service)
+	if err != nil {
+		return nil, fmt.Errorf("GetApps: %s", err.Error())
+	}
+
+	var apps []string
+	for _, depl := range serviceDetails.Deployments.Items {
+		if app, ok := depl.Labels["app"]; ok {
+			apps = append(apps, app)
+		}
+	}
+	return apps, nil
 }

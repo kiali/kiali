@@ -102,6 +102,20 @@ type InternalError struct {
 	} `json:"body"`
 }
 
+// BadRequestError: the client request is incorrect
+//
+// swagger:response badRequestError
+type BadRequestError struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 400
+		// default: 400
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
 // HTTP status code 200 and statusInfo model in data
 // swagger:response statusInfo
 type swaggStatusInfoResp struct {
@@ -142,6 +156,34 @@ type ServiceValidationResponse struct {
 type WorkloadListResponse struct {
 	// in:body
 	Body models.WorkloadList
+}
+
+// serviceHealthResponse contains aggregated health from various sources, for a given service
+// swagger:response serviceHealthResponse
+type serviceHealthResponse struct {
+	// in:body
+	Body models.ServiceHealth
+}
+
+// appHealthResponse contains aggregated health from various sources, for a given app
+// swagger:response appHealthResponse
+type appHealthResponse struct {
+	// in:body
+	Body models.AppHealth
+}
+
+// workloadHealthResponse contains aggregated health from various sources, for a given workload
+// swagger:response workloadHealthResponse
+type workloadHealthResponse struct {
+	// in:body
+	Body models.WorkloadHealth
+}
+
+// namespaceAppHealthResponse is a map of app name x health
+// swagger:response namespaceAppHealthResponse
+type namespaceAppHealthResponse struct {
+	// in:body
+	Body models.NamespaceAppHealth
 }
 
 //////////////////

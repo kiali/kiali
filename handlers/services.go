@@ -11,8 +11,6 @@ import (
 	"github.com/kiali/kiali/services/business"
 )
 
-const defaultHealthRateInterval = "10m"
-
 // ServiceList is the API handler to fetch the list of services in a given namespace
 func ServiceList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -46,7 +44,20 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplie
 	namespace := vars["namespace"]
 	service := vars["service"]
 
-	params, err := extractServiceMetricsQuery(r, namespace, service)
+	// Get business layer
+	business, err := business.Get()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+	apps, err := business.Svc.GetApps(namespace, service)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Could not get apps: "+err.Error())
+		return
+	}
+
+	params := prometheus.MetricsQuery{Namespace: namespace, Apps: apps}
+	err = extractMetricsQueryParams(r, &params)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -57,32 +68,8 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplie
 		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
 		return
 	}
-	metrics := prometheusClient.GetServiceMetrics(params)
+	metrics := prometheusClient.GetMetrics(&params)
 	RespondWithJSON(w, http.StatusOK, metrics)
-}
-
-// ServiceHealth is the API handler to get health of a single service
-func ServiceHealth(w http.ResponseWriter, r *http.Request) {
-	// Get business layer
-	business, err := business.Get()
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
-		return
-	}
-
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-	service := vars["service"]
-
-	// Rate interval is needed to fetch request rates based health
-	rateInterval := defaultHealthRateInterval
-	queryParams := r.URL.Query()
-	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
-		rateInterval = rateIntervals[0]
-	}
-
-	health := business.Health.GetServiceHealth(namespace, service, rateInterval)
-	RespondWithJSON(w, http.StatusOK, health)
 }
 
 // ServiceIstioValidations is the API handler to get istio validations of a single service that returns

@@ -76,7 +76,7 @@ func TestCheckVirtualService(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	assert.False(t, CheckVirtualService(nil, "", "", nil))
+	assert.False(t, CheckVirtualServiceSubset(nil, "", "", nil))
 
 	virtualService := MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -109,8 +109,8 @@ func TestCheckVirtualService(t *testing.T) {
 		},
 	}
 
-	assert.True(t, CheckVirtualService(&virtualService, "", "reviews", []string{"v1", "v2", "v3"}))
-	assert.False(t, CheckVirtualService(&virtualService, "", "reviews", []string{"v1"}))
+	assert.True(t, CheckVirtualServiceSubset(&virtualService, "", "reviews", []string{"v1", "v2", "v3"}))
+	assert.False(t, CheckVirtualServiceSubset(&virtualService, "", "reviews", []string{"v1"}))
 
 	virtualService = MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -143,8 +143,8 @@ func TestCheckVirtualService(t *testing.T) {
 		},
 	}
 
-	assert.True(t, CheckVirtualService(&virtualService, "", "reviews", []string{"v1", "v2", "v3"}))
-	assert.False(t, CheckVirtualService(&virtualService, "", "reviews", []string{"v1"}))
+	assert.True(t, CheckVirtualServiceSubset(&virtualService, "", "reviews", []string{"v1", "v2", "v3"}))
+	assert.False(t, CheckVirtualServiceSubset(&virtualService, "", "reviews", []string{"v1"}))
 }
 
 func TestGetDestinationRulesSubsets(t *testing.T) {

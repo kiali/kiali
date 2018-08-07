@@ -34,7 +34,7 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
-  -iv|--istio-version <#.#.#>: Version of Istio to download.
+  -iv|--istio-version <#.#.#>: Version of Istio to download. (default will be the latest version)
   -o|--output <dir> : Output directory where Istio is (or will be downloaded to if it doesn't exist).
   -h|--help : This message.
 HELPMSG

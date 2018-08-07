@@ -47,6 +47,207 @@
         }
       }
     },
+    "/api/namespaces/{namespace}/apps/{app}/health": {
+      "get": {
+        "description": "Get health associated to the given app",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "appHealth",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Namespace",
+            "description": "The namespace scope",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "x-go-name": "RateInterval",
+            "description": "The rate interval used for fetching error rate",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "App",
+            "description": "The target app",
+            "name": "app",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/appHealthResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/api/namespaces/{namespace}/health": {
+      "get": {
+        "description": "Get health for all objects in the given namespace",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "namespaceHealth",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Namespace",
+            "description": "The namespace scope",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "x-go-name": "RateInterval",
+            "description": "The rate interval used for fetching error rate",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "pattern": "^(app|workload)$",
+            "type": "string",
+            "default": "app",
+            "x-go-name": "Type",
+            "description": "The type of health, \"app\" or \"workload\".",
+            "name": "type",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/namespaceAppHealthResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/api/namespaces/{namespace}/services/{service}/health": {
+      "get": {
+        "description": "Get health associated to the given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "serviceHealth",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Namespace",
+            "description": "The namespace scope",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "x-go-name": "RateInterval",
+            "description": "The rate interval used for fetching error rate",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Service",
+            "description": "The target service",
+            "name": "service",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/serviceHealthResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/api/namespaces/{namespace}/workloads/{workload}/health": {
+      "get": {
+        "description": "Get health associated to the given workload",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "workloadHealth",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Namespace",
+            "description": "The namespace scope",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "x-go-name": "RateInterval",
+            "description": "The rate interval used for fetching error rate",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Workload",
+            "description": "The target workload",
+            "name": "workload",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/workloadHealthResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/istio": {
       "get": {
         "description": "Endpoint to get the list of Istio Config of a namespace",
@@ -196,13 +397,6 @@
         "consumes": [
           "application/json"
         ],
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
         "tags": [
           "validations"
         ],
@@ -351,6 +545,98 @@
     }
   },
   "definitions": {
+    "AppHealth": {
+      "description": "AppHealth contains aggregated health from various sources, for a given app",
+      "type": "object",
+      "properties": {
+        "deploymentStatuses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DeploymentStatus"
+          },
+          "x-go-name": "DeploymentStatuses"
+        },
+        "envoy": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EnvoyHealthWrapper"
+          },
+          "x-go-name": "Envoy"
+        },
+        "requests": {
+          "$ref": "#/definitions/RequestHealth"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "DeploymentStatus": {
+      "description": "DeploymentStatus gives the available / total replicas in a deployment of a pod",
+      "type": "object",
+      "properties": {
+        "available": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "AvailableReplicas"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "replicas": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "Replicas"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "EnvoyHealthWrapper": {
+      "description": "EnvoyHealthWrapper wraps EnvoyServiceHealth with the service name",
+      "type": "object",
+      "properties": {
+        "inbound": {
+          "$ref": "#/definitions/EnvoyRatio"
+        },
+        "outbound": {
+          "$ref": "#/definitions/EnvoyRatio"
+        },
+        "service": {
+          "type": "string",
+          "x-go-name": "Service"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "EnvoyRatio": {
+      "description": "EnvoyRatio is the number of healthy members versus total members",
+      "type": "object",
+      "properties": {
+        "healthy": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Healthy"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Total"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/prometheus"
+    },
+    "EnvoyServiceHealth": {
+      "description": "EnvoyServiceHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster for inbound and outbound traffic",
+      "type": "object",
+      "properties": {
+        "inbound": {
+          "$ref": "#/definitions/EnvoyRatio"
+        },
+        "outbound": {
+          "$ref": "#/definitions/EnvoyRatio"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/prometheus"
+    },
     "Gateway": {
       "type": "object",
       "properties": {
@@ -494,6 +780,14 @@
       },
       "x-go-package": "github.com/kiali/kiali"
     },
+    "NamespaceAppHealth": {
+      "description": "NamespaceAppHealth is an alias of map of app name x health",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/AppHealth"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "NamespaceValidations": {
       "description": "List of validations grouped by namespace",
       "type": "object",
@@ -564,6 +858,23 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
+    "RequestHealth": {
+      "description": "RequestHealth holds several stats about recent request errors",
+      "type": "object",
+      "properties": {
+        "requestCount": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "RequestCount"
+        },
+        "requestErrorCount": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "RequestErrorCount"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "ServiceEntries": {
       "type": "array",
       "items": {
@@ -609,6 +920,19 @@
         "resourceVersion": {
           "type": "string",
           "x-go-name": "ResourceVersion"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "ServiceHealth": {
+      "description": "ServiceHealth contains aggregated health from various sources, for a given service",
+      "type": "object",
+      "properties": {
+        "envoy": {
+          "$ref": "#/definitions/EnvoyServiceHealth"
+        },
+        "requests": {
+          "$ref": "#/definitions/RequestHealth"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -681,6 +1005,19 @@
         "$ref": "#/definitions/NameIstioValidation"
       },
       "x-go-package": "github.com/kiali/kiali"
+    },
+    "WorkloadHealth": {
+      "description": "WorkloadHealth contains aggregated health from various sources, for a given workload",
+      "type": "object",
+      "properties": {
+        "deploymentStatus": {
+          "$ref": "#/definitions/DeploymentStatus"
+        },
+        "requests": {
+          "$ref": "#/definitions/RequestHealth"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
     },
     "WorkloadList": {
       "type": "object",
@@ -903,6 +1240,32 @@
     }
   },
   "responses": {
+    "appHealthResponse": {
+      "description": "appHealthResponse contains aggregated health from various sources, for a given app",
+      "schema": {
+        "$ref": "#/definitions/AppHealth"
+      }
+    },
+    "badRequestError": {
+      "description": "BadRequestError: the client request is incorrect",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 400,
+            "x-go-name": "Code",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
+      }
+    },
     "genericError": {
       "description": "A GenericError is the default error message that is generated.",
       "schema": {
@@ -949,6 +1312,12 @@
         "$ref": "#/definitions/IstioConfigList"
       }
     },
+    "namespaceAppHealthResponse": {
+      "description": "namespaceAppHealthResponse is a map of app name x health",
+      "schema": {
+        "$ref": "#/definitions/NamespaceAppHealth"
+      }
+    },
     "namespaceValidationsResponse": {
       "description": "Listing all istio validations for object in the namespace",
       "schema": {
@@ -975,6 +1344,12 @@
         }
       }
     },
+    "serviceHealthResponse": {
+      "description": "serviceHealthResponse contains aggregated health from various sources, for a given service",
+      "schema": {
+        "$ref": "#/definitions/ServiceHealth"
+      }
+    },
     "statusInfo": {
       "description": "HTTP status code 200 and statusInfo model in data",
       "schema": {
@@ -991,6 +1366,12 @@
       "description": "Listing all istio validations for object in the namespace",
       "schema": {
         "$ref": "#/definitions/TypedIstioValidations"
+      }
+    },
+    "workloadHealthResponse": {
+      "description": "workloadHealthResponse contains aggregated health from various sources, for a given workload",
+      "schema": {
+        "$ref": "#/definitions/WorkloadHealth"
       }
     },
     "workloadListResponse": {
