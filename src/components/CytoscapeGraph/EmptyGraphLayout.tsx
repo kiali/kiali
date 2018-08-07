@@ -27,12 +27,15 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
   };
 
   shouldComponentUpdate(nextProps: EmptyGraphLayoutProps) {
+    const currentIsEmpty = _.isEmpty(this.props.elements.nodes);
+    const nextIsEmpty = _.isEmpty(nextProps.elements.nodes);
+
     // Update if we are going from having no elements to having elements or vice versa
-    if (_.isEmpty(this.props.elements) !== _.isEmpty(nextProps.elements)) {
+    if (currentIsEmpty !== nextIsEmpty) {
       return true;
     }
     // Do not update if we have elements and the namespace didn't change, as this means we are refreshing
-    if (!_.isEmpty(nextProps.elements) && this.props.namespace === nextProps.namespace) {
+    if (!nextIsEmpty && this.props.namespace === nextProps.namespace) {
       return false;
     }
 

@@ -73,14 +73,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private graphHighlighter: GraphHighlighter;
   private trafficRenderer: TrafficRender;
   private cytoscapeReactWrapperRef: any;
-  private updateLayout: boolean;
+  private namespaceChanged: boolean;
   private resetSelection: boolean;
   private initialValues: InitialValues;
   private cy: any;
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
-    this.updateLayout = false;
+    this.namespaceChanged = false;
     this.initialValues = {
       position: undefined,
       zoom: undefined
@@ -88,11 +88,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   }
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
-    this.updateLayout =
-      this.props.graphLayout !== nextProps.graphLayout ||
-      this.props.namespace.name !== nextProps.namespace.name ||
-      (this.props.elements !== nextProps.elements &&
-        this.elementsNeedRelayout(this.props.elements, nextProps.elements));
+    this.namespaceChanged = this.namespaceChanged || this.props.namespace.name !== nextProps.namespace.name;
     this.resetSelection = this.props.namespace.name !== nextProps.namespace.name;
     return (
       this.props.namespace.name !== nextProps.namespace.name ||
@@ -114,7 +110,15 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
   componentDidUpdate(prevProps: CytoscapeGraphProps, prevState: CytoscapeGraphState) {
     const cy = this.getCy();
-    this.processGraphUpdate(cy);
+    let updateLayout = false;
+    if (
+      this.namespaceNeedsRelayout(prevProps.elements, this.props.elements) ||
+      this.elementsNeedRelayout(prevProps.elements, this.props.elements) ||
+      this.props.graphLayout.name !== prevProps.graphLayout.name
+    ) {
+      updateLayout = true;
+    }
+    this.processGraphUpdate(cy, updateLayout);
     if (this.props.elements !== prevProps.elements) {
       this.updateHealth(cy);
     }
@@ -185,7 +189,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
     this.cy = cy;
-    this.updateLayout = true;
 
     this.graphHighlighter = new GraphHighlighter(cy);
     this.trafficRenderer = new TrafficRender(cy, cy.edges());
@@ -269,7 +272,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     cy.ready((evt: any) => {
       this.props.onReady(evt.cy);
-      this.processGraphUpdate(cy);
+      this.processGraphUpdate(cy, true);
     });
 
     cy.on('destroy', (evt: any) => {
@@ -288,7 +291,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.initialValues.zoom = cy.zoom();
   }
 
-  private processGraphUpdate(cy: any) {
+  private processGraphUpdate(cy: any, updateLayout: boolean) {
     if (!cy) {
       return;
     }
@@ -327,15 +330,15 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       msBadge.destroyBadge(ele);
     });
 
+    if (updateLayout) {
+      // To get a more consistent layout, remove every node and start again (only when a relayout is a must)
+      cy.remove(cy.elements());
+    }
+
     // update the entire set of nodes and edges to keep the graph up-to-date
     cy.json({ elements: this.props.elements });
 
-    // update the layout if needed and reset to default values
-    if (this.updateLayout) {
-      // Reset all the nodes positions from previous layouts to avoid the next layout to use these as suggestions
-      cy.nodes().forEach(node => {
-        node.position({ x: 0, y: 0 });
-      });
+    if (updateLayout) {
       // Enable labels when doing a relayout, layouts can be told to take into account the labels to avoid
       // overlap, but we need to have them enabled (nodeDimensionsIncludeLabels: true)
       this.turnNodeLabelsTo(cy, true);
@@ -365,9 +368,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     cy.endBatch();
 
     // We need to fit outside of the batch operation for it to take effect on the new nodes
-    if (this.updateLayout) {
+    if (updateLayout) {
       this.safeFit(cy);
-      this.updateLayout = false;
     }
 
     // We opt-in for manual selection to be able to control when to select a node/edge
@@ -433,6 +435,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.graphHighlighter.onMouseOut(event);
   };
 
+  private namespaceNeedsRelayout(prevElements: any, nextElements: any) {
+    const needsRelayout = this.namespaceChanged && prevElements !== nextElements;
+    if (needsRelayout) {
+      this.namespaceChanged = false;
+    }
+    return needsRelayout;
+  }
+
   // To know if we should re-layout, we need to know if any element changed
   // Do a quick round by comparing the number of nodes and edges, if different
   // a change is expected.
@@ -440,6 +450,9 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   // in the other, we can be sure that there are changes.
   // Worst case is when they are the same, avoid that.
   private elementsNeedRelayout(prevElements: any, nextElements: any) {
+    if (prevElements === nextElements) {
+      return false;
+    }
     if (
       !prevElements ||
       !nextElements ||
