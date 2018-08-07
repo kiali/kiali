@@ -15,9 +15,11 @@ import (
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyHealth, error)
-	GetNamespaceRequestRates(namespace, ratesInterval string) (model.Vector, model.Vector, error)
-	GetAppsRequestRates(namespace string, apps []string, ratesInterval string) (model.Vector, model.Vector, error)
+	GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyServiceHealth, error)
+	GetAllRequestRates(namespace, ratesInterval string) (model.Vector, error)
+	GetServiceRequestRates(namespace, service, ratesInterval string) (model.Vector, error)
+	GetAppRequestRates(namespace, app, ratesInterval string) (model.Vector, model.Vector, error)
+	GetWorkloadRequestRates(namespace, workload, ratesInterval string) (model.Vector, model.Vector, error)
 	GetSourceWorkloads(namespace, servicename string) (map[string][]Workload, error)
 }
 
@@ -111,22 +113,35 @@ func (in *Client) GetMetrics(query *MetricsQuery) Metrics {
 // GetServiceHealth returns the Health related to the provided service identified by its namespace and service name.
 // It reads Envoy metrics, inbound and outbound
 // When the health is unavailable, total number of members will be 0.
-func (in *Client) GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyHealth, error) {
+func (in *Client) GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyServiceHealth, error) {
 	return getServiceHealth(in.api, namespace, servicename, ports)
 }
 
-// GetNamespaceRequestRates queries Prometheus to fetch request counters rates over a time interval
-// for each service, both in and out.
-// Returns (in, out, error)
-func (in *Client) GetNamespaceRequestRates(namespace string, ratesInterval string) (model.Vector, model.Vector, error) {
-	return getNamespaceRequestRates(in.api, namespace, ratesInterval)
+// GetAllRequestRates queries Prometheus to fetch request counters rates over a time interval within a namespace
+// Returns (rates, error)
+func (in *Client) GetAllRequestRates(namespace string, ratesInterval string) (model.Vector, error) {
+	return getAllRequestRates(in.api, namespace, ratesInterval)
 }
 
-// GetAppsRequestRates queries Prometheus to fetch request counters rates over a time interval
-// for a given list of apps, both in and out.
+// GetServiceRequestRates queries Prometheus to fetch request counters rates over a time interval
+// for a given service (hence only inbound).
+// Returns (in, error)
+func (in *Client) GetServiceRequestRates(namespace, service, ratesInterval string) (model.Vector, error) {
+	return getServiceRequestRates(in.api, namespace, service, ratesInterval)
+}
+
+// GetAppRequestRates queries Prometheus to fetch request counters rates over a time interval
+// for a given app, both in and out.
 // Returns (in, out, error)
-func (in *Client) GetAppsRequestRates(namespace string, apps []string, ratesInterval string) (model.Vector, model.Vector, error) {
-	return getAppsRequestRates(in.api, namespace, apps, ratesInterval)
+func (in *Client) GetAppRequestRates(namespace, app, ratesInterval string) (model.Vector, model.Vector, error) {
+	return getItemRequestRates(in.api, namespace, app, "app", ratesInterval)
+}
+
+// GetWorkloadRequestRates queries Prometheus to fetch request counters rates over a time interval
+// for a given workload, both in and out.
+// Returns (in, out, error)
+func (in *Client) GetWorkloadRequestRates(namespace, workload, ratesInterval string) (model.Vector, model.Vector, error) {
+	return getItemRequestRates(in.api, namespace, workload, "workload", ratesInterval)
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client

@@ -37,6 +37,8 @@ type IstioClientInterface interface {
 	GetNamespaces() (*v1.NamespaceList, error)
 	GetService(namespace string, serviceName string) (*v1.Service, error)
 	GetFullServices(namespace string) (*ServiceList, error)
+	GetNamespaceAppsDetails(namespace string) (NamespaceApps, error)
+	GetAppDetails(namespace, app string) (AppDetails, error)
 	GetServices(namespace string) (*v1.ServiceList, error)
 	GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error)
 	GetPods(namespace, labelSelector string) (*v1.PodList, error)
@@ -56,6 +58,7 @@ type IstioClientInterface interface {
 	GetQuotaSpec(namespace string, quotaSpecName string) (IstioObject, error)
 	GetQuotaSpecBindings(namespace string) ([]IstioObject, error)
 	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)
+	GetDeployments(namespace string) (*v1beta1.DeploymentList, error)
 	GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error)
 }
 

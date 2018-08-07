@@ -1,19 +1,47 @@
 package models
 
-import "github.com/kiali/kiali/prometheus"
+import (
+	"github.com/kiali/kiali/prometheus"
+)
 
-// Health contains aggregated health from various sources, for a given service
-type Health struct {
-	Envoy              EnvoyHealthWrapper `json:"envoy"`
-	DeploymentStatuses []DeploymentStatus `json:"deploymentStatuses"`
-	Requests           RequestHealth      `json:"requests"`
-	DeploymentsFetched bool               `json:"-"`
+// NamespaceAppHealth is an alias of map of app name x health
+type NamespaceAppHealth map[string]*AppHealth
+
+// NamespaceWorkloadHealth is an alias of map of workload name x health
+type NamespaceWorkloadHealth map[string]*WorkloadHealth
+
+// ServiceHealth contains aggregated health from various sources, for a given service
+type ServiceHealth struct {
+	Envoy    prometheus.EnvoyServiceHealth `json:"envoy"`
+	Requests RequestHealth                 `json:"requests"`
 }
 
-// EnvoyHealthWrapper wraps EnvoyHealth with memo flag
+// AppHealth contains aggregated health from various sources, for a given app
+type AppHealth struct {
+	Envoy              []EnvoyHealthWrapper `json:"envoy"`
+	DeploymentStatuses []DeploymentStatus   `json:"deploymentStatuses"`
+	Requests           RequestHealth        `json:"requests"`
+}
+
+// EmptyAppHealth create an empty AppHealth
+func EmptyAppHealth() AppHealth {
+	return AppHealth{
+		Envoy:              []EnvoyHealthWrapper{},
+		DeploymentStatuses: []DeploymentStatus{},
+		Requests:           RequestHealth{},
+	}
+}
+
+// WorkloadHealth contains aggregated health from various sources, for a given workload
+type WorkloadHealth struct {
+	DeploymentStatus DeploymentStatus `json:"deploymentStatus"`
+	Requests         RequestHealth    `json:"requests"`
+}
+
+// EnvoyHealthWrapper wraps EnvoyServiceHealth with the service name
 type EnvoyHealthWrapper struct {
-	prometheus.EnvoyHealth
-	Fetched bool `json:"-"`
+	prometheus.EnvoyServiceHealth
+	Service string `json:"service"`
 }
 
 // DeploymentStatus gives the available / total replicas in a deployment of a pod
@@ -27,31 +55,43 @@ type DeploymentStatus struct {
 type RequestHealth struct {
 	RequestCount      float64 `json:"requestCount"`
 	RequestErrorCount float64 `json:"requestErrorCount"`
-	Fetched           bool    `json:"-"`
 }
 
-// FillDeploymentStatusesIfMissing sets DeploymentStatuses if necessary
-func (in *Health) FillDeploymentStatusesIfMissing(supplier func() []DeploymentStatus) {
-	if !in.DeploymentsFetched {
-		in.DeploymentStatuses = supplier()
-		in.DeploymentsFetched = true
-	}
+/////////////////////////////////
+// SWAGGER
+/////////////////////////////////
+
+// namespaceAppHealthResponse is a map of app name x health
+// swagger:response namespaceAppHealthResponse
+type namespaceAppHealthResponse struct {
+	// in:body
+	Body NamespaceAppHealth
 }
 
-// FillIfMissing sets EnvoyHealth if necessary. Supplier must return (healthy, total)
-func (in *EnvoyHealthWrapper) FillIfMissing(supplier func() prometheus.EnvoyHealth) {
-	if !in.Fetched {
-		in.EnvoyHealth = supplier()
-		in.Fetched = true
-	}
+// namespaceWorkloadHealthResponse is a map of workload x health
+// swagger:response namespaceWorkloadHealthResponse
+type namespaceWorkloadHealthResponse struct {
+	// in:body
+	Body NamespaceWorkloadHealth
 }
 
-// FillIfMissing sets RequestHealth if necessary. Supplier must return (errors, total)
-func (in *RequestHealth) FillIfMissing(supplier func() (float64, float64)) {
-	if !in.Fetched {
-		e, t := supplier()
-		in.RequestErrorCount = e
-		in.RequestCount = t
-		in.Fetched = true
-	}
+// serviceHealthResponse contains aggregated health from various sources, for a given service
+// swagger:response serviceHealthResponse
+type serviceHealthResponse struct {
+	// in:body
+	Body ServiceHealth
+}
+
+// appHealthResponse contains aggregated health from various sources, for a given app
+// swagger:response appHealthResponse
+type appHealthResponse struct {
+	// in:body
+	Body AppHealth
+}
+
+// workloadHealthResponse contains aggregated health from various sources, for a given workload
+// swagger:response workloadHealthResponse
+type workloadHealthResponse struct {
+	// in:body
+	Body WorkloadHealth
 }

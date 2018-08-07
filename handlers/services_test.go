@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"k8s.io/api/apps/v1beta1"
@@ -281,47 +280,4 @@ func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SC
 	business.SetWithBackends(k8s, prom)
 	return ts, k8s, api
 	// return nil, ts, api
-}
-
-// TestServiceHealth is unit test (testing request handling, not the prometheus client behaviour)
-func TestServiceHealth(t *testing.T) {
-	ts, k8s, prom := setupServiceHealthEndpoint(t)
-	defer ts.Close()
-
-	url := ts.URL + "/api/namespaces/ns/services/svc/health"
-
-	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-		assert.Equal(t, "svc", args[1])
-	}).Return((*kubernetes.ServiceDetails)(nil), nil)
-
-	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-		assert.Equal(t, "svc", args[1])
-	}).Return(prometheus.EnvoyHealth{}, nil)
-
-	prom.On("GetAppsRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("[]string"), mock.AnythingOfType("string")).Return(model.Vector{}, model.Vector{}, nil)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	actual, _ := ioutil.ReadAll(resp.Body)
-
-	assert.NotEmpty(t, actual)
-	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetServiceDetails", 1)
-	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
-}
-
-func setupServiceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
-	k8s := new(kubetest.K8SClientMock)
-	prom := new(prometheustest.PromClientMock)
-	business.SetWithBackends(k8s, prom)
-
-	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/health", ServiceHealth)
-
-	ts := httptest.NewServer(mr)
-	return ts, k8s, prom
 }

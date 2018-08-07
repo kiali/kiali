@@ -30,7 +30,7 @@ type Service struct {
 	Dependencies     map[string][]string `json:"dependencies"`
 	Pods             Pods                `json:"pods"`
 	Deployments      Deployments         `json:"deployments"`
-	Health           Health              `json:"health"`
+	Health           ServiceHealth       `json:"health"`
 }
 
 func (s *Service) SetServiceDetails(serviceDetails *kubernetes.ServiceDetails, istioDetails *kubernetes.IstioDetails, prometheusDetails map[string][]prometheus.Workload) {

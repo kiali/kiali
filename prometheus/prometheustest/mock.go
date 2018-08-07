@@ -88,18 +88,28 @@ type PromClientMock struct {
 	mock.Mock
 }
 
-func (o *PromClientMock) GetServiceHealth(namespace, servicename string, ports []int32) (prometheus.EnvoyHealth, error) {
+func (o *PromClientMock) GetServiceHealth(namespace, servicename string, ports []int32) (prometheus.EnvoyServiceHealth, error) {
 	args := o.Called(namespace, servicename, ports)
-	return args.Get(0).(prometheus.EnvoyHealth), args.Error(1)
+	return args.Get(0).(prometheus.EnvoyServiceHealth), args.Error(1)
 }
 
-func (o *PromClientMock) GetNamespaceRequestRates(namespace, ratesInterval string) (model.Vector, model.Vector, error) {
+func (o *PromClientMock) GetAllRequestRates(namespace, ratesInterval string) (model.Vector, error) {
 	args := o.Called(namespace, ratesInterval)
+	return args.Get(0).(model.Vector), args.Error(1)
+}
+
+func (o *PromClientMock) GetAppRequestRates(namespace, app, ratesInterval string) (model.Vector, model.Vector, error) {
+	args := o.Called(namespace, app, ratesInterval)
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) GetAppsRequestRates(namespace string, apps []string, ratesInterval string) (model.Vector, model.Vector, error) {
-	args := o.Called(namespace, apps, ratesInterval)
+func (o *PromClientMock) GetServiceRequestRates(namespace, service, ratesInterval string) (model.Vector, error) {
+	args := o.Called(namespace, service, ratesInterval)
+	return args.Get(0).(model.Vector), args.Error(1)
+}
+
+func (o *PromClientMock) GetWorkloadRequestRates(namespace, workload, ratesInterval string) (model.Vector, model.Vector, error) {
+	args := o.Called(namespace, workload, ratesInterval)
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 

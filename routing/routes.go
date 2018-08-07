@@ -20,7 +20,7 @@ type Routes struct {
 	Routes []Route
 }
 
-// A GenericError is the default error message that is generated.
+// GenericError: any other kind of error
 //
 // swagger:response genericError
 type GenericError struct {
@@ -34,7 +34,21 @@ type GenericError struct {
 	} `json:"body"`
 }
 
-// A NotFoundError is the error message that is generated when server could not find what was requested.
+// BadRequestError: the client request is incorrect
+//
+// swagger:response badRequestError
+type BadRequestError struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 400
+		// default: 400
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
+// NotFoundError: the requested resource is not found
 //
 // swagger:response notFoundError
 type NotFoundError struct {
@@ -48,7 +62,7 @@ type NotFoundError struct {
 	} `json:"body"`
 }
 
-// A Internal is the error message that means something has gone wrong
+// InternalError: something went wrong server-side
 //
 // swagger:response internalError
 type InternalError struct {
@@ -233,11 +247,67 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadMetrics,
 			true,
 		},
+		// swagger:route GET /api/namespaces/{namespace}/services/{service}/health serviceHealth
+		// ---
+		// Get health associated to the given service
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: serviceHealthResponse
+		//      404: notFoundError
+		//      500: internalError
+		//
 		{
 			"ServiceHealth",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/health",
 			handlers.ServiceHealth,
+			true,
+		},
+		// swagger:route GET /api/namespaces/{namespace}/apps/{app}/health appHealth
+		// ---
+		// Get health associated to the given app
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: appHealthResponse
+		//      404: notFoundError
+		//      500: internalError
+		//
+		{
+			"AppHealth",
+			"GET",
+			"/api/namespaces/{namespace}/app/{app}/health",
+			handlers.AppHealth,
+			true,
+		},
+		// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/health workloadHealth
+		// ---
+		// Get health associated to the given workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: workloadHealthResponse
+		//      404: notFoundError
+		//      500: internalError
+		//
+		{
+			"WorkloadHealth",
+			"GET",
+			"/api/namespaces/{namespace}/workloads/{workload}/health",
+			handlers.WorkloadHealth,
 			true,
 		},
 		{
@@ -254,6 +324,20 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceMetrics,
 			true,
 		},
+		// swagger:route GET /api/namespaces/{namespace}/health namespaceHealth
+		// ---
+		// Get health for all objects in the given namespace
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: namespaceAppHealthResponse
+		//			400: badRequestError
+		//      500: internalError
+		//
 		{
 			"NamespaceHealth",
 			"GET",
