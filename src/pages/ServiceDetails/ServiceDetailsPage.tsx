@@ -6,7 +6,7 @@ import { NamespaceFilterSelected } from '../../components/NamespaceFilter/Namesp
 import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
-import { hasIstioSidecar, ServiceDetailsInfo, Validations } from '../../types/ServiceInfo';
+import { ServiceDetailsInfo, Validations } from '../../types/ServiceInfo';
 import { authentication } from '../../utils/Authentication';
 import IstioObjectDetails from './IstioObjectDetails';
 import ServiceMetrics from './ServiceMetrics';
@@ -158,10 +158,8 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     );
     Promise.all([promiseDetails, promiseValidations])
       .then(([resultDetails, resultValidations]) => {
-        const details = resultDetails.data;
-        details.istioSidecar = hasIstioSidecar(details.pods);
         this.setState({
-          serviceDetailsInfo: details,
+          serviceDetailsInfo: resultDetails,
           validations: resultValidations.data
         });
       })

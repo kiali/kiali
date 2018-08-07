@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import ItemDescription from '../ItemDescription';
-import { Health } from '../../../types/Health';
+import { ServiceHealth } from '../../../types/Health';
 import { ServiceItem } from '../../../types/ServiceListComponent';
 
-const health: Health = {
-  envoy: { inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } },
-  deploymentStatuses: [{ name: 'A', available: 1, replicas: 1 }, { name: 'B', available: 2, replicas: 2 }],
-  requests: { requestCount: 10, requestErrorCount: 1 }
-};
+const health = new ServiceHealth(
+  { inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } },
+  { requestCount: 10, requestErrorCount: 1 },
+  60
+);
 
 describe('ItemDescription', () => {
   let resolver;
@@ -20,12 +20,12 @@ describe('ItemDescription', () => {
       name: 'svc',
       namespace: 'ns',
       istioSidecar: false,
-      healthPromise: new Promise<Health>(r => (resolver = r))
+      healthPromise: new Promise<ServiceHealth>(r => (resolver = r))
     };
   });
 
   it('should render with promise resolving', done => {
-    const wrapper = shallow(<ItemDescription item={item} rateInterval={60} />);
+    const wrapper = shallow(<ItemDescription item={item} />);
     expect(wrapper.text()).toBe('');
 
     resolver(health);

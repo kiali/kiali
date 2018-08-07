@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { NA, getRequestErrorsRatio } from '../../utils/Health';
-import { RequestHealth } from '../../types/Health';
+import { NA, getRequestErrorsRatio, RequestHealth } from '../../types/Health';
 
 type ServiceErrorRateProps = {
   requestHealth: RequestHealth;

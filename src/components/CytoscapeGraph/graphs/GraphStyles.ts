@@ -1,7 +1,7 @@
 import { PfColors } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { config } from '../../../config';
-import { FAILURE, DEGRADED } from '../../../utils/Health';
+import { FAILURE, DEGRADED } from '../../../types/Health';
 import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
 
 export const DimClass = 'mousedim';

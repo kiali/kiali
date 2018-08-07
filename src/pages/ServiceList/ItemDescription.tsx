@@ -1,15 +1,14 @@
 import * as React from 'react';
 import { ServiceItem } from '../../types/ServiceListComponent';
-import { Health } from '../../types/Health';
-import { DisplayMode, HealthIndicator } from '../../components/ServiceHealth/HealthIndicator';
+import { ServiceHealth } from '../../types/Health';
+import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import ServiceErrorRate from './ServiceErrorRate';
 
 interface Props {
   item: ServiceItem;
-  rateInterval: number;
 }
 interface State {
-  health?: Health;
+  health?: ServiceHealth;
 }
 
 export default class ItemDescription extends React.PureComponent<Props, State> {
@@ -39,12 +38,7 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
           <tr>
             <td>
               <strong>Health: </strong>
-              <HealthIndicator
-                id={this.props.item.name}
-                health={this.state.health}
-                mode={DisplayMode.SMALL}
-                rateInterval={this.props.rateInterval}
-              />
+              <HealthIndicator id={this.props.item.name} health={this.state.health} mode={DisplayMode.SMALL} />
             </td>
             <td>
               <ServiceErrorRate requestHealth={this.state.health.requests} />

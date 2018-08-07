@@ -21,12 +21,12 @@ import {
   GraphParamsType,
   CytoscapeGlobalScratchNamespace,
   CytoscapeGlobalScratchData,
-  GraphType
+  NodeType
 } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
+import * as H from '../../types/Health';
 import { authentication } from '../../utils/Authentication';
-import * as H from '../../utils/Health';
-import { NamespaceHealth } from '../../types/Health';
+import { NamespaceAppHealth, NamespaceWorkloadHealth } from '../../types/Health';
 
 import { makeServiceGraphUrlFromParams } from '../Nav/NavUtils';
 
@@ -473,44 +473,50 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
     const duration = this.props.graphDuration.value;
     // Keep a map of namespace x promises in order not to fetch several times the same data per namespace
-    const healthPerNamespace = new Map<String, Promise<NamespaceHealth>>();
+    const appHealthPerNamespace = new Map<String, Promise<NamespaceAppHealth>>();
+    const wkldHealthPerNamespace = new Map<String, Promise<NamespaceWorkloadHealth>>();
     // Asynchronously fetch health
     cy.nodes().forEach(ele => {
       const namespace = ele.data('namespace');
-      const app = ele.data('app');
-      const workload = ele.data('workload');
-
-      if ((workload !== 'unknown' || app !== 'unknown') && (ele.data('isGroup') || !ele.data('parent'))) {
-        const isAppGraph = this.props.graphType === GraphType.APP || this.props.graphType === GraphType.VERSIONED_APP;
-        const appBasedHealth = isAppGraph && app !== 'unknown';
-        let promise = healthPerNamespace.get(namespace);
+      const nodeType = ele.data('nodeType');
+      const isInAppBox = nodeType === NodeType.APP && ele.data('parent');
+      if (nodeType === NodeType.WORKLOAD || isInAppBox) {
+        const workload = ele.data('workload');
+        // Workload-based health
+        let promise = wkldHealthPerNamespace.get(namespace);
         if (!promise) {
-          promise = API.getNamespaceHealth(authentication(), namespace, duration).then(r => r.data);
-          healthPerNamespace.set(namespace, promise);
+          promise = API.getNamespaceWorkloadHealth(authentication(), namespace, duration);
+          wkldHealthPerNamespace.set(namespace, promise);
         }
-        if (appBasedHealth) {
-          ele.data('healthPromise', promise.then(nsHealth => nsHealth[app]));
-          promise
-            .then(nsHealth => {
-              const health = nsHealth[app];
-              const status = H.computeAggregatedHealth(health);
-              ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
-              if (status === H.DEGRADED || status === H.FAILURE) {
-                ele.addClass(status.name);
-              }
-            })
-            .catch(err => {
-              ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
-              console.error(API.getErrorMsg('Could not fetch health', err));
-            });
-        } else {
-          // TODO: Workload health needs a change on the getNamespaceHealth service to
-          // provide an easier way to search by workload.
-          // We must take into consideration that graphType might be APP but we don't
-          // have the app data and need to fallback to workload.
+        this.updateNodeHealth(ele, promise, workload);
+      } else if (nodeType === NodeType.APP) {
+        const app = ele.data('app');
+        // App-based health
+        let promise = appHealthPerNamespace.get(namespace);
+        if (!promise) {
+          promise = API.getNamespaceAppHealth(authentication(), namespace, duration);
+          appHealthPerNamespace.set(namespace, promise);
         }
+        this.updateNodeHealth(ele, promise, app);
       }
     });
+  }
+
+  private updateNodeHealth(ele: any, promise: Promise<H.NamespaceAppHealth | H.NamespaceWorkloadHealth>, key: string) {
+    ele.data('healthPromise', promise.then(nsHealth => nsHealth[key]));
+    promise
+      .then(nsHealth => {
+        const health = nsHealth[key];
+        const status = health.getGlobalStatus();
+        ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
+        if (status === H.DEGRADED || status === H.FAILURE) {
+          ele.addClass(status.name);
+        }
+      })
+      .catch(err => {
+        ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
+        console.error(API.getErrorMsg('Could not fetch health', err));
+      });
   }
 }
 

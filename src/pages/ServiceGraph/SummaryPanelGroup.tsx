@@ -11,7 +11,7 @@ import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
 import { shouldRefreshData, updateHealth, nodeData } from './SummaryPanelCommon';
-import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
+import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
 
@@ -85,7 +85,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
                 mode={DisplayMode.SMALL}
                 health={this.state.health}
                 tooltipPlacement="left"
-                rateInterval={this.props.duration}
               />
             )
           )}
