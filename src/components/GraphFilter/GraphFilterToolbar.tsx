@@ -20,7 +20,8 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
       namespace: this.props.namespace,
       graphLayout: this.props.graphLayout,
       graphDuration: this.props.graphDuration,
-      edgeLabelMode: this.props.edgeLabelMode
+      edgeLabelMode: this.props.edgeLabelMode,
+      graphType: this.props.graphType
     };
 
     return (
@@ -57,7 +58,8 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
       namespace: this.props.namespace,
       graphDuration: this.props.graphDuration,
       graphLayout: this.props.graphLayout,
-      edgeLabelMode: this.props.edgeLabelMode
+      edgeLabelMode: this.props.edgeLabelMode,
+      graphType: this.props.graphType
     };
   };
 }

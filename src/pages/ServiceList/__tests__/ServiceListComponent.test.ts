@@ -1,13 +1,19 @@
 import { sortFields, sortServices } from '../ServiceListComponent';
 import { ServiceItem } from '../../../types/ServiceListComponent';
-import { Health, RequestHealth } from '../../../types/Health';
+import { ServiceHealth, RequestHealth, EnvoyHealth } from '../../../types/Health';
 
-const makeService = (name: string, reqCount: number, errCount: number): ServiceItem & { health: Health } => {
+const makeService = (name: string, reqCount: number, errCount: number): ServiceItem & { health: ServiceHealth } => {
   const reqErrs: RequestHealth = {
     requestCount: reqCount,
     requestErrorCount: errCount
   };
-  return { name: name, health: { requests: reqErrs } } as ServiceItem & { health: Health };
+  const envoy: EnvoyHealth = {
+    inbound: { healthy: 0, total: 0 },
+    outbound: { healthy: 0, total: 0 }
+  };
+  return { name: name, health: new ServiceHealth(envoy, reqErrs, 60) } as ServiceItem & {
+    health: ServiceHealth;
+  };
 };
 
 describe('SortField#compare', () => {

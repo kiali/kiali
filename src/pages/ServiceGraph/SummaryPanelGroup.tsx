@@ -10,8 +10,8 @@ import MetricsOptions from '../../types/MetricsOptions';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
-import { shouldRefreshData, updateHealth } from './SummaryPanelCommon';
-import { HealthIndicator, DisplayMode } from '../../components/ServiceHealth/HealthIndicator';
+import { shouldRefreshData, updateHealth, nodeData } from './SummaryPanelCommon';
+import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
 
@@ -66,10 +66,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   render() {
     const group = this.props.data.summaryTarget;
-
-    const namespace = group.data('service').split('.')[1];
-    const service = group.data('service').split('.')[0];
-    const serviceHotLink = <Link to={`/namespaces/${namespace}/services/${service}`}>{service}</Link>;
+    const { namespace, app } = nodeData(group);
+    const serviceHotLink = <Link to={`/namespaces/${namespace}/services/${app}`}>{app}</Link>;
 
     const incoming = getAccumulatedTrafficRate(group.children());
     const outgoing = getAccumulatedTrafficRate(group.children().edgesTo('*'));
@@ -87,7 +85,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
                 mode={DisplayMode.SMALL}
                 health={this.state.health}
                 tooltipPlacement="left"
-                rateInterval={this.props.duration}
               />
             )
           )}
@@ -100,9 +97,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         </div>
         <div className="panel-body">
           <p style={{ textAlign: 'right' }}>
-            <Link
-              to={`/namespaces/${namespace}/services/${service}?tab=metrics&groupings=local+version%2Cresponse+code`}
-            >
+            <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>
               View detailed charts <Icon name="angle-double-right" />
             </Link>
           </p>
@@ -125,8 +120,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   }
 
   private updateRpsCharts = (props: SummaryPanelPropType) => {
-    const namespace = props.data.summaryTarget.data('service').split('.')[1];
-    const service = props.data.summaryTarget.data('service').split('.')[0];
+    const { namespace, app } = nodeData(props.data.summaryTarget);
     const options: MetricsOptions = {
       queryTime: props.queryTime,
       duration: +props.duration,
@@ -135,7 +129,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       filters: ['request_count', 'request_error_count'],
       includeIstio: props.namespace === 'istio-system'
     };
-    API.getServiceMetrics(authentication(), namespace, service, options)
+    API.getServiceMetrics(authentication(), namespace, app, options)
       .then(response => {
         if (!this._isMounted) {
           console.log('SummaryPanelGroup: Ignore fetch, component not mounted.');

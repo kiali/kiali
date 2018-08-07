@@ -1,9 +1,7 @@
 import * as React from 'react';
 import { Icon } from 'patternfly-react';
-
-import { Health } from '../../types/Health';
-import * as H from '../../utils/Health';
 import { HealthDetails } from './HealthDetails';
+import * as H from '../../types/Health';
 
 export enum DisplayMode {
   LARGE,
@@ -12,10 +10,9 @@ export enum DisplayMode {
 
 interface Props {
   id: string;
-  health?: Health;
+  health?: H.Health;
   mode: DisplayMode;
   tooltipPlacement?: string;
-  rateInterval: number;
 }
 
 interface HealthState {
@@ -24,9 +21,12 @@ interface HealthState {
 }
 
 export class HealthIndicator extends React.PureComponent<Props, HealthState> {
-  static updateHealth = (health?: Health) => {
-    let infoArr: string[] = [];
-    return { info: infoArr, globalStatus: H.computeAggregatedHealth(health, info => infoArr.push(info)) };
+  static updateHealth = (health?: H.Health) => {
+    if (health) {
+      return { info: health.getReport(), globalStatus: health.getGlobalStatus() };
+    } else {
+      return { info: [], globalStatus: H.NA };
+    }
   };
 
   static getDerivedStateFromProps(props: Props, state: HealthState) {
@@ -49,11 +49,11 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
     return <span />;
   }
 
-  renderSmall(health: Health) {
+  renderSmall(health: H.Health) {
     return <span>{this.renderIndicator(health, '18px', '12px', this.state.globalStatus.name)}</span>;
   }
 
-  renderLarge(health: Health) {
+  renderLarge(health: H.Health) {
     return (
       <div style={{ color: this.state.globalStatus.color }}>
         {this.renderIndicator(health, '35px', '24px', this.state.globalStatus.name)}
@@ -66,16 +66,10 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
     );
   }
 
-  renderIndicator(health: Health, iconSize: string, textSize: string, title: string) {
+  renderIndicator(health: H.Health, iconSize: string, textSize: string, title: string) {
     if (this.state.globalStatus.icon) {
       return (
-        <HealthDetails
-          id={this.props.id}
-          health={health}
-          headline={title}
-          placement={this.props.tooltipPlacement}
-          rateInterval={this.props.rateInterval}
-        >
+        <HealthDetails id={this.props.id} health={health} headline={title} placement={this.props.tooltipPlacement}>
           <Icon
             type="pf"
             name={this.state.globalStatus.icon}

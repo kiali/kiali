@@ -108,25 +108,15 @@ describe('ServiceMetrics', () => {
         .catch(err => done.fail(err)),
       mockGrafanaInfo({
         url: 'http://172.30.139.113:3000',
-        variablesSuffix: 'svc.cluster.local',
-        dashboard: 'istio-dashboard',
-        varServiceSource: 'var-source',
-        varServiceDest: 'var-http_destination'
+        serviceDashboardPath: '/dashboard/db/istio-dashboard',
+        varService: 'var-service'
       })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('#grafana-out-link > a').map(div => div.getElement().props)).toEqual([
+          expect(mounted!.find('#grafana-link > a').map(div => div.getElement().props)).toEqual([
             {
               children: 'View in Grafana',
-              href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-source=svc.ns.svc.cluster.local',
-              target: '_blank'
-            }
-          ]);
-          expect(mounted!.find('#grafana-in-link > a').map(div => div.getElement().props)).toEqual([
-            {
-              children: 'View in Grafana',
-              href:
-                'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-http_destination=svc.ns.svc.cluster.local',
+              href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local',
               target: '_blank'
             }
           ]);

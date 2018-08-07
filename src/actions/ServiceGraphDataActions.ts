@@ -5,6 +5,7 @@ import * as API from '../services/Api';
 import { authentication } from '../utils/Authentication';
 import { MessageCenterActions } from './MessageCenterActions';
 import { ServiceGraphDataActionKeys } from './ServiceGraphDataActionKeys';
+import { GraphType } from '../types/Graph';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 
@@ -76,11 +77,12 @@ export const ServiceGraphDataActions = {
   handleLegend: createAction(ServiceGraphDataActionKeys.HANDLE_LEGEND),
 
   // action creator that performs the async request
-  fetchGraphData: (namespace: Namespace, graphDuration: Duration) => {
+  fetchGraphData: (namespace: Namespace, graphDuration: Duration, graphType: GraphType) => {
     return dispatch => {
       dispatch(ServiceGraphDataActions.getGraphDataStart());
       const duration = graphDuration.value;
-      let restParams = { duration: duration + 's' };
+      let restParams = { duration: duration + 's', graphType: graphType };
+      // TODO: this namespace should not be hardcoded
       if (namespace.name === 'istio-system') {
         restParams['includeIstio'] = true;
       }

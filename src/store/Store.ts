@@ -4,6 +4,7 @@ import { PollIntervalInMs } from '../types/GraphFilter';
 
 export interface GlobalState {
   readonly loadingCounter: number;
+  readonly isPageVisible: boolean;
 }
 
 // Various pages are described here with their various sections

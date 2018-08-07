@@ -4,7 +4,7 @@ import FlexView from 'react-flexview';
 import { Breadcrumb } from 'patternfly-react';
 
 import Namespace from '../../types/Namespace';
-import { GraphParamsType, SummaryData } from '../../types/Graph';
+import { GraphParamsType, SummaryData, GraphType } from '../../types/Graph';
 import { Duration, PollIntervalInMs } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
@@ -25,10 +25,11 @@ type ServiceGraphPageProps = GraphParamsType & {
   isLoading: boolean;
   showLegend: boolean;
   isReady: boolean;
-  fetchGraphData: (namespace: Namespace, graphDuration: Duration) => any;
+  fetchGraphData: (namespace: Namespace, graphDuration: Duration, graphType: GraphType) => any;
   toggleLegend: () => void;
   summaryData: SummaryData | null;
   pollInterval: PollIntervalInMs;
+  isPageVisible: boolean;
 };
 const NUMBER_OF_DATAPOINTS = 30;
 
@@ -37,7 +38,7 @@ const containerStyle = style({
   height: 'calc(100vh - 60px)' // View height minus top bar height
 });
 
-const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0 });
+const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
 
 const makeCancelablePromise = (promise: Promise<any>) => {
   let hasCanceled = false;
@@ -114,13 +115,14 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
       namespace: this.props.namespace,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
-      graphDuration: this.props.graphDuration
+      graphDuration: this.props.graphDuration,
+      graphType: this.props.graphType
     };
     return (
       <>
         <FlexView className={containerStyle} column={true}>
           <Breadcrumb title={true}>
-            <Breadcrumb.Item active={true}>Service Graph</Breadcrumb.Item>
+            <Breadcrumb.Item active={true}>Graph</Breadcrumb.Item>
           </Breadcrumb>
           <div>
             {/* Use empty div to reset the flex, this component doesn't seem to like that. It renders all its contents in the center */}
@@ -150,6 +152,7 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
                 namespace={this.props.namespace.name}
                 queryTime={this.props.graphTimestamp}
                 duration={this.props.graphDuration.value}
+                isPageVisible={this.props.isPageVisible}
                 {...computePrometheusQueryInterval(this.props.graphDuration.value, NUMBER_OF_DATAPOINTS)}
               />
             ) : null}
@@ -161,10 +164,8 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
   }
 
   /** Fetch graph data */
-  private loadGraphDataFromBackend = (namespace?: Namespace, graphDuration?: Duration) => {
-    namespace = namespace ? namespace : this.props.namespace;
-    graphDuration = graphDuration ? graphDuration : this.props.graphDuration;
-    return this.props.fetchGraphData(namespace, graphDuration);
+  private loadGraphDataFromBackend = () => {
+    return this.props.fetchGraphData(this.props.namespace, this.props.graphDuration, this.props.graphType);
   };
 
   private scheduleNextPollingIntervalFromProps() {
@@ -211,6 +212,6 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
   }
 
   private notifyError = (error: Error, componentStack: string) => {
-    MessageCenterUtils.add('There was an error when rendering the service graph, please try a different layout');
+    MessageCenterUtils.add('There was an error when rendering the graph, please try a different layout');
   };
 }

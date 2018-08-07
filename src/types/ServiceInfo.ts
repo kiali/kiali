@@ -1,4 +1,4 @@
-import { Health } from './Health';
+import { ServiceHealth } from './Health';
 import { PfColors } from '../components/Pf/PfColors';
 
 export interface Endpoints {
@@ -380,7 +380,7 @@ export interface ServiceDetailsInfo {
   virtualServices?: VirtualService[];
   destinationRules?: DestinationRule[];
   dependencies?: { [key: string]: string[] };
-  health?: Health;
+  health?: ServiceHealth;
 }
 
 // NamespaceValidations are grouped per 'namespace'

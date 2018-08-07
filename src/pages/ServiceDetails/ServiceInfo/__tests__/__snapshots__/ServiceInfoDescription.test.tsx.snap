@@ -230,7 +230,6 @@ ShallowWrapper {
             health={undefined}
             id="reviews"
             mode={0}
-            rateInterval={600}
             tooltipPlacement="left"
           />
         </Col>
@@ -419,7 +418,6 @@ ShallowWrapper {
               health={undefined}
               id="reviews"
               mode={0}
-              rateInterval={600}
               tooltipPlacement="left"
             />
           </Col>

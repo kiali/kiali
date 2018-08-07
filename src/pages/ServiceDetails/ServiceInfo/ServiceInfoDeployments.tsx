@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Col, Row, Icon } from 'patternfly-react';
 import LocalTime from '../../../components/Time/LocalTime';
 import { Deployment } from '../../../types/ServiceInfo';
-import { ratioCheck, Status } from '../../../utils/Health';
+import { ratioCheck, Status } from '../../../types/Health';
 import Label from '../../../components/Label/Label';
 
 interface ServiceInfoDeploymentsProps {

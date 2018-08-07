@@ -2,8 +2,8 @@ import * as React from 'react';
 import { Col, Row } from 'patternfly-react';
 import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
-import { HealthIndicator, DisplayMode } from '../../../components/ServiceHealth/HealthIndicator';
-import { Health } from '../../../types/Health';
+import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
+import { ServiceHealth } from '../../../types/Health';
 import { Endpoints, Port } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
 
@@ -20,7 +20,7 @@ interface ServiceInfoDescriptionProps {
   ip?: any;
   ports?: Port[];
   endpoints?: Endpoints[];
-  health?: Health;
+  health?: ServiceHealth;
 }
 
 class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps> {
@@ -110,7 +110,6 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 health={this.props.health}
                 mode={DisplayMode.LARGE}
                 tooltipPlacement="left"
-                rateInterval={600}
               />
             </Col>
           </Row>
