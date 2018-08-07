@@ -4,15 +4,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"k8s.io/api/apps/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
-func setupDeploymentService(k8s *kubetest.K8SClientMock) DeploymentService {
-	return DeploymentService{k8s: k8s}
+func setupDeploymentService(k8s *kubetest.K8SClientMock) WorkloadService {
+	return WorkloadService{k8s: k8s}
 }
 
 func TestDeploymentListHandler(t *testing.T) {
@@ -23,15 +24,15 @@ func TestDeploymentListHandler(t *testing.T) {
 	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
 	svc := setupDeploymentService(k8s)
 
-	deploymentList, _ := svc.GetDeploymentList("Namespace")
-	deployments := deploymentList.Deployments
+	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", deploymentList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace.Name)
 
-	assert.Equal(3, len(deployments))
-	assert.Equal("httpbin-v1", deployments[0].Name)
-	assert.Equal("httpbin-v2", deployments[1].Name)
-	assert.Equal("httpbin-v3", deployments[2].Name)
+	assert.Equal(3, len(workloads))
+	assert.Equal("httpbin-v1", workloads[0].Name)
+	assert.Equal("httpbin-v2", workloads[1].Name)
+	assert.Equal("httpbin-v3", workloads[2].Name)
 }
 
 func fakeDeploymentList() *v1beta1.DeploymentList {
