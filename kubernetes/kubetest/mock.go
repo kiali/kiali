@@ -30,6 +30,11 @@ func (o *K8SClientMock) GetDeployments(namespace string) (*v1beta1.DeploymentLis
 	return args.Get(0).(*v1beta1.DeploymentList), args.Error(1)
 }
 
+func (o *K8SClientMock) GetDeploymentSelector(namespace string, deploymentName string) (string, error) {
+	args := o.Called(namespace, deploymentName)
+	return args.Get(0).(string), args.Error(1)
+}
+
 func (o *K8SClientMock) GetService(namespace string, serviceName string) (*v1.Service, error) {
 	args := o.Called(namespace, serviceName)
 	return args.Get(0).(*v1.Service), args.Error(1)

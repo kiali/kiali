@@ -95,3 +95,16 @@ func lookupImage(containerName string, containers []v1.Container) string {
 	}
 	return ""
 }
+
+func (pod *Pod) HasIstioSideCar() bool {
+	return len(pod.IstioContainers) > 0
+}
+
+func (pods Pods) HasIstioSideCar() bool {
+	for _, pod := range pods {
+		if pod.HasIstioSideCar() {
+			return true
+		}
+	}
+	return false
+}

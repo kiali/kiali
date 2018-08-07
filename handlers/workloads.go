@@ -10,13 +10,14 @@ import (
 	"github.com/kiali/kiali/services/business"
 )
 
+// WorkloadList is the API handler to get list of workloads
 func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// Get business layer
 	business, err := business.Get()
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		RespondWithError(w, http.StatusInternalServerError, "Workloads initialization error: "+err.Error())
 		return
 	}
 	namespace := params["namespace"]

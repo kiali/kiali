@@ -6,8 +6,18 @@ import (
 )
 
 type ServiceOverview struct {
-	Name         string `json:"name"`
-	IstioSidecar bool   `json:"istioSidecar"`
+	// Name of the Service
+	// required: true
+	// example: reviews-v1
+	Name string `json:"name"`
+	// Define if Pods related to this Service has an IstioSidecar deployed
+	// required: true
+	// example: true
+	IstioSidecar bool `json:"istioSidecar"`
+	// Has label app
+	// required: true
+	// example: true
+	AppLabel bool `json:"appLabel"`
 }
 
 type ServiceList struct {

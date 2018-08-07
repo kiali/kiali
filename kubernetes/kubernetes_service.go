@@ -225,6 +225,21 @@ func (in *IstioClient) GetDeployment(namespace, deploymentName string) (*v1beta1
 	return in.k8s.AppsV1beta1().Deployments(namespace).Get(deploymentName, emptyGetOptions)
 }
 
+// GetDeploymentSelector returns the selector of a deployment.
+// It returns an error on any problem.
+// Return all labels listed as a human readable string separated by ','
+func (in *IstioClient) GetDeploymentSelector(namespace, deploymentName string) (string, error) {
+	deployment, err := in.GetDeployment(namespace, deploymentName)
+	if err != nil {
+		return "", err
+	}
+	selector, err := meta_v1.LabelSelectorAsMap(deployment.Spec.Selector)
+	if err != nil {
+		return "", err
+	}
+	return labels.FormatLabels(selector), nil
+}
+
 // GetPods returns the pods definitions for a given set of labels.
 // It returns an error on any problem.
 func (in *IstioClient) GetPods(namespace, labelSelector string) (*v1.PodList, error) {

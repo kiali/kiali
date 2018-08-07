@@ -3,8 +3,6 @@ package business
 import (
 	"fmt"
 
-	"k8s.io/api/core/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/services/models"
@@ -35,25 +33,20 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernete
 	// Convert each k8s service into our model
 	for i, item := range sl.Services.Items {
 		sPods := kubernetes.FilterPodsForService(&item, sl.Pods)
-		hasSideCar := hasIstioSideCar(sPods)
+		/** Check if Service has istioSidecar deployed */
+		mPods := models.Pods{}
+		mPods.Parse(sPods)
+		hasSideCar := mPods.HasIstioSideCar()
+		/** Check if Service has the label app required by Istio */
+		_, appLabel := item.Spec.Selector["app"]
 		services[i] = models.ServiceOverview{
 			Name:         item.Name,
 			IstioSidecar: hasSideCar,
+			AppLabel:     appLabel,
 		}
 	}
 
 	return &models.ServiceList{Namespace: namespace, Services: services}
-}
-
-func hasIstioSideCar(pods []v1.Pod) bool {
-	mPods := models.Pods{}
-	mPods.Parse(pods)
-	for _, pod := range mPods {
-		if len(pod.IstioContainers) > 0 {
-			return true
-		}
-	}
-	return false
 }
 
 // GetService returns a single service

@@ -1044,9 +1044,24 @@
       "type": "object",
       "required": [
         "name",
-        "type"
+        "type",
+        "istioSidecar",
+        "appLabel",
+        "versionLabel"
       ],
       "properties": {
+        "appLabel": {
+          "description": "Has label app",
+          "type": "boolean",
+          "x-go-name": "AppLabel",
+          "example": true
+        },
+        "istioSidecar": {
+          "description": "Has IstioSidecar",
+          "type": "boolean",
+          "x-go-name": "IstioSidecar",
+          "example": true
+        },
         "name": {
           "description": "Name of the workload",
           "type": "string",
@@ -1058,6 +1073,12 @@
           "type": "string",
           "x-go-name": "Type",
           "example": "deployment"
+        },
+        "versionLabel": {
+          "description": "Has version label",
+          "type": "boolean",
+          "x-go-name": "VersionLabel",
+          "example": true
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
