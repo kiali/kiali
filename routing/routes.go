@@ -60,7 +60,7 @@ func NewRoutes() (r *Routes) {
 		//
 		//     Schemes: http, https
 		//
-		//	   Security:
+		//    Security:
 		//     authorization: user, password
 		//
 		// responses:
@@ -297,6 +297,18 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadHealth,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/services/{service}/istio_validations validations serviceValidations
+		// ---
+		// Endpoint to get the list of istio object validations for a service
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: typeValidationsResponse
+		//
 		{
 			"ServiceValidations",
 			"GET",
@@ -322,7 +334,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//      200: namespaceAppHealthResponse
-		//			400: badRequestError
+		//      400: badRequestError
 		//      500: internalError
 		//
 		{
