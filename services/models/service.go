@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/prometheus"
 )
 
 type ServiceOverview struct {
@@ -29,10 +30,10 @@ type Service struct {
 	Dependencies     map[string][]string `json:"dependencies"`
 	Pods             Pods                `json:"pods"`
 	Deployments      Deployments         `json:"deployments"`
-	Health           Health              `json:"health"`
+	Health           ServiceHealth       `json:"health"`
 }
 
-func (s *Service) SetServiceDetails(serviceDetails *kubernetes.ServiceDetails, istioDetails *kubernetes.IstioDetails, prometheusDetails map[string][]string) {
+func (s *Service) SetServiceDetails(serviceDetails *kubernetes.ServiceDetails, istioDetails *kubernetes.IstioDetails, prometheusDetails map[string][]prometheus.Workload) {
 	s.setKubernetesDetails(serviceDetails)
 	s.setIstioDetails(istioDetails)
 	s.setPrometheusDetails(prometheusDetails)
@@ -59,6 +60,12 @@ func (s *Service) setIstioDetails(istioDetails *kubernetes.IstioDetails) {
 	(&s.DestinationRules).Parse(istioDetails.DestinationRules)
 }
 
-func (s *Service) setPrometheusDetails(prometheusDetails map[string][]string) {
-	s.Dependencies = prometheusDetails
+func (s *Service) setPrometheusDetails(prometheusDetails map[string][]prometheus.Workload) {
+	// Transform dependencies for UI
+	s.Dependencies = make(map[string][]string)
+	for version, workloads := range prometheusDetails {
+		for _, workload := range workloads {
+			s.Dependencies[version] = append(s.Dependencies[version], workload.App+"."+workload.Namespace+"/"+workload.Version)
+		}
+	}
 }

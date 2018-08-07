@@ -2,13 +2,15 @@ package kubernetes
 
 import (
 	"fmt"
+	"sync"
 
-	"github.com/kiali/kiali/config"
 	"k8s.io/api/apps/v1beta1"
 	autoscalingV1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/kiali/kiali/config"
 )
 
 type servicesResponse struct {
@@ -88,6 +90,117 @@ func (in *IstioClient) GetFullServices(namespace string) (*ServiceList, error) {
 	return services, err
 }
 
+// GetNamespaceAppsDetails returns a map of apps details (services, deployments and pods) in the given namespace.
+// The map key is the app label.
+// Entities without app label are gathered under empty-string-key
+// It returns an error on any problem.
+func (in *IstioClient) GetNamespaceAppsDetails(namespace string) (NamespaceApps, error) {
+	allEntities := make(NamespaceApps)
+	var err error
+	servicesChan, podsChan, deploymentsChan := make(chan servicesResponse), make(chan podsResponse), make(chan deploymentsResponse)
+	appLabel := config.Get().AppLabelName
+
+	go in.getServiceList(namespace, servicesChan)
+	go in.getPodsList(namespace, podsChan)
+	go in.getDeployments(namespace, deploymentsChan)
+
+	servicesResponse := <-servicesChan
+	podsResponse := <-podsChan
+	deploymentsResponse := <-deploymentsChan
+	for _, service := range servicesResponse.services.Items {
+		app := service.Labels[appLabel]
+		if appEntities, ok := allEntities[app]; ok {
+			appEntities.Services = append(appEntities.Services, service)
+		} else {
+			allEntities[app] = &AppDetails{
+				app:      app,
+				Services: []v1.Service{service},
+			}
+		}
+	}
+	for _, pod := range podsResponse.pods.Items {
+		app := pod.Labels[appLabel]
+		if appEntities, ok := allEntities[app]; ok {
+			appEntities.Pods = append(appEntities.Pods, pod)
+		} else {
+			allEntities[app] = &AppDetails{
+				app:  app,
+				Pods: []v1.Pod{pod},
+			}
+		}
+	}
+	for _, depl := range deploymentsResponse.deployments.Items {
+		app := depl.Labels[appLabel]
+		if appEntities, ok := allEntities[app]; ok {
+			appEntities.Deployments = append(appEntities.Deployments, depl)
+		} else {
+			allEntities[app] = &AppDetails{
+				app:         app,
+				Deployments: []v1beta1.Deployment{depl},
+			}
+		}
+	}
+
+	if servicesResponse.err != nil {
+		err = servicesResponse.err
+	} else if podsResponse.err != nil {
+		err = podsResponse.err
+	} else {
+		err = deploymentsResponse.err
+	}
+
+	return allEntities, err
+}
+
+// GetAppDetails returns the app details (services, deployments and pods) for the input app label.
+// It returns an error on any problem.
+func (in *IstioClient) GetAppDetails(namespace, app string) (AppDetails, error) {
+	var errSvc, errPods, errDepls error
+	var wg sync.WaitGroup
+	var services *v1.ServiceList
+	var pods *v1.PodList
+	var depls *v1beta1.DeploymentList
+	appLabel := config.Get().AppLabelName
+	opts := meta_v1.ListOptions{LabelSelector: appLabel + "=" + app}
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		services, errSvc = in.k8s.CoreV1().Services(namespace).List(opts)
+	}()
+	go func() {
+		defer wg.Done()
+		pods, errPods = in.k8s.CoreV1().Pods(namespace).List(opts)
+	}()
+	go func() {
+		defer wg.Done()
+		depls, errDepls = in.k8s.AppsV1beta1().Deployments(namespace).List(opts)
+	}()
+
+	wg.Wait()
+
+	details := AppDetails{
+		Services:    []v1.Service{},
+		Pods:        []v1.Pod{},
+		Deployments: []v1beta1.Deployment{},
+	}
+	if services != nil {
+		details.Services = services.Items
+	}
+	if pods != nil {
+		details.Pods = pods.Items
+	}
+	if depls != nil {
+		details.Deployments = depls.Items
+	}
+	if errSvc != nil {
+		return details, errSvc
+	} else if errPods != nil {
+		return details, errPods
+	}
+	return details, errDepls
+}
+
 // GetServices returns a list of services for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetServices(namespace string) (*v1.ServiceList, error) {
@@ -104,6 +217,12 @@ func (in *IstioClient) GetDeployments(namespace string) (*v1beta1.DeploymentList
 // It returns an error on any problem.
 func (in *IstioClient) GetService(namespace, serviceName string) (*v1.Service, error) {
 	return in.k8s.CoreV1().Services(namespace).Get(serviceName, emptyGetOptions)
+}
+
+// GetDeployment returns the definition of a specific deployment.
+// It returns an error on any problem.
+func (in *IstioClient) GetDeployment(namespace, deploymentName string) (*v1beta1.Deployment, error) {
+	return in.k8s.AppsV1beta1().Deployments(namespace).Get(deploymentName, emptyGetOptions)
 }
 
 // GetPods returns the pods definitions for a given set of labels.
@@ -184,18 +303,6 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 		Items: FilterDeploymentsForService(service, servicePods, deployments)}
 
 	return &serviceDetails, nil
-}
-
-// GetServicePods returns the list of pods associated to a given service. namespace is required.
-// A selector is generated using the canonical labels for serviceName (required)
-// and serviceVersion (optional). An error is returned on any problem.
-func (in *IstioClient) GetServicePods(namespace, serviceName, serviceVersion string) (*v1.PodList, error) {
-	cfg := config.Get()
-	selector := labels.Set{cfg.ServiceFilterLabelName: serviceName}
-	if "" != serviceVersion {
-		selector[cfg.VersionFilterLabelName] = serviceVersion
-	}
-	return in.GetPods(namespace, selector.String())
 }
 
 func filterAutoscalersByDeployments(deploymentNames []string, al *autoscalingV1.HorizontalPodAutoscalerList) *autoscalingV1.HorizontalPodAutoscalerList {

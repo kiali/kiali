@@ -9,7 +9,7 @@
 //
 // Algorithm: Process the graph structure adding nodes and edges, decorating each
 //            with information provided.  An optional second pass generates compound
-//            nodes for for versioned services.
+//            nodes for version grouping.
 //
 package cytoscape
 
@@ -21,7 +21,6 @@ import (
 
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/options"
-	"github.com/kiali/kiali/services/models"
 )
 
 type NodeData struct {
@@ -30,24 +29,26 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	Service      string         `json:"service"`
-	Namespace    string         `json:"namespace"`
-	ServiceName  string         `json:"serviceName"`
-	Version      string         `json:"version,omitempty"`
-	Rate         string         `json:"rate,omitempty"`         // edge aggregate
-	Rate3xx      string         `json:"rate3XX,omitempty"`      // edge aggregate
-	Rate4xx      string         `json:"rate4XX,omitempty"`      // edge aggregate
-	Rate5xx      string         `json:"rate5XX,omitempty"`      // edge aggregate
-	RateOut      string         `json:"rateOut,omitempty"`      // edge aggregate
-	HasCB        bool           `json:"hasCB,omitempty"`        // true (has circuit breaker) | false
-	HasMissingSC bool           `json:"hasMissingSC,omitempty"` // true (has missing sidecar) | false
-	HasVS        bool           `json:"hasVS,omitempty"`        // true (has route rule) | false
-	Health       *models.Health `json:"health,omitempty"`
-	IsDead       bool           `json:"isDead,omitempty"`    // true (has no pods) | false
-	IsGroup      string         `json:"isGroup,omitempty"`   // set to the grouping type, current values: [ 'version' ]
-	IsOutside    bool           `json:"isOutside,omitempty"` // true | false
-	IsRoot       bool           `json:"isRoot,omitempty"`    // true | false
-	IsUnused     bool           `json:"isUnused,omitempty"`  // true | false
+	NodeType     string          `json:"nodeType"`
+	Namespace    string          `json:"namespace"`
+	Workload     string          `json:"workload,omitempty"`
+	App          string          `json:"app,omitempty"`
+	Version      string          `json:"version,omitempty"`
+	Service      string          `json:"service,omitempty"`      // requested service for NodeTypeService
+	DestServices map[string]bool `json:"destServices,omitempty"` // requested services for [dest] node
+	Rate         string          `json:"rate,omitempty"`         // edge aggregate
+	Rate3xx      string          `json:"rate3XX,omitempty"`      // edge aggregate
+	Rate4xx      string          `json:"rate4XX,omitempty"`      // edge aggregate
+	Rate5xx      string          `json:"rate5XX,omitempty"`      // edge aggregate
+	RateOut      string          `json:"rateOut,omitempty"`      // edge aggregate
+	HasCB        bool            `json:"hasCB,omitempty"`        // true (has circuit breaker) | false
+	HasMissingSC bool            `json:"hasMissingSC,omitempty"` // true (has missing sidecar) | false
+	HasVS        bool            `json:"hasVS,omitempty"`        // true (has route rule) | false
+	IsDead       bool            `json:"isDead,omitempty"`    // true (has no pods) | false
+	IsGroup      string          `json:"isGroup,omitempty"`   // set to the grouping type, current values: [ 'version' ]
+	IsOutside    bool            `json:"isOutside,omitempty"` // true | false
+	IsRoot       bool            `json:"isRoot,omitempty"`    // true | false
+	IsUnused     bool            `json:"isUnused,omitempty"`  // true | false
 }
 
 type EdgeData struct {
@@ -83,6 +84,7 @@ type Elements struct {
 
 type Config struct {
 	Timestamp int64    `json:"timestamp"`
+	GraphType string   `json:"graphType"`
 	Elements  Elements `json:"elements"`
 }
 
@@ -100,20 +102,25 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 
 	buildConfig(trafficMap, &nodes, &edges, o)
 
-	// Add compound nodes that group together different versions of the same service
-	if o.GroupByVersion {
-		addCompoundNodes(&nodes)
+	// Add compound nodes that group together different versions of the same node
+	if o.GraphType == graph.GraphTypeVersionedApp && o.GroupBy == options.GroupByVersion {
+		groupByVersion(&nodes)
 	}
 
 	// sort nodes and edges for better json presentation (and predictable testing)
+	// kiali-1258 compound/isGroup/parent nodes must come before the child references
 	sort.Slice(nodes, func(i, j int) bool {
 		switch {
-		case nodes[i].Data.Service < nodes[j].Data.Service:
-			return true
-		case nodes[i].Data.Service > nodes[j].Data.Service:
-			return false
-		default:
+		case nodes[i].Data.Namespace != nodes[j].Data.Namespace:
+			return nodes[i].Data.Namespace < nodes[j].Data.Namespace
+		case nodes[i].Data.IsGroup != nodes[j].Data.IsGroup:
+			return nodes[i].Data.IsGroup > nodes[j].Data.IsGroup
+		case nodes[i].Data.App != nodes[j].Data.App:
+			return nodes[i].Data.App < nodes[j].Data.App
+		case nodes[i].Data.Version != nodes[j].Data.Version:
 			return nodes[i].Data.Version < nodes[j].Data.Version
+		default:
+			return nodes[i].Data.Workload < nodes[j].Data.Workload
 		}
 	})
 	sort.Slice(edges, func(i, j int) bool {
@@ -130,63 +137,66 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 	elements := Elements{nodes, edges}
 	result = Config{
 		Timestamp: o.Timestamp,
+		GraphType: o.GraphType,
 		Elements:  elements,
 	}
 	return result
 }
 
 func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, o options.VendorOptions) {
-	for id, s := range trafficMap {
+	for id, n := range trafficMap {
 		nodeId := nodeHash(id)
 
 		nd := &NodeData{
-			Id:          nodeId,
-			Service:     s.Name,
-			Namespace:   s.Namespace,
-			ServiceName: s.ServiceName,
-			Version:     s.Version,
+			Id:        nodeId,
+			NodeType:  n.NodeType,
+			Namespace: n.Namespace,
+			Workload:  n.Workload,
+			App:       n.App,
+			Version:   n.Version,
+			Service:   n.Service,
 		}
 
-		addServiceTelemetry(s, nd)
+		addNodeTelemetry(n, nd)
 
-		// node may be dead (service defined but no pods running)
-		if val, ok := s.Metadata["isDead"]; ok {
+		// node may have deployment but no pods running)
+		if val, ok := n.Metadata["isDead"]; ok {
 			nd.IsDead = val.(bool)
 		}
 
 		// node may be a root
-		if val, ok := s.Metadata["isRoot"]; ok {
+		if val, ok := n.Metadata["isRoot"]; ok {
 			nd.IsRoot = val.(bool)
 		}
 
-		// node may be an unused service
-		if val, ok := s.Metadata["isUnused"]; ok {
+		// node may be unused
+		if val, ok := n.Metadata["isUnused"]; ok {
 			nd.IsUnused = val.(bool)
 		}
 
 		// node may have a circuit breaker
-		if val, ok := s.Metadata["hasCB"]; ok {
+		if val, ok := n.Metadata["hasCB"]; ok {
 			nd.HasCB = val.(bool)
 		}
 
 		// node may have a virtual service
-		if val, ok := s.Metadata["hasVS"]; ok {
+		if val, ok := n.Metadata["hasVS"]; ok {
 			nd.HasVS = val.(bool)
 		}
 
 		// set sidecars checks, if available
-		if val, ok := s.Metadata["hasMissingSC"]; ok {
+		if val, ok := n.Metadata["hasMissingSC"]; ok {
 			nd.HasMissingSC = val.(bool)
 		}
 
-		// set health, if available
-		if val, ok := s.Metadata["health"]; ok {
-			nd.Health = val.(*models.Health)
+		// check if node is on another namespace
+		if val, ok := n.Metadata["isOutside"]; ok {
+			nd.IsOutside = val.(bool)
 		}
 
-		// check if node is on another namespace
-		if val, ok := s.Metadata["isOutside"]; ok {
-			nd.IsOutside = val.(bool)
+		// node may have destination service info
+		if val, ok := n.Metadata["destServices"]; ok {
+			nd.DestServices = val.(map[string]bool)
 		}
 
 		nw := NodeWrapper{
@@ -195,8 +205,8 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		*nodes = append(*nodes, &nw)
 
-		for _, e := range s.Edges {
-			sourceIdHash := nodeHash(s.ID)
+		for _, e := range n.Edges {
+			sourceIdHash := nodeHash(n.ID)
 			destIdHash := nodeHash(e.Dest.ID)
 			edgeId := edgeHash(sourceIdHash, destIdHash)
 			ed := EdgeData{
@@ -214,7 +224,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 	}
 }
 
-func addServiceTelemetry(s *graph.ServiceNode, nd *NodeData) {
+func addNodeTelemetry(s *graph.Node, nd *NodeData) {
 	rate := getRate(s.Metadata, "rate")
 
 	if rate > 0.0 {
@@ -302,32 +312,34 @@ func add(current string, val float64) string {
 	return fmt.Sprintf("%.3f", sum)
 }
 
-// addCompoundNodes generates additional nodes to group multiple versions of the
-// same service.
-func addCompoundNodes(nodes *[]*NodeWrapper) {
+// groupByVersion adds compound nodes to group multiple versions of the same app
+func groupByVersion(nodes *[]*NodeWrapper) {
 	grouped := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
-		grouped[nw.Data.Service] = append(grouped[nw.Data.Service], nw.Data)
+		if graph.NodeTypeApp == nw.Data.NodeType {
+			grouped[nw.Data.App] = append(grouped[nw.Data.App], nw.Data)
+		}
 	}
 
 	for k, members := range grouped {
 		if len(members) > 1 {
-			// create the compound grouping all versions of the service
+			// create the compound grouping all versions of the app
 			nodeId := nodeHash(k)
 			nd := NodeData{
-				Id:          nodeId,
-				Service:     k,
-				Namespace:   members[0].Namespace,
-				ServiceName: members[0].ServiceName,
-				IsGroup:     "version",
+				Id:        nodeId,
+				NodeType:  graph.NodeTypeApp,
+				Namespace: members[0].Namespace,
+				App:       k,
+				Version:   "",
+				IsGroup:   options.GroupByVersion,
 			}
 
 			nw := NodeWrapper{
 				Data: &nd,
 			}
 
-			// assign each service version node to the compound parent
+			// assign each app version node to the compound parent
 			hasVirtualService := false
 			nd.HasMissingSC = false
 			nd.IsOutside = false

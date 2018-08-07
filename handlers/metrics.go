@@ -9,22 +9,6 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-func extractServiceMetricsQuery(r *http.Request, namespace, service string) (*prometheus.ServiceMetricsQuery, error) {
-	q := prometheus.ServiceMetricsQuery{
-		Namespace: namespace,
-		Service:   service}
-	err := extractMetricsQueryParams(r, &q.MetricsQuery)
-	return &q, err
-}
-
-func extractNamespaceMetricsQuery(r *http.Request, namespace, servicePattern string) (*prometheus.NamespaceMetricsQuery, error) {
-	q := prometheus.NamespaceMetricsQuery{
-		Namespace:      namespace,
-		ServicePattern: servicePattern}
-	err := extractMetricsQueryParams(r, &q.MetricsQuery)
-	return &q, err
-}
-
 func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) error {
 	q.FillDefaults()
 	queryParams := r.URL.Query()
@@ -65,9 +49,6 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) erro
 			return errors.New("Bad request, cannot parse query parameter 'step'")
 		}
 	}
-	if versions, ok := queryParams["version"]; ok && len(versions) > 0 {
-		q.Version = versions[0]
-	}
 	if filters, ok := queryParams["filters[]"]; ok && len(filters) > 0 {
 		q.Filters = filters
 	}
@@ -76,9 +57,6 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) erro
 	}
 	if lblsout, ok := queryParams["byLabelsOut[]"]; ok && len(lblsout) > 0 {
 		q.ByLabelsOut = lblsout
-	}
-	if includeIstio, err := strconv.ParseBool(queryParams.Get("includeIstio")); err == nil {
-		q.IncludeIstio = includeIstio
 	}
 
 	// Adjust start & end times to be a multiple of step

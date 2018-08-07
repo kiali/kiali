@@ -133,7 +133,7 @@ Valid options:
   -iov|--istiooc-version <version>
       The version of the istiooc binary to use.
       If one does not exist in the bin directory, it will be downloaded there.
-      Default: istio-3.9-0.8.0-alpha4
+      Default: istio-3.9-1.0.0-alpha1
   -iop|--istiooc-platform (linux|darwin)
       The platform indicator to determine what istiooc binary executable to download.
       Default: linux (darwin if Mac is detected)
@@ -194,7 +194,7 @@ fi
 
 # The version is the tag from the openshift-istio/origin release builds.
 # The platform is either "linux" or "darwin".
-OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-0.8.0-alpha4}"
+OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-1.0.0-alpha1}"
 DEFAULT_OS_VERSION=linux
 DETECTED_OS_VERSION=`uname | tr '[:upper:]' '[:lower:]'`
 if [ "${DETECTED_OS_VERSION}" = "linux" -o "${DETECTED_OS_VERSION}" = "darwin" ] ; then

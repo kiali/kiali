@@ -1,33 +1,39 @@
 {
   "timestamp": 1523364075,
+  "graphType": "app",
   "elements": {
     "nodes": [
       {
         "data": {
-          "id": "80c2e74be9c24effcaf63df866f8f02d",
-          "service": "customer.tutorial.svc.cluster.local",
-          "namespace": "tutorial",
-          "serviceName": "customer",
-          "version": "v1",
-          "rate": "50.000"
-        }
-      },
-      {
-        "data": {
-          "id": "32f13d185b9a6764d67f9f96f8796f6c",
-          "service": "productpage.bookinfo.svc.cluster.local",
+          "id": "2c22af42b0c750749399ed2838c56054",
+          "nodeType": "app",
           "namespace": "bookinfo",
-          "serviceName": "productpage",
-          "version": "v1",
+          "app": "productpage",
+          "destServices": {
+            "productpage": true
+          },
           "rate": "50.000"
         }
       },
       {
         "data": {
-          "id": "ba113404e46b8aa41dc0e7cc339073fe",
-          "service": "unknown",
+          "id": "ba389fce1a74a05e1fcd46aca64941f8",
+          "nodeType": "app",
+          "namespace": "tutorial",
+          "app": "customer",
+          "destServices": {
+            "customer": true
+          },
+          "rate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "5c33c02dc744d0d03513a364935660b7",
+          "nodeType": "unknown",
           "namespace": "unknown",
-          "serviceName": "unknown",
+          "workload": "unknown",
+          "app": "unknown",
           "version": "unknown",
           "rateOut": "50.000",
           "isRoot": true
@@ -37,17 +43,17 @@
     "edges": [
       {
         "data": {
-          "id": "9f82022f17be0601a8b48369f84a870f",
-          "source": "ba113404e46b8aa41dc0e7cc339073fe",
-          "target": "32f13d185b9a6764d67f9f96f8796f6c",
+          "id": "423f97a4c2e70e194b7295c6055efd76",
+          "source": "5c33c02dc744d0d03513a364935660b7",
+          "target": "2c22af42b0c750749399ed2838c56054",
           "rate": "50.000"
         }
       },
       {
         "data": {
-          "id": "88ea5efca009742e150fa3cfd3bdbda9",
-          "source": "ba113404e46b8aa41dc0e7cc339073fe",
-          "target": "80c2e74be9c24effcaf63df866f8f02d",
+          "id": "0ab99fcb65f50cbe6ca0c882a771cdef",
+          "source": "5c33c02dc744d0d03513a364935660b7",
+          "target": "ba389fce1a74a05e1fcd46aca64941f8",
           "rate": "50.000"
         }
       }

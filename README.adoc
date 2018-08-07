@@ -328,11 +328,18 @@ server:
 in_cluster: (true\|false)
 ----
 
-|`SERVICE_FILTER_LABEL_NAME`
-|Label name which all resources of a service are group by. (default is `app`)
+|`APP_LABEL_NAME`
+|Label name which all resources of an app are grouped by. (default is `app`)
 [source,yaml]
 ----
-service_filter_label_name: VALUE
+app_label_name: VALUE
+----
+
+|`VERSION_LABEL_NAME`
+|Label name which all resources of an app version are grouped by. (default is `version`)
+[source,yaml]
+----
+version_label_name: VALUE
 ----
 
 |`PROMETHEUS_SERVICE_URL`

@@ -28,33 +28,6 @@ func NamespaceMetrics(w http.ResponseWriter, r *http.Request) {
 	getNamespaceMetrics(w, r, prometheus.NewClient)
 }
 
-// NamespaceHealth is the API handler to get health of every services in the given namespace
-func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
-	// Get business layer
-	business, err := business.Get()
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
-		return
-	}
-
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-
-	// Rate interval is needed to fetch request rates based health
-	rateInterval := defaultHealthRateInterval
-	queryParams := r.URL.Query()
-	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
-		rateInterval = rateIntervals[0]
-	}
-
-	health, err := business.Health.GetNamespaceHealth(namespace, rateInterval)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error while fetching health: "+err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, health)
-}
-
 // NamespaceIstioValidations is the API handler to get istio validations of a given namespace
 func NamespaceIstioValidations(w http.ResponseWriter, r *http.Request) {
 	// Get business layer
@@ -79,7 +52,8 @@ func NamespaceIstioValidations(w http.ResponseWriter, r *http.Request) {
 func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error)) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
-	params, err := extractNamespaceMetricsQuery(r, namespace, "")
+	params := prometheus.MetricsQuery{Namespace: namespace}
+	err := extractMetricsQueryParams(r, &params)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -90,6 +64,6 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promClientSuppl
 		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
 		return
 	}
-	metrics := prometheusClient.GetNamespaceMetrics(params)
+	metrics := prometheusClient.GetMetrics(&params)
 	RespondWithJSON(w, http.StatusOK, metrics)
 }

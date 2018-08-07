@@ -212,7 +212,6 @@ func NewRoutes() (r *Routes) {
 			// filters[]:     List of metrics to fetch (empty by default). When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
 			// byLabelsIn[]:  List of labels to use for grouping input metrics (empty by default). Example: response_code,source_version
 			// byLabelsOut[]: List of labels to use for grouping output metrics (empty by default). Example: response_code,destination_version
-			// includeIstio:  Include istio-system destinations in collected metrics (default false)
 
 			"ServiceMetrics",
 			"GET",
@@ -221,18 +220,23 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 		{
-			"ServiceHealth",
+			// Supported query parameters:
+			// step:          Duration indicating desired step between two datapoints, in seconds (default 15)
+			// duration:      Duration indicating desired query period, in seconds (default 1800 = 30 minutes)
+			// rateInterval:  Interval used for rate and histogram calculation (default 1m)
+			// rateFunc:      Rate: standard 'rate' or instant 'irate' (default is 'rate')
+			// filters[]:     List of metrics to fetch (empty by default). When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
+			// byLabelsIn[]:  List of labels to use for grouping input metrics (empty by default). Example: response_code,source_version
+			// byLabelsOut[]: List of labels to use for grouping output metrics (empty by default). Example: response_code,destination_version
+			"WorkloadMetrics",
 			"GET",
-			"/api/namespaces/{namespace}/services/{service}/health",
-			handlers.ServiceHealth,
+			"/api/namespaces/{namespace}/workloads/{workload}/metrics",
+			handlers.WorkloadMetrics,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/istio_validations validations serviceValidations
+		// swagger:route GET /api/namespaces/{namespace}/services/{service}/health serviceHealth
 		// ---
-		// Endpoint to get the list of istio object validations for a service
-		//
-		//     Consumes:
-		//     - application/json
+		// Get health associated to the given service
 		//
 		//     Produces:
 		//     - application/json
@@ -240,11 +244,59 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
+		//      200: serviceHealthResponse
 		//      404: notFoundError
 		//      500: internalError
-		//      200: typeValidationsResponse
 		//
+		{
+			"ServiceHealth",
+			"GET",
+			"/api/namespaces/{namespace}/services/{service}/health",
+			handlers.ServiceHealth,
+			true,
+		},
+		// swagger:route GET /api/namespaces/{namespace}/apps/{app}/health appHealth
+		// ---
+		// Get health associated to the given app
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: appHealthResponse
+		//      404: notFoundError
+		//      500: internalError
+		//
+		{
+			"AppHealth",
+			"GET",
+			"/api/namespaces/{namespace}/app/{app}/health",
+			handlers.AppHealth,
+			true,
+		},
+		// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/health workloadHealth
+		// ---
+		// Get health associated to the given workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: workloadHealthResponse
+		//      404: notFoundError
+		//      500: internalError
+		//
+		{
+			"WorkloadHealth",
+			"GET",
+			"/api/namespaces/{namespace}/workloads/{workload}/health",
+			handlers.WorkloadHealth,
+			true,
+		},
 		{
 			"ServiceValidations",
 			"GET",
@@ -259,6 +311,20 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceMetrics,
 			true,
 		},
+		// swagger:route GET /api/namespaces/{namespace}/health namespaceHealth
+		// ---
+		// Get health for all objects in the given namespace
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: namespaceAppHealthResponse
+		//			400: badRequestError
+		//      500: internalError
+		//
 		{
 			"NamespaceHealth",
 			"GET",
@@ -293,34 +359,20 @@ func NewRoutes() (r *Routes) {
 		},
 		{
 			// Supported query parameters:
-			// appenders:      comma-separated list of desired appenders (default all)
+			// appenders:      Comma-separated list of desired appenders (default all)
 			// duration:       Duration indicating desired query period (default 10m)
-			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
-			// includeIstio    include istio-system services in graph (default false)
+			// graphType:      Graph type for the telemetry data: app | versionedApp | workload (default workload)
+			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
+			// includeIstio:   Include istio-system destinations in graph (default false)
 			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
-			// namespaces:     comma-separated list of namespaces will override path param (path param 'all' for all namespaces)
+			// namespaces:     Comma-separated list of namespaces will override path param (path param 'all' for all namespaces)
 			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-			// vendor:         cytoscape (default) | vizceral
+			// vendor:         Graph format: cytoscape (default) | vizceral
 
 			"GraphNamespace",
 			"GET",
 			"/api/namespaces/{namespace}/graph",
 			handlers.GraphNamespace,
-			true,
-		},
-		{
-			// Supported query parameters:
-			// appenders:      comma-separated list of desired appenders (default all)
-			// duration:       Duration indicating desired query period (default 10m)
-			// groupByVersion: visually group versions of the same service (cytoscape only, default true)
-			// includeIstio    include istio-system services in graph (default false)
-			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
-			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-
-			"GraphService",
-			"GET",
-			"/api/namespaces/{namespace}/services/{service}/graph",
-			handlers.GraphService,
 			true,
 		},
 		{

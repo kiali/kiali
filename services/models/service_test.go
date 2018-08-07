@@ -11,6 +11,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/prometheus"
 )
 
 func TestServiceDetailParsing(t *testing.T) {
@@ -213,8 +214,8 @@ func TestServiceDetailParsing(t *testing.T) {
 
 	// Prometheus Client
 	assert.Equal(service.Dependencies, map[string][]string{
-		"v1": {"unknown", "/products", "/reviews"},
-		"v2": {"/catalog", "/shares"}})
+		"v1": {"unknown.ns/unknown", "products.ns/v1", "reviews.ns/v2"},
+		"v2": {"catalog.ns/v1", "shares.ns/v2"}})
 }
 
 func fakeServiceDetails() *kubernetes.ServiceDetails {
@@ -486,8 +487,11 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	return &kubernetes.IstioDetails{virtualServices, destinationRules}
 }
 
-func fakePrometheusDetails() map[string][]string {
-	return map[string][]string{
-		"v1": []string{"unknown", "/products", "/reviews"},
-		"v2": []string{"/catalog", "/shares"}}
+func fakePrometheusDetails() map[string][]prometheus.Workload {
+	return map[string][]prometheus.Workload{
+		"v1": []prometheus.Workload{prometheus.Workload{App: "unknown", Version: "unknown", Namespace: "ns"},
+			prometheus.Workload{App: "products", Version: "v1", Namespace: "ns"},
+			prometheus.Workload{App: "reviews", Version: "v2", Namespace: "ns"}},
+		"v2": []prometheus.Workload{prometheus.Workload{App: "catalog", Version: "v1", Namespace: "ns"},
+			prometheus.Workload{App: "shares", Version: "v2", Namespace: "ns"}}}
 }
