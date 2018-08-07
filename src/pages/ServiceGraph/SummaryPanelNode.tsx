@@ -5,13 +5,13 @@ import graphUtils from '../../utils/Graphing';
 import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
-import { SummaryPanelPropType } from '../../types/Graph';
+import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import MetricsOptions from '../../types/MetricsOptions';
 import { Metrics } from '../../types/Metrics';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
-import { shouldRefreshData, updateHealth, nodeData } from './SummaryPanelCommon';
+import { shouldRefreshData, updateHealth, nodeData, nodeTypeToString, getServicesLinkList } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
@@ -112,13 +112,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   render() {
     const node = this.props.data.summaryTarget;
-    const { namespace, app } = nodeData(node);
-    const serviceHotLink = <Link to={`/namespaces/${namespace}/services/${app}`}>{app}</Link>;
-
+    const { namespace, app, workload } = nodeData(node);
     const incoming = getTrafficRate(node);
     const outgoing = getAccumulatedTrafficRate(this.props.data.summaryTarget.edgesTo('*'));
+    const isUnknown = node.data('nodeType') === NodeType.UNKNOWN;
+    const backedServices = getServicesLinkList([node]);
 
-    const isUnknown = app === 'unknown';
     return (
       <div className="panel panel-default" style={SummaryPanelNode.panelStyle}>
         <div className="panel-heading">
@@ -135,14 +134,24 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               />
             )
           )}
-          <span> Service: {isUnknown ? 'unknown' : serviceHotLink}</span>
+          <span>
+            {' '}
+            {nodeTypeToString(node.data('nodeType'))}: {isUnknown ? 'unknown' : app || workload || node.data('service')}
+          </span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
             <Label name="namespace" value={namespace} />
-            <Label name="version" value={this.props.data.summaryTarget.data('version')} />
+            {node.data('version') && <Label name="version" value={node.data('version')} />}
           </div>
           {this.renderBadgeSummary(node.data('hasCB'), node.data('hasVS'), node.data('hasMissingSC'))}
         </div>
         <div className="panel-body">
+          {backedServices.length > 0 && (
+            <>
+              <strong>Backed services: </strong>
+              {backedServices}
+              <hr />
+            </>
+          )}
           {!isUnknown && (
             <p style={{ textAlign: 'right' }}>
               <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>

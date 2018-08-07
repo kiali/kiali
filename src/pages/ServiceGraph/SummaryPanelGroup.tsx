@@ -10,7 +10,7 @@ import MetricsOptions from '../../types/MetricsOptions';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
-import { shouldRefreshData, updateHealth, nodeData } from './SummaryPanelCommon';
+import { shouldRefreshData, updateHealth, nodeData, getServicesLinkList } from './SummaryPanelCommon';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
@@ -67,10 +67,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   render() {
     const group = this.props.data.summaryTarget;
     const { namespace, app } = nodeData(group);
-    const serviceHotLink = <Link to={`/namespaces/${namespace}/services/${app}`}>{app}</Link>;
 
     const incoming = getAccumulatedTrafficRate(group.children());
     const outgoing = getAccumulatedTrafficRate(group.children().edgesTo('*'));
+    const backedServices = getServicesLinkList(group.children());
 
     return (
       <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
@@ -88,7 +88,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               />
             )
           )}
-          <span> Versioned Group: {serviceHotLink}</span>
+          <span> Versioned Group: {app}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
             <Label name="namespace" value={namespace} key={namespace} />
             {this.renderVersionBadges()}
@@ -96,6 +96,13 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           {this.renderBadgeSummary(group.data('hasVS'))}
         </div>
         <div className="panel-body">
+          {backedServices.length > 0 && (
+            <div>
+              <strong>Backed services: </strong>
+              {backedServices}
+              <hr />
+            </div>
+          )}
           <p style={{ textAlign: 'right' }}>
             <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>
               View detailed charts <Icon name="angle-double-right" />

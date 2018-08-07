@@ -2,15 +2,13 @@ import * as React from 'react';
 import RateTable from '../../components/SummaryPanel/RateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
-import { SummaryPanelPropType } from '../../types/Graph';
+import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import MetricsOptions from '../../types/MetricsOptions';
 import { authentication } from '../../utils/Authentication';
-import { Icon } from 'patternfly-react';
-import { Link } from 'react-router-dom';
-import { shouldRefreshData, nodeData } from './SummaryPanelCommon';
+import { shouldRefreshData, nodeData, getServicesLinkList } from './SummaryPanelCommon';
 import Label from '../../components/Label/Label';
 
 type SummaryPanelEdgeState = {
@@ -64,43 +62,46 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
   render() {
     const edge = this.props.data.summaryTarget;
-    const source = nodeData(edge.source());
-    const dest = nodeData(edge.target());
+    const source = edge.source();
+    const dest = edge.target();
     const rate = this.safeRate(edge.data('rate'));
     const rate3xx = this.safeRate(edge.data('rate3XX'));
     const rate4xx = this.safeRate(edge.data('rate4XX'));
     const rate5xx = this.safeRate(edge.data('rate5XX'));
-    const sourceLink = <Link to={`/namespaces/${source.namespace}/services/${source.app}`}>{source.app}</Link>;
-    const destLink = <Link to={`/namespaces/${source.namespace}/services/${source.app}`}>{source.app}</Link>;
 
-    const isUnknown = source.app === 'unknown';
-
-    const HeadingBlock = ({ prefix, appLink, data }) => {
-      const isAppUnknown = data.app === 'unknown';
+    const HeadingBlock = ({ prefix, node }) => {
+      const isAppUnknown = node.data('nodeType') === NodeType.UNKNOWN;
+      const { namespace, version, app, workload } = nodeData(node);
       return (
         <div className="panel-heading label-collection">
-          {prefix}: {isAppUnknown ? 'unknown' : appLink}
+          {prefix}: {isAppUnknown ? 'unknown' : app || workload || node.data('service')}
           <br />
-          {this.renderLabels(data.namespace, data.version)}
+          {this.renderLabels(namespace, version)}
         </div>
       );
     };
 
+    const sourceServices = getServicesLinkList([source]);
+    const destinationServices = getServicesLinkList([dest]);
+
     return (
       <div className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
-        <HeadingBlock prefix="Source" appLink={sourceLink} data={source} />
-        <HeadingBlock prefix="Destination" appLink={destLink} data={dest} />
+        <HeadingBlock prefix="Source" node={source} />
+        <HeadingBlock prefix="Destination" node={dest} />
         <div className="panel-body">
-          <p style={{ textAlign: 'right' }}>
-            <Link
-              to={
-                (isUnknown ? destLink.props.to : sourceLink.props.to) +
-                '?tab=metrics&groupings=local+version%2Cremote+service%2Cremote+version%2Cresponse+code'
-              }
-            >
-              View detailed charts <Icon name="angle-double-right" />
-            </Link>
-          </p>
+          {sourceServices.length > 0 && (
+            <div>
+              <strong>Source services: </strong>
+              {sourceServices}
+            </div>
+          )}
+          {destinationServices.length > 0 && (
+            <div>
+              <strong>Destination services: </strong>
+              {destinationServices}
+            </div>
+          )}
+          {(destinationServices || sourceServices) && <hr />}
           <RateTable
             title="Traffic (requests per second):"
             rate={rate}
@@ -194,7 +195,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   private renderLabels = (ns: string, ver: string) => (
     <div style={{ paddingTop: '3px' }}>
       <Label name="namespace" value={ns} />
-      <Label name="version" value={ver} />
+      {ver && <Label name="version" value={ver} />}
     </div>
   );
 

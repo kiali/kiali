@@ -1,4 +1,7 @@
-import { SummaryPanelPropType } from '../../types/Graph';
+import { Link } from 'react-router-dom';
+import * as React from 'react';
+
+import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import { Health, healthNotAvailable } from '../../types/Health';
 
 export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType) => {
@@ -36,4 +39,50 @@ export const nodeData = (node: any) => {
     version: node.data('version'),
     workload: node.data('workload')
   };
+};
+
+export const nodeTypeToString = (nodeType: string) => {
+  if (nodeType === NodeType.APP) {
+    return 'Application';
+  }
+
+  if (nodeType === NodeType.UNKNOWN) {
+    return 'Service';
+  }
+
+  return nodeType.charAt(0).toUpperCase() + nodeType.slice(1);
+};
+
+export const getServicesLinkList = (cyNodes: any) => {
+  let namespace = '';
+  if (cyNodes.data) {
+    namespace = cyNodes.data('namespace');
+  } else {
+    namespace = cyNodes[0].data('namespace');
+  }
+
+  let services = new Set();
+  let linkList: any[] = [];
+
+  cyNodes.forEach(node => {
+    if (node.data('destServices')) {
+      Object.keys(node.data('destServices')).forEach(k => {
+        services.add(k);
+      });
+    }
+  });
+
+  services.forEach(svc => {
+    linkList.push(
+      <span key={svc}>
+        <Link to={`/namespaces/${namespace}/services/${svc}`}>{svc}</Link>
+      </span>
+    );
+    linkList.push(', ');
+  });
+  if (linkList.length > 0) {
+    linkList.pop();
+  }
+
+  return linkList;
 };
