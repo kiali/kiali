@@ -57,10 +57,18 @@ const chartDefinitions = {
   tcpReceivedOut: { familyName: 'TCP received (bps)', isInput: false, component: MetricChart }
 };
 
-class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
+type ServiceMetricsProps = ServiceId & {
+  isPageVisible?: boolean;
+};
+
+class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetricsState> {
+  static defaultProps = {
+    isPageVisible: true
+  };
+
   options: MetricsOptions;
 
-  constructor(props: ServiceId) {
+  constructor(props: ServiceMetricsProps) {
     super(props);
     this.state = {};
   }
@@ -180,6 +188,9 @@ class ServiceMetrics extends React.Component<ServiceId, ServiceMetricsState> {
   }
 
   renderMetrics() {
+    if (!this.props.isPageVisible) {
+      return null;
+    }
     return (
       <div className="card-pf">
         <div className="row row-cards-pf">
