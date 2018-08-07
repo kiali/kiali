@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"regexp"
 	"strings"
 
 	"github.com/golang/glog"
@@ -29,6 +30,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/server"
 	"github.com/kiali/kiali/status"
+	"github.com/kiali/kiali/util"
 )
 
 // Identifies the build. These are set via ldflags during the build (see Makefile).
@@ -83,6 +85,11 @@ func main() {
 	status.Put(status.CoreVersion, version)
 	status.Put(status.CoreCommitHash, commitHash)
 
+	if webRoot := config.Get().Server.WebRoot; webRoot != "/" {
+		util.UpdateBaseURL(webRoot)
+		util.ConfigToJS()
+	}
+
 	// Start listening to requests
 	server := server.NewServer()
 	server.Start()
@@ -125,6 +132,11 @@ func validateConfig() error {
 	}
 	if _, err := os.Stat(config.Get().Server.StaticContentRootDirectory); os.IsNotExist(err) {
 		return fmt.Errorf("server static content root directory does not exist: %v", config.Get().Server.StaticContentRootDirectory)
+	}
+
+	validPathRegEx := regexp.MustCompile(`^\/[a-zA-Z\d_\$]*$`)
+	if path := config.Get().Server.WebRoot; !validPathRegEx.MatchString(path) {
+		return fmt.Errorf("web root must begin with a / and contain only alphanumerics: %v", path)
 	}
 
 	return nil

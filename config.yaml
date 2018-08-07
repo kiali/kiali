@@ -9,6 +9,10 @@ server:
   #  username: admin
   #  password: admin
 
+  # Web context path to serve Kiali API and frontend from.
+  # Default is /
+  # web_root: /kiali
+
   # Uncomment static_content_root_directory to set up a different directory for static front-end content.
   # Default is /static-files
   # static_content_root_directory: /static-files

@@ -10,6 +10,7 @@ data:
     server:
       port: 20001
       static_content_root_directory: /opt/kiali/console
+      web_root: /
     external_services:
       jaeger:
         url: ${JAEGER_URL}
