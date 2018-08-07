@@ -60,7 +60,7 @@ type Histogram struct {
 	Percentile99 *Metric `json:"percentile99"`
 }
 
-// EnvoyServiceHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster (ie. service)
+// EnvoyServiceHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster for inbound and outbound traffic
 type EnvoyServiceHealth struct {
 	Inbound  EnvoyRatio `json:"inbound"`
 	Outbound EnvoyRatio `json:"outbound"`
@@ -346,22 +346,26 @@ func replaceInvalidCharacters(metricName string) string {
 	return invalidLabelCharRE.ReplaceAllString(metricName, "_")
 }
 
-func getAllRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, model.Vector, error) {
-	outReporter := "source"
+func getAllRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, error) {
+	reporter := "source"
 	if config.Get().IstioNamespace == namespace {
-		outReporter = "destination"
+		reporter = "destination"
 	}
-	lblIn := fmt.Sprintf(`reporter="destination",destination_workload_namespace="%s"`, namespace)
+	// traffic originating outside the namespace to destinations inside the namespace
+	lblIn := fmt.Sprintf(`reporter="%s",destination_service_namespace="%s",source_workload_namespace!="%s"`, reporter, namespace, namespace)
 	in, err := getRequestRatesForLabel(api, time.Now(), lblIn, ratesInterval)
 	if err != nil {
-		return model.Vector{}, model.Vector{}, err
+		return model.Vector{}, err
 	}
-	lblOut := fmt.Sprintf(`reporter="%s",source_workload_namespace="%s"`, outReporter, namespace)
+	// traffic originating inside the namespace to destinations inside or outside the namespace
+	lblOut := fmt.Sprintf(`reporter="%s",source_workload_namespace="%s"`, reporter, namespace)
 	out, err := getRequestRatesForLabel(api, time.Now(), lblOut, ratesInterval)
 	if err != nil {
-		return model.Vector{}, model.Vector{}, err
+		return model.Vector{}, err
 	}
-	return in, out, nil
+	// Merge results
+	all := append(in, out...)
+	return all, nil
 }
 
 func getServiceRequestRates(api v1.API, namespace, service, ratesInterval string) (model.Vector, error) {

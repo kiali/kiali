@@ -120,11 +120,10 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities kub
 	}
 
 	// Fetch services requests rates
-	inRates, outRates, _ := in.prom.GetAllRequestRates(namespace, rateInterval)
+	rates, _ := in.prom.GetAllRequestRates(namespace, rateInterval)
 
 	// Fill with collected request rates
-	// Note: we must match each service with inRates and outRates separately, else we would generate duplicates
-	fillAppRequestRates(allHealth, inRates, outRates)
+	fillAppRequestRates(allHealth, rates)
 
 	var wg sync.WaitGroup
 	wg.Add(len(allHealth))
@@ -175,11 +174,10 @@ func (in *HealthService) getNamespaceWorkloadHealth(namespace string, dl *v1beta
 	}
 
 	// Fetch services requests rates
-	inRates, outRates, _ := in.prom.GetAllRequestRates(namespace, rateInterval)
+	rates, _ := in.prom.GetAllRequestRates(namespace, rateInterval)
 
 	// Fill with collected request rates
-	// Note: we must match each service with inRates and outRates separately, else we would generate duplicates
-	fillWorkloadRequestRates(allHealth, inRates, outRates)
+	fillWorkloadRequestRates(allHealth, rates)
 
 	var wg sync.WaitGroup
 	wg.Add(len(allHealth))
@@ -203,19 +201,15 @@ func (in *HealthService) getNamespaceWorkloadHealth(namespace string, dl *v1beta
 }
 
 // fillAppRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
-func fillAppRequestRates(allHealth models.NamespaceAppHealth, inRates, outRates model.Vector) {
+func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector) {
 	lblDest := model.LabelName("destination_app")
 	lblSrc := model.LabelName("source_app")
-	// Inbound
-	for _, sample := range inRates {
+	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
 		if health, ok := allHealth[name]; ok {
 			sumRequestCounters(&health.Requests, sample)
 		}
-	}
-	// Outbound
-	for _, sample := range outRates {
-		name := string(sample.Metric[lblSrc])
+		name = string(sample.Metric[lblSrc])
 		if health, ok := allHealth[name]; ok {
 			sumRequestCounters(&health.Requests, sample)
 		}
@@ -223,19 +217,15 @@ func fillAppRequestRates(allHealth models.NamespaceAppHealth, inRates, outRates 
 }
 
 // fillWorkloadRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
-func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, inRates, outRates model.Vector) {
+func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates model.Vector) {
 	lblDest := model.LabelName("destination_workload")
 	lblSrc := model.LabelName("source_workload")
-	// Inbound
-	for _, sample := range inRates {
+	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
 		if health, ok := allHealth[name]; ok {
 			sumRequestCounters(&health.Requests, sample)
 		}
-	}
-	// Outbound
-	for _, sample := range outRates {
-		name := string(sample.Metric[lblSrc])
+		name = string(sample.Metric[lblSrc])
 		if health, ok := allHealth[name]; ok {
 			sumRequestCounters(&health.Requests, sample)
 		}

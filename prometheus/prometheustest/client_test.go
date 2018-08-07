@@ -442,7 +442,7 @@ func TestGetAllRequestRates(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	mockQuery(api, `rate(istio_requests_total{reporter="destination",destination_workload_namespace="ns"}[5m])`, &vectorQ1)
+	mockQuery(api, `rate(istio_requests_total{reporter="source",destination_service_namespace="ns",source_workload_namespace!="ns"}[5m])`, &vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
@@ -452,11 +452,10 @@ func TestGetAllRequestRates(t *testing.T) {
 	}
 	mockQuery(api, `rate(istio_requests_total{reporter="source",source_workload_namespace="ns"}[5m])`, &vectorQ2)
 
-	in, out, err := client.GetAllRequestRates("ns", "5m")
-	assert.Equal(t, 1, in.Len())
-	assert.Equal(t, 1, out.Len())
-	assert.Equal(t, vectorQ1, in)
-	assert.Equal(t, vectorQ2, out)
+	rates, err := client.GetAllRequestRates("ns", "5m")
+	assert.Equal(t, 2, rates.Len())
+	assert.Equal(t, vectorQ1[0], rates[0])
+	assert.Equal(t, vectorQ2[0], rates[1])
 }
 
 func TestGetAllRequestRatesIstioSystem(t *testing.T) {
@@ -473,7 +472,7 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	mockQuery(api, `rate(istio_requests_total{reporter="destination",destination_workload_namespace="istio-system"}[5m])`, &vectorQ1)
+	mockQuery(api, `rate(istio_requests_total{reporter="destination",destination_service_namespace="istio-system",source_workload_namespace!="istio-system"}[5m])`, &vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
@@ -483,11 +482,10 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 	}
 	mockQuery(api, `rate(istio_requests_total{reporter="destination",source_workload_namespace="istio-system"}[5m])`, &vectorQ2)
 
-	in, out, err := client.GetAllRequestRates("istio-system", "5m")
-	assert.Equal(t, 1, in.Len())
-	assert.Equal(t, 1, out.Len())
-	assert.Equal(t, vectorQ1, in)
-	assert.Equal(t, vectorQ2, out)
+	rates, err := client.GetAllRequestRates("istio-system", "5m")
+	assert.Equal(t, 2, rates.Len())
+	assert.Equal(t, vectorQ1[0], rates[0])
+	assert.Equal(t, vectorQ2[0], rates[1])
 }
 
 func mockQuery(api *PromAPIMock, query string, ret *model.Vector) {

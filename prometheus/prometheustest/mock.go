@@ -93,9 +93,9 @@ func (o *PromClientMock) GetServiceHealth(namespace, servicename string, ports [
 	return args.Get(0).(prometheus.EnvoyServiceHealth), args.Error(1)
 }
 
-func (o *PromClientMock) GetAllRequestRates(namespace, ratesInterval string) (model.Vector, model.Vector, error) {
+func (o *PromClientMock) GetAllRequestRates(namespace, ratesInterval string) (model.Vector, error) {
 	args := o.Called(namespace, ratesInterval)
-	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
+	return args.Get(0).(model.Vector), args.Error(1)
 }
 
 func (o *PromClientMock) GetAppRequestRates(namespace, app, ratesInterval string) (model.Vector, model.Vector, error) {

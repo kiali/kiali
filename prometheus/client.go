@@ -16,7 +16,7 @@ import (
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
 	GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyServiceHealth, error)
-	GetAllRequestRates(namespace, ratesInterval string) (model.Vector, model.Vector, error)
+	GetAllRequestRates(namespace, ratesInterval string) (model.Vector, error)
 	GetServiceRequestRates(namespace, service, ratesInterval string) (model.Vector, error)
 	GetAppRequestRates(namespace, app, ratesInterval string) (model.Vector, model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string) (model.Vector, model.Vector, error)
@@ -117,10 +117,9 @@ func (in *Client) GetServiceHealth(namespace, servicename string, ports []int32)
 	return getServiceHealth(in.api, namespace, servicename, ports)
 }
 
-// GetAllRequestRates queries Prometheus to fetch request counters rates over a time interval
-// for each service, both in and out.
-// Returns (in, out, error)
-func (in *Client) GetAllRequestRates(namespace string, ratesInterval string) (model.Vector, model.Vector, error) {
+// GetAllRequestRates queries Prometheus to fetch request counters rates over a time interval within a namespace
+// Returns (rates, error)
+func (in *Client) GetAllRequestRates(namespace string, ratesInterval string) (model.Vector, error) {
 	return getAllRequestRates(in.api, namespace, ratesInterval)
 }
 
