@@ -5,9 +5,25 @@ import './App.css';
 import Navigation from '../containers/NavigationContainer';
 import { store, persistor } from '../store/ConfigStore';
 import axios from 'axios';
-import { globalActions } from '../actions/GlobalActions';
+import { GlobalActions } from '../actions/GlobalActions';
 import history from './History';
 import { PersistGate } from 'redux-persist/lib/integration/react';
+import * as Visibility from 'visibilityjs';
+
+Visibility.change((e, state) => {
+  // There are 3 states, visible, hidden and prerender, consider prerender as hidden.
+  // https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilityState
+  if (state === 'visible') {
+    store.dispatch(GlobalActions.setPageVisibilityVisible());
+  } else {
+    store.dispatch(GlobalActions.setPageVisibilityHidden());
+  }
+});
+if (Visibility.hidden()) {
+  store.dispatch(GlobalActions.setPageVisibilityHidden);
+} else {
+  store.dispatch(GlobalActions.setPageVisibilityVisible);
+}
 
 const getIsLoadingState = () => {
   const state = store.getState();
@@ -16,7 +32,7 @@ const getIsLoadingState = () => {
 
 const decrementLoadingCounter = () => {
   if (getIsLoadingState()) {
-    store.dispatch(globalActions.decrementLoadingCounter());
+    store.dispatch(GlobalActions.decrementLoadingCounter());
   }
 };
 
@@ -24,7 +40,7 @@ const decrementLoadingCounter = () => {
 axios.interceptors.request.use(
   request => {
     // dispatch an action to turn spinner on
-    store.dispatch(globalActions.incrementLoadingCounter());
+    store.dispatch(GlobalActions.incrementLoadingCounter());
     return request;
   },
   error => {

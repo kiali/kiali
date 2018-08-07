@@ -38,7 +38,8 @@
     "ssri": "6.0.0",
     "typesafe-actions": "1.1.2",
     "typestyle": "2.0.1",
-    "url-search-params": "0.10.0"
+    "url-search-params": "0.10.0",
+    "visibilityjs": "2.0.1"
   },
   "script-comments": [
     "When adding new scripts, please be careful to using `npm run` instead of `yarn` for the tasks.",

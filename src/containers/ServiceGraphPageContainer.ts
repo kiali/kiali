@@ -20,7 +20,8 @@ const mapStateToProps = (state: KialiAppState) => ({
       }
     : null,
   showLegend: state.serviceGraph.filterState.showLegend,
-  pollInterval: state.serviceGraph.filterState.refreshRate
+  pollInterval: state.serviceGraph.filterState.refreshRate,
+  isPageVisible: state.globalState.isPageVisible
 });
 
 const mapDispatchToProps = (dispatch: any) => ({

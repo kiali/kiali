@@ -29,6 +29,7 @@ type ServiceGraphPageProps = GraphParamsType & {
   toggleLegend: () => void;
   summaryData: SummaryData | null;
   pollInterval: PollIntervalInMs;
+  isPageVisible: boolean;
 };
 const NUMBER_OF_DATAPOINTS = 30;
 
@@ -151,6 +152,7 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
                 namespace={this.props.namespace.name}
                 queryTime={this.props.graphTimestamp}
                 duration={this.props.graphDuration.value}
+                isPageVisible={this.props.isPageVisible}
                 {...computePrometheusQueryInterval(this.props.graphDuration.value, NUMBER_OF_DATAPOINTS)}
               />
             ) : null}
