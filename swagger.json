@@ -397,13 +397,6 @@
         "consumes": [
           "application/json"
         ],
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
         "tags": [
           "validations"
         ],
@@ -632,7 +625,7 @@
       "x-go-package": "github.com/kiali/kiali/prometheus"
     },
     "EnvoyServiceHealth": {
-      "description": "EnvoyServiceHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster (ie. service)",
+      "description": "EnvoyServiceHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster for inbound and outbound traffic",
       "type": "object",
       "properties": {
         "inbound": {
@@ -787,13 +780,6 @@
       },
       "x-go-package": "github.com/kiali/kiali"
     },
-    "NamespaceValidations": {
-      "description": "List of validations grouped by namespace",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/TypedIstioValidations"
-      },
-      "x-go-package": "github.com/kiali/kiali"
     "NamespaceAppHealth": {
       "description": "NamespaceAppHealth is an alias of map of app name x health",
       "type": "object",
@@ -802,13 +788,13 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
-    "NamespaceWorkloadHealth": {
-      "description": "NamespaceWorkloadHealth is an alias of map of workload name x health",
+    "NamespaceValidations": {
+      "description": "List of validations grouped by namespace",
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/definitions/WorkloadHealth"
+        "$ref": "#/definitions/TypedIstioValidations"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali"
     },
     "QuotaSpec": {
       "type": "object",
@@ -1020,6 +1006,19 @@
       },
       "x-go-package": "github.com/kiali/kiali"
     },
+    "WorkloadHealth": {
+      "description": "WorkloadHealth contains aggregated health from various sources, for a given workload",
+      "type": "object",
+      "properties": {
+        "deploymentStatus": {
+          "$ref": "#/definitions/DeploymentStatus"
+        },
+        "requests": {
+          "$ref": "#/definitions/RequestHealth"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "WorkloadList": {
       "type": "object",
       "required": [
@@ -1052,15 +1051,6 @@
           "type": "string",
           "x-go-name": "Name",
           "example": "reviews-v1"
-    "WorkloadHealth": {
-      "description": "WorkloadHealth contains aggregated health from various sources, for a given workload",
-      "type": "object",
-      "properties": {
-        "deploymentStatus": {
-          "$ref": "#/definitions/DeploymentStatus"
-        },
-        "requests": {
-          "$ref": "#/definitions/RequestHealth"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -1277,7 +1267,7 @@
       }
     },
     "genericError": {
-      "description": "GenericError: any other kind of error",
+      "description": "A GenericError is the default error message that is generated.",
       "schema": {
         "type": "object",
         "properties": {
@@ -1297,7 +1287,7 @@
       }
     },
     "internalError": {
-      "description": "InternalError: something went wrong server-side",
+      "description": "A Internal is the error message that means something has gone wrong",
       "schema": {
         "type": "object",
         "properties": {
@@ -1322,26 +1312,20 @@
         "$ref": "#/definitions/IstioConfigList"
       }
     },
-    "namespaceValidationsResponse": {
-      "description": "Listing all istio validations for object in the namespace",
-      "schema": {
-        "$ref": "#/definitions/NamespaceValidations"
-      }
-    },
     "namespaceAppHealthResponse": {
       "description": "namespaceAppHealthResponse is a map of app name x health",
       "schema": {
         "$ref": "#/definitions/NamespaceAppHealth"
       }
     },
-    "namespaceWorkloadHealthResponse": {
-      "description": "namespaceWorkloadHealthResponse is a map of workload x health",
+    "namespaceValidationsResponse": {
+      "description": "Listing all istio validations for object in the namespace",
       "schema": {
-        "$ref": "#/definitions/NamespaceWorkloadHealth"
+        "$ref": "#/definitions/NamespaceValidations"
       }
     },
     "notFoundError": {
-      "description": "NotFoundError: the requested resource is not found",
+      "description": "A NotFoundError is the error message that is generated when server could not find what was requested.",
       "schema": {
         "type": "object",
         "properties": {
@@ -1384,16 +1368,16 @@
         "$ref": "#/definitions/TypedIstioValidations"
       }
     },
-    "workloadListResponse": {
-      "description": "Listing all workloads in the namespace",
-      "schema": {
-        "$ref": "#/definitions/WorkloadList"
-      }
-    },
     "workloadHealthResponse": {
       "description": "workloadHealthResponse contains aggregated health from various sources, for a given workload",
       "schema": {
         "$ref": "#/definitions/WorkloadHealth"
+      }
+    },
+    "workloadListResponse": {
+      "description": "Listing all workloads in the namespace",
+      "schema": {
+        "$ref": "#/definitions/WorkloadList"
       }
     }
   }

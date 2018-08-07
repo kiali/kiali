@@ -304,6 +304,7 @@ func NewRoutes() (r *Routes) {
 		//     Consumes:
 		//     - application/json
 		//
+		// responses:
 		//      default: genericError
 		//      404: notFoundError
 		//      500: internalError
