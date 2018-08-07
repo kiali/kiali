@@ -40,10 +40,21 @@ class GraphBadge {
     div.style.zIndex = node.css('z-index');
     div.style.position = 'absolute';
 
-    node
-      .cy()
-      .container()
-      .children[0].appendChild(div);
+    const containerNode = Array.prototype.slice
+      .call(node.cy().container().children, 0)
+      .reverse()
+      .find((element: any) => {
+        return element.nodeName === 'DIV';
+      });
+
+    if (containerNode) {
+      containerNode.appendChild(div);
+    } else {
+      node
+        .cy()
+        .container()
+        .children[0].appendChild(div);
+    }
 
     const setScale = () => {
       const zoom = node.cy().zoom();
