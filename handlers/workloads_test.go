@@ -23,7 +23,7 @@ func setupDeploymentList() (*httptest.Server, *kubetest.K8SClientMock, *promethe
 	business.SetWithBackends(k8s, prom)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/workloads", DeploymentList)
+	mr.HandleFunc("/api/namespaces/{namespace}/workloads", WorkloadList)
 
 	ts := httptest.NewServer(mr)
 	return ts, k8s, prom

@@ -170,9 +170,9 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/deployments deploymentList
+		// swagger:route GET /namespaces/{namespace}/workloads workloadList
 		// ---
-		// Endpoint to get the list of deployments for a namespace
+		// Endpoint to get the list of workloads for a namespace
 		//
 		//     Consumes:
 		//     - application/json
@@ -186,13 +186,13 @@ func NewRoutes() (r *Routes) {
 		//      default: genericError
 		//      404: notFoundError
 		//      500: internalError
-		//      200: deploymentListResponse
+		//      200: workloadListResponse
 		//
 		{
-			"DeploymentList",
+			"WorkloadList",
 			"GET",
-			"/api/namespaces/{namespace}/deployments",
-			handlers.DeploymentList,
+			"/api/namespaces/{namespace}/workloads",
+			handlers.WorkloadList,
 			true,
 		},
 		{

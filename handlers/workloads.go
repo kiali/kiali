@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func DeploymentList(w http.ResponseWriter, r *http.Request) {
+func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// Get business layer
@@ -17,12 +17,12 @@ func DeploymentList(w http.ResponseWriter, r *http.Request) {
 	}
 	namespace := params["namespace"]
 
-	// Fetch and build deployments
-	serviceList, err := business.DeploymentService.GetDeploymentList(namespace)
+	// Fetch and build workloads
+	workloadList, err := business.Workload.GetWorkloadList(namespace)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	RespondWithJSON(w, http.StatusOK, serviceList)
+	RespondWithJSON(w, http.StatusOK, workloadList)
 }
