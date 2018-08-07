@@ -84,8 +84,11 @@ class GraphBadge {
         modifiers: {
           inner: { enabled: this.inner },
           preventOverflow: {
-            enabled: true,
+            enabled: false,
             padding: 0
+          },
+          hide: {
+            enabled: false
           },
           flip: {
             enabled: false
