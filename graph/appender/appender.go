@@ -8,7 +8,7 @@ import "github.com/kiali/kiali/graph"
 type Appender interface {
 	// AppendGraph performs the appender work on the provided traffic map. The map
 	// may be initially empty. An appender is allowed to add or remove map entries.
-	AppendGraph(trafficMap graph.TrafficMap, namespaceName string)
+	AppendGraph(trafficMap graph.TrafficMap, namespace string)
 }
 
 func checkError(err error) {

@@ -31,7 +31,12 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 	versionLabel := config.Get().VersionLabelName
 
 	for _, n := range trafficMap {
-		// dead nodes have no pods
+		// We whitelist istio components because they may not report telemetry using injected sidecars.
+		if n.Namespace == config.Get().IstioNamespace {
+			continue
+		}
+
+		// dead nodes tell no tales (er, have no pods)
 		if isDead, ok := n.Metadata["isDead"]; ok && isDead.(bool) {
 			continue
 		}
