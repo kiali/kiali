@@ -441,17 +441,8 @@ external_services:
     var_service_dest: VALUE
 ----
 
-|`JAEGER_URL`
-|The URL to the Jaeger server. When not set, the URL may be automatically detected from OpenShift or Kubernetes API.
-[source,yaml]
-----
-external_services:
-  jaeger:
-    url: VALUE
-----
-
 |`JAEGER_SERVICE_NAMESPACE`
-|The Kubernetes namespace that holds the Jaeger service. This configuration is ignored if `JAEGER_URL` is set. (default is `istio-system`)
+|The Kubernetes namespace that holds the Jaeger service. (default is `istio-system`)
 [source,yaml]
 ----
 external_services:
@@ -460,7 +451,7 @@ external_services:
 ----
 
 |`JAEGER_SERVICE`
-|The OpenShift route name or the Kubernetes service name for Jaeger. This configuration is ignored if `JAEGER_URL` is set. (default is `jaeger-query`)
+|The Kubernetes service name for Jaeger. (default is `jaeger-query`)
 [source,yaml]
 ----
 external_services:
@@ -469,7 +460,7 @@ external_services:
 ----
 
 |`JAEGER_SERVICE_PORT`
-|The Kubernetes service port for Jaeger. This configuration is ignored if `JAEGER_URL` is set. (default is `16686`)
+|The Kubernetes service port for Jaeger. (default is `16686`)
 [source,yaml]
 ----
 external_services:
