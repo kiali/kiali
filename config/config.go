@@ -49,9 +49,9 @@ const (
 	EnvAppLabelName     = "APP_LABEL_NAME"
 	EnvVersionLabelName = "VERSION_LABEL_NAME"
 
-	EnvTokenSecret       = "TOKEN_SECRET"
-	EnvTokenExpirationAt = "TOKEN_EXPIRATION_AT"
-	EnvIstioNamespace    = "ISTIO_NAMESPACE"
+	EnvLoginTokenSigningKey        = "LOGIN_TOKEN_SIGNING_KEY"
+	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
+	EnvIstioNamespace              = "ISTIO_NAMESPACE"
 
 	EnvKialiService       = "KIALI_SERVICE"
 	IstioVersionSupported = ">= 1.0"
@@ -96,6 +96,7 @@ type IstioConfig struct {
 	IstioSidecarAnnotation string `yaml:"istio_sidecar_annotation,omitempty"`
 }
 
+// ExternalServices holds configurations for other systems that Kiali depends on
 type ExternalServices struct {
 	Istio                IstioConfig   `yaml:"istio,omitempty"`
 	PrometheusServiceURL string        `yaml:"prometheus_service_url,omitempty"`
@@ -103,9 +104,10 @@ type ExternalServices struct {
 	Jaeger               JaegerConfig  `yaml:"jaeger,omitempty"`
 }
 
-type Token struct {
-	Secret       []byte `yaml:"secret,omitempty"`
-	ExpirationAt int64  `yaml:"expiration,omitempty"`
+// LoginToken holds config used in token-based authentication
+type LoginToken struct {
+	SigningKey        []byte `yaml:"signing_key,omitempty"`
+	ExpirationSeconds int64  `yaml:"expiration_seconds,omitempty"`
 }
 
 // Config defines full YAML configuration.
@@ -116,7 +118,7 @@ type Config struct {
 	AppLabelName     string            `yaml:"app_label_name,omitempty"`
 	VersionLabelName string            `yaml:"version_label_name,omitempty"`
 	ExternalServices ExternalServices  `yaml:"external_services,omitempty"`
-	Token            Token             `yaml:"token,omitempty"`
+	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
 	KialiService     string            `yaml:"kiali_service,omitempty"`
 	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
 }
@@ -167,9 +169,9 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Istio.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
 	c.ExternalServices.Istio.UrlServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioUrlServiceVersion, "http://istio-pilot:9093/version"))
 
-	// Token Configuration
-	c.Token.Secret = []byte(strings.TrimSpace(getDefaultString(EnvTokenSecret, "kiali")))
-	c.Token.ExpirationAt = getDefaultInt64(EnvTokenExpirationAt, 36000)
+	// Token-based authentication Configuration
+	c.LoginToken.SigningKey = []byte(strings.TrimSpace(getDefaultString(EnvLoginTokenSigningKey, "kiali")))
+	c.LoginToken.ExpirationSeconds = getDefaultInt64(EnvLoginTokenExpirationSeconds, 36000)
 
 	return
 }
