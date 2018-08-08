@@ -48,10 +48,10 @@ ShallowWrapper {
             currentValue=""
             filterValues={
               Array [
-                "local version",
-                "remote service",
-                "remote version",
-                "response code",
+                "Local version",
+                "Remote app",
+                "Remote version",
+                "Response code",
               ]
             }
             id=""
@@ -133,10 +133,10 @@ ShallowWrapper {
             currentValue=""
             filterValues={
               Array [
-                "local version",
-                "remote service",
-                "remote version",
-                "response code",
+                "Local version",
+                "Remote app",
+                "Remote version",
+                "Response code",
               ]
             }
             id=""
@@ -153,10 +153,10 @@ ShallowWrapper {
             "className": "",
             "currentValue": "",
             "filterValues": Array [
-              "local version",
-              "remote service",
-              "remote version",
-              "response code",
+              "Local version",
+              "Remote app",
+              "Remote version",
+              "Response code",
             ],
             "id": "",
             "onFilterValueSelected": [Function],
@@ -293,10 +293,10 @@ ShallowWrapper {
               currentValue=""
               filterValues={
                 Array [
-                  "local version",
-                  "remote service",
-                  "remote version",
-                  "response code",
+                  "Local version",
+                  "Remote app",
+                  "Remote version",
+                  "Response code",
                 ]
               }
               id=""
@@ -378,10 +378,10 @@ ShallowWrapper {
               currentValue=""
               filterValues={
                 Array [
-                  "local version",
-                  "remote service",
-                  "remote version",
-                  "response code",
+                  "Local version",
+                  "Remote app",
+                  "Remote version",
+                  "Response code",
                 ]
               }
               id=""
@@ -398,10 +398,10 @@ ShallowWrapper {
               "className": "",
               "currentValue": "",
               "filterValues": Array [
-                "local version",
-                "remote service",
-                "remote version",
-                "response code",
+                "Local version",
+                "Remote app",
+                "Remote version",
+                "Response code",
               ],
               "id": "",
               "onFilterValueSelected": [Function],

@@ -30,19 +30,19 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
   static DefaultDuration = config().toolbar.defaultDuration;
 
   static GroupByLabelOptions: { [key: string]: GroupByLabel } = {
-    'local version': {
+    'Local version': {
       labelIn: 'destination_version',
       labelOut: 'source_version'
     },
-    'remote service': {
-      labelIn: 'source_service',
-      labelOut: 'destination_service'
+    'Remote app': {
+      labelIn: 'source_app',
+      labelOut: 'destination_app'
     },
-    'remote version': {
+    'Remote version': {
       labelIn: 'source_version',
       labelOut: 'destination_version'
     },
-    'response code': {
+    'Response code': {
       labelIn: 'response_code',
       labelOut: 'response_code'
     }
