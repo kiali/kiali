@@ -14,8 +14,12 @@ export interface MetricGroup {
   matrix: TimeSeries[];
 }
 
+export type Metric = {
+  [key: string]: string;
+};
+
 export interface TimeSeries {
-  metric: { [key: string]: string };
+  metric: Metric;
   values: Datapoint[];
   name: string;
 }

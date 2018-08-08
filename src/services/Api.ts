@@ -102,13 +102,22 @@ export const getServices = (auth: string, namespace: String): Promise<Response<S
   return newRequest('get', `/api/namespaces/${namespace}/services`, {}, {}, auth);
 };
 
-export const getServiceMetrics = (
+export const getAppMetrics = (
   auth: string,
   namespace: String,
   service: String,
   params: MetricsOptions
 ): Promise<Response<Metrics>> => {
   return newRequest('get', `/api/namespaces/${namespace}/services/${service}/metrics`, params, {}, auth);
+};
+
+export const getWorkloadMetrics = (
+  auth: string,
+  namespace: String,
+  workload: String,
+  params: MetricsOptions
+): Promise<Response<Metrics>> => {
+  return newRequest('get', `/api/namespaces/${namespace}/workloads/${workload}/metrics`, params, {}, auth);
 };
 
 export const getServiceHealth = (

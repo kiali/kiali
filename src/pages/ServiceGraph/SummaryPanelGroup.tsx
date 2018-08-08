@@ -2,15 +2,19 @@ import * as React from 'react';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
-import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
-import MetricsOptions from '../../types/MetricsOptions';
 import { Icon } from 'patternfly-react';
-import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
-import { shouldRefreshData, updateHealth, nodeData, getServicesLinkList } from './SummaryPanelCommon';
+import {
+  shouldRefreshData,
+  updateHealth,
+  nodeData,
+  getServicesLinkList,
+  getNodeMetrics,
+  getNodeMetricType
+} from './SummaryPanelCommon';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
@@ -127,16 +131,17 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   }
 
   private updateRpsCharts = (props: SummaryPanelPropType) => {
-    const { namespace, app } = nodeData(props.data.summaryTarget);
-    const options: MetricsOptions = {
-      queryTime: props.queryTime,
-      duration: +props.duration,
-      step: props.step,
-      rateInterval: props.rateInterval,
-      filters: ['request_count', 'request_error_count'],
-      includeIstio: props.namespace === 'istio-system'
-    };
-    API.getServiceMetrics(authentication(), namespace, app, options)
+    const target = props.data.summaryTarget;
+    const nodeMetricType = getNodeMetricType(target);
+
+    if (!nodeMetricType) {
+      return;
+    }
+
+    const filters = ['request_count', 'request_error_count'];
+    const includeIstio = props.namespace === 'istio-system';
+
+    getNodeMetrics(nodeMetricType, target, props, filters, includeIstio)
       .then(response => {
         if (!this._isMounted) {
           console.log('SummaryPanelGroup: Ignore fetch, component not mounted.');

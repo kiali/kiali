@@ -1,8 +1,24 @@
 import { Link } from 'react-router-dom';
 import * as React from 'react';
-
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import { Health, healthNotAvailable } from '../../types/Health';
+import MetricsOptions from '../../types/MetricsOptions';
+import * as API from '../../services/Api';
+import { authentication } from '../../utils/Authentication';
+
+export interface NodeData {
+  namespace: string;
+  app: string;
+  version: string;
+  workload: string;
+  nodeType: NodeType;
+  hasParent: boolean;
+}
+
+export enum NodeMetricType {
+  APP = 1,
+  WORKLOAD = 2
+}
 
 export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType) => {
   return (
@@ -32,12 +48,14 @@ export const updateHealth = (summaryTarget: any, stateSetter: (hs: HealthState) 
   }
 };
 
-export const nodeData = (node: any) => {
+export const nodeData = (node: any): NodeData => {
   return {
     namespace: node.data('namespace'),
     app: node.data('app'),
     version: node.data('version'),
-    workload: node.data('workload')
+    workload: node.data('workload'),
+    nodeType: node.data('nodeType'),
+    hasParent: !!node.data('parent')
   };
 };
 
@@ -85,4 +103,47 @@ export const getServicesLinkList = (cyNodes: any) => {
   }
 
   return linkList;
+};
+
+export const getNodeMetricType = (node: any) => {
+  const data = nodeData(node);
+  if (data.nodeType === NodeType.WORKLOAD || (data.nodeType === NodeType.APP && data.hasParent)) {
+    return NodeMetricType.WORKLOAD;
+  } else if (data.nodeType === NodeType.APP) {
+    return NodeMetricType.APP;
+  }
+  return undefined;
+};
+
+export const getNodeMetrics = (
+  nodeMetricType: NodeMetricType,
+  node: any,
+  props: SummaryPanelPropType,
+  filters: Array<string>,
+  includeIstio?: boolean,
+  byLabelsIn?: Array<string>
+) => {
+  // Determine if is by workload or by app
+  const data = nodeData(node);
+
+  const options: MetricsOptions = {
+    queryTime: props.queryTime,
+    duration: props.duration,
+    step: props.step,
+    rateInterval: props.rateInterval,
+    includeIstio: includeIstio,
+    filters: filters,
+    byLabelsIn: byLabelsIn
+  };
+
+  switch (nodeMetricType) {
+    case NodeMetricType.APP:
+      return API.getAppMetrics(authentication(), data.namespace, data.app, options);
+    case NodeMetricType.WORKLOAD:
+      return API.getWorkloadMetrics(authentication(), data.namespace, data.workload, options);
+    default:
+      // Unreachable code, but tslint disagrees
+      // https://github.com/palantir/tslint/issues/696
+      return Promise.reject(new Error(`Unknown NodeMetricType: ${nodeMetricType}`));
+  }
 };

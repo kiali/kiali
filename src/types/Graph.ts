@@ -5,7 +5,7 @@ import Namespace from './Namespace';
 //   summaryTarget: The cytoscape element
 //   summaryType  : one of 'graph', 'node', 'edge', 'group'
 export interface SummaryData {
-  summaryType: string;
+  summaryType: 'graph' | 'node' | 'edge' | 'group';
   summaryTarget: any;
 }
 

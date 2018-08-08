@@ -3,13 +3,18 @@ import RateTable from '../../components/SummaryPanel/RateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
-import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
-import MetricsOptions from '../../types/MetricsOptions';
-import { authentication } from '../../utils/Authentication';
-import { shouldRefreshData, nodeData, getServicesLinkList } from './SummaryPanelCommon';
+import {
+  shouldRefreshData,
+  nodeData,
+  getServicesLinkList,
+  getNodeMetrics,
+  NodeMetricType,
+  getNodeMetricType
+} from './SummaryPanelCommon';
 import Label from '../../components/Label/Label';
+import { MetricGroup, Metric } from '../../types/Metrics';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -118,21 +123,54 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     );
   }
 
+  private getByLabelsIn = (nodeMetricType: NodeMetricType) => {
+    switch (nodeMetricType) {
+      case NodeMetricType.WORKLOAD:
+        return ['source_workload'];
+      case NodeMetricType.APP:
+        return ['source_app'];
+      default:
+        // Unreachable code, but tslint disagrees
+        // https://github.com/palantir/tslint/issues/696
+        throw new Error(`Unknown NodeMetricType: ${nodeMetricType}`);
+    }
+  };
+
+  private getNodeDataPoints = (m: MetricGroup, title: string, nodeMetricType: NodeMetricType, node: any) => {
+    const data = nodeData(node);
+    let comparator;
+    switch (nodeMetricType) {
+      case NodeMetricType.APP:
+        comparator = (metric: Metric) => {
+          return metric['source_app'] === data.app;
+        };
+        break;
+      case NodeMetricType.WORKLOAD:
+        comparator = (metric: Metric) => {
+          return metric['source_workload'] === data.workload;
+        };
+        break;
+      default:
+        // Unreachable code, but tslint disagrees
+        // https://github.com/palantir/tslint/issues/696
+        throw new Error(`Unknown NodeMetricType: ${nodeMetricType}`);
+    }
+    return this.getDatapoints(m, title, comparator);
+  };
+
   private updateCharts = (props: SummaryPanelPropType) => {
     const edge = props.data.summaryTarget;
-    const source = nodeData(edge.source());
-    const dest = nodeData(edge.target());
+    const source = edge.source();
+    const nodeMetricType = getNodeMetricType(source);
 
-    const options: MetricsOptions = {
-      version: dest.version,
-      byLabelsIn: ['source_service', 'source_version'],
-      queryTime: props.queryTime,
-      duration: +props.duration,
-      step: props.step,
-      rateInterval: props.rateInterval,
-      filters: ['request_count', 'request_duration', 'request_error_count']
-    };
-    API.getServiceMetrics(authentication(), dest.namespace, dest.app, options)
+    if (!nodeMetricType) {
+      return;
+    }
+
+    const filters = ['request_count', 'request_duration', 'request_error_count'];
+    const byLabelsIn = this.getByLabelsIn(nodeMetricType);
+
+    getNodeMetrics(nodeMetricType, edge.target(), props, filters, undefined, byLabelsIn)
       .then(response => {
         if (!this._isMounted) {
           console.log('SummaryPanelEdge: Ignore fetch, component not mounted.');
@@ -140,31 +178,31 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         }
         const metrics = response.data.metrics;
         const histograms = response.data.histograms;
-        const reqRates = this.getDatapoints(metrics['request_count_in'], 'RPS', source.app, source.version);
-        const errRates = this.getDatapoints(metrics['request_error_count_in'], 'Error', source.app, source.version);
-        const rtAvg = this.getDatapoints(
+        const reqRates = this.getNodeDataPoints(metrics['request_count_in'], 'RPS', nodeMetricType, source);
+        const errRates = this.getNodeDataPoints(metrics['request_error_count_in'], 'Error', nodeMetricType, source);
+        const rtAvg = this.getNodeDataPoints(
           histograms['request_duration_in']['average'],
           'Average',
-          source.app,
-          source.version
+          nodeMetricType,
+          source
         );
-        const rtMed = this.getDatapoints(
+        const rtMed = this.getNodeDataPoints(
           histograms['request_duration_in']['median'],
           'Median',
-          source.app,
-          source.version
+          nodeMetricType,
+          source
         );
-        const rt95 = this.getDatapoints(
+        const rt95 = this.getNodeDataPoints(
           histograms['request_duration_in']['percentile95'],
           '95th',
-          source.app,
-          source.version
+          nodeMetricType,
+          source
         );
-        const rt99 = this.getDatapoints(
+        const rt99 = this.getNodeDataPoints(
           histograms['request_duration_in']['percentile99'],
           '99th',
-          source.app,
-          source.version
+          nodeMetricType,
+          source
         );
 
         this.setState({
@@ -222,15 +260,14 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   private getDatapoints = (
     mg: M.MetricGroup,
     title: string,
-    sourceService: string,
-    sourceVersion: string
+    comparator: (metric: Metric) => boolean
   ): [string, number][] => {
     const tsa: M.TimeSeries[] = mg.matrix;
     let series: M.TimeSeries[] = [];
 
     for (let i = 0; i < tsa.length; ++i) {
       const ts = tsa[i];
-      if (ts.metric['source_service'] === sourceService && ts.metric['source_version'] === sourceVersion) {
+      if (comparator(ts.metric)) {
         series.push(ts);
       }
     }

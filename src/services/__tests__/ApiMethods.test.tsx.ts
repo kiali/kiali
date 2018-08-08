@@ -68,8 +68,8 @@ describe('#Test Methods return a Promise', () => {
     evaluatePromise(result);
   });
 
-  it('#getServiceMetrics', () => {
-    const result = API.getServiceMetrics(authentication(), 'istio-system', 'book-info', {});
+  it('#getAppMetrics', () => {
+    const result = API.getAppMetrics(authentication(), 'istio-system', 'book-info', {});
     evaluatePromise(result);
   });
 

@@ -1,17 +1,21 @@
 import * as React from 'react';
-import * as API from '../../services/Api';
-
 import graphUtils from '../../utils/Graphing';
 import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
-import MetricsOptions from '../../types/MetricsOptions';
 import { Metrics } from '../../types/Metrics';
 import { Icon } from 'patternfly-react';
-import { authentication } from '../../utils/Authentication';
 import { Link } from 'react-router-dom';
-import { shouldRefreshData, updateHealth, nodeData, nodeTypeToString, getServicesLinkList } from './SummaryPanelCommon';
+import {
+  shouldRefreshData,
+  updateHealth,
+  nodeData,
+  getNodeMetrics,
+  getNodeMetricType,
+  nodeTypeToString,
+  getServicesLinkList
+} from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
@@ -68,18 +72,17 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   fetchRequestCountMetrics(props: SummaryPanelPropType) {
-    const namespace = props.data.summaryTarget.data('namespace');
-    const { app, version } = nodeData(props.data.summaryTarget);
-    const options: MetricsOptions = {
-      version: version,
-      queryTime: props.queryTime,
-      duration: +props.duration,
-      step: props.step,
-      rateInterval: props.rateInterval,
-      filters: ['request_count', 'request_error_count'],
-      includeIstio: props.namespace === 'istio-system'
-    };
-    API.getServiceMetrics(authentication(), namespace, app, options)
+    const target = props.data.summaryTarget;
+    const nodeMetricType = getNodeMetricType(target);
+
+    if (!nodeMetricType) {
+      return;
+    }
+
+    const filters = ['request_count', 'request_error_count'];
+    const includeIstio = props.namespace === 'istio-system';
+
+    getNodeMetrics(nodeMetricType, target, props, filters, includeIstio)
       .then(response => {
         if (!this._isMounted) {
           console.log('SummaryPanelNode: Ignore fetch, component not mounted.');
