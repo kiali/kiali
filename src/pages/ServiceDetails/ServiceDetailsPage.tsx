@@ -9,7 +9,7 @@ import * as MessageCenter from '../../utils/MessageCenter';
 import { ServiceDetailsInfo, Validations } from '../../types/ServiceInfo';
 import { authentication } from '../../utils/Authentication';
 import IstioObjectDetails from './IstioObjectDetails';
-import ServiceMetrics from './ServiceMetrics';
+import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceInfo from './ServiceInfo';
 
 type ServiceDetailsState = {
@@ -257,7 +257,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
                   />
                 </TabPane>
                 <TabPane eventKey="metrics" mountOnEnter={true} unmountOnExit={true}>
-                  <ServiceMetrics
+                  <ServiceMetricsContainer
                     namespace={this.props.match.params.namespace}
                     service={this.props.match.params.service}
                   />
