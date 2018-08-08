@@ -351,7 +351,7 @@ external_services:
 ----
 
 |`ISTIO_SIDECAR_ANNOTATION`
-|The annotation used by Istio in a Deployment template.
+|The annotation used by Istio in Pods. (default is `sidecar.istio.io/status`)
 [source,yaml]
 ----
 external_services:
@@ -376,7 +376,6 @@ external_services:
   istio:
     istio_url_service_version: VALUE
 ----
-
 
 |`GRAFANA_DISPLAY_LINK`
 |When true, a link to Grafana will be displayed for more metrics.
@@ -414,31 +413,49 @@ external_services:
     service: VALUE
 ----
 
-|`GRAFANA_DASHBOARD`
-|The name of the Grafana dashboard used as a landing page. (default is `istio-dashboard`)
+|`GRAFANA_SERVICE_DASHBOARD_PATTERN`
+|Search pattern for Grafana Service dashboard. (default is `Istio%20Service%20Dashboard`)
 [source,yaml]
 ----
 external_services:
   grafana:
-    dashboard: VALUE
+    service_dashboard_pattern: VALUE
 ----
 
-|`GRAFANA_VAR_SERVICE_SOURCE`
-|The name of the Grafana variable that controls service sources, as defined in the configured `GRAFANA_DASHBOARD`. (default is `var-source`)
+|`GRAFANA_WORKLOAD_DASHBOARD_PATTERN`
+|Search pattern for Grafana Workload dashboard. (default is `Istio%20Workload%20Dashboard`)
 [source,yaml]
 ----
 external_services:
   grafana:
-    var_service_source: VALUE
+    workload_dashboard_pattern: VALUE
 ----
 
-|`GRAFANA_VAR_SERVICE_DEST`
-|The name of the Grafana variable that controls service destinations, as defined in the configured `GRAFANA_DASHBOARD`. (default is `var-http_destination`)
+|`GRAFANA_VAR_NAMESPACE`
+|The name of the Grafana variable that controls namespaces in dashboards. (default is `var-namespace`)
 [source,yaml]
 ----
 external_services:
   grafana:
-    var_service_dest: VALUE
+    var_namespace: VALUE
+----
+
+|`GRAFANA_VAR_SERVICE`
+|The name of the Grafana variable that controls services in dashboards. (default is `var-service`)
+[source,yaml]
+----
+external_services:
+  grafana:
+    var_service: VALUE
+----
+
+|`GRAFANA_VAR_WORKLOAD`
+|The name of the Grafana variable that controls workloads in dashboards. (default is `var-workload`)
+[source,yaml]
+----
+external_services:
+  grafana:
+    var_workload: VALUE
 ----
 
 |`JAEGER_URL`

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kiali/kiali/config"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,6 +12,7 @@ import (
 
 func TestPodFullyParsing(t *testing.T) {
 	assert := assert.New(t)
+	config.Set(config.NewConfig())
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	k8sPod := v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -51,6 +53,7 @@ func TestPodFullyParsing(t *testing.T) {
 
 func TestPodParsingMissingImage(t *testing.T) {
 	assert := assert.New(t)
+	config.Set(config.NewConfig())
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	k8sPod := v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -82,6 +85,7 @@ func TestPodParsingMissingImage(t *testing.T) {
 
 func TestPodParsingMissingAnnotations(t *testing.T) {
 	assert := assert.New(t)
+	config.Set(config.NewConfig())
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	k8sPod := v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -102,6 +106,7 @@ func TestPodParsingMissingAnnotations(t *testing.T) {
 
 func TestPodParsingInvalidAnnotations(t *testing.T) {
 	assert := assert.New(t)
+	config.Set(config.NewConfig())
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	k8sPod := v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
