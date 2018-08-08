@@ -24,7 +24,3 @@ do
 done
 
 kill -9 ${APP_PID}
-
-if [ -n "$labels" ]; then
-  ./take_test_screenshot.sh
-fi
