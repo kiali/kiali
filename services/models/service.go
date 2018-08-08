@@ -29,6 +29,7 @@ type ServiceList struct {
 
 type ServiceDetails struct {
 	Service          Service             `json:"service"`
+	IstioSidecar     bool                `json:"istioSidecar"`
 	Endpoints        Endpoints           `json:"endpoints"`
 	VirtualServices  VirtualServices     `json:"virtualServices"`
 	DestinationRules DestinationRules    `json:"destinationRules"`
@@ -81,6 +82,10 @@ func (s *ServiceDetails) SetServiceDetails(serviceDetails *kubernetes.ServiceDet
 }
 
 func (s *ServiceDetails) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails) {
+	mPods := Pods{}
+	mPods.Parse(serviceDetails.Pods)
+	s.IstioSidecar = mPods.HasIstioSideCar()
+
 	s.Service.Parse(serviceDetails.Service)
 	(&s.Endpoints).Parse(serviceDetails.Endpoints)
 	(&s.Workloads).Parse(serviceDetails.Deployments)
