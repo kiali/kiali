@@ -468,6 +468,15 @@ external_services:
     service: VALUE
 ----
 
+|`JAEGER_SERVICE_PORT`
+|The Kubernetes service port for Jaeger. This configuration is ignored if `JAEGER_URL` is set. (default is `16686`)
+[source,yaml]
+----
+external_services:
+  jaeger:
+    service: VALUE
+----
+
 |`TOKEN_SECRET`
 |The token secret for generate. This configuration is ignored if `TOKEN_SECRET` is set. (default is `kiali`)
 [source,yaml]

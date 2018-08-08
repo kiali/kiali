@@ -15,7 +15,9 @@ import (
 
 /** Proxy solution Jaeger*/
 func ProxyJaeger(w http.ResponseWriter, r *http.Request) {
-	url, err := url.Parse(fmt.Sprintf("http://%s/", config.Get().ExternalServices.Jaeger.Service))
+	jaegerConfig := config.Get().ExternalServices.Jaeger
+	// It assumes that jaeger internally is accessible through http. This is how it works in Istio 1.0 GA.
+	url, err := url.Parse(fmt.Sprintf("http://%s.%s:%s/", jaegerConfig.Service, jaegerConfig.ServiceNamespace, jaegerConfig.ServicePort))
 	if err != nil {
 		log.Error(err)
 		return
@@ -31,7 +33,7 @@ func ProxyJaeger(w http.ResponseWriter, r *http.Request) {
 
 /** End solution */
 
-// GetjaegerInfo provides the jaeger URLo, first by checking if a config exists
+// GetjaegerInfo provides the jaeger URL, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Jaeger service in namespace istio-system
 func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
 	conf := config.Get()

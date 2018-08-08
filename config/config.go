@@ -45,6 +45,7 @@ const (
 	EnvJaegerURL              = "JAEGER_URL"
 	EnvJaegerServiceNamespace = "JAEGER_SERVICE_NAMESPACE"
 	EnvJaegerService          = "JAEGER_SERVICE"
+	EnvJaegerServicePort      = "JAEGER_SERVICE_PORT"
 
 	EnvAppLabelName     = "APP_LABEL_NAME"
 	EnvVersionLabelName = "VERSION_LABEL_NAME"
@@ -87,6 +88,7 @@ type JaegerConfig struct {
 	URL              string `yaml:"url"`
 	ServiceNamespace string `yaml:"service_namespace"`
 	Service          string `yaml:"service"`
+	ServicePort      string `yaml:"service_port"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -161,6 +163,7 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
 	c.ExternalServices.Jaeger.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvJaegerServiceNamespace, "istio-system"))
 	c.ExternalServices.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
+	c.ExternalServices.Jaeger.ServicePort = strings.TrimSpace(getDefaultString(EnvJaegerServicePort, "16686"))
 
 	// Istio Configuration
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
