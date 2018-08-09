@@ -86,7 +86,7 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
           <Row className={'card-pf-body'} key={'virtualservice-yaml'}>
             <Col xs={12}>
               <div className={'pull-right'}>
-                <Link to={{ pathname: this.props.servicePageURL }}>Back to Service</Link>{' '}
+                <Link to={this.props.servicePageURL}>Back to Service</Link>{' '}
               </div>
               <AceEditor
                 mode="yaml"

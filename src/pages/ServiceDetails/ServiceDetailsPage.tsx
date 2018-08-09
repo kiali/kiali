@@ -38,8 +38,12 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     };
   }
 
-  servicePageURL() {
-    return '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
+  servicePageURL(parsedSearch?: ParsedSearch) {
+    let url = '/namespaces/' + this.props.match.params.namespace + '/services/' + this.props.match.params.service;
+    if (parsedSearch && parsedSearch.type) {
+      url += `?list=${parsedSearch.type}s`;
+    }
+    return url;
   }
 
   cleanFilter = () => {
@@ -224,7 +228,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
             validations={this.searchValidation(parsedSearch)}
             onSelectTab={this.tabSelectHandler}
             activeTab={this.activeTab}
-            servicePageURL={this.servicePageURL()}
+            servicePageURL={this.servicePageURL(parsedSearch)}
           />
         ) : (
           <TabContainer
