@@ -31,17 +31,12 @@ func ProxyJaeger(w http.ResponseWriter, r *http.Request) {
 
 // GetJaegerInfo provides the proxy Jaeger URL
 func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
-	conf := config.Get()
-	urlKiali, err := getOpenshiftRouteURL(conf.IstioNamespace, conf.KialiService)
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
+	scheme := "http"
+	if r.URL.Scheme != "" {
+		scheme = r.URL.Scheme
 	}
-	url, _ := url.Parse(urlKiali)
-
 	info := models.JaegerInfo{
-		URL: fmt.Sprintf("%s://%s:%s", url.Scheme, url.Host, "32439"),
+		URL: fmt.Sprintf("%s://%s:%s", scheme, r.Host, "32439"),
 	}
 	RespondWithJSON(w, http.StatusOK, info)
 }
