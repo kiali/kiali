@@ -55,8 +55,14 @@ func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, g
 	// trim unnecessary fields
 	switch nodeType {
 	case NodeTypeWorkload:
-		app = ""
-		version = ""
+		// maintain the app+version labeling if it is set, it can be useful for
+		// for identifying destination rules, and providing additional links
+		if app == UnknownApp {
+			app = ""
+		}
+		if version == UnknownVersion {
+			version = ""
+		}
 		service = ""
 	case NodeTypeApp:
 		// note: we keep workload for a versioned app node because app+version labeling
