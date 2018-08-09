@@ -127,7 +127,7 @@ make docker-build
 ==== Deploying Kiali to OpenShift
 
 [NOTE]
-Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 0.8+*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here].
+Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 1.0*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here].
 
 [NOTE]
 The following make targets assume that the `oc` command is available in the user's PATH and that the user is logged in. If you have `istiooc` instead, create a symlink in your PATH pointing `oc` to your `istiooc` binary.
