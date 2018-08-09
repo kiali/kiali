@@ -93,7 +93,7 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
           })
         };
         const initialFilters = this.initialFilterList(namespaceFilter);
-        this.setState({ filterTypeList: initialFilters });
+        this.setState({ filterTypeList: initialFilters, currentFilterType: namespaceFilter });
       })
       .catch(error => {
         const errMsg = API.getErrorMsg('Error fetching namespace list.', error);
@@ -184,7 +184,6 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
     if (!currentFilterType) {
       return null;
     }
-
     if (currentFilterType.filterType === 'select') {
       return (
         <Filter.ValueSelector
