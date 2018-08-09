@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"k8s.io/api/apps/v1beta1"
+	kv1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -29,7 +30,11 @@ var detailsForLabels = kubernetes.ServiceDetails{
 		Items: []v1beta1.Deployment{
 			v1beta1.Deployment{
 				ObjectMeta: meta_v1.ObjectMeta{
-					Labels: map[string]string{"app": "svc"}}}}}}
+					Labels: map[string]string{"app": "svc"}}}}},
+	Pods: []kv1.Pod{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Labels: map[string]string{"app": "svc"}}}}}
 
 // TestServiceMetricsDefault is unit test (testing request handling, not the prometheus client behaviour)
 func TestServiceMetricsDefault(t *testing.T) {
