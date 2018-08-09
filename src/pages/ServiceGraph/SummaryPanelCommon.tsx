@@ -11,6 +11,7 @@ export interface NodeData {
   app: string;
   version: string;
   workload: string;
+  service: string;
   nodeType: NodeType;
   hasParent: boolean;
 }
@@ -55,20 +56,17 @@ export const nodeData = (node: any): NodeData => {
     version: node.data('version'),
     workload: node.data('workload'),
     nodeType: node.data('nodeType'),
-    hasParent: !!node.data('parent')
+    hasParent: !!node.data('parent'),
+    service: node.data('service')
   };
 };
 
 export const nodeTypeToString = (nodeType: string) => {
-  if (nodeType === NodeType.APP) {
-    return 'Application';
-  }
-
   if (nodeType === NodeType.UNKNOWN) {
-    return 'Service';
+    return 'service';
   }
 
-  return nodeType.charAt(0).toUpperCase() + nodeType.slice(1);
+  return nodeType;
 };
 
 export const getServicesLinkList = (cyNodes: any) => {
@@ -146,4 +144,36 @@ export const getNodeMetrics = (
       // https://github.com/palantir/tslint/issues/696
       return Promise.reject(new Error(`Unknown NodeMetricType: ${nodeMetricType}`));
   }
+};
+
+export const renderPanelTitle = node => {
+  const { namespace, service, app, workload, nodeType } = nodeData(node);
+  const displayName: string = nodeType === NodeType.UNKNOWN ? 'unknown' : app || workload || service;
+  let link: string | undefined;
+  let displaySpan: any;
+
+  switch (nodeType) {
+    case NodeType.SERVICE:
+      link = `/namespaces/${namespace}/services/${service}`;
+      break;
+    case NodeType.WORKLOAD:
+      // Not available yet.
+      // link = `/namespaces/${namespace}/workloads/${service}`;
+      break;
+    default:
+      // NOOP
+      break;
+  }
+
+  if (link) {
+    displaySpan = <Link to={link}>{displayName}</Link>;
+  } else {
+    displaySpan = displayName;
+  }
+
+  return (
+    <>
+      {nodeTypeToString(nodeType)}: {displaySpan}
+    </>
+  );
 };

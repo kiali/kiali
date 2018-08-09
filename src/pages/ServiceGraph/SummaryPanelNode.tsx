@@ -13,8 +13,8 @@ import {
   nodeData,
   getNodeMetrics,
   getNodeMetricType,
-  nodeTypeToString,
-  getServicesLinkList
+  getServicesLinkList,
+  renderPanelTitle
 } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
@@ -115,11 +115,13 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   render() {
     const node = this.props.data.summaryTarget;
-    const { namespace, app, workload } = nodeData(node);
+    const { namespace, app, nodeType, workload } = nodeData(node);
     const incoming = getTrafficRate(node);
     const outgoing = getAccumulatedTrafficRate(this.props.data.summaryTarget.edgesTo('*'));
-    const isUnknown = node.data('nodeType') === NodeType.UNKNOWN;
-    const backedServices = getServicesLinkList([node]);
+    const servicesList = nodeType !== NodeType.SERVICE && getServicesLinkList([node]);
+
+    const shouldRenderSvcList = servicesList && servicesList.length > 0;
+    const shouldRenderWorkload = nodeType !== NodeType.WORKLOAD && workload;
 
     return (
       <div className="panel panel-default" style={SummaryPanelNode.panelStyle}>
@@ -137,10 +139,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               />
             )
           )}
-          <span>
-            {' '}
-            {nodeTypeToString(node.data('nodeType'))}: {isUnknown ? 'unknown' : app || workload || node.data('service')}
-          </span>
+          <span>{[' ', renderPanelTitle(node)]}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
             <Label name="namespace" value={namespace} />
             {node.data('version') && <Label name="version" value={node.data('version')} />}
@@ -148,14 +147,20 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           {this.renderBadgeSummary(node.data('hasCB'), node.data('hasVS'), node.data('hasMissingSC'))}
         </div>
         <div className="panel-body">
-          {backedServices.length > 0 && (
-            <>
-              <strong>Backed services: </strong>
-              {backedServices}
-              <hr />
-            </>
+          {shouldRenderSvcList && (
+            <div>
+              <strong>Services: </strong>
+              {servicesList}
+            </div>
           )}
-          {!isUnknown && (
+          {shouldRenderWorkload && (
+            <div>
+              <strong>Workload: </strong>
+              {workload}
+            </div>
+          )}
+          {(shouldRenderSvcList || shouldRenderWorkload) && <hr />}
+          {nodeType !== NodeType.UNKNOWN && (
             <p style={{ textAlign: 'right' }}>
               <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>
                 View detailed charts <Icon name="angle-double-right" />

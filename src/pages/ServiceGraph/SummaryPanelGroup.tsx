@@ -7,14 +7,7 @@ import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import { Icon } from 'patternfly-react';
 import { Link } from 'react-router-dom';
-import {
-  shouldRefreshData,
-  updateHealth,
-  nodeData,
-  getServicesLinkList,
-  getNodeMetrics,
-  getNodeMetricType
-} from './SummaryPanelCommon';
+import { shouldRefreshData, updateHealth, nodeData, getNodeMetrics, getNodeMetricType } from './SummaryPanelCommon';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
@@ -74,7 +67,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
     const incoming = getAccumulatedTrafficRate(group.children());
     const outgoing = getAccumulatedTrafficRate(group.children().edgesTo('*'));
-    const backedServices = getServicesLinkList(group.children());
+    const workloadList = this.renderWorkloadList(group);
 
     return (
       <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
@@ -92,7 +85,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               />
             )
           )}
-          <span> Versioned Group: {app}</span>
+          <span> app: {app}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
             <Label name="namespace" value={namespace} key={namespace} />
             {this.renderVersionBadges()}
@@ -100,10 +93,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           {this.renderBadgeSummary(group.data('hasVS'))}
         </div>
         <div className="panel-body">
-          {backedServices.length > 0 && (
+          {workloadList.length > 0 && (
             <div>
-              <strong>Backed services: </strong>
-              {backedServices}
+              <strong>Workloads: </strong>
+              {workloadList}
               <hr />
             </div>
           )}
@@ -210,5 +203,24 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         />
       </>
     );
+  };
+
+  private renderWorkloadList = (group): any[] => {
+    let workloadList: any[] = [];
+
+    group.children().forEach(node => {
+      let workload = node.data('workload');
+
+      if (workload) {
+        workloadList.push(workload);
+        workloadList.push(', ');
+      }
+    });
+
+    if (workloadList.length > 0) {
+      workloadList.pop();
+    }
+
+    return workloadList;
   };
 }
