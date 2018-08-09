@@ -13,7 +13,7 @@ import (
 // A Namespace provide a scope for names.
 // This type used to describe a set of objects.
 //
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails
 type NamespaceParam struct {
 	// The id of the namespace.
 	//
@@ -24,7 +24,7 @@ type NamespaceParam struct {
 
 // Service identify the a service object
 //
-// swagger:parameters serviceValidations
+// swagger:parameters serviceValidations serviceDetails
 type ServiceParam struct {
 	// The name of the service
 	//
@@ -195,6 +195,13 @@ type workloadHealthResponse struct {
 type namespaceAppHealthResponse struct {
 	// in:body
 	Body models.NamespaceAppHealth
+}
+
+// Listing all the information related to a workload
+// swagger:response serviceDetailsResponse
+type ServiceDetailsResponse struct {
+	// in:body
+	Body models.ServiceDetails
 }
 
 // Listing all the information related to a workload

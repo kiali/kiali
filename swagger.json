@@ -391,6 +391,51 @@
         }
       }
     },
+    "/namespaces/{namespace}/services/{service}": {
+      "get": {
+        "description": "Endpoint to get the details of a given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "serviceDetails",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the service",
+            "name": "service",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/serviceDetailsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/services/{service}/istio_validations": {
       "get": {
         "description": "Endpoint to get the list of istio object validations for a service",
@@ -593,6 +638,31 @@
     }
   },
   "definitions": {
+    "Address": {
+      "type": "object",
+      "properties": {
+        "ip": {
+          "type": "string",
+          "x-go-name": "IP"
+        },
+        "kind": {
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Addresses": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Address"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "AppHealth": {
       "description": "AppHealth contains aggregated health from various sources, for a given app",
       "type": "object",
@@ -613,68 +683,6 @@
         },
         "requests": {
           "$ref": "#/definitions/RequestHealth"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/services/models"
-    },
-    "Autoscaler": {
-      "type": "object",
-      "properties": {
-        "createdAt": {
-          "type": "string",
-          "x-go-name": "CreatedAt"
-        },
-        "currentCPUUtilizationPercentage": {
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "CurrentCPUUtilizationPercentage"
-        },
-        "currentReplicas": {
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "CurrentReplicas"
-        },
-        "desiredReplicas": {
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "DesiredReplicas"
-        },
-        "labels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "Labels"
-        },
-        "lastScaleTime": {
-          "type": "string",
-          "x-go-name": "LastScaleTime"
-        },
-        "maxReplicas": {
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "MaxReplicas"
-        },
-        "minReplicas": {
-          "description": "Spec",
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "MinReplicas"
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "observedGeneration": {
-          "description": "Status",
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "ObservedGeneration"
-        },
-        "targetCPUUtilizationPercentage": {
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "TargetCPUUtilizationPercentage"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -712,6 +720,25 @@
           "format": "int32",
           "x-go-name": "Replicas"
         }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Endpoint": {
+      "type": "object",
+      "properties": {
+        "addresses": {
+          "$ref": "#/definitions/Addresses"
+        },
+        "ports": {
+          "$ref": "#/definitions/Ports"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Endpoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Endpoint"
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
@@ -1131,6 +1158,40 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
+    "ServiceDetails": {
+      "type": "object",
+      "properties": {
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "x-go-name": "Dependencies"
+        },
+        "destinationRules": {
+          "$ref": "#/definitions/destinationRules"
+        },
+        "endpoints": {
+          "$ref": "#/definitions/Endpoints"
+        },
+        "health": {
+          "$ref": "#/definitions/ServiceHealth"
+        },
+        "service": {
+          "$ref": "#/definitions/Service"
+        },
+        "virtualServices": {
+          "$ref": "#/definitions/virtualServices"
+        },
+        "workloads": {
+          "$ref": "#/definitions/WorkloadOverviews"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "ServiceEntries": {
       "type": "array",
       "items": {
@@ -1282,9 +1343,6 @@
         "unavailableReplicas"
       ],
       "properties": {
-        "autoscaler": {
-          "$ref": "#/definitions/Autoscaler"
-        },
         "availableReplicas": {
           "description": "Number of available replicas",
           "type": "integer",
@@ -1376,14 +1434,14 @@
           "description": "Workloads for a given namespace",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WorkloadOverview"
+            "$ref": "#/definitions/WorkloadListItem"
           },
           "x-go-name": "Workloads"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
-    "WorkloadOverview": {
+    "WorkloadListItem": {
       "type": "object",
       "required": [
         "name",
@@ -1423,6 +1481,37 @@
           "x-go-name": "VersionLabel",
           "example": true
         }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "WorkloadOverview": {
+      "type": "object",
+      "required": [
+        "name",
+        "labels"
+      ],
+      "properties": {
+        "labels": {
+          "description": "Kubernetes labels",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "name": {
+          "description": "Name of the workload",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "reviews-v1"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "WorkloadOverviews": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/WorkloadOverview"
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
@@ -1713,6 +1802,12 @@
             "x-go-name": "Message"
           }
         }
+      }
+    },
+    "serviceDetailsResponse": {
+      "description": "Listing all the information related to a workload",
+      "schema": {
+        "$ref": "#/definitions/ServiceDetails"
       }
     },
     "serviceHealthResponse": {

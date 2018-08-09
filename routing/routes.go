@@ -163,6 +163,21 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceList,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/services/{service} serviceDetails
+		// ---
+		// Endpoint to get the details of a given service
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: serviceDetailsResponse
+		//
 		{
 			"ServiceDetails",
 			"GET",

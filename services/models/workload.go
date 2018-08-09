@@ -2,7 +2,6 @@ package models
 
 import (
 	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/autoscaling/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 )
@@ -15,10 +14,10 @@ type WorkloadList struct {
 
 	// Workloads for a given namespace
 	// required: true
-	Workloads []WorkloadOverview `json:"workloads"`
+	Workloads []WorkloadListItem `json:"workloads"`
 }
 
-type WorkloadOverview struct {
+type WorkloadListItem struct {
 	// Name of the workload
 	// required: true
 	// example: reviews-v1
@@ -41,6 +40,18 @@ type WorkloadOverview struct {
 	// required: true
 	// example: true
 	VersionLabel bool `json:"versionLabel"`
+}
+
+type WorkloadOverviews []*WorkloadOverview
+type WorkloadOverview struct {
+	// Name of the workload
+	// required: true
+	// example: reviews-v1
+	Name string `json:"name"`
+
+	// Kubernetes labels
+	// required: true
+	Labels map[string]string `json:"labels"`
 }
 
 type Workloads []*Workload
@@ -83,9 +94,6 @@ type Workload struct {
 	// example: 1
 	UnavailableReplicas int32 `json:"unavailableReplicas"`
 
-	// Autoscaler bound to the workload
-	Autoscaler Autoscaler `json:"autoscaler"`
-
 	// Pods bound to the workload
 	Pods Pods `json:"pods"`
 
@@ -101,19 +109,31 @@ func (workloadList *WorkloadList) Parse(namespace string, ds *v1beta1.Deployment
 	workloadList.Namespace.Name = namespace
 
 	for _, deployment := range ds.Items {
-		casted := WorkloadOverview{}
+		casted := WorkloadListItem{}
 		casted.Parse(deployment)
 		(*workloadList).Workloads = append((*workloadList).Workloads, casted)
 	}
 }
 
-func (workload *WorkloadOverview) Parse(d v1beta1.Deployment) {
+func (workload *WorkloadListItem) Parse(d v1beta1.Deployment) {
 	workload.Name = d.Name
 	workload.Type = "Deployment"
 
 	/** Check the labels app and version required by Istio*/
 	_, workload.AppLabel = d.Labels["app"]
 	_, workload.VersionLabel = d.Labels["version"]
+}
+
+func (workloadList *WorkloadOverviews) Parse(ds *v1beta1.DeploymentList) {
+	if ds == nil {
+		return
+	}
+
+	for _, deployment := range ds.Items {
+		casted := &WorkloadOverview{}
+		casted.Parse(deployment)
+		*workloadList = append(*workloadList, casted)
+	}
 }
 
 func (workloads *Workloads) Parse(ds *v1beta1.DeploymentList) {
@@ -126,6 +146,11 @@ func (workloads *Workloads) Parse(ds *v1beta1.DeploymentList) {
 		casted.Parse(&deployment)
 		*workloads = append(*workloads, &casted)
 	}
+}
+
+func (workload *WorkloadOverview) Parse(d v1beta1.Deployment) {
+	workload.Name = d.Name
+	workload.Labels = d.Labels
 }
 
 func (workload *Workload) Parse(d *v1beta1.Deployment) {
@@ -142,18 +167,4 @@ func (workload *Workload) Parse(d *v1beta1.Deployment) {
 func (workload *Workload) SetDetails(deploymentDetails *kubernetes.DeploymentDetails) {
 	workload.Pods.Parse(deploymentDetails.Pods.Items)
 	workload.Services.Parse(deploymentDetails.Services)
-}
-
-func (workloads *Workloads) AddAutoscalers(as *v1.HorizontalPodAutoscalerList) {
-	if as == nil {
-		return
-	}
-
-	for _, deployment := range *workloads {
-		for _, autoscaler := range as.Items {
-			if deployment.Name == autoscaler.Spec.ScaleTargetRef.Name {
-				deployment.Autoscaler.Parse(&autoscaler)
-			}
-		}
-	}
 }
