@@ -2,16 +2,16 @@ import * as React from 'react';
 import RateTable from '../../components/SummaryPanel/RateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
-import { NodeType, SummaryPanelPropType } from '../../types/Graph';
+import { SummaryPanelPropType } from '../../types/Graph';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import {
   shouldRefreshData,
   nodeData,
-  getServicesLinkList,
   getNodeMetrics,
   NodeMetricType,
-  getNodeMetricType
+  getNodeMetricType,
+  renderPanelTitle
 } from './SummaryPanelCommon';
 import Label from '../../components/Label/Label';
 import { MetricGroup, Metric } from '../../types/Metrics';
@@ -75,38 +75,21 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const rate5xx = this.safeRate(edge.data('rate5XX'));
 
     const HeadingBlock = ({ prefix, node }) => {
-      const isAppUnknown = node.data('nodeType') === NodeType.UNKNOWN;
-      const { namespace, version, app, workload } = nodeData(node);
+      const { namespace, version } = nodeData(node);
       return (
         <div className="panel-heading label-collection">
-          {prefix}: {isAppUnknown ? 'unknown' : app || workload || node.data('service')}
+          {prefix} {renderPanelTitle(node)}
           <br />
           {this.renderLabels(namespace, version)}
         </div>
       );
     };
 
-    const sourceServices = getServicesLinkList([source]);
-    const destinationServices = getServicesLinkList([dest]);
-
     return (
       <div className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
         <HeadingBlock prefix="Source" node={source} />
         <HeadingBlock prefix="Destination" node={dest} />
         <div className="panel-body">
-          {sourceServices.length > 0 && (
-            <div>
-              <strong>Source services: </strong>
-              {sourceServices}
-            </div>
-          )}
-          {destinationServices.length > 0 && (
-            <div>
-              <strong>Destination services: </strong>
-              {destinationServices}
-            </div>
-          )}
-          {(destinationServices || sourceServices) && <hr />}
           <RateTable
             title="Traffic (requests per second):"
             rate={rate}
