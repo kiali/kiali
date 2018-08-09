@@ -1043,7 +1043,8 @@
     "WorkloadOverview": {
       "type": "object",
       "required": [
-        "name"
+        "name",
+        "type"
       ],
       "properties": {
         "name": {
@@ -1051,6 +1052,12 @@
           "type": "string",
           "x-go-name": "Name",
           "example": "reviews-v1"
+        },
+        "type": {
+          "description": "Type of the workload",
+          "type": "string",
+          "x-go-name": "Type",
+          "example": "deployment"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"

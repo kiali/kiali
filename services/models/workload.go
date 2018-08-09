@@ -18,6 +18,11 @@ type WorkloadOverview struct {
 	// required: true
 	// example: reviews-v1
 	Name string `json:"name"`
+
+	// Type of the workload
+	// required: true
+	// example: deployment
+	Type string `json:"type"`
 }
 
 func (workloadList *WorkloadList) Parse(namespace string, ds *v1beta1.DeploymentList) {
@@ -36,4 +41,5 @@ func (workloadList *WorkloadList) Parse(namespace string, ds *v1beta1.Deployment
 
 func (workload *WorkloadOverview) Parse(d v1beta1.Deployment) {
 	workload.Name = d.Name
+	workload.Type = "Deployment"
 }
