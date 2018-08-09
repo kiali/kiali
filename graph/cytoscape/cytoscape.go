@@ -29,26 +29,27 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	NodeType     string          `json:"nodeType"`
-	Namespace    string          `json:"namespace"`
-	Workload     string          `json:"workload,omitempty"`
-	App          string          `json:"app,omitempty"`
-	Version      string          `json:"version,omitempty"`
-	Service      string          `json:"service,omitempty"`      // requested service for NodeTypeService
-	DestServices map[string]bool `json:"destServices,omitempty"` // requested services for [dest] node
-	Rate         string          `json:"rate,omitempty"`         // edge aggregate
-	Rate3xx      string          `json:"rate3XX,omitempty"`      // edge aggregate
-	Rate4xx      string          `json:"rate4XX,omitempty"`      // edge aggregate
-	Rate5xx      string          `json:"rate5XX,omitempty"`      // edge aggregate
-	RateOut      string          `json:"rateOut,omitempty"`      // edge aggregate
-	HasCB        bool            `json:"hasCB,omitempty"`        // true (has circuit breaker) | false
-	HasMissingSC bool            `json:"hasMissingSC,omitempty"` // true (has missing sidecar) | false
-	HasVS        bool            `json:"hasVS,omitempty"`        // true (has route rule) | false
-	IsDead       bool            `json:"isDead,omitempty"`       // true (has no pods) | false
-	IsGroup      string          `json:"isGroup,omitempty"`      // set to the grouping type, current values: [ 'version' ]
-	IsOutside    bool            `json:"isOutside,omitempty"`    // true | false
-	IsRoot       bool            `json:"isRoot,omitempty"`       // true | false
-	IsUnused     bool            `json:"isUnused,omitempty"`     // true | false
+	NodeType        string          `json:"nodeType"`
+	Namespace       string          `json:"namespace"`
+	Workload        string          `json:"workload,omitempty"`
+	App             string          `json:"app,omitempty"`
+	Version         string          `json:"version,omitempty"`
+	Service         string          `json:"service,omitempty"`         // requested service for NodeTypeService
+	DestServices    map[string]bool `json:"destServices,omitempty"`    // requested services for [dest] node
+	Rate            string          `json:"rate,omitempty"`            // edge aggregate
+	Rate3xx         string          `json:"rate3XX,omitempty"`         // edge aggregate
+	Rate4xx         string          `json:"rate4XX,omitempty"`         // edge aggregate
+	Rate5xx         string          `json:"rate5XX,omitempty"`         // edge aggregate
+	RateOut         string          `json:"rateOut,omitempty"`         // edge aggregate
+	HasCB           bool            `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
+	HasMissingSC    bool            `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
+	HasVS           bool            `json:"hasVS,omitempty"`           // true (has route rule) | false
+	IsDead          bool            `json:"isDead,omitempty"`          // true (has no pods) | false
+	IsGroup         string          `json:"isGroup,omitempty"`         // set to the grouping type, current values: [ 'version' ]
+	IsMisconfigured string          `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
+	IsOutside       bool            `json:"isOutside,omitempty"`       // true | false
+	IsRoot          bool            `json:"isRoot,omitempty"`          // true | false
+	IsUnused        bool            `json:"isUnused,omitempty"`        // true | false
 }
 
 type EdgeData struct {
@@ -187,6 +188,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// set sidecars checks, if available
 		if val, ok := n.Metadata["hasMissingSC"]; ok {
 			nd.HasMissingSC = val.(bool)
+		}
+
+		// check if node is misconfigured
+		if val, ok := n.Metadata["isMisconfigured"]; ok {
+			nd.IsMisconfigured = val.(string)
 		}
 
 		// check if node is on another namespace

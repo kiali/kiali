@@ -241,8 +241,8 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		code := string(lCode)
 		csp := string(lCsp)
 
-		source, _ := addSourceNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, o)
-		dest, _ := addDestNode(trafficMap, destSvcNs, destWl, destApp, destVer, destSvcName, o)
+		source, sourceFound := addSourceNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, o)
+		dest, destFound := addDestNode(trafficMap, destSvcNs, destWl, destApp, destVer, destSvcName, o)
 
 		addToDestServices(dest.Metadata, destSvcName)
 
@@ -258,6 +258,16 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		}
 
 		val := float64(s.Value)
+
+		// A workload may mistakenly have multiple app and or version label values.
+		// This is a misconfiguration we need to handle. See Kiali-1309.
+		if sourceFound {
+			handleMisconfiguredLabels(source, sourceApp, sourceVer, val, o)
+		}
+		if destFound {
+			handleMisconfiguredLabels(dest, destApp, destVer, val, o)
+		}
+
 		var ck string
 		switch {
 		case strings.HasPrefix(string(code), "2"):
@@ -300,6 +310,29 @@ func addToDestServices(md map[string]interface{}, destService string) {
 	destServices.(map[string]bool)[destService] = true
 }
 
+func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float64, o options.Options) {
+	isVersionedAppGraph := o.VendorOptions.GraphType == graph.GraphTypeVersionedApp
+	isWorkloadNode := node.NodeType == graph.NodeTypeWorkload
+	isVersionedAppNode := node.NodeType == graph.NodeTypeApp && isVersionedAppGraph
+	if isWorkloadNode || isVersionedAppNode {
+		labels := []string{}
+		if node.App != app {
+			labels = append(labels, "app")
+		}
+		if node.Version != version {
+			labels = append(labels, "version")
+		}
+		// prefer the labels of an active time series as often the other labels are inactive
+		if len(labels) > 0 {
+			node.Metadata["isMisconfigured"] = fmt.Sprintf("labels=%v", labels)
+			if rate > 0.0 {
+				node.App = app
+				node.Version = version
+			}
+		}
+	}
+}
+
 func addSourceNode(trafficMap graph.TrafficMap, namespace, workload, app, version string, o options.Options) (*graph.Node, bool) {
 	id, nodeType := graph.Id(namespace, workload, app, version, "", o.VendorOptions.GraphType)
 	node, found := trafficMap[id]
@@ -308,7 +341,7 @@ func addSourceNode(trafficMap graph.TrafficMap, namespace, workload, app, versio
 		node = &newNode
 		trafficMap[id] = node
 	}
-	return node, !found
+	return node, found
 }
 
 func addDestNode(trafficMap graph.TrafficMap, namespace, workload, app, version, service string, o options.Options) (*graph.Node, bool) {
@@ -319,7 +352,7 @@ func addDestNode(trafficMap graph.TrafficMap, namespace, workload, app, version,
 		node = &newNode
 		trafficMap[id] = node
 	}
-	return node, !found
+	return node, found
 }
 
 // mergeTrafficMaps ensures that we only have unique nodes by removing duplicate
