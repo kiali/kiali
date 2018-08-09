@@ -27,12 +27,14 @@ func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, _ string
 }
 
 func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, k8s *kubernetes.IstioClient) {
-	appLabel := config.Get().AppLabelName
-	versionLabel := config.Get().VersionLabelName
+	cfg := config.Get()
+	appLabel := cfg.AppLabelName
+	versionLabel := cfg.VersionLabelName
+	istioNamespace := cfg.IstioNamespace
 
 	for _, n := range trafficMap {
 		// We whitelist istio components because they may not report telemetry using injected sidecars.
-		if n.Namespace == config.Get().IstioNamespace {
+		if n.Namespace == istioNamespace {
 			continue
 		}
 

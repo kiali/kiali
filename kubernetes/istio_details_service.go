@@ -325,13 +325,16 @@ func CheckDestinationRuleCircuitBreaker(destinationRule IstioObject, namespace s
 			if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
 				return true
 			}
+			if version == "" {
+				return false
+			}
 			if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
 				if dSubsets, ok := subsets.([]interface{}); ok {
 					for _, subset := range dSubsets {
 						if innerSubset, ok := subset.(map[string]interface{}); ok {
 							if trafficPolicy, ok := innerSubset["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
 								if labels, ok := innerSubset["labels"]; ok {
-									if dLabels, ok := labels.(map[string]interface{}); ok && version != "" {
+									if dLabels, ok := labels.(map[string]interface{}); ok {
 										if versionValue, ok := dLabels[cfg.VersionLabelName]; ok && versionValue == version {
 											return true
 										}

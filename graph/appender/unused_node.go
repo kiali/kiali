@@ -43,8 +43,9 @@ func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespac
 
 func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, namespace string, deployments *v1beta1.DeploymentList) graph.TrafficMap {
 	unusedTrafficMap := graph.NewTrafficMap()
-	appLabel := config.Get().AppLabelName
-	versionLabel := config.Get().VersionLabelName
+	cfg := config.Get()
+	appLabel := cfg.AppLabelName
+	versionLabel := cfg.VersionLabelName
 	for _, d := range deployments.Items {
 		labels := d.GetLabels()
 		app := graph.UnknownApp

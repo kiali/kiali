@@ -36,13 +36,15 @@ func addRouteBadges(trafficMap graph.TrafficMap, namespace string, istioDetails 
 func applyCircuitBreakers(trafficMap graph.TrafficMap, namespace string, istioDetails *kubernetes.IstioDetails) {
 NODES:
 	for _, n := range trafficMap {
-		if n.Version == graph.UnknownVersion {
-			continue
+		version := n.Version
+		if version == graph.UnknownVersion {
+			version = ""
 		}
+
 		if destServices, ok := n.Metadata["destServices"]; ok {
 			for serviceName, _ := range destServices.(map[string]bool) {
 				for _, destinationRule := range istioDetails.DestinationRules {
-					if kubernetes.CheckDestinationRuleCircuitBreaker(destinationRule, namespace, serviceName, n.Version) {
+					if kubernetes.CheckDestinationRuleCircuitBreaker(destinationRule, namespace, serviceName, version) {
 						n.Metadata["hasCB"] = true
 						continue NODES
 					}
