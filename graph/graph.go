@@ -147,17 +147,16 @@ func Id(namespace, workload, app, version, service, graphType string) (id, nodeT
 		// For a versionedApp graph we use workload as the Id, it allows us some protection against labeling
 		// anti-patterns. For versionless we  just use the app label to aggregate versions/workloads into one node
 		if graphType == GraphTypeVersionedApp {
-			return fmt.Sprintf("app_%v_%v", namespace, workload), NodeTypeApp
-		} else {
-			return fmt.Sprintf("app_%v_%v", namespace, app), NodeTypeApp
+			return fmt.Sprintf("vapp_%v_%v", namespace, workload), NodeTypeApp
 		}
+		return fmt.Sprintf("app_%v_%v", namespace, app), NodeTypeApp
 	}
 
-	// fall back to service if applicable
-	if serviceOk {
-		return fmt.Sprintf("svc_%v_%v", namespace, service), NodeTypeService
+	// fall back to workload if applicable
+	if workloadOk {
+		return fmt.Sprintf("wl_%v_%v", namespace, workload), NodeTypeWorkload
 	}
 
-	// fall back to workload as a last resort in the app graph
-	return fmt.Sprintf("wl_%v_%v", namespace, workload), NodeTypeWorkload
+	// fall back to service as a last resort in the app graph
+	return fmt.Sprintf("svc_%v_%v", namespace, service), NodeTypeService
 }
