@@ -74,7 +74,10 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     const numEdges = cy.edges().size();
     const trafficRate = getAccumulatedTrafficRate(cy.edges());
     const servicesLink = (
-      <Link to="../services" onClick={this.updateServicesFilter}>
+      <Link
+        to={this.props.namespace === 'all' ? '../services' : `../services?namespace=${this.props.namespace}`}
+        onClick={this.updateServicesFilter}
+      >
         {this.props.namespace}
       </Link>
     );
