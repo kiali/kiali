@@ -485,19 +485,19 @@ external_services:
     service: VALUE
 ----
 
-|`TOKEN_SECRET`
-|The token secret for generate. This configuration is ignored if `TOKEN_SECRET` is set. (default is `kiali`)
+|`LOGIN_TOKEN_SIGNING_KEY`
+|The signing key used to generate tokens for user authentication. (default is `kiali`)
 [source,yaml]
 ----
-token:
-  secret: VALUE
+login_token:
+  signing_key: VALUE
 ----
-|`TOKEN_EXPIRATION_AT`
-|The token expired in VALUE seconds. This configuration is ignored if `TOKEN_EXPIRATION_AT` is set. (default is 10 hours => 36000)
+|`LOGIN_TOKEN_EXPIRATION_SECONDS`
+|The token expiration in seconds. (default is 10 hours => 36000)
 [source,yaml]
 ----
-token:
-  expiration_hours: VALUE
+login_token:
+  expiration_seconds: VALUE
 ----
 |===
 
