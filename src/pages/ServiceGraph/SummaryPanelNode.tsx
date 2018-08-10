@@ -6,7 +6,6 @@ import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import { Metrics } from '../../types/Metrics';
 import { Icon } from 'patternfly-react';
-import { Link } from 'react-router-dom';
 import {
   shouldRefreshData,
   updateHealth,
@@ -115,7 +114,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   render() {
     const node = this.props.data.summaryTarget;
-    const { namespace, app, nodeType, workload } = nodeData(node);
+    const { namespace, nodeType, workload } = nodeData(node);
     const incoming = getTrafficRate(node);
     const outgoing = getAccumulatedTrafficRate(this.props.data.summaryTarget.edgesTo('*'));
     const servicesList = nodeType !== NodeType.SERVICE && getServicesLinkList([node]);
@@ -160,13 +159,14 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
             </div>
           )}
           {(shouldRenderSvcList || shouldRenderWorkload) && <hr />}
+          {/* TODO: link to App or Workload Details charts when available
           {nodeType !== NodeType.UNKNOWN && (
             <p style={{ textAlign: 'right' }}>
               <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>
                 View detailed charts <Icon name="angle-double-right" />
               </Link>
             </p>
-          )}
+          )} */}
           <InOutRateTable
             title="Request Traffic (requests per second):"
             inRate={incoming.rate}

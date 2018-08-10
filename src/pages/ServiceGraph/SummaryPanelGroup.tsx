@@ -6,7 +6,6 @@ import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import { Icon } from 'patternfly-react';
-import { Link } from 'react-router-dom';
 import { shouldRefreshData, updateHealth, nodeData, getNodeMetrics, getNodeMetricType } from './SummaryPanelCommon';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
@@ -100,11 +99,12 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               <hr />
             </div>
           )}
-          <p style={{ textAlign: 'right' }}>
+          {/* TODO: link to App Details charts when available
+           <p style={{ textAlign: 'right' }}>
             <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>
               View detailed charts <Icon name="angle-double-right" />
             </Link>
-          </p>
+          </p> */}
           <InOutRateTable
             title="Request Traffic (requests per second):"
             inRate={incoming.rate}
