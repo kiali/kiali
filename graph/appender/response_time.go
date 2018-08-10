@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	DefaultQuantile = 0.95                  // 95th percentile
-	TF              = "2006-01-02 15:04:05" // TF is the TimeFormat for printing timestamp
+	DefaultQuantile = 0.95 // 95th percentile
 )
 
 // ResponseTimeAppender is responsible for adding responseTime information to the graph. ResponseTime
@@ -49,7 +48,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		log.Warningf("Replacing invalid quantile [%.2f] with default [%.2f]", a.Quantile, DefaultQuantile)
 		quantile = DefaultQuantile
 	}
-	log.Warningf("Generating responseTime using quantile [%.2f]", quantile)
+	log.Debugf("Generating responseTime using quantile [%.2f]", quantile)
 
 	// query prometheus for the responseTime info in three queries:
 	// 1) query for responseTime originating from "unknown" (i.e. the internet)
@@ -167,13 +166,13 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 	}
 }
 
-func promQuery(query string, queryTime time.Time, api v1.API) model.Vector {
+func responseTimeQuery(query string, queryTime time.Time, api v1.API) model.Vector {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// wrap with a round() to be in line with metrics api
 	query = fmt.Sprintf("round(%s,0.001)", query)
-	log.Debugf("Executing query %s&time=%v (now=%v, %v)\n", query, queryTime.Format(TF), time.Now().Format(TF), queryTime.Unix())
+	log.Debugf("Executing query %s&time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
 
 	value, err := api.Query(ctx, query, queryTime)
 	checkError(err)

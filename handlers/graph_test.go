@@ -65,7 +65,7 @@ func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector)
 }
 
 func TestNamespaceGraph(t *testing.T) {
-	q0 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload=\"unknown\",destination_service_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code,connection_security_policy),0.001)"
+	q0 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload=\"unknown\",destination_service_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)"
 	q0m0 := model.Metric{
 		"source_workload_namespace":     "unknown",
 		"source_workload":               "unknown",
@@ -76,14 +76,13 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "productpage-v1",
 		"destination_app":               "productpage",
 		"destination_version":           "v1",
-		"response_code":                 "200",
-		"connection_security_policy":    "mutual_tls"}
+		"response_code":                 "200"}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
 			Value:  50}}
 
-	q1 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace!=\"bookinfo\",destination_service_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code,connection_security_policy),0.001)"
+	q1 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace!=\"bookinfo\",destination_service_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)"
 	q1m0 := model.Metric{
 		"source_workload_namespace":     "istio-system",
 		"source_workload":               "ingressgateway-unknown",
@@ -94,14 +93,13 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "productpage-v1",
 		"destination_app":               "productpage",
 		"destination_version":           "v1",
-		"response_code":                 "200",
-		"connection_security_policy":    "mutual_tls"}
+		"response_code":                 "200"}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
 			Value:  100}}
 
-	q2 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code,connection_security_policy),0.001)"
+	q2 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)"
 	q2m0 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "productpage-v1",
@@ -112,8 +110,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "reviews-v1",
 		"destination_app":               "reviews",
 		"destination_version":           "v1",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 	q2m1 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "productpage-v1",
@@ -124,8 +121,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "reviews-v2",
 		"destination_app":               "reviews",
 		"destination_version":           "v2",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 	q2m2 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "productpage-v1",
@@ -136,8 +132,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "reviews-v3",
 		"destination_app":               "reviews",
 		"destination_version":           "v3",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 	q2m3 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "productpage-v1",
@@ -148,8 +143,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "details-v1",
 		"destination_app":               "details",
 		"destination_version":           "v1",
-		"response_code":                 "300",
-		"connection_security_policy":    "none"}
+		"response_code":                 "300"}
 	q2m4 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "productpage-v1",
@@ -160,8 +154,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "details-v1",
 		"destination_app":               "details",
 		"destination_version":           "v1",
-		"response_code":                 "400",
-		"connection_security_policy":    "none"}
+		"response_code":                 "400"}
 	q2m5 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "productpage-v1",
@@ -172,9 +165,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "details-v1",
 		"destination_app":               "details",
 		"destination_version":           "v1",
-		"response_code":                 "500",
-
-		"connection_security_policy": "none"}
+		"response_code":                 "500"}
 	q2m6 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "productpage-v1",
@@ -185,8 +176,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "details-v1",
 		"destination_app":               "details",
 		"destination_version":           "v1",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 	q2m7 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "productpage-v1",
@@ -197,8 +187,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "productpage-v1",
 		"destination_app":               "productpage",
 		"destination_version":           "v1",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 	q2m8 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "reviews-v2",
@@ -209,8 +198,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "ratings-v1",
 		"destination_app":               "ratings",
 		"destination_version":           "v1",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 	q2m9 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "reviews-v2",
@@ -221,8 +209,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "reviews-v2",
 		"destination_app":               "reviews",
 		"destination_version":           "v2",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 	q2m10 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "reviews-v3",
@@ -233,8 +220,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "ratings-v1",
 		"destination_app":               "ratings",
 		"destination_version":           "v1",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 	q2m11 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "reviews-v3",
@@ -245,8 +231,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "reviews-v3",
 		"destination_app":               "reviews",
 		"destination_version":           "v3",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 	q2m12 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "reviews-v3",
@@ -257,8 +242,7 @@ func TestNamespaceGraph(t *testing.T) {
 		"destination_workload":          "pricing-v1",
 		"destination_app":               "pricing",
 		"destination_version":           "v1",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 
 	v2 := model.Vector{
 		&model.Sample{
@@ -338,7 +322,7 @@ func TestNamespaceGraph(t *testing.T) {
 }
 
 func TestMultiNamespaceGraph(t *testing.T) {
-	q0 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload=\"unknown\",destination_service_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code,connection_security_policy),0.001)"
+	q0 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload=\"unknown\",destination_service_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)"
 	q0m0 := model.Metric{
 		"source_workload_namespace":     "unknown",
 		"source_workload":               "unknown",
@@ -349,20 +333,19 @@ func TestMultiNamespaceGraph(t *testing.T) {
 		"destination_workload":          "productpage-v1",
 		"destination_app":               "productpage",
 		"destination_version":           "v1",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
 			Value:  50}}
 
-	q1 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace!=\"bookinfo\",destination_service_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code,connection_security_policy),0.001)"
+	q1 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace!=\"bookinfo\",destination_service_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)"
 	v1 := model.Vector{}
 
-	q2 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code,connection_security_policy),0.001)"
+	q2 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)"
 	v2 := model.Vector{}
 
-	q3 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload=\"unknown\",destination_service_namespace=\"tutorial\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code,connection_security_policy),0.001)"
+	q3 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload=\"unknown\",destination_service_namespace=\"tutorial\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)"
 	q3m0 := model.Metric{
 		"source_workload_namespace":     "unknown",
 		"source_workload":               "unknown",
@@ -373,17 +356,16 @@ func TestMultiNamespaceGraph(t *testing.T) {
 		"destination_workload":          "customer-v1",
 		"destination_app":               "customer",
 		"destination_version":           "v1",
-		"response_code":                 "200",
-		"connection_security_policy":    "none"}
+		"response_code":                 "200"}
 	v3 := model.Vector{
 		&model.Sample{
 			Metric: q3m0,
 			Value:  50}}
 
-	q4 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace!=\"tutorial\",destination_service_namespace=\"tutorial\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code,connection_security_policy),0.001)"
+	q4 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace!=\"tutorial\",destination_service_namespace=\"tutorial\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)"
 	v4 := model.Vector{}
 
-	q5 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"tutorial\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code,connection_security_policy),0.001)"
+	q5 := "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"tutorial\",response_code=~\"[2345][0-9][0-9]\"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)"
 	v5 := model.Vector{}
 
 	client, api, err := setupMocked()

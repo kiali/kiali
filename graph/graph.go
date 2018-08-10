@@ -14,6 +14,7 @@ const (
 	NodeTypeService       string = "service"
 	NodeTypeUnknown       string = "unknown" // The special "unknown" traffic gen node
 	NodeTypeWorkload      string = "workload"
+	TF                    string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
 	UnknownApp            string = "unknown"
 	UnknownNamespace      string = "unknown"
 	UnknownVersion        string = "unknown"
