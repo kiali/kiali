@@ -17,6 +17,7 @@ type WorkloadList struct {
 	Workloads []WorkloadListItem `json:"workloads"`
 }
 
+// WorkloadListItem has the necessary information to display the console workload list
 type WorkloadListItem struct {
 	// Name of the workload
 	// required: true
@@ -43,18 +44,36 @@ type WorkloadListItem struct {
 }
 
 type WorkloadOverviews []*WorkloadOverview
+
+// WorkloadOverview has the summary information of a workload.
+// Useful to display a link to the workload details page.
 type WorkloadOverview struct {
 	// Name of the workload
 	// required: true
 	// example: reviews-v1
 	Name string `json:"name"`
 
+	// Type of the workload
+	// required: true
+	// example: deployment
+	Type string `json:"type"`
+
+	// Creation timestamp (in RFC3339 format)
+	// required: true
+	// example: 2018-07-31T12:24:17Z
+	CreatedAt string `json:"createdAt"`
+
+	// Kubernetes ResourceVersion
+	// required: true
+	// example: 192892127
+	ResourceVersion string `json:"resourceVersion"`
+
 	// Kubernetes labels
 	// required: true
 	Labels map[string]string `json:"labels"`
 }
 
-type Workloads []*Workload
+// Workload has the details of a workload
 type Workload struct {
 	// Workload name
 	// required: true
@@ -109,9 +128,9 @@ func (workloadList *WorkloadList) Parse(namespace string, ds *v1beta1.Deployment
 	workloadList.Namespace.Name = namespace
 
 	for _, deployment := range ds.Items {
-		casted := WorkloadListItem{}
-		casted.Parse(deployment)
-		(*workloadList).Workloads = append((*workloadList).Workloads, casted)
+		cast := WorkloadListItem{}
+		cast.Parse(deployment)
+		(*workloadList).Workloads = append((*workloadList).Workloads, cast)
 	}
 }
 
@@ -130,27 +149,18 @@ func (workloadList *WorkloadOverviews) Parse(ds *v1beta1.DeploymentList) {
 	}
 
 	for _, deployment := range ds.Items {
-		casted := &WorkloadOverview{}
-		casted.Parse(deployment)
-		*workloadList = append(*workloadList, casted)
-	}
-}
-
-func (workloads *Workloads) Parse(ds *v1beta1.DeploymentList) {
-	if ds == nil {
-		return
-	}
-
-	for _, deployment := range ds.Items {
-		casted := Workload{}
-		casted.Parse(&deployment)
-		*workloads = append(*workloads, &casted)
+		cast := &WorkloadOverview{}
+		cast.Parse(deployment)
+		*workloadList = append(*workloadList, cast)
 	}
 }
 
 func (workload *WorkloadOverview) Parse(d v1beta1.Deployment) {
 	workload.Name = d.Name
 	workload.Labels = d.Labels
+	workload.CreatedAt = formatTime(d.CreationTimestamp.Time)
+	workload.ResourceVersion = d.ResourceVersion
+	workload.Type = "Deployment"
 }
 
 func (workload *Workload) Parse(d *v1beta1.Deployment) {

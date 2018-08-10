@@ -44,13 +44,19 @@ func TestServiceDetailParsing(t *testing.T) {
 			}}})
 
 	assert.Equal(*service.Workloads[0], WorkloadOverview{
-		Name:   "reviews-v1",
-		Labels: map[string]string{"apps": "reviews", "version": "v1"},
+		Name:            "reviews-v1",
+		Labels:          map[string]string{"apps": "reviews", "version": "v1"},
+		Type:            "Deployment",
+		CreatedAt:       "2018-03-08T17:44:00+03:00",
+		ResourceVersion: "1234",
 	})
 
 	assert.Equal(*service.Workloads[1], WorkloadOverview{
-		Name:   "reviews-v2",
-		Labels: map[string]string{"apps": "reviews", "version": "v2"},
+		Name:            "reviews-v2",
+		Labels:          map[string]string{"apps": "reviews", "version": "v2"},
+		Type:            "Deployment",
+		CreatedAt:       "2018-03-08T17:45:00+03:00",
+		ResourceVersion: "4567",
 	})
 
 	// Istio Details
@@ -290,7 +296,7 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					Name:              "reviews-v2",
 					Namespace:         "Namespace",
 					CreationTimestamp: meta_v1.NewTime(t2),
-					ResourceVersion:   "1234",
+					ResourceVersion:   "4567",
 					Labels:            map[string]string{"apps": "reviews", "version": "v2"}},
 				Status: v1beta1.DeploymentStatus{
 					Replicas:            3,

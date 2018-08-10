@@ -1492,9 +1492,18 @@
       "type": "object",
       "required": [
         "name",
+        "type",
+        "createdAt",
+        "resourceVersion",
         "labels"
       ],
       "properties": {
+        "createdAt": {
+          "description": "Creation timestamp (in RFC3339 format)",
+          "type": "string",
+          "x-go-name": "CreatedAt",
+          "example": "2018-07-31T12:24:17Z"
+        },
         "labels": {
           "description": "Kubernetes labels",
           "type": "object",
@@ -1508,6 +1517,18 @@
           "type": "string",
           "x-go-name": "Name",
           "example": "reviews-v1"
+        },
+        "resourceVersion": {
+          "description": "Kubernetes ResourceVersion",
+          "type": "string",
+          "x-go-name": "ResourceVersion",
+          "example": "192892127"
+        },
+        "type": {
+          "description": "Type of the workload",
+          "type": "string",
+          "x-go-name": "Type",
+          "example": "deployment"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"

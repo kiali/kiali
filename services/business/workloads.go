@@ -23,14 +23,14 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 		selector, _ := in.k8s.GetDeploymentSelector(namespace, deployment.Name)
 		dPods, _ := in.k8s.GetPods(namespace, selector)
 
-		casted := &models.WorkloadListItem{}
-		casted.Parse(deployment)
+		cast := &models.WorkloadListItem{}
+		cast.Parse(deployment)
 
 		mPods := models.Pods{}
 		mPods.Parse(dPods.Items)
-		casted.IstioSidecar = mPods.HasIstioSideCar()
+		cast.IstioSidecar = mPods.HasIstioSideCar()
 
-		(*workloadList).Workloads = append((*workloadList).Workloads, *casted)
+		(*workloadList).Workloads = append((*workloadList).Workloads, *cast)
 	}
 	return *workloadList, nil
 }
