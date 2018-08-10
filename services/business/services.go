@@ -90,11 +90,21 @@ func (in *SvcService) GetApps(namespace, service string) ([]string, error) {
 		return nil, fmt.Errorf("GetApps: %s", err.Error())
 	}
 
-	var apps []string
-	for _, depl := range serviceDetails.Deployments.Items {
-		if app, ok := depl.Labels["app"]; ok {
-			apps = append(apps, app)
+	// Make a map to avoid repeated values
+	apps := make(map[string]bool)
+	for _, pod := range serviceDetails.Pods {
+		if app, ok := pod.Labels["app"]; ok {
+			apps[app] = true
 		}
 	}
-	return apps, nil
+
+	// Make an array of the apps found
+	uniqueApps := make([]string, len(apps))
+	i := 0
+	for k := range apps {
+		uniqueApps[i] = k
+		i++
+	}
+
+	return uniqueApps, nil
 }
