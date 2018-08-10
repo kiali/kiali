@@ -98,8 +98,7 @@
           "id": "27371b83763afee92cf29adef487d844",
           "source": "19950ddefadd370bf5434953c1944c80",
           "target": "2c22af42b0c750749399ed2838c56054",
-          "rate": "100.000",
-          "isMTLS": true
+          "rate": "100.000"
         }
       },
       {
@@ -165,8 +164,7 @@
           "id": "423f97a4c2e70e194b7295c6055efd76",
           "source": "5c33c02dc744d0d03513a364935660b7",
           "target": "2c22af42b0c750749399ed2838c56054",
-          "rate": "50.000",
-          "isMTLS": true
+          "rate": "50.000"
         }
       }
     ]

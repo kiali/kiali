@@ -19,7 +19,7 @@ package handlers
 //                    requesting and requested nodes.
 //
 // The handlers accept the following query parameters (some handlers may ignore some parameters):
-//   appenders:      Comma-separated list of appenders to run from [circuit_breaker, unused_service] (default all)
+//   appenders:      Comma-separated list of appenders to run from [circuit_breaker, unused_service...] (default all)
 //                   Note, appenders may support appender-specific query parameters
 //   duration:       time.Duration indicating desired query range duration, (default 10m)
 //   graphType:      Determines how to present the telemetry data. app | versionedApp | workload (default workload)
@@ -133,7 +133,7 @@ func isRoot(s *graph.Node) bool {
 func buildNamespaceTrafficMap(namespace string, o options.Options, client *prometheus.Client) graph.TrafficMap {
 	// query prometheus for request traffic in three queries:
 	// 1) query for traffic originating from "unknown" (i.e. the internet)
-	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code,connection_security_policy"
+	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code"
 	query := fmt.Sprintf("sum(rate(%v{reporter=\"destination\",source_workload=\"unknown\",destination_service_namespace=\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
 		o.Metric,
 		namespace,
@@ -222,9 +222,8 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		lDestApp, destAppOk := m["destination_app"]
 		lDestVer, destVerOk := m["destination_version"]
 		lCode, codeOk := m["response_code"]
-		lCsp, cspOk := m["connection_security_policy"]
 
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlOk || !destAppOk || !destVerOk || !codeOk || !cspOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlOk || !destAppOk || !destVerOk || !codeOk {
 			log.Warningf("Skipping %v, missing expected TS labels", m.String())
 			continue
 		}
@@ -239,7 +238,6 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 		code := string(lCode)
-		csp := string(lCsp)
 
 		source, sourceFound := addSourceNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, o)
 		dest, destFound := addDestNode(trafficMap, destSvcNs, destWl, destApp, destVer, destSvcName, o)
@@ -281,11 +279,6 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		}
 		addToRate(edge.Metadata, ck, val)
 		addToRate(edge.Metadata, "rate", val)
-
-		// we set MTLS true if any TS for this edge has MTLS
-		if csp == "mutual_tls" {
-			edge.Metadata["isMTLS"] = true
-		}
 
 		addToRate(source.Metadata, "rateOut", val)
 		addToRate(dest.Metadata, ck, val)
@@ -396,16 +389,13 @@ func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options
 	RespondWithJSONIndent(w, http.StatusOK, vendorConfig)
 }
 
-// TF is the TimeFormat for printing timestamp
-const TF = "2006-01-02 15:04:05"
-
 func promQuery(query string, queryTime time.Time, api v1.API) model.Vector {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// wrap with a round() to be in line with metrics api
 	query = fmt.Sprintf("round(%s,0.001)", query)
-	log.Debugf("Executing query %s@time=%v (now=%v, %v)\n", query, queryTime.Format(TF), time.Now().Format(TF), queryTime.Unix())
+	log.Debugf("Executing query %s@time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
 
 	value, err := api.Query(ctx, query, queryTime)
 	checkError(err)

@@ -162,6 +162,15 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		}
 		appenders = append(appenders, a)
 	}
+	if csl == AppenderAll || strings.Contains(csl, "security_policy") {
+		a := appender.SecurityPolicyAppender{
+			Duration:     o.Duration,
+			GraphType:    o.GraphType,
+			IncludeIstio: o.IncludeIstio,
+			QueryTime:    o.QueryTime,
+		}
+		appenders = append(appenders, a)
+	}
 	if csl == AppenderAll || strings.Contains(csl, "unused_node") {
 		appenders = append(appenders, appender.UnusedNodeAppender{
 			GraphType: o.GraphType,
