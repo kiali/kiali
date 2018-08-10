@@ -6,7 +6,7 @@ import { Layout } from '../../../types/GraphFilter';
 const LayoutMap = {
   cola: ColaGraph.getLayout(),
   dagre: DagreGraph.getLayout(),
-  cose: CoseGraph.getLayout()
+  'cose-bilkent': CoseGraph.getLayout()
 };
 
 const getLayout = (layout: Layout) =>
