@@ -39,7 +39,7 @@ export const config = () => {
       /** Graphs layouts types */
       graphLayouts: {
         cola: 'Cola',
-        cose: 'Cose',
+        'cose-bilkent': 'Cose',
         dagre: 'Dagre'
       }
     },

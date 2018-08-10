@@ -1670,7 +1670,7 @@ ShallowWrapper {
     options={
       Object {
         "cola": "Cola",
-        "cose": "Cose",
+        "cose-bilkent": "Cose",
         "dagre": "Dagre",
       }
     }
@@ -1717,7 +1717,7 @@ ShallowWrapper {
             bsClass="dropdown"
             disabled={false}
             divider={false}
-            eventKey="cose"
+            eventKey="cose-bilkent"
             header={false}
           >
             Cose
@@ -1773,7 +1773,7 @@ ShallowWrapper {
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="cose"
+              eventKey="cose-bilkent"
               header={false}
             >
               Cose
@@ -1814,7 +1814,7 @@ ShallowWrapper {
           },
           Object {
             "instance": null,
-            "key": "cose",
+            "key": "cose-bilkent",
             "nodeType": "class",
             "props": Object {
               "active": false,
@@ -1822,7 +1822,7 @@ ShallowWrapper {
               "children": "Cose",
               "disabled": false,
               "divider": false,
-              "eventKey": "cose",
+              "eventKey": "cose-bilkent",
               "header": false,
             },
             "ref": null,
@@ -1888,7 +1888,7 @@ ShallowWrapper {
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="cose"
+              eventKey="cose-bilkent"
               header={false}
             >
               Cose
@@ -1944,7 +1944,7 @@ ShallowWrapper {
                 bsClass="dropdown"
                 disabled={false}
                 divider={false}
-                eventKey="cose"
+                eventKey="cose-bilkent"
                 header={false}
               >
                 Cose
@@ -1985,7 +1985,7 @@ ShallowWrapper {
             },
             Object {
               "instance": null,
-              "key": "cose",
+              "key": "cose-bilkent",
               "nodeType": "class",
               "props": Object {
                 "active": false,
@@ -1993,7 +1993,7 @@ ShallowWrapper {
                 "children": "Cose",
                 "disabled": false,
                 "divider": false,
-                "eventKey": "cose",
+                "eventKey": "cose-bilkent",
                 "header": false,
               },
               "ref": null,
@@ -3703,7 +3703,7 @@ ShallowWrapper {
     options={
       Object {
         "cola": "Cola",
-        "cose": "Cose",
+        "cose-bilkent": "Cose",
         "dagre": "Dagre",
       }
     }
@@ -3751,7 +3751,7 @@ ShallowWrapper {
             bsClass="dropdown"
             disabled={false}
             divider={false}
-            eventKey="cose"
+            eventKey="cose-bilkent"
             header={false}
           >
             Cose
@@ -3807,7 +3807,7 @@ ShallowWrapper {
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="cose"
+              eventKey="cose-bilkent"
               header={false}
             >
               Cose
@@ -3848,7 +3848,7 @@ ShallowWrapper {
           },
           Object {
             "instance": null,
-            "key": "cose",
+            "key": "cose-bilkent",
             "nodeType": "class",
             "props": Object {
               "active": false,
@@ -3856,7 +3856,7 @@ ShallowWrapper {
               "children": "Cose",
               "disabled": false,
               "divider": false,
-              "eventKey": "cose",
+              "eventKey": "cose-bilkent",
               "header": false,
             },
             "ref": null,
@@ -3922,7 +3922,7 @@ ShallowWrapper {
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="cose"
+              eventKey="cose-bilkent"
               header={false}
             >
               Cose
@@ -3978,7 +3978,7 @@ ShallowWrapper {
                 bsClass="dropdown"
                 disabled={false}
                 divider={false}
-                eventKey="cose"
+                eventKey="cose-bilkent"
                 header={false}
               >
                 Cose
@@ -4019,7 +4019,7 @@ ShallowWrapper {
             },
             Object {
               "instance": null,
-              "key": "cose",
+              "key": "cose-bilkent",
               "nodeType": "class",
               "props": Object {
                 "active": false,
@@ -4027,7 +4027,7 @@ ShallowWrapper {
                 "children": "Cose",
                 "disabled": false,
                 "divider": false,
-                "eventKey": "cose",
+                "eventKey": "cose-bilkent",
                 "header": false,
               },
               "ref": null,
