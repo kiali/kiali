@@ -7,9 +7,11 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-// DeadNodeAppender is responsible for removing from the graph any nodes for which
-// there is no traffic reported and the related definitions are undefined (presumably
-// removed from K8S). (kiali-621)
+// DeadNodeAppender is responsible for removing from the graph unwanted nodes:
+// - nodes for which there is no traffic reported and the related schema is missing
+//   (presumably removed from K8S). (kiali-621)
+// - service nodes for which there is no incoming error traffic and no outgoing
+//   edges (kiali-1326)
 type DeadNodeAppender struct{}
 
 // AppendGraph implements Appender
@@ -27,29 +29,45 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
 func applyDeadNodes(trafficMap graph.TrafficMap, istioClient kubernetes.IstioClientInterface) {
 	numRemoved := 0
 	for id, n := range trafficMap {
-		// a node with traffic is not dead, skip
-		rate, hasRate := n.Metadata["rate"]
-		rateOut, hasRateOut := n.Metadata["rateOut"]
-		if (hasRate && rate.(float64) > 0) || (hasRateOut && rateOut.(float64) > 0) {
+		switch n.NodeType {
+		case graph.NodeTypeUnknown:
 			continue
-		}
-		// a node w/o a valid be dead, it may represent some other sort of data
-		if n.Workload == "" || n.Workload == graph.UnknownWorkload {
-			continue
-		}
+		case graph.NodeTypeService:
+			// a service node with no incoming error traffic and no outgoing edges, is dead.
+			// Incoming non-error traffic can not raise the dead because it is caused by an
+			// edge case (pod life-cycle change) that we don't want to see.
+			rate4xx, hasRate4xx := n.Metadata["rate4xx"]
+			rate5xx, hasRate5xx := n.Metadata["rate5xx"]
+			numOutEdges := len(n.Edges)
+			if numOutEdges == 0 && (!hasRate4xx || rate4xx.(float64) == 0) && (!hasRate5xx || rate5xx.(float64) == 0) {
+				delete(trafficMap, id)
+				numRemoved++
+			}
+		default:
+			// a node with traffic is not dead, skip
+			rate, hasRate := n.Metadata["rate"]
+			rateOut, hasRateOut := n.Metadata["rateOut"]
+			if (hasRate && rate.(float64) > 0) || (hasRateOut && rateOut.(float64) > 0) {
+				continue
+			}
+			// a node w/o a valid workload is a versionless app node and can't be dead
+			if n.Workload == "" || n.Workload == graph.UnknownWorkload {
+				continue
+			}
 
-		// Remove if backing deployment is not defined, flag if there are no pods
-		// Note that in the future a workload could feasibly be back by something
-		// other than a deployment; we may need to query the workload name againts
-		// various possibly entities.
-		deployment, err := istioClient.GetDeployment(n.Namespace, n.Workload)
-		if err != nil || deployment == nil {
-			delete(trafficMap, id)
-			numRemoved++
-		} else {
-			pods, err := istioClient.GetPods(n.Namespace, labels.Set(deployment.Spec.Selector.MatchLabels).String())
-			if err != nil || pods == nil || len(pods.Items) == 0 {
-				n.Metadata["isDead"] = true
+			// Remove if backing deployment is not defined, flag if there are no pods
+			// Note that in the future a workload could feasibly be back by something
+			// other than a deployment; we may need to query the workload name againts
+			// various possibly entities.
+			deployment, err := istioClient.GetDeployment(n.Namespace, n.Workload)
+			if err != nil || deployment == nil {
+				delete(trafficMap, id)
+				numRemoved++
+			} else {
+				pods, err := istioClient.GetPods(n.Namespace, labels.Set(deployment.Spec.Selector.MatchLabels).String())
+				if err != nil || pods == nil || len(pods.Items) == 0 {
+					n.Metadata["isDead"] = true
+				}
 			}
 		}
 	}
