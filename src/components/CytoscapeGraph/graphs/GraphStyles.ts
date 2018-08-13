@@ -72,7 +72,7 @@ export class GraphStyles {
             let content = '';
             switch (nodeType) {
               case NodeType.APP:
-                if (getCyGlobalData(ele).graphType === GraphType.APP || ele.data('isGroup')) {
+                if (getCyGlobalData(ele).graphType === GraphType.APP || ele.data('isGroup') || version === 'unknown') {
                   content = app;
                 } else {
                   content = app + `\n${version}`;
