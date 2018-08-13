@@ -49,8 +49,16 @@ GO_BUILD_ENVVARS = \
 	GOARCH=amd64 \
 	CGO_ENABLED=0 \
 
-all: build
+.PHONY: help
+all: help
+help: Makefile
+	@echo
+	@echo " Choose a command run in "$(PROJECTNAME)":"
+	@echo
+	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
+	@echo
 
+## clean: Clean ${GOPATH}/bin/kiali, ${GOPATH}/pkg/*, _output/docker and the kilai binary
 clean:
 	@echo Cleaning...
 	@rm -f kiali
@@ -58,47 +66,59 @@ clean:
 	@rm -rf ${GOPATH}/pkg/*
 	@rm -rf _output/docker
 
+## clean-all: Runs `make clean` internally and remove the _output dir
 clean-all: clean
 	@rm -rf _output
 
+## git-init: Set the hooks under ./git/hooks
 git-init:
 	@echo Setting Git Hooks
 	cp hack/hooks/* .git/hooks
 
+## go-check: Check if the go version installed is supported by Kiali
 go-check:
 	@hack/check_go_version.sh "${GO_VERSION_KIALI}"
 
+## build: Runs `make go-check` internally and build Kiali binary
 build: go-check
 	@echo Building...
 	${GO_BUILD_ENVVARS} go build \
 		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
+## install: Install missing dependencies. Runs `go install` internally
 install:
 	@echo Installing...
 	${GO_BUILD_ENVVARS} go install \
 		-ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH}"
 
+## format: Format all the files excluding vendor. Runs `gofmt` internally
 format:
 	@# Exclude more paths find . \( -path './vendor' -o -path <new_path_to_exclude> \) -prune -o -type f -iname '*.go' -print
 	@for gofile in $$(find . -path './vendor' -prune -o -type f -iname '*.go' -print); do \
 			gofmt -w $$gofile; \
 	done
+
+## build-test: Run tests and installing test dependencies, excluding third party tests under vendor. Runs `go test -i` internally
 build-test:
 	@echo Building and installing test dependencies to help speed up test runs.
 	go test -i $(shell go list ./... | grep -v -e /vendor/)
 
+## test: Run tests, excluding third party tests under vendor. Runs `go test` internally
 test:
 	@echo Running tests, excluding third party tests under vendor
 	go test $(shell go list ./... | grep -v -e /vendor/)
 
+## test-debug: Run tests in debug mode, excluding third party tests under vendor. Runs `go test -v` internally
 test-debug:
 	@echo Running tests in debug mode, excluding third party tests under vendor
 	go test -v $(shell go list ./... | grep -v -e /vendor/)
 
+## test-race: Run tests with race detection, excluding third party tests under vendor. Runs `go test -race` internally
 test-race:
 	@echo Running tests with race detection, excluding third party tests under vendor
 	go test -race $(shell go list ./... | grep -v -e /vendor/)
 
+## run: Run kiali binary
 run:
 	@echo Running...
 	@${GOPATH}/bin/kiali -v ${VERBOSE_MODE} -config config.yaml
@@ -107,6 +127,7 @@ run:
 # dep targets - dependency management
 #
 
+## dep-install: Install Glide.
 dep-install:
 	@echo Installing Glide itself
 	@mkdir -p ${GOPATH}/bin
@@ -114,6 +135,7 @@ dep-install:
 	# @curl https://glide.sh/get | sh
 	@curl https://glide.sh/get | awk '{gsub("get TAG https://glide.sh/version", "TAG=v0.13.1", $$0); print}' | sh
 
+## dep-update: Updating dependencies and storing in vendor directory. Runs `glide update` internally
 dep-update:
 	@echo Updating dependencies and storing in vendor directory
 	@glide update --strip-vendor
@@ -121,15 +143,20 @@ dep-update:
 #
 # Swagger Documentation
 #
+
+## swagger-install: Install swagger. Runs `go get swagger` internally
 swagger-install:
 	go get -u github.com/go-swagger/go-swagger/cmd/swagger
 
+## swagger-validate: Validate that swagger.json is correctly. Runs `swagger validate` internally
 swagger-validate:
 	@swagger validate ./swagger.json
 
+## swagger-gen: Generate that swagger.json from Code. Runs `swagger generate` internally
 swagger-gen:
 	@swagger generate spec -o ./swagger.json
 
+## swagger-serve: Serve the swagger.json in a website in local. Runs `swagger serve` internally
 swagger-serve: swagger-validate
 	@swagger serve ./swagger.json
 
@@ -161,6 +188,7 @@ endif
 	@cp -r deploy/docker/* _output/docker
 	@cp ${GOPATH}/bin/kiali _output/docker
 
+## docker-build: Build docker image into local docker daemon. Runs `docker build` internally
 docker-build: .prepare-docker-image-files
 	@echo Building docker image into local docker daemon...
 	docker build -t ${DOCKER_TAG} _output/docker
@@ -176,11 +204,13 @@ docker-build: .prepare-docker-image-files
 		echo "/etc/hosts should have kiali so you can access the ingress"; \
 	fi
 
+## minikube-docker: Build docker image into minikube docker daemon. Runs `docker build` internally
 minikube-docker: .prepare-minikube .prepare-docker-image-files
 	@echo Building docker image into minikube docker daemon...
 	@eval $$(minikube docker-env) ; \
 	docker build -t ${DOCKER_TAG} _output/docker
 
+## docker-push: Pushing current docker image to ${DOCKER_TAG}. Runs `docker push` internally
 docker-push:
 	@echo Pushing current docker image to ${DOCKER_TAG}
 	docker push ${DOCKER_TAG}
@@ -189,6 +219,7 @@ docker-push:
 	@$(eval OC ?= $(shell which istiooc 2>/dev/null || which oc))
 	@${OC} get project ${NAMESPACE} > /dev/null
 
+## openshift-deploy: Deploy docker image in Openshift project.
 openshift-deploy: openshift-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to OpenShift project ${NAMESPACE}
@@ -196,10 +227,12 @@ openshift-deploy: openshift-undeploy
 	cat deploy/openshift/kiali-secrets.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
 	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | ${OC} create -n ${NAMESPACE} -f -
 
+## openshift-undeploy: Undeploy from Openshift project.
 openshift-undeploy: .openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
 	${OC} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=kiali -n ${NAMESPACE}
 
+## openshift-reload-image: Refreshing image in Openshift project.
 openshift-reload-image: .openshift-validate
 	@echo Refreshing image in OpenShift project ${NAMESPACE}
 	${OC} delete pod --selector=app=kiali -n ${NAMESPACE}
@@ -208,6 +241,7 @@ openshift-reload-image: .openshift-validate
 	@$(eval KUBECTL ?= $(shell which kubectl))
 	@${KUBECTL} get namespace ${NAMESPACE} > /dev/null
 
+## k8s-deploy: Deploy docker image in Kubernetes namespace.
 k8s-deploy: k8s-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
@@ -215,10 +249,12 @@ k8s-deploy: k8s-undeploy
 	cat deploy/kubernetes/kiali-secrets.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
 	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
 
+## k8s-undeploy: Undeploy docker image in Kubernetes namespace.
 k8s-undeploy: .k8s-validate
 	@echo Undeploying from Kubernetes namespace ${NAMESPACE}
 	${KUBECTL} delete all,secrets,sa,configmaps,deployments,ingresses,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=kiali -n ${NAMESPACE}
 
+## k8s-reload-image: Refreshing image in Kubernetes namespace.
 k8s-reload-image: .k8s-validate
 	@echo Refreshing image in Kubernetes namespace ${NAMESPACE}
 	${KUBECTL} delete pod --selector=app=kiali -n ${NAMESPACE}
