@@ -2,8 +2,6 @@ import * as React from 'react';
 import { Link, RouteComponentProps } from 'react-router-dom';
 import { Breadcrumb, Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import ServiceId from '../../types/ServiceId';
-import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
-import { ActiveFilter } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import { ServiceDetailsInfo, Validations } from '../../types/ServiceInfo';
@@ -45,19 +43,6 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     }
     return url;
   }
-
-  cleanFilter = () => {
-    NamespaceFilterSelected.setSelected([]);
-  };
-
-  updateFilter = () => {
-    const activeFilter: ActiveFilter = {
-      label: 'Namespace: ' + this.props.match.params.namespace,
-      category: 'Namespace',
-      value: this.props.match.params.namespace.toString()
-    };
-    NamespaceFilterSelected.setSelected([activeFilter]);
-  };
 
   validateParams(parsed: ParsedSearch): boolean {
     if (!parsed.type || !parsed.name) {
@@ -180,12 +165,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item>
-          <Link to="/services" onClick={this.cleanFilter}>
-            Services
-          </Link>
+          <Link to="/services">Services</Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
-          <Link to="/services" onClick={this.updateFilter}>
+          <Link to={`/services?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}>
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>

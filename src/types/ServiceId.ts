@@ -1,6 +1,6 @@
 interface ServiceId {
-  namespace: String;
-  service: String;
+  namespace: string;
+  service: string;
 }
 
 export default ServiceId;
