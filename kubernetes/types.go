@@ -427,7 +427,7 @@ type ServiceDetails struct {
 type DeploymentDetails struct {
 	Deployment *v1beta1.Deployment `json:"deployment"`
 	Pods       *v1.PodList         `json:"pods"`
-	Services   *v1.ServiceList     `json:"services"`
+	Services   []v1.Service        `json:"services"`
 }
 
 // IstioDetails is a wrapper to group all Istio objects related to a Service.

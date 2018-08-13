@@ -18,6 +18,11 @@ type servicesResponse struct {
 	err      error
 }
 
+type serviceSliceResponse struct {
+	services []v1.Service
+	err      error
+}
+
 type serviceResponse struct {
 	service *v1.Service
 	err     error
@@ -321,7 +326,7 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 }
 
 func (in *IstioClient) GetDeploymentDetails(namespace string, deploymentName string) (*DeploymentDetails, error) {
-	podsChan, servicesChan := make(chan podsResponse), make(chan servicesResponse)
+	podsChan, servicesChan := make(chan podsResponse), make(chan serviceSliceResponse)
 
 	deployment, err := in.GetDeployment(namespace, deploymentName)
 	if err != nil {
@@ -337,7 +342,7 @@ func (in *IstioClient) GetDeploymentDetails(namespace string, deploymentName str
 	}
 
 	go in.getPods(namespace, deploymentSelector, podsChan)
-	go in.getServicesByApp(namespace, deploymentSelector, servicesChan)
+	go in.getServicesByDeployment(namespace, deployment, servicesChan)
 
 	podsResponse := <-podsChan
 	if podsResponse.err != nil {
@@ -401,15 +406,19 @@ func (in *IstioClient) getPods(namespace string, selector map[string]string, pod
 	podsChan <- podsResponse{pods: pods, err: err}
 }
 
-func (in *IstioClient) getServicesByApp(namespace string, selector map[string]string, serviceChan chan servicesResponse) {
+func (in *IstioClient) getServicesByDeployment(namespace string, deployment *v1beta1.Deployment,
+	serviceChan chan serviceSliceResponse) {
 	var err error
-	var services *v1.ServiceList
+	var allServices *v1.ServiceList
+	var services []v1.Service
 
-	cfg := config.Get()
-	if serviceSelectorName, ok := selector[cfg.AppLabelName]; ok {
-		serviceSelector := labels.Set{cfg.AppLabelName: serviceSelectorName}
-		services, err = in.k8s.CoreV1().Services(namespace).List(meta_v1.ListOptions{LabelSelector: serviceSelector.String()})
+	allServices, err = in.k8s.CoreV1().Services(namespace).List(emptyListOptions)
+	for _, svc := range allServices.Items {
+		svcSelector := labels.Set(svc.Spec.Selector).AsSelector()
+		if svcSelector.Matches(labels.Set(deployment.Labels)) {
+			services = append(services, svc)
+		}
 	}
 
-	serviceChan <- servicesResponse{services: services, err: err}
+	serviceChan <- serviceSliceResponse{services: services, err: err}
 }

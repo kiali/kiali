@@ -52,12 +52,12 @@ type Service struct {
 	Ports           Ports             `json:"ports"`
 }
 
-func (ss *Services) Parse(services *v1.ServiceList) {
+func (ss *Services) Parse(services []v1.Service) {
 	if ss == nil {
 		return
 	}
 
-	for _, item := range services.Items {
+	for _, item := range services {
 		service := &Service{}
 		service.Parse(&item)
 		*ss = append(*ss, service)
@@ -66,6 +66,8 @@ func (ss *Services) Parse(services *v1.ServiceList) {
 
 func (s *Service) Parse(service *v1.Service) {
 	if service != nil {
+		s.Name = service.Name
+		s.Namespace = Namespace{Name: service.Namespace}
 		s.Labels = service.Labels
 		s.Type = string(service.Spec.Type)
 		s.Ip = service.Spec.ClusterIP
