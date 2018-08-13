@@ -42,9 +42,12 @@ const (
 	EnvGrafanaVarService               = "GRAFANA_VAR_SERVICE"
 	EnvGrafanaVarWorkload              = "GRAFANA_VAR_WORKLOAD"
 
+	EnvJaegerURL              = "JAEGER_URL"
 	EnvJaegerServiceNamespace = "JAEGER_SERVICE_NAMESPACE"
 	EnvJaegerService          = "JAEGER_SERVICE"
 	EnvJaegerServicePort      = "JAEGER_SERVICE_PORT"
+	EnvJaegerProxyNodePort    = "JAEGER_PROXY_NODE_PORT"
+	EnvJaegerProxyServicePort = "JAEGER_PROXY_SERVICE_PORT"
 
 	EnvAppLabelName     = "APP_LABEL_NAME"
 	EnvVersionLabelName = "VERSION_LABEL_NAME"
@@ -53,7 +56,6 @@ const (
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
 	EnvIstioNamespace              = "ISTIO_NAMESPACE"
 
-	EnvKialiService       = "KIALI_SERVICE"
 	IstioVersionSupported = ">= 1.0"
 )
 
@@ -84,9 +86,12 @@ type GrafanaConfig struct {
 
 // JaegerConfig describes configuration used for jaeger links
 type JaegerConfig struct {
+	URL              string `yaml:"url"`
 	ServiceNamespace string `yaml:"service_namespace"`
 	Service          string `yaml:"service"`
 	ServicePort      string `yaml:"service_port"`
+	ProxyNodePort    int    `yaml:"proxy_node_port"`
+	ProxyServicePort int    `yaml:"proxy_service_port"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -119,7 +124,6 @@ type Config struct {
 	VersionLabelName string            `yaml:"version_label_name,omitempty"`
 	ExternalServices ExternalServices  `yaml:"external_services,omitempty"`
 	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
-	KialiService     string            `yaml:"kiali_service,omitempty"`
 	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
 }
 
@@ -132,7 +136,6 @@ func NewConfig() (c *Config) {
 	c.InCluster = getDefaultBool(EnvInCluster, true)
 	c.AppLabelName = strings.TrimSpace(getDefaultString(EnvAppLabelName, "app"))
 	c.VersionLabelName = strings.TrimSpace(getDefaultString(EnvVersionLabelName, "version"))
-	c.KialiService = strings.TrimSpace(getDefaultString(EnvKialiService, "kiali"))
 	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
 
 	// Server configuration
@@ -160,9 +163,12 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Grafana.VarWorkload = strings.TrimSpace(getDefaultString(EnvGrafanaVarWorkload, "var-workload"))
 
 	// Jaeger Configuration
+	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
 	c.ExternalServices.Jaeger.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvJaegerServiceNamespace, "istio-system"))
 	c.ExternalServices.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
 	c.ExternalServices.Jaeger.ServicePort = strings.TrimSpace(getDefaultString(EnvJaegerServicePort, "16686"))
+	c.ExternalServices.Jaeger.ProxyNodePort = getDefaultInt(EnvJaegerProxyNodePort, 32439)
+	c.ExternalServices.Jaeger.ProxyServicePort = getDefaultInt(EnvJaegerProxyServicePort, 20002)
 
 	// Istio Configuration
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))

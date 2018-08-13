@@ -263,12 +263,6 @@ identity:
 ----
 istio_namespace: VALUE
 ----
-
-|`KIALI_SERVICE`
-| The name of the service of Kiali. (Default: kiali)
-[source,yaml]
-----
-kiali_service: VALUE
 ----
 
 |`SERVER_ADDRESS`
@@ -458,6 +452,18 @@ external_services:
     var_workload: VALUE
 ----
 
+|`JAEGER_URL`
+|Optional, URL to the Jaeger Query service. This URL must be accessible directly from the client browser.
+If the URL is not provided, Kiali will start a proxy for Jaeger queries.
+Note that in order to enable proxy when SSL is also activated, you must make sure that Kiali certificate is valid for the main Kiali server and for the Proxy server, which runs on a different port (see proxy options below).
+By default, Jaeger URL is unset, so proxy is enabled.
+[source,yaml]
+----
+external_services:
+  jaeger:
+    url: VALUE
+----
+
 |`JAEGER_SERVICE_NAMESPACE`
 |The Kubernetes namespace that holds the Jaeger service. (default is `istio-system`)
 [source,yaml]
@@ -483,6 +489,24 @@ external_services:
 external_services:
   jaeger:
     service: VALUE
+----
+
+|`JAEGER_PROXY_NODE_PORT`
+|Node port for the Jaeger proxy, if enabled. If changed, make sure it still matches the `kiali-jaeger` service definition. (default is `32439`)
+[source,yaml]
+----
+external_services:
+  jaeger:
+    proxy_node_port: VALUE
+----
+
+|`JAEGER_PROXY_SERVICE_PORT`
+|Service port for the Jaeger proxy, if enabled. If changed, make sure it still matches the `kiali-jaeger` service definition. (default is `20002`)
+[source,yaml]
+----
+external_services:
+  jaeger:
+    proxy_service_port: VALUE
 ----
 
 |`LOGIN_TOKEN_SIGNING_KEY`
@@ -540,6 +564,14 @@ If you git cloned the Kiali UI repository in directory `/my/git/repo` and have b
 ----
 CONSOLE_VERSION=local CONSOLE_LOCAL_DIR=/my/git/repo make docker-build
 ----
+
+=== Disabling SSL
+
+In the provided OpenShift templates, SSL is turned on by default. If you want to turn it off, you should:
+
+* Remove the "tls: termination: reencrypt" option in Kiali route
+* Remove the "identity" block, with certificate paths, in Kiali Config Map.
+* Optionnally you can also remove the annotation "service.alpha.openshift.io/serving-cert-secret-name", and the related volume that is declared and mounted in Kiali Deployment (but if you don't, they will just be ignored).
 
 == Contributing
 
