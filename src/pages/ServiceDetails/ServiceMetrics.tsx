@@ -111,7 +111,7 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
   };
 
   fetchMetrics = () => {
-    API.getAppMetrics(authentication(), this.props.namespace, this.props.service, this.options)
+    API.getServiceMetrics(authentication(), this.props.namespace, this.props.service, this.options)
       .then(response => {
         const metrics: M.Metrics = response.data;
         this.setState({
