@@ -53,7 +53,7 @@ const tooltipListStyle = style({
 });
 
 export class ConfigIndicator extends React.PureComponent<Props, {}> {
-  numberOfChecks = (type: string) => (this.props.validation.checks || []).filter(i => i.severity === type).length;
+  numberOfChecks = (type: string) => this.props.validation.checks.filter(i => i.severity === type).length;
 
   getTypeMessage = (type: string) => {
     const numberType = this.numberOfChecks(type);
@@ -75,7 +75,7 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
   }
 
   tooltipContent() {
-    const numChecks = this.props.validation.checks ? this.props.validation.checks.length : 0;
+    const numChecks = this.props.validation.checks.length;
 
     let issuesMessages: string[] = [];
     if (numChecks === 0) {

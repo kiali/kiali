@@ -393,7 +393,7 @@ export interface ObjectValidation {
   name: string;
   objectType: string;
   valid: boolean;
-  checks?: ObjectCheck[];
+  checks: ObjectCheck[];
 }
 
 export interface ObjectCheck {
@@ -460,7 +460,7 @@ export const highestSeverity = (checks: ObjectCheck[]): string => {
 };
 
 const numberOfChecks = (type: string, object: ObjectValidation) =>
-  (object ? object.checks || [] : []).filter(i => i.severity === type).length;
+  (object ? object.checks : []).filter(i => i.severity === type).length;
 
 export const validationToSeverity = (object: ObjectValidation): string => {
   const warnChecks = numberOfChecks('warning', object);
@@ -480,7 +480,7 @@ export const validationToIconName = (object: ObjectValidation): string => {
 };
 
 export const checkForPath = (object: ObjectValidation, path: string): ObjectCheck[] => {
-  if (!object || !object.checks) {
+  if (!object) {
     return [];
   }
 

@@ -64,16 +64,14 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
       virtualService =>
         this.props.validations['virtualservice'] &&
         this.props.validations['virtualservice'][virtualService.name] &&
-        this.props.validations['virtualservice'][virtualService.name].checks !== undefined &&
-        this.props.validations['virtualservice'][virtualService.name].checks!.length > 0
+        this.props.validations['virtualservice'][virtualService.name].checks.length > 0
     );
 
     validationChecks.hasDestinationRuleChecks = destinationRules.some(
       destinationRule =>
         this.props.validations['destinationrule'] &&
         this.props.validations['destinationrule'][destinationRule.name] &&
-        this.props.validations['destinationrule'][destinationRule.name].checks !== undefined &&
-        this.props.validations['destinationrule'][destinationRule.name].checks!.length > 0
+        this.props.validations['destinationrule'][destinationRule.name].checks.length > 0
     );
 
     return validationChecks;

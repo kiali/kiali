@@ -201,11 +201,7 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
     if (filterByNotValidated && !item.validation) {
       filtered.push(item);
     }
-    if (
-      filterByWarning &&
-      item.validation &&
-      (item.validation.checks || []).filter(i => i.severity === 'warning').length > 0
-    ) {
+    if (filterByWarning && item.validation && item.validation.checks.filter(i => i.severity === 'warning').length > 0) {
       filtered.push(item);
     }
   });
@@ -288,9 +284,7 @@ export const sortIstioItems = (unsorted: IstioConfigItem[], sortField: SortField
           sortValue = 0;
         }
         if (!a.validation.valid && !b.validation.valid) {
-          let aIssues = a.validation.checks ? a.validation.checks.length : 0;
-          let bIssues = b.validation.checks ? b.validation.checks.length : 0;
-          sortValue = aIssues > bIssues ? -1 : aIssues < bIssues ? 1 : 0;
+          sortValue = b.validation.checks.length - a.validation.checks.length;
         }
       }
     }
