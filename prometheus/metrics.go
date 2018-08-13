@@ -27,8 +27,9 @@ type MetricsQuery struct {
 	ByLabelsIn   []string
 	ByLabelsOut  []string
 	Namespace    string
-	Apps         []string
-	Workload     string
+	// TODO: replace with single string value when `business.GetApps` gets deleted
+	Apps     []string
+	Workload string
 }
 
 // FillDefaults fills the struct with default parameters

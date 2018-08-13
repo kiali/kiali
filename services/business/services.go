@@ -84,6 +84,8 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 }
 
 // GetApps returns a list of "app" label values used for the Deployments covered by this service
+//	DEPRECATED this should only be used temporarily, until it's possible the get metrics for a given app label
+//	Ultimately, service metrics will not gather full apps metrics.
 func (in *SvcService) GetApps(namespace, service string) ([]string, error) {
 	serviceDetails, err := in.k8s.GetServiceDetails(namespace, service)
 	if err != nil {

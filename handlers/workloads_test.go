@@ -116,7 +116,7 @@ func TestWorkloadMetricsDefault(t *testing.T) {
 	assert.NotZero(t, gaugeSentinel)
 }
 
-func testWorkloadMetricsWithParams(t *testing.T) {
+func TestWorkloadMetricsWithParams(t *testing.T) {
 	ts, api := setupWorkloadMetricsEndpoint(t)
 	defer ts.Close()
 
