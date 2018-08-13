@@ -12,7 +12,7 @@ type PodChecker struct {
 
 const podsCheckerType = "pod"
 
-// Runs all checkers for Pod objects passed into the PodChecker
+// Check runs all checkers for Pod objects passed into the PodChecker
 func (checker PodChecker) Check() models.IstioValidations {
 	return checker.runIndividualChecks()
 }
@@ -26,6 +26,8 @@ func (checker PodChecker) runIndividualChecks() models.IstioValidations {
 			Name:       pod.ObjectMeta.Name,
 			ObjectType: podsCheckerType,
 			Valid:      true,
+			// Explicitly create an empty array as 0-values do not appear in json
+			Checks: []*models.IstioCheck{},
 		}
 
 		for _, podChecker := range checker.enabledCheckersFor(&pod) {

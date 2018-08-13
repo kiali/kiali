@@ -2,6 +2,7 @@ package virtual_services
 
 import (
 	"fmt"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
 )
