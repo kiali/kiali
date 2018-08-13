@@ -16,16 +16,9 @@ type EdgeLabelRadioGroupProps = {
   onEdgeChanged: PropTypes.func;
 };
 
-type EdgeLabelRadioGroupState = {
-  edgeValue?: string;
-};
-
-export class EdgeLabelRadioGroup extends React.Component<EdgeLabelRadioGroupProps, EdgeLabelRadioGroupState> {
+export class EdgeLabelRadioGroup extends React.Component<EdgeLabelRadioGroupProps> {
   constructor(props: EdgeLabelRadioGroupProps) {
     super(props);
-    this.state = {
-      edgeValue: props.graphParams.edgeLabelMode
-    };
   }
 
   onEdgeChanged = (event: any) => {
@@ -46,7 +39,7 @@ export class EdgeLabelRadioGroup extends React.Component<EdgeLabelRadioGroupProp
             type="radio"
             name="edge-label-radio-group"
             value={edgeLabelModeKey}
-            checked={edgeLabelModeKey === this.state.edgeValue}
+            checked={edgeLabelModeKey === this.props.graphParams.edgeLabelMode}
             onChange={this.onEdgeChanged}
           />
           <span className={radioButtonStyle}>{EDGE_LABEL_MODES[edgeLabelModeKey]}</span>

@@ -1,15 +1,14 @@
 import * as React from 'react';
+import { style } from 'typestyle';
 import { Toolbar, FormGroup } from 'patternfly-react';
 
 import { Duration } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
 import { config } from '../../config';
-import { style } from 'typestyle';
 import { GraphParamsType } from '../../types/Graph';
 import Namespace from '../../types/Namespace';
 import GraphRefreshContainer from '../../containers/GraphRefreshContainer';
-
 import GraphSettingsContainer from '../../containers/GraphSettingsContainer';
 
 export interface GraphFilterProps extends GraphParamsType {
@@ -43,12 +42,6 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
     }
   };
 
-  updateNamespace = (selected: string) => {
-    if (this.props.namespace.name !== selected) {
-      this.props.onNamespaceChange({ name: selected });
-    }
-  };
-
   handleRefresh = (e: any) => {
     this.props.onRefresh();
   };
@@ -74,8 +67,8 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
               disabled={this.props.disabled}
               handleSelect={this.updateDuration}
               nameDropdown={'Displaying'}
-              initialValue={this.props.graphDuration.value}
-              initialLabel={String(GraphFilter.INTERVAL_DURATION[this.props.graphDuration.value])}
+              value={this.props.graphDuration.value}
+              label={String(GraphFilter.INTERVAL_DURATION[this.props.graphDuration.value])}
               options={GraphFilter.INTERVAL_DURATION}
             />
           </span>
