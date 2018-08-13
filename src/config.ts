@@ -42,11 +42,6 @@ export const config = () => {
         'cose-bilkent': 'Cose',
         dagre: 'Dagre'
       }
-    },
-    /** Threshold limits */
-    threshold: {
-      percentErrorSevere: 2.0,
-      percentErrorWarn: 0.1
     }
   });
 };
