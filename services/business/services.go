@@ -75,31 +75,3 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 	s.SetServiceDetails(serviceDetails, istioDetails, prometheusDetails)
 	return &s, nil
 }
-
-// GetApps returns a list of "app" label values used for the Deployments covered by this service
-//	DEPRECATED this should only be used temporarily, until it's possible the get metrics for a given app label
-//	Ultimately, service metrics will not gather full apps metrics.
-func (in *SvcService) GetApps(namespace, service string) ([]string, error) {
-	serviceDetails, err := in.k8s.GetServiceDetails(namespace, service)
-	if err != nil {
-		return nil, fmt.Errorf("GetApps: %s", err.Error())
-	}
-
-	// Make a map to avoid repeated values
-	apps := make(map[string]bool)
-	for _, pod := range serviceDetails.Pods {
-		if app, ok := pod.Labels["app"]; ok {
-			apps[app] = true
-		}
-	}
-
-	// Make an array of the apps found
-	uniqueApps := make([]string, len(apps))
-	i := 0
-	for k := range apps {
-		uniqueApps[i] = k
-		i++
-	}
-
-	return uniqueApps, nil
-}

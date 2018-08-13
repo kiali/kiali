@@ -44,20 +44,8 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplie
 	namespace := vars["namespace"]
 	service := vars["service"]
 
-	// Get business layer
-	business, err := business.Get()
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
-		return
-	}
-	apps, err := business.Svc.GetApps(namespace, service)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Could not get apps: "+err.Error())
-		return
-	}
-
-	params := prometheus.MetricsQuery{Namespace: namespace, Apps: apps}
-	err = extractMetricsQueryParams(r, &params)
+	params := prometheus.MetricsQuery{Namespace: namespace, Service: service}
+	err := extractMetricsQueryParams(r, &params)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return

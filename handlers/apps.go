@@ -20,7 +20,7 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier fu
 	namespace := vars["namespace"]
 	app := vars["app"]
 
-	params := prometheus.MetricsQuery{Namespace: namespace, Apps: []string{app}}
+	params := prometheus.MetricsQuery{Namespace: namespace, App: app}
 	err := extractMetricsQueryParams(r, &params)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())

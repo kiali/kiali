@@ -41,9 +41,9 @@ var (
 	}
 )
 
-func (in *kialiMetric) labelsToUse(labelsIn, labelsOut, labelsErrorIn, labelsErrorOut string) (string, string) {
+func (in *kialiMetric) labelsToUse(labels, labelsError string) string {
 	if in.useErrorLabels {
-		return labelsErrorIn, labelsErrorOut
+		return labelsError
 	}
-	return labelsIn, labelsOut
+	return labels
 }
