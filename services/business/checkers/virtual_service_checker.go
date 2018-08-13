@@ -61,6 +61,8 @@ func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject)
 		Name:       virtualServiceName,
 		ObjectType: VirtualCheckerType,
 		Valid:      true,
+		// Explicitly create an empty array as 0-values do not appear in json
+		Checks: []*models.IstioCheck{},
 	}
 
 	enabledCheckers := []Checker{
