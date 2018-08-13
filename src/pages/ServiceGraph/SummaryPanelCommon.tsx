@@ -18,7 +18,8 @@ export interface NodeData {
 
 export enum NodeMetricType {
   APP = 1,
-  WORKLOAD = 2
+  WORKLOAD = 2,
+  SERVICE = 3
 }
 
 export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType) => {
@@ -109,6 +110,8 @@ export const getNodeMetricType = (node: any) => {
     return NodeMetricType.WORKLOAD;
   } else if (data.nodeType === NodeType.APP) {
     return NodeMetricType.APP;
+  } else if (data.nodeType === NodeType.SERVICE) {
+    return NodeMetricType.SERVICE;
   }
   return undefined;
 };

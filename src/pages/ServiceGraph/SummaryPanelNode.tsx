@@ -13,7 +13,8 @@ import {
   getNodeMetrics,
   getNodeMetricType,
   getServicesLinkList,
-  renderPanelTitle
+  renderPanelTitle,
+  NodeMetricType
 } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
@@ -27,6 +28,7 @@ type SummaryPanelStateType = {
   errorCountOut: [string, number][];
   healthLoading: boolean;
   health?: Health;
+  rpsMetrics: boolean;
 };
 
 export default class SummaryPanelNode extends React.Component<SummaryPanelPropType, SummaryPanelStateType> {
@@ -49,7 +51,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       requestCountOut: [],
       errorCountIn: [],
       errorCountOut: [],
-      healthLoading: false
+      healthLoading: false,
+      rpsMetrics: true
     };
   }
 
@@ -81,24 +84,31 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const filters = ['request_count', 'request_error_count'];
     const includeIstio = props.namespace === 'istio-system';
 
-    getNodeMetrics(nodeMetricType, target, props, filters, includeIstio)
-      .then(response => {
-        if (!this._isMounted) {
-          console.log('SummaryPanelNode: Ignore fetch, component not mounted.');
-          return;
-        }
-        this.showRequestCountMetrics(response.data);
-      })
-      .catch(error => {
-        if (!this._isMounted) {
-          console.log('SummaryPanelNode: Ignore fetch error, component not mounted.');
-          return;
-        }
-        this.setState({ loading: false });
-        console.error(error);
-      });
+    // For service nodes we need to handle metrics a bit differently
+    // The don't have the normal incoming and outgoing metrics, so we don't display them
+    if (nodeMetricType === NodeMetricType.SERVICE) {
+      this.setState({ loading: false });
+      this.setState({ rpsMetrics: false });
+    } else {
+      getNodeMetrics(nodeMetricType, target, props, filters, includeIstio)
+        .then(response => {
+          if (!this._isMounted) {
+            console.log('SummaryPanelNode: Ignore fetch, component not mounted.');
+            return;
+          }
+          this.showRequestCountMetrics(response.data);
+        })
+        .catch(error => {
+          if (!this._isMounted) {
+            console.log('SummaryPanelNode: Ignore fetch error, component not mounted.');
+            return;
+          }
+          this.setState({ loading: false });
+          console.error(error);
+        });
 
-    this.setState({ loading: true });
+      this.setState({ loading: true });
+    }
   }
 
   showRequestCountMetrics(all: Metrics) {
@@ -187,6 +197,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   private renderRpsCharts = () => {
     if (this.state.loading) {
       return <strong>loading charts...</strong>;
+    } else if (!this.state.rpsMetrics) {
+      return;
     }
     return (
       <>
