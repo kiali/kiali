@@ -35,8 +35,10 @@ func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Scheme != "" {
 		scheme = r.URL.Scheme
 	}
+	// r.Host can be set as "host" or "host:port", we always remove the :port as it is updated by the proxy
+	kialiHost := strings.Split(r.Host, ":")
 	info := models.JaegerInfo{
-		URL: fmt.Sprintf("%s://%s:%s", scheme, r.Host, "32439"),
+		URL: fmt.Sprintf("%s://%s:%s", scheme, kialiHost[0], "32439"),
 	}
 	RespondWithJSON(w, http.StatusOK, info)
 }
