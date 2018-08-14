@@ -75,7 +75,7 @@ interface Thresholds {
   unit: string;
 }
 
-const REQUESTS_THRESHOLDS: Thresholds = {
+export const REQUESTS_THRESHOLDS: Thresholds = {
   degraded: 0.1,
   failure: 20,
   unit: '%'

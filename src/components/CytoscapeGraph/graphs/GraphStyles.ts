@@ -1,10 +1,31 @@
 import { PfColors } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
-import { config } from '../../../config';
-import { FAILURE, DEGRADED } from '../../../types/Health';
+import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
 import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
 
 export const DimClass = 'mousedim';
+
+// UX-specified colors and widths
+const EdgeColor = PfColors.Green400;
+const EdgeColorDead = PfColors.Black500;
+const EdgeColorDegraded = PfColors.Orange;
+const EdgeColorFailure = PfColors.Red;
+const EdgeWidth = 1;
+const EdgeWidthSelected = 3;
+const EdgeText = '6px';
+const NodeColorBorder = PfColors.Black400;
+const NodeColorBorderDegraded = PfColors.Orange;
+const NodeColorBorderFailure = PfColors.Red;
+const NodeColorBorderHover = PfColors.Blue300;
+const NodeColorBorderSelected = PfColors.Blue300;
+const NodeColorFill = PfColors.White;
+const NodeColorFillBox = PfColors.Black100;
+const NodeColorFillHover = PfColors.Blue50;
+const NodeColorFillHoverDegraded = '#fdf2e5';
+const NodeColorFillHoverFailure = '#ffe6e6';
+const NodeWidth = '1px';
+const NodeWidthSelected = '3px';
+const NodeText = '8px';
 
 export class GraphStyles {
   static options() {
@@ -19,16 +40,16 @@ export class GraphStyles {
     const getEdgeColor = (ele: any): string => {
       const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
       if (rate === 0 || ele.data('isUnused')) {
-        return PfColors.Black;
+        return EdgeColorDead;
       }
       const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
-      if (pErr > config().threshold.percentErrorSevere) {
-        return PfColors.Red100;
+      if (pErr > REQUESTS_THRESHOLDS.failure) {
+        return EdgeColorFailure;
       }
-      if (pErr > config().threshold.percentErrorWarn) {
-        return PfColors.Orange400;
+      if (pErr > REQUESTS_THRESHOLDS.degraded) {
+        return EdgeColorDegraded;
       }
-      return PfColors.Green400;
+      return EdgeColor;
     };
 
     const getTLSValue = (ele: any, tlsValue: string, nonTlsValue: string): string => {
@@ -40,16 +61,22 @@ export class GraphStyles {
     };
 
     const nodeSelectedStyle = {
-      'background-color': PfColors.Blue50,
-      'border-color': PfColors.Blue200,
-      'border-width': '2px'
+      'border-color': (ele: any) => {
+        if (ele.hasClass(DEGRADED.name)) {
+          return NodeColorBorderDegraded;
+        }
+        if (ele.hasClass(FAILURE.name)) {
+          return NodeColorBorderFailure;
+        }
+        return NodeColorBorderSelected;
+      },
+      'border-width': NodeWidthSelected
     };
 
     return [
       {
         selector: 'node',
         css: {
-          // color: PfColors.Black,
           content: (ele: any) => {
             const nodeType = ele.data('nodeType');
             const namespace = ele.data('namespace');
@@ -97,13 +124,21 @@ export class GraphStyles {
 
             return content;
           },
-          'background-color': PfColors.Black200,
-          'border-color': PfColors.Black400,
+          'background-color': NodeColorFill,
+          'border-color': (ele: any) => {
+            if (ele.hasClass(DEGRADED.name)) {
+              return NodeColorBorderDegraded;
+            }
+            if (ele.hasClass(FAILURE.name)) {
+              return NodeColorBorderFailure;
+            }
+            return NodeColorBorder;
+          },
           'border-style': (ele: any) => {
             return ele.data('isUnused') ? 'dotted' : 'solid';
           },
-          'border-width': '1px',
-          'font-size': '8px',
+          'border-width': NodeWidth,
+          'font-size': NodeText,
           'overlay-padding': '6px',
           'text-halign': 'center',
           'text-valign': 'center',
@@ -142,7 +177,7 @@ export class GraphStyles {
           'text-margin-x': '2px',
           'text-margin-y': '8px',
           'text-rotation': '90deg',
-          'background-color': PfColors.Black100
+          'background-color': NodeColorFillBox
         }
       },
       // Uncomment and update if we decide to apply style overrides for a selected group (composite) node
@@ -192,7 +227,7 @@ export class GraphStyles {
           'text-rotation': (ele: any) => {
             return getTLSValue(ele, '0deg', 'autorotate');
           },
-          'font-size': '7px',
+          'font-size': EdgeText,
           'line-color': (ele: any) => {
             return getEdgeColor(ele);
           },
@@ -203,17 +238,14 @@ export class GraphStyles {
           'target-arrow-color': (ele: any) => {
             return getEdgeColor(ele);
           },
-          'text-margin-x': '6px',
-          width: 1
+          'text-margin-x': '4px',
+          width: EdgeWidth
         }
       },
       {
         selector: 'edge:selected',
         css: {
-          'line-color': PfColors.Blue200,
-          'source-arrow-color': PfColors.Blue200,
-          'target-arrow-color': PfColors.Blue200,
-          width: 2
+          width: EdgeWidthSelected
         }
       },
       // When you mouse over a node, all nodes other than the moused over node
@@ -221,7 +253,24 @@ export class GraphStyles {
       {
         selector: 'node.mousehighlight',
         style: {
-          'background-color': PfColors.Blue50
+          'background-color': (ele: any) => {
+            if (ele.hasClass(DEGRADED.name)) {
+              return NodeColorFillHoverDegraded;
+            }
+            if (ele.hasClass(FAILURE.name)) {
+              return NodeColorFillHoverFailure;
+            }
+            return NodeColorFillHover;
+          },
+          'border-color': (ele: any) => {
+            if (ele.hasClass(DEGRADED.name)) {
+              return NodeColorBorderDegraded;
+            }
+            if (ele.hasClass(FAILURE.name)) {
+              return NodeColorBorderFailure;
+            }
+            return NodeColorBorderHover;
+          }
         }
       },
       {
@@ -229,28 +278,6 @@ export class GraphStyles {
         style: {
           opacity: '0.6'
         }
-      },
-      {
-        selector: 'node.' + DEGRADED.name,
-        style: {
-          'border-color': DEGRADED.color,
-          'border-width': '3px'
-        }
-      },
-      {
-        selector: 'node.' + FAILURE.name,
-        style: {
-          'border-color': FAILURE.color,
-          'border-width': '3px'
-        }
-      },
-      {
-        selector: 'node:selected.' + DEGRADED.name,
-        style: nodeSelectedStyle
-      },
-      {
-        selector: 'node:selected.' + FAILURE.name,
-        style: nodeSelectedStyle
       },
       {
         selector: 'edge.' + DimClass,
