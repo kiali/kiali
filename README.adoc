@@ -93,6 +93,21 @@ yarn build-css
 Note:
 Only static assets which are `import` 'ed into your application will be included in your resulting build output.
 
+=== RCUE Styling
+To use the https://redhat-rcue.github.io/[RCUE] styled css instead of normal Patternfly
+
+For development run:
+[source,shell]
+----
+env REACT_APP_RCUE=true yarn start
+----
+
+For production build run:
+[source,shell]
+----
+env REACT_APP_RCUE=true yarn build
+----
+
 === Style Code Guide
 
 See the link:./STYLE_GUIDE.adoc[STYLE CODE GUIDE file].

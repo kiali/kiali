@@ -21,6 +21,12 @@ $icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/";
   }
 }
 
+// Override RCUE style: https://redhat-rcue.github.io/
+// otherwise we get a 35px height for title which is distorted
+.navbar-pf-vertical .navbar-brand .navbar-brand-name {
+  height: 12px !important;
+}
+
 .navbar-pf-vertical .nav .nav-item-iconic .badge-danger {
   background-color: #cc0000; // Red100
 }

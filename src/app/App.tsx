@@ -10,6 +10,20 @@ import history from './History';
 import { PersistGate } from 'redux-persist/lib/integration/react';
 import * as Visibility from 'visibilityjs';
 
+/**
+ * Use the Patternfly RCUE productized css styles if set by the environment
+ * @example 'env REACT_APP_RCUE=true yarn start'
+ */
+const loadRcueCssIfNeeded = async (): Promise<void> => {
+  // get the flag from command line if set: env REACT_APP_RCUE=true yarn start
+  const useRcue = process.env.REACT_APP_RCUE;
+  if (useRcue === 'true') {
+    console.debug('REACT_APP_RCUE set to true');
+    Promise.all([require('patternfly/dist/css/rcue.css'), require('patternfly/dist/css/rcue-additions.css')]);
+    console.debug('Loaded RCUE css libraries loaded');
+  }
+};
+
 Visibility.change((e, state) => {
   // There are 3 states, visible, hidden and prerender, consider prerender as hidden.
   // https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilityState
@@ -68,6 +82,7 @@ const Loading = () => {
 
 class App extends React.Component {
   render() {
+    loadRcueCssIfNeeded();
     const Sidebar = withRouter(Navigation);
     return (
       <Provider store={store}>
