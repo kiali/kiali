@@ -17,7 +17,7 @@ import (
 func TestServiceDetailParsing(t *testing.T) {
 	assert := assert.New(t)
 
-	service := Service{}
+	service := ServiceDetails{}
 	service.Name = "service"
 	service.Namespace = Namespace{"namespace"}
 	service.SetServiceDetails(fakeServiceDetails(), fakeIstioDetails(), fakePrometheusDetails())
@@ -25,12 +25,12 @@ func TestServiceDetailParsing(t *testing.T) {
 	// Kubernetes Details
 	assert.Equal(service.Name, "service")
 	assert.Equal(service.Namespace.Name, "namespace")
-	assert.Equal(service.CreatedAt, "2018-03-08T17:44:00+03:00")
-	assert.Equal(service.ResourceVersion, "1234")
-	assert.Equal(service.Type, "ClusterIP")
-	assert.Equal(service.Ip, "fromservice")
-	assert.Equal(service.Labels, map[string]string{"label1": "labelName1", "label2": "labelName2"})
-	assert.Equal(service.Ports, Ports{
+	assert.Equal(service.Service.CreatedAt, "2018-03-08T17:44:00+03:00")
+	assert.Equal(service.Service.ResourceVersion, "1234")
+	assert.Equal(service.Service.Type, "ClusterIP")
+	assert.Equal(service.Service.Ip, "127.0.0.9")
+	assert.Equal(service.Service.Labels, map[string]string{"label1": "labelName1", "label2": "labelName2"})
+	assert.Equal(service.Service.Ports, Ports{
 		Port{Name: "http", Protocol: "TCP", Port: 3001},
 		Port{Name: "http", Protocol: "TCP", Port: 3000}})
 	assert.Equal(service.Endpoints, Endpoints{
@@ -47,7 +47,7 @@ func TestServiceDetailParsing(t *testing.T) {
 	assert.Len(service.Pods, 2)
 	assert.Equal(service.Pods[0].Name, "reviews-v1-1234")
 	assert.Equal(service.Pods[1].Name, "reviews-v2-1234")
-	assert.Equal(*service.Deployments[0], Deployment{
+	assert.Equal(*service.Workloads[0], Workload{
 		Name:                "reviews-v1",
 		Labels:              map[string]string{"apps": "reviews", "version": "v1"},
 		CreatedAt:           "2018-03-08T17:44:00+03:00",
@@ -67,7 +67,7 @@ func TestServiceDetailParsing(t *testing.T) {
 			ObservedGeneration:              50,
 			CurrentCPUUtilizationPercentage: 70}})
 
-	assert.Equal(*service.Deployments[1], Deployment{
+	assert.Equal(*service.Workloads[1], Workload{
 		Name:                "reviews-v2",
 		Labels:              map[string]string{"apps": "reviews", "version": "v2"},
 		CreatedAt:           "2018-03-08T17:45:00+03:00",
@@ -218,11 +218,33 @@ func TestServiceDetailParsing(t *testing.T) {
 		"v2": {"catalog.ns/v1", "shares.ns/v2"}})
 }
 
-func fakeServiceDetails() *kubernetes.ServiceDetails {
-	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:45 +0300")
+func TestServiceParse(t *testing.T) {
+	assert := assert.New(t)
 
-	service := &v1.Service{
+	service := Service{}
+	service.Name = "service"
+	service.Namespace = Namespace{"namespace"}
+
+	service.Parse(fakeService())
+	assert.Equal("labelName1", service.Labels["label1"])
+	assert.Equal("labelName2", service.Labels["label2"])
+	assert.Equal("ClusterIP", service.Type)
+	assert.Equal("127.0.0.9", service.Ip)
+	assert.Equal("1234", service.ResourceVersion)
+
+	assert.Equal("http", service.Ports[0].Name)
+	assert.Equal("TCP", service.Ports[0].Protocol)
+	assert.Equal(int32(3001), service.Ports[0].Port)
+
+	assert.Equal("http", service.Ports[1].Name)
+	assert.Equal("TCP", service.Ports[1].Protocol)
+	assert.Equal(int32(3000), service.Ports[1].Port)
+}
+
+func fakeService() *v1.Service {
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+
+	return &v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "Name",
 			Namespace:         "Namespace",
@@ -232,7 +254,7 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 				"label1": "labelName1",
 				"label2": "labelName2"}},
 		Spec: v1.ServiceSpec{
-			ClusterIP: "fromservice",
+			ClusterIP: "127.0.0.9",
 			Type:      "ClusterIP",
 			Ports: []v1.ServicePort{
 				{
@@ -243,6 +265,13 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					Name:     "http",
 					Protocol: "TCP",
 					Port:     3000}}}}
+}
+
+func fakeServiceDetails() *kubernetes.ServiceDetails {
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:45 +0300")
+
+	service := fakeService()
 
 	endpoints := &v1.Endpoints{
 		Subsets: []v1.EndpointSubset{

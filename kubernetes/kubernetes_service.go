@@ -18,6 +18,11 @@ type servicesResponse struct {
 	err      error
 }
 
+type serviceSliceResponse struct {
+	services []v1.Service
+	err      error
+}
+
 type serviceResponse struct {
 	service *v1.Service
 	err     error
@@ -320,6 +325,42 @@ func (in *IstioClient) GetServiceDetails(namespace string, serviceName string) (
 	return &serviceDetails, nil
 }
 
+func (in *IstioClient) GetDeploymentDetails(namespace string, deploymentName string) (*DeploymentDetails, error) {
+	podsChan, servicesChan := make(chan podsResponse), make(chan serviceSliceResponse)
+
+	deployment, err := in.GetDeployment(namespace, deploymentName)
+	if err != nil {
+		return nil, fmt.Errorf("deployment: %s", err.Error())
+	}
+
+	deploymentDetails := &DeploymentDetails{}
+	deploymentDetails.Deployment = deployment
+
+	deploymentSelector, err := meta_v1.LabelSelectorAsMap(deployment.Spec.Selector)
+	if err != nil {
+		return deploymentDetails, nil
+	}
+
+	go in.getPods(namespace, deploymentSelector, podsChan)
+	go in.getServicesByDeployment(namespace, deployment, servicesChan)
+
+	podsResponse := <-podsChan
+	if podsResponse.err != nil {
+		return nil, fmt.Errorf("pods: %s", podsResponse.err.Error())
+	}
+
+	deploymentDetails.Pods = podsResponse.pods
+
+	servicesResponse := <-servicesChan
+	if servicesResponse.err != nil {
+		return nil, fmt.Errorf("services: %s", servicesResponse.err.Error())
+	}
+
+	deploymentDetails.Services = servicesResponse.services
+
+	return deploymentDetails, nil
+}
+
 func filterAutoscalersByDeployments(deploymentNames []string, al *autoscalingV1.HorizontalPodAutoscalerList) *autoscalingV1.HorizontalPodAutoscalerList {
 	autoscalers := make([]autoscalingV1.HorizontalPodAutoscaler, 0, len(al.Items))
 
@@ -357,4 +398,27 @@ func (in *IstioClient) getPodsList(namespace string, podsChan chan podsResponse)
 func (in *IstioClient) getDeployments(namespace string, deploymentsChan chan deploymentsResponse) {
 	deployments, err := in.k8s.AppsV1beta1().Deployments(namespace).List(emptyListOptions)
 	deploymentsChan <- deploymentsResponse{deployments: deployments, err: err}
+}
+
+func (in *IstioClient) getPods(namespace string, selector map[string]string, podsChan chan podsResponse) {
+	selectorQuery := labels.Set(selector).String()
+	pods, err := in.GetPods(namespace, selectorQuery)
+	podsChan <- podsResponse{pods: pods, err: err}
+}
+
+func (in *IstioClient) getServicesByDeployment(namespace string, deployment *v1beta1.Deployment,
+	serviceChan chan serviceSliceResponse) {
+	var err error
+	var allServices *v1.ServiceList
+	var services []v1.Service
+
+	allServices, err = in.k8s.CoreV1().Services(namespace).List(emptyListOptions)
+	for _, svc := range allServices.Items {
+		svcSelector := labels.Set(svc.Spec.Selector).AsSelector()
+		if svcSelector.Matches(labels.Set(deployment.Labels)) {
+			services = append(services, svc)
+		}
+	}
+
+	serviceChan <- serviceSliceResponse{services: services, err: err}
 }

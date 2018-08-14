@@ -60,6 +60,7 @@ type IstioClientInterface interface {
 	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)
 	GetDeployments(namespace string) (*v1beta1.DeploymentList, error)
 	GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error)
+	GetDeploymentDetails(namespace string, deploymentName string) (*DeploymentDetails, error)
 	GetDeploymentSelector(namespace string, deploymentName string) (string, error)
 }
 

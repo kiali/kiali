@@ -1,6 +1,8 @@
 package models
 
 import (
+	"k8s.io/api/core/v1"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -25,52 +27,76 @@ type ServiceList struct {
 	Services  []ServiceOverview `json:"services"`
 }
 
-type Service struct {
+type ServiceDetails struct {
 	Name             string              `json:"name"`
-	CreatedAt        string              `json:"createdAt"`
-	ResourceVersion  string              `json:"resourceVersion"`
 	Namespace        Namespace           `json:"namespace"`
-	Labels           map[string]string   `json:"labels"`
-	Type             string              `json:"type"`
-	Ip               string              `json:"ip"`
-	Ports            Ports               `json:"ports"`
+	Service          Service             `json:"service"`
 	Endpoints        Endpoints           `json:"endpoints"`
 	VirtualServices  VirtualServices     `json:"virtualServices"`
 	DestinationRules DestinationRules    `json:"destinationRules"`
 	Dependencies     map[string][]string `json:"dependencies"`
 	Pods             Pods                `json:"pods"`
-	Deployments      Deployments         `json:"deployments"`
+	Workloads        Workloads           `json:"deployments"`
 	Health           ServiceHealth       `json:"health"`
 }
 
-func (s *Service) SetServiceDetails(serviceDetails *kubernetes.ServiceDetails, istioDetails *kubernetes.IstioDetails, prometheusDetails map[string][]prometheus.Workload) {
+type Services []*Service
+type Service struct {
+	Name            string            `json:"name"`
+	CreatedAt       string            `json:"createdAt"`
+	ResourceVersion string            `json:"resourceVersion"`
+	Namespace       Namespace         `json:"namespace"`
+	Labels          map[string]string `json:"labels"`
+	Type            string            `json:"type"`
+	Ip              string            `json:"ip"`
+	Ports           Ports             `json:"ports"`
+}
+
+func (ss *Services) Parse(services []v1.Service) {
+	if ss == nil {
+		return
+	}
+
+	for _, item := range services {
+		service := &Service{}
+		service.Parse(&item)
+		*ss = append(*ss, service)
+	}
+}
+
+func (s *Service) Parse(service *v1.Service) {
+	if service != nil {
+		s.Name = service.Name
+		s.Namespace = Namespace{Name: service.Namespace}
+		s.Labels = service.Labels
+		s.Type = string(service.Spec.Type)
+		s.Ip = service.Spec.ClusterIP
+		s.CreatedAt = formatTime(service.CreationTimestamp.Time)
+		s.ResourceVersion = service.ResourceVersion
+		(&s.Ports).Parse(service.Spec.Ports)
+	}
+}
+
+func (s *ServiceDetails) SetServiceDetails(serviceDetails *kubernetes.ServiceDetails, istioDetails *kubernetes.IstioDetails, prometheusDetails map[string][]prometheus.Workload) {
 	s.setKubernetesDetails(serviceDetails)
 	s.setIstioDetails(istioDetails)
 	s.setPrometheusDetails(prometheusDetails)
 }
 
-func (s *Service) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails) {
-	if serviceDetails.Service != nil {
-		s.Labels = serviceDetails.Service.Labels
-		s.Type = string(serviceDetails.Service.Spec.Type)
-		s.Ip = serviceDetails.Service.Spec.ClusterIP
-		s.CreatedAt = formatTime(serviceDetails.Service.CreationTimestamp.Time)
-		s.ResourceVersion = serviceDetails.Service.ResourceVersion
-		(&s.Ports).Parse(serviceDetails.Service.Spec.Ports)
-	}
-
+func (s *ServiceDetails) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails) {
+	s.Service.Parse(serviceDetails.Service)
 	(&s.Endpoints).Parse(serviceDetails.Endpoints)
 	(&s.Pods).Parse(serviceDetails.Pods)
-	(&s.Deployments).Parse(serviceDetails.Deployments)
-	(&s.Deployments).AddAutoscalers(serviceDetails.Autoscalers)
+	(&s.Workloads).Parse(serviceDetails.Deployments)
+	(&s.Workloads).AddAutoscalers(serviceDetails.Autoscalers)
 }
 
-func (s *Service) setIstioDetails(istioDetails *kubernetes.IstioDetails) {
+func (s *ServiceDetails) setIstioDetails(istioDetails *kubernetes.IstioDetails) {
 	(&s.VirtualServices).Parse(istioDetails.VirtualServices)
 	(&s.DestinationRules).Parse(istioDetails.DestinationRules)
 }
 
-func (s *Service) setPrometheusDetails(prometheusDetails map[string][]prometheus.Workload) {
+func (s *ServiceDetails) setPrometheusDetails(prometheusDetails map[string][]prometheus.Workload) {
 	// Transform dependencies for UI
 	s.Dependencies = make(map[string][]string)
 	for version, workloads := range prometheusDetails {
