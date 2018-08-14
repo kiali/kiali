@@ -264,6 +264,22 @@ identity:
 istio_namespace: VALUE
 ----
 
+|`ISTIO_LABEL_NAME_APP`
+| The label name of app required by Istio. (Default: app)
+[source,yaml]
+----
+istio_labels:
+  app_label_name: VALUE
+----
+
+|`ISTIO_LABEL_NAME_VERSION`
+| The label name of version required by Istio. (Default: version)
+[source,yaml]
+----
+istio_labels:
+  version_label_name: VALUE
+----
+
 |`KIALI_SERVICE`
 | The name of the service of Kiali. (Default: kiali)
 [source,yaml]

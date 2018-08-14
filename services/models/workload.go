@@ -6,6 +6,8 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
+const DEPLOYMENT string = "Deployment"
+
 type WorkloadList struct {
 	// Namespace where the workloads live in
 	// required: true
@@ -80,6 +82,11 @@ type Workload struct {
 	// example: reviews
 	Name string `json:"name"`
 
+	// Type of the workload
+	// required: true
+	// example: deployment
+	Type string `json:"type"`
+
 	// Kubernetes annotations
 	// required: true
 	TemplateAnnotations map[string]string `json:"templateAnnotations"`
@@ -136,7 +143,7 @@ func (workloadList *WorkloadList) Parse(namespace string, ds *v1beta1.Deployment
 
 func (workload *WorkloadListItem) Parse(d v1beta1.Deployment) {
 	workload.Name = d.Name
-	workload.Type = "Deployment"
+	workload.Type = DEPLOYMENT
 
 	/** Check the labels app and version required by Istio*/
 	_, workload.AppLabel = d.Labels["app"]
@@ -165,6 +172,7 @@ func (workload *WorkloadOverview) Parse(d v1beta1.Deployment) {
 
 func (workload *Workload) Parse(d *v1beta1.Deployment) {
 	workload.Name = d.Name
+	workload.Type = DEPLOYMENT
 	workload.TemplateAnnotations = d.Spec.Template.Annotations
 	workload.Labels = d.Labels
 	workload.CreatedAt = formatTime(d.CreationTimestamp.Time)

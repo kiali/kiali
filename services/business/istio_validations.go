@@ -65,6 +65,23 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 	return models.NamespaceValidations{namespace: runObjectCheckers(objectCheckers)}, nil
 }
 
+func (in *IstioValidationsService) GetWorkloadValidations(namespace string, workload string) (models.IstioValidations, error) {
+	selector, err := in.k8s.GetDeploymentSelector(namespace, workload)
+	if err != nil {
+		return nil, err
+	}
+	dPods, err := in.k8s.GetPods(namespace, selector)
+	if err != nil {
+		return nil, err
+	}
+
+	objectCheckers := []ObjectChecker{
+		checkers.PodChecker{Pods: dPods.Items},
+	}
+
+	return runObjectCheckers(objectCheckers), nil
+}
+
 func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, objectType string, object string) (models.IstioValidations, error) {
 	serviceList, err := in.k8s.GetServices(namespace)
 	if err != nil {
