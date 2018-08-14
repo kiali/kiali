@@ -24,37 +24,17 @@ const expandedChartBackLinkStyle = style({
   textAlign: 'right'
 });
 
-type ServiceMetricsState = {
-  alertDetails?: string;
-  requestCountIn?: MetricGroup;
-  requestCountOut?: MetricGroup;
-  requestSizeIn?: Histogram;
-  requestSizeOut?: Histogram;
-  requestDurationIn?: Histogram;
-  requestDurationOut?: Histogram;
-  responseSizeIn?: Histogram;
-  responseSizeOut?: Histogram;
-  tcpReceivedIn?: MetricGroup;
-  tcpReceivedOut?: MetricGroup;
-  tcpSentIn?: MetricGroup;
-  tcpSentOut?: MetricGroup;
-  grafanaLink?: string;
-  pollMetrics?: number;
+type ChartDefinition = {
+  familyName: string;
+  component: any;
+  metrics?: MetricGroup | Histogram;
 };
 
-const chartDefinitions = {
-  requestCountIn: { familyName: 'Request volume (ops)', isInput: true, component: MetricChart },
-  requestDurationIn: { familyName: 'Request duration (seconds)', isInput: true, component: HistogramChart },
-  requestSizeIn: { familyName: 'Request size (bytes)', isInput: true, component: HistogramChart },
-  responseSizeIn: { familyName: 'Response size (bytes)', isInput: true, component: HistogramChart },
-  tcpReceivedIn: { familyName: 'TCP received (bps)', isInput: true, component: MetricChart },
-  tcpSentIn: { familyName: 'TCP sent (bps)', isInput: true, component: MetricChart },
-  requestCountOut: { familyName: 'Request volume (ops)', isInput: false, component: MetricChart },
-  requestDurationOut: { familyName: 'Request duration (seconds)', isInput: false, component: HistogramChart },
-  requestSizeOut: { familyName: 'Request size (bytes)', isInput: false, component: HistogramChart },
-  responseSizeOut: { familyName: 'Response size (bytes)', isInput: false, component: HistogramChart },
-  tcpSentOut: { familyName: 'TCP sent (bps)', isInput: false, component: MetricChart },
-  tcpReceivedOut: { familyName: 'TCP received (bps)', isInput: false, component: MetricChart }
+type ServiceMetricsState = {
+  charts: { [key: string]: ChartDefinition };
+  alertDetails?: string;
+  grafanaLink?: string;
+  pollMetrics?: number;
 };
 
 type ServiceMetricsProps = ServiceId & {
@@ -70,7 +50,16 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
 
   constructor(props: ServiceMetricsProps) {
     super(props);
-    this.state = {};
+    this.state = {
+      charts: {
+        request_count_in: { familyName: 'Request volume (ops)', component: MetricChart },
+        request_duration_in: { familyName: 'Request duration (seconds)', component: HistogramChart },
+        request_size_in: { familyName: 'Request size (bytes)', component: HistogramChart },
+        response_size_in: { familyName: 'Response size (bytes)', component: HistogramChart },
+        tcp_received_in: { familyName: 'TCP received (bps)', component: MetricChart },
+        tcp_sent_in: { familyName: 'TCP sent (bps)', component: MetricChart }
+      }
+    };
   }
 
   componentDidMount() {
@@ -114,19 +103,17 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
     API.getServiceMetrics(authentication(), this.props.namespace, this.props.service, this.options)
       .then(response => {
         const metrics: M.Metrics = response.data;
-        this.setState({
-          requestCountIn: metrics.metrics['request_count_in'],
-          requestCountOut: metrics.metrics['request_count_out'],
-          requestSizeIn: metrics.histograms['request_size_in'],
-          requestSizeOut: metrics.histograms['request_size_out'],
-          requestDurationIn: metrics.histograms['request_duration_in'],
-          requestDurationOut: metrics.histograms['request_duration_out'],
-          responseSizeIn: metrics.histograms['response_size_in'],
-          responseSizeOut: metrics.histograms['response_size_out'],
-          tcpReceivedIn: metrics.metrics['tcp_received_in'],
-          tcpReceivedOut: metrics.metrics['tcp_received_out'],
-          tcpSentIn: metrics.metrics['tcp_sent_in'],
-          tcpSentOut: metrics.metrics['tcp_sent_out']
+        this.setState(prevState => {
+          Object.keys(prevState.charts).forEach(k => {
+            const chart = prevState.charts[k];
+            const histo = metrics.histograms[k];
+            if (histo) {
+              chart.metrics = histo;
+            } else {
+              chart.metrics = metrics.metrics[k];
+            }
+          });
+          return prevState;
         });
       })
       .catch(error => {
@@ -194,30 +181,11 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
     return (
       <div className="card-pf">
         <div className="row row-cards-pf">
-          <div className="col-xs-6">
+          <div className="col-xs-12">
             <div className="card-pf-accented card-pf-aggregate-status">
-              <h3 className="card-pf-title">
-                <span className="fa fa-bar-chart" />
-                Input
-              </h3>
               <div className="card-pf-body">
-                {Object.keys(chartDefinitions).map(
-                  chartKey => chartDefinitions[chartKey].isInput && this.renderNormalChart(chartKey)
-                )}
+                {Object.keys(this.state.charts).map(key => this.renderNormalChart(key))}
               </div>
-            </div>
-          </div>
-          <div className="col-xs-6">
-            <div className="card-pf-accented card-pf-aggregate-status">
-              <h3 className="card-pf-title">
-                <span className="fa fa-bar-chart" />
-                Output
-              </h3>
-              <ul className="card-pf-body">
-                {Object.keys(chartDefinitions).map(
-                  chartKey => !chartDefinitions[chartKey].isInput && this.renderNormalChart(chartKey)
-                )}
-              </ul>
             </div>
           </div>
           {this.state.grafanaLink && (
@@ -241,33 +209,30 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
   }
 
   private renderChart(chartKey: string, isExpanded: boolean = false) {
-    if (!this.state[chartKey]) {
-      return null;
+    const chart = this.state.charts[chartKey];
+    if (!chart || !chart.metrics) {
+      return undefined;
     }
-
-    const metricDefinition = chartDefinitions[chartKey];
-    let familyName = metricDefinition.familyName;
-    if (isExpanded) {
-      familyName = (metricDefinition.isInput ? 'Input: ' : 'Output: ') + familyName;
-    }
-    let props: any = {
+    const props: any = {
       key: chartKey,
-      series: this.state[chartKey].matrix,
-      histogram: this.state[chartKey],
-      familyName: familyName
+      familyName: chart.familyName
     };
+    if ((chart.metrics as MetricGroup).matrix) {
+      props.series = (chart.metrics as MetricGroup).matrix;
+    } else {
+      props.histogram = chart.metrics;
+    }
 
     if (!isExpanded) {
       props.onExpandRequested = () => this.onExpandHandler(chartKey);
     }
 
-    return React.createElement(metricDefinition.component, props);
+    return React.createElement(chart.component, props);
   }
 
   private onExpandHandler = (chartKey: string): void => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.set('expand', chartKey);
-
     history.push(history.location.pathname + '?' + urlParams.toString());
   };
 }

@@ -225,7 +225,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
                   <div>Info</div>
                 </NavItem>
                 <NavItem eventKey="metrics">
-                  <div>Metrics</div>
+                  <div>Inbound Metrics</div>
                 </NavItem>
                 <NavItem onClick={this.navigateToJaeger}>
                   <div>Traces</div>
