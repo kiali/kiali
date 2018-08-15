@@ -567,6 +567,66 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 		{
+			// Supported query parameters:
+			// appenders:      Comma-separated list of desired appenders (default all)
+			// duration:       Duration indicating desired query period (default 10m)
+			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
+			// includeIstio:   Include istio-system destinations in graph (default false)
+			// queryTime:      Unix timestamp in seconds is query range end time (default now)
+			// vendor:         Graph format: cytoscape (default)
+
+			"GraphAppVersion",
+			"GET",
+			"/api/namespaces/{namespace}/applications/{app}/versions/{version}/graph",
+			handlers.GraphNode,
+			true,
+		},
+		{
+			// Supported query parameters:
+			// appenders:      Comma-separated list of desired appenders (default all)
+			// duration:       Duration indicating desired query period (default 10m)
+			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
+			// includeIstio:   Include istio-system destinations in graph (default false)
+			// queryTime:      Unix timestamp in seconds is query range end time (default now)
+			// vendor:         Graph format: cytoscape (default)
+
+			"GraphApp",
+			"GET",
+			"/api/namespaces/{namespace}/applications/{app}/graph",
+			handlers.GraphNode,
+			true,
+		},
+		{
+			// Supported query parameters:
+			// appenders:      Comma-separated list of desired appenders (default all)
+			// duration:       Duration indicating desired query period (default 10m)
+			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
+			// includeIstio:   Include istio-system destinations in graph (default false)
+			// queryTime:      Unix timestamp in seconds is query range end time (default now)
+			// vendor:         Graph format: cytoscape (default)
+
+			"GraphService",
+			"GET",
+			"/api/namespaces/{namespace}/services/{service}/graph",
+			handlers.GraphNode,
+			true,
+		},
+		{
+			// Supported query parameters:
+			// appenders:      Comma-separated list of desired appenders (default all)
+			// duration:       Duration indicating desired query period (default 10m)
+			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
+			// includeIstio:   Include istio-system destinations in graph (default false)
+			// queryTime:      Unix timestamp in seconds is query range end time (default now)
+			// vendor:         Graph format: cytoscape (default)
+
+			"GraphWorkload",
+			"GET",
+			"/api/namespaces/{namespace}/workloads/{workload}/graph",
+			handlers.GraphNode,
+			true,
+		},
+		{
 			"GrafanaURL",
 			"GET",
 			"/api/grafana",

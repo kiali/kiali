@@ -16,15 +16,25 @@ import (
 )
 
 const (
-	AppenderAll          string = "_all_"
-	GroupByVersion       string = "version"
-	NamespaceAll         string = "all"
-	NamespaceIstioSystem string = "istio-system"
-	defaultDuration      string = "10m"
-	defaultGraphType     string = graph.GraphTypeApp
-	defaultGroupBy       string = GroupByVersion
-	defaultVendor        string = "cytoscape"
+	AppenderAll               string = "_all_"
+	GroupByVersion            string = "version"
+	NamespaceAll              string = "all"
+	NamespaceIstioSystem      string = "istio-system"
+	defaultDuration           string = "10m"
+	defaultGraphType          string = graph.GraphTypeApp
+	defaultGroupBy            string = GroupByVersion
+	defaultIncludeIstio       bool   = false
+	defaultInjectServiceNodes bool   = false
+	defaultVendor             string = "cytoscape"
 )
+
+// NodeOptions are those that apply only to node-detail graphs
+type NodeOptions struct {
+	App      string
+	Service  string
+	Version  string
+	Workload string
+}
 
 // VendorOptions are those that are supplied to the vendor-specific generators.
 type VendorOptions struct {
@@ -35,26 +45,33 @@ type VendorOptions struct {
 
 // Options are all supported graph generation options.
 type Options struct {
-	Appenders    []appender.Appender
-	Duration     time.Duration
-	IncludeIstio bool // include istio-system services. Ignored for istio-system ns. Default false.
-	Namespaces   []string
-	QueryTime    int64 // unix time in seconds
-	Workload     string
-	Vendor       string
+	Appenders          []appender.Appender
+	Duration           time.Duration
+	IncludeIstio       bool // include istio-system services. Ignored for istio-system ns. Default false.
+	InjectServiceNodes bool // inject destination service nodes between source and destination nodes.
+	Namespaces         []string
+	NodeOptions
+	QueryTime int64 // unix time in seconds
+	Workload  string
+	Vendor    string
+	Version   string
 	VendorOptions
 }
 
 func NewOptions(r *http.Request) Options {
 	// path variables
 	vars := mux.Vars(r)
+	app := vars["app"]
+	version := vars["version"]
 	namespace := vars["namespace"]
+	service := vars["service"]
 	workload := vars["workload"]
 
 	// query params
 	params := r.URL.Query()
 	duration, durationErr := time.ParseDuration(params.Get("duration"))
 	includeIstio, includeIstioErr := strconv.ParseBool(params.Get("includeIstio"))
+	injectServiceNodes, injectServiceNodesErr := strconv.ParseBool(params.Get("injectServiceNodes"))
 	graphType := params.Get("graphType")
 	groupBy := params.Get("groupBy")
 	queryTime, queryTimeErr := strconv.ParseInt(params.Get("queryTime"), 10, 64)
@@ -88,7 +105,10 @@ func NewOptions(r *http.Request) Options {
 		duration, _ = time.ParseDuration(defaultDuration)
 	}
 	if includeIstioErr != nil {
-		includeIstio = false
+		includeIstio = defaultIncludeIstio
+	}
+	if injectServiceNodesErr != nil {
+		injectServiceNodes = defaultInjectServiceNodes
 	}
 	if "" == graphType {
 		graphType = defaultGraphType
@@ -104,12 +124,18 @@ func NewOptions(r *http.Request) Options {
 	}
 
 	options := Options{
-		Duration:     duration,
-		IncludeIstio: includeIstio,
-		Namespaces:   namespaceNames,
-		QueryTime:    queryTime,
-		Vendor:       vendor,
-		Workload:     workload,
+		Duration:           duration,
+		IncludeIstio:       includeIstio,
+		InjectServiceNodes: injectServiceNodes,
+		Namespaces:         namespaceNames,
+		QueryTime:          queryTime,
+		Vendor:             vendor,
+		NodeOptions: NodeOptions{
+			App:      app,
+			Service:  service,
+			Version:  version,
+			Workload: workload,
+		},
 		VendorOptions: VendorOptions{
 			GraphType: graphType,
 			GroupBy:   groupBy,
