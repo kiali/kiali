@@ -196,11 +196,9 @@ toolbar: {
 ----
 toolbar: {
   graphLayouts: {
-    breadthfirst: 'Breadthfirst',
     cola: 'Cola',
-    cose: 'Cose',
-    dagre: 'Dagre',
-    klay: 'Klay'
+    'cose-bilkent': 'Cose',
+    dagre: 'Dagre'
   }
 }
 ----
