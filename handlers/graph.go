@@ -97,35 +97,49 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 	// we can make some final adjustments:
 	// - mark the outsiders (i.e. nodes not in the requested namespaces)
 	// - mark the insider traffic generators (i.e. inside the namespace and only outgoing edges)
-	for _, s := range trafficMap {
-		if isOutside(s, o.Namespaces) {
-			s.Metadata["isOutside"] = true
-		} else if isRoot(s) {
-			s.Metadata["isRoot"] = true
-		}
-	}
+	markOutsiders(trafficMap, o.Namespaces)
+	markTrafficGenerators(trafficMap)
 
 	return trafficMap
 }
 
-func isOutside(s *graph.Node, namespaces []string) bool {
-	if s.Namespace == graph.UnknownNamespace {
+func markOutsiders(trafficMap graph.TrafficMap, namespaces []string) {
+	for _, n := range trafficMap {
+		if isOutside(n, namespaces) {
+			n.Metadata["isOutside"] = true
+		}
+	}
+}
+
+func isOutside(n *graph.Node, namespaces []string) bool {
+	if n.Namespace == graph.UnknownNamespace {
 		return false
 	}
 	for _, ns := range namespaces {
-		if s.Namespace == ns {
+		if n.Namespace == ns {
 			return false
 		}
 	}
 	return true
 }
 
-func isRoot(s *graph.Node) bool {
-	if len(s.Edges) == 0 {
-		return false
+func markTrafficGenerators(trafficMap graph.TrafficMap) {
+	destMap := make(map[string]*graph.Node)
+	for _, n := range trafficMap {
+		for _, e := range n.Edges {
+			destMap[e.Dest.ID] = e.Dest
+		}
 	}
-	_, hasRateIn := s.Metadata["rate"]
-	return !hasRateIn
+	for _, n := range trafficMap {
+		if len(n.Edges) == 0 {
+			continue
+		}
+		if _, isDest := destMap[n.ID]; !isDest {
+			if _, isOutside := n.Metadata["isOutside"]; !isOutside {
+				n.Metadata["isRoot"] = true
+			}
+		}
+	}
 }
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
@@ -349,7 +363,7 @@ func addDestNode(trafficMap graph.TrafficMap, namespace, workload, app, version,
 }
 
 // mergeTrafficMaps ensures that we only have unique nodes by removing duplicate
-// nodes and merging their edges.  When also need to avoid duplicate edges, it can
+// nodes and merging their edges.  We also need to avoid duplicate edges, it can
 // happen when an terminal node of one namespace is a root node of another:
 //   ns1 graph: unknown -> ns1:A -> ns2:B
 //   ns2 graph:   ns1:A -> ns2:B -> ns2:C
