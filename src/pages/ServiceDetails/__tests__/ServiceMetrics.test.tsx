@@ -93,7 +93,7 @@ describe('ServiceMetrics', () => {
   it('renders initial layout', () => {
     mockGrafanaInfo({});
     const wrapper = shallow(<ServiceMetrics namespace="ns" service="svc" />);
-    expect(wrapper.find('.card-pf-title').map(div => div.text())).toEqual(['Input', 'Output']);
+    expect(wrapper).toMatchSnapshot();
   });
 
   it('mounts and loads empty metrics', done => {
@@ -101,8 +101,7 @@ describe('ServiceMetrics', () => {
       mockMetrics({ metrics: {}, histograms: {} })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('Spinner').map(div => div.getElement().props.loading)).toEqual([]);
-          expect(mounted!.find('.card-pf-body')).toHaveLength(2);
+          expect(mounted!.find('.card-pf-body')).toHaveLength(1);
           mounted!.find('.card-pf-body').forEach(pfCard => expect(pfCard.children().length === 0));
         })
         .catch(err => done.fail(err)),
@@ -133,22 +132,17 @@ describe('ServiceMetrics', () => {
       const allMocksDone = [
         mockMetrics({
           metrics: {
-            request_count_in: createMetric('m1'),
-            request_count_out: createMetric('m2')
+            request_count_in: createMetric('m1')
           },
           histograms: {
             request_size_in: createHistogram('m3'),
-            request_size_out: createHistogram('m4'),
             request_duration_in: createHistogram('m5'),
-            request_duration_out: createHistogram('m6'),
-            response_size_in: createHistogram('m7'),
-            response_size_out: createHistogram('m8')
+            response_size_in: createHistogram('m7')
           }
         })
           .then(() => {
             mounted!.update();
-            expect(mounted!.find('Spinner').map(div => div.getElement().props.loading)).toEqual([]);
-            expect(mounted!.find('LineChart')).toHaveLength(8);
+            expect(mounted!.find('LineChart')).toHaveLength(4);
           })
           .catch(err => done.fail(err)),
         mockGrafanaInfo({})
