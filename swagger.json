@@ -1394,13 +1394,13 @@
       ],
       "properties": {
         "appLabel": {
-          "description": "Has label app",
+          "description": "Define if Pods related to this Service has the label App",
           "type": "boolean",
           "x-go-name": "AppLabel",
           "example": true
         },
         "istioSidecar": {
-          "description": "Has IstioSidecar",
+          "description": "Define if Pods related to this Service has an IstioSidecar deployed",
           "type": "boolean",
           "x-go-name": "IstioSidecar",
           "example": true
@@ -1418,7 +1418,7 @@
           "example": "deployment"
         },
         "versionLabel": {
-          "description": "Has version label",
+          "description": "Define if Pods related to this Service has the label Version",
           "type": "boolean",
           "x-go-name": "VersionLabel",
           "example": true
