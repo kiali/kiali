@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Alert, Icon } from 'patternfly-react';
 import ServiceId from '../../types/ServiceId';
-import * as M from '../../types/Metrics';
 import GrafanaInfo from '../../types/GrafanaInfo';
 import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
@@ -51,15 +50,20 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
   constructor(props: ServiceMetricsProps) {
     super(props);
     this.state = {
-      charts: {
-        request_count_in: { familyName: 'Request volume (ops)', component: MetricChart },
-        request_duration_in: { familyName: 'Request duration (seconds)', component: HistogramChart },
-        request_size_in: { familyName: 'Request size (bytes)', component: HistogramChart },
-        response_size_in: { familyName: 'Response size (bytes)', component: HistogramChart },
-        tcp_received_in: { familyName: 'TCP received (bps)', component: MetricChart },
-        tcp_sent_in: { familyName: 'TCP sent (bps)', component: MetricChart }
-      }
+      charts: this.getChartsDef()
     };
+  }
+
+  getChartsDef(): { [key: string]: ChartDefinition } {
+    const charts = {
+      request_count_in: { familyName: 'Request volume (ops)', component: MetricChart },
+      request_duration_in: { familyName: 'Request duration (seconds)', component: HistogramChart },
+      request_size_in: { familyName: 'Request size (bytes)', component: HistogramChart },
+      response_size_in: { familyName: 'Response size (bytes)', component: HistogramChart },
+      tcp_received_in: { familyName: 'TCP received (bps)', component: MetricChart },
+      tcp_sent_in: { familyName: 'TCP sent (bps)', component: MetricChart }
+    };
+    return charts;
   }
 
   componentDidMount() {
@@ -102,18 +106,18 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
   fetchMetrics = () => {
     API.getServiceMetrics(authentication(), this.props.namespace, this.props.service, this.options)
       .then(response => {
-        const metrics: M.Metrics = response.data;
-        this.setState(prevState => {
-          Object.keys(prevState.charts).forEach(k => {
-            const chart = prevState.charts[k];
-            const histo = metrics.histograms[k];
-            if (histo) {
-              chart.metrics = histo;
-            } else {
-              chart.metrics = metrics.metrics[k];
-            }
-          });
-          return prevState;
+        const charts = this.getChartsDef();
+        Object.keys(charts).forEach(k => {
+          const chart = charts[k];
+          const histo = response.data.histograms[k];
+          if (histo) {
+            chart.metrics = histo;
+          } else {
+            chart.metrics = response.data.metrics[k];
+          }
+        });
+        this.setState({
+          charts: charts
         });
       })
       .catch(error => {
