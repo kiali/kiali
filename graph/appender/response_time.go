@@ -92,7 +92,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 
 		// 4) if the target namespace is istioNamespace re-query for traffic originating from a workload outside of the namespace
 		if namespace == istioNamespace {
-			query = fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{reporter=\"destination\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\",response_code=\"200\"}[%vs])) by (%s))",
+			query = fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{reporter=\"destination\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\",response_code=~\"2[0-9]{2}\"}[%vs])) by (%s))",
 				quantile,
 				"istio_request_duration_seconds_bucket",
 				namespace,
@@ -106,7 +106,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		}
 
 		// 5) supplemental query for traffic originating from a workload inside of the namespace with istioSystem destination
-		query = fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{reporter=\"destination\",source_workload_namespace=\"%v\",destination_service_namespace=\"%v\",response_code=\"200\"}[%vs])) by (%s))",
+		query = fmt.Sprintf("histogram_quantile(%.2f, sum(rate(%s{reporter=\"destination\",source_workload_namespace=\"%v\",destination_service_namespace=\"%v\",response_code=~\"2[0-9]{2}\"}[%vs])) by (%s))",
 			quantile,
 			"istio_request_duration_seconds_bucket",
 			namespace,
