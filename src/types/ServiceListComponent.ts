@@ -29,8 +29,6 @@ export const overviewToItem = (
   };
 };
 
-export const IstioLogo = require('../assets/img/istio-logo.svg');
-
 export interface SortField {
   title: string;
   param: string;

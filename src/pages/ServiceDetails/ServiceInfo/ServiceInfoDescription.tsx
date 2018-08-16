@@ -8,7 +8,7 @@ import { Endpoints, Port } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
 
 import './ServiceInfoDescription.css';
-import { IstioLogo } from '../../../types/ServiceListComponent';
+import { IstioLogo } from '../../../config';
 
 interface ServiceInfoDescriptionProps {
   name: string;

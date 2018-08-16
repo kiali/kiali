@@ -64,3 +64,6 @@ export const socialLinks = [
     label: 'Twitter'
   }
 ];
+
+/** Istio logo */
+export const IstioLogo = require('./assets/img/istio-logo.svg');

@@ -1,4 +1,5 @@
 import ServiceGraphRouteHandler from './pages/ServiceGraph/ServiceGraphRouteHandler';
+import WorkloadListPage from './pages/WorkloadList/WorkloadListPage';
 import ServiceListPage from './pages/ServiceList/ServiceListPage';
 import IstioConfigPage from './pages/IstioConfigList/IstioConfigListPage';
 import ServiceJaegerPage from './pages/ServiceJaeger/ServiceJaegerPage';
@@ -16,6 +17,12 @@ const navItems: MenuItem[] = [
     title: 'Graph',
     to: '/service-graph/all',
     pathsActive: [/^\/service-graph\/(.*)/]
+  },
+  {
+    iconClass: 'fa pficon-bundle',
+    title: 'Workloads',
+    to: '/workloads',
+    pathsActive: [/^\/namespaces\/(.*)\/workloads\/(.*)/]
   },
   {
     iconClass: 'fa pficon-service',
@@ -54,6 +61,10 @@ const pathRoutes: Path[] = [
   {
     path: '/services',
     component: ServiceListPage
+  },
+  {
+    path: '/workloads',
+    component: WorkloadListPage
   },
   {
     path: '/istio',

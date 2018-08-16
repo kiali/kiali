@@ -4,6 +4,7 @@ import MetricsOptions from '../types/MetricsOptions';
 import { Metrics } from '../types/Metrics';
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
 import { IstioConfigList } from '../types/IstioConfigListComponent';
+import { WorkloadNamespaceResponse } from '../types/Workload';
 import { NamespaceValidations, ServiceDetailsInfo, Validations, hasIstioSidecar } from '../types/ServiceInfo';
 import JaegerInfo from '../types/JaegerInfo';
 import GrafanaInfo from '../types/GrafanaInfo';
@@ -251,6 +252,10 @@ export const getIstioConfigValidations = (
     {},
     auth
   );
+};
+
+export const getWorkloads = (auth: string, namespace: String): Promise<Response<WorkloadNamespaceResponse>> => {
+  return newRequest('get', `/api/namespaces/${namespace}/workloads`, {}, {}, auth);
 };
 
 export const getErrorMsg = (msg: string, error: AxiosError) => {

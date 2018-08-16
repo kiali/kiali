@@ -102,7 +102,7 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
       });
   }
 
-  filterAdded(field: any, value: any) {
+  filterAdded = (field: any, value: any) => {
     let filterText = '';
     const activeFilters = this.state.activeFilters;
     let activeFilter: ActiveFilter = { label: '', category: '', value: '' };
@@ -126,7 +126,7 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
     this.setState({ activeFilters: activeFilters });
     NamespaceFilterSelected.setSelected(activeFilters);
     this.props.onFilterChange(activeFilters);
-  }
+  };
 
   selectFilterType = (filterType: FilterType) => {
     const { currentFilterType } = this.state;
