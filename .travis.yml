@@ -54,3 +54,4 @@ branches:
   only:
   - master
   - /^v(\d+\.){2}(\d+){1}(\.[a-zA-Z\d]+)?$/
+  - pre-release
