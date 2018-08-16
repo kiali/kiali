@@ -57,7 +57,6 @@
     "kiali": "node  ./src/__itests__/Kiali.app.standalone.ts",
     "test": "npm run prettier && react-scripts-ts test --env=jsdom __tests__",
     "itest": "export CI=true && react-scripts-ts test  __itests__",
-    "eject": "react-scripts-ts eject",
     "set-snapshot-version": "npm-snapshot",
     "precommit": "npm run prettier -- --list-different || (echo 'Above file(s) were modified by prettier, check them before commiting' && false)"
   },
