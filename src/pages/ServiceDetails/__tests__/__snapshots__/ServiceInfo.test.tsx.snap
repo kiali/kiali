@@ -10,7 +10,7 @@ ShallowWrapper {
         "calls": Array [
           Array [
             "list",
-            "pods",
+            "workloads",
           ],
         ],
       }
@@ -29,85 +29,7 @@ ShallowWrapper {
     service="reviews"
     serviceDetails={
       Object {
-        "createdAt": "2018-06-29T16:43:18+02:00",
         "dependencies": Object {},
-        "deployments": Array [
-          Object {
-            "autoscaler": Object {
-              "createdAt": "",
-              "currentReplicas": 0,
-              "desiredReplicas": 0,
-              "labels": null,
-              "maxReplicas": 0,
-              "minReplicas": 0,
-              "name": "",
-              "targetCPUUtilizationPercentage": 0,
-            },
-            "availableReplicas": 1,
-            "createdAt": "2018-06-29T16:43:18+02:00",
-            "labels": Object {
-              "app": "reviews",
-              "version": "v1",
-            },
-            "name": "reviews-v1",
-            "replicas": 1,
-            "resourceVersion": "2836",
-            "templateAnnotations": Object {
-              "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-            },
-            "unavailableReplicas": 0,
-          },
-          Object {
-            "autoscaler": Object {
-              "createdAt": "",
-              "currentReplicas": 0,
-              "desiredReplicas": 0,
-              "labels": null,
-              "maxReplicas": 0,
-              "minReplicas": 0,
-              "name": "",
-              "targetCPUUtilizationPercentage": 0,
-            },
-            "availableReplicas": 1,
-            "createdAt": "2018-06-29T16:43:18+02:00",
-            "labels": Object {
-              "app": "reviews",
-              "version": "v2",
-            },
-            "name": "reviews-v2",
-            "replicas": 1,
-            "resourceVersion": "2856",
-            "templateAnnotations": Object {
-              "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-            },
-            "unavailableReplicas": 0,
-          },
-          Object {
-            "autoscaler": Object {
-              "createdAt": "",
-              "currentReplicas": 0,
-              "desiredReplicas": 0,
-              "labels": null,
-              "maxReplicas": 0,
-              "minReplicas": 0,
-              "name": "",
-              "targetCPUUtilizationPercentage": 0,
-            },
-            "availableReplicas": 1,
-            "createdAt": "2018-06-29T16:43:18+02:00",
-            "labels": Object {
-              "app": "reviews",
-              "version": "v3",
-            },
-            "name": "reviews-v3",
-            "replicas": 1,
-            "resourceVersion": "2849",
-            "templateAnnotations": Object {
-              "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-            },
-            "unavailableReplicas": 0,
-          },
-        ],
         "destinationRules": Array [
           Object {
             "createdAt": "2018-07-02T13:44:01+02:00",
@@ -198,21 +120,24 @@ ShallowWrapper {
             "requestErrorCount": 0,
           },
         },
-        "ip": "172.30.196.248",
         "istioSidecar": false,
-        "labels": Object {
-          "app": "reviews",
-        },
-        "name": "reviews",
-        "ports": Array [
-          Object {
-            "name": "http",
-            "port": 9080,
-            "protocol": "TCP",
+        "service": Object {
+          "createdAt": "2018-06-29T16:43:18+02:00",
+          "ip": "172.30.196.248",
+          "labels": Object {
+            "app": "reviews",
           },
-        ],
-        "resourceVersion": "2652",
-        "type": "ClusterIP",
+          "name": "reviews",
+          "ports": Array [
+            Object {
+              "name": "http",
+              "port": 9080,
+              "protocol": "TCP",
+            },
+          ],
+          "resourceVersion": "2652",
+          "type": "ClusterIP",
+        },
         "virtualServices": Array [
           Object {
             "createdAt": "2018-07-02T13:44:01+02:00",
@@ -357,7 +282,7 @@ ShallowWrapper {
                   }
                 }
                 ip="172.30.196.248"
-                istio_sidecar={false}
+                istioEnabled={false}
                 labels={
                   Object {
                     "app": "reviews",
@@ -407,16 +332,9 @@ ShallowWrapper {
                     <NavItem
                       active={false}
                       disabled={false}
-                      eventKey="pods"
+                      eventKey="workloads"
                     >
-                      Pods (0)
-                    </NavItem>
-                    <NavItem
-                      active={false}
-                      disabled={false}
-                      eventKey="deployments"
-                    >
-                      Deployments (3)
+                      Workloads (0)
                     </NavItem>
                     <NavItem
                       active={false}
@@ -449,94 +367,8 @@ ShallowWrapper {
                   >
                     <TabPane
                       bsClass="tab-pane"
-                      eventKey="pods"
+                      eventKey="workloads"
                     />
-                    <TabPane
-                      bsClass="tab-pane"
-                      eventKey="deployments"
-                    >
-                      <ServiceInfoDeployments
-                        deployments={
-                          Array [
-                            Object {
-                              "autoscaler": Object {
-                                "createdAt": "",
-                                "currentReplicas": 0,
-                                "desiredReplicas": 0,
-                                "labels": null,
-                                "maxReplicas": 0,
-                                "minReplicas": 0,
-                                "name": "",
-                                "targetCPUUtilizationPercentage": 0,
-                              },
-                              "availableReplicas": 1,
-                              "createdAt": "2018-06-29T16:43:18+02:00",
-                              "labels": Object {
-                                "app": "reviews",
-                                "version": "v1",
-                              },
-                              "name": "reviews-v1",
-                              "replicas": 1,
-                              "resourceVersion": "2836",
-                              "templateAnnotations": Object {
-                                "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                              },
-                              "unavailableReplicas": 0,
-                            },
-                            Object {
-                              "autoscaler": Object {
-                                "createdAt": "",
-                                "currentReplicas": 0,
-                                "desiredReplicas": 0,
-                                "labels": null,
-                                "maxReplicas": 0,
-                                "minReplicas": 0,
-                                "name": "",
-                                "targetCPUUtilizationPercentage": 0,
-                              },
-                              "availableReplicas": 1,
-                              "createdAt": "2018-06-29T16:43:18+02:00",
-                              "labels": Object {
-                                "app": "reviews",
-                                "version": "v2",
-                              },
-                              "name": "reviews-v2",
-                              "replicas": 1,
-                              "resourceVersion": "2856",
-                              "templateAnnotations": Object {
-                                "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                              },
-                              "unavailableReplicas": 0,
-                            },
-                            Object {
-                              "autoscaler": Object {
-                                "createdAt": "",
-                                "currentReplicas": 0,
-                                "desiredReplicas": 0,
-                                "labels": null,
-                                "maxReplicas": 0,
-                                "minReplicas": 0,
-                                "name": "",
-                                "targetCPUUtilizationPercentage": 0,
-                              },
-                              "availableReplicas": 1,
-                              "createdAt": "2018-06-29T16:43:18+02:00",
-                              "labels": Object {
-                                "app": "reviews",
-                                "version": "v3",
-                              },
-                              "name": "reviews-v3",
-                              "replicas": 1,
-                              "resourceVersion": "2849",
-                              "templateAnnotations": Object {
-                                "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                              },
-                              "unavailableReplicas": 0,
-                            },
-                          ]
-                        }
-                      />
-                    </TabPane>
                     <TabPane
                       bsClass="tab-pane"
                       eventKey="sources"
@@ -731,7 +563,7 @@ ShallowWrapper {
                     }
                   }
                   ip="172.30.196.248"
-                  istio_sidecar={false}
+                  istioEnabled={false}
                   labels={
                     Object {
                       "app": "reviews",
@@ -781,16 +613,9 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey="pods"
+                        eventKey="workloads"
                       >
-                        Pods (0)
-                      </NavItem>
-                      <NavItem
-                        active={false}
-                        disabled={false}
-                        eventKey="deployments"
-                      >
-                        Deployments (3)
+                        Workloads (0)
                       </NavItem>
                       <NavItem
                         active={false}
@@ -823,94 +648,8 @@ ShallowWrapper {
                     >
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey="pods"
+                        eventKey="workloads"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
-                        eventKey="deployments"
-                      >
-                        <ServiceInfoDeployments
-                          deployments={
-                            Array [
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v1",
-                                },
-                                "name": "reviews-v1",
-                                "replicas": 1,
-                                "resourceVersion": "2836",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v2",
-                                },
-                                "name": "reviews-v2",
-                                "replicas": 1,
-                                "resourceVersion": "2856",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v3",
-                                },
-                                "name": "reviews-v3",
-                                "replicas": 1,
-                                "resourceVersion": "2849",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                            ]
-                          }
-                        />
-                      </TabPane>
                       <TabPane
                         bsClass="tab-pane"
                         eventKey="sources"
@@ -1099,7 +838,7 @@ ShallowWrapper {
                     }
                   }
                   ip="172.30.196.248"
-                  istio_sidecar={false}
+                  istioEnabled={false}
                   labels={
                     Object {
                       "app": "reviews",
@@ -1216,7 +955,7 @@ ShallowWrapper {
                       }
                     }
                     ip="172.30.196.248"
-                    istio_sidecar={false}
+                    istioEnabled={false}
                     labels={
                       Object {
                         "app": "reviews",
@@ -1346,7 +1085,7 @@ ShallowWrapper {
                       },
                     },
                     "ip": "172.30.196.248",
-                    "istio_sidecar": false,
+                    "istioEnabled": false,
                     "labels": Object {
                       "app": "reviews",
                     },
@@ -1400,16 +1139,9 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey="pods"
+                        eventKey="workloads"
                       >
-                        Pods (0)
-                      </NavItem>
-                      <NavItem
-                        active={false}
-                        disabled={false}
-                        eventKey="deployments"
-                      >
-                        Deployments (3)
+                        Workloads (0)
                       </NavItem>
                       <NavItem
                         active={false}
@@ -1442,94 +1174,8 @@ ShallowWrapper {
                     >
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey="pods"
+                        eventKey="workloads"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
-                        eventKey="deployments"
-                      >
-                        <ServiceInfoDeployments
-                          deployments={
-                            Array [
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v1",
-                                },
-                                "name": "reviews-v1",
-                                "replicas": 1,
-                                "resourceVersion": "2836",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v2",
-                                },
-                                "name": "reviews-v2",
-                                "replicas": 1,
-                                "resourceVersion": "2856",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v3",
-                                },
-                                "name": "reviews-v3",
-                                "replicas": 1,
-                                "resourceVersion": "2849",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                            ]
-                          }
-                        />
-                      </TabPane>
                       <TabPane
                         bsClass="tab-pane"
                         eventKey="sources"
@@ -1638,16 +1284,9 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey="pods"
+                        eventKey="workloads"
                       >
-                        Pods (0)
-                      </NavItem>
-                      <NavItem
-                        active={false}
-                        disabled={false}
-                        eventKey="deployments"
-                      >
-                        Deployments (3)
+                        Workloads (0)
                       </NavItem>
                       <NavItem
                         active={false}
@@ -1680,94 +1319,8 @@ ShallowWrapper {
                     >
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey="pods"
+                        eventKey="workloads"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
-                        eventKey="deployments"
-                      >
-                        <ServiceInfoDeployments
-                          deployments={
-                            Array [
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v1",
-                                },
-                                "name": "reviews-v1",
-                                "replicas": 1,
-                                "resourceVersion": "2836",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v2",
-                                },
-                                "name": "reviews-v2",
-                                "replicas": 1,
-                                "resourceVersion": "2856",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v3",
-                                },
-                                "name": "reviews-v3",
-                                "replicas": 1,
-                                "resourceVersion": "2849",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                            ]
-                          }
-                        />
-                      </TabPane>
                       <TabPane
                         bsClass="tab-pane"
                         eventKey="sources"
@@ -1873,16 +1426,9 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey="pods"
+                        eventKey="workloads"
                       >
-                        Pods (0)
-                      </NavItem>
-                      <NavItem
-                        active={false}
-                        disabled={false}
-                        eventKey="deployments"
-                      >
-                        Deployments (3)
+                        Workloads (0)
                       </NavItem>
                       <NavItem
                         active={false}
@@ -1915,94 +1461,8 @@ ShallowWrapper {
                     >
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey="pods"
+                        eventKey="workloads"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
-                        eventKey="deployments"
-                      >
-                        <ServiceInfoDeployments
-                          deployments={
-                            Array [
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v1",
-                                },
-                                "name": "reviews-v1",
-                                "replicas": 1,
-                                "resourceVersion": "2836",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v2",
-                                },
-                                "name": "reviews-v2",
-                                "replicas": 1,
-                                "resourceVersion": "2856",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v3",
-                                },
-                                "name": "reviews-v3",
-                                "replicas": 1,
-                                "resourceVersion": "2849",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                            ]
-                          }
-                        />
-                      </TabPane>
                       <TabPane
                         bsClass="tab-pane"
                         eventKey="sources"
@@ -2103,16 +1563,9 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey="pods"
+                          eventKey="workloads"
                         >
-                          Pods (0)
-                        </NavItem>
-                        <NavItem
-                          active={false}
-                          disabled={false}
-                          eventKey="deployments"
-                        >
-                          Deployments (3)
+                          Workloads (0)
                         </NavItem>
                         <NavItem
                           active={false}
@@ -2145,94 +1598,8 @@ ShallowWrapper {
                       >
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey="pods"
+                          eventKey="workloads"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
-                          eventKey="deployments"
-                        >
-                          <ServiceInfoDeployments
-                            deployments={
-                              Array [
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v1",
-                                  },
-                                  "name": "reviews-v1",
-                                  "replicas": 1,
-                                  "resourceVersion": "2836",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v2",
-                                  },
-                                  "name": "reviews-v2",
-                                  "replicas": 1,
-                                  "resourceVersion": "2856",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v3",
-                                  },
-                                  "name": "reviews-v3",
-                                  "replicas": 1,
-                                  "resourceVersion": "2849",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                              ]
-                            }
-                          />
-                        </TabPane>
                         <TabPane
                           bsClass="tab-pane"
                           eventKey="sources"
@@ -2326,16 +1693,9 @@ ShallowWrapper {
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey="pods"
+                            eventKey="workloads"
                           >
-                            Pods (0)
-                          </NavItem>,
-                          <NavItem
-                            active={false}
-                            disabled={false}
-                            eventKey="deployments"
-                          >
-                            Deployments (3)
+                            Workloads (0)
                           </NavItem>,
                           <NavItem
                             active={false}
@@ -2372,26 +1732,12 @@ ShallowWrapper {
                           "nodeType": "class",
                           "props": Object {
                             "active": false,
-                            "children": "Pods (0)",
+                            "children": "Workloads (0)",
                             "disabled": false,
-                            "eventKey": "pods",
+                            "eventKey": "workloads",
                           },
                           "ref": null,
-                          "rendered": "Pods (0)",
-                          "type": [Function],
-                        },
-                        Object {
-                          "instance": null,
-                          "key": undefined,
-                          "nodeType": "class",
-                          "props": Object {
-                            "active": false,
-                            "children": "Deployments (3)",
-                            "disabled": false,
-                            "eventKey": "deployments",
-                          },
-                          "ref": null,
-                          "rendered": "Deployments (3)",
+                          "rendered": "Workloads (0)",
                           "type": [Function],
                         },
                         Object {
@@ -2461,94 +1807,8 @@ ShallowWrapper {
                         "children": Array [
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey="pods"
+                            eventKey="workloads"
                           />,
-                          <TabPane
-                            bsClass="tab-pane"
-                            eventKey="deployments"
-                          >
-                            <ServiceInfoDeployments
-                              deployments={
-                                Array [
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v1",
-                                    },
-                                    "name": "reviews-v1",
-                                    "replicas": 1,
-                                    "resourceVersion": "2836",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v2",
-                                    },
-                                    "name": "reviews-v2",
-                                    "replicas": 1,
-                                    "resourceVersion": "2856",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v3",
-                                    },
-                                    "name": "reviews-v3",
-                                    "replicas": 1,
-                                    "resourceVersion": "2849",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                ]
-                              }
-                            />
-                          </TabPane>,
                           <TabPane
                             bsClass="tab-pane"
                             eventKey="sources"
@@ -2641,189 +1901,10 @@ ShallowWrapper {
                           "props": Object {
                             "bsClass": "tab-pane",
                             "children": false,
-                            "eventKey": "pods",
+                            "eventKey": "workloads",
                           },
                           "ref": null,
                           "rendered": false,
-                          "type": [Function],
-                        },
-                        Object {
-                          "instance": null,
-                          "key": undefined,
-                          "nodeType": "class",
-                          "props": Object {
-                            "bsClass": "tab-pane",
-                            "children": <ServiceInfoDeployments
-                              deployments={
-                                Array [
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v1",
-                                    },
-                                    "name": "reviews-v1",
-                                    "replicas": 1,
-                                    "resourceVersion": "2836",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v2",
-                                    },
-                                    "name": "reviews-v2",
-                                    "replicas": 1,
-                                    "resourceVersion": "2856",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v3",
-                                    },
-                                    "name": "reviews-v3",
-                                    "replicas": 1,
-                                    "resourceVersion": "2849",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                ]
-                              }
-                            />,
-                            "eventKey": "deployments",
-                          },
-                          "ref": null,
-                          "rendered": Object {
-                            "instance": null,
-                            "key": undefined,
-                            "nodeType": "class",
-                            "props": Object {
-                              "deployments": Array [
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v1",
-                                  },
-                                  "name": "reviews-v1",
-                                  "replicas": 1,
-                                  "resourceVersion": "2836",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v2",
-                                  },
-                                  "name": "reviews-v2",
-                                  "replicas": 1,
-                                  "resourceVersion": "2856",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v3",
-                                  },
-                                  "name": "reviews-v3",
-                                  "replicas": 1,
-                                  "resourceVersion": "2849",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                              ],
-                            },
-                            "ref": null,
-                            "rendered": null,
-                            "type": [Function],
-                          },
                           "type": [Function],
                         },
                         Object {
@@ -3129,7 +2210,7 @@ ShallowWrapper {
                     }
                   }
                   ip="172.30.196.248"
-                  istio_sidecar={false}
+                  istioEnabled={false}
                   labels={
                     Object {
                       "app": "reviews",
@@ -3179,16 +2260,9 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey="pods"
+                        eventKey="workloads"
                       >
-                        Pods (0)
-                      </NavItem>
-                      <NavItem
-                        active={false}
-                        disabled={false}
-                        eventKey="deployments"
-                      >
-                        Deployments (3)
+                        Workloads (0)
                       </NavItem>
                       <NavItem
                         active={false}
@@ -3221,94 +2295,8 @@ ShallowWrapper {
                     >
                       <TabPane
                         bsClass="tab-pane"
-                        eventKey="pods"
+                        eventKey="workloads"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
-                        eventKey="deployments"
-                      >
-                        <ServiceInfoDeployments
-                          deployments={
-                            Array [
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v1",
-                                },
-                                "name": "reviews-v1",
-                                "replicas": 1,
-                                "resourceVersion": "2836",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v2",
-                                },
-                                "name": "reviews-v2",
-                                "replicas": 1,
-                                "resourceVersion": "2856",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                              Object {
-                                "autoscaler": Object {
-                                  "createdAt": "",
-                                  "currentReplicas": 0,
-                                  "desiredReplicas": 0,
-                                  "labels": null,
-                                  "maxReplicas": 0,
-                                  "minReplicas": 0,
-                                  "name": "",
-                                  "targetCPUUtilizationPercentage": 0,
-                                },
-                                "availableReplicas": 1,
-                                "createdAt": "2018-06-29T16:43:18+02:00",
-                                "labels": Object {
-                                  "app": "reviews",
-                                  "version": "v3",
-                                },
-                                "name": "reviews-v3",
-                                "replicas": 1,
-                                "resourceVersion": "2849",
-                                "templateAnnotations": Object {
-                                  "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                },
-                                "unavailableReplicas": 0,
-                              },
-                            ]
-                          }
-                        />
-                      </TabPane>
                       <TabPane
                         bsClass="tab-pane"
                         eventKey="sources"
@@ -3503,7 +2491,7 @@ ShallowWrapper {
                       }
                     }
                     ip="172.30.196.248"
-                    istio_sidecar={false}
+                    istioEnabled={false}
                     labels={
                       Object {
                         "app": "reviews",
@@ -3553,16 +2541,9 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey="pods"
+                          eventKey="workloads"
                         >
-                          Pods (0)
-                        </NavItem>
-                        <NavItem
-                          active={false}
-                          disabled={false}
-                          eventKey="deployments"
-                        >
-                          Deployments (3)
+                          Workloads (0)
                         </NavItem>
                         <NavItem
                           active={false}
@@ -3595,94 +2576,8 @@ ShallowWrapper {
                       >
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey="pods"
+                          eventKey="workloads"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
-                          eventKey="deployments"
-                        >
-                          <ServiceInfoDeployments
-                            deployments={
-                              Array [
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v1",
-                                  },
-                                  "name": "reviews-v1",
-                                  "replicas": 1,
-                                  "resourceVersion": "2836",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v2",
-                                  },
-                                  "name": "reviews-v2",
-                                  "replicas": 1,
-                                  "resourceVersion": "2856",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v3",
-                                  },
-                                  "name": "reviews-v3",
-                                  "replicas": 1,
-                                  "resourceVersion": "2849",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                              ]
-                            }
-                          />
-                        </TabPane>
                         <TabPane
                           bsClass="tab-pane"
                           eventKey="sources"
@@ -3871,7 +2766,7 @@ ShallowWrapper {
                       }
                     }
                     ip="172.30.196.248"
-                    istio_sidecar={false}
+                    istioEnabled={false}
                     labels={
                       Object {
                         "app": "reviews",
@@ -3988,7 +2883,7 @@ ShallowWrapper {
                         }
                       }
                       ip="172.30.196.248"
-                      istio_sidecar={false}
+                      istioEnabled={false}
                       labels={
                         Object {
                           "app": "reviews",
@@ -4118,7 +3013,7 @@ ShallowWrapper {
                         },
                       },
                       "ip": "172.30.196.248",
-                      "istio_sidecar": false,
+                      "istioEnabled": false,
                       "labels": Object {
                         "app": "reviews",
                       },
@@ -4172,16 +3067,9 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey="pods"
+                          eventKey="workloads"
                         >
-                          Pods (0)
-                        </NavItem>
-                        <NavItem
-                          active={false}
-                          disabled={false}
-                          eventKey="deployments"
-                        >
-                          Deployments (3)
+                          Workloads (0)
                         </NavItem>
                         <NavItem
                           active={false}
@@ -4214,94 +3102,8 @@ ShallowWrapper {
                       >
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey="pods"
+                          eventKey="workloads"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
-                          eventKey="deployments"
-                        >
-                          <ServiceInfoDeployments
-                            deployments={
-                              Array [
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v1",
-                                  },
-                                  "name": "reviews-v1",
-                                  "replicas": 1,
-                                  "resourceVersion": "2836",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v2",
-                                  },
-                                  "name": "reviews-v2",
-                                  "replicas": 1,
-                                  "resourceVersion": "2856",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v3",
-                                  },
-                                  "name": "reviews-v3",
-                                  "replicas": 1,
-                                  "resourceVersion": "2849",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                              ]
-                            }
-                          />
-                        </TabPane>
                         <TabPane
                           bsClass="tab-pane"
                           eventKey="sources"
@@ -4410,16 +3212,9 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey="pods"
+                          eventKey="workloads"
                         >
-                          Pods (0)
-                        </NavItem>
-                        <NavItem
-                          active={false}
-                          disabled={false}
-                          eventKey="deployments"
-                        >
-                          Deployments (3)
+                          Workloads (0)
                         </NavItem>
                         <NavItem
                           active={false}
@@ -4452,94 +3247,8 @@ ShallowWrapper {
                       >
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey="pods"
+                          eventKey="workloads"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
-                          eventKey="deployments"
-                        >
-                          <ServiceInfoDeployments
-                            deployments={
-                              Array [
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v1",
-                                  },
-                                  "name": "reviews-v1",
-                                  "replicas": 1,
-                                  "resourceVersion": "2836",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v2",
-                                  },
-                                  "name": "reviews-v2",
-                                  "replicas": 1,
-                                  "resourceVersion": "2856",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v3",
-                                  },
-                                  "name": "reviews-v3",
-                                  "replicas": 1,
-                                  "resourceVersion": "2849",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                              ]
-                            }
-                          />
-                        </TabPane>
                         <TabPane
                           bsClass="tab-pane"
                           eventKey="sources"
@@ -4645,16 +3354,9 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey="pods"
+                          eventKey="workloads"
                         >
-                          Pods (0)
-                        </NavItem>
-                        <NavItem
-                          active={false}
-                          disabled={false}
-                          eventKey="deployments"
-                        >
-                          Deployments (3)
+                          Workloads (0)
                         </NavItem>
                         <NavItem
                           active={false}
@@ -4687,94 +3389,8 @@ ShallowWrapper {
                       >
                         <TabPane
                           bsClass="tab-pane"
-                          eventKey="pods"
+                          eventKey="workloads"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
-                          eventKey="deployments"
-                        >
-                          <ServiceInfoDeployments
-                            deployments={
-                              Array [
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v1",
-                                  },
-                                  "name": "reviews-v1",
-                                  "replicas": 1,
-                                  "resourceVersion": "2836",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v2",
-                                  },
-                                  "name": "reviews-v2",
-                                  "replicas": 1,
-                                  "resourceVersion": "2856",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                                Object {
-                                  "autoscaler": Object {
-                                    "createdAt": "",
-                                    "currentReplicas": 0,
-                                    "desiredReplicas": 0,
-                                    "labels": null,
-                                    "maxReplicas": 0,
-                                    "minReplicas": 0,
-                                    "name": "",
-                                    "targetCPUUtilizationPercentage": 0,
-                                  },
-                                  "availableReplicas": 1,
-                                  "createdAt": "2018-06-29T16:43:18+02:00",
-                                  "labels": Object {
-                                    "app": "reviews",
-                                    "version": "v3",
-                                  },
-                                  "name": "reviews-v3",
-                                  "replicas": 1,
-                                  "resourceVersion": "2849",
-                                  "templateAnnotations": Object {
-                                    "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                  },
-                                  "unavailableReplicas": 0,
-                                },
-                              ]
-                            }
-                          />
-                        </TabPane>
                         <TabPane
                           bsClass="tab-pane"
                           eventKey="sources"
@@ -4875,16 +3491,9 @@ ShallowWrapper {
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey="pods"
+                            eventKey="workloads"
                           >
-                            Pods (0)
-                          </NavItem>
-                          <NavItem
-                            active={false}
-                            disabled={false}
-                            eventKey="deployments"
-                          >
-                            Deployments (3)
+                            Workloads (0)
                           </NavItem>
                           <NavItem
                             active={false}
@@ -4917,94 +3526,8 @@ ShallowWrapper {
                         >
                           <TabPane
                             bsClass="tab-pane"
-                            eventKey="pods"
+                            eventKey="workloads"
                           />
-                          <TabPane
-                            bsClass="tab-pane"
-                            eventKey="deployments"
-                          >
-                            <ServiceInfoDeployments
-                              deployments={
-                                Array [
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v1",
-                                    },
-                                    "name": "reviews-v1",
-                                    "replicas": 1,
-                                    "resourceVersion": "2836",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v2",
-                                    },
-                                    "name": "reviews-v2",
-                                    "replicas": 1,
-                                    "resourceVersion": "2856",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v3",
-                                    },
-                                    "name": "reviews-v3",
-                                    "replicas": 1,
-                                    "resourceVersion": "2849",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                ]
-                              }
-                            />
-                          </TabPane>
                           <TabPane
                             bsClass="tab-pane"
                             eventKey="sources"
@@ -5098,16 +3621,9 @@ ShallowWrapper {
                             <NavItem
                               active={false}
                               disabled={false}
-                              eventKey="pods"
+                              eventKey="workloads"
                             >
-                              Pods (0)
-                            </NavItem>,
-                            <NavItem
-                              active={false}
-                              disabled={false}
-                              eventKey="deployments"
-                            >
-                              Deployments (3)
+                              Workloads (0)
                             </NavItem>,
                             <NavItem
                               active={false}
@@ -5144,26 +3660,12 @@ ShallowWrapper {
                             "nodeType": "class",
                             "props": Object {
                               "active": false,
-                              "children": "Pods (0)",
+                              "children": "Workloads (0)",
                               "disabled": false,
-                              "eventKey": "pods",
+                              "eventKey": "workloads",
                             },
                             "ref": null,
-                            "rendered": "Pods (0)",
-                            "type": [Function],
-                          },
-                          Object {
-                            "instance": null,
-                            "key": undefined,
-                            "nodeType": "class",
-                            "props": Object {
-                              "active": false,
-                              "children": "Deployments (3)",
-                              "disabled": false,
-                              "eventKey": "deployments",
-                            },
-                            "ref": null,
-                            "rendered": "Deployments (3)",
+                            "rendered": "Workloads (0)",
                             "type": [Function],
                           },
                           Object {
@@ -5233,94 +3735,8 @@ ShallowWrapper {
                           "children": Array [
                             <TabPane
                               bsClass="tab-pane"
-                              eventKey="pods"
+                              eventKey="workloads"
                             />,
-                            <TabPane
-                              bsClass="tab-pane"
-                              eventKey="deployments"
-                            >
-                              <ServiceInfoDeployments
-                                deployments={
-                                  Array [
-                                    Object {
-                                      "autoscaler": Object {
-                                        "createdAt": "",
-                                        "currentReplicas": 0,
-                                        "desiredReplicas": 0,
-                                        "labels": null,
-                                        "maxReplicas": 0,
-                                        "minReplicas": 0,
-                                        "name": "",
-                                        "targetCPUUtilizationPercentage": 0,
-                                      },
-                                      "availableReplicas": 1,
-                                      "createdAt": "2018-06-29T16:43:18+02:00",
-                                      "labels": Object {
-                                        "app": "reviews",
-                                        "version": "v1",
-                                      },
-                                      "name": "reviews-v1",
-                                      "replicas": 1,
-                                      "resourceVersion": "2836",
-                                      "templateAnnotations": Object {
-                                        "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                      },
-                                      "unavailableReplicas": 0,
-                                    },
-                                    Object {
-                                      "autoscaler": Object {
-                                        "createdAt": "",
-                                        "currentReplicas": 0,
-                                        "desiredReplicas": 0,
-                                        "labels": null,
-                                        "maxReplicas": 0,
-                                        "minReplicas": 0,
-                                        "name": "",
-                                        "targetCPUUtilizationPercentage": 0,
-                                      },
-                                      "availableReplicas": 1,
-                                      "createdAt": "2018-06-29T16:43:18+02:00",
-                                      "labels": Object {
-                                        "app": "reviews",
-                                        "version": "v2",
-                                      },
-                                      "name": "reviews-v2",
-                                      "replicas": 1,
-                                      "resourceVersion": "2856",
-                                      "templateAnnotations": Object {
-                                        "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                      },
-                                      "unavailableReplicas": 0,
-                                    },
-                                    Object {
-                                      "autoscaler": Object {
-                                        "createdAt": "",
-                                        "currentReplicas": 0,
-                                        "desiredReplicas": 0,
-                                        "labels": null,
-                                        "maxReplicas": 0,
-                                        "minReplicas": 0,
-                                        "name": "",
-                                        "targetCPUUtilizationPercentage": 0,
-                                      },
-                                      "availableReplicas": 1,
-                                      "createdAt": "2018-06-29T16:43:18+02:00",
-                                      "labels": Object {
-                                        "app": "reviews",
-                                        "version": "v3",
-                                      },
-                                      "name": "reviews-v3",
-                                      "replicas": 1,
-                                      "resourceVersion": "2849",
-                                      "templateAnnotations": Object {
-                                        "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                      },
-                                      "unavailableReplicas": 0,
-                                    },
-                                  ]
-                                }
-                              />
-                            </TabPane>,
                             <TabPane
                               bsClass="tab-pane"
                               eventKey="sources"
@@ -5413,189 +3829,10 @@ ShallowWrapper {
                             "props": Object {
                               "bsClass": "tab-pane",
                               "children": false,
-                              "eventKey": "pods",
+                              "eventKey": "workloads",
                             },
                             "ref": null,
                             "rendered": false,
-                            "type": [Function],
-                          },
-                          Object {
-                            "instance": null,
-                            "key": undefined,
-                            "nodeType": "class",
-                            "props": Object {
-                              "bsClass": "tab-pane",
-                              "children": <ServiceInfoDeployments
-                                deployments={
-                                  Array [
-                                    Object {
-                                      "autoscaler": Object {
-                                        "createdAt": "",
-                                        "currentReplicas": 0,
-                                        "desiredReplicas": 0,
-                                        "labels": null,
-                                        "maxReplicas": 0,
-                                        "minReplicas": 0,
-                                        "name": "",
-                                        "targetCPUUtilizationPercentage": 0,
-                                      },
-                                      "availableReplicas": 1,
-                                      "createdAt": "2018-06-29T16:43:18+02:00",
-                                      "labels": Object {
-                                        "app": "reviews",
-                                        "version": "v1",
-                                      },
-                                      "name": "reviews-v1",
-                                      "replicas": 1,
-                                      "resourceVersion": "2836",
-                                      "templateAnnotations": Object {
-                                        "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                      },
-                                      "unavailableReplicas": 0,
-                                    },
-                                    Object {
-                                      "autoscaler": Object {
-                                        "createdAt": "",
-                                        "currentReplicas": 0,
-                                        "desiredReplicas": 0,
-                                        "labels": null,
-                                        "maxReplicas": 0,
-                                        "minReplicas": 0,
-                                        "name": "",
-                                        "targetCPUUtilizationPercentage": 0,
-                                      },
-                                      "availableReplicas": 1,
-                                      "createdAt": "2018-06-29T16:43:18+02:00",
-                                      "labels": Object {
-                                        "app": "reviews",
-                                        "version": "v2",
-                                      },
-                                      "name": "reviews-v2",
-                                      "replicas": 1,
-                                      "resourceVersion": "2856",
-                                      "templateAnnotations": Object {
-                                        "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                      },
-                                      "unavailableReplicas": 0,
-                                    },
-                                    Object {
-                                      "autoscaler": Object {
-                                        "createdAt": "",
-                                        "currentReplicas": 0,
-                                        "desiredReplicas": 0,
-                                        "labels": null,
-                                        "maxReplicas": 0,
-                                        "minReplicas": 0,
-                                        "name": "",
-                                        "targetCPUUtilizationPercentage": 0,
-                                      },
-                                      "availableReplicas": 1,
-                                      "createdAt": "2018-06-29T16:43:18+02:00",
-                                      "labels": Object {
-                                        "app": "reviews",
-                                        "version": "v3",
-                                      },
-                                      "name": "reviews-v3",
-                                      "replicas": 1,
-                                      "resourceVersion": "2849",
-                                      "templateAnnotations": Object {
-                                        "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                      },
-                                      "unavailableReplicas": 0,
-                                    },
-                                  ]
-                                }
-                              />,
-                              "eventKey": "deployments",
-                            },
-                            "ref": null,
-                            "rendered": Object {
-                              "instance": null,
-                              "key": undefined,
-                              "nodeType": "class",
-                              "props": Object {
-                                "deployments": Array [
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v1",
-                                    },
-                                    "name": "reviews-v1",
-                                    "replicas": 1,
-                                    "resourceVersion": "2836",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v2",
-                                    },
-                                    "name": "reviews-v2",
-                                    "replicas": 1,
-                                    "resourceVersion": "2856",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                  Object {
-                                    "autoscaler": Object {
-                                      "createdAt": "",
-                                      "currentReplicas": 0,
-                                      "desiredReplicas": 0,
-                                      "labels": null,
-                                      "maxReplicas": 0,
-                                      "minReplicas": 0,
-                                      "name": "",
-                                      "targetCPUUtilizationPercentage": 0,
-                                    },
-                                    "availableReplicas": 1,
-                                    "createdAt": "2018-06-29T16:43:18+02:00",
-                                    "labels": Object {
-                                      "app": "reviews",
-                                      "version": "v3",
-                                    },
-                                    "name": "reviews-v3",
-                                    "replicas": 1,
-                                    "resourceVersion": "2849",
-                                    "templateAnnotations": Object {
-                                      "sidecar.istio.io/status": "{\\"version\\":\\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\\",\\"initContainers\\":[\\"istio-init\\"],\\"containers\\":[\\"istio-proxy\\"],\\"volumes\\":[\\"istio-envoy\\",\\"istio-certs\\"],\\"imagePullSecrets\\":null}",
-                                    },
-                                    "unavailableReplicas": 0,
-                                  },
-                                ],
-                              },
-                              "ref": null,
-                              "rendered": null,
-                              "type": [Function],
-                            },
                             "type": [Function],
                           },
                           Object {

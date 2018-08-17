@@ -12,6 +12,14 @@ interface EndpointAddress {
   name?: string;
 }
 
+export interface WorkloadOverview {
+  name: string;
+  type: string;
+  labels?: { [key: string]: string };
+  resourceVersion: string;
+  createdAt: string;
+}
+
 export interface Port {
   protocol: string;
   port: number;
@@ -365,7 +373,7 @@ export const hasIstioSidecar = (pods?: Pod[]) => {
   return false;
 };
 
-export interface ServiceDetailsInfo {
+export interface Service {
   labels?: { [key: string]: string };
   type: string;
   name: string;
@@ -373,14 +381,17 @@ export interface ServiceDetailsInfo {
   resourceVersion: string;
   ip: string;
   ports?: Port[];
+}
+
+export interface ServiceDetailsInfo {
+  service: Service;
   endpoints?: Endpoints[];
   istioSidecar: boolean;
-  pods?: Pod[];
-  deployments?: Deployment[];
   virtualServices?: VirtualService[];
   destinationRules?: DestinationRule[];
   dependencies?: { [key: string]: string[] };
   health?: ServiceHealth;
+  workloads?: WorkloadOverview[];
 }
 
 // NamespaceValidations are grouped per 'namespace'

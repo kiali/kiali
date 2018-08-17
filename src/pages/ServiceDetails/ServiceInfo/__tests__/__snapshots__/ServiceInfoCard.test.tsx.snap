@@ -130,6 +130,7 @@ ShallowWrapper {
                 }
                 type="fa"
               />,
+              undefined,
               "Pods",
             ],
             "className": "card-pf-title",
@@ -151,6 +152,7 @@ ShallowWrapper {
               "rendered": null,
               "type": [Function],
             },
+            undefined,
             "Pods",
           ],
           "type": "h2",
@@ -381,6 +383,7 @@ ShallowWrapper {
                   }
                   type="fa"
                 />,
+                undefined,
                 "Pods",
               ],
               "className": "card-pf-title",
@@ -402,6 +405,7 @@ ShallowWrapper {
                 "rendered": null,
                 "type": [Function],
               },
+              undefined,
               "Pods",
             ],
             "type": "h2",

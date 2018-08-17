@@ -60,6 +60,7 @@ ShallowWrapper {
     "props": Object {
       "iconName": "service",
       "iconType": "pf",
+      "istio": undefined,
       "items": <Row
         bsClass="row"
         componentClass="div"
@@ -102,12 +103,6 @@ ShallowWrapper {
             </strong>
              
             172.30.78.33
-          </div>
-          <div>
-            <strong>
-              Istio Sidecar
-            </strong>
-             Not deployed
           </div>
           <div>
             <strong>
@@ -248,6 +243,7 @@ ShallowWrapper {
       "props": Object {
         "iconName": "service",
         "iconType": "pf",
+        "istio": undefined,
         "items": <Row
           bsClass="row"
           componentClass="div"
@@ -290,12 +286,6 @@ ShallowWrapper {
               </strong>
                
               172.30.78.33
-            </div>
-            <div>
-              <strong>
-                Istio Sidecar
-              </strong>
-               Not deployed
             </div>
             <div>
               <strong>

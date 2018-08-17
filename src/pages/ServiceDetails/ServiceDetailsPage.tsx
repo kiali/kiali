@@ -26,12 +26,14 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     this.state = {
       validations: {},
       serviceDetailsInfo: {
-        type: '',
-        name: '',
-        createdAt: '',
         istioSidecar: false,
-        resourceVersion: '',
-        ip: ''
+        service: {
+          type: '',
+          name: '',
+          createdAt: '',
+          resourceVersion: '',
+          ip: ''
+        }
       }
     };
   }

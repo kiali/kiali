@@ -8,13 +8,12 @@ import { Endpoints, Port } from '../../../types/ServiceInfo';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
 
 import './ServiceInfoDescription.css';
-import { IstioLogo } from '../../../config';
 
 interface ServiceInfoDescriptionProps {
   name: string;
   createdAt: string;
   resourceVersion: string;
-  istio_sidecar?: boolean;
+  istioEnabled?: boolean;
   labels?: { [key: string]: string };
   type?: string;
   ip?: any;
@@ -34,6 +33,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
         iconType="pf"
         iconName="service"
         title={this.props.name}
+        istio={this.props.istioEnabled}
         items={
           <Row>
             <Col xs={12} sm={6} md={2} lg={2}>
@@ -52,17 +52,6 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               </div>
               <div>
                 <strong>IP</strong> {this.props.ip ? this.props.ip : ''}
-              </div>
-              <div>
-                <strong>Istio Sidecar</strong>
-                {this.props.istio_sidecar ? (
-                  <span>
-                    {' Deployed'}
-                    <img className="IstioLogo" src={IstioLogo} alt="Istio sidecar" />
-                  </span>
-                ) : (
-                  ' Not deployed'
-                )}
               </div>
               <div>
                 <strong>Created at</strong> <LocalTime time={this.props.createdAt} />

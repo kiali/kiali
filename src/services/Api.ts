@@ -5,7 +5,7 @@ import { Metrics } from '../types/Metrics';
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
 import { IstioConfigList } from '../types/IstioConfigListComponent';
 import { WorkloadNamespaceResponse } from '../types/Workload';
-import { NamespaceValidations, ServiceDetailsInfo, Validations, hasIstioSidecar } from '../types/ServiceInfo';
+import { NamespaceValidations, ServiceDetailsInfo, Validations } from '../types/ServiceInfo';
 import JaegerInfo from '../types/JaegerInfo';
 import GrafanaInfo from '../types/GrafanaInfo';
 import { AppHealth, ServiceHealth, WorkloadHealth, NamespaceAppHealth, NamespaceWorkloadHealth } from '../types/Health';
@@ -217,7 +217,7 @@ export const getServiceDetail = (auth: string, namespace: String, service: Strin
   return newRequest('get', `/api/namespaces/${namespace}/services/${service}`, {}, {}, auth).then(
     (r: Response<ServiceDetailsInfo>) => {
       const info: ServiceDetailsInfo = r.data;
-      info.istioSidecar = hasIstioSidecar(info.pods);
+      info.istioSidecar = info.istioSidecar;
       if (info.health) {
         // Default rate interval in backend = 600s
         info.health = ServiceHealth.fromJson(info.health, 600);
