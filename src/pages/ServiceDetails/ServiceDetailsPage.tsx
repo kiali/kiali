@@ -166,15 +166,15 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     const toDetails = to + '?' + parsedSearch.type + '=' + parsedSearch.name;
     return (
       <Breadcrumb title={true}>
-        <Breadcrumb.Item>
+        <Breadcrumb.Item componentClass={'span'}>
           <Link to="/services">Services</Link>
         </Breadcrumb.Item>
-        <Breadcrumb.Item>
+        <Breadcrumb.Item componentClass={'span'}>
           <Link to={`/services?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}>
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>
-        <Breadcrumb.Item>
+        <Breadcrumb.Item componentClass={'span'}>
           <Link to={to}>Service: {this.props.match.params.service}</Link>
         </Breadcrumb.Item>
         {!showingDetails ? (
@@ -183,10 +183,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
           </Breadcrumb.Item>
         ) : (
           <>
-            <Breadcrumb.Item>
+            <Breadcrumb.Item componentClass={'span'}>
               <Link to={to}>Service Info</Link>
             </Breadcrumb.Item>
-            <Breadcrumb.Item>
+            <Breadcrumb.Item componentClass={'span'}>
               <Link to={toDetails}>
                 {parsedSearchTypeHuman}: {parsedSearch.name}
               </Link>

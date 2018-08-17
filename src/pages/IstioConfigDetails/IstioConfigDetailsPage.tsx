@@ -217,7 +217,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       );
     } else if (parsedRuleParams.type && parsedRuleParams.name) {
       titleBreadcrumb.push(
-        <Breadcrumb.Item key={'breadcrumb_' + this.props.match.params.object}>
+        <Breadcrumb.Item key={'breadcrumb_' + this.props.match.params.object} componentClass={'span'}>
           <Link to={this.props.location.pathname}>Istio Object: {this.props.match.params.object}</Link>
         </Breadcrumb.Item>
       );
@@ -229,17 +229,17 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     }
     return (
       <Breadcrumb title={true}>
-        <Breadcrumb.Item>
+        <Breadcrumb.Item componentClass={'span'}>
           <Link to="/istio" onClick={this.cleanFilter}>
             Istio Config
           </Link>
         </Breadcrumb.Item>
-        <Breadcrumb.Item>
+        <Breadcrumb.Item componentClass={'span'}>
           <Link to="/istio" onClick={this.updateNamespaceFilter}>
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>
-        <Breadcrumb.Item>
+        <Breadcrumb.Item componentClass={'span'}>
           <Link to="/istio" onClick={this.updateTypeFilter}>
             Istio Object Type: {dicIstioType[this.props.match.params.objectType]}
           </Link>
