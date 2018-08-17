@@ -31,14 +31,17 @@ func ProxyJaeger(w http.ResponseWriter, r *http.Request) {
 
 // GetJaegerInfo provides the proxy Jaeger URL
 func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
-	scheme := "http"
-	if r.URL.Scheme != "" {
-		scheme = r.URL.Scheme
-	}
-	// r.Host can be set as "host" or "host:port", we always remove the :port as it is updated by the proxy
-	kialiHost := strings.Split(r.Host, ":")
-	info := models.JaegerInfo{
-		URL: fmt.Sprintf("%s://%s:%s", scheme, kialiHost[0], "32439"),
+	conf := config.Get()
+	info := models.JaegerInfo{URL: conf.ExternalServices.Jaeger.URL}
+	if info.URL == "" {
+		scheme := "http"
+		// Detect https from Kiali config (not from URL.Scheme as it is not set at this point)
+		if conf.Identity.CertFile != "" && conf.Identity.PrivateKeyFile != "" {
+			scheme = "https"
+		}
+		// r.Host can be set as "host" or "host:port", we always remove the :port as it is updated by the proxy
+		kialiHost := strings.Split(r.Host, ":")
+		info.URL = fmt.Sprintf("%s://%s:%d", scheme, kialiHost[0], conf.ExternalServices.Jaeger.ProxyNodePort)
 	}
 	RespondWithJSON(w, http.StatusOK, info)
 }

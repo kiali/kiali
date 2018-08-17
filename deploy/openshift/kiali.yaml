@@ -9,6 +9,8 @@ metadata:
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    service.alpha.openshift.io/serving-cert-secret-name: kiali-cert-secret
   name: kiali
   labels:
     app: kiali
@@ -50,6 +52,8 @@ metadata:
     app: kiali
     version: ${VERSION_LABEL}
 spec:
+  tls:
+    termination: reencrypt
   to:
     kind: Service
     targetPort: 20001
@@ -108,10 +112,15 @@ spec:
         volumeMounts:
         - name: kiali-configuration
           mountPath: "/kiali-configuration"
+        - name: kiali-cert
+          mountPath: "/kiali-cert"
       volumes:
       - name: kiali-configuration
         configMap:
           name: kiali
+      - name: kiali-cert
+        secret:
+          secretName: kiali-cert-secret
 ---
 apiVersion: v1
 kind: ClusterRole

@@ -40,26 +40,33 @@ func NewServer() *Server {
 
 // Start HTTP server asynchronously. TLS may be active depending on the global configuration.
 func (s *Server) Start() {
+	conf := config.Get()
 	log.Infof("Server endpoint will start at [%v]", s.httpServer.Addr)
-	log.Infof("Server endpoint will serve static content from [%v]", config.Get().Server.StaticContentRootDirectory)
+	log.Infof("Server endpoint will serve static content from [%v]", conf.Server.StaticContentRootDirectory)
+	secure := conf.Identity.CertFile != "" && conf.Identity.PrivateKeyFile != ""
 	go func() {
 		var err error
-		secure := config.Get().Identity.CertFile != "" && config.Get().Identity.PrivateKeyFile != ""
 		if secure {
 			log.Infof("Server endpoint will require https")
-			err = s.httpServer.ListenAndServeTLS(config.Get().Identity.CertFile, config.Get().Identity.PrivateKeyFile)
+			err = s.httpServer.ListenAndServeTLS(conf.Identity.CertFile, conf.Identity.PrivateKeyFile)
 		} else {
 			err = s.httpServer.ListenAndServe()
 		}
 		log.Warning(err)
 	}()
-	/** Proxy solution Jaeger*/
-	go func() {
-		server20002 := http.NewServeMux()
-		server20002.HandleFunc("/", handlers.ProxyJaeger)
-		log.Error(http.ListenAndServe(":20002", server20002))
-	}()
-	/** End Proxy solution Jaeger*/
+	if conf.ExternalServices.Jaeger.URL == "" {
+		// No direct URL provided => enable Jaeger Proxy
+		go func() {
+			jaegerProxy := http.NewServeMux()
+			jaegerProxy.HandleFunc("/", handlers.ProxyJaeger)
+			address := fmt.Sprintf(":%d", conf.ExternalServices.Jaeger.ProxyServicePort)
+			if secure {
+				log.Error(http.ListenAndServeTLS(address, conf.Identity.CertFile, conf.Identity.PrivateKeyFile, jaegerProxy))
+			} else {
+				log.Error(http.ListenAndServe(address, jaegerProxy))
+			}
+		}()
+	}
 }
 
 // Stop the HTTP server

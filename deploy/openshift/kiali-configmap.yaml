@@ -10,3 +10,7 @@ data:
     server:
       port: 20001
       static_content_root_directory: /opt/kiali/console
+    identity:
+      cert_file: /kiali-cert/tls.crt
+      private_key_file: /kiali-cert/tls.key
+
