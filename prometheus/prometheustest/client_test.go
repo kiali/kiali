@@ -117,6 +117,59 @@ func TestGetServiceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockRange(api, "round(sum(rate(istio_tcp_received_bytes_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 11)
+	mockRange(api, "round(sum(rate(istio_tcp_sent_bytes_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 13)
+	mockHistogram(api, "istio_request_bytes", "{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_bytes", "{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+		Namespace: "bookinfo",
+		Service:   "productpage",
+		Range: v1.Range{
+			Start: time.Unix(1000, 0),
+			End:   time.Unix(2000, 0),
+			Step:  10,
+		},
+		RateInterval: "5m",
+		RateFunc:     "rate",
+		ByLabelsIn:   []string{},
+		ByLabelsOut:  []string{},
+		Filters:      []string{}})
+
+	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
+	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
+	rqCountIn := metrics.Metrics["request_count_in"]
+	assert.NotNil(t, rqCountIn)
+	rqErrorCountIn := metrics.Metrics["request_error_count_in"]
+	assert.NotNil(t, rqCountIn)
+	rqSizeIn := metrics.Histograms["request_size_in"]
+	assert.NotNil(t, rqSizeIn)
+	rqDurationIn := metrics.Histograms["request_duration_in"]
+	assert.NotNil(t, rqDurationIn)
+	rsSizeIn := metrics.Histograms["response_size_in"]
+	assert.NotNil(t, rsSizeIn)
+	tcpRecIn := metrics.Metrics["tcp_received_in"]
+	assert.NotNil(t, tcpRecIn)
+	tcpSentIn := metrics.Metrics["tcp_sent_in"]
+	assert.NotNil(t, tcpSentIn)
+
+	assert.Equal(t, 2.5, float64(rqCountIn.Matrix[0].Values[0].Value))
+	assert.Equal(t, 4.5, float64(rqErrorCountIn.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.7, float64(rqSizeIn.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.8, float64(rqDurationIn.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.9, float64(rsSizeIn.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 11.0, float64(tcpRecIn.Matrix[0].Values[0].Value))
+	assert.Equal(t, 13.0, float64(tcpSentIn.Matrix[0].Values[0].Value))
+}
+
+func TestGetAppMetrics(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 1.5)
 	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
 	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_app=\"productpage\",source_workload_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
@@ -133,7 +186,7 @@ func TestGetServiceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_response_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
 	metrics := client.GetMetrics(&prometheus.MetricsQuery{
 		Namespace: "bookinfo",
-		Apps:      []string{"productpage"},
+		App:       "productpage",
 		Range: v1.Range{
 			Start: time.Unix(1000, 0),
 			End:   time.Unix(2000, 0),
@@ -195,7 +248,7 @@ func TestGetServiceMetrics(t *testing.T) {
 	assert.Equal(t, 12.0, float64(tcpSentOut.Matrix[0].Values[0].Value))
 }
 
-func TestGetFilteredServiceMetrics(t *testing.T) {
+func TestGetFilteredAppMetrics(t *testing.T) {
 	client, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
@@ -207,7 +260,7 @@ func TestGetFilteredServiceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	metrics := client.GetMetrics(&prometheus.MetricsQuery{
 		Namespace: "bookinfo",
-		Apps:      []string{"productpage"},
+		App:       "productpage",
 		Range: v1.Range{
 			Start: time.Unix(1000, 0),
 			End:   time.Unix(2000, 0),
@@ -231,7 +284,7 @@ func TestGetFilteredServiceMetrics(t *testing.T) {
 	assert.NotNil(t, rqSizeOut)
 }
 
-func TestGetServiceMetricsInstantRates(t *testing.T) {
+func TestGetAppMetricsInstantRates(t *testing.T) {
 	client, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
@@ -241,7 +294,7 @@ func TestGetServiceMetricsInstantRates(t *testing.T) {
 	mockRange(api, "round(sum(irate(istio_requests_total{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[1m])), 0.001)", 2.5)
 	metrics := client.GetMetrics(&prometheus.MetricsQuery{
 		Namespace: "bookinfo",
-		Apps:      []string{"productpage"},
+		App:       "productpage",
 		Range: v1.Range{
 			Start: time.Unix(1000, 0),
 			End:   time.Unix(2000, 0),
@@ -285,7 +338,7 @@ func TestGetServiceHealth(t *testing.T) {
 	assert.Equal(t, 5, health.Outbound.Total)
 }
 
-func TestGetServiceMetricsUnavailable(t *testing.T) {
+func TestGetAppMetricsUnavailable(t *testing.T) {
 	client, api, err := setupMocked()
 	if err != nil {
 		t.Error(err)
@@ -298,7 +351,7 @@ func TestGetServiceMetricsUnavailable(t *testing.T) {
 	mockEmptyHistogram(api, "istio_request_bytes", "{reporter=\"destination\",destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]")
 	metrics := client.GetMetrics(&prometheus.MetricsQuery{
 		Namespace: "bookinfo",
-		Apps:      []string{"productpage"},
+		App:       "productpage",
 		Range: v1.Range{
 			Start: time.Unix(1000, 0),
 			End:   time.Unix(2000, 0),

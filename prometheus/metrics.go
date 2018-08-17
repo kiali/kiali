@@ -27,9 +27,9 @@ type MetricsQuery struct {
 	ByLabelsIn   []string
 	ByLabelsOut  []string
 	Namespace    string
-	// TODO: replace with single string value when `business.GetApps` gets deleted
-	Apps     []string
-	Workload string
+	App          string
+	Workload     string
+	Service      string
 }
 
 // FillDefaults fills the struct with default parameters
@@ -152,71 +152,86 @@ func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) 
 }
 
 func getMetrics(api v1.API, q *MetricsQuery) Metrics {
-	labelsIn, labelsOut, labelsErrorIn, labelsErrorOut := buildLabelStrings(q)
+	labelsIn, labelsErrorIn := buildLabelStrings(q, true)
 	groupingIn := strings.Join(q.ByLabelsIn, ",")
-	groupingOut := strings.Join(q.ByLabelsOut, ",")
+	inboundMetrics := fetchAllMetrics(api, q, labelsIn, labelsErrorIn, groupingIn, "_in")
+	if q.Service != "" {
+		// If a service is set, stop now; we'll only have inbound metrics
+		return inboundMetrics
+	}
 
-	return fetchAllMetrics(api, q, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut)
+	labelsOut, labelsErrorOut := buildLabelStrings(q, false)
+	groupingOut := strings.Join(q.ByLabelsOut, ",")
+	metrics := fetchAllMetrics(api, q, labelsOut, labelsErrorOut, groupingOut, "_out")
+
+	// Merge in a single object
+	for key, obj := range inboundMetrics.Metrics {
+		metrics.Metrics[key] = obj
+	}
+	for key, obj := range inboundMetrics.Histograms {
+		metrics.Histograms[key] = obj
+	}
+	return metrics
 }
 
-func buildLabelStrings(q *MetricsQuery) (string, string, string, string) {
-	labelsIn := []string{`reporter="destination"`}
-	labelsOut := []string{`reporter="source"`}
-	if config.Get().IstioNamespace == q.Namespace {
-		labelsOut = []string{`reporter="destination"`}
+func buildLabelStrings(q *MetricsQuery, isInbound bool) (string, string) {
+	var referential string
+	var labels []string
+	if isInbound {
+		referential = "destination"
+		labels = []string{`reporter="destination"`}
+	} else {
+		referential = "source"
+		if config.Get().IstioNamespace == q.Namespace {
+			labels = []string{`reporter="destination"`}
+		} else {
+			labels = []string{`reporter="source"`}
+		}
 	}
 
 	if q.Workload != "" {
-		labelsIn = append(labelsIn, fmt.Sprintf(`destination_workload="%s"`, q.Workload))
-		labelsOut = append(labelsOut, fmt.Sprintf(`source_workload="%s"`, q.Workload))
+		labels = append(labels, fmt.Sprintf(`%s_workload="%s"`, referential, q.Workload))
 	}
-	if len(q.Apps) == 1 {
-		labelsIn = append(labelsIn, fmt.Sprintf(`destination_app="%s"`, q.Apps[0]))
-		labelsOut = append(labelsOut, fmt.Sprintf(`source_app="%s"`, q.Apps[0]))
-	} else if len(q.Apps) > 1 {
-		apps := strings.Join(q.Apps, "|")
-		labelsIn = append(labelsIn, fmt.Sprintf(`destination_app=~"%s"`, apps))
-		labelsOut = append(labelsOut, fmt.Sprintf(`source_app=~"%s"`, apps))
+	if q.App != "" {
+		labels = append(labels, fmt.Sprintf(`%s_app="%s"`, referential, q.App))
+	}
+	if q.Service != "" {
+		// Should never be outbound (in that case, will just return empty metrics)
+		labels = append(labels, fmt.Sprintf(`%s_service_name="%s"`, referential, q.Service))
 	}
 	if q.Namespace != "" {
-		labelsIn = append(labelsIn, fmt.Sprintf(`destination_workload_namespace="%s"`, q.Namespace))
-		labelsOut = append(labelsOut, fmt.Sprintf(`source_workload_namespace="%s"`, q.Namespace))
+		if q.Service != "" {
+			labels = append(labels, fmt.Sprintf(`%s_service_namespace="%s"`, referential, q.Namespace))
+		} else {
+			labels = append(labels, fmt.Sprintf(`%s_workload_namespace="%s"`, referential, q.Namespace))
+		}
 	}
 
-	fullIn := "{" + strings.Join(labelsIn, ",") + "}"
-	fullOut := "{" + strings.Join(labelsOut, ",") + "}"
+	full := "{" + strings.Join(labels, ",") + "}"
 
-	labelsIn = append(labelsIn, `response_code=~"[5|4].*"`)
-	labelsOut = append(labelsOut, `response_code=~"[5|4].*"`)
-	errorIn := "{" + strings.Join(labelsIn, ",") + "}"
-	errorOut := "{" + strings.Join(labelsOut, ",") + "}"
+	labels = append(labels, `response_code=~"[5|4].*"`)
+	errors := "{" + strings.Join(labels, ",") + "}"
 
-	return fullIn, fullOut, errorIn, errorOut
+	return full, errors
 }
 
-func fetchAllMetrics(api v1.API, q *MetricsQuery, labelsIn, labelsOut, labelsErrorIn, labelsErrorOut, groupingIn, groupingOut string) Metrics {
+func fetchAllMetrics(api v1.API, q *MetricsQuery, labels, labelsError, grouping, suffix string) Metrics {
 	var wg sync.WaitGroup
-	fetchRateInOut := func(p8sFamilyName string, metricIn **Metric, metricOut **Metric, lblIn string, lblOut string) {
+	fetchRate := func(p8sFamilyName string, metric **Metric, lbl string) {
 		defer wg.Done()
-		m := fetchRateRange(api, p8sFamilyName, lblIn, groupingIn, q)
-		*metricIn = m
-		m = fetchRateRange(api, p8sFamilyName, lblOut, groupingOut, q)
-		*metricOut = m
+		m := fetchRateRange(api, p8sFamilyName, lbl, grouping, q)
+		*metric = m
 	}
 
-	fetchHistoInOut := func(p8sFamilyName string, hIn *Histogram, hOut *Histogram) {
+	fetchHisto := func(p8sFamilyName string, histo *Histogram) {
 		defer wg.Done()
-		h := fetchHistogramRange(api, p8sFamilyName, labelsIn, groupingIn, q)
-		*hIn = h
-		h = fetchHistogramRange(api, p8sFamilyName, labelsOut, groupingOut, q)
-		*hOut = h
+		h := fetchHistogramRange(api, p8sFamilyName, labels, grouping, q)
+		*histo = h
 	}
 
 	type resultHolder struct {
-		metricIn   *Metric
-		metricOut  *Metric
-		histoIn    Histogram
-		histoOut   Histogram
+		metric     *Metric
+		histo      Histogram
 		definition kialiMetric
 	}
 	maxResults := len(kialiMetrics)
@@ -238,10 +253,10 @@ func fetchAllMetrics(api v1.API, q *MetricsQuery, labelsIn, labelsOut, labelsErr
 			result := resultHolder{definition: metric}
 			results[i] = &result
 			if metric.isHisto {
-				go fetchHistoInOut(metric.istioName, &result.histoIn, &result.histoOut)
+				go fetchHisto(metric.istioName, &result.histo)
 			} else {
-				labelsInToUse, labelsOutToUse := metric.labelsToUse(labelsIn, labelsOut, labelsErrorIn, labelsErrorOut)
-				go fetchRateInOut(metric.istioName, &result.metricIn, &result.metricOut, labelsInToUse, labelsOutToUse)
+				labelsToUse := metric.labelsToUse(labels, labelsError)
+				go fetchRate(metric.istioName, &result.metric, labelsToUse)
 			}
 		}
 	}
@@ -253,11 +268,9 @@ func fetchAllMetrics(api v1.API, q *MetricsQuery, labelsIn, labelsOut, labelsErr
 	for _, result := range results {
 		if result != nil {
 			if result.definition.isHisto {
-				histograms[result.definition.name+"_in"] = result.histoIn
-				histograms[result.definition.name+"_out"] = result.histoOut
+				histograms[result.definition.name+suffix] = result.histo
 			} else {
-				metrics[result.definition.name+"_in"] = result.metricIn
-				metrics[result.definition.name+"_out"] = result.metricOut
+				metrics[result.definition.name+suffix] = result.metric
 			}
 		}
 	}
