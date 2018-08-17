@@ -68,10 +68,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		return nil, fmt.Errorf("Source services: %s", err.Error())
 	}
 
-	s := models.ServiceDetails{
-		Namespace: models.Namespace{Name: namespace},
-		Name:      service,
-		Health:    health}
+	s := models.ServiceDetails{Health: health}
 	s.SetServiceDetails(serviceDetails, istioDetails, prometheusDetails)
 	return &s, nil
 }

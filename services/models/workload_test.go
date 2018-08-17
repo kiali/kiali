@@ -26,6 +26,20 @@ func TestDeploymentInvidividualParse(t *testing.T) {
 	assert.Equal(int32(0), deployment.UnavailableReplicas)
 }
 
+func TestDeploymentWorkloadOverview(t *testing.T) {
+	assert := assert.New(t)
+
+	deployment := WorkloadOverview{}
+	k18sDeployment := fakeDeployment()
+	deployment.Parse(*k18sDeployment)
+
+	assert.Equal("reviews-v1", deployment.Name)
+	assert.Equal("bar", deployment.Labels["foo"])
+	assert.Equal("v1", deployment.Labels["version"])
+	assert.Equal("2709198702082918", deployment.ResourceVersion)
+	assert.Equal("2018-03-08T17:44:00+03:00", deployment.CreatedAt)
+}
+
 func fakeDeployment() *v1beta1.Deployment {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 

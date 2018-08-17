@@ -18,13 +18,12 @@ func TestServiceDetailParsing(t *testing.T) {
 	assert := assert.New(t)
 
 	service := ServiceDetails{}
-	service.Name = "service"
-	service.Namespace = Namespace{"namespace"}
 	service.SetServiceDetails(fakeServiceDetails(), fakeIstioDetails(), fakePrometheusDetails())
 
 	// Kubernetes Details
-	assert.Equal(service.Name, "service")
-	assert.Equal(service.Namespace.Name, "namespace")
+
+	assert.Equal(service.Service.Name, "Name")
+	assert.Equal(service.Service.Namespace.Name, "Namespace")
 	assert.Equal(service.Service.CreatedAt, "2018-03-08T17:44:00+03:00")
 	assert.Equal(service.Service.ResourceVersion, "1234")
 	assert.Equal(service.Service.Type, "ClusterIP")
@@ -44,48 +43,21 @@ func TestServiceDetailParsing(t *testing.T) {
 				Port{Name: "http", Protocol: "TCP", Port: 3000},
 			}}})
 
-	assert.Len(service.Pods, 2)
-	assert.Equal(service.Pods[0].Name, "reviews-v1-1234")
-	assert.Equal(service.Pods[1].Name, "reviews-v2-1234")
-	assert.Equal(*service.Workloads[0], Workload{
-		Name:                "reviews-v1",
-		Labels:              map[string]string{"apps": "reviews", "version": "v1"},
-		CreatedAt:           "2018-03-08T17:44:00+03:00",
-		ResourceVersion:     "1234",
-		Replicas:            3,
-		AvailableReplicas:   1,
-		UnavailableReplicas: 2,
-		Autoscaler: Autoscaler{
-			Name:                            "reviews-v1",
-			Labels:                          map[string]string{"apps": "reviews", "version": "v1"},
-			CreatedAt:                       "2018-03-08T17:44:00+03:00",
-			MinReplicas:                     1,
-			MaxReplicas:                     10,
-			TargetCPUUtilizationPercentage:  50,
-			CurrentReplicas:                 3,
-			DesiredReplicas:                 4,
-			ObservedGeneration:              50,
-			CurrentCPUUtilizationPercentage: 70}})
+	assert.Equal(*service.Workloads[0], WorkloadOverview{
+		Name:            "reviews-v1",
+		Labels:          map[string]string{"apps": "reviews", "version": "v1"},
+		Type:            "Deployment",
+		CreatedAt:       "2018-03-08T17:44:00+03:00",
+		ResourceVersion: "1234",
+	})
 
-	assert.Equal(*service.Workloads[1], Workload{
-		Name:                "reviews-v2",
-		Labels:              map[string]string{"apps": "reviews", "version": "v2"},
-		CreatedAt:           "2018-03-08T17:45:00+03:00",
-		ResourceVersion:     "1234",
-		Replicas:            3,
-		AvailableReplicas:   3,
-		UnavailableReplicas: 0,
-		Autoscaler: Autoscaler{
-			Name:                            "reviews-v2",
-			Labels:                          map[string]string{"apps": "reviews", "version": "v2"},
-			CreatedAt:                       "2018-03-08T17:45:00+03:00",
-			MinReplicas:                     1,
-			MaxReplicas:                     10,
-			TargetCPUUtilizationPercentage:  50,
-			CurrentReplicas:                 3,
-			DesiredReplicas:                 2,
-			ObservedGeneration:              50,
-			CurrentCPUUtilizationPercentage: 30}})
+	assert.Equal(*service.Workloads[1], WorkloadOverview{
+		Name:            "reviews-v2",
+		Labels:          map[string]string{"apps": "reviews", "version": "v2"},
+		Type:            "Deployment",
+		CreatedAt:       "2018-03-08T17:45:00+03:00",
+		ResourceVersion: "4567",
+	})
 
 	// Istio Details
 
@@ -311,6 +283,7 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 			v1beta1.Deployment{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:              "reviews-v1",
+					Namespace:         "Namespace",
 					CreationTimestamp: meta_v1.NewTime(t1),
 					ResourceVersion:   "1234",
 					Labels:            map[string]string{"apps": "reviews", "version": "v1"}},
@@ -321,8 +294,9 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 			v1beta1.Deployment{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:              "reviews-v2",
+					Namespace:         "Namespace",
 					CreationTimestamp: meta_v1.NewTime(t2),
-					ResourceVersion:   "1234",
+					ResourceVersion:   "4567",
 					Labels:            map[string]string{"apps": "reviews", "version": "v2"}},
 				Status: v1beta1.DeploymentStatus{
 					Replicas:            3,
