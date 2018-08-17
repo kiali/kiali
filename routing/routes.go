@@ -460,7 +460,7 @@ func NewRoutes() (r *Routes) {
 			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
 			// namespaces:     Comma-separated list of namespaces will override path param (path param 'all' for all namespaces)
 			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-			// vendor:         Graph format: cytoscape (default) | vizceral
+			// vendor:         Graph format: cytoscape (default)
 
 			"GraphNamespace",
 			"GET",

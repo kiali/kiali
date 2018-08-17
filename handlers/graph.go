@@ -28,7 +28,7 @@ package handlers
 //   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
 //   namespaces:     Comma-separated list of namespace names to use in the graph. Will override namespace path param
 //   queryTime:      Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
-//   vendor:         cytoscape | vizceral (default cytoscape)
+//   vendor:         cytoscape (default cytoscape)
 //
 // * Error% is the percentage of requests with response code != 2XX
 // * See the vendor-specific config generators for more details about the specific vendor.
@@ -49,7 +49,6 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/cytoscape"
 	"github.com/kiali/kiali/graph/options"
-	"github.com/kiali/kiali/graph/vizceral"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -75,9 +74,8 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 func graphNamespaces(o options.Options, client *prometheus.Client) graph.TrafficMap {
 	switch o.Vendor {
 	case "cytoscape":
-	case "vizceral":
 	default:
-		checkError(errors.New(fmt.Sprintf("Vendor [%v] does not support Namespace Graphs", o.Vendor)))
+		checkError(errors.New(fmt.Sprintf("Vendor [%v] not supported", o.Vendor)))
 	}
 
 	log.Debugf("Build graph for [%v] namespaces [%s]", len(o.Namespaces), o.Namespaces)
@@ -393,10 +391,10 @@ func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options
 
 	var vendorConfig interface{}
 	switch o.Vendor {
-	case "vizceral":
-		vendorConfig = vizceral.NewConfig(fmt.Sprintf("%v", o.Namespaces), trafficMap, o.VendorOptions)
 	case "cytoscape":
 		vendorConfig = cytoscape.NewConfig(trafficMap, o.VendorOptions)
+	default:
+		checkError(errors.New(fmt.Sprintf("Vendor [%v] not supported", o.Vendor)))
 	}
 
 	log.Debugf("Done generating config for [%v] service graph.", o.Vendor)
