@@ -13,7 +13,8 @@ import (
 // A Namespace provide a scope for names.
 // This type used to describe a set of objects.
 //
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails
+
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations
 type NamespaceParam struct {
 	// The id of the namespace.
 	//
@@ -58,7 +59,7 @@ type ObjectName struct {
 
 // Workload name
 //
-// swagger:parameters workloadDetails
+// swagger:parameters workloadDetails workloadValidations
 type WorkloadParam struct {
 	// The name of the workload
 	//
@@ -158,6 +159,13 @@ type NamespaceValidationResponse struct {
 // Listing all istio validations for object in the namespace
 // swagger:response typeValidationsResponse
 type ServiceValidationResponse struct {
+	// in:body
+	Body TypedIstioValidations
+}
+
+// Listing all istio validations for object in the namespace
+// swagger:response WorkloadValidations
+type WorkloadValidationResponse struct {
 	// in:body
 	Body TypedIstioValidations
 }

@@ -55,6 +55,9 @@ const (
 
 	EnvKialiService       = "KIALI_SERVICE"
 	IstioVersionSupported = ">= 1.0"
+
+	EnvIstioLabelNameApp     = "ISTIO_LABEL_NAME_APP"
+	EnvIstioLabelNameVersion = "ISTIO_LABEL_NAME_VERSION"
 )
 
 // Global configuration for the application.
@@ -110,6 +113,12 @@ type LoginToken struct {
 	ExpirationSeconds int64  `yaml:"expiration_seconds,omitempty"`
 }
 
+// IstioLabels holds configuration about the labels required by Istio
+type IstioLabels struct {
+	AppLabelName     string `yaml:"app_label_name,omitempty"`
+	VersionLabelName string `yaml:"version_label_name,omitempty"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	Identity         security.Identity `yaml:",omitempty"`
@@ -121,6 +130,7 @@ type Config struct {
 	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
 	KialiService     string            `yaml:"kiali_service,omitempty"`
 	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
+	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -134,6 +144,8 @@ func NewConfig() (c *Config) {
 	c.VersionLabelName = strings.TrimSpace(getDefaultString(EnvVersionLabelName, "version"))
 	c.KialiService = strings.TrimSpace(getDefaultString(EnvKialiService, "kiali"))
 	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
+	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
+	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
 
 	// Server configuration
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))

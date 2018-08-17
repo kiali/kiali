@@ -568,6 +568,54 @@
         }
       }
     },
+    "/namespaces/{namespace}/workloads/{workload}/istio_validations": {
+      "get": {
+        "description": "Endpoint to get the list of istio object validations for a workload",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "workloadValidations",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the workload",
+            "name": "workload",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/WorkloadValidations"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/status": {
       "get": {
         "description": "Endpoint to get the status of Kiali",
@@ -1335,9 +1383,11 @@
       "x-go-package": "github.com/kiali/kiali"
     },
     "Workload": {
+      "description": "Workload has the details of a workload",
       "type": "object",
       "required": [
         "name",
+        "type",
         "templateAnnotations",
         "labels",
         "createdAt",
@@ -1401,6 +1451,12 @@
           },
           "x-go-name": "TemplateAnnotations"
         },
+        "type": {
+          "description": "Type of the workload",
+          "type": "string",
+          "x-go-name": "Type",
+          "example": "deployment"
+        },
         "unavailableReplicas": {
           "description": "Number of unavailable replicas",
           "type": "integer",
@@ -1446,6 +1502,7 @@
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
     "WorkloadListItem": {
+      "description": "WorkloadListItem has the necessary information to display the console workload list",
       "type": "object",
       "required": [
         "name",
@@ -1489,7 +1546,9 @@
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
     "WorkloadOverview": {
+      "description": "Useful to display a link to the workload details page.",
       "type": "object",
+      "title": "WorkloadOverview has the summary information of a workload.",
       "required": [
         "name",
         "type",
@@ -1725,6 +1784,12 @@
     }
   },
   "responses": {
+    "WorkloadValidations": {
+      "description": "Listing all istio validations for object in the namespace",
+      "schema": {
+        "$ref": "#/definitions/TypedIstioValidations"
+      }
+    },
     "appHealthResponse": {
       "description": "appHealthResponse contains aggregated health from various sources, for a given app",
       "schema": {

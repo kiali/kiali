@@ -235,6 +235,31 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadDetails,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/istio_validations workloadValidations
+		// ---
+		// Endpoint to get the list of istio object validations for a workload
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: WorkloadValidations
+		//
+		{
+			"WorkloadValidations",
+			"GET",
+			"/api/namespaces/{namespace}/workloads/{workload}/istio_validations",
+			handlers.WorkloadValidations,
+			true,
+		},
 		{
 			"NamespaceList",
 			"GET",

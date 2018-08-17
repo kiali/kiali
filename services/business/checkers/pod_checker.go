@@ -47,5 +47,6 @@ func (checker PodChecker) runIndividualChecks() models.IstioValidations {
 func (checker *PodChecker) enabledCheckersFor(object *v1.Pod) []Checker {
 	return []Checker{
 		pods.SidecarPresenceChecker{Pod: object},
+		pods.LabelPresenceChecker{Pod: object},
 	}
 }
