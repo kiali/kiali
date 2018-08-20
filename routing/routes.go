@@ -260,6 +260,31 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadValidations,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/apps appList
+		// ---
+		// Endpoint to get the list of apps for a namespace
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: appListResponse
+		//
+		{
+			"AppList",
+			"GET",
+			"/api/namespaces/{namespace}/apps",
+			handlers.AppList,
+			true,
+		},
 		{
 			"NamespaceList",
 			"GET",

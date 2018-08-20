@@ -7,7 +7,30 @@ import (
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/services/business"
 )
+
+// AppList is the API handler to fetch all the apps to be displayed, related to a single namespace
+func AppList(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	// Get business layer
+	business, err := business.Get()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Apps initialization error: "+err.Error())
+		return
+	}
+	namespace := params["namespace"]
+
+	// Fetch and build apps
+	appList, err := business.App.GetAppList(namespace)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, appList)
+}
 
 // AppMetrics is the API handler to fetch metrics to be displayed, related to an app-label grouping
 func AppMetrics(w http.ResponseWriter, r *http.Request) {

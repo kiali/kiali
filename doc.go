@@ -177,6 +177,13 @@ type WorkloadListResponse struct {
 	Body models.WorkloadList
 }
 
+// Listing all apps in the namespace
+// swagger:response appListResponse
+type AppListResponse struct {
+	// in:body
+	Body models.AppList
+}
+
 // serviceHealthResponse contains aggregated health from various sources, for a given service
 // swagger:response serviceHealthResponse
 type serviceHealthResponse struct {

@@ -31,15 +31,15 @@ type WorkloadListItem struct {
 	// example: deployment
 	Type string `json:"type"`
 
-	// Define if Pods related to this Service has an IstioSidecar deployed
+	// Define if Pods related to this Workload has an IstioSidecar deployed
 	// required: true
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
-	// Define if Pods related to this Service has the label App
+	// Define if Pods related to this Workload has the label App
 	// required: true
 	// example: true
 	AppLabel bool `json:"appLabel"`
-	// Define if Pods related to this Service has the label Version
+	// Define if Pods related to this Workload has the label Version
 	// required: true
 	// example: true
 	VersionLabel bool `json:"versionLabel"`
