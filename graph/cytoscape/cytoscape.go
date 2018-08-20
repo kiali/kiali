@@ -17,7 +17,6 @@ import (
 	"crypto/md5"
 	"fmt"
 	"sort"
-	"strconv"
 
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/options"
@@ -41,6 +40,8 @@ type NodeData struct {
 	Rate4xx         string          `json:"rate4XX,omitempty"`         // edge aggregate
 	Rate5xx         string          `json:"rate5XX,omitempty"`         // edge aggregate
 	RateOut         string          `json:"rateOut,omitempty"`         // edge aggregate
+	RateTcpSent     string          `json:"rateTcpSent,omitempty"`     // edge aggregate
+	RateTcpSentOut  string          `json:"rateTcpSentOut,omitempty"`  // edge aggregate
 	HasCB           bool            `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
 	HasMissingSC    bool            `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
 	HasVS           bool            `json:"hasVS,omitempty"`           // true (has route rule) | false
@@ -68,6 +69,7 @@ type EdgeData struct {
 	ResponseTime string `json:"responseTime,omitempty"`
 	IsMTLS       bool   `json:"isMTLS,omitempty"`   // true (mutual TLS connection) | false
 	IsUnused     bool   `json:"isUnused,omitempty"` // true | false
+	TcpSentRate  string `json:"tcpSentRate,omitempty"`
 }
 
 type NodeWrapper struct {
@@ -256,6 +258,16 @@ func addNodeTelemetry(s *graph.Node, nd *NodeData) {
 	if rateOut > 0.0 {
 		nd.RateOut = fmt.Sprintf("%.3f", rateOut)
 	}
+
+	tcpSent := getRate(s.Metadata, "tcpSentRate")
+	tcpSentOut := getRate(s.Metadata, "tcpSentRateOut")
+
+	if tcpSent > 0.0 {
+		nd.RateTcpSent = fmt.Sprintf("%.3f", tcpSent)
+	}
+	if tcpSentOut > 0.0 {
+		nd.RateTcpSentOut = fmt.Sprintf("%.3f", tcpSentOut)
+	}
 }
 
 func getRate(md map[string]interface{}, k string) float64 {
@@ -307,15 +319,11 @@ func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
 	if val, ok := e.Metadata["isMTLS"]; ok {
 		ed.IsMTLS = val.(bool)
 	}
-}
 
-func add(current string, val float64) string {
-	sum := val
-	f, err := strconv.ParseFloat(current, 64)
-	if err == nil {
-		sum += f
+	tcpSentRate := getRate(e.Metadata, "tcpSentRate")
+	if tcpSentRate > 0.0 {
+		ed.TcpSentRate = fmt.Sprintf("%.3f", tcpSentRate)
 	}
-	return fmt.Sprintf("%.3f", sum)
 }
 
 // groupByVersion adds compound nodes to group multiple versions of the same app

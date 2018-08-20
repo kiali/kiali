@@ -44,9 +44,15 @@ func applyDeadNodes(trafficMap graph.TrafficMap, istioClient kubernetes.IstioCli
 				numRemoved++
 			}
 		default:
-			// a node with traffic is not dead, skip
+			// a node with HTTP traffic is not dead, skip
 			rate, hasRate := n.Metadata["rate"]
 			rateOut, hasRateOut := n.Metadata["rateOut"]
+			if (hasRate && rate.(float64) > 0) || (hasRateOut && rateOut.(float64) > 0) {
+				continue
+			}
+			// a node with TCP Sent traffic is not dead, skip
+			rate, hasRate = n.Metadata["tcpSentRate"]
+			rateOut, hasRateOut = n.Metadata["tcpSentRateOut"]
 			if (hasRate && rate.(float64) > 0) || (hasRateOut && rateOut.(float64) > 0) {
 				continue
 			}

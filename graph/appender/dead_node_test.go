@@ -85,25 +85,27 @@ func TestDeadNode(t *testing.T) {
 
 	trafficMap := testTrafficMap()
 
-	assert.Equal(7, len(trafficMap))
+	assert.Equal(9, len(trafficMap))
 	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
 	unknownNode, found := trafficMap[id]
 	assert.Equal(true, found)
 	assert.Equal(graph.UnknownWorkload, unknownNode.Workload)
-	assert.Equal(6, len(unknownNode.Edges))
+	assert.Equal(8, len(unknownNode.Edges))
 
 	applyDeadNodes(trafficMap, k8s)
 
-	assert.Equal(6, len(trafficMap))
+	assert.Equal(8, len(trafficMap))
 	unknownNode, found = trafficMap[id]
 	assert.Equal(true, found)
-	assert.Equal(5, len(unknownNode.Edges))
+	assert.Equal(7, len(unknownNode.Edges))
 
 	assert.Equal("testPodsWithTraffic-v1", unknownNode.Edges[0].Dest.Workload)
 	assert.Equal("testPodsNoTraffic-v1", unknownNode.Edges[1].Dest.Workload)
 	assert.Equal("testNoPodsWithTraffic-v1", unknownNode.Edges[2].Dest.Workload)
 	assert.Equal("testNoPodsNoTraffic-v1", unknownNode.Edges[3].Dest.Workload)
 	assert.Equal("testNoDeploymentWithTraffic-v1", unknownNode.Edges[4].Dest.Workload)
+	assert.Equal("testNodeWithTcpSentTraffic-v1", unknownNode.Edges[5].Dest.Workload)
+	assert.Equal("testNodeWithTcpSentOutTraffic-v1", unknownNode.Edges[6].Dest.Workload)
 
 	id, _ = graph.Id("testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", "testNoPodsNoTraffic", graph.GraphTypeVersionedApp)
 	noPodsNoTraffic, ok := trafficMap[id]
@@ -134,6 +136,12 @@ func testTrafficMap() map[string]*graph.Node {
 
 	n6 := graph.NewNode("testNamespace", "testNoDeploymentNoTraffic-v1", "testNoDeploymentNoTraffic", "v1", "testNoDeploymentNoTraffic", graph.GraphTypeVersionedApp)
 
+	n7 := graph.NewNode("testNamespace", "testNodeWithTcpSentTraffic-v1", "testNodeWithTcpSentTraffic", "v1", "testNodeWithTcpSentTraffic", graph.GraphTypeVersionedApp)
+	n7.Metadata["tcpSentRate"] = 74.1
+
+	n8 := graph.NewNode("testNamespace", "testNodeWithTcpSentOutTraffic-v1", "testNodeWithTcpSentOutTraffic", "v1", "testNodeWithTcpSentOutTraffic", graph.GraphTypeVersionedApp)
+	n8.Metadata["tcpSentRateOut"] = 74.1
+
 	trafficMap[n0.ID] = &n0
 	trafficMap[n1.ID] = &n1
 	trafficMap[n2.ID] = &n2
@@ -141,6 +149,8 @@ func testTrafficMap() map[string]*graph.Node {
 	trafficMap[n4.ID] = &n4
 	trafficMap[n5.ID] = &n5
 	trafficMap[n6.ID] = &n6
+	trafficMap[n7.ID] = &n7
+	trafficMap[n8.ID] = &n8
 
 	e := n0.AddEdge(&n1)
 	e.Metadata["rate"] = 0.8
@@ -159,6 +169,12 @@ func testTrafficMap() map[string]*graph.Node {
 
 	e = n0.AddEdge(&n6)
 	e.Metadata["rate"] = 0.0
+
+	e = n0.AddEdge(&n7)
+	e.Metadata["tcpSentRate"] = 74.1
+
+	e = n0.AddEdge(&n8)
+	e.Metadata["tcpSentRate"] = 74.1
 
 	return trafficMap
 }

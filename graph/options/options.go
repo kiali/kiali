@@ -23,7 +23,6 @@ const (
 	defaultDuration      string = "10m"
 	defaultGraphType     string = graph.GraphTypeApp
 	defaultGroupBy       string = GroupByVersion
-	defaultMetric        string = "istio_requests_total"
 	defaultVendor        string = "cytoscape"
 )
 
@@ -39,7 +38,6 @@ type Options struct {
 	Appenders    []appender.Appender
 	Duration     time.Duration
 	IncludeIstio bool // include istio-system services. Ignored for istio-system ns. Default false.
-	Metric       string
 	Namespaces   []string
 	QueryTime    int64 // unix time in seconds
 	Workload     string
@@ -59,7 +57,6 @@ func NewOptions(r *http.Request) Options {
 	includeIstio, includeIstioErr := strconv.ParseBool(params.Get("includeIstio"))
 	graphType := params.Get("graphType")
 	groupBy := params.Get("groupBy")
-	metric := params.Get("metric")
 	queryTime, queryTimeErr := strconv.ParseInt(params.Get("queryTime"), 10, 64)
 	namespaces := params.Get("namespaces") // csl of namespaces. Overrides namespace path param if set
 	vendor := params.Get("vendor")
@@ -99,9 +96,6 @@ func NewOptions(r *http.Request) Options {
 	if "" == groupBy {
 		groupBy = defaultGroupBy
 	}
-	if "" == metric {
-		metric = defaultMetric
-	}
 	if queryTimeErr != nil {
 		queryTime = time.Now().Unix()
 	}
@@ -112,7 +106,6 @@ func NewOptions(r *http.Request) Options {
 	options := Options{
 		Duration:     duration,
 		IncludeIstio: includeIstio,
-		Metric:       metric,
 		Namespaces:   namespaceNames,
 		QueryTime:    queryTime,
 		Vendor:       vendor,
