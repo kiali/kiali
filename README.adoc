@@ -44,9 +44,9 @@ make sure you install them with `yarn` and commit the `yarn.lock` file.
 
 === Testing with Kiali
 
-When developing, is usual to run this application outside of https://github.com/kiali/kiali[kiali].
+When developing, it is usual to run this application outside of https://github.com/kiali/kiali[kiali].
 
-Is possible to proxy the API requests without having to push the changes to kiali.
+It is possible to proxy the API requests without having to push the changes to kiali.
 Add the https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#proxying-api-requests-in-development[proxy]
 property to `package.json` with the url of kiali.
 [source, json]
@@ -121,7 +121,7 @@ brew install watchman
 Use `yarn build` which will bundle the build artifacts using webpack into the `build` directory.
 
 == Configure Kiali
-Use the [config file](https://github.com/kiali/kiali-ui/blob/master/src/config.ts) to configure Kiali-UI.
+Use the link:https://github.com/kiali/kiali-ui/blob/master/src/config.ts[config file] to configure Kiali-UI.
 
 [cols="1a,1a"]
 |===
