@@ -25,7 +25,6 @@ package handlers
 //   graphType:      Determines how to present the telemetry data. app | versionedApp | workload (default workload)
 //   groupBy:        If supported by vendor, visually group by a specified node attribute (default version)
 //   includeIstio:   Include istio-system (infra) services (default false)
-//   metric:         Prometheus metric name to be used to generate the dependency graph (default istio_request_count)
 //   namespaces:     Comma-separated list of namespace names to use in the graph. Will override namespace path param
 //   queryTime:      Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
 //   vendor:         cytoscape (default cytoscape)
@@ -143,11 +142,13 @@ func markTrafficGenerators(trafficMap graph.TrafficMap) {
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
 // nodes either directly send and/or receive requests from a node in the namespace.
 func buildNamespaceTrafficMap(namespace string, o options.Options, client *prometheus.Client) graph.TrafficMap {
+	httpMetric := "istio_requests_total"
+
 	// query prometheus for request traffic in three queries:
 	// 1) query for traffic originating from "unknown" (i.e. the internet)
 	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code"
 	query := fmt.Sprintf("sum(rate(%v{reporter=\"destination\",source_workload=\"unknown\",destination_service_namespace=\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
-		o.Metric,
+		httpMetric,
 		namespace,
 		"[2345][0-9][0-9]",        // regex for valid response_codes
 		int(o.Duration.Seconds()), // range duration for the query
@@ -158,7 +159,7 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 
 	// 2) query for traffic originating from a workload outside of the namespace
 	query = fmt.Sprintf("sum(rate(%v{reporter=\"source\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
-		o.Metric,
+		httpMetric,
 		namespace,
 		namespace,
 		"[2345][0-9][0-9]",        // regex for valid response_codes
@@ -170,7 +171,7 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 
 	// 3) query for traffic originating from a workload inside of the namespace
 	query = fmt.Sprintf("sum(rate(%v{reporter=\"source\",source_workload_namespace=\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
-		o.Metric,
+		httpMetric,
 		namespace,
 		"[2345][0-9][0-9]",        // regex for valid response_codes
 		int(o.Duration.Seconds()), // range duration for the query
@@ -181,9 +182,9 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 
 	// create map to aggregate traffic by response code
 	trafficMap := graph.NewTrafficMap()
-	populateTrafficMap(trafficMap, &unkVector, o)
-	populateTrafficMap(trafficMap, &extVector, o)
-	populateTrafficMap(trafficMap, &intVector, o)
+	populateTrafficMapHttp(trafficMap, &unkVector, o)
+	populateTrafficMapHttp(trafficMap, &extVector, o)
+	populateTrafficMapHttp(trafficMap, &intVector, o)
 
 	// istio component telemetry is only reported destination-side, so we must perform additional queries
 	if o.IncludeIstio {
@@ -192,7 +193,7 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 		// 4) if the target namespace is istioNamespace re-query for traffic originating from a workload outside of the namespace
 		if namespace == istioNamespace {
 			query = fmt.Sprintf("sum(rate(%v{reporter=\"destination\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
-				o.Metric,
+				httpMetric,
 				namespace,
 				namespace,
 				"[2345][0-9][0-9]",        // regex for valid response_codes
@@ -201,12 +202,12 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 
 			// fetch the externally originating request traffic time-series
 			extIstioVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
-			populateTrafficMap(trafficMap, &extIstioVector, o)
+			populateTrafficMapHttp(trafficMap, &extIstioVector, o)
 		}
 
 		// 5) supplemental query for traffic originating from a workload inside of the namespace with istioSystem destination
 		query = fmt.Sprintf("sum(rate(%v{reporter=\"destination\",source_workload_namespace=\"%v\",destination_service_namespace=\"%v\",response_code=~\"%v\"} [%vs])) by (%v)",
-			o.Metric,
+			httpMetric,
 			namespace,
 			istioNamespace,
 			"[2345][0-9][0-9]",        // regex for valid response_codes
@@ -215,13 +216,47 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 
 		// fetch the internally originating request traffic time-series
 		intIstioVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
-		populateTrafficMap(trafficMap, &intIstioVector, o)
+		populateTrafficMapHttp(trafficMap, &intIstioVector, o)
 	}
+
+	// Section for TCP services
+	tcpMetric := "istio_tcp_sent_bytes_total"
+
+	// 1) query for traffic originating from "unknown" (i.e. the internet)
+	groupByTcp := "source_workload_namespace,source_workload,source_app,source_version,destination_workload_namespace,destination_service_name,destination_workload,destination_app,destination_version"
+	query = fmt.Sprintf("sum(rate(%v{reporter=\"destination\",source_workload=\"unknown\",destination_workload_namespace=\"%v\"} [%vs])) by (%v)",
+		tcpMetric,
+		namespace,
+		int(o.Duration.Seconds()), // range duration for the query
+		groupByTcp)
+	tcpUnkVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+
+	// 2) query for traffic originating from a workload outside of the namespace
+	groupByTcp = "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version"
+	query = fmt.Sprintf("sum(rate(%v{reporter=\"source\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\"} [%vs])) by (%v)",
+		tcpMetric,
+		namespace,
+		namespace,
+		int(o.Duration.Seconds()), // range duration for the query
+		groupByTcp)
+	tcpExtVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+
+	// 3) query for traffic originating from a workload inside of the namespace
+	query = fmt.Sprintf("sum(rate(%v{reporter=\"source\",source_workload_namespace=\"%v\"} [%vs])) by (%v)",
+		tcpMetric,
+		namespace,
+		int(o.Duration.Seconds()), // range duration for the query
+		groupByTcp)
+	tcpInVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+
+	populateTrafficMapTcp(trafficMap, &tcpUnkVector, o)
+	populateTrafficMapTcp(trafficMap, &tcpExtVector, o)
+	populateTrafficMapTcp(trafficMap, &tcpInVector, o)
 
 	return trafficMap
 }
 
-func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o options.Options) {
+func populateTrafficMapHttp(trafficMap graph.TrafficMap, vector *model.Vector, o options.Options) {
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
@@ -295,6 +330,73 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 		addToRate(source.Metadata, "rateOut", val)
 		addToRate(dest.Metadata, ck, val)
 		addToRate(dest.Metadata, "rate", val)
+	}
+}
+
+func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o options.Options) {
+	for _, s := range *vector {
+		m := s.Metric
+		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
+		lSourceWl, sourceWlOk := m["source_workload"]
+		lSourceApp, sourceAppOk := m["source_app"]
+		lSourceVer, sourceVerOk := m["source_version"]
+		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
+		lDestSvcName, destSvcNameOk := m["destination_service_name"]
+		lDestWl, destWlOk := m["destination_workload"]
+		lDestApp, destAppOk := m["destination_app"]
+		lDestVer, destVerOk := m["destination_version"]
+
+		// TCP queries doesn't use destination_service_namespace for the unknown node.
+		// Check if this is the case and use destination_workload_namespace
+		if !destSvcNsOk {
+			lDestSvcNs, destSvcNsOk = m["destination_workload_namespace"]
+		}
+
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlOk || !destAppOk || !destVerOk {
+			log.Warningf("Skipping %v, missing expected TS labels", m.String())
+			continue
+		}
+
+		sourceWlNs := string(lSourceWlNs)
+		sourceWl := string(lSourceWl)
+		sourceApp := string(lSourceApp)
+		sourceVer := string(lSourceVer)
+		destSvcNs := string(lDestSvcNs)
+		destSvcName := string(lDestSvcName)
+		destWl := string(lDestWl)
+		destApp := string(lDestApp)
+		destVer := string(lDestVer)
+
+		source, sourceFound := addSourceNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, o)
+		dest, destFound := addDestNode(trafficMap, destSvcNs, destWl, destApp, destVer, destSvcName, o)
+
+		addToDestServices(dest.Metadata, destSvcName)
+
+		var edge *graph.Edge
+		for _, e := range source.Edges {
+			if dest.ID == e.Dest.ID {
+				edge = e
+				break
+			}
+		}
+		if nil == edge {
+			edge = source.AddEdge(dest)
+		}
+
+		val := float64(s.Value)
+
+		// A workload may mistakenly have multiple app and or version label values.
+		// This is a misconfiguration we need to handle. See Kiali-1309.
+		if sourceFound {
+			handleMisconfiguredLabels(source, sourceApp, sourceVer, val, o)
+		}
+		if destFound {
+			handleMisconfiguredLabels(dest, destApp, destVer, val, o)
+		}
+
+		addToRate(edge.Metadata, "tcpSentRate", val)
+		addToRate(source.Metadata, "tcpSentRateOut", val)
+		addToRate(dest.Metadata, "tcpSentRate", val)
 	}
 }
 

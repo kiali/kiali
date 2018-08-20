@@ -457,7 +457,6 @@ func NewRoutes() (r *Routes) {
 			// graphType:      Graph type for the telemetry data: app | versionedApp | workload (default workload)
 			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
 			// includeIstio:   Include istio-system destinations in graph (default false)
-			// metric:         Prometheus metric name used to generate the dependency graph (default=istio_request_count)
 			// namespaces:     Comma-separated list of namespaces will override path param (path param 'all' for all namespaces)
 			// queryTime:      Unix timestamp in seconds is query range end time (default now)
 			// vendor:         Graph format: cytoscape (default)

@@ -41,7 +41,8 @@
             "productpage": true
           },
           "rate": "170.000",
-          "rateOut": "160.000"
+          "rateOut": "160.000",
+          "rateTcpSentOut": "31.000"
         }
       },
       {
@@ -71,11 +72,24 @@
       },
       {
         "data": {
+          "id": "4ee8019fc0454770a401b89d427277bf",
+          "nodeType": "app",
+          "namespace": "bookinfo",
+          "app": "tcp",
+          "destServices": {
+            "tcp": true
+          },
+          "rateTcpSent": "581.000"
+        }
+      },
+      {
+        "data": {
           "id": "19950ddefadd370bf5434953c1944c80",
           "nodeType": "app",
           "namespace": "istio-system",
           "app": "ingressgateway",
           "rateOut": "100.000",
+          "rateTcpSentOut": "150.000",
           "isOutside": true
         }
       },
@@ -88,6 +102,7 @@
           "app": "unknown",
           "version": "unknown",
           "rateOut": "50.000",
+          "rateTcpSentOut": "400.000",
           "isRoot": true
         }
       }
@@ -99,6 +114,14 @@
           "source": "19950ddefadd370bf5434953c1944c80",
           "target": "2c22af42b0c750749399ed2838c56054",
           "rate": "100.000"
+        }
+      },
+      {
+        "data": {
+          "id": "d4fdd9066e627a2afd3171822388fab4",
+          "source": "19950ddefadd370bf5434953c1944c80",
+          "target": "4ee8019fc0454770a401b89d427277bf",
+          "tcpSentRate": "150.000"
         }
       },
       {
@@ -117,6 +140,14 @@
           "target": "37ddc91db761d432f3fff1943802cad7",
           "rate": "60.000",
           "percentRate": "37.500"
+        }
+      },
+      {
+        "data": {
+          "id": "31f1137765289f98de743a8d7d13d2b8",
+          "source": "2c22af42b0c750749399ed2838c56054",
+          "target": "4ee8019fc0454770a401b89d427277bf",
+          "tcpSentRate": "31.000"
         }
       },
       {
@@ -165,6 +196,14 @@
           "source": "5c33c02dc744d0d03513a364935660b7",
           "target": "2c22af42b0c750749399ed2838c56054",
           "rate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "b622398b26d906f5561d70e12cacba74",
+          "source": "5c33c02dc744d0d03513a364935660b7",
+          "target": "4ee8019fc0454770a401b89d427277bf",
+          "tcpSentRate": "400.000"
         }
       }
     ]
