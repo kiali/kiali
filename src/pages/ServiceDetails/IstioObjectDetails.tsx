@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { DestinationRule, Validations, VirtualService } from '../../types/ServiceInfo';
+import { DestinationRule, VirtualService } from '../../types/ServiceInfo';
+import { Validations } from '../../types/IstioObjects';
 import { Col, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { AceValidations, parseAceValidations } from '../../types/AceValidations';
 import AceEditor, { AceOptions } from 'react-ace';

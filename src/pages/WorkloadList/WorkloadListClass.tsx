@@ -1,4 +1,4 @@
-import { WorkloadIcons, WorkloadListItem, WorkloadNamespaceResponse, WorloadLink } from '../../types/Workload';
+import { WorkloadIcons, WorkloadListItem, WorkloadNamespaceResponse, worloadLink } from '../../types/Workload';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Badge, ListViewIcon, ListViewItem } from 'patternfly-react';
@@ -59,13 +59,14 @@ export namespace WorkloadList {
         description={itemDescription}
       />
     );
-    const link = WorloadLink(ns, object.name);
-    return link ? (
-      <Link key={'worloadItemItem_' + index + '_' + ns + '_' + object.name} to={link} style={{ color: PfColors.Black }}>
+    return (
+      <Link
+        key={'worloadItemItem_' + index + '_' + ns + '_' + object.name}
+        to={worloadLink(ns, object.name)}
+        style={{ color: PfColors.Black }}
+      >
         {content}
       </Link>
-    ) : (
-      content
     );
   };
 }

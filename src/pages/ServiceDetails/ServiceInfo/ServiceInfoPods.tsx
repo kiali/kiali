@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Col, Row, OverlayTrigger, Tooltip } from 'patternfly-react';
-import { Pod } from '../../../types/ServiceInfo';
+import { Pod } from '../../../types/IstioObjects';
 import { PodsGroup, groupPods } from './ServiceInfoPodsGrouping';
 import Label from '../../../components/Label/Label';
 

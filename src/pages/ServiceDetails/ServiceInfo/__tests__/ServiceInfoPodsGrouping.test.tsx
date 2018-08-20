@@ -1,5 +1,5 @@
 import { groupPods } from '../ServiceInfoPodsGrouping';
-import { Pod } from '../../../../types/ServiceInfo';
+import { Pod } from '../../../../types/IstioObjects';
 
 const pods: Pod[] = [
   {

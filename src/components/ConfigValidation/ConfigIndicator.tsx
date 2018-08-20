@@ -1,12 +1,13 @@
 import * as React from 'react';
-import { ObjectValidation } from '../../types/ServiceInfo';
+import { ObjectValidation } from '../../types/IstioObjects';
 import { PfColors } from '../Pf/PfColors';
-import { Icon, OverlayTrigger, Popover, ListGroup, ListGroupItem } from 'patternfly-react';
+import { Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { style } from 'typestyle';
 
 interface Props {
   id: string;
-  validation: ObjectValidation;
+  validations: ObjectValidation[];
+  definition?: boolean;
   size?: string;
 }
 
@@ -53,7 +54,13 @@ const tooltipListStyle = style({
 });
 
 export class ConfigIndicator extends React.PureComponent<Props, {}> {
-  numberOfChecks = (type: string) => this.props.validation.checks.filter(i => i.severity === type).length;
+  numberOfChecks = (type: string) => {
+    let numCheck = 0;
+    this.props.validations.forEach(validation => {
+      numCheck += validation.checks.filter(i => i.severity === type).length;
+    });
+    return numCheck;
+  };
 
   getTypeMessage = (type: string) => {
     const numberType = this.numberOfChecks(type);
@@ -75,7 +82,10 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
   }
 
   tooltipContent() {
-    const numChecks = this.props.validation.checks.length;
+    let numChecks = 0;
+    this.props.validations.forEach(validation => {
+      numChecks += validation.checks.length;
+    });
 
     let issuesMessages: string[] = [];
     if (numChecks === 0) {
@@ -91,15 +101,32 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
       }
     }
 
+    let validationsInfo: JSX.Element[] = [];
+    const showDefinitions = this.props.definition && numChecks !== 0;
+    if (showDefinitions) {
+      this.props.validations.map(validation => {
+        validationsInfo.push(
+          <div style={{ paddingLeft: '10px' }} key={validation.name}>
+            {validation.name} : {validation.checks.map(check => check.message).join(',')}
+          </div>
+        );
+      });
+    }
+
     return (
-      <Popover id={this.props.id + '-config-validation'} title={this.getValid().name}>
-        <ListGroup className={tooltipListStyle}>
+      <Popover
+        id={this.props.id + '-config-validation'}
+        title={this.getValid().name}
+        style={showDefinitions && { maxWidth: '80%', minWidth: '200px' }}
+      >
+        <div className={tooltipListStyle}>
           {issuesMessages.map(cat => (
-            <ListGroupItem className={tooltipListStyle} key={cat}>
+            <div className={tooltipListStyle} key={cat}>
               {cat}
-            </ListGroupItem>
+            </div>
           ))}
-        </ListGroup>
+          {validationsInfo}
+        </div>
       </Popover>
     );
   }

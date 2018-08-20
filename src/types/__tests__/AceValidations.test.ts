@@ -1,4 +1,4 @@
-import { Validations } from '../ServiceInfo';
+import { Validations } from '../IstioObjects';
 import { parseAceValidations } from '../AceValidations';
 
 const fs = require('fs');

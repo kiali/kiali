@@ -1,4 +1,4 @@
-import { Pod, Reference, ContainerInfo } from '../../../types/ServiceInfo';
+import { Pod, Reference, ContainerInfo } from '../../../types/IstioObjects';
 
 export interface PodsGroup {
   commonPrefix: string;

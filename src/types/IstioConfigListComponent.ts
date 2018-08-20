@@ -1,5 +1,6 @@
 import Namespace from './Namespace';
-import { DestinationRule, ObjectValidation, VirtualService } from './ServiceInfo';
+import { DestinationRule, VirtualService } from './ServiceInfo';
+import { ObjectValidation } from './IstioObjects';
 
 export interface IstioConfigItem {
   namespace: string;

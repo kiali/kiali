@@ -4,12 +4,12 @@ import {
   checkForPath,
   globalChecks,
   highestSeverity,
-  ObjectValidation,
   severityToColor,
   severityToIconName,
   validationToSeverity,
   VirtualService
 } from '../../../../types/ServiceInfo';
+import { ObjectValidation } from '../../../../types/IstioObjects';
 import LocalTime from '../../../../components/Time/LocalTime';
 import DetailObject from '../../../../components/Details/DetailObject';
 import VirtualServiceRoute from './VirtualServiceRoute';

@@ -6,12 +6,11 @@ import {
   DestinationWeight,
   highestSeverity,
   HTTPRoute,
-  ObjectCheck,
-  ObjectValidation,
   severityToColor,
   severityToIconName,
   TCPRoute
 } from '../../../../types/ServiceInfo';
+import { ObjectCheck, ObjectValidation } from '../../../../types/IstioObjects';
 import { BulletChart, Col, Icon, OverlayTrigger, Popover, Row, Table, Tooltip } from 'patternfly-react';
 import DetailObject from '../../../../components/Details/DetailObject';
 import { PfColors } from '../../../../components/Pf/PfColors';

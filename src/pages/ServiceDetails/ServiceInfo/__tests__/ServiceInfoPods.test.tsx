@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import ServiceInfoPods from '../ServiceInfoPods';
-import { Pod } from '../../../../types/ServiceInfo';
+import { Pod } from '../../../../types/IstioObjects';
 
 const pods: Pod[] = [
   {

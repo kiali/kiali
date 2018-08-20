@@ -1,5 +1,6 @@
 import { ServiceHealth } from './Health';
 import { PfColors } from '../components/Pf/PfColors';
+import { Pod, Port, ObjectCheck, ObjectValidation } from './IstioObjects';
 
 export interface Endpoints {
   addresses?: EndpointAddress[];
@@ -18,53 +19,6 @@ export interface WorkloadOverview {
   labels?: { [key: string]: string };
   resourceVersion: string;
   createdAt: string;
-}
-
-export interface Port {
-  protocol: string;
-  port: number;
-  name: string;
-}
-
-export interface Pod {
-  name: string;
-  labels?: { [key: string]: string };
-  createdAt: string;
-  createdBy: Reference[];
-  istioContainers?: ContainerInfo[];
-  istioInitContainers?: ContainerInfo[];
-}
-
-export interface Reference {
-  name: string;
-  kind: string;
-}
-
-export interface ContainerInfo {
-  name: string;
-  image: string;
-}
-
-export interface Deployment {
-  name: string;
-  templateAnnotations?: { [key: string]: string };
-  labels?: { [key: string]: string };
-  createdAt: string;
-  resourceVersion: string;
-  replicas: number;
-  availableReplicas: number;
-  unavailableReplicas: number;
-  autoscaler: Autoscaler;
-}
-
-export interface Autoscaler {
-  name: string;
-  labels?: { [key: string]: string };
-  minReplicas: number;
-  maxReplicas: number;
-  targetCPUUtilizationPercentage: number;
-  currentReplicas?: number;
-  desiredReplicas?: number;
 }
 
 // RouteRule type
@@ -392,25 +346,6 @@ export interface ServiceDetailsInfo {
   dependencies?: { [key: string]: string[] };
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];
-}
-
-// NamespaceValidations are grouped per 'namespace'
-export type NamespaceValidations = { [key: string]: Validations };
-
-// validations are grouped per 'objectType' first in the first map and 'name' in the inner map
-export type Validations = { [key1: string]: { [key2: string]: ObjectValidation } };
-
-export interface ObjectValidation {
-  name: string;
-  objectType: string;
-  valid: boolean;
-  checks: ObjectCheck[];
-}
-
-export interface ObjectCheck {
-  message: string;
-  severity: string;
-  path: string;
 }
 
 const higherThan = [

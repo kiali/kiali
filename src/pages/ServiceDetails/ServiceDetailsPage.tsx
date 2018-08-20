@@ -4,7 +4,8 @@ import { Breadcrumb, Nav, NavItem, TabContainer, TabContent, TabPane } from 'pat
 import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
-import { ServiceDetailsInfo, Validations } from '../../types/ServiceInfo';
+import { ServiceDetailsInfo } from '../../types/ServiceInfo';
+import { Validations } from '../../types/IstioObjects';
 import { authentication } from '../../utils/Authentication';
 import IstioObjectDetails from './IstioObjectDetails';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';

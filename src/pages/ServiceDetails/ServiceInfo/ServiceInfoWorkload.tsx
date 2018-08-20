@@ -3,10 +3,12 @@ import { Col, Row, Table } from 'patternfly-react';
 import { WorkloadOverview } from '../../../types/ServiceInfo';
 import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
+import { Link } from 'react-router-dom';
 import * as resolve from 'table-resolver';
 
 interface ServiceInfoWorkloadProps {
   workloads?: WorkloadOverview[];
+  namespace: string;
 }
 
 class ServiceInfoWorkload extends React.Component<ServiceInfoWorkloadProps> {
@@ -76,7 +78,14 @@ class ServiceInfoWorkload extends React.Component<ServiceInfoWorkloadProps> {
   }
 
   overviewLink(workload: WorkloadOverview) {
-    return workload.name;
+    return (
+      <Link
+        to={`/namespaces/${this.props.namespace}/workloads/${workload.name}`}
+        key={'ServiceWorkloadItem_' + this.props.namespace + '_' + workload.name}
+      >
+        {workload.name}
+      </Link>
+    );
   }
 
   renderLabels(workload: WorkloadOverview) {

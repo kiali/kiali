@@ -2,7 +2,8 @@ import * as React from 'react';
 import { Col, Row, Table } from 'patternfly-react';
 import * as resolve from 'table-resolver';
 import { Link } from 'react-router-dom';
-import { EditorLink, ObjectValidation, VirtualService } from '../../../types/ServiceInfo';
+import { EditorLink, VirtualService } from '../../../types/ServiceInfo';
+import { ObjectValidation } from '../../../types/IstioObjects';
 import './ServiceInfoVirtualServices.css';
 import LocalTime from '../../../components/Time/LocalTime';
 import { ConfigIndicator } from '../../../components/ConfigValidation/ConfigIndicator';
@@ -106,7 +107,7 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
   rows() {
     return (this.props.virtualServices || []).map((virtualService, vsIdx) => ({
       id: vsIdx,
-      status: <ConfigIndicator id={vsIdx + '-config-validation'} validation={this.validation(virtualService)} />,
+      status: <ConfigIndicator id={vsIdx + '-config-validation'} validations={[this.validation(virtualService)]} />,
       name: this.overviewLink(virtualService),
       createdAt: <LocalTime time={virtualService.createdAt} />,
       resourceVersion: virtualService.resourceVersion,

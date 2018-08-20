@@ -1,8 +1,36 @@
 import Namespace from './Namespace';
 
-export const WorloadLink = (ns: string, name: string) => {
-  return '';
-  // Change the return in Workload Details Merge
+export interface WorkloadId {
+  namespace: string;
+  workload: string;
+}
+
+interface Autoscaler {
+  name: string;
+  labels: { [key: string]: string[] };
+  createdAt: Date;
+  minReplicas: Number;
+  maxReplicas: Number;
+  targetCPUUtilizationPercentage: Number;
+  currentReplicas: Number;
+  desiredReplicas: Number;
+}
+
+export interface Deployment {
+  name: string;
+  type: string;
+  templateAnnotations: { [key: string]: string[] };
+  labels: { [key: string]: string[] };
+  createdAt: Date;
+  resourceVersion: string;
+  replicas: Number;
+  availableReplicas: Number;
+  unavailableReplicas: Number;
+  autoscaler: Autoscaler;
+}
+
+export const worloadLink = (ns: string, name: string) => {
+  return `/namespaces/${ns}/workloads/${name}`;
 };
 
 export const WorkloadIcons = {

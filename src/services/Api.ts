@@ -5,7 +5,8 @@ import { Metrics } from '../types/Metrics';
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
 import { IstioConfigList } from '../types/IstioConfigListComponent';
 import { WorkloadNamespaceResponse } from '../types/Workload';
-import { NamespaceValidations, ServiceDetailsInfo, Validations } from '../types/ServiceInfo';
+import { Deployment, NamespaceValidations, Validations } from '../types/IstioObjects';
+import { ServiceDetailsInfo } from '../types/ServiceInfo';
 import JaegerInfo from '../types/JaegerInfo';
 import GrafanaInfo from '../types/GrafanaInfo';
 import { AppHealth, ServiceHealth, WorkloadHealth, NamespaceAppHealth, NamespaceWorkloadHealth } from '../types/Health';
@@ -256,6 +257,18 @@ export const getIstioConfigValidations = (
 
 export const getWorkloads = (auth: string, namespace: String): Promise<Response<WorkloadNamespaceResponse>> => {
   return newRequest('get', `/api/namespaces/${namespace}/workloads`, {}, {}, auth);
+};
+
+export const getWorkload = (auth: string, namespace: String, name: String): Promise<Response<Deployment>> => {
+  return newRequest('get', `/api/namespaces/${namespace}/workloads/${name}`, {}, {}, auth);
+};
+
+export const getWorkloadValidations = (
+  auth: string,
+  namespace: String,
+  workload: String
+): Promise<Response<Validations>> => {
+  return newRequest('get', `/api/namespaces/${namespace}/workloads/${workload}/istio_validations`, {}, {}, auth);
 };
 
 export const getErrorMsg = (msg: string, error: AxiosError) => {

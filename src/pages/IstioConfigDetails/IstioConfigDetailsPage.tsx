@@ -19,7 +19,7 @@ import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
-import { Validations } from '../../types/ServiceInfo';
+import { Validations } from '../../types/IstioObjects';
 import { parseAceValidations } from '../../types/AceValidations';
 
 const yaml = require('js-yaml');

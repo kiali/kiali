@@ -29,7 +29,7 @@ const workloads: WorkloadOverview[] = [
 
 describe('#ServiceInfoWorkload render correctly with data', () => {
   it('should render service pods', () => {
-    const wrapper = shallow(<ServiceInfoWorkload workloads={workloads} />);
+    const wrapper = shallow(<ServiceInfoWorkload workloads={workloads} namespace={'ns'} />);
     expect(wrapper).toBeDefined();
     expect(wrapper).toMatchSnapshot();
   });

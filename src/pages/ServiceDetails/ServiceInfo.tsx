@@ -16,10 +16,11 @@ import {
 import ServiceId from '../../types/ServiceId';
 import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
 import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
-import { ServiceDetailsInfo, severityToIconName, Validations, validationToSeverity } from '../../types/ServiceInfo';
+import { ServiceDetailsInfo, severityToIconName, validationToSeverity } from '../../types/ServiceInfo';
 import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
+import { Validations } from '../../types/IstioObjects';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
@@ -168,7 +169,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                   <TabContent>
                     <TabPane eventKey={'workloads'}>
                       {(Object.keys(workloads).length > 0 || this.props.serviceDetails.istioSidecar) && (
-                        <ServiceInfoWorkload workloads={workloads} />
+                        <ServiceInfoWorkload workloads={workloads} namespace={this.props.namespace} />
                       )}
                     </TabPane>
                     <TabPane eventKey={'sources'}>

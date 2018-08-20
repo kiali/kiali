@@ -5,6 +5,7 @@ import IstioConfigPage from './pages/IstioConfigList/IstioConfigListPage';
 import ServiceJaegerPage from './pages/ServiceJaeger/ServiceJaegerPage';
 import ServiceDetailsPage from './pages/ServiceDetails/ServiceDetailsPage';
 import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetailsPage';
+import WorkloadDetailsPage from './pages/WorkloadDetails/WorkloadDetailsPage';
 import { MenuItem, Path } from './types/Routes';
 
 /**
@@ -65,6 +66,10 @@ const pathRoutes: Path[] = [
   {
     path: '/workloads',
     component: WorkloadListPage
+  },
+  {
+    path: '/namespaces/:namespace/workloads/:workload',
+    component: WorkloadDetailsPage
   },
   {
     path: '/istio',

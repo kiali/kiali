@@ -24,7 +24,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { PfColors } from '../../components/Pf/PfColors';
 import { authentication } from '../../utils/Authentication';
-import { NamespaceValidations } from '../../types/ServiceInfo';
+import { NamespaceValidations } from '../../types/IstioObjects';
 import { ConfigIndicator } from '../../components/ConfigValidation/ConfigIndicator';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { URLParameter } from '../../types/Parameters';
@@ -493,7 +493,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
             {istioItem.validation ? (
               <td>
                 <strong>Config: </strong>{' '}
-                <ConfigIndicator id={index + '-config-validation'} validation={istioItem.validation} size="medium" />
+                <ConfigIndicator id={index + '-config-validation'} validations={[istioItem.validation]} size="medium" />
               </td>
             ) : (
               undefined

@@ -4,7 +4,8 @@ import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { ServiceHealth } from '../../../types/Health';
-import { Endpoints, Port } from '../../../types/ServiceInfo';
+import { Endpoints } from '../../../types/ServiceInfo';
+import { Port } from '../../../types/IstioObjects';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
 
 import './ServiceInfoDescription.css';

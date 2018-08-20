@@ -1,5 +1,5 @@
 import { Annotation, Marker } from 'react-ace';
-import { ObjectCheck, ObjectValidation, Validations } from './ServiceInfo';
+import { ObjectCheck, ObjectValidation, Validations } from './IstioObjects';
 
 export interface AceValidations {
   markers: Array<Marker>;
