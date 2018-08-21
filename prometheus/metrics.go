@@ -177,33 +177,41 @@ func getMetrics(api v1.API, q *MetricsQuery) Metrics {
 func buildLabelStrings(q *MetricsQuery, isInbound bool) (string, string) {
 	var referential string
 	var labels []string
-	if isInbound {
-		referential = "destination"
-		labels = []string{`reporter="destination"`}
-	} else {
-		referential = "source"
-		if config.Get().IstioNamespace == q.Namespace {
+
+	if q.Service == "" {
+		if isInbound {
+			referential = "destination"
 			labels = []string{`reporter="destination"`}
 		} else {
-			labels = []string{`reporter="source"`}
+			referential = "source"
+			if config.Get().IstioNamespace == q.Namespace {
+				labels = []string{`reporter="destination"`}
+			} else {
+				labels = []string{`reporter="source"`}
+			}
 		}
-	}
 
-	if q.Workload != "" {
-		labels = append(labels, fmt.Sprintf(`%s_workload="%s"`, referential, q.Workload))
-	}
-	if q.App != "" {
-		labels = append(labels, fmt.Sprintf(`%s_app="%s"`, referential, q.App))
-	}
-	if q.Service != "" {
-		// Should never be outbound (in that case, will just return empty metrics)
-		labels = append(labels, fmt.Sprintf(`%s_service_name="%s"`, referential, q.Service))
-	}
-	if q.Namespace != "" {
-		if q.Service != "" {
-			labels = append(labels, fmt.Sprintf(`%s_service_namespace="%s"`, referential, q.Namespace))
-		} else {
+		if q.Workload != "" {
+			labels = append(labels, fmt.Sprintf(`%s_workload="%s"`, referential, q.Workload))
+		}
+		if q.App != "" {
+			labels = append(labels, fmt.Sprintf(`%s_app="%s"`, referential, q.App))
+		}
+		if q.Namespace != "" {
 			labels = append(labels, fmt.Sprintf(`%s_workload_namespace="%s"`, referential, q.Namespace))
+		}
+	} else {
+		// Service metrics are bit different, we want only the requests that failed to reach a destination workload. Inbound metrics only.
+		// - use source reporting (note, it's inbound reporting only)
+		// - use destination_service_name
+		// - I'm fairly sure we can ignore the "unknown" source as it has no source telemetry and that is all we care about for service metrics
+		if q.Service != "" {
+			labels = []string{fmt.Sprintf(`reporter="source",destination_service_name="%s"`, q.Service)}
+			if q.Namespace != "" {
+				if q.Service != "" {
+					labels = append(labels, fmt.Sprintf(`destination_service_namespace="%s"`, q.Namespace))
+				}
+			}
 		}
 	}
 

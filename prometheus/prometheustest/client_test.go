@@ -117,13 +117,13 @@ func TestGetServiceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
-	mockRange(api, "round(sum(rate(istio_tcp_received_bytes_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 11)
-	mockRange(api, "round(sum(rate(istio_tcp_sent_bytes_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 13)
-	mockHistogram(api, "istio_request_bytes", "{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_response_bytes", "{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
+	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
+	mockRange(api, "round(sum(rate(istio_tcp_received_bytes_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 11)
+	mockRange(api, "round(sum(rate(istio_tcp_sent_bytes_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 13)
+	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
 	metrics := client.GetMetrics(&prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		Service:   "productpage",
