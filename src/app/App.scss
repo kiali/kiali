@@ -37,6 +37,11 @@ a:focus {
   vertical-align: middle;
 }
 
+// Take out extra margin and padding for breadcrumb
+.breadcrumb {
+  margin-bottom: -5px;
+}
+
 // SplitButton looks separated inside a toolbar, fix that
 .toolbar-pf .form-group .btn+.btn {
   margin-left: 0;
