@@ -89,6 +89,20 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
   renderBreadcrumbs = () => {
     const urlParams = new URLSearchParams(this.props.location.search);
     const to = this.workloadPageURL();
+    let tab = 'Info';
+    switch (urlParams.get('tab')) {
+      case 'info':
+        tab = 'Info';
+        break;
+      case 'in_metrics':
+        tab = 'Inbound Metrics';
+        break;
+      case 'out_metrics':
+        tab = 'Outbound Metrics';
+        break;
+      default:
+        tab = 'Info';
+    }
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass="span">
@@ -102,9 +116,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
         <Breadcrumb.Item componentClass="span">
           <Link to={to}>Workload: {this.props.match.params.workload}</Link>
         </Breadcrumb.Item>
-        <Breadcrumb.Item active={true}>
-          Workload {(urlParams.get('tab') || 'info') === 'info' ? 'Info' : 'Inbound Metrics'}
-        </Breadcrumb.Item>
+        <Breadcrumb.Item active={true}>Workload {tab}</Breadcrumb.Item>
       </Breadcrumb>
     );
   };
