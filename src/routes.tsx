@@ -7,6 +7,7 @@ import ServiceDetailsPage from './pages/ServiceDetails/ServiceDetailsPage';
 import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetailsPage';
 import WorkloadDetailsPage from './pages/WorkloadDetails/WorkloadDetailsPage';
 import { MenuItem, Path } from './types/Routes';
+import AppListPage from './pages/AppList/AppListPage';
 
 /**
  * Return array of objects that describe vertical menu
@@ -18,6 +19,12 @@ const navItems: MenuItem[] = [
     title: 'Graph',
     to: '/service-graph/all',
     pathsActive: [/^\/service-graph\/(.*)/]
+  },
+  {
+    iconClass: 'fa pficon-applications',
+    title: 'Applications',
+    to: '/applications',
+    pathsActive: [/^\/namespaces\/(.*)\/applications\/(.*)/]
   },
   {
     iconClass: 'fa pficon-bundle',
@@ -62,6 +69,10 @@ const pathRoutes: Path[] = [
   {
     path: '/services',
     component: ServiceListPage
+  },
+  {
+    path: '/applications',
+    component: AppListPage
   },
   {
     path: '/workloads',
