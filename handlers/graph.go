@@ -132,9 +132,7 @@ func markTrafficGenerators(trafficMap graph.TrafficMap) {
 			continue
 		}
 		if _, isDest := destMap[n.ID]; !isDest {
-			if _, isOutside := n.Metadata["isOutside"]; !isOutside {
-				n.Metadata["isRoot"] = true
-			}
+			n.Metadata["isRoot"] = true
 		}
 	}
 }

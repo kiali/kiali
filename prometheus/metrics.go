@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 var (
@@ -30,6 +31,7 @@ type MetricsQuery struct {
 	App          string
 	Workload     string
 	Service      string
+	Reporter     string // source | destination, defaults to both if not provided
 }
 
 // FillDefaults fills the struct with default parameters
@@ -41,8 +43,14 @@ func (q *MetricsQuery) FillDefaults() {
 	q.RateFunc = "rate"
 }
 
-// Metrics contains health, all simple metrics and histograms data
+// Metrics contains all simple metrics and histograms data for both source and destination telemetry
 type Metrics struct {
+	Source ReporterMetrics `json:"source"`
+	Dest   ReporterMetrics `json:"dest"`
+}
+
+// ReporterMetrics contains all simple metrics and histograms data for one reporter's telemetry
+type ReporterMetrics struct {
 	Metrics    map[string]*Metric   `json:"metrics"`
 	Histograms map[string]Histogram `json:"histograms"`
 }
@@ -152,7 +160,9 @@ func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) 
 }
 
 func getMetrics(api v1.API, q *MetricsQuery) Metrics {
-	labelsIn, labelsErrorIn := buildLabelStrings(q, true)
+	labelsIn, labelsErrorIn, _ := buildLabelStrings(q, true)
+	// discriminate results by source and dest telemetry
+	q.ByLabelsIn = append([]string{"reporter"}, q.ByLabelsIn...)
 	groupingIn := strings.Join(q.ByLabelsIn, ",")
 	inboundMetrics := fetchAllMetrics(api, q, labelsIn, labelsErrorIn, groupingIn, "_in")
 	if q.Service != "" {
@@ -160,49 +170,58 @@ func getMetrics(api v1.API, q *MetricsQuery) Metrics {
 		return inboundMetrics
 	}
 
-	labelsOut, labelsErrorOut := buildLabelStrings(q, false)
+	labelsOut, labelsErrorOut, _ := buildLabelStrings(q, false)
+	// discriminate results by source and dest telemetry
+	q.ByLabelsOut = append([]string{"reporter"}, q.ByLabelsOut...)
 	groupingOut := strings.Join(q.ByLabelsOut, ",")
 	metrics := fetchAllMetrics(api, q, labelsOut, labelsErrorOut, groupingOut, "_out")
 
 	// Merge in a single object
-	for key, obj := range inboundMetrics.Metrics {
-		metrics.Metrics[key] = obj
+	for key, obj := range inboundMetrics.Source.Metrics {
+		metrics.Source.Metrics[key] = obj
 	}
-	for key, obj := range inboundMetrics.Histograms {
-		metrics.Histograms[key] = obj
+	for key, obj := range inboundMetrics.Source.Histograms {
+		metrics.Source.Histograms[key] = obj
+	}
+	for key, obj := range inboundMetrics.Dest.Metrics {
+		metrics.Dest.Metrics[key] = obj
+	}
+	for key, obj := range inboundMetrics.Dest.Histograms {
+		metrics.Dest.Histograms[key] = obj
 	}
 	return metrics
 }
 
-func buildLabelStrings(q *MetricsQuery, isInbound bool) (string, string) {
-	var referential string
-	var labels []string
-	if isInbound {
-		referential = "destination"
-		labels = []string{`reporter="destination"`}
-	} else {
-		referential = "source"
-		if config.Get().IstioNamespace == q.Namespace {
-			labels = []string{`reporter="destination"`}
-		} else {
-			labels = []string{`reporter="source"`}
-		}
+func buildLabelStrings(q *MetricsQuery, isInbound bool) (string, string, string) {
+	labels := []string{}
+	reporter := ""
+
+	if q.Reporter == "destination" {
+		labels = append(labels, `reporter="destination"`)
+		reporter = "destination"
+	} else if q.Reporter == "source" {
+		labels = append(labels, `reporter="source"`)
+		reporter = "source"
 	}
 
-	if q.Workload != "" {
-		labels = append(labels, fmt.Sprintf(`%s_workload="%s"`, referential, q.Workload))
-	}
-	if q.App != "" {
-		labels = append(labels, fmt.Sprintf(`%s_app="%s"`, referential, q.App))
-	}
 	if q.Service != "" {
-		// Should never be outbound (in that case, will just return empty metrics)
-		labels = append(labels, fmt.Sprintf(`%s_service_name="%s"`, referential, q.Service))
-	}
-	if q.Namespace != "" {
-		if q.Service != "" {
-			labels = append(labels, fmt.Sprintf(`%s_service_namespace="%s"`, referential, q.Namespace))
-		} else {
+		// inbound only
+		labels = append(labels, fmt.Sprintf(`destination_service_name="%s"`, q.Service))
+		if q.Namespace != "" {
+			labels = append(labels, fmt.Sprintf(`destination_service_namespace="%s"`, q.Namespace))
+		}
+	} else {
+		referential := "source"
+		if isInbound {
+			referential = "destination"
+		}
+		if q.Workload != "" {
+			labels = append(labels, fmt.Sprintf(`%s_workload="%s"`, referential, q.Workload))
+		}
+		if q.App != "" {
+			labels = append(labels, fmt.Sprintf(`%s_app="%s"`, referential, q.App))
+		}
+		if q.Namespace != "" {
 			labels = append(labels, fmt.Sprintf(`%s_workload_namespace="%s"`, referential, q.Namespace))
 		}
 	}
@@ -212,7 +231,7 @@ func buildLabelStrings(q *MetricsQuery, isInbound bool) (string, string) {
 	labels = append(labels, `response_code=~"[5|4].*"`)
 	errors := "{" + strings.Join(labels, ",") + "}"
 
-	return full, errors
+	return full, errors, reporter
 }
 
 func fetchAllMetrics(api v1.API, q *MetricsQuery, labels, labelsError, grouping, suffix string) Metrics {
@@ -237,12 +256,12 @@ func fetchAllMetrics(api v1.API, q *MetricsQuery, labels, labelsError, grouping,
 	maxResults := len(kialiMetrics)
 	results := make([]*resultHolder, maxResults, maxResults)
 
-	for i, metric := range kialiMetrics {
+	for i, kialiMetric := range kialiMetrics {
 		// if filters is empty, fetch all anyway
 		doFetch := len(q.Filters) == 0
 		if !doFetch {
 			for _, filter := range q.Filters {
-				if filter == metric.name {
+				if filter == kialiMetric.name {
 					doFetch = true
 					break
 				}
@@ -250,33 +269,139 @@ func fetchAllMetrics(api v1.API, q *MetricsQuery, labels, labelsError, grouping,
 		}
 		if doFetch {
 			wg.Add(1)
-			result := resultHolder{definition: metric}
+			result := resultHolder{definition: kialiMetric}
 			results[i] = &result
-			if metric.isHisto {
-				go fetchHisto(metric.istioName, &result.histo)
+			if kialiMetric.isHisto {
+				go fetchHisto(kialiMetric.istioName, &result.histo)
 			} else {
-				labelsToUse := metric.labelsToUse(labels, labelsError)
-				go fetchRate(metric.istioName, &result.metric, labelsToUse)
+				labelsToUse := kialiMetric.labelsToUse(labels, labelsError)
+				go fetchRate(kialiMetric.istioName, &result.metric, labelsToUse)
 			}
 		}
 	}
 	wg.Wait()
 
-	// Return results as two maps
-	metrics := make(map[string]*Metric)
-	histograms := make(map[string]Histogram)
+	// Return results as two maps per reporter
+	sourceMetrics := make(map[string]*Metric)
+	sourceHistograms := make(map[string]Histogram)
+	destMetrics := make(map[string]*Metric)
+	destHistograms := make(map[string]Histogram)
 	for _, result := range results {
 		if result != nil {
 			if result.definition.isHisto {
-				histograms[result.definition.name+suffix] = result.histo
+				source, dest := splitHistoTelemetry(result.histo)
+				sourceHistograms[result.definition.name+suffix] = source
+				destHistograms[result.definition.name+suffix] = dest
 			} else {
-				metrics[result.definition.name+suffix] = result.metric
+				source, dest := splitMetricTelemetry(result.metric)
+				sourceMetrics[result.definition.name+suffix] = source
+				destMetrics[result.definition.name+suffix] = dest
 			}
 		}
 	}
 	return Metrics{
-		Metrics:    metrics,
-		Histograms: histograms}
+		Source: ReporterMetrics{
+			Metrics:    sourceMetrics,
+			Histograms: sourceHistograms},
+		Dest: ReporterMetrics{
+			Metrics:    destMetrics,
+			Histograms: destHistograms},
+	}
+}
+
+func splitMetricTelemetry(metric *Metric) (source, dest *Metric) {
+	source = &Metric{
+		Matrix: []*model.SampleStream{},
+		err:    metric.err,
+	}
+	dest = &Metric{
+		Matrix: []*model.SampleStream{},
+		err:    metric.err,
+	}
+	for _, s := range metric.Matrix {
+		switch s.Metric["reporter"] {
+		case "source":
+			source.Matrix = append(source.Matrix, s)
+		case "destination":
+			dest.Matrix = append(dest.Matrix, s)
+		default:
+			log.Warningf("Discarding metric with reporter=[%s]", s.Metric["reporter"])
+		}
+	}
+	return source, dest
+}
+
+func splitHistoTelemetry(histo Histogram) (source, dest Histogram) {
+	source = Histogram{
+		Average: &Metric{
+			Matrix: []*model.SampleStream{},
+			err:    histo.Average.err},
+		Median: &Metric{
+			Matrix: []*model.SampleStream{},
+			err:    histo.Median.err},
+		Percentile95: &Metric{
+			Matrix: []*model.SampleStream{},
+			err:    histo.Percentile95.err},
+		Percentile99: &Metric{
+			Matrix: []*model.SampleStream{},
+			err:    histo.Percentile99.err},
+	}
+	dest = Histogram{
+		Average: &Metric{
+			Matrix: []*model.SampleStream{},
+			err:    histo.Average.err},
+		Median: &Metric{
+			Matrix: []*model.SampleStream{},
+			err:    histo.Median.err},
+		Percentile95: &Metric{
+			Matrix: []*model.SampleStream{},
+			err:    histo.Percentile95.err},
+		Percentile99: &Metric{
+			Matrix: []*model.SampleStream{},
+			err:    histo.Percentile99.err},
+	}
+	for _, s := range histo.Average.Matrix {
+		switch s.Metric["reporter"] {
+		case "source":
+			source.Average.Matrix = append(source.Average.Matrix, s)
+		case "destination":
+			dest.Average.Matrix = append(dest.Average.Matrix, s)
+		default:
+			log.Warningf("Discarding histo avg with reporter=[%s]", s.Metric["reporter"])
+		}
+	}
+	for _, s := range histo.Median.Matrix {
+		switch s.Metric["reporter"] {
+		case "source":
+			source.Median.Matrix = append(source.Median.Matrix, s)
+		case "destination":
+			dest.Median.Matrix = append(dest.Median.Matrix, s)
+		default:
+			log.Warningf("Discarding histo median with reporter=[%s]", s.Metric["reporter"])
+		}
+	}
+	for _, s := range histo.Percentile95.Matrix {
+		switch s.Metric["reporter"] {
+		case "source":
+			source.Percentile95.Matrix = append(source.Percentile95.Matrix, s)
+		case "destination":
+			dest.Percentile95.Matrix = append(dest.Percentile95.Matrix, s)
+		default:
+			log.Warningf("Discarding histo p95 with reporter=[%s]", s.Metric["reporter"])
+		}
+	}
+	for _, s := range histo.Percentile99.Matrix {
+		switch s.Metric["reporter"] {
+		case "source":
+			source.Percentile99.Matrix = append(source.Percentile99.Matrix, s)
+		case "destination":
+			dest.Percentile99.Matrix = append(dest.Percentile99.Matrix, s)
+		default:
+			log.Warningf("Discarding histo p95 with reporter=[%s]", s.Metric["reporter"])
+		}
+	}
+
+	return source, dest
 }
 
 func fetchRateRange(api v1.API, metricName string, labels string, grouping string, q *MetricsQuery) *Metric {
