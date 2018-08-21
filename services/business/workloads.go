@@ -10,7 +10,7 @@ type WorkloadService struct {
 	k8s kubernetes.IstioClientInterface
 }
 
-// ServiceList is the API handler to fetch the list of workloads in a given namespace
+// GetWorkloadList is the API handler to fetch the list of workloads in a given namespace
 func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadList, error) {
 	deployments, err := in.k8s.GetDeployments(namespace)
 	if err != nil {

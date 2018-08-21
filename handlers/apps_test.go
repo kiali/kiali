@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/services/business"
@@ -141,4 +142,38 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	ts := httptest.NewServer(mr)
 	business.SetWithBackends(nil, prom)
 	return ts, api
+}
+
+func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
+	config.Set(config.NewConfig())
+	k8s := new(kubetest.K8SClientMock)
+	prom := new(prometheustest.PromClientMock)
+	business.SetWithBackends(k8s, prom)
+
+	mr := mux.NewRouter()
+	mr.HandleFunc("/api/namespaces/{namespace}/apps", AppList)
+
+	ts := httptest.NewServer(mr)
+	return ts, k8s, prom
+}
+
+func TestAppList(t *testing.T) {
+	ts, k8s, _ := setupAppListEndpoint()
+	defer ts.Close()
+
+	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
+	k8s.On("GetDeploymentSelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentSelector(), nil)
+
+	url := ts.URL + "/api/namespaces/ns/apps"
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, _ := ioutil.ReadAll(resp.Body)
+
+	assert.NotEmpty(t, actual)
+	assert.Equal(t, 200, resp.StatusCode, string(actual))
+	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 }
