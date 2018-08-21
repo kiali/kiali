@@ -10,8 +10,8 @@ import (
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 func setupDeploymentService(k8s *kubetest.K8SClientMock) WorkloadService {

@@ -15,10 +15,10 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/services/business"
-	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 func TestAppMetricsDefault(t *testing.T) {
