@@ -348,6 +348,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     // Create and destroy labels
     this.turnNodeLabelsTo(cy, this.props.showNodeLabels);
 
+    cy.endBatch();
+
     // Create badges
     cy.nodes().forEach(ele => {
       if (this.props.showCircuitBreakers && ele.data('hasCB')) {
@@ -364,8 +366,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         msBadge.buildBadge(ele);
       }
     });
-
-    cy.endBatch();
 
     // We need to fit outside of the batch operation for it to take effect on the new nodes
     if (updateLayout) {
