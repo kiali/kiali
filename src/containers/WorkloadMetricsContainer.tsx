@@ -6,6 +6,6 @@ const mapStateToProps = (state: KialiAppState) => ({
   isPageVisible: state.globalState.isPageVisible
 });
 
-const ServiceMetricsConnected = connect(mapStateToProps)(GraphPage);
+const WorkloadMetricsConnected = connect(mapStateToProps)(GraphPage);
 
-export default ServiceMetricsConnected;
+export default WorkloadMetricsConnected;

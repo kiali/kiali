@@ -7,6 +7,7 @@ import { authentication } from '../../utils/Authentication';
 import { Breadcrumb, TabContainer, Nav, NavItem, TabContent, TabPane } from 'patternfly-react';
 import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
+import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer';
 
 type WorkloadDetailsState = {
   workload: Deployment;
@@ -118,8 +119,11 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
               <NavItem eventKey="info">
                 <div>Info</div>
               </NavItem>
-              <NavItem eventKey="metrics" disabled={true}>
+              <NavItem eventKey="in_metrics">
                 <div>Inbound Metrics</div>
+              </NavItem>
+              <NavItem eventKey="out_metrics">
+                <div>Outbound Metrics</div>
               </NavItem>
             </Nav>
             <TabContent>
@@ -134,7 +138,22 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   istioEnabled={this.state.istioEnabled}
                 />
               </TabPane>
-              <TabPane eventKey="metrics" />
+              <TabPane eventKey="in_metrics">
+                <WorkloadMetricsContainer
+                  namespace={this.props.match.params.namespace}
+                  object={this.props.match.params.workload}
+                  objectType={'workload'}
+                  metricsType={'inbound'}
+                />
+              </TabPane>
+              <TabPane eventKey="out_metrics">
+                <WorkloadMetricsContainer
+                  namespace={this.props.match.params.namespace}
+                  object={this.props.match.params.workload}
+                  objectType={'workload'}
+                  metricsType={'outbound'}
+                />
+              </TabPane>
             </TabContent>
           </div>
         </TabContainer>

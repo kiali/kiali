@@ -249,7 +249,9 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
                 <TabPane eventKey="metrics" mountOnEnter={true} unmountOnExit={true}>
                   <ServiceMetricsContainer
                     namespace={this.props.match.params.namespace}
-                    service={this.props.match.params.service}
+                    object={this.props.match.params.service}
+                    objectType={'service'}
+                    metricsType={'inbound'}
                   />
                 </TabPane>
               </TabContent>

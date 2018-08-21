@@ -1,12 +1,11 @@
 import * as React from 'react';
 import { Alert, Icon } from 'patternfly-react';
-import ServiceId from '../../types/ServiceId';
 import GrafanaInfo from '../../types/GrafanaInfo';
+import { authentication } from '../../utils/Authentication';
 import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import MetricsOptions from '../../types/MetricsOptions';
-import { authentication } from '../../utils/Authentication';
 import HistogramChart from './HistogramChart';
 import MetricChart from './MetricChart';
 import { Histogram, MetricGroup } from '../../types/Metrics';
@@ -29,25 +28,32 @@ type ChartDefinition = {
   metrics?: MetricGroup | Histogram;
 };
 
-type ServiceMetricsState = {
+type MetricsState = {
   charts: { [key: string]: ChartDefinition };
   alertDetails?: string;
   grafanaLink?: string;
   pollMetrics?: number;
 };
 
-type ServiceMetricsProps = ServiceId & {
-  isPageVisible?: boolean;
+type ObjectId = {
+  namespace: string;
+  object: string;
 };
 
-class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetricsState> {
+type MetricsProps = ObjectId & {
+  isPageVisible?: boolean;
+  objectType: string;
+  metricsType: string;
+};
+
+class Metrics extends React.Component<MetricsProps, MetricsState> {
   static defaultProps = {
     isPageVisible: true
   };
 
   options: MetricsOptions;
 
-  constructor(props: ServiceMetricsProps) {
+  constructor(props: MetricsProps) {
     super(props);
     this.state = {
       charts: this.getChartsDef()
@@ -55,7 +61,7 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
   }
 
   getChartsDef(): { [key: string]: ChartDefinition } {
-    const charts = {
+    let inboundCharts = {
       request_count_in: { familyName: 'Request volume (ops)', component: MetricChart },
       request_duration_in: { familyName: 'Request duration (seconds)', component: HistogramChart },
       request_size_in: { familyName: 'Request size (bytes)', component: HistogramChart },
@@ -63,7 +69,21 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
       tcp_received_in: { familyName: 'TCP received (bps)', component: MetricChart },
       tcp_sent_in: { familyName: 'TCP sent (bps)', component: MetricChart }
     };
-    return charts;
+    switch (this.props.metricsType) {
+      case 'inbound':
+        return inboundCharts;
+      case 'outbound':
+        return {
+          request_count_out: { familyName: 'Request volume (ops)', component: MetricChart },
+          request_duration_out: { familyName: 'Request duration (seconds)', component: HistogramChart },
+          request_size_out: { familyName: 'Request size (bytes)', component: HistogramChart },
+          response_size_out: { familyName: 'Response size (bytes)', component: HistogramChart },
+          tcp_received_out: { familyName: 'TCP received (bps)', component: MetricChart },
+          tcp_sent_out: { familyName: 'TCP sent (bps)', component: MetricChart }
+        };
+      default:
+        return inboundCharts;
+    }
   }
 
   componentDidMount() {
@@ -104,8 +124,20 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
   };
 
   fetchMetrics = () => {
-    API.getServiceMetrics(authentication(), this.props.namespace, this.props.service, this.options)
-      .then(response => {
+    let promise;
+    switch (this.props.objectType) {
+      case 'service':
+        promise = API.getServiceMetrics(authentication(), this.props.namespace, this.props.object, this.options);
+        break;
+      case 'workload':
+        promise = API.getWorkloadMetrics(authentication(), this.props.namespace, this.props.object, this.options);
+        break;
+      default:
+        promise = API.getServiceMetrics(authentication(), this.props.namespace, this.props.object, this.options);
+        break;
+    }
+    Promise.all([promise])
+      .then(([response]) => {
         const charts = this.getChartsDef();
         Object.keys(charts).forEach(k => {
           const chart = charts[k];
@@ -126,7 +158,13 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
       });
   };
 
-  getGrafanaInfo() {
+  getGrafanaLink(info: GrafanaInfo): string {
+    return `${info.url}${info.serviceDashboardPath}?${info.varService}=${this.props.object}.${
+      this.props.namespace
+    }.svc.cluster.local`;
+  }
+
+  getGrafanaInfo = () => {
     API.getGrafanaInfo(authentication())
       .then(response => {
         const info: GrafanaInfo = response['data'];
@@ -142,13 +180,7 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
         this.setState({ grafanaLink: undefined });
         console.error(error);
       });
-  }
-
-  getGrafanaLink(info: GrafanaInfo): string {
-    return `${info.url}${info.serviceDashboardPath}?${info.varService}=${this.props.service}.${
-      this.props.namespace
-    }.svc.cluster.local`;
-  }
+  };
 
   dismissAlert = () => this.setState({ alertDetails: undefined });
 
@@ -241,4 +273,4 @@ class ServiceMetrics extends React.Component<ServiceMetricsProps, ServiceMetrics
   };
 }
 
-export default ServiceMetrics;
+export default Metrics;
