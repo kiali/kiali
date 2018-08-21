@@ -2,7 +2,6 @@ import * as React from 'react';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
-import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import { Icon } from 'patternfly-react';
@@ -125,33 +124,37 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   private updateRpsCharts = (props: SummaryPanelPropType) => {
     const target = props.data.summaryTarget;
-    const nodeMetricType = getNodeMetricType(target);
+    const data = nodeData(target);
+    const nodeMetricType = getNodeMetricType(data);
 
     if (!nodeMetricType) {
       return;
     }
 
     const filters = ['request_count', 'request_error_count'];
-    const includeIstio = props.namespace === 'istio-system';
 
-    getNodeMetrics(nodeMetricType, target, props, filters, includeIstio)
+    getNodeMetrics(nodeMetricType, target, props, filters)
       .then(response => {
         if (!this._isMounted) {
           console.log('SummaryPanelGroup: Ignore fetch, component not mounted.');
           return;
         }
-        const metrics = response.data.metrics;
-        const reqCountIn: M.MetricGroup = metrics['request_count_in'];
-        const reqCountOut: M.MetricGroup = metrics['request_count_out'];
-        const errCountIn: M.MetricGroup = metrics['request_error_count_in'];
-        const errCountOut: M.MetricGroup = metrics['request_error_count_out'];
-
+        // use source metrics for outgoing, except for:
+        // - is is the istio namespace
+        let useDest = this.props.namespace === 'istio-system';
+        let metrics = useDest ? response.data.dest.metrics : response.data.source.metrics;
+        const rcOut = metrics['request_count_out'];
+        const ecOut = metrics['request_error_count_out'];
+        // use dest metrics for incoming
+        metrics = response.data.dest.metrics;
+        const rcIn = metrics['request_count_in'];
+        const ecIn = metrics['request_error_count_in'];
         this.setState({
           loading: false,
-          requestCountIn: graphUtils.toC3Columns(reqCountIn.matrix, 'RPS'),
-          requestCountOut: graphUtils.toC3Columns(reqCountOut.matrix, 'RPS'),
-          errorCountIn: graphUtils.toC3Columns(errCountIn.matrix, 'Error'),
-          errorCountOut: graphUtils.toC3Columns(errCountOut.matrix, 'Error')
+          requestCountIn: graphUtils.toC3Columns(rcIn.matrix, 'RPS'),
+          errorCountIn: graphUtils.toC3Columns(ecIn.matrix, 'Error'),
+          requestCountOut: graphUtils.toC3Columns(rcOut.matrix, 'RPS'),
+          errorCountOut: graphUtils.toC3Columns(ecOut.matrix, 'Error')
         });
       })
       .catch(error => {

@@ -25,11 +25,11 @@ const mockAPIToPromise = (func: keyof typeof API, obj: any): Promise<void> => {
 };
 
 const mockServiceMetrics = (metrics: any): Promise<void> => {
-  return mockAPIToPromise('getServiceMetrics', metrics);
+  return mockAPIToPromise('getServiceMetrics', { source: metrics, dest: metrics });
 };
 
 const mockWorkloadMetrics = (metrics: any): Promise<void> => {
-  return mockAPIToPromise('getWorkloadMetrics', metrics);
+  return mockAPIToPromise('getWorkloadMetrics', { source: metrics, dest: metrics });
 };
 
 const mockGrafanaInfo = (info: any): Promise<any> => {

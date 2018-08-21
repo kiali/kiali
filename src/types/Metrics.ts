@@ -1,4 +1,9 @@
 export interface Metrics {
+  source: ReporterMetrics;
+  dest: ReporterMetrics;
+}
+
+export interface ReporterMetrics {
   metrics: { [key: string]: MetricGroup };
   histograms: { [key: string]: Histogram };
 }
