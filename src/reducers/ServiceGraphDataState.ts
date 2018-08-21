@@ -2,13 +2,25 @@ import { ServiceGraphState } from '../store/Store';
 import { ServiceGraphDataActionKeys } from '../actions/ServiceGraphDataActionKeys';
 import { ServiceGraphActionKeys } from '../actions/ServiceGraphActions';
 import FilterStateReducer from './ServiceGraphFilterState';
+import { MILLISECONDS } from '../types/Common';
 
-const INITIAL_STATE: any = {
+const INITIAL_STATE: ServiceGraphState = {
   isLoading: false,
+  isError: false,
+  error: undefined,
   graphDataTimestamp: 0,
   graphData: {},
   sidePanelInfo: null,
-  hideLegend: true
+  hideLegend: true,
+  filterState: {
+    showLegend: false,
+    showNodeLabels: true,
+    showCircuitBreakers: true,
+    showVirtualServices: true,
+    showMissingSidecars: true,
+    showTrafficAnimation: false,
+    refreshRate: 15 * MILLISECONDS
+  }
 };
 
 // This Reducer allows changes to the 'serviceGraphDataState' portion of Redux Store
@@ -36,10 +48,9 @@ const serviceGraphDataState = (state: ServiceGraphState = INITIAL_STATE, action)
       newState.graphData = action.graphData;
       break;
     case ServiceGraphDataActionKeys.GET_GRAPH_DATA_FAILURE:
-      console.warn('ServiceGraphDataState reducer: failed to get graph data');
       newState.isLoading = false;
       newState.isError = true;
-      // newState.error = action.error; // Already handled in the action.
+      newState.error = action.error;
       break;
     case ServiceGraphActionKeys.SERVICE_GRAPH_SIDE_PANEL_SHOW_INFO:
       newState.sidePanelInfo = {
