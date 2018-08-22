@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { PropTypes } from 'prop-types';
 
-import { GraphParamsType } from '../../types/Graph';
+import { GraphParamsType, GraphType } from '../../types/Graph';
 import { Duration } from '../../types/GraphFilter';
 import Namespace from '../../types/Namespace';
 import GraphFilterToolbarType from '../../types/GraphFilterToolbar';
@@ -29,6 +29,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
         disabled={this.props.isLoading}
         onDurationChange={this.handleDurationChange}
         onNamespaceChange={this.handleNamespaceChange}
+        onGraphTypeChange={this.handleGraphTypeChange}
         onRefresh={this.props.handleRefreshClick}
         {...graphParams}
       />
@@ -46,6 +47,13 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     this.handleFilterChange({
       ...this.getGraphParams(),
       namespace
+    });
+  };
+
+  handleGraphTypeChange = (graphType: GraphType) => {
+    this.handleFilterChange({
+      ...this.getGraphParams(),
+      graphType
     });
   };
 

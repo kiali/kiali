@@ -15,7 +15,7 @@ type GraphRefreshProps = {
 const GraphRefresh: React.SFC<GraphRefreshProps> = props => {
   return (
     <>
-      <label style={{ paddingRight: '0.5em' }}>Refreshing</label>
+      <label style={{ paddingRight: '0.5em', marginLeft: '1.5em' }}>Refreshing</label>
       <DropdownButton id="graph_refresh_dropdown" title={props.options[props.selected]} onSelect={props.handleRefresh}>
         {Object.keys(props.options).map((key: any) => {
           return (

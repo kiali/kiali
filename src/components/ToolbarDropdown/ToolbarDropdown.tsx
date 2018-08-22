@@ -35,7 +35,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
 
   render() {
     return (
-      <div className="form-group">
+      <>
         {this.props.nameDropdown && <label style={{ paddingRight: '0.5em' }}>{this.props.nameDropdown}</label>}
         <DropdownButton
           title={this.props.label || this.state.currentName}
@@ -48,7 +48,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
             </MenuItem>
           ))}
         </DropdownButton>
-      </div>
+      </>
     );
   }
 }
