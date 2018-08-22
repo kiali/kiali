@@ -82,7 +82,6 @@ spec:
       containers:
       - image: ${IMAGE_NAME}:${IMAGE_VERSION}
         name: kiali
-        imagePullPolicy: Always
         command:
         - "/opt/kiali/kiali"
         - "-config"
