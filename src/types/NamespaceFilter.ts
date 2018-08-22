@@ -10,8 +10,12 @@ export interface FilterType {
   title: string;
   placeholder: string;
   filterType: string;
+  action: string;
   filterValues: FilterValue[];
 }
+
+export const FILTER_ACTION_APPEND = 'append';
+export const FILTER_ACTION_UPDATE = 'update';
 
 export interface ActiveFilter {
   label: string;

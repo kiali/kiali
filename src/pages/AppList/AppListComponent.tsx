@@ -89,7 +89,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         if (typeof availableFilter === 'undefined') {
           NamespaceFilterSelected.setSelected(
             NamespaceFilterSelected.getSelected().filter(nfs => {
-              return nfs.category === activeFilter.category;
+              return nfs.category !== activeFilter.category;
             })
           );
           return null;

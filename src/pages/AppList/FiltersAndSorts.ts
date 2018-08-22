@@ -1,4 +1,10 @@
-import { ActiveFilter, FilterType, FilterValue } from '../../types/NamespaceFilter';
+import {
+  ActiveFilter,
+  FILTER_ACTION_APPEND,
+  FILTER_ACTION_UPDATE,
+  FilterType,
+  FilterValue
+} from '../../types/NamespaceFilter';
 import { AppListItem } from '../../types/AppList';
 import { removeDuplicatesArray } from '../../utils/Common';
 
@@ -65,6 +71,7 @@ export namespace AppListFilters {
     title: 'App Name',
     placeholder: 'Filter by App Name',
     filterType: 'text',
+    action: FILTER_ACTION_APPEND,
     filterValues: []
   };
 
@@ -73,6 +80,7 @@ export namespace AppListFilters {
     title: 'Istio Sidecar',
     placeholder: 'Filter by IstioSidecar Validation',
     filterType: 'select',
+    action: FILTER_ACTION_UPDATE,
     filterValues: presenceValues
   };
 

@@ -22,7 +22,7 @@ import { PfColors } from '../../components/Pf/PfColors';
 import * as API from '../../services/Api';
 import { getRequestErrorsRatio, ServiceHealth } from '../../types/Health';
 import Namespace from '../../types/Namespace';
-import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
+import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType } from '../../types/NamespaceFilter';
 import { Pagination } from '../../types/Pagination';
 import { overviewToItem, ServiceItem, ServiceOverview, SortField } from '../../types/ServiceListComponent';
 import { IstioLogo } from '../../config';
@@ -111,6 +111,7 @@ const serviceNameFilter: FilterType = {
   title: 'Service Name',
   placeholder: 'Filter by Service Name',
   filterType: 'text',
+  action: 'append',
   filterValues: []
 };
 
@@ -119,7 +120,8 @@ const istioFilter: FilterType = {
   title: 'Istio Sidecar',
   placeholder: 'Filter by Istio Sidecar',
   filterType: 'select',
-  filterValues: [{ id: 'deployed', title: 'Deployed' }, { id: 'not_deployed', title: 'Not Deployed' }]
+  action: 'update',
+  filterValues: [{ id: 'present', title: 'Present' }, { id: 'not_present', title: 'Not Present' }]
 };
 
 export const availableFilters: FilterType[] = [serviceNameFilter, istioFilter, defaultNamespaceFilter];
@@ -227,7 +229,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         if (typeof availableFilter === 'undefined') {
           NamespaceFilterSelected.setSelected(
             NamespaceFilterSelected.getSelected().filter(nfs => {
-              return nfs.category === activeFilter.category;
+              return nfs.category !== activeFilter.category;
             })
           );
           return null;
@@ -272,15 +274,37 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         }) || availableFilters[2]
       ).id;
 
-      params.push({
-        name: filterId,
-        value: activeFilter.value
-      });
+      const updateableFilterIds = availableFilters
+        .filter(filter => filter.action === FILTER_ACTION_UPDATE)
+        .map(filter => filter.id);
+
+      if (updateableFilterIds.includes(filterId)) {
+        params = this.updateParams(params, filterId, activeFilter.value);
+      } else {
+        params.push({
+          name: filterId,
+          value: activeFilter.value
+        });
+      }
     });
 
     this.props.onParamChange(params, 'append');
     this.updateServices();
   };
+
+  updateParams(params: URLParameter[], id: string, value: string) {
+    let newParams = params;
+    const index = newParams.findIndex(param => param.name === id && param.value.length > 0);
+    if (index >= 0) {
+      newParams[index].value = value;
+    } else {
+      newParams.push({
+        name: id,
+        value: value
+      });
+    }
+    return newParams;
+  }
 
   handleError = (error: string) => {
     this.props.onError(error);
@@ -438,10 +462,10 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
 
     let istioFiltered = true;
     if (istioFilters.length === 1) {
-      if (istioFilters[0] === 'Deployed') {
+      if (istioFilters[0] === 'Present') {
         istioFiltered = service.istioSidecar;
       }
-      if (istioFilters[0] === 'Not Deployed') {
+      if (istioFilters[0] === 'Not Present') {
         istioFiltered = !service.istioSidecar;
       }
     }

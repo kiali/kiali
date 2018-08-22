@@ -14,7 +14,7 @@ import {
 import { ListView, Sort, Paginator, ToolbarRightContent, Button, Icon } from 'patternfly-react';
 import { Pagination } from '../../types/Pagination';
 import PropTypes from 'prop-types';
-import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
+import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType } from '../../types/NamespaceFilter';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { URLParameter } from '../../types/Parameters';
 
@@ -92,7 +92,7 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
         if (typeof availableFilter === 'undefined') {
           NamespaceFilterSelected.setSelected(
             NamespaceFilterSelected.getSelected().filter(nfs => {
-              return nfs.category === activeFilter.category;
+              return nfs.category !== activeFilter.category;
             })
           );
           return null;
@@ -213,9 +213,9 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
     console.error(errMsg);
   }
 
-  updateParams(params: URLParameter[], looking: string, id: string, value: string) {
+  updateParams(params: URLParameter[], id: string, value: string) {
     let newParams = params;
-    const index = newParams.findIndex(param => param.name === looking && param.value.length > 0);
+    const index = newParams.findIndex(param => param.name === id && param.value.length > 0);
     if (index >= 0) {
       newParams[index].value = value;
     } else {
@@ -229,34 +229,29 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
 
   onFilterChange = (filters: ActiveFilter[]) => {
     let params: URLParameter[] = [];
+
     availableFilters.forEach(availableFilter => {
       params.push({ name: availableFilter.id, value: '' });
     });
+
     filters.forEach(activeFilter => {
       let filterId = (
         availableFilters.find(filter => {
           return filter.title === activeFilter.category;
         }) || availableFilters[2]
       ).id;
-      switch (activeFilter.category) {
-        case 'Istio Sidecar': {
-          params = this.updateParams(params, 'istiosidecar', filterId, activeFilter.value);
-          break;
-        }
-        case 'App Label': {
-          params = this.updateParams(params, 'applabel', filterId, activeFilter.value);
-          break;
-        }
-        case 'Version Label': {
-          params = this.updateParams(params, 'versionlabel', filterId, activeFilter.value);
-          break;
-        }
-        default: {
-          params.push({
-            name: filterId,
-            value: activeFilter.value
-          });
-        }
+
+      const updateableFilterIds = availableFilters
+        .filter(filter => filter.action === FILTER_ACTION_UPDATE)
+        .map(filter => filter.id);
+
+      if (updateableFilterIds.includes(filterId)) {
+        params = this.updateParams(params, filterId, activeFilter.value);
+      } else {
+        params.push({
+          name: filterId,
+          value: activeFilter.value
+        });
       }
     });
     this.props.onParamChange(params, 'append');

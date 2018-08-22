@@ -7,7 +7,7 @@ import {
   NamespaceFilterSelected
 } from '../../components/NamespaceFilter/NamespaceFilter';
 import { Paginator } from 'patternfly-react';
-import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
+import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
@@ -61,6 +61,7 @@ const istioNameFilter: FilterType = {
   title: 'Istio Name',
   placeholder: 'Filter by Istio Name',
   filterType: 'text',
+  action: FILTER_ACTION_UPDATE,
   filterValues: []
 };
 
@@ -69,6 +70,7 @@ const istioTypeFilter: FilterType = {
   title: 'Istio Type',
   placeholder: 'Filter by Istio Type',
   filterType: 'select',
+  action: FILTER_ACTION_APPEND,
   filterValues: [
     {
       id: 'Gateway',
@@ -106,6 +108,7 @@ const configValidationFilter: FilterType = {
   title: 'Config',
   placeholder: 'Filter by Config Validation',
   filterType: 'select',
+  action: FILTER_ACTION_APPEND,
   filterValues: [
     {
       id: 'valid',
@@ -233,7 +236,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
         if (typeof availableFilter === 'undefined') {
           NamespaceFilterSelected.setSelected(
             NamespaceFilterSelected.getSelected().filter(nfs => {
-              return nfs.category === activeFilter.category;
+              return nfs.category !== activeFilter.category;
             })
           );
           return null;

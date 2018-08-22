@@ -1,4 +1,10 @@
-import { ActiveFilter, FilterType, FilterValue } from '../../types/NamespaceFilter';
+import {
+  ActiveFilter,
+  FILTER_ACTION_APPEND,
+  FILTER_ACTION_UPDATE,
+  FilterType,
+  FilterValue
+} from '../../types/NamespaceFilter';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { removeDuplicatesArray } from '../../utils/Common';
 
@@ -102,14 +108,16 @@ export namespace WorkloadListFilters {
     title: 'Workload Name',
     placeholder: 'Filter by Workload Name',
     filterType: 'text',
+    action: FILTER_ACTION_APPEND,
     filterValues: []
   };
 
   export const istioSidecarFilter: FilterType = {
-    id: 'istiosidecar',
+    id: 'istio',
     title: 'Istio Sidecar',
     placeholder: 'Filter by IstioSidecar Validation',
     filterType: 'select',
+    action: FILTER_ACTION_UPDATE,
     filterValues: presenceValues
   };
 
@@ -118,6 +126,7 @@ export namespace WorkloadListFilters {
     title: 'App Label',
     placeholder: 'Filter by App Label Validation',
     filterType: 'select',
+    action: FILTER_ACTION_UPDATE,
     filterValues: presenceValues
   };
 
@@ -126,6 +135,7 @@ export namespace WorkloadListFilters {
     title: 'Version Label',
     placeholder: 'Filter by Version Label Validation',
     filterType: 'select',
+    action: FILTER_ACTION_UPDATE,
     filterValues: presenceValues
   };
 
@@ -134,6 +144,7 @@ export namespace WorkloadListFilters {
     title: 'Workload Type',
     placeholder: 'Filter by Workload Type',
     filterType: 'select',
+    action: FILTER_ACTION_APPEND,
     filterValues: [
       {
         id: WorkloadType.Deployment,
