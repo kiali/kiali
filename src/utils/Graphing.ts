@@ -1,8 +1,8 @@
 import { TimeSeries } from '../types/Metrics';
 
 export default {
-  toC3Columns(matrix: TimeSeries[], title?: string) {
-    if (matrix.length === 0) {
+  toC3Columns(matrix?: TimeSeries[], title?: string) {
+    if (!matrix || matrix.length === 0) {
       return [['x'], [title || '']];
     }
 

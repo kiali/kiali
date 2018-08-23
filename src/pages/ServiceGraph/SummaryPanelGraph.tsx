@@ -122,7 +122,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
           console.log('SummaryPanelGraph: Ignore fetch, component not mounted.');
           return;
         }
-        const metrics = response.data.metrics;
+        const metrics = response.data.dest.metrics;
         const reqRates = this.getRates(metrics['request_count_in'], 'RPS');
         const errRates = this.getRates(metrics['request_error_count_in'], 'Error');
 

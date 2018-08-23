@@ -8,7 +8,6 @@ interface MetricsOptions {
   filters?: string[];
   byLabelsIn?: string[];
   byLabelsOut?: string[];
-  includeIstio?: boolean;
 }
 
 export default MetricsOptions;
