@@ -7,6 +7,9 @@ import {
 } from '../../types/NamespaceFilter';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { removeDuplicatesArray } from '../../utils/Common';
+import { getRequestErrorsRatio, WorkloadHealth } from '../../types/Health';
+
+type WorkloadItemHealth = WorkloadListItem & { health: WorkloadHealth };
 
 export namespace WorkloadListFilters {
   export interface SortField {
@@ -88,6 +91,20 @@ export namespace WorkloadListFilters {
         } else {
           return a.workload.name.localeCompare(b.workload.name);
         }
+      }
+    },
+    {
+      id: 'errorrate',
+      title: 'Error Rate',
+      isNumeric: true,
+      param: 'er',
+      compare: (a: WorkloadItemHealth, b: WorkloadItemHealth) => {
+        if (a.health && b.health) {
+          const ratioA = getRequestErrorsRatio(a.health.requests).value;
+          const ratioB = getRequestErrorsRatio(b.health.requests).value;
+          return ratioA === ratioB ? a.workload.name.localeCompare(b.workload.name) : ratioA - ratioB;
+        }
+        return 0;
       }
     }
   ];
@@ -263,7 +280,22 @@ export namespace WorkloadListFilters {
     unsorted: WorkloadListItem[],
     sortField: WorkloadListFilters.SortField,
     isAscending: boolean
-  ): WorkloadListItem[] => {
-    return unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+  ): Promise<WorkloadListItem[]> => {
+    if (sortField.title === 'Error Rate') {
+      // In the case of error rate sorting, we may not have all health promises ready yet
+      // So we need to get them all before actually sorting
+      const allHealthPromises: Promise<WorkloadItemHealth>[] = unsorted.map(item => {
+        return item.healthPromise.then(health => {
+          const withHealth: any = item;
+          withHealth.health = health;
+          return withHealth;
+        });
+      });
+      return Promise.all(allHealthPromises).then(arr => {
+        return arr.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+      });
+    }
+    const sorted = unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+    return Promise.resolve(sorted);
   };
 }

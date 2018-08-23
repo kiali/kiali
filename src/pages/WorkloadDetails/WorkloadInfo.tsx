@@ -5,6 +5,7 @@ import WorkloadDescription from './WorkloadInfo/WorkloadDescription';
 import WorkloadPods from './WorkloadInfo/WorkloadPods';
 import WorkloadServices from './WorkloadInfo/WorkloadServices';
 import { severityToIconName, validationToSeverity } from '../../types/ServiceInfo';
+import { WorkloadHealth } from '../../types/Health';
 
 type WorkloadInfoProps = {
   workload: Deployment;
@@ -14,6 +15,7 @@ type WorkloadInfoProps = {
   onSelectTab: (tabName: string, tabKey?: string) => void;
   activeTab: (tabName: string, whenEmpty: string) => string;
   istioEnabled: boolean;
+  health?: WorkloadHealth;
 };
 
 interface ValidationChecks {
@@ -83,7 +85,11 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
           </Row>
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
-              <WorkloadDescription workload={workload} istioEnabled={this.props.istioEnabled} />
+              <WorkloadDescription
+                workload={workload}
+                istioEnabled={this.props.istioEnabled}
+                health={this.props.health}
+              />
             </Col>
           </Row>
           <Row className="row-cards-pf">

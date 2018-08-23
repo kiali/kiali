@@ -33,7 +33,7 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
 
   render() {
     return this.state.health ? (
-      <table style={{ width: '30em', tableLayout: 'fixed' }}>
+      <table style={{ width: '50em', tableLayout: 'fixed' }}>
         <tbody>
           <tr>
             <td>
@@ -43,6 +43,7 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
             <td>
               <ServiceErrorRate requestHealth={this.state.health.requests} />
             </td>
+            <td />
           </tr>
         </tbody>
       </table>

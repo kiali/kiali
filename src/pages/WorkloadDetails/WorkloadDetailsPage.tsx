@@ -8,11 +8,13 @@ import { Breadcrumb, TabContainer, Nav, NavItem, TabContent, TabPane } from 'pat
 import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer';
+import { WorkloadHealth } from '../../types/Health';
 
 type WorkloadDetailsState = {
   workload: Deployment;
   validations: Validations;
   istioEnabled: boolean;
+  health?: WorkloadHealth;
 };
 interface ParsedSearch {
   type?: string;
@@ -61,12 +63,20 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
       this.props.match.params.workload
     );
 
-    Promise.all([promiseDetails, promiseValidations])
-      .then(([resultDetails, resultValidations]) => {
+    let promiseHealth = API.getWorkloadHealth(
+      authentication(),
+      this.props.match.params.namespace,
+      this.props.match.params.workload,
+      600
+    );
+
+    Promise.all([promiseDetails, promiseValidations, promiseHealth])
+      .then(([resultDetails, resultValidations, resultHealth]) => {
         this.setState({
           workload: resultDetails.data,
           validations: resultValidations.data,
-          istioEnabled: this.checkIstioEnabled(resultValidations.data)
+          istioEnabled: this.checkIstioEnabled(resultValidations.data),
+          health: resultHealth
         });
       })
       .catch(error => {
@@ -148,6 +158,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   activeTab={this.activeTab}
                   onSelectTab={this.tabSelectHandler}
                   istioEnabled={this.state.istioEnabled}
+                  health={this.state.health}
                 />
               </TabPane>
               <TabPane eventKey="in_metrics">

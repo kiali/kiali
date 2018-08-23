@@ -3,9 +3,8 @@ import * as API from '../../services/Api';
 import { authentication } from '../../utils/Authentication';
 import Namespace from '../../types/Namespace';
 import { AxiosError } from 'axios';
-import { WorkloadListItem } from '../../types/Workload';
+import { WorkloadListItem, WorkloadNamespaceResponse } from '../../types/Workload';
 import { WorkloadListFilters } from './FiltersAndSorts';
-import { WorkloadList } from './WorkloadListClass';
 import {
   defaultNamespaceFilter,
   NamespaceFilter,
@@ -17,6 +16,8 @@ import PropTypes from 'prop-types';
 import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType } from '../../types/NamespaceFilter';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { URLParameter } from '../../types/Parameters';
+import ItemDescription from './ItemDescription';
+import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
 
 export const availableFilters: FilterType[] = [
   defaultNamespaceFilter,
@@ -32,6 +33,7 @@ type WorkloadListComponentState = {
   pagination: Pagination;
   currentSortField: WorkloadListFilters.SortField;
   isSortAscending: boolean;
+  rateInterval: number;
 };
 
 type WorkloadListComponentProps = {
@@ -41,6 +43,7 @@ type WorkloadListComponentProps = {
   onParamChange: PropTypes.func;
   currentSortField: WorkloadListFilters.SortField;
   isSortAscending: boolean;
+  rateInterval: number;
 };
 
 const perPageOptions: number[] = [5, 10, 15];
@@ -52,7 +55,8 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       workloadItems: [],
       pagination: this.props.pagination,
       currentSortField: this.props.currentSortField,
-      isSortAscending: this.props.isSortAscending
+      isSortAscending: this.props.isSortAscending,
+      rateInterval: this.props.rateInterval
     };
     this.setActiveFiltersToURL();
   }
@@ -108,30 +112,49 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
     this.props.onParamChange(params, 'append');
   }
 
+  getDeploymentItems = (data: WorkloadNamespaceResponse): WorkloadListItem[] => {
+    let workloadsItems: WorkloadListItem[] = [];
+    if (data.workloads) {
+      data.workloads.forEach(deployment => {
+        workloadsItems.push({
+          namespace: data.namespace.name,
+          workload: deployment,
+          healthPromise: API.getWorkloadHealth(
+            authentication(),
+            data.namespace.name,
+            deployment.name,
+            this.state.rateInterval
+          )
+        });
+      });
+    }
+    return workloadsItems;
+  };
+
   fetchWorkloads(namespaces: string[], filters: ActiveFilter[]) {
     const workloadsConfigPromises = namespaces.map(namespace => API.getWorkloads(authentication(), namespace));
     Promise.all(workloadsConfigPromises).then(responses => {
       let workloadsItems: WorkloadListItem[] = [];
       responses.forEach(response => {
         workloadsItems = workloadsItems.concat(
-          WorkloadListFilters.filterBy(WorkloadList.getDeploymentItems(response.data), filters)
+          WorkloadListFilters.filterBy(this.getDeploymentItems(response.data), filters)
         );
       });
-
-      workloadsItems = WorkloadListFilters.sortWorkloadsItems(
+      WorkloadListFilters.sortWorkloadsItems(
         workloadsItems,
         this.state.currentSortField,
         this.state.isSortAscending
-      );
-      this.setState(prevState => {
-        return {
-          workloadItems: workloadsItems,
-          pagination: {
-            page: this.state.pagination.page,
-            perPage: prevState.pagination.perPage,
-            perPageOptions: perPageOptions
-          }
-        };
+      ).then(sorted => {
+        this.setState(prevState => {
+          return {
+            workloadItems: sorted,
+            pagination: {
+              page: this.state.pagination.page,
+              perPage: prevState.pagination.perPage,
+              perPageOptions: perPageOptions
+            }
+          };
+        });
       });
     });
   }
@@ -182,30 +205,29 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
   }
 
   updateSortField = (sortField: WorkloadListFilters.SortField) => {
-    this.setState({
-      currentSortField: sortField,
-      workloadItems: WorkloadListFilters.sortWorkloadsItems(
-        this.state.workloadItems,
-        sortField,
-        this.state.isSortAscending
-      )
-    });
-    this.props.onParamChange([{ name: 'sort', value: sortField.param }]);
+    WorkloadListFilters.sortWorkloadsItems(this.state.workloadItems, sortField, this.state.isSortAscending).then(
+      sorted => {
+        this.setState({
+          currentSortField: sortField,
+          workloadItems: sorted
+        });
+        this.props.onParamChange([{ name: 'sort', value: sortField.param }]);
+      }
+    );
   };
 
   updateSortDirection = () => {
-    this.setState(prevState => {
-      return {
-        isSortAscending: !prevState.isSortAscending,
-        workloadItems: WorkloadListFilters.sortWorkloadsItems(
-          prevState.workloadItems,
-          prevState.currentSortField,
-          !prevState.isSortAscending
-        )
-      };
+    WorkloadListFilters.sortWorkloadsItems(
+      this.state.workloadItems,
+      this.state.currentSortField,
+      !this.state.isSortAscending
+    ).then(sorted => {
+      this.setState({
+        isSortAscending: !this.state.isSortAscending,
+        workloadItems: sorted
+      });
+      this.props.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'desc' : 'asc' }]);
     });
-
-    this.props.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'desc' : 'asc' }]);
   };
 
   handleAxiosError(message: string, error: AxiosError) {
@@ -270,7 +292,13 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
     pageEnd = pageEnd < this.state.workloadItems.length ? pageEnd : this.state.workloadItems.length;
 
     for (let i = pageStart; i < pageEnd; i++) {
-      workloadList.push(WorkloadList.renderWorkloadListItem(this.state.workloadItems[i], i));
+      workloadList.push(
+        <ItemDescription
+          workloadItem={this.state.workloadItems[i]}
+          key={`ItemDescription_${this.state.workloadItems[i].workload.name}_${i}`}
+          position={i}
+        />
+      );
     }
 
     return (
@@ -299,6 +327,10 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
               onClick={this.updateSortDirection}
             />
           </Sort>
+          <RateIntervalToolbarItem
+            rateIntervalSelected={this.state.rateInterval}
+            onRateIntervalChanged={this.rateIntervalChangedHandler}
+          />
           <ToolbarRightContent>
             <Button onClick={this.updateWorkloads}>
               <Icon name="refresh" />
@@ -316,6 +348,12 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       </>
     );
   }
+
+  private rateIntervalChangedHandler = (key: number) => {
+    this.setState({ rateInterval: key });
+    this.props.onParamChange([{ name: 'rate', value: key.toString(10) }]);
+    this.updateWorkloads();
+  };
 }
 
 export default WorkloadListComponent;

@@ -5,10 +5,13 @@ import PfInfoCard from '../../../components/Pf/PfInfoCard';
 import { WorkloadIcons } from '../../../types/Workload';
 import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
+import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
+import { WorkloadHealth } from '../../../types/Health';
 
 type WorkloadDescriptionProps = {
   workload: Deployment;
   istioEnabled: boolean;
+  health?: WorkloadHealth;
 };
 
 type WorkloadDescriptionState = {};
@@ -49,6 +52,18 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
               <div>
                 <strong>Resource Version</strong> {workload.resourceVersion}
               </div>
+            </Col>
+            <Col xs={12} sm={6} md={8} lg={8} />
+            <Col xs={12} sm={6} md={2} lg={2}>
+              <div className="progress-description">
+                <strong>Health</strong>
+              </div>
+              <HealthIndicator
+                id={workload.name}
+                health={this.props.health}
+                mode={DisplayMode.LARGE}
+                tooltipPlacement="left"
+              />
             </Col>
           </Row>
         }

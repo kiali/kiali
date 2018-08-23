@@ -1,4 +1,5 @@
 import Namespace from './Namespace';
+import { WorkloadHealth } from './Health';
 
 export interface WorkloadId {
   namespace: string;
@@ -52,6 +53,7 @@ export interface WorkloadOverview {
 export interface WorkloadListItem {
   namespace: string;
   workload: WorkloadOverview;
+  healthPromise: Promise<WorkloadHealth>;
 }
 
 export interface WorkloadNamespaceResponse {

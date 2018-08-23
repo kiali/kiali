@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Breadcrumb } from 'patternfly-react';
 import { ListPage } from '../../components/ListPage/ListPage';
 import WorkloadListComponent from './WorkloadListComponent';
-import { perPageOptions } from '../ServiceList/ServiceListComponent';
+import { defaultRateInterval, perPageOptions } from '../ServiceList/ServiceListComponent';
 import { WorkloadListFilters } from './FiltersAndSorts';
 
 type WorkloadListState = {};
@@ -40,6 +40,10 @@ class WorkloadListPage extends ListPage.Component<WorkloadListProps, WorkloadLis
     );
   }
 
+  currentRateInterval() {
+    return parseInt(this.getQueryParam('rate', [defaultRateInterval.toString(10)])[0], 10);
+  }
+
   render() {
     return (
       <>
@@ -53,6 +57,7 @@ class WorkloadListPage extends ListPage.Component<WorkloadListProps, WorkloadLis
           queryParam={this.getQueryParam}
           currentSortField={this.currentSortField()}
           isSortAscending={this.isCurrentSortAscending()}
+          rateInterval={this.currentRateInterval()}
         />
       </>
     );
