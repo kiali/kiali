@@ -2,9 +2,8 @@ import React from 'react';
 import { Alert, Row, Col, Form, FormGroup, FormControl, Button, HelpBlock } from 'patternfly-react';
 import PropTypes from 'prop-types';
 import { KEY_CODES } from '../../types/Common';
-import SocialLink from '../../components/SocialLink/SocialLink';
 
-const kialiTitle = require('../../assets/img/kiali-title.svg');
+const kialiTitle = require('../../assets/img/logo-login.svg');
 
 type LoginProps = {
   user: { username: string; password: string } | undefined;
@@ -106,9 +105,6 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
                       </Button>
                     </Form>
                   </div>
-                  <footer className={'login-pf-page-footer'}>
-                    <SocialLink />
-                  </footer>
                 </Col>
               </Row>
             </Col>

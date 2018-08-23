@@ -92,3 +92,21 @@ a:focus {
 .c3-legend-item-hidden {
   opacity: 0.4;
 }
+.navbar-pf-vertical,
+.about-modal-pf,
+.login-pf body,
+.nav-pf-vertical,
+.nav-pf-vertical .list-group-item.active>a, .nav-pf-vertical .list-group-item:hover>a
+{
+  background-color: #003145;
+  background-image: none;
+}
+.nav-pf-vertical .list-group-item.active, .nav-pf-vertical .list-group-item.active:hover {
+  border-color: #438fdd;
+}
+.nav-pf-vertical .list-group-item {
+  border-color: #18546b;
+}
+.nav-pf-vertical {
+  border-top: 2px solid #18546b;
+}

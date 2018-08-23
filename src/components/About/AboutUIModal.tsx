@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { AboutModal } from 'patternfly-react';
 import { Component } from '../../store/Store';
+import { KialiLogo } from '../../config';
 
-const pfLogo = require('../../img/logo-alt.svg');
 const KIALI_CORE_COMMIT_HASH = 'Kiali core commit hash';
 const KIALI_CORE_VERSION = 'Kiali core version';
 
@@ -31,13 +31,7 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
 
   render() {
     return (
-      <AboutModal
-        show={this.state.showModal}
-        onHide={this.close}
-        productTitle="Kiali"
-        logo={pfLogo}
-        altLogo="Kiali Logo"
-      >
+      <AboutModal show={this.state.showModal} onHide={this.close} productTitle={<img src={KialiLogo} />}>
         <AboutModal.Versions>
           <AboutModal.VersionItem
             label="kiali-ui"
