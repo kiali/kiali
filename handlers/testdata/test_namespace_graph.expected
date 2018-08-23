@@ -90,7 +90,8 @@
           "app": "ingressgateway",
           "rateOut": "100.000",
           "rateTcpSentOut": "150.000",
-          "isOutside": true
+          "isOutside": true,
+          "isRoot": true
         }
       },
       {
