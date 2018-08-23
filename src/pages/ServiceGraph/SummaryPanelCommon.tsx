@@ -178,17 +178,23 @@ export const getDatapoints = (
 
 export const renderPanelTitle = node => {
   const { namespace, service, app, workload, nodeType } = nodeData(node);
-  const displayName: string = nodeType === NodeType.UNKNOWN ? 'unknown' : app || workload || service;
+  let displayName: string = 'unknown';
   let link: string | undefined;
   let displaySpan: any;
 
   switch (nodeType) {
+    case NodeType.APP:
+      // Not available yet
+      // link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service)}`;
+      displayName = app;
+      break;
     case NodeType.SERVICE:
-      link = `/namespaces/${namespace}/services/${service}`;
+      link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service)}`;
+      displayName = service;
       break;
     case NodeType.WORKLOAD:
-      // Not available yet.
-      // link = `/namespaces/${namespace}/workloads/${service}`;
+      link = `/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload)}`;
+      displayName = workload;
       break;
     default:
       // NOOP

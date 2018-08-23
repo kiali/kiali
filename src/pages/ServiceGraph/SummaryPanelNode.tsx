@@ -1,10 +1,12 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
+import { Icon } from 'patternfly-react';
+
 import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import { Metrics, Metric } from '../../types/Metrics';
-import { Icon } from 'patternfly-react';
 import {
   shouldRefreshData,
   updateHealth,
@@ -192,7 +194,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           {shouldRenderWorkload && (
             <div>
               <strong>Workload: </strong>
-              {workload}
+              <Link to={`/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload)}`}>
+                {workload}
+              </Link>
             </div>
           )}
           {(shouldRenderSvcList || shouldRenderWorkload) && <hr />}
