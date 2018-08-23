@@ -11,6 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type servicesResponse struct {
@@ -157,6 +159,8 @@ func (in *IstioClient) GetNamespaceAppsDetails(namespace string) (NamespaceApps,
 	return allEntities, err
 }
 
+// TODO I think this method could fail as it is filtering services by app label
+// TODO it should use getServicesByDeployment() instead
 // GetAppDetails returns the app details (services, deployments and pods) for the input app label.
 // It returns an error on any problem.
 func (in *IstioClient) GetAppDetails(namespace, app string) (AppDetails, error) {
@@ -218,6 +222,12 @@ func (in *IstioClient) GetDeployments(namespace string) (*v1beta1.DeploymentList
 	return in.k8s.AppsV1beta1().Deployments(namespace).List(emptyListOptions)
 }
 
+// GetDeploymentsBySelector returns a list of deployments for a given namespace and a set of labels.
+// It returns an error on any problem.
+func (in *IstioClient) GetDeploymentsBySelector(namespace string, labelSelector string) (*v1beta1.DeploymentList, error) {
+	return in.k8s.AppsV1beta1().Deployments(namespace).List(meta_v1.ListOptions{LabelSelector: labelSelector})
+}
+
 // GetService returns the definition of a specific service.
 // It returns an error on any problem.
 func (in *IstioClient) GetService(namespace, serviceName string) (*v1.Service, error) {
@@ -230,7 +240,7 @@ func (in *IstioClient) GetDeployment(namespace, deploymentName string) (*v1beta1
 	return in.k8s.AppsV1beta1().Deployments(namespace).Get(deploymentName, emptyGetOptions)
 }
 
-// GetDeploymentSelector returns the selector of a deployment.
+// GetDeploymentSelector returns the selector of a deployment given a namespace and a deployment names.
 // It returns an error on any problem.
 // Return all labels listed as a human readable string separated by ','
 func (in *IstioClient) GetDeploymentSelector(namespace, deploymentName string) (string, error) {
@@ -408,6 +418,12 @@ func (in *IstioClient) getPods(namespace string, selector map[string]string, pod
 
 func (in *IstioClient) getServicesByDeployment(namespace string, deployment *v1beta1.Deployment,
 	serviceChan chan serviceSliceResponse) {
+
+	services, err := in.GetServicesByDeploymentSelector(namespace, deployment)
+	serviceChan <- serviceSliceResponse{services: services, err: err}
+}
+
+func (in *IstioClient) GetServicesByDeploymentSelector(namespace string, deployment *v1beta1.Deployment) ([]v1.Service, error) {
 	var err error
 	var allServices *v1.ServiceList
 	var services []v1.Service
@@ -420,5 +436,21 @@ func (in *IstioClient) getServicesByDeployment(namespace string, deployment *v1b
 		}
 	}
 
-	serviceChan <- serviceSliceResponse{services: services, err: err}
+	return services, err
+}
+
+// GetSelectorAsString extracts the Selector used by a Deployment
+// Returns a selector represented as a plain string
+func GetSelectorAsString(deployment *v1beta1.Deployment) (string, error) {
+	selector, err := meta_v1.LabelSelectorAsMap(deployment.Spec.Selector)
+	if err != nil {
+		return "", err
+	}
+	return labels.FormatLabels(selector), nil
+}
+
+// NewNotFound is a helper method to create a NotFound error similar as used by the kubernetes client.
+// This method helps upper layers to send a explicit NotFound error without querying the backend.
+func NewNotFound(name, group, resource string) error {
+	return errors.NewNotFound(schema.GroupResource{Group: group, Resource: resource}, name)
 }

@@ -38,7 +38,7 @@ func WorkloadValidations(w http.ResponseWriter, r *http.Request) {
 	// Get business layer
 	business, err := business.Get()
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		RespondWithError(w, http.StatusInternalServerError, "Workloads initialization error: "+err.Error())
 		return
 	}
 	namespace := params["namespace"]
@@ -61,7 +61,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	// Get business layer
 	business, err := business.Get()
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		RespondWithError(w, http.StatusInternalServerError, "Workloads initialization error: "+err.Error())
 		return
 	}
 	namespace := params["namespace"]
