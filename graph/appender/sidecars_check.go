@@ -28,8 +28,8 @@ func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, _ string
 
 func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, k8s *kubernetes.IstioClient) {
 	cfg := config.Get()
-	appLabel := cfg.AppLabelName
-	versionLabel := cfg.VersionLabelName
+	appLabel := cfg.IstioLabels.AppLabelName
+	versionLabel := cfg.IstioLabels.VersionLabelName
 	istioNamespace := cfg.IstioNamespace
 
 	for _, n := range trafficMap {

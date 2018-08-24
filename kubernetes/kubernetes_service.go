@@ -105,7 +105,7 @@ func (in *IstioClient) GetNamespaceAppsDetails(namespace string) (NamespaceApps,
 	allEntities := make(NamespaceApps)
 	var err error
 	servicesChan, podsChan, deploymentsChan := make(chan servicesResponse), make(chan podsResponse), make(chan deploymentsResponse)
-	appLabel := config.Get().AppLabelName
+	appLabel := config.Get().IstioLabels.AppLabelName
 
 	go in.getServiceList(namespace, servicesChan)
 	go in.getPodsList(namespace, podsChan)
@@ -169,7 +169,7 @@ func (in *IstioClient) GetAppDetails(namespace, app string) (AppDetails, error) 
 	var services *v1.ServiceList
 	var pods *v1.PodList
 	var depls *v1beta1.DeploymentList
-	appLabel := config.Get().AppLabelName
+	appLabel := config.Get().IstioLabels.AppLabelName
 	opts := meta_v1.ListOptions{LabelSelector: appLabel + "=" + app}
 	wg.Add(3)
 

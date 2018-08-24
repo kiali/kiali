@@ -46,9 +46,6 @@ const (
 	EnvJaegerService          = "JAEGER_SERVICE"
 	EnvJaegerServicePort      = "JAEGER_SERVICE_PORT"
 
-	EnvAppLabelName     = "APP_LABEL_NAME"
-	EnvVersionLabelName = "VERSION_LABEL_NAME"
-
 	EnvLoginTokenSigningKey        = "LOGIN_TOKEN_SIGNING_KEY"
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
 	EnvIstioNamespace              = "ISTIO_NAMESPACE"
@@ -124,8 +121,6 @@ type Config struct {
 	Identity         security.Identity `yaml:",omitempty"`
 	Server           Server            `yaml:",omitempty"`
 	InCluster        bool              `yaml:"in_cluster,omitempty"`
-	AppLabelName     string            `yaml:"app_label_name,omitempty"`
-	VersionLabelName string            `yaml:"version_label_name,omitempty"`
 	ExternalServices ExternalServices  `yaml:"external_services,omitempty"`
 	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
 	KialiService     string            `yaml:"kiali_service,omitempty"`
@@ -140,8 +135,6 @@ func NewConfig() (c *Config) {
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
 	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")
 	c.InCluster = getDefaultBool(EnvInCluster, true)
-	c.AppLabelName = strings.TrimSpace(getDefaultString(EnvAppLabelName, "app"))
-	c.VersionLabelName = strings.TrimSpace(getDefaultString(EnvVersionLabelName, "version"))
 	c.KialiService = strings.TrimSpace(getDefaultString(EnvKialiService, "kiali"))
 	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))

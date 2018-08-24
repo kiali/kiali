@@ -344,20 +344,6 @@ server:
 in_cluster: (true\|false)
 ----
 
-|`APP_LABEL_NAME`
-|Label name which all resources of an app are grouped by. (default is `app`)
-[source,yaml]
-----
-app_label_name: VALUE
-----
-
-|`VERSION_LABEL_NAME`
-|Label name which all resources of an app version are grouped by. (default is `version`)
-[source,yaml]
-----
-version_label_name: VALUE
-----
-
 |`PROMETHEUS_SERVICE_URL`
 |The URL used to access and query the Prometheus Server. It must be accessible from Kiali pod. (default is `http://prometheus.istio-system:9090`)
 [source,yaml]

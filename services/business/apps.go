@@ -37,7 +37,7 @@ func (in *AppService) fetchWorkloadsPerApp(namespace, labelSelector string) (app
 
 	apps := make(appsWorkload)
 	for _, deployment := range deployments.Items {
-		if appLabel, ok := deployment.Labels[cfg.AppLabelName]; ok {
+		if appLabel, ok := deployment.Labels[cfg.IstioLabels.AppLabelName]; ok {
 			selector, _ := kubernetes.GetSelectorAsString(&deployment)
 			dPods, _ := in.k8s.GetPods(namespace, selector)
 			mPods := &models.Pods{}
@@ -61,7 +61,7 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 	cfg := config.Get()
 	appList := &models.AppList{}
 	appList.Namespace = models.Namespace{Name: namespace}
-	apps, err := in.fetchWorkloadsPerApp(namespace, cfg.AppLabelName)
+	apps, err := in.fetchWorkloadsPerApp(namespace, cfg.IstioLabels.AppLabelName)
 	if err != nil {
 		return *appList, err
 	}
@@ -82,7 +82,7 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 func (in *AppService) GetApp(namespace string, app string) (models.App, error) {
 	cfg := config.Get()
 	appInstance := &models.App{Namespace: models.Namespace{Name: namespace}, Name: app}
-	apps, err := in.fetchWorkloadsPerApp(namespace, fmt.Sprintf("%s=%s", cfg.AppLabelName, app))
+	apps, err := in.fetchWorkloadsPerApp(namespace, fmt.Sprintf("%s=%s", cfg.IstioLabels.AppLabelName, app))
 	if err != nil {
 		return *appInstance, err
 	}
