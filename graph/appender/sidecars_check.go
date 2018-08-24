@@ -9,7 +9,7 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/services/business/checkers"
+	pods_checker "github.com/kiali/kiali/services/business/checkers/pods"
 )
 
 type SidecarsCheckAppender struct{}
@@ -26,7 +26,7 @@ func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, _ string
 	a.applySidecarsChecks(trafficMap, k8s)
 }
 
-func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, k8s *kubernetes.IstioClient) {
+func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, k8s kubernetes.IstioClientInterface) {
 	cfg := config.Get()
 	appLabel := cfg.IstioLabels.AppLabelName
 	versionLabel := cfg.IstioLabels.VersionLabelName
@@ -65,11 +65,9 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		}
 
 		// check each pod for sidecar, stop and flag at first pod missing sidecar
-		checker := checkers.PodChecker{Pods: pods.Items}
-		validations := checker.Check()
-
-		for _, check := range validations {
-			if !check.Valid {
+		for _, pod := range pods.Items {
+			checker := pods_checker.SidecarPresenceChecker{Pod: &pod}
+			if _, ok := checker.Check(); !ok {
 				n.Metadata["hasMissingSC"] = true
 				break
 			}
@@ -85,7 +83,7 @@ func (a *SidecarsCheckAppender) getAppLabels(appLabel, app, versionLabel, versio
 	return fmt.Sprintf("%s=%s", appLabel, app)
 }
 
-func (a *SidecarsCheckAppender) getWorkloadLabels(namespace, workload string, k8s *kubernetes.IstioClient) (string, error) {
+func (a *SidecarsCheckAppender) getWorkloadLabels(namespace, workload string, k8s kubernetes.IstioClientInterface) (string, error) {
 	deployment, err := k8s.GetDeployment(namespace, workload)
 	if err != nil {
 		return "", err
