@@ -296,7 +296,7 @@ func GetDestinationRulesSubsets(destinationRules []IstioObject, serviceName, ver
 								subsetName := innerSubset["name"]
 								if labels, ok := innerSubset["labels"]; ok {
 									if dLabels, ok := labels.(map[string]interface{}); ok {
-										if versionValue, ok := dLabels[cfg.VersionLabelName]; ok && versionValue == version {
+										if versionValue, ok := dLabels[cfg.IstioLabels.VersionLabelName]; ok && versionValue == version {
 											foundSubsets = append(foundSubsets, subsetName.(string))
 										}
 									}
@@ -335,7 +335,7 @@ func CheckDestinationRuleCircuitBreaker(destinationRule IstioObject, namespace s
 							if trafficPolicy, ok := innerSubset["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
 								if labels, ok := innerSubset["labels"]; ok {
 									if dLabels, ok := labels.(map[string]interface{}); ok {
-										if versionValue, ok := dLabels[cfg.VersionLabelName]; ok && versionValue == version {
+										if versionValue, ok := dLabels[cfg.IstioLabels.VersionLabelName]; ok && versionValue == version {
 											return true
 										}
 									}
@@ -385,7 +385,7 @@ func FilterByDestination(spec map[string]interface{}, namespace string, serviceN
 
 		if dLabels, ok := dest["labels"]; ok && version != "" {
 			if labels, ok := dLabels.(map[string]interface{}); ok {
-				if versionValue, ok := labels[cfg.VersionLabelName]; ok && versionValue == version {
+				if versionValue, ok := labels[cfg.IstioLabels.VersionLabelName]; ok && versionValue == version {
 					return true
 				}
 				return false

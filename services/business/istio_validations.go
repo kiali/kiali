@@ -3,9 +3,7 @@ package business
 import (
 	"fmt"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/services/business/checkers"
 	"github.com/kiali/kiali/services/models"
 )
@@ -27,17 +25,16 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		return nil, err
 	}
 
-	appLabel := config.Get().AppLabelName
-	pods, err := in.k8s.GetPods(namespace, appLabel+"="+service)
+	// Get serviceDetails from a Namespace and service
+	serviceDetails, err := in.k8s.GetServiceDetails(namespace, service)
 	if err != nil {
-		log.Warningf("Cannot get pods for service %v.%v.", namespace, service)
 		return nil, err
 	}
 
 	objectCheckers := []ObjectChecker{
 		checkers.VirtualServiceChecker{namespace, istioDetails.DestinationRules,
 			istioDetails.VirtualServices},
-		checkers.PodChecker{Pods: pods.Items},
+		checkers.PodChecker{Pods: serviceDetails.Pods},
 	}
 
 	// Get groupal validations for same kind istio objects
