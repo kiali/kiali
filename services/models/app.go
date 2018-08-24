@@ -30,6 +30,11 @@ type WorkloadSvc struct {
 	// example: reviews-v1
 	WorkloadName string `json:"workloadName"`
 
+	// Define if all Pods related to the Workload has an IstioSidecar deployed
+	// required: true
+	// example: true
+	IstioSidecar bool `json:"istioSidecar"`
+
 	// List of service names linked with a workload
 	// required: true
 	ServiceNames []string `json:"serviceNames"`

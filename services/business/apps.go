@@ -101,6 +101,10 @@ func (in *AppService) GetApp(namespace string, app string) (models.App, error) {
 		if err != nil {
 			return *appInstance, err
 		}
+		mPods := &models.Pods{}
+		// Using Parse to calculate the IstioSideCar from Pods
+		mPods.Parse(wkd.Pods.Items)
+		wkdSvc.IstioSidecar = mPods.HasIstioSideCar()
 		wkdSvc.ServiceNames = make([]string, len(services))
 		for j, service := range services {
 			wkdSvc.ServiceNames[j] = service.Name
