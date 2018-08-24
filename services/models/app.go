@@ -53,5 +53,5 @@ type App struct {
 
 	// Workloads for a given application
 	// required: true
-	Workloads []WorkloadSvc
+	Workloads []WorkloadSvc `json:"workloads"`
 }
