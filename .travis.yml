@@ -18,7 +18,7 @@ script:
     yarn test --forceExit --maxWorkers=4
   - ./run_itest.sh
 before_deploy:
-  - yarn set-snapshot-version $TRAVIS_BUILD_NUMBER
+  - [ -z "$TRAVIS_TAG" ] && yarn set-snapshot-version $TRAVIS_BUILD_NUMBER || true
 deploy:
   skip_cleanup: true
   provider: npm
@@ -27,6 +27,7 @@ deploy:
     secure: Jo2WZnjFwm5quz269BLETozmEED9GwXBRECtk15gQOu9kRBdb+lyqt/c+ulucD9o4XVGfrtPJIqki8XCNHKNkgq4iWU/B2uXlIFH1ZefbeaHJTsPiQmeZ790PdY9SrjJRz9Tpv/Ev1IPWtT4RJiHN2ydandbjIAdPoNDJmMRUkezqFSYnhB4UcLRR8PzuO6TcmUQToHkaiQ5DUTmaewjQhaT8IK1Npg25pn6FXHhe7jy+FnuXSKLBhm51PO9KPohv/CGISVJvG5BLX4az/l2iH1zrS/Ji5u5U5J7ukp7NH7TfP9/JqSJ58Zm+zgC+NNsuUjy2p8fEb4kK/LgwP54yjhZWCVs+gvTMxIfaxukTCyCTqinGmSK+xgEMOyGMyUQkETsQhdo7wRMEJZ7cTkge1IKrdOsMEZulOIaGblMyY5eSpg2xHVyshSO7JdQiKWpeKA6KI2lV6qUIafFmIpLDt9p392bsnwU6YODE0THVer0Ql4yYlJBdjPIoYp8igSeILp2CoQ5I45l0ZOsJQq+KnkVPC/qWcH8eU0ykSsBTiA4lmqOPZ4nnGXJ18BEcxh6BEEmQV3p3WP+u84cBwg/upiszKlLKSy0TURGJUG5mf08NOT3Z8PIL8klmM8R5jnTFBnKYpE2BcczSIOrwv5RwpTyOvbb7u/jHh4HghQnQn8=
   on:
     branch: master
+    tags: true
     repo: kiali/kiali-ui
 after_deploy:
 - 'curl -s -X POST -H "Content-Type: application/json" -H "Accept: application/json" -H "Travis-API-Version: 3" -H "Authorization: token $TRAVIS_TOKEN" -d "{\"request\":{\"message\": \"Triggered by kiali-ui change: $TRAVIS_COMMIT\", \"branch\":\"master\"}}" https://api.travis-ci.org/repo/kiali%2Fkiali/requests'
