@@ -3,8 +3,8 @@ package business
 import (
 	"fmt"
 
-	"k8s.io/api/core/v1"
 	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
