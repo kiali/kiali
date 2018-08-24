@@ -5,7 +5,7 @@ export class ColaGraph implements GraphType {
     return {
       name: 'cola',
       animate: false,
-      flow: { axis: 'y' },
+      flow: { axis: 'x' },
       nodeDimensionsIncludeLabels: true
     };
   }
