@@ -39,8 +39,6 @@ func TestGetApp(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	// Auxiliar fake* tests defined in workload_test.go
-	// TODO add them in some unified place
 	k8s.On("GetDeploymentsBySelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
 	k8s.On("GetServicesByDeploymentSelector", mock.AnythingOfType("string"), mock.AnythingOfType("*v1beta1.Deployment")).Return(fakeServices(), nil)

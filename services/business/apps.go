@@ -2,11 +2,13 @@ package business
 
 import (
 	"fmt"
+
+	"k8s.io/api/core/v1"
+	"k8s.io/api/apps/v1beta1"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/core/v1"
 )
 
 // AppService deals with fetching Workloads group by "app" label, which will be identified as an "application"
@@ -76,6 +78,7 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 	return *appList, nil
 }
 
+// GetApp is the API handler to fetch the details for a given namespace and app name
 func (in *AppService) GetApp(namespace string, app string) (models.App, error) {
 	cfg := config.Get()
 	appInstance := &models.App{Namespace: models.Namespace{Name: namespace}, Name: app}
