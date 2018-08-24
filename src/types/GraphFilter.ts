@@ -13,6 +13,7 @@ export enum EdgeLabelMode {
   REQUESTS_PER_SECOND = 'requestsPerSecond',
   REQUESTS_PERCENT_OF_TOTAL = 'requestsPercentOfTotal',
   RESPONSE_TIME_95TH_PERCENTILE = 'responseTime95thPercentile',
+  TCP_SENT = 'tcpSentBytes',
   MTLS_ENABLED = 'security'
 }
 

@@ -216,6 +216,13 @@ export class GraphStyles {
               case EdgeLabelMode.MTLS_ENABLED: {
                 return ele.data('isMTLS') ? '\ue923' : '';
               }
+              case EdgeLabelMode.TCP_SENT: {
+                const tcpRate = ele.data('tcpSentRate') ? parseFloat(ele.data('tcpSentRate')) : 0;
+                if (tcpRate > 0) {
+                  return `${tcpRate.toFixed(2)}`;
+                }
+                return '';
+              }
               default:
                 return '';
             }
@@ -234,7 +241,7 @@ export class GraphStyles {
           'line-style': (ele: any) => {
             return ele.data('isUnused') ? 'dotted' : 'solid';
           },
-          'target-arrow-shape': 'vee',
+          'target-arrow-shape': 'triangle',
           'target-arrow-color': (ele: any) => {
             return getEdgeColor(ele);
           },
@@ -246,6 +253,14 @@ export class GraphStyles {
         selector: 'edge:selected',
         css: {
           width: EdgeWidthSelected
+        }
+      },
+      {
+        selector: 'edge[tcpSentRate]',
+        css: {
+          'target-arrow-shape': 'triangle-cross',
+          'line-color': PfColors.Blue600,
+          'target-arrow-color': PfColors.Blue600
         }
       },
       // When you mouse over a node, all nodes other than the moused over node
