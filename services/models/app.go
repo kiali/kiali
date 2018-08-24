@@ -23,3 +23,30 @@ type AppListItem struct {
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
 }
+
+type WorkloadSvc struct {
+	// Name of a workload member of an application
+	// required: true
+	// example: reviews-v1
+	WorkloadName string `json:"workloadName"`
+
+	// List of service names linked with a workload
+	// required: true
+	ServiceNames []string `json:"serviceNames"`
+}
+
+type App struct {
+	// Namespace where the app lives in
+	// required: true
+	// example: bookinfo
+	Namespace Namespace `json:"namespace"`
+
+	// Name of the application
+	// required: true
+	// example: reviews
+	Name string `json:"name"`
+
+	// Workloads for a given application
+	// required: true
+	Workloads []WorkloadSvc
+}

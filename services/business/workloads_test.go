@@ -132,3 +132,11 @@ func fakePodList() *v1.PodList {
 func fakeDeploymentSelector() string {
 	return "app:httpbin,version:v1"
 }
+
+func fakeServices() []v1.Service {
+	return []v1.Service{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin"},
+		},
+	}
+}

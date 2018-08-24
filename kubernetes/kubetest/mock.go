@@ -35,6 +35,16 @@ func (o *K8SClientMock) GetDeploymentSelector(namespace string, deploymentName s
 	return args.Get(0).(string), args.Error(1)
 }
 
+func (o *K8SClientMock) GetDeploymentsBySelector(namespace string, labelSelector string) (*v1beta1.DeploymentList, error) {
+	args := o.Called(namespace, labelSelector)
+	return args.Get(0).(*v1beta1.DeploymentList), args.Error(1)
+}
+
+func (o *K8SClientMock) GetSelector(namespace string, deploymentName string) (string, error) {
+	args := o.Called(namespace, deploymentName)
+	return args.Get(0).(string), args.Error(1)
+}
+
 func (o *K8SClientMock) GetService(namespace string, serviceName string) (*v1.Service, error) {
 	args := o.Called(namespace, serviceName)
 	return args.Get(0).(*v1.Service), args.Error(1)
@@ -83,6 +93,11 @@ func (o *K8SClientMock) GetServiceDetails(namespace string, serviceName string) 
 func (o *K8SClientMock) GetServicePods(namespace string, serviceName string, serviceVersion string) (*v1.PodList, error) {
 	args := o.Called(namespace, serviceName, serviceVersion)
 	return args.Get(0).(*v1.PodList), args.Error(1)
+}
+
+func (o *K8SClientMock) GetServicesByDeploymentSelector(namespace string, deployment *v1beta1.Deployment) ([]v1.Service, error) {
+	args := o.Called(namespace, deployment)
+	return args.Get(0).([]v1.Service), args.Error(1)
 }
 
 func (o *K8SClientMock) GetIstioDetails(namespace string, serviceName string) (*kubernetes.IstioDetails, error) {

@@ -113,6 +113,15 @@ func fakePodList() *k8s_v1.PodList {
 func fakeDeploymentSelector() string {
 	return "app:httpbin,version:v1"
 }
+
+func fakeServices() []k8s_v1.Service {
+	return []k8s_v1.Service{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin"},
+		},
+	}
+}
+
 func TestWorkloadMetricsDefault(t *testing.T) {
 	ts, api := setupWorkloadMetricsEndpoint(t)
 	defer ts.Close()

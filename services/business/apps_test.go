@@ -12,7 +12,7 @@ func setupAppService(k8s *kubetest.K8SClientMock) AppService {
 	return AppService{k8s: k8s}
 }
 
-func TestAppsListHandler(t *testing.T) {
+func TestGetAppList(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -20,9 +20,8 @@ func TestAppsListHandler(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	// Auxiliar fake* tests defined in workload_test.go
-	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
+	k8s.On("GetDeploymentsBySelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
-	k8s.On("GetDeploymentSelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentSelector(), nil)
 	svc := setupAppService(k8s)
 
 	appList, _ := svc.GetAppList("Namespace")
@@ -31,4 +30,27 @@ func TestAppsListHandler(t *testing.T) {
 
 	assert.Equal(1, len(appList.Apps))
 	assert.Equal("httpbin", appList.Apps[0].Name)
+}
+
+func TestGetApp(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetDeploymentsBySelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
+	k8s.On("GetServicesByDeploymentSelector", mock.AnythingOfType("string"), mock.AnythingOfType("*v1beta1.Deployment")).Return(fakeServices(), nil)
+	svc := setupAppService(k8s)
+
+	appDetails, _ := svc.GetApp("Namespace", "httpbin")
+
+	assert.Equal("Namespace", appDetails.Namespace.Name)
+	assert.Equal("httpbin", appDetails.Name)
+
+	assert.Equal(3, len(appDetails.Workloads))
+	assert.Equal("httpbin-v1", appDetails.Workloads[0].WorkloadName)
+	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
+	assert.Equal("httpbin-v3", appDetails.Workloads[2].WorkloadName)
 }
