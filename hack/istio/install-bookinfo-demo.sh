@@ -42,6 +42,14 @@ while [[ $# -gt 0 ]]; do
       GATEWAY_YAML="$2"
       shift;shift
       ;;
+    --mongo)
+      MONGO_ENABLED="true"
+      shift;
+      ;;
+    --mysql)
+      MYSQL_ENABLED="true"
+      shift;
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -50,6 +58,8 @@ Valid command line arguments:
   -n|--namespace <name>: Install the demo in this namespace (default: bookinfo)
   -b|--bookinfo.yaml <file>: A custom yaml file to deploy the bookinfo demo
   -g|--gateway.yaml <file>: A custom yaml file to deploy the bookinfo-gateway resources
+  --mongo: Install a Mongo DB that a ratings service will access
+  --mysql: Install a MySQL DB that a ratings service will access
   -h|--help : this message
 HELPMSG
       exit 1
@@ -122,6 +132,22 @@ $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f
 # $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
 
 $ISTIOCTL create -n ${NAMESPACE} -f ${GATEWAY_YAML}
+
+if [ "${MONGO_ENABLED}" == "true" ]; then
+  echo "Installing Mongo DB and a ratings service that uses it"
+  MONGO_DB_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-db.yaml"
+  MONGO_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2.yaml"
+  $ISTIOCTL kube-inject -f ${MONGO_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+  $ISTIOCTL kube-inject -f ${MONGO_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+fi
+
+if [ "${MYSQL_ENABLED}" == "true" ]; then
+  echo "Installing MySql DB and a ratings service that uses it"
+  MYSQL_DB_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-mysql.yaml"
+  MYSQL_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql.yaml"
+  $ISTIOCTL kube-inject -f ${MYSQL_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+  $ISTIOCTL kube-inject -f ${MYSQL_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+fi
 
 sleep 4
 
