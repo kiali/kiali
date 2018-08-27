@@ -1,8 +1,23 @@
 import * as React from 'react';
-import { Button, EmptyState, EmptyStateTitle, EmptyStateInfo, EmptyStateAction } from 'patternfly-react';
+import { connect } from 'react-redux';
+import {
+  Button,
+  EmptyState,
+  EmptyStateTitle,
+  EmptyStateIcon,
+  EmptyStateInfo,
+  EmptyStateAction
+} from 'patternfly-react';
 import { style } from 'typestyle';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as MessageCenter from '../utils/MessageCenter';
 import * as _ from 'lodash';
+import { KialiAppState } from '../store/Store';
+
+const mapStateToProps = (state: KialiAppState) => {
+  return {
+    error: state.serviceGraph.error
+  };
+};
 
 type EmptyGraphLayoutProps = {
   elements?: any;
@@ -10,6 +25,7 @@ type EmptyGraphLayoutProps = {
   action?: any;
   isLoading?: boolean;
   isError: boolean;
+  error?: string;
 };
 
 const emptyStateStyle = style({
@@ -21,8 +37,8 @@ const emptyStateStyle = style({
 
 type EmptyGraphLayoutState = {};
 
-export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
-  toogleMessageCenter = () => {
+export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
+  toggleMessageCenter = () => {
     MessageCenter.toggleMessageCenter();
   };
 
@@ -31,7 +47,7 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
     const nextIsEmpty = _.isEmpty(nextProps.elements.nodes);
 
     // Update if we have elements and we are not loading
-    if (nextProps.isLoading === false && !nextIsEmpty) {
+    if (!nextProps.isLoading && !nextIsEmpty) {
       return true;
     }
 
@@ -40,21 +56,18 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
       return true;
     }
     // Do not update if we have elements and the namespace didn't change, as this means we are refreshing
-    if (!nextIsEmpty && this.props.namespace === nextProps.namespace) {
-      return false;
-    }
-
-    return true;
+    return !(!nextIsEmpty && this.props.namespace === nextProps.namespace);
   }
 
   render() {
     if (this.props.isError) {
       return (
         <EmptyState className={emptyStateStyle}>
+          <EmptyStateIcon name="error-circle-o" />
           <EmptyStateTitle>Error loading Graph</EmptyStateTitle>
-          <EmptyStateInfo>Graph cannot be loaded. Please access to the Message Center for more details.</EmptyStateInfo>
+          <EmptyStateInfo>{this.props.error}</EmptyStateInfo>
           <EmptyStateAction>
-            <Button bsStyle="primary" bsSize="large" onClick={this.toogleMessageCenter}>
+            <Button bsStyle="primary" bsSize="large" onClick={this.toggleMessageCenter}>
               Message Center
             </Button>
           </EmptyStateAction>
@@ -68,12 +81,14 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
         </EmptyState>
       );
     }
-    if (
+
+    const isGraphEmpty =
       !this.props.elements ||
       this.props.elements.length < 1 ||
       !this.props.elements.nodes ||
-      this.props.elements.nodes.length < 1
-    ) {
+      this.props.elements.nodes.length < 1;
+
+    if (isGraphEmpty) {
       return (
         <EmptyState className={emptyStateStyle}>
           <EmptyStateTitle>Empty Graph</EmptyStateTitle>
@@ -94,3 +109,9 @@ export default class EmptyGraphLayout extends React.Component<EmptyGraphLayoutPr
     }
   }
 }
+
+const EmptyGraphLayoutContainer = connect(
+  mapStateToProps,
+  null
+)(EmptyGraphLayout);
+export default EmptyGraphLayoutContainer;

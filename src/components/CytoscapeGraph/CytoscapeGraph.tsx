@@ -7,7 +7,7 @@ import { GraphHighlighter } from './graphs/GraphHighlighter';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
 import * as GraphBadge from './graphs/GraphBadge';
 import TrafficRender from './graphs/TrafficRenderer';
-import EmptyGraphLayout from './EmptyGraphLayout';
+import EmptyGraphLayout from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeReactWrapper, PanZoomOptions } from './CytoscapeReactWrapper';
 
 import { ServiceGraphActions } from '../../actions/ServiceGraphActions';

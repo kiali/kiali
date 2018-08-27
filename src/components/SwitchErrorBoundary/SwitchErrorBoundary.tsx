@@ -30,7 +30,7 @@ export default class SwitchErrorBoundary extends React.Component<SwitchErrorBoun
 
   componentDidUpdate() {
     if (this.state.hasError) {
-      if (this.show === true) {
+      if (this.show) {
         this.setState({ hasError: false });
       }
       this.show = !this.show;

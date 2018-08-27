@@ -17,7 +17,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
     this.state = { hasError: false };
   }
 
-  componentDidCatch(error: any, info: any) {
+  componentDidCatch(error: Error, info: any) {
     if (this.props.onError) {
       this.props.onError(error, info);
     }
@@ -26,7 +26,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
 
   cleanError = () => {
     this.setState((prevState: ErrorBoundaryState) => {
-      if (prevState.hasError === true) {
+      if (prevState.hasError) {
         return { hasError: false };
       }
       return null;

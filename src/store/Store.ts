@@ -30,6 +30,7 @@ export interface MessageCenterState {
 export interface ServiceGraphState {
   isLoading: boolean;
   isError: boolean;
+  error?: string; // the error message to show from loading service graph
   graphDataTimestamp: number;
   graphData: any;
   filterState: ServiceGraphFilterState;

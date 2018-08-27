@@ -8,6 +8,8 @@ describe('ServiceGraphDataState', () => {
     expect(serviceGraphDataState(undefined, {})).toEqual({
       filterState: serviceGraphFilterState(undefined, {}),
       isLoading: false,
+      isError: false,
+      error: undefined,
       graphDataTimestamp: 0,
       hideLegend: true,
       graphData: {},
@@ -27,6 +29,9 @@ describe('ServiceGraphDataState', () => {
     const action = ServiceGraphDataActions.getGraphDataSuccess(100, []);
     const updatedState = serviceGraphDataState(undefined, action);
 
+    expect(updatedState.isLoading).toBeFalsy();
+    expect(updatedState.isError).toBeFalsy();
+    expect(updatedState.error).toBeUndefined();
     expect(updatedState).toMatchObject({ isLoading: false, graphDataTimestamp: 100, graphData: [] });
   });
 
@@ -35,6 +40,8 @@ describe('ServiceGraphDataState', () => {
     const updatedState = serviceGraphDataState(undefined, action);
 
     expect(updatedState.isLoading).toBeFalsy();
+    expect(updatedState.isError).toBeTruthy();
+    expect(updatedState.error).toBeDefined();
   });
 
   it('should handle SERVICE_GRAPH_SIDE_PANEL_SHOW_INFO', () => {

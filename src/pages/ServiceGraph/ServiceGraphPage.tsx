@@ -10,7 +10,6 @@ import { Duration, PollIntervalInMs } from '../../types/GraphFilter';
 import SummaryPanel from './SummaryPanel';
 import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
 import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
-import EmptyGraphLayout from '../../components/CytoscapeGraph/EmptyGraphLayout';
 import GraphFilterToolbar from '../../components/GraphFilter/GraphFilterToolbar';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import { style } from 'typestyle';
@@ -18,6 +17,7 @@ import { style } from 'typestyle';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
 
 import GraphLegend from '../../components/GraphFilter/GraphLegend';
+import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContainer';
 
 type ServiceGraphPageProps = GraphParamsType & {
   graphTimestamp: string;
@@ -61,7 +61,7 @@ const makeCancelablePromise = (promise: Promise<any>) => {
 const ServiceGraphErrorBoundaryFallback = () => {
   return (
     <div className={cytoscapeGraphContainerStyle}>
-      <EmptyGraphLayout isError={true} />
+      <EmptyGraphLayoutContainer isError={true} />
     </div>
   );
 };
@@ -69,7 +69,7 @@ const ServiceGraphErrorBoundaryFallback = () => {
 export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPageProps> {
   private pollTimeoutRef?: number;
   private pollPromise?;
-  private errorBoundaryRef: any;
+  private readonly errorBoundaryRef: any;
   constructor(props: ServiceGraphPageProps) {
     super(props);
     this.errorBoundaryRef = React.createRef();
@@ -163,7 +163,6 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
     );
   }
 
-  /** Fetch graph data */
   private loadGraphDataFromBackend = () => {
     return this.props.fetchGraphData(this.props.namespace, this.props.graphDuration, this.props.graphType);
   };
@@ -211,7 +210,9 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
     }
   }
 
-  private notifyError = (error: Error, componentStack: string) => {
-    MessageCenterUtils.add('There was an error when rendering the graph, please try a different layout');
+  private notifyError = (error: Error, _componentStack: string) => {
+    MessageCenterUtils.add(
+      `There was an error when rendering the graph: ${error.message}, please try a different layout`
+    );
   };
 }
