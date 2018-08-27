@@ -27,6 +27,12 @@ debug() {
 # Change to the directory where this script is and set our env
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
+# The default version of the istiooc command to be downloaded
+DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.10.0+maistra-0.1.0-3"
+
+# The default installation custom resource used to define what to install
+DEFAULT_MAISTRA_INSTALL_YAML="https://raw.githubusercontent.com/Maistra/openshift-ansible/maistra-0.1.0-ocp-3.1.0-istio-1.0.0/istio/cr-minimal.yaml"
+
 # set the default openshift address here so that it can be used for the usage text
 #
 # This is the IP address where OpenShift will bind its master.
@@ -75,11 +81,15 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -iov|--istiooc-version)
-      OS_ISTIO_OC_DOWNLOAD_VERSION="$2"
+      MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="$2"
       shift;shift
       ;;
     -iop|--istiooc-platform)
-      OS_ISTIO_OC_DOWNLOAD_PLATFORM="$2"
+      MAISTRA_ISTIO_OC_DOWNLOAD_PLATFORM="$2"
+      shift;shift
+      ;;
+    -ioy|--istiooc-install-yaml)
+      MAISTRA_INSTALL_YAML="$2"
       shift;shift
       ;;
     -p|--persistence-dir)
@@ -133,10 +143,13 @@ Valid options:
   -iov|--istiooc-version <version>
       The version of the istiooc binary to use.
       If one does not exist in the bin directory, it will be downloaded there.
-      Default: istio-3.9-1.0.0-alpha1
+      Default: ${DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION}
   -iop|--istiooc-platform (linux|darwin)
       The platform indicator to determine what istiooc binary executable to download.
       Default: linux (darwin if Mac is detected)
+  -ioy|--istiooc-install-yaml <file or url>
+      Points to the YAML file that defines the Installation custom resource which declares what to install.
+      Default: ${DEFAULT_MAISTRA_INSTALL_YAML}
   -ke|--kiali-enabled (true|false)
       When set to true, Kiali will be installed in OpenShift.
       Default: false
@@ -194,14 +207,17 @@ fi
 
 # The version is the tag from the openshift-istio/origin release builds.
 # The platform is either "linux" or "darwin".
-OS_ISTIO_OC_DOWNLOAD_VERSION="${OS_ISTIO_OC_DOWNLOAD_VERSION:-istio-3.9-1.0.0-alpha1}"
+MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="${MAISTRA_ISTIO_OC_DOWNLOAD_VERSION:-${DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION}}"
 DEFAULT_OS_VERSION=linux
 DETECTED_OS_VERSION=`uname | tr '[:upper:]' '[:lower:]'`
 if [ "${DETECTED_OS_VERSION}" = "linux" -o "${DETECTED_OS_VERSION}" = "darwin" ] ; then
   DEFAULT_OS_VERSION=${DETECTED_OS_VERSION}
   debug "The operating system has been detected as ${DEFAULT_OS_VERSION}"
 fi
-OS_ISTIO_OC_DOWNLOAD_PLATFORM="${OS_ISTIO_OC_DOWNLOAD_PLATFORM:-${DEFAULT_OS_VERSION}}"
+MAISTRA_ISTIO_OC_DOWNLOAD_PLATFORM="${MAISTRA_ISTIO_OC_DOWNLOAD_PLATFORM:-${DEFAULT_OS_VERSION}}"
+
+# Defines where the Installation yaml is to be found.
+MAISTRA_INSTALL_YAML="${MAISTRA_INSTALL_YAML:-${DEFAULT_MAISTRA_INSTALL_YAML}}"
 
 # if sed is gnu-sed then set option to work in posix mode to be compatible with non-gnu-sed versions
 if sed --posix 's/ / /' < /dev/null > /dev/null 2>&1 ; then
@@ -218,14 +234,11 @@ ISTIO_ENABLED="${ISTIO_ENABLED:-true}"
 
 # If you set KIALI_ENABLED=true, then the istiooc command will install a version of Kiali for you.
 # If that is set to false, the other KIALI_ environment variables will be ignored.
-# This is ONLY supported in OS_ISTIO_OC_DOWNLOAD_PLATFORM versions of istio-3.9-0.8.0.alpha2 or higher.
+# This is ONLY supported in MAISTRA_ISTIO_OC_DOWNLOAD_PLATFORM versions of istio-3.9-0.8.0.alpha2 or higher.
 KIALI_ENABLED="${KIALI_ENABLED:-false}"
-KIALI_VERSION="${KIALI_VERSION:-v0.5.0}"
+KIALI_VERSION="${KIALI_VERSION:-istio-release-1.0}"
 KIALI_USERNAME="${KIALI_USERNAME:-admin}"
 KIALI_PASSWORD="${KIALI_PASSWORD:-admin}"
-
-# How to tell oc cluster up what version to use
-#OPENSHIFT_VERSION_ARG="--version=latest"
 
 #--------------------------------------------------------------
 # Variables below have values derived from the variables above.
@@ -241,28 +254,35 @@ fi
 
 # Determine where to get the binary executable and its full path and how to execute it.
 # This download URL is where to the binary is on the github release page.
-OS_ISTIO_OC_DOWNLOAD_LOCATION="https://github.com/openshift-istio/origin/releases/download/${OS_ISTIO_OC_DOWNLOAD_VERSION}/istiooc_${OS_ISTIO_OC_DOWNLOAD_PLATFORM}"
-OS_ISTIO_OC_EXE_NAME=istiooc
-OS_ISTIO_OC_EXE_PATH="${OPENSHIFT_BIN_PATH}/${OS_ISTIO_OC_EXE_NAME}"
-OS_ISTIO_OC_COMMAND="${OS_ISTIO_OC_EXE_PATH}"
+MAISTRA_ISTIO_OC_DOWNLOAD_LOCATION="https://github.com/Maistra/origin/releases/download/${MAISTRA_ISTIO_OC_DOWNLOAD_VERSION}/istiooc_${MAISTRA_ISTIO_OC_DOWNLOAD_PLATFORM}"
+MAISTRA_ISTIO_OC_EXE_NAME=istiooc
+MAISTRA_ISTIO_OC_EXE_PATH="${OPENSHIFT_BIN_PATH}/${MAISTRA_ISTIO_OC_EXE_NAME}"
+MAISTRA_ISTIO_OC_COMMAND="${MAISTRA_ISTIO_OC_EXE_PATH}"
 
 # If we are to persist data across restarts, set the proper arguments
 if [ "${OPENSHIFT_PERSISTENCE_DIR}" != "" ]; then
-  OPENSHIFT_PERSISTENCE_ARGS="--use-existing-config --host-data-dir=${OPENSHIFT_PERSISTENCE_DIR}"
+  OPENSHIFT_PERSISTENCE_ARGS="--base-dir=${OPENSHIFT_PERSISTENCE_DIR}"
+  echo "SUDO ACCESS: Creating persistence dir and giving ownership to $(whoami):"
+  sudo mkdir -p ${OPENSHIFT_PERSISTENCE_DIR} && sudo chown $(whoami):$(whoami) ${OPENSHIFT_PERSISTENCE_DIR}
+  ls -ld ${OPENSHIFT_PERSISTENCE_DIR}
 fi
 
-# If Istio is to be installed, set the proper istiooc arguments that will be needed.
+# If Istio is to be installed, set the proper istiooc enable option value that will be needed.
 if [ "${ISTIO_ENABLED}" == "true" ]; then
-  ISTIO_ARGS="--istio"
-  # If Istio version is explicitly defined, set the proper istiooc arguments that will be needed.
-  if [ "${ISTIO_VERSION}" != "" ]; then
-    ISTIO_ARGS="${ISTIO_ARGS} --istio-version=${ISTIO_VERSION}"
-  fi
+  ENABLE_OPTION_VALUE="*,istio"
+else
+  ENABLE_OPTION_VALUE="*"
 fi
 
 # If Kiali is to be installed, set the proper istiooc arguments that will be needed.
 if [ "${KIALI_ENABLED}" == "true" ]; then
-  KIALI_ARGS="--istio-kiali-version=${KIALI_VERSION} --istio-kiali-username=${KIALI_USERNAME} --istio-kiali-password=${KIALI_PASSWORD}"
+  echo TODO export Kiali env vars
+fi
+
+# Operator Tempate Variables - export these so the template can see them
+export OPENSHIFT_ISTIO_MASTER_PUBLIC_URL="https://${OPENSHIFT_IP_ADDRESS}:8443"
+if [ "${ISTIO_VERSION}" != "" ]; then
+  export OPENSHIFT_ISTIO_VERSION="${ISTIO_VERSION}"
 fi
 
 # Environment setup section stops here.
@@ -272,22 +292,26 @@ debug "ENVIRONMENT:
   command=$_CMD
   OPENSHIFT_BIN_PATH=$OPENSHIFT_BIN_PATH
   OPENSHIFT_IP_ADDRESS=$OPENSHIFT_IP_ADDRESS
-  OS_ISTIO_OC_DOWNLOAD_VERSION=$OS_ISTIO_OC_DOWNLOAD_VERSION
-  OS_ISTIO_OC_DOWNLOAD_PLATFORM=$OS_ISTIO_OC_DOWNLOAD_PLATFORM
   OPENSHIFT_PERSISTENCE_DIR=$OPENSHIFT_PERSISTENCE_DIR
+  MAISTRA_ISTIO_OC_DOWNLOAD_VERSION=$MAISTRA_ISTIO_OC_DOWNLOAD_VERSION
+  MAISTRA_ISTIO_OC_DOWNLOAD_PLATFORM=$MAISTRA_ISTIO_OC_DOWNLOAD_PLATFORM
+  MAISTRA_ISTIO_OC_DOWNLOAD_LOCATION=$MAISTRA_ISTIO_OC_DOWNLOAD_LOCATION
+  MAISTRA_ISTIO_OC_EXE_NAME=$MAISTRA_ISTIO_OC_EXE_NAME
+  MAISTRA_ISTIO_OC_EXE_PATH=$MAISTRA_ISTIO_OC_EXE_PATH
+  MAISTRA_ISTIO_OC_COMMAND=$MAISTRA_ISTIO_OC_COMMAND
+  MAISTRA_INSTALL_YAML=$MAISTRA_INSTALL_YAML
+  DOCKER_SUDO=$DOCKER_SUDO
   KIALI_ENABLED=$KIALI_ENABLED
+  KIALI_VERSION=$KIALI_VERSION
   KIALI_USERNAME=$KIALI_USERNAME
   KIALI_PASSWORD=$KIALI_PASSWORD
-  DOCKER_SUDO=$DOCKER_SUDO
-  OS_ISTIO_OC_DOWNLOAD_LOCATION=$OS_ISTIO_OC_DOWNLOAD_LOCATION
-  OS_ISTIO_OC_EXE_NAME=$OS_ISTIO_OC_EXE_NAME
-  OS_ISTIO_OC_EXE_PATH=$OS_ISTIO_OC_EXE_PATH
-  OS_ISTIO_OC_COMMAND=$OS_ISTIO_OC_COMMAND
+  ISTIO_ENABLED=$ISTIO_ENABLED
   ISTIO_VERSION=$ISTIO_VERSION
-  ISTIO_ARGS=$ISTIO_ARGS
+  ENABLE_OPTION_VALUE=$ENABLE_OPTION_VALUE
   OPENSHIFT_PERSISTENCE_ARGS=$OPENSHIFT_PERSISTENCE_ARGS
-  KIALI_ARGS=$KIALI_ARGS
   CLUSTER_OPTIONS=$CLUSTER_OPTIONS
+  OPENSHIFT_ISTIO_MASTER_PUBLIC_URL=$OPENSHIFT_ISTIO_MASTER_PUBLIC_URL
+  OPENSHIFT_ISTIO_VERSION=$OPENSHIFT_ISTIO_VERSION
   "
 
 # Fail fast if we don't even have the correct location where the oc client should be
@@ -297,21 +321,21 @@ if [ ! -d "${OPENSHIFT_BIN_PATH}" ]; then
 fi
 
 # Download the oc client if we do not have it yet
-if [[ -f "${OS_ISTIO_OC_EXE_PATH}" ]]; then
-  _existingVersion=$(${OS_ISTIO_OC_EXE_PATH} --request-timeout=2s version | head -n 1 | sed ${SEDOPTIONS}  "s/^oc \([A-Za-z0-9.-]*\)\+[a-z0-9 ]*$/\1/")
-  if [ "$_existingVersion" != "${OS_ISTIO_OC_DOWNLOAD_VERSION}" ]; then
+if [[ -f "${MAISTRA_ISTIO_OC_EXE_PATH}" ]]; then
+  _existingVersion=$(${MAISTRA_ISTIO_OC_EXE_PATH} --request-timeout=2s version | head -n 1 | sed ${SEDOPTIONS}  "s/^oc \([A-Za-z0-9.-]*+[A-Za-z0-9.-]*\)\+[a-z0-9 ]*$/\1/")
+  if [ "$_existingVersion" != "${MAISTRA_ISTIO_OC_DOWNLOAD_VERSION}" ]; then
     echo "===== WARNING ====="
     echo "You already have the client binary but it does not match the version you want."
     echo "Either delete your existing client binary and let this script download another one,"
     echo "or change the version passed to this script to match the version of your client binary."
-    echo "Client binary is here: ${OS_ISTIO_OC_EXE_PATH}"
+    echo "Client binary is here: ${MAISTRA_ISTIO_OC_EXE_PATH}"
     echo "The version of the client binary is: ${_existingVersion}"
-    echo "You asked for version: ${OS_ISTIO_OC_DOWNLOAD_VERSION}"
+    echo "You asked for version: ${MAISTRA_ISTIO_OC_DOWNLOAD_VERSION}"
     echo "===== WARNING ====="
     exit 1
   fi
 else
-   echo "Downloading binary to ${OS_ISTIO_OC_EXE_PATH}"
+   echo "Downloading binary to ${MAISTRA_ISTIO_OC_EXE_PATH}"
 
    # Use wget command if available, otherwise try curl
    if which wget > /dev/null ; then
@@ -327,20 +351,20 @@ else
      exit 1
    fi
 
-   eval ${DOWNLOADER} ${OS_ISTIO_OC_EXE_PATH} ${OS_ISTIO_OC_DOWNLOAD_LOCATION}
+   eval ${DOWNLOADER} ${MAISTRA_ISTIO_OC_EXE_PATH} ${MAISTRA_ISTIO_OC_DOWNLOAD_LOCATION}
    if [ "$?" != "0" ]; then
      echo "===== WARNING ====="
      echo "Could not download the client binary for the version you want."
-     echo "Make sure this is valid: ${OS_ISTIO_OC_DOWNLOAD_LOCATION}"
+     echo "Make sure this is valid: ${MAISTRA_ISTIO_OC_DOWNLOAD_LOCATION}"
      echo "===== WARNING ====="
-     rm ${OS_ISTIO_OC_EXE_PATH}
+     rm ${MAISTRA_ISTIO_OC_EXE_PATH}
      exit 1
    fi
-   chmod +x ${OS_ISTIO_OC_EXE_PATH}
+   chmod +x ${MAISTRA_ISTIO_OC_EXE_PATH}
 fi
 
-debug "oc command that will be used: ${OS_ISTIO_OC_COMMAND}"
-debug "$(${OS_ISTIO_OC_COMMAND} version)"
+debug "oc command that will be used: ${MAISTRA_ISTIO_OC_COMMAND}"
+debug "$(${MAISTRA_ISTIO_OC_COMMAND} version)"
 
 cd ${OPENSHIFT_BIN_PATH}
 
@@ -376,8 +400,8 @@ if [ "$_CMD" = "up" ]; then
   fi
 
   echo "Starting the OpenShift cluster..."
-  debug "${OS_ISTIO_OC_COMMAND} cluster up ${ISTIO_ARGS} ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${KIALI_ARGS} ${CLUSTER_OPTIONS}"
-  ${OS_ISTIO_OC_COMMAND} cluster up ${ISTIO_ARGS} ${OPENSHIFT_VERSION_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${KIALI_ARGS} ${CLUSTER_OPTIONS}
+  debug "${MAISTRA_ISTIO_OC_COMMAND} cluster up \"--enable=${ENABLE_OPTION_VALUE}\" --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS}"
+  ${MAISTRA_ISTIO_OC_COMMAND} cluster up "--enable=${ENABLE_OPTION_VALUE}" --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS}
 
   if [ "$?" != "0" ]; then
     echo "ERROR: failed to start OpenShift"
@@ -391,8 +415,8 @@ if [ "$_CMD" = "up" ]; then
     case $yn in
       Yes )
         echo Will assign the cluster-admin role to the admin user.
-        ${OS_ISTIO_OC_COMMAND} login -u system:admin
-        ${OS_ISTIO_OC_COMMAND} adm policy add-cluster-role-to-user cluster-admin admin
+        ${MAISTRA_ISTIO_OC_COMMAND} login -u system:admin
+        ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-cluster-role-to-user cluster-admin admin
         break;;
       No )
         echo Admin user will not be assigned the cluster-admin role.
@@ -400,10 +424,14 @@ if [ "$_CMD" = "up" ]; then
     esac
   done
 
+  echo "Installing Istio via Installation Custom Resource"
+  debug "${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
+  ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}
+
 elif [ "$_CMD" = "down" ];then
 
   echo "Will shutdown the OpenShift cluster"
-  ${OS_ISTIO_OC_COMMAND} cluster down
+  ${MAISTRA_ISTIO_OC_COMMAND} cluster down
   echo "SUDO ACCESS: unmounting openshift local volumes"
   mount | grep "openshift.local.volumes" | awk '{ print $3}' | while read FILESYSTEM
   do
@@ -421,8 +449,8 @@ elif [ "$_CMD" = "down" ];then
 
 elif [ "$_CMD" = "status" ];then
 
-  ${OS_ISTIO_OC_COMMAND} version
-  ${OS_ISTIO_OC_COMMAND} cluster status
+  ${MAISTRA_ISTIO_OC_COMMAND} version
+  ${MAISTRA_ISTIO_OC_COMMAND} cluster status
 
 else
   echo "ERROR: Required command must be either: up, down, or status"
