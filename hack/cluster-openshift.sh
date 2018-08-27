@@ -413,6 +413,8 @@ if [ "$_CMD" = "up" ]; then
 
   echo 'Do you want the admin user to be assigned the cluster-admin role?'
   echo 'NOTE: This could expose your machine to root access!'
+  echo '      If you elect not to do this and Istio is not already installed,'
+  echo '      you will be required to perform additional steps later.'
   echo 'Select "1" for Yes and "2" for No:'
   select yn in "Yes" "No"; do
     case $yn in
@@ -420,18 +422,27 @@ if [ "$_CMD" = "up" ]; then
         echo Will assign the cluster-admin role to the admin user.
         ${MAISTRA_ISTIO_OC_COMMAND} login -u system:admin
         ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-cluster-role-to-user cluster-admin admin
+        _CREATE_INSTALLATION_RESOURCE="true"
         break;;
       No )
         echo Admin user will not be assigned the cluster-admin role.
+        echo If Istio is not already installed then you will be required to perform additional steps later.
+        _CREATE_INSTALLATION_RESOURCE="false"
         break;;
     esac
   done
 
   ${MAISTRA_ISTIO_OC_COMMAND} get -n istio-operator Installation istio-installation > /dev/null 2>&1
   if [ "$?" != "0" ]; then
-    echo "Installing Istio via Installation Custom Resource"
-    debug "${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
-    ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}
+    if [ "${_CREATE_INSTALLATION_RESOURCE}" == "true" ] ; then
+      echo "Installing Istio via Installation Custom Resource"
+      debug "${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
+      ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}
+    else
+      echo "It appears Istio has not yet been installed - after you have ensured that your OpenShift user has the proper"
+      echo "permissions, you will need to run the following command:"
+      echo "  ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
+    fi
   else
     echo "It appears Istio has already been installed - will not create the Installation Custom Resource again"
   fi
