@@ -6,6 +6,14 @@ interface TimeProps {
 
 export default class LocalTime extends React.Component<TimeProps> {
   render() {
-    return new Date(this.props.time).toLocaleString();
+    let renderedTime: string;
+
+    if (this.props.time) {
+      renderedTime = new Date(this.props.time).toLocaleString();
+    } else {
+      renderedTime = '-';
+    }
+
+    return renderedTime;
   }
 }
