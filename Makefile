@@ -173,11 +173,11 @@ ifeq ("${CONSOLE_VERSION}", "local")
 	@echo "$$(cd ${CONSOLE_LOCAL_DIR} && npm view ${CONSOLE_LOCAL_DIR} version)-local-$$(cd ${CONSOLE_LOCAL_DIR} && git rev-parse HEAD)" > _output/docker/console/version.txt
 else
 	@if [ ! -d "_output/docker/console" ]; then \
-		echo "Downloading console (${CONSOLE_VERSION})..." ; \
-		mkdir _output/docker/console ; \
+		echo "Downloading console (${CONSOLE_VERSION})..." && \
+		mkdir _output/docker/console && \
 		curl $$(npm view @kiali/kiali-ui@${CONSOLE_VERSION} dist.tarball) \
-		| tar zxf - --strip-components=2 --directory _output/docker/console package/build ; \
-		echo "$$(npm view @kiali/kiali-ui@${CONSOLE_VERSION} version)" > _output/docker/console/version.txt ; \
+		| tar zxf - --strip-components=2 --directory _output/docker/console package/build && \
+		echo "$$(npm view @kiali/kiali-ui@${CONSOLE_VERSION} version)" > _output/docker/console/version.txt ;\
 	fi
 endif
 	@echo "Console version being packaged: $$(cat _output/docker/console/version.txt)"
