@@ -25,6 +25,13 @@ const LoginState = (state: LoginState = INITIAL_STATE, action) => {
         username: action.username,
         sessionTimeOut: action.sessionTimeOut
       });
+    case LoginActionKeys.LOGIN_EXTEND:
+      return Object.assign({}, INITIAL_STATE, {
+        logged: true,
+        token: action.token,
+        username: action.username,
+        sessionTimeOut: action.sessionTimeOut
+      });
     case LoginActionKeys.LOGIN_FAILURE:
       let message = 'Error connecting to Kiali';
       if (action.error.request.status === 401) {

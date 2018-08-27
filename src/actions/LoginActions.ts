@@ -7,6 +7,7 @@ import { config } from '../config';
 
 export enum LoginActionKeys {
   LOGIN_REQUEST = 'LOGIN_REQUEST',
+  LOGIN_EXTEND = 'LOGIN_EXTEND',
   LOGIN_SUCCESS = 'LOGIN_SUCCESS',
   LOGIN_FAILURE = 'LOGIN_FAILURE',
   LOGOUT_SUCCESS = 'LOGOUT_SUCCESS'
@@ -15,12 +16,18 @@ export enum LoginActionKeys {
 // synchronous action creators
 export const LoginActions = {
   loginRequest: createAction(LoginActionKeys.LOGIN_REQUEST),
+  loginExtend: createAction(LoginActionKeys.LOGIN_EXTEND, (token: Token, username: string, actualTimeOut: number) => ({
+    type: LoginActionKeys.LOGIN_EXTEND,
+    token: token,
+    username: username,
+    sessionTimeOut: actualTimeOut + config().session.extendedSessionTimeOut
+  })),
   loginSuccess: createAction(LoginActionKeys.LOGIN_SUCCESS, (token: Token, username: string) => ({
     type: LoginActionKeys.LOGIN_SUCCESS,
     token: token,
     username: username,
     logged: true,
-    sessionTimeOut: new Date().getTime() + config().sessionTimeOut
+    sessionTimeOut: new Date().getTime() + config().session.sessionTimeOut
   })),
   loginFailure: createAction(LoginActionKeys.LOGIN_FAILURE, (error: any) => ({
     type: LoginActionKeys.LOGIN_FAILURE,
@@ -32,6 +39,18 @@ export const LoginActions = {
     username: undefined,
     logged: false
   })),
+  extendSession: () => {
+    return (dispatch, getState) => {
+      const actualState = getState() || {};
+      dispatch(
+        LoginActions.loginExtend(
+          actualState.authentication.token,
+          actualState.authentication.username,
+          actualState.authentication.sessionTimeOut
+        )
+      );
+    };
+  },
   checkCredentials: () => {
     return (dispatch, getState) => {
       const actualState = getState() || {};

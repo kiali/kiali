@@ -4,8 +4,15 @@ import { UNIT_TIME, MILLISECONDS } from './types/Common';
 export const config = () => {
   return deepFreeze({
     version: '0.1',
-    /** TimeOut in Minutes default 30 minutes */
-    sessionTimeOut: 30 * UNIT_TIME.MINUTE * MILLISECONDS,
+    /** Configuration related with session */
+    session: {
+      /** TimeOut in Minutes default 24 hours */
+      sessionTimeOut: 24 * UNIT_TIME.HOUR * MILLISECONDS,
+      /** Extended Session in Minutes default 30 minutes */
+      extendedSessionTimeOut: 30 * UNIT_TIME.MINUTE * MILLISECONDS,
+      /** TimeOut Session remain for warning user default 1 minute */
+      timeOutforWarningUser: 1 * UNIT_TIME.MINUTE * MILLISECONDS
+    },
     /** Toolbar Configuration */
     toolbar: {
       /** Duration default in 1 minute */
