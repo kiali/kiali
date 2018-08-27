@@ -132,6 +132,9 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
       case 'workload':
         promise = API.getWorkloadMetrics(authentication(), this.props.namespace, this.props.object, this.options);
         break;
+      case 'app':
+        promise = API.getAppMetrics(authentication(), this.props.namespace, this.props.object, this.options);
+        break;
       default:
         promise = API.getServiceMetrics(authentication(), this.props.namespace, this.props.object, this.options);
         break;

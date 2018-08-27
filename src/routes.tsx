@@ -8,6 +8,7 @@ import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetail
 import WorkloadDetailsPage from './pages/WorkloadDetails/WorkloadDetailsPage';
 import { MenuItem, Path } from './types/Routes';
 import AppListPage from './pages/AppList/AppListPage';
+import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
 
 /**
  * Return array of objects that describe vertical menu
@@ -73,6 +74,10 @@ const pathRoutes: Path[] = [
   {
     path: '/applications',
     component: AppListPage
+  },
+  {
+    path: '/namespaces/:namespace/applications/:app',
+    component: AppDetailsPage
   },
   {
     path: '/workloads',
