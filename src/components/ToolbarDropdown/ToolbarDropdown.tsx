@@ -36,7 +36,9 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
   render() {
     return (
       <>
-        {this.props.nameDropdown && <label style={{ paddingRight: '0.5em' }}>{this.props.nameDropdown}</label>}
+        {this.props.nameDropdown && (
+          <label style={{ paddingRight: '0.5em', paddingLeft: '0.5em' }}>{this.props.nameDropdown}</label>
+        )}
         <DropdownButton
           title={this.props.label || this.state.currentName}
           onSelect={this.onKeyChanged}
