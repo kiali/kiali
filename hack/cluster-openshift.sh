@@ -259,19 +259,22 @@ MAISTRA_ISTIO_OC_EXE_NAME=istiooc
 MAISTRA_ISTIO_OC_EXE_PATH="${OPENSHIFT_BIN_PATH}/${MAISTRA_ISTIO_OC_EXE_NAME}"
 MAISTRA_ISTIO_OC_COMMAND="${MAISTRA_ISTIO_OC_EXE_PATH}"
 
+# If Istio is to be installed, set the proper istiooc enable option value that will be needed.
+# Note that the --enable option is only used if the cluster was never initialized. Do not use it otherwise.
+if [ ! -d "${OPENSHIFT_PERSISTENCE_DIR}" ]; then
+  if [ "${ISTIO_ENABLED}" == "true" ]; then
+    ENABLE_ARG="--enable=*,istio"
+  else
+    ENABLE_ARG="--enable=*"
+  fi
+fi
+
 # If we are to persist data across restarts, set the proper arguments
 if [ "${OPENSHIFT_PERSISTENCE_DIR}" != "" ]; then
   OPENSHIFT_PERSISTENCE_ARGS="--base-dir=${OPENSHIFT_PERSISTENCE_DIR}"
   echo "SUDO ACCESS: Creating persistence dir and giving ownership to $(whoami):"
   sudo mkdir -p ${OPENSHIFT_PERSISTENCE_DIR} && sudo chown $(whoami):$(whoami) ${OPENSHIFT_PERSISTENCE_DIR}
   ls -ld ${OPENSHIFT_PERSISTENCE_DIR}
-fi
-
-# If Istio is to be installed, set the proper istiooc enable option value that will be needed.
-if [ "${ISTIO_ENABLED}" == "true" ]; then
-  ENABLE_OPTION_VALUE="*,istio"
-else
-  ENABLE_OPTION_VALUE="*"
 fi
 
 # If Kiali is to be installed, set the proper istiooc arguments that will be needed.
@@ -307,7 +310,7 @@ debug "ENVIRONMENT:
   KIALI_PASSWORD=$KIALI_PASSWORD
   ISTIO_ENABLED=$ISTIO_ENABLED
   ISTIO_VERSION=$ISTIO_VERSION
-  ENABLE_OPTION_VALUE=$ENABLE_OPTION_VALUE
+  ENABLE_ARG=$ENABLE_ARG
   OPENSHIFT_PERSISTENCE_ARGS=$OPENSHIFT_PERSISTENCE_ARGS
   CLUSTER_OPTIONS=$CLUSTER_OPTIONS
   OPENSHIFT_ISTIO_MASTER_PUBLIC_URL=$OPENSHIFT_ISTIO_MASTER_PUBLIC_URL
@@ -400,8 +403,8 @@ if [ "$_CMD" = "up" ]; then
   fi
 
   echo "Starting the OpenShift cluster..."
-  debug "${MAISTRA_ISTIO_OC_COMMAND} cluster up \"--enable=${ENABLE_OPTION_VALUE}\" --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS}"
-  ${MAISTRA_ISTIO_OC_COMMAND} cluster up "--enable=${ENABLE_OPTION_VALUE}" --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS}
+  debug "${MAISTRA_ISTIO_OC_COMMAND} cluster up ${ENABLE_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS}"
+  ${MAISTRA_ISTIO_OC_COMMAND} cluster up ${ENABLE_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS}
 
   if [ "$?" != "0" ]; then
     echo "ERROR: failed to start OpenShift"
@@ -424,9 +427,14 @@ if [ "$_CMD" = "up" ]; then
     esac
   done
 
-  echo "Installing Istio via Installation Custom Resource"
-  debug "${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
-  ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}
+  ${MAISTRA_ISTIO_OC_COMMAND} get -n istio-operator Installation istio-installation > /dev/null 2>&1
+  if [ "$?" != "0" ]; then
+    echo "Installing Istio via Installation Custom Resource"
+    debug "${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
+    ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}
+  else
+    echo "It appears Istio has already been installed - will not create the Installation Custom Resource again"
+  fi
 
 elif [ "$_CMD" = "down" ];then
 
