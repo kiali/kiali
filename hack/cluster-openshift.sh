@@ -272,9 +272,6 @@ fi
 # If we are to persist data across restarts, set the proper arguments
 if [ "${OPENSHIFT_PERSISTENCE_DIR}" != "" ]; then
   OPENSHIFT_PERSISTENCE_ARGS="--base-dir=${OPENSHIFT_PERSISTENCE_DIR}"
-  echo "SUDO ACCESS: Creating persistence dir and giving ownership to $(whoami):"
-  sudo mkdir -p ${OPENSHIFT_PERSISTENCE_DIR} && sudo chown $(whoami):$(whoami) ${OPENSHIFT_PERSISTENCE_DIR}
-  ls -ld ${OPENSHIFT_PERSISTENCE_DIR}
 fi
 
 # If Kiali is to be installed, set the proper istiooc arguments that will be needed.
@@ -372,6 +369,13 @@ debug "$(${MAISTRA_ISTIO_OC_COMMAND} version)"
 cd ${OPENSHIFT_BIN_PATH}
 
 if [ "$_CMD" = "up" ]; then
+
+  # Create and set ownership of the persistence dir, if there is one
+  if [ "${OPENSHIFT_PERSISTENCE_DIR}" != "" ]; then
+    echo "SUDO ACCESS: Creating persistence dir and giving ownership to $(whoami):"
+    sudo mkdir -p ${OPENSHIFT_PERSISTENCE_DIR} && sudo chown $(whoami):$(whoami) ${OPENSHIFT_PERSISTENCE_DIR}
+    ls -ld ${OPENSHIFT_PERSISTENCE_DIR}
+  fi
 
   # The OpenShift docs say to define docker with an insecure registry setting. This checks such a setting is enabled.
   pgrep -a dockerd | grep '[-]-insecure-registry' > /dev/null 2>&1
