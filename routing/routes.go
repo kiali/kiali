@@ -318,16 +318,21 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 		{
-			// Supported query parameters:
-			// version:       When provided, filters metrics for a specific version of this service
-			// step:          Duration indicating desired step between two datapoints, in seconds (default 15)
-			// duration:      Duration indicating desired query period, in seconds (default 1800 = 30 minutes)
-			// rateInterval:  Interval used for rate and histogram calculation (default 1m)
-			// rateFunc:      Rate: standard 'rate' or instant 'irate' (default is 'rate')
-			// filters[]:     List of metrics to fetch (empty by default). When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
-			// byLabelsIn[]:  List of labels to use for grouping input metrics (empty by default). Example: response_code,source_version
-			// byLabelsOut[]: List of labels to use for grouping output metrics (empty by default). Example: response_code,destination_version
-
+			// swagger:route GET /api/namespaces/{namespace}/services/{service}/metrics serviceMetrics
+			// ---
+			// Endpoint to fetch metrics to be displayed, related to a single service
+			//
+			//     Produces:
+			//     - application/json
+			//
+			//     Schemes: http, https
+			//
+			// responses:
+			//      default: genericError
+			//      404: notFoundError
+			//      500: internalError
+			//      200: metricsResponse
+			//
 			"ServiceMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/metrics",
@@ -335,14 +340,21 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 		{
-			// Supported query parameters:
-			// step:          Duration indicating desired step between two datapoints, in seconds (default 15)
-			// duration:      Duration indicating desired query period, in seconds (default 1800 = 30 minutes)
-			// rateInterval:  Interval used for rate and histogram calculation (default 1m)
-			// rateFunc:      Rate: standard 'rate' or instant 'irate' (default is 'rate')
-			// filters[]:     List of metrics to fetch (empty by default). When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
-			// byLabelsIn[]:  List of labels to use for grouping input metrics (empty by default). Example: response_code,source_version
-			// byLabelsOut[]: List of labels to use for grouping output metrics (empty by default). Example: response_code,destination_version
+			// swagger:route GET /api/namespaces/{namespace}/apps/{app}/metrics appMetrics
+			// ---
+			// Endpoint to fetch metrics to be displayed, related to a single app
+			//
+			//     Produces:
+			//     - application/json
+			//
+			//     Schemes: http, https
+			//
+			// responses:
+			//      default: genericError
+			//      404: notFoundError
+			//      500: internalError
+			//      200: metricsResponse
+			//
 			"AppMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/metrics",
@@ -350,14 +362,21 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 		{
-			// Supported query parameters:
-			// step:          Duration indicating desired step between two datapoints, in seconds (default 15)
-			// duration:      Duration indicating desired query period, in seconds (default 1800 = 30 minutes)
-			// rateInterval:  Interval used for rate and histogram calculation (default 1m)
-			// rateFunc:      Rate: standard 'rate' or instant 'irate' (default is 'rate')
-			// filters[]:     List of metrics to fetch (empty by default). When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
-			// byLabelsIn[]:  List of labels to use for grouping input metrics (empty by default). Example: response_code,source_version
-			// byLabelsOut[]: List of labels to use for grouping output metrics (empty by default). Example: response_code,destination_version
+			// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/metrics workloadMetrics
+			// ---
+			// Endpoint to fetch metrics to be displayed, related to a single workload
+			//
+			//     Produces:
+			//     - application/json
+			//
+			//     Schemes: http, https
+			//
+			// responses:
+			//      default: genericError
+			//      404: notFoundError
+			//      500: internalError
+			//      200: metricsResponse
+			//
 			"WorkloadMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/metrics",

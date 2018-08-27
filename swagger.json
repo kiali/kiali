@@ -97,6 +97,51 @@
         }
       }
     },
+    "/api/namespaces/{namespace}/apps/{app}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a single app",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "appMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the app",
+            "name": "app",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/api/namespaces/{namespace}/health": {
       "get": {
         "description": "Get health for all objects in the given namespace",
@@ -198,6 +243,113 @@
         }
       }
     },
+    "/api/namespaces/{namespace}/services/{service}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a single service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "serviceMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the service",
+            "name": "service",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "When provided, filters metrics for a specific version of this service",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Duration indicating desired step between two datapoints, in seconds",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration indicating desired query period, in seconds",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Rate: standard 'rate' or instant 'irate'",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of metrics to fetch. When empty, all metrics are fetched. Expected name here is the Kiali internal metric name",
+            "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping input metrics.",
+            "name": "byLabelsIn[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping output metrics",
+            "name": "byLabelsOut[]",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/api/namespaces/{namespace}/workloads/{workload}/health": {
       "get": {
         "description": "Get health associated to the given workload",
@@ -244,6 +396,51 @@
           },
           "500": {
             "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/api/namespaces/{namespace}/workloads/{workload}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a single workload",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "workloadMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the workload",
+            "name": "workload",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -957,6 +1154,25 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
+    "Histogram": {
+      "description": "Histogram contains Metric objects for several histogram-kind statistics",
+      "type": "object",
+      "properties": {
+        "average": {
+          "$ref": "#/definitions/Metric"
+        },
+        "median": {
+          "$ref": "#/definitions/Metric"
+        },
+        "percentile95": {
+          "$ref": "#/definitions/Metric"
+        },
+        "percentile99": {
+          "$ref": "#/definitions/Metric"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/prometheus"
+    },
     "IstioCheck": {
       "type": "object",
       "title": "IstioCheck represents an individual check.",
@@ -1058,6 +1274,45 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Matrix": {
+      "type": "array",
+      "title": "Matrix is a list of time series.",
+      "items": {
+        "$ref": "#/definitions/SampleStream"
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
+    },
+    "Metric": {
+      "description": "Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)",
+      "type": "object",
+      "properties": {
+        "matrix": {
+          "$ref": "#/definitions/Matrix"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/prometheus"
+    },
+    "Metrics": {
+      "description": "Metrics contains health, all simple metrics and histograms data",
+      "type": "object",
+      "properties": {
+        "histograms": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Histogram"
+          },
+          "x-go-name": "Histograms"
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Metric"
+          },
+          "x-go-name": "Metrics"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/prometheus"
     },
     "NameIstioValidation": {
       "description": "List of validations grouped by object name",
@@ -1254,6 +1509,42 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
+    "SamplePair": {
+      "type": "object",
+      "title": "SamplePair pairs a SampleValue with a Timestamp.",
+      "properties": {
+        "Timestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "Value": {
+          "$ref": "#/definitions/SampleValue"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
+    },
+    "SampleStream": {
+      "type": "object",
+      "title": "SampleStream is a stream of Values belonging to an attached COWMetric.",
+      "properties": {
+        "metric": {
+          "$ref": "#/definitions/Metric"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SamplePair"
+          },
+          "x-go-name": "Values"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
+    },
+    "SampleValue": {
+      "description": "A SampleValue is a representation of a value for a given sample at a given\ntime.",
+      "type": "number",
+      "format": "double",
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
+    },
     "Service": {
       "type": "object",
       "properties": {
@@ -1436,6 +1727,12 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/status"
+    },
+    "Time": {
+      "description": "Time is the number of milliseconds since the epoch\n(1970-01-01 00:00 UTC) excluding leap seconds.",
+      "type": "integer",
+      "format": "int64",
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
     },
     "TokenGenerated": {
       "description": "This is used for returning the token",
@@ -1953,6 +2250,12 @@
       "description": "HTTP status code 200 and IstioConfigList model in data",
       "schema": {
         "$ref": "#/definitions/IstioConfigList"
+      }
+    },
+    "metricsResponse": {
+      "description": "Listing all the information related to a service",
+      "schema": {
+        "$ref": "#/definitions/Metrics"
       }
     },
     "namespaceAppHealthResponse": {
