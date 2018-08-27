@@ -16,6 +16,10 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
 CONSOLE_VERSION ?= latest
 CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 
+# External Services Configuration
+JAEGER_URL ?= http://jaeger-query-istio-system.127.0.0.1.nip.io
+GRAFANA_URL ?= http://grafana-istio-system.127.0.0.1.nip.io
+
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of
 # "app: kiali" and "version: ${VERSION_LABEL}"
@@ -223,7 +227,7 @@ docker-push:
 openshift-deploy: openshift-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to OpenShift project ${NAMESPACE}
-	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
+	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} JAEGER_URL=${JAEGER_URL} GRAFANA_URL=${GRAFANA_URL} envsubst | ${OC} create -n ${NAMESPACE} -f -
 	cat deploy/openshift/kiali-secrets.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
 	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | ${OC} create -n ${NAMESPACE} -f -
 
@@ -245,7 +249,7 @@ openshift-reload-image: .openshift-validate
 k8s-deploy: k8s-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
-	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
+	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} JAEGER_URL=${JAEGER_URL} GRAFANA_URL=${GRAFANA_URL} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
 	cat deploy/kubernetes/kiali-secrets.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
 	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
 

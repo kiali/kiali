@@ -137,6 +137,11 @@ The deploy and undeploy commands are automated in the Makefile. The following wi
 make openshift-deploy
 ----
 
+If you need to set the **JAEGER** or **GRAFANA** services, set the URL in the environment variable **JAEGER_URL** and **GRAFANA_URL**
+
+==== Deploying Kiali to OpenShift with commands
+
+
 ==== Undeploying Kiali from OpenShift
 
 If you want to remove Kiali from your OpenShift environment, you can do so by running the following command:
@@ -194,6 +199,8 @@ The deploy and undeploy commands are automated in the Makefile. The following wi
 ----
 make k8s-deploy
 ----
+
+If you need to set the **JAEGER** or **GRAFANA** services, set the URL in the environment variable **JAEGER_URL** and **GRAFANA_URL**
 
 ==== Undeploying Kiali from Kubernetes
 
@@ -389,7 +396,7 @@ external_services:
 ----
 
 |`GRAFANA_URL`
-|The URL to the Grafana server. When not set, the URL may be automatically detected from OpenShift or Kubernetes API.
+|The URL to the Grafana service. When not set, Kiali throw an error when the user try request to Grafana (/api/grafana).
 [source,yaml]
 ----
 external_services:
@@ -460,31 +467,13 @@ external_services:
     var_workload: VALUE
 ----
 
-|`JAEGER_SERVICE_NAMESPACE`
-|The Kubernetes namespace that holds the Jaeger service. (default is `istio-system`)
+|`JAEGER_URL`
+|The URL to the Jaeger service. When not set, Kiali throw an error when the user try request to Jaeger (/api/jaeger).
 [source,yaml]
 ----
 external_services:
   jaeger:
-    service_namespace: VALUE
-----
-
-|`JAEGER_SERVICE`
-|The Kubernetes service name for Jaeger. (default is `jaeger-query`)
-[source,yaml]
-----
-external_services:
-  jaeger:
-    service: VALUE
-----
-
-|`JAEGER_SERVICE_PORT`
-|The Kubernetes service port for Jaeger. (default is `16686`)
-[source,yaml]
-----
-external_services:
-  jaeger:
-    service: VALUE
+    url: VALUE
 ----
 
 |`LOGIN_TOKEN_SIGNING_KEY`
@@ -502,6 +491,73 @@ login_token:
   expiration_seconds: VALUE
 ----
 |===
+
+== Configure External Services
+
+=== Jaeger
+
+To configure the Jaeger Service you need to expose the service and set the URL parameter in the config.yaml
+
+[source,yaml]
+----
+external_services:
+  jaeger:
+    url: https://jaeger-query-istio-system.127.0.0.1.nip.io
+----
+
+If you are using the Make task **openshift-deploy** or **k8s-deploy** you need to change in the **kiali-configmap.yaml** the value of the jaeger > url
+[source,yaml]
+----
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kiali
+  labels:
+    app: kiali
+    version: ${VERSION_LABEL}
+data:
+  config.yaml: |
+    server:
+      port: 20001
+      static_content_root_directory: /opt/kiali/console
+    external_services:
+      jaeger:
+        url: http://jaeger-query-istio-system.127.0.0.1.nip.io
+      grafana:
+        url: http://grafana-istio-system.127.0.0.1.nip.io
+----
+=== Grafana
+
+To configure the Grafana Service you need to expose the service and set the URL parameter in the config.yaml
+
+[source,yaml]
+----
+
+external_services:
+  grafana:
+    url: http://grafana-istio-system.127.0.0.1.nip.io
+----
+If you are using the Make task **openshift-deploy** or **k8s-deploy** you need to change in the **kiali-configmap.yaml** the value of the grafana > url
+[source,yaml]
+----
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kiali
+  labels:
+    app: kiali
+    version: ${VERSION_LABEL}
+data:
+  config.yaml: |
+    server:
+      port: 20001
+      static_content_root_directory: /opt/kiali/console
+    external_services:
+      jaeger:
+        url: http://jaeger-query-istio-system.127.0.0.1.nip.io
+      grafana:
+        url: http://grafana-istio-system.127.0.0.1.nip.io
+----
 
 == Additional Notes
 
@@ -541,6 +597,62 @@ If you git cloned the Kiali UI repository in directory `/my/git/repo` and have b
 [source,shell]
 ----
 CONSOLE_VERSION=local CONSOLE_LOCAL_DIR=/my/git/repo make docker-build
+----
+
+=== Running Kiali with commands
+
+==== Download the files and configure
+[NOTE]
+Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 1.0*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here].
+
+[NOTE]
+The following make targets assume that the `oc` command is available in the user's PATH and that the user is logged in. If you have `istiooc` instead, create a symlink in your PATH pointing `oc` to your `istiooc` binary.
+
+===== Get the kiali-configmap.yaml
+[source,bash]
+----
+$ curl https://raw.githubusercontent.com/kiali/kiali/master/deploy/kubernetes/kiali-configmap.yaml | \
+VERSION_LABEL=master envsubst > kiali-configmap.yaml
+----
+If you need to set the JAEGER and GRAFANA services set the URL configuration.
+[source,bash]
+----
+$ curl https://raw.githubusercontent.com/kiali/kiali/master/deploy/kubernetes/kiali-configmap.yaml | \
+VERSION_LABEL=master JAEGER_URL=http://jaeger-query-istio-system.127.0.0.1.nip.io GRAFANA_URL=http://grafana-istio-system.127.0.0.1.nip.io envsubst > kiali-configmap.yaml
+----
+
+===== Get the kiali-secrets.yaml
+[source,bash]
+----
+$ curl https://raw.githubusercontent.com/kiali/kiali/master/deploy/kubernetes/kiali-secrets.yaml | \
+VERSION_LABEL=master envsubst > kiali-secrets.yaml
+----
+
+===== Get the kiali.yaml
+[source,bash]
+----
+curl https://raw.githubusercontent.com/kiali/kiali/master/deploy/kubernetes/kiali.yaml | \
+IMAGE_NAME=kiali/kiali \
+IMAGE_VERSION=latest \
+NAMESPACE=istio-system \
+VERSION_LABEL=master \
+VERBOSE_MODE=4 envsubst > kiali.yaml
+----
+
+==== Running in Openshift
+[source,bash]
+----
+oc create -f kiali-configmap.yaml -n istio-system
+oc create -f kiali-secrets.yaml -n istio-system
+oc create -f kiali.yaml -n istio-system
+----
+
+==== Running in kubernetes
+[source,bash]
+----
+kubectl create -f kiali-configmap.yaml -n istio-system
+kubectl create -f kiali-secrets.yaml -n istio-system
+kubectl create -f kiali.yaml -n istio-system
 ----
 
 == Contributing
