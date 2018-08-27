@@ -8,6 +8,7 @@ import AppInfo from './AppInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import AppMetricsContainer from '../../containers/AppMetricsContainer';
 import { AppHealth } from '../../types/Health';
+import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 
 type AppDetailsState = {
   app: App;
@@ -29,6 +30,10 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
       }
     };
     this.fetchApp();
+  }
+
+  clearFilters() {
+    NamespaceFilterSelected.setSelected([]);
   }
 
   appPageURL(parsedSearch?: ParsedSearch) {
@@ -77,7 +82,9 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass="span">
-          <Link to="/applications">Applications</Link>
+          <Link to="/applications" onClick={this.clearFilters}>
+            Applications
+          </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
           <Link to={`/applications?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}>
