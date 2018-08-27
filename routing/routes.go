@@ -99,7 +99,7 @@ func NewRoutes() (r *Routes) {
 			handlers.Root,
 			false,
 		},
-		// swagger:route GET /namespaces/{namespace}/istio istioConfigList
+		// swagger:route GET /namespaces/{namespace}/istio config istioConfigList
 		// ---
 		// Endpoint to get the list of Istio Config of a namespace
 		//
@@ -124,6 +124,21 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigList,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object} config istioConfigDetails
+		// ---
+		// Endpoint to get the Istio Config of an Istio object
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: istioConfigDetailsResponse
+		//
 		{
 			"IstioConfigDetails",
 			"GET",
@@ -131,7 +146,7 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object}/istio_validations validations objectValidations
+		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object}/istio_validations config objectValidations
 		// ---
 		// Endpoint to get the list of istio object validations for a service
 		//
@@ -156,6 +171,21 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigValidations,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/services services serviceList
+		// ---
+		// Endpoint to get the details of a given service
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: serviceListResponse
+		//
 		{
 			"ServiceList",
 			"GET",
@@ -163,7 +193,7 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceList,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service} serviceDetails
+		// swagger:route GET /namespaces/{namespace}/services/{service} services serviceDetails
 		// ---
 		// Endpoint to get the details of a given service
 		//
@@ -185,7 +215,7 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/workloads workloadList
+		// swagger:route GET /namespaces/{namespace}/workloads workloads workloadList
 		// ---
 		// Endpoint to get the list of workloads for a namespace
 		//
@@ -210,7 +240,7 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadList,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/workloads/{workload} workloadDetails
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload} workloads workloadDetails
 		// ---
 		// Endpoint to get the workload details
 		//
@@ -235,7 +265,7 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/istio_validations validations workloadValidations
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/istio_validations workloads workloadValidations
 		// ---
 		// Endpoint to get the list of istio object validations for a workload
 		//
@@ -260,7 +290,7 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadValidations,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/apps appList
+		// swagger:route GET /namespaces/{namespace}/apps apps appList
 		// ---
 		// Endpoint to get the list of apps for a namespace
 		//
@@ -318,7 +348,7 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 		{
-			// swagger:route GET /api/namespaces/{namespace}/services/{service}/metrics serviceMetrics
+			// swagger:route GET /api/namespaces/{namespace}/services/{service}/metrics services serviceMetrics
 			// ---
 			// Endpoint to fetch metrics to be displayed, related to a single service
 			//
@@ -340,7 +370,7 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 		{
-			// swagger:route GET /api/namespaces/{namespace}/apps/{app}/metrics appMetrics
+			// swagger:route GET /api/namespaces/{namespace}/apps/{app}/metrics apps appMetrics
 			// ---
 			// Endpoint to fetch metrics to be displayed, related to a single app
 			//
@@ -362,7 +392,7 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 		{
-			// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/metrics workloadMetrics
+			// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/metrics workloads workloadMetrics
 			// ---
 			// Endpoint to fetch metrics to be displayed, related to a single workload
 			//
@@ -383,7 +413,7 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadMetrics,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/services/{service}/health serviceHealth
+		// swagger:route GET /api/namespaces/{namespace}/services/{service}/health services serviceHealth
 		// ---
 		// Get health associated to the given service
 		//
@@ -404,7 +434,7 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceHealth,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/apps/{app}/health appHealth
+		// swagger:route GET /api/namespaces/{namespace}/apps/{app}/health apps appHealth
 		// ---
 		// Get health associated to the given app
 		//
@@ -425,7 +455,7 @@ func NewRoutes() (r *Routes) {
 			handlers.AppHealth,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/health workloadHealth
+		// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/health workloads workloadHealth
 		// ---
 		// Get health associated to the given workload
 		//
@@ -446,7 +476,7 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadHealth,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/istio_validations validations serviceValidations
+		// swagger:route GET /namespaces/{namespace}/services/{service}/istio_validations services serviceValidations
 		// ---
 		// Endpoint to get the list of istio object validations for a service
 		//
@@ -473,7 +503,7 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceMetrics,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/health namespaceHealth
+		// swagger:route GET /api/namespaces/{namespace}/health namespaces namespaceHealth
 		// ---
 		// Get health for all objects in the given namespace
 		//
@@ -494,7 +524,7 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceHealth,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/istio_validations validations namespaceValidations
+		// swagger:route GET /namespaces/{namespace}/istio_validations namespaces namespaceValidations
 		// ---
 		// Endpoint to get the list of istio object validations for a namespace
 		//

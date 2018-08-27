@@ -57,6 +57,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "apps"
+        ],
         "operationId": "appHealth",
         "parameters": [
           {
@@ -107,6 +110,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "apps"
+        ],
         "operationId": "appMetrics",
         "parameters": [
           {
@@ -151,6 +157,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "namespaces"
         ],
         "operationId": "namespaceHealth",
         "parameters": [
@@ -203,6 +212,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "services"
+        ],
         "operationId": "serviceHealth",
         "parameters": [
           {
@@ -252,6 +264,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "services"
         ],
         "operationId": "serviceMetrics",
         "parameters": [
@@ -360,6 +375,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "workloads"
+        ],
         "operationId": "workloadHealth",
         "parameters": [
           {
@@ -410,6 +428,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "workloads"
+        ],
         "operationId": "workloadMetrics",
         "parameters": [
           {
@@ -458,6 +479,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "apps"
+        ],
         "operationId": "appList",
         "parameters": [
           {
@@ -498,6 +522,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "config"
+        ],
         "operationId": "istioConfigList",
         "parameters": [
           {
@@ -525,6 +552,63 @@
         }
       }
     },
+    "/namespaces/{namespace}/istio/{object_type}/{object}": {
+      "get": {
+        "description": "Endpoint to get the Istio Config of an Istio object",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "config"
+        ],
+        "operationId": "istioConfigDetails",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The type of the istio object",
+            "name": "object_type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the istio object",
+            "name": "object",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/istioConfigDetailsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/istio/{object_type}/{object}/istio_validations": {
       "get": {
         "description": "Endpoint to get the list of istio object validations for a service",
@@ -539,7 +623,7 @@
           "https"
         ],
         "tags": [
-          "validations"
+          "config"
         ],
         "operationId": "objectValidations",
         "parameters": [
@@ -599,7 +683,7 @@
           "https"
         ],
         "tags": [
-          "validations"
+          "namespaces"
         ],
         "operationId": "namespaceValidations",
         "parameters": [
@@ -628,6 +712,46 @@
         }
       }
     },
+    "/namespaces/{namespace}/services": {
+      "get": {
+        "description": "Endpoint to get the details of a given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "services"
+        ],
+        "operationId": "serviceList",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/serviceListResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/services/{service}": {
       "get": {
         "description": "Endpoint to get the details of a given service",
@@ -637,6 +761,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "services"
         ],
         "operationId": "serviceDetails",
         "parameters": [
@@ -680,7 +807,7 @@
           "application/json"
         ],
         "tags": [
-          "validations"
+          "services"
         ],
         "operationId": "serviceValidations",
         "parameters": [
@@ -730,6 +857,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "workloads"
+        ],
         "operationId": "workloadList",
         "parameters": [
           {
@@ -769,6 +899,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "workloads"
         ],
         "operationId": "workloadDetails",
         "parameters": [
@@ -819,7 +952,7 @@
           "https"
         ],
         "tags": [
-          "validations"
+          "workloads"
         ],
         "operationId": "workloadValidations",
         "parameters": [
@@ -1202,6 +1335,40 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
+    "IstioConfigDetails": {
+      "type": "object",
+      "properties": {
+        "destinationRule": {
+          "$ref": "#/definitions/destinationRule"
+        },
+        "gateway": {
+          "$ref": "#/definitions/Gateway"
+        },
+        "namespace": {
+          "$ref": "#/definitions/namespace"
+        },
+        "objectType": {
+          "type": "string",
+          "x-go-name": "ObjectType"
+        },
+        "quotaSpec": {
+          "$ref": "#/definitions/QuotaSpec"
+        },
+        "quotaSpecBinding": {
+          "$ref": "#/definitions/QuotaSpecBinding"
+        },
+        "rule": {
+          "$ref": "#/definitions/IstioRuleDetails"
+        },
+        "serviceEntry": {
+          "$ref": "#/definitions/ServiceEntry"
+        },
+        "virtualService": {
+          "$ref": "#/definitions/virtualService"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "IstioConfigList": {
       "description": "This type is used for returning a response of IstioConfigList",
       "type": "object",
@@ -1233,6 +1400,82 @@
         },
         "virtualServices": {
           "$ref": "#/definitions/virtualServices"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "IstioHandler": {
+      "type": "object",
+      "properties": {
+        "adapter": {
+          "type": "string",
+          "x-go-name": "Adapter"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "spec": {
+          "type": "object",
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "IstioInstance": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "spec": {
+          "type": "object",
+          "x-go-name": "Spec"
+        },
+        "template": {
+          "type": "string",
+          "x-go-name": "Template"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "IstioRuleAction": {
+      "type": "object",
+      "properties": {
+        "handler": {
+          "$ref": "#/definitions/IstioHandler"
+        },
+        "instances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioInstance"
+          },
+          "x-go-name": "Instances"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "IstioRuleDetails": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioRuleAction"
+          },
+          "x-go-name": "Actions"
+        },
+        "match": {
+          "type": "object",
+          "x-go-name": "Match"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "$ref": "#/definitions/namespace"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -1680,6 +1923,51 @@
         },
         "requests": {
           "$ref": "#/definitions/RequestHealth"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "ServiceList": {
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "$ref": "#/definitions/namespace"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServiceOverview"
+          },
+          "x-go-name": "Services"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "ServiceOverview": {
+      "type": "object",
+      "required": [
+        "name",
+        "istioSidecar",
+        "appLabel"
+      ],
+      "properties": {
+        "appLabel": {
+          "description": "Has label app",
+          "type": "boolean",
+          "x-go-name": "AppLabel",
+          "example": true
+        },
+        "istioSidecar": {
+          "description": "Define if Pods related to this Service has an IstioSidecar deployed",
+          "type": "boolean",
+          "x-go-name": "IstioSidecar",
+          "example": true
+        },
+        "name": {
+          "description": "Name of the Service",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "reviews-v1"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -2246,6 +2534,12 @@
         }
       }
     },
+    "istioConfigDetailsResponse": {
+      "description": "IstioConfig details of an specific Istio Object",
+      "schema": {
+        "$ref": "#/definitions/IstioConfigDetails"
+      }
+    },
     "istioConfigList": {
       "description": "HTTP status code 200 and IstioConfigList model in data",
       "schema": {
@@ -2300,6 +2594,12 @@
       "description": "serviceHealthResponse contains aggregated health from various sources, for a given service",
       "schema": {
         "$ref": "#/definitions/ServiceHealth"
+      }
+    },
+    "serviceListResponse": {
+      "description": "Listing all services in the namespace",
+      "schema": {
+        "$ref": "#/definitions/ServiceList"
       }
     },
     "statusInfo": {

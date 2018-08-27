@@ -14,7 +14,7 @@ import (
 // A Namespace provide a scope for names.
 // This type used to describe a set of objects.
 //
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList
 type NamespaceParam struct {
 	// The id of the namespace.
 	//
@@ -36,7 +36,7 @@ type ServiceParam struct {
 
 // Istio Object Type:
 //
-// swagger:parameters objectValidations
+// swagger:parameters objectValidations istioConfigDetails
 type ObjectType struct {
 	// The type of the istio object
 	//
@@ -48,7 +48,7 @@ type ObjectType struct {
 
 // Istio Object name
 //
-// swagger:parameters objectValidations
+// swagger:parameters objectValidations istioConfigDetails
 type ObjectName struct {
 	// The name of the istio object
 	//
@@ -275,6 +275,13 @@ type WorkloadValidationResponse struct {
 	Body TypedIstioValidations
 }
 
+// Listing all services in the namespace
+// swagger:response serviceListResponse
+type ServiceListResponse struct {
+	// in:body
+	Body models.ServiceList
+}
+
 // Listing all workloads in the namespace
 // swagger:response workloadListResponse
 type WorkloadListResponse struct {
@@ -336,6 +343,13 @@ type WorkloadDetailsResponse struct {
 type MetricsResponse struct {
 	// in:body
 	Body prometheus.Metrics
+}
+
+// IstioConfig details of an specific Istio Object
+// swagger:response istioConfigDetailsResponse
+type IstioConfigDetailsResponse struct {
+	// in:body
+	Body models.IstioConfigDetails
 }
 
 //////////////////
