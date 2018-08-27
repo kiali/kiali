@@ -242,7 +242,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       })
       .filter(filter => filter !== null);
 
-    this.props.onParamChange(params, 'append');
+    this.props.onParamChange(params, 'append', 'replace');
   }
 
   selectedFilters() {

@@ -12,10 +12,10 @@ export namespace ListPage {
       MessageCenter.add(error);
     };
 
-    onParamChange = (params: URLParameter[], action?: string) => {
+    onParamChange = (params: URLParameter[], paramAction: string, historyAction: string) => {
       const urlParams = new URLSearchParams(this.props.location.search);
 
-      if (params.length > 0 && action === ACTION_APPEND) {
+      if (params.length > 0 && paramAction === ACTION_APPEND) {
         params.forEach(param => {
           urlParams.delete(param.name);
         });
@@ -25,15 +25,19 @@ export namespace ListPage {
         if (param.value === '') {
           urlParams.delete(param.name);
         } else {
-          if (action === ACTION_APPEND) {
+          if (paramAction === ACTION_APPEND) {
             urlParams.append(param.name, param.value);
-          } else if (!action || action === ACTION_SET) {
+          } else if (!paramAction || paramAction === ACTION_SET) {
             urlParams.set(param.name, param.value);
           }
         }
       });
 
-      this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
+      if (historyAction === 'replace') {
+        this.props.history.replace(this.props.location.pathname + '?' + urlParams.toString());
+      } else {
+        this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
+      }
     };
 
     onParamDelete = (params: string[]) => {

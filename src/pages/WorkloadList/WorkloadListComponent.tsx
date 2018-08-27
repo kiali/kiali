@@ -109,7 +109,7 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       })
       .filter(filter => filter !== null);
 
-    this.props.onParamChange(params, 'append');
+    this.props.onParamChange(params, 'append', 'replace');
   }
 
   getDeploymentItems = (data: WorkloadNamespaceResponse): WorkloadListItem[] => {

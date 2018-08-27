@@ -10,6 +10,7 @@ import { authentication } from '../../utils/Authentication';
 import IstioObjectDetails from './IstioObjectDetails';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceInfo from './ServiceInfo';
+import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -160,6 +161,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       });
   };
 
+  clearFilters() {
+    NamespaceFilterSelected.setSelected([]);
+  }
+
   renderBreadcrumbs = (parsedSearch: ParsedSearch, showingDetails: boolean) => {
     const urlParams = new URLSearchParams(this.props.location.search);
     const parsedSearchTypeHuman = parsedSearch.type === 'virtualservice' ? 'Virtual Service' : 'Destination Rule';
@@ -168,7 +173,9 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass={'span'}>
-          <Link to="/services">Services</Link>
+          <Link to="/services" onClick={this.clearFilters}>
+            Services
+          </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
           <Link to={`/services?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}>

@@ -249,7 +249,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       })
       .filter(filter => filter !== null);
 
-    this.props.onParamChange(params, 'append');
+    this.props.onParamChange(params, 'append', 'replace');
   }
 
   selectedFilters() {

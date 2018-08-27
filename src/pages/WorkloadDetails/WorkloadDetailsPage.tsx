@@ -9,6 +9,7 @@ import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer';
 import { WorkloadHealth } from '../../types/Health';
+import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 
 type WorkloadDetailsState = {
   workload: Deployment;
@@ -96,6 +97,10 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     return istioEnabled;
   };
 
+  clearFilters() {
+    NamespaceFilterSelected.setSelected([]);
+  }
+
   renderBreadcrumbs = () => {
     const urlParams = new URLSearchParams(this.props.location.search);
     const to = this.workloadPageURL();
@@ -116,7 +121,9 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass="span">
-          <Link to="/workloads">Workloads</Link>
+          <Link to="/workloads" onClick={this.clearFilters}>
+            Workloads
+          </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
           <Link to={`/workloads?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}>

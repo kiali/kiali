@@ -102,7 +102,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       })
       .filter(filter => filter !== null);
 
-    this.props.onParamChange(params, 'append');
+    this.props.onParamChange(params, 'append', 'replace');
   }
 
   fetchApps(namespaces: string[], filters: ActiveFilter[]) {
