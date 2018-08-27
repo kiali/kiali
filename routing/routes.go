@@ -402,7 +402,7 @@ func NewRoutes() (r *Routes) {
 		{
 			"AppHealth",
 			"GET",
-			"/api/namespaces/{namespace}/app/{app}/health",
+			"/api/namespaces/{namespace}/apps/{app}/health",
 			handlers.AppHealth,
 			true,
 		},
