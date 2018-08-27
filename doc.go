@@ -14,7 +14,7 @@ import (
 // This type used to describe a set of objects.
 //
 
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList
 type NamespaceParam struct {
 	// The id of the namespace.
 	//

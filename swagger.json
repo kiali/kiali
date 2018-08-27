@@ -248,6 +248,46 @@
         }
       }
     },
+    "/namespaces/{namespace}/apps": {
+      "get": {
+        "description": "Endpoint to get the list of apps for a namespace",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "appList",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/appListResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/istio": {
       "get": {
         "description": "Endpoint to get the list of Istio Config of a namespace",
@@ -581,6 +621,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "validations"
+        ],
         "operationId": "workloadValidations",
         "parameters": [
           {
@@ -731,6 +774,50 @@
         },
         "requests": {
           "$ref": "#/definitions/RequestHealth"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "AppList": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "applications"
+      ],
+      "properties": {
+        "applications": {
+          "description": "Applications for a given namespace",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AppListItem"
+          },
+          "x-go-name": "Apps"
+        },
+        "namespace": {
+          "$ref": "#/definitions/namespace"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "AppListItem": {
+      "description": "AppListItem has the necessary information to display the console app list",
+      "type": "object",
+      "required": [
+        "name",
+        "istioSidecar"
+      ],
+      "properties": {
+        "istioSidecar": {
+          "description": "Define if all Pods related to the Workloads of this app has an IstioSidecar deployed",
+          "type": "boolean",
+          "x-go-name": "IstioSidecar",
+          "example": true
+        },
+        "name": {
+          "description": "Name of the application",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "reviews"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -1513,13 +1600,13 @@
       ],
       "properties": {
         "appLabel": {
-          "description": "Define if Pods related to this Service has the label App",
+          "description": "Define if Pods related to this Workload has the label App",
           "type": "boolean",
           "x-go-name": "AppLabel",
           "example": true
         },
         "istioSidecar": {
-          "description": "Define if Pods related to this Service has an IstioSidecar deployed",
+          "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
           "type": "boolean",
           "x-go-name": "IstioSidecar",
           "example": true
@@ -1537,7 +1624,7 @@
           "example": "deployment"
         },
         "versionLabel": {
-          "description": "Define if Pods related to this Service has the label Version",
+          "description": "Define if Pods related to this Workload has the label Version",
           "type": "boolean",
           "x-go-name": "VersionLabel",
           "example": true
@@ -1794,6 +1881,12 @@
       "description": "appHealthResponse contains aggregated health from various sources, for a given app",
       "schema": {
         "$ref": "#/definitions/AppHealth"
+      }
+    },
+    "appListResponse": {
+      "description": "Listing all apps in the namespace",
+      "schema": {
+        "$ref": "#/definitions/AppList"
       }
     },
     "badRequestError": {

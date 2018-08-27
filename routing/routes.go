@@ -235,7 +235,7 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/istio_validations workloadValidations
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/istio_validations validations workloadValidations
 		// ---
 		// Endpoint to get the list of istio object validations for a workload
 		//
