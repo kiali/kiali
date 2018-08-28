@@ -29,10 +29,11 @@ type ChartDefinition = {
 };
 
 type MetricsState = {
-  charts: { [key: string]: ChartDefinition };
   alertDetails?: string;
   grafanaLink?: string;
   pollMetrics?: number;
+  metricReporter: string;
+  metricData?: any;
 };
 
 type ObjectId = {
@@ -55,8 +56,14 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
 
   constructor(props: MetricsProps) {
     super(props);
+
+    let metricReporter = 'source';
+    if (this.props.metricsType === 'inbound') {
+      metricReporter = 'destination';
+    }
+
     this.state = {
-      charts: this.getChartsDef()
+      metricReporter: metricReporter
     };
   }
 
@@ -69,21 +76,34 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
       tcp_received_in: { familyName: 'TCP received (bps)', component: MetricChart },
       tcp_sent_in: { familyName: 'TCP sent (bps)', component: MetricChart }
     };
-    switch (this.props.metricsType) {
-      case 'inbound':
-        return inboundCharts;
-      case 'outbound':
-        return {
-          request_count_out: { familyName: 'Request volume (ops)', component: MetricChart },
-          request_duration_out: { familyName: 'Request duration (seconds)', component: HistogramChart },
-          request_size_out: { familyName: 'Request size (bytes)', component: HistogramChart },
-          response_size_out: { familyName: 'Response size (bytes)', component: HistogramChart },
-          tcp_received_out: { familyName: 'TCP received (bps)', component: MetricChart },
-          tcp_sent_out: { familyName: 'TCP sent (bps)', component: MetricChart }
-        };
-      default:
-        return inboundCharts;
+    let charts: { [key: string]: ChartDefinition } = inboundCharts;
+
+    if (this.props.metricsType === 'outbound') {
+      charts = {
+        request_count_out: { familyName: 'Request volume (ops)', component: MetricChart },
+        request_duration_out: { familyName: 'Request duration (seconds)', component: HistogramChart },
+        request_size_out: { familyName: 'Request size (bytes)', component: HistogramChart },
+        response_size_out: { familyName: 'Response size (bytes)', component: HistogramChart },
+        tcp_received_out: { familyName: 'TCP received (bps)', component: MetricChart },
+        tcp_sent_out: { familyName: 'TCP sent (bps)', component: MetricChart }
+      };
     }
+
+    if (this.state.metricData) {
+      Object.keys(charts).forEach(k => {
+        const chart = charts[k];
+        const reporter = this.state.metricReporter === 'destination' ? 'dest' : 'source';
+        const histo = this.state.metricData[reporter].histograms[k];
+
+        if (histo) {
+          chart.metrics = histo;
+        } else {
+          chart.metrics = this.state.metricData[reporter].metrics[k];
+        }
+      });
+    }
+
+    return charts;
   }
 
   componentDidMount() {
@@ -123,6 +143,10 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     this.setState({ pollMetrics: newRefInterval });
   };
 
+  onReporterChanged = (reporter: string) => {
+    this.setState({ metricReporter: reporter });
+  };
+
   fetchMetrics = () => {
     let promise;
     switch (this.props.objectType) {
@@ -141,19 +165,7 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     }
     Promise.all([promise])
       .then(([response]) => {
-        const charts = this.getChartsDef();
-        Object.keys(charts).forEach(k => {
-          const chart = charts[k];
-          const histo = response.data.dest.histograms[k];
-          if (histo) {
-            chart.metrics = histo;
-          } else {
-            chart.metrics = response.data.dest.metrics[k];
-          }
-        });
-        this.setState({
-          charts: charts
-        });
+        this.setState({ metricData: response.data });
       })
       .catch(error => {
         this.setState({ alertDetails: API.getErrorMsg('Cannot fetch metrics.', error) });
@@ -206,7 +218,9 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
         <MetricsOptionsBar
           onOptionsChanged={this.onOptionsChanged}
           onPollIntervalChanged={this.onPollIntervalChanged}
+          onReporterChanged={this.onReporterChanged}
           onManualRefresh={this.fetchMetrics}
+          metricReporter={this.state.metricReporter}
         />
         {expandedChart ? this.renderExpandedChart(expandedChart) : this.renderMetrics()}
       </div>
@@ -217,13 +231,16 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     if (!this.props.isPageVisible) {
       return null;
     }
+
+    let charts = this.getChartsDef();
+
     return (
       <div className="card-pf">
         <div className="row row-cards-pf">
           <div className="col-xs-12">
             <div className="card-pf-accented card-pf-aggregate-status">
               <div className="card-pf-body">
-                {Object.keys(this.state.charts).map(key => this.renderNormalChart(key))}
+                {Object.keys(charts).map(key => this.renderNormalChart(key, charts[key]))}
               </div>
             </div>
           </div>
@@ -239,21 +256,24 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     );
   }
 
-  private renderNormalChart(chartKey: string) {
-    return this.renderChart(chartKey);
+  private renderNormalChart(chartKey: string, chart: ChartDefinition) {
+    return this.renderChart(chartKey, chart);
   }
 
   private renderExpandedChart(chartKey: string) {
-    return <div className={expandedChartContainerStyle}>{this.renderChart(chartKey, true)}</div>;
+    return (
+      <div className={expandedChartContainerStyle}>
+        {this.renderChart(chartKey, this.getChartsDef()[chartKey], true)}
+      </div>
+    );
   }
 
-  private renderChart(chartKey: string, isExpanded: boolean = false) {
-    const chart = this.state.charts[chartKey];
+  private renderChart(chartKey: string, chart: ChartDefinition, isExpanded: boolean = false) {
     if (!chart || !chart.metrics) {
       return undefined;
     }
     const props: any = {
-      key: chartKey,
+      key: chartKey + this.state.metricReporter,
       familyName: chart.familyName
     };
     if ((chart.metrics as MetricGroup).matrix) {

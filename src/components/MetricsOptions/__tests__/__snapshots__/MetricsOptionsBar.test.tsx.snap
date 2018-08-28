@@ -5,6 +5,7 @@ ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <MetricsOptionsBar
+    metricReporter="destination"
     onManualRefresh={[MockFunction]}
     onOptionsChanged={
       [MockFunction] {
@@ -28,6 +29,7 @@ ShallowWrapper {
         ],
       }
     }
+    onReporterChanged={[MockFunction]}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -59,6 +61,24 @@ ShallowWrapper {
             placeholder="Group by"
           />
         </getContext(Filter)>,
+        <FormGroup
+          bsClass="form-group"
+        >
+          <ToolbarDropdown
+            disabled={false}
+            handleSelect={[MockFunction]}
+            id="metrics_filter_reporter"
+            initialLabel="Destination"
+            nameDropdown="Reported from"
+            options={
+              Object {
+                "destination": "Destination",
+                "source": "Source",
+              }
+            }
+            value="destination"
+          />
+        </FormGroup>,
         <ToolbarDropdown
           disabled={false}
           handleSelect={[Function]}
@@ -161,6 +181,50 @@ ShallowWrapper {
             "id": "",
             "onFilterValueSelected": [Function],
             "placeholder": "Group by",
+          },
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
+        },
+        "type": [Function],
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "bsClass": "form-group",
+          "children": <ToolbarDropdown
+            disabled={false}
+            handleSelect={[MockFunction]}
+            id="metrics_filter_reporter"
+            initialLabel="Destination"
+            nameDropdown="Reported from"
+            options={
+              Object {
+                "destination": "Destination",
+                "source": "Source",
+              }
+            }
+            value="destination"
+          />,
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "disabled": false,
+            "handleSelect": [MockFunction],
+            "id": "metrics_filter_reporter",
+            "initialLabel": "Destination",
+            "nameDropdown": "Reported from",
+            "options": Object {
+              "destination": "Destination",
+              "source": "Source",
+            },
+            "value": "destination",
           },
           "ref": null,
           "rendered": null,
@@ -304,6 +368,24 @@ ShallowWrapper {
               placeholder="Group by"
             />
           </getContext(Filter)>,
+          <FormGroup
+            bsClass="form-group"
+          >
+            <ToolbarDropdown
+              disabled={false}
+              handleSelect={[MockFunction]}
+              id="metrics_filter_reporter"
+              initialLabel="Destination"
+              nameDropdown="Reported from"
+              options={
+                Object {
+                  "destination": "Destination",
+                  "source": "Source",
+                }
+              }
+              value="destination"
+            />
+          </FormGroup>,
           <ToolbarDropdown
             disabled={false}
             handleSelect={[Function]}
@@ -406,6 +488,50 @@ ShallowWrapper {
               "id": "",
               "onFilterValueSelected": [Function],
               "placeholder": "Group by",
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          "type": [Function],
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "bsClass": "form-group",
+            "children": <ToolbarDropdown
+              disabled={false}
+              handleSelect={[MockFunction]}
+              id="metrics_filter_reporter"
+              initialLabel="Destination"
+              nameDropdown="Reported from"
+              options={
+                Object {
+                  "destination": "Destination",
+                  "source": "Source",
+                }
+              }
+              value="destination"
+            />,
+          },
+          "ref": null,
+          "rendered": Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "disabled": false,
+              "handleSelect": [MockFunction],
+              "id": "metrics_filter_reporter",
+              "initialLabel": "Destination",
+              "nameDropdown": "Reported from",
+              "options": Object {
+                "destination": "Destination",
+                "source": "Source",
+              },
+              "value": "destination",
             },
             "ref": null,
             "rendered": null,

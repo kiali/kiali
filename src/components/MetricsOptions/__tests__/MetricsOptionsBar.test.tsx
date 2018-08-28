@@ -11,7 +11,13 @@ const lastOptionsChanged = () => {
 describe('MetricsOptionsBar', () => {
   it('renders initial layout', () => {
     const wrapper = shallow(
-      <MetricsOptionsBar onOptionsChanged={jest.fn()} onPollIntervalChanged={jest.fn()} onManualRefresh={jest.fn()} />
+      <MetricsOptionsBar
+        onOptionsChanged={jest.fn()}
+        onPollIntervalChanged={jest.fn()}
+        onManualRefresh={jest.fn()}
+        onReporterChanged={jest.fn()}
+        metricReporter={'destination'}
+      />
     );
     expect(wrapper).toMatchSnapshot();
   });
@@ -22,6 +28,8 @@ describe('MetricsOptionsBar', () => {
         onOptionsChanged={optionsChanged}
         onPollIntervalChanged={jest.fn()}
         onManualRefresh={jest.fn()}
+        onReporterChanged={jest.fn()}
+        metricReporter={'destination'}
       />
     );
     expect(optionsChanged).toHaveBeenCalledTimes(1);

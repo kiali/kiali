@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Icon, Toolbar, ToolbarRightContent } from 'patternfly-react';
+import { Button, Icon, Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
 import { config } from '../../config';
 import ValueSelectHelper from './ValueSelectHelper';
 import MetricsOptions from '../../types/MetricsOptions';
@@ -8,7 +8,9 @@ import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
   onPollIntervalChanged: (interval: number) => void;
+  onReporterChanged: (reporter: string) => void;
   onManualRefresh: () => void;
+  metricReporter: string;
 }
 
 interface MetricsOptionsState {
@@ -46,6 +48,11 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
       labelIn: 'response_code',
       labelOut: 'response_code'
     }
+  };
+
+  static ReporterOptions: { [key: string]: string } = {
+    destination: 'Destination',
+    source: 'Source'
   };
 
   groupByLabelsHelper: ValueSelectHelper;
@@ -109,6 +116,17 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     return (
       <Toolbar>
         {this.groupByLabelsHelper.renderDropdown()}
+        <FormGroup>
+          <ToolbarDropdown
+            id={'metrics_filter_reporter'}
+            disabled={false}
+            handleSelect={this.props.onReporterChanged}
+            nameDropdown={'Reported from'}
+            value={this.props.metricReporter}
+            initialLabel={MetricsOptionsBar.ReporterOptions[this.props.metricReporter]}
+            options={MetricsOptionsBar.ReporterOptions}
+          />
+        </FormGroup>
         <ToolbarDropdown
           id={'metrics_filter_interval_duration'}
           disabled={false}
@@ -131,7 +149,6 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
           initialLabel={String(MetricsOptionsBar.PollIntervals[MetricsOptionsBar.DefaultPollInterval])}
           options={MetricsOptionsBar.PollIntervals}
         />
-
         <ToolbarRightContent>
           <Button onClick={this.props.onManualRefresh}>
             <Icon name="refresh" />
