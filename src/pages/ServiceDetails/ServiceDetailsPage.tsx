@@ -169,6 +169,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     const urlParams = new URLSearchParams(this.props.location.search);
     const parsedSearchTypeHuman = parsedSearch.type === 'virtualservice' ? 'Virtual Service' : 'Destination Rule';
     const to = this.servicePageURL();
+    const toDetailsTab = to + '?list=' + parsedSearch.type + 's';
     const toDetails = to + '?' + parsedSearch.type + '=' + parsedSearch.name;
     return (
       <Breadcrumb title={true}>
@@ -192,7 +193,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         ) : (
           <>
             <Breadcrumb.Item componentClass={'span'}>
-              <Link to={to}>Service Info</Link>
+              <Link to={toDetailsTab}>Service Info</Link>
             </Breadcrumb.Item>
             <Breadcrumb.Item componentClass={'span'}>
               <Link to={toDetails}>
