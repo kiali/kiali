@@ -18,9 +18,16 @@ type RouteChecker struct{ kubernetes.IstioObject }
 // 3. Sum of all weights are 100 (if only one weight, then it assumes that is 100).
 // 4. All the route has to have weight label.
 func (route RouteChecker) Check() ([]*models.IstioCheck, bool) {
-	httpChecks, httpValid := route.checkRoutesFor("http")
-	tcpChecks, tcpValid := route.checkRoutesFor("tcp")
-	return append(httpChecks, tcpChecks...), httpValid && tcpValid
+	checks, valid := make([]*models.IstioCheck, 0), true
+	protocols := []string{"http", "tcp", "tls"}
+
+	for _, protocol := range protocols {
+		cs, v := route.checkRoutesFor(protocol)
+		checks = append(checks, cs...)
+		valid = valid && v
+	}
+
+	return checks, valid
 }
 
 func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, bool) {
