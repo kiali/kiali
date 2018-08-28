@@ -14,6 +14,7 @@ import GraphFilterToolbar from '../../components/GraphFilter/GraphFilterToolbar'
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import { style } from 'typestyle';
 
+import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
 
 import GraphLegend from '../../components/GraphFilter/GraphLegend';
@@ -40,24 +41,6 @@ const containerStyle = style({
 
 const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
 
-const makeCancelablePromise = (promise: Promise<any>) => {
-  let hasCanceled = false;
-
-  const wrappedPromise = new Promise((resolve, reject) => {
-    promise.then(
-      val => (hasCanceled ? reject({ isCanceled: true }) : resolve(val)),
-      error => (hasCanceled ? reject({ isCanceled: true }) : reject(error))
-    );
-  });
-
-  return {
-    promise: wrappedPromise,
-    cancel() {
-      hasCanceled = true;
-    }
-  };
-};
-
 const ServiceGraphErrorBoundaryFallback = () => {
   return (
     <div className={cytoscapeGraphContainerStyle}>
@@ -68,7 +51,7 @@ const ServiceGraphErrorBoundaryFallback = () => {
 
 export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPageProps> {
   private pollTimeoutRef?: number;
-  private pollPromise?;
+  private pollPromise?: CancelablePromise<any>;
   private readonly errorBoundaryRef: any;
   constructor(props: ServiceGraphPageProps) {
     super(props);

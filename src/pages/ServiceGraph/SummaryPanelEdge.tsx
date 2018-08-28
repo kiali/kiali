@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { Icon } from 'patternfly-react';
+
 import RateTable from '../../components/SummaryPanel/RateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
@@ -14,16 +16,19 @@ import {
   NodeMetricType
 } from './SummaryPanelCommon';
 import Label from '../../components/Label/Label';
-import { MetricGroup, Metric } from '../../types/Metrics';
+import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
+import { Response } from '../../services/Api';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
-  reqRates: [string, number][];
+  reqRates: [string, number][] | null;
   errRates: [string, number][];
   rtAvg: [string, number][];
   rtMed: [string, number][];
   rt95: [string, number][];
   rt99: [string, number][];
+  metricsLoadError: string | null;
 };
 
 export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
@@ -33,36 +38,43 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     overflowY: 'auto' as 'auto'
   };
 
-  // avoid state changes after component is unmounted
-  _isMounted: boolean = false;
+  private metricsPromise?: CancelablePromise<Response<Metrics>>;
 
   constructor(props: SummaryPanelPropType) {
     super(props);
 
     this.state = {
       loading: true,
-      reqRates: [],
+      reqRates: null,
       errRates: [],
       rtAvg: [],
       rtMed: [],
       rt95: [],
-      rt99: []
+      rt99: [],
+      metricsLoadError: null
     };
   }
 
   componentDidMount() {
-    this._isMounted = true;
     this.updateCharts(this.props);
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
+    if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
+      this.setState({
+        loading: true,
+        reqRates: null
+      });
+    }
     if (shouldRefreshData(prevProps, this.props)) {
       this.updateCharts(this.props);
     }
   }
 
   componentWillUnmount() {
-    this._isMounted = false;
+    if (this.metricsPromise) {
+      this.metricsPromise.cancel();
+    }
   }
 
   render() {
@@ -149,15 +161,18 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     if (!destMetricType || !sourceMetricType) {
       return;
     }
+    if (this.metricsPromise) {
+      this.metricsPromise.cancel();
+    }
 
     const filters = ['request_count', 'request_duration', 'request_error_count'];
     const byLabelsIn = this.getByLabelsIn(sourceMetricType, destMetricType);
-    getNodeMetrics(destMetricType, edge.target(), props, filters, byLabelsIn)
+
+    const promise = getNodeMetrics(destMetricType, edge.target(), props, filters, byLabelsIn);
+    this.metricsPromise = makeCancelablePromise(promise);
+
+    this.metricsPromise.promise
       .then(response => {
-        if (!this._isMounted) {
-          console.log('SummaryPanelEdge: Ignore fetch, component not mounted.');
-          return;
-        }
         let useDest = sourceData.nodeType === NodeType.UNKNOWN;
         useDest = useDest || this.props.namespace === 'istio-system';
         const reporter = useDest ? response.data.dest : response.data.source;
@@ -217,14 +232,19 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         });
       })
       .catch(error => {
-        if (!this._isMounted) {
-          console.log('SummaryPanelEdge: Ignore fetch error, component not mounted.');
+        if (error.isCanceled) {
+          console.log('SummaryPanelEdge: Ignore fetch error (canceled).');
           return;
         }
-        this.setState({ loading: false });
-        console.error(error);
-        // this.props.onError(error);
+        const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
+        this.setState({
+          loading: false,
+          metricsLoadError: errorMsg,
+          reqRates: null
+        });
       });
+
+    this.setState({ loading: true, metricsLoadError: null });
   };
 
   private safeRate = (s: string) => {
@@ -239,13 +259,20 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   );
 
   private renderCharts = () => {
-    if (this.state.loading) {
-      return <strong>loading charts...</strong>;
+    if (this.state.loading && !this.state.reqRates) {
+      return <strong>Loading charts...</strong>;
+    } else if (this.state.metricsLoadError) {
+      return (
+        <div>
+          <Icon type="pf" name="warning-triangle-o" /> <strong>Error loading metrics: </strong>
+          {this.state.metricsLoadError}
+        </div>
+      );
     }
 
     return (
       <>
-        <RpsChart label="Request Traffic" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />
+        <RpsChart label="Request Traffic" dataRps={this.state.reqRates!} dataErrors={this.state.errRates} />
         <hr />
         <ResponseTimeChart
           label="Request Response Time (ms)"

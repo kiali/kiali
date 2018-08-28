@@ -22,16 +22,18 @@ import {
 import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
+import { Response } from '../../services/Api';
 
 type SummaryPanelStateType = {
   loading: boolean;
-  requestCountIn: [string, number][];
+  requestCountIn: [string, number][] | null;
   requestCountOut: [string, number][];
   errorCountIn: [string, number][];
   errorCountOut: [string, number][];
   healthLoading: boolean;
   health?: Health;
-  rpsMetrics: boolean;
+  metricsLoadError: string | null;
 };
 
 export default class SummaryPanelNode extends React.Component<SummaryPanelPropType, SummaryPanelStateType> {
@@ -41,8 +43,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     overflowY: 'auto' as 'auto'
   };
 
-  // avoid state changes after component is unmounted
-  _isMounted: boolean = false;
+  private metricsPromise?: CancelablePromise<Response<Metrics>>;
 
   constructor(props: SummaryPanelPropType) {
     super(props);
@@ -50,22 +51,27 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
     this.state = {
       loading: true,
-      requestCountIn: [],
+      requestCountIn: null,
       requestCountOut: [],
       errorCountIn: [],
       errorCountOut: [],
       healthLoading: false,
-      rpsMetrics: true
+      metricsLoadError: null
     };
   }
 
   componentDidMount() {
-    this._isMounted = true;
     this.fetchRequestCountMetrics(this.props);
     updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
+    if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
+      this.setState({
+        requestCountIn: null,
+        loading: true
+      });
+    }
     if (shouldRefreshData(prevProps, this.props)) {
       this.fetchRequestCountMetrics(this.props);
       updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
@@ -73,7 +79,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   componentWillUnmount() {
-    this._isMounted = false;
+    if (this.metricsPromise) {
+      this.metricsPromise.cancel();
+    }
   }
 
   fetchRequestCountMetrics(props: SummaryPanelPropType) {
@@ -85,27 +93,34 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       return;
     }
 
+    if (this.metricsPromise) {
+      this.metricsPromise.cancel();
+    }
+
     const filters = ['request_count', 'request_error_count'];
     let byLabelsIn = nodeMetricType === NodeMetricType.SERVICE ? ['destination_workload'] : undefined;
     let byLabelsOut = data.isRoot ? ['destination_service_namespace'] : undefined;
-    getNodeMetrics(nodeMetricType, target, props, filters, byLabelsIn, byLabelsOut)
+
+    const promise = getNodeMetrics(nodeMetricType, target, props, filters, byLabelsIn, byLabelsOut);
+    this.metricsPromise = makeCancelablePromise(promise);
+    this.metricsPromise.promise
       .then(response => {
-        if (!this._isMounted) {
-          console.log('SummaryPanelNode: Ignore fetch, component not mounted.');
-          return;
-        }
         this.showRequestCountMetrics(response.data, data, nodeMetricType);
       })
       .catch(error => {
-        if (!this._isMounted) {
-          console.log('SummaryPanelNode: Ignore fetch error, component not mounted.');
+        if (error.isCanceled) {
+          console.log('SummaryPanelNode: Ignore fetch error (canceled).');
           return;
         }
-        this.setState({ loading: false });
-        console.error(error);
+        const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
+        this.setState({
+          loading: false,
+          metricsLoadError: errorMsg,
+          requestCountIn: null
+        });
       });
 
-    this.setState({ loading: true });
+    this.setState({ loading: true, metricsLoadError: null });
   }
 
   showRequestCountMetrics(all: Metrics, data: NodeData, nodeMetricType: NodeMetricType) {
@@ -177,7 +192,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               />
             )
           )}
-          <span>{[' ', renderPanelTitle(node)]}</span>
+          <span> {renderPanelTitle(node)}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
             <Label name="namespace" value={namespace} />
             {node.data('version') && <Label name="version" value={node.data('version')} />}
@@ -226,16 +241,21 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   private renderRpsCharts = () => {
-    if (this.state.loading) {
-      return <strong>loading charts...</strong>;
-    } else if (!this.state.rpsMetrics) {
-      return;
+    if (this.state.loading && !this.state.requestCountIn) {
+      return <strong>Loading charts...</strong>;
+    } else if (this.state.metricsLoadError) {
+      return (
+        <div>
+          <Icon type="pf" name="warning-triangle-o" /> <strong>Error loading metrics: </strong>
+          {this.state.metricsLoadError}
+        </div>
+      );
     }
     return (
       <>
         <RpsChart
           label="Incoming Request Traffic"
-          dataRps={this.state.requestCountIn}
+          dataRps={this.state.requestCountIn!}
           dataErrors={this.state.errorCountIn}
         />
         <RpsChart
