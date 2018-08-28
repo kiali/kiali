@@ -7,7 +7,14 @@ import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
-import { shouldRefreshData, updateHealth, nodeData, getNodeMetrics, getNodeMetricType } from './SummaryPanelCommon';
+import {
+  shouldRefreshData,
+  updateHealth,
+  nodeData,
+  getNodeMetrics,
+  getNodeMetricType,
+  renderPanelTitle
+} from './SummaryPanelCommon';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
@@ -63,7 +70,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   render() {
     const group = this.props.data.summaryTarget;
-    const { namespace, app } = nodeData(group);
+    const { namespace } = nodeData(group);
 
     const incoming = getAccumulatedTrafficRate(group.children());
     const outgoing = getAccumulatedTrafficRate(group.children().edgesTo('*'));
@@ -85,7 +92,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               />
             )
           )}
-          <span> app: {app}</span>
+          <span>{[' ', renderPanelTitle(group)]}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
             <Label name="namespace" value={namespace} key={namespace} />
             {this.renderVersionBadges()}
