@@ -1,0 +1,7 @@
+# Project requirements
+# 'pip install -r requirements.txt'
+
+virtualenv
+pytest
+pyyaml
+kiali-client
