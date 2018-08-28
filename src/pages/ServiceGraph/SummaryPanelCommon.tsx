@@ -184,8 +184,7 @@ export const renderPanelTitle = node => {
 
   switch (nodeType) {
     case NodeType.APP:
-      // Not available yet
-      // link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service)}`;
+      link = `/namespaces/${encodeURIComponent(namespace)}/applications/${encodeURIComponent(app)}`;
       displayName = app;
       break;
     case NodeType.SERVICE:

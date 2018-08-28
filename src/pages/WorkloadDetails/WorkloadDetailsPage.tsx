@@ -81,7 +81,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
         });
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', error));
+        MessageCenter.add(API.getErrorMsg('Could not fetch Workload.', error));
       });
   };
 
