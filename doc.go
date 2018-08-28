@@ -14,7 +14,7 @@ import (
 // A Namespace provide a scope for names.
 // This type used to describe a set of objects.
 //
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList appDetails
 type NamespaceParam struct {
 	// The id of the namespace.
 	//
@@ -68,9 +68,9 @@ type WorkloadParam struct {
 	Name string `json:"workload"`
 }
 
-// Workload name
+// App name
 //
-// swagger:parameters appMetrics
+// swagger:parameters appMetrics appDetails
 type AppParam struct {
 	// The name of the app
 	//
@@ -81,7 +81,7 @@ type AppParam struct {
 
 // Version name
 //
-// swagger:parameters serviceMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
 type VersionParam struct {
 	// When provided, filters metrics for a specific version of this service
 	//
@@ -92,7 +92,7 @@ type VersionParam struct {
 
 // Step duration
 //
-// swagger:parameters serviceMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
 type StepParam struct {
 	// Duration indicating desired step between two datapoints, in seconds
 	//
@@ -104,7 +104,7 @@ type StepParam struct {
 
 // Duration query period
 //
-// swagger:parameters serviceMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
 type DurationParam struct {
 	// Duration indicating desired query period, in seconds
 	//
@@ -116,7 +116,7 @@ type DurationParam struct {
 
 // RateInterval for rate and histogram
 //
-// swagger:parameters serviceMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
 type RateIntervalParam struct {
 	// Interval used for rate and histogram calculation
 	//
@@ -128,7 +128,7 @@ type RateIntervalParam struct {
 
 // rateFunc: rate function
 //
-// swagger:parameters serviceMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
 type RateFuncParam struct {
 	// Rate: standard 'rate' or instant 'irate'
 	//
@@ -140,7 +140,7 @@ type RateFuncParam struct {
 
 // Filters: list of metrics to fetch
 //
-// swagger:parameters serviceMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
 type FiltersParam struct {
 	// List of metrics to fetch. When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
 	//
@@ -152,7 +152,7 @@ type FiltersParam struct {
 
 // ByLabelsIn: labels for grouping input metrics
 //
-// swagger:parameters serviceMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
 type ByLabelsInParam struct {
 	// List of labels to use for grouping input metrics.
 	//
@@ -164,13 +164,25 @@ type ByLabelsInParam struct {
 
 // ByLabelsOut: labels for grouping output metrics
 //
-// swagger:parameters serviceMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
 type ByLabelsOutParam struct {
 	// List of labels to use for grouping output metrics
 	//
 	// in: query
 	// required: false
+	// default: []
 	Name string `json:"byLabelsOut[]"`
+}
+
+// Reporter: source or destination metric reporter
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type ReporterParam struct {
+	// Reporter: source or destination
+	//
+	// in: query
+	// required: false
+	Name string `json:"reporter"`
 }
 
 /////////////////////
@@ -350,6 +362,13 @@ type MetricsResponse struct {
 type IstioConfigDetailsResponse struct {
 	// in:body
 	Body models.IstioConfigDetails
+}
+
+// Detailed information of an specific app
+// swagger:response appDetails
+type AppDetailsResponse struct {
+	// in:body
+	Body models.App
 }
 
 //////////////////
