@@ -484,7 +484,7 @@ external_services:
 ----
 external_services:
   jaeger:
-    service: VALUE
+    service_port: VALUE
 ----
 
 |`LOGIN_TOKEN_SIGNING_KEY`
