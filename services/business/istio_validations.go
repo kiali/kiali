@@ -2,6 +2,7 @@ package business
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/business/checkers"
@@ -87,21 +88,56 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 
 	// Get only the given Istio Object
 	var dr kubernetes.IstioObject
-	var vss []kubernetes.IstioObject
+	vss := make([]kubernetes.IstioObject, 0)
+	ses := make([]kubernetes.IstioObject, 0)
+	drs := make([]kubernetes.IstioObject, 0)
 	var objectCheckers []ObjectChecker
 	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, ServiceList: serviceList}
 	istioDetails := kubernetes.IstioDetails{}
 	noServiceChecker.IstioDetails = &istioDetails
+
+	wg := sync.WaitGroup{}
+	fetch := func(rValue *[]kubernetes.IstioObject, namespace string, fetcher func(string, string) ([]kubernetes.IstioObject, error), errChan chan error) {
+		defer wg.Done()
+		fetched, err := fetcher(namespace, "")
+		rValue = &fetched
+		if err != nil {
+			errChan <- err
+		}
+	}
+
 	switch objectType {
 	case "gateways":
 		// Validations on Gateways are not yet in place
 	case "virtualservices":
+		wg.Add(2)
+		errChan := make(chan error, 3)
+		// Error checking..
+		go fetch(&vss, namespace, in.k8s.GetVirtualServices, errChan)
+		go fetch(&drs, namespace, in.k8s.GetDestinationRules, errChan)
+		// We can block current goroutine for the third fetch
+		ses, err = in.k8s.GetServiceEntries(namespace)
+		if err != nil {
+			errChan <- err
+		}
+		wg.Wait()
+		if len(errChan) == 0 {
+			istioDetails.ServiceEntries = ses
+			istioDetails.VirtualServices = vss
+			istioDetails.DestinationRules = drs
+			virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
+			objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
+		}
+
 		if vss, err = in.k8s.GetVirtualServices(namespace, ""); err == nil {
 			if drs, err := in.k8s.GetDestinationRules(namespace, ""); err == nil {
-				istioDetails.VirtualServices = vss
-				istioDetails.DestinationRules = drs
-				virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
-				objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
+				if ses, err := in.k8s.GetServiceEntries(namespace); err == nil {
+					istioDetails.ServiceEntries = ses
+					istioDetails.VirtualServices = vss
+					istioDetails.DestinationRules = drs
+					virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
+					objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
+				}
 			}
 		}
 	case "destinationrules":

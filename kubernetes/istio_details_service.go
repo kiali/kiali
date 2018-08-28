@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/kiali/kiali/config"
@@ -61,7 +62,7 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	for _, virtualService := range virtualServiceList.GetItems() {
 		appendVirtualService := serviceName == ""
 		routeProtocols := []string{"http", "tcp"}
-		if !appendVirtualService && FilterByRoute(virtualService.GetSpec(), routeProtocols, serviceName, namespace) {
+		if !appendVirtualService && FilterByRoute(virtualService.GetSpec(), routeProtocols, serviceName, namespace, nil) {
 			appendVirtualService = true
 		}
 		if appendVirtualService {
@@ -423,7 +424,7 @@ func FilterByHost(host string, serviceName string, namespace string) bool {
 	return false
 }
 
-func FilterByRoute(spec map[string]interface{}, protocols []string, service string, namespace string) bool {
+func FilterByRoute(spec map[string]interface{}, protocols []string, service string, namespace string, serviceEntries map[string]struct{}) bool {
 	if len(protocols) == 0 {
 		return false
 	}
@@ -439,8 +440,16 @@ func FilterByRoute(spec map[string]interface{}, protocols []string, service stri
 										if destinationW, ok := mDestination["destination"]; ok {
 											if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
 												if host, ok := mDestinationW["host"]; ok {
-													if sHost, ok := host.(string); ok && FilterByHost(sHost, service, namespace) {
-														return true
+													if sHost, ok := host.(string); ok {
+														if FilterByHost(sHost, service, namespace) {
+															return true
+														}
+														if serviceEntries != nil {
+															// We have ServiceEntry to check
+															if _, found := serviceEntries[strings.ToLower(protocol)+sHost]; found {
+																return true
+															}
+														}
 													}
 												}
 											}
@@ -500,4 +509,33 @@ func FilterByRouteAndSubset(spec map[string]interface{}, protocols []string, ser
 		}
 	}
 	return false
+}
+
+// ServiceEntryHostnames returns a list of hostnames defined in the ServiceEntries Specs. Key in the resulting map is the protocol (in lowercase) + hostname
+// exported for test
+func ServiceEntryHostnames(serviceEntries []IstioObject) map[string]struct{} {
+	var empty struct{}
+	hostnames := make(map[string]struct{})
+
+	for _, v := range serviceEntries {
+		if hostsSpec, found := v.GetSpec()["hosts"]; found {
+			if hosts, ok := hostsSpec.([]interface{}); ok {
+				// Seek the protocol
+				if portsSpec, found := v.GetSpec()["ports"]; found {
+					if ports, ok := portsSpec.(map[string]interface{}); ok {
+						if proto, found := ports["protocol"]; found {
+							if protocol, ok := proto.(string); ok {
+								protocol = strings.ToLower(protocol)
+								for _, v := range hosts {
+									hostnames[fmt.Sprintf("%v%v", protocol, v)] = empty
+								}
+
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return hostnames
 }
