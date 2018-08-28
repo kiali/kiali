@@ -7,6 +7,9 @@ import {
 } from '../../types/NamespaceFilter';
 import { AppListItem } from '../../types/AppList';
 import { removeDuplicatesArray } from '../../utils/Common';
+import { getRequestErrorsRatio, AppHealth } from '../../types/Health';
+
+type AppListItemHealth = AppListItem & { health: AppHealth };
 
 export namespace AppListFilters {
   export interface SortField {
@@ -51,6 +54,20 @@ export namespace AppListFilters {
         } else {
           return a.name.localeCompare(b.name);
         }
+      }
+    },
+    {
+      id: 'errorrate',
+      title: 'Error Rate',
+      isNumeric: true,
+      param: 'er',
+      compare: (a: AppListItemHealth, b: AppListItemHealth) => {
+        if (a.health && b.health) {
+          const ratioA = getRequestErrorsRatio(a.health.requests).value;
+          const ratioB = getRequestErrorsRatio(b.health.requests).value;
+          return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioA - ratioB;
+        }
+        return 0;
       }
     }
   ];
@@ -141,7 +158,22 @@ export namespace AppListFilters {
     unsorted: AppListItem[],
     sortField: AppListFilters.SortField,
     isAscending: boolean
-  ): AppListItem[] => {
-    return unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+  ): Promise<AppListItem[]> => {
+    if (sortField.title === 'Error Rate') {
+      // In the case of error rate sorting, we may not have all health promises ready yet
+      // So we need to get them all before actually sorting
+      const allHealthPromises: Promise<AppListItemHealth>[] = unsorted.map(item => {
+        return item.healthPromise.then(health => {
+          const withHealth: any = item;
+          withHealth.health = health;
+          return withHealth;
+        });
+      });
+      return Promise.all(allHealthPromises).then(arr => {
+        return arr.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+      });
+    }
+    const sorted = unsorted.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+    return Promise.resolve(sorted);
   };
 }

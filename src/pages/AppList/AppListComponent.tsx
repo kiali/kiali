@@ -17,6 +17,7 @@ import PropTypes from 'prop-types';
 import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { URLParameter } from '../../types/Parameters';
+import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
 
 export const availableFilters: FilterType[] = [
   defaultNamespaceFilter,
@@ -29,6 +30,7 @@ type AppListComponentState = {
   pagination: Pagination;
   currentSortField: AppListFilters.SortField;
   isSortAscending: boolean;
+  rateInterval: number;
 };
 
 type AppListComponentProps = {
@@ -38,6 +40,7 @@ type AppListComponentProps = {
   onParamChange: PropTypes.func;
   currentSortField: AppListFilters.SortField;
   isSortAscending: boolean;
+  rateInterval: number;
 };
 
 const perPageOptions: number[] = [5, 10, 15];
@@ -49,7 +52,8 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       appListItems: [],
       pagination: this.props.pagination,
       currentSortField: this.props.currentSortField,
-      isSortAscending: this.props.isSortAscending
+      isSortAscending: this.props.isSortAscending,
+      rateInterval: this.props.rateInterval
     };
     this.setActiveFiltersToURL();
   }
@@ -71,11 +75,11 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       API.getNamespaces(authentication())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
-          this.fetchApps(namespaces.map(namespace => namespace.name), activeFilters);
+          this.fetchApps(namespaces.map(namespace => namespace.name), activeFilters, this.props.rateInterval);
         })
         .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
     } else {
-      this.fetchApps(namespacesSelected, activeFilters);
+      this.fetchApps(namespacesSelected, activeFilters, this.props.rateInterval);
     }
   };
 
@@ -105,29 +109,30 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
     this.props.onParamChange(params, 'append', 'replace');
   }
 
-  fetchApps(namespaces: string[], filters: ActiveFilter[]) {
+  fetchApps(namespaces: string[], filters: ActiveFilter[], rateInterval: number) {
     const appsPromises = namespaces.map(namespace => API.getApps(authentication(), namespace));
     Promise.all(appsPromises).then(responses => {
       let appListItems: AppListItem[] = [];
       responses.forEach(response => {
-        appListItems = appListItems.concat(AppListFilters.filterBy(AppListClass.getAppItems(response.data), filters));
+        appListItems = appListItems.concat(
+          AppListFilters.filterBy(AppListClass.getAppItems(response.data, rateInterval), filters)
+        );
       });
 
-      appListItems = AppListFilters.sortAppsItems(
-        appListItems,
-        this.state.currentSortField,
-        this.state.isSortAscending
+      AppListFilters.sortAppsItems(appListItems, this.state.currentSortField, this.state.isSortAscending).then(
+        sorted => {
+          this.setState(prevState => {
+            return {
+              appListItems: sorted,
+              pagination: {
+                page: this.state.pagination.page,
+                perPage: prevState.pagination.perPage,
+                perPageOptions: perPageOptions
+              }
+            };
+          });
+        }
       );
-      this.setState(prevState => {
-        return {
-          appListItems: appListItems,
-          pagination: {
-            page: this.state.pagination.page,
-            perPage: prevState.pagination.perPage,
-            perPageOptions: perPageOptions
-          }
-        };
-      });
     });
   }
 
@@ -177,26 +182,27 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
   }
 
   updateSortField = (sortField: AppListFilters.SortField) => {
-    this.setState({
-      currentSortField: sortField,
-      appListItems: AppListFilters.sortAppsItems(this.state.appListItems, sortField, this.state.isSortAscending)
+    AppListFilters.sortAppsItems(this.state.appListItems, sortField, this.state.isSortAscending).then(sorted => {
+      this.setState({
+        currentSortField: sortField,
+        appListItems: sorted
+      });
+      this.props.onParamChange([{ name: 'sort', value: sortField.param }]);
     });
-    this.props.onParamChange([{ name: 'sort', value: sortField.param }]);
   };
 
   updateSortDirection = () => {
-    this.setState(prevState => {
-      return {
-        isSortAscending: !prevState.isSortAscending,
-        appListItems: AppListFilters.sortAppsItems(
-          prevState.appListItems,
-          prevState.currentSortField,
-          !prevState.isSortAscending
-        )
-      };
+    AppListFilters.sortAppsItems(
+      this.state.appListItems,
+      this.state.currentSortField,
+      !this.state.isSortAscending
+    ).then(sorted => {
+      this.setState({
+        isSortAscending: !this.state.isSortAscending,
+        appListItems: sorted
+      });
+      this.props.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'desc' : 'asc' }]);
     });
-
-    this.props.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'desc' : 'asc' }]);
   };
 
   handleAxiosError(message: string, error: AxiosError) {
@@ -281,6 +287,10 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
               onClick={this.updateSortDirection}
             />
           </Sort>
+          <RateIntervalToolbarItem
+            rateIntervalSelected={this.state.rateInterval}
+            onRateIntervalChanged={this.rateIntervalChangedHandler}
+          />
           <ToolbarRightContent>
             <Button onClick={this.updateApps}>
               <Icon name="refresh" />
@@ -298,6 +308,12 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       </>
     );
   }
+
+  private rateIntervalChangedHandler = (key: number) => {
+    this.setState({ rateInterval: key });
+    this.props.onParamChange([{ name: 'rate', value: key.toString(10) }]);
+    this.updateApps();
+  };
 }
 
 export default AppListComponent;

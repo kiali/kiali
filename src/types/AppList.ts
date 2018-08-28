@@ -1,4 +1,5 @@
 import Namespace from './Namespace';
+import { AppHealth } from './Health';
 
 export interface AppList {
   namespace: Namespace;
@@ -12,12 +13,5 @@ export interface AppOverview {
 
 export interface AppListItem extends AppOverview {
   namespace: string;
+  healthPromise: Promise<AppHealth>;
 }
-
-export const overviewToItem = (overview: AppOverview, namespace: string): AppListItem => {
-  return {
-    namespace: namespace,
-    name: overview.name,
-    istioSidecar: overview.istioSidecar
-  };
-};
