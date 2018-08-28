@@ -4,16 +4,21 @@ import { ListViewIcon, ListViewItem } from 'patternfly-react';
 import { IstioLogo } from '../../config';
 import { PfColors } from '../../components/Pf/PfColors';
 import { AppList, AppListItem } from '../../types/AppList';
+import * as API from '../../services/Api';
+import { authentication } from '../../utils/Authentication';
+import ItemDescription from './ItemDescription';
 
 export namespace AppListClass {
-  export const getAppItems = (data: AppList): AppListItem[] => {
+  export const getAppItems = (data: AppList, rateInterval: number): AppListItem[] => {
     let appItems: AppListItem[] = [];
     if (data.applications) {
       data.applications.forEach(app => {
+        const healthProm = API.getAppHealth(authentication(), data.namespace.name, app.name, rateInterval);
         appItems.push({
           namespace: data.namespace.name,
           name: app.name,
-          istioSidecar: app.istioSidecar
+          istioSidecar: app.istioSidecar,
+          healthPromise: healthProm
         });
       });
     }
@@ -44,6 +49,9 @@ export namespace AppListClass {
         leftContent={<ListViewIcon type={iconType} name={iconName} />}
         key={'appItemItemView_' + index + '_' + object.namespace + '_' + object.name}
         heading={heading}
+        // Prettier makes irrelevant line-breaking clashing with tslint
+        // prettier-ignore
+        description={<ItemDescription item={appItem} />}
       />
     );
     return (

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Breadcrumb } from 'patternfly-react';
 import { ListPage } from '../../components/ListPage/ListPage';
 import AppListComponent from './AppListComponent';
-import { perPageOptions } from '../ServiceList/ServiceListComponent';
+import { defaultRateInterval, perPageOptions } from '../ServiceList/ServiceListComponent';
 import { AppListFilters } from './FiltersAndSorts';
 
 type AppListState = {};
@@ -31,6 +31,10 @@ class AppListPage extends ListPage.Component<AppListProps, AppListState> {
     return this.getQueryParam('direction', ['asc'])[0] === 'asc';
   }
 
+  currentRateInterval() {
+    return parseInt(this.getQueryParam('rate', [defaultRateInterval.toString(10)])[0], 10);
+  }
+
   currentSortField() {
     const queriedSortedField = this.getQueryParam('sort', [AppListFilters.sortFields[0].param]);
     return (
@@ -53,6 +57,7 @@ class AppListPage extends ListPage.Component<AppListProps, AppListState> {
           queryParam={this.getQueryParam}
           currentSortField={this.currentSortField()}
           isSortAscending={this.isCurrentSortAscending()}
+          rateInterval={this.currentRateInterval()}
         />
       </>
     );
