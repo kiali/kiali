@@ -1,10 +1,12 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
+import { Icon } from 'patternfly-react';
+
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import RpsChart from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
-import { Icon } from 'patternfly-react';
 import { shouldRefreshData, updateHealth, nodeData, getNodeMetrics, getNodeMetricType } from './SummaryPanelCommon';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
@@ -212,10 +214,14 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     let workloadList: any[] = [];
 
     group.children().forEach(node => {
-      let workload = node.data('workload');
+      let { namespace, workload } = nodeData(node);
 
       if (workload) {
-        workloadList.push(workload);
+        workloadList.push(
+          <Link to={`/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload)}`}>
+            {workload}
+          </Link>
+        );
         workloadList.push(', ');
       }
     });
