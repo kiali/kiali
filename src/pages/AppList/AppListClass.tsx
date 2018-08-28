@@ -1,8 +1,8 @@
 import * as React from 'react';
-// import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ListViewIcon, ListViewItem } from 'patternfly-react';
 import { IstioLogo } from '../../config';
-// import { PfColors } from '../../components/Pf/PfColors';
+import { PfColors } from '../../components/Pf/PfColors';
 import { AppList, AppListItem } from '../../types/AppList';
 
 export namespace AppListClass {
@@ -21,7 +21,7 @@ export namespace AppListClass {
   };
 
   export const appLink = (namespace: string, app: string): string => {
-    return '';
+    return `/namespaces/${namespace}/applications/${app}`;
   };
 
   export const renderAppListItem = (appItem: AppListItem, index: number): React.ReactElement<{}> => {
@@ -46,8 +46,6 @@ export namespace AppListClass {
         heading={heading}
       />
     );
-    return content;
-    /* TODO enable App details link once the App details page is added
     return (
       <Link
         key={'appItemItem_' + index + '_' + object.namespace + '_' + object.name}
@@ -57,6 +55,5 @@ export namespace AppListClass {
         {content}
       </Link>
     );
-    */
   };
 }

@@ -12,6 +12,7 @@ import GrafanaInfo from '../types/GrafanaInfo';
 import { AppHealth, ServiceHealth, WorkloadHealth, NamespaceAppHealth, NamespaceWorkloadHealth } from '../types/Health';
 import { ServiceList } from '../types/ServiceListComponent';
 import { AppList } from '../types/AppList';
+import { App } from '../types/App';
 
 interface Response<T> {
   data: T;
@@ -112,6 +113,10 @@ export const getServiceMetrics = (
   params: MetricsOptions
 ): Promise<Response<Metrics>> => {
   return newRequest('get', `/api/namespaces/${namespace}/services/${service}/metrics`, params, {}, auth);
+};
+
+export const getApp = (auth: string, namespace: String, app: String): Promise<Response<App>> => {
+  return newRequest('get', `/api/namespaces/${namespace}/apps/${app}`, {}, {}, auth);
 };
 
 export const getApps = (auth: string, namespace: String): Promise<Response<AppList>> => {
