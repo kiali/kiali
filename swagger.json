@@ -57,6 +57,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "apps"
+        ],
         "operationId": "appHealth",
         "parameters": [
           {
@@ -97,6 +100,124 @@
         }
       }
     },
+    "/api/namespaces/{namespace}/apps/{app}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a single app",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "apps"
+        ],
+        "operationId": "appMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the app",
+            "name": "app",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "When provided, filters metrics for a specific version of this service",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Duration indicating desired step between two datapoints, in seconds",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration indicating desired query period, in seconds",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Rate: standard 'rate' or instant 'irate'",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of metrics to fetch. When empty, all metrics are fetched. Expected name here is the Kiali internal metric name",
+            "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping input metrics.",
+            "name": "byLabelsIn[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping output metrics",
+            "name": "byLabelsOut[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Reporter: source or destination",
+            "name": "reporter",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/api/namespaces/{namespace}/health": {
       "get": {
         "description": "Get health for all objects in the given namespace",
@@ -106,6 +227,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "namespaces"
         ],
         "operationId": "namespaceHealth",
         "parameters": [
@@ -158,6 +282,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "services"
+        ],
         "operationId": "serviceHealth",
         "parameters": [
           {
@@ -198,6 +325,124 @@
         }
       }
     },
+    "/api/namespaces/{namespace}/services/{service}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a single service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "services"
+        ],
+        "operationId": "serviceMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the service",
+            "name": "service",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "When provided, filters metrics for a specific version of this service",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Duration indicating desired step between two datapoints, in seconds",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration indicating desired query period, in seconds",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Rate: standard 'rate' or instant 'irate'",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of metrics to fetch. When empty, all metrics are fetched. Expected name here is the Kiali internal metric name",
+            "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping input metrics.",
+            "name": "byLabelsIn[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping output metrics",
+            "name": "byLabelsOut[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Reporter: source or destination",
+            "name": "reporter",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/api/namespaces/{namespace}/workloads/{workload}/health": {
       "get": {
         "description": "Get health associated to the given workload",
@@ -207,6 +452,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "workloads"
         ],
         "operationId": "workloadHealth",
         "parameters": [
@@ -248,6 +496,215 @@
         }
       }
     },
+    "/api/namespaces/{namespace}/workloads/{workload}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a single workload",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "workloads"
+        ],
+        "operationId": "workloadMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the workload",
+            "name": "workload",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "When provided, filters metrics for a specific version of this service",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Duration indicating desired step between two datapoints, in seconds",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration indicating desired query period, in seconds",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Rate: standard 'rate' or instant 'irate'",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of metrics to fetch. When empty, all metrics are fetched. Expected name here is the Kiali internal metric name",
+            "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping input metrics.",
+            "name": "byLabelsIn[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping output metrics",
+            "name": "byLabelsOut[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Reporter: source or destination",
+            "name": "reporter",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/apps": {
+      "get": {
+        "description": "Endpoint to get the list of apps for a namespace",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "apps"
+        ],
+        "operationId": "appList",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/appListResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/apps/{app}": {
+      "get": {
+        "description": "Endpoint to get the app details",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "appDetails",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the app",
+            "name": "app",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/appDetails"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/istio": {
       "get": {
         "description": "Endpoint to get the list of Istio Config of a namespace",
@@ -260,6 +717,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "config"
         ],
         "operationId": "istioConfigList",
         "parameters": [
@@ -288,6 +748,63 @@
         }
       }
     },
+    "/namespaces/{namespace}/istio/{object_type}/{object}": {
+      "get": {
+        "description": "Endpoint to get the Istio Config of an Istio object",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "config"
+        ],
+        "operationId": "istioConfigDetails",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The type of the istio object",
+            "name": "object_type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The name of the istio object",
+            "name": "object",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/istioConfigDetailsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/istio/{object_type}/{object}/istio_validations": {
       "get": {
         "description": "Endpoint to get the list of istio object validations for a service",
@@ -302,7 +819,7 @@
           "https"
         ],
         "tags": [
-          "validations"
+          "config"
         ],
         "operationId": "objectValidations",
         "parameters": [
@@ -362,7 +879,7 @@
           "https"
         ],
         "tags": [
-          "validations"
+          "namespaces"
         ],
         "operationId": "namespaceValidations",
         "parameters": [
@@ -391,6 +908,46 @@
         }
       }
     },
+    "/namespaces/{namespace}/services": {
+      "get": {
+        "description": "Endpoint to get the details of a given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "services"
+        ],
+        "operationId": "serviceList",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The id of the namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/serviceListResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          },
+          "default": {
+            "$ref": "#/responses/genericError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/services/{service}": {
       "get": {
         "description": "Endpoint to get the details of a given service",
@@ -400,6 +957,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "services"
         ],
         "operationId": "serviceDetails",
         "parameters": [
@@ -443,7 +1003,7 @@
           "application/json"
         ],
         "tags": [
-          "validations"
+          "services"
         ],
         "operationId": "serviceValidations",
         "parameters": [
@@ -493,6 +1053,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "workloads"
+        ],
         "operationId": "workloadList",
         "parameters": [
           {
@@ -532,6 +1095,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "workloads"
         ],
         "operationId": "workloadDetails",
         "parameters": [
@@ -580,6 +1146,9 @@
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "workloads"
         ],
         "operationId": "workloadValidations",
         "parameters": [
@@ -711,6 +1280,34 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
+    "App": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "name",
+        "workloads"
+      ],
+      "properties": {
+        "name": {
+          "description": "Name of the application",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "reviews"
+        },
+        "namespace": {
+          "$ref": "#/definitions/namespace"
+        },
+        "workloads": {
+          "description": "Workloads for a given application",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WorkloadSvc"
+          },
+          "x-go-name": "Workloads"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "AppHealth": {
       "description": "AppHealth contains aggregated health from various sources, for a given app",
       "type": "object",
@@ -731,6 +1328,50 @@
         },
         "requests": {
           "$ref": "#/definitions/RequestHealth"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "AppList": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "applications"
+      ],
+      "properties": {
+        "applications": {
+          "description": "Applications for a given namespace",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AppListItem"
+          },
+          "x-go-name": "Apps"
+        },
+        "namespace": {
+          "$ref": "#/definitions/namespace"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "AppListItem": {
+      "description": "AppListItem has the necessary information to display the console app list",
+      "type": "object",
+      "required": [
+        "name",
+        "istioSidecar"
+      ],
+      "properties": {
+        "istioSidecar": {
+          "description": "Define if all Pods related to the Workloads of this app has an IstioSidecar deployed",
+          "type": "boolean",
+          "x-go-name": "IstioSidecar",
+          "example": true
+        },
+        "name": {
+          "description": "Name of the application",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "reviews"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -870,6 +1511,25 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
+    "Histogram": {
+      "description": "Histogram contains Metric objects for several histogram-kind statistics",
+      "type": "object",
+      "properties": {
+        "average": {
+          "$ref": "#/definitions/Metric"
+        },
+        "median": {
+          "$ref": "#/definitions/Metric"
+        },
+        "percentile95": {
+          "$ref": "#/definitions/Metric"
+        },
+        "percentile99": {
+          "$ref": "#/definitions/Metric"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/prometheus"
+    },
     "IstioCheck": {
       "type": "object",
       "title": "IstioCheck represents an individual check.",
@@ -895,6 +1555,40 @@
           "type": "string",
           "x-go-name": "Severity",
           "example": "error"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "IstioConfigDetails": {
+      "type": "object",
+      "properties": {
+        "destinationRule": {
+          "$ref": "#/definitions/destinationRule"
+        },
+        "gateway": {
+          "$ref": "#/definitions/Gateway"
+        },
+        "namespace": {
+          "$ref": "#/definitions/namespace"
+        },
+        "objectType": {
+          "type": "string",
+          "x-go-name": "ObjectType"
+        },
+        "quotaSpec": {
+          "$ref": "#/definitions/QuotaSpec"
+        },
+        "quotaSpecBinding": {
+          "$ref": "#/definitions/QuotaSpecBinding"
+        },
+        "rule": {
+          "$ref": "#/definitions/IstioRuleDetails"
+        },
+        "serviceEntry": {
+          "$ref": "#/definitions/ServiceEntry"
+        },
+        "virtualService": {
+          "$ref": "#/definitions/virtualService"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -930,6 +1624,82 @@
         },
         "virtualServices": {
           "$ref": "#/definitions/virtualServices"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "IstioHandler": {
+      "type": "object",
+      "properties": {
+        "adapter": {
+          "type": "string",
+          "x-go-name": "Adapter"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "spec": {
+          "type": "object",
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "IstioInstance": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "spec": {
+          "type": "object",
+          "x-go-name": "Spec"
+        },
+        "template": {
+          "type": "string",
+          "x-go-name": "Template"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "IstioRuleAction": {
+      "type": "object",
+      "properties": {
+        "handler": {
+          "$ref": "#/definitions/IstioHandler"
+        },
+        "instances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioInstance"
+          },
+          "x-go-name": "Instances"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "IstioRuleDetails": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioRuleAction"
+          },
+          "x-go-name": "Actions"
+        },
+        "match": {
+          "type": "object",
+          "x-go-name": "Match"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "$ref": "#/definitions/namespace"
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
@@ -971,6 +1741,37 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "Matrix": {
+      "type": "array",
+      "title": "Matrix is a list of time series.",
+      "items": {
+        "$ref": "#/definitions/SampleStream"
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
+    },
+    "Metric": {
+      "description": "Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)",
+      "type": "object",
+      "properties": {
+        "matrix": {
+          "$ref": "#/definitions/Matrix"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/prometheus"
+    },
+    "Metrics": {
+      "description": "Metrics contains all simple metrics and histograms data for both source and destination telemetry",
+      "type": "object",
+      "properties": {
+        "dest": {
+          "$ref": "#/definitions/ReporterMetrics"
+        },
+        "source": {
+          "$ref": "#/definitions/ReporterMetrics"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/prometheus"
     },
     "NameIstioValidation": {
       "description": "List of validations grouped by object name",
@@ -1150,6 +1951,27 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
+    "ReporterMetrics": {
+      "description": "ReporterMetrics contains all simple metrics and histograms data for one reporter's telemetry",
+      "type": "object",
+      "properties": {
+        "histograms": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Histogram"
+          },
+          "x-go-name": "Histograms"
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Metric"
+          },
+          "x-go-name": "Metrics"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/prometheus"
+    },
     "RequestHealth": {
       "description": "RequestHealth holds several stats about recent request errors",
       "type": "object",
@@ -1166,6 +1988,42 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "SamplePair": {
+      "type": "object",
+      "title": "SamplePair pairs a SampleValue with a Timestamp.",
+      "properties": {
+        "Timestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "Value": {
+          "$ref": "#/definitions/SampleValue"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
+    },
+    "SampleStream": {
+      "type": "object",
+      "title": "SampleStream is a stream of Values belonging to an attached COWMetric.",
+      "properties": {
+        "metric": {
+          "$ref": "#/definitions/Metric"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SamplePair"
+          },
+          "x-go-name": "Values"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
+    },
+    "SampleValue": {
+      "description": "A SampleValue is a representation of a value for a given sample at a given\ntime.",
+      "type": "number",
+      "format": "double",
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
     },
     "Service": {
       "type": "object",
@@ -1306,6 +2164,51 @@
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
+    "ServiceList": {
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "$ref": "#/definitions/namespace"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServiceOverview"
+          },
+          "x-go-name": "Services"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "ServiceOverview": {
+      "type": "object",
+      "required": [
+        "name",
+        "istioSidecar",
+        "appLabel"
+      ],
+      "properties": {
+        "appLabel": {
+          "description": "Has label app",
+          "type": "boolean",
+          "x-go-name": "AppLabel",
+          "example": true
+        },
+        "istioSidecar": {
+          "description": "Define if Pods related to this Service has an IstioSidecar deployed",
+          "type": "boolean",
+          "x-go-name": "IstioSidecar",
+          "example": true
+        },
+        "name": {
+          "description": "Name of the Service",
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "reviews-v1"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
     "Services": {
       "type": "array",
       "items": {
@@ -1349,6 +2252,12 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/status"
+    },
+    "Time": {
+      "description": "Time is the number of milliseconds since the epoch\n(1970-01-01 00:00 UTC) excluding leap seconds.",
+      "type": "integer",
+      "format": "int64",
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
     },
     "TokenGenerated": {
       "description": "This is used for returning the token",
@@ -1513,13 +2422,13 @@
       ],
       "properties": {
         "appLabel": {
-          "description": "Define if Pods related to this Service has the label App",
+          "description": "Define if Pods related to this Workload has the label App",
           "type": "boolean",
           "x-go-name": "AppLabel",
           "example": true
         },
         "istioSidecar": {
-          "description": "Define if Pods related to this Service has an IstioSidecar deployed",
+          "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
           "type": "boolean",
           "x-go-name": "IstioSidecar",
           "example": true
@@ -1537,7 +2446,7 @@
           "example": "deployment"
         },
         "versionLabel": {
-          "description": "Define if Pods related to this Service has the label Version",
+          "description": "Define if Pods related to this Workload has the label Version",
           "type": "boolean",
           "x-go-name": "VersionLabel",
           "example": true
@@ -1596,6 +2505,37 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/WorkloadOverview"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "WorkloadSvc": {
+      "type": "object",
+      "required": [
+        "workloadName",
+        "istioSidecar",
+        "serviceNames"
+      ],
+      "properties": {
+        "istioSidecar": {
+          "description": "Define if all Pods related to the Workload has an IstioSidecar deployed",
+          "type": "boolean",
+          "x-go-name": "IstioSidecar",
+          "example": true
+        },
+        "serviceNames": {
+          "description": "List of service names linked with a workload",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceNames"
+        },
+        "workloadName": {
+          "description": "Name of a workload member of an application",
+          "type": "string",
+          "x-go-name": "WorkloadName",
+          "example": "reviews-v1"
+        }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
@@ -1790,10 +2730,22 @@
         "$ref": "#/definitions/TypedIstioValidations"
       }
     },
+    "appDetails": {
+      "description": "Detailed information of an specific app",
+      "schema": {
+        "$ref": "#/definitions/App"
+      }
+    },
     "appHealthResponse": {
       "description": "appHealthResponse contains aggregated health from various sources, for a given app",
       "schema": {
         "$ref": "#/definitions/AppHealth"
+      }
+    },
+    "appListResponse": {
+      "description": "Listing all apps in the namespace",
+      "schema": {
+        "$ref": "#/definitions/AppList"
       }
     },
     "badRequestError": {
@@ -1856,10 +2808,22 @@
         }
       }
     },
+    "istioConfigDetailsResponse": {
+      "description": "IstioConfig details of an specific Istio Object",
+      "schema": {
+        "$ref": "#/definitions/IstioConfigDetails"
+      }
+    },
     "istioConfigList": {
       "description": "HTTP status code 200 and IstioConfigList model in data",
       "schema": {
         "$ref": "#/definitions/IstioConfigList"
+      }
+    },
+    "metricsResponse": {
+      "description": "Listing all the information related to a service",
+      "schema": {
+        "$ref": "#/definitions/Metrics"
       }
     },
     "namespaceAppHealthResponse": {
@@ -1904,6 +2868,12 @@
       "description": "serviceHealthResponse contains aggregated health from various sources, for a given service",
       "schema": {
         "$ref": "#/definitions/ServiceHealth"
+      }
+    },
+    "serviceListResponse": {
+      "description": "Listing all services in the namespace",
+      "schema": {
+        "$ref": "#/definitions/ServiceList"
       }
     },
     "statusInfo": {

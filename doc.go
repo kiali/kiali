@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/services/models"
 	"github.com/kiali/kiali/status"
 )
@@ -13,8 +14,7 @@ import (
 // A Namespace provide a scope for names.
 // This type used to describe a set of objects.
 //
-
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList appDetails
 type NamespaceParam struct {
 	// The id of the namespace.
 	//
@@ -25,7 +25,7 @@ type NamespaceParam struct {
 
 // Service identify the a service object
 //
-// swagger:parameters serviceValidations serviceDetails
+// swagger:parameters serviceValidations serviceDetails serviceMetrics
 type ServiceParam struct {
 	// The name of the service
 	//
@@ -36,7 +36,7 @@ type ServiceParam struct {
 
 // Istio Object Type:
 //
-// swagger:parameters objectValidations
+// swagger:parameters objectValidations istioConfigDetails
 type ObjectType struct {
 	// The type of the istio object
 	//
@@ -48,7 +48,7 @@ type ObjectType struct {
 
 // Istio Object name
 //
-// swagger:parameters objectValidations
+// swagger:parameters objectValidations istioConfigDetails
 type ObjectName struct {
 	// The name of the istio object
 	//
@@ -59,13 +59,130 @@ type ObjectName struct {
 
 // Workload name
 //
-// swagger:parameters workloadDetails workloadValidations
+// swagger:parameters workloadDetails workloadValidations workloadMetrics
 type WorkloadParam struct {
 	// The name of the workload
 	//
 	// in: path
 	// required: true
 	Name string `json:"workload"`
+}
+
+// App name
+//
+// swagger:parameters appMetrics appDetails
+type AppParam struct {
+	// The name of the app
+	//
+	// in: path
+	// required: true
+	Name string `json:"app"`
+}
+
+// Version name
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type VersionParam struct {
+	// When provided, filters metrics for a specific version of this service
+	//
+	// in: query
+	// required: false
+	Name string `json:"version"`
+}
+
+// Step duration
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type StepParam struct {
+	// Duration indicating desired step between two datapoints, in seconds
+	//
+	// in: query
+	// required: false
+	// default: 15
+	Name string `json:"step"`
+}
+
+// Duration query period
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type DurationParam struct {
+	// Duration indicating desired query period, in seconds
+	//
+	// in: query
+	// required: false
+	// default: 1800
+	Name string `json:"duration"`
+}
+
+// RateInterval for rate and histogram
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type RateIntervalParam struct {
+	// Interval used for rate and histogram calculation
+	//
+	// in: query
+	// required: false
+	// default: 1m
+	Name string `json:"rateInterval"`
+}
+
+// rateFunc: rate function
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type RateFuncParam struct {
+	// Rate: standard 'rate' or instant 'irate'
+	//
+	// in: query
+	// required: false
+	// default: rate
+	Name string `json:"rateFunc"`
+}
+
+// Filters: list of metrics to fetch
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type FiltersParam struct {
+	// List of metrics to fetch. When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
+	//
+	// in: query
+	// required: false
+	// default: []
+	Name string `json:"filters[]"`
+}
+
+// ByLabelsIn: labels for grouping input metrics
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type ByLabelsInParam struct {
+	// List of labels to use for grouping input metrics.
+	//
+	// in: query
+	// required: false
+	// default: []
+	Name string `json:"byLabelsIn[]"`
+}
+
+// ByLabelsOut: labels for grouping output metrics
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type ByLabelsOutParam struct {
+	// List of labels to use for grouping output metrics
+	//
+	// in: query
+	// required: false
+	// default: []
+	Name string `json:"byLabelsOut[]"`
+}
+
+// Reporter: source or destination metric reporter
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type ReporterParam struct {
+	// Reporter: source or destination
+	//
+	// in: query
+	// required: false
+	Name string `json:"reporter"`
 }
 
 /////////////////////
@@ -170,6 +287,13 @@ type WorkloadValidationResponse struct {
 	Body TypedIstioValidations
 }
 
+// Listing all services in the namespace
+// swagger:response serviceListResponse
+type ServiceListResponse struct {
+	// in:body
+	Body models.ServiceList
+}
+
 // Listing all workloads in the namespace
 // swagger:response workloadListResponse
 type WorkloadListResponse struct {
@@ -224,6 +348,27 @@ type ServiceDetailsResponse struct {
 type WorkloadDetailsResponse struct {
 	// in:body
 	Body models.Workload
+}
+
+// Listing all the information related to a service
+// swagger:response metricsResponse
+type MetricsResponse struct {
+	// in:body
+	Body prometheus.Metrics
+}
+
+// IstioConfig details of an specific Istio Object
+// swagger:response istioConfigDetailsResponse
+type IstioConfigDetailsResponse struct {
+	// in:body
+	Body models.IstioConfigDetails
+}
+
+// Detailed information of an specific app
+// swagger:response appDetails
+type AppDetailsResponse struct {
+	// in:body
+	Body models.App
 }
 
 //////////////////
