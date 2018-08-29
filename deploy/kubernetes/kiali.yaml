@@ -81,6 +81,7 @@ spec:
       serviceAccount: kiali
       containers:
       - image: ${IMAGE_NAME}:${IMAGE_VERSION}
+        ${IMAGE_PULL_POLICY_TOKEN}
         name: kiali
         command:
         - "/opt/kiali/kiali"
