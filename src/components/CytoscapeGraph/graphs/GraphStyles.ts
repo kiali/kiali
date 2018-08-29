@@ -10,9 +10,11 @@ const EdgeColor = PfColors.Green400;
 const EdgeColorDead = PfColors.Black500;
 const EdgeColorDegraded = PfColors.Orange;
 const EdgeColorFailure = PfColors.Red;
+const EdgeFont = 'Verdana,Arial,Helvetica,sans-serif';
+const EdgeFontSize = '6px';
+const EdgeTextMargin = '6px';
 const EdgeWidth = 1;
 const EdgeWidthSelected = 3;
-const EdgeText = '6px';
 const NodeColorBorder = PfColors.Black400;
 const NodeColorBorderDegraded = PfColors.Orange;
 const NodeColorBorderFailure = PfColors.Red;
@@ -23,9 +25,10 @@ const NodeColorFillBox = PfColors.Black100;
 const NodeColorFillHover = PfColors.Blue50;
 const NodeColorFillHoverDegraded = '#fdf2e5';
 const NodeColorFillHoverFailure = '#ffe6e6';
+const NodeFont = EdgeFont;
+const NodeFontSize = '8px';
 const NodeWidth = '1px';
 const NodeWidthSelected = '3px';
-const NodeText = '8px';
 
 export class GraphStyles {
   static options() {
@@ -138,7 +141,8 @@ export class GraphStyles {
             return ele.data('isUnused') ? 'dotted' : 'solid';
           },
           'border-width': NodeWidth,
-          'font-size': NodeText,
+          'font-family': NodeFont,
+          'font-size': NodeFontSize,
           'overlay-padding': '6px',
           'text-halign': 'center',
           'text-valign': 'center',
@@ -229,12 +233,9 @@ export class GraphStyles {
           },
           'curve-style': 'bezier',
           'font-family': (ele: any) => {
-            return getTLSValue(ele, 'PatternFlyIcons-webfont', 'inherit');
+            return getTLSValue(ele, 'PatternFlyIcons-webfont', EdgeFont);
           },
-          'text-rotation': (ele: any) => {
-            return getTLSValue(ele, '0deg', 'autorotate');
-          },
-          'font-size': EdgeText,
+          'font-size': EdgeFontSize,
           'line-color': (ele: any) => {
             return getEdgeColor(ele);
           },
@@ -245,7 +246,10 @@ export class GraphStyles {
           'target-arrow-color': (ele: any) => {
             return getEdgeColor(ele);
           },
-          'text-margin-x': '4px',
+          'text-margin-x': EdgeTextMargin,
+          'text-rotation': (ele: any) => {
+            return getTLSValue(ele, '0deg', 'autorotate');
+          },
           width: EdgeWidth
         }
       },
