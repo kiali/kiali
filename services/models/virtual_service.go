@@ -35,6 +35,7 @@ type VirtualService struct {
 	Gateways        interface{} `json:"gateways"`
 	Http            interface{} `json:"http"`
 	Tcp             interface{} `json:"tcp"`
+	Tls             interface{} `json:"tls"`
 }
 
 func (vServices *VirtualServices) Parse(virtualServices []kubernetes.IstioObject) {
@@ -53,4 +54,5 @@ func (vService *VirtualService) Parse(virtualService kubernetes.IstioObject) {
 	vService.Gateways = virtualService.GetSpec()["gateways"]
 	vService.Http = virtualService.GetSpec()["http"]
 	vService.Tcp = virtualService.GetSpec()["tcp"]
+	vService.Tls = virtualService.GetSpec()["tls"]
 }
