@@ -27,7 +27,7 @@ GO_VERSION_KIALI = 1.8.3
 
 # Identifies the docker image that will be built and deployed.
 DOCKER_NAME ?= kiali/kiali
-DOCKER_VERSION ?= dev
+DOCKER_VERSION ?= latest
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
 
 
@@ -37,7 +37,7 @@ ifndef PULL_POLICY
 	endif
 
 	ifeq ("${DOCKER_VERSION}", "dev")
-		PULL_POLICY = "IFNotPresent"
+		PULL_POLICY = "IfNotPresent"
 	endif
 endif
 
