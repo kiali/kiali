@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/routing"
 )
@@ -53,13 +52,6 @@ func (s *Server) Start() {
 		}
 		log.Warning(err)
 	}()
-	/** Proxy solution Jaeger*/
-	go func() {
-		server20002 := http.NewServeMux()
-		server20002.HandleFunc("/", handlers.ProxyJaeger)
-		log.Error(http.ListenAndServe(":20002", server20002))
-	}()
-	/** End Proxy solution Jaeger*/
 }
 
 // Stop the HTTP server

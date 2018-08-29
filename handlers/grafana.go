@@ -21,7 +21,7 @@ type dashboardSupplier func(string, string) (string, error)
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
 func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
-	info, code, err := getGrafanaInfo(getOpenshiftRouteURL, getService, findDashboardPath)
+	info, code, err := getGrafanaInfo(getService, findDashboardPath)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, code, err.Error())
@@ -31,8 +31,20 @@ func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // getGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
-func getGrafanaInfo(osRouteSupplier osRouteSupplier, serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
+func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
+
+	// Check if URL is in the configuration
+	if grafanaConfig.URL == "" {
+		return nil, http.StatusNotFound, errors.New("You need to set the Grafana URL configuration.")
+	}
+
+	// Check if URL is valid
+	_, error := validateURL(grafanaConfig.URL)
+	if error != nil {
+		return nil, http.StatusNotAcceptable, errors.New("You need to set a correct format for Grafana URL in the configuration error: " + error.Error())
+	}
+
 	if !grafanaConfig.DisplayLink {
 		return nil, http.StatusNoContent, nil
 	}
@@ -69,29 +81,6 @@ func getGrafanaInfo(osRouteSupplier osRouteSupplier, serviceSupplier serviceSupp
 		VarWorkload:           grafanaConfig.VarWorkload,
 	}
 
-	// Case of overridden URL from config: use it and return immediately
-	if grafanaInfo.URL != "" {
-		return &grafanaInfo, http.StatusOK, nil
-	}
-
-	// OpenShift case: find any associated route
-	url, err := osRouteSupplier(grafanaConfig.ServiceNamespace, grafanaConfig.Service)
-	if err == nil {
-		grafanaInfo.URL = url
-		return &grafanaInfo, http.StatusOK, nil
-	}
-	// Else on error, silently continue. Might not be running on OpenShift.
-
-	// Fallback scenario, try to find any external IP.
-	if len(spec.ExternalIPs) == 0 {
-		return nil, http.StatusNotFound, errors.New("Unable to find Grafana URL: no route defined. ExternalIPs not defined on service 'grafana'")
-	}
-	if len(spec.ExternalIPs) > 1 {
-		log.Warning("Several IPs found for Grafana service, picking the first one")
-	}
-
-	// detect https?
-	grafanaInfo.URL = fmt.Sprintf("http://%s:%d", spec.ExternalIPs[0], spec.Ports[0].Port)
 	return &grafanaInfo, http.StatusOK, nil
 }
 

@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/url"
+
 	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -24,4 +26,8 @@ func getService(namespace string, service string) (*v1.ServiceSpec, error) {
 		return nil, err
 	}
 	return &details.Service.Spec, nil
+}
+
+func validateURL(serviceURL string) (*url.URL, error) {
+	return url.ParseRequestURI(serviceURL)
 }
