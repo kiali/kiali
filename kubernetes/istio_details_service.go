@@ -525,7 +525,7 @@ func ServiceEntryHostnames(serviceEntries []IstioObject) map[string]struct{} {
 					if ports, ok := portsSpec.(map[string]interface{}); ok {
 						if proto, found := ports["protocol"]; found {
 							if protocol, ok := proto.(string); ok {
-								protocol = strings.ToLower(protocol)
+								protocol = mapPortToVirtualServiceProtocol(protocol)
 								for _, v := range hosts {
 									hostnames[fmt.Sprintf("%v%v", protocol, v)] = empty
 								}
@@ -538,4 +538,26 @@ func ServiceEntryHostnames(serviceEntries []IstioObject) map[string]struct{} {
 		}
 	}
 	return hostnames
+}
+
+// mapPortToVirtualServiceProtocol transforms Istio's Port-definitions' protocol names to VirtualService's protocol names
+func mapPortToVirtualServiceProtocol(proto string) string {
+	// http: HTTP/HTTP2/GRPC/ TLS-terminated-HTTPS and service entry ports using HTTP/HTTP2/GRPC protocol
+	// tls: HTTPS/TLS protocols (i.e. with “passthrough” TLS mode) and service entry ports using HTTPS/TLS protocols.
+	// tcp: everything else
+
+	switch proto {
+	case "HTTP":
+		fallthrough
+	case "HTTP2":
+		fallthrough
+	case "GRPC":
+		return "http"
+	case "HTTPS":
+		fallthrough
+	case "TLS":
+		return "tls"
+	default:
+		return "tcp"
+	}
 }
