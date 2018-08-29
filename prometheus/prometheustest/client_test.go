@@ -329,7 +329,11 @@ func TestGetServiceHealth(t *testing.T) {
 	mockSingle(api, "envoy_cluster_inbound_8080__productpage_istio_system_svc_cluster_local_membership_total", 2)
 	mockSingle(api, "envoy_cluster_outbound_8080__productpage_istio_system_svc_cluster_local_membership_healthy", 3)
 	mockSingle(api, "envoy_cluster_outbound_8080__productpage_istio_system_svc_cluster_local_membership_total", 4)
-	health, _ := client.GetServiceHealth("istio-system", "productpage", []int32{9080, 8080})
+	health, err := client.GetServiceHealth("istio-system", "productpage", []int32{9080, 8080})
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	// Check health
 	assert.Equal(t, 1, health.Inbound.Healthy)
