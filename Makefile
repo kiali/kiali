@@ -34,6 +34,30 @@ DOCKER_NAME ?= kiali/kiali
 DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
 
+# If the IMAGE_PULL_POLICY is not defined and its the short version (eg vX.Y and not vX.Y.Z)
+# then we need to use the image pull policy of 'Always' otherwise the latest update to that
+# branch may not be brought in for users
+ifndef IMAGE_PULL_POLICY
+	SHORT_VERSION=$(shell if [[ ${DOCKER_VERSION} =~ ^v[0-9]+\.[0-9]+$$ ]]; then echo true; fi)
+	ifeq (${SHORT_VERSION}, true)
+		IMAGE_PULL_POLICY = Always
+	endif
+
+	ifeq ("${DOCKER_VERSION}", "latest")
+		IMAGE_PULL_POLICY = Always
+	endif
+
+	ifeq ("${DOCKER_VERSION}", "dev")
+		IMAGE_PULL_POLICY = IfNotPresent
+	endif
+
+endif
+# If the IMAGE_PULL_POLICY is defined, then we need to update the token so it can be added
+# Otherwise we just use the k8s defaults.
+ifdef IMAGE_PULL_POLICY
+	IMAGE_PULL_POLICY_TOKEN="imagePullPolicy: ${IMAGE_PULL_POLICY}"
+endif
+
 # Indicates the log level the app will use when started.
 # <4=INFO
 #  4=DEBUG
@@ -122,7 +146,7 @@ test-race:
 	@echo Running tests with race detection, excluding third party tests under vendor
 	go test -race $(shell go list ./... | grep -v -e /vendor/)
 
-## test-e2e-setup: Setup Python environment for running test suite 
+## test-e2e-setup: Setup Python environment for running test suite
 test-e2e-setup:
 	@echo Setting up E2E tests
 	cd tests/e2e && ./setup.sh
@@ -239,7 +263,7 @@ openshift-deploy: openshift-undeploy
 	@echo Deploying to OpenShift project ${NAMESPACE}
 	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} JAEGER_URL=${JAEGER_URL} GRAFANA_URL=${GRAFANA_URL} envsubst | ${OC} create -n ${NAMESPACE} -f -
 	cat deploy/openshift/kiali-secrets.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
-	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | ${OC} create -n ${NAMESPACE} -f -
+	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} envsubst | ${OC} create -n ${NAMESPACE} -f -
 
 ## openshift-undeploy: Undeploy from Openshift project.
 openshift-undeploy: .openshift-validate
@@ -261,7 +285,7 @@ k8s-deploy: k8s-undeploy
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
 	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} JAEGER_URL=${JAEGER_URL} GRAFANA_URL=${GRAFANA_URL} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
 	cat deploy/kubernetes/kiali-secrets.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
-	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
+	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
 
 ## k8s-undeploy: Undeploy docker image in Kubernetes namespace.
 k8s-undeploy: .k8s-validate
