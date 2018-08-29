@@ -27,7 +27,7 @@ GO_VERSION_KIALI = 1.8.3
 
 # Identifies the docker image that will be built and deployed.
 DOCKER_NAME ?= kiali/kiali
-DOCKER_VERSION ?= latest
+DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
 
 
@@ -37,6 +37,16 @@ ifndef PULL_POLICY
 	endif
 
 	ifeq ("${DOCKER_VERSION}", "dev")
+		PULL_POLICY = "IfNotPresent"
+	endif
+	SHORT_VERSION=$(shell if [[ ${DOCKER_VERSION} =~ ^v[0-9]+\.[0-9]+$$ ]]; then echo true; fi)
+	LONG_VERSION=$(shell if [[ ${DOCKER_VERSION} =~ ^v[0-9]+\.[0-9]+\.[0-9]+$$ ]]; then echo true; fi)
+
+	ifeq (${SHORT_VERSION}, true)
+		PULL_POLICY = "Always"
+	endif
+
+	ifeq (${LONG_VERSION}, true)
 		PULL_POLICY = "IfNotPresent"
 	endif
 endif
