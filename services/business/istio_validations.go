@@ -100,7 +100,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	fetch := func(rValue *[]kubernetes.IstioObject, namespace string, fetcher func(string, string) ([]kubernetes.IstioObject, error), errChan chan error) {
 		defer wg.Done()
 		fetched, err := fetcher(namespace, "")
-		rValue = &fetched
+		*rValue = append(*rValue, fetched...)
 		if err != nil {
 			errChan <- err
 		}
@@ -112,7 +112,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	case "virtualservices":
 		wg.Add(2)
 		errChan := make(chan error, 3)
-		// Error checking..
 		go fetch(&vss, namespace, in.k8s.GetVirtualServices, errChan)
 		go fetch(&drs, namespace, in.k8s.GetDestinationRules, errChan)
 		// We can block current goroutine for the third fetch
@@ -127,18 +126,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 			istioDetails.DestinationRules = drs
 			virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
 			objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
-		}
-
-		if vss, err = in.k8s.GetVirtualServices(namespace, ""); err == nil {
-			if drs, err := in.k8s.GetDestinationRules(namespace, ""); err == nil {
-				if ses, err := in.k8s.GetServiceEntries(namespace); err == nil {
-					istioDetails.ServiceEntries = ses
-					istioDetails.VirtualServices = vss
-					istioDetails.DestinationRules = drs
-					virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
-					objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
-				}
-			}
+		} else {
+			err = <-errChan
 		}
 	case "destinationrules":
 		if dr, err = in.k8s.GetDestinationRule(namespace, object); err == nil {
