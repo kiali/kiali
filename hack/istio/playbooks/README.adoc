@@ -18,7 +18,7 @@ All the Bookinfo Demo pods and services are installed in the "bookinfo" namespac
 - In order quick install, you may use the following command
 
 ```
-ansible-playbook bookinfo.yml
+ansible-playbook install_bookinfo.yml
 ```
 
 - If you want to include traffic generator to bookinfo project, see sections below
@@ -32,13 +32,15 @@ The variable `-e traffic_generator=true` must be present on the command line, if
 Rate is the number of request per seconds that traffic generator will hit the application and this variable is mandatory. It is recommend to use `-e rate=1`
 
 [NOTE]
+Rename label is for renamming bookinfo resources. It is recommend to use `-e rename_label=-app`
+[NOTE]
 You must choose between Ingress Route or Openshift Route there is a traffic generator included
 
 === Kiali Traffic Generator with Ingress Route
 - If you want to use ingress route (all traffic is going to hit ingress-gateway), you may use the following command:
 
 ```
-ansible-playbook bookinfo.yml -e ingress_route=true -e traffic_generator=true -e rate=1 -vv
+ansible-playbook install_bookinfo.yml -e ingress_route=true -e traffic_generator=true -e rate=1 -vv
 ```
 
 === Kiali Traffic Generator with Openshift Route
@@ -46,7 +48,7 @@ ansible-playbook bookinfo.yml -e ingress_route=true -e traffic_generator=true -e
 - If you want to use openshift route (kiali will report as "unknown"), you may use the following command:
 
 ```
-ansible-playbook bookinfo.yml -e ingress_route=false -e traffic_generator=true -e rate=1 -vv
+ansible-playbook install_bookinfo.yml -e ingress_route=false -e traffic_generator=true -e rate=1 -vv
 ```
 
 
@@ -55,5 +57,13 @@ ansible-playbook bookinfo.yml -e ingress_route=false -e traffic_generator=true -
 - If you want to enable MongoDB for ratings, you may use the following command
 
 ```
-ansible-playbook bookinfo.yml -e ingress_route=false -e traffic_generator=true -e rate=1 -e -vv
+ansible-playbook install_bookinfo.yml -e ingress_route=false -e traffic_generator=true -e rate=1 -e mongodb=true -vv
+```
+
+=== Kiali Traffic Generator with MySQL
+
+- If you want to enable MySQL for ratings, you may use the following command
+
+```
+ansible-playbook install_bookinfo.yml -e ingress_route=false -e traffic_generator=true -e rate=1 -e mysql=true -vv
 ```
