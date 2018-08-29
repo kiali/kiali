@@ -123,6 +123,18 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
           ) : (
             undefined
           )}
+          {virtualService.tls && virtualService.tls.length > 0 ? (
+            <>
+              <VirtualServiceRoute
+                name={virtualService.name}
+                kind="TLS"
+                routes={virtualService.tls}
+                validations={this.props.validations}
+              />
+            </>
+          ) : (
+            undefined
+          )}
         </Col>
       </Row>
     );

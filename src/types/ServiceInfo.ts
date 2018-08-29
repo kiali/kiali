@@ -63,6 +63,14 @@ export interface L4MatchAttributes {
   destinationSubnet: string[];
 }
 
+export interface TLSMatchAttributes {
+  sniHosts: string[];
+  destinationSubnet: string[];
+  port: number;
+  sourceLabels: { [key: string]: string };
+  gateways: string[];
+}
+
 export interface MatchRequest {
   headers: { [key: string]: StringMatch };
 }
@@ -237,6 +245,11 @@ export interface TCPRoute {
   route?: DestinationWeight[];
 }
 
+export interface TLSRoute {
+  match?: TLSMatchAttributes[];
+  route?: DestinationWeight[];
+}
+
 export interface VirtualService {
   name: string;
   createdAt: string;
@@ -245,6 +258,7 @@ export interface VirtualService {
   gateways?: string[];
   http?: HTTPRoute[];
   tcp?: TCPRoute[];
+  tls?: TLSRoute[];
 }
 
 // Destination Rule
