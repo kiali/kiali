@@ -7,11 +7,14 @@ import { matchPath } from 'react-router';
 import _ from 'lodash';
 
 import MessageCenter from '../../containers/MessageCenterContainer';
+import * as MsgCenter from '../../utils/MessageCenter';
 import HelpDropdown from '../../containers/HelpDropdownContainer';
 import UserDropdown from '../../containers/UserDropdownContainer';
 import LoginPage from '../../containers/LoginPageContainer';
 import { store } from '../../store/ConfigStore';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
+import * as API from '../../services/Api';
+import { authentication } from '../../utils/Authentication';
 
 export const istioConfigTitle = 'Istio Config';
 export const servicesTitle = 'Services';
@@ -54,6 +57,18 @@ class Navigation extends React.Component<PropsType> {
     }
   };
 
+  goTojaeger() {
+    API.getJaegerInfo(authentication())
+      .then(response => {
+        let data = response['data'];
+        window.open(data.url, '_blank');
+      })
+      .catch(error => {
+        MsgCenter.add(API.getErrorMsg('Could not fetch Jaeger info', error));
+        console.log(error);
+      });
+  }
+
   renderMenuItems() {
     const { location } = this.props;
     const activeItem = navItems.find(item => {
@@ -64,6 +79,17 @@ class Navigation extends React.Component<PropsType> {
       return isRoute;
     });
     return navItems.map(item => {
+      if (item.title === 'Distributed Tracing') {
+        return (
+          <VerticalNav.Item
+            key={item.to}
+            title={item.title}
+            iconClass={item.iconClass}
+            active={item === activeItem}
+            onClick={() => this.goTojaeger()}
+          />
+        );
+      }
       return (
         <VerticalNav.Item
           key={item.to}

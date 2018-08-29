@@ -288,7 +288,15 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   };
 
   private navigateToJaeger = () => {
-    this.props.history.push('/jaeger?path=' + encodeURIComponent(`/search?service=${this.props.match.params.service}`));
+    API.getJaegerInfo(authentication())
+      .then(response => {
+        let data = response['data'];
+        window.open(data.url + `/search?service=${this.props.match.params.service}`, '_blank');
+      })
+      .catch(error => {
+        MessageCenter.add(API.getErrorMsg('Could not fetch Jaeger info', error));
+        console.log(error);
+      });
   };
 }
 
