@@ -41,7 +41,13 @@ const containerStyle = style({
 
 const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
 const cytoscapeGraphWrapperDivStyle = style({ position: 'relative' });
-const cytoscapeToolbarWrapperDivStyle = style({ position: 'absolute', bottom: 5, left: 0, zIndex: 2 });
+const cytoscapeToolbarWrapperDivStyle = style({
+  position: 'absolute',
+  bottom: '10px',
+  left: '-13px',
+  zIndex: 2,
+  boxShadow: '2px 2px 6px 0 grey'
+});
 
 const makeCancelablePromise = (promise: Promise<any>) => {
   let hasCanceled = false;
