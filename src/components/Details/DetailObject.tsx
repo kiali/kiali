@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Label from '../Label/Label';
 import { Icon } from 'patternfly-react';
+import './DetailObject.css';
 
 interface DetailObjectProps {
   name: string;
@@ -104,7 +105,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
         ) : (
           undefined
         )}
-        <ul style={{ listStyleType: 'none' }}>{childrenList}</ul>
+        <ul className={'details'}>{childrenList}</ul>
       </div>
     );
   }

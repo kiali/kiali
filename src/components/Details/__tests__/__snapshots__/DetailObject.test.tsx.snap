@@ -46,11 +46,7 @@ ShallowWrapper {
           nodejs
         </strong>
         <ul
-          style={
-            Object {
-              "listStyleType": "none",
-            }
-          }
+          className="details"
         >
           <li>
             <div>
@@ -60,11 +56,7 @@ ShallowWrapper {
                 destination
               </strong>
               <ul
-                style={
-                  Object {
-                    "listStyleType": "none",
-                  }
-                }
+                className="details"
               >
                 <li>
                   <div
@@ -104,11 +96,7 @@ ShallowWrapper {
                       port
                     </strong>
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -178,11 +166,7 @@ ShallowWrapper {
           </strong>,
           undefined,
           <ul
-            style={
-              Object {
-                "listStyleType": "none",
-              }
-            }
+            className="details"
           >
             <li>
               <div>
@@ -192,11 +176,7 @@ ShallowWrapper {
                   destination
                 </strong>
                 <ul
-                  style={
-                    Object {
-                      "listStyleType": "none",
-                    }
-                  }
+                  className="details"
                 >
                   <li>
                     <div
@@ -236,11 +216,7 @@ ShallowWrapper {
                         port
                       </strong>
                       <ul
-                        style={
-                          Object {
-                            "listStyleType": "none",
-                          }
-                        }
+                        className="details"
                       >
                         <li>
                           <div
@@ -325,11 +301,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -369,11 +341,7 @@ ShallowWrapper {
                           port
                         </strong>
                         <ul
-                          style={
-                            Object {
-                              "listStyleType": "none",
-                            }
-                          }
+                          className="details"
                         >
                           <li>
                             <div
@@ -427,9 +395,7 @@ ShallowWrapper {
                 </div>
               </li>,
             ],
-            "style": Object {
-              "listStyleType": "none",
-            },
+            "className": "details",
           },
           "ref": null,
           "rendered": Array [
@@ -445,11 +411,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -489,11 +451,7 @@ ShallowWrapper {
                           port
                         </strong>
                         <ul
-                          style={
-                            Object {
-                              "listStyleType": "none",
-                            }
-                          }
+                          className="details"
                         >
                           <li>
                             <div
@@ -545,11 +503,7 @@ ShallowWrapper {
                     </strong>,
                     undefined,
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -589,11 +543,7 @@ ShallowWrapper {
                             port
                           </strong>
                           <ul
-                            style={
-                              Object {
-                                "listStyleType": "none",
-                              }
-                            }
+                            className="details"
                           >
                             <li>
                               <div
@@ -690,11 +640,7 @@ ShallowWrapper {
                               port
                             </strong>
                             <ul
-                              style={
-                                Object {
-                                  "listStyleType": "none",
-                                }
-                              }
+                              className="details"
                             >
                               <li>
                                 <div
@@ -730,9 +676,7 @@ ShallowWrapper {
                           </div>
                         </li>,
                       ],
-                      "style": Object {
-                        "listStyleType": "none",
-                      },
+                      "className": "details",
                     },
                     "ref": null,
                     "rendered": Array [
@@ -898,11 +842,7 @@ ShallowWrapper {
                               port
                             </strong>
                             <ul
-                              style={
-                                Object {
-                                  "listStyleType": "none",
-                                }
-                              }
+                              className="details"
                             >
                               <li>
                                 <div
@@ -951,11 +891,7 @@ ShallowWrapper {
                               </strong>,
                               undefined,
                               <ul
-                                style={
-                                  Object {
-                                    "listStyleType": "none",
-                                  }
-                                }
+                                className="details"
                               >
                                 <li>
                                   <div
@@ -1042,9 +978,7 @@ ShallowWrapper {
                                     </div>
                                   </li>,
                                 ],
-                                "style": Object {
-                                  "listStyleType": "none",
-                                },
+                                "className": "details",
                               },
                               "ref": null,
                               "rendered": Array [
@@ -1310,11 +1244,7 @@ ShallowWrapper {
             nodejs
           </strong>
           <ul
-            style={
-              Object {
-                "listStyleType": "none",
-              }
-            }
+            className="details"
           >
             <li>
               <div>
@@ -1324,11 +1254,7 @@ ShallowWrapper {
                   destination
                 </strong>
                 <ul
-                  style={
-                    Object {
-                      "listStyleType": "none",
-                    }
-                  }
+                  className="details"
                 >
                   <li>
                     <div
@@ -1368,11 +1294,7 @@ ShallowWrapper {
                         port
                       </strong>
                       <ul
-                        style={
-                          Object {
-                            "listStyleType": "none",
-                          }
-                        }
+                        className="details"
                       >
                         <li>
                           <div
@@ -1442,11 +1364,7 @@ ShallowWrapper {
             </strong>,
             undefined,
             <ul
-              style={
-                Object {
-                  "listStyleType": "none",
-                }
-              }
+              className="details"
             >
               <li>
                 <div>
@@ -1456,11 +1374,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -1500,11 +1414,7 @@ ShallowWrapper {
                           port
                         </strong>
                         <ul
-                          style={
-                            Object {
-                              "listStyleType": "none",
-                            }
-                          }
+                          className="details"
                         >
                           <li>
                             <div
@@ -1589,11 +1499,7 @@ ShallowWrapper {
                       destination
                     </strong>
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -1633,11 +1539,7 @@ ShallowWrapper {
                             port
                           </strong>
                           <ul
-                            style={
-                              Object {
-                                "listStyleType": "none",
-                              }
-                            }
+                            className="details"
                           >
                             <li>
                               <div
@@ -1691,9 +1593,7 @@ ShallowWrapper {
                   </div>
                 </li>,
               ],
-              "style": Object {
-                "listStyleType": "none",
-              },
+              "className": "details",
             },
             "ref": null,
             "rendered": Array [
@@ -1709,11 +1609,7 @@ ShallowWrapper {
                       destination
                     </strong>
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -1753,11 +1649,7 @@ ShallowWrapper {
                             port
                           </strong>
                           <ul
-                            style={
-                              Object {
-                                "listStyleType": "none",
-                              }
-                            }
+                            className="details"
                           >
                             <li>
                               <div
@@ -1809,11 +1701,7 @@ ShallowWrapper {
                       </strong>,
                       undefined,
                       <ul
-                        style={
-                          Object {
-                            "listStyleType": "none",
-                          }
-                        }
+                        className="details"
                       >
                         <li>
                           <div
@@ -1853,11 +1741,7 @@ ShallowWrapper {
                               port
                             </strong>
                             <ul
-                              style={
-                                Object {
-                                  "listStyleType": "none",
-                                }
-                              }
+                              className="details"
                             >
                               <li>
                                 <div
@@ -1954,11 +1838,7 @@ ShallowWrapper {
                                 port
                               </strong>
                               <ul
-                                style={
-                                  Object {
-                                    "listStyleType": "none",
-                                  }
-                                }
+                                className="details"
                               >
                                 <li>
                                   <div
@@ -1994,9 +1874,7 @@ ShallowWrapper {
                             </div>
                           </li>,
                         ],
-                        "style": Object {
-                          "listStyleType": "none",
-                        },
+                        "className": "details",
                       },
                       "ref": null,
                       "rendered": Array [
@@ -2162,11 +2040,7 @@ ShallowWrapper {
                                 port
                               </strong>
                               <ul
-                                style={
-                                  Object {
-                                    "listStyleType": "none",
-                                  }
-                                }
+                                className="details"
                               >
                                 <li>
                                   <div
@@ -2215,11 +2089,7 @@ ShallowWrapper {
                                 </strong>,
                                 undefined,
                                 <ul
-                                  style={
-                                    Object {
-                                      "listStyleType": "none",
-                                    }
-                                  }
+                                  className="details"
                                 >
                                   <li>
                                     <div
@@ -2306,9 +2176,7 @@ ShallowWrapper {
                                       </div>
                                     </li>,
                                   ],
-                                  "style": Object {
-                                    "listStyleType": "none",
-                                  },
+                                  "className": "details",
                                 },
                                 "ref": null,
                                 "rendered": Array [
@@ -2616,11 +2484,7 @@ ShallowWrapper {
           nodejs
         </strong>
         <ul
-          style={
-            Object {
-              "listStyleType": "none",
-            }
-          }
+          className="details"
         >
           <li>
             <div>
@@ -2630,11 +2494,7 @@ ShallowWrapper {
                 destination
               </strong>
               <ul
-                style={
-                  Object {
-                    "listStyleType": "none",
-                  }
-                }
+                className="details"
               >
                 <li>
                   <div
@@ -2704,11 +2564,7 @@ ShallowWrapper {
           </strong>,
           undefined,
           <ul
-            style={
-              Object {
-                "listStyleType": "none",
-              }
-            }
+            className="details"
           >
             <li>
               <div>
@@ -2718,11 +2574,7 @@ ShallowWrapper {
                   destination
                 </strong>
                 <ul
-                  style={
-                    Object {
-                      "listStyleType": "none",
-                    }
-                  }
+                  className="details"
                 >
                   <li>
                     <div
@@ -2807,11 +2659,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -2865,9 +2713,7 @@ ShallowWrapper {
                 </div>
               </li>,
             ],
-            "style": Object {
-              "listStyleType": "none",
-            },
+            "className": "details",
           },
           "ref": null,
           "rendered": Array [
@@ -2883,11 +2729,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -2939,11 +2781,7 @@ ShallowWrapper {
                     </strong>,
                     undefined,
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -3036,9 +2874,7 @@ ShallowWrapper {
                           
                         </li>,
                       ],
-                      "style": Object {
-                        "listStyleType": "none",
-                      },
+                      "className": "details",
                     },
                     "ref": null,
                     "rendered": Array [
@@ -3307,11 +3143,7 @@ ShallowWrapper {
             nodejs
           </strong>
           <ul
-            style={
-              Object {
-                "listStyleType": "none",
-              }
-            }
+            className="details"
           >
             <li>
               <div>
@@ -3321,11 +3153,7 @@ ShallowWrapper {
                   destination
                 </strong>
                 <ul
-                  style={
-                    Object {
-                      "listStyleType": "none",
-                    }
-                  }
+                  className="details"
                 >
                   <li>
                     <div
@@ -3395,11 +3223,7 @@ ShallowWrapper {
             </strong>,
             undefined,
             <ul
-              style={
-                Object {
-                  "listStyleType": "none",
-                }
-              }
+              className="details"
             >
               <li>
                 <div>
@@ -3409,11 +3233,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -3498,11 +3318,7 @@ ShallowWrapper {
                       destination
                     </strong>
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -3556,9 +3372,7 @@ ShallowWrapper {
                   </div>
                 </li>,
               ],
-              "style": Object {
-                "listStyleType": "none",
-              },
+              "className": "details",
             },
             "ref": null,
             "rendered": Array [
@@ -3574,11 +3388,7 @@ ShallowWrapper {
                       destination
                     </strong>
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -3630,11 +3440,7 @@ ShallowWrapper {
                       </strong>,
                       undefined,
                       <ul
-                        style={
-                          Object {
-                            "listStyleType": "none",
-                          }
-                        }
+                        className="details"
                       >
                         <li>
                           <div
@@ -3727,9 +3533,7 @@ ShallowWrapper {
                             
                           </li>,
                         ],
-                        "style": Object {
-                          "listStyleType": "none",
-                        },
+                        "className": "details",
                       },
                       "ref": null,
                       "rendered": Array [
@@ -4035,11 +3839,7 @@ ShallowWrapper {
           nodejs
         </strong>
         <ul
-          style={
-            Object {
-              "listStyleType": "none",
-            }
-          }
+          className="details"
         >
           <li>
             <div>
@@ -4049,11 +3849,7 @@ ShallowWrapper {
                 destination
               </strong>
               <ul
-                style={
-                  Object {
-                    "listStyleType": "none",
-                  }
-                }
+                className="details"
               >
                 <li>
                   <div
@@ -4093,11 +3889,7 @@ ShallowWrapper {
                       port
                     </strong>
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -4167,11 +3959,7 @@ ShallowWrapper {
           </strong>,
           undefined,
           <ul
-            style={
-              Object {
-                "listStyleType": "none",
-              }
-            }
+            className="details"
           >
             <li>
               <div>
@@ -4181,11 +3969,7 @@ ShallowWrapper {
                   destination
                 </strong>
                 <ul
-                  style={
-                    Object {
-                      "listStyleType": "none",
-                    }
-                  }
+                  className="details"
                 >
                   <li>
                     <div
@@ -4225,11 +4009,7 @@ ShallowWrapper {
                         port
                       </strong>
                       <ul
-                        style={
-                          Object {
-                            "listStyleType": "none",
-                          }
-                        }
+                        className="details"
                       >
                         <li>
                           <div
@@ -4314,11 +4094,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -4358,11 +4134,7 @@ ShallowWrapper {
                           port
                         </strong>
                         <ul
-                          style={
-                            Object {
-                              "listStyleType": "none",
-                            }
-                          }
+                          className="details"
                         >
                           <li>
                             <div
@@ -4416,9 +4188,7 @@ ShallowWrapper {
                 </div>
               </li>,
             ],
-            "style": Object {
-              "listStyleType": "none",
-            },
+            "className": "details",
           },
           "ref": null,
           "rendered": Array [
@@ -4434,11 +4204,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -4478,11 +4244,7 @@ ShallowWrapper {
                           port
                         </strong>
                         <ul
-                          style={
-                            Object {
-                              "listStyleType": "none",
-                            }
-                          }
+                          className="details"
                         >
                           <li>
                             <div
@@ -4534,11 +4296,7 @@ ShallowWrapper {
                     </strong>,
                     undefined,
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -4578,11 +4336,7 @@ ShallowWrapper {
                             port
                           </strong>
                           <ul
-                            style={
-                              Object {
-                                "listStyleType": "none",
-                              }
-                            }
+                            className="details"
                           >
                             <li>
                               <div
@@ -4679,11 +4433,7 @@ ShallowWrapper {
                               port
                             </strong>
                             <ul
-                              style={
-                                Object {
-                                  "listStyleType": "none",
-                                }
-                              }
+                              className="details"
                             >
                               <li>
                                 <div
@@ -4719,9 +4469,7 @@ ShallowWrapper {
                           </div>
                         </li>,
                       ],
-                      "style": Object {
-                        "listStyleType": "none",
-                      },
+                      "className": "details",
                     },
                     "ref": null,
                     "rendered": Array [
@@ -4887,11 +4635,7 @@ ShallowWrapper {
                               port
                             </strong>
                             <ul
-                              style={
-                                Object {
-                                  "listStyleType": "none",
-                                }
-                              }
+                              className="details"
                             >
                               <li>
                                 <div
@@ -4940,11 +4684,7 @@ ShallowWrapper {
                               </strong>,
                               undefined,
                               <ul
-                                style={
-                                  Object {
-                                    "listStyleType": "none",
-                                  }
-                                }
+                                className="details"
                               >
                                 <li>
                                   <div
@@ -5031,9 +4771,7 @@ ShallowWrapper {
                                     </div>
                                   </li>,
                                 ],
-                                "style": Object {
-                                  "listStyleType": "none",
-                                },
+                                "className": "details",
                               },
                               "ref": null,
                               "rendered": Array [
@@ -5299,11 +5037,7 @@ ShallowWrapper {
             nodejs
           </strong>
           <ul
-            style={
-              Object {
-                "listStyleType": "none",
-              }
-            }
+            className="details"
           >
             <li>
               <div>
@@ -5313,11 +5047,7 @@ ShallowWrapper {
                   destination
                 </strong>
                 <ul
-                  style={
-                    Object {
-                      "listStyleType": "none",
-                    }
-                  }
+                  className="details"
                 >
                   <li>
                     <div
@@ -5357,11 +5087,7 @@ ShallowWrapper {
                         port
                       </strong>
                       <ul
-                        style={
-                          Object {
-                            "listStyleType": "none",
-                          }
-                        }
+                        className="details"
                       >
                         <li>
                           <div
@@ -5431,11 +5157,7 @@ ShallowWrapper {
             </strong>,
             undefined,
             <ul
-              style={
-                Object {
-                  "listStyleType": "none",
-                }
-              }
+              className="details"
             >
               <li>
                 <div>
@@ -5445,11 +5167,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -5489,11 +5207,7 @@ ShallowWrapper {
                           port
                         </strong>
                         <ul
-                          style={
-                            Object {
-                              "listStyleType": "none",
-                            }
-                          }
+                          className="details"
                         >
                           <li>
                             <div
@@ -5578,11 +5292,7 @@ ShallowWrapper {
                       destination
                     </strong>
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -5622,11 +5332,7 @@ ShallowWrapper {
                             port
                           </strong>
                           <ul
-                            style={
-                              Object {
-                                "listStyleType": "none",
-                              }
-                            }
+                            className="details"
                           >
                             <li>
                               <div
@@ -5680,9 +5386,7 @@ ShallowWrapper {
                   </div>
                 </li>,
               ],
-              "style": Object {
-                "listStyleType": "none",
-              },
+              "className": "details",
             },
             "ref": null,
             "rendered": Array [
@@ -5698,11 +5402,7 @@ ShallowWrapper {
                       destination
                     </strong>
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -5742,11 +5442,7 @@ ShallowWrapper {
                             port
                           </strong>
                           <ul
-                            style={
-                              Object {
-                                "listStyleType": "none",
-                              }
-                            }
+                            className="details"
                           >
                             <li>
                               <div
@@ -5798,11 +5494,7 @@ ShallowWrapper {
                       </strong>,
                       undefined,
                       <ul
-                        style={
-                          Object {
-                            "listStyleType": "none",
-                          }
-                        }
+                        className="details"
                       >
                         <li>
                           <div
@@ -5842,11 +5534,7 @@ ShallowWrapper {
                               port
                             </strong>
                             <ul
-                              style={
-                                Object {
-                                  "listStyleType": "none",
-                                }
-                              }
+                              className="details"
                             >
                               <li>
                                 <div
@@ -5943,11 +5631,7 @@ ShallowWrapper {
                                 port
                               </strong>
                               <ul
-                                style={
-                                  Object {
-                                    "listStyleType": "none",
-                                  }
-                                }
+                                className="details"
                               >
                                 <li>
                                   <div
@@ -5983,9 +5667,7 @@ ShallowWrapper {
                             </div>
                           </li>,
                         ],
-                        "style": Object {
-                          "listStyleType": "none",
-                        },
+                        "className": "details",
                       },
                       "ref": null,
                       "rendered": Array [
@@ -6151,11 +5833,7 @@ ShallowWrapper {
                                 port
                               </strong>
                               <ul
-                                style={
-                                  Object {
-                                    "listStyleType": "none",
-                                  }
-                                }
+                                className="details"
                               >
                                 <li>
                                   <div
@@ -6204,11 +5882,7 @@ ShallowWrapper {
                                 </strong>,
                                 undefined,
                                 <ul
-                                  style={
-                                    Object {
-                                      "listStyleType": "none",
-                                    }
-                                  }
+                                  className="details"
                                 >
                                   <li>
                                     <div
@@ -6295,9 +5969,7 @@ ShallowWrapper {
                                       </div>
                                     </li>,
                                   ],
-                                  "style": Object {
-                                    "listStyleType": "none",
-                                  },
+                                  "className": "details",
                                 },
                                 "ref": null,
                                 "rendered": Array [
@@ -6623,11 +6295,7 @@ ShallowWrapper {
           </p>
         </div>
         <ul
-          style={
-            Object {
-              "listStyleType": "none",
-            }
-          }
+          className="details"
         >
           <li>
             <div>
@@ -6637,11 +6305,7 @@ ShallowWrapper {
                 destination
               </strong>
               <ul
-                style={
-                  Object {
-                    "listStyleType": "none",
-                  }
-                }
+                className="details"
               >
                 <li>
                   <div
@@ -6681,11 +6345,7 @@ ShallowWrapper {
                       port
                     </strong>
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -6770,11 +6430,7 @@ ShallowWrapper {
             </p>
           </div>,
           <ul
-            style={
-              Object {
-                "listStyleType": "none",
-              }
-            }
+            className="details"
           >
             <li>
               <div>
@@ -6784,11 +6440,7 @@ ShallowWrapper {
                   destination
                 </strong>
                 <ul
-                  style={
-                    Object {
-                      "listStyleType": "none",
-                    }
-                  }
+                  className="details"
                 >
                   <li>
                     <div
@@ -6828,11 +6480,7 @@ ShallowWrapper {
                         port
                       </strong>
                       <ul
-                        style={
-                          Object {
-                            "listStyleType": "none",
-                          }
-                        }
+                        className="details"
                       >
                         <li>
                           <div
@@ -6975,11 +6623,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -7019,11 +6663,7 @@ ShallowWrapper {
                           port
                         </strong>
                         <ul
-                          style={
-                            Object {
-                              "listStyleType": "none",
-                            }
-                          }
+                          className="details"
                         >
                           <li>
                             <div
@@ -7077,9 +6717,7 @@ ShallowWrapper {
                 </div>
               </li>,
             ],
-            "style": Object {
-              "listStyleType": "none",
-            },
+            "className": "details",
           },
           "ref": null,
           "rendered": Array [
@@ -7095,11 +6733,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -7139,11 +6773,7 @@ ShallowWrapper {
                           port
                         </strong>
                         <ul
-                          style={
-                            Object {
-                              "listStyleType": "none",
-                            }
-                          }
+                          className="details"
                         >
                           <li>
                             <div
@@ -7195,11 +6825,7 @@ ShallowWrapper {
                     </strong>,
                     undefined,
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -7239,11 +6865,7 @@ ShallowWrapper {
                             port
                           </strong>
                           <ul
-                            style={
-                              Object {
-                                "listStyleType": "none",
-                              }
-                            }
+                            className="details"
                           >
                             <li>
                               <div
@@ -7340,11 +6962,7 @@ ShallowWrapper {
                               port
                             </strong>
                             <ul
-                              style={
-                                Object {
-                                  "listStyleType": "none",
-                                }
-                              }
+                              className="details"
                             >
                               <li>
                                 <div
@@ -7380,9 +6998,7 @@ ShallowWrapper {
                           </div>
                         </li>,
                       ],
-                      "style": Object {
-                        "listStyleType": "none",
-                      },
+                      "className": "details",
                     },
                     "ref": null,
                     "rendered": Array [
@@ -7548,11 +7164,7 @@ ShallowWrapper {
                               port
                             </strong>
                             <ul
-                              style={
-                                Object {
-                                  "listStyleType": "none",
-                                }
-                              }
+                              className="details"
                             >
                               <li>
                                 <div
@@ -7601,11 +7213,7 @@ ShallowWrapper {
                               </strong>,
                               undefined,
                               <ul
-                                style={
-                                  Object {
-                                    "listStyleType": "none",
-                                  }
-                                }
+                                className="details"
                               >
                                 <li>
                                   <div
@@ -7692,9 +7300,7 @@ ShallowWrapper {
                                     </div>
                                   </li>,
                                 ],
-                                "style": Object {
-                                  "listStyleType": "none",
-                                },
+                                "className": "details",
                               },
                               "ref": null,
                               "rendered": Array [
@@ -7976,11 +7582,7 @@ ShallowWrapper {
             </p>
           </div>
           <ul
-            style={
-              Object {
-                "listStyleType": "none",
-              }
-            }
+            className="details"
           >
             <li>
               <div>
@@ -7990,11 +7592,7 @@ ShallowWrapper {
                   destination
                 </strong>
                 <ul
-                  style={
-                    Object {
-                      "listStyleType": "none",
-                    }
-                  }
+                  className="details"
                 >
                   <li>
                     <div
@@ -8034,11 +7632,7 @@ ShallowWrapper {
                         port
                       </strong>
                       <ul
-                        style={
-                          Object {
-                            "listStyleType": "none",
-                          }
-                        }
+                        className="details"
                       >
                         <li>
                           <div
@@ -8123,11 +7717,7 @@ ShallowWrapper {
               </p>
             </div>,
             <ul
-              style={
-                Object {
-                  "listStyleType": "none",
-                }
-              }
+              className="details"
             >
               <li>
                 <div>
@@ -8137,11 +7727,7 @@ ShallowWrapper {
                     destination
                   </strong>
                   <ul
-                    style={
-                      Object {
-                        "listStyleType": "none",
-                      }
-                    }
+                    className="details"
                   >
                     <li>
                       <div
@@ -8181,11 +7767,7 @@ ShallowWrapper {
                           port
                         </strong>
                         <ul
-                          style={
-                            Object {
-                              "listStyleType": "none",
-                            }
-                          }
+                          className="details"
                         >
                           <li>
                             <div
@@ -8328,11 +7910,7 @@ ShallowWrapper {
                       destination
                     </strong>
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -8372,11 +7950,7 @@ ShallowWrapper {
                             port
                           </strong>
                           <ul
-                            style={
-                              Object {
-                                "listStyleType": "none",
-                              }
-                            }
+                            className="details"
                           >
                             <li>
                               <div
@@ -8430,9 +8004,7 @@ ShallowWrapper {
                   </div>
                 </li>,
               ],
-              "style": Object {
-                "listStyleType": "none",
-              },
+              "className": "details",
             },
             "ref": null,
             "rendered": Array [
@@ -8448,11 +8020,7 @@ ShallowWrapper {
                       destination
                     </strong>
                     <ul
-                      style={
-                        Object {
-                          "listStyleType": "none",
-                        }
-                      }
+                      className="details"
                     >
                       <li>
                         <div
@@ -8492,11 +8060,7 @@ ShallowWrapper {
                             port
                           </strong>
                           <ul
-                            style={
-                              Object {
-                                "listStyleType": "none",
-                              }
-                            }
+                            className="details"
                           >
                             <li>
                               <div
@@ -8548,11 +8112,7 @@ ShallowWrapper {
                       </strong>,
                       undefined,
                       <ul
-                        style={
-                          Object {
-                            "listStyleType": "none",
-                          }
-                        }
+                        className="details"
                       >
                         <li>
                           <div
@@ -8592,11 +8152,7 @@ ShallowWrapper {
                               port
                             </strong>
                             <ul
-                              style={
-                                Object {
-                                  "listStyleType": "none",
-                                }
-                              }
+                              className="details"
                             >
                               <li>
                                 <div
@@ -8693,11 +8249,7 @@ ShallowWrapper {
                                 port
                               </strong>
                               <ul
-                                style={
-                                  Object {
-                                    "listStyleType": "none",
-                                  }
-                                }
+                                className="details"
                               >
                                 <li>
                                   <div
@@ -8733,9 +8285,7 @@ ShallowWrapper {
                             </div>
                           </li>,
                         ],
-                        "style": Object {
-                          "listStyleType": "none",
-                        },
+                        "className": "details",
                       },
                       "ref": null,
                       "rendered": Array [
@@ -8901,11 +8451,7 @@ ShallowWrapper {
                                 port
                               </strong>
                               <ul
-                                style={
-                                  Object {
-                                    "listStyleType": "none",
-                                  }
-                                }
+                                className="details"
                               >
                                 <li>
                                   <div
@@ -8954,11 +8500,7 @@ ShallowWrapper {
                                 </strong>,
                                 undefined,
                                 <ul
-                                  style={
-                                    Object {
-                                      "listStyleType": "none",
-                                    }
-                                  }
+                                  className="details"
                                 >
                                   <li>
                                     <div
@@ -9045,9 +8587,7 @@ ShallowWrapper {
                                       </div>
                                     </li>,
                                   ],
-                                  "style": Object {
-                                    "listStyleType": "none",
-                                  },
+                                  "className": "details",
                                 },
                                 "ref": null,
                                 "rendered": Array [
