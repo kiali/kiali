@@ -168,7 +168,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   health={this.state.health}
                 />
               </TabPane>
-              <TabPane eventKey="in_metrics">
+              <TabPane eventKey="in_metrics" mountOnEnter={true} unmountOnExit={true}>
                 <WorkloadMetricsContainer
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.workload}
@@ -176,7 +176,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   metricsType={'inbound'}
                 />
               </TabPane>
-              <TabPane eventKey="out_metrics">
+              <TabPane eventKey="out_metrics" mountOnEnter={true} unmountOnExit={true}>
                 <WorkloadMetricsContainer
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.workload}

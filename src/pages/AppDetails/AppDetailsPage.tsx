@@ -127,7 +127,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                   health={this.state.health}
                 />
               </TabPane>
-              <TabPane eventKey="in_metrics">
+              <TabPane eventKey="in_metrics" mountOnEnter={true} unmountOnExit={true}>
                 <AppMetricsContainer
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.app}
@@ -135,7 +135,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                   metricsType={'inbound'}
                 />
               </TabPane>
-              <TabPane eventKey="out_metrics">
+              <TabPane eventKey="out_metrics" mountOnEnter={true} unmountOnExit={true}>
                 <AppMetricsContainer
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.app}
