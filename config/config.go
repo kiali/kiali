@@ -48,7 +48,6 @@ const (
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
 	EnvIstioNamespace              = "ISTIO_NAMESPACE"
 
-	EnvKialiService       = "KIALI_SERVICE"
 	IstioVersionSupported = ">= 1.0"
 
 	EnvIstioLabelNameApp     = "ISTIO_LABEL_NAME_APP"
@@ -119,7 +118,6 @@ type Config struct {
 	InCluster        bool              `yaml:"in_cluster,omitempty"`
 	ExternalServices ExternalServices  `yaml:"external_services,omitempty"`
 	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
-	KialiService     string            `yaml:"kiali_service,omitempty"`
 	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
 	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
 }
@@ -131,7 +129,6 @@ func NewConfig() (c *Config) {
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
 	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")
 	c.InCluster = getDefaultBool(EnvInCluster, true)
-	c.KialiService = strings.TrimSpace(getDefaultString(EnvKialiService, "kiali"))
 	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
 	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))

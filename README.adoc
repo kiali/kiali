@@ -287,13 +287,6 @@ istio_labels:
   version_label_name: VALUE
 ----
 
-|`KIALI_SERVICE`
-| The name of the service of Kiali. (Default: kiali)
-[source,yaml]
-----
-kiali_service: VALUE
-----
-
 |`SERVER_ADDRESS`
 |Where the http server is bound to.
 [source,yaml]
@@ -598,6 +591,12 @@ If you git cloned the Kiali UI repository in directory `/my/git/repo` and have b
 ----
 CONSOLE_VERSION=local CONSOLE_LOCAL_DIR=/my/git/repo make docker-build
 ----
+
+=== Disabling SSL
+In the provided OpenShift templates, SSL is turned on by default. If you want to turn it off, you should:
+* Remove the "tls: termination: reencrypt" option in Kiali route
+* Remove the "identity" block, with certificate paths, in Kiali Config Map.
+* Optionnally you can also remove the annotation "service.alpha.openshift.io/serving-cert-secret-name", and the related volume that is declared and mounted in Kiali Deployment (but if you don't, they will just be ignored).
 
 === Running Kiali with commands
 

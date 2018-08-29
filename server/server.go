@@ -39,14 +39,15 @@ func NewServer() *Server {
 
 // Start HTTP server asynchronously. TLS may be active depending on the global configuration.
 func (s *Server) Start() {
+	conf := config.Get()
 	log.Infof("Server endpoint will start at [%v]", s.httpServer.Addr)
-	log.Infof("Server endpoint will serve static content from [%v]", config.Get().Server.StaticContentRootDirectory)
+	log.Infof("Server endpoint will serve static content from [%v]", conf.Server.StaticContentRootDirectory)
+	secure := conf.Identity.CertFile != "" && conf.Identity.PrivateKeyFile != ""
 	go func() {
 		var err error
-		secure := config.Get().Identity.CertFile != "" && config.Get().Identity.PrivateKeyFile != ""
 		if secure {
 			log.Infof("Server endpoint will require https")
-			err = s.httpServer.ListenAndServeTLS(config.Get().Identity.CertFile, config.Get().Identity.PrivateKeyFile)
+			err = s.httpServer.ListenAndServeTLS(conf.Identity.CertFile, conf.Identity.PrivateKeyFile)
 		} else {
 			err = s.httpServer.ListenAndServe()
 		}
