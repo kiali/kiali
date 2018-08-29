@@ -18,15 +18,19 @@ import {
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
+import { Response } from '../../services/Api';
+import { Metrics } from '../../types/Metrics';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
 
 type SummaryPanelGroupState = {
   loading: boolean;
-  requestCountIn: [string, number][];
+  requestCountIn: [string, number][] | null;
   requestCountOut: [string, number][];
   errorCountIn: [string, number][];
   errorCountOut: [string, number][];
   healthLoading: boolean;
   health?: Health;
+  metricsLoadError: string | null;
 };
 
 export default class SummaryPanelGroup extends React.Component<SummaryPanelPropType, SummaryPanelGroupState> {
@@ -36,28 +40,33 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     overflowY: 'auto' as 'auto'
   };
 
-  // avoid state changes after component is unmounted
-  _isMounted: boolean = false;
+  private metricsPromise?: CancelablePromise<Response<Metrics>>;
 
   constructor(props: SummaryPanelPropType) {
     super(props);
     this.state = {
       loading: true,
-      requestCountIn: [],
+      requestCountIn: null,
       requestCountOut: [],
       errorCountIn: [],
       errorCountOut: [],
-      healthLoading: false
+      healthLoading: false,
+      metricsLoadError: null
     };
   }
 
   componentDidMount() {
-    this._isMounted = true;
     this.updateRpsCharts(this.props);
     updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
+    if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
+      this.setState({
+        requestCountIn: null,
+        loading: true
+      });
+    }
     if (shouldRefreshData(prevProps, this.props)) {
       this.updateRpsCharts(this.props);
       updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
@@ -65,7 +74,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   }
 
   componentWillUnmount() {
-    this._isMounted = false;
+    if (this.metricsPromise) {
+      this.metricsPromise.cancel();
+    }
   }
 
   render() {
@@ -140,14 +151,17 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       return;
     }
 
+    if (this.metricsPromise) {
+      this.metricsPromise.cancel();
+    }
+
     const filters = ['request_count', 'request_error_count'];
 
-    getNodeMetrics(nodeMetricType, target, props, filters)
+    const promise = getNodeMetrics(nodeMetricType, target, props, filters);
+    this.metricsPromise = makeCancelablePromise(promise);
+
+    this.metricsPromise.promise
       .then(response => {
-        if (!this._isMounted) {
-          console.log('SummaryPanelGroup: Ignore fetch, component not mounted.');
-          return;
-        }
         // use source metrics for outgoing, except for:
         // - is is the istio namespace
         let useDest = this.props.namespace === 'istio-system';
@@ -167,14 +181,19 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         });
       })
       .catch(error => {
-        if (!this._isMounted) {
-          console.log('SummaryPanelGroup: Ignore fetch error, component not mounted.');
+        if (error.isCanceled) {
+          console.log('SummaryPanelGroup: Ignore fetch error (canceled).');
           return;
         }
-        // TODO: show error alert
-        this.setState({ loading: false });
-        console.error(error);
+        const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
+        this.setState({
+          loading: false,
+          metricsLoadError: errorMsg,
+          requestCountIn: null
+        });
       });
+
+    this.setState({ loading: true, metricsLoadError: null });
   };
 
   private renderVersionBadges = () => {
@@ -198,14 +217,21 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   };
 
   private renderRpsCharts = () => {
-    if (this.state.loading) {
-      return <strong>loading charts...</strong>;
+    if (this.state.loading && !this.state.requestCountIn) {
+      return <strong>Loading charts...</strong>;
+    } else if (this.state.metricsLoadError) {
+      return (
+        <div>
+          <Icon type="pf" name="warning-triangle-o" /> <strong>Error loading metrics: </strong>
+          {this.state.metricsLoadError}
+        </div>
+      );
     }
     return (
       <>
         <RpsChart
           label="Incoming Request Traffic"
-          dataRps={this.state.requestCountIn}
+          dataRps={this.state.requestCountIn!}
           dataErrors={this.state.errorCountIn}
         />
         <RpsChart
@@ -225,7 +251,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
       if (workload) {
         workloadList.push(
-          <Link to={`/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload)}`}>
+          <Link
+            to={`/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload)}`}
+            key={workload}
+          >
             {workload}
           </Link>
         );

@@ -14,7 +14,7 @@ import { ServiceList } from '../types/ServiceListComponent';
 import { AppList } from '../types/AppList';
 import { App } from '../types/App';
 
-interface Response<T> {
+export interface Response<T> {
   data: T;
 }
 

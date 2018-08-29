@@ -8,6 +8,7 @@ import { authentication } from '../../utils/Authentication';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import { Metric } from '../../types/Metrics';
+import { Response } from '../../services/Api';
 
 export interface NodeData {
   namespace: string;
@@ -130,7 +131,7 @@ export const getNodeMetrics = (
   filters: Array<string>,
   byLabelsIn?: Array<string>,
   byLabelsOut?: Array<string>
-) => {
+): Promise<Response<M.Metrics>> => {
   const data = nodeData(node);
   const options: MetricsOptions = {
     queryTime: props.queryTime,

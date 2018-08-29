@@ -12,11 +12,15 @@ import * as M from '../../types/Metrics';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { shouldRefreshData } from './SummaryPanelCommon';
+import { Response } from '../../services/Api';
+import { Metrics } from '../../types/Metrics';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
 
 type SummaryPanelGraphState = {
   loading: boolean;
-  reqRates: [string, number][];
+  reqRates: [string, number][] | null;
   errRates: [string, number][];
+  metricsLoadError: string | null;
 };
 
 export default class SummaryPanelGraph extends React.Component<SummaryPanelPropType, SummaryPanelGraphState> {
@@ -26,27 +30,33 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     overflowY: 'auto' as 'auto'
   };
 
-  // avoid state changes after component is unmounted
-  _isMounted: boolean = false;
+  private metricsPromise?: CancelablePromise<Response<Metrics>>;
 
   constructor(props: SummaryPanelPropType) {
     super(props);
 
     this.state = {
       loading: true,
-      reqRates: [],
-      errRates: []
+      reqRates: null,
+      errRates: [],
+      metricsLoadError: null
     };
   }
 
   componentDidMount() {
-    this._isMounted = true;
     if (this.props.namespace !== 'all') {
       this.updateRpsChart(this.props);
     }
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
+    if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
+      this.setState({
+        reqRates: null,
+        loading: true
+      });
+    }
+
     if (shouldRefreshData(prevProps, this.props)) {
       // TODO (maybe) we omit the rps chart when dealing with multiple namespaces. There is no backend
       // API support to gather the data. The whole-graph chart is of nominal value, it will likely be OK.
@@ -57,7 +67,9 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   }
 
   componentWillUnmount() {
-    this._isMounted = false;
+    if (this.metricsPromise) {
+      this.metricsPromise.cancel();
+    }
   }
 
   render() {
@@ -116,12 +128,11 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       step: props.step,
       rateInterval: props.rateInterval
     };
-    API.getNamespaceMetrics(authentication(), props.namespace, options)
+    const promise = API.getNamespaceMetrics(authentication(), props.namespace, options);
+    this.metricsPromise = makeCancelablePromise(promise);
+
+    this.metricsPromise.promise
       .then(response => {
-        if (!this._isMounted) {
-          console.log('SummaryPanelGraph: Ignore fetch, component not mounted.');
-          return;
-        }
         const metrics = response.data.dest.metrics;
         const reqRates = this.getRates(metrics['request_count_in'], 'RPS');
         const errRates = this.getRates(metrics['request_error_count_in'], 'Error');
@@ -133,15 +144,19 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         });
       })
       .catch(error => {
-        if (!this._isMounted) {
-          console.log('SummaryPanelGraph: Ignore fetch error, component not mounted.');
+        if (error.isCanceled) {
+          console.log('SummaryPanelGraph: Ignore fetch error (canceled).');
           return;
         }
-
-        this.setState({ loading: false });
-        console.error(error);
-        // this.props.onError(error);
+        const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
+        this.setState({
+          loading: false,
+          metricsLoadError: errorMsg,
+          reqRates: null
+        });
       });
+
+    this.setState({ loading: true, metricsLoadError: null });
   };
 
   private renderTopologySummary = (numNodes: number, numEdges: number) => (
@@ -154,11 +169,18 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   );
 
   private renderRpsChart = () => {
-    if (this.state.loading) {
-      return <strong>loading chart...</strong>;
+    if (this.state.loading && !this.state.reqRates) {
+      return <strong>Loading chart...</strong>;
+    } else if (this.state.metricsLoadError) {
+      return (
+        <div>
+          <Icon type="pf" name="warning-triangle-o" /> <strong>Error loading metrics: </strong>
+          {this.state.metricsLoadError}
+        </div>
+      );
     }
 
-    return <RpsChart label="Total Request Traffic" dataRps={this.state.reqRates} dataErrors={this.state.errRates} />;
+    return <RpsChart label="Total Request Traffic" dataRps={this.state.reqRates!} dataErrors={this.state.errRates} />;
   };
 
   private getRates = (mg: M.MetricGroup, title: string): [string, number][] => {
