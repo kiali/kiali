@@ -22,9 +22,10 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	}
 
 	serviceNames := getServiceNames(in.ServiceList)
+	serviceHosts := kubernetes.ServiceEntryHostnames(in.IstioDetails.ServiceEntries)
 
 	for _, virtualService := range in.IstioDetails.VirtualServices {
-		validations.MergeValidations(runVirtualServiceCheck(virtualService, in.Namespace, serviceNames))
+		validations.MergeValidations(runVirtualServiceCheck(virtualService, in.Namespace, serviceNames, serviceHosts))
 	}
 	for _, destinationRule := range in.IstioDetails.DestinationRules {
 		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, serviceNames))
@@ -33,11 +34,12 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string) models.IstioValidations {
+func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string, serviceHosts map[string]struct{}) models.IstioValidations {
 	result, valid := virtual_services.NoHostChecker{
-		Namespace:      namespace,
-		ServiceNames:   serviceNames,
-		VirtualService: virtualService,
+		Namespace:         namespace,
+		ServiceNames:      serviceNames,
+		VirtualService:    virtualService,
+		ServiceEntryHosts: serviceHosts,
 	}.Check()
 
 	istioObjectName := virtualService.GetObjectMeta().Name

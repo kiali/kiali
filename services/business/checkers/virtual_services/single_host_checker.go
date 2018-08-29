@@ -24,10 +24,8 @@ func (in SingleHostChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	for _, vs := range in.VirtualServices {
-		if hosts, ok := getHost(vs); ok {
-			for _, host := range hosts {
-				storeHost(hostCounter, vs, host)
-			}
+		for _, host := range getHost(vs) {
+			storeHost(hostCounter, vs, host)
 		}
 	}
 
@@ -91,15 +89,15 @@ func storeHost(hostCounter map[string]map[string]map[string][]*kubernetes.IstioO
 	}
 }
 
-func getHost(virtualService kubernetes.IstioObject) ([]Host, bool) {
+func getHost(virtualService kubernetes.IstioObject) []Host {
 	hosts := virtualService.GetSpec()["hosts"]
 	if hosts == nil {
-		return []Host{}, false
+		return []Host{}
 	}
 
 	slice := reflect.ValueOf(hosts)
 	if slice.Kind() != reflect.Slice {
-		return []Host{}, false
+		return []Host{}
 	}
 
 	targetHosts := make([]Host, 0, slice.Len())
@@ -113,7 +111,7 @@ func getHost(virtualService kubernetes.IstioObject) ([]Host, bool) {
 		targetHosts = append(targetHosts, formatHostForSearch(hostName, virtualService.GetObjectMeta().Namespace))
 	}
 
-	return targetHosts, true
+	return targetHosts
 }
 
 // Convert host to Host struct for searching

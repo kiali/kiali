@@ -75,6 +75,37 @@ func TestNoValidHost(t *testing.T) {
 	assert.Equal("", validations[0].Path)
 }
 
+func TestValidServiceEntryHost(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	virtualService := fakeVirtualServiceWithServiceEntryTarget()
+
+	validations, valid := NoHostChecker{
+		Namespace:      "test-namespace",
+		ServiceNames:   []string{"my-wiki-rule"},
+		VirtualService: virtualService,
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(validations)
+
+	// Add ServiceEntry for validity
+	serviceEntry := fakeExternalServiceEntry()
+
+	validations, valid = NoHostChecker{
+		Namespace:         "test-namespace",
+		ServiceNames:      []string{"my-wiki-rule"},
+		VirtualService:    virtualService,
+		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{serviceEntry}),
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
 func fakeVirtualService() kubernetes.IstioObject {
 	virtualService := kubernetes.VirtualService{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -111,4 +142,56 @@ func fakeVirtualService() kubernetes.IstioObject {
 		},
 	}
 	return &virtualService
+}
+
+// Example from https://istio.io/docs/reference/config/istio.networking.v1alpha3/#Destination
+func fakeVirtualServiceWithServiceEntryTarget() kubernetes.IstioObject {
+	return (&kubernetes.VirtualService{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "my-wiki-rule",
+			Namespace: "wikipedia",
+		},
+		Spec: map[string]interface{}{
+			"hosts": []interface{}{
+				"wikipedia.org",
+			},
+			"http": []interface{}{
+				map[string]interface{}{
+					"timeout": "5s",
+					"route": []interface{}{
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"host": "wikipedia.org",
+							},
+						},
+					},
+				},
+			},
+		},
+	}).DeepCopyIstioObject()
+}
+
+func fakeExternalServiceEntry() kubernetes.IstioObject {
+	return (&kubernetes.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "external-svc-wikipedia",
+			Namespace: "wikipedia",
+		},
+		Spec: map[string]interface{}{
+			"hosts": []interface{}{
+				"wikipedia.org",
+			},
+			"location": "MESH_EXTERNAL",
+			"ports": map[string]interface{}{
+				"number":   uint64(80),
+				"name":     "example-http",
+				"protocol": "HTTP",
+			},
+			"resolution": "DNS",
+		},
+	}).DeepCopyIstioObject()
+}
+
+func fakeVirtualServiceMultipleIstioObjects() []kubernetes.IstioObject {
+	return []kubernetes.IstioObject{fakeVirtualServiceWithServiceEntryTarget(), fakeExternalServiceEntry()}
 }

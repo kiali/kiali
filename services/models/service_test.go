@@ -487,7 +487,28 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	}
 	destinationRules := []kubernetes.IstioObject{&destinationRule1, &destinationRule2}
 
-	return &kubernetes.IstioDetails{virtualServices, destinationRules}
+	serviceEntry := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "external-svc-wikipedia",
+			Namespace: "wikipedia",
+		},
+		Spec: map[string]interface{}{
+			"hosts": []interface{}{
+				"wikipedia.org",
+			},
+			"location": "MESH_EXTERNAL",
+			"ports": map[string]interface{}{
+				"number":   uint64(80),
+				"name":     "example-http",
+				"protocol": "HTTP",
+			},
+			"resolution": "DNS",
+		},
+	}
+
+	serviceEntries := []kubernetes.IstioObject{&serviceEntry}
+
+	return &kubernetes.IstioDetails{virtualServices, destinationRules, serviceEntries}
 }
 
 func fakePrometheusDetails() map[string][]prometheus.Workload {

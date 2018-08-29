@@ -8,18 +8,19 @@ import (
 )
 
 type NoHostChecker struct {
-	Namespace      string
-	ServiceNames   []string
-	VirtualService kubernetes.IstioObject
+	Namespace         string
+	ServiceNames      []string
+	VirtualService    kubernetes.IstioObject
+	ServiceEntryHosts map[string]struct{}
 }
 
 func (virtualService NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	valid := false
 	validations := make([]*models.IstioCheck, 0)
 
-	routeProtocols := []string{"http", "tcp"}
+	routeProtocols := []string{"http", "tcp", "tls"}
 	for _, serviceName := range virtualService.ServiceNames {
-		if valid = kubernetes.FilterByRoute(virtualService.VirtualService.GetSpec(), routeProtocols, serviceName, virtualService.Namespace); valid {
+		if valid = kubernetes.FilterByRoute(virtualService.VirtualService.GetSpec(), routeProtocols, serviceName, virtualService.Namespace, virtualService.ServiceEntryHosts); valid {
 			break
 		}
 	}
