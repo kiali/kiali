@@ -18,6 +18,7 @@ import * as MessageCenterUtils from '../../utils/MessageCenter';
 
 import GraphLegend from '../../components/GraphFilter/GraphLegend';
 import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContainer';
+import { CytoscapeToolbar } from '../../components/CytoscapeGraph/CytoscapeToolbar';
 
 type ServiceGraphPageProps = GraphParamsType & {
   graphTimestamp: string;
@@ -39,6 +40,8 @@ const containerStyle = style({
 });
 
 const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
+const cytoscapeGraphWrapperDivStyle = style({ position: 'relative' });
+const cytoscapeToolbarWrapperDivStyle = style({ position: 'absolute', bottom: 5, left: 0, zIndex: 2 });
 
 const makeCancelablePromise = (promise: Promise<any>) => {
   let hasCanceled = false;
@@ -70,9 +73,12 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
   private pollTimeoutRef?: number;
   private pollPromise?;
   private readonly errorBoundaryRef: any;
+  private cytoscapeGraphRef: any;
+
   constructor(props: ServiceGraphPageProps) {
     super(props);
     this.errorBoundaryRef = React.createRef();
+    this.cytoscapeGraphRef = React.createRef();
   }
 
   componentDidMount() {
@@ -132,7 +138,7 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
               {...graphParams}
             />
           </div>
-          <FlexView grow={true}>
+          <FlexView grow={true} className={cytoscapeGraphWrapperDivStyle}>
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
@@ -144,7 +150,17 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
                 elements={this.props.graphData}
                 refresh={this.handleRefreshClick}
                 containerClassName={cytoscapeGraphContainerStyle}
+                ref={refInstance => this.setCytoscapeGraph(refInstance)}
               />
+              {this.props.graphData.nodes && Object.keys(this.props.graphData.nodes).length > 0 ? (
+                <div className={cytoscapeToolbarWrapperDivStyle}>
+                  <CytoscapeToolbar
+                    cytoscapeGraphRef={this.cytoscapeGraphRef}
+                    isLegendActive={this.props.showLegend}
+                    toggleLegend={this.props.toggleLegend}
+                  />
+                </div>
+              ) : null}
             </ErrorBoundary>
             {this.props.summaryData ? (
               <SummaryPanel
@@ -161,6 +177,10 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
         </FlexView>
       </>
     );
+  }
+
+  private setCytoscapeGraph(cytoscapeGraph: any) {
+    this.cytoscapeGraphRef.current = cytoscapeGraph ? cytoscapeGraph.getWrappedInstance() : null;
   }
 
   private loadGraphDataFromBackend = () => {

@@ -11,7 +11,6 @@ describe('ServiceGraphDataState', () => {
       isError: false,
       error: undefined,
       graphDataTimestamp: 0,
-      hideLegend: true,
       graphData: {},
       sidePanelInfo: null
     });

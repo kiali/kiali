@@ -16,7 +16,6 @@ const GRAPH_LAYOUTS = config().toolbar.graphLayouts;
 
 interface ServiceGraphDispatch {
   // Dispatch methods
-  toggleLegend(): void;
   toggleGraphNodeLabels(): void;
   toggleGraphCircuitBreakers(): void;
   toggleGraphVirtualServices(): void;
@@ -29,7 +28,6 @@ type GraphSettingsProps = ServiceGraphDispatch & ServiceGraphFilterState & Graph
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState) => ({
-  showLegend: state.serviceGraph.filterState.showLegend,
   showNodeLabels: state.serviceGraph.filterState.showNodeLabels,
   showCircuitBreakers: state.serviceGraph.filterState.showCircuitBreakers,
   showVirtualServices: state.serviceGraph.filterState.showVirtualServices,
@@ -40,7 +38,6 @@ const mapStateToProps = (state: KialiAppState) => ({
 // Map our actions to Redux
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    toggleLegend: bindActionCreators(serviceGraphFilterActions.toggleLegend, dispatch),
     toggleGraphNodeLabels: bindActionCreators(serviceGraphFilterActions.toggleGraphNodeLabel, dispatch),
     toggleGraphCircuitBreakers: bindActionCreators(serviceGraphFilterActions.toggleGraphCircuitBreakers, dispatch),
     toggleGraphVirtualServices: bindActionCreators(serviceGraphFilterActions.toggleGraphVirtualServices, dispatch),
@@ -85,7 +82,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
   render() {
     // map our attributes from redux
     const {
-      showLegend,
       showCircuitBreakers,
       showVirtualServices,
       showNodeLabels,
@@ -103,7 +99,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
 
     // map or dispatchers for redux
     const {
-      toggleLegend,
       toggleGraphCircuitBreakers,
       toggleGraphVirtualServices,
       toggleGraphNodeLabels,
@@ -123,12 +118,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
         labelText: 'Traffic Animation',
         value: showTrafficAnimation,
         onChange: toggleTrafficAnimation
-      },
-      {
-        id: 'toggleLegend',
-        labelText: 'Legend',
-        value: showLegend,
-        onChange: toggleLegend
       }
     ];
 
