@@ -186,14 +186,17 @@ describe('Inbound Metrics for a workload', () => {
       mockGrafanaInfo({
         url: 'http://172.30.139.113:3000',
         serviceDashboardPath: '/dashboard/db/istio-dashboard',
-        varService: 'var-service'
+        workloadDashboardPath: '/dashboard/db/istio-dashboard',
+        varService: 'var-service',
+        varNamespace: 'var-namespace',
+        varWorkload: 'var-workload'
       })
         .then(() => {
           mounted!.update();
           expect(mounted!.find('#grafana-link > a').map(div => div.getElement().props)).toEqual([
             {
               children: 'View in Grafana',
-              href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local',
+              href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc',
               target: '_blank'
             }
           ]);
@@ -260,14 +263,17 @@ describe('Outbound Metrics for a workload', () => {
       mockGrafanaInfo({
         url: 'http://172.30.139.113:3000',
         serviceDashboardPath: '/dashboard/db/istio-dashboard',
-        varService: 'var-service'
+        workloadDashboardPath: '/dashboard/db/istio-dashboard',
+        varService: 'var-service',
+        varNamespace: 'var-namespace',
+        varWorkload: 'var-workload'
       })
         .then(() => {
           mounted!.update();
           expect(mounted!.find('#grafana-link > a').map(div => div.getElement().props)).toEqual([
             {
               children: 'View in Grafana',
-              href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local',
+              href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc',
               target: '_blank'
             }
           ]);
