@@ -174,9 +174,22 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   };
 
   getGrafanaLink(info: GrafanaInfo): string {
-    return `${info.url}${info.serviceDashboardPath}?${info.varService}=${this.props.object}.${
-      this.props.namespace
-    }.svc.cluster.local`;
+    let grafanaLink;
+    switch (this.props.objectType) {
+      case 'service':
+        grafanaLink = `${info.url}${info.serviceDashboardPath}?${info.varService}=${this.props.object}.${
+          this.props.namespace
+        }.svc.cluster.local`;
+        break;
+      case 'workload':
+        grafanaLink = `${info.url}${info.workloadDashboardPath}?${info.varNamespace}=${this.props.namespace}&${
+          info.varWorkload
+        }=${this.props.object}`;
+        break;
+      default:
+        grafanaLink = `${info.url}${info.workloadDashboardPath}?${info.varNamespace}=${this.props.namespace}`;
+    }
+    return grafanaLink;
   }
 
   getGrafanaInfo = () => {
