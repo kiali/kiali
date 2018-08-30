@@ -8,7 +8,8 @@ import * as LayoutDictionary from './graphs/LayoutDictionary';
 import * as GraphBadge from './graphs/GraphBadge';
 import TrafficRender from './graphs/TrafficRenderer';
 import EmptyGraphLayout from '../../containers/EmptyGraphLayoutContainer';
-import { CytoscapeReactWrapper, PanZoomOptions } from './CytoscapeReactWrapper';
+import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
+import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 
 import { ServiceGraphActions } from '../../actions/ServiceGraphActions';
 import * as API from '../../services/Api';
@@ -85,6 +86,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       position: undefined,
       zoom: undefined
     };
+    this.cytoscapeReactWrapperRef = React.createRef();
   }
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
@@ -135,22 +137,18 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           isLoading={this.props.isLoading}
           isError={this.props.isError}
         >
-          <CytoscapeReactWrapper
-            ref={e => {
-              this.setCytoscapeReactWrapperRef(e);
-            }}
-          />
+          <CytoscapeReactWrapper ref={e => this.setCytoscapeReactWrapperRef(e)} />
         </EmptyGraphLayout>
       </div>
     );
   }
 
-  private getCy() {
-    return this.cytoscapeReactWrapperRef ? this.cytoscapeReactWrapperRef.getCy() : null;
+  getCy() {
+    return this.cytoscapeReactWrapperRef.current ? this.cytoscapeReactWrapperRef.current.getCy() : null;
   }
 
   private setCytoscapeReactWrapperRef(cyRef: any) {
-    this.cytoscapeReactWrapperRef = cyRef;
+    this.cytoscapeReactWrapperRef.current = cyRef;
     this.cyInitialization(this.getCy());
   }
 
@@ -282,11 +280,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   }
 
   private safeFit(cy: any) {
-    cy.fit('', PanZoomOptions.fitPadding);
-    if (cy.zoom() > 2.5) {
-      cy.zoom(2.5);
-      cy.center();
-    }
+    CytoscapeGraphUtils.safeFit(cy);
     this.initialValues.position = { ...cy.pan() };
     this.initialValues.zoom = cy.zoom();
   }
@@ -551,6 +545,8 @@ const mapDispatchToProps = (dispatch: any) => ({
 
 const CytoscapeGraphConnected = connect(
   mapStateToProps,
-  mapDispatchToProps
+  mapDispatchToProps,
+  null,
+  { withRef: true } // Allows to use getWrappedInstance to get the ref
 )(CytoscapeGraph);
 export default CytoscapeGraphConnected;

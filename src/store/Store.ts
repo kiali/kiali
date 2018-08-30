@@ -38,7 +38,6 @@ export interface ServiceGraphState {
     kind: string;
     graphReference: any;
   } | null;
-  hideLegend: boolean;
 }
 
 export interface Token {

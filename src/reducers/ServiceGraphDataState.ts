@@ -11,7 +11,6 @@ const INITIAL_STATE: ServiceGraphState = {
   graphDataTimestamp: 0,
   graphData: {},
   sidePanelInfo: null,
-  hideLegend: true,
   filterState: {
     showLegend: false,
     showNodeLabels: true,
@@ -36,11 +35,6 @@ const serviceGraphDataState = (state: ServiceGraphState = INITIAL_STATE, action)
       newState.isLoading = true;
       newState.isError = false;
       break;
-    case ServiceGraphDataActionKeys.HANDLE_LEGEND:
-      return {
-        ...state,
-        hideLegend: !state.hideLegend
-      };
     case ServiceGraphDataActionKeys.GET_GRAPH_DATA_SUCCESS:
       newState.isLoading = false;
       newState.isError = false;
