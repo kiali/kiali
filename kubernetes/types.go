@@ -436,6 +436,7 @@ type IstioDetails struct {
 	VirtualServices  []IstioObject `json:"virtualservices"`
 	DestinationRules []IstioObject `json:"destinationrules"`
 	ServiceEntries   []IstioObject `json:"serviceentries"`
+	Gateways         []IstioObject `json:"gateways"`
 }
 
 // IstioRules is a wrapper to group all mixer rules related to a Namespace.

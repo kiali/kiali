@@ -23,9 +23,11 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 
 	serviceNames := getServiceNames(in.ServiceList)
 	serviceHosts := kubernetes.ServiceEntryHostnames(in.IstioDetails.ServiceEntries)
+	gatewayNames := kubernetes.GatewayNames(in.IstioDetails.Gateways)
 
 	for _, virtualService := range in.IstioDetails.VirtualServices {
 		validations.MergeValidations(runVirtualServiceCheck(virtualService, in.Namespace, serviceNames, serviceHosts))
+		validations.MergeValidations(runGatewayCheck(virtualService, gatewayNames))
 	}
 	for _, destinationRule := range in.IstioDetails.DestinationRules {
 		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, serviceNames))
@@ -40,6 +42,24 @@ func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace str
 		ServiceNames:      serviceNames,
 		VirtualService:    virtualService,
 		ServiceEntryHosts: serviceHosts,
+	}.Check()
+
+	istioObjectName := virtualService.GetObjectMeta().Name
+	key := models.IstioValidationKey{ObjectType: "virtualservice", Name: istioObjectName}
+	vsvalidations := models.IstioValidations{}
+	vsvalidations[key] = &models.IstioValidation{
+		Name:       istioObjectName,
+		ObjectType: "virtualservice",
+		Checks:     result,
+		Valid:      valid,
+	}
+	return vsvalidations
+}
+
+func runGatewayCheck(virtualService kubernetes.IstioObject, gatewayNames map[string]struct{}) models.IstioValidations {
+	result, valid := virtual_services.NoGatewayChecker{
+		VirtualService: virtualService,
+		GatewayNames:   gatewayNames,
 	}.Check()
 
 	istioObjectName := virtualService.GetObjectMeta().Name

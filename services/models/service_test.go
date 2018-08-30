@@ -508,7 +508,7 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 
 	serviceEntries := []kubernetes.IstioObject{&serviceEntry}
 
-	return &kubernetes.IstioDetails{virtualServices, destinationRules, serviceEntries}
+	return &kubernetes.IstioDetails{virtualServices, destinationRules, serviceEntries, nil}
 }
 
 func fakePrometheusDetails() map[string][]prometheus.Workload {
