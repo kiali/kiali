@@ -10,7 +10,7 @@ type NoGatewayChecker struct {
 	GatewayNames   map[string]struct{}
 }
 
-// Check validates that all the
+// Check validates that all the VirtualServices are pointing to an existing Gateway
 func (s NoGatewayChecker) Check() ([]*models.IstioCheck, bool) {
 	valid := false
 	validations := make([]*models.IstioCheck, 0)
