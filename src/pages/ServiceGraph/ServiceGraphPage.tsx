@@ -31,6 +31,7 @@ type ServiceGraphPageProps = GraphParamsType & {
   summaryData: SummaryData | null;
   pollInterval: PollIntervalInMs;
   isPageVisible: boolean;
+  isError: boolean;
 };
 const NUMBER_OF_DATAPOINTS = 30;
 
@@ -158,7 +159,9 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
                 containerClassName={cytoscapeGraphContainerStyle}
                 ref={refInstance => this.setCytoscapeGraph(refInstance)}
               />
-              {this.props.graphData.nodes && Object.keys(this.props.graphData.nodes).length > 0 ? (
+              {this.props.graphData.nodes &&
+              Object.keys(this.props.graphData.nodes).length > 0 &&
+              !this.props.isError ? (
                 <div className={cytoscapeToolbarWrapperDivStyle}>
                   <CytoscapeToolbar
                     cytoscapeGraphRef={this.cytoscapeGraphRef}

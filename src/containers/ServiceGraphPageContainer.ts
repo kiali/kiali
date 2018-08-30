@@ -21,7 +21,8 @@ const mapStateToProps = (state: KialiAppState) => ({
     : null,
   showLegend: state.serviceGraph.filterState.showLegend,
   pollInterval: state.serviceGraph.filterState.refreshRate,
-  isPageVisible: state.globalState.isPageVisible
+  isPageVisible: state.globalState.isPageVisible,
+  isError: state.serviceGraph.isError
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
