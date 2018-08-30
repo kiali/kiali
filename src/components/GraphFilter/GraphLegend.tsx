@@ -3,6 +3,9 @@ import Draggable from 'react-draggable';
 import { style } from 'typestyle';
 import { Button, Icon } from 'patternfly-react';
 
+// The content of the graph legend is taken from the image in src/assets/img/graph-legend.png
+// The size of content's dialog is the same as the image (it is fetched dynamically on this code)
+// Any image format that can be displayed by a browser could be used.
 const graphLegendImage = require('../../assets/img/graph-legend.png');
 
 export interface GraphLegendProps {
