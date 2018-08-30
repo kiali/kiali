@@ -561,3 +561,31 @@ func mapPortToVirtualServiceProtocol(proto string) string {
 		return "tcp"
 	}
 }
+
+// GatewayNames extracts the gateway names for easier matching
+func GatewayNames(gateways []IstioObject) map[string]struct{} {
+	var empty struct{}
+	names := make(map[string]struct{})
+	for _, v := range gateways {
+		v := v
+		names[v.GetObjectMeta().Name] = empty
+	}
+	return names
+}
+
+// ValidateVirtualServiceGateways checks all VirtualService gateways (except mesh, which is reserved word) and checks that they're found from the given list of gatewayNames
+func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames map[string]struct{}) bool {
+	if gatewaysSpec, found := spec["gateways"]; found {
+		if gateways, ok := gatewaysSpec.([]interface{}); ok {
+			for _, g := range gateways {
+				if gate, ok := g.(string); ok {
+					if _, found := gatewayNames[gate]; !found && gate != "mesh" {
+						return false
+					}
+				}
+			}
+		}
+	}
+	// No gateways defined or all found
+	return true
+}

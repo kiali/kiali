@@ -98,6 +98,29 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.True(validations[models.IstioValidationKey{"destinationrule", "customer-dr"}].Valid)
 }
 
+func TestObjectWithoutGateway(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	assert := assert.New(t)
+
+	istioDetails := fakeIstioDetails()
+	gateways := make([]interface{}, 1)
+	gateways = append(gateways, "non-existant-gateway")
+
+	istioDetails.VirtualServices[0].GetSpec()["gateways"] = gateways
+	validations := NoServiceChecker{
+		Namespace:    "test",
+		IstioDetails: istioDetails,
+		ServiceList:  fakeServiceDetails([]string{"reviews", "product", "customer"}),
+	}.Check()
+
+	assert.NotEmpty(validations)
+
+	productVs := validations[models.IstioValidationKey{"virtualservice", "product-vs"}]
+	assert.False(productVs.Valid)
+	assert.Equal("VirtualService is pointing to a non-existent gateway", productVs.Checks[0].Message)
+}
+
 func fakeIstioDetails() *kubernetes.IstioDetails {
 	istioDetails := kubernetes.IstioDetails{}
 

@@ -91,6 +91,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	vss := make([]kubernetes.IstioObject, 0)
 	ses := make([]kubernetes.IstioObject, 0)
 	drs := make([]kubernetes.IstioObject, 0)
+	gws := make([]kubernetes.IstioObject, 0)
 	var objectCheckers []ObjectChecker
 	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, ServiceList: serviceList}
 	istioDetails := kubernetes.IstioDetails{}
@@ -106,15 +107,26 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		}
 	}
 
+	// Identical to above, but since k8s layer has both (namespace, serviceentry) and (namespace) queries, we need two different functions
+	fetchNoEntry := func(rValue *[]kubernetes.IstioObject, namespace string, fetcher func(string) ([]kubernetes.IstioObject, error), errChan chan error) {
+		defer wg.Done()
+		fetched, err := fetcher(namespace)
+		*rValue = append(*rValue, fetched...)
+		if err != nil {
+			errChan <- err
+		}
+	}
+
 	switch objectType {
 	case "gateways":
 		// Validations on Gateways are not yet in place
 	case "virtualservices":
-		wg.Add(2)
+		wg.Add(3)
 		errChan := make(chan error, 3)
 		go fetch(&vss, namespace, in.k8s.GetVirtualServices, errChan)
 		go fetch(&drs, namespace, in.k8s.GetDestinationRules, errChan)
-		// We can block current goroutine for the third fetch
+		go fetchNoEntry(&gws, namespace, in.k8s.GetGateways, errChan)
+		// We can block current goroutine for the fourth fetch
 		ses, err = in.k8s.GetServiceEntries(namespace)
 		if err != nil {
 			errChan <- err
@@ -124,6 +136,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 			istioDetails.ServiceEntries = ses
 			istioDetails.VirtualServices = vss
 			istioDetails.DestinationRules = drs
+			istioDetails.Gateways = gws
 			virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
 			objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
 		} else {
