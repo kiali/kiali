@@ -108,6 +108,10 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
     );
   }
 
+  isVirtualService() {
+    return this.typeIstioObject() === 'VirtualService';
+  }
+
   typeIstioObject() {
     if ('tcp' in this.props.object && 'http' in this.props.object) {
       return 'VirtualService';
@@ -117,7 +121,7 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
 
   overviewTab() {
     const istioObj: VirtualService | DestinationRule = this.props.object as VirtualService | DestinationRule;
-    if (this.typeIstioObject() === 'VirtualService') {
+    if (this.isVirtualService()) {
       return (
         <TabPane eventKey="overview">
           <VirtualServiceDetail virtualService={istioObj} validations={this.props.validations['virtualservice']} />
@@ -131,7 +135,7 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
     return (
       <>
         <Nav bsClass="nav nav-tabs nav-tabs-pf">
-          {this.typeIstioObject() === 'VirtualService' && (
+          {this.isVirtualService() && (
             <NavItem eventKey="overview">
               <div>Overview</div>
             </NavItem>
@@ -145,13 +149,14 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
   }
 
   render() {
+    const defaultDetailTab = this.isVirtualService() ? 'overview' : 'yaml';
     return (
       <div className="container-fluid container-cards-pf">
         <Row className="row-cards-pf">
           <Col>
             <TabContainer
               id="basic-tabs"
-              activeKey={this.props.activeTab('detail', 'overview')}
+              activeKey={this.props.activeTab('detail', defaultDetailTab)}
               onSelect={this.props.onSelectTab('detail')}
             >
               <>

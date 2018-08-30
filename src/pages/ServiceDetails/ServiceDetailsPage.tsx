@@ -171,6 +171,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     const to = this.servicePageURL();
     const toDetailsTab = to + '?list=' + parsedSearch.type + 's';
     const toDetails = to + '?' + parsedSearch.type + '=' + parsedSearch.name;
+    const detailTab = parsedSearch.type === 'virtualservice' ? 'Virtual Service' : 'Destination Rule';
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass={'span'}>
@@ -201,7 +202,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
               </Link>
             </Breadcrumb.Item>
             <Breadcrumb.Item active={true}>
-              {parsedSearchTypeHuman} {(urlParams.get('detail') || 'overview') === 'overview' ? 'Overview' : 'YAML'}
+              {parsedSearchTypeHuman} {(urlParams.get('detail') || detailTab) === 'overview' ? 'Overview' : 'YAML'}
             </Breadcrumb.Item>
           </>
         )}
