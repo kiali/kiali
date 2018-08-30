@@ -10,6 +10,8 @@ describe('MessageCenter', () => {
     {
       id: 'first',
       title: 'im first',
+      showActions: true,
+      hideIfEmpty: false,
       messages: [
         {
           id: 1,
@@ -31,6 +33,8 @@ describe('MessageCenter', () => {
     {
       id: 'second',
       title: 'im second',
+      showActions: true,
+      hideIfEmpty: false,
       messages: [
         {
           id: 2,

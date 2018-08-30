@@ -90,6 +90,10 @@ describe('MessageCenterActions', () => {
     const expectedActions = [
       {
         type: MessageCenterActionKeys.SHOW
+      },
+      {
+        groupId: 'default',
+        type: 'EXPAND_GROUP'
       }
     ];
     const store = mockStore({ messageCenter: { hidden: true } });

@@ -76,6 +76,7 @@ export const LoginActions = {
                   actualState['authentication']['username']
                 )
               );
+              dispatch(HelpDropdownActions.refresh());
             },
             error => {
               /** Logout user */

@@ -12,7 +12,8 @@ export const enum MessageCenterActionKeys {
   HIDE = 'HIDE',
   TOGGLE_EXPAND = 'TOGGLE_EXPAND',
   TOGGLE_GROUP = 'TOGGLE_GROUP',
-  HIDE_NOTIFICATION = 'HIDE_NOTIFICATION'
+  HIDE_NOTIFICATION = 'HIDE_NOTIFICATION',
+  EXPAND_GROUP = 'EXPAND_GROUP'
 }
 
 type numberOrNumberArray = number | number[];
@@ -52,6 +53,13 @@ export const MessageCenterActions = {
       groupId
     };
   }),
+  expandGroup: createAction(MessageCenterActionKeys.EXPAND_GROUP, (groupId: string) => {
+    const type = MessageCenterActionKeys.EXPAND_GROUP;
+    return {
+      type,
+      groupId
+    };
+  }),
   hideNotification: createAction(MessageCenterActionKeys.HIDE_NOTIFICATION, (messageId: numberOrNumberArray) => {
     const type = MessageCenterActionKeys.HIDE_NOTIFICATION;
     messageId = toNumberArray(messageId);
@@ -70,6 +78,19 @@ export const MessageCenterActions = {
       const state = getState();
       if (state.messageCenter.hidden) {
         dispatch(MessageCenterActions.showMessageCenter());
+        dispatch(MessageCenterActions.expandGroup('default'));
+      } else {
+        dispatch(MessageCenterActions.hideMessageCenter());
+      }
+      return Promise.resolve();
+    };
+  },
+  toggleSystemErrorsCenter: () => {
+    return (dispatch, getState) => {
+      const state = getState();
+      if (state.messageCenter.hidden) {
+        dispatch(MessageCenterActions.showMessageCenter());
+        dispatch(MessageCenterActions.expandGroup('systemErrors'));
       } else {
         dispatch(MessageCenterActions.hideMessageCenter());
       }

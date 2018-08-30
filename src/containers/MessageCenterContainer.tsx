@@ -35,8 +35,16 @@ const mapStateToPropsMessageCenterTrigger = state => {
   type MessageCenterTriggerPropsToMap = {
     newMessagesCount: number;
     badgeDanger: boolean;
+    systemErrorsCount: number;
   };
   const dangerousMessageTypes = [MessageType.ERROR, MessageType.WARNING];
+  let systemErrorsCount = 0;
+
+  const systemErrorsGroup = state.messageCenter.groups.find(item => item.id === 'systemErrors');
+  if (systemErrorsGroup) {
+    systemErrorsCount = systemErrorsGroup.messages.length;
+  }
+
   return state.messageCenter.groups
     .reduce((unreadMessages: any[], group) => {
       return unreadMessages.concat(
@@ -54,13 +62,14 @@ const mapStateToPropsMessageCenterTrigger = state => {
         propsToMap.badgeDanger = propsToMap.badgeDanger || dangerousMessageTypes.includes(message.type);
         return propsToMap;
       },
-      { newMessagesCount: 0, badgeDanger: false }
+      { newMessagesCount: 0, systemErrorsCount: systemErrorsCount, badgeDanger: false }
     );
 };
 
 const mapDispatchToPropsMessageCenterTrigger = dispatch => {
   return {
-    toggleMessageCenter: () => dispatch(MessageCenterActions.toggleMessageCenter())
+    toggleMessageCenter: () => dispatch(MessageCenterActions.toggleMessageCenter()),
+    toggleSystemErrorsCenter: () => dispatch(MessageCenterActions.toggleSystemErrorsCenter())
   };
 };
 

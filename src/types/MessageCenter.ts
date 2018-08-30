@@ -20,6 +20,8 @@ export interface NotificationGroup {
   id: string;
   title: string;
   messages: NotificationMessage[];
+  showActions: boolean;
+  hideIfEmpty: boolean;
 }
 
 export interface MessageCenterPropsType {

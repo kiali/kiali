@@ -6,9 +6,18 @@ const INITIAL_STATE: MessageCenterState = {
   nextId: 0,
   groups: [
     {
+      id: 'systemErrors',
+      title: 'Open issues',
+      messages: [],
+      showActions: false,
+      hideIfEmpty: true
+    },
+    {
       id: 'default',
-      title: 'Default',
-      messages: []
+      title: 'Notifications',
+      messages: [],
+      showActions: true,
+      hideIfEmpty: false
     }
   ],
   hidden: true,
@@ -91,12 +100,15 @@ const Messages = (state: MessageCenterState = INITIAL_STATE, action) => {
       return state;
     case MessageCenterActionKeys.TOGGLE_EXPAND:
       return mergeToState(state, { expanded: !state.expanded });
-
     case MessageCenterActionKeys.TOGGLE_GROUP: {
       const { groupId } = action;
       if (state.expandedGroupId === groupId) {
         return mergeToState(state, { expandedGroupId: undefined });
       }
+      return mergeToState(state, { expandedGroupId: groupId });
+    }
+    case MessageCenterActionKeys.EXPAND_GROUP: {
+      const { groupId } = action;
       return mergeToState(state, { expandedGroupId: groupId });
     }
 
