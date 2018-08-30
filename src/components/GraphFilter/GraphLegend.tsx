@@ -1,65 +1,63 @@
 import * as React from 'react';
 import Draggable from 'react-draggable';
-import { Card } from 'patternfly-react';
-import { PfColors } from '../../components/Pf/PfColors';
 import { style } from 'typestyle';
-import { NestedCSSProperties } from 'typestyle/lib/types';
+import { Button, Icon } from 'patternfly-react';
+
+// The content of the graph legend is taken from the image in src/assets/img/graph-legend.png
+// The size of content's dialog is the same as the image (it is fetched dynamically on this code)
+// Any image format that can be displayed by a browser could be used.
+const graphLegendImage = require('../../assets/img/graph-legend.png');
 
 export interface GraphLegendProps {
   closeLegend: () => void;
+  className?: string;
 }
 
-export interface GraphLegendState {}
-
-export interface ArrowProps {
-  color: string;
-  label: string;
-  dashed: boolean;
+export interface GraphLegendState {
+  width: number;
+  height: number;
 }
-const dashedTemplate = (color: string) => {
-  return `repeating-linear-gradient(90deg, ${color},  ${color} 10px, white 10px, white 20px)`;
-};
 
-const Arrow = (props: ArrowProps) => {
-  const line: NestedCSSProperties = { marginTop: '5px', width: '90px', height: '5px', float: 'left' };
-  if (props.dashed) {
-    line['backgroundImage'] = dashedTemplate(props.color);
-  } else {
-    line['backgroundColor'] = props.color;
-  }
-  const lineBase = style(line);
-  const arrowStyle = style({ marginTop: 20, clear: 'both' });
-  const arrowDiv = style({ width: '175px', float: 'left' });
-  const labelStyle = style({ float: 'left', verticalAlign: 'middle', height: '20px' });
-  return (
-    <div className={arrowStyle}>
-      <div className={arrowDiv}>
-        <div className={lineBase} />
-        <div className={labelStyle}>{props.label}</div>
-      </div>
-    </div>
-  );
-};
+const legendImageStyle = style({
+  backgroundImage: `url(${graphLegendImage})`
+});
 
 export default class GraphLegend extends React.Component<GraphLegendProps, GraphLegendState> {
   constructor(props: GraphLegendProps) {
     super(props);
+    this.state = {
+      width: 0,
+      height: 0
+    };
+    const image = new Image();
+    image.onload = () => {
+      this.setState({
+        width: image.width,
+        height: image.height
+      });
+    };
+    image.src = graphLegendImage;
   }
 
   render() {
-    const dragHandlers = {};
-    const cardStyle = style({ zIndex: 10, width: '20em', position: 'absolute' });
+    if (this.state.height === 0 && this.state.width === 0) {
+      return null;
+    }
+    const className = this.props.className ? this.props.className : '';
     return (
-      <Draggable defaultPosition={{ x: 20, y: 500 }} {...dragHandlers}>
-        <Card accented={false} className={cardStyle}>
-          <Card.Body>
-            <Arrow color={PfColors.Red100} label={'Over 10% Error'} dashed={false} />
-            <Arrow color={PfColors.Orange400} label={'5 - 10% Error'} dashed={false} />
-            <Arrow color={PfColors.Green400} label={'< 5% Error'} dashed={false} />
-            <Arrow color={PfColors.Black} label={'Idle'} dashed={false} />
-            <Arrow color={PfColors.Black} label={'No Traffic yet'} dashed={true} />
-          </Card.Body>
-        </Card>
+      <Draggable>
+        <div className={`modal-content ${className}`}>
+          <div className="modal-header">
+            <Button className="close" bsClass="" type="" onClick={this.props.closeLegend}>
+              <Icon title="Close" type="pf" name="close" />
+            </Button>
+            <span className="modal-title">Graph Legend</span>
+          </div>
+          <div
+            style={{ width: this.state.width, height: this.state.height }}
+            className={`modal-body ${legendImageStyle}`}
+          />
+        </div>
       </Draggable>
     );
   }

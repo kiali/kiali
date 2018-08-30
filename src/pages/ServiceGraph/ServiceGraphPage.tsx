@@ -51,6 +51,13 @@ const cytoscapeToolbarWrapperDivStyle = style({
   boxShadow: '2px 2px 6px 0 grey'
 });
 
+const graphToolbarStyle = style({
+  right: '0',
+  bottom: '10px',
+  zIndex: 9999,
+  position: 'absolute'
+});
+
 const ServiceGraphErrorBoundaryFallback = () => {
   return (
     <div className={cytoscapeGraphContainerStyle}>
@@ -164,7 +171,9 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
                 {...computePrometheusQueryInterval(this.props.graphDuration.value, NUMBER_OF_DATAPOINTS)}
               />
             ) : null}
-            {this.props.showLegend && <GraphLegend closeLegend={this.props.toggleLegend} />}
+            {this.props.showLegend && (
+              <GraphLegend className={graphToolbarStyle} closeLegend={this.props.toggleLegend} />
+            )}
           </FlexView>
         </FlexView>
       </>
