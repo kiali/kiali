@@ -52,8 +52,8 @@ const cytoscapeToolbarWrapperDivStyle = style({
 });
 
 const graphToolbarStyle = style({
-  left: '-13px',
-  bottom: '60px',
+  right: '0',
+  bottom: '10px',
   zIndex: 9999,
   position: 'absolute'
 });
