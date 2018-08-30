@@ -15,12 +15,10 @@ import { store } from '../../store/ConfigStore';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 import * as API from '../../services/Api';
 import { authentication } from '../../utils/Authentication';
+import { KialiLogo } from '../../config';
 
 export const istioConfigTitle = 'Istio Config';
 export const servicesTitle = 'Services';
-
-const pfLogo = require('../../img/logo-alt.svg');
-const pfBrand = require('../../assets/img/kiali-title.svg');
 
 type PropsType = {
   location: any;
@@ -110,7 +108,7 @@ class Navigation extends React.Component<PropsType> {
       <>
         <VerticalNav setControlledState={this.setControlledState} navCollapsed={this.props.navCollapsed}>
           <VerticalNav.Masthead title="Kiali">
-            <VerticalNav.Brand iconImg={pfLogo} titleImg={pfBrand} />
+            <VerticalNav.Brand iconImg={KialiLogo} />
             <PfSpinnerContainer />
             <VerticalNav.IconBar>
               <MessageCenter.Trigger />

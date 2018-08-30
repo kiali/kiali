@@ -53,24 +53,8 @@ export const config = () => {
   });
 };
 
-/** Social networks in Login Page */
-export const socialLinks = [
-  {
-    url: 'https://github.com/kiali',
-    icon: { type: 'fa', name: 'github' },
-    label: 'Github'
-  },
-  {
-    url: 'https://www.youtube.com/channel/UCcm2NzDN_UCZKk2yYmOpc5w',
-    icon: { type: 'fa', name: 'youtube' },
-    label: 'Youtube'
-  },
-  {
-    url: 'https://twitter.com/KialiProject',
-    icon: { type: 'fa', name: 'twitter' },
-    label: 'Twitter'
-  }
-];
-
 /** Istio logo */
 export const IstioLogo = require('./assets/img/istio-logo.svg');
+
+/** Kiali logo */
+export const KialiLogo = require('./assets/img/logo-alt.svg');

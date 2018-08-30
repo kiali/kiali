@@ -10,7 +10,7 @@ type PfSpinnerProps = {
 
 const spinnerStyle = style({
   position: 'absolute',
-  left: 450,
+  left: 200,
   top: 15
 });
 
