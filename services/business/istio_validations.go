@@ -32,6 +32,25 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		return nil, err
 	}
 
+	// Get Gateways and ServiceEntries to validate VirtualServices
+	wg := sync.WaitGroup{}
+	errChan := make(chan error, 2)
+
+	gws := make([]kubernetes.IstioObject, 0)
+	ses := make([]kubernetes.IstioObject, 0)
+
+	wg.Add(2)
+	go fetchNoEntry(&gws, namespace, in.k8s.GetGateways, &wg, errChan)
+	go fetchNoEntry(&ses, namespace, in.k8s.GetServiceEntries, &wg, errChan)
+	wg.Wait()
+	if len(errChan) == 0 {
+		istioDetails.Gateways = gws
+		istioDetails.ServiceEntries = ses
+	} else {
+		err = <-errChan
+		return nil, err
+	}
+
 	objectCheckers := []ObjectChecker{
 		checkers.VirtualServiceChecker{namespace, istioDetails.DestinationRules,
 			istioDetails.VirtualServices},
@@ -51,6 +70,25 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 
 	serviceList, err := in.k8s.GetServices(namespace)
 	if err != nil {
+		return nil, err
+	}
+
+	// Get Gateways and ServiceEntries to validate VirtualServices
+	wg := sync.WaitGroup{}
+	errChan := make(chan error, 2)
+
+	gws := make([]kubernetes.IstioObject, 0)
+	ses := make([]kubernetes.IstioObject, 0)
+
+	wg.Add(2)
+	go fetchNoEntry(&gws, namespace, in.k8s.GetGateways, &wg, errChan)
+	go fetchNoEntry(&ses, namespace, in.k8s.GetServiceEntries, &wg, errChan)
+	wg.Wait()
+	if len(errChan) == 0 {
+		istioDetails.Gateways = gws
+		istioDetails.ServiceEntries = ses
+	} else {
+		err = <-errChan
 		return nil, err
 	}
 
@@ -98,24 +136,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	noServiceChecker.IstioDetails = &istioDetails
 
 	wg := sync.WaitGroup{}
-	fetch := func(rValue *[]kubernetes.IstioObject, namespace string, fetcher func(string, string) ([]kubernetes.IstioObject, error), errChan chan error) {
-		defer wg.Done()
-		fetched, err := fetcher(namespace, "")
-		*rValue = append(*rValue, fetched...)
-		if err != nil {
-			errChan <- err
-		}
-	}
-
-	// Identical to above, but since k8s layer has both (namespace, serviceentry) and (namespace) queries, we need two different functions
-	fetchNoEntry := func(rValue *[]kubernetes.IstioObject, namespace string, fetcher func(string) ([]kubernetes.IstioObject, error), errChan chan error) {
-		defer wg.Done()
-		fetched, err := fetcher(namespace)
-		*rValue = append(*rValue, fetched...)
-		if err != nil {
-			errChan <- err
-		}
-	}
 
 	switch objectType {
 	case "gateways":
@@ -123,9 +143,9 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	case "virtualservices":
 		wg.Add(3)
 		errChan := make(chan error, 3)
-		go fetch(&vss, namespace, in.k8s.GetVirtualServices, errChan)
-		go fetch(&drs, namespace, in.k8s.GetDestinationRules, errChan)
-		go fetchNoEntry(&gws, namespace, in.k8s.GetGateways, errChan)
+		go fetch(&vss, namespace, in.k8s.GetVirtualServices, &wg, errChan)
+		go fetch(&drs, namespace, in.k8s.GetDestinationRules, &wg, errChan)
+		go fetchNoEntry(&gws, namespace, in.k8s.GetGateways, &wg, errChan)
 		// We can block current goroutine for the fourth fetch
 		ses, err = in.k8s.GetServiceEntries(namespace)
 		if err != nil {
@@ -174,4 +194,23 @@ func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
 		objectTypeValidations.MergeValidations(objectChecker.Check())
 	}
 	return objectTypeValidations
+}
+
+func fetch(rValue *[]kubernetes.IstioObject, namespace string, fetcher func(string, string) ([]kubernetes.IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
+	defer wg.Done()
+	fetched, err := fetcher(namespace, "")
+	*rValue = append(*rValue, fetched...)
+	if err != nil {
+		errChan <- err
+	}
+}
+
+// Identical to above, but since k8s layer has both (namespace, serviceentry) and (namespace) queries, we need two different functions
+func fetchNoEntry(rValue *[]kubernetes.IstioObject, namespace string, fetcher func(string) ([]kubernetes.IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
+	defer wg.Done()
+	fetched, err := fetcher(namespace)
+	*rValue = append(*rValue, fetched...)
+	if err != nil {
+		errChan <- err
+	}
 }
