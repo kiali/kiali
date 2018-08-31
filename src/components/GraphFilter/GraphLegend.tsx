@@ -3,10 +3,10 @@ import Draggable from 'react-draggable';
 import { style } from 'typestyle';
 import { Button, Icon } from 'patternfly-react';
 
-// The content of the graph legend is taken from the image in src/assets/img/graph-legend.png
+// The content of the graph legend is taken from the image in src/assets/img/graph-legend.svg
 // The size of content's dialog is the same as the image (it is fetched dynamically on this code)
 // Any image format that can be displayed by a browser could be used.
-const graphLegendImage = require('../../assets/img/graph-legend.png');
+const graphLegendImage = require('../../assets/img/graph-legend.svg');
 
 export interface GraphLegendProps {
   closeLegend: () => void;
@@ -19,7 +19,9 @@ export interface GraphLegendState {
 }
 
 const legendImageStyle = style({
-  backgroundImage: `url(${graphLegendImage})`
+  backgroundImage: `url(${graphLegendImage})`,
+  margin: '5px 10px',
+  padding: 0
 });
 
 export default class GraphLegend extends React.Component<GraphLegendProps, GraphLegendState> {
@@ -48,7 +50,7 @@ export default class GraphLegend extends React.Component<GraphLegendProps, Graph
       <Draggable>
         <div className={`modal-content ${className}`}>
           <div className="modal-header">
-            <Button className="close" bsClass="" type="" onClick={this.props.closeLegend}>
+            <Button className="close" bsClass="" onClick={this.props.closeLegend}>
               <Icon title="Close" type="pf" name="close" />
             </Button>
             <span className="modal-title">Graph Legend</span>

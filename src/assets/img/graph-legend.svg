@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="490px" height="193px" viewBox="0 0 490 193" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 51.1 (57501) - http://www.bohemiancoding.com/sketch -->
+    <title>Group 42</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="service-graph" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Group-42" transform="translate(-2.000000, 2.000000)">
+            <path id="Line-3" d="M385,28.8333333 L371,21.8333333 L371,35.8333333 L385,28.8333333 Z M341.22449,29.8333333 L372,29.8333333 L373,29.8333333 L373,27.8333333 L372,27.8333333 L341.22449,27.8333333 L340.22449,27.8333333 L340.22449,29.8333333 L341.22449,29.8333333 Z" fill="#CC0000" fill-rule="nonzero"></path>
+            <path id="Line-3" d="M385,48.8333333 L371,41.8333333 L371,55.8333333 L385,48.8333333 Z M341.22449,49.8333333 L372,49.8333333 L373,49.8333333 L373,47.8333333 L372,47.8333333 L341.22449,47.8333333 L340.22449,47.8333333 L340.22449,49.8333333 L341.22449,49.8333333 Z" fill="#EC7A08" fill-rule="nonzero"></path>
+            <path id="Line-3" d="M385,68.8333333 L371,61.8333333 L371,75.8333333 L385,68.8333333 Z M341.22449,69.8333333 L372,69.8333333 L373,69.8333333 L373,67.8333333 L372,67.8333333 L341.22449,67.8333333 L340.22449,67.8333333 L340.22449,69.8333333 L341.22449,69.8333333 Z" fill="#3F9C35" fill-rule="nonzero"></path>
+            <text id="&gt;-10%-Error" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                <tspan x="402" y="32">&gt; 10% Error</tspan>
+            </text>
+            <text id="5---10%-Error" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                <tspan x="402" y="52">5 - 10% Error</tspan>
+            </text>
+            <text id="&lt;-5%-Error" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                <tspan x="402" y="72">&lt; 5% Error</tspan>
+            </text>
+            <text id="Idle" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                <tspan x="402" y="112">Idle</tspan>
+            </text>
+            <text id="Normal-Request" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                <tspan x="401" y="167">Normal Request</tspan>
+            </text>
+            <text id="Failed-Request" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                <tspan x="401" y="187">Failed Request</tspan>
+            </text>
+            <text id="TCP-Connection" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                <tspan x="402" y="92">TCP Connection</tspan>
+            </text>
+            <path id="Line-3" d="M385,108.833333 L371,101.833333 L371,115.833333 L385,108.833333 Z M341.22449,109.833333 L372,109.833333 L373,109.833333 L373,107.833333 L372,107.833333 L341.22449,107.833333 L340.22449,107.833333 L340.22449,109.833333 L341.22449,109.833333 Z" fill="#8B8D8F" fill-rule="nonzero"></path>
+            <path d="M341.22449,162.833333 L385,162.833333" id="Line-3" stroke="#D1D1D1" stroke-width="2" stroke-linecap="square"></path>
+            <path d="M341.22449,182.833333 L385,182.833333" id="Line-3" stroke="#D1D1D1" stroke-width="2" stroke-linecap="square"></path>
+            <text id="Node-Shapes" font-family="OpenSans-Semibold, Open Sans" font-size="15" font-weight="500" line-spacing="10" fill="#030303">
+                <tspan x="3" y="16">Node Shapes</tspan>
+            </text>
+            <text id="Node-Colors" font-family="OpenSans-Semibold, Open Sans" font-size="15" font-weight="500" line-spacing="10" fill="#030303">
+                <tspan x="183" y="16">Node Colors</tspan>
+            </text>
+            <text id="Edges" font-family="OpenSans-Semibold, Open Sans" font-size="15" font-weight="500" line-spacing="10" fill="#030303">
+                <tspan x="338" y="17">Edges</tspan>
+            </text>
+            <text id="Traffic-Animations" font-family="OpenSans-Semibold, Open Sans" font-size="15" font-weight="500" line-spacing="10" fill="#030303">
+                <tspan x="338" y="149">Traffic Animations</tspan>
+            </text>
+            <circle id="Oval-3" fill="#393F44" cx="364" cy="163" r="5"></circle>
+            <g id="Group" transform="translate(341.000000, 83.000000)">
+                <path id="Line" d="M44,6 L30,-1 L30,13 L44,6 Z M0,7 L31,7 L32,7 L32,5 L31,5 L0,5 L-1,5 L-1,7 L0,7 Z" fill="#004368" fill-rule="nonzero"></path>
+                <path d="M25,0 L25,12" id="Line-2" stroke="#004368" stroke-width="3" stroke-linecap="square"></path>
+            </g>
+            <polygon id="Polygon" fill="#CC0000" points="364 177 370 183 364 189 358 183"></polygon>
+            <g id="Group-8" transform="translate(183.000000, 27.000000)">
+                <text id="Healthy" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                    <tspan x="32" y="16">Healthy</tspan>
+                </text>
+                <circle id="Oval-7" stroke="#8B8D8F" fill="#FFFFFF" cx="12.5" cy="12.5" r="12.5"></circle>
+            </g>
+            <g id="Group-9" transform="translate(183.000000, 72.000000)">
+                <text id="Warning" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                    <tspan x="32" y="17">Warning</tspan>
+                </text>
+                <circle id="Oval-7" stroke="#EC7A08" fill="#FFFFFF" cx="12.5" cy="12.5" r="12.5"></circle>
+            </g>
+            <g id="Group-10" transform="translate(183.000000, 115.000000)">
+                <text id="Error" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                    <tspan x="32" y="18">Error</tspan>
+                </text>
+                <circle id="Oval-7" stroke="#CC0000" fill="#FFFFFF" cx="12.5" cy="12.5" r="12.5"></circle>
+            </g>
+            <g id="Group-11" transform="translate(183.000000, 152.000000)">
+                <text id="Unused-(no-traffic-y" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                    <tspan x="33" y="13">Unused</tspan>
+                    <tspan x="33" y="31">(no traffic yet)</tspan>
+                </text>
+                <path d="M12.5,31 C19.4035594,31 25,25.4035594 25,18.5 C25,11.5964406 19.4035594,6 12.5,6 C5.59644063,6 0,11.5964406 0,18.5 C0,25.4035594 5.59644063,31 12.5,31 Z" id="Oval-7" stroke="#8B8D8F" fill="#FFFFFF" stroke-dasharray="6,5"></path>
+            </g>
+            <g id="Group-3" transform="translate(0.000000, 153.000000)">
+                <text id="Service" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                    <tspan x="34" y="20">Service</tspan>
+                </text>
+                <polygon id="Polygon" stroke="#8B8D8F" fill="#FFFFFF" transform="translate(16.500000, 16.500000) rotate(23.000000) translate(-16.500000, -16.500000) " points="16.5 4 25.3388348 7.66116524 29 16.5 25.3388348 25.3388348 16.5 29 7.66116524 25.3388348 4 16.5 7.66116524 7.66116524"></polygon>
+            </g>
+            <g id="Group-6" transform="translate(3.000000, 27.000000)">
+                <text id="App/Workload" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                    <tspan x="31" y="15">App/Workload</tspan>
+                </text>
+                <circle id="Oval-5" stroke="#8B8D8F" fill="#FFFFFF" cx="12.5" cy="12.5" r="12.5"></circle>
+            </g>
+            <g id="Group-5" transform="translate(3.000000, 66.000000)">
+                <text id="App/Workload-(Extern" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                    <tspan x="31" y="13">App/Workload</tspan>
+                    <tspan x="31" y="31">(External Namespace)</tspan>
+                </text>
+                <polygon id="Polygon" stroke="#8B8D8F" fill="#FFFFFF" points="12.5 6 24.3882065 14.6372876 19.8473157 28.6127124 5.15268435 28.6127124 0.611793546 14.6372876"></polygon>
+            </g>
+            <g id="Group-7" transform="translate(3.000000, 115.000000)">
+                <text id="Traffic-Source" font-family="OpenSans, Open Sans" font-size="12" font-weight="normal" line-spacing="18" fill="#030303">
+                    <tspan x="30" y="15">Traffic Source</tspan>
+                </text>
+                <polygon id="Polygon" stroke="#8B8D8F" fill="#FFFFFF" points="12.5 0 25 12.5 12.5 25 0 12.5"></polygon>
+            </g>
+        </g>
+    </g>
+</svg>
