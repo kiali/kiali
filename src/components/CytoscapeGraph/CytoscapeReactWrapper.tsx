@@ -7,13 +7,11 @@ import cytoscape from 'cytoscape';
 import cycola from 'cytoscape-cola';
 import dagre from 'cytoscape-dagre';
 import coseBilkent from 'cytoscape-cose-bilkent';
-import popper from 'cytoscape-popper';
 
 cytoscape.use(canvas);
 cytoscape.use(cycola);
 cytoscape.use(dagre);
 cytoscape.use(coseBilkent);
-cytoscape.use(popper);
 
 type CytoscapeReactWrapperProps = {};
 

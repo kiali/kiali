@@ -46,7 +46,10 @@ export const CytoscapeGlobalScratchNamespace = '_global';
 export type CytoscapeGlobalScratchData = {
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
+  showCircuitBreakers: boolean;
+  showMissingSidecars: boolean;
   showNodeLabels: boolean;
+  showVirtualServices: boolean;
 };
 
 export interface CytoscapeBaseEvent {

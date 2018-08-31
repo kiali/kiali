@@ -114,7 +114,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                       {pods.length > 0 && <WorkloadPods pods={pods} validations={this.props.validations!['pod']} />}
                     </TabPane>
                     <TabPane eventKey={'services'}>
-                      {pods.length > 0 && <WorkloadServices services={services} namespace={this.props.namespace} />}
+                      {services.length > 0 && <WorkloadServices services={services} namespace={this.props.namespace} />}
                     </TabPane>
                   </TabContent>
                 </div>
