@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { AboutModal } from 'patternfly-react';
+import { AboutModal, Icon } from 'patternfly-react';
 import { Component } from '../../store/Store';
-import { KialiLogo } from '../../config';
+import { config, KialiLogo } from '../../config';
 
 const KIALI_CORE_COMMIT_HASH = 'Kiali core commit hash';
 const KIALI_CORE_VERSION = 'Kiali core version';
@@ -46,9 +46,51 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
             <AboutModal.VersionItem key={component.name} label={component.name} versionText={component.version} />
           ))}
         </AboutModal.Versions>
+        {this.renderWebsiteLink()}
+        {this.renderProjectLink()}
       </AboutModal>
     );
   }
+
+  private renderWebsiteLink = () => {
+    if (config().about && config().about.website) {
+      return (
+        <div>
+          <a href={config().about.website.url} target="_blank">
+            <Icon
+              name={config().about.website.iconName}
+              type={config().about.website.iconType}
+              size="lg"
+              style={{ color: 'white' }}
+            />{' '}
+            {config().about.website.linkText}
+          </a>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  private renderProjectLink = () => {
+    if (config().about && config().about.project) {
+      return (
+        <div>
+          <a href={config().about.project.url} target="_blank">
+            <Icon
+              name={config().about.project.iconName}
+              type={config().about.project.iconType}
+              size="lg"
+              style={{ color: 'white' }}
+            />{' '}
+            {config().about.project.linkText}
+          </a>
+        </div>
+      );
+    }
+
+    return null;
+  };
 }
 
 export default AboutUIModal;

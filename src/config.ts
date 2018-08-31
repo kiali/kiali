@@ -49,6 +49,21 @@ export const config = () => {
         'cose-bilkent': 'Cose',
         dagre: 'Dagre'
       }
+    },
+    /** About dialog configuration */
+    about: {
+      project: {
+        url: 'https://github.com/kiali',
+        iconName: 'github',
+        iconType: 'fa',
+        linkText: 'Find us on GitHub'
+      },
+      website: {
+        url: 'http://kiali.io',
+        iconName: 'home',
+        iconType: 'fa',
+        linkText: 'Visit our web page'
+      }
     }
   });
 };
