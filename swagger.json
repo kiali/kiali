@@ -2707,6 +2707,10 @@
         "tcp": {
           "type": "object",
           "x-go-name": "Tcp"
+        },
+        "tls": {
+          "type": "object",
+          "x-go-name": "Tls"
         }
       },
       "x-go-name": "VirtualService",
