@@ -265,7 +265,7 @@ if [ ! -d "${OPENSHIFT_PERSISTENCE_DIR}" ]; then
   if [ "${ISTIO_ENABLED}" == "true" ]; then
     ENABLE_ARG="--enable=*,istio"
   else
-    ENABLE_ARG="--enable=*"
+    ENABLE_ARG="--enable=*,-istio"
   fi
 fi
 
@@ -438,17 +438,25 @@ if [ "$_CMD" = "up" ]; then
 
   ${MAISTRA_ISTIO_OC_COMMAND} get -n istio-operator Installation istio-installation > /dev/null 2>&1
   if [ "$?" != "0" ]; then
-    if [ "${_CREATE_INSTALLATION_RESOURCE}" == "true" ] ; then
-      echo "Installing Istio via Installation Custom Resource"
-      debug "${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
-      ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}
+    if [ "${ISTIO_ENABLED}" == "true" ] ; then
+      if [ "${_CREATE_INSTALLATION_RESOURCE}" == "true" ] ; then
+        echo "Installing Istio via Installation Custom Resource"
+        debug "${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
+        ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}
+      else
+        echo "It appears Istio has not yet been installed - after you have ensured that your OpenShift user has the proper"
+        echo "permissions, you will need to run the following command:"
+        echo "  ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
+      fi
     else
-      echo "It appears Istio has not yet been installed - after you have ensured that your OpenShift user has the proper"
-      echo "permissions, you will need to run the following command:"
-      echo "  ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
+      echo "You asked that Istio not be enabled - will not create the Installation Custom Resource."
     fi
   else
-    echo "It appears Istio has already been installed - will not create the Installation Custom Resource again"
+    if [ "${ISTIO_ENABLED}" == "true" ] ; then
+      echo "It appears Istio has already been installed - will not create the Installation Custom Resource again."
+    else
+      echo "You asked that Istio not be enabled, but it appears Istio has already been installed. You might want to uninstall it."
+    fi
   fi
 
 elif [ "$_CMD" = "down" ];then
