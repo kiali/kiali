@@ -23,4 +23,6 @@ do
     yarn itest -t "${label}"
 done
 
-kill -9 ${APP_PID}
+if ! kill -9 ${APP_PID} > /dev/null 2>&1; then
+    echo "Could not send SIGTERM to process ${APP_PID}" >&2
+fi
