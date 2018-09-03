@@ -120,6 +120,12 @@
   ],
   "author": "Red Hat",
   "license": "Apache-2.0",
+  "homepage-comment": [
+    "By default, Create React App produces a build assuming your app is hosted at the server root.",
+    "To override this, specify the homepage in your package.json:",
+    "We don't want this, so don't touch homepage.",
+    "https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#building-for-relative-paths"
+  ],
   "homepage": "/",
   "publishConfig": {
     "access": "public"
