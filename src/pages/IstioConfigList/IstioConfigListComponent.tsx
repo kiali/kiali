@@ -287,9 +287,11 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       });
     });
 
-    this.props.onParamChange(params, 'append');
+    // Resetting pagination when filters change
+    params.push({ name: 'page', value: '' });
 
-    this.updateIstioConfig();
+    this.props.onParamChange(params, 'append');
+    this.updateIstioConfig(true);
   };
 
   handleError = (error: string) => {
@@ -354,7 +356,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     this.props.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'desc' : 'asc' }]);
   };
 
-  updateIstioConfig = () => {
+  updateIstioConfig = (resetPagination?: boolean) => {
     const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
@@ -383,12 +385,19 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
             namespaces.map(namespace => namespace.name),
             istioTypeFilters,
             istioNameFilters,
-            configValidationFilters
+            configValidationFilters,
+            resetPagination
           );
         })
         .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
     } else {
-      this.fetchIstioConfig(namespacesSelected, istioTypeFilters, istioNameFilters, configValidationFilters);
+      this.fetchIstioConfig(
+        namespacesSelected,
+        istioTypeFilters,
+        istioNameFilters,
+        configValidationFilters,
+        resetPagination
+      );
     }
   };
 
@@ -409,7 +418,8 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     namespaces: string[],
     istioTypeFilters: string[],
     istioNameFilters: string[],
-    configValidationFilters: string[]
+    configValidationFilters: string[],
+    resetPagination?: boolean
   ) {
     const istioConfigPromises = namespaces.map(namespace =>
       API.getIstioConfig(authentication(), namespace, istioTypeFilters)
@@ -417,6 +427,8 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     const validationPromises = namespaces.map(namespace => API.getNamespaceValidations(authentication(), namespace));
     Promise.all(istioConfigPromises)
       .then(responses => {
+        const currentPage = resetPagination ? 1 : this.state.pagination.page;
+
         let istioItems: IstioConfigItem[] = [];
         responses.forEach(response => {
           istioItems = istioItems.concat(toIstioItems(filterByName(response.data, istioNameFilters)));
@@ -426,7 +438,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
           return {
             istioItems: istioItems,
             pagination: {
-              page: this.state.pagination.page,
+              page: currentPage,
               perPage: prevState.pagination.perPage,
               perPageOptions: perPageOptions
             }

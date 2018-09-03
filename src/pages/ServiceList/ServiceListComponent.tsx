@@ -288,8 +288,11 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       }
     });
 
+    // Resetting pagination when filters change
+    params.push({ name: 'page', value: '' });
+
     this.props.onParamChange(params, 'append');
-    this.updateServices();
+    this.updateServices(true);
   };
 
   updateParams(params: URLParameter[], id: string, value: string) {
@@ -331,7 +334,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     this.props.onParamChange([{ name: 'page', value: page }]);
   };
 
-  pageSelect = (perPage: number) => {
+  perPageSelect = (perPage: number) => {
     this.setState(prevState => {
       return {
         services: prevState.services,
@@ -368,7 +371,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     });
   };
 
-  updateServices = () => {
+  updateServices = (resetPagination?: boolean) => {
     const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
@@ -389,18 +392,25 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       API.getNamespaces(authentication())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
-          this.fetchServices(namespaces.map(namespace => namespace.name), servicenameFilters, istioFilters);
+          this.fetchServices(
+            namespaces.map(namespace => namespace.name),
+            servicenameFilters,
+            istioFilters,
+            resetPagination
+          );
         })
         .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
     } else {
-      this.fetchServices(namespacesSelected, servicenameFilters, istioFilters);
+      this.fetchServices(namespacesSelected, servicenameFilters, istioFilters, resetPagination);
     }
   };
 
-  fetchServices(namespaces: string[], servicenameFilters: string[], istioFilters: string[]) {
+  fetchServices(namespaces: string[], servicenameFilters: string[], istioFilters: string[], resetPagination?: boolean) {
     const promises = namespaces.map(ns => API.getServices(authentication(), ns));
+
     Promise.all(promises)
       .then(servicesResponse => {
+        const currentPage = resetPagination ? 1 : this.state.pagination.page;
         let updatedServices: ServiceItem[] = [];
         servicesResponse.forEach(serviceResponse => {
           const namespace = serviceResponse.data.namespace.name;
@@ -422,7 +432,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
           this.setState({
             services: sorted,
             pagination: {
-              page: this.state.pagination.page,
+              page: currentPage,
               perPage: this.state.pagination.perPage,
               perPageOptions: perPageOptions
             }
@@ -541,7 +551,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
           pagination={this.state.pagination}
           itemCount={this.state.services.length}
           onPageSet={this.pageSet}
-          onPerPageSelect={this.pageSelect}
+          onPerPageSelect={this.perPageSelect}
         />
       </div>
     );

@@ -62,7 +62,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
     this.updateApps();
   }
 
-  updateApps = () => {
+  updateApps = (resetPagination?: boolean) => {
     const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
@@ -75,11 +75,16 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       API.getNamespaces(authentication())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
-          this.fetchApps(namespaces.map(namespace => namespace.name), activeFilters, this.props.rateInterval);
+          this.fetchApps(
+            namespaces.map(namespace => namespace.name),
+            activeFilters,
+            this.props.rateInterval,
+            resetPagination
+          );
         })
         .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
     } else {
-      this.fetchApps(namespacesSelected, activeFilters, this.props.rateInterval);
+      this.fetchApps(namespacesSelected, activeFilters, this.props.rateInterval, resetPagination);
     }
   };
 
@@ -109,9 +114,11 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
     this.props.onParamChange(params, 'append', 'replace');
   }
 
-  fetchApps(namespaces: string[], filters: ActiveFilter[], rateInterval: number) {
+  fetchApps(namespaces: string[], filters: ActiveFilter[], rateInterval: number, resetPagination?: boolean) {
     const appsPromises = namespaces.map(namespace => API.getApps(authentication(), namespace));
     Promise.all(appsPromises).then(responses => {
+      const currentPage = resetPagination ? 1 : this.state.pagination.page;
+
       let appListItems: AppListItem[] = [];
       responses.forEach(response => {
         appListItems = appListItems.concat(
@@ -125,7 +132,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
             return {
               appListItems: sorted,
               pagination: {
-                page: this.state.pagination.page,
+                page: currentPage,
                 perPage: prevState.pagination.perPage,
                 perPageOptions: perPageOptions
               }
@@ -248,9 +255,12 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         }
       }
     });
-    this.props.onParamChange(params, 'append');
 
-    this.updateApps();
+    // Resetting pagination when filters change
+    params.push({ name: 'page', value: '' });
+
+    this.props.onParamChange(params, 'append');
+    this.updateApps(true);
   };
 
   handleError = (error: string) => {

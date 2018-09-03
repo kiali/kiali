@@ -65,7 +65,7 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
     this.updateWorkloads();
   }
 
-  updateWorkloads = () => {
+  updateWorkloads = (resetPagination?: boolean) => {
     const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
@@ -78,11 +78,11 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       API.getNamespaces(authentication())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
-          this.fetchWorkloads(namespaces.map(namespace => namespace.name), activeFilters);
+          this.fetchWorkloads(namespaces.map(namespace => namespace.name), activeFilters, resetPagination);
         })
         .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
     } else {
-      this.fetchWorkloads(namespacesSelected, activeFilters);
+      this.fetchWorkloads(namespacesSelected, activeFilters, resetPagination);
     }
   };
 
@@ -131,9 +131,10 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
     return workloadsItems;
   };
 
-  fetchWorkloads(namespaces: string[], filters: ActiveFilter[]) {
+  fetchWorkloads(namespaces: string[], filters: ActiveFilter[], resetPagination?: boolean) {
     const workloadsConfigPromises = namespaces.map(namespace => API.getWorkloads(authentication(), namespace));
     Promise.all(workloadsConfigPromises).then(responses => {
+      const currentPage = resetPagination ? 1 : this.state.pagination.page;
       let workloadsItems: WorkloadListItem[] = [];
       responses.forEach(response => {
         workloadsItems = workloadsItems.concat(
@@ -149,7 +150,7 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
           return {
             workloadItems: sorted,
             pagination: {
-              page: this.state.pagination.page,
+              page: currentPage,
               perPage: prevState.pagination.perPage,
               perPageOptions: perPageOptions
             }
@@ -276,9 +277,12 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
         });
       }
     });
-    this.props.onParamChange(params, 'append');
 
-    this.updateWorkloads();
+    // Resetting pagination when filters change
+    params.push({ name: 'page', value: '' });
+
+    this.props.onParamChange(params, 'append');
+    this.updateWorkloads(true);
   };
 
   handleError = (error: string) => {
