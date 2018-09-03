@@ -1,5 +1,6 @@
 import pytest
 import yaml
+import ssl
 from kiali import KialiClient
 
 ENV_FILE = './config/env.yaml'
@@ -21,9 +22,15 @@ def kiali_client():
     return __get_kiali_client__(config)
 
 def __get_kiali_client__(config):
+    if(config.get('kiali_ssl_enabled') == 'true'):
+        context = ssl._create_unverified_context()
+        return KialiClient(host=config.get('kiali_hostname'),
+                           username=config.get('kiali_username'), password=config.get('kiali_password'), port=443, context=context)
+    else:
+        return KialiClient(host=config.get('kiali_hostname'),
+                           username=config.get('kiali_username'), password=config.get('kiali_password'))
     print "\nGet Kiali Client for Kiali hostname: {}\n".format(config.get('kiali_hostname'))
-    return KialiClient(host=config.get('kiali_hostname'),
-                       username=config.get('kiali_username'), password=config.get('kiali_password'))
+
 
 def __get_environment_config__(env_file):
     with open(env_file) as yamlfile:
