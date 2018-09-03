@@ -36,6 +36,9 @@ class UserDropdown extends React.Component<UserProps, UserState> {
 
   timeLeft = (): number => {
     const nowDate = new Date().getTime();
+    if (this.props.sessionTimeOut - nowDate < 1) {
+      this.handleLogout();
+    }
     return this.props.sessionTimeOut - nowDate;
   };
 
