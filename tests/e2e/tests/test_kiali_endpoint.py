@@ -1,6 +1,6 @@
 import pytest
 import json
-import conftest
+import tests.conftest as conftest
 
 # Note: Number of services +1 Views Group Node
 # Note: Node and Edge counts are based on traffic origainating from the Ingress
