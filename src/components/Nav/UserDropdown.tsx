@@ -3,6 +3,7 @@ import { Dropdown, Icon, MenuItem } from 'patternfly-react';
 import { SessionTimeout } from '../SessionTimeout/SessionTimeout';
 import { config } from '../../config';
 import { MILLISECONDS } from '../../types/Common';
+import Timer = NodeJS.Timer;
 
 type UserProps = {
   username: string;
@@ -14,6 +15,8 @@ type UserProps = {
 type UserState = {
   showSessionTimeOut: boolean;
   timeCountDownSeconds: number;
+  checkSessionTimerId?: Timer;
+  timeLeftTimerId?: Timer;
 };
 
 class UserDropdown extends React.Component<UserProps, UserState> {
@@ -25,13 +28,29 @@ class UserDropdown extends React.Component<UserProps, UserState> {
     };
   }
   componentDidMount() {
-    setInterval(() => {
+    let checkSessionTimerId = setInterval(() => {
       this.checkSession();
     }, 3000);
-
-    setInterval(() => {
+    let timeLeftTimerId = setInterval(() => {
       this.setState({ timeCountDownSeconds: this.timeLeft() / MILLISECONDS });
     }, 1000);
+
+    console.debug('Added timers [' + checkSessionTimerId + ', ' + timeLeftTimerId + ']');
+    this.setState({
+      checkSessionTimerId: checkSessionTimerId,
+      timeLeftTimerId: timeLeftTimerId
+    });
+  }
+
+  componentWillUnmount() {
+    if (this.state.checkSessionTimerId) {
+      clearInterval(this.state.checkSessionTimerId);
+      console.debug('Removed timer [' + this.state.checkSessionTimerId + ']');
+    }
+    if (this.state.timeLeftTimerId) {
+      clearInterval(this.state.timeLeftTimerId);
+      console.log('Removed timer [' + this.state.timeLeftTimerId + ']');
+    }
   }
 
   timeLeft = (): number => {
