@@ -18,9 +18,9 @@ const loadRcueCssIfNeeded = async (): Promise<void> => {
   // get the flag from command line if set: env REACT_APP_RCUE=true yarn start
   const useRcue = process.env.REACT_APP_RCUE;
   if (useRcue === 'true') {
-    console.debug('REACT_APP_RCUE set to true');
+    console.info('REACT_APP_RCUE set to true');
     Promise.all([require('patternfly/dist/css/rcue.css'), require('patternfly/dist/css/rcue-additions.css')]);
-    console.debug('Loaded RCUE css libraries loaded');
+    console.info('Loaded RCUE css libraries loaded');
   }
 };
 
