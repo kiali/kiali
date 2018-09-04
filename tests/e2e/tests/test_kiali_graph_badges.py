@@ -1,5 +1,5 @@
 import os
-import conftest
+import tests.conftest as conftest
 from utils.timeout import timeout
 import time
 
