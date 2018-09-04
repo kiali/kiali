@@ -13,10 +13,10 @@ import (
 func TestSecurityPolicy(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload_namespace!=\"bookinfo\",destination_service_namespace=\"bookinfo\",connection_security_policy!=\"none\",response_code=~\"[2345][0-9][0-9]\"}[60s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)"
+	q0 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload_namespace!=\"bookinfo\",destination_service_namespace=\"bookinfo\",connection_security_policy!=\"none\",response_code=~\"[2345][0-9][0-9]\"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)"
 	v0 := model.Vector{}
 
-	q1 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload_namespace=\"bookinfo\",destination_service_namespace!=\"istio-system\",connection_security_policy!=\"none\",response_code=~\"[2345][0-9][0-9]\"}[60s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)"
+	q1 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload_namespace=\"bookinfo\",destination_service_namespace!=\"istio-system\",connection_security_policy!=\"none\",response_code=~\"[2345][0-9][0-9]\"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)"
 	q1m0 := model.Metric{
 		"source_workload_namespace":     "istio-system",
 		"source_workload":               "ingressgateway-unknown",

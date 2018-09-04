@@ -40,7 +40,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	// query prometheus for mutual_tls info in two queries:
 	// 1) query for active security originating from a workload outside the namespace
 	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy"
-	query := fmt.Sprintf("sum(rate(%s{reporter=\"destination\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\",connection_security_policy!=\"none\",response_code=~\"%v\"}[%vs])) by (%s)",
+	query := fmt.Sprintf("sum(rate(%s{reporter=\"destination\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\",connection_security_policy!=\"none\",response_code=~\"%v\"}[%vs]) > 0) by (%s)",
 		"istio_requests_total",
 		namespace,
 		namespace,
@@ -54,7 +54,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	if !a.IncludeIstio {
 		istioCondition = fmt.Sprintf(",destination_service_namespace!=\"%s\"", config.Get().IstioNamespace)
 	}
-	query = fmt.Sprintf("sum(rate(%s{reporter=\"destination\",source_workload_namespace=\"%v\"%s,connection_security_policy!=\"none\",response_code=~\"%v\"}[%vs])) by (%s)",
+	query = fmt.Sprintf("sum(rate(%s{reporter=\"destination\",source_workload_namespace=\"%v\"%s,connection_security_policy!=\"none\",response_code=~\"%v\"}[%vs]) > 0) by (%s)",
 		"istio_requests_total",
 		namespace,
 		istioCondition,
