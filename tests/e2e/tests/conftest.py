@@ -22,10 +22,9 @@ def kiali_client():
     return __get_kiali_client__(config)
 
 def __get_kiali_client__(config):
-    if(config.get('kiali_ssl_enabled') == 'true'):
+    if(config.get('kiali_ssl_enabled') is True):
         context = ssl._create_unverified_context()
-        return KialiClient(host=config.get('kiali_hostname'),
-                           username=config.get('kiali_username'), password=config.get('kiali_password'), port=443, context=context)
+        return KialiClient(host=config.get('kiali_hostname'), username=config.get('kiali_username'), password=config.get('kiali_password'), port=443, context=context)
     else:
         return KialiClient(host=config.get('kiali_hostname'),
                            username=config.get('kiali_username'), password=config.get('kiali_password'))
