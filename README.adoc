@@ -8,7 +8,7 @@ image:https://img.shields.io/badge/license-Apache2-blue.svg["Apache 2.0 license"
 
 == Introduction
 
-Kiali provides answers to the question _What are the microservices in my Istio service mesh doing?_
+Kiali provides answers to the questions: _What microservices are part of my Istio service mesh and how are they connected?_
 
 image::https://www.kiali.io/images/features/feature3.png[Kiali Graph]
 
