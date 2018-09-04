@@ -2,7 +2,6 @@ package checkers
 
 import (
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/services/business/checkers/destination_rules"
 	"github.com/kiali/kiali/services/business/checkers/virtual_services"
 	"github.com/kiali/kiali/services/models"
 )
@@ -48,14 +47,6 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 	}
 
 	for _, checker := range enabledCheckers {
-		validations = validations.MergeValidations(checker.Check())
-	}
-
-	enabledDRCheckers := []GroupChecker{
-		destination_rules.MultiMatchChecker{in.DestinationRules},
-	}
-
-	for _, checker := range enabledDRCheckers {
 		validations = validations.MergeValidations(checker.Check())
 	}
 

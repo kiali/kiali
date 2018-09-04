@@ -19,7 +19,7 @@ func TestMultiHostMatchCorrect(t *testing.T) {
 
 	destinationRules := []kubernetes.IstioObject{
 		fakeHostDestinationRule("rule1", "host1"),
-		fakeHostDestinationRule("rule2", "host2"),
+		fakeHostDestinationRule("rule2", "host2.test.svc.cluster.local"),
 	}
 
 	validations := MultiMatchChecker{
@@ -40,7 +40,7 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 
 	destinationRules := []kubernetes.IstioObject{
 		fakeHostDestinationRule("rule1", "host1"),
-		fakeHostDestinationRule("rule2", "host1"),
+		fakeHostDestinationRule("rule2", "host1.test.svc.cluster.local"),
 	}
 
 	validations := MultiMatchChecker{
@@ -55,10 +55,52 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 	assert.Equal("warning", validation.Checks[0].Severity)
 }
 
+func TestMultiHostMatchWildcardInvalid(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	destinationRules := []kubernetes.IstioObject{
+		fakeHostDestinationRule("rule1", "host1"),
+		fakeHostDestinationRule("rule2", "*.test.svc.cluster.local"),
+	}
+
+	validations := MultiMatchChecker{
+		DestinationRules: destinationRules,
+	}.Check()
+
+	assert.NotEmpty(validations)
+	validation, ok := validations[models.IstioValidationKey{"destinationrules", "rule2"}]
+	assert.True(ok)
+	assert.True(validation.Valid) // As long as it is warning, this is true
+	assert.NotEmpty(validation.Checks)
+	assert.Equal("warning", validation.Checks[0].Severity)
+
+	destinationRules = []kubernetes.IstioObject{
+		fakeHostDestinationRule("rule2", "*.test.svc.cluster.local"),
+		fakeHostDestinationRule("rule1", "host1"),
+	}
+
+	validations = MultiMatchChecker{
+		DestinationRules: destinationRules,
+	}.Check()
+
+	assert.NotEmpty(validations)
+	validation, ok = validations[models.IstioValidationKey{"destinationrules", "rule1"}]
+	assert.True(ok)
+	assert.True(validation.Valid) // As long as it is warning, this is true
+	assert.NotEmpty(validation.Checks)
+	assert.Equal("warning", validation.Checks[0].Severity)
+
+}
+
 func fakeHostDestinationRule(name string, host string) kubernetes.IstioObject {
 	destinationRule := kubernetes.DestinationRule{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: name,
+			Name:        name,
+			Namespace:   "test",
+			ClusterName: "svc.cluster.local",
 		},
 		Spec: map[string]interface{}{
 			"host": host,

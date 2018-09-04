@@ -107,7 +107,6 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	// Setup mocks
 	destinationList := []kubernetes.IstioObject{
 		fakeDestinationRule("reviewsrule1", "reviews"),
-		fakeDestinationRule("reviewsrule2", "reviews"),
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{"bookinfo",
@@ -129,13 +128,6 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	assert.Equal(validation.ObjectType, "virtualservice")
 	assert.Equal(validation.Valid, false)
 	assert.Len(validation.Checks, 2)
-
-	validation, ok = validations[models.IstioValidationKey{"destinationrules", "reviewsrule2"}]
-	assert.True(ok)
-	assert.Equal(validation.Name, "reviewsrule2")
-	assert.Equal(validation.ObjectType, "destinationrules")
-	assert.Equal(validation.Valid, true)
-	assert.Len(validation.Checks, 1)
 }
 
 func fakeVirtualServices() kubernetes.IstioObject {
