@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
 import { Icon } from 'patternfly-react';
 
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
@@ -21,6 +20,7 @@ import { Health } from '../../types/Health';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
+import WorkloadLink from './WorkloadLink';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -250,14 +250,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       let { namespace, workload } = nodeData(node);
 
       if (workload) {
-        workloadList.push(
-          <Link
-            to={`/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload)}`}
-            key={workload}
-          >
-            {workload}
-          </Link>
-        );
+        workloadList.push(<WorkloadLink workload={workload} namespace={namespace} />);
         workloadList.push(', ');
       }
     });

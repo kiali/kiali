@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import WorkloadLink from './WorkloadLink';
 import { Icon } from 'patternfly-react';
 
 import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
@@ -209,9 +209,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           {shouldRenderWorkload && (
             <div>
               <strong>Workload: </strong>
-              <Link to={`/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload)}`}>
-                {workload}
-              </Link>
+              <WorkloadLink namespace={namespace} workload={workload} />
             </div>
           )}
           {(shouldRenderSvcList || shouldRenderWorkload) && <hr />}
