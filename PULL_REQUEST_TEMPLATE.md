@@ -7,7 +7,7 @@ _explanation of what it does_
 * If this is a fix for a JIRA, please put JIRA-reference in the PR title like _`KIALI-7 New icons`_ (Jira-id, one space, description)
 * If this is a fix for a GH-issue, please link it here
 
-** Backwards in compatible? **
+** Backwards compatible? **
 
 [ ] Is your pull-request introducing changes in behaviour?
 
