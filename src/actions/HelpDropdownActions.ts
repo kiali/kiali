@@ -30,7 +30,7 @@ export const HelpDropdownActions = {
             )
           );
           status['data']['warningMessages'].forEach(wMsg => {
-            dispatch(MessageCenterActions.addMessage(wMsg, 'default', MessageType.WARNING));
+            dispatch(MessageCenterActions.addMessage(wMsg, 'systemErrors', MessageType.WARNING));
           });
         },
         error => {

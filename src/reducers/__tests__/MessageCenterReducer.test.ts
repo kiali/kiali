@@ -20,9 +20,18 @@ describe('MessageCenter reducer', () => {
       expandedGroupId: 'default',
       groups: [
         {
+          id: 'systemErrors',
+          title: 'Open issues',
+          messages: [],
+          showActions: false,
+          hideIfEmpty: true
+        },
+        {
           id: 'default',
           messages: [],
-          title: 'Default'
+          title: 'Notifications',
+          showActions: true,
+          hideIfEmpty: false
         }
       ],
       hidden: true,
@@ -40,7 +49,9 @@ describe('MessageCenter reducer', () => {
             {
               id: 'default',
               messages: [],
-              title: 'Default'
+              title: 'Default',
+              showActions: true,
+              hideIfEmpty: false
             }
           ],
           hidden: true,
@@ -69,7 +80,9 @@ describe('MessageCenter reducer', () => {
               created: date
             }
           ],
-          title: 'Default'
+          title: 'Default',
+          showActions: true,
+          hideIfEmpty: false
         }
       ],
       hidden: true,
@@ -86,6 +99,8 @@ describe('MessageCenter reducer', () => {
           groups: [
             {
               id: 'default',
+              showActions: true,
+              hideIfEmpty: false,
               messages: [
                 {
                   id: 0,
@@ -139,7 +154,9 @@ describe('MessageCenter reducer', () => {
               created: date
             }
           ],
-          title: 'Default'
+          title: 'Default',
+          showActions: true,
+          hideIfEmpty: false
         }
       ],
       hidden: true,
@@ -156,6 +173,8 @@ describe('MessageCenter reducer', () => {
           groups: [
             {
               id: 'default',
+              showActions: true,
+              hideIfEmpty: false,
               messages: [
                 {
                   id: 0,
@@ -225,7 +244,9 @@ describe('MessageCenter reducer', () => {
               created: date
             }
           ],
-          title: 'Default'
+          title: 'Default',
+          showActions: true,
+          hideIfEmpty: false
         }
       ],
       hidden: true,
@@ -242,6 +263,8 @@ describe('MessageCenter reducer', () => {
           groups: [
             {
               id: 'default',
+              showActions: true,
+              hideIfEmpty: false,
               messages: [
                 {
                   id: 0,
@@ -295,7 +318,9 @@ describe('MessageCenter reducer', () => {
               created: date
             }
           ],
-          title: 'Default'
+          title: 'Default',
+          showActions: true,
+          hideIfEmpty: false
         }
       ],
       hidden: true,
@@ -312,7 +337,9 @@ describe('MessageCenter reducer', () => {
             {
               id: 'default',
               messages: [],
-              title: 'Default'
+              title: 'Default',
+              showActions: true,
+              hideIfEmpty: false
             }
           ],
           hidden: true,
@@ -329,7 +356,9 @@ describe('MessageCenter reducer', () => {
         {
           id: 'default',
           messages: [],
-          title: 'Default'
+          title: 'Default',
+          showActions: true,
+          hideIfEmpty: false
         }
       ],
       hidden: false,
@@ -346,7 +375,9 @@ describe('MessageCenter reducer', () => {
             {
               id: 'default',
               messages: [],
-              title: 'Default'
+              title: 'Default',
+              showActions: true,
+              hideIfEmpty: false
             }
           ],
           hidden: false,
@@ -363,7 +394,9 @@ describe('MessageCenter reducer', () => {
         {
           id: 'default',
           messages: [],
-          title: 'Default'
+          title: 'Default',
+          showActions: true,
+          hideIfEmpty: false
         }
       ],
       hidden: true,
@@ -380,7 +413,9 @@ describe('MessageCenter reducer', () => {
             {
               id: 'default',
               messages: [],
-              title: 'Default'
+              title: 'Default',
+              showActions: true,
+              hideIfEmpty: false
             }
           ],
           hidden: false,
@@ -397,7 +432,9 @@ describe('MessageCenter reducer', () => {
         {
           id: 'default',
           messages: [],
-          title: 'Default'
+          title: 'Default',
+          showActions: true,
+          hideIfEmpty: false
         }
       ],
       hidden: false,
@@ -414,7 +451,9 @@ describe('MessageCenter reducer', () => {
             {
               id: 'default',
               messages: [],
-              title: 'Default'
+              title: 'Default',
+              showActions: true,
+              hideIfEmpty: false
             }
           ],
           hidden: false,
@@ -432,7 +471,9 @@ describe('MessageCenter reducer', () => {
         {
           id: 'default',
           messages: [],
-          title: 'Default'
+          title: 'Default',
+          showActions: true,
+          hideIfEmpty: false
         }
       ],
       hidden: false,
@@ -449,7 +490,9 @@ describe('MessageCenter reducer', () => {
             {
               id: 'default',
               messages: [],
-              title: 'Default'
+              title: 'Default',
+              showActions: true,
+              hideIfEmpty: false
             }
           ],
           hidden: false,
@@ -467,7 +510,9 @@ describe('MessageCenter reducer', () => {
         {
           id: 'default',
           messages: [],
-          title: 'Default'
+          title: 'Default',
+          showActions: true,
+          hideIfEmpty: false
         }
       ],
       hidden: false,
