@@ -6,6 +6,7 @@ import time
 DURATION = '60s'
 VERSIONED_APP_PARAMS = {'graphType': 'versionedApp', 'duration': DURATION}
 WORKLOAD_PARAMS      = {'graphType': 'workload', 'duration': DURATION}
+APP_PARAMS           = {'graphType': 'app', 'duration': DURATION}
 
 CB_BADGE = 'hasCB'
 VS_BADGE = "hasVS"
@@ -20,6 +21,9 @@ def test_kiali_virtual_service_versioned_app(kiali_client):
     assert do_test(kiali_client, VERSIONED_APP_PARAMS, conftest.VIRTUAL_SERVICE_FILE, VS_BADGE)
 
 def test_kiali_virtual_service_workload(kiali_client):
+    assert do_test(kiali_client, WORKLOAD_PARAMS, conftest.VIRTUAL_SERVICE_FILE, VS_BADGE)
+
+def test_kiali_virtual_service_app(kiali_client):
     assert do_test(kiali_client, WORKLOAD_PARAMS, conftest.VIRTUAL_SERVICE_FILE, VS_BADGE)
 
 
