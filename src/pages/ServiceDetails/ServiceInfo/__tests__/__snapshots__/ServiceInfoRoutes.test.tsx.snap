@@ -8,7 +8,10 @@ ShallowWrapper {
     dependencies={
       Object {
         "v1": Array [
-          "productpage.istio-system/v1",
+          Object {
+            "name": "productpage-v1",
+            "namespace": "istio-system",
+          },
         ],
       }
     }
@@ -59,10 +62,10 @@ ShallowWrapper {
             >
               <Link
                 replace={false}
-                to="/namespaces/istio-system/services/productpage"
+                to="/namespaces/istio-system/workloads/productpage-v1"
               >
                 <li>
-                  productpage.istio-system/v1
+                  productpage-v1
                 </li>
               </Link>
             </ul>
@@ -107,10 +110,10 @@ ShallowWrapper {
             >
               <Link
                 replace={false}
-                to="/namespaces/istio-system/services/productpage"
+                to="/namespaces/istio-system/workloads/productpage-v1"
               >
                 <li>
-                  productpage.istio-system/v1
+                  productpage-v1
                 </li>
               </Link>
             </ul>
@@ -148,10 +151,10 @@ ShallowWrapper {
               >
                 <Link
                   replace={false}
-                  to="/namespaces/istio-system/services/productpage"
+                  to="/namespaces/istio-system/workloads/productpage-v1"
                 >
                   <li>
-                    productpage.istio-system/v1
+                    productpage-v1
                   </li>
                 </Link>
               </ul>
@@ -189,10 +192,10 @@ ShallowWrapper {
                 >
                   <Link
                     replace={false}
-                    to="/namespaces/istio-system/services/productpage"
+                    to="/namespaces/istio-system/workloads/productpage-v1"
                   >
                     <li>
-                      productpage.istio-system/v1
+                      productpage-v1
                     </li>
                   </Link>
                 </ul>,
@@ -241,10 +244,10 @@ ShallowWrapper {
                   "children": Array [
                     <Link
                       replace={false}
-                      to="/namespaces/istio-system/services/productpage"
+                      to="/namespaces/istio-system/workloads/productpage-v1"
                     >
                       <li>
-                        productpage.istio-system/v1
+                        productpage-v1
                       </li>
                     </Link>,
                   ],
@@ -256,14 +259,14 @@ ShallowWrapper {
                 "rendered": Array [
                   Object {
                     "instance": null,
-                    "key": "/namespaces/istio-system/services/productpagev1productpage.istio-system/v1",
+                    "key": "v1/namespaces/istio-system/workloads/productpage-v1",
                     "nodeType": "class",
                     "props": Object {
                       "children": <li>
-                        productpage.istio-system/v1
+                        productpage-v1
                       </li>,
                       "replace": false,
-                      "to": "/namespaces/istio-system/services/productpage",
+                      "to": "/namespaces/istio-system/workloads/productpage-v1",
                     },
                     "ref": null,
                     "rendered": Object {
@@ -271,10 +274,10 @@ ShallowWrapper {
                       "key": "dependencies_0_dependency_0",
                       "nodeType": "host",
                       "props": Object {
-                        "children": "productpage.istio-system/v1",
+                        "children": "productpage-v1",
                       },
                       "ref": null,
-                      "rendered": "productpage.istio-system/v1",
+                      "rendered": "productpage-v1",
                       "type": "li",
                     },
                     "type": [Function],
@@ -332,10 +335,10 @@ ShallowWrapper {
               >
                 <Link
                   replace={false}
-                  to="/namespaces/istio-system/services/productpage"
+                  to="/namespaces/istio-system/workloads/productpage-v1"
                 >
                   <li>
-                    productpage.istio-system/v1
+                    productpage-v1
                   </li>
                 </Link>
               </ul>
@@ -380,10 +383,10 @@ ShallowWrapper {
               >
                 <Link
                   replace={false}
-                  to="/namespaces/istio-system/services/productpage"
+                  to="/namespaces/istio-system/workloads/productpage-v1"
                 >
                   <li>
-                    productpage.istio-system/v1
+                    productpage-v1
                   </li>
                 </Link>
               </ul>
@@ -421,10 +424,10 @@ ShallowWrapper {
                 >
                   <Link
                     replace={false}
-                    to="/namespaces/istio-system/services/productpage"
+                    to="/namespaces/istio-system/workloads/productpage-v1"
                   >
                     <li>
-                      productpage.istio-system/v1
+                      productpage-v1
                     </li>
                   </Link>
                 </ul>
@@ -462,10 +465,10 @@ ShallowWrapper {
                   >
                     <Link
                       replace={false}
-                      to="/namespaces/istio-system/services/productpage"
+                      to="/namespaces/istio-system/workloads/productpage-v1"
                     >
                       <li>
-                        productpage.istio-system/v1
+                        productpage-v1
                       </li>
                     </Link>
                   </ul>,
@@ -514,10 +517,10 @@ ShallowWrapper {
                     "children": Array [
                       <Link
                         replace={false}
-                        to="/namespaces/istio-system/services/productpage"
+                        to="/namespaces/istio-system/workloads/productpage-v1"
                       >
                         <li>
-                          productpage.istio-system/v1
+                          productpage-v1
                         </li>
                       </Link>,
                     ],
@@ -529,14 +532,14 @@ ShallowWrapper {
                   "rendered": Array [
                     Object {
                       "instance": null,
-                      "key": "/namespaces/istio-system/services/productpagev1productpage.istio-system/v1",
+                      "key": "v1/namespaces/istio-system/workloads/productpage-v1",
                       "nodeType": "class",
                       "props": Object {
                         "children": <li>
-                          productpage.istio-system/v1
+                          productpage-v1
                         </li>,
                         "replace": false,
-                        "to": "/namespaces/istio-system/services/productpage",
+                        "to": "/namespaces/istio-system/workloads/productpage-v1",
                       },
                       "ref": null,
                       "rendered": Object {
@@ -544,10 +547,10 @@ ShallowWrapper {
                         "key": "dependencies_0_dependency_0",
                         "nodeType": "host",
                         "props": Object {
-                          "children": "productpage.istio-system/v1",
+                          "children": "productpage-v1",
                         },
                         "ref": null,
-                        "rendered": "productpage.istio-system/v1",
+                        "rendered": "productpage-v1",
                         "type": "li",
                       },
                       "type": [Function],

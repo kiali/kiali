@@ -145,7 +145,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                   <Nav bsClass="nav nav-tabs nav-tabs-pf">
                     <NavItem eventKey={'workloads'}>{'Workloads (' + Object.keys(workloads).length + ')'}</NavItem>
                     <NavItem eventKey={'sources'}>
-                      {'Source Services (' + Object.keys(dependencies).length + ')'}
+                      {'Source Workloads (' + Object.keys(dependencies).length + ')'}
                     </NavItem>
                     <NavItem eventKey={'virtualservices'}>
                       {'Virtual Services (' + virtualServices.length + ')'}

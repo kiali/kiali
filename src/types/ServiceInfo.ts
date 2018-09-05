@@ -332,6 +332,11 @@ export interface DestinationRule {
   subsets?: Subset[];
 }
 
+export interface SourceWorkload {
+  name: string;
+  namespace: string;
+}
+
 // Istio Sidecar
 
 export const hasIstioSidecar = (pods?: Pod[]) => {
@@ -357,7 +362,7 @@ export interface ServiceDetailsInfo {
   istioSidecar: boolean;
   virtualServices?: VirtualService[];
   destinationRules?: DestinationRule[];
-  dependencies?: { [key: string]: string[] };
+  dependencies?: { [key: string]: SourceWorkload[] };
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];
 }

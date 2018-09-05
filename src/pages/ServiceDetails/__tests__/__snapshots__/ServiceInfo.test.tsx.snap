@@ -341,7 +341,7 @@ ShallowWrapper {
                       disabled={false}
                       eventKey="sources"
                     >
-                      Source Services (0)
+                      Source Workloads (0)
                     </NavItem>
                     <NavItem
                       active={false}
@@ -622,7 +622,7 @@ ShallowWrapper {
                         disabled={false}
                         eventKey="sources"
                       >
-                        Source Services (0)
+                        Source Workloads (0)
                       </NavItem>
                       <NavItem
                         active={false}
@@ -1148,7 +1148,7 @@ ShallowWrapper {
                         disabled={false}
                         eventKey="sources"
                       >
-                        Source Services (0)
+                        Source Workloads (0)
                       </NavItem>
                       <NavItem
                         active={false}
@@ -1293,7 +1293,7 @@ ShallowWrapper {
                         disabled={false}
                         eventKey="sources"
                       >
-                        Source Services (0)
+                        Source Workloads (0)
                       </NavItem>
                       <NavItem
                         active={false}
@@ -1435,7 +1435,7 @@ ShallowWrapper {
                         disabled={false}
                         eventKey="sources"
                       >
-                        Source Services (0)
+                        Source Workloads (0)
                       </NavItem>
                       <NavItem
                         active={false}
@@ -1572,7 +1572,7 @@ ShallowWrapper {
                           disabled={false}
                           eventKey="sources"
                         >
-                          Source Services (0)
+                          Source Workloads (0)
                         </NavItem>
                         <NavItem
                           active={false}
@@ -1702,7 +1702,7 @@ ShallowWrapper {
                             disabled={false}
                             eventKey="sources"
                           >
-                            Source Services (0)
+                            Source Workloads (0)
                           </NavItem>,
                           <NavItem
                             active={false}
@@ -1746,12 +1746,12 @@ ShallowWrapper {
                           "nodeType": "class",
                           "props": Object {
                             "active": false,
-                            "children": "Source Services (0)",
+                            "children": "Source Workloads (0)",
                             "disabled": false,
                             "eventKey": "sources",
                           },
                           "ref": null,
-                          "rendered": "Source Services (0)",
+                          "rendered": "Source Workloads (0)",
                           "type": [Function],
                         },
                         Object {
@@ -2269,7 +2269,7 @@ ShallowWrapper {
                         disabled={false}
                         eventKey="sources"
                       >
-                        Source Services (0)
+                        Source Workloads (0)
                       </NavItem>
                       <NavItem
                         active={false}
@@ -2550,7 +2550,7 @@ ShallowWrapper {
                           disabled={false}
                           eventKey="sources"
                         >
-                          Source Services (0)
+                          Source Workloads (0)
                         </NavItem>
                         <NavItem
                           active={false}
@@ -3076,7 +3076,7 @@ ShallowWrapper {
                           disabled={false}
                           eventKey="sources"
                         >
-                          Source Services (0)
+                          Source Workloads (0)
                         </NavItem>
                         <NavItem
                           active={false}
@@ -3221,7 +3221,7 @@ ShallowWrapper {
                           disabled={false}
                           eventKey="sources"
                         >
-                          Source Services (0)
+                          Source Workloads (0)
                         </NavItem>
                         <NavItem
                           active={false}
@@ -3363,7 +3363,7 @@ ShallowWrapper {
                           disabled={false}
                           eventKey="sources"
                         >
-                          Source Services (0)
+                          Source Workloads (0)
                         </NavItem>
                         <NavItem
                           active={false}
@@ -3500,7 +3500,7 @@ ShallowWrapper {
                             disabled={false}
                             eventKey="sources"
                           >
-                            Source Services (0)
+                            Source Workloads (0)
                           </NavItem>
                           <NavItem
                             active={false}
@@ -3630,7 +3630,7 @@ ShallowWrapper {
                               disabled={false}
                               eventKey="sources"
                             >
-                              Source Services (0)
+                              Source Workloads (0)
                             </NavItem>,
                             <NavItem
                               active={false}
@@ -3674,12 +3674,12 @@ ShallowWrapper {
                             "nodeType": "class",
                             "props": Object {
                               "active": false,
-                              "children": "Source Services (0)",
+                              "children": "Source Workloads (0)",
                               "disabled": false,
                               "eventKey": "sources",
                             },
                             "ref": null,
-                            "rendered": "Source Services (0)",
+                            "rendered": "Source Workloads (0)",
                             "type": [Function],
                           },
                           Object {
