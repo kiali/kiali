@@ -24,7 +24,7 @@ def test_kiali_virtual_service_workload(kiali_client):
     assert do_test(kiali_client, WORKLOAD_PARAMS, conftest.VIRTUAL_SERVICE_FILE, VS_BADGE)
 
 def test_kiali_virtual_service_app(kiali_client):
-    assert do_test(kiali_client, WORKLOAD_PARAMS, conftest.VIRTUAL_SERVICE_FILE, VS_BADGE)
+    assert do_test(kiali_client, APP_PARAMS, conftest.VIRTUAL_SERVICE_FILE, VS_BADGE)
 
 
 def do_test(kiali_client, graph_params, yaml_file, badge):
