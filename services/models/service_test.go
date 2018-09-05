@@ -10,12 +10,14 @@ import (
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
 )
 
 func TestServiceDetailParsing(t *testing.T) {
 	assert := assert.New(t)
+	config.Set(config.NewConfig())
 
 	service := ServiceDetails{}
 	service.SetServiceDetails(fakeServiceDetails(), fakeIstioDetails(), fakePrometheusDetails())
@@ -185,13 +187,15 @@ func TestServiceDetailParsing(t *testing.T) {
 	})
 
 	// Prometheus Client
-	assert.Equal(service.Dependencies, map[string][]string{
-		"v1": {"unknown.ns/unknown", "products.ns/v1", "reviews.ns/v2"},
-		"v2": {"catalog.ns/v1", "shares.ns/v2"}})
+	assert.Equal(service.Dependencies, map[string][]SourceWorkload{
+		"v1": {SourceWorkload{Name: "unknown", Namespace: "ns"}, SourceWorkload{Name: "products-v1", Namespace: "ns"}, SourceWorkload{Name: "reviews-v2", Namespace: "ns"}},
+		"v2": {SourceWorkload{Name: "catalog-v1", Namespace: "ns"}, SourceWorkload{Name: "shares-v2", Namespace: "ns"}},
+	})
 }
 
 func TestServiceParse(t *testing.T) {
 	assert := assert.New(t)
+	config.Set(config.NewConfig())
 
 	service := Service{}
 	service.Name = "service"
@@ -513,9 +517,9 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 
 func fakePrometheusDetails() map[string][]prometheus.Workload {
 	return map[string][]prometheus.Workload{
-		"v1": []prometheus.Workload{prometheus.Workload{App: "unknown", Version: "unknown", Namespace: "ns"},
-			prometheus.Workload{App: "products", Version: "v1", Namespace: "ns"},
-			prometheus.Workload{App: "reviews", Version: "v2", Namespace: "ns"}},
-		"v2": []prometheus.Workload{prometheus.Workload{App: "catalog", Version: "v1", Namespace: "ns"},
-			prometheus.Workload{App: "shares", Version: "v2", Namespace: "ns"}}}
+		"v1": []prometheus.Workload{prometheus.Workload{App: "unknown", Version: "unknown", Namespace: "ns", Workload: "unknown"},
+			prometheus.Workload{App: "products", Version: "v1", Namespace: "ns", Workload: "products-v1"},
+			prometheus.Workload{App: "reviews", Version: "v2", Namespace: "ns", Workload: "reviews-v2"}},
+		"v2": []prometheus.Workload{prometheus.Workload{App: "catalog", Version: "v1", Namespace: "ns", Workload: "catalog-v1"},
+			prometheus.Workload{App: "shares", Version: "v2", Namespace: "ns", Workload: "shares-v2"}}}
 }
