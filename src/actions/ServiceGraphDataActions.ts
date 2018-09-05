@@ -22,7 +22,8 @@ const decorateGraphData = (graphData: any) => {
       percentErr: undefined,
       percentRate: undefined,
       latency: undefined,
-      isUnused: undefined
+      isUnused: undefined,
+      isMTLS: undefined
     },
     nodes: {
       version: undefined,
