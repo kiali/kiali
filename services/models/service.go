@@ -28,14 +28,14 @@ type ServiceList struct {
 }
 
 type ServiceDetails struct {
-	Service          Service             `json:"service"`
-	IstioSidecar     bool                `json:"istioSidecar"`
-	Endpoints        Endpoints           `json:"endpoints"`
-	VirtualServices  VirtualServices     `json:"virtualServices"`
-	DestinationRules DestinationRules    `json:"destinationRules"`
-	Dependencies     map[string][]string `json:"dependencies"`
-	Workloads        WorkloadOverviews   `json:"workloads"`
-	Health           ServiceHealth       `json:"health"`
+	Service          Service                     `json:"service"`
+	IstioSidecar     bool                        `json:"istioSidecar"`
+	Endpoints        Endpoints                   `json:"endpoints"`
+	VirtualServices  VirtualServices             `json:"virtualServices"`
+	DestinationRules DestinationRules            `json:"destinationRules"`
+	Dependencies     map[string][]SourceWorkload `json:"dependencies"`
+	Workloads        WorkloadOverviews           `json:"workloads"`
+	Health           ServiceHealth               `json:"health"`
 }
 
 type Services []*Service
@@ -48,6 +48,12 @@ type Service struct {
 	Type            string            `json:"type"`
 	Ip              string            `json:"ip"`
 	Ports           Ports             `json:"ports"`
+}
+
+// SourceWorkload holds workload identifiers used for service dependencies
+type SourceWorkload struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 func (ss *Services) Parse(services []v1.Service) {
@@ -98,10 +104,13 @@ func (s *ServiceDetails) setIstioDetails(istioDetails *kubernetes.IstioDetails) 
 
 func (s *ServiceDetails) setPrometheusDetails(prometheusDetails map[string][]prometheus.Workload) {
 	// Transform dependencies for UI
-	s.Dependencies = make(map[string][]string)
+	s.Dependencies = make(map[string][]SourceWorkload)
 	for version, workloads := range prometheusDetails {
 		for _, workload := range workloads {
-			s.Dependencies[version] = append(s.Dependencies[version], workload.App+"."+workload.Namespace+"/"+workload.Version)
+			s.Dependencies[version] = append(s.Dependencies[version], SourceWorkload{
+				Name:      workload.Workload,
+				Namespace: workload.Namespace,
+			})
 		}
 	}
 }
