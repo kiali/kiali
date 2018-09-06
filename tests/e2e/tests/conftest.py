@@ -28,7 +28,7 @@ def __get_kiali_client__(config):
     else:
         return KialiClient(host=config.get('kiali_hostname'),
                            username=config.get('kiali_username'), password=config.get('kiali_password'))
-    print ("\nGet Kiali Client for Kiali hostname: {}\n").format(config.get('kiali_hostname'))
+    print ("\nGet Kiali Client for Kiali hostname: {}\n".format(config.get('kiali_hostname')))
 
 
 def __get_environment_config__(env_file):

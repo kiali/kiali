@@ -2,10 +2,10 @@
 
 ### Project Structure
 
-* `tests/e2e/`: Root directory
-    *  `tests`: Tests
-    *  `utils`: Support utilities
-    *  `conf`:  Environment configuration
+* `tests/e2e/`:  Root directory
+    *  `tests`:  Tests
+    *  `utils`:  Support utilities
+    *  `config`: Environment configuration
     *  `assets`: Routing yaml's used by tests
 
 
@@ -30,7 +30,7 @@ $ source .env-e2e/bin/activate
 $ pip install -U pip
 $ pip install -r requirements.txt
 
-# Update conf/env.yaml with kiali hostname and credentials
+# Update config/env.yaml with kiali hostname and credentials
 
 # Login to Openshift Cluster 
 $ oc login https://<openshift>:8443 --username=<username> --password=<password> --insecure-skip-tls-verify=true
