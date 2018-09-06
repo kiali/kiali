@@ -11,7 +11,9 @@ go:
 notifications:
   irc:
     channels:
-    - chat.freenode.net#BOGUS_DOES_NOT_EXIST
+      - chat.freenode.net#kiali
+    on_success: change
+    on_failure: change
 
 before_script:
   - GO_FILES=$(find . -iname '*.go' -type f | grep -v /vendor/) # All the .go files, excluding vendor/
