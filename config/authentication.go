@@ -14,7 +14,7 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 		if strings.Contains(r.Header.Get("Authorization"), "Bearer") {
 			err := ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 			if err != nil {
-				log.Warning("Error token %+v", err)
+				log.Warning("Token error: ", err)
 				statusCode = http.StatusUnauthorized
 			}
 		} else if conf.Server.Credentials.Username != "" || conf.Server.Credentials.Password != "" {

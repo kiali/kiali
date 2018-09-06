@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-
-	"github.com/kiali/kiali/log"
 )
 
 // Structured version of Claims Section, as referenced at
@@ -70,20 +68,6 @@ func ValidateToken(tokenString string) error {
 	}
 	if token.Valid {
 		return nil
-	} else if ve, ok := err.(*jwt.ValidationError); ok {
-		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-			log.Debugf("That's not even a token")
-			return errors.New("That's not even a token")
-		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-			// Token is either expired or not active yet
-			log.Debugf("Token expired ... Timing is everything")
-			return errors.New("Token expired ... Timing is everything")
-		} else {
-			log.Debugf("Couldn't handle this token:", err)
-			return err
-		}
-	} else {
-		log.Debugf("Couldn't handle this token:", err)
-		return err
 	}
+	return errors.New("Invalid token")
 }
