@@ -37,11 +37,21 @@ func TestDeploymentListHandler(t *testing.T) {
 
 	assert.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
+	assert.Equal(true, workloads[0].AppLabel)
+	assert.Equal(false, workloads[0].VersionLabel)
 	assert.Equal("httpbin-v2", workloads[1].Name)
+	assert.Equal(true, workloads[1].AppLabel)
+	assert.Equal(true, workloads[1].VersionLabel)
 	assert.Equal("httpbin-v3", workloads[2].Name)
+	assert.Equal(false, workloads[2].AppLabel)
+	assert.Equal(false, workloads[2].VersionLabel)
 }
 
 func fakeDeploymentList() *v1beta1.DeploymentList {
+	conf := config.NewConfig()
+	config.Set(conf)
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	return &v1beta1.DeploymentList{
 		Items: []v1beta1.Deployment{
@@ -49,11 +59,16 @@ func fakeDeploymentList() *v1beta1.DeploymentList {
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:              "httpbin-v1",
 					CreationTimestamp: meta_v1.NewTime(t1),
-					Labels:            map[string]string{"app": "httpbin", "version": "v1"},
+					Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
 				},
 				Spec: v1beta1.DeploymentSpec{
 					Selector: &meta_v1.LabelSelector{
-						MatchLabels: map[string]string{"app": "httpbin", "version": "v1"},
+						MatchLabels: map[string]string{appLabel: "httpbin", versionLabel: "v1"},
+					},
+					Template: v1.PodTemplateSpec{
+						ObjectMeta: meta_v1.ObjectMeta{
+							Labels: map[string]string{appLabel: "httpbin"},
+						},
 					},
 				},
 				Status: v1beta1.DeploymentStatus{
@@ -66,11 +81,16 @@ func fakeDeploymentList() *v1beta1.DeploymentList {
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:              "httpbin-v2",
 					CreationTimestamp: meta_v1.NewTime(t1),
-					Labels:            map[string]string{"app": "httpbin", "version": "v2"},
+					Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v2"},
 				},
 				Spec: v1beta1.DeploymentSpec{
 					Selector: &meta_v1.LabelSelector{
-						MatchLabels: map[string]string{"app": "httpbin", "version": "v2"},
+						MatchLabels: map[string]string{appLabel: "httpbin", versionLabel: "v2"},
+					},
+					Template: v1.PodTemplateSpec{
+						ObjectMeta: meta_v1.ObjectMeta{
+							Labels: map[string]string{appLabel: "httpbin", versionLabel: "v2"},
+						},
 					},
 				},
 				Status: v1beta1.DeploymentStatus{
@@ -83,11 +103,11 @@ func fakeDeploymentList() *v1beta1.DeploymentList {
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:              "httpbin-v3",
 					CreationTimestamp: meta_v1.NewTime(t1),
-					Labels:            map[string]string{"app": "httpbin", "version": "v3"},
+					Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v3"},
 				},
 				Spec: v1beta1.DeploymentSpec{
 					Selector: &meta_v1.LabelSelector{
-						MatchLabels: map[string]string{"app": "httpbin", "version": "v3"},
+						MatchLabels: map[string]string{appLabel: "httpbin", versionLabel: "v3"},
 					},
 				},
 				Status: v1beta1.DeploymentStatus{
@@ -101,6 +121,10 @@ func fakeDeploymentList() *v1beta1.DeploymentList {
 }
 
 func fakePodList() *v1.PodList {
+	conf := config.NewConfig()
+	config.Set(conf)
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	return &v1.PodList{
 		Items: []v1.Pod{
@@ -108,7 +132,7 @@ func fakePodList() *v1.PodList {
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:              "details-v1-3618568057-dnkjp",
 					CreationTimestamp: meta_v1.NewTime(t1),
-					Labels:            map[string]string{"app": "httpbin", "version": "v1"},
+					Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
 					OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
 						Kind: "ReplicaSet",
 						Name: "details-v1-3618568057",

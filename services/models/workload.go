@@ -3,6 +3,7 @@ package models
 import (
 	"k8s.io/api/apps/v1beta1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -142,12 +143,13 @@ func (workloadList *WorkloadList) Parse(namespace string, ds *v1beta1.Deployment
 }
 
 func (workload *WorkloadListItem) Parse(d v1beta1.Deployment) {
+	conf := config.Get()
 	workload.Name = d.Name
 	workload.Type = DEPLOYMENT
 
-	/** Check the labels app and version required by Istio*/
-	_, workload.AppLabel = d.Labels["app"]
-	_, workload.VersionLabel = d.Labels["version"]
+	/** Check the labels app and version required by Istio in template Pods*/
+	_, workload.AppLabel = d.Spec.Template.Labels[conf.IstioLabels.AppLabelName]
+	_, workload.VersionLabel = d.Spec.Template.Labels[conf.IstioLabels.VersionLabelName]
 }
 
 func (workloadList *WorkloadOverviews) Parse(ds *v1beta1.DeploymentList) {

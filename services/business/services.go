@@ -3,6 +3,7 @@ package business
 import (
 	"fmt"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/services/models"
@@ -29,7 +30,7 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 
 func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernetes.ServiceList) *models.ServiceList {
 	services := make([]models.ServiceOverview, len(sl.Services.Items))
-
+	conf := config.Get()
 	// Convert each k8s service into our model
 	for i, item := range sl.Services.Items {
 		sPods := kubernetes.FilterPodsForService(&item, sl.Pods)
@@ -38,7 +39,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernete
 		mPods.Parse(sPods)
 		hasSideCar := mPods.HasIstioSideCar()
 		/** Check if Service has the label app required by Istio */
-		_, appLabel := item.Spec.Selector["app"]
+		_, appLabel := item.Spec.Selector[conf.IstioLabels.AppLabelName]
 		services[i] = models.ServiceOverview{
 			Name:         item.Name,
 			IstioSidecar: hasSideCar,
