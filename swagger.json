@@ -2072,7 +2072,7 @@
           "additionalProperties": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/definitions/SourceWorkload"
             }
           },
           "x-go-name": "Dependencies"
@@ -2213,6 +2213,21 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/Service"
+      },
+      "x-go-package": "github.com/kiali/kiali/services/models"
+    },
+    "SourceWorkload": {
+      "description": "SourceWorkload holds workload identifiers used for service dependencies",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        }
       },
       "x-go-package": "github.com/kiali/kiali/services/models"
     },
@@ -2707,6 +2722,10 @@
         "tcp": {
           "type": "object",
           "x-go-name": "Tcp"
+        },
+        "tls": {
+          "type": "object",
+          "x-go-name": "Tls"
         }
       },
       "x-go-name": "VirtualService",
