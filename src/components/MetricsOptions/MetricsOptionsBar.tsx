@@ -4,6 +4,7 @@ import { config } from '../../config';
 import ValueSelectHelper from './ValueSelectHelper';
 import MetricsOptions from '../../types/MetricsOptions';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
+import { HistoryManager } from '../../app/History';
 
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
@@ -69,8 +70,8 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     });
 
     this.state = {
-      pollInterval: MetricsOptionsBar.DefaultPollInterval,
-      duration: Number(sessionStorage.getItem('appDuration')) || MetricsOptionsBar.DefaultDuration,
+      pollInterval: this.initialPollInterval(),
+      duration: this.initialDuration(),
       groupByLabels: this.groupByLabelsHelper.selected
     };
   }
@@ -80,6 +81,29 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     this.reportOptions();
     this.props.onPollIntervalChanged(this.state.pollInterval);
   }
+
+  initialPollInterval = (): number => {
+    let initialPollInterval = MetricsOptionsBar.DefaultPollInterval;
+
+    const pollIntervalParam = HistoryManager.getParam('pi');
+    if (pollIntervalParam != null) {
+      initialPollInterval = Number(pollIntervalParam);
+    }
+
+    return initialPollInterval;
+  };
+
+  initialDuration = (): number => {
+    let initialDuration = Number(sessionStorage.getItem('appDuration')) || MetricsOptionsBar.DefaultDuration;
+
+    const durationParam = HistoryManager.getParam('duration');
+    if (durationParam != null) {
+      initialDuration = Number(durationParam);
+      sessionStorage.setItem('appDuration', durationParam);
+    }
+
+    return initialDuration;
+  };
 
   onPollIntervalChanged = (key: number) => {
     // We use a specific handler so that changing poll interval doesn't trigger a metrics refresh in parent
@@ -132,12 +156,8 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
           disabled={false}
           handleSelect={this.onDurationChanged}
           nameDropdown={'Duration'}
-          initialValue={Number(sessionStorage.getItem('appDuration')) || MetricsOptionsBar.DefaultDuration}
-          initialLabel={String(
-            MetricsOptionsBar.Durations[
-              Number(sessionStorage.getItem('appDuration')) || MetricsOptionsBar.DefaultDuration
-            ]
-          )}
+          initialValue={this.state.duration}
+          initialLabel={String(MetricsOptionsBar.Durations[this.state.duration])}
           options={MetricsOptionsBar.Durations}
         />
         <ToolbarDropdown
@@ -145,8 +165,8 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
           disabled={false}
           handleSelect={this.onPollIntervalChanged}
           nameDropdown={'Poll Interval'}
-          initialValue={MetricsOptionsBar.DefaultPollInterval}
-          initialLabel={String(MetricsOptionsBar.PollIntervals[MetricsOptionsBar.DefaultPollInterval])}
+          initialValue={this.state.pollInterval}
+          initialLabel={String(MetricsOptionsBar.PollIntervals[this.state.pollInterval])}
           options={MetricsOptionsBar.PollIntervals}
         />
         <ToolbarRightContent>

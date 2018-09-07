@@ -160,7 +160,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
         return;
       }
 
-      const urlParams = new URLSearchParams(this.props.location.search);
+      const urlParams = new URLSearchParams('');
       urlParams.set(tabName, tabKey);
 
       this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());

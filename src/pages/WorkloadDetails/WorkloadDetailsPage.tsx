@@ -201,7 +201,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
         return;
       }
 
-      const urlParams = new URLSearchParams(this.props.location.search);
+      const urlParams = new URLSearchParams('');
       urlParams.set(tabName, tabKey);
 
       this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
