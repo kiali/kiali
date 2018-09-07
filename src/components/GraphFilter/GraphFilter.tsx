@@ -70,7 +70,7 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
             id={'graph_filter_view_type'}
             disabled={this.props.disabled}
             handleSelect={this.updateViewType}
-            nameDropdown={'Graph type'}
+            nameDropdown={'Graph Type'}
             value={graphTypeKey}
             label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
             options={GraphFilter.GRAPH_TYPES}
