@@ -40,6 +40,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
           <label style={{ paddingRight: '0.5em', paddingLeft: '0.5em' }}>{this.props.nameDropdown}</label>
         )}
         <DropdownButton
+          disabled={this.props.disabled}
           title={this.props.label || this.state.currentName}
           onSelect={this.onKeyChanged}
           id={this.props.id}

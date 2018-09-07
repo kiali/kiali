@@ -13,6 +13,7 @@ import { AppHealth, ServiceHealth, WorkloadHealth, NamespaceAppHealth, Namespace
 import { ServiceList } from '../types/ServiceListComponent';
 import { AppList } from '../types/AppList';
 import { App } from '../types/App';
+import { NodeParamsType, NodeType } from '../types/Graph';
 
 export interface Response<T> {
   data: T;
@@ -222,6 +223,27 @@ export const getJaegerInfo = (auth: string): Promise<Response<JaegerInfo>> => {
 
 export const getGraphElements = (auth: string, namespace: Namespace, params: any) => {
   return newRequest('get', `/api/namespaces/${namespace.name}/graph`, params, {}, auth);
+};
+
+export const getNodeGraphElements = (auth: string, namespace: Namespace, node: NodeParamsType, params: any) => {
+  switch (node.nodeType) {
+    case NodeType.APP:
+      if (node.version && node.version !== 'unknown') {
+        return newRequest(
+          'get',
+          `/api/namespaces/${namespace.name}/applications/${node.app}/versions/${node.version}/graph`,
+          params,
+          {},
+          auth
+        );
+      }
+      return newRequest('get', `/api/namespaces/${namespace.name}/applications/${node.app}/graph`, params, {}, auth);
+    case NodeType.WORKLOAD:
+      return newRequest('get', `/api/namespaces/${namespace.name}/workloads/${node.workload}/graph`, params, {}, auth);
+    default:
+      // default to namespace graph
+      return getGraphElements(auth, namespace, params);
+  }
 };
 
 export const getServiceDetail = (auth: string, namespace: String, service: String): Promise<ServiceDetailsInfo> => {

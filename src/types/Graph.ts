@@ -31,12 +31,21 @@ export enum NodeType {
   WORKLOAD = 'workload'
 }
 
+export interface NodeParamsType {
+  nodeType: NodeType;
+  workload: string;
+  app: string;
+  version: string;
+}
+
 export interface GraphParamsType {
   namespace: Namespace;
+  node?: NodeParamsType;
   graphDuration: Duration;
   graphLayout: Layout;
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
+  injectServiceNodes: boolean;
 }
 
 // This data is stored in the _global scratch area in the cy graph

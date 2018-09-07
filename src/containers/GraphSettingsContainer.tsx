@@ -8,7 +8,7 @@ import { KialiAppState, ServiceGraphFilterState } from '../store/Store';
 import { style } from 'typestyle';
 import { EdgeLabelMode, Layout } from '../types/GraphFilter';
 import { GraphParamsType } from '../types/Graph';
-import { makeServiceGraphUrlFromParams } from '../components/Nav/NavUtils';
+import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../components/Nav/NavUtils';
 import EdgeLabelRadioGroup from '../components/ToolbarDropdown/EdgeLabelRadioGroup';
 import { config } from '../config';
 
@@ -76,7 +76,12 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
   };
 
   handleFilterChangeToUrl = (params: GraphParamsType) => {
-    this.context.router.history.push(makeServiceGraphUrlFromParams(params));
+    document.body.click(); // close the layover
+    if (params.node) {
+      this.context.router.history.push(makeNodeGraphUrlFromParams(params.node, params));
+    } else {
+      this.context.router.history.push(makeNamespaceGraphUrlFromParams(params));
+    }
   };
 
   render() {
@@ -91,10 +96,12 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
 
     const graphParams: GraphParamsType = {
       namespace: this.props.namespace,
+      node: this.props.node,
       graphLayout: this.props.graphLayout,
       graphDuration: this.props.graphDuration,
       edgeLabelMode: this.props.edgeLabelMode,
-      graphType: this.props.graphType
+      graphType: this.props.graphType,
+      injectServiceNodes: this.props.injectServiceNodes
     };
 
     // map or dispatchers for redux
@@ -220,10 +227,12 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
   private getGraphParams: () => GraphParamsType = () => {
     return {
       namespace: this.props.namespace,
+      node: this.props.node,
       graphDuration: this.props.graphDuration,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
-      graphType: this.props.graphType
+      graphType: this.props.graphType,
+      injectServiceNodes: this.props.injectServiceNodes
     };
   };
 }

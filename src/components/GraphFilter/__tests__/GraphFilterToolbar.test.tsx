@@ -13,7 +13,8 @@ const PARAMS: GraphParamsType = {
   graphLayout: { name: 'Cose' },
   edgeLabelMode: EdgeLabelMode.HIDE,
   // TODO: GraphType not yet added into the UI
-  graphType: GraphType.VERSIONED_APP
+  graphType: GraphType.VERSIONED_APP,
+  injectServiceNodes: false
 };
 
 describe('ServiceGraphPage test', () => {

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import { Toolbar, FormGroup } from 'patternfly-react';
+import { Toolbar, FormGroup, Button } from 'patternfly-react';
 import * as _ from 'lodash';
 
 import { Duration } from '../../types/GraphFilter';
@@ -16,6 +16,7 @@ export interface GraphFilterProps extends GraphParamsType {
   disabled: boolean;
   onDurationChange: (newDuration: Duration) => void;
   onNamespaceChange: (newValue: Namespace) => void;
+  onNamespaceReturn: () => void;
   onGraphTypeChange: (newType: GraphType) => void;
   onRefresh: () => void;
 }
@@ -56,9 +57,15 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
       <>
         <Toolbar>
           <FormGroup className={zeroPaddingLeft}>
-            <label className={namespaceStyle}>Namespace:</label>
+            {this.props.node ? (
+              <Button className={namespaceStyle} onClick={this.props.onNamespaceReturn}>
+                Back To Namespace
+              </Button>
+            ) : (
+              <label className={namespaceStyle}>Namespace:</label>
+            )}
             <NamespaceDropdownContainer
-              disabled={this.props.disabled}
+              disabled={this.props.node || this.props.disabled}
               activeNamespace={this.props.namespace}
               onSelect={this.props.onNamespaceChange}
             />
@@ -68,7 +75,7 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
           </FormGroup>
           <ToolbarDropdown
             id={'graph_filter_view_type'}
-            disabled={this.props.disabled}
+            disabled={this.props.node !== undefined || this.props.disabled}
             handleSelect={this.updateViewType}
             nameDropdown={'Graph Type'}
             value={graphTypeKey}

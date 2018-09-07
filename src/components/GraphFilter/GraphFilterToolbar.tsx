@@ -6,7 +6,7 @@ import { Duration } from '../../types/GraphFilter';
 import Namespace from '../../types/Namespace';
 import GraphFilterToolbarType from '../../types/GraphFilterToolbar';
 
-import { makeServiceGraphUrlFromParams } from '../Nav/NavUtils';
+import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 
 import GraphFilter from './GraphFilter';
 
@@ -18,10 +18,12 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
   render() {
     const graphParams: GraphParamsType = {
       namespace: this.props.namespace,
+      node: this.props.node,
       graphLayout: this.props.graphLayout,
       graphDuration: this.props.graphDuration,
       edgeLabelMode: this.props.edgeLabelMode,
-      graphType: this.props.graphType
+      graphType: this.props.graphType,
+      injectServiceNodes: this.props.injectServiceNodes
     };
 
     return (
@@ -29,6 +31,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
         disabled={this.props.isLoading}
         onDurationChange={this.handleDurationChange}
         onNamespaceChange={this.handleNamespaceChange}
+        onNamespaceReturn={this.handleNamespaceReturn}
         onGraphTypeChange={this.handleGraphTypeChange}
         onRefresh={this.props.handleRefreshClick}
         {...graphParams}
@@ -50,6 +53,12 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     });
   };
 
+  handleNamespaceReturn = () => {
+    this.context.router.history.push(
+      makeNamespaceGraphUrlFromParams({ ...this.getGraphParams(), node: undefined, injectServiceNodes: false })
+    );
+  };
+
   handleGraphTypeChange = (graphType: GraphType) => {
     this.handleFilterChange({
       ...this.getGraphParams(),
@@ -58,16 +67,22 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
   };
 
   handleFilterChange = (params: GraphParamsType) => {
-    this.context.router.history.push(makeServiceGraphUrlFromParams(params));
+    if (this.props.node) {
+      this.context.router.history.push(makeNodeGraphUrlFromParams(this.props.node, params));
+    } else {
+      this.context.router.history.push(makeNamespaceGraphUrlFromParams(params));
+    }
   };
 
   private getGraphParams: () => GraphParamsType = () => {
     return {
       namespace: this.props.namespace,
+      node: this.props.node,
       graphDuration: this.props.graphDuration,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
-      graphType: this.props.graphType
+      graphType: this.props.graphType,
+      injectServiceNodes: this.props.injectServiceNodes
     };
   };
 }

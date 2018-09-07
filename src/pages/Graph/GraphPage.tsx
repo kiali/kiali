@@ -4,7 +4,7 @@ import FlexView from 'react-flexview';
 import { Breadcrumb } from 'patternfly-react';
 
 import Namespace from '../../types/Namespace';
-import { GraphParamsType, SummaryData, GraphType } from '../../types/Graph';
+import { GraphParamsType, SummaryData, NodeParamsType, GraphType } from '../../types/Graph';
 import { Duration, PollIntervalInMs } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
@@ -27,7 +27,13 @@ type ServiceGraphPageProps = GraphParamsType & {
   isLoading: boolean;
   showLegend: boolean;
   isReady: boolean;
-  fetchGraphData: (namespace: Namespace, graphDuration: Duration, graphType: GraphType) => any;
+  fetchGraphData: (
+    namespace: Namespace,
+    graphDuration: Duration,
+    graphType: GraphType,
+    injectServiceNodes: boolean,
+    node?: NodeParamsType
+  ) => any;
   toggleLegend: () => void;
   summaryData: SummaryData | null;
   pollInterval: PollIntervalInMs;
@@ -66,7 +72,7 @@ const ServiceGraphErrorBoundaryFallback = () => {
   );
 };
 
-export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPageProps> {
+export default class GraphPage extends React.PureComponent<ServiceGraphPageProps> {
   private pollTimeoutRef?: number;
   private pollPromise?: CancelablePromise<any>;
   private readonly errorBoundaryRef: any;
@@ -92,10 +98,11 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
     const prevPollInterval = prevProps.pollInterval;
 
     const namespaceHasChanged = prevNamespace.name !== this.props.namespace.name;
+    const nodeHasChanged = prevProps.node !== this.props.node;
     const durationHasChanged = prevDuration.value !== this.props.graphDuration.value;
     const pollIntervalChanged = prevPollInterval !== this.props.pollInterval;
 
-    if (namespaceHasChanged || durationHasChanged) {
+    if (namespaceHasChanged || nodeHasChanged || durationHasChanged) {
       this.scheduleNextPollingInterval(0);
     } else if (pollIntervalChanged) {
       this.scheduleNextPollingIntervalFromProps();
@@ -116,10 +123,12 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
   render() {
     const graphParams: GraphParamsType = {
       namespace: this.props.namespace,
+      node: this.props.node,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
       graphDuration: this.props.graphDuration,
-      graphType: this.props.graphType
+      graphType: this.props.graphType,
+      injectServiceNodes: this.props.injectServiceNodes
     };
     return (
       <>
@@ -185,7 +194,13 @@ export default class ServiceGraphPage extends React.PureComponent<ServiceGraphPa
   }
 
   private loadGraphDataFromBackend = () => {
-    return this.props.fetchGraphData(this.props.namespace, this.props.graphDuration, this.props.graphType);
+    return this.props.fetchGraphData(
+      this.props.namespace,
+      this.props.graphDuration,
+      this.props.graphType,
+      this.props.injectServiceNodes,
+      this.props.node
+    );
   };
 
   private scheduleNextPollingIntervalFromProps() {

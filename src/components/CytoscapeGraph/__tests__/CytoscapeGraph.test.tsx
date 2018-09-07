@@ -48,6 +48,7 @@ describe('CytoscapeGraph component test', () => {
         isLoading={false}
         isError={false}
         graphType={GraphType.VERSIONED_APP}
+        injectServiceNodes={false}
       />
     );
     const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayout);

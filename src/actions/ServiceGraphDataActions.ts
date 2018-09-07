@@ -5,7 +5,7 @@ import * as API from '../services/Api';
 import { authentication } from '../utils/Authentication';
 import { MessageCenterActions } from './MessageCenterActions';
 import { ServiceGraphDataActionKeys } from './ServiceGraphDataActionKeys';
-import { GraphType } from '../types/Graph';
+import { GraphType, NodeParamsType } from '../types/Graph';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 
@@ -78,14 +78,40 @@ export const ServiceGraphDataActions = {
   handleLegend: createAction(ServiceGraphDataActionKeys.HANDLE_LEGEND),
 
   // action creator that performs the async request
-  fetchGraphData: (namespace: Namespace, graphDuration: Duration, graphType: GraphType) => {
+  fetchGraphData: (
+    namespace: Namespace,
+    graphDuration: Duration,
+    graphType: GraphType,
+    injectServiceNodes: boolean,
+    node?: NodeParamsType
+  ) => {
     return dispatch => {
       dispatch(ServiceGraphDataActions.getGraphDataStart());
       const duration = graphDuration.value;
-      let restParams = { duration: duration + 's', graphType: graphType };
+      let restParams = { duration: duration + 's', graphType: graphType, injectServiceNodes: injectServiceNodes };
       // TODO: this namespace should not be hardcoded
       if (namespace.name === 'istio-system') {
         restParams['includeIstio'] = true;
+      }
+      if (node) {
+        return API.getNodeGraphElements(authentication(), namespace, node, restParams).then(
+          response => {
+            const responseData: any = response['data'];
+            const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
+            const timestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
+            dispatch(ServiceGraphDataActions.getGraphDataSuccess(timestamp, graphData));
+          },
+          error => {
+            let emsg: string;
+            if (error.response && error.response.data && error.response.data.error) {
+              emsg = 'Cannot load the graph: ' + error.response.data.error;
+            } else {
+              emsg = 'Cannot load the graph: ' + error.toString();
+            }
+            dispatch(MessageCenterActions.addMessage(emsg));
+            dispatch(ServiceGraphDataActions.getGraphDataFailure(emsg));
+          }
+        );
       }
       return API.getGraphElements(authentication(), namespace, restParams).then(
         response => {

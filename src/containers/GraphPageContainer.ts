@@ -2,12 +2,12 @@ import { KialiAppState } from '../store/Store';
 import { connect } from 'react-redux';
 import Namespace from '../types/Namespace';
 import { Duration } from '../types/GraphFilter';
-import ServiceGraphPage from '../pages/ServiceGraph/ServiceGraphPage';
+import GraphPage from '../pages/Graph/GraphPage';
 
 import { ServiceGraphDataActions } from '../actions/ServiceGraphDataActions';
 import { serviceGraphFilterActions } from '../actions/ServiceGraphFilterActions';
 import { bindActionCreators } from 'redux';
-import { GraphType } from '../types/Graph';
+import { GraphType, NodeParamsType } from '../types/Graph';
 
 const mapStateToProps = (state: KialiAppState) => ({
   graphTimestamp: state.serviceGraph.graphDataTimestamp,
@@ -26,13 +26,18 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
-  fetchGraphData: (namespace: Namespace, graphDuration: Duration, graphType: GraphType) =>
-    dispatch(ServiceGraphDataActions.fetchGraphData(namespace, graphDuration, graphType)),
+  fetchGraphData: (
+    namespace: Namespace,
+    graphDuration: Duration,
+    graphType: GraphType,
+    injectServiceNodes: boolean,
+    node?: NodeParamsType
+  ) => dispatch(ServiceGraphDataActions.fetchGraphData(namespace, graphDuration, graphType, injectServiceNodes, node)),
   toggleLegend: bindActionCreators(serviceGraphFilterActions.toggleLegend, dispatch)
 });
 
-const ServiceGraphPageConnected = connect(
+const GraphPageConnected = connect(
   mapStateToProps,
   mapDispatchToProps
-)(ServiceGraphPage);
-export default ServiceGraphPageConnected;
+)(GraphPage);
+export default GraphPageConnected;
