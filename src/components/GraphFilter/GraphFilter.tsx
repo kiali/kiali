@@ -66,29 +66,29 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
           <FormGroup className={zeroPaddingLeft}>
             <GraphSettingsContainer {...this.props} />
           </FormGroup>
-          <FormGroup>
+          <ToolbarDropdown
+            id={'graph_filter_view_type'}
+            disabled={this.props.disabled}
+            handleSelect={this.updateViewType}
+            nameDropdown={'Graph type'}
+            value={graphTypeKey}
+            label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
+            options={GraphFilter.GRAPH_TYPES}
+          />
+          <span style={{ marginLeft: '1.5em' }}>
             <ToolbarDropdown
-              id={'graph_filter_view_type'}
+              id={'graph_filter_interval_duration'}
               disabled={this.props.disabled}
-              handleSelect={this.updateViewType}
-              nameDropdown={'Graph type'}
-              value={graphTypeKey}
-              label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
-              options={GraphFilter.GRAPH_TYPES}
+              handleSelect={this.updateDuration}
+              nameDropdown={'Displaying'}
+              value={this.props.graphDuration.value}
+              label={String(GraphFilter.INTERVAL_DURATION[this.props.graphDuration.value])}
+              options={GraphFilter.INTERVAL_DURATION}
             />
-            <span style={{ marginLeft: '1.5em' }}>
-              <ToolbarDropdown
-                id={'graph_filter_interval_duration'}
-                disabled={this.props.disabled}
-                handleSelect={this.updateDuration}
-                nameDropdown={'Displaying'}
-                value={this.props.graphDuration.value}
-                label={String(GraphFilter.INTERVAL_DURATION[this.props.graphDuration.value])}
-                options={GraphFilter.INTERVAL_DURATION}
-              />
-            </span>
+          </span>
+          <Toolbar.RightContent>
             <GraphRefreshContainer id="graph_refresh_container" handleRefresh={this.handleRefresh} />
-          </FormGroup>
+          </Toolbar.RightContent>
         </Toolbar>
       </>
     );
