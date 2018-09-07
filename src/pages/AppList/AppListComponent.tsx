@@ -143,6 +143,58 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
     });
   }
 
+  componentDidUpdate(prevProps: AppListComponentProps, prevState: AppListComponentState, snapshot: any) {
+    if (!this.paramsAreSynced(prevProps)) {
+      this.setState({
+        pagination: this.props.pagination,
+        currentSortField: this.props.currentSortField,
+        isSortAscending: this.props.isSortAscending,
+        rateInterval: this.props.rateInterval
+      });
+
+      NamespaceFilterSelected.setSelected(this.selectedFilters());
+      this.updateApps();
+    }
+  }
+
+  paramsAreSynced(prevProps: AppListComponentProps) {
+    return (
+      prevProps.pagination.page === this.props.pagination.page &&
+      prevProps.pagination.perPage === this.props.pagination.perPage &&
+      prevProps.rateInterval === this.props.rateInterval &&
+      prevProps.isSortAscending === this.props.isSortAscending &&
+      prevProps.currentSortField.title === this.props.currentSortField.title &&
+      this.filtersMatch()
+    );
+  }
+
+  filtersMatch() {
+    const selectedFilters: Map<string, string[]> = new Map<string, string[]>();
+
+    NamespaceFilterSelected.getSelected().map(activeFilter => {
+      const existingValue = selectedFilters.get(activeFilter.category) || [];
+      selectedFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
+    });
+
+    let urlParams: Map<string, string[]> = new Map<string, string[]>();
+    availableFilters.forEach(filter => {
+      const param = this.props.queryParam(filter.id, ['']);
+      if (param[0] !== '') {
+        const existing = urlParams.get(filter.title) || [];
+        urlParams.set(filter.title, existing.concat(param));
+      }
+    });
+
+    let equalFilters = true;
+    selectedFilters.forEach((filterValues, filterName) => {
+      const aux = urlParams.get(filterName) || [];
+      equalFilters =
+        equalFilters && filterValues.every(value => aux.includes(value)) && filterValues.length === aux.length;
+    });
+
+    return selectedFilters.size === urlParams.size && equalFilters;
+  }
+
   pageSet = (page: number) => {
     this.setState(prevState => {
       return {
@@ -208,7 +260,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         isSortAscending: !this.state.isSortAscending,
         appListItems: sorted
       });
-      this.props.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'desc' : 'asc' }]);
+      this.props.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'asc' : 'desc' }]);
     });
   };
 
