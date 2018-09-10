@@ -283,6 +283,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       }
 
       const urlParams = new URLSearchParams('');
+      const parsedSearch = this.parseSearch();
+      if (parsedSearch.type && parsedSearch.name) {
+        urlParams.set(parsedSearch.type, parsedSearch.name);
+      }
       urlParams.set(tabName, tabKey);
 
       this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
