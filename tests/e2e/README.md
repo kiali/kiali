@@ -11,9 +11,14 @@
 
 ## Environment Setup
 
-* Dependencies that will need to be available prior to running this test suite
+* System dependencies that will need to be available
     *  `oc`
     *  `python 3.6`
+
+* It is expected that the following have already been deployed in Openshift
+    * `Istio-system (Istio, Grafana, Prometheus, etc.)`
+    * `Kiali (Deployed into Istio-system namespace)`
+    * `Bookinfo`
 
 ```sh
 # Clone this repository
