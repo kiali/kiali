@@ -1,6 +1,12 @@
 import { Point, clamp, quadraticBezier, linearInterpolation, distance, bezierLength } from '../../../utils/MathUtils';
-import { DimClass } from './GraphStyles';
-import { PfColors } from '../../../components/Pf/PfColors';
+import { DimClass } from '../graphs/GraphStyles';
+import { PfColors } from '../../Pf/PfColors';
+import {
+  TrafficPointCircleRenderer,
+  TrafficPointConcentricDiamondRenderer,
+  TrafficPointRenderer,
+  Diamond
+} from './TrafficPointRenderer';
 
 // Min and max values to clamp the request per second rate
 const TIMER_REQUEST_PER_SECOND_MIN = 0;
@@ -24,23 +30,22 @@ const BASE_LENGTH = 50;
 // How often paint a frame
 const FRAME_RATE = 1 / 60;
 
-enum PointShape {
-  CIRCLE,
-  DIAMOND
-}
-
 enum EdgeConnectionType {
   LINEAR,
   CURVE,
   LOOP
 }
 
-const TRAFFIC_POINT_ERROR_SHAPE = PointShape.DIAMOND;
-const TRAFFIC_POINT_ERROR_COLOR = PfColors.Red100;
-const TRAFFIC_POINT_DEFAULT_SHAPE = PointShape.CIRCLE;
-const TRAFFIC_POINT_DEFAULT_COLOR = PfColors.Black;
+const getTrafficPointRendererForHttpError: (edge: any) => TrafficPointRenderer = (edge: any) => {
+  return new TrafficPointConcentricDiamondRenderer(
+    new Diamond(4, PfColors.White, PfColors.Red100, 1.0),
+    new Diamond(2, PfColors.Red100, PfColors.Red100, 1.0)
+  );
+};
 
-const TRAFFIC_POINT_RADIO = 3;
+const getTrafficPointRendererForHttpSuccess: (edge: any) => TrafficPointRenderer = (edge: any) => {
+  return new TrafficPointCircleRenderer(3, PfColors.White, edge.style('line-color'), 2);
+};
 
 /**
  * Traffic Point, it defines in an edge
@@ -51,14 +56,12 @@ const TRAFFIC_POINT_RADIO = 3;
  * delta - defines in what part of the edge is the point,  is a normalized number
  *  from 0 to 1, 0 means at the start of the path, and 1 is the end. The position
  *  is interpolated.
- * shape - The shape of the point (see: PointShape)
- * color - The color of the point in the format #RRGGBBAA
+ * renderer - Renderer used to draw the shape at a given position.
  */
 type TrafficPoint = {
   speed: number;
   delta: number;
-  shape: PointShape;
-  color: string;
+  renderer: TrafficPointRenderer;
 };
 
 /**
@@ -86,15 +89,15 @@ class TrafficPointGenerator {
    * Process a render step for the generator, decrements the timerForNextPoint and
    * returns a new point if it reaches zero (or is close).
    * This method adds some randomness to avoid the "flat" look that all the points
-   * are syncronized.
+   * are synchronized.
    */
-  processStep(step: number): TrafficPoint | undefined {
+  processStep(step: number, edge: any): TrafficPoint | undefined {
     if (this.timerForNextPoint !== undefined) {
       this.timerForNextPoint -= step;
       // Add some random-ness to make it less "flat"
       if (this.timerForNextPoint <= Math.random() * 200) {
         this.timerForNextPoint = this.timer;
-        return this.nextPoint();
+        return this.nextPoint(edge);
       }
     }
     return undefined;
@@ -115,13 +118,12 @@ class TrafficPointGenerator {
     this.errorRate = errorRate;
   }
 
-  private nextPoint(): TrafficPoint {
+  private nextPoint(edge: any): TrafficPoint {
     const isErrorPoint = Math.random() <= this.errorRate;
     return {
       speed: this.speed,
       delta: 0, // at the beginning of the edge
-      color: isErrorPoint ? TRAFFIC_POINT_ERROR_COLOR : TRAFFIC_POINT_DEFAULT_COLOR,
-      shape: isErrorPoint ? TRAFFIC_POINT_ERROR_SHAPE : TRAFFIC_POINT_DEFAULT_SHAPE
+      renderer: isErrorPoint ? getTrafficPointRendererForHttpError(edge) : getTrafficPointRendererForHttpSuccess(edge)
     };
   }
 }
@@ -152,7 +154,7 @@ class TrafficEdge {
       p.delta += (step * p.speed) / 1000;
       return p;
     });
-    const point = this.generator.processStep(step);
+    const point = this.generator.processStep(step, this.edge);
     if (point) {
       this.points.push(point);
     }
@@ -284,7 +286,7 @@ export default class TrafficRenderer {
         const pointInGraph = this.pointInGraph(controlPoints, point.delta);
 
         if (pointInGraph) {
-          this.renderPoint(point, pointInGraph.x, pointInGraph.y, TRAFFIC_POINT_RADIO);
+          point.renderer.render(this.context, pointInGraph);
         }
       } catch (error) {
         console.log(`Error rendering TrafficEdge, it won't be rendered: ${error.message}`);
@@ -319,25 +321,6 @@ export default class TrafficRenderer {
       default:
         throw Error('Unhandled EdgeConnectionType:' + edgeConnectionType);
     }
-  }
-
-  private renderPoint(point: TrafficPoint, x: number, y: number, radio: number) {
-    this.context.fillStyle = point.color;
-    this.context.beginPath();
-    switch (point.shape) {
-      case PointShape.CIRCLE:
-        this.context.arc(x, y, radio, 0, 2 * Math.PI, true);
-        break;
-      case PointShape.DIAMOND:
-        this.context.moveTo(x, y - radio);
-        this.context.lineTo(x + radio, y);
-        this.context.lineTo(x, y + radio);
-        this.context.lineTo(x - radio, y);
-        break;
-      default:
-        throw Error('Unknown shape ' + point.shape);
-    }
-    this.context.fill(); // or stroke if we only want the outer ring
   }
 
   private currentStep(currentTime: number): number {
