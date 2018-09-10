@@ -17,6 +17,8 @@ server:
   # Default is false
   # cors_allow_all: true
 external_services:
+  istio:
+    istio_version_supported: [">= 1.0", ">= 0.1.0"]
   prometheus_service_url: http://prometheus-istio-system.127.0.0.1.nip.io
   # Uncomment istio_identity_domain to set a different value. This value must match the Istio configuration.
   # Default is "svc.cluster.local" (which matches Istio's default)

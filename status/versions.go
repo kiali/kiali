@@ -13,6 +13,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 )
 
 type externalService func() (*ExternalServiceInfo, error)
@@ -73,8 +74,17 @@ func istioVersion() (*ExternalServiceInfo, error) {
 			version := expVersion.FindStringSubmatch(rawVersion)
 			if version != nil {
 				product.Version = version[0]
-				if !validateVersion(config.IstioVersionSupported, product.Version) {
-					info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
+				vSupported := config.Get().ExternalServices.Istio.IstioVersionSupported
+				isSupported := false
+				for i := 0; i < len(vSupported); i++ {
+					isSupported = validateVersion(vSupported[i], product.Version) || isSupported // 'OR' current check with previous to reset flag
+					log.Debugf("Checking actual Istio version [%v] against supported string [%v]: %v", product.Version, vSupported[i], isSupported)
+					if isSupported {
+						break
+					}
+				}
+				if !isSupported {
+					info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, supported version(s) should be "+strings.Join(vSupported, ","))
 				}
 			} else {
 				product.Version = rawVersion
