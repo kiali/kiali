@@ -5,7 +5,6 @@ import ReactResizeDetector from 'react-resize-detector';
 
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
-import * as GraphBadge from './graphs/GraphBadge';
 import TrafficRender from './graphs/TrafficRenderer';
 import EmptyGraphLayout from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
@@ -304,25 +303,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     const globalScratchData: CytoscapeGlobalScratchData = {
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,
-      showNodeLabels: this.props.showNodeLabels
+      showCircuitBreakers: this.props.showCircuitBreakers,
+      showMissingSidecars: this.props.showMissingSidecars,
+      showNodeLabels: this.props.showNodeLabels,
+      showVirtualServices: this.props.showVirtualServices
     };
     cy.scratch(CytoscapeGlobalScratchNamespace, globalScratchData);
 
     cy.startBatch();
-
-    // Destroy badges
-    // We must destroy all badges before updating the json, or else we will lose all the
-    // references to removed nodes
-    const cbBadge = new GraphBadge.CircuitBreakerBadge();
-    const vsBadge = new GraphBadge.VirtualServiceBadge();
-    const vsGroupBadge = new GraphBadge.VirtualServiceGroupBadge();
-    const msBadge = new GraphBadge.MissingSidecarsBadge();
-    cy.nodes().forEach(ele => {
-      cbBadge.destroyBadge(ele);
-      vsBadge.destroyBadge(ele);
-      vsGroupBadge.destroyBadge(ele);
-      msBadge.destroyBadge(ele);
-    });
 
     if (updateLayout) {
       // To get a more consistent layout, remove every node and start again (only when a relayout is a must)
@@ -343,23 +331,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.turnNodeLabelsTo(cy, this.props.showNodeLabels);
 
     cy.endBatch();
-
-    // Create badges
-    cy.nodes().forEach(ele => {
-      if (this.props.showCircuitBreakers && ele.data('hasCB')) {
-        cbBadge.buildBadge(ele);
-      }
-      if (this.props.showVirtualServices && ele.data('hasVS')) {
-        if (ele.data('isGroup')) {
-          vsGroupBadge.buildBadge(ele);
-        } else {
-          vsBadge.buildBadge(ele);
-        }
-      }
-      if (this.props.showMissingSidecars && ele.data('hasMissingSC') && !ele.data('isGroup')) {
-        msBadge.buildBadge(ele);
-      }
-    });
 
     // We need to fit outside of the batch operation for it to take effect on the new nodes
     if (updateLayout) {
