@@ -7,8 +7,7 @@ spec:
   host: reviews
   trafficPolicy:
     outlierDetection:
-      http:
-        consecutiveErrors: 1
-        interval: 1s
-        baseEjectionTime: 10s
-        maxEjectionPercent: 100
+      consecutiveErrors: 1
+      interval: 1s
+      baseEjectionTime: 10s
+      maxEjectionPercent: 100
