@@ -1,6 +1,7 @@
 import pytest
 import json
 import tests.conftest as conftest
+from utils.url_connection import url_connection
 
 # Note: Number of services +1 Views Group Node
 # Note: Node and Edge counts are based on traffic origainating from the Ingress
@@ -23,7 +24,7 @@ def test_service_graph_rest_endpoint(kiali_json):
     assert len(kiali_json.get('elements').get('edges')) >= 1
 
 def test_service_graph_bookinfo_namespace_(kiali_client):
-    bookinfo_namespace = conftest.__get_environment_config__(conftest.ENV_FILE).get('mesh_bookinfo_namespace')
+    bookinfo_namespace = get_bookinfo_namespace()
 
     # Validate Node count
     nodes = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=PARAMS)["elements"]['nodes']
@@ -36,13 +37,13 @@ def test_service_graph_bookinfo_namespace_(kiali_client):
     assert len(edges) >= BOOKINFO_EXPECTED_EDGES
 
 def test_service_list_endpoint(kiali_client):
-    bookinfo_namespace = conftest.__get_environment_config__(conftest.ENV_FILE).get('mesh_bookinfo_namespace')
+    bookinfo_namespace = get_bookinfo_namespace()
 
     assert kiali_client.service_list(namespace=bookinfo_namespace).get('namespace').get('name') == bookinfo_namespace
     assert (len (kiali_client.service_list(namespace=bookinfo_namespace).get('services')) == BOOKINFO_EXPECTED_SERVICES), "Unexpected number of services"
 
 def test_service_detail_endpoint(kiali_client):
-    bookinfo_namespace = conftest.__get_environment_config__(conftest.ENV_FILE).get('mesh_bookinfo_namespace')
+    bookinfo_namespace = get_bookinfo_namespace()
 
     for service in kiali_client.service_list(namespace=bookinfo_namespace).get('services'):
         service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=service.get('name'))
@@ -52,13 +53,13 @@ def test_service_detail_endpoint(kiali_client):
         assert 'service' in service_details
 
 def test_service_metrics_endpoint(kiali_client):
-    bookinfo_namespace = conftest.__get_environment_config__(conftest.ENV_FILE).get('mesh_bookinfo_namespace')
+    bookinfo_namespace = get_bookinfo_namespace()
 
     service_metrics = kiali_client.service_metrics(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE).get('dest')
     assert 'metrics' in service_metrics
 
 def test_service_health_endpoint(kiali_client):
-    bookinfo_namespace = conftest.__get_environment_config__(conftest.ENV_FILE).get('mesh_bookinfo_namespace')
+    bookinfo_namespace = get_bookinfo_namespace()
 
     service_health = kiali_client.service_health(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
     assert service_health != None
@@ -68,13 +69,13 @@ def test_service_health_endpoint(kiali_client):
     assert 'outbound' in envoy
 
 def test_service_validations_endpoint(kiali_client):
-    bookinfo_namespace = conftest.__get_environment_config__(conftest.ENV_FILE).get('mesh_bookinfo_namespace')
+    bookinfo_namespace = get_bookinfo_namespace()
 
     assert kiali_client.service_validations(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE) != None
     assert len(kiali_client.service_validations(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE).get('pod')) > 0
 
 def test_workload_list_endpoint(kiali_client):
-    bookinfo_namespace = conftest.__get_environment_config__(conftest.ENV_FILE).get('mesh_bookinfo_namespace')
+    bookinfo_namespace = get_bookinfo_namespace()
 
     workload_list = kiali_client.workload_list(namespace=bookinfo_namespace)
     assert workload_list != None
@@ -82,7 +83,7 @@ def test_workload_list_endpoint(kiali_client):
         assert workload.get('istioSidecar') == True
 
 def test_application_list_endpoint(kiali_client):
-    bookinfo_namespace = conftest.__get_environment_config__(conftest.ENV_FILE).get('mesh_bookinfo_namespace')
+    bookinfo_namespace = get_bookinfo_namespace()
 
     app_list = kiali_client.app_list(namespace=bookinfo_namespace)
     assert app_list != None
@@ -92,7 +93,7 @@ def test_application_list_endpoint(kiali_client):
     assert app_list.get('namespace').get('name') == bookinfo_namespace
 
 def test_application_details_endpoint(kiali_client):
-    bookinfo_namespace = conftest.__get_environment_config__(conftest.ENV_FILE).get('mesh_bookinfo_namespace')
+    bookinfo_namespace = get_bookinfo_namespace()
 
     app_details = kiali_client.app_details(namespace=bookinfo_namespace, app=APPLICATION_TO_VALIDATE)
 
@@ -100,3 +101,23 @@ def test_application_details_endpoint(kiali_client):
     assert app_details.get('namespace').get('name') == bookinfo_namespace
     assert 'workloads' in app_details and (len(app_details.get('workloads')) > 0)
     assert app_details.get('workloads')[0].get('istioSidecar') == True
+
+
+def test_grafana_url_endpoint(kiali_client):
+    url = kiali_client.grafana().get('url')
+    assert url != None and 'grafana-istio-system' in url
+    content =  url_connection.open_url_connection(url)
+    assert content != None
+
+def test_jaeger_url_endpoint(kiali_client):
+    url = kiali_client.jaeger().get('url')
+    assert url != None and 'jaeger-query-istio-system' in url
+    #content =  url_connection.open_url_connection(url)
+    #assert content != None
+
+
+
+####
+
+def get_bookinfo_namespace():
+    return conftest.__get_environment_config__(conftest.ENV_FILE).get('mesh_bookinfo_namespace')
