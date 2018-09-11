@@ -48,10 +48,14 @@ const (
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
 	EnvIstioNamespace              = "ISTIO_NAMESPACE"
 
-	IstioVersionSupported = ">= 1.0"
-
 	EnvIstioLabelNameApp     = "ISTIO_LABEL_NAME_APP"
 	EnvIstioLabelNameVersion = "ISTIO_LABEL_NAME_VERSION"
+)
+
+// The versions that Kiali requires
+const (
+	IstioVersionSupported   = ">= 1.0"
+	MaistraVersionSupported = ">= 0.1.0"
 )
 
 // Global configuration for the application.
