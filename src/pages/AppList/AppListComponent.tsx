@@ -35,7 +35,7 @@ type AppListComponentState = {
 
 type AppListComponentProps = {
   pagination: Pagination;
-  pageHooks: ListPage.Component<any, any>;
+  pageHooks: ListPage.Hooks;
   currentSortField: AppListFilters.SortField;
   isSortAscending: boolean;
   rateInterval: number;

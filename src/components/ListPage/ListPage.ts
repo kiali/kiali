@@ -11,7 +11,16 @@ export namespace ListPage {
   const perPageOptions: number[] = [5, 10, 15];
   const defaultRateInterval = 600;
 
-  export class Component<P, S> extends React.Component<RouteComponentProps<P>, S> {
+  export interface Hooks {
+    handleError: (error: string) => void;
+    onParamChange: (params: URLParameter[], paramAction?: string, historyAction?: string) => void;
+    onParamDelete: (params: string[]) => void;
+    getQueryParam: (queryName: string) => string[] | undefined;
+    getSingleQueryParam: (queryName: string) => string | undefined;
+    getSingleIntQueryParam: (queryName: string) => number | undefined;
+  }
+
+  export class Component<P, S> extends React.Component<RouteComponentProps<P>, S> implements Hooks {
     handleError = (error: string) => {
       MessageCenter.add(error);
     };

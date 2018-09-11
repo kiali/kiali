@@ -144,7 +144,7 @@ type IstioConfigListComponentState = {
 };
 
 type IstioConfigListComponentProps = {
-  pageHooks: ListPage.Component<any, any>;
+  pageHooks: ListPage.Hooks;
   pagination: Pagination;
   currentSortField: SortField;
   isSortAscending: boolean;

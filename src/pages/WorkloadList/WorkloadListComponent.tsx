@@ -38,7 +38,7 @@ type WorkloadListComponentState = {
 
 type WorkloadListComponentProps = {
   pagination: Pagination;
-  pageHooks: ListPage.Component<any, any>;
+  pageHooks: ListPage.Hooks;
   currentSortField: WorkloadListFilters.SortField;
   isSortAscending: boolean;
   rateInterval: number;
