@@ -13,13 +13,13 @@ import {
 } from '../../components/NamespaceFilter/NamespaceFilter';
 import { ListView, Sort, Paginator, ToolbarRightContent, Button, Icon } from 'patternfly-react';
 import { Pagination } from '../../types/Pagination';
-import PropTypes from 'prop-types';
 import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { URLParameter } from '../../types/Parameters';
 import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
+import { ListPage } from '../../components/ListPage/ListPage';
 
-export const availableFilters: FilterType[] = [
+const availableFilters: FilterType[] = [
   defaultNamespaceFilter,
   AppListFilters.appNameFilter,
   AppListFilters.istioSidecarFilter
@@ -34,16 +34,12 @@ type AppListComponentState = {
 };
 
 type AppListComponentProps = {
-  onError: PropTypes.func;
   pagination: Pagination;
-  queryParam: PropTypes.func;
-  onParamChange: PropTypes.func;
+  pageHooks: ListPage.Hooks;
   currentSortField: AppListFilters.SortField;
   isSortAscending: boolean;
   rateInterval: number;
 };
-
-const perPageOptions: number[] = [5, 10, 15];
 
 class AppListComponent extends React.Component<AppListComponentProps, AppListComponentState> {
   constructor(props: AppListComponentProps) {
@@ -109,9 +105,9 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
           value: activeFilter.value
         };
       })
-      .filter(filter => filter !== null);
+      .filter(filter => filter !== null) as URLParameter[];
 
-    this.props.onParamChange(params, 'append', 'replace');
+    this.props.pageHooks.onParamChange(params, 'append', 'replace');
   }
 
   fetchApps(namespaces: string[], filters: ActiveFilter[], rateInterval: number, resetPagination?: boolean) {
@@ -133,8 +129,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
               appListItems: sorted,
               pagination: {
                 page: currentPage,
-                perPage: prevState.pagination.perPage,
-                perPageOptions: perPageOptions
+                perPage: prevState.pagination.perPage
               }
             };
           });
@@ -178,8 +173,8 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
 
     let urlParams: Map<string, string[]> = new Map<string, string[]>();
     availableFilters.forEach(filter => {
-      const param = this.props.queryParam(filter.id, ['']);
-      if (param[0] !== '') {
+      const param = this.props.pageHooks.getSingleQueryParam(filter.id);
+      if (param !== undefined) {
         const existing = urlParams.get(filter.title) || [];
         urlParams.set(filter.title, existing.concat(param));
       }
@@ -201,13 +196,12 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         appListItems: prevState.appListItems,
         pagination: {
           page: page,
-          perPage: prevState.pagination.perPage,
-          perPageOptions: perPageOptions
+          perPage: prevState.pagination.perPage
         }
       };
     });
 
-    this.props.onParamChange([{ name: 'page', value: page }]);
+    this.props.pageHooks.onParamChange([{ name: 'page', value: String(page) }]);
   };
 
   pageSelect = (perPage: number) => {
@@ -216,19 +210,18 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         appListItems: prevState.appListItems,
         pagination: {
           page: 1,
-          perPage: perPage,
-          perPageOptions: perPageOptions
+          perPage: perPage
         }
       };
     });
 
-    this.props.onParamChange([{ name: 'page', value: 1 }, { name: 'perPage', value: perPage }]);
+    this.props.pageHooks.onParamChange([{ name: 'page', value: '1' }, { name: 'perPage', value: String(perPage) }]);
   };
 
   selectedFilters() {
     let activeFilters: ActiveFilter[] = [];
     availableFilters.forEach(filter => {
-      this.props.queryParam(filter.id, []).forEach(value => {
+      (this.props.pageHooks.getQueryParam(filter.id) || []).forEach(value => {
         activeFilters.push({
           label: filter.title + ': ' + value,
           category: filter.title,
@@ -246,7 +239,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         currentSortField: sortField,
         appListItems: sorted
       });
-      this.props.onParamChange([{ name: 'sort', value: sortField.param }]);
+      this.props.pageHooks.onParamChange([{ name: 'sort', value: sortField.param }]);
     });
   };
 
@@ -260,7 +253,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         isSortAscending: !this.state.isSortAscending,
         appListItems: sorted
       });
-      this.props.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'asc' : 'desc' }]);
+      this.props.pageHooks.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'asc' : 'desc' }]);
     });
   };
 
@@ -311,12 +304,12 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
     // Resetting pagination when filters change
     params.push({ name: 'page', value: '' });
 
-    this.props.onParamChange(params, 'append');
+    this.props.pageHooks.onParamChange(params, 'append');
     this.updateApps(true);
   };
 
   handleError = (error: string) => {
-    this.props.onError(error);
+    this.props.pageHooks.handleError(error);
   };
 
   render() {
@@ -373,7 +366,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
 
   private rateIntervalChangedHandler = (key: number) => {
     this.setState({ rateInterval: key });
-    this.props.onParamChange([{ name: 'rate', value: key.toString(10) }]);
+    this.props.pageHooks.onParamChange([{ name: 'rate', value: key.toString(10) }]);
     this.updateApps();
   };
 }

@@ -1,5 +1,5 @@
 import { PfColors } from '../components/Pf/PfColors';
-import { getName } from './RateIntervals';
+import { getName } from '../utils/RateIntervals';
 
 interface HealthItem {
   status: Status;
