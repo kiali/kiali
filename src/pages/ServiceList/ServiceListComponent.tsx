@@ -11,7 +11,6 @@ import {
   ToolbarRightContent
 } from 'patternfly-react';
 import { Link } from 'react-router-dom';
-import PropTypes from 'prop-types';
 
 import {
   defaultNamespaceFilter,
@@ -32,6 +31,7 @@ import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import ItemDescription from './ItemDescription';
 import './ServiceListComponent.css';
 import { URLParameter } from '../../types/Parameters';
+import { ListPage } from '../../components/ListPage/ListPage';
 
 type ServiceItemHealth = ServiceItem & { health: ServiceHealth };
 
@@ -124,7 +124,7 @@ const istioFilter: FilterType = {
   filterValues: [{ id: 'present', title: 'Present' }, { id: 'not_present', title: 'Not Present' }]
 };
 
-export const availableFilters: FilterType[] = [serviceNameFilter, istioFilter, defaultNamespaceFilter];
+const availableFilters: FilterType[] = [serviceNameFilter, istioFilter, defaultNamespaceFilter];
 
 type ServiceListComponentState = {
   services: ServiceItem[];
@@ -135,18 +135,12 @@ type ServiceListComponentState = {
 };
 
 type ServiceListComponentProps = {
-  onError: PropTypes.func;
-  onParamChange: PropTypes.func;
-  onParamDelete: PropTypes.func;
-  queryParam: PropTypes.func;
+  pageHooks: ListPage.Component<any, any>;
   pagination: Pagination;
   currentSortField: SortField;
   isSortAscending: boolean;
   rateInterval: number;
 };
-
-export const perPageOptions: number[] = [5, 10, 15];
-export const defaultRateInterval = 600;
 
 class ServiceListComponent extends React.Component<ServiceListComponentProps, ServiceListComponentState> {
   constructor(props: ServiceListComponentProps) {
@@ -202,8 +196,8 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
 
     let urlParams: Map<string, string[]> = new Map<string, string[]>();
     availableFilters.forEach(filter => {
-      const param = this.props.queryParam(filter.id, ['']);
-      if (param[0] !== '') {
+      const param = this.props.pageHooks.getQueryParam(filter.id);
+      if (param !== undefined) {
         const existing = urlParams.get(filter.title) || [];
         urlParams.set(filter.title, existing.concat(param));
       }
@@ -240,15 +234,15 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
           value: activeFilter.value
         };
       })
-      .filter(filter => filter !== null);
+      .filter(filter => filter !== null) as URLParameter[];
 
-    this.props.onParamChange(params, 'append', 'replace');
+    this.props.pageHooks.onParamChange(params, 'append', 'replace');
   }
 
   selectedFilters() {
     let activeFilters: ActiveFilter[] = [];
     availableFilters.forEach(filter => {
-      this.props.queryParam(filter.id, []).forEach(value => {
+      (this.props.pageHooks.getQueryParam(filter.id) || []).forEach(value => {
         activeFilters = activeFilters.concat({
           label: filter.title + ': ' + value,
           category: filter.title,
@@ -291,7 +285,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     // Resetting pagination when filters change
     params.push({ name: 'page', value: '' });
 
-    this.props.onParamChange(params, 'append');
+    this.props.pageHooks.onParamChange(params, 'append');
     this.updateServices(true);
   };
 
@@ -310,7 +304,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   }
 
   handleError = (error: string) => {
-    this.props.onError(error);
+    this.props.pageHooks.handleError(error);
   };
 
   handleAxiosError(message: string, error: AxiosError) {
@@ -325,13 +319,12 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         services: prevState.services,
         pagination: {
           page: page,
-          perPage: prevState.pagination.perPage,
-          perPageOptions: perPageOptions
+          perPage: prevState.pagination.perPage
         }
       };
     });
 
-    this.props.onParamChange([{ name: 'page', value: page }]);
+    this.props.pageHooks.onParamChange([{ name: 'page', value: String(page) }]);
   };
 
   perPageSelect = (perPage: number) => {
@@ -340,13 +333,12 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         services: prevState.services,
         pagination: {
           page: 1,
-          perPage: perPage,
-          perPageOptions: perPageOptions
+          perPage: perPage
         }
       };
     });
 
-    this.props.onParamChange([{ name: 'page', value: 1 }, { name: 'perPage', value: perPage }]);
+    this.props.pageHooks.onParamChange([{ name: 'page', value: '1' }, { name: 'perPage', value: String(perPage) }]);
   };
 
   updateSortField = (sortField: SortField) => {
@@ -356,7 +348,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         services: sorted
       });
 
-      this.props.onParamChange([{ name: 'sort', value: sortField.param }]);
+      this.props.pageHooks.onParamChange([{ name: 'sort', value: sortField.param }]);
     });
   };
 
@@ -367,7 +359,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         services: sorted
       });
 
-      this.props.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'asc' : 'desc' }]);
+      this.props.pageHooks.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'asc' : 'desc' }]);
     });
   };
 
@@ -433,8 +425,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             services: sorted,
             pagination: {
               page: currentPage,
-              perPage: this.state.pagination.perPage,
-              perPageOptions: perPageOptions
+              perPage: this.state.pagination.perPage
             }
           });
         });
@@ -559,7 +550,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
 
   private rateIntervalChangedHandler = (key: number) => {
     this.setState({ rateInterval: key });
-    this.props.onParamChange([{ name: 'rate', value: key.toString(10) }]);
+    this.props.pageHooks.onParamChange([{ name: 'rate', value: String(key) }]);
     this.updateServices();
   };
 }
