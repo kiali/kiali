@@ -48,7 +48,7 @@ const (
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
 	EnvIstioNamespace              = "ISTIO_NAMESPACE"
 
-	IstioVersionSupported = ">= 1.0"
+	IstioVersionSupported = "ISTIO_VERSION_SUPPORTED"
 
 	EnvIstioLabelNameApp     = "ISTIO_LABEL_NAME_APP"
 	EnvIstioLabelNameVersion = "ISTIO_LABEL_NAME_VERSION"
@@ -86,9 +86,10 @@ type JaegerConfig struct {
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
-	UrlServiceVersion      string `yaml:"url_service_version"`
-	IstioIdentityDomain    string `yaml:"istio_identity_domain,omitempty"`
-	IstioSidecarAnnotation string `yaml:"istio_sidecar_annotation,omitempty"`
+	UrlServiceVersion      string   `yaml:"url_service_version"`
+	IstioIdentityDomain    string   `yaml:"istio_identity_domain,omitempty"`
+	IstioSidecarAnnotation string   `yaml:"istio_sidecar_annotation,omitempty"`
+	IstioVersionSupported  []string `yaml:"istio_version_supported,omitempty"`
 }
 
 // ExternalServices holds configurations for other systems that Kiali depends on
@@ -161,6 +162,8 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
 
 	// Istio Configuration
+	csvVersionSupported := strings.TrimSpace(getDefaultString(IstioVersionSupported, ">= 1.0"))
+	c.ExternalServices.Istio.IstioVersionSupported = strings.Split(csvVersionSupported, ",")
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
 	c.ExternalServices.Istio.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
 	c.ExternalServices.Istio.UrlServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioUrlServiceVersion, "http://istio-pilot:9093/version"))

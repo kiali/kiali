@@ -11,6 +11,8 @@ data:
       port: 20001
       static_content_root_directory: /opt/kiali/console
     external_services:
+      istio:
+        istio_version_supported: [">= 1.0", ">= 0.1.0"]
       jaeger:
         url: ${JAEGER_URL}
       grafana:
