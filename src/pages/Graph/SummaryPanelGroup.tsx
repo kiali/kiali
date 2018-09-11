@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Icon } from 'patternfly-react';
 
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
-import RpsChart from '../../components/SummaryPanel/RpsChart';
+import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
@@ -28,6 +28,10 @@ type SummaryPanelGroupState = {
   requestCountOut: [string, number][];
   errorCountIn: [string, number][];
   errorCountOut: [string, number][];
+  tcpSentIn: [string, number][];
+  tcpSentOut: [string, number][];
+  tcpReceivedIn: [string, number][];
+  tcpReceivedOut: [string, number][];
   healthLoading: boolean;
   health?: Health;
   metricsLoadError: string | null;
@@ -50,6 +54,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       requestCountOut: [],
       errorCountIn: [],
       errorCountOut: [],
+      tcpSentIn: [],
+      tcpSentOut: [],
+      tcpReceivedIn: [],
+      tcpReceivedOut: [],
       healthLoading: false,
       metricsLoadError: null
     };
@@ -83,8 +91,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const group = this.props.data.summaryTarget;
     const { namespace } = nodeData(group);
 
-    const incoming = getAccumulatedTrafficRate(group.children());
-    const outgoing = getAccumulatedTrafficRate(group.children().edgesTo('*'));
     const workloadList = this.renderWorkloadList(group);
 
     return (
@@ -124,19 +130,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               View detailed charts <Icon name="angle-double-right" />
             </Link>
           </p> */}
-          <InOutRateTable
-            title="Request Traffic (requests per second):"
-            inRate={incoming.rate}
-            inRate3xx={incoming.rate3xx}
-            inRate4xx={incoming.rate4xx}
-            inRate5xx={incoming.rate5xx}
-            outRate={outgoing.rate}
-            outRate3xx={outgoing.rate3xx}
-            outRate4xx={outgoing.rate4xx}
-            outRate5xx={outgoing.rate5xx}
-          />
-          <hr />
-          <div>{this.renderRpsCharts()}</div>
+          {this.hasHttpTraffic(group) && this.renderHttpRates(group)}
+          <div>{this.renderSparklines(group)}</div>
         </div>
       </div>
     );
@@ -147,15 +142,16 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const data = nodeData(target);
     const nodeMetricType = getNodeMetricType(data);
 
-    if (!nodeMetricType) {
-      return;
-    }
-
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
     }
 
-    const filters = ['request_count', 'request_error_count'];
+    if (!nodeMetricType || (!this.hasHttpTraffic(target) && !this.hasTcpTraffic(target))) {
+      this.setState({ loading: false });
+      return;
+    }
+
+    const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
 
     const promise = getNodeMetrics(nodeMetricType, target, props, filters);
     this.metricsPromise = makeCancelablePromise(promise);
@@ -168,16 +164,24 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         let metrics = useDest ? response.data.dest.metrics : response.data.source.metrics;
         const rcOut = metrics['request_count_out'];
         const ecOut = metrics['request_error_count_out'];
+        const tcpSentOut = metrics['tcp_sent_out'];
+        const tcpReceivedOut = metrics['tcp_received_out'];
         // use dest metrics for incoming
         metrics = response.data.dest.metrics;
         const rcIn = metrics['request_count_in'];
         const ecIn = metrics['request_error_count_in'];
+        const tcpSentIn = metrics['tcp_sent_in'];
+        const tcpReceivedIn = metrics['tcp_received_in'];
         this.setState({
           loading: false,
           requestCountIn: graphUtils.toC3Columns(rcIn.matrix, 'RPS'),
           errorCountIn: graphUtils.toC3Columns(ecIn.matrix, 'Error'),
           requestCountOut: graphUtils.toC3Columns(rcOut.matrix, 'RPS'),
-          errorCountOut: graphUtils.toC3Columns(ecOut.matrix, 'Error')
+          errorCountOut: graphUtils.toC3Columns(ecOut.matrix, 'Error'),
+          tcpSentOut: graphUtils.toC3Columns(tcpSentOut.matrix, 'Sent'),
+          tcpReceivedOut: graphUtils.toC3Columns(tcpReceivedOut.matrix, 'Received'),
+          tcpSentIn: graphUtils.toC3Columns(tcpSentIn.matrix, 'Sent'),
+          tcpReceivedIn: graphUtils.toC3Columns(tcpReceivedIn.matrix, 'Received')
         });
       })
       .catch(error => {
@@ -216,7 +220,29 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     );
   };
 
-  private renderRpsCharts = () => {
+  private renderHttpRates = group => {
+    const incoming = getAccumulatedTrafficRate(group.children());
+    const outgoing = getAccumulatedTrafficRate(group.children().edgesTo('*'));
+
+    return (
+      <>
+        <InOutRateTable
+          title="HTTP Traffic (requests per second):"
+          inRate={incoming.rate}
+          inRate3xx={incoming.rate3xx}
+          inRate4xx={incoming.rate4xx}
+          inRate5xx={incoming.rate5xx}
+          outRate={outgoing.rate}
+          outRate3xx={outgoing.rate3xx}
+          outRate4xx={outgoing.rate4xx}
+          outRate5xx={outgoing.rate5xx}
+        />
+        <hr />
+      </>
+    );
+  };
+
+  private renderSparklines = group => {
     if (this.state.loading && !this.state.requestCountIn) {
       return <strong>Loading charts...</strong>;
     } else if (this.state.metricsLoadError) {
@@ -227,18 +253,48 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         </div>
       );
     }
+
+    let tcpCharts, httpCharts;
+    if (this.hasHttpTraffic(group)) {
+      httpCharts = (
+        <>
+          <RpsChart
+            label="HTTP - Inbound Request Traffic"
+            dataRps={this.state.requestCountIn!}
+            dataErrors={this.state.errorCountIn}
+          />
+          <RpsChart
+            label="HTTP - Outbound Request Traffic"
+            dataRps={this.state.requestCountOut}
+            dataErrors={this.state.errorCountOut}
+          />
+          <hr />
+        </>
+      );
+    }
+
+    if (this.hasTcpTraffic(group)) {
+      tcpCharts = (
+        <>
+          <TcpChart
+            label="TCP - Inbound Traffic"
+            receivedRates={this.state.tcpReceivedIn}
+            sentRates={this.state.tcpSentIn}
+          />
+          <TcpChart
+            label="TCP - Outbound Traffic"
+            receivedRates={this.state.tcpReceivedOut}
+            sentRates={this.state.tcpSentOut}
+          />
+          <hr />
+        </>
+      );
+    }
+
     return (
       <>
-        <RpsChart
-          label="Incoming Request Traffic"
-          dataRps={this.state.requestCountIn!}
-          dataErrors={this.state.errorCountIn}
-        />
-        <RpsChart
-          label="Outgoing Request Traffic"
-          dataRps={this.state.requestCountOut}
-          dataErrors={this.state.errorCountOut}
-        />
+        {httpCharts}
+        {tcpCharts}
       </>
     );
   };
@@ -260,5 +316,29 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     }
 
     return workloadList;
+  };
+
+  private hasHttpTraffic = (group): boolean => {
+    if (
+      group
+        .children()
+        .filter('[rate],[rateOut]')
+        .size() > 0
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  private hasTcpTraffic = (group): boolean => {
+    if (
+      group
+        .children()
+        .filter('[rateTcpSent],[rateTcpSentOut]')
+        .size() > 0
+    ) {
+      return true;
+    }
+    return false;
   };
 }

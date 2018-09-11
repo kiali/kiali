@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Icon } from 'patternfly-react';
 
 import RateTable from '../../components/SummaryPanel/RateTable';
-import RpsChart from '../../components/SummaryPanel/RpsChart';
+import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import {
@@ -28,6 +28,8 @@ type SummaryPanelEdgeState = {
   rtMed: [string, number][];
   rt95: [string, number][];
   rt99: [string, number][];
+  tcpSent: [string, number][];
+  tcpReceived: [string, number][];
   metricsLoadError: string | null;
 };
 
@@ -51,6 +53,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       rtMed: [],
       rt95: [],
       rt99: [],
+      tcpSent: [],
+      tcpReceived: [],
       metricsLoadError: null
     };
   }
@@ -102,17 +106,19 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         <HeadingBlock prefix="Source" node={source} />
         <HeadingBlock prefix="Destination" node={dest} />
         <div className="panel-body">
-          <RateTable
-            title="Traffic (requests per second):"
-            rate={rate}
-            rate3xx={rate3xx}
-            rate4xx={rate4xx}
-            rate5xx={rate5xx}
-          />
-          <div>
-            <hr />
-            {this.renderCharts()}
-          </div>
+          {this.hasHttpMetrics(edge) && (
+            <>
+              <RateTable
+                title="HTTP Traffic (requests per second):"
+                rate={rate}
+                rate3xx={rate3xx}
+                rate4xx={rate4xx}
+                rate5xx={rate5xx}
+              />
+              <hr />
+            </>
+          )}
+          {this.renderCharts(edge)}
         </div>
       </div>
     );
@@ -179,14 +185,15 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const sourceMetricType = getNodeMetricType(sourceData);
     const destMetricType = getNodeMetricType(destData);
 
-    if (!destMetricType || !sourceMetricType) {
-      return;
-    }
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
     }
 
-    const filters = ['request_count', 'request_duration', 'request_error_count'];
+    if (!destMetricType || !sourceMetricType || (!this.hasHttpMetrics(edge) && !this.hasTcpMetrics(edge))) {
+      return;
+    }
+
+    const filters = ['request_count', 'request_duration', 'request_error_count', 'tcp_sent', 'tcp_received'];
     const byLabelsIn = this.getByLabelsIn(sourceMetricType, destMetricType);
 
     const promise = getNodeMetrics(destMetricType, edge.target(), props, filters, byLabelsIn);
@@ -241,6 +248,20 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           destMetricType,
           sourceData
         );
+        const tcpSentRates = this.getNodeDataPoints(
+          metrics['tcp_sent_in'],
+          'Sent',
+          sourceMetricType,
+          destMetricType,
+          sourceData
+        );
+        const tcpReceivedRates = this.getNodeDataPoints(
+          metrics['tcp_received_in'],
+          'Received',
+          sourceMetricType,
+          destMetricType,
+          sourceData
+        );
 
         this.setState({
           loading: false,
@@ -249,7 +270,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           rtAvg: rtAvg,
           rtMed: rtMed,
           rt95: rt95,
-          rt99: rt99
+          rt99: rt99,
+          tcpSent: tcpSentRates,
+          tcpReceived: tcpReceivedRates
         });
       })
       .catch(error => {
@@ -279,7 +302,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     </div>
   );
 
-  private renderCharts = () => {
+  private renderCharts = edge => {
     if (this.state.loading && !this.state.reqRates) {
       return <strong>Loading charts...</strong>;
     } else if (this.state.metricsLoadError) {
@@ -291,18 +314,49 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       );
     }
 
+    let httpCharts, tcpCharts;
+    if (this.hasHttpMetrics(edge)) {
+      httpCharts = (
+        <>
+          <RpsChart label="HTTP Request Traffic" dataRps={this.state.reqRates!} dataErrors={this.state.errRates} />
+          <hr />
+          <ResponseTimeChart
+            label="HTTP Request Response Time (ms)"
+            rtAvg={this.state.rtAvg}
+            rtMed={this.state.rtMed}
+            rt95={this.state.rt95}
+            rt99={this.state.rt99}
+          />
+          <hr />
+        </>
+      );
+    }
+
+    if (this.hasTcpMetrics(edge)) {
+      tcpCharts = (
+        <TcpChart label="TCP Traffic" sentRates={this.state.tcpSent} receivedRates={this.state.tcpReceived} />
+      );
+    }
+
     return (
       <>
-        <RpsChart label="Request Traffic" dataRps={this.state.reqRates!} dataErrors={this.state.errRates} />
-        <hr />
-        <ResponseTimeChart
-          label="Request Response Time (ms)"
-          rtAvg={this.state.rtAvg}
-          rtMed={this.state.rtMed}
-          rt95={this.state.rt95}
-          rt99={this.state.rt99}
-        />
+        {httpCharts}
+        {tcpCharts}
       </>
     );
+  };
+
+  private hasHttpMetrics = (edge): boolean => {
+    if (edge.data('rate')) {
+      return true;
+    }
+    return false;
+  };
+
+  private hasTcpMetrics = (edge): boolean => {
+    if (edge.data('tcpSentRate')) {
+      return true;
+    }
+    return false;
   };
 }

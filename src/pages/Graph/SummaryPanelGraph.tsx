@@ -1,17 +1,15 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import RateTable from '../../components/SummaryPanel/RateTable';
-import RpsChart from '../../components/SummaryPanel/RpsChart';
+import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
-import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { ActiveFilter } from '../../types/Filters';
-import * as M from '../../types/Metrics';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
-import { shouldRefreshData } from './SummaryPanelCommon';
+import { shouldRefreshData, getDatapoints } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
@@ -20,6 +18,8 @@ type SummaryPanelGraphState = {
   loading: boolean;
   reqRates: [string, number][] | null;
   errRates: [string, number][];
+  tcpSent: [string, number][];
+  tcpReceived: [string, number][];
   metricsLoadError: string | null;
 };
 
@@ -39,6 +39,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       loading: true,
       reqRates: null,
       errRates: [],
+      tcpSent: [],
+      tcpReceived: [],
       metricsLoadError: null
     };
   }
@@ -103,7 +105,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         <div className="panel-body">
           <div>
             <RateTable
-              title="Traffic (requests per second):"
+              title="HTTP Traffic (requests per second):"
               rate={trafficRate.rate}
               rate3xx={trafficRate.rate3xx}
               rate4xx={trafficRate.rate4xx}
@@ -134,13 +136,17 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     this.metricsPromise.promise
       .then(response => {
         const metrics = response.data.dest.metrics;
-        const reqRates = this.getRates(metrics['request_count_in'], 'RPS');
-        const errRates = this.getRates(metrics['request_error_count_in'], 'Error');
+        const reqRates = getDatapoints(metrics['request_count_in'], 'RPS');
+        const errRates = getDatapoints(metrics['request_error_count_in'], 'Error');
+        const tcpSent = getDatapoints(metrics['tcp_sent_in'], 'Sent');
+        const tcpReceived = getDatapoints(metrics['tcp_received_in'], 'Received');
 
         this.setState({
           loading: false,
           reqRates: reqRates,
-          errRates: errRates
+          errRates: errRates,
+          tcpSent: tcpSent,
+          tcpReceived: tcpReceived
         });
       })
       .catch(error => {
@@ -155,6 +161,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
           reqRates: null
         });
       });
+
+    this.metricsPromise = makeCancelablePromise(promise);
 
     this.setState({ loading: true, metricsLoadError: null });
   };
@@ -180,18 +188,16 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       );
     }
 
-    return <RpsChart label="Total Request Traffic" dataRps={this.state.reqRates!} dataErrors={this.state.errRates} />;
-  };
-
-  private getRates = (mg: M.MetricGroup, title: string): [string, number][] => {
-    const tsa: M.TimeSeries[] = mg.matrix;
-    let series: M.TimeSeries[] = [];
-
-    for (let i = 0; i < tsa.length; ++i) {
-      const ts = tsa[i];
-      series.push(ts);
-    }
-    return graphUtils.toC3Columns(series, title);
+    return (
+      <>
+        <RpsChart
+          label="HTTP - Total Request Traffic"
+          dataRps={this.state.reqRates!}
+          dataErrors={this.state.errRates}
+        />
+        <TcpChart label="TCP - Total Traffic" receivedRates={this.state.tcpReceived} sentRates={this.state.tcpSent} />
+      </>
+    );
   };
 
   private updateAppsFilter = () => {
