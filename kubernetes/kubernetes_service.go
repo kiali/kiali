@@ -45,11 +45,6 @@ type podsResponse struct {
 	err  error
 }
 
-type podResponse struct {
-	pod *v1.Pod
-	err error
-}
-
 // GetNamespaces returns a list of all namespaces of the cluster.
 // It returns a list of all namespaces of the cluster.
 // It returns an error on any problem.

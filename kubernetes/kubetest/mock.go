@@ -202,7 +202,7 @@ func (o *K8SClientMock) FakeServiceDetails() *kubernetes.ServiceDetails {
 						UnavailableReplicas: 0}}}}}
 }
 
-func (o *K8SClientMock) FakeServiceList() *v1.ServiceList{
+func (o *K8SClientMock) FakeServiceList() *v1.ServiceList {
 	return &v1.ServiceList{
 		Items: []v1.Service{
 			{

@@ -2,13 +2,13 @@ package business
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/log"
 	"sync"
 
 	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/services/models"
 )
@@ -52,7 +52,7 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 
 	wg.Wait()
 	if len(errChan) != 0 {
-		err := <- errChan
+		err := <-errChan
 		return nil, err
 	}
 
