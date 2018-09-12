@@ -319,7 +319,8 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         services: prevState.services,
         pagination: {
           page: page,
-          perPage: prevState.pagination.perPage
+          perPage: prevState.pagination.perPage,
+          perPageOptions: ListPage.perPageOptions
         }
       };
     });
@@ -333,7 +334,8 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         services: prevState.services,
         pagination: {
           page: 1,
-          perPage: perPage
+          perPage: perPage,
+          perPageOptions: ListPage.perPageOptions
         }
       };
     });
@@ -425,7 +427,8 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
             services: sorted,
             pagination: {
               page: currentPage,
-              perPage: this.state.pagination.perPage
+              perPage: this.state.pagination.perPage,
+              perPageOptions: ListPage.perPageOptions
             }
           });
         });
