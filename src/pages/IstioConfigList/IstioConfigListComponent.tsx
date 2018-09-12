@@ -305,7 +305,8 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
         istioItems: prevState.istioItems,
         pagination: {
           page: page,
-          perPage: prevState.pagination.perPage
+          perPage: prevState.pagination.perPage,
+          perPageOptions: ListPage.perPageOptions
         }
       };
     });
@@ -319,7 +320,8 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
         istioItems: prevState.istioItems,
         pagination: {
           page: 1,
-          perPage: perPage
+          perPage: perPage,
+          perPageOptions: ListPage.perPageOptions
         }
       };
     });
@@ -432,7 +434,8 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
             istioItems: istioItems,
             pagination: {
               page: currentPage,
-              perPage: prevState.pagination.perPage
+              perPage: prevState.pagination.perPage,
+              perPageOptions: ListPage.perPageOptions
             }
           };
         });

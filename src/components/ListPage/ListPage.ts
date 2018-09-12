@@ -8,7 +8,7 @@ export namespace ListPage {
   const ACTION_APPEND = 'append';
   const ACTION_SET = 'set';
 
-  const perPageOptions: number[] = [5, 10, 15];
+  export const perPageOptions: number[] = [5, 10, 15];
   const defaultRateInterval = 600;
 
   export interface Hooks {
@@ -87,7 +87,8 @@ export namespace ListPage {
     currentPagination(): Pagination {
       return {
         page: this.getSingleIntQueryParam('page') || 1,
-        perPage: this.getSingleIntQueryParam('perPage') || perPageOptions[1]
+        perPage: this.getSingleIntQueryParam('perPage') || perPageOptions[1],
+        perPageOptions: perPageOptions
       };
     }
 

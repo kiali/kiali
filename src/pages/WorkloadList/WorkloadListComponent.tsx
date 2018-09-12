@@ -199,7 +199,8 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
             workloadItems: sorted,
             pagination: {
               page: currentPage,
-              perPage: prevState.pagination.perPage
+              perPage: prevState.pagination.perPage,
+              perPageOptions: ListPage.perPageOptions
             }
           };
         });
@@ -213,7 +214,8 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
         workloadItems: prevState.workloadItems,
         pagination: {
           page: page,
-          perPage: prevState.pagination.perPage
+          perPage: prevState.pagination.perPage,
+          perPageOptions: ListPage.perPageOptions
         }
       };
     });
@@ -227,7 +229,8 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
         workloadItems: prevState.workloadItems,
         pagination: {
           page: 1,
-          perPage: perPage
+          perPage: perPage,
+          perPageOptions: ListPage.perPageOptions
         }
       };
     });

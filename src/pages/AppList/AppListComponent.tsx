@@ -129,7 +129,8 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
               appListItems: sorted,
               pagination: {
                 page: currentPage,
-                perPage: prevState.pagination.perPage
+                perPage: prevState.pagination.perPage,
+                perPageOptions: ListPage.perPageOptions
               }
             };
           });
@@ -196,7 +197,8 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         appListItems: prevState.appListItems,
         pagination: {
           page: page,
-          perPage: prevState.pagination.perPage
+          perPage: prevState.pagination.perPage,
+          perPageOptions: ListPage.perPageOptions
         }
       };
     });
@@ -210,7 +212,8 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         appListItems: prevState.appListItems,
         pagination: {
           page: 1,
-          perPage: perPage
+          perPage: perPage,
+          perPageOptions: ListPage.perPageOptions
         }
       };
     });
