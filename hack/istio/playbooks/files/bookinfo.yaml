@@ -18,7 +18,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: details-service${LABEL}
+  name: details
   labels:
     app: details${LABEL}
 spec:
@@ -53,7 +53,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ratings-service${LABEL}
+  name: ratings
   labels:
     app: ratings${LABEL}
 spec:
@@ -88,7 +88,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: reviews-service
+  name: reviews
   labels:
     app: reviews${LABEL}
 spec:
@@ -161,7 +161,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: productpage-service
+  name: productpage
   labels:
     app: productpage${LABEL}
 spec:

@@ -27,7 +27,7 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysqldb-service${LABEL}
+  name: mysqldb
   labels:
     app: mysqldb${LABEL}
 spec:

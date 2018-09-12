@@ -15,7 +15,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb-service${LABEL}
+  name: mongodb
   labels:
     app: mongodb${LABEL}
 spec:
