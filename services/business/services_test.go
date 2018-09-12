@@ -17,7 +17,8 @@ func TestServiceListParsing(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetFullServices", mock.AnythingOfType("string")).Return(k8s.FakeServiceList(), nil)
+	k8s.On("GetServices", mock.AnythingOfType("string")).Return(k8s.FakeServiceList(), nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(k8s.FakePodList(), nil)
 	conf := config.NewConfig()
 	config.Set(conf)
 	svc := SvcService{k8s: k8s}

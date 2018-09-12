@@ -25,11 +25,6 @@ type serviceSliceResponse struct {
 	err      error
 }
 
-type serviceResponse struct {
-	service *v1.Service
-	err     error
-}
-
 type endpointsResponse struct {
 	endpoints *v1.Endpoints
 	err       error
@@ -65,36 +60,6 @@ func (in *IstioClient) GetNamespaces() (*v1.NamespaceList, error) {
 	}
 
 	return namespaces, nil
-}
-
-// GetFullServices returns a list of services for a given namespace, along with its pods and deployments.
-// It returns an error on any problem.
-func (in *IstioClient) GetFullServices(namespace string) (*ServiceList, error) {
-	var err error
-	servicesChan, podsChan, deploymentsChan := make(chan servicesResponse), make(chan podsResponse), make(chan deploymentsResponse)
-
-	go in.getServiceList(namespace, servicesChan)
-	go in.getPodsList(namespace, podsChan)
-	go in.getDeployments(namespace, deploymentsChan)
-
-	servicesResponse := <-servicesChan
-	podsResponse := <-podsChan
-	deploymentsResponse := <-deploymentsChan
-
-	services := &ServiceList{}
-	services.Services = servicesResponse.services
-	services.Pods = podsResponse.pods
-	services.Deployments = deploymentsResponse.deployments
-
-	if servicesResponse.err != nil {
-		err = servicesResponse.err
-	} else if podsResponse.err != nil {
-		err = podsResponse.err
-	} else {
-		err = deploymentsResponse.err
-	}
-
-	return services, err
 }
 
 // GetNamespaceAppsDetails returns a map of apps details (services, deployments and pods) in the given namespace.
@@ -256,18 +221,13 @@ func (in *IstioClient) GetDeploymentSelector(namespace, deploymentName string) (
 }
 
 // GetPods returns the pods definitions for a given set of labels.
+// An empty labelSelector will fetch all pods found per a namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetPods(namespace, labelSelector string) (*v1.PodList, error) {
 	// An empty selector is ambiguous in the go client, could mean either "select all" or "select none"
 	// Here we assume empty == select all
 	// (see also https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)
 	return in.k8s.CoreV1().Pods(namespace).List(meta_v1.ListOptions{LabelSelector: labelSelector})
-}
-
-// GetNamespacePods returns the pods definitions for a given namespace
-// It returns an error on any problem.
-func (in *IstioClient) GetNamespacePods(namespace string) (*v1.PodList, error) {
-	return in.k8s.CoreV1().Pods(namespace).List(emptyListOptions)
 }
 
 // GetServiceDetails returns full details for a given service, consisting on service description, endpoints and pods.
@@ -401,7 +361,7 @@ func (in *IstioClient) getServiceList(namespace string, servicesChan chan servic
 }
 
 func (in *IstioClient) getPodsList(namespace string, podsChan chan podsResponse) {
-	pods, err := in.GetNamespacePods(namespace)
+	pods, err := in.GetPods(namespace, "")
 	podsChan <- podsResponse{pods: pods, err: err}
 }
 

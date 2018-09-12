@@ -2,6 +2,10 @@ package business
 
 import (
 	"fmt"
+	"github.com/kiali/kiali/log"
+	"sync"
+
+	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -18,22 +22,50 @@ type SvcService struct {
 
 // GetServiceList returns a list of all services for a given Namespace
 func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, error) {
-	// Fetch services list
-	kubernetesServices, err := in.k8s.GetFullServices(namespace)
-	if err != nil {
+
+	var sl *v1.ServiceList
+	var pl *v1.PodList
+
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	errChan := make(chan error, 2)
+
+	go func() {
+		defer wg.Done()
+		var err error
+		sl, err = in.k8s.GetServices(namespace)
+		if err != nil {
+			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err)
+			errChan <- err
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err error
+		pl, err = in.k8s.GetPods(namespace, "")
+		if err != nil {
+			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
+			errChan <- err
+		}
+	}()
+
+	wg.Wait()
+	if len(errChan) != 0 {
+		err := <- errChan
 		return nil, err
 	}
 
 	// Convert to Kiali model
-	return in.buildServiceList(models.Namespace{Name: namespace}, kubernetesServices), nil
+	return in.buildServiceList(models.Namespace{Name: namespace}, sl, pl), nil
 }
 
-func (in *SvcService) buildServiceList(namespace models.Namespace, sl *kubernetes.ServiceList) *models.ServiceList {
-	services := make([]models.ServiceOverview, len(sl.Services.Items))
+func (in *SvcService) buildServiceList(namespace models.Namespace, sl *v1.ServiceList, pl *v1.PodList) *models.ServiceList {
+	services := make([]models.ServiceOverview, len(sl.Items))
 	conf := config.Get()
 	// Convert each k8s service into our model
-	for i, item := range sl.Services.Items {
-		sPods := kubernetes.FilterPodsForService(&item, sl.Pods)
+	for i, item := range sl.Items {
+		sPods := kubernetes.FilterPodsForService(&item, pl)
 		/** Check if Service has istioSidecar deployed */
 		mPods := models.Pods{}
 		mPods.Parse(sPods)
