@@ -9,7 +9,7 @@
 
 
 [NOTE]
-All the Bookinfo Demo pods and services are installed in the "bookinfo" namespace by default. If you want to define a different namespace from bookinfo, please set -e bookinfo_namespace='your_namespace'
+All the Bookinfo Demo pods and services are installed in the "bookinfo" namespace by default. If you want to define a different namespace from bookinfo, please set `-e bookinfo_namespace='your_namespace'`
 
 
 - In order to uninstall it, simply delete that namespace via something like `kubectl delete namespace bookinfo` or

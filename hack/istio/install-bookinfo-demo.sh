@@ -51,10 +51,10 @@ while [[ $# -gt 0 ]]; do
       MYSQL_ENABLED="true"
       shift;
       ;;
-      --traffic_generator)
-        TRAFFIC_GENERATOR_ENABLED="true"
-        shift;
-        ;;
+    -tg|--traffic-generator)
+      TRAFFIC_GENERATOR_ENABLED="true"
+      shift;
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -65,7 +65,7 @@ Valid command line arguments:
   -g|--gateway.yaml <file>: A custom yaml file to deploy the bookinfo-gateway resources
   --mongo: Install a Mongo DB that a ratings service will access
   --mysql: Install a MySQL DB that a ratings service will access
-  --traffic_generator: Install Kiali Traffic Generator on Bookinfo
+  -tg|--traffic-generator: Install Kiali Traffic Generator on Bookinfo
   -h|--help : this message
 HELPMSG
       exit 1
@@ -163,8 +163,8 @@ $CLIENT_EXE get pods -n ${NAMESPACE}
 
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
-  $CLIENT_EXE expose svc productpage
-  $CLIENT_EXE expose svc ingress-gateway -n istio-system
+  $CLIENT_EXE expose svc productpage -n ${NAMESPACE}
+  $CLIENT_EXE expose svc istio-ingressgateway -n istio-system
 fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
