@@ -11,8 +11,8 @@ const EdgeColorDead = PfColors.Black500;
 const EdgeColorDegraded = PfColors.Orange;
 const EdgeColorFailure = PfColors.Red;
 const EdgeIconLock = '\ue923'; // lock
-const EdgeTextBackgroundColor = PfColors.White;
-const EdgeTextBackgroundOpacity = '0.8';
+const EdgeTextOutlineColor = PfColors.White;
+const EdgeTextOutlineWidth = '1px';
 const EdgeTextFont = 'Verdana,Arial,Helvetica,sans-serif,FontAwesome,PatternFlyIcons-webfont';
 const EdgeTextFontSize = '6px';
 const EdgeWidth = 1;
@@ -34,8 +34,8 @@ const NodeIconCB = '\uf0e7 '; // bolt
 const NodeIconMS = '\uf12a '; // exclamation
 const NodeIconVS = '\uf126 '; // code-branch
 const NodeImageOut = require('../../../assets/img/node-out.png');
-const NodeTextBackgroundColor = PfColors.White;
-const NodeTextBackgroundOpacity = EdgeTextBackgroundOpacity;
+const NodeTextOutlineColor = PfColors.White;
+const NodeTextOutlineWidth = '1px';
 const NodeTextColor = PfColors.Black;
 const NodeTextColorBadged = PfColors.Purple600;
 const NodeTextFont = EdgeTextFont;
@@ -261,11 +261,8 @@ export class GraphStyles {
           shape: (ele: any) => {
             return getNodeShape(ele);
           },
-          // 'overlay-padding': '6px',
-          'text-background-color': (ele: any) => {
-            return isNodeBadged(ele) ? NodeTextBackgroundColor : NodeTextBackgroundColor;
-          },
-          'text-background-opacity': NodeTextBackgroundOpacity,
+          'text-outline-color': NodeTextOutlineColor,
+          'text-outline-width': NodeTextOutlineWidth,
           'text-halign': 'center',
           'text-margin-y': '-1px',
           'text-valign': 'top',
@@ -319,12 +316,8 @@ export class GraphStyles {
           'target-arrow-color': (ele: any) => {
             return getEdgeColor(ele);
           },
-          'text-background-color': EdgeTextBackgroundColor,
-          'text-background-opacity': EdgeTextBackgroundOpacity,
-          // 'text-margin-x': EdgeTextMargin,
-          // 'text-rotation': (ele: any) => {
-          //  return getTLSValue(ele, '0deg', 'autorotate');
-          // },
+          'text-outline-color': EdgeTextOutlineColor,
+          'text-outline-width': EdgeTextOutlineWidth,
           width: EdgeWidth
         }
       },

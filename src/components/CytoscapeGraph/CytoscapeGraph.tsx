@@ -21,6 +21,7 @@ import {
   GraphParamsType,
   CytoscapeGlobalScratchNamespace,
   CytoscapeGlobalScratchData,
+  NodeParamsType,
   NodeType
 } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
@@ -28,11 +29,12 @@ import * as H from '../../types/Health';
 import { authentication } from '../../utils/Authentication';
 import { NamespaceAppHealth, NamespaceWorkloadHealth } from '../../types/Health';
 
-import { makeServiceGraphUrlFromParams } from '../Nav/NavUtils';
+import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 
 type CytoscapeGraphType = {
   elements?: any;
   edgeLabelMode: EdgeLabelMode;
+  node?: NodeParamsType; // node for initial selection
   showNodeLabels: boolean;
   showCircuitBreakers: boolean;
   showVirtualServices: boolean;
@@ -74,6 +76,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private trafficRenderer: TrafficRender;
   private cytoscapeReactWrapperRef: any;
   private namespaceChanged: boolean;
+  private nodeChanged: boolean;
   private resetSelection: boolean;
   private initialValues: InitialValues;
   private cy: any;
@@ -90,9 +93,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
     this.namespaceChanged = this.namespaceChanged || this.props.namespace.name !== nextProps.namespace.name;
+    this.nodeChanged = this.nodeChanged || this.props.node !== nextProps.node;
     this.resetSelection = this.props.namespace.name !== nextProps.namespace.name;
-    return (
+    const result =
       this.props.namespace.name !== nextProps.namespace.name ||
+      this.props.node !== nextProps.node ||
       this.props.graphLayout !== nextProps.graphLayout ||
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
       this.props.showNodeLabels !== nextProps.showNodeLabels ||
@@ -101,8 +106,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.elements !== nextProps.elements ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
-      this.props.isError !== nextProps.isError
-    );
+      this.props.isError !== nextProps.isError;
+    return result;
   }
 
   componentDidMount() {
@@ -113,6 +118,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     const cy = this.getCy();
     let updateLayout = false;
     if (
+      this.nodeNeedsRelayout() ||
       this.namespaceNeedsRelayout(prevProps.elements, this.props.elements) ||
       this.elementsNeedRelayout(prevProps.elements, this.props.elements) ||
       this.props.graphLayout.name !== prevProps.graphLayout.name
@@ -120,6 +126,26 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       updateLayout = true;
     }
     this.processGraphUpdate(cy, updateLayout);
+    // pre-select node if provided
+    const node = this.props.node;
+    if (node && cy && cy.$(':selected').length === 0) {
+      let selector = "[nodeType = '" + node.nodeType + "']";
+      switch (node.nodeType) {
+        case NodeType.APP:
+          selector = selector + "[app = '" + node.app + "']";
+          if (node.version && node.version !== 'unknown') {
+            selector = selector + "[version = '" + node.version + "']";
+          }
+          break;
+        default:
+          selector = selector + "[workload = '" + node.workload + "']";
+      }
+      const eles = cy.nodes(selector);
+      if (eles.length > 0) {
+        this.selectTarget(eles[0]);
+        this.props.onClick({ summaryType: 'node', summaryTarget: eles[0] });
+      }
+    }
     if (this.props.elements !== prevProps.elements) {
       this.updateHealth(cy);
     }
@@ -372,19 +398,43 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   };
 
   private handleDoubleTap = (event: CytoscapeClickEvent) => {
-    if (!event.summaryTarget.data('isOutside')) {
-      return;
+    if (event.summaryTarget.data('isOutside')) {
+      this.context.router.history.push(
+        makeNamespaceGraphUrlFromParams({
+          namespace: { name: event.summaryTarget.data('namespace') },
+          graphLayout: this.props.graphLayout,
+          graphDuration: this.props.graphDuration,
+          edgeLabelMode: this.props.edgeLabelMode,
+          graphType: this.props.graphType,
+          injectServiceNodes: this.props.injectServiceNodes
+        })
+      );
+    } else {
+      const nodeType = event.summaryTarget.data('nodeType');
+      switch (event.summaryTarget.data('nodeType')) {
+        case NodeType.APP:
+        case NodeType.WORKLOAD:
+          const node: NodeParamsType = {
+            nodeType: nodeType,
+            workload: event.summaryTarget.data('workload'),
+            app: event.summaryTarget.data('app'),
+            version: event.summaryTarget.data('version')
+          };
+          this.context.router.history.push(
+            makeNodeGraphUrlFromParams(node, {
+              namespace: { name: event.summaryTarget.data('namespace') },
+              graphLayout: this.props.graphLayout,
+              graphDuration: this.props.graphDuration,
+              edgeLabelMode: this.props.edgeLabelMode,
+              graphType: this.props.graphType,
+              injectServiceNodes: this.props.injectServiceNodes
+            })
+          );
+          break;
+        default:
+          return;
+      }
     }
-
-    this.context.router.history.push(
-      makeServiceGraphUrlFromParams({
-        namespace: { name: event.summaryTarget.data('namespace') },
-        graphLayout: this.props.graphLayout,
-        graphDuration: this.props.graphDuration,
-        edgeLabelMode: this.props.edgeLabelMode,
-        graphType: this.props.graphType
-      })
-    );
   };
 
   private handleTap = (event: CytoscapeClickEvent) => {
@@ -404,6 +454,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     const needsRelayout = this.namespaceChanged && prevElements !== nextElements;
     if (needsRelayout) {
       this.namespaceChanged = false;
+    }
+    return needsRelayout;
+  }
+
+  private nodeNeedsRelayout() {
+    const needsRelayout = this.nodeChanged;
+    if (needsRelayout) {
+      this.nodeChanged = false;
     }
     return needsRelayout;
   }

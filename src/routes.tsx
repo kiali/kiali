@@ -1,4 +1,4 @@
-import ServiceGraphRouteHandler from './pages/ServiceGraph/ServiceGraphRouteHandler';
+import GraphRouteHandler from './pages/Graph/GraphRouteHandler';
 import WorkloadListPage from './pages/WorkloadList/WorkloadListPage';
 import ServiceListPage from './pages/ServiceList/ServiceListPage';
 import IstioConfigPage from './pages/IstioConfigList/IstioConfigListPage';
@@ -18,8 +18,8 @@ const navItems: MenuItem[] = [
   {
     iconClass: 'fa pficon-topology',
     title: 'Graph',
-    to: '/service-graph/all',
-    pathsActive: [/^\/service-graph\/(.*)/]
+    to: '/graph/namespaces/all',
+    pathsActive: [/^\/graph\/(.*)/]
   },
   {
     iconClass: 'fa pficon-applications',
@@ -52,12 +52,24 @@ const navItems: MenuItem[] = [
   }
 ];
 
-const defaultRoute = '/service-graph/all';
+const defaultRoute = '/graph/namespaces/all';
 
 const pathRoutes: Path[] = [
   {
-    path: '/service-graph/:namespace',
-    component: ServiceGraphRouteHandler
+    path: '/graph/namespaces/:namespace/applications/:app/versions/:version',
+    component: GraphRouteHandler
+  },
+  {
+    path: '/graph/namespaces/:namespace/applications/:app',
+    component: GraphRouteHandler
+  },
+  {
+    path: '/graph/namespaces/:namespace/workloads/:workload',
+    component: GraphRouteHandler
+  },
+  {
+    path: '/graph/namespaces/:namespace',
+    component: GraphRouteHandler
   },
   {
     path: '/namespaces/:namespace/services/:service',

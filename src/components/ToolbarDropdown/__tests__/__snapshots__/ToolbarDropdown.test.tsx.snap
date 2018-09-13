@@ -51,6 +51,7 @@ ShallowWrapper {
           graph_filter_interval_duration
         </label>,
         <DropdownButton
+          disabled={false}
           id="graph_filter_interval_duration"
           onSelect={[Function]}
           title="Last minute"
@@ -302,6 +303,7 @@ ShallowWrapper {
               Last 30 days
             </MenuItem>,
           ],
+          "disabled": false,
           "id": "graph_filter_interval_duration",
           "onSelect": [Function],
           "title": "Last minute",
@@ -519,6 +521,7 @@ ShallowWrapper {
             graph_filter_interval_duration
           </label>,
           <DropdownButton
+            disabled={false}
             id="graph_filter_interval_duration"
             onSelect={[Function]}
             title="Last minute"
@@ -770,6 +773,7 @@ ShallowWrapper {
                 Last 30 days
               </MenuItem>,
             ],
+            "disabled": false,
             "id": "graph_filter_interval_duration",
             "onSelect": [Function],
             "title": "Last minute",
@@ -1027,6 +1031,7 @@ ShallowWrapper {
           metrics_filter_poll_interval
         </label>,
         <DropdownButton
+          disabled={false}
           id="metrics_filter_poll_interval"
           onSelect={[Function]}
           title="15 seconds"
@@ -1198,6 +1203,7 @@ ShallowWrapper {
               5 minutes
             </MenuItem>,
           ],
+          "disabled": false,
           "id": "metrics_filter_poll_interval",
           "onSelect": [Function],
           "title": "15 seconds",
@@ -1347,6 +1353,7 @@ ShallowWrapper {
             metrics_filter_poll_interval
           </label>,
           <DropdownButton
+            disabled={false}
             id="metrics_filter_poll_interval"
             onSelect={[Function]}
             title="15 seconds"
@@ -1518,6 +1525,7 @@ ShallowWrapper {
                 5 minutes
               </MenuItem>,
             ],
+            "disabled": false,
             "id": "metrics_filter_poll_interval",
             "onSelect": [Function],
             "title": "15 seconds",
@@ -1703,6 +1711,7 @@ ShallowWrapper {
           graph_filter_layouts
         </label>,
         <DropdownButton
+          disabled={false}
           id="graph_filter_layouts"
           onSelect={[Function]}
           title="Cola"
@@ -1794,6 +1803,7 @@ ShallowWrapper {
               Dagre
             </MenuItem>,
           ],
+          "disabled": false,
           "id": "graph_filter_layouts",
           "onSelect": [Function],
           "title": "Cola",
@@ -1875,6 +1885,7 @@ ShallowWrapper {
             graph_filter_layouts
           </label>,
           <DropdownButton
+            disabled={false}
             id="graph_filter_layouts"
             onSelect={[Function]}
             title="Cola"
@@ -1966,6 +1977,7 @@ ShallowWrapper {
                 Dagre
               </MenuItem>,
             ],
+            "disabled": false,
             "id": "graph_filter_layouts",
             "onSelect": [Function],
             "title": "Cola",
@@ -2091,6 +2103,7 @@ ShallowWrapper {
           graph_filter_interval_duration
         </label>,
         <DropdownButton
+          disabled={false}
           id="graph_filter_interval_duration"
           onSelect={[Function]}
           title="Last minute"
@@ -2342,6 +2355,7 @@ ShallowWrapper {
               Last 30 days
             </MenuItem>,
           ],
+          "disabled": false,
           "id": "graph_filter_interval_duration",
           "onSelect": [Function],
           "title": "Last minute",
@@ -2559,6 +2573,7 @@ ShallowWrapper {
             graph_filter_interval_duration
           </label>,
           <DropdownButton
+            disabled={false}
             id="graph_filter_interval_duration"
             onSelect={[Function]}
             title="Last minute"
@@ -2810,6 +2825,7 @@ ShallowWrapper {
                 Last 30 days
               </MenuItem>,
             ],
+            "disabled": false,
             "id": "graph_filter_interval_duration",
             "onSelect": [Function],
             "title": "Last minute",
@@ -3067,6 +3083,7 @@ ShallowWrapper {
           metrics_filter_poll_interval
         </label>,
         <DropdownButton
+          disabled={false}
           id="metrics_filter_poll_interval"
           onSelect={[Function]}
           title="15 seconds"
@@ -3238,6 +3255,7 @@ ShallowWrapper {
               5 minutes
             </MenuItem>,
           ],
+          "disabled": false,
           "id": "metrics_filter_poll_interval",
           "onSelect": [Function],
           "title": "15 seconds",
@@ -3387,6 +3405,7 @@ ShallowWrapper {
             metrics_filter_poll_interval
           </label>,
           <DropdownButton
+            disabled={false}
             id="metrics_filter_poll_interval"
             onSelect={[Function]}
             title="15 seconds"
@@ -3558,6 +3577,7 @@ ShallowWrapper {
                 5 minutes
               </MenuItem>,
             ],
+            "disabled": false,
             "id": "metrics_filter_poll_interval",
             "onSelect": [Function],
             "title": "15 seconds",
@@ -3743,6 +3763,7 @@ ShallowWrapper {
           graph_filter_layouts
         </label>,
         <DropdownButton
+          disabled={false}
           id="graph_filter_layouts"
           onSelect={[Function]}
           title="Cola"
@@ -3834,6 +3855,7 @@ ShallowWrapper {
               Dagre
             </MenuItem>,
           ],
+          "disabled": false,
           "id": "graph_filter_layouts",
           "onSelect": [Function],
           "title": "Cola",
@@ -3915,6 +3937,7 @@ ShallowWrapper {
             graph_filter_layouts
           </label>,
           <DropdownButton
+            disabled={false}
             id="graph_filter_layouts"
             onSelect={[Function]}
             title="Cola"
@@ -4006,6 +4029,7 @@ ShallowWrapper {
                 Dagre
               </MenuItem>,
             ],
+            "disabled": false,
             "id": "graph_filter_layouts",
             "onSelect": [Function],
             "title": "Cola",
