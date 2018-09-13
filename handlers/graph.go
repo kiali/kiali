@@ -221,22 +221,22 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 	tcpMetric := "istio_tcp_sent_bytes_total"
 
 	// 1) query for traffic originating from "unknown" (i.e. the internet)
-	groupByTcp := "source_workload_namespace,source_workload,source_app,source_version,destination_workload_namespace,destination_service_name,destination_workload,destination_app,destination_version"
+	tcpGroupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_workload_namespace,destination_service_name,destination_workload,destination_app,destination_version"
 	query = fmt.Sprintf("sum(rate(%v{reporter=\"destination\",source_workload=\"unknown\",destination_workload_namespace=\"%v\"} [%vs])) by (%v)",
 		tcpMetric,
 		namespace,
 		int(o.Duration.Seconds()), // range duration for the query
-		groupByTcp)
+		tcpGroupBy)
 	tcpUnkVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
 	// 2) query for traffic originating from a workload outside of the namespace
-	groupByTcp = "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version"
+	tcpGroupBy = "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version"
 	query = fmt.Sprintf("sum(rate(%v{reporter=\"source\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\"} [%vs])) by (%v)",
 		tcpMetric,
 		namespace,
 		namespace,
 		int(o.Duration.Seconds()), // range duration for the query
-		groupByTcp)
+		tcpGroupBy)
 	tcpExtVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
 	// 3) query for traffic originating from a workload inside of the namespace
@@ -244,7 +244,7 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 		tcpMetric,
 		namespace,
 		int(o.Duration.Seconds()), // range duration for the query
-		groupByTcp)
+		tcpGroupBy)
 	tcpInVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
 	populateTrafficMapTcp(trafficMap, &tcpUnkVector, o)
@@ -284,51 +284,66 @@ func populateTrafficMapHttp(trafficMap graph.TrafficMap, vector *model.Vector, o
 		destVer := string(lDestVer)
 		code := string(lCode)
 
-		source, sourceFound := addSourceNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, o)
-		dest, destFound := addDestNode(trafficMap, destSvcNs, destWl, destApp, destVer, destSvcName, o)
-
-		addToDestServices(dest.Metadata, destSvcName)
-
-		var edge *graph.Edge
-		for _, e := range source.Edges {
-			if dest.ID == e.Dest.ID {
-				edge = e
-				break
-			}
-		}
-		if nil == edge {
-			edge = source.AddEdge(dest)
-		}
-
 		val := float64(s.Value)
 
-		// A workload may mistakenly have multiple app and or version label values.
-		// This is a misconfiguration we need to handle. See Kiali-1309.
-		if sourceFound {
-			handleMisconfiguredLabels(source, sourceApp, sourceVer, val, o)
+		if o.InjectServiceNodes {
+			// don't inject a service node if the dest node is already a service node
+			if _, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.VendorOptions.GraphType); destNodeType != graph.NodeTypeService {
+				addHttpTraffic(trafficMap, val, code, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName, o)
+				addHttpTraffic(trafficMap, val, code, destSvcNs, "", "", "", destSvcName, destSvcNs, destWl, destApp, destVer, destSvcName, o)
+			} else {
+				addHttpTraffic(trafficMap, val, code, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName, o)
+			}
+		} else {
+			addHttpTraffic(trafficMap, val, code, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName, o)
 		}
-		if destFound {
-			handleMisconfiguredLabels(dest, destApp, destVer, val, o)
-		}
-
-		var ck string
-		switch {
-		case strings.HasPrefix(string(code), "2"):
-			ck = "rate2xx"
-		case strings.HasPrefix(string(code), "3"):
-			ck = "rate3xx"
-		case strings.HasPrefix(string(code), "4"):
-			ck = "rate4xx"
-		case strings.HasPrefix(string(code), "5"):
-			ck = "rate5xx"
-		}
-		addToRate(edge.Metadata, ck, val)
-		addToRate(edge.Metadata, "rate", val)
-
-		addToRate(source.Metadata, "rateOut", val)
-		addToRate(dest.Metadata, ck, val)
-		addToRate(dest.Metadata, "rate", val)
 	}
+}
+
+func addHttpTraffic(trafficMap graph.TrafficMap, val float64, code, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, destSvcNs, destWl, destApp, destVer, destSvcName string, o options.Options) {
+
+	source, sourceFound := addNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, o)
+	dest, destFound := addNode(trafficMap, destSvcNs, destWl, destApp, destVer, destSvcName, o)
+
+	addToDestServices(dest.Metadata, destSvcName)
+
+	var edge *graph.Edge
+	for _, e := range source.Edges {
+		if dest.ID == e.Dest.ID {
+			edge = e
+			break
+		}
+	}
+	if nil == edge {
+		edge = source.AddEdge(dest)
+	}
+
+	// A workload may mistakenly have multiple app and or version label values.
+	// This is a misconfiguration we need to handle. See Kiali-1309.
+	if sourceFound {
+		handleMisconfiguredLabels(source, sourceApp, sourceVer, val, o)
+	}
+	if destFound {
+		handleMisconfiguredLabels(dest, destApp, destVer, val, o)
+	}
+
+	var ck string
+	switch {
+	case strings.HasPrefix(string(code), "2"):
+		ck = "rate2xx"
+	case strings.HasPrefix(string(code), "3"):
+		ck = "rate3xx"
+	case strings.HasPrefix(string(code), "4"):
+		ck = "rate4xx"
+	case strings.HasPrefix(string(code), "5"):
+		ck = "rate5xx"
+	}
+	addToRate(edge.Metadata, ck, val)
+	addToRate(edge.Metadata, "rate", val)
+
+	addToRate(source.Metadata, "rateOut", val)
+	addToRate(dest.Metadata, ck, val)
+	addToRate(dest.Metadata, "rate", val)
 }
 
 func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o options.Options) {
@@ -365,37 +380,52 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 
-		source, sourceFound := addSourceNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, o)
-		dest, destFound := addDestNode(trafficMap, destSvcNs, destWl, destApp, destVer, destSvcName, o)
-
-		addToDestServices(dest.Metadata, destSvcName)
-
-		var edge *graph.Edge
-		for _, e := range source.Edges {
-			if dest.ID == e.Dest.ID {
-				edge = e
-				break
-			}
-		}
-		if nil == edge {
-			edge = source.AddEdge(dest)
-		}
-
 		val := float64(s.Value)
 
-		// A workload may mistakenly have multiple app and or version label values.
-		// This is a misconfiguration we need to handle. See Kiali-1309.
-		if sourceFound {
-			handleMisconfiguredLabels(source, sourceApp, sourceVer, val, o)
+		if o.InjectServiceNodes {
+			// don't inject a service node if the dest node is already a service node
+			if _, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.VendorOptions.GraphType); destNodeType != graph.NodeTypeService {
+				addTcpTraffic(trafficMap, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName, o)
+				addTcpTraffic(trafficMap, val, destSvcNs, "", "", "", destSvcName, destSvcNs, destWl, destApp, destVer, destSvcName, o)
+			} else {
+				addTcpTraffic(trafficMap, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName, o)
+			}
+		} else {
+			addTcpTraffic(trafficMap, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName, o)
 		}
-		if destFound {
-			handleMisconfiguredLabels(dest, destApp, destVer, val, o)
-		}
-
-		addToRate(edge.Metadata, "tcpSentRate", val)
-		addToRate(source.Metadata, "tcpSentRateOut", val)
-		addToRate(dest.Metadata, "tcpSentRate", val)
 	}
+}
+
+func addTcpTraffic(trafficMap graph.TrafficMap, val float64, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, destSvcNs, destWl, destApp, destVer, destSvcName string, o options.Options) {
+
+	source, sourceFound := addNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, o)
+	dest, destFound := addNode(trafficMap, destSvcNs, destWl, destApp, destVer, destSvcName, o)
+
+	addToDestServices(dest.Metadata, destSvcName)
+
+	var edge *graph.Edge
+	for _, e := range source.Edges {
+		if dest.ID == e.Dest.ID {
+			edge = e
+			break
+		}
+	}
+	if nil == edge {
+		edge = source.AddEdge(dest)
+	}
+
+	// A workload may mistakenly have multiple app and or version label values.
+	// This is a misconfiguration we need to handle. See Kiali-1309.
+	if sourceFound {
+		handleMisconfiguredLabels(source, sourceApp, sourceVer, val, o)
+	}
+	if destFound {
+		handleMisconfiguredLabels(dest, destApp, destVer, val, o)
+	}
+
+	addToRate(edge.Metadata, "tcpSentRate", val)
+	addToRate(source.Metadata, "tcpSentRateOut", val)
+	addToRate(dest.Metadata, "tcpSentRate", val)
 }
 
 func addToRate(md map[string]interface{}, k string, v float64) {
@@ -438,18 +468,7 @@ func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float
 	}
 }
 
-func addSourceNode(trafficMap graph.TrafficMap, namespace, workload, app, version string, o options.Options) (*graph.Node, bool) {
-	id, nodeType := graph.Id(namespace, workload, app, version, "", o.VendorOptions.GraphType)
-	node, found := trafficMap[id]
-	if !found {
-		newNode := graph.NewNodeExplicit(id, namespace, workload, app, version, "", nodeType, o.VendorOptions.GraphType)
-		node = &newNode
-		trafficMap[id] = node
-	}
-	return node, found
-}
-
-func addDestNode(trafficMap graph.TrafficMap, namespace, workload, app, version, service string, o options.Options) (*graph.Node, bool) {
+func addNode(trafficMap graph.TrafficMap, namespace, workload, app, version, service string, o options.Options) (*graph.Node, bool) {
 	id, nodeType := graph.Id(namespace, workload, app, version, service, o.VendorOptions.GraphType)
 	node, found := trafficMap[id]
 	if !found {
@@ -484,6 +503,239 @@ func mergeTrafficMaps(trafficMap, nsTrafficMap graph.TrafficMap) {
 			trafficMap[nsId] = nsNode
 		}
 	}
+}
+
+// GraphNode is a REST http.HandlerFunc handling node-detail graph
+// config generation.
+func GraphNode(w http.ResponseWriter, r *http.Request) {
+	defer handlePanic(w)
+
+	client, err := prometheus.NewClient()
+	checkError(err)
+
+	graphNode(w, r, client)
+}
+
+// graphNode provides a testing hook that can supply a mock client
+func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
+	o := options.NewOptions(r)
+	switch o.Vendor {
+	case "cytoscape":
+	default:
+		checkError(errors.New(fmt.Sprintf("Vendor [%v] not supported", o.Vendor)))
+	}
+	if len(o.Namespaces) != 1 {
+		checkError(errors.New(fmt.Sprintf("Node graph does not support the 'namespaces' query parameter or the 'all' namespace")))
+	}
+
+	namespace := o.Namespaces[0]
+	n := graph.NewNode(namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.NodeOptions.Service, o.GraphType)
+
+	log.Debugf("Build graph for node [%v]", n)
+
+	trafficMap := buildNodeTrafficMap(namespace, n, o, client)
+
+	// The appenders can add/remove/alter nodes. After the manipulations are complete
+	// we can make some final adjustments:
+	// - mark the outsiders (i.e. nodes not in the requested namespaces)
+	// - mark the traffic generators
+	markOutsiders(trafficMap, []string{namespace})
+	markTrafficGenerators(trafficMap)
+
+	generateGraph(trafficMap, w, o)
+}
+
+// buildNodeTrafficMap returns a map of all nodes requesting or requested by the target node (key=id).
+func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, client *prometheus.Client) graph.TrafficMap {
+	httpMetric := "istio_requests_total"
+
+	// query prometheus for request traffic in three queries:
+	// 1) query for incoming traffic
+	var query string
+	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code"
+	switch n.NodeType {
+	case graph.NodeTypeWorkload:
+		query = fmt.Sprintf(`sum(rate(%v{reporter="destination",destination_workload_namespace="%v",destination_workload="%s",response_code=~"%v"} [%vs])) by (%v)`,
+			httpMetric,
+			namespace,
+			n.Workload,
+			"[2345][0-9][0-9]",        // regex for valid response_codes
+			int(o.Duration.Seconds()), // range duration for the query
+			groupBy)
+	case graph.NodeTypeApp:
+		if n.Version != "" && n.Version != graph.UnknownVersion {
+			query = fmt.Sprintf(`sum(rate(%v{reporter="destination",destination_service_namespace="%v",destination_app="%s",destination_version="%s",response_code=~"%v"} [%vs])) by (%v)`,
+				httpMetric,
+				namespace,
+				n.App,
+				n.Version,
+				"[2345][0-9][0-9]",        // regex for valid response_codes
+				int(o.Duration.Seconds()), // range duration for the query
+				groupBy)
+		} else {
+			query = fmt.Sprintf(`sum(rate(%v{reporter="destination",destination_service_namespace="%v",destination_app="%s",response_code=~"%v"} [%vs])) by (%v)`,
+				httpMetric,
+				namespace,
+				n.App,
+				"[2345][0-9][0-9]",        // regex for valid response_codes
+				int(o.Duration.Seconds()), // range duration for the query
+				groupBy)
+		}
+	default:
+		checkError(errors.New(fmt.Sprintf("NodeType [%v] not supported", n.NodeType)))
+	}
+	inVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+
+	// 2) query for outbound traffic
+	switch n.NodeType {
+	case graph.NodeTypeWorkload:
+		query = fmt.Sprintf(`sum(rate(%v{reporter="source",source_workload_namespace="%v",source_workload="%s",response_code=~"%v"} [%vs])) by (%v)`,
+			httpMetric,
+			namespace,
+			n.Workload,
+			"[2345][0-9][0-9]",        // regex for valid response_codes
+			int(o.Duration.Seconds()), // range duration for the query
+			groupBy)
+	case graph.NodeTypeApp:
+		if n.Version != "" && n.Version != graph.UnknownVersion {
+			query = fmt.Sprintf(`sum(rate(%v{reporter="source",source_workload_namespace="%v",source_app="%s",source_version="%s",response_code=~"%v"} [%vs])) by (%v)`,
+				httpMetric,
+				namespace,
+				n.App,
+				n.Version,
+				"[2345][0-9][0-9]",        // regex for valid response_codes
+				int(o.Duration.Seconds()), // range duration for the query
+				groupBy)
+		} else {
+			query = fmt.Sprintf(`sum(rate(%v{reporter="source",source_workload_namespace="%v",source_app="%s",response_code=~"%v"} [%vs])) by (%v)`,
+				httpMetric,
+				namespace,
+				n.App,
+				"[2345][0-9][0-9]",        // regex for valid response_codes
+				int(o.Duration.Seconds()), // range duration for the query
+				groupBy)
+		}
+	default:
+		checkError(errors.New(fmt.Sprintf("NodeType [%v] not supported", n.NodeType)))
+	}
+	outVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+
+	// create map to aggregate traffic by response code
+	trafficMap := graph.NewTrafficMap()
+	populateTrafficMapHttp(trafficMap, &inVector, o)
+	populateTrafficMapHttp(trafficMap, &outVector, o)
+
+	// istio component telemetry is only reported destination-side, so we must perform additional queries
+	if o.IncludeIstio {
+		istioNamespace := config.Get().IstioNamespace
+
+		// 3) supplemental query for outbound traffic to the istio namespace
+		switch n.NodeType {
+		case graph.NodeTypeWorkload:
+			query = fmt.Sprintf(`sum(rate(%v{reporter="destination",source_workload_namespace="%v",source_workload="%s",destination_service_namespace=\"%v\",response_code=~"%v"} [%vs])) by (%v)`,
+				httpMetric,
+				namespace,
+				n.Workload,
+				"[2345][0-9][0-9]",        // regex for valid response_codes
+				int(o.Duration.Seconds()), // range duration for the query
+				groupBy)
+		case graph.NodeTypeApp:
+			if n.Version != "" && n.Version != graph.UnknownVersion {
+				query = fmt.Sprintf(`sum(rate(%v{reporter="destination",source_workload_namespace="%v",source_app="%s",source_version="%s",destination_service_namespace=\"%v\",response_code=~"%v"} [%vs])) by (%v)`,
+					httpMetric,
+					namespace,
+					n.App,
+					n.Version,
+					istioNamespace,
+					"[2345][0-9][0-9]",        // regex for valid response_codes
+					int(o.Duration.Seconds()), // range duration for the query
+					groupBy)
+			} else {
+				query = fmt.Sprintf(`sum(rate(%v{reporter="destination",source_workload_namespace="%v",source_app="%s",destination_service_namespace=\"%v\",response_code=~"%v"} [%vs])) by (%v)`,
+					httpMetric,
+					namespace,
+					n.App,
+					istioNamespace,
+					"[2345][0-9][0-9]",        // regex for valid response_codes
+					int(o.Duration.Seconds()), // range duration for the query
+					groupBy)
+			}
+		default:
+			checkError(errors.New(fmt.Sprintf("NodeType [%v] not supported", n.NodeType)))
+		}
+		outIstioVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+		populateTrafficMapHttp(trafficMap, &outIstioVector, o)
+	}
+
+	// Section for TCP services
+	tcpMetric := "istio_tcp_sent_bytes_total"
+
+	tcpGroupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_workload_namespace,destination_service_name,destination_workload,destination_app,destination_version"
+	switch n.NodeType {
+	case graph.NodeTypeWorkload:
+		query = fmt.Sprintf(`sum(rate(%v{reporter="destination",destination_workload_namespace="%v",destination_workload="%s"} [%vs])) by (%v)`,
+			tcpMetric,
+			namespace,
+			n.Workload,
+			int(o.Duration.Seconds()), // range duration for the query
+			tcpGroupBy)
+	case graph.NodeTypeApp:
+		if n.Version != "" && n.Version != graph.UnknownVersion {
+			query = fmt.Sprintf(`sum(rate(%v{reporter="destination",destination_service_namespace="%v",destination_app="%s",destination_version="%s"} [%vs])) by (%v)`,
+				tcpMetric,
+				namespace,
+				n.App,
+				n.Version,
+				int(o.Duration.Seconds()), // range duration for the query
+				tcpGroupBy)
+		} else {
+			query = fmt.Sprintf(`sum(rate(%v{reporter="destination",destination_service_namespace="%v",destination_app="%s"} [%vs])) by (%v)`,
+				tcpMetric,
+				namespace,
+				n.App,
+				int(o.Duration.Seconds()), // range duration for the query
+				tcpGroupBy)
+		}
+	default:
+		checkError(errors.New(fmt.Sprintf("NodeType [%v] not supported", n.NodeType)))
+	}
+	tcpInVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+
+	// 2) query for outbound traffic
+	switch n.NodeType {
+	case graph.NodeTypeWorkload:
+		query = fmt.Sprintf(`sum(rate(%v{reporter="source",source_workload_namespace="%v",source_workload="%s"} [%vs])) by (%v)`,
+			tcpMetric,
+			namespace,
+			n.Workload,
+			int(o.Duration.Seconds()), // range duration for the query
+			groupBy)
+	case graph.NodeTypeApp:
+		if n.Version != "" && n.Version != graph.UnknownVersion {
+			query = fmt.Sprintf(`sum(rate(%v{reporter="source",source_workload_namespace="%v",source_app="%s",source_version="%s"} [%vs])) by (%v)`,
+				tcpMetric,
+				namespace,
+				n.App,
+				n.Version,
+				int(o.Duration.Seconds()), // range duration for the query
+				groupBy)
+		} else {
+			query = fmt.Sprintf(`sum(rate(%v{reporter="source",source_workload_namespace="%v",source_app="%s"} [%vs])) by (%v)`,
+				tcpMetric,
+				namespace,
+				n.App,
+				int(o.Duration.Seconds()), // range duration for the query
+				groupBy)
+		}
+	default:
+		checkError(errors.New(fmt.Sprintf("NodeType [%v] not supported", n.NodeType)))
+	}
+	tcpOutVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+
+	populateTrafficMapTcp(trafficMap, &tcpInVector, o)
+	populateTrafficMapTcp(trafficMap, &tcpOutVector, o)
+
+	return trafficMap
 }
 
 func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options.Options) {
