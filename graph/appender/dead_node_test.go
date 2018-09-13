@@ -12,14 +12,17 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/services/business"
 )
 
-func TestDeadNode(t *testing.T) {
-	assert := assert.New(t)
+func setupWorkloadService() business.WorkloadService {
 	k8s := new(kubetest.K8SClientMock)
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testPodsWithTraffic-v1").Return(
 		&v1beta1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testPodsWithTraffic-v1",
+			},
 			Spec: v1beta1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"app": "testPodsWithTraffic", "version": "v1"},
@@ -37,6 +40,9 @@ func TestDeadNode(t *testing.T) {
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testPodsNoTraffic-v1").Return(
 		&v1beta1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testPodsNoTraffic-v1",
+			},
 			Spec: v1beta1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"app": "testPodsNoTraffic", "version": "v1"},
@@ -54,6 +60,9 @@ func TestDeadNode(t *testing.T) {
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoPodsWithTraffic-v1").Return(
 		&v1beta1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testNoPodsWithTraffic-v1",
+			},
 			Spec: v1beta1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"app": "testNoPodsWithTraffic", "version": "v1"},
@@ -67,6 +76,9 @@ func TestDeadNode(t *testing.T) {
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoPodsNoTraffic-v1").Return(
 		&v1beta1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "testNoPodsNoTraffic-v1",
+			},
 			Spec: v1beta1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"app": "testNoPodsNoTraffic", "version": "v1"},
@@ -83,6 +95,13 @@ func TestDeadNode(t *testing.T) {
 
 	config.Set(config.NewConfig())
 
+	return business.SetWithBackends(k8s, nil).Workload
+}
+
+func TestDeadNode(t *testing.T) {
+	assert := assert.New(t)
+
+	workloadService := setupWorkloadService()
 	trafficMap := testTrafficMap()
 
 	assert.Equal(9, len(trafficMap))
@@ -92,7 +111,7 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal(graph.UnknownWorkload, unknownNode.Workload)
 	assert.Equal(8, len(unknownNode.Edges))
 
-	applyDeadNodes(trafficMap, k8s)
+	applyDeadNodes(trafficMap, workloadService)
 
 	assert.Equal(8, len(trafficMap))
 	unknownNode, found = trafficMap[id]

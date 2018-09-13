@@ -25,9 +25,8 @@ func TestDeploymentListHandler(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
-	k8s.On("GetDeploymentSelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentSelector(), nil)
 	svc := setupDeploymentService(k8s)
 
 	workloadList, _ := svc.GetWorkloadList("Namespace")
@@ -153,14 +152,12 @@ func fakePodList() *v1.PodList {
 	}
 }
 
-func fakeDeploymentSelector() string {
-	return "app:httpbin,version:v1"
-}
-
-func fakeServices() []v1.Service {
-	return []v1.Service{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin"},
+func fakeServices() *v1.ServiceList {
+	return &v1.ServiceList{
+		Items: []v1.Service{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin"},
+			},
 		},
 	}
 }

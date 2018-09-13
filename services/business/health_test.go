@@ -22,10 +22,10 @@ func TestGetServiceHealth(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	hs := HealthService{k8s: k8s, prom: prom}
-	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal("ns", args[0])
 		assert.Equal("httpbin", args[1])
-	}).Return(k8s.FakeServiceDetails(), nil)
+	}).Return(k8s.FakeService(), nil)
 
 	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
 		assert.Equal("ns", args[0])
@@ -36,7 +36,7 @@ func TestGetServiceHealth(t *testing.T) {
 
 	health, _ := hs.GetServiceHealth("ns", "httpbin", "1m")
 
-	k8s.AssertNumberOfCalls(t, "GetServiceDetails", 1)
+	k8s.AssertNumberOfCalls(t, "GetService", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
 	assert.Equal(1, health.Envoy.Inbound.Total)

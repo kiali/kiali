@@ -2,9 +2,7 @@ package appender
 
 import (
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
-
-	"k8s.io/apimachinery/pkg/labels"
+	"github.com/kiali/kiali/services/business"
 )
 
 // DeadNodeAppender is responsible for removing from the graph unwanted nodes:
@@ -20,13 +18,13 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
 		return
 	}
 
-	istioClient, err := kubernetes.NewClient()
+	business, err := business.Get()
 	checkError(err)
 
-	applyDeadNodes(trafficMap, istioClient)
+	applyDeadNodes(trafficMap, business.Workload)
 }
 
-func applyDeadNodes(trafficMap graph.TrafficMap, istioClient kubernetes.IstioClientInterface) {
+func applyDeadNodes(trafficMap graph.TrafficMap, wkSvc business.WorkloadService) {
 	numRemoved := 0
 	for id, n := range trafficMap {
 		switch n.NodeType {
@@ -65,13 +63,12 @@ func applyDeadNodes(trafficMap graph.TrafficMap, istioClient kubernetes.IstioCli
 			// Note that in the future a workload could feasibly be back by something
 			// other than a deployment; we may need to query the workload name againts
 			// various possibly entities.
-			deployment, err := istioClient.GetDeployment(n.Namespace, n.Workload)
-			if err != nil || deployment == nil {
+			workload, err := wkSvc.GetWorkload(n.Namespace, n.Workload, false)
+			if err != nil || workload == nil {
 				delete(trafficMap, id)
 				numRemoved++
 			} else {
-				pods, err := istioClient.GetPods(n.Namespace, labels.Set(deployment.Spec.Selector.MatchLabels).String())
-				if err != nil || pods == nil || len(pods.Items) == 0 {
+				if len(workload.Pods) == 0 {
 					n.Metadata["isDead"] = true
 				}
 			}

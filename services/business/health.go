@@ -20,18 +20,18 @@ type HealthService struct {
 
 // GetServiceHealth returns a service health from just Namespace and service (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetServiceHealth(namespace, service, rateInterval string) (*models.ServiceHealth, error) {
-	details, err := in.k8s.GetServiceDetails(namespace, service)
+	svc, err := in.k8s.GetService(namespace, service)
 	if err != nil {
 		return nil, err
 	}
-	h := in.getServiceHealth(namespace, service, rateInterval, details)
+	h := in.getServiceHealth(namespace, service, rateInterval, svc)
 	return &h, nil
 }
 
-func (in *HealthService) getServiceHealth(namespace, service, rateInterval string, details *kubernetes.ServiceDetails) models.ServiceHealth {
+func (in *HealthService) getServiceHealth(namespace, service, rateInterval string, svc *v1.Service) models.ServiceHealth {
 	var envoyHealth prometheus.EnvoyServiceHealth
 	var ports []int32
-	for _, port := range details.Service.Spec.Ports {
+	for _, port := range svc.Spec.Ports {
 		ports = append(ports, port.Port)
 	}
 	envoyHealth, _ = in.prom.GetServiceHealth(namespace, service, ports)
@@ -156,7 +156,7 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities kub
 
 // GetNamespaceWorkloadHealth returns a health for all workloads in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceWorkloadHealth(namespace, rateInterval string) (models.NamespaceWorkloadHealth, error) {
-	depls, err := in.k8s.GetDeployments(namespace)
+	depls, err := in.k8s.GetDeployments(namespace, "")
 	if err != nil {
 		return nil, err
 	}

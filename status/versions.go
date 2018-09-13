@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
-	"k8s.io/api/core/v1"
 	kube "k8s.io/client-go/kubernetes"
 
 	"github.com/kiali/kiali/config"
@@ -134,15 +133,4 @@ func kubernetesVersion() (*ExternalServiceInfo, error) {
 		}
 	}
 	return nil, err
-}
-func getService(namespace string, service string) (*v1.ServiceSpec, error) {
-	client, err := kubernetes.NewClient()
-	if err != nil {
-		return nil, err
-	}
-	details, err := client.GetServiceDetails(namespace, service)
-	if err != nil {
-		return nil, err
-	}
-	return &details.Service.Spec, nil
 }

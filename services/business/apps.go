@@ -30,7 +30,7 @@ type appsWorkload map[string][]appWorkload
 // Helper method to build a map of workloads for a given labelSelector
 func (in *AppService) fetchWorkloadsPerApp(namespace, labelSelector string) (appsWorkload, error) {
 	cfg := config.Get()
-	deployments, err := in.k8s.GetDeploymentsBySelector(namespace, labelSelector)
+	deployments, err := in.k8s.GetDeployments(namespace, labelSelector)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (in *AppService) GetApp(namespace string, app string) (models.App, error) {
 	(*appInstance).Workloads = make([]models.WorkloadSvc, len(appWkd))
 	for i, wkd := range appWkd {
 		wkdSvc := &models.WorkloadSvc{WorkloadName: wkd.Workload}
-		services, _ := in.k8s.GetServicesByDeploymentSelector(namespace, wkd.Deployment)
+		services, _ := in.k8s.GetServices(namespace, wkd.Deployment.Labels)
 		if err != nil {
 			return *appInstance, err
 		}
@@ -105,8 +105,8 @@ func (in *AppService) GetApp(namespace string, app string) (models.App, error) {
 		// Using Parse to calculate the IstioSideCar from Pods
 		mPods.Parse(wkd.Pods.Items)
 		wkdSvc.IstioSidecar = mPods.HasIstioSideCar()
-		wkdSvc.ServiceNames = make([]string, len(services))
-		for j, service := range services {
+		wkdSvc.ServiceNames = make([]string, len(services.Items))
+		for j, service := range services.Items {
 			wkdSvc.ServiceNames[j] = service.Name
 		}
 		(*appInstance).Workloads[i] = *wkdSvc

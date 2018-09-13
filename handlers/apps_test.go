@@ -162,7 +162,7 @@ func TestAppListEndpoint(t *testing.T) {
 	ts, k8s, _ := setupAppListEndpoint()
 	defer ts.Close()
 
-	k8s.On("GetDeploymentsBySelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
 
 	url := ts.URL + "/api/namespaces/ns/apps"
@@ -175,7 +175,7 @@ func TestAppListEndpoint(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetDeploymentsBySelector", 1)
+	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
 }
 
@@ -183,9 +183,9 @@ func TestAppDetailsEndpoint(t *testing.T) {
 	ts, k8s, _ := setupAppListEndpoint()
 	defer ts.Close()
 
-	k8s.On("GetDeploymentsBySelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
-	k8s.On("GetServicesByDeploymentSelector", mock.AnythingOfType("string"), mock.AnythingOfType("*v1beta1.Deployment")).Return(fakeServices(), nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeServices(), nil)
 
 	url := ts.URL + "/api/namespaces/ns/apps/httpbin"
 
@@ -197,7 +197,7 @@ func TestAppDetailsEndpoint(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetDeploymentsBySelector", 1)
+	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
-	k8s.AssertNumberOfCalls(t, "GetServicesByDeploymentSelector", 1)
+	k8s.AssertNumberOfCalls(t, "GetServices", 1)
 }

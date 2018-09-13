@@ -25,24 +25,9 @@ func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (
 	return args.Get(0).(*v1beta1.Deployment), args.Error(1)
 }
 
-func (o *K8SClientMock) GetDeployments(namespace string) (*v1beta1.DeploymentList, error) {
-	args := o.Called(namespace)
-	return args.Get(0).(*v1beta1.DeploymentList), args.Error(1)
-}
-
-func (o *K8SClientMock) GetDeploymentSelector(namespace string, deploymentName string) (string, error) {
-	args := o.Called(namespace, deploymentName)
-	return args.Get(0).(string), args.Error(1)
-}
-
-func (o *K8SClientMock) GetDeploymentsBySelector(namespace string, labelSelector string) (*v1beta1.DeploymentList, error) {
+func (o *K8SClientMock) GetDeployments(namespace string, labelSelector string) (*v1beta1.DeploymentList, error) {
 	args := o.Called(namespace, labelSelector)
 	return args.Get(0).(*v1beta1.DeploymentList), args.Error(1)
-}
-
-func (o *K8SClientMock) GetSelector(namespace string, deploymentName string) (string, error) {
-	args := o.Called(namespace, deploymentName)
-	return args.Get(0).(string), args.Error(1)
 }
 
 func (o *K8SClientMock) GetService(namespace string, serviceName string) (*v1.Service, error) {
@@ -60,8 +45,8 @@ func (o *K8SClientMock) GetAppDetails(namespace, app string) (kubernetes.AppDeta
 	return args.Get(0).(kubernetes.AppDetails), args.Error(1)
 }
 
-func (o *K8SClientMock) GetServices(namespace string) (*v1.ServiceList, error) {
-	args := o.Called(namespace)
+func (o *K8SClientMock) GetServices(namespace string, selectorLabels map[string]string) (*v1.ServiceList, error) {
+	args := o.Called(namespace, selectorLabels)
 	return args.Get(0).(*v1.ServiceList), args.Error(1)
 }
 
@@ -75,9 +60,9 @@ func (o *K8SClientMock) GetPods(namespace, labelSelector string) (*v1.PodList, e
 	return args.Get(0).(*v1.PodList), args.Error(1)
 }
 
-func (o *K8SClientMock) GetServiceDetails(namespace string, serviceName string) (*kubernetes.ServiceDetails, error) {
+func (o *K8SClientMock) GetEndpoints(namespace string, serviceName string) (*v1.Endpoints, error) {
 	args := o.Called(namespace, serviceName)
-	return args.Get(0).(*kubernetes.ServiceDetails), args.Error(1)
+	return args.Get(0).(*v1.Endpoints), args.Error(1)
 }
 
 func (o *K8SClientMock) GetServicePods(namespace string, serviceName string, serviceVersion string) (*v1.PodList, error) {
@@ -85,9 +70,9 @@ func (o *K8SClientMock) GetServicePods(namespace string, serviceName string, ser
 	return args.Get(0).(*v1.PodList), args.Error(1)
 }
 
-func (o *K8SClientMock) GetServicesByDeploymentSelector(namespace string, deployment *v1beta1.Deployment) ([]v1.Service, error) {
+func (o *K8SClientMock) GetServicesByDeploymentSelector(namespace string, deployment *v1beta1.Deployment) (*v1.ServiceList, error) {
 	args := o.Called(namespace, deployment)
-	return args.Get(0).([]v1.Service), args.Error(1)
+	return args.Get(0).(*v1.ServiceList), args.Error(1)
 }
 
 func (o *K8SClientMock) GetIstioDetails(namespace string, serviceName string) (*kubernetes.IstioDetails, error) {
@@ -163,6 +148,29 @@ func (o *K8SClientMock) GetQuotaSpecBindings(namespace string) ([]kubernetes.Ist
 func (o *K8SClientMock) GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (kubernetes.IstioObject, error) {
 	args := o.Called(namespace, quotaSpecBindingName)
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) FakeService() *v1.Service {
+	return &v1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "httpbin",
+			Namespace: "tutorial",
+			Labels: map[string]string{
+				"app":     "httpbin",
+				"version": "v1"}},
+		Spec: v1.ServiceSpec{
+			ClusterIP: "fromservice",
+			Type:      "ClusterIP",
+			Selector:  map[string]string{"app": "httpbin"},
+			Ports: []v1.ServicePort{
+				{
+					Name:     "http",
+					Protocol: "TCP",
+					Port:     3001},
+				{
+					Name:     "http",
+					Protocol: "TCP",
+					Port:     3000}}}}
 }
 
 func (o *K8SClientMock) FakeServiceDetails() *kubernetes.ServiceDetails {

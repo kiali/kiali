@@ -111,10 +111,10 @@ func TestServiceHealth(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/ns/services/svc/health"
 
-	k8s.On("GetServiceDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
 		assert.Equal(t, "svc", args[1])
-	}).Return(k8s.FakeServiceDetails(), nil)
+	}).Return(k8s.FakeService(), nil)
 
 	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
@@ -131,7 +131,7 @@ func TestServiceHealth(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetServiceDetails", 1)
+	k8s.AssertNumberOfCalls(t, "GetService", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
 }

@@ -18,7 +18,7 @@ func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, namespace s
 	istioClient, err := kubernetes.NewClient()
 	checkError(err)
 
-	deployments, err := istioClient.GetDeployments(namespace)
+	deployments, err := istioClient.GetDeployments(namespace, "")
 	checkError(err)
 
 	a.addUnusedNodes(trafficMap, namespace, deployments)

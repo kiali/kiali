@@ -37,12 +37,13 @@ func setupDeploymentList() (*httptest.Server, *kubetest.K8SClientMock, *promethe
 }
 
 func TestDeploymentList(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
 	ts, k8s, _ := setupDeploymentList()
 	defer ts.Close()
 
-	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
-	k8s.On("GetDeploymentSelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentSelector(), nil)
 
 	url := ts.URL + "/api/namespaces/ns/workloads"
 
@@ -110,14 +111,12 @@ func fakePodList() *k8s_v1.PodList {
 	}
 }
 
-func fakeDeploymentSelector() string {
-	return "app:httpbin,version:v1"
-}
-
-func fakeServices() []k8s_v1.Service {
-	return []k8s_v1.Service{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin"},
+func fakeServices() *k8s_v1.ServiceList {
+	return &k8s_v1.ServiceList{
+		Items: []k8s_v1.Service{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin"},
+			},
 		},
 	}
 }
