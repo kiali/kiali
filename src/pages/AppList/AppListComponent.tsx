@@ -172,12 +172,12 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       selectedFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
     });
 
-    let urlParams: Map<string, string[]> = new Map<string, string[]>();
+    const urlParams: Map<string, string[]> = new Map<string, string[]>();
     availableFilters.forEach(filter => {
-      const param = this.props.pageHooks.getSingleQueryParam(filter.id);
-      if (param !== undefined) {
+      const params = this.props.pageHooks.getQueryParam(filter.id);
+      if (params !== undefined) {
         const existing = urlParams.get(filter.title) || [];
-        urlParams.set(filter.title, existing.concat(param));
+        urlParams.set(filter.title, existing.concat(params));
       }
     });
 
