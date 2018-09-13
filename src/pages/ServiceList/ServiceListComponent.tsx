@@ -12,16 +12,13 @@ import {
 } from 'patternfly-react';
 import { Link } from 'react-router-dom';
 
-import {
-  defaultNamespaceFilter,
-  NamespaceFilter,
-  NamespaceFilterSelected
-} from '../../components/NamespaceFilter/NamespaceFilter';
+import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
+import { NamespaceFilter } from '../../components/Filters/NamespaceFilter';
 import { PfColors } from '../../components/Pf/PfColors';
 import * as API from '../../services/Api';
 import { getRequestErrorsRatio, ServiceHealth } from '../../types/Health';
 import Namespace from '../../types/Namespace';
-import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType } from '../../types/NamespaceFilter';
+import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
 import { Pagination } from '../../types/Pagination';
 import { overviewToItem, ServiceItem, ServiceOverview, SortField } from '../../types/ServiceListComponent';
 import { IstioLogo } from '../../config';
@@ -124,7 +121,7 @@ const istioFilter: FilterType = {
   filterValues: [{ id: 'present', title: 'Present' }, { id: 'not_present', title: 'Not Present' }]
 };
 
-const availableFilters: FilterType[] = [serviceNameFilter, istioFilter, defaultNamespaceFilter];
+const availableFilters: FilterType[] = [NamespaceFilter.create(), serviceNameFilter, istioFilter];
 
 type ServiceListComponentState = {
   services: ServiceItem[];
@@ -145,7 +142,6 @@ type ServiceListComponentProps = {
 class ServiceListComponent extends React.Component<ServiceListComponentProps, ServiceListComponentState> {
   constructor(props: ServiceListComponentProps) {
     super(props);
-
     this.state = {
       services: [],
       pagination: this.props.pagination,
@@ -153,8 +149,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       isSortAscending: this.props.isSortAscending,
       rateInterval: this.props.rateInterval
     };
-
-    this.setActiveFiltersToURL();
+    this.props.pageHooks.setFiltersToURL(availableFilters, FilterSelected.getSelected());
   }
 
   componentDidMount() {
@@ -170,7 +165,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         rateInterval: this.props.rateInterval
       });
 
-      NamespaceFilterSelected.setSelected(this.selectedFilters());
+      FilterSelected.setSelected(this.props.pageHooks.getFiltersFromURL(availableFilters));
       this.updateServices();
     }
   }
@@ -182,76 +177,8 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       prevProps.rateInterval === this.props.rateInterval &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title &&
-      this.filtersMatch()
+      this.props.pageHooks.filtersMatchURL(availableFilters, FilterSelected.getSelected())
     );
-  }
-
-  filtersMatch() {
-    const selectedFilters: Map<string, string[]> = new Map<string, string[]>();
-
-    NamespaceFilterSelected.getSelected().map(activeFilter => {
-      const existingValue = selectedFilters.get(activeFilter.category) || [];
-      selectedFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
-    });
-
-    let urlParams: Map<string, string[]> = new Map<string, string[]>();
-    availableFilters.forEach(filter => {
-      const param = this.props.pageHooks.getQueryParam(filter.id);
-      if (param !== undefined) {
-        const existing = urlParams.get(filter.title) || [];
-        urlParams.set(filter.title, existing.concat(param));
-      }
-    });
-
-    let equalFilters = true;
-    selectedFilters.forEach((filterValues, filterName) => {
-      const aux = urlParams.get(filterName) || [];
-      equalFilters =
-        equalFilters && filterValues.every(value => aux.includes(value)) && filterValues.length === aux.length;
-    });
-
-    return selectedFilters.size === urlParams.size && equalFilters;
-  }
-
-  setActiveFiltersToURL() {
-    const params = NamespaceFilterSelected.getSelected()
-      .map(activeFilter => {
-        const availableFilter = availableFilters.find(filter => {
-          return filter.title === activeFilter.category;
-        });
-
-        if (typeof availableFilter === 'undefined') {
-          NamespaceFilterSelected.setSelected(
-            NamespaceFilterSelected.getSelected().filter(nfs => {
-              return nfs.category !== activeFilter.category;
-            })
-          );
-          return null;
-        }
-
-        return {
-          name: availableFilter.id,
-          value: activeFilter.value
-        };
-      })
-      .filter(filter => filter !== null) as URLParameter[];
-
-    this.props.pageHooks.onParamChange(params, 'append', 'replace');
-  }
-
-  selectedFilters() {
-    let activeFilters: ActiveFilter[] = [];
-    availableFilters.forEach(filter => {
-      (this.props.pageHooks.getQueryParam(filter.id) || []).forEach(value => {
-        activeFilters = activeFilters.concat({
-          label: filter.title + ': ' + value,
-          category: filter.title,
-          value: value
-        });
-      });
-    });
-
-    return activeFilters;
   }
 
   onFilterChange = (filters: ActiveFilter[]) => {
@@ -366,7 +293,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
   };
 
   updateServices = (resetPagination?: boolean) => {
-    const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
+    const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
       .map(activeFilter => activeFilter.value);
@@ -511,9 +438,9 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
     }
     return (
       <div>
-        <NamespaceFilter
-          initialFilters={[serviceNameFilter, istioFilter]}
-          initialActiveFilters={this.selectedFilters()}
+        <StatefulFilters
+          initialFilters={availableFilters}
+          initialActiveFilters={this.props.pageHooks.getFiltersFromURL(availableFilters)}
           onFilterChange={this.onFilterChange}
           onError={this.handleError}
         >
@@ -538,7 +465,7 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
               <Icon name="refresh" />
             </Button>
           </ToolbarRightContent>
-        </NamespaceFilter>
+        </StatefulFilters>
         <ListView>{serviceList}</ListView>
         <Paginator
           viewType="list"

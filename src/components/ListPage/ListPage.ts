@@ -3,6 +3,7 @@ import { RouteComponentProps } from 'react-router';
 import * as MessageCenter from '../../utils/MessageCenter';
 import { URLParameter } from '../../types/Parameters';
 import { Pagination } from '../../types/Pagination';
+import { FilterType, ActiveFilter } from '../../types/Filters';
 
 export namespace ListPage {
   const ACTION_APPEND = 'append';
@@ -18,6 +19,9 @@ export namespace ListPage {
     getQueryParam: (queryName: string) => string[] | undefined;
     getSingleQueryParam: (queryName: string) => string | undefined;
     getSingleIntQueryParam: (queryName: string) => number | undefined;
+    getFiltersFromURL: (filterTypes: FilterType[]) => ActiveFilter[];
+    setFiltersToURL: (filterTypes: FilterType[], filters: ActiveFilter[]) => void;
+    filtersMatchURL: (filterTypes: FilterType[], filters: ActiveFilter[]) => boolean;
   }
 
   export class Component<P, S> extends React.Component<RouteComponentProps<P>, S> implements Hooks {
@@ -83,6 +87,69 @@ export namespace ListPage {
       const p = this.getQueryParam(queryName);
       return p === undefined ? undefined : parseInt(p[0], 10);
     };
+
+    getFiltersFromURL(filterTypes: FilterType[]): ActiveFilter[] {
+      const urlParams = new URLSearchParams(this.props.location.search);
+      const activeFilters: ActiveFilter[] = [];
+      filterTypes.forEach(filter => {
+        urlParams.getAll(filter.id).forEach(value => {
+          activeFilters.push({
+            label: filter.title + ': ' + value,
+            category: filter.title,
+            value: value
+          });
+        });
+      });
+      return activeFilters;
+    }
+
+    setFiltersToURL(filterTypes: FilterType[], filters: ActiveFilter[]) {
+      const urlParams = new URLSearchParams(this.props.location.search);
+      filterTypes.forEach(type => {
+        urlParams.delete(type.id);
+      });
+      filters.forEach(activeFilter => {
+        const filterType = filterTypes.find(filter => filter.title === activeFilter.category);
+        if (!filterType) {
+          return;
+        }
+        urlParams.append(filterType.id, activeFilter.value);
+      });
+      // Resetting pagination when filters change
+      urlParams.delete('page');
+      this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
+    }
+
+    filtersMatchURL(filterTypes: FilterType[], filters: ActiveFilter[]): boolean {
+      // This can probably be improved and/or simplified?
+      const fromFilters: Map<string, string[]> = new Map<string, string[]>();
+      filters.map(activeFilter => {
+        const existingValue = fromFilters.get(activeFilter.category) || [];
+        fromFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
+      });
+
+      const fromURL: Map<string, string[]> = new Map<string, string[]>();
+      const urlParams = new URLSearchParams(this.props.location.search);
+      filterTypes.forEach(filter => {
+        const values = urlParams.getAll(filter.id);
+        if (values.length > 0) {
+          const existing = fromURL.get(filter.title) || [];
+          fromURL.set(filter.title, existing.concat(values));
+        }
+      });
+
+      if (fromFilters.size !== fromURL.size) {
+        return false;
+      }
+      let equalFilters = true;
+      fromFilters.forEach((filterValues, filterName) => {
+        const aux = fromURL.get(filterName) || [];
+        equalFilters =
+          equalFilters && filterValues.every(value => aux.includes(value)) && filterValues.length === aux.length;
+      });
+
+      return equalFilters;
+    }
 
     currentPagination(): Pagination {
       return {

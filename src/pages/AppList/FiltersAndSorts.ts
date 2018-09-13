@@ -1,10 +1,4 @@
-import {
-  ActiveFilter,
-  FILTER_ACTION_APPEND,
-  FILTER_ACTION_UPDATE,
-  FilterType,
-  FilterValue
-} from '../../types/NamespaceFilter';
+import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
 import { AppListItem } from '../../types/AppList';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { getRequestErrorsRatio, AppHealth } from '../../types/Health';
