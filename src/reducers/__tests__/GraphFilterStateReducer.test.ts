@@ -1,9 +1,9 @@
-import serviceGraphFilterState from '../ServiceGraphFilterState';
-import { ServiceGraphFilterActionKeys } from '../../actions/ServiceGraphFilterActions';
+import graphFilterState from '../GraphFilterState';
+import { GraphFilterActionKeys } from '../../actions/GraphFilterActions';
 
-describe('ServiceGraphFilterState reducer', () => {
+describe('GraphFilterState reducer', () => {
   it('should return the initial state', () => {
-    expect(serviceGraphFilterState(undefined, {})).toEqual({
+    expect(graphFilterState(undefined, {})).toEqual({
       showLegend: false,
       showNodeLabels: true,
       showCircuitBreakers: true,
@@ -16,7 +16,7 @@ describe('ServiceGraphFilterState reducer', () => {
 
   it('should handle TOGGLE_LEGEND', () => {
     expect(
-      serviceGraphFilterState(
+      graphFilterState(
         {
           showLegend: false,
           showNodeLabels: true,
@@ -27,7 +27,7 @@ describe('ServiceGraphFilterState reducer', () => {
           refreshRate: 15000
         },
         {
-          type: ServiceGraphFilterActionKeys.TOGGLE_LEGEND
+          type: GraphFilterActionKeys.TOGGLE_LEGEND
         }
       )
     ).toEqual({
@@ -43,7 +43,7 @@ describe('ServiceGraphFilterState reducer', () => {
 
   it('should handle TOGGLE_GRAPH_NODE_LABEL', () => {
     expect(
-      serviceGraphFilterState(
+      graphFilterState(
         {
           showLegend: false,
           showNodeLabels: true,
@@ -54,7 +54,7 @@ describe('ServiceGraphFilterState reducer', () => {
           refreshRate: 15000
         },
         {
-          type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL
+          type: GraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL
         }
       )
     ).toEqual({
@@ -70,7 +70,7 @@ describe('ServiceGraphFilterState reducer', () => {
 
   it('should handle TOGGLE_GRAPH_CIRCUIT_BREAKERS', () => {
     expect(
-      serviceGraphFilterState(
+      graphFilterState(
         {
           showLegend: false,
           showNodeLabels: true,
@@ -81,7 +81,7 @@ describe('ServiceGraphFilterState reducer', () => {
           refreshRate: 15000
         },
         {
-          type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS
+          type: GraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS
         }
       )
     ).toEqual({
@@ -96,7 +96,7 @@ describe('ServiceGraphFilterState reducer', () => {
   });
   it('should handle TOGGLE_GRAPH_VIRTUAL_SERVICES', () => {
     expect(
-      serviceGraphFilterState(
+      graphFilterState(
         {
           showLegend: false,
           showNodeLabels: true,
@@ -107,7 +107,7 @@ describe('ServiceGraphFilterState reducer', () => {
           refreshRate: 15000
         },
         {
-          type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_VIRTUAL_SERVICES
+          type: GraphFilterActionKeys.TOGGLE_GRAPH_VIRTUAL_SERVICES
         }
       )
     ).toEqual({
@@ -122,7 +122,7 @@ describe('ServiceGraphFilterState reducer', () => {
   });
   it('should handle TOGGLE_GRAPH_MISSING_SIDECARS', () => {
     expect(
-      serviceGraphFilterState(
+      graphFilterState(
         {
           showLegend: false,
           showNodeLabels: true,
@@ -133,7 +133,7 @@ describe('ServiceGraphFilterState reducer', () => {
           refreshRate: 15000
         },
         {
-          type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS
+          type: GraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS
         }
       )
     ).toEqual({
@@ -148,7 +148,7 @@ describe('ServiceGraphFilterState reducer', () => {
   });
   it('should handle TOGGLE_TRAFFIC_ANIMATION', () => {
     expect(
-      serviceGraphFilterState(
+      graphFilterState(
         {
           showLegend: false,
           showNodeLabels: true,
@@ -159,7 +159,7 @@ describe('ServiceGraphFilterState reducer', () => {
           refreshRate: 15000
         },
         {
-          type: ServiceGraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION
+          type: GraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION
         }
       )
     ).toEqual({
@@ -174,7 +174,7 @@ describe('ServiceGraphFilterState reducer', () => {
   });
   it('should handle SET_GRAPH_REFRESH_RATE', () => {
     expect(
-      serviceGraphFilterState(
+      graphFilterState(
         {
           showLegend: false,
           showNodeLabels: true,
@@ -185,7 +185,7 @@ describe('ServiceGraphFilterState reducer', () => {
           refreshRate: 15000
         },
         {
-          type: ServiceGraphFilterActionKeys.SET_GRAPH_REFRESH_RATE,
+          type: GraphFilterActionKeys.SET_GRAPH_REFRESH_RATE,
           payload: 10000
         }
       )

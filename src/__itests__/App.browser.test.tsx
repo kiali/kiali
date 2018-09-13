@@ -17,7 +17,7 @@ const getPath = (key: string) => {
 };
 
 const kialiPages = {
-  graph: `${getUrl()}/console/service-graph/all`,
+  graph: `${getUrl()}/console/graph/all`,
   services: `${getUrl()}/console/services`,
   services_review: `${getUrl()}/console/namespaces/istio-system/services/reviews`,
   reviews_metrics: `${getUrl()}/console/namespaces/istio-system/services/reviews?tab=metrics`,

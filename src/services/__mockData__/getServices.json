@@ -31,7 +31,7 @@
       "name": "reviews"
     },
     {
-      "name": "servicegraph"
+      "name": "graph"
     },
     {
       "name": "kiali"

@@ -15,7 +15,7 @@ import { KialiAppState } from '../store/Store';
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    error: state.serviceGraph.error
+    error: state.graph.error
   };
 };
 

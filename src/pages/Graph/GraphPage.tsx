@@ -21,7 +21,7 @@ import GraphLegend from '../../components/GraphFilter/GraphLegend';
 import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeToolbar } from '../../components/CytoscapeGraph/CytoscapeToolbar';
 
-type ServiceGraphPageProps = GraphParamsType & {
+type GraphPageProps = GraphParamsType & {
   graphTimestamp: string;
   graphData: any;
   isLoading: boolean;
@@ -64,7 +64,7 @@ const graphToolbarStyle = style({
   position: 'absolute'
 });
 
-const ServiceGraphErrorBoundaryFallback = () => {
+const GraphErrorBoundaryFallback = () => {
   return (
     <div className={cytoscapeGraphContainerStyle}>
       <EmptyGraphLayoutContainer isError={true} />
@@ -72,13 +72,13 @@ const ServiceGraphErrorBoundaryFallback = () => {
   );
 };
 
-export default class GraphPage extends React.PureComponent<ServiceGraphPageProps> {
+export default class GraphPage extends React.PureComponent<GraphPageProps> {
   private pollTimeoutRef?: number;
   private pollPromise?: CancelablePromise<any>;
   private readonly errorBoundaryRef: any;
   private cytoscapeGraphRef: any;
 
-  constructor(props: ServiceGraphPageProps) {
+  constructor(props: GraphPageProps) {
     super(props);
     this.errorBoundaryRef = React.createRef();
     this.cytoscapeGraphRef = React.createRef();
@@ -92,7 +92,7 @@ export default class GraphPage extends React.PureComponent<ServiceGraphPageProps
     this.removePollingIntervalTimer();
   }
 
-  componentDidUpdate(prevProps: ServiceGraphPageProps) {
+  componentDidUpdate(prevProps: GraphPageProps) {
     const prevNamespace = prevProps.namespace;
     const prevDuration = prevProps.graphDuration;
     const prevPollInterval = prevProps.pollInterval;
@@ -148,7 +148,7 @@ export default class GraphPage extends React.PureComponent<ServiceGraphPageProps
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
-              fallBackComponent={<ServiceGraphErrorBoundaryFallback />}
+              fallBackComponent={<GraphErrorBoundaryFallback />}
             >
               <CytoscapeGraph
                 {...graphParams}

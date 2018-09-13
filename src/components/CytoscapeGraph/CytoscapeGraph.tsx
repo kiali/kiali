@@ -10,7 +10,7 @@ import EmptyGraphLayout from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 
-import { ServiceGraphActions } from '../../actions/ServiceGraphActions';
+import { GraphActions } from '../../actions/GraphActions';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import {
@@ -557,19 +557,19 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  showNodeLabels: state.serviceGraph.filterState.showNodeLabels,
-  showCircuitBreakers: state.serviceGraph.filterState.showCircuitBreakers,
-  showVirtualServices: state.serviceGraph.filterState.showVirtualServices,
-  showMissingSidecars: state.serviceGraph.filterState.showMissingSidecars,
-  showTrafficAnimation: state.serviceGraph.filterState.showTrafficAnimation,
-  elements: state.serviceGraph.graphData,
-  isLoading: state.serviceGraph.isLoading,
-  isError: state.serviceGraph.isError
+  showNodeLabels: state.graph.filterState.showNodeLabels,
+  showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
+  showVirtualServices: state.graph.filterState.showVirtualServices,
+  showMissingSidecars: state.graph.filterState.showMissingSidecars,
+  showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
+  elements: state.graph.graphData,
+  isLoading: state.graph.isLoading,
+  isError: state.graph.isError
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
-  onClick: (event: CytoscapeClickEvent) => dispatch(ServiceGraphActions.showSidePanelInfo(event)),
-  onReady: (cy: any) => dispatch(ServiceGraphActions.graphRendered(cy))
+  onClick: (event: CytoscapeClickEvent) => dispatch(GraphActions.showSidePanelInfo(event)),
+  onReady: (cy: any) => dispatch(GraphActions.graphRendered(cy))
 });
 
 const CytoscapeGraphConnected = connect(

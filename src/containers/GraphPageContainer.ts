@@ -4,25 +4,25 @@ import Namespace from '../types/Namespace';
 import { Duration } from '../types/GraphFilter';
 import GraphPage from '../pages/Graph/GraphPage';
 
-import { ServiceGraphDataActions } from '../actions/ServiceGraphDataActions';
-import { serviceGraphFilterActions } from '../actions/ServiceGraphFilterActions';
+import { GraphDataActions } from '../actions/GraphDataActions';
+import { graphFilterActions } from '../actions/GraphFilterActions';
 import { bindActionCreators } from 'redux';
 import { GraphType, NodeParamsType } from '../types/Graph';
 
 const mapStateToProps = (state: KialiAppState) => ({
-  graphTimestamp: state.serviceGraph.graphDataTimestamp,
-  graphData: state.serviceGraph.graphData,
-  isLoading: state.serviceGraph.isLoading,
-  summaryData: state.serviceGraph.sidePanelInfo
+  graphTimestamp: state.graph.graphDataTimestamp,
+  graphData: state.graph.graphData,
+  isLoading: state.graph.isLoading,
+  summaryData: state.graph.sidePanelInfo
     ? {
-        summaryTarget: state.serviceGraph.sidePanelInfo.graphReference,
-        summaryType: state.serviceGraph.sidePanelInfo.kind
+        summaryTarget: state.graph.sidePanelInfo.graphReference,
+        summaryType: state.graph.sidePanelInfo.kind
       }
     : null,
-  showLegend: state.serviceGraph.filterState.showLegend,
-  pollInterval: state.serviceGraph.filterState.refreshRate,
+  showLegend: state.graph.filterState.showLegend,
+  pollInterval: state.graph.filterState.refreshRate,
   isPageVisible: state.globalState.isPageVisible,
-  isError: state.serviceGraph.isError
+  isError: state.graph.isError
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
@@ -32,8 +32,8 @@ const mapDispatchToProps = (dispatch: any) => ({
     graphType: GraphType,
     injectServiceNodes: boolean,
     node?: NodeParamsType
-  ) => dispatch(ServiceGraphDataActions.fetchGraphData(namespace, graphDuration, graphType, injectServiceNodes, node)),
-  toggleLegend: bindActionCreators(serviceGraphFilterActions.toggleLegend, dispatch)
+  ) => dispatch(GraphDataActions.fetchGraphData(namespace, graphDuration, graphType, injectServiceNodes, node)),
+  toggleLegend: bindActionCreators(graphFilterActions.toggleLegend, dispatch)
 });
 
 const GraphPageConnected = connect(

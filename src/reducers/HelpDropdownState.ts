@@ -7,7 +7,7 @@ const INITIAL_STATE: StatusState = {
   warningMessages: []
 };
 
-// This Reducer allows changes to the 'serviceGraphDataState' portion of Redux Store
+// This Reducer allows changes to the 'graphDataState' portion of Redux Store
 const HelpDropdownState = (state: StatusState = INITIAL_STATE, action) => {
   switch (action.type) {
     case HelpDropdownActionKeys.STATUS_REFRESH:

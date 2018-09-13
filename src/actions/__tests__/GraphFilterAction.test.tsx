@@ -1,89 +1,89 @@
-import { ServiceGraphFilterActionKeys, serviceGraphFilterActions } from '../ServiceGraphFilterActions';
+import { GraphFilterActionKeys, graphFilterActions } from '../GraphFilterActions';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 
 // Test our ActionCreators for proper message format
 describe('GraphFilterActions', () => {
   it('should toggle an edge label ', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
+      type: GraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
       payload: EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE
     };
-    expect(serviceGraphFilterActions.setGraphEdgeLabelMode(EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE)).toEqual(
+    expect(graphFilterActions.setGraphEdgeLabelMode(EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE)).toEqual(
       expectedAction
     );
   });
 
   it('should toggle the legend ', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.TOGGLE_LEGEND
+      type: GraphFilterActionKeys.TOGGLE_LEGEND
     };
-    expect(serviceGraphFilterActions.toggleLegend()).toEqual(expectedAction);
+    expect(graphFilterActions.toggleLegend()).toEqual(expectedAction);
   });
 
   it('should toggle a node label ', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL
+      type: GraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL
     };
-    expect(serviceGraphFilterActions.toggleGraphNodeLabel()).toEqual(expectedAction);
+    expect(graphFilterActions.toggleGraphNodeLabel()).toEqual(expectedAction);
   });
 
   it('should toggle a circuit breaker ', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS
+      type: GraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS
     };
-    expect(serviceGraphFilterActions.toggleGraphCircuitBreakers()).toEqual(expectedAction);
+    expect(graphFilterActions.toggleGraphCircuitBreakers()).toEqual(expectedAction);
   });
 
   it('should toggle a virtual service', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_VIRTUAL_SERVICES
+      type: GraphFilterActionKeys.TOGGLE_GRAPH_VIRTUAL_SERVICES
     };
-    expect(serviceGraphFilterActions.toggleGraphVirtualServices()).toEqual(expectedAction);
+    expect(graphFilterActions.toggleGraphVirtualServices()).toEqual(expectedAction);
   });
 
   it('should toggle missing sidecars', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS
+      type: GraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS
     };
-    expect(serviceGraphFilterActions.toggleGraphMissingSidecars()).toEqual(expectedAction);
+    expect(graphFilterActions.toggleGraphMissingSidecars()).toEqual(expectedAction);
   });
 
   it('should toggle traffic animations', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION
+      type: GraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION
     };
-    expect(serviceGraphFilterActions.toggleTrafficAnimation()).toEqual(expectedAction);
+    expect(graphFilterActions.toggleTrafficAnimation()).toEqual(expectedAction);
   });
 
   it('should enable graph filters toggles', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.ENABLE_GRAPH_FILTERS,
+      type: GraphFilterActionKeys.ENABLE_GRAPH_FILTERS,
       payload: true
     };
-    expect(serviceGraphFilterActions.showGraphFilters(true)).toEqual(expectedAction);
+    expect(graphFilterActions.showGraphFilters(true)).toEqual(expectedAction);
   });
 
   it('should disable graph filters toggles', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.ENABLE_GRAPH_FILTERS,
+      type: GraphFilterActionKeys.ENABLE_GRAPH_FILTERS,
       payload: false
     };
-    expect(serviceGraphFilterActions.showGraphFilters(false)).toEqual(expectedAction);
+    expect(graphFilterActions.showGraphFilters(false)).toEqual(expectedAction);
   });
 
   it('should set graph refresh rate to 0', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.SET_GRAPH_REFRESH_RATE,
+      type: GraphFilterActionKeys.SET_GRAPH_REFRESH_RATE,
       payload: 0
     };
-    expect(serviceGraphFilterActions.setRefreshRate(0)).toEqual(expectedAction);
+    expect(graphFilterActions.setRefreshRate(0)).toEqual(expectedAction);
   });
 
   it('should set graph refresh rate to 15000', () => {
     const expectedAction = {
-      type: ServiceGraphFilterActionKeys.SET_GRAPH_REFRESH_RATE,
+      type: GraphFilterActionKeys.SET_GRAPH_REFRESH_RATE,
       payload: 15000
     };
-    expect(serviceGraphFilterActions.setRefreshRate(15000)).toEqual(expectedAction);
+    expect(graphFilterActions.setRefreshRate(15000)).toEqual(expectedAction);
   });
 });

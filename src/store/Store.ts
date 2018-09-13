@@ -8,7 +8,7 @@ export interface GlobalState {
 }
 
 // Various pages are described here with their various sections
-export interface ServiceGraphFilterState {
+export interface GraphFilterState {
   // Toggle props
   readonly showLegend: boolean;
   readonly showNodeLabels: boolean;
@@ -27,13 +27,13 @@ export interface MessageCenterState {
   expandedGroupId?: string;
 }
 
-export interface ServiceGraphState {
+export interface GraphState {
   isLoading: boolean;
   isError: boolean;
-  error?: string; // the error message to show from loading service graph
+  error?: string; // the error message to show from loading graph
   graphDataTimestamp: number;
   graphData: any;
-  filterState: ServiceGraphFilterState;
+  filterState: GraphFilterState;
   sidePanelInfo: {
     kind: string;
     graphReference: any;
@@ -84,7 +84,7 @@ export interface KialiAppState {
   authentication: LoginState;
   messageCenter: MessageCenterState;
   namespaces: any;
-  serviceGraph: ServiceGraphState;
+  graph: GraphState;
   /** User Settings */
   userSettings: UserSettings;
 }

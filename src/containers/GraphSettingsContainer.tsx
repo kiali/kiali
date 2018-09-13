@@ -3,8 +3,8 @@ import { Button, DropdownButton, Icon, MenuItem, OverlayTrigger, Popover } from 
 import { PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { serviceGraphFilterActions } from '../actions/ServiceGraphFilterActions';
-import { KialiAppState, ServiceGraphFilterState } from '../store/Store';
+import { graphFilterActions } from '../actions/GraphFilterActions';
+import { KialiAppState, GraphFilterState } from '../store/Store';
 import { style } from 'typestyle';
 import { EdgeLabelMode, Layout } from '../types/GraphFilter';
 import { GraphParamsType } from '../types/Graph';
@@ -14,7 +14,7 @@ import { config } from '../config';
 
 const GRAPH_LAYOUTS = config().toolbar.graphLayouts;
 
-interface ServiceGraphDispatch {
+interface GraphDispatch {
   // Dispatch methods
   toggleGraphNodeLabels(): void;
   toggleGraphCircuitBreakers(): void;
@@ -24,25 +24,25 @@ interface ServiceGraphDispatch {
 }
 
 // inherit all of our Reducer state section  and Dispatch methods for redux
-type GraphSettingsProps = ServiceGraphDispatch & ServiceGraphFilterState & GraphParamsType;
+type GraphSettingsProps = GraphDispatch & GraphFilterState & GraphParamsType;
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState) => ({
-  showNodeLabels: state.serviceGraph.filterState.showNodeLabels,
-  showCircuitBreakers: state.serviceGraph.filterState.showCircuitBreakers,
-  showVirtualServices: state.serviceGraph.filterState.showVirtualServices,
-  showMissingSidecars: state.serviceGraph.filterState.showMissingSidecars,
-  showTrafficAnimation: state.serviceGraph.filterState.showTrafficAnimation
+  showNodeLabels: state.graph.filterState.showNodeLabels,
+  showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
+  showVirtualServices: state.graph.filterState.showVirtualServices,
+  showMissingSidecars: state.graph.filterState.showMissingSidecars,
+  showTrafficAnimation: state.graph.filterState.showTrafficAnimation
 });
 
 // Map our actions to Redux
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    toggleGraphNodeLabels: bindActionCreators(serviceGraphFilterActions.toggleGraphNodeLabel, dispatch),
-    toggleGraphCircuitBreakers: bindActionCreators(serviceGraphFilterActions.toggleGraphCircuitBreakers, dispatch),
-    toggleGraphVirtualServices: bindActionCreators(serviceGraphFilterActions.toggleGraphVirtualServices, dispatch),
-    toggleGraphMissingSidecars: bindActionCreators(serviceGraphFilterActions.toggleGraphMissingSidecars, dispatch),
-    toggleTrafficAnimation: bindActionCreators(serviceGraphFilterActions.toggleTrafficAnimation, dispatch)
+    toggleGraphNodeLabels: bindActionCreators(graphFilterActions.toggleGraphNodeLabel, dispatch),
+    toggleGraphCircuitBreakers: bindActionCreators(graphFilterActions.toggleGraphCircuitBreakers, dispatch),
+    toggleGraphVirtualServices: bindActionCreators(graphFilterActions.toggleGraphVirtualServices, dispatch),
+    toggleGraphMissingSidecars: bindActionCreators(graphFilterActions.toggleGraphMissingSidecars, dispatch),
+    toggleTrafficAnimation: bindActionCreators(graphFilterActions.toggleTrafficAnimation, dispatch)
   };
 };
 
@@ -211,10 +211,10 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       </Popover>
     );
 
-    const alignWithServiceGraphHeaderStyle = style({ marginLeft: -40 });
+    const alignWithGraphHeaderStyle = style({ marginLeft: -40 });
 
     return (
-      <span className={alignWithServiceGraphHeaderStyle}>
+      <span className={alignWithGraphHeaderStyle}>
         <OverlayTrigger overlay={graphSettingsPopover} placement="bottom" trigger={['click']} rootClose={true}>
           <Button>
             Graph Settings <Icon name="angle-down" />

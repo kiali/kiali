@@ -4,7 +4,7 @@ import { Duration } from '../types/GraphFilter';
 import * as API from '../services/Api';
 import { authentication } from '../utils/Authentication';
 import { MessageCenterActions } from './MessageCenterActions';
-import { ServiceGraphDataActionKeys } from './ServiceGraphDataActionKeys';
+import { GraphDataActionKeys } from './GraphDataActionKeys';
 import { GraphType, NodeParamsType } from '../types/Graph';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
@@ -61,21 +61,21 @@ const decorateGraphData = (graphData: any) => {
 };
 
 // synchronous action creators
-export const ServiceGraphDataActions = {
-  getGraphDataStart: createAction(ServiceGraphDataActionKeys.GET_GRAPH_DATA_START),
+export const GraphDataActions = {
+  getGraphDataStart: createAction(GraphDataActionKeys.GET_GRAPH_DATA_START),
   getGraphDataSuccess: createAction(
-    ServiceGraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
+    GraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
     (timestamp: number, graphData: any) => ({
-      type: ServiceGraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
+      type: GraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
       timestamp: timestamp,
       graphData: decorateGraphData(graphData)
     })
   ),
-  getGraphDataFailure: createAction(ServiceGraphDataActionKeys.GET_GRAPH_DATA_FAILURE, (error: any) => ({
-    type: ServiceGraphDataActionKeys.GET_GRAPH_DATA_FAILURE,
+  getGraphDataFailure: createAction(GraphDataActionKeys.GET_GRAPH_DATA_FAILURE, (error: any) => ({
+    type: GraphDataActionKeys.GET_GRAPH_DATA_FAILURE,
     error: error
   })),
-  handleLegend: createAction(ServiceGraphDataActionKeys.HANDLE_LEGEND),
+  handleLegend: createAction(GraphDataActionKeys.HANDLE_LEGEND),
 
   // action creator that performs the async request
   fetchGraphData: (
@@ -86,7 +86,7 @@ export const ServiceGraphDataActions = {
     node?: NodeParamsType
   ) => {
     return dispatch => {
-      dispatch(ServiceGraphDataActions.getGraphDataStart());
+      dispatch(GraphDataActions.getGraphDataStart());
       const duration = graphDuration.value;
       let restParams = { duration: duration + 's', graphType: graphType, injectServiceNodes: injectServiceNodes };
       // TODO: this namespace should not be hardcoded
@@ -99,7 +99,7 @@ export const ServiceGraphDataActions = {
             const responseData: any = response['data'];
             const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
             const timestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
-            dispatch(ServiceGraphDataActions.getGraphDataSuccess(timestamp, graphData));
+            dispatch(GraphDataActions.getGraphDataSuccess(timestamp, graphData));
           },
           error => {
             let emsg: string;
@@ -109,7 +109,7 @@ export const ServiceGraphDataActions = {
               emsg = 'Cannot load the graph: ' + error.toString();
             }
             dispatch(MessageCenterActions.addMessage(emsg));
-            dispatch(ServiceGraphDataActions.getGraphDataFailure(emsg));
+            dispatch(GraphDataActions.getGraphDataFailure(emsg));
           }
         );
       }
@@ -118,7 +118,7 @@ export const ServiceGraphDataActions = {
           const responseData: any = response['data'];
           const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
           const timestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
-          dispatch(ServiceGraphDataActions.getGraphDataSuccess(timestamp, graphData));
+          dispatch(GraphDataActions.getGraphDataSuccess(timestamp, graphData));
         },
         error => {
           let emsg: string;
@@ -128,7 +128,7 @@ export const ServiceGraphDataActions = {
             emsg = 'Cannot load the graph: ' + error.toString();
           }
           dispatch(MessageCenterActions.addMessage(emsg));
-          dispatch(ServiceGraphDataActions.getGraphDataFailure(emsg));
+          dispatch(GraphDataActions.getGraphDataFailure(emsg));
         }
       );
     };

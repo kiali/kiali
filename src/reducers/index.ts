@@ -5,7 +5,7 @@ import { KialiAppState } from '../store/Store';
 import messageCenter from './MessageCenter';
 import LoginState from './LoginState';
 import HelpDropdownState from './HelpDropdownState';
-import serviceGraphDataState from './ServiceGraphDataState';
+import graphDataState from './GraphDataState';
 import globalState from './GlobalState';
 import UserSettingsState from './UserSettingsState';
 
@@ -15,7 +15,7 @@ const rootReducer = combineReducers<KialiAppState>({
   messageCenter,
   namespaces,
   globalState: globalState,
-  serviceGraph: serviceGraphDataState,
+  graph: graphDataState,
   userSettings: UserSettingsState
 });
 
