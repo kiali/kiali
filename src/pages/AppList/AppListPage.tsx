@@ -38,7 +38,7 @@ class AppListPage extends ListPage.Component<AppListProps, AppListState> {
           pageHooks={this}
           currentSortField={this.currentSortField()}
           isSortAscending={this.isCurrentSortAscending()}
-          rateInterval={this.currentRateInterval()}
+          rateInterval={this.currentDuration()}
         />
       </>
     );
