@@ -16,7 +16,7 @@ func prepareTestForVirtualService(istioObject kubernetes.IstioObject) models.Ist
 
 	// Setup mocks
 	destinationList := []kubernetes.IstioObject{
-		fakeDestinationRule("reviews"),
+		fakeDestinationRule("reviewsrule", "reviews"),
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{"bookinfo", destinationList, istioObjects}
@@ -24,8 +24,11 @@ func prepareTestForVirtualService(istioObject kubernetes.IstioObject) models.Ist
 	return virtualServiceChecker.Check()
 }
 
-func fakeDestinationRule(hostName string) kubernetes.IstioObject {
+func fakeDestinationRule(ruleName string, hostName string) kubernetes.IstioObject {
 	destinationRule := kubernetes.DestinationRule{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: ruleName,
+		},
 		Spec: map[string]interface{}{
 			"host": hostName,
 			"subsets": []interface{}{
@@ -103,7 +106,7 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 
 	// Setup mocks
 	destinationList := []kubernetes.IstioObject{
-		fakeDestinationRule("reviews"),
+		fakeDestinationRule("reviewsrule1", "reviews"),
 	}
 
 	virtualServiceChecker := VirtualServiceChecker{"bookinfo",
