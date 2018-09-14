@@ -1,6 +1,4 @@
-import { GraphType } from './GraphType';
-
-export class ColaGraph implements GraphType {
+export class ColaGraph {
   static getLayout() {
     return {
       name: 'cola',

@@ -1,6 +1,4 @@
-import { GraphType } from './GraphType';
-
-export class CoseGraph implements GraphType {
+export class CoseGraph {
   static getLayout() {
     return {
       name: 'cose-bilkent',

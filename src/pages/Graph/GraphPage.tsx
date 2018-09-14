@@ -1,11 +1,11 @@
 import * as React from 'react';
 import FlexView from 'react-flexview';
-
+import { PropTypes } from 'prop-types';
 import { Breadcrumb } from 'patternfly-react';
 
 import Namespace from '../../types/Namespace';
 import { GraphParamsType, SummaryData, NodeParamsType, GraphType } from '../../types/Graph';
-import { Duration, PollIntervalInMs } from '../../types/GraphFilter';
+import { Duration, Layout, PollIntervalInMs } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
 import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
@@ -20,6 +20,7 @@ import * as MessageCenterUtils from '../../utils/MessageCenter';
 import GraphLegend from '../../components/GraphFilter/GraphLegend';
 import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeToolbar } from '../../components/CytoscapeGraph/CytoscapeToolbar';
+import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../../components/Nav/NavUtils';
 
 type GraphPageProps = GraphParamsType & {
   graphTimestamp: string;
@@ -73,6 +74,10 @@ const GraphErrorBoundaryFallback = () => {
 };
 
 export default class GraphPage extends React.PureComponent<GraphPageProps> {
+  static contextTypes = {
+    router: PropTypes.object
+  };
+
   private pollTimeoutRef?: number;
   private pollPromise?: CancelablePromise<any>;
   private readonly errorBoundaryRef: any;
@@ -120,6 +125,15 @@ export default class GraphPage extends React.PureComponent<GraphPageProps> {
     this.scheduleNextPollingInterval(0);
   };
 
+  handleLayoutChange = (layout: Layout) => {
+    const params = this.getGraphParams();
+    if (params.node) {
+      this.context.router.history.replace(makeNodeGraphUrlFromParams(params.node, { ...params, graphLayout: layout }));
+    } else {
+      this.context.router.history.replace(makeNamespaceGraphUrlFromParams({ ...params, graphLayout: layout }));
+    }
+  };
+
   render() {
     const graphParams: GraphParamsType = {
       namespace: this.props.namespace,
@@ -165,6 +179,8 @@ export default class GraphPage extends React.PureComponent<GraphPageProps> {
                   <CytoscapeToolbar
                     cytoscapeGraphRef={this.cytoscapeGraphRef}
                     isLegendActive={this.props.showLegend}
+                    activeLayout={this.props.graphLayout}
+                    onLayoutChange={this.handleLayoutChange}
                     toggleLegend={this.props.toggleLegend}
                   />
                 </div>
@@ -250,5 +266,17 @@ export default class GraphPage extends React.PureComponent<GraphPageProps> {
     MessageCenterUtils.add(
       `There was an error when rendering the graph: ${error.message}, please try a different layout`
     );
+  };
+
+  private getGraphParams: () => GraphParamsType = () => {
+    return {
+      namespace: this.props.namespace,
+      node: this.props.node,
+      graphDuration: this.props.graphDuration,
+      graphLayout: this.props.graphLayout,
+      edgeLabelMode: this.props.edgeLabelMode,
+      graphType: this.props.graphType,
+      injectServiceNodes: this.props.injectServiceNodes
+    };
   };
 }

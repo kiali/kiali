@@ -1,18 +1,15 @@
 import * as React from 'react';
-import { Button, DropdownButton, Icon, MenuItem, OverlayTrigger, Popover } from 'patternfly-react';
+import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { graphFilterActions } from '../actions/GraphFilterActions';
 import { KialiAppState, GraphFilterState } from '../store/Store';
 import { style } from 'typestyle';
-import { EdgeLabelMode, Layout } from '../types/GraphFilter';
+import { EdgeLabelMode } from '../types/GraphFilter';
 import { GraphParamsType } from '../types/Graph';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../components/Nav/NavUtils';
 import EdgeLabelRadioGroup from '../components/ToolbarDropdown/EdgeLabelRadioGroup';
-import { config } from '../config';
-
-const GRAPH_LAYOUTS = config().toolbar.graphLayouts;
 
 interface GraphDispatch {
   // Dispatch methods
@@ -56,14 +53,6 @@ interface VisibilityLayersType {
 class GraphSettings extends React.PureComponent<GraphSettingsProps> {
   static contextTypes = {
     router: PropTypes.object
-  };
-
-  handleLayoutChange = (layout: string) => {
-    const graphLayout: Layout = { name: layout };
-    this.handleFilterChangeToUrl({
-      ...this.getGraphParams(),
-      graphLayout
-    });
   };
 
   handleEdgeLabelModeChange = (event: any) => {
@@ -174,29 +163,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       height: '1em'
     });
 
-    const layoutItems = Object.keys(GRAPH_LAYOUTS).map((layoutKey: string) => (
-      <MenuItem active={layoutKey === graphParams.graphLayout.name} key={layoutKey} eventKey={layoutKey}>
-        {GRAPH_LAYOUTS[layoutKey]}
-      </MenuItem>
-    ));
-
-    const layoutDropdown = (
-      <>
-        <div>
-          <label>Layout Schema:</label>
-        </div>
-        <div>
-          <DropdownButton
-            id="graph_filter_layout"
-            title={GRAPH_LAYOUTS[graphParams.graphLayout.name]}
-            onSelect={this.handleLayoutChange}
-          >
-            {layoutItems}
-          </DropdownButton>
-        </div>
-      </>
-    );
-
     const graphSettingsPopover = (
       <Popover id="layers-popover">
         <label>Display:</label>
@@ -206,8 +172,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
         {badgeItems}
         <div className={spacerStyle} />
         <EdgeLabelRadioGroup graphParams={graphParams} onEdgeChanged={this.handleEdgeLabelModeChange} />
-        <div className={spacerStyle} />
-        {layoutDropdown}
       </Popover>
     );
 

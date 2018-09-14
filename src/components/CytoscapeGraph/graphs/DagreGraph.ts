@@ -1,6 +1,4 @@
-import { GraphType } from './GraphType';
-
-export class DagreGraph implements GraphType {
+export class DagreGraph {
   static getLayout() {
     return {
       name: 'dagre',
