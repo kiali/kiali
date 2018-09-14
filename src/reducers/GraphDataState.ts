@@ -52,6 +52,11 @@ const graphDataState = (state: GraphState = INITIAL_STATE, action) => {
         graphReference: action.summaryTarget
       };
       break;
+    case GraphActionKeys.GRAPH_NAMESPACE_CHANGED:
+      newState.graphData = INITIAL_STATE.graphData;
+      newState.graphDataTimestamp = INITIAL_STATE.graphDataTimestamp;
+      newState.sidePanelInfo = INITIAL_STATE.sidePanelInfo;
+      break;
     default:
       break;
   }

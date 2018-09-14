@@ -82,11 +82,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
       );
     }
 
-    const isGraphEmpty =
-      !this.props.elements ||
-      this.props.elements.length < 1 ||
-      !this.props.elements.nodes ||
-      this.props.elements.nodes.length < 1;
+    const isGraphEmpty = !this.props.elements || !this.props.elements.nodes || this.props.elements.nodes.length < 1;
 
     if (isGraphEmpty) {
       return (

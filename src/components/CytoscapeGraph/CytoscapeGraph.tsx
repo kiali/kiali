@@ -95,7 +95,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.namespaceChanged = this.namespaceChanged || this.props.namespace.name !== nextProps.namespace.name;
     this.nodeChanged = this.nodeChanged || this.props.node !== nextProps.node;
     this.resetSelection = this.props.namespace.name !== nextProps.namespace.name;
-    const result =
+    let result =
       this.props.namespace.name !== nextProps.namespace.name ||
       this.props.node !== nextProps.node ||
       this.props.graphLayout !== nextProps.graphLayout ||
@@ -107,6 +107,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.elements !== nextProps.elements ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.isError !== nextProps.isError;
+
+    if (!nextProps.elements || !nextProps.elements.nodes || nextProps.elements.nodes.length < 1) {
+      result = true;
+    }
+
     return result;
   }
 
