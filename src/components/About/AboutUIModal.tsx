@@ -39,12 +39,17 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
           />
           <AboutModal.VersionItem
             label="kiali"
-            versionText={`${this.props.status[KIALI_CORE_VERSION]} (${this.props.status[KIALI_CORE_COMMIT_HASH]})`}
+            versionText={
+              this.props.status
+                ? `${this.props.status[KIALI_CORE_VERSION]} (${this.props.status[KIALI_CORE_COMMIT_HASH]})`
+                : 'Unknown'
+            }
           />
           <h3>Components </h3>
-          {this.props.components.map(component => (
-            <AboutModal.VersionItem key={component.name} label={component.name} versionText={component.version} />
-          ))}
+          {this.props.components &&
+            this.props.components.map(component => (
+              <AboutModal.VersionItem key={component.name} label={component.name} versionText={component.version} />
+            ))}
         </AboutModal.Versions>
         {this.renderWebsiteLink()}
         {this.renderProjectLink()}

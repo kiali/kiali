@@ -60,7 +60,7 @@ export const login = (username: string, password: string) => {
   return new Promise((resolve, reject) => {
     axios({
       method: 'get',
-      url: '/api/token',
+      url: 'api/token',
       headers: getHeaders(),
       auth: basicAuth(username, password)
     })
@@ -74,15 +74,15 @@ export const login = (username: string, password: string) => {
 };
 
 export const getStatus = () => {
-  return newRequest('get', '/api/status', {}, {});
+  return newRequest('get', 'api/status', {}, {});
 };
 
 export const getNamespaces = (auth: string): Promise<Response<Namespace[]>> => {
-  return newRequest('get', `/api/namespaces`, {}, {}, auth);
+  return newRequest('get', `api/namespaces`, {}, {}, auth);
 };
 
 export const getNamespaceMetrics = (auth: string, namespace: String, params: any): Promise<Response<Metrics>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/metrics`, params, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/metrics`, params, {}, auth);
 };
 
 export const getIstioConfig = (
@@ -91,7 +91,7 @@ export const getIstioConfig = (
   objects: String[]
 ): Promise<Response<IstioConfigList>> => {
   let params = objects && objects.length > 0 ? { objects: objects.join(',') } : {};
-  return newRequest('get', `/api/namespaces/${namespace}/istio`, params, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/istio`, params, {}, auth);
 };
 
 export const getIstioConfigDetail = (
@@ -100,11 +100,11 @@ export const getIstioConfigDetail = (
   objectType: String,
   object: String
 ): Promise<Response<IstioConfigDetails>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/istio/${objectType}/${object}`, {}, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/istio/${objectType}/${object}`, {}, {}, auth);
 };
 
 export const getServices = (auth: string, namespace: String): Promise<Response<ServiceList>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/services`, {}, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/services`, {}, {}, auth);
 };
 
 export const getServiceMetrics = (
@@ -113,15 +113,15 @@ export const getServiceMetrics = (
   service: String,
   params: MetricsOptions
 ): Promise<Response<Metrics>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/services/${service}/metrics`, params, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/services/${service}/metrics`, params, {}, auth);
 };
 
 export const getApp = (auth: string, namespace: String, app: String): Promise<Response<App>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/apps/${app}`, {}, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/apps/${app}`, {}, {}, auth);
 };
 
 export const getApps = (auth: string, namespace: String): Promise<Response<AppList>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/apps`, {}, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/apps`, {}, {}, auth);
 };
 
 export const getAppMetrics = (
@@ -130,7 +130,7 @@ export const getAppMetrics = (
   app: String,
   params: MetricsOptions
 ): Promise<Response<Metrics>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/apps/${app}/metrics`, params, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/apps/${app}/metrics`, params, {}, auth);
 };
 
 export const getWorkloadMetrics = (
@@ -139,7 +139,7 @@ export const getWorkloadMetrics = (
   workload: String,
   params: MetricsOptions
 ): Promise<Response<Metrics>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/workloads/${workload}/metrics`, params, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/workloads/${workload}/metrics`, params, {}, auth);
 };
 
 export const getServiceHealth = (
@@ -149,14 +149,14 @@ export const getServiceHealth = (
   durationSec: number
 ): Promise<ServiceHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest('get', `/api/namespaces/${namespace}/services/${service}/health`, params, {}, auth).then(response =>
+  return newRequest('get', `api/namespaces/${namespace}/services/${service}/health`, params, {}, auth).then(response =>
     ServiceHealth.fromJson(response.data, durationSec)
   );
 };
 
 export const getAppHealth = (auth: string, namespace: String, app: String, durationSec: number): Promise<AppHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest('get', `/api/namespaces/${namespace}/apps/${app}/health`, params, {}, auth).then(response =>
+  return newRequest('get', `api/namespaces/${namespace}/apps/${app}/health`, params, {}, auth).then(response =>
     AppHealth.fromJson(response.data, durationSec)
   );
 };
@@ -168,7 +168,7 @@ export const getWorkloadHealth = (
   durationSec: number
 ): Promise<WorkloadHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest('get', `/api/namespaces/${namespace}/workloads/${workload}/health`, params, {}, auth).then(
+  return newRequest('get', `api/namespaces/${namespace}/workloads/${workload}/health`, params, {}, auth).then(
     response => WorkloadHealth.fromJson(response.data, durationSec)
   );
 };
@@ -184,7 +184,7 @@ export const getNamespaceAppHealth = (
   if (durationSec) {
     params.rateInterval = String(durationSec) + 's';
   }
-  return newRequest('get', `/api/namespaces/${namespace}/health`, params, {}, auth).then(response => {
+  return newRequest('get', `api/namespaces/${namespace}/health`, params, {}, auth).then(response => {
     const ret: NamespaceAppHealth = {};
     Object.keys(response.data).forEach(k => {
       ret[k] = AppHealth.fromJson(response.data[k], durationSec);
@@ -204,7 +204,7 @@ export const getNamespaceWorkloadHealth = (
   if (durationSec) {
     params.rateInterval = String(durationSec) + 's';
   }
-  return newRequest('get', `/api/namespaces/${namespace}/health`, params, {}, auth).then(response => {
+  return newRequest('get', `api/namespaces/${namespace}/health`, params, {}, auth).then(response => {
     const ret: NamespaceWorkloadHealth = {};
     Object.keys(response.data).forEach(k => {
       ret[k] = WorkloadHealth.fromJson(response.data[k], durationSec);
@@ -214,15 +214,15 @@ export const getNamespaceWorkloadHealth = (
 };
 
 export const getGrafanaInfo = (auth: string): Promise<Response<GrafanaInfo>> => {
-  return newRequest('get', `/api/grafana`, {}, {}, auth);
+  return newRequest('get', `api/grafana`, {}, {}, auth);
 };
 
 export const getJaegerInfo = (auth: string): Promise<Response<JaegerInfo>> => {
-  return newRequest('get', `/api/jaeger`, {}, {}, auth);
+  return newRequest('get', `api/jaeger`, {}, {}, auth);
 };
 
 export const getGraphElements = (auth: string, namespace: Namespace, params: any) => {
-  return newRequest('get', `/api/namespaces/${namespace.name}/graph`, params, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace.name}/graph`, params, {}, auth);
 };
 
 export const getNodeGraphElements = (auth: string, namespace: Namespace, node: NodeParamsType, params: any) => {
@@ -247,7 +247,7 @@ export const getNodeGraphElements = (auth: string, namespace: Namespace, node: N
 };
 
 export const getServiceDetail = (auth: string, namespace: String, service: String): Promise<ServiceDetailsInfo> => {
-  return newRequest('get', `/api/namespaces/${namespace}/services/${service}`, {}, {}, auth).then(
+  return newRequest('get', `api/namespaces/${namespace}/services/${service}`, {}, {}, auth).then(
     (r: Response<ServiceDetailsInfo>) => {
       const info: ServiceDetailsInfo = r.data;
       info.istioSidecar = info.istioSidecar;
@@ -265,11 +265,11 @@ export const getServiceValidations = (
   namespace: String,
   service: String
 ): Promise<Response<Validations>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/services/${service}/istio_validations`, {}, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/services/${service}/istio_validations`, {}, {}, auth);
 };
 
 export const getNamespaceValidations = (auth: string, namespace: String): Promise<Response<NamespaceValidations>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/istio_validations`, {}, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/istio_validations`, {}, {}, auth);
 };
 
 export const getIstioConfigValidations = (
@@ -278,21 +278,15 @@ export const getIstioConfigValidations = (
   objectType: String,
   object: String
 ): Promise<Response<Validations>> => {
-  return newRequest(
-    'get',
-    `/api/namespaces/${namespace}/istio/${objectType}/${object}/istio_validations`,
-    {},
-    {},
-    auth
-  );
+  return newRequest('get', `api/namespaces/${namespace}/istio/${objectType}/${object}/istio_validations`, {}, {}, auth);
 };
 
 export const getWorkloads = (auth: string, namespace: String): Promise<Response<WorkloadNamespaceResponse>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/workloads`, {}, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/workloads`, {}, {}, auth);
 };
 
 export const getWorkload = (auth: string, namespace: String, name: String): Promise<Response<Deployment>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/workloads/${name}`, {}, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/workloads/${name}`, {}, {}, auth);
 };
 
 export const getWorkloadValidations = (
@@ -300,7 +294,7 @@ export const getWorkloadValidations = (
   namespace: String,
   workload: String
 ): Promise<Response<Validations>> => {
-  return newRequest('get', `/api/namespaces/${namespace}/workloads/${workload}/istio_validations`, {}, {}, auth);
+  return newRequest('get', `api/namespaces/${namespace}/workloads/${workload}/istio_validations`, {}, {}, auth);
 };
 
 export const getErrorMsg = (msg: string, error: AxiosError) => {
