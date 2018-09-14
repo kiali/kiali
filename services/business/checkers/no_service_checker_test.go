@@ -18,7 +18,7 @@ func TestNoCrashOnNil(t *testing.T) {
 	typeValidations := NoServiceChecker{
 		Namespace:    "test",
 		IstioDetails: nil,
-		ServiceList:  nil,
+		Services:     nil,
 	}.Check()
 
 	assert.Empty(typeValidations)
@@ -33,7 +33,7 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 	validations := NoServiceChecker{
 		Namespace:    "test",
 		IstioDetails: fakeIstioDetails(),
-		ServiceList:  fakeServiceDetails([]string{"reviews", "details", "product", "customer"}),
+		Services:     fakeServiceDetails([]string{"reviews", "details", "product", "customer"}),
 	}.Check()
 
 	assert.NotEmpty(validations)
@@ -52,7 +52,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	validations := NoServiceChecker{
 		Namespace:    "test",
 		IstioDetails: fakeIstioDetails(),
-		ServiceList:  fakeServiceDetails([]string{"reviews", "details", "product"}),
+		Services:     fakeServiceDetails([]string{"reviews", "details", "product"}),
 	}.Check()
 
 	assert.NotEmpty(validations)
@@ -66,7 +66,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	validations = NoServiceChecker{
 		Namespace:    "test",
 		IstioDetails: fakeIstioDetails(),
-		ServiceList:  fakeServiceDetails([]string{"reviews", "details", "customer"}),
+		Services:     fakeServiceDetails([]string{"reviews", "details", "customer"}),
 	}.Check()
 
 	assert.NotEmpty(validations)
@@ -82,7 +82,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	validations = NoServiceChecker{
 		Namespace:    "test",
 		IstioDetails: fakeIstioDetails(),
-		ServiceList:  fakeServiceDetails([]string{"reviews", "product", "customer"}),
+		Services:     fakeServiceDetails([]string{"reviews", "product", "customer"}),
 	}.Check()
 
 	assert.NotEmpty(validations)
@@ -91,7 +91,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	validations = NoServiceChecker{
 		Namespace:    "test",
 		IstioDetails: fakeIstioDetails(),
-		ServiceList:  fakeServiceDetails([]string{"details", "product", "customer"}),
+		Services:     fakeServiceDetails([]string{"details", "product", "customer"}),
 	}.Check()
 
 	assert.NotEmpty(validations)
@@ -111,7 +111,7 @@ func TestObjectWithoutGateway(t *testing.T) {
 	validations := NoServiceChecker{
 		Namespace:    "test",
 		IstioDetails: istioDetails,
-		ServiceList:  fakeServiceDetails([]string{"reviews", "product", "customer"}),
+		Services:     fakeServiceDetails([]string{"reviews", "product", "customer"}),
 	}.Check()
 
 	assert.NotEmpty(validations)
@@ -189,9 +189,8 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	return &istioDetails
 }
 
-func fakeServiceDetails(services []string) *v1.ServiceList {
+func fakeServiceDetails(services []string) []v1.Service {
 	items := []v1.Service{}
-
 	for _, service := range services {
 		items = append(items, v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -199,8 +198,5 @@ func fakeServiceDetails(services []string) *v1.ServiceList {
 			},
 		})
 	}
-
-	return &v1.ServiceList{
-		Items: items,
-	}
+	return items
 }

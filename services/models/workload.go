@@ -184,10 +184,10 @@ func (workload *Workload) Parse(d *v1beta1.Deployment) {
 	workload.UnavailableReplicas = d.Status.UnavailableReplicas
 }
 
-func (workload *Workload) SetPods(pl *v1.PodList) {
-	workload.Pods.Parse(pl.Items)
+func (workload *Workload) SetPods(pods []v1.Pod) {
+	workload.Pods.Parse(pods)
 }
 
-func (workload *Workload) SetServices(sl *v1.ServiceList) {
-	workload.Services.Parse(sl.Items)
+func (workload *Workload) SetServices(svcs []v1.Service) {
+	workload.Services.Parse(svcs)
 }

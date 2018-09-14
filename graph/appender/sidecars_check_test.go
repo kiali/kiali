@@ -134,29 +134,27 @@ func buildFakeWorkloadDeployment() *v1beta1.Deployment {
 				}}}}
 }
 
-func buildFakeWorkloadPods() *api_v1.PodList {
+func buildFakeWorkloadPods() []api_v1.Pod {
 	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
 
-	return &api_v1.PodList{
-		Items: []api_v1.Pod{
-			{
-				ObjectMeta: v1.ObjectMeta{
-					Name:              "wk-1-asdf",
-					CreationTimestamp: v1.NewTime(time.Date(2018, 8, 24, 14, 0, 0, 0, time.UTC)),
-					Annotations: map[string]string{
-						istioAnnotation: "{ \"containers\":[\"istio-proxy\"] }",
-					},
+	return []api_v1.Pod{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "wk-1-asdf",
+				CreationTimestamp: v1.NewTime(time.Date(2018, 8, 24, 14, 0, 0, 0, time.UTC)),
+				Annotations: map[string]string{
+					istioAnnotation: "{ \"containers\":[\"istio-proxy\"] }",
 				},
 			},
 		},
 	}
 }
 
-func buildFakeWorkloadPodsNoSidecar() *api_v1.PodList {
+func buildFakeWorkloadPodsNoSidecar() []api_v1.Pod {
 	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
 
 	podList := buildFakeWorkloadPods()
-	podList.Items[0].ObjectMeta.Annotations[istioAnnotation] = "{}"
+	podList[0].ObjectMeta.Annotations[istioAnnotation] = "{}"
 
 	return podList
 }

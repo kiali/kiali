@@ -60,12 +60,12 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		pods, err := k8s.GetPods(n.Namespace, podLabels)
 		checkError(err)
 
-		if len(pods.Items) == 0 {
-			log.Warningf("Sidecar check found no pods Checking sidecars node [%s] num pods [%v]", n.ID, len(pods.Items))
+		if len(pods) == 0 {
+			log.Warningf("Sidecar check found no pods Checking sidecars node [%s] num pods [%v]", n.ID, len(pods))
 		}
 
 		// check each pod for sidecar, stop and flag at first pod missing sidecar
-		for _, pod := range pods.Items {
+		for _, pod := range pods {
 			checker := pods_checker.SidecarPresenceChecker{Pod: &pod}
 			if _, ok := checker.Check(); !ok {
 				n.Metadata["hasMissingSC"] = true

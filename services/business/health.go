@@ -163,12 +163,12 @@ func (in *HealthService) GetNamespaceWorkloadHealth(namespace, rateInterval stri
 	return in.getNamespaceWorkloadHealth(namespace, depls, rateInterval), nil
 }
 
-func (in *HealthService) getNamespaceWorkloadHealth(namespace string, dl *v1beta1.DeploymentList, rateInterval string) models.NamespaceWorkloadHealth {
+func (in *HealthService) getNamespaceWorkloadHealth(namespace string, deployments []v1beta1.Deployment, rateInterval string) models.NamespaceWorkloadHealth {
 	allHealth := make(models.NamespaceWorkloadHealth)
 	deploymentsMap := make(map[string]v1beta1.Deployment)
 
 	// Prepare all data
-	for _, item := range dl.Items {
+	for _, item := range deployments {
 		allHealth[item.Name] = &models.WorkloadHealth{}
 		deploymentsMap[item.Name] = item
 	}

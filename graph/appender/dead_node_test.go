@@ -30,12 +30,10 @@ func setupWorkloadService() business.WorkloadService {
 			},
 		}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), "app=testPodsWithTraffic,version=v1").Return(
-		&v1.PodList{
-			Items: []v1.Pod{v1.Pod{
-				Status: v1.PodStatus{
-					Message: "foo",
-				}},
-			},
+		[]v1.Pod{v1.Pod{
+			Status: v1.PodStatus{
+				Message: "foo",
+			}},
 		}, nil)
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testPodsNoTraffic-v1").Return(
@@ -50,12 +48,10 @@ func setupWorkloadService() business.WorkloadService {
 			},
 		}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), "app=testPodsNoTraffic,version=v1").Return(
-		&v1.PodList{
-			Items: []v1.Pod{v1.Pod{
-				Status: v1.PodStatus{
-					Message: "foo",
-				}},
-			},
+		[]v1.Pod{v1.Pod{
+			Status: v1.PodStatus{
+				Message: "foo",
+			}},
 		}, nil)
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoPodsWithTraffic-v1").Return(
@@ -70,9 +66,7 @@ func setupWorkloadService() business.WorkloadService {
 			},
 		}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), "app=testNoPodsWithTraffic,version=v1").Return(
-		&v1.PodList{
-			Items: []v1.Pod{},
-		}, nil)
+		[]v1.Pod{}, nil)
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoPodsNoTraffic-v1").Return(
 		&v1beta1.Deployment{
@@ -86,9 +80,7 @@ func setupWorkloadService() business.WorkloadService {
 			},
 		}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), "app=testNoPodsNoTraffic,version=v1").Return(
-		&v1.PodList{
-			Items: []v1.Pod{},
-		}, nil)
+		[]v1.Pod{}, nil)
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoDeploymentWithTraffic-v1").Return((*v1beta1.Deployment)(nil), nil)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoDeploymentNoTraffic-v1").Return((*v1beta1.Deployment)(nil), nil)

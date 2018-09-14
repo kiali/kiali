@@ -20,7 +20,7 @@ type AppService struct {
 type appWorkload struct {
 	Workload   string
 	Deployment *v1beta1.Deployment
-	Pods       *v1.PodList
+	Pods       []v1.Pod
 	IstioFlag  bool
 }
 
@@ -36,13 +36,13 @@ func (in *AppService) fetchWorkloadsPerApp(namespace, labelSelector string) (app
 	}
 
 	apps := make(appsWorkload)
-	for _, deployment := range deployments.Items {
+	for _, deployment := range deployments {
 		if appLabel, ok := deployment.Labels[cfg.IstioLabels.AppLabelName]; ok {
 			selector, _ := kubernetes.GetSelectorAsString(&deployment)
 			dPods, _ := in.k8s.GetPods(namespace, selector)
 			mPods := &models.Pods{}
 			// Using Parse to calculate the IstioSideCar from Pods
-			mPods.Parse(dPods.Items)
+			mPods.Parse(dPods)
 			appWkd := &appWorkload{
 				Workload:   deployment.Name,
 				Deployment: &deployment,
@@ -103,10 +103,10 @@ func (in *AppService) GetApp(namespace string, app string) (models.App, error) {
 		}
 		mPods := &models.Pods{}
 		// Using Parse to calculate the IstioSideCar from Pods
-		mPods.Parse(wkd.Pods.Items)
+		mPods.Parse(wkd.Pods)
 		wkdSvc.IstioSidecar = mPods.HasIstioSideCar()
-		wkdSvc.ServiceNames = make([]string, len(services.Items))
-		for j, service := range services.Items {
+		wkdSvc.ServiceNames = make([]string, len(services))
+		for j, service := range services {
 			wkdSvc.ServiceNames[j] = service.Name
 		}
 		(*appInstance).Workloads[i] = *wkdSvc

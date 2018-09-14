@@ -15,9 +15,9 @@ type K8SClientMock struct {
 	mock.Mock
 }
 
-func (o *K8SClientMock) GetNamespaces() (*v1.NamespaceList, error) {
+func (o *K8SClientMock) GetNamespaces() ([]v1.Namespace, error) {
 	args := o.Called()
-	return args.Get(0).(*v1.NamespaceList), args.Error(1)
+	return args.Get(0).([]v1.Namespace), args.Error(1)
 }
 
 func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error) {
@@ -25,9 +25,9 @@ func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (
 	return args.Get(0).(*v1beta1.Deployment), args.Error(1)
 }
 
-func (o *K8SClientMock) GetDeployments(namespace string, labelSelector string) (*v1beta1.DeploymentList, error) {
+func (o *K8SClientMock) GetDeployments(namespace string, labelSelector string) ([]v1beta1.Deployment, error) {
 	args := o.Called(namespace, labelSelector)
-	return args.Get(0).(*v1beta1.DeploymentList), args.Error(1)
+	return args.Get(0).([]v1beta1.Deployment), args.Error(1)
 }
 
 func (o *K8SClientMock) GetService(namespace string, serviceName string) (*v1.Service, error) {
@@ -45,9 +45,9 @@ func (o *K8SClientMock) GetAppDetails(namespace, app string) (kubernetes.AppDeta
 	return args.Get(0).(kubernetes.AppDetails), args.Error(1)
 }
 
-func (o *K8SClientMock) GetServices(namespace string, selectorLabels map[string]string) (*v1.ServiceList, error) {
+func (o *K8SClientMock) GetServices(namespace string, selectorLabels map[string]string) ([]v1.Service, error) {
 	args := o.Called(namespace, selectorLabels)
-	return args.Get(0).(*v1.ServiceList), args.Error(1)
+	return args.Get(0).([]v1.Service), args.Error(1)
 }
 
 func (o *K8SClientMock) GetDeploymentDetails(namespace string, deploymentName string) (*kubernetes.DeploymentDetails, error) {
@@ -55,9 +55,9 @@ func (o *K8SClientMock) GetDeploymentDetails(namespace string, deploymentName st
 	return args.Get(0).(*kubernetes.DeploymentDetails), args.Error(1)
 }
 
-func (o *K8SClientMock) GetPods(namespace, labelSelector string) (*v1.PodList, error) {
+func (o *K8SClientMock) GetPods(namespace, labelSelector string) ([]v1.Pod, error) {
 	args := o.Called(namespace, labelSelector)
-	return args.Get(0).(*v1.PodList), args.Error(1)
+	return args.Get(0).([]v1.Pod), args.Error(1)
 }
 
 func (o *K8SClientMock) GetEndpoints(namespace string, serviceName string) (*v1.Endpoints, error) {
@@ -210,69 +210,65 @@ func (o *K8SClientMock) FakeServiceDetails() *kubernetes.ServiceDetails {
 						UnavailableReplicas: 0}}}}}
 }
 
-func (o *K8SClientMock) FakeServiceList() *v1.ServiceList {
-	return &v1.ServiceList{
-		Items: []v1.Service{
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:      "reviews",
-					Namespace: "tutorial",
-					Labels: map[string]string{
-						"app":     "reviews",
-						"version": "v1"}},
-				Spec: v1.ServiceSpec{
-					ClusterIP: "fromservice",
-					Type:      "ClusterIP",
-					Selector:  map[string]string{"app": "reviews"},
-					Ports: []v1.ServicePort{
-						{
-							Name:     "http",
-							Protocol: "TCP",
-							Port:     3001},
-						{
-							Name:     "http",
-							Protocol: "TCP",
-							Port:     3000}}}},
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:      "httpbin",
-					Namespace: "tutorial",
-					Labels: map[string]string{
-						"app":     "httpbin",
-						"version": "v1"}},
-				Spec: v1.ServiceSpec{
-					ClusterIP: "fromservice",
-					Type:      "ClusterIP",
-					Selector:  map[string]string{"app": "httpbin"},
-					Ports: []v1.ServicePort{
-						{
-							Name:     "http",
-							Protocol: "TCP",
-							Port:     3001},
-						{
-							Name:     "http",
-							Protocol: "TCP",
-							Port:     3000}}}},
-		},
+func (o *K8SClientMock) FakeServiceList() []v1.Service {
+	return []v1.Service{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "reviews",
+				Namespace: "tutorial",
+				Labels: map[string]string{
+					"app":     "reviews",
+					"version": "v1"}},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "fromservice",
+				Type:      "ClusterIP",
+				Selector:  map[string]string{"app": "reviews"},
+				Ports: []v1.ServicePort{
+					{
+						Name:     "http",
+						Protocol: "TCP",
+						Port:     3001},
+					{
+						Name:     "http",
+						Protocol: "TCP",
+						Port:     3000}}}},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "httpbin",
+				Namespace: "tutorial",
+				Labels: map[string]string{
+					"app":     "httpbin",
+					"version": "v1"}},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "fromservice",
+				Type:      "ClusterIP",
+				Selector:  map[string]string{"app": "httpbin"},
+				Ports: []v1.ServicePort{
+					{
+						Name:     "http",
+						Protocol: "TCP",
+						Port:     3001},
+					{
+						Name:     "http",
+						Protocol: "TCP",
+						Port:     3000}}}},
 	}
 }
 
-func (o *K8SClientMock) FakePodList() *v1.PodList {
-	return &v1.PodList{
-		Items: []v1.Pod{
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:   "reviews-v1",
-					Labels: map[string]string{"app": "reviews", "version": "v1"}}},
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:   "reviews-v2",
-					Labels: map[string]string{"app": "reviews", "version": "v2"}}},
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:   "httpbin-v1",
-					Labels: map[string]string{"app": "httpbin", "version": "v1"}}},
-		},
+func (o *K8SClientMock) FakePodList() []v1.Pod {
+	return []v1.Pod{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:   "reviews-v1",
+				Labels: map[string]string{"app": "reviews", "version": "v1"}}},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:   "reviews-v2",
+				Labels: map[string]string{"app": "reviews", "version": "v2"}}},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:   "httpbin-v1",
+				Labels: map[string]string{"app": "httpbin", "version": "v1"}}},
 	}
 }
 

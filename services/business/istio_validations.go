@@ -35,7 +35,7 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	dr := make([]kubernetes.IstioObject, 0)
 	gws := make([]kubernetes.IstioObject, 0)
 	ses := make([]kubernetes.IstioObject, 0)
-	var pl *v1.PodList
+	var pods []v1.Pod
 
 	wg.Add(5)
 	go fetch(&vs, namespace, service, in.k8s.GetVirtualServices, &wg, errChan)
@@ -45,7 +45,7 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	go func() {
 		defer wg.Done()
 		var err error
-		pl, err = in.k8s.GetPods(namespace, labels.Set(svc.Spec.Selector).String())
+		pods, err = in.k8s.GetPods(namespace, labels.Set(svc.Spec.Selector).String())
 		if err != nil {
 			errChan <- err
 		}
@@ -67,7 +67,7 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	}
 	objectCheckers := []ObjectChecker{
 		checkers.VirtualServiceChecker{namespace, dr, vs},
-		checkers.PodChecker{Pods: pl.Items},
+		checkers.PodChecker{Pods: pods},
 	}
 
 	// Get groupal validations for same kind istio objects
@@ -81,7 +81,7 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 		return nil, err
 	}
 
-	serviceList, err := in.k8s.GetServices(namespace, nil)
+	services, err := in.k8s.GetServices(namespace, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 	objectCheckers := []ObjectChecker{
 		checkers.VirtualServiceChecker{namespace, istioDetails.DestinationRules,
 			istioDetails.VirtualServices},
-		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: istioDetails, ServiceList: serviceList},
+		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: istioDetails, Services: services},
 	}
 
 	return models.NamespaceValidations{namespace: runObjectCheckers(objectCheckers)}, nil
@@ -126,14 +126,14 @@ func (in *IstioValidationsService) GetWorkloadValidations(namespace string, work
 	}
 
 	objectCheckers := []ObjectChecker{
-		checkers.PodChecker{Pods: dPods.Items},
+		checkers.PodChecker{Pods: dPods},
 	}
 
 	return runObjectCheckers(objectCheckers), nil
 }
 
 func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, objectType string, object string) (models.IstioValidations, error) {
-	serviceList, err := in.k8s.GetServices(namespace, nil)
+	services, err := in.k8s.GetServices(namespace, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	drs := make([]kubernetes.IstioObject, 0)
 	gws := make([]kubernetes.IstioObject, 0)
 	var objectCheckers []ObjectChecker
-	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, ServiceList: serviceList}
+	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, Services: services}
 	istioDetails := kubernetes.IstioDetails{}
 	noServiceChecker.IstioDetails = &istioDetails
 

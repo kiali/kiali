@@ -24,8 +24,8 @@ type SvcService struct {
 // GetServiceList returns a list of all services for a given Namespace
 func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, error) {
 
-	var sl *v1.ServiceList
-	var pl *v1.PodList
+	var svcs []v1.Service
+	var pods []v1.Pod
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -34,7 +34,7 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	go func() {
 		defer wg.Done()
 		var err error
-		sl, err = in.k8s.GetServices(namespace, nil)
+		svcs, err = in.k8s.GetServices(namespace, nil)
 		if err != nil {
 			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -44,7 +44,7 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	go func() {
 		defer wg.Done()
 		var err error
-		pl, err = in.k8s.GetPods(namespace, "")
+		pods, err = in.k8s.GetPods(namespace, "")
 		if err != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -58,15 +58,15 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	}
 
 	// Convert to Kiali model
-	return in.buildServiceList(models.Namespace{Name: namespace}, sl, pl), nil
+	return in.buildServiceList(models.Namespace{Name: namespace}, svcs, pods), nil
 }
 
-func (in *SvcService) buildServiceList(namespace models.Namespace, sl *v1.ServiceList, pl *v1.PodList) *models.ServiceList {
-	services := make([]models.ServiceOverview, len(sl.Items))
+func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []v1.Service, pods []v1.Pod) *models.ServiceList {
+	services := make([]models.ServiceOverview, len(svcs))
 	conf := config.Get()
 	// Convert each k8s service into our model
-	for i, item := range sl.Items {
-		sPods := kubernetes.FilterPodsForService(&item, pl.Items)
+	for i, item := range svcs {
+		sPods := kubernetes.FilterPodsForService(&item, pods)
 		/** Check if Service has istioSidecar deployed */
 		mPods := models.Pods{}
 		mPods.Parse(sPods)
@@ -119,11 +119,11 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		return nil, err
 	}
 
-	var pl *v1.PodList
+	var pods []v1.Pod
 	var hth models.ServiceHealth
 	var vs, dr []kubernetes.IstioObject
 	var sWk map[string][]prometheus.Workload
-	var dl *v1beta1.DeploymentList
+	var ds []v1beta1.Deployment
 
 	wg = sync.WaitGroup{}
 	wg.Add(6)
@@ -132,7 +132,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 	go func() {
 		defer wg.Done()
 		var err error
-		pl, err = in.k8s.GetPods(namespace, labels.Set(svc.Spec.Selector).String())
+		pods, err = in.k8s.GetPods(namespace, labels.Set(svc.Spec.Selector).String())
 		if err != nil {
 			errChan <- err
 		}
@@ -174,7 +174,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 	go func() {
 		defer wg.Done()
 		var err error
-		dl, err = in.k8s.GetDeployments(namespace, "")
+		ds, err = in.k8s.GetDeployments(namespace, "")
 		if err != nil {
 			log.Errorf("Error fetching Deployments per namespace %s and service %s:", namespace, service, err)
 			errChan <- err
@@ -188,11 +188,11 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 	}
 
 	wo := models.WorkloadOverviews{}
-	wo.Parse(kubernetes.FilterDeploymentsForService(svc, pl.Items, dl.Items))
+	wo.Parse(kubernetes.FilterDeploymentsForService(svc, pods, ds))
 
 	s := models.ServiceDetails{Workloads: wo, Health: hth}
 	s.SetService(svc)
-	s.SetPods(kubernetes.FilterPodsForEndpoints(eps, pl.Items))
+	s.SetPods(kubernetes.FilterPodsForEndpoints(eps, pods))
 	s.SetEndpoints(eps)
 	s.SetVirtualServices(vs)
 	s.SetDestinationRules(dr)

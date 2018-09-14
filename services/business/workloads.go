@@ -13,14 +13,14 @@ type WorkloadService struct {
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace
 func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadList, error) {
-	deployments, err := in.k8s.GetDeployments(namespace, "")
+	ds, err := in.k8s.GetDeployments(namespace, "")
 	if err != nil {
 		return models.WorkloadList{}, err
 	}
 
 	workloadList := &models.WorkloadList{}
 	workloadList.Namespace.Name = namespace
-	for _, deployment := range deployments.Items {
+	for _, deployment := range ds {
 		selector, _ := kubernetes.GetSelectorAsString(&deployment)
 		dPods, _ := in.k8s.GetPods(namespace, selector)
 
@@ -28,7 +28,7 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 		cast.Parse(deployment)
 
 		mPods := models.Pods{}
-		mPods.Parse(dPods.Items)
+		mPods.Parse(dPods)
 		cast.IstioSidecar = mPods.HasIstioSideCar()
 
 		(*workloadList).Workloads = append((*workloadList).Workloads, *cast)
