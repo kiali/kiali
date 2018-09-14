@@ -15,7 +15,7 @@ const TIMER_REQUEST_PER_SECOND_MAX = 750;
 // Range of time to use between spawning a new dot.
 // At higher request per second rate, faster dot spawning.
 const TIMER_TIME_BETWEEN_DOTS_MIN = 20;
-const TIMER_TIME_BETWEEN_DOTS_MAX = 2000;
+const TIMER_TIME_BETWEEN_DOTS_MAX = 1000;
 
 // Clamp response time from min to max
 const SPEED_RESPONSE_TIME_MIN = 0;
