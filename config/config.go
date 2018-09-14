@@ -29,6 +29,7 @@ const (
 	EnvServerPort                       = "SERVER_PORT"
 	EnvServerCredentialsUsername        = "SERVER_CREDENTIALS_USERNAME"
 	EnvServerCredentialsPassword        = "SERVER_CREDENTIALS_PASSWORD"
+	EnvWebRoot                          = "SERVER_WEB_ROOT"
 	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
 	EnvServerCORSAllowAll               = "SERVER_CORS_ALLOW_ALL"
 
@@ -66,6 +67,7 @@ type Server struct {
 	Address                    string               `yaml:",omitempty"`
 	Port                       int                  `yaml:",omitempty"`
 	Credentials                security.Credentials `yaml:",omitempty"`
+	WebRoot                    string               `yaml:"web_root,omitempty"`
 	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
 	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
 }
@@ -144,6 +146,7 @@ func NewConfig() (c *Config) {
 		Username: getDefaultString(EnvServerCredentialsUsername, ""),
 		Password: getDefaultString(EnvServerCredentialsPassword, ""),
 	}
+	c.Server.WebRoot = strings.TrimSpace(getDefaultString(EnvWebRoot, "/"))
 	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/static-files"))
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
 
