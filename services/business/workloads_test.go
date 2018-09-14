@@ -46,6 +46,23 @@ func TestDeploymentListHandler(t *testing.T) {
 	assert.Equal(false, workloads[2].VersionLabel)
 }
 
+func TestGetPods(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
+
+	svc := setupDeploymentService(k8s)
+
+	pods, _ := svc.GetPods("Namespace", "app=httpbin")
+
+	assert.Equal(1, len(pods))
+	assert.Equal("details-v1-3618568057-dnkjp", pods[0].Name)
+}
+
 func fakeDeploymentList() []v1beta1.Deployment {
 	conf := config.NewConfig()
 	config.Set(conf)

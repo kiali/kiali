@@ -135,10 +135,13 @@ func buildServiceTrafficMap() graph.TrafficMap {
 func buildFakeWorkloadDeployment() *v1beta1.Deployment {
 	return &v1beta1.Deployment{
 		Spec: v1beta1.DeploymentSpec{
-			Selector: &v1.LabelSelector{
-				MatchLabels: map[string]string{
-					"wk": "wk-1",
-				}}}}
+			Template: api_v1.PodTemplateSpec{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"wk": "wk-1"},
+				},
+			},
+		},
+	}
 }
 
 func buildFakeWorkloadPods() []api_v1.Pod {

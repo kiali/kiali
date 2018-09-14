@@ -21,7 +21,7 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 	workloadList := &models.WorkloadList{}
 	workloadList.Namespace.Name = namespace
 	for _, deployment := range ds {
-		selector, _ := kubernetes.GetSelectorAsString(&deployment)
+		selector := labels.FormatLabels(deployment.Spec.Template.Labels)
 		dPods, _ := in.k8s.GetPods(namespace, selector)
 
 		cast := &models.WorkloadListItem{}
@@ -47,14 +47,15 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 	}
 	model.Parse(deployment)
 
-	pods, err := in.k8s.GetPods(namespace, labels.Set(deployment.Spec.Selector.MatchLabels).String())
+	selector := labels.FormatLabels(deployment.Spec.Template.Labels)
+	pods, err := in.k8s.GetPods(namespace, selector)
 	if err != nil {
 		return nil, err
 	}
 	model.SetPods(pods)
 
 	if includeServices {
-		services, err := in.k8s.GetServices(namespace, deployment.Labels)
+		services, err := in.k8s.GetServices(namespace, deployment.Spec.Template.Labels)
 		if err != nil {
 			return nil, err
 		}
@@ -64,12 +65,12 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 	return model, nil
 }
 
-func (in *WorkloadService) GetPods(namespace string, labelSelector string) (*models.Pods, error) {
+func (in *WorkloadService) GetPods(namespace string, labelSelector string) (models.Pods, error) {
 	ps, err := in.k8s.GetPods(namespace, labelSelector)
 	if err != nil {
 		return nil, err
 	}
 	pods := models.Pods{}
 	pods.Parse(ps)
-	return &pods, nil
+	return pods, nil
 }

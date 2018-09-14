@@ -24,8 +24,10 @@ func setupWorkloadService() business.WorkloadService {
 				Name: "testPodsWithTraffic-v1",
 			},
 			Spec: v1beta1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{"app": "testPodsWithTraffic", "version": "v1"},
+				Template: v1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{"app": "testPodsWithTraffic", "version": "v1"},
+					},
 				},
 			},
 		}, nil)
@@ -42,8 +44,10 @@ func setupWorkloadService() business.WorkloadService {
 				Name: "testPodsNoTraffic-v1",
 			},
 			Spec: v1beta1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{"app": "testPodsNoTraffic", "version": "v1"},
+				Template: v1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{"app": "testPodsNoTraffic", "version": "v1"},
+					},
 				},
 			},
 		}, nil)
@@ -60,8 +64,10 @@ func setupWorkloadService() business.WorkloadService {
 				Name: "testNoPodsWithTraffic-v1",
 			},
 			Spec: v1beta1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{"app": "testNoPodsWithTraffic", "version": "v1"},
+				Template: v1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{"app": "testNoPodsWithTraffic", "version": "v1"},
+					},
 				},
 			},
 		}, nil)
@@ -74,8 +80,10 @@ func setupWorkloadService() business.WorkloadService {
 				Name: "testNoPodsNoTraffic-v1",
 			},
 			Spec: v1beta1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{"app": "testNoPodsNoTraffic", "version": "v1"},
+				Template: v1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{"app": "testNoPodsNoTraffic", "version": "v1"},
+					},
 				},
 			},
 		}, nil)

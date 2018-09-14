@@ -2,6 +2,7 @@ package business
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
@@ -38,7 +39,7 @@ func (in *AppService) fetchWorkloadsPerApp(namespace, labelSelector string) (app
 	apps := make(appsWorkload)
 	for _, deployment := range deployments {
 		if appLabel, ok := deployment.Labels[cfg.IstioLabels.AppLabelName]; ok {
-			selector, _ := kubernetes.GetSelectorAsString(&deployment)
+			selector := labels.FormatLabels(deployment.Spec.Template.Labels)
 			dPods, _ := in.k8s.GetPods(namespace, selector)
 			mPods := &models.Pods{}
 			// Using Parse to calculate the IstioSideCar from Pods
@@ -97,7 +98,7 @@ func (in *AppService) GetApp(namespace string, app string) (models.App, error) {
 	(*appInstance).Workloads = make([]models.WorkloadSvc, len(appWkd))
 	for i, wkd := range appWkd {
 		wkdSvc := &models.WorkloadSvc{WorkloadName: wkd.Workload}
-		services, _ := in.k8s.GetServices(namespace, wkd.Deployment.Labels)
+		services, _ := in.k8s.GetServices(namespace, wkd.Deployment.Spec.Template.Labels)
 		if err != nil {
 			return *appInstance, err
 		}

@@ -45,12 +45,12 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 
 		// get the pods for the node, either by app+version labels, or workload deployment
 		var err error
-		var pods *models.Pods
+		var pods models.Pods
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
 			workload, err := business.Workload.GetWorkload(n.Namespace, n.Workload, false)
 			if err == nil {
-				pods = &workload.Pods
+				pods = workload.Pods
 			}
 		case graph.NodeTypeApp:
 			podLabels := a.getAppLabels(appLabel, n.App, versionLabel, n.Version)
@@ -60,13 +60,13 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		}
 		checkError(err)
 
-		if pods == nil || (pods != nil && len(*pods) == 0) {
+		if len(pods) == 0 {
 			log.Warningf("Sidecar check found no pods Checking sidecars node [%s]", n.ID)
+			continue
 		}
 
 		if !pods.HasIstioSideCar() {
 			n.Metadata["hasMissingSC"] = true
-			break
 		}
 	}
 }

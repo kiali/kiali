@@ -233,16 +233,6 @@ func (in *IstioClient) getDeployments(namespace string, deploymentsChan chan dep
 	deploymentsChan <- deploymentsResponse{deployments: deployments, err: err}
 }
 
-// GetSelectorAsString extracts the Selector used by a Deployment
-// Returns a selector represented as a plain string
-func GetSelectorAsString(deployment *v1beta1.Deployment) (string, error) {
-	selector, err := meta_v1.LabelSelectorAsMap(deployment.Spec.Selector)
-	if err != nil {
-		return "", err
-	}
-	return labels.FormatLabels(selector), nil
-}
-
 // NewNotFound is a helper method to create a NotFound error similar as used by the kubernetes client.
 // This method helps upper layers to send a explicit NotFound error without querying the backend.
 func NewNotFound(name, group, resource string) error {

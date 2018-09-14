@@ -119,7 +119,7 @@ func (in *IstioValidationsService) GetWorkloadValidations(namespace string, work
 	if err != nil {
 		return nil, err
 	}
-	selector, _ := kubernetes.GetSelectorAsString(deployment)
+	selector := labels.FormatLabels(deployment.Spec.Template.Labels)
 	dPods, err := in.k8s.GetPods(namespace, selector)
 	if err != nil {
 		return nil, err
