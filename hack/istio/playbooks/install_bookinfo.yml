@@ -74,7 +74,7 @@
         - "{{ istio_bookinfo_mysql_service_path }}"
 
     - name: Expose Ingress Gateway
-      shell: "oc expose svc ingress-gateway -n istio-system"
+      shell: "oc expose svc istio-ingressgateway -n istio-system"
       ignore_errors: true
 
     - name: Expose Openshift Route for Bookinfo (useful when you trying to deploy with external traffic)
