@@ -63,3 +63,13 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 
 	return model, nil
 }
+
+func (in *WorkloadService) GetPods(namespace string, labelSelector string) (*models.Pods, error) {
+	ps, err := in.k8s.GetPods(namespace, labelSelector)
+	if err != nil {
+		return nil, err
+	}
+	pods := models.Pods{}
+	pods.Parse(ps)
+	return &pods, nil
+}

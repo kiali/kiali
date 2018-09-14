@@ -13,6 +13,8 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+
+	"github.com/kiali/kiali/services/business"
 )
 
 func TestWorkloadSidecarsPasses(t *testing.T) {
@@ -23,8 +25,9 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 
 	trafficMap := buildWorkloadTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{}
+	business := business.SetWithBackends(k8s, nil)
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, k8s)
+	sidecarsAppender.applySidecarsChecks(trafficMap, business)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata["hasMissingSC"].(bool)
@@ -40,8 +43,9 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 
 	trafficMap := buildWorkloadTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{}
+	business := business.SetWithBackends(k8s, nil)
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, k8s)
+	sidecarsAppender.applySidecarsChecks(trafficMap, business)
 
 	for _, node := range trafficMap {
 		flag, ok := node.Metadata["hasMissingSC"].(bool)
@@ -57,8 +61,9 @@ func TestAppSidecarsPasses(t *testing.T) {
 
 	trafficMap := buildAppTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{}
+	business := business.SetWithBackends(k8s, nil)
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, k8s)
+	sidecarsAppender.applySidecarsChecks(trafficMap, business)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata["hasMissingSC"].(bool)
@@ -73,8 +78,9 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 
 	trafficMap := buildAppTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{}
+	business := business.SetWithBackends(k8s, nil)
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, k8s)
+	sidecarsAppender.applySidecarsChecks(trafficMap, business)
 
 	for _, node := range trafficMap {
 		flag, ok := node.Metadata["hasMissingSC"].(bool)
@@ -89,8 +95,9 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 
 	trafficMap := buildServiceTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{}
+	business := business.SetWithBackends(k8s, nil)
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, k8s)
+	sidecarsAppender.applySidecarsChecks(trafficMap, business)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata["hasMissingSC"].(bool)
