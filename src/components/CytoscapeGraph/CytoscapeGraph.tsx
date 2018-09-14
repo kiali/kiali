@@ -5,7 +5,7 @@ import ReactResizeDetector from 'react-resize-detector';
 
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
-import TrafficRender from './graphs/TrafficRenderer';
+import TrafficRender from './TrafficAnimation/TrafficRenderer';
 import EmptyGraphLayout from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
