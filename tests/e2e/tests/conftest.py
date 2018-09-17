@@ -21,6 +21,9 @@ def kiali_client():
     config = __get_environment_config__(ENV_FILE)
     return __get_kiali_client__(config)
 
+def get_bookinfo_endpoint():
+    return __get_environment_config__(ENV_FILE).get('mesh_bookinfo_namespace')
+
 def __get_kiali_client__(config):
     if(config.get('kiali_ssl_enabled') is True):
         context = ssl._create_unverified_context()

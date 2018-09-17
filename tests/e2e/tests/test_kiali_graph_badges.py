@@ -29,7 +29,8 @@ def test_kiali_virtual_service_app(kiali_client):
 
 def do_test(kiali_client, graph_params, yaml_file, badge):
     environment_configmap = conftest.__get_environment_config__(conftest.ENV_FILE)
-    bookinfo_namespace = environment_configmap.get('mesh_bookinfo_namespace')
+    bookinfo_namespace = bookinfo_namespace = conftest.get_bookinfo_endpoint()
+
 
     appType = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)['graphType']
     assert appType == graph_params.get('graphType')
