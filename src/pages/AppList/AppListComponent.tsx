@@ -48,7 +48,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       isSortAscending: this.props.isSortAscending,
       rateInterval: this.props.rateInterval
     };
-    this.props.pageHooks.setFiltersToURL(availableFilters, FilterSelected.getSelected());
+    this.props.pageHooks.setSelectedFiltersToURL(availableFilters);
   }
 
   componentDidMount() {
@@ -119,7 +119,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         rateInterval: this.props.rateInterval
       });
 
-      FilterSelected.setSelected(this.props.pageHooks.getFiltersFromURL(availableFilters));
+      this.props.pageHooks.setSelectedFiltersFromURL(availableFilters);
       this.updateApps();
     }
   }
@@ -131,7 +131,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       prevProps.rateInterval === this.props.rateInterval &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title &&
-      this.props.pageHooks.filtersMatchURL(availableFilters, FilterSelected.getSelected())
+      this.props.pageHooks.filtersMatchURL(availableFilters)
     );
   }
 
@@ -258,7 +258,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       <>
         <StatefulFilters
           initialFilters={availableFilters}
-          initialActiveFilters={this.props.pageHooks.getFiltersFromURL(availableFilters)}
+          initialActiveFilters={FilterSelected.getSelected()}
           onFilterChange={this.onFilterChange}
           onError={this.handleError}
         >

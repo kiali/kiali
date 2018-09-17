@@ -51,7 +51,7 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       isSortAscending: this.props.isSortAscending,
       rateInterval: this.props.rateInterval
     };
-    this.props.pageHooks.setFiltersToURL(availableFilters, FilterSelected.getSelected());
+    this.props.pageHooks.setSelectedFiltersToURL(availableFilters);
   }
 
   componentDidMount() {
@@ -67,7 +67,7 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
         rateInterval: this.props.rateInterval
       });
 
-      FilterSelected.setSelected(this.props.pageHooks.getFiltersFromURL(availableFilters));
+      this.props.pageHooks.setSelectedFiltersFromURL(availableFilters);
       this.updateWorkloads();
     }
   }
@@ -79,7 +79,7 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       prevProps.rateInterval === this.props.rateInterval &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title &&
-      this.props.pageHooks.filtersMatchURL(availableFilters, FilterSelected.getSelected())
+      this.props.pageHooks.filtersMatchURL(availableFilters)
     );
   }
 
@@ -286,7 +286,7 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       <>
         <StatefulFilters
           initialFilters={availableFilters}
-          initialActiveFilters={this.props.pageHooks.getFiltersFromURL(availableFilters)}
+          initialActiveFilters={FilterSelected.getSelected()}
           onFilterChange={this.onFilterChange}
           onError={this.handleError}
         >

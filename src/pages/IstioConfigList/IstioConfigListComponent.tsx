@@ -156,7 +156,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       currentSortField: this.props.currentSortField,
       isSortAscending: this.props.isSortAscending
     };
-    this.props.pageHooks.setFiltersToURL(availableFilters, FilterSelected.getSelected());
+    this.props.pageHooks.setSelectedFiltersToURL(availableFilters);
   }
 
   componentDidMount() {
@@ -175,7 +175,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
         isSortAscending: this.props.isSortAscending
       });
 
-      FilterSelected.setSelected(this.props.pageHooks.getFiltersFromURL(availableFilters));
+      this.props.pageHooks.setSelectedFiltersFromURL(availableFilters);
       this.updateIstioConfig();
     }
   }
@@ -186,7 +186,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title &&
-      this.props.pageHooks.filtersMatchURL(availableFilters, FilterSelected.getSelected())
+      this.props.pageHooks.filtersMatchURL(availableFilters)
     );
   }
 
@@ -476,7 +476,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       <>
         <StatefulFilters
           initialFilters={availableFilters}
-          initialActiveFilters={this.props.pageHooks.getFiltersFromURL(availableFilters)}
+          initialActiveFilters={FilterSelected.getSelected()}
           onFilterChange={this.onFilterChange}
           onError={this.handleError}
         >
