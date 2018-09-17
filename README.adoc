@@ -1,14 +1,20 @@
-= Kiali image:https://travis-ci.org/kiali/kiali.svg["Build Status", link="https://travis-ci.org/kiali/kiali"]
+= Kiali image:https://img.shields.io/twitter/url/http/shields.io.svg?style=social["Tweet about Kiali", link="https://twitter.com/intent/tweet?text=Learn%20what%20your%20Istio-Mesh%20is%20doing.%20Visit%20https://www.kiali.io/%20and%20@kiali_project"]
 :toc: macro
 :toc-title:
 
-toc::[]
+image:https://travis-ci.org/kiali/kiali.svg["Build Status", link="https://travis-ci.org/kiali/kiali"]
+image:https://img.shields.io/badge/license-Apache2-blue.svg["Apache 2.0 license", link="LICENSE"]
+
 
 == Introduction
 
 Kiali provides answers to the question _What are the microservices in my Istio service mesh doing?_
 
 image::https://www.kiali.io/images/features/feature3.png[Kiali Graph]
+
+== Table of contents
+
+toc::[]
 
 === Description
 
@@ -662,9 +668,24 @@ kubectl create -f kiali.yaml -n istio-system
 
 == Contributing
 
-All contributions are welcome - Kiali uses the Apache 2 license and does not require any contributor agreement to submit patches. Please link:https://github.com/kiali/kiali/issues[open issues] for any bugs or problems you encounter or to suggest new features. Ask questions on the Kiali IRC channel (_#kiali_ on freenode) or the Google Groups: link:++https://groups.google.com/forum/#!forum/kiali-users++[kiali-users] or link:++https://groups.google.com/forum/#!forum/kiali-dev++[kiali-dev]. Get involved by submitting pull requests on GitHub.
+All contributions are welcome - Kiali uses the Apache 2 license and does not require any contributor agreement to submit patches.
+Please link:https://github.com/kiali/kiali/issues[open issues] for any bugs or problems you encounter or to suggest new features.
+Ask questions on the Kiali IRC channel (_#kiali_ on freenode) or the Google Groups: link:++https://groups.google.com/forum/#!forum/kiali-users++[kiali-users] or link:++https://groups.google.com/forum/#!forum/kiali-dev++[kiali-dev].
+Get involved by submitting pull requests on GitHub.
 
 To setup your environment, check instructions in the link:#building[Building] and link:#running[Running] sections.
+
+=== Issue tracking
+
+The Kiali team is using link:https://issues.jboss.org/browse/KIALI[Jira] for issue tracking. 
+If you do not have a JIRA account, you can also open issues here on GitHub (we are monitoring this as well).
+
+When you are looking for issues to get started, you can use this https://issues.jboss.org/issues/?filter=12336706[Jira query for good first issues].
+If you pick one from the list, please let us know.
+
+
+
+
 
 === Code Style Guide
 
