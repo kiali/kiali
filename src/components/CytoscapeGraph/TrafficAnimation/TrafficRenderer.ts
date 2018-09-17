@@ -82,7 +82,7 @@ const getTrafficPointRendererForHttpSuccess: (edge: any) => TrafficPointRenderer
  * @returns {TrafficPointCircleRenderer}
  */
 const getTrafficPointRendererForTcp: (edge: any) => TrafficPointRenderer = (edge: any) => {
-  return new TrafficPointCircleRenderer(0.5, PfColors.Black100, PfColors.Black500, 1);
+  return new TrafficPointCircleRenderer(0.8, PfColors.Black100, PfColors.Black500, 1);
 };
 
 /**
@@ -164,7 +164,10 @@ class TrafficPointGenerator {
     } else if (this.type === TrafficEdgeType.TCP) {
       renderer = getTrafficPointRendererForTcp(edge);
       // Cheap way to put some offset around the edge, I think this is enough unless we want more accuracy
-      offset = { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 };
+      // More accuracy would need to identify the slope of current segment of the edgge (for curves and loops) to only do
+      // offsets perpendicular to it, instead of it, we are moving around a circle area
+      // Random offset (x,y); 'x' in [-1.5, 1.5] and 'y' in [-1.5, 1.5]
+      offset = { x: Math.random() * 3 - 1.5, y: Math.random() * 3 - 1.5 };
     }
 
     return {
