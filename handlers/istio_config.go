@@ -6,8 +6,8 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/services/business"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 

@@ -11,7 +11,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/services/models"
+	"github.com/kiali/kiali/models"
 )
 
 type osRouteSupplier func(string, string) (string, error)

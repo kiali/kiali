@@ -15,11 +15,11 @@ import (
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
-	"github.com/kiali/kiali/services/business"
 )
 
 // Setup mock
@@ -40,17 +40,15 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, error) {
 		}, nil)
 
 	k8s.On("GetProjects").Return(
-		&osv1.ProjectList{
-			Items: []osv1.Project{
-				osv1.Project{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "bookinfo",
-					},
+		[]osv1.Project{
+			osv1.Project{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "bookinfo",
 				},
-				osv1.Project{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "tutorial",
-					},
+			},
+			osv1.Project{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "tutorial",
 				},
 			},
 		}, nil)

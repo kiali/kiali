@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/services/models"
+	"github.com/kiali/kiali/models"
 )
 
 // Get JaegerInfo provides the proxy Jaeger URL

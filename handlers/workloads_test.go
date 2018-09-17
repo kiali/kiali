@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"io/ioutil"
+	"k8s.io/api/apps/v1beta2"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,21 +11,21 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta1"
-	k8s_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
-	"github.com/kiali/kiali/services/business"
+	osappsv1 "github.com/openshift/api/apps/v1"
+	"github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	batch_v1 "k8s.io/api/batch/v1"
+	batch_v1beta1 "k8s.io/api/batch/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 )
 
-func setupDeploymentList() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
+func setupWorkloadList() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
 	business.SetWithBackends(k8s, prom)
@@ -36,14 +37,20 @@ func setupDeploymentList() (*httptest.Server, *kubetest.K8SClientMock, *promethe
 	return ts, k8s, prom
 }
 
-func TestDeploymentList(t *testing.T) {
+func TestWorkloadsEndpoint(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
-	ts, k8s, _ := setupDeploymentList()
+	ts, k8s, _ := setupWorkloadList()
 	defer ts.Close()
 
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeDepSyncedWithRS(), nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeRSSyncedWithPods(), nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]corev1.ReplicationController{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.StatefulSet{}, nil)
+	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
+	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakePodsSyncedWithDeployments(), nil)
 
 	url := ts.URL + "/api/namespaces/ns/workloads"
 
@@ -56,63 +63,6 @@ func TestDeploymentList(t *testing.T) {
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
-}
-
-func fakeDeploymentList() []v1beta1.Deployment {
-	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []v1beta1.Deployment{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:              "httpbin-v1",
-				CreationTimestamp: meta_v1.NewTime(t1),
-				Labels:            map[string]string{"app": "httpbin", "version": "v1"}},
-			Spec: v1beta1.DeploymentSpec{
-				Selector: &meta_v1.LabelSelector{
-					MatchLabels: map[string]string{"app": "httpbin", "version": "v3"},
-				},
-			},
-			Status: v1beta1.DeploymentStatus{
-				Replicas:            1,
-				AvailableReplicas:   1,
-				UnavailableReplicas: 0,
-			},
-		},
-	}
-}
-
-func fakePodList() []k8s_v1.Pod {
-	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []k8s_v1.Pod{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:              "details-v1-3618568057-dnkjp",
-				CreationTimestamp: meta_v1.NewTime(t1),
-				Labels:            map[string]string{"app": "httpbin", "version": "v1"},
-				OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
-					Kind: "ReplicaSet",
-					Name: "details-v1-3618568057",
-				}},
-				Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
-			Spec: k8s_v1.PodSpec{
-				Containers: []k8s_v1.Container{
-					k8s_v1.Container{Name: "details", Image: "whatever"},
-					k8s_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
-				},
-				InitContainers: []k8s_v1.Container{
-					k8s_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-					k8s_v1.Container{Name: "enable-core-dump", Image: "alpine"},
-				},
-			},
-		},
-	}
-}
-
-func fakeServices() []k8s_v1.Service {
-	return []k8s_v1.Service{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin"},
-		},
-	}
 }
 
 func TestWorkloadMetricsDefault(t *testing.T) {

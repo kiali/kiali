@@ -1,8 +1,8 @@
 package appender
 
 import (
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/services/business"
 )
 
 // DeadNodeAppender is responsible for removing from the graph unwanted nodes:

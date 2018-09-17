@@ -1,12 +1,11 @@
 package appender
 
 import (
-	"k8s.io/api/apps/v1beta1"
-
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 )
 
 type UnusedNodeAppender struct {
@@ -20,17 +19,17 @@ func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, namespace s
 		return
 	}
 
-	istioClient, err := kubernetes.NewClient()
+	business, err := business.Get()
 	checkError(err)
 
-	deployments, err := istioClient.GetDeployments(namespace, "")
+	workloads, err := business.Workload.GetWorkloadList(namespace)
 	checkError(err)
 
-	a.addUnusedNodes(trafficMap, namespace, deployments)
+	a.addUnusedNodes(trafficMap, namespace, workloads.Workloads)
 }
 
-func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespace string, deployments []v1beta1.Deployment) {
-	unusedTrafficMap := a.buildUnusedTrafficMap(trafficMap, namespace, deployments)
+func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespace string, workloads []models.WorkloadListItem) {
+	unusedTrafficMap := a.buildUnusedTrafficMap(trafficMap, namespace, workloads)
 
 	// If trafficMap is empty just populate it with the unused nodes and return
 	if len(trafficMap) == 0 {
@@ -46,13 +45,13 @@ func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespac
 	}
 }
 
-func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, namespace string, deployments []v1beta1.Deployment) graph.TrafficMap {
+func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, namespace string, workloads []models.WorkloadListItem) graph.TrafficMap {
 	unusedTrafficMap := graph.NewTrafficMap()
 	cfg := config.Get()
 	appLabel := cfg.IstioLabels.AppLabelName
 	versionLabel := cfg.IstioLabels.VersionLabelName
-	for _, d := range deployments {
-		labels := d.GetLabels()
+	for _, w := range workloads {
+		labels := w.Labels
 		app := graph.UnknownApp
 		version := graph.UnknownVersion
 		if v, ok := labels[appLabel]; ok {
@@ -61,11 +60,11 @@ func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, n
 		if v, ok := labels[versionLabel]; ok {
 			version = v
 		}
-		id, nodeType := graph.Id(namespace, d.Name, app, version, "", a.GraphType)
+		id, nodeType := graph.Id(namespace, w.Name, app, version, "", a.GraphType)
 		if _, found := trafficMap[id]; !found {
 			if _, found = unusedTrafficMap[id]; !found {
-				log.Debugf("Adding unused node for deployment [%s] with labels [%v]", d.Name, labels)
-				node := graph.NewNodeExplicit(id, namespace, d.Name, app, version, "", nodeType, a.GraphType)
+				log.Debugf("Adding unused node for workload [%s] with labels [%v]", w.Name, labels)
+				node := graph.NewNodeExplicit(id, namespace, w.Name, app, version, "", nodeType, a.GraphType)
 				node.Metadata = map[string]interface{}{"rate": 0.0, "rateOut": 0.0, "isUnused": true}
 				unusedTrafficMap[id] = &node
 			}

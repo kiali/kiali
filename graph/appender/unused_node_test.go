@@ -1,14 +1,12 @@
 package appender
 
 import (
+	"github.com/kiali/kiali/models"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNonTrafficScenario(t *testing.T) {
@@ -18,13 +16,13 @@ func TestNonTrafficScenario(t *testing.T) {
 
 	// Empty trafficMap
 	trafficMap := graph.NewTrafficMap()
-	deployments := mockDeployments()
+	workloads := mockWorkloads()
 
 	a := UnusedNodeAppender{
 		graph.GraphTypeVersionedApp,
 		false,
 	}
-	a.addUnusedNodes(trafficMap, "testNamespace", deployments)
+	a.addUnusedNodes(trafficMap, "testNamespace", workloads)
 	assert.Equal(4, len(trafficMap))
 
 	id, _ := graph.Id("testNamespace", "customer-v1", "customer", "v1", "customer", a.GraphType)
@@ -71,9 +69,9 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	}
 
 	trafficMap := a.oneNodeTraffic()
-	deployments := mockDeployments()
+	workloads := mockWorkloads()
 
-	a.addUnusedNodes(trafficMap, "testNamespace", deployments)
+	a.addUnusedNodes(trafficMap, "testNamespace", workloads)
 
 	assert.Equal(5, len(trafficMap))
 	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", a.GraphType)
@@ -126,9 +124,9 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	}
 
 	trafficMap := a.v1Traffic()
-	deployments := mockDeployments()
+	workloads := mockWorkloads()
 
-	a.addUnusedNodes(trafficMap, "testNamespace", deployments)
+	a.addUnusedNodes(trafficMap, "testNamespace", workloads)
 
 	assert.Equal(5, len(trafficMap))
 	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", a.GraphType)
@@ -170,31 +168,23 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal(true, recommendationV2.Metadata["isUnused"])
 }
 
-func mockDeployments() []v1beta1.Deployment {
-	return []v1beta1.Deployment{
+func mockWorkloads() []models.WorkloadListItem {
+	return []models.WorkloadListItem{
 		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:   "customer-v1",
-				Labels: map[string]string{"app": "customer", "version": "v1"},
-			},
+			Name:   "customer-v1",
+			Labels: map[string]string{"app": "customer", "version": "v1"},
 		},
 		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:   "preference-v1",
-				Labels: map[string]string{"app": "preference", "version": "v1"},
-			},
+			Name:   "preference-v1",
+			Labels: map[string]string{"app": "preference", "version": "v1"},
 		},
 		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:   "recommendation-v1",
-				Labels: map[string]string{"app": "recommendation", "version": "v1"},
-			},
+			Name:   "recommendation-v1",
+			Labels: map[string]string{"app": "recommendation", "version": "v1"},
 		},
 		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:   "recommendation-v2",
-				Labels: map[string]string{"app": "recommendation", "version": "v2"},
-			},
+			Name:   "recommendation-v2",
+			Labels: map[string]string{"app": "recommendation", "version": "v2"},
 		},
 	}
 }
