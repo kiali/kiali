@@ -1,14 +1,20 @@
-= Kiali image:https://travis-ci.org/kiali/kiali.svg["Build Status", link="https://travis-ci.org/kiali/kiali"]
+= Kiali image:https://img.shields.io/twitter/url/http/shields.io.svg?style=social["Tweet about Kiali", link="https://twitter.com/intent/tweet?text=Learn%20what%20your%20Istio-Mesh%20is%20doing.%20Visit%20https://www.kiali.io/%20and%20@kiali_project"]
 :toc: macro
 :toc-title:
 
-toc::[]
+image:https://travis-ci.org/kiali/kiali.svg["Build Status", link="https://travis-ci.org/kiali/kiali"]
+image:https://img.shields.io/badge/license-Apache2-blue.svg["Apache 2.0 license", link="LICENSE"]
+
 
 == Introduction
 
 Kiali provides answers to the question _What are the microservices in my Istio service mesh doing?_
 
 image::https://www.kiali.io/images/features/feature3.png[Kiali Graph]
+
+== Table of contents
+
+toc::[]
 
 === Description
 
@@ -22,7 +28,7 @@ Kiali also includes Jaeger Tracing to provide distributed tracing out of the box
 
 === Getting Started
 
-If you are not a developer but just want to run something to see Kiali, then go to https://kiali.org for some instructions.
+If you are not a developer but just want to run something to see Kiali, then go to https://www.kiali.io for some instructions.
 
 You could also try to use our hack script to quickly install OpenShift, Istio, and Kiali like this:
 
@@ -662,9 +668,26 @@ kubectl create -f kiali.yaml -n istio-system
 
 == Contributing
 
-All contributions are welcome - Kiali uses the Apache 2 license and does not require any contributor agreement to submit patches. Please link:https://github.com/kiali/kiali/issues[open issues] for any bugs or problems you encounter or to suggest new features. Ask questions on the Kiali IRC channel (_#kiali_ on freenode) or the Google Groups: link:++https://groups.google.com/forum/#!forum/kiali-users++[kiali-users] or link:++https://groups.google.com/forum/#!forum/kiali-dev++[kiali-dev]. Get involved by submitting pull requests on GitHub.
-
+All contributions are welcome - Kiali uses the Apache 2 license and does not require any contributor agreement to submit patches.
 To setup your environment, check instructions in the link:#building[Building] and link:#running[Running] sections.
+
+Get involved by submitting pull requests on GitHub. Before you do, please talk to us.
+
+=== Talk to us
+
+Ask questions on the Kiali IRC channel (_#kiali_ on freenode) or the Google Groups: link:++https://groups.google.com/forum/#!forum/kiali-users++[kiali-users] or link:++https://groups.google.com/forum/#!forum/kiali-dev++[kiali-dev].
+
+=== Issue tracking
+
+The Kiali team is using link:https://issues.jboss.org/browse/KIALI[JIRA] for issue tracking. 
+If you do not have a JIRA account, you can also https://github.com/kiali/kiali/issues[open issues here on GitHub] (we are monitoring this as well) for any bugs or problems you encounter or to suggest new features.
+
+When you are looking for issues to get started, you can use this https://issues.jboss.org/issues/?filter=12336706[JIRA query for good first issues].
+If you pick one from the list, please let us know by the above mentioned means.
+
+
+
+
 
 === Code Style Guide
 
