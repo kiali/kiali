@@ -6,8 +6,8 @@ import { SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
-import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
-import { ActiveFilter } from '../../types/NamespaceFilter';
+import { FilterSelected } from '../../components/Filters/StatefulFilters';
+import { ActiveFilter } from '../../types/Filters';
 import * as M from '../../types/Metrics';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
@@ -204,6 +204,6 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       };
       filters = [activeFilter];
     }
-    NamespaceFilterSelected.setSelected(filters);
+    FilterSelected.setSelected(filters);
   };
 }

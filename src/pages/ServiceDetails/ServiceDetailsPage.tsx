@@ -10,7 +10,7 @@ import { authentication } from '../../utils/Authentication';
 import IstioObjectDetails from './IstioObjectDetails';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceInfo from './ServiceInfo';
-import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
+import { FilterSelected } from '../../components/Filters/StatefulFilters';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -162,7 +162,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   };
 
   clearFilters() {
-    NamespaceFilterSelected.setSelected([]);
+    FilterSelected.setSelected([]);
   }
 
   renderBreadcrumbs = (parsedSearch: ParsedSearch, showingDetails: boolean) => {

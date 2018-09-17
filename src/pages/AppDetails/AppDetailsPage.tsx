@@ -8,7 +8,7 @@ import AppInfo from './AppInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import AppMetricsContainer from '../../containers/AppMetricsContainer';
 import { AppHealth } from '../../types/Health';
-import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
+import { FilterSelected } from '../../components/Filters/StatefulFilters';
 
 type AppDetailsState = {
   app: App;
@@ -33,7 +33,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
   }
 
   clearFilters() {
-    NamespaceFilterSelected.setSelected([]);
+    FilterSelected.setSelected([]);
   }
 
   appPageURL(parsedSearch?: ParsedSearch) {
