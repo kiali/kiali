@@ -1,8 +1,9 @@
 package business
 
 import (
-	"k8s.io/api/apps/v1beta1"
 	"sync"
+
+	"k8s.io/api/apps/v1beta1"
 
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -98,7 +99,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		var err error
 		svc, err = in.k8s.GetService(namespace, service)
 		if err != nil {
-			log.Errorf("Error fetching Service per namespace %s and service %s:", namespace, service, err)
+			log.Errorf("Error fetching Service per namespace %s and service %s: %s", namespace, service, err)
 			errChan <- err
 		}
 	}()
@@ -108,7 +109,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		var err error
 		eps, err = in.k8s.GetEndpoints(namespace, service)
 		if err != nil {
-			log.Errorf("Error fetching Endpoints per namespace %s and service %s:", namespace, service, err)
+			log.Errorf("Error fetching Endpoints per namespace %s and service %s: %s", namespace, service, err)
 			errChan <- err
 		}
 	}()
@@ -166,7 +167,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		var err error
 		sWk, err = in.prom.GetSourceWorkloads(namespace, service)
 		if err != nil {
-			log.Errorf("Error fetching SourceWorkloads per namespace %s and service %s:", namespace, service, err)
+			log.Errorf("Error fetching SourceWorkloads per namespace %s and service %s: %s", namespace, service, err)
 			errChan <- err
 		}
 	}()
@@ -176,7 +177,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 		var err error
 		ds, err = in.k8s.GetDeployments(namespace, "")
 		if err != nil {
-			log.Errorf("Error fetching Deployments per namespace %s and service %s:", namespace, service, err)
+			log.Errorf("Error fetching Deployments per namespace %s and service %s: %s", namespace, service, err)
 			errChan <- err
 		}
 	}()
