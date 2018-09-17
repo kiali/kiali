@@ -8,14 +8,12 @@ import (
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	kialiConfig "github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 )
 
 const (
@@ -34,36 +32,30 @@ var (
 
 // IstioClientInterface for mocks (only mocked function are necessary here)
 type IstioClientInterface interface {
-	GetNamespaces() (*v1.NamespaceList, error)
-	GetService(namespace string, serviceName string) (*v1.Service, error)
-	GetFullServices(namespace string) (*ServiceList, error)
-	GetNamespaceAppsDetails(namespace string) (NamespaceApps, error)
 	GetAppDetails(namespace, app string) (AppDetails, error)
-	GetServices(namespace string) (*v1.ServiceList, error)
-	GetServiceDetails(namespace string, serviceName string) (*ServiceDetails, error)
-	GetPods(namespace, labelSelector string) (*v1.PodList, error)
-	GetNamespacePods(namespace string) (*v1.PodList, error)
-	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
-	GetGateways(namespace string) ([]IstioObject, error)
-	GetGateway(namespace string, gateway string) (IstioObject, error)
-	GetServiceEntries(namespace string) ([]IstioObject, error)
-	GetServiceEntry(namespace string, serviceEntryName string) (IstioObject, error)
-	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
-	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
-	GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error)
+	GetEndpoints(namespace string, serviceName string) (*v1.Endpoints, error)
+	GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error)
+	GetDeployments(namespace string, labelSelector string) ([]v1beta1.Deployment, error)
 	GetDestinationRule(namespace string, destinationrule string) (IstioObject, error)
+	GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error)
+	GetGateway(namespace string, gateway string) (IstioObject, error)
+	GetGateways(namespace string) ([]IstioObject, error)
+	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
 	GetIstioRules(namespace string) (*IstioRules, error)
 	GetIstioRuleDetails(namespace string, istiorule string) (*IstioRuleDetails, error)
-	GetQuotaSpecs(namespace string) ([]IstioObject, error)
+	GetNamespaceAppsDetails(namespace string) (NamespaceApps, error)
+	GetNamespaces() ([]v1.Namespace, error)
+	GetPods(namespace, labelSelector string) ([]v1.Pod, error)
+	GetService(namespace string, serviceName string) (*v1.Service, error)
+	GetServices(namespace string, selectorLabels map[string]string) ([]v1.Service, error)
+	GetServiceEntries(namespace string) ([]IstioObject, error)
+	GetServiceEntry(namespace string, serviceEntryName string) (IstioObject, error)
+	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
+	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	GetQuotaSpec(namespace string, quotaSpecName string) (IstioObject, error)
-	GetQuotaSpecBindings(namespace string) ([]IstioObject, error)
+	GetQuotaSpecs(namespace string) ([]IstioObject, error)
 	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)
-	GetDeployments(namespace string) (*v1beta1.DeploymentList, error)
-	GetDeploymentsBySelector(namespace string, labelSelector string) (*v1beta1.DeploymentList, error)
-	GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error)
-	GetDeploymentDetails(namespace string, deploymentName string) (*DeploymentDetails, error)
-	GetDeploymentSelector(namespace string, deploymentName string) (string, error)
-	GetServicesByDeploymentSelector(namespace string, deployment *v1beta1.Deployment) ([]v1.Service, error)
+	GetQuotaSpecBindings(namespace string) ([]IstioObject, error)
 }
 
 // IstioClient is the client struct for Kubernetes and Istio APIs
@@ -176,80 +168,4 @@ func NewClient() (*IstioClient, error) {
 	}
 
 	return &client, nil
-}
-
-// FilterPodsForService returns a subpart of pod list filtered according service selector
-func FilterPodsForService(s *v1.Service, allPods *v1.PodList) []v1.Pod {
-	if s == nil || allPods == nil {
-		return nil
-	}
-	serviceSelector := labels.Set(s.Spec.Selector).AsSelector()
-	pods := filterPodsForService(serviceSelector, allPods)
-
-	return pods
-}
-
-// FilterDeploymentsForService returns a subpart of deployments list filtered according to pods labels.
-func FilterDeploymentsForService(s *v1.Service, servicePods []v1.Pod, allDepls *v1beta1.DeploymentList) []v1beta1.Deployment {
-	if s == nil || allDepls == nil {
-		return nil
-	}
-	serviceSelector := labels.Set(s.Spec.Selector).AsSelector()
-
-	var deployments []v1beta1.Deployment
-	for _, d := range allDepls.Items {
-		depSelector, err := meta_v1.LabelSelectorAsSelector(d.Spec.Selector)
-		if err != nil {
-			log.Errorf("Invalid label selector: %v", err)
-		}
-		added := false
-		// If it matches any of the pods, then it's "part" of the service
-		for _, pod := range servicePods {
-			// If a deployment with an empty selector creeps in, it should match nothing, not everything.
-			if !depSelector.Empty() && depSelector.Matches(labels.Set(pod.ObjectMeta.Labels)) {
-				deployments = append(deployments, d)
-				added = true
-				break
-			}
-		}
-		if !added {
-			// Maybe there's no pod (yet) for a deployment, but it still "belongs" to that service
-			// We can try to guess that by matching service selector with deployment labels and assume they would match.
-			// This is of course not guaranteed.
-			if !serviceSelector.Empty() && serviceSelector.Matches(labels.Set(d.ObjectMeta.Labels)) {
-				deployments = append(deployments, d)
-			}
-		}
-	}
-	return deployments
-}
-
-func filterPodsForService(selector labels.Selector, allPods *v1.PodList) []v1.Pod {
-	var pods []v1.Pod
-	for _, pod := range allPods.Items {
-		if selector.Matches(labels.Set(pod.ObjectMeta.Labels)) {
-			pods = append(pods, pod)
-		}
-	}
-	return pods
-}
-
-// filterPodsForEndpoints performs a second pass was selector may return too many data
-// This case happens when a "nil" selector (such as one of default/kubernetes service) is used
-func filterPodsForEndpoints(endpoints *v1.Endpoints, unfiltered *v1.PodList) []v1.Pod {
-	endpointPods := make(map[string]bool)
-	for _, subset := range endpoints.Subsets {
-		for _, address := range subset.Addresses {
-			if address.TargetRef != nil && address.TargetRef.Kind == "Pod" {
-				endpointPods[address.TargetRef.Name] = true
-			}
-		}
-	}
-	var pods []v1.Pod
-	for _, pod := range unfiltered.Items {
-		if _, ok := endpointPods[pod.Name]; ok {
-			pods = append(pods, pod)
-		}
-	}
-	return pods
 }

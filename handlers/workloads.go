@@ -68,7 +68,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	workload := params["workload"]
 
 	// Fetch and build workload
-	workloadDetails, err := business.Workload.GetWorkload(namespace, workload)
+	workloadDetails, err := business.Workload.GetWorkload(namespace, workload, true)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return

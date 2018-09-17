@@ -13,6 +13,8 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+
+	"github.com/kiali/kiali/services/business"
 )
 
 func TestWorkloadSidecarsPasses(t *testing.T) {
@@ -23,8 +25,9 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 
 	trafficMap := buildWorkloadTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{}
+	business := business.SetWithBackends(k8s, nil)
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, k8s)
+	sidecarsAppender.applySidecarsChecks(trafficMap, business)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata["hasMissingSC"].(bool)
@@ -40,8 +43,9 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 
 	trafficMap := buildWorkloadTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{}
+	business := business.SetWithBackends(k8s, nil)
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, k8s)
+	sidecarsAppender.applySidecarsChecks(trafficMap, business)
 
 	for _, node := range trafficMap {
 		flag, ok := node.Metadata["hasMissingSC"].(bool)
@@ -57,8 +61,9 @@ func TestAppSidecarsPasses(t *testing.T) {
 
 	trafficMap := buildAppTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{}
+	business := business.SetWithBackends(k8s, nil)
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, k8s)
+	sidecarsAppender.applySidecarsChecks(trafficMap, business)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata["hasMissingSC"].(bool)
@@ -73,8 +78,9 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 
 	trafficMap := buildAppTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{}
+	business := business.SetWithBackends(k8s, nil)
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, k8s)
+	sidecarsAppender.applySidecarsChecks(trafficMap, business)
 
 	for _, node := range trafficMap {
 		flag, ok := node.Metadata["hasMissingSC"].(bool)
@@ -89,8 +95,9 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 
 	trafficMap := buildServiceTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{}
+	business := business.SetWithBackends(k8s, nil)
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, k8s)
+	sidecarsAppender.applySidecarsChecks(trafficMap, business)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata["hasMissingSC"].(bool)
@@ -128,35 +135,36 @@ func buildServiceTrafficMap() graph.TrafficMap {
 func buildFakeWorkloadDeployment() *v1beta1.Deployment {
 	return &v1beta1.Deployment{
 		Spec: v1beta1.DeploymentSpec{
-			Selector: &v1.LabelSelector{
-				MatchLabels: map[string]string{
-					"wk": "wk-1",
-				}}}}
-}
-
-func buildFakeWorkloadPods() *api_v1.PodList {
-	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
-
-	return &api_v1.PodList{
-		Items: []api_v1.Pod{
-			{
+			Template: api_v1.PodTemplateSpec{
 				ObjectMeta: v1.ObjectMeta{
-					Name:              "wk-1-asdf",
-					CreationTimestamp: v1.NewTime(time.Date(2018, 8, 24, 14, 0, 0, 0, time.UTC)),
-					Annotations: map[string]string{
-						istioAnnotation: "{ \"containers\":[\"istio-proxy\"] }",
-					},
+					Labels: map[string]string{"wk": "wk-1"},
 				},
 			},
 		},
 	}
 }
 
-func buildFakeWorkloadPodsNoSidecar() *api_v1.PodList {
+func buildFakeWorkloadPods() []api_v1.Pod {
+	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
+
+	return []api_v1.Pod{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              "wk-1-asdf",
+				CreationTimestamp: v1.NewTime(time.Date(2018, 8, 24, 14, 0, 0, 0, time.UTC)),
+				Annotations: map[string]string{
+					istioAnnotation: "{ \"containers\":[\"istio-proxy\"] }",
+				},
+			},
+		},
+	}
+}
+
+func buildFakeWorkloadPodsNoSidecar() []api_v1.Pod {
 	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
 
 	podList := buildFakeWorkloadPods()
-	podList.Items[0].ObjectMeta.Annotations[istioAnnotation] = "{}"
+	podList[0].ObjectMeta.Annotations[istioAnnotation] = "{}"
 
 	return podList
 }

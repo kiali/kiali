@@ -24,17 +24,17 @@ func GetNamespaces() ([]Namespace, error) {
 		return nil, err
 	}
 
-	services, err := istioClient.GetNamespaces()
+	namespaces, err := istioClient.GetNamespaces()
 	if err != nil {
 		return nil, err
 	}
 
-	return CastNamespaceCollection(services), nil
+	return CastNamespaceCollection(namespaces), nil
 }
 
-func CastNamespaceCollection(nsl *v1.NamespaceList) []Namespace {
-	namespaces := make([]Namespace, len(nsl.Items))
-	for i, item := range nsl.Items {
+func CastNamespaceCollection(ns []v1.Namespace) []Namespace {
+	namespaces := make([]Namespace, len(ns))
+	for i, item := range ns {
 		namespaces[i] = CastNamespace(item)
 	}
 

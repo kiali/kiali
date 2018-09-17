@@ -52,8 +52,7 @@ func mockValidationService(istioObjects *kubernetes.IstioDetails, podList *v1.Po
 func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, services []string, podList *v1.PodList) IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetIstioDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(istioObjects, nil)
-	k8s.On("GetServices", mock.AnythingOfType("string")).Return(fakeCombinedServices(services), nil)
-	k8s.On("GetNamespacePods", mock.AnythingOfType("string")).Return(podList, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices(services), nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().VirtualServices, nil)
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().DestinationRules, nil)
 	k8s.On("GetServiceEntries", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().ServiceEntries, nil)
@@ -145,7 +144,7 @@ func fakeCombinedIstioDetails() *kubernetes.IstioDetails {
 	return &istioDetails
 }
 
-func fakeCombinedServices(services []string) *v1.ServiceList {
+func fakeCombinedServices(services []string) []v1.Service {
 	items := []v1.Service{}
 
 	for _, service := range services {
@@ -155,9 +154,7 @@ func fakeCombinedServices(services []string) *v1.ServiceList {
 			},
 		})
 	}
-	return &v1.ServiceList{
-		Items: items,
-	}
+	return items
 }
 
 func fakePods() *v1.PodList {

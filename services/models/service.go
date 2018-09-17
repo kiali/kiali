@@ -81,31 +81,32 @@ func (s *Service) Parse(service *v1.Service) {
 	}
 }
 
-func (s *ServiceDetails) SetServiceDetails(serviceDetails *kubernetes.ServiceDetails, istioDetails *kubernetes.IstioDetails, prometheusDetails map[string][]prometheus.Workload) {
-	s.setKubernetesDetails(serviceDetails)
-	s.setIstioDetails(istioDetails)
-	s.setPrometheusDetails(prometheusDetails)
+func (s *ServiceDetails) SetService(svc *v1.Service) {
+	s.Service.Parse(svc)
 }
 
-func (s *ServiceDetails) setKubernetesDetails(serviceDetails *kubernetes.ServiceDetails) {
+func (s *ServiceDetails) SetEndpoints(eps *v1.Endpoints) {
+	(&s.Endpoints).Parse(eps)
+}
+
+func (s *ServiceDetails) SetPods(pods []v1.Pod) {
 	mPods := Pods{}
-	mPods.Parse(serviceDetails.Pods)
+	mPods.Parse(pods)
 	s.IstioSidecar = mPods.HasIstioSideCar()
-
-	s.Service.Parse(serviceDetails.Service)
-	(&s.Endpoints).Parse(serviceDetails.Endpoints)
-	(&s.Workloads).Parse(serviceDetails.Deployments)
 }
 
-func (s *ServiceDetails) setIstioDetails(istioDetails *kubernetes.IstioDetails) {
-	(&s.VirtualServices).Parse(istioDetails.VirtualServices)
-	(&s.DestinationRules).Parse(istioDetails.DestinationRules)
+func (s *ServiceDetails) SetVirtualServices(vs []kubernetes.IstioObject) {
+	(&s.VirtualServices).Parse(vs)
 }
 
-func (s *ServiceDetails) setPrometheusDetails(prometheusDetails map[string][]prometheus.Workload) {
+func (s *ServiceDetails) SetDestinationRules(dr []kubernetes.IstioObject) {
+	(&s.DestinationRules).Parse(dr)
+}
+
+func (s *ServiceDetails) SetSourceWorkloads(sw map[string][]prometheus.Workload) {
 	// Transform dependencies for UI
 	s.Dependencies = make(map[string][]SourceWorkload)
-	for version, workloads := range prometheusDetails {
+	for version, workloads := range sw {
 		for _, workload := range workloads {
 			s.Dependencies[version] = append(s.Dependencies[version], SourceWorkload{
 				Name:      workload.Workload,

@@ -167,37 +167,33 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal(true, recommendationV2.Metadata["isUnused"])
 }
 
-func mockDeployments() *v1beta1.DeploymentList {
-	deployments := v1beta1.DeploymentList{
-		Items: []v1beta1.Deployment{
-			{
-				ObjectMeta: v1.ObjectMeta{
-					Name:   "customer-v1",
-					Labels: map[string]string{"app": "customer", "version": "v1"},
-				},
+func mockDeployments() []v1beta1.Deployment {
+	return []v1beta1.Deployment{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:   "customer-v1",
+				Labels: map[string]string{"app": "customer", "version": "v1"},
 			},
-			{
-				ObjectMeta: v1.ObjectMeta{
-					Name:   "preference-v1",
-					Labels: map[string]string{"app": "preference", "version": "v1"},
-				},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:   "preference-v1",
+				Labels: map[string]string{"app": "preference", "version": "v1"},
 			},
-			{
-				ObjectMeta: v1.ObjectMeta{
-					Name:   "recommendation-v1",
-					Labels: map[string]string{"app": "recommendation", "version": "v1"},
-				},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:   "recommendation-v1",
+				Labels: map[string]string{"app": "recommendation", "version": "v1"},
 			},
-			{
-				ObjectMeta: v1.ObjectMeta{
-					Name:   "recommendation-v2",
-					Labels: map[string]string{"app": "recommendation", "version": "v2"},
-				},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:   "recommendation-v2",
+				Labels: map[string]string{"app": "recommendation", "version": "v2"},
 			},
 		},
 	}
-
-	return &deployments
 }
 
 func (a *UnusedNodeAppender) oneNodeTraffic() map[string]*graph.Node {

@@ -2,9 +2,9 @@ package models
 
 import (
 	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 )
 
 const DEPLOYMENT string = "Deployment"
@@ -152,12 +152,12 @@ func (workload *WorkloadListItem) Parse(d v1beta1.Deployment) {
 	_, workload.VersionLabel = d.Spec.Template.Labels[conf.IstioLabels.VersionLabelName]
 }
 
-func (workloadList *WorkloadOverviews) Parse(ds *v1beta1.DeploymentList) {
+func (workloadList *WorkloadOverviews) Parse(ds []v1beta1.Deployment) {
 	if ds == nil {
 		return
 	}
 
-	for _, deployment := range ds.Items {
+	for _, deployment := range ds {
 		cast := &WorkloadOverview{}
 		cast.Parse(deployment)
 		*workloadList = append(*workloadList, cast)
@@ -184,7 +184,10 @@ func (workload *Workload) Parse(d *v1beta1.Deployment) {
 	workload.UnavailableReplicas = d.Status.UnavailableReplicas
 }
 
-func (workload *Workload) SetDetails(deploymentDetails *kubernetes.DeploymentDetails) {
-	workload.Pods.Parse(deploymentDetails.Pods.Items)
-	workload.Services.Parse(deploymentDetails.Services)
+func (workload *Workload) SetPods(pods []v1.Pod) {
+	workload.Pods.Parse(pods)
+}
+
+func (workload *Workload) SetServices(svcs []v1.Service) {
+	workload.Services.Parse(svcs)
 }

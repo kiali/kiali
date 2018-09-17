@@ -2,6 +2,8 @@ package business
 
 import (
 	"fmt"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"sync"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -20,29 +22,37 @@ type ObjectChecker interface {
 // GetServiceValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers.
 func (in *IstioValidationsService) GetServiceValidations(namespace, service string) (models.IstioValidations, error) {
-	// Get all the Istio objects from a Namespace and service
-	istioDetails, err := in.k8s.GetIstioDetails(namespace, service)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get serviceDetails from a Namespace and service
-	serviceDetails, err := in.k8s.GetServiceDetails(namespace, service)
+	svc, err := in.k8s.GetService(namespace, service)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get Gateways and ServiceEntries to validate VirtualServices
 	wg := sync.WaitGroup{}
-	errChan := make(chan error, 2)
+	errChan := make(chan error, 5)
 
+	vs := make([]kubernetes.IstioObject, 0)
+	dr := make([]kubernetes.IstioObject, 0)
 	gws := make([]kubernetes.IstioObject, 0)
 	ses := make([]kubernetes.IstioObject, 0)
+	var pods []v1.Pod
 
-	wg.Add(2)
+	wg.Add(5)
+	go fetch(&vs, namespace, service, in.k8s.GetVirtualServices, &wg, errChan)
+	go fetch(&dr, namespace, service, in.k8s.GetDestinationRules, &wg, errChan)
 	go fetchNoEntry(&gws, namespace, in.k8s.GetGateways, &wg, errChan)
 	go fetchNoEntry(&ses, namespace, in.k8s.GetServiceEntries, &wg, errChan)
+	go func() {
+		defer wg.Done()
+		var err error
+		pods, err = in.k8s.GetPods(namespace, labels.Set(svc.Spec.Selector).String())
+		if err != nil {
+			errChan <- err
+		}
+	}()
 	wg.Wait()
+	/* TODO revisit if Gateways and ServiceEntries are used here, something seems missing
+	   istioDetails is not passed
 	if len(errChan) == 0 {
 		istioDetails.Gateways = gws
 		istioDetails.ServiceEntries = ses
@@ -50,11 +60,14 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		err = <-errChan
 		return nil, err
 	}
-
+	*/
+	if len(errChan) != 0 {
+		err = <-errChan
+		return nil, err
+	}
 	objectCheckers := []ObjectChecker{
-		checkers.VirtualServiceChecker{namespace, istioDetails.DestinationRules,
-			istioDetails.VirtualServices},
-		checkers.PodChecker{Pods: serviceDetails.Pods},
+		checkers.VirtualServiceChecker{namespace, dr, vs},
+		checkers.PodChecker{Pods: pods},
 	}
 
 	// Get groupal validations for same kind istio objects
@@ -68,7 +81,7 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 		return nil, err
 	}
 
-	serviceList, err := in.k8s.GetServices(namespace)
+	services, err := in.k8s.GetServices(namespace, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -95,31 +108,32 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 	objectCheckers := []ObjectChecker{
 		checkers.VirtualServiceChecker{namespace, istioDetails.DestinationRules,
 			istioDetails.VirtualServices},
-		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: istioDetails, ServiceList: serviceList},
+		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: istioDetails, Services: services},
 	}
 
 	return models.NamespaceValidations{namespace: runObjectCheckers(objectCheckers)}, nil
 }
 
 func (in *IstioValidationsService) GetWorkloadValidations(namespace string, workload string) (models.IstioValidations, error) {
-	selector, err := in.k8s.GetDeploymentSelector(namespace, workload)
+	deployment, err := in.k8s.GetDeployment(namespace, workload)
 	if err != nil {
 		return nil, err
 	}
+	selector := labels.FormatLabels(deployment.Spec.Template.Labels)
 	dPods, err := in.k8s.GetPods(namespace, selector)
 	if err != nil {
 		return nil, err
 	}
 
 	objectCheckers := []ObjectChecker{
-		checkers.PodChecker{Pods: dPods.Items},
+		checkers.PodChecker{Pods: dPods},
 	}
 
 	return runObjectCheckers(objectCheckers), nil
 }
 
 func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, objectType string, object string) (models.IstioValidations, error) {
-	serviceList, err := in.k8s.GetServices(namespace)
+	services, err := in.k8s.GetServices(namespace, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +145,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	drs := make([]kubernetes.IstioObject, 0)
 	gws := make([]kubernetes.IstioObject, 0)
 	var objectCheckers []ObjectChecker
-	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, ServiceList: serviceList}
+	noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, Services: services}
 	istioDetails := kubernetes.IstioDetails{}
 	noServiceChecker.IstioDetails = &istioDetails
 
@@ -143,8 +157,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	case "virtualservices":
 		wg.Add(3)
 		errChan := make(chan error, 3)
-		go fetch(&vss, namespace, in.k8s.GetVirtualServices, &wg, errChan)
-		go fetch(&drs, namespace, in.k8s.GetDestinationRules, &wg, errChan)
+		go fetch(&vss, namespace, "", in.k8s.GetVirtualServices, &wg, errChan)
+		go fetch(&drs, namespace, "", in.k8s.GetDestinationRules, &wg, errChan)
 		go fetchNoEntry(&gws, namespace, in.k8s.GetGateways, &wg, errChan)
 		// We can block current goroutine for the fourth fetch
 		ses, err = in.k8s.GetServiceEntries(namespace)
@@ -197,9 +211,9 @@ func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
 	return objectTypeValidations
 }
 
-func fetch(rValue *[]kubernetes.IstioObject, namespace string, fetcher func(string, string) ([]kubernetes.IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
+func fetch(rValue *[]kubernetes.IstioObject, namespace string, service string, fetcher func(string, string) ([]kubernetes.IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
 	defer wg.Done()
-	fetched, err := fetcher(namespace, "")
+	fetched, err := fetcher(namespace, service)
 	*rValue = append(*rValue, fetched...)
 	if err != nil {
 		errChan <- err

@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/apps/v1beta1"
-	autoscalingV1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -20,7 +18,12 @@ func TestServiceDetailParsing(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	service := ServiceDetails{}
-	service.SetServiceDetails(fakeServiceDetails(), fakeIstioDetails(), fakePrometheusDetails())
+	service.SetService(fakeService())
+	service.SetEndpoints(fakeEndpoints())
+	service.SetPods(fakePods())
+	service.SetVirtualServices(fakeVirtualService())
+	service.SetDestinationRules(fakeDestinationRules())
+	service.SetSourceWorkloads(fakeSourceWorkloads())
 
 	// Kubernetes Details
 
@@ -44,24 +47,6 @@ func TestServiceDetailParsing(t *testing.T) {
 				Port{Name: "http", Protocol: "TCP", Port: 3001},
 				Port{Name: "http", Protocol: "TCP", Port: 3000},
 			}}})
-
-	assert.Equal(*service.Workloads[0], WorkloadOverview{
-		Name:            "reviews-v1",
-		Labels:          map[string]string{"apps": "reviews", "version": "v1"},
-		Type:            "Deployment",
-		CreatedAt:       "2018-03-08T17:44:00+03:00",
-		ResourceVersion: "1234",
-	})
-
-	assert.Equal(*service.Workloads[1], WorkloadOverview{
-		Name:            "reviews-v2",
-		Labels:          map[string]string{"apps": "reviews", "version": "v2"},
-		Type:            "Deployment",
-		CreatedAt:       "2018-03-08T17:45:00+03:00",
-		ResourceVersion: "4567",
-	})
-
-	// Istio Details
 
 	assert.Equal(service.VirtualServices, VirtualServices{
 		VirtualService{
@@ -186,7 +171,6 @@ func TestServiceDetailParsing(t *testing.T) {
 		},
 	})
 
-	// Prometheus Client
 	assert.Equal(service.Dependencies, map[string][]SourceWorkload{
 		"v1": {SourceWorkload{Name: "unknown", Namespace: "ns"}, SourceWorkload{Name: "products-v1", Namespace: "ns"}, SourceWorkload{Name: "reviews-v2", Namespace: "ns"}},
 		"v2": {SourceWorkload{Name: "catalog-v1", Namespace: "ns"}, SourceWorkload{Name: "shares-v2", Namespace: "ns"}},
@@ -243,13 +227,8 @@ func fakeService() *v1.Service {
 					Port:     3000}}}}
 }
 
-func fakeServiceDetails() *kubernetes.ServiceDetails {
-	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:45 +0300")
-
-	service := fakeService()
-
-	endpoints := &v1.Endpoints{
+func fakeEndpoints() *v1.Endpoints {
+	return &v1.Endpoints{
 		Subsets: []v1.EndpointSubset{
 			{
 				Addresses: []v1.EndpointAddress{
@@ -268,8 +247,13 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 					{Name: "http", Protocol: "TCP", Port: 3001},
 					{Name: "http", Protocol: "TCP", Port: 3000},
 				}}}}
+}
 
-	pods := []v1.Pod{
+func fakePods() []v1.Pod {
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:45 +0300")
+
+	return []v1.Pod{
 		v1.Pod{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "reviews-v1-1234",
@@ -281,77 +265,9 @@ func fakeServiceDetails() *kubernetes.ServiceDetails {
 				CreationTimestamp: meta_v1.NewTime(t2),
 				Labels:            map[string]string{"apps": "reviews", "version": "v2"}}},
 	}
-
-	deployments := &v1beta1.DeploymentList{
-		Items: []v1beta1.Deployment{
-			v1beta1.Deployment{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:              "reviews-v1",
-					Namespace:         "Namespace",
-					CreationTimestamp: meta_v1.NewTime(t1),
-					ResourceVersion:   "1234",
-					Labels:            map[string]string{"apps": "reviews", "version": "v1"}},
-				Status: v1beta1.DeploymentStatus{
-					Replicas:            3,
-					AvailableReplicas:   1,
-					UnavailableReplicas: 2}},
-			v1beta1.Deployment{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:              "reviews-v2",
-					Namespace:         "Namespace",
-					CreationTimestamp: meta_v1.NewTime(t2),
-					ResourceVersion:   "4567",
-					Labels:            map[string]string{"apps": "reviews", "version": "v2"}},
-				Status: v1beta1.DeploymentStatus{
-					Replicas:            3,
-					AvailableReplicas:   3,
-					UnavailableReplicas: 0}}}}
-
-	autoscalers := &autoscalingV1.HorizontalPodAutoscalerList{
-		Items: []autoscalingV1.HorizontalPodAutoscaler{
-			autoscalingV1.HorizontalPodAutoscaler{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:              "reviews-v1",
-					Labels:            map[string]string{"apps": "reviews", "version": "v1"},
-					CreationTimestamp: meta_v1.NewTime(t1)},
-				Spec: autoscalingV1.HorizontalPodAutoscalerSpec{
-					ScaleTargetRef: autoscalingV1.CrossVersionObjectReference{
-						Name: "reviews-v1"},
-					MinReplicas:                    &[]int32{1}[0],
-					MaxReplicas:                    10,
-					TargetCPUUtilizationPercentage: &[]int32{50}[0]},
-				Status: autoscalingV1.HorizontalPodAutoscalerStatus{
-					ObservedGeneration:              &[]int64{50}[0],
-					CurrentReplicas:                 3,
-					DesiredReplicas:                 4,
-					CurrentCPUUtilizationPercentage: &[]int32{70}[0]}},
-			autoscalingV1.HorizontalPodAutoscaler{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:              "reviews-v2",
-					Labels:            map[string]string{"apps": "reviews", "version": "v2"},
-					CreationTimestamp: meta_v1.NewTime(t2)},
-				Spec: autoscalingV1.HorizontalPodAutoscalerSpec{
-					ScaleTargetRef: autoscalingV1.CrossVersionObjectReference{
-						Name: "reviews-v2"},
-					MinReplicas:                    &[]int32{1}[0],
-					MaxReplicas:                    10,
-					TargetCPUUtilizationPercentage: &[]int32{50}[0]},
-				Status: autoscalingV1.HorizontalPodAutoscalerStatus{
-					ObservedGeneration:              &[]int64{50}[0],
-					CurrentReplicas:                 3,
-					DesiredReplicas:                 2,
-					CurrentCPUUtilizationPercentage: &[]int32{30}[0]}}}}
-
-	return &kubernetes.ServiceDetails{
-		Service:     service,
-		Endpoints:   endpoints,
-		Pods:        pods,
-		Deployments: deployments,
-		Autoscalers: autoscalers,
-	}
 }
 
-func fakeIstioDetails() *kubernetes.IstioDetails {
+func fakeVirtualService() []kubernetes.IstioObject {
 	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:47 +0300")
 
 	virtualService1 := kubernetes.MockIstioObject{
@@ -435,7 +351,11 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 			},
 		},
 	}
-	virtualServices := []kubernetes.IstioObject{&virtualService1, &virtualService2}
+	return []kubernetes.IstioObject{&virtualService1, &virtualService2}
+}
+
+func fakeDestinationRules() []kubernetes.IstioObject {
+	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:47 +0300")
 
 	destinationRule1 := kubernetes.MockIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -489,37 +409,15 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 			},
 		},
 	}
-	destinationRules := []kubernetes.IstioObject{&destinationRule1, &destinationRule2}
 
-	serviceEntry := kubernetes.MockIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "external-svc-wikipedia",
-			Namespace: "wikipedia",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"wikipedia.org",
-			},
-			"location": "MESH_EXTERNAL",
-			"ports": map[string]interface{}{
-				"number":   uint64(80),
-				"name":     "example-http",
-				"protocol": "HTTP",
-			},
-			"resolution": "DNS",
-		},
-	}
-
-	serviceEntries := []kubernetes.IstioObject{&serviceEntry}
-
-	return &kubernetes.IstioDetails{virtualServices, destinationRules, serviceEntries, nil}
+	return []kubernetes.IstioObject{&destinationRule1, &destinationRule2}
 }
 
-func fakePrometheusDetails() map[string][]prometheus.Workload {
+func fakeSourceWorkloads() map[string][]prometheus.Workload {
 	return map[string][]prometheus.Workload{
-		"v1": []prometheus.Workload{prometheus.Workload{App: "unknown", Version: "unknown", Namespace: "ns", Workload: "unknown"},
-			prometheus.Workload{App: "products", Version: "v1", Namespace: "ns", Workload: "products-v1"},
-			prometheus.Workload{App: "reviews", Version: "v2", Namespace: "ns", Workload: "reviews-v2"}},
-		"v2": []prometheus.Workload{prometheus.Workload{App: "catalog", Version: "v1", Namespace: "ns", Workload: "catalog-v1"},
-			prometheus.Workload{App: "shares", Version: "v2", Namespace: "ns", Workload: "shares-v2"}}}
+		"v1": {{App: "unknown", Version: "unknown", Namespace: "ns", Workload: "unknown"},
+			{App: "products", Version: "v1", Namespace: "ns", Workload: "products-v1"},
+			{App: "reviews", Version: "v2", Namespace: "ns", Workload: "reviews-v2"}},
+		"v2": {{App: "catalog", Version: "v1", Namespace: "ns", Workload: "catalog-v1"},
+			{App: "shares", Version: "v2", Namespace: "ns", Workload: "shares-v2"}}}
 }

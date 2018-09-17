@@ -37,12 +37,13 @@ func setupDeploymentList() (*httptest.Server, *kubetest.K8SClientMock, *promethe
 }
 
 func TestDeploymentList(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
 	ts, k8s, _ := setupDeploymentList()
 	defer ts.Close()
 
-	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
-	k8s.On("GetDeploymentSelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentSelector(), nil)
 
 	url := ts.URL + "/api/namespaces/ns/workloads"
 
@@ -57,61 +58,53 @@ func TestDeploymentList(t *testing.T) {
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 }
 
-func fakeDeploymentList() *v1beta1.DeploymentList {
+func fakeDeploymentList() []v1beta1.Deployment {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return &v1beta1.DeploymentList{
-		Items: []v1beta1.Deployment{
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:              "httpbin-v1",
-					CreationTimestamp: meta_v1.NewTime(t1),
-					Labels:            map[string]string{"app": "httpbin", "version": "v1"}},
-				Spec: v1beta1.DeploymentSpec{
-					Selector: &meta_v1.LabelSelector{
-						MatchLabels: map[string]string{"app": "httpbin", "version": "v3"},
-					},
+	return []v1beta1.Deployment{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "httpbin-v1",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{"app": "httpbin", "version": "v1"}},
+			Spec: v1beta1.DeploymentSpec{
+				Selector: &meta_v1.LabelSelector{
+					MatchLabels: map[string]string{"app": "httpbin", "version": "v3"},
 				},
-				Status: v1beta1.DeploymentStatus{
-					Replicas:            1,
-					AvailableReplicas:   1,
-					UnavailableReplicas: 0,
-				},
+			},
+			Status: v1beta1.DeploymentStatus{
+				Replicas:            1,
+				AvailableReplicas:   1,
+				UnavailableReplicas: 0,
 			},
 		},
 	}
 }
 
-func fakePodList() *k8s_v1.PodList {
+func fakePodList() []k8s_v1.Pod {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return &k8s_v1.PodList{
-		Items: []k8s_v1.Pod{
-			{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Name:              "details-v1-3618568057-dnkjp",
-					CreationTimestamp: meta_v1.NewTime(t1),
-					Labels:            map[string]string{"app": "httpbin", "version": "v1"},
-					OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
-						Kind: "ReplicaSet",
-						Name: "details-v1-3618568057",
-					}},
-					Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
-				Spec: k8s_v1.PodSpec{
-					Containers: []k8s_v1.Container{
-						k8s_v1.Container{Name: "details", Image: "whatever"},
-						k8s_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
-					},
-					InitContainers: []k8s_v1.Container{
-						k8s_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-						k8s_v1.Container{Name: "enable-core-dump", Image: "alpine"},
-					},
+	return []k8s_v1.Pod{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "details-v1-3618568057-dnkjp",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{"app": "httpbin", "version": "v1"},
+				OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+					Kind: "ReplicaSet",
+					Name: "details-v1-3618568057",
+				}},
+				Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+			Spec: k8s_v1.PodSpec{
+				Containers: []k8s_v1.Container{
+					k8s_v1.Container{Name: "details", Image: "whatever"},
+					k8s_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+				},
+				InitContainers: []k8s_v1.Container{
+					k8s_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+					k8s_v1.Container{Name: "enable-core-dump", Image: "alpine"},
 				},
 			},
 		},
 	}
-}
-
-func fakeDeploymentSelector() string {
-	return "app:httpbin,version:v1"
 }
 
 func fakeServices() []k8s_v1.Service {

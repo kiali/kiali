@@ -18,13 +18,13 @@ func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, namespace s
 	istioClient, err := kubernetes.NewClient()
 	checkError(err)
 
-	deployments, err := istioClient.GetDeployments(namespace)
+	deployments, err := istioClient.GetDeployments(namespace, "")
 	checkError(err)
 
 	a.addUnusedNodes(trafficMap, namespace, deployments)
 }
 
-func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespace string, deployments *v1beta1.DeploymentList) {
+func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespace string, deployments []v1beta1.Deployment) {
 	unusedTrafficMap := a.buildUnusedTrafficMap(trafficMap, namespace, deployments)
 
 	// If trafficMap is empty just populate it with the unused nodes and return
@@ -41,12 +41,12 @@ func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespac
 	}
 }
 
-func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, namespace string, deployments *v1beta1.DeploymentList) graph.TrafficMap {
+func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, namespace string, deployments []v1beta1.Deployment) graph.TrafficMap {
 	unusedTrafficMap := graph.NewTrafficMap()
 	cfg := config.Get()
 	appLabel := cfg.IstioLabels.AppLabelName
 	versionLabel := cfg.IstioLabels.VersionLabelName
-	for _, d := range deployments.Items {
+	for _, d := range deployments {
 		labels := d.GetLabels()
 		app := graph.UnknownApp
 		version := graph.UnknownVersion

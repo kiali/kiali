@@ -20,7 +20,7 @@ func TestGetAppList(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	// Auxiliar fake* tests defined in workload_test.go
-	k8s.On("GetDeploymentsBySelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
 	svc := setupAppService(k8s)
 
@@ -39,9 +39,9 @@ func TestGetApp(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetDeploymentsBySelector", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentList(), nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodList(), nil)
-	k8s.On("GetServicesByDeploymentSelector", mock.AnythingOfType("string"), mock.AnythingOfType("*v1beta1.Deployment")).Return(fakeServices(), nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeServices(), nil)
 	svc := setupAppService(k8s)
 
 	appDetails, _ := svc.GetApp("Namespace", "httpbin")

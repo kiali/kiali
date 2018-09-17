@@ -2,14 +2,14 @@ package appender
 
 import (
 	"fmt"
-
+	"github.com/kiali/kiali/services/business"
+	"github.com/kiali/kiali/services/models"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	pods_checker "github.com/kiali/kiali/services/business/checkers/pods"
 )
 
 type SidecarsCheckAppender struct{}
@@ -20,13 +20,13 @@ func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, _ string
 		return
 	}
 
-	k8s, err := kubernetes.NewClient()
+	business, err := business.Get()
 	checkError(err)
 
-	a.applySidecarsChecks(trafficMap, k8s)
+	a.applySidecarsChecks(trafficMap, business)
 }
 
-func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, k8s kubernetes.IstioClientInterface) {
+func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, business *business.Layer) {
 	cfg := config.Get()
 	appLabel := cfg.IstioLabels.AppLabelName
 	versionLabel := cfg.IstioLabels.VersionLabelName
@@ -44,33 +44,29 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		}
 
 		// get the pods for the node, either by app+version labels, or workload deployment
-		var podLabels string
 		var err error
+		var pods models.Pods
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
-			podLabels, err = a.getWorkloadLabels(n.Namespace, n.Workload, k8s)
-			if err != nil {
-				continue
+			workload, err := business.Workload.GetWorkload(n.Namespace, n.Workload, false)
+			if err == nil {
+				pods = workload.Pods
 			}
 		case graph.NodeTypeApp:
-			podLabels = a.getAppLabels(appLabel, n.App, versionLabel, n.Version)
+			podLabels := a.getAppLabels(appLabel, n.App, versionLabel, n.Version)
+			pods, err = business.Workload.GetPods(n.Namespace, podLabels)
 		default:
 			continue
 		}
-		pods, err := k8s.GetPods(n.Namespace, podLabels)
 		checkError(err)
 
-		if len(pods.Items) == 0 {
-			log.Warningf("Sidecar check found no pods Checking sidecars node [%s] num pods [%v]", n.ID, len(pods.Items))
+		if len(pods) == 0 {
+			log.Warningf("Sidecar check found no pods Checking sidecars node [%s]", n.ID)
+			continue
 		}
 
-		// check each pod for sidecar, stop and flag at first pod missing sidecar
-		for _, pod := range pods.Items {
-			checker := pods_checker.SidecarPresenceChecker{Pod: &pod}
-			if _, ok := checker.Check(); !ok {
-				n.Metadata["hasMissingSC"] = true
-				break
-			}
+		if !pods.HasIstioSideCar() {
+			n.Metadata["hasMissingSC"] = true
 		}
 	}
 }

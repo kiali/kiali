@@ -2,6 +2,7 @@ package business
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
@@ -20,7 +21,7 @@ type AppService struct {
 type appWorkload struct {
 	Workload   string
 	Deployment *v1beta1.Deployment
-	Pods       *v1.PodList
+	Pods       []v1.Pod
 	IstioFlag  bool
 }
 
@@ -30,19 +31,19 @@ type appsWorkload map[string][]appWorkload
 // Helper method to build a map of workloads for a given labelSelector
 func (in *AppService) fetchWorkloadsPerApp(namespace, labelSelector string) (appsWorkload, error) {
 	cfg := config.Get()
-	deployments, err := in.k8s.GetDeploymentsBySelector(namespace, labelSelector)
+	deployments, err := in.k8s.GetDeployments(namespace, labelSelector)
 	if err != nil {
 		return nil, err
 	}
 
 	apps := make(appsWorkload)
-	for _, deployment := range deployments.Items {
+	for _, deployment := range deployments {
 		if appLabel, ok := deployment.Labels[cfg.IstioLabels.AppLabelName]; ok {
-			selector, _ := kubernetes.GetSelectorAsString(&deployment)
+			selector := labels.FormatLabels(deployment.Spec.Template.Labels)
 			dPods, _ := in.k8s.GetPods(namespace, selector)
 			mPods := &models.Pods{}
 			// Using Parse to calculate the IstioSideCar from Pods
-			mPods.Parse(dPods.Items)
+			mPods.Parse(dPods)
 			appWkd := &appWorkload{
 				Workload:   deployment.Name,
 				Deployment: &deployment,
@@ -97,13 +98,13 @@ func (in *AppService) GetApp(namespace string, app string) (models.App, error) {
 	(*appInstance).Workloads = make([]models.WorkloadSvc, len(appWkd))
 	for i, wkd := range appWkd {
 		wkdSvc := &models.WorkloadSvc{WorkloadName: wkd.Workload}
-		services, _ := in.k8s.GetServicesByDeploymentSelector(namespace, wkd.Deployment)
+		services, _ := in.k8s.GetServices(namespace, wkd.Deployment.Spec.Template.Labels)
 		if err != nil {
 			return *appInstance, err
 		}
 		mPods := &models.Pods{}
 		// Using Parse to calculate the IstioSideCar from Pods
-		mPods.Parse(wkd.Pods.Items)
+		mPods.Parse(wkd.Pods)
 		wkdSvc.IstioSidecar = mPods.HasIstioSideCar()
 		wkdSvc.ServiceNames = make([]string, len(services))
 		for j, service := range services {
