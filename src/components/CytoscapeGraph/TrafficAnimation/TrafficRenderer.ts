@@ -8,6 +8,19 @@ import {
   Diamond
 } from './TrafficPointRenderer';
 
+const TCP_SETTINGS = {
+  baseSpeed: 0.5,
+  timer: {
+    max: 600,
+    min: 150
+  },
+  sentRate: {
+    min: 50,
+    max: 1024 * 1024
+  },
+  errorRate: 0
+};
+
 // Min and max values to clamp the request per second rate
 const TIMER_REQUEST_PER_SECOND_MIN = 0;
 const TIMER_REQUEST_PER_SECOND_MAX = 750;
@@ -36,6 +49,17 @@ enum EdgeConnectionType {
   LOOP
 }
 
+enum TrafficEdgeType {
+  HTTP,
+  TCP,
+  NONE
+}
+
+/**
+ * Returns a TrafficPointRenderer for a Http error point
+ * @param edge
+ * @returns {TrafficPointRenderer}
+ */
 const getTrafficPointRendererForHttpError: (edge: any) => TrafficPointRenderer = (edge: any) => {
   return new TrafficPointConcentricDiamondRenderer(
     new Diamond(4, PfColors.White, PfColors.Red100, 1.0),
@@ -43,8 +67,22 @@ const getTrafficPointRendererForHttpError: (edge: any) => TrafficPointRenderer =
   );
 };
 
+/**
+ * Returns a TrafficPointRenderer for a Http success point
+ * @param edge
+ * @returns {TrafficPointRenderer}
+ */
 const getTrafficPointRendererForHttpSuccess: (edge: any) => TrafficPointRenderer = (edge: any) => {
   return new TrafficPointCircleRenderer(3, PfColors.White, edge.style('line-color'), 2);
+};
+
+/**
+ * Returns a TrafficPointRenderer for a Tcp point
+ * @param edge
+ * @returns {TrafficPointCircleRenderer}
+ */
+const getTrafficPointRendererForTcp: (edge: any) => TrafficPointRenderer = (edge: any) => {
+  return new TrafficPointCircleRenderer(0.8, PfColors.Black100, PfColors.Black500, 1);
 };
 
 /**
@@ -56,11 +94,13 @@ const getTrafficPointRendererForHttpSuccess: (edge: any) => TrafficPointRenderer
  * delta - defines in what part of the edge is the point,  is a normalized number
  *  from 0 to 1, 0 means at the start of the path, and 1 is the end. The position
  *  is interpolated.
+ * offset - Offset to add to the rendered point position.
  * renderer - Renderer used to draw the shape at a given position.
  */
 type TrafficPoint = {
   speed: number;
   delta: number;
+  offset: Point;
   renderer: TrafficPointRenderer;
 };
 
@@ -75,15 +115,7 @@ class TrafficPointGenerator {
   private timerForNextPoint?: number;
   private speed: number;
   private errorRate: number;
-
-  // If timer is undefined, no point is going to be generated, ideal when traffic is zero
-  constructor(speed: number, timer: number | undefined, errorRate: number) {
-    this.speed = speed;
-    this.timer = timer;
-    this.errorRate = errorRate;
-    // Start as soon as posible, unless we have no traffic
-    this.timerForNextPoint = this.timer === undefined ? undefined : 0;
-  }
+  private type: TrafficEdgeType;
 
   /**
    * Process a render step for the generator, decrements the timerForNextPoint and
@@ -105,6 +137,7 @@ class TrafficPointGenerator {
 
   setTimer(timer: number | undefined) {
     this.timer = timer;
+    // Start as soon as posible, unless we have no traffic
     if (this.timerForNextPoint === undefined) {
       this.timerForNextPoint = timer;
     }
@@ -118,12 +151,30 @@ class TrafficPointGenerator {
     this.errorRate = errorRate;
   }
 
+  setType(type: TrafficEdgeType) {
+    this.type = type;
+  }
+
   private nextPoint(edge: any): TrafficPoint {
+    let renderer;
+    let offset;
     const isErrorPoint = Math.random() <= this.errorRate;
+    if (this.type === TrafficEdgeType.HTTP) {
+      renderer = isErrorPoint ? getTrafficPointRendererForHttpError(edge) : getTrafficPointRendererForHttpSuccess(edge);
+    } else if (this.type === TrafficEdgeType.TCP) {
+      renderer = getTrafficPointRendererForTcp(edge);
+      // Cheap way to put some offset around the edge, I think this is enough unless we want more accuracy
+      // More accuracy would need to identify the slope of current segment of the edgge (for curves and loops) to only do
+      // offsets perpendicular to it, instead of it, we are moving around a circle area
+      // Random offset (x,y); 'x' in [-1.5, 1.5] and 'y' in [-1.5, 1.5]
+      offset = { x: Math.random() * 3 - 1.5, y: Math.random() * 3 - 1.5 };
+    }
+
     return {
       speed: this.speed,
       delta: 0, // at the beginning of the edge
-      renderer: isErrorPoint ? getTrafficPointRendererForHttpError(edge) : getTrafficPointRendererForHttpSuccess(edge)
+      renderer: renderer,
+      offset: offset
     };
   }
 }
@@ -139,10 +190,10 @@ class TrafficEdge {
   private points: Array<TrafficPoint> = [];
   private generator: TrafficPointGenerator;
   private edge: any;
+  private type: TrafficEdgeType;
 
-  constructor(speed: number, timer: number | undefined, errorRate: number, edge: any) {
-    this.generator = new TrafficPointGenerator(speed, timer, errorRate);
-    this.edge = edge;
+  constructor() {
+    this.generator = new TrafficPointGenerator();
   }
 
   /**
@@ -168,6 +219,10 @@ class TrafficEdge {
     return this.edge;
   }
 
+  getType() {
+    return this.type;
+  }
+
   setTimer(timer: number | undefined) {
     this.generator.setTimer(timer);
   }
@@ -190,6 +245,11 @@ class TrafficEdge {
   setEdge(edge: any) {
     this.edge = edge;
   }
+
+  setType(type: TrafficEdgeType) {
+    this.type = type;
+    this.generator.setType(type);
+  }
 }
 
 type TrafficEdgeHash = {
@@ -199,6 +259,10 @@ type TrafficEdgeHash = {
 /**
  * Renders the traffic going from edges using the edge information to compute
  * their rate and speed
+ *
+ * rate determines how often to put a TrafficPoint in the edge.
+ * responseTime determines how fast the TrafficPoint should travel from the start to the end of the edge.
+ * percentErr determine if the next TrafficPoint is error or not.
  */
 export default class TrafficRenderer {
   private animationTimer;
@@ -283,7 +347,7 @@ export default class TrafficRenderer {
     trafficEdge.getPoints().forEach((point: TrafficPoint) => {
       const controlPoints = this.edgeControlPoints(edge);
       try {
-        const pointInGraph = this.pointInGraph(controlPoints, point.delta);
+        const pointInGraph = this.pointWithOffset(this.pointInGraph(controlPoints, point.delta), point.offset);
 
         if (pointInGraph) {
           point.renderer.render(this.context, pointInGraph);
@@ -323,43 +387,73 @@ export default class TrafficRenderer {
     }
   }
 
+  private pointWithOffset(point: Point, offset: Point) {
+    return offset === undefined ? point : { x: point.x + offset.x, y: point.y + offset.y };
+  }
+
   private currentStep(currentTime: number): number {
     const step = currentTime - this.previousTimestamp;
     return step === 0 ? FRAME_RATE * 1000 : step;
   }
 
+  private getTrafficEdgeType(edge: any) {
+    if (edge.data('rate') !== undefined) {
+      return TrafficEdgeType.HTTP;
+    } else if (edge.data('tcpSentRate') !== undefined) {
+      return TrafficEdgeType.TCP;
+    }
+    return TrafficEdgeType.NONE;
+  }
+
   private processEdges(edges: any): TrafficEdgeHash {
     return edges.reduce((trafficEdges: TrafficEdgeHash, edge: any) => {
-      const edgeId = edge.data('id');
-      const timer = this.timerFromRate(edge.data('rate'));
-      let edgeLengthFactor = 1;
-      try {
-        const edgeLength = this.edgeLength(edge);
-        edgeLengthFactor = BASE_LENGTH / Math.max(edgeLength, 1);
-      } catch (error) {
-        console.error(
-          `Error when finding the length of the edge for the traffic animation, this TrafficEdge won't be rendered: ${
-            error.message
-          }`
-        );
+      const type = this.getTrafficEdgeType(edge);
+      if (type !== TrafficEdgeType.NONE) {
+        const edgeId = edge.data('id');
+        if (edgeId in this.trafficEdges) {
+          trafficEdges[edgeId] = this.trafficEdges[edgeId];
+        } else {
+          trafficEdges[edgeId] = new TrafficEdge();
+        }
+        trafficEdges[edgeId].setType(type);
+        this.fillTrafficEdge(edge, trafficEdges[edgeId]);
       }
+      return trafficEdges;
+    }, {});
+  }
 
+  private fillTrafficEdge(edge: any, trafficEdge: TrafficEdge) {
+    // Need to identify if we are going to fill a HTTP or TCP traffic edge
+    // HTTP traffic has rate, responseTime, percentErr (among others) where TCP traffic only has: tcpSentRate
+
+    let edgeLengthFactor = 1;
+    try {
+      const edgeLength = this.edgeLength(edge);
+      edgeLengthFactor = BASE_LENGTH / Math.max(edgeLength, 1);
+    } catch (error) {
+      console.error(
+        `Error when finding the length of the edge for the traffic animation, this TrafficEdge won't be rendered: ${
+          error.message
+        }`
+      );
+    }
+
+    if (trafficEdge.getType() === TrafficEdgeType.HTTP) {
+      const timer = this.timerFromRate(edge.data('rate'));
       // The edge of the length also affects the speed, include a factor in the speed to even visual speed for
       // long and short edges.
       const speed = this.speedFromResponseTime(edge.data('responseTime')) * edgeLengthFactor;
       const errorRate = edge.data('percentErr') === undefined ? 0 : edge.data('percentErr') / 100;
-      if (edgeId in this.trafficEdges) {
-        const trafficEdge = this.trafficEdges[edgeId];
-        trafficEdge.setTimer(timer);
-        trafficEdge.setSpeed(speed);
-        trafficEdge.setEdge(edge);
-        trafficEdge.setErrorRate(errorRate);
-        trafficEdges[edgeId] = trafficEdge;
-      } else {
-        trafficEdges[edgeId] = new TrafficEdge(speed, timer, errorRate, edge);
-      }
-      return trafficEdges;
-    }, {});
+      trafficEdge.setSpeed(speed);
+      trafficEdge.setTimer(timer);
+      trafficEdge.setEdge(edge);
+      trafficEdge.setErrorRate(errorRate);
+    } else if (trafficEdge.getType() === TrafficEdgeType.TCP) {
+      trafficEdge.setSpeed(TCP_SETTINGS.baseSpeed * edgeLengthFactor);
+      trafficEdge.setErrorRate(TCP_SETTINGS.errorRate);
+      trafficEdge.setTimer(this.timerFromTcpSentRate(edge.data('tcpSentRate'))); // 150 - 500
+      trafficEdge.setEdge(edge);
+    }
   }
 
   // see for easing functions https://gist.github.com/gre/1650294
@@ -375,6 +469,17 @@ export default class TrafficRenderer {
     return (
       TIMER_TIME_BETWEEN_DOTS_MIN + Math.pow(1 - delta, 2) * (TIMER_TIME_BETWEEN_DOTS_MAX - TIMER_TIME_BETWEEN_DOTS_MIN)
     );
+  }
+
+  private timerFromTcpSentRate(tcpSentRate: number) {
+    if (isNaN(tcpSentRate) || tcpSentRate === 0) {
+      return undefined;
+    }
+    // Normalize requests per second within a range
+    const delta = clamp(tcpSentRate, TCP_SETTINGS.sentRate.min, TCP_SETTINGS.sentRate.max) / TCP_SETTINGS.sentRate.max;
+
+    // Invert and scale
+    return TCP_SETTINGS.timer.min + Math.pow(1 - delta, 2) * (TCP_SETTINGS.timer.max - TCP_SETTINGS.timer.min);
   }
 
   private speedFromResponseTime(responseTime: number) {
