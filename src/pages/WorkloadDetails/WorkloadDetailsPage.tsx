@@ -76,7 +76,10 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
         this.setState({
           workload: resultDetails.data,
           validations: resultValidations.data,
-          istioEnabled: this.checkIstioEnabled(resultValidations.data),
+          istioEnabled:
+            resultDetails.data.pods && resultDetails.data.pods.length > 0
+              ? this.checkIstioEnabled(resultValidations.data)
+              : false,
           health: resultHealth
         });
       })
