@@ -3,10 +3,9 @@ import { style } from 'typestyle';
 import { Toolbar, FormGroup, Button } from 'patternfly-react';
 import * as _ from 'lodash';
 
-import { Duration } from '../../types/GraphFilter';
+import { Duration, EdgeLabelMode } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
-import { config } from '../../config';
 import { GraphParamsType, GraphType } from '../../types/Graph';
 import Namespace from '../../types/Namespace';
 import GraphRefreshContainer from '../../containers/GraphRefreshContainer';
@@ -18,6 +17,7 @@ export interface GraphFilterProps extends GraphParamsType {
   onNamespaceChange: (newValue: Namespace) => void;
   onNamespaceReturn: () => void;
   onGraphTypeChange: (newType: GraphType) => void;
+  onEdgeLabelModeChange: (newEdgeLabelMode: EdgeLabelMode) => void;
   onRefresh: () => void;
 }
 
@@ -33,8 +33,10 @@ const namespaceStyle = style({
 
 export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
   // GraphFilter should be minimal and used for assembling those filtering components.
-  static readonly INTERVAL_DURATION = config().toolbar.intervalDuration;
   static readonly GRAPH_TYPES = _.mapValues(GraphType, val => _.capitalize(_.startCase(val)));
+  static readonly EDGE_LABEL_MODES = _.mapValues(_.omitBy(EdgeLabelMode, _.isFunction), val =>
+    _.capitalize(_.startCase(val as EdgeLabelMode))
+  );
 
   constructor(props: GraphFilterProps) {
     super(props);
@@ -52,6 +54,7 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
 
   render() {
     const graphTypeKey: string = _.findKey(GraphType, val => val === this.props.graphType)!;
+    const edgeLabelModeKey: string = _.findKey(EdgeLabelMode, val => val === this.props.edgeLabelMode)!;
 
     return (
       <>
@@ -74,6 +77,14 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
             <GraphSettingsContainer {...this.props} />
           </FormGroup>
           <ToolbarDropdown
+            id={'graph_filter_edge_labels'}
+            disabled={false}
+            handleSelect={this.updateEdgeLabelMode}
+            value={edgeLabelModeKey}
+            label="Edge Labels"
+            options={GraphFilter.EDGE_LABEL_MODES}
+          />
+          <ToolbarDropdown
             id={'graph_filter_view_type'}
             disabled={this.props.node !== undefined || this.props.disabled}
             handleSelect={this.updateGraphType}
@@ -82,19 +93,14 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
             label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
             options={GraphFilter.GRAPH_TYPES}
           />
-          <span style={{ marginLeft: '1.5em' }}>
-            <ToolbarDropdown
-              id={'graph_filter_interval_duration'}
-              disabled={this.props.disabled}
-              handleSelect={this.updateDuration}
-              nameDropdown={'Displaying'}
-              value={this.props.graphDuration.value}
-              label={String(GraphFilter.INTERVAL_DURATION[this.props.graphDuration.value])}
-              options={GraphFilter.INTERVAL_DURATION}
-            />
-          </span>
           <Toolbar.RightContent>
-            <GraphRefreshContainer id="graph_refresh_container" handleRefresh={this.handleRefresh} />
+            <GraphRefreshContainer
+              id="graph_refresh_container"
+              disabled={this.props.disabled}
+              handleRefresh={this.handleRefresh}
+              graphDuration={this.props.graphDuration}
+              onUpdateGraphDuration={this.updateDuration}
+            />
           </Toolbar.RightContent>
         </Toolbar>
       </>
@@ -105,6 +111,13 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
     const graphType: GraphType = GraphType[type] as GraphType;
     if (this.props.graphType !== graphType) {
       this.props.onGraphTypeChange(graphType);
+    }
+  };
+
+  private updateEdgeLabelMode = (edgeMode: string) => {
+    const mode: EdgeLabelMode = EdgeLabelMode[edgeMode] as EdgeLabelMode;
+    if (this.props.edgeLabelMode !== mode) {
+      this.props.onEdgeLabelModeChange(mode);
     }
   };
 }
