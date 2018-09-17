@@ -636,6 +636,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 				httpMetric,
 				namespace,
 				n.Workload,
+				istioNamespace,
 				"[2345][0-9][0-9]",        // regex for valid response_codes
 				int(o.Duration.Seconds()), // range duration for the query
 				groupBy)
