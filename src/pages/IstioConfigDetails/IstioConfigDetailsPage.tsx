@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Breadcrumb, Button, Col, Icon, Row } from 'patternfly-react';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { FilterSelected } from '../../components/Filters/StatefulFilters';
-import { ActiveFilter } from '../../types/Filters';
+import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
+import { ActiveFilter } from '../../types/NamespaceFilter';
 import {
   aceOptions,
   IstioConfigDetails,
@@ -55,15 +55,15 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       activeFilters.push(objectTypeFilter);
     }
 
-    FilterSelected.setSelected(activeFilters);
+    NamespaceFilterSelected.setSelected(activeFilters);
   };
 
-  updateStatefulFilters = () => this.updateFilters(false);
+  updateNamespaceFilter = () => this.updateFilters(false);
 
   updateTypeFilter = () => this.updateFilters(true);
 
   cleanFilter = () => {
-    FilterSelected.setSelected([]);
+    NamespaceFilterSelected.setSelected([]);
   };
 
   fetchIstioObjectDetails = () => {
@@ -235,7 +235,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <Link to="/istio" onClick={this.updateStatefulFilters}>
+          <Link to="/istio" onClick={this.updateNamespaceFilter}>
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>

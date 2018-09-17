@@ -38,7 +38,7 @@ class WorkloadListPage extends ListPage.Component<WorkloadListProps, WorkloadLis
           pageHooks={this}
           currentSortField={this.currentSortField()}
           isSortAscending={this.isCurrentSortAscending()}
-          rateInterval={this.currentDuration()}
+          rateInterval={this.currentRateInterval()}
         />
       </>
     );

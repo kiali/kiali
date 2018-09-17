@@ -1,10 +1,10 @@
-// FilterValue maps a Patternfly property. Modify with care.
+import PropTypes from 'prop-types';
+
 export interface FilterValue {
   id: string;
   title: string;
 }
 
-// FilterType maps a Patternfly property. Modify with care.
 export interface FilterType {
   id: string;
   title: string;
@@ -12,7 +12,6 @@ export interface FilterType {
   filterType: string;
   action: string;
   filterValues: FilterValue[];
-  loader?: () => Promise<FilterValue[]>;
 }
 
 export const FILTER_ACTION_APPEND = 'append';
@@ -22,4 +21,18 @@ export interface ActiveFilter {
   label: string;
   category: string;
   value: string;
+}
+
+export interface NamespaceFilterProps {
+  onFilterChange: PropTypes.func;
+  onError: PropTypes.func;
+  initialFilters: FilterType[];
+  initialActiveFilters?: ActiveFilter[];
+}
+
+export interface NamespaceFilterState {
+  filterTypeList: FilterType[];
+  currentFilterType: FilterType;
+  activeFilters: ActiveFilter[];
+  currentValue: string;
 }

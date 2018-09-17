@@ -9,7 +9,7 @@ import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer';
 import { WorkloadHealth } from '../../types/Health';
-import { FilterSelected } from '../../components/Filters/StatefulFilters';
+import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
 
 type WorkloadDetailsState = {
   workload: Deployment;
@@ -101,7 +101,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
   };
 
   clearFilters() {
-    FilterSelected.setSelected([]);
+    NamespaceFilterSelected.setSelected([]);
   }
 
   renderBreadcrumbs = () => {

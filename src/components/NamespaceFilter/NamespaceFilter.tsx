@@ -1,22 +1,18 @@
 import * as React from 'react';
 import { Filter, FormControl, Toolbar } from 'patternfly-react';
-import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
+import {
+  ActiveFilter,
+  FILTER_ACTION_APPEND,
+  FILTER_ACTION_UPDATE,
+  FilterType,
+  FilterValue,
+  NamespaceFilterProps,
+  NamespaceFilterState
+} from '../../types/NamespaceFilter';
+import * as API from '../../services/Api';
+import { authentication } from '../../utils/Authentication';
 
-export interface StatefulFiltersProps {
-  onFilterChange: (filters: ActiveFilter[]) => void;
-  onError: (msg: string) => void;
-  initialFilters: FilterType[];
-  initialActiveFilters?: ActiveFilter[];
-}
-
-export interface StatefulFiltersState {
-  filterTypes: FilterType[];
-  currentFilterType: FilterType;
-  activeFilters: ActiveFilter[];
-  currentValue: string;
-}
-
-export namespace FilterSelected {
+export namespace NamespaceFilterSelected {
   let selectedFilters: ActiveFilter[] = [];
 
   export const setSelected = (activeFilters: ActiveFilter[]) => {
@@ -28,48 +24,42 @@ export namespace FilterSelected {
   };
 }
 
-export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
-  constructor(props: StatefulFiltersProps) {
+export const defaultNamespaceFilter = {
+  id: 'namespace',
+  title: 'Namespace',
+  placeholder: 'Filter by Namespace',
+  filterType: 'select',
+  action: FILTER_ACTION_APPEND,
+  filterValues: []
+};
+
+export class NamespaceFilter extends React.Component<NamespaceFilterProps, NamespaceFilterState> {
+  constructor(props: NamespaceFilterProps) {
     super(props);
 
+    let initialFilters = this.initialFilterList(defaultNamespaceFilter);
+
     if (!!this.props.initialActiveFilters && this.props.initialActiveFilters.length > 0) {
-      FilterSelected.setSelected(this.props.initialActiveFilters);
+      NamespaceFilterSelected.setSelected(this.props.initialActiveFilters);
     }
 
     this.state = {
-      currentFilterType: this.props.initialFilters[0],
-      filterTypes: this.props.initialFilters,
-      activeFilters: FilterSelected.getSelected(),
+      currentFilterType: initialFilters[0],
+      filterTypeList: initialFilters,
+      activeFilters: NamespaceFilterSelected.getSelected(),
       currentValue: ''
     };
   }
 
-  componentDidMount() {
-    // Call all loaders from FilterTypes and set results in state
-    const promises = this.props.initialFilters.map(ft => {
-      if (ft.loader) {
-        return ft.loader().then(values => {
-          ft.filterValues = values;
-          return {
-            id: ft.id,
-            title: ft.title,
-            placeholder: ft.placeholder,
-            filterType: ft.filterType,
-            action: ft.action,
-            filterValues: ft.filterValues
-          };
-        });
-      } else {
-        return Promise.resolve(ft);
-      }
-    });
-
-    Promise.all(promises).then(types => {
-      this.setState({ filterTypes: types });
-    });
+  initialFilterList(namespaceFilter: FilterType) {
+    return this.props.initialFilters.slice().concat(namespaceFilter);
   }
 
-  componentDidUpdate(prevProps: StatefulFiltersProps, prevState: StatefulFiltersState, snapshot: any) {
+  componentDidMount() {
+    this.updateNamespaces();
+  }
+
+  componentDidUpdate(prevProps: NamespaceFilterProps, prevState: NamespaceFilterState, snapshot: any) {
     const filtersExists = (prevProps.initialActiveFilters || []).every(prevFilter => {
       return (
         (this.props.initialActiveFilters || []).findIndex(filter => {
@@ -91,6 +81,29 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
         activeFilters: this.props.initialActiveFilters
       });
     }
+  }
+
+  updateNamespaces() {
+    API.getNamespaces(authentication())
+      .then(response => {
+        const namespaceFilter: FilterType = {
+          id: 'namespace',
+          title: 'Namespace',
+          placeholder: 'Filter by Namespace',
+          filterType: 'select',
+          action: FILTER_ACTION_APPEND,
+          filterValues: response.data.map(namespace => {
+            return { title: namespace.name, id: namespace.name };
+          })
+        };
+        const initialFilters = this.initialFilterList(namespaceFilter);
+        this.setState({ filterTypeList: initialFilters, currentFilterType: namespaceFilter });
+      })
+      .catch(error => {
+        const errMsg = API.getErrorMsg('Error fetching namespace list.', error);
+        console.error(errMsg);
+        this.props.onError(errMsg);
+      });
   }
 
   filterAdded = (field: FilterType, value: string) => {
@@ -120,7 +133,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     }
 
     this.setState({ activeFilters: activeFilters });
-    FilterSelected.setSelected(activeFilters);
+    NamespaceFilterSelected.setSelected(activeFilters);
     this.props.onFilterChange(activeFilters);
   };
 
@@ -179,14 +192,14 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     if (index > -1) {
       let updated = [...activeFilters.slice(0, index), ...activeFilters.slice(index + 1)];
       this.setState({ activeFilters: updated });
-      FilterSelected.setSelected(updated);
+      NamespaceFilterSelected.setSelected(updated);
       this.props.onFilterChange(updated);
     }
   };
 
   clearFilters = () => {
     this.setState({ activeFilters: [] });
-    FilterSelected.setSelected([]);
+    NamespaceFilterSelected.setSelected([]);
     this.props.onFilterChange([]);
   };
 
@@ -225,7 +238,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
         <Toolbar>
           <Filter>
             <Filter.TypeSelector
-              filterTypes={this.state.filterTypes}
+              filterTypes={this.state.filterTypeList}
               currentFilterType={currentFilterType}
               onFilterTypeSelected={this.selectFilterType}
             />
@@ -262,4 +275,4 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   }
 }
 
-export default StatefulFilters;
+export default NamespaceFilter;

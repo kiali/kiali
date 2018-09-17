@@ -1,10 +1,13 @@
 import * as React from 'react';
 import { Button, Icon, ListView, ListViewItem, ListViewIcon, Sort, ToolbarRightContent } from 'patternfly-react';
 import { AxiosError } from 'axios';
-import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { NamespaceFilter } from '../../components/Filters/NamespaceFilter';
+import {
+  defaultNamespaceFilter,
+  NamespaceFilter,
+  NamespaceFilterSelected
+} from '../../components/NamespaceFilter/NamespaceFilter';
 import { Paginator } from 'patternfly-react';
-import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
+import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } from '../../types/NamespaceFilter';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { Pagination } from '../../types/Pagination';
@@ -127,10 +130,10 @@ const configValidationFilter: FilterType = {
 };
 
 const availableFilters: FilterType[] = [
-  NamespaceFilter.create(),
   istioTypeFilter,
   istioNameFilter,
-  configValidationFilter
+  configValidationFilter,
+  defaultNamespaceFilter
 ];
 
 type IstioConfigListComponentState = {
@@ -156,7 +159,8 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       currentSortField: this.props.currentSortField,
       isSortAscending: this.props.isSortAscending
     };
-    this.props.pageHooks.setSelectedFiltersToURL(availableFilters);
+
+    this.setActiveFiltersToURL();
   }
 
   componentDidMount() {
@@ -175,7 +179,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
         isSortAscending: this.props.isSortAscending
       });
 
-      this.props.pageHooks.setSelectedFiltersFromURL(availableFilters);
+      NamespaceFilterSelected.setSelected(this.selectedFilters());
       this.updateIstioConfig();
     }
   }
@@ -186,8 +190,76 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title &&
-      this.props.pageHooks.filtersMatchURL(availableFilters)
+      this.filtersMatch()
     );
+  }
+
+  filtersMatch() {
+    const selectedFilters: Map<string, string[]> = new Map<string, string[]>();
+
+    NamespaceFilterSelected.getSelected().map(activeFilter => {
+      const existingValue = selectedFilters.get(activeFilter.category) || [];
+      selectedFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
+    });
+
+    let urlParams: Map<string, string[]> = new Map<string, string[]>();
+    availableFilters.forEach(filter => {
+      const param = this.props.pageHooks.getQueryParam(filter.id);
+      if (param !== undefined) {
+        const existing = urlParams.get(filter.title) || [];
+        urlParams.set(filter.title, existing.concat(param));
+      }
+    });
+
+    let equalFilters = true;
+    selectedFilters.forEach((filterValues, filterName) => {
+      const aux = urlParams.get(filterName) || [];
+      equalFilters =
+        equalFilters && filterValues.every(value => aux.includes(value)) && filterValues.length === aux.length;
+    });
+
+    return selectedFilters.size === urlParams.size && equalFilters;
+  }
+
+  setActiveFiltersToURL() {
+    const params = NamespaceFilterSelected.getSelected()
+      .map(activeFilter => {
+        const availableFilter = availableFilters.find(filter => {
+          return filter.title === activeFilter.category;
+        });
+
+        if (typeof availableFilter === 'undefined') {
+          NamespaceFilterSelected.setSelected(
+            NamespaceFilterSelected.getSelected().filter(nfs => {
+              return nfs.category !== activeFilter.category;
+            })
+          );
+          return null;
+        }
+
+        return {
+          name: availableFilter.id,
+          value: activeFilter.value
+        };
+      })
+      .filter(filter => filter !== null) as URLParameter[];
+
+    this.props.pageHooks.onParamChange(params, 'append', 'replace');
+  }
+
+  selectedFilters() {
+    let activeFilters: ActiveFilter[] = [];
+    availableFilters.forEach(filter => {
+      (this.props.pageHooks.getQueryParam(filter.id) || []).forEach(value => {
+        activeFilters.push({
+          label: filter.title + ': ' + value,
+          category: filter.title,
+          value: value
+        });
+      });
+    });
+
+    return activeFilters;
   }
 
   onFilterChange = (filters: ActiveFilter[]) => {
@@ -280,7 +352,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
   };
 
   updateIstioConfig = (resetPagination?: boolean) => {
-    const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
+    const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
       .map(activeFilter => activeFilter.value);
@@ -474,9 +546,9 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
     let ruleListComponent;
     ruleListComponent = (
       <>
-        <StatefulFilters
-          initialFilters={availableFilters}
-          initialActiveFilters={FilterSelected.getSelected()}
+        <NamespaceFilter
+          initialFilters={[istioTypeFilter, istioNameFilter, configValidationFilter]}
+          initialActiveFilters={this.selectedFilters()}
           onFilterChange={this.onFilterChange}
           onError={this.handleError}
         >
@@ -497,7 +569,7 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
               <Icon name="refresh" />
             </Button>
           </ToolbarRightContent>
-        </StatefulFilters>
+        </NamespaceFilter>
         <ListView>{istioList}</ListView>
         <Paginator
           viewType="list"

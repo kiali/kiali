@@ -1,4 +1,10 @@
-import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
+import {
+  ActiveFilter,
+  FILTER_ACTION_APPEND,
+  FILTER_ACTION_UPDATE,
+  FilterType,
+  FilterValue
+} from '../../types/NamespaceFilter';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { getRequestErrorsRatio, WorkloadHealth } from '../../types/Health';

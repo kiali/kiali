@@ -30,7 +30,7 @@ class ServiceListPage extends ListPage.Component<ServiceListProps, ServiceListSt
           pagination={this.currentPagination()}
           currentSortField={this.currentSortField()}
           isSortAscending={this.isCurrentSortAscending()}
-          rateInterval={this.currentDuration()}
+          rateInterval={this.currentRateInterval()}
         />
       </>
     );
