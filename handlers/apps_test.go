@@ -146,7 +146,7 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 
 func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
 	config.Set(config.NewConfig())
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
 	business.SetWithBackends(k8s, prom)
 

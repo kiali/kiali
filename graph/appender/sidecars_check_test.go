@@ -19,12 +19,13 @@ import (
 
 func TestWorkloadSidecarsPasses(t *testing.T) {
 	config.Set(config.NewConfig())
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
+
 	k8s.On("GetDeployment", "testing", "workload-1").Return(buildFakeWorkloadDeployment(), nil)
 	k8s.On("GetPods", "testing", "wk=wk-1").Return(buildFakeWorkloadPods(), nil)
 
 	trafficMap := buildWorkloadTrafficMap()
-	sidecarsAppender := SidecarsCheckAppender{}
+	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
 	business := business.SetWithBackends(k8s, nil)
 
 	sidecarsAppender.applySidecarsChecks(trafficMap, business)
@@ -37,12 +38,13 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 
 func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	config.Set(config.NewConfig())
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
+
 	k8s.On("GetDeployment", "testing", "workload-1").Return(buildFakeWorkloadDeployment(), nil)
 	k8s.On("GetPods", "testing", "wk=wk-1").Return(buildFakeWorkloadPodsNoSidecar(), nil)
 
 	trafficMap := buildWorkloadTrafficMap()
-	sidecarsAppender := SidecarsCheckAppender{}
+	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
 	business := business.SetWithBackends(k8s, nil)
 
 	sidecarsAppender.applySidecarsChecks(trafficMap, business)
@@ -56,11 +58,12 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 
 func TestAppSidecarsPasses(t *testing.T) {
 	config.Set(config.NewConfig())
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
+
 	k8s.On("GetPods", "testing", fmt.Sprintf("%v=myTest", config.Get().IstioLabels.AppLabelName)).Return(buildFakeWorkloadPods(), nil)
 
 	trafficMap := buildAppTrafficMap()
-	sidecarsAppender := SidecarsCheckAppender{}
+	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
 	business := business.SetWithBackends(k8s, nil)
 
 	sidecarsAppender.applySidecarsChecks(trafficMap, business)
@@ -73,11 +76,11 @@ func TestAppSidecarsPasses(t *testing.T) {
 
 func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	config.Set(config.NewConfig())
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
 	k8s.On("GetPods", "testing", fmt.Sprintf("%v=myTest", config.Get().IstioLabels.AppLabelName)).Return(buildFakeWorkloadPodsNoSidecar(), nil)
 
 	trafficMap := buildAppTrafficMap()
-	sidecarsAppender := SidecarsCheckAppender{}
+	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
 	business := business.SetWithBackends(k8s, nil)
 
 	sidecarsAppender.applySidecarsChecks(trafficMap, business)
@@ -91,10 +94,10 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 
 func TestServicesAreAlwaysValid(t *testing.T) {
 	config.Set(config.NewConfig())
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
 
 	trafficMap := buildServiceTrafficMap()
-	sidecarsAppender := SidecarsCheckAppender{}
+	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
 	business := business.SetWithBackends(k8s, nil)
 
 	sidecarsAppender.applySidecarsChecks(trafficMap, business)

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	osv1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,7 +27,6 @@ import (
 func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, error) {
 	config.Set(config.NewConfig())
 	k8s := new(kubetest.K8SClientMock)
-	business.SetWithBackends(k8s, nil)
 
 	k8s.On("GetNamespaces").Return(
 		&v1.NamespaceList{
@@ -39,6 +39,24 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, error) {
 			},
 		}, nil)
 
+	k8s.On("GetProjects").Return(
+		&osv1.ProjectList{
+			Items: []osv1.Project{
+				osv1.Project{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "bookinfo",
+					},
+				},
+				osv1.Project{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "tutorial",
+					},
+				},
+			},
+		}, nil)
+
+	k8s.On("IsOpenShift").Return(true)
+
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
 	if err != nil {
@@ -46,6 +64,7 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, error) {
 	}
 	client.Inject(api)
 
+	business.SetWithBackends(k8s, nil)
 	return client, api, nil
 }
 

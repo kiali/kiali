@@ -94,16 +94,19 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 	// we can make some final adjustments:
 	// - mark the outsiders (i.e. nodes not in the requested namespaces)
 	// - mark the insider traffic generators (i.e. inside the namespace and only outgoing edges)
-	markOutsiders(trafficMap, o.Namespaces)
+	markOutsiders(trafficMap, o)
 	markTrafficGenerators(trafficMap)
 
 	return trafficMap
 }
 
-func markOutsiders(trafficMap graph.TrafficMap, namespaces []string) {
+func markOutsiders(trafficMap graph.TrafficMap, o options.Options) {
 	for _, n := range trafficMap {
-		if isOutside(n, namespaces) {
+		if isOutside(n, o.Namespaces) {
 			n.Metadata["isOutside"] = true
+			if isInaccessible(n, o.AccessibleNamespaces) {
+				n.Metadata["isInaccessible"] = true
+			}
 		}
 	}
 }
@@ -118,6 +121,14 @@ func isOutside(n *graph.Node, namespaces []string) bool {
 		}
 	}
 	return true
+}
+
+func isInaccessible(n *graph.Node, accessibleNamespaces map[string]bool) bool {
+	if _, found := accessibleNamespaces[n.Namespace]; !found {
+		return true
+	} else {
+		return false
+	}
 }
 
 func markTrafficGenerators(trafficMap graph.TrafficMap) {
@@ -539,7 +550,7 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	// we can make some final adjustments:
 	// - mark the outsiders (i.e. nodes not in the requested namespaces)
 	// - mark the traffic generators
-	markOutsiders(trafficMap, []string{namespace})
+	markOutsiders(trafficMap, o)
 	markTrafficGenerators(trafficMap)
 
 	generateGraph(trafficMap, w, o)

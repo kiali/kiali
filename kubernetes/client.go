@@ -14,6 +14,8 @@ import (
 	"k8s.io/client-go/rest"
 
 	kialiConfig "github.com/kiali/kiali/config"
+
+	osv1 "github.com/openshift/api/project/v1"
 )
 
 const (
@@ -46,6 +48,7 @@ type IstioClientInterface interface {
 	GetNamespaceAppsDetails(namespace string) (NamespaceApps, error)
 	GetNamespaces() ([]v1.Namespace, error)
 	GetPods(namespace, labelSelector string) ([]v1.Pod, error)
+	GetProjects() (*osv1.ProjectList, error)
 	GetService(namespace string, serviceName string) (*v1.Service, error)
 	GetServices(namespace string, selectorLabels map[string]string) ([]v1.Service, error)
 	GetServiceEntries(namespace string) ([]IstioObject, error)
@@ -56,6 +59,7 @@ type IstioClientInterface interface {
 	GetQuotaSpecs(namespace string) ([]IstioObject, error)
 	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)
 	GetQuotaSpecBindings(namespace string) ([]IstioObject, error)
+	IsOpenShift() bool
 }
 
 // IstioClient is the client struct for Kubernetes and Istio APIs

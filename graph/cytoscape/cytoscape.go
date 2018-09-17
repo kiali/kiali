@@ -47,6 +47,7 @@ type NodeData struct {
 	HasVS           bool            `json:"hasVS,omitempty"`           // true (has route rule) | false
 	IsDead          bool            `json:"isDead,omitempty"`          // true (has no pods) | false
 	IsGroup         string          `json:"isGroup,omitempty"`         // set to the grouping type, current values: [ 'version' ]
+	IsInaccessible  bool            `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
 	IsMisconfigured string          `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
 	IsOutside       bool            `json:"isOutside,omitempty"`       // true | false
 	IsRoot          bool            `json:"isRoot,omitempty"`          // true | false
@@ -175,6 +176,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node may be unused
 		if val, ok := n.Metadata["isUnused"]; ok {
 			nd.IsUnused = val.(bool)
+		}
+
+		// node is not accessible to the current user
+		if val, ok := n.Metadata["isInaccessible"]; ok {
+			nd.IsInaccessible = val.(bool)
 		}
 
 		// node may have a circuit breaker
@@ -369,6 +375,12 @@ func groupByVersion(nodes *[]*NodeWrapper) {
 				if n.HasVS {
 					n.HasVS = false
 					hasVirtualService = true
+				}
+
+				// If we have any nodes which are inaccessible, then mark the group as being inaccessible
+				// Note: all nodes here would have the same inaccessible value since they all belong to the same namespace
+				if n.IsInaccessible {
+					nd.IsInaccessible = true
 				}
 			}
 

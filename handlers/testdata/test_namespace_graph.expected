@@ -13,6 +13,7 @@
             "pricing": true
           },
           "rate": "20.000",
+          "isInaccessible": true,
           "isOutside": true
         }
       },
@@ -90,6 +91,7 @@
           "app": "ingressgateway",
           "rateOut": "100.000",
           "rateTcpSentOut": "150.000",
+          "isInaccessible": true,
           "isOutside": true,
           "isRoot": true
         }

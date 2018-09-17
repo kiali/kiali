@@ -12,7 +12,9 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-type SidecarsCheckAppender struct{}
+type SidecarsCheckAppender struct {
+	AccessibleNamespaces map[string]bool
+}
 
 // AppendGraph implements Appender
 func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
@@ -33,6 +35,12 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 	istioNamespace := cfg.IstioNamespace
 
 	for _, n := range trafficMap {
+
+		// Skip the check on the sidecars if we don't have access to the namespace
+		if _, found := a.AccessibleNamespaces[n.Namespace]; !found {
+			continue
+		}
+
 		// We whitelist istio components because they may not report telemetry using injected sidecars.
 		if n.Namespace == istioNamespace {
 			continue

@@ -13,6 +13,7 @@ type Layer struct {
 	IstioConfig IstioConfigService
 	Workload    WorkloadService
 	App         AppService
+	Namespace   NamespaceService
 }
 
 // Global business.Layer; currently only used for tests to inject mocks,
@@ -40,6 +41,7 @@ func Get() (*Layer, error) {
 	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s}
 	temporaryLayer.Workload = WorkloadService{k8s: k8s}
 	temporaryLayer.App = AppService{k8s: k8s}
+	temporaryLayer.Namespace = NewNamespaceService(k8s)
 	return temporaryLayer, nil
 }
 
@@ -52,5 +54,6 @@ func SetWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	layer.IstioConfig = IstioConfigService{k8s: k8s}
 	layer.Workload = WorkloadService{k8s: k8s}
 	layer.App = AppService{k8s: k8s}
+	layer.Namespace = NewNamespaceService(k8s)
 	return layer
 }

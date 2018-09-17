@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+
+	osv1 "github.com/openshift/api/project/v1"
 )
 
 type servicesResponse struct {
@@ -39,6 +41,26 @@ func (in *IstioClient) GetNamespaces() ([]v1.Namespace, error) {
 	}
 
 	return namespaces.Items, nil
+}
+
+func (in *IstioClient) GetProjects() (*osv1.ProjectList, error) {
+	result := &osv1.ProjectList{}
+
+	err := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects").Do().Into(result)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (in *IstioClient) IsOpenShift() bool {
+	_, err := in.k8s.RESTClient().Get().AbsPath("/version/openshift").Do().Raw()
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // GetNamespaceAppsDetails returns a map of apps details (services, deployments and pods) in the given namespace.
