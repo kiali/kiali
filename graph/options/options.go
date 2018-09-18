@@ -2,6 +2,8 @@
 package options
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -12,7 +14,7 @@ import (
 
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/appender"
-	"github.com/kiali/kiali/services/models"
+	"github.com/kiali/kiali/services/business"
 )
 
 const (
@@ -45,11 +47,12 @@ type VendorOptions struct {
 
 // Options are all supported graph generation options.
 type Options struct {
-	Appenders          []appender.Appender
-	Duration           time.Duration
-	IncludeIstio       bool // include istio-system services. Ignored for istio-system ns. Default false.
-	InjectServiceNodes bool // inject destination service nodes between source and destination nodes.
-	Namespaces         []string
+	AccessibleNamespaces map[string]bool
+	Appenders            []appender.Appender
+	Duration             time.Duration
+	IncludeIstio         bool // include istio-system services. Ignored for istio-system ns. Default false.
+	InjectServiceNodes   bool // inject destination service nodes between source and destination nodes.
+	Namespaces           []string
 	NodeOptions
 	QueryTime int64 // unix time in seconds
 	Workload  string
@@ -78,24 +81,32 @@ func NewOptions(r *http.Request) Options {
 	namespaces := params.Get("namespaces") // csl of namespaces. Overrides namespace path param if set
 	vendor := params.Get("vendor")
 
+	accessibleNamespaces := getAccessibleNamespaces()
+
 	var namespaceNames []string
 	fetchNamespaces := namespaces == NamespaceAll || (namespaces == "" && (namespace == NamespaceAll))
 	if fetchNamespaces {
-		namespaces, err := models.GetNamespaces()
-		checkError(err)
-
-		for _, namespace := range namespaces {
+		for namespace, _ := range accessibleNamespaces {
 			// The istio-system namespace is only shown when explicitly requested. Note that the
 			// 'includeIstio' option doesn't apply here, that option affects what is done in
 			// non-istio-system namespaces.
-			if namespace.Name != NamespaceIstioSystem {
-				namespaceNames = append(namespaceNames, namespace.Name)
+			if namespace != NamespaceIstioSystem {
+				namespaceNames = append(namespaceNames, namespace)
 			}
 		}
 	} else if namespaces != "" {
 		namespaceNames = strings.Split(namespaces, ",")
+		for _, namespaceName := range namespaceNames {
+			if _, found := accessibleNamespaces[namespaceName]; !found {
+				checkError(errors.New(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceName)))
+			}
+		}
 	} else if namespace != "" {
-		namespaceNames = []string{namespace}
+		if _, found := accessibleNamespaces[namespace]; !found {
+			checkError(errors.New(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespace)))
+		} else {
+			namespaceNames = []string{namespace}
+		}
 	} else {
 		// note, some global handlers do not require any namespaces
 		namespaceNames = []string{}
@@ -124,12 +135,13 @@ func NewOptions(r *http.Request) Options {
 	}
 
 	options := Options{
-		Duration:           duration,
-		IncludeIstio:       includeIstio,
-		InjectServiceNodes: injectServiceNodes,
-		Namespaces:         namespaceNames,
-		QueryTime:          queryTime,
-		Vendor:             vendor,
+		AccessibleNamespaces: accessibleNamespaces,
+		Duration:             duration,
+		IncludeIstio:         includeIstio,
+		InjectServiceNodes:   injectServiceNodes,
+		Namespaces:           namespaceNames,
+		QueryTime:            queryTime,
+		Vendor:               vendor,
 		NodeOptions: NodeOptions{
 			App:      app,
 			Service:  service,
@@ -199,10 +211,31 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		appenders = append(appenders, appender.IstioAppender{})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "sidecars_check") {
-		appenders = append(appenders, appender.SidecarsCheckAppender{})
+		appenders = append(appenders, appender.SidecarsCheckAppender{
+			AccessibleNamespaces: o.AccessibleNamespaces,
+		})
 	}
 
 	return appenders
+}
+
+// getAccessibleNamespaces returns a Set of all namespaces accessible to the user.
+// The Set is implemented using the map[string]bool convention.
+func getAccessibleNamespaces() map[string]bool {
+	// Get the namespaces
+	business, err := business.Get()
+	checkError(err)
+
+	namespaces, err := business.Namespace.GetNamespaces()
+	checkError(err)
+
+	// Create a map to store the namespaces
+	namespaceMap := make(map[string]bool)
+	for _, namespace := range namespaces {
+		namespaceMap[namespace.Name] = true
+	}
+
+	return namespaceMap
 }
 
 func checkError(err error) {

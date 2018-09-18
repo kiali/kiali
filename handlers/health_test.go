@@ -49,7 +49,7 @@ func TestNamespaceAppHealth(t *testing.T) {
 }
 
 func setupNamespaceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
 	business.SetWithBackends(k8s, prom)
 
@@ -93,7 +93,7 @@ func TestAppHealth(t *testing.T) {
 }
 
 func setupAppHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
 	business.SetWithBackends(k8s, prom)
 
@@ -137,7 +137,7 @@ func TestServiceHealth(t *testing.T) {
 }
 
 func setupServiceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
 	business.SetWithBackends(k8s, prom)
 

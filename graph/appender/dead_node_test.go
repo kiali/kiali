@@ -16,7 +16,7 @@ import (
 )
 
 func setupWorkloadService() business.WorkloadService {
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testPodsWithTraffic-v1").Return(
 		&v1beta1.Deployment{

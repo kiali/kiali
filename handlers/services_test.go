@@ -246,7 +246,8 @@ func TestServiceMetricsBadRateFunc(t *testing.T) {
 
 func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
 	config.Set(config.NewConfig())
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
+
 	api := new(prometheustest.PromAPIMock)
 	prom, err := prometheus.NewClient()
 	if err != nil {

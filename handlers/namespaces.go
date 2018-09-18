@@ -8,11 +8,18 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/services/business"
-	"github.com/kiali/kiali/services/models"
 )
 
 func NamespaceList(w http.ResponseWriter, r *http.Request) {
-	namespaces, err := models.GetNamespaces()
+
+	business, err := business.Get()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	namespaces, err := business.Namespace.GetNamespaces()
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

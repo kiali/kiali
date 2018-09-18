@@ -9,15 +9,33 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/kubernetes"
+
+	osv1 "github.com/openshift/api/project/v1"
 )
 
 type K8SClientMock struct {
 	mock.Mock
 }
 
+func NewK8SClientMock() *K8SClientMock {
+	k8s := new(K8SClientMock)
+	k8s.On("IsOpenShift").Return(true)
+	return k8s
+}
+
 func (o *K8SClientMock) GetNamespaces() ([]v1.Namespace, error) {
 	args := o.Called()
 	return args.Get(0).([]v1.Namespace), args.Error(1)
+}
+
+func (o *K8SClientMock) GetProjects() (*osv1.ProjectList, error) {
+	args := o.Called()
+	return args.Get(0).(*osv1.ProjectList), args.Error(1)
+}
+
+func (o *K8SClientMock) IsOpenShift() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
 }
 
 func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error) {

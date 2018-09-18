@@ -25,7 +25,7 @@ import (
 )
 
 func setupDeploymentList() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
 	business.SetWithBackends(k8s, prom)
 
