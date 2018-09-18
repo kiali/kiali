@@ -9,7 +9,7 @@ import { FilterSelected, StatefulFilters } from '../../components/Filters/Statef
 import { NamespaceFilter } from '../../components/Filters/NamespaceFilter';
 import { ListView, Sort, Paginator, ToolbarRightContent, Button, Icon } from 'patternfly-react';
 import { Pagination } from '../../types/Pagination';
-import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
+import { ActiveFilter, FilterType } from '../../types/Filters';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { URLParameter } from '../../types/Parameters';
 import ItemDescription from './ItemDescription';
@@ -51,7 +51,6 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       isSortAscending: this.props.isSortAscending,
       rateInterval: this.props.rateInterval
     };
-    this.props.pageHooks.setSelectedFiltersToURL(availableFilters);
   }
 
   componentDidMount() {
@@ -67,7 +66,6 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
         rateInterval: this.props.rateInterval
       });
 
-      this.props.pageHooks.setSelectedFiltersFromURL(availableFilters);
       this.updateWorkloads();
     }
   }
@@ -78,8 +76,7 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.rateInterval === this.props.rateInterval &&
       prevProps.isSortAscending === this.props.isSortAscending &&
-      prevProps.currentSortField.title === this.props.currentSortField.title &&
-      this.props.pageHooks.filtersMatchURL(availableFilters)
+      prevProps.currentSortField.title === this.props.currentSortField.title
     );
   }
 
@@ -227,38 +224,9 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
     return newParams;
   }
 
-  onFilterChange = (filters: ActiveFilter[]) => {
-    let params: URLParameter[] = [];
-
-    availableFilters.forEach(availableFilter => {
-      params.push({ name: availableFilter.id, value: '' });
-    });
-
-    filters.forEach(activeFilter => {
-      let filterId = (
-        availableFilters.find(filter => {
-          return filter.title === activeFilter.category;
-        }) || availableFilters[2]
-      ).id;
-
-      const updateableFilterIds = availableFilters
-        .filter(filter => filter.action === FILTER_ACTION_UPDATE)
-        .map(filter => filter.id);
-
-      if (updateableFilterIds.includes(filterId)) {
-        params = this.updateParams(params, filterId, activeFilter.value);
-      } else {
-        params.push({
-          name: filterId,
-          value: activeFilter.value
-        });
-      }
-    });
-
+  onFilterChange = () => {
     // Resetting pagination when filters change
-    params.push({ name: 'page', value: '' });
-
-    this.props.pageHooks.onParamChange(params, 'append');
+    this.props.pageHooks.onParamChange([{ name: 'page', value: '' }]);
     this.updateWorkloads(true);
   };
 
@@ -286,9 +254,8 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       <>
         <StatefulFilters
           initialFilters={availableFilters}
-          initialActiveFilters={FilterSelected.getSelected()}
+          pageHooks={this.props.pageHooks}
           onFilterChange={this.onFilterChange}
-          onError={this.handleError}
         >
           <Sort>
             <Sort.TypeSelector

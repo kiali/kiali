@@ -18,7 +18,7 @@ import { PfColors } from '../../components/Pf/PfColors';
 import * as API from '../../services/Api';
 import { getRequestErrorsRatio, ServiceHealth } from '../../types/Health';
 import Namespace from '../../types/Namespace';
-import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
+import { ActiveFilter, FilterType } from '../../types/Filters';
 import { Pagination } from '../../types/Pagination';
 import { overviewToItem, ServiceItem, ServiceOverview, SortField } from '../../types/ServiceListComponent';
 import { IstioLogo } from '../../config';
@@ -149,7 +149,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       isSortAscending: this.props.isSortAscending,
       rateInterval: this.props.rateInterval
     };
-    this.props.pageHooks.setSelectedFiltersToURL(availableFilters);
   }
 
   componentDidMount() {
@@ -165,7 +164,6 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
         rateInterval: this.props.rateInterval
       });
 
-      this.props.pageHooks.setSelectedFiltersFromURL(availableFilters);
       this.updateServices();
     }
   }
@@ -176,43 +174,13 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.rateInterval === this.props.rateInterval &&
       prevProps.isSortAscending === this.props.isSortAscending &&
-      prevProps.currentSortField.title === this.props.currentSortField.title &&
-      this.props.pageHooks.filtersMatchURL(availableFilters)
+      prevProps.currentSortField.title === this.props.currentSortField.title
     );
   }
 
-  onFilterChange = (filters: ActiveFilter[]) => {
-    let params: URLParameter[] = [];
-
-    availableFilters.forEach(availableFilter => {
-      params.push({ name: availableFilter.id, value: '' });
-    });
-
-    filters.forEach(activeFilter => {
-      let filterId = (
-        availableFilters.find(filter => {
-          return filter.title === activeFilter.category;
-        }) || availableFilters[2]
-      ).id;
-
-      const updateableFilterIds = availableFilters
-        .filter(filter => filter.action === FILTER_ACTION_UPDATE)
-        .map(filter => filter.id);
-
-      if (updateableFilterIds.includes(filterId)) {
-        params = this.updateParams(params, filterId, activeFilter.value);
-      } else {
-        params.push({
-          name: filterId,
-          value: activeFilter.value
-        });
-      }
-    });
-
+  onFilterChange = () => {
     // Resetting pagination when filters change
-    params.push({ name: 'page', value: '' });
-
-    this.props.pageHooks.onParamChange(params, 'append');
+    this.props.pageHooks.onParamChange([{ name: 'page', value: '' }]);
     this.updateServices(true);
   };
 
@@ -440,9 +408,8 @@ class ServiceListComponent extends React.Component<ServiceListComponentProps, Se
       <div>
         <StatefulFilters
           initialFilters={availableFilters}
-          initialActiveFilters={FilterSelected.getSelected()}
+          pageHooks={this.props.pageHooks}
           onFilterChange={this.onFilterChange}
-          onError={this.handleError}
         >
           <Sort>
             <Sort.TypeSelector

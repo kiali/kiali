@@ -6,13 +6,12 @@ import { AxiosError } from 'axios';
 import { AppListItem } from '../../types/AppList';
 import { AppListFilters } from './FiltersAndSorts';
 import { AppListClass } from './AppListClass';
-import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
+import { StatefulFilters, FilterSelected } from '../../components/Filters/StatefulFilters';
 import { NamespaceFilter } from '../../components/Filters/NamespaceFilter';
 import { ListView, Sort, Paginator, ToolbarRightContent, Button, Icon } from 'patternfly-react';
 import { Pagination } from '../../types/Pagination';
 import { ActiveFilter, FilterType } from '../../types/Filters';
 import { removeDuplicatesArray } from '../../utils/Common';
-import { URLParameter } from '../../types/Parameters';
 import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
 import { ListPage } from '../../components/ListPage/ListPage';
 
@@ -48,7 +47,6 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       isSortAscending: this.props.isSortAscending,
       rateInterval: this.props.rateInterval
     };
-    this.props.pageHooks.setSelectedFiltersToURL(availableFilters);
   }
 
   componentDidMount() {
@@ -118,8 +116,6 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         isSortAscending: this.props.isSortAscending,
         rateInterval: this.props.rateInterval
       });
-
-      this.props.pageHooks.setSelectedFiltersFromURL(availableFilters);
       this.updateApps();
     }
   }
@@ -130,8 +126,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.rateInterval === this.props.rateInterval &&
       prevProps.isSortAscending === this.props.isSortAscending &&
-      prevProps.currentSortField.title === this.props.currentSortField.title &&
-      this.props.pageHooks.filtersMatchURL(availableFilters)
+      prevProps.currentSortField.title === this.props.currentSortField.title
     );
   }
 
@@ -194,54 +189,10 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
     console.error(errMsg);
   }
 
-  updateParams(params: URLParameter[], looking: string, id: string, value: string) {
-    let newParams = params;
-    const index = newParams.findIndex(param => param.name === looking && param.value.length > 0);
-    if (index >= 0) {
-      newParams[index].value = value;
-    } else {
-      newParams.push({
-        name: id,
-        value: value
-      });
-    }
-    return newParams;
-  }
-
-  onFilterChange = (filters: ActiveFilter[]) => {
-    let params: URLParameter[] = [];
-    availableFilters.forEach(availableFilter => {
-      params.push({ name: availableFilter.id, value: '' });
-    });
-    filters.forEach(activeFilter => {
-      let filterId = (
-        availableFilters.find(filter => {
-          return filter.title === activeFilter.category;
-        }) || availableFilters[2]
-      ).id;
-      switch (activeFilter.category) {
-        case 'Istio Sidecar': {
-          params = this.updateParams(params, 'istiosidecar', filterId, activeFilter.value);
-          break;
-        }
-        default: {
-          params.push({
-            name: filterId,
-            value: activeFilter.value
-          });
-        }
-      }
-    });
-
+  onFilterChange = () => {
     // Resetting pagination when filters change
-    params.push({ name: 'page', value: '' });
-
-    this.props.pageHooks.onParamChange(params, 'append');
+    this.props.pageHooks.onParamChange([{ name: 'page', value: '' }]);
     this.updateApps(true);
-  };
-
-  handleError = (error: string) => {
-    this.props.pageHooks.handleError(error);
   };
 
   render() {
@@ -258,9 +209,8 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       <>
         <StatefulFilters
           initialFilters={availableFilters}
-          initialActiveFilters={FilterSelected.getSelected()}
+          pageHooks={this.props.pageHooks}
           onFilterChange={this.onFilterChange}
-          onError={this.handleError}
         >
           <Sort>
             <Sort.TypeSelector

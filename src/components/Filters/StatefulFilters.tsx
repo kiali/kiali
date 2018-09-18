@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { Filter, FormControl, Toolbar } from 'patternfly-react';
 import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
+import { ListPage } from '../ListPage/ListPage';
 
 export interface StatefulFiltersProps {
-  onFilterChange: (filters: ActiveFilter[]) => void;
-  onError: (msg: string) => void;
+  onFilterChange: () => void;
+  pageHooks: ListPage.Hooks;
   initialFilters: FilterType[];
-  initialActiveFilters?: ActiveFilter[];
 }
 
 export interface StatefulFiltersState {
@@ -17,14 +17,18 @@ export interface StatefulFiltersState {
 }
 
 export namespace FilterSelected {
-  let selectedFilters: ActiveFilter[] = [];
+  let selectedFilters: ActiveFilter[] | undefined = undefined;
 
   export const setSelected = (activeFilters: ActiveFilter[]) => {
     selectedFilters = activeFilters;
   };
 
   export const getSelected = (): ActiveFilter[] => {
-    return selectedFilters;
+    return selectedFilters || [];
+  };
+
+  export const isInitialized = () => {
+    return selectedFilters !== undefined;
   };
 }
 
@@ -32,14 +36,19 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   constructor(props: StatefulFiltersProps) {
     super(props);
 
-    if (!!this.props.initialActiveFilters && this.props.initialActiveFilters.length > 0) {
-      FilterSelected.setSelected(this.props.initialActiveFilters);
+    let active = FilterSelected.getSelected();
+    if (!FilterSelected.isInitialized()) {
+      active = this.props.pageHooks.getFiltersFromURL(this.props.initialFilters);
+      FilterSelected.setSelected(active);
+    } else if (!this.props.pageHooks.filtersMatchURL(this.props.initialFilters, active)) {
+      active = this.props.pageHooks.setFiltersToURL(this.props.initialFilters, active);
+      FilterSelected.setSelected(active);
     }
 
     this.state = {
       currentFilterType: this.props.initialFilters[0],
       filterTypes: this.props.initialFilters,
-      activeFilters: FilterSelected.getSelected(),
+      activeFilters: active,
       currentValue: ''
     };
   }
@@ -70,42 +79,24 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   }
 
   componentDidUpdate(prevProps: StatefulFiltersProps, prevState: StatefulFiltersState, snapshot: any) {
-    const filtersExists = (prevProps.initialActiveFilters || []).every(prevFilter => {
-      return (
-        (this.props.initialActiveFilters || []).findIndex(filter => {
-          return (
-            filter.label === prevFilter.label &&
-            filter.category === prevFilter.category &&
-            filter.value === prevFilter.value
-          );
-        }) > -1
-      );
-    });
-
-    if (
-      this.props.initialActiveFilters &&
-      prevProps.initialActiveFilters &&
-      (!filtersExists || prevProps.initialActiveFilters.length !== this.props.initialActiveFilters.length)
-    ) {
-      this.setState({
-        activeFilters: this.props.initialActiveFilters
-      });
+    if (!this.props.pageHooks.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)) {
+      this.props.pageHooks.setFiltersToURL(this.state.filterTypes, this.state.activeFilters);
     }
   }
 
+  updateActiveFilters(activeFilters: ActiveFilter[]) {
+    const cleanFilters = this.props.pageHooks.setFiltersToURL(this.state.filterTypes, activeFilters);
+    FilterSelected.setSelected(cleanFilters);
+    this.setState({ activeFilters: cleanFilters });
+    this.props.onFilterChange();
+  }
+
   filterAdded = (field: FilterType, value: string) => {
-    let filterText = '';
     const activeFilters = this.state.activeFilters;
-    let activeFilter: ActiveFilter = { label: '', category: '', value: '' };
-
-    if (field.title) {
-      filterText = field.title;
-      activeFilter.category = field.title;
-    }
-
-    filterText += ': ' + value;
-    activeFilter.value = value;
-    activeFilter.label = filterText;
+    const activeFilter: ActiveFilter = {
+      category: field.title,
+      value: value
+    };
 
     const typeFilterPresent = activeFilters.filter(filter => filter.category === field.title).length > 0;
 
@@ -119,9 +110,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       activeFilters.push(activeFilter);
     }
 
-    this.setState({ activeFilters: activeFilters });
-    FilterSelected.setSelected(activeFilters);
-    this.props.onFilterChange(activeFilters);
+    this.updateActiveFilters(activeFilters);
   };
 
   selectFilterType = (filterType: FilterType) => {
@@ -178,16 +167,12 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     let index = activeFilters.indexOf(filter);
     if (index > -1) {
       let updated = [...activeFilters.slice(0, index), ...activeFilters.slice(index + 1)];
-      this.setState({ activeFilters: updated });
-      FilterSelected.setSelected(updated);
-      this.props.onFilterChange(updated);
+      this.updateActiveFilters(updated);
     }
   };
 
   clearFilters = () => {
-    this.setState({ activeFilters: [] });
-    FilterSelected.setSelected([]);
-    this.props.onFilterChange([]);
+    this.updateActiveFilters([]);
   };
 
   renderInput() {
@@ -240,7 +225,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
                   {activeFilters.map((item, index) => {
                     return (
                       <Filter.Item key={index} onRemove={this.removeFilter} filterData={item}>
-                        {item.label}
+                        {item.category + ': ' + item.value}
                       </Filter.Item>
                     );
                   })}

@@ -1,5 +1,4 @@
 import { ListPage } from '../ListPage';
-import { FilterSelected } from '../../Filters/StatefulFilters';
 import { Location } from 'history';
 import { FilterType } from '../../../types/Filters';
 import { createBrowserHistory } from 'history';
@@ -31,21 +30,18 @@ describe('List page', () => {
       history: history,
       staticContext: mock
     });
-    listPage.setSelectedFiltersFromURL(managedFilterTypes);
-    expect(FilterSelected.getSelected()).toEqual([
+    const filters = listPage.getFiltersFromURL(managedFilterTypes);
+    expect(filters).toEqual([
       {
         category: 'A',
-        label: 'A: 1',
         value: '1'
       },
       {
         category: 'C',
-        label: 'C: 3',
         value: '3'
       },
       {
         category: 'C',
-        label: 'C: 4',
         value: '4'
       }
     ]);
@@ -62,25 +58,22 @@ describe('List page', () => {
       history: history,
       staticContext: mock
     });
-    FilterSelected.setSelected([
+    const cleanFilters = listPage.setFiltersToURL(managedFilterTypes, [
       {
         category: 'A',
-        label: 'A: 1',
         value: '1'
       },
       {
         category: 'C',
-        label: 'C: 3',
         value: '3'
       },
       {
         category: 'C',
-        label: 'C: 4',
         value: '4'
       }
     ]);
-    listPage.setSelectedFiltersToURL(managedFilterTypes);
     expect(listPage.props.history.location.search).toEqual('?b=20&a=1&c=3&c=4');
+    expect(cleanFilters).toHaveLength(3);
   });
 
   it('filters should match URL, ignoring order and non-managed query params', () => {
@@ -94,24 +87,20 @@ describe('List page', () => {
       staticContext: mock
     });
     // Make sure order is ignored
-    FilterSelected.setSelected([
+    const match = listPage.filtersMatchURL(managedFilterTypes, [
       {
         category: 'C',
-        label: 'C: 3',
         value: '3'
       },
       {
         category: 'A',
-        label: 'A: 1',
         value: '1'
       },
       {
         category: 'C',
-        label: 'C: 4',
         value: '4'
       }
     ]);
-    const match = listPage.filtersMatchURL(managedFilterTypes);
     expect(match).toBe(true);
   });
 
@@ -126,103 +115,84 @@ describe('List page', () => {
       staticContext: mock
     });
     // Incorrect value
-    FilterSelected.setSelected([
+    let match = listPage.filtersMatchURL(managedFilterTypes, [
       {
         category: 'A',
-        label: 'A: 1',
         value: '1'
       },
       {
         category: 'C',
-        label: 'C: 3',
         value: '3'
       },
       {
         category: 'C',
-        label: 'C: 5',
         value: '5'
       }
     ]);
-    let match = listPage.filtersMatchURL(managedFilterTypes);
     expect(match).toBe(false);
 
     // Missing value from selection
-    FilterSelected.setSelected([
+    match = listPage.filtersMatchURL(managedFilterTypes, [
       {
         category: 'A',
-        label: 'A: 1',
         value: '1'
       },
       {
         category: 'C',
-        label: 'C: 3',
         value: '3'
       }
     ]);
-    match = listPage.filtersMatchURL(managedFilterTypes);
     expect(match).toBe(false);
 
     // Missing value from URL
-    FilterSelected.setSelected([
+    match = listPage.filtersMatchURL(managedFilterTypes, [
       {
         category: 'A',
-        label: 'A: 1',
         value: '1'
       },
       {
         category: 'C',
-        label: 'C: 3',
         value: '3'
       },
       {
         category: 'C',
-        label: 'C: 4',
         value: '4'
       },
       {
         category: 'C',
-        label: 'C: 5',
         value: '5'
       }
     ]);
-    match = listPage.filtersMatchURL(managedFilterTypes);
     expect(match).toBe(false);
 
     // Missing key from selection
-    FilterSelected.setSelected([
+    match = listPage.filtersMatchURL(managedFilterTypes, [
       {
         category: 'A',
-        label: 'A: 1',
         value: '1'
       }
     ]);
-    match = listPage.filtersMatchURL(managedFilterTypes);
     expect(match).toBe(false);
 
     // Missing key from URL
-    FilterSelected.setSelected([
+    match = listPage.filtersMatchURL(managedFilterTypes, [
       {
         category: 'A',
-        label: 'A: 1',
         value: '1'
       },
       {
         category: 'C',
-        label: 'C: 3',
         value: '3'
       },
       {
         category: 'C',
-        label: 'C: 4',
         value: '4'
       },
       {
         category: 'D',
-        label: 'D: 5',
         value: '5'
       }
     ]);
-    match = listPage.filtersMatchURL(managedFilterTypes);
     expect(match).toBe(false);
   });
 });

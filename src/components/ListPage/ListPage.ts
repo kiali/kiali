@@ -4,7 +4,6 @@ import * as MessageCenter from '../../utils/MessageCenter';
 import { URLParameter } from '../../types/Parameters';
 import { Pagination } from '../../types/Pagination';
 import { FilterType, ActiveFilter } from '../../types/Filters';
-import { FilterSelected } from '../Filters/StatefulFilters';
 import { config } from '../../config';
 
 export namespace ListPage {
@@ -22,9 +21,9 @@ export namespace ListPage {
     getQueryParam: (queryName: string) => string[] | undefined;
     getSingleQueryParam: (queryName: string) => string | undefined;
     getSingleIntQueryParam: (queryName: string) => number | undefined;
-    setSelectedFiltersFromURL: (filterTypes: FilterType[]) => void;
-    setSelectedFiltersToURL: (filterTypes: FilterType[]) => void;
-    filtersMatchURL: (filterTypes: FilterType[]) => boolean;
+    getFiltersFromURL: (filterTypes: FilterType[]) => ActiveFilter[];
+    setFiltersToURL: (filterTypes: FilterType[], filters: ActiveFilter[]) => ActiveFilter[];
+    filtersMatchURL: (filterTypes: FilterType[], filters: ActiveFilter[]) => boolean;
     isCurrentSortAscending: () => boolean;
     currentDuration: () => number;
     currentPollInterval: () => number;
@@ -94,23 +93,21 @@ export namespace ListPage {
       return p === undefined ? undefined : parseInt(p[0], 10);
     };
 
-    setSelectedFiltersFromURL(filterTypes: FilterType[]) {
+    getFiltersFromURL(filterTypes: FilterType[]): ActiveFilter[] {
       const urlParams = new URLSearchParams(this.props.location.search);
       const activeFilters: ActiveFilter[] = [];
       filterTypes.forEach(filter => {
         urlParams.getAll(filter.id).forEach(value => {
           activeFilters.push({
-            label: filter.title + ': ' + value,
             category: filter.title,
             value: value
           });
         });
       });
-      FilterSelected.setSelected(activeFilters);
+      return activeFilters;
     }
 
-    setSelectedFiltersToURL(filterTypes: FilterType[]) {
-      const filters = FilterSelected.getSelected();
+    setFiltersToURL(filterTypes: FilterType[], filters: ActiveFilter[]): ActiveFilter[] {
       const urlParams = new URLSearchParams(this.props.location.search);
       filterTypes.forEach(type => {
         urlParams.delete(type.id);
@@ -127,12 +124,10 @@ export namespace ListPage {
       // Resetting pagination when filters change
       urlParams.delete('page');
       this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
-      // Update the selected filters list, as some may have been removed
-      FilterSelected.setSelected(cleanFilters);
+      return cleanFilters;
     }
 
-    filtersMatchURL(filterTypes: FilterType[]): boolean {
-      const filters = FilterSelected.getSelected();
+    filtersMatchURL(filterTypes: FilterType[], filters: ActiveFilter[]): boolean {
       // This can probably be improved and/or simplified?
       const fromFilters: Map<string, string[]> = new Map<string, string[]>();
       filters.map(activeFilter => {

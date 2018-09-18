@@ -23,7 +23,6 @@ import { authentication } from '../../utils/Authentication';
 import { NamespaceValidations } from '../../types/IstioObjects';
 import { ConfigIndicator } from '../../components/ConfigValidation/ConfigIndicator';
 import { removeDuplicatesArray } from '../../utils/Common';
-import { URLParameter } from '../../types/Parameters';
 import { ListPage } from '../../components/ListPage/ListPage';
 
 export const sortFields: SortField[] = [
@@ -156,7 +155,6 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       currentSortField: this.props.currentSortField,
       isSortAscending: this.props.isSortAscending
     };
-    this.props.pageHooks.setSelectedFiltersToURL(availableFilters);
   }
 
   componentDidMount() {
@@ -175,7 +173,6 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
         isSortAscending: this.props.isSortAscending
       });
 
-      this.props.pageHooks.setSelectedFiltersFromURL(availableFilters);
       this.updateIstioConfig();
     }
   }
@@ -185,35 +182,13 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       prevProps.pagination.page === this.props.pagination.page &&
       prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.isSortAscending === this.props.isSortAscending &&
-      prevProps.currentSortField.title === this.props.currentSortField.title &&
-      this.props.pageHooks.filtersMatchURL(availableFilters)
+      prevProps.currentSortField.title === this.props.currentSortField.title
     );
   }
 
-  onFilterChange = (filters: ActiveFilter[]) => {
-    let params: URLParameter[] = [];
-
-    availableFilters.forEach(availableFilter => {
-      params.push({ name: availableFilter.id, value: '' });
-    });
-
-    filters.forEach(activeFilter => {
-      let filterId = (
-        availableFilters.find(filter => {
-          return filter.title === activeFilter.category;
-        }) || availableFilters[2]
-      ).id;
-
-      params.push({
-        name: filterId,
-        value: activeFilter.value
-      });
-    });
-
+  onFilterChange = () => {
     // Resetting pagination when filters change
-    params.push({ name: 'page', value: '' });
-
-    this.props.pageHooks.onParamChange(params, 'append');
+    this.props.pageHooks.onParamChange([{ name: 'page', value: '' }]);
     this.updateIstioConfig(true);
   };
 
@@ -476,9 +451,8 @@ class IstioConfigListComponent extends React.Component<IstioConfigListComponentP
       <>
         <StatefulFilters
           initialFilters={availableFilters}
-          initialActiveFilters={FilterSelected.getSelected()}
+          pageHooks={this.props.pageHooks}
           onFilterChange={this.onFilterChange}
-          onError={this.handleError}
         >
           <Sort>
             <Sort.TypeSelector

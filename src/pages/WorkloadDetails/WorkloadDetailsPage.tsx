@@ -100,6 +100,15 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     return istioEnabled;
   };
 
+  namespaceFilters = () => {
+    FilterSelected.setSelected([
+      {
+        category: 'Namespace',
+        value: this.props.match.params.namespace.toString()
+      }
+    ]);
+  };
+
   clearFilters() {
     FilterSelected.setSelected([]);
   }
@@ -129,7 +138,10 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
-          <Link to={`/workloads?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}>
+          <Link
+            to={`/workloads?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}
+            onClick={this.namespaceFilters}
+          >
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>

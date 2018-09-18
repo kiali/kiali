@@ -161,6 +161,15 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       });
   };
 
+  namespaceFilters = () => {
+    FilterSelected.setSelected([
+      {
+        category: 'Namespace',
+        value: this.props.match.params.namespace.toString()
+      }
+    ]);
+  };
+
   clearFilters() {
     FilterSelected.setSelected([]);
   }
@@ -180,7 +189,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <Link to={`/services?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}>
+          <Link
+            to={`/services?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}
+            onClick={this.namespaceFilters}
+          >
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>

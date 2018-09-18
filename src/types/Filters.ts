@@ -19,7 +19,6 @@ export const FILTER_ACTION_APPEND = 'append';
 export const FILTER_ACTION_UPDATE = 'update';
 
 export interface ActiveFilter {
-  label: string;
   category: string;
   value: string;
 }
