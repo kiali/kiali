@@ -3,7 +3,7 @@ import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { graphFilterActions } from '../actions/GraphFilterActions';
+import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { KialiAppState, GraphFilterState } from '../store/Store';
 import { style } from 'typestyle';
 import { EdgeLabelMode } from '../types/GraphFilter';
@@ -18,6 +18,7 @@ interface GraphDispatch {
   toggleGraphVirtualServices(): void;
   toggleGraphMissingSidecars(): void;
   toggleTrafficAnimation(): void;
+  toggleServiceNodes(): void;
 }
 
 // inherit all of our Reducer state section  and Dispatch methods for redux
@@ -29,17 +30,19 @@ const mapStateToProps = (state: KialiAppState) => ({
   showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
   showVirtualServices: state.graph.filterState.showVirtualServices,
   showMissingSidecars: state.graph.filterState.showMissingSidecars,
-  showTrafficAnimation: state.graph.filterState.showTrafficAnimation
+  showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
+  showServiceNodes: state.graph.filterState.showServiceNodes
 });
 
 // Map our actions to Redux
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    toggleGraphNodeLabels: bindActionCreators(graphFilterActions.toggleGraphNodeLabel, dispatch),
-    toggleGraphCircuitBreakers: bindActionCreators(graphFilterActions.toggleGraphCircuitBreakers, dispatch),
-    toggleGraphVirtualServices: bindActionCreators(graphFilterActions.toggleGraphVirtualServices, dispatch),
-    toggleGraphMissingSidecars: bindActionCreators(graphFilterActions.toggleGraphMissingSidecars, dispatch),
-    toggleTrafficAnimation: bindActionCreators(graphFilterActions.toggleTrafficAnimation, dispatch)
+    toggleGraphNodeLabels: bindActionCreators(GraphFilterActions.toggleGraphNodeLabel, dispatch),
+    toggleGraphCircuitBreakers: bindActionCreators(GraphFilterActions.toggleGraphCircuitBreakers, dispatch),
+    toggleGraphVirtualServices: bindActionCreators(GraphFilterActions.toggleGraphVirtualServices, dispatch),
+    toggleGraphMissingSidecars: bindActionCreators(GraphFilterActions.toggleGraphMissingSidecars, dispatch),
+    toggleTrafficAnimation: bindActionCreators(GraphFilterActions.toggleTrafficAnimation, dispatch),
+    toggleServiceNodes: bindActionCreators(GraphFilterActions.toggleServiceNodes, dispatch)
   };
 };
 
@@ -54,6 +57,23 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
   static contextTypes = {
     router: PropTypes.object
   };
+
+  constructor(props: GraphSettingsProps) {
+    super(props);
+    // ensure setting is initialized to match the url
+    if (props.showServiceNodes !== props.injectServiceNodes) {
+      this.props.toggleServiceNodes();
+    }
+  }
+
+  componentDidUpdate(prevProps: GraphSettingsProps) {
+    if (this.props.showServiceNodes !== prevProps.showServiceNodes) {
+      this.handleFilterChangeToUrl({
+        ...this.getGraphParams(),
+        injectServiceNodes: this.props.showServiceNodes
+      });
+    }
+  }
 
   handleEdgeLabelModeChange = (event: any) => {
     const edgeLabelMode: EdgeLabelMode = EdgeLabelMode.fromString(event.target.value);
@@ -80,7 +100,8 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       showVirtualServices,
       showNodeLabels,
       showMissingSidecars,
-      showTrafficAnimation
+      showTrafficAnimation,
+      showServiceNodes
     } = this.props;
 
     const graphParams: GraphParamsType = {
@@ -90,7 +111,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       graphDuration: this.props.graphDuration,
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,
-      injectServiceNodes: this.props.injectServiceNodes
+      injectServiceNodes: this.props.showServiceNodes
     };
 
     // map or dispatchers for redux
@@ -99,7 +120,8 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       toggleGraphVirtualServices,
       toggleGraphNodeLabels,
       toggleGraphMissingSidecars,
-      toggleTrafficAnimation
+      toggleTrafficAnimation,
+      toggleServiceNodes
     } = this.props;
 
     const visibilityLayers: VisibilityLayersType[] = [
@@ -108,6 +130,12 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
         labelText: 'Node Names',
         value: showNodeLabels,
         onChange: toggleGraphNodeLabels
+      },
+      {
+        id: 'filterServiceNodes',
+        labelText: 'Service Nodes',
+        value: showServiceNodes,
+        onChange: toggleServiceNodes
       },
       {
         id: 'filterTrafficAnimation',

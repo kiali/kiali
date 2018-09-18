@@ -18,6 +18,7 @@ const INITIAL_STATE: GraphState = {
     showVirtualServices: true,
     showMissingSidecars: true,
     showTrafficAnimation: false,
+    showServiceNodes: false,
     refreshRate: 15 * MILLISECONDS
   }
 };

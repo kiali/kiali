@@ -9,6 +9,7 @@ export enum GraphFilterActionKeys {
   TOGGLE_GRAPH_CIRCUIT_BREAKERS = 'TOGGLE_GRAPH_CIRCUIT_BREAKERS',
   TOGGLE_GRAPH_VIRTUAL_SERVICES = 'TOGGLE_GRAPH_VIRTUAL_SERVICES',
   TOGGLE_GRAPH_MISSING_SIDECARS = 'TOGGLE_GRAPH_MISSING_SIDECARS',
+  TOGGLE_SERVICE_NODES = 'TOGGLE_SERVICE_NODES',
   TOGGLE_TRAFFIC_ANIMATION = 'TOGGLE_TRAFFIC_ANIMATION',
   SET_GRAPH_EDGE_LABEL_MODE = 'SET_GRAPH_EDGE_LABEL_MODE',
   // Disable Actions
@@ -17,7 +18,7 @@ export enum GraphFilterActionKeys {
   SET_GRAPH_REFRESH_RATE = 'SET_GRAPH_REFRESH_RATE'
 }
 
-export const graphFilterActions = {
+export const GraphFilterActions = {
   // Toggle actions
   toggleGraphNodeLabel: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL),
   toggleLegend: createAction(GraphFilterActionKeys.TOGGLE_LEGEND),
@@ -32,6 +33,7 @@ export const graphFilterActions = {
   toggleGraphCircuitBreakers: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS),
   toggleGraphMissingSidecars: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS),
   toggleTrafficAnimation: createAction(GraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION),
+  toggleServiceNodes: createAction(GraphFilterActionKeys.TOGGLE_SERVICE_NODES),
   showGraphFilters: createAction(GraphFilterActionKeys.ENABLE_GRAPH_FILTERS, (value: boolean) => ({
     type: GraphFilterActionKeys.ENABLE_GRAPH_FILTERS,
     payload: value

@@ -7,7 +7,6 @@ export const makeNamespaceGraphUrlFromParams = (params: GraphParamsType) => {
 };
 
 export const makeNodeGraphUrlFromParams = (node: NodeParamsType, params: GraphParamsType) => {
-  params.injectServiceNodes = true; // TODO: Remove this when injectServiceNodes is an on-screen option
   switch (node.nodeType) {
     case NodeType.APP:
       if (node.version && node.version !== 'unknown') {

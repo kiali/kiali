@@ -5,7 +5,7 @@ import { Duration } from '../types/GraphFilter';
 import GraphPage from '../pages/Graph/GraphPage';
 
 import { GraphDataActions } from '../actions/GraphDataActions';
-import { graphFilterActions } from '../actions/GraphFilterActions';
+import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { bindActionCreators } from 'redux';
 import { GraphType, NodeParamsType } from '../types/Graph';
 
@@ -33,7 +33,7 @@ const mapDispatchToProps = (dispatch: any) => ({
     injectServiceNodes: boolean,
     node?: NodeParamsType
   ) => dispatch(GraphDataActions.fetchGraphData(namespace, graphDuration, graphType, injectServiceNodes, node)),
-  toggleLegend: bindActionCreators(graphFilterActions.toggleLegend, dispatch)
+  toggleLegend: bindActionCreators(GraphFilterActions.toggleLegend, dispatch)
 });
 
 const GraphPageConnected = connect(
