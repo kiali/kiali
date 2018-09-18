@@ -4,4 +4,4 @@
 virtualenv
 pytest==3.6
 pyyaml
-kiali-client==0.4.7
+kiali-client==0.4.8
