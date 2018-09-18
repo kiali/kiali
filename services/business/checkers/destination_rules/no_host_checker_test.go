@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func TestValidHost(t *testing.T) {
@@ -15,7 +15,7 @@ func TestValidHost(t *testing.T) {
 	validations, valid := NoHostChecker{
 		Namespace:       "test-namespace",
 		ServiceNames:    []string{"reviews", "other"},
-		DestinationRule: fakeNameDestinationRule(),
+		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
 
 	assert.True(valid)
@@ -32,7 +32,7 @@ func TestNoValidHost(t *testing.T) {
 	validations, valid := NoHostChecker{
 		Namespace:       "test-namespace",
 		ServiceNames:    []string{"details", "other"},
-		DestinationRule: fakeNameDestinationRule(),
+		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
 
 	assert.False(valid)
@@ -40,27 +40,4 @@ func TestNoValidHost(t *testing.T) {
 	assert.Equal("error", validations[0].Severity)
 	assert.Equal("Host doesn't have a valid service", validations[0].Message)
 	assert.Equal("spec/host", validations[0].Path)
-}
-
-func fakeNameDestinationRule() kubernetes.IstioObject {
-	destinationRule := kubernetes.DestinationRule{
-		Spec: map[string]interface{}{
-			"host": "reviews",
-			"subsets": []interface{}{
-				map[string]interface{}{
-					"name": "v1",
-					"labels": map[string]interface{}{
-						"version": "v1",
-					},
-				},
-				map[string]interface{}{
-					"name": "v2",
-					"labels": map[string]interface{}{
-						"version": "v2",
-					},
-				},
-			},
-		},
-	}
-	return &destinationRule
 }

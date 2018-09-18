@@ -5,8 +5,8 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/tests/data"
 	"github.com/stretchr/testify/assert"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestCheckerWithPodsMatching(t *testing.T) {
@@ -16,7 +16,7 @@ func TestCheckerWithPodsMatching(t *testing.T) {
 
 	// Setup mocks
 	destinationList := []kubernetes.IstioObject{
-		fakeDestinationRule("reviews"),
+		data.CreateTestDestinationRule("test", "testrule", "reviews"),
 	}
 
 	validations, valid := SubsetPresenceChecker{"bookinfo",
@@ -27,59 +27,13 @@ func TestCheckerWithPodsMatching(t *testing.T) {
 	assert.True(valid)
 }
 
-func fakeDestinationRule(hostName string) kubernetes.IstioObject {
-	destinationRule := kubernetes.DestinationRule{
-		Spec: map[string]interface{}{
-			"host": hostName,
-			"subsets": []interface{}{
-				map[string]interface{}{
-					"name": "v1",
-					"labels": map[string]interface{}{
-						"version": "v1",
-					},
-				},
-				map[string]interface{}{
-					"name": "v2",
-					"labels": map[string]interface{}{
-						"version": "v2",
-					},
-				},
-			},
-		},
-	}
-
-	return destinationRule.DeepCopyIstioObject()
-}
-
 func fakeCorrectVersions() kubernetes.IstioObject {
-	validVirtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "reviews",
-			Namespace: "bookinfo",
-		},
-		Spec: map[string]interface{}{
-			"http": []map[string]interface{}{
-				{
-					"route": []map[string]interface{}{
-						{
-							"destination": map[string]interface{}{
-								"host":   "reviews.bookinfo.svc.cluster.local",
-								"subset": "v1",
-							},
-							"weight": uint64(55),
-						},
-						{
-							"destination": map[string]interface{}{
-								"host":   "reviews.bookinfo.svc.cluster.local",
-								"subset": "v2",
-							},
-							"weight": uint64(45),
-						},
-					},
-				},
-			},
-		},
-	}).DeepCopyIstioObject()
+	validVirtualService :=
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews.bookinfo.svc.cluster.local", "v1", 55),
+			data.AddRoutesToVirtualService("http", data.CreateRoute("reviews.bookinfo.svc.cluster.local", "v2", 45),
+				data.CreateEmptyVirtualService("reviews", "bookinfo", []string{"reviews.bookinfo.svc.cluster.local"}),
+			),
+		)
 
 	return validVirtualService
 }
@@ -91,7 +45,7 @@ func TestCheckerWithSubsetsMatchingShortHostname(t *testing.T) {
 
 	// Setup mocks
 	destinationList := []kubernetes.IstioObject{
-		fakeDestinationRule("reviews"),
+		data.CreateTestDestinationRule("test", "testrule", "reviews"),
 	}
 
 	validations, valid := SubsetPresenceChecker{"bookinfo",
@@ -103,34 +57,12 @@ func TestCheckerWithSubsetsMatchingShortHostname(t *testing.T) {
 }
 
 func fakeCorrectVersionsShortHostname() kubernetes.IstioObject {
-	validVirtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "reviews",
-			Namespace: "bookinfo",
-		},
-		Spec: map[string]interface{}{
-			"http": []map[string]interface{}{
-				{
-					"route": []map[string]interface{}{
-						{
-							"destination": map[string]interface{}{
-								"host":   "reviews",
-								"subset": "v1",
-							},
-							"weight": uint64(55),
-						},
-						{
-							"destination": map[string]interface{}{
-								"host":   "reviews",
-								"subset": "v2",
-							},
-							"weight": uint64(45),
-						},
-					},
-				},
-			},
-		},
-	}).DeepCopyIstioObject()
+	validVirtualService :=
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55),
+			data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v2", 45),
+				data.CreateEmptyVirtualService("reviews", "bookinfo", []string{"reviews"}),
+			),
+		)
 
 	return validVirtualService
 }
@@ -140,7 +72,7 @@ func TestSubsetsNotFound(t *testing.T) {
 
 	// Setup mocks
 	destinationList := []kubernetes.IstioObject{
-		fakeDestinationRule("reviews"),
+		data.CreateTestDestinationRule("test", "testrule", "reviews"),
 	}
 
 	validations, valid := SubsetPresenceChecker{"bookinfo",
@@ -160,34 +92,12 @@ func TestSubsetsNotFound(t *testing.T) {
 }
 
 func fakeWrongSubsets() kubernetes.IstioObject {
-	validVirtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "reviews",
-			Namespace: "bookinfo",
-		},
-		Spec: map[string]interface{}{
-			"http": []map[string]interface{}{
-				{
-					"route": []map[string]interface{}{
-						{
-							"destination": map[string]interface{}{
-								"host":   "reviews.bookinfo.svc.cluster.local",
-								"subset": "not-v1",
-							},
-							"weight": uint64(55),
-						},
-						{
-							"destination": map[string]interface{}{
-								"host":   "reviews",
-								"subset": "not-v2",
-							},
-							"weight": uint64(45),
-						},
-					},
-				},
-			},
-		},
-	}).DeepCopyIstioObject()
+	validVirtualService :=
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "not-v2", 45),
+			data.AddRoutesToVirtualService("http", data.CreateRoute("reviews.bookinfo.svc.cluster.local", "not-v1", 55),
+				data.CreateEmptyVirtualService("reviews", "bookinfo", []string{"reviews"}),
+			),
+		)
 
 	return validVirtualService
 }
@@ -199,7 +109,7 @@ func TestVirtualServiceWithoutDestination(t *testing.T) {
 
 	// Setup mocks
 	destinationList := []kubernetes.IstioObject{
-		fakeDestinationRule("reviews"),
+		data.CreateTestDestinationRule("test", "testrule", "reviews"),
 	}
 
 	validations, valid := SubsetPresenceChecker{"bookinfo",
@@ -215,30 +125,15 @@ func TestVirtualServiceWithoutDestination(t *testing.T) {
 }
 
 func fakeNilDestination() kubernetes.IstioObject {
-	validVirtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "reviews",
-			Namespace: "bookinfo",
-		},
-		Spec: map[string]interface{}{
-			"http": []map[string]interface{}{
-				{
-					"route": []map[string]interface{}{
-						{
-							"weight": uint64(55),
-						},
-						{
-							"destination": map[string]interface{}{
-								"host":   "reviews.bookinfo.svc.cluster.local",
-								"subset": "v2",
-							},
-							"weight": uint64(45),
-						},
-					},
-				},
-			},
-		},
-	}).DeepCopyIstioObject()
+	emptyRoute := make(map[string]interface{})
+	emptyRoute["weight"] = uint64(55)
+
+	validVirtualService :=
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews.bookinfo.svc.cluster.local", "v2", 45),
+			data.AddRoutesToVirtualService("http", emptyRoute,
+				data.CreateEmptyVirtualService("reviews", "bookinfo", []string{"reviews"}),
+			),
+		)
 
 	return validVirtualService
 }
@@ -250,7 +145,7 @@ func TestVirtualServiceWithoutSpec(t *testing.T) {
 
 	// Setup mocks
 	destinationList := []kubernetes.IstioObject{
-		fakeDestinationRule("reviews"),
+		data.CreateTestDestinationRule("test", "testrule", "reviews"),
 	}
 
 	validations, valid := SubsetPresenceChecker{"bookinfo",
@@ -261,14 +156,7 @@ func TestVirtualServiceWithoutSpec(t *testing.T) {
 }
 
 func fakeBadSpec() kubernetes.IstioObject {
-	validVirtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "reviews",
-			Namespace: "bookinfo",
-		},
-	}).DeepCopyIstioObject()
-
-	return validVirtualService
+	return data.CreateEmptyVirtualService("reviews", "bookinfo", []string{})
 }
 
 func TestWrongDestinationRule(t *testing.T) {
@@ -278,7 +166,7 @@ func TestWrongDestinationRule(t *testing.T) {
 
 	// Setup mocks
 	destinationList := []kubernetes.IstioObject{
-		fakeDestinationRule("ratings"),
+		data.CreateTestDestinationRule("test", "testrule", "ratings"),
 	}
 
 	validations, valid := SubsetPresenceChecker{"bookinfo",

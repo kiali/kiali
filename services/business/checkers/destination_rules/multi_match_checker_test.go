@@ -6,9 +6,8 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
+	"github.com/kiali/kiali/tests/data"
 	"github.com/stretchr/testify/assert"
-
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestMultiHostMatchCorrect(t *testing.T) {
@@ -18,8 +17,8 @@ func TestMultiHostMatchCorrect(t *testing.T) {
 	assert := assert.New(t)
 
 	destinationRules := []kubernetes.IstioObject{
-		fakeHostDestinationRule("rule1", "host1"),
-		fakeHostDestinationRule("rule2", "host2.test.svc.cluster.local"),
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.CreateTestDestinationRule("test", "rule2", "host2.test.svc.cluster.local"),
 	}
 
 	validations := MultiMatchChecker{
@@ -39,8 +38,8 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 	assert := assert.New(t)
 
 	destinationRules := []kubernetes.IstioObject{
-		fakeHostDestinationRule("rule1", "host1"),
-		fakeHostDestinationRule("rule2", "host1.test.svc.cluster.local"),
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.CreateTestDestinationRule("test", "rule2", "host1.test.svc.cluster.local"),
 	}
 
 	validations := MultiMatchChecker{
@@ -62,8 +61,8 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	assert := assert.New(t)
 
 	destinationRules := []kubernetes.IstioObject{
-		fakeHostDestinationRule("rule1", "host1"),
-		fakeHostDestinationRule("rule2", "*.test.svc.cluster.local"),
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
 	}
 
 	validations := MultiMatchChecker{
@@ -78,8 +77,8 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	assert.Equal("warning", validation.Checks[0].Severity)
 
 	destinationRules = []kubernetes.IstioObject{
-		fakeHostDestinationRule("rule2", "*.test.svc.cluster.local"),
-		fakeHostDestinationRule("rule1", "host1"),
+		data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
 	}
 
 	validations = MultiMatchChecker{
@@ -93,32 +92,4 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	assert.NotEmpty(validation.Checks)
 	assert.Equal("warning", validation.Checks[0].Severity)
 
-}
-
-func fakeHostDestinationRule(name string, host string) kubernetes.IstioObject {
-	destinationRule := kubernetes.DestinationRule{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:        name,
-			Namespace:   "test",
-			ClusterName: "svc.cluster.local",
-		},
-		Spec: map[string]interface{}{
-			"host": host,
-			"subsets": []interface{}{
-				map[string]interface{}{
-					"name": "v1",
-					"labels": map[string]interface{}{
-						"version": "v1",
-					},
-				},
-				map[string]interface{}{
-					"name": "v2",
-					"labels": map[string]interface{}{
-						"version": "v2",
-					},
-				},
-			},
-		},
-	}
-	return &destinationRule
 }
