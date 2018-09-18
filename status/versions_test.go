@@ -15,6 +15,24 @@ func TestParseIstioRawVersion(t *testing.T) {
 	// see config.go/[Maistra,Istio]VersionSupported for what versions are supported
 	versionsToTest := []versionsToTestStruct{
 		{
+			rawVersion: "redhat@redhat-brew.abc.xyz.redhat.com:8888/openshift-istio-tech-preview-0.1.2-1-3a13-Custom",
+			name:       "Maistra Project",
+			version:    "0.1.2",
+			supported:  true,
+		},
+		{
+			rawVersion: "redhat@redhat-brew.abc.xyz.redhat.com:8888/openshift-istio-10.11.12-1-3a13-Custom",
+			name:       "Maistra Project",
+			version:    "10.11.12",
+			supported:  true,
+		},
+		{
+			rawVersion: "redhat@redhat-brew.abc.xyz.redhat.com:8888/openshift-istio-0.0.12-1-3a13-Custom",
+			name:       "Maistra Project",
+			version:    "0.0.12",
+			supported:  false,
+		},
+		{
 			rawVersion: "redhat@redhat-docker.io/maistra-0.1.0-1-3a13-unknown",
 			name:       "Maistra",
 			version:    "0.1.0",

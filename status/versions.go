@@ -18,10 +18,13 @@ import (
 type externalService func() (*ExternalServiceInfo, error)
 
 var (
-	// Example Maistra version is:
+	// Example Maistra product version is:
 	//   redhat@redhat-docker.io/maistra-0.1.0-1-3a136c90ec5e308f236e0d7ebb5c4c5e405217f4-unknown
-	maistraVersionExpr = regexp.MustCompile("maistra-([0-9]+\\.[0-9]+\\.[0-9]+)")
-	istioVersionExpr   = regexp.MustCompile("([0-9]+\\.[0-9]+\\.[0-9]+)")
+	// Example Maistra upstream project version is:
+	//   redhat@redhat-pulp.abc.xyz.redhat.com:8888/openshift-istio-tech-preview-0.1.0-1-3a136c90ec5e308f236e0d7ebb5c4c5e405217f4-Custom
+	maistraProductVersionExpr = regexp.MustCompile("maistra-([0-9]+\\.[0-9]+\\.[0-9]+)")
+	maistraProjectVersionExpr = regexp.MustCompile("openshift-istio.*-([0-9]+\\.[0-9]+\\.[0-9]+)")
+	istioVersionExpr          = regexp.MustCompile("([0-9]+\\.[0-9]+\\.[0-9]+)")
 )
 
 func getVersions() {
@@ -82,17 +85,33 @@ func istioVersion() (*ExternalServiceInfo, error) {
 func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{Name: "Unknown", Version: "Unknown"}
 
-	// First see if we detect Maistra. If it is not Maistra, see if it is upstream Istio.
+	// First see if we detect Maistra (either product or upstream project).
+	// If it is not Maistra, see if it is upstream Istio.
 	// If it is neither then it is some unknown Istio implementation that we do not support.
 
-	maistraVersionStringArr := maistraVersionExpr.FindStringSubmatch(rawVersion)
+	maistraVersionStringArr := maistraProductVersionExpr.FindStringSubmatch(rawVersion)
 	if maistraVersionStringArr != nil {
-		log.Debugf("Detected Maistra version [%v]", rawVersion)
+		log.Debugf("Detected Maistra product version [%v]", rawVersion)
 		if len(maistraVersionStringArr) > 1 {
 			product.Name = "Maistra"
 			product.Version = maistraVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
 			if !validateVersion(config.MaistraVersionSupported, product.Version) {
 				info.WarningMessages = append(info.WarningMessages, "Maistra version "+product.Version+" is not supported, the version should be "+config.MaistraVersionSupported)
+			}
+
+			// we know this is Maistra - either a supported or unsupported version - return now
+			return &product, nil
+		}
+	}
+
+	maistraVersionStringArr = maistraProjectVersionExpr.FindStringSubmatch(rawVersion)
+	if maistraVersionStringArr != nil {
+		log.Debugf("Detected Maistra project version [%v]", rawVersion)
+		if len(maistraVersionStringArr) > 1 {
+			product.Name = "Maistra Project"
+			product.Version = maistraVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
+			if !validateVersion(config.MaistraVersionSupported, product.Version) {
+				info.WarningMessages = append(info.WarningMessages, "Maistra project version "+product.Version+" is not supported, the version should be "+config.MaistraVersionSupported)
 			}
 
 			// we know this is Maistra - either a supported or unsupported version - return now
