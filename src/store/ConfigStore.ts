@@ -25,7 +25,9 @@ const configureStore = (initialState?: KialiAppState) => {
   const enhancer = composeEnhancers(applyMiddleware(...middlewares));
   // persist reducers
   const persistentReducer = persistReducer(persistConfig, rootReducer);
+  // the ts-ignore is needed with the new version of Redux 4.0
   // create store
+  // @ts-ignore
   return createStore(persistentReducer, initialState, enhancer);
 };
 
