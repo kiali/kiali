@@ -34,6 +34,7 @@ const NodeIconCB = '\uf0e7 '; // bolt
 const NodeIconMS = '\uf12a '; // exclamation
 const NodeIconVS = '\uf126 '; // code-branch
 const NodeImageOut = require('../../../assets/img/node-out.png');
+const NodeImageOutLocked = require('../../../assets/img/node-out-locked.png');
 const NodeTextOutlineColor = PfColors.White;
 const NodeTextOutlineWidth = '1px';
 const NodeTextColor = PfColors.Black;
@@ -111,9 +112,14 @@ export class GraphStyles {
     const getNodeBackgroundImage = (ele: any): string => {
       const isOutside = ele.data('isOutside');
       const isGroup = ele.data('isGroup');
+      const isInaccessible = ele.data('isInaccessible');
 
       if (isOutside && !isGroup) {
-        return NodeImageOut;
+        if (isInaccessible) {
+          return NodeImageOutLocked;
+        } else {
+          return NodeImageOut;
+        }
       }
       return 'none';
     };

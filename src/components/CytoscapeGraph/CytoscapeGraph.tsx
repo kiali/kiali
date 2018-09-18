@@ -404,16 +404,18 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
   private handleDoubleTap = (event: CytoscapeClickEvent) => {
     if (event.summaryTarget.data('isOutside')) {
-      this.context.router.history.push(
-        makeNamespaceGraphUrlFromParams({
-          namespace: { name: event.summaryTarget.data('namespace') },
-          graphLayout: this.props.graphLayout,
-          graphDuration: this.props.graphDuration,
-          edgeLabelMode: this.props.edgeLabelMode,
-          graphType: this.props.graphType,
-          injectServiceNodes: this.props.injectServiceNodes
-        })
-      );
+      if (!event.summaryTarget.data('isInaccessible')) {
+        this.context.router.history.push(
+          makeNamespaceGraphUrlFromParams({
+            namespace: { name: event.summaryTarget.data('namespace') },
+            graphLayout: this.props.graphLayout,
+            graphDuration: this.props.graphDuration,
+            edgeLabelMode: this.props.edgeLabelMode,
+            graphType: this.props.graphType,
+            injectServiceNodes: this.props.injectServiceNodes
+          })
+        );
+      }
     } else {
       const nodeType = event.summaryTarget.data('nodeType');
       switch (event.summaryTarget.data('nodeType')) {
@@ -521,24 +523,27 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       const namespace = ele.data('namespace');
       const nodeType = ele.data('nodeType');
       const isInAppBox = nodeType === NodeType.APP && ele.data('parent');
-      if (nodeType === NodeType.WORKLOAD || isInAppBox) {
-        const workload = ele.data('workload');
-        // Workload-based health
-        let promise = wkldHealthPerNamespace.get(namespace);
-        if (!promise) {
-          promise = API.getNamespaceWorkloadHealth(authentication(), namespace, duration);
-          wkldHealthPerNamespace.set(namespace, promise);
+      const inaccessible = ele.data('isInaccessible');
+      if (!inaccessible) {
+        if (nodeType === NodeType.WORKLOAD || isInAppBox) {
+          const workload = ele.data('workload');
+          // Workload-based health
+          let promise = wkldHealthPerNamespace.get(namespace);
+          if (!promise) {
+            promise = API.getNamespaceWorkloadHealth(authentication(), namespace, duration);
+            wkldHealthPerNamespace.set(namespace, promise);
+          }
+          this.updateNodeHealth(ele, promise, workload);
+        } else if (nodeType === NodeType.APP) {
+          const app = ele.data('app');
+          // App-based health
+          let promise = appHealthPerNamespace.get(namespace);
+          if (!promise) {
+            promise = API.getNamespaceAppHealth(authentication(), namespace, duration);
+            appHealthPerNamespace.set(namespace, promise);
+          }
+          this.updateNodeHealth(ele, promise, app);
         }
-        this.updateNodeHealth(ele, promise, workload);
-      } else if (nodeType === NodeType.APP) {
-        const app = ele.data('app');
-        // App-based health
-        let promise = appHealthPerNamespace.get(namespace);
-        if (!promise) {
-          promise = API.getNamespaceAppHealth(authentication(), namespace, duration);
-          appHealthPerNamespace.set(namespace, promise);
-        }
-        this.updateNodeHealth(ele, promise, app);
       }
     });
   }
@@ -556,7 +561,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       })
       .catch(err => {
         ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
-        console.error(API.getErrorMsg('Could not fetch health', err));
+        console.error(API.getErrorMsg('Could not fetch health [' + key + ']', err));
       });
   }
 }
