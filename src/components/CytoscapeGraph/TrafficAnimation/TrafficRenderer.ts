@@ -62,8 +62,8 @@ enum TrafficEdgeType {
  */
 const getTrafficPointRendererForHttpError: (edge: any) => TrafficPointRenderer = (edge: any) => {
   return new TrafficPointConcentricDiamondRenderer(
-    new Diamond(4, PfColors.White, PfColors.Red100, 1.0),
-    new Diamond(2, PfColors.Red100, PfColors.Red100, 1.0)
+    new Diamond(2.5, PfColors.White, PfColors.Red100, 1.0),
+    new Diamond(1, PfColors.Red100, PfColors.Red100, 1.0)
   );
 };
 
@@ -73,7 +73,7 @@ const getTrafficPointRendererForHttpError: (edge: any) => TrafficPointRenderer =
  * @returns {TrafficPointRenderer}
  */
 const getTrafficPointRendererForHttpSuccess: (edge: any) => TrafficPointRenderer = (edge: any) => {
-  return new TrafficPointCircleRenderer(3, PfColors.White, edge.style('line-color'), 2);
+  return new TrafficPointCircleRenderer(1, PfColors.White, edge.style('line-color'), 2);
 };
 
 /**
