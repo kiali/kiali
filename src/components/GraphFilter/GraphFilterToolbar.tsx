@@ -55,9 +55,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
   };
 
   handleNamespaceReturn = () => {
-    this.context.router.history.push(
-      makeNamespaceGraphUrlFromParams({ ...this.getGraphParams(), node: undefined, injectServiceNodes: false })
-    );
+    this.context.router.history.push(makeNamespaceGraphUrlFromParams({ ...this.getGraphParams(), node: undefined }));
   };
 
   handleGraphTypeChange = (graphType: GraphType) => {

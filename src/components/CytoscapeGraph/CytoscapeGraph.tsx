@@ -40,6 +40,7 @@ type CytoscapeGraphType = {
   showVirtualServices: boolean;
   showMissingSidecars: boolean;
   showTrafficAnimation: boolean;
+  showServiceNodes: boolean;
   onClick: (event: CytoscapeClickEvent) => void;
   onDoubleClick: (event: CytoscapeClickEvent) => void;
   onReady: (cytoscapeRef: any) => void;
@@ -84,6 +85,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   constructor(props: CytoscapeGraphProps) {
     super(props);
     this.namespaceChanged = false;
+    this.nodeChanged = false;
     this.initialValues = {
       position: undefined,
       zoom: undefined
@@ -104,8 +106,9 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.showCircuitBreakers !== nextProps.showCircuitBreakers ||
       this.props.showVirtualServices !== nextProps.showVirtualServices ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
-      this.props.elements !== nextProps.elements ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
+      this.props.showServiceNodes !== nextProps.showServiceNodes ||
+      this.props.elements !== nextProps.elements ||
       this.props.isError !== nextProps.isError;
 
     if (!nextProps.elements || !nextProps.elements.nodes || nextProps.elements.nodes.length < 1) {

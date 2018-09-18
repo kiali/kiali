@@ -59,9 +59,16 @@ export default class GraphRouteHandler extends React.Component<RouteComponentPro
       urlParams.get('graphType'),
       GraphRouteHandler.graphParamsDefaults.graphType
     );
-    let _injectServiceNodes = urlParams.get('injectServiceNodes');
-    if (_injectServiceNodes !== 'true') {
-      _injectServiceNodes = GraphRouteHandler.graphParamsDefaults.injectServiceNodes;
+    let _injectServiceNodes: boolean;
+    switch (urlParams.get('injectServiceNodes')) {
+      case 'true':
+        _injectServiceNodes = true;
+        break;
+      case 'false':
+        _injectServiceNodes = false;
+        break;
+      default:
+        _injectServiceNodes = GraphRouteHandler.graphParamsDefaults.injectServiceNodes;
     }
 
     return {

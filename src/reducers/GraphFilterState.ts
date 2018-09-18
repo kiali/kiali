@@ -10,6 +10,7 @@ const INITIAL_STATE: GraphFilterState = {
   showVirtualServices: true,
   showMissingSidecars: true,
   showTrafficAnimation: false,
+  showServiceNodes: false,
   // @ todo: add disableLayers back in later
   // disableLayers: false
   // edgeLabelMode: EdgeLabelMode.HIDE,
@@ -33,6 +34,8 @@ const graphFilterState = (state: GraphFilterState = INITIAL_STATE, action) => {
       return updateState(state, { showMissingSidecars: !state.showMissingSidecars });
     case GraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION:
       return updateState(state, { showTrafficAnimation: !state.showTrafficAnimation });
+    case GraphFilterActionKeys.TOGGLE_SERVICE_NODES:
+      return updateState(state, { showServiceNodes: !state.showServiceNodes });
     case GraphFilterActionKeys.ENABLE_GRAPH_FILTERS:
       return updateState(state, { disableLayers: action.payload });
     case GraphFilterActionKeys.SET_GRAPH_REFRESH_RATE:
