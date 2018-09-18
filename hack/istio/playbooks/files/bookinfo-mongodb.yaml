@@ -23,7 +23,7 @@ spec:
   - port: 27017
     name: mongo
   selector:
-    app: mongodb
+    app: mongodb${LABEL}
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment

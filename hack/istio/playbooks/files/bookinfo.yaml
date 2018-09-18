@@ -26,7 +26,7 @@ spec:
   - port: 9080
     name: http
   selector:
-    app: details-app
+    app: details${LABEL}
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment

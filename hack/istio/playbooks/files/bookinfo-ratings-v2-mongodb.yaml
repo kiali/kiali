@@ -15,14 +15,14 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: ratings-v2
+  name: ratings-v2-mongodb
 spec:
   replicas: 1
   template:
     metadata:
       labels:
         app: ratings${LABEL}
-        version: v2
+        version: v2-mongodb
     spec:
       containers:
       - name: ratings

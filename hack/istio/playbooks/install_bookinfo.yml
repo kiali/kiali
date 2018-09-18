@@ -16,7 +16,7 @@
         bookinfo_namespace: 'bookinfo'
       when: bookinfo_namespace is not defined
 
-    - name: Define Label if is not defined
+    - name: Define Rename Label if is not defined
       set_fact:
         rename_label: ''
       when: rename_label is not defined
@@ -98,6 +98,42 @@
         - reviews-v1
         - reviews-v2
         - reviews-v3
+      retries: 100
+      delay: 10
+
+    - name: Wait until mongodb pods are running
+      openshift_raw:
+        definition:
+          apiVersion: v1
+          kind: Deployment
+          metadata:
+            name: "{{item}}"
+            namespace: "{{ bookinfo_namespace }}"
+      register: replicaResult
+      when: "mongodb is defined and mongodb == 'true'"
+      until: (replicaResult.result.status.ready_replicas is defined and replicaResult.result.status.ready_replicas == 1) or
+           (replicaResult.result.status.readyReplicas is defined and replicaResult.result.status.readyReplicas == 1)
+      with_items:
+        - ratings-v2-mongodb
+        - mongodb-v1
+      retries: 100
+      delay: 10
+
+    - name: Wait until mysql pods are running
+      openshift_raw:
+        definition:
+          apiVersion: v1
+          kind: Deployment
+          metadata:
+            name: "{{item}}"
+            namespace: "{{ bookinfo_namespace }}"
+      register: replicaResult
+      when: "mysql is defined and mysql == 'true'"
+      until: (replicaResult.result.status.ready_replicas is defined and replicaResult.result.status.ready_replicas == 1) or
+           (replicaResult.result.status.readyReplicas is defined and replicaResult.result.status.readyReplicas == 1)
+      with_items:
+        - ratings-v2-mysql
+        - mysqldb-v1
       retries: 100
       delay: 10
 

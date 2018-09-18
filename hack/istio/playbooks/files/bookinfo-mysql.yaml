@@ -35,7 +35,7 @@ spec:
   - port: 3306
     name: mysql
   selector:
-    app: mysqldb
+    app: mysqldb${LABEL}
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
