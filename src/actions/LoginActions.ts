@@ -16,19 +16,22 @@ export enum LoginActionKeys {
 // synchronous action creators
 export const LoginActions = {
   loginRequest: createAction(LoginActionKeys.LOGIN_REQUEST),
-  loginExtend: createAction(LoginActionKeys.LOGIN_EXTEND, (token: Token, username: string, actualTimeOut: number) => ({
+  loginExtend: createAction(LoginActionKeys.LOGIN_EXTEND, (token: Token, username: string, currentTimeOut: number) => ({
     type: LoginActionKeys.LOGIN_EXTEND,
     token: token,
     username: username,
-    sessionTimeOut: actualTimeOut + config().session.extendedSessionTimeOut
+    sessionTimeOut: currentTimeOut + config().session.extendedSessionTimeOut
   })),
-  loginSuccess: createAction(LoginActionKeys.LOGIN_SUCCESS, (token: Token, username: string) => ({
-    type: LoginActionKeys.LOGIN_SUCCESS,
-    token: token,
-    username: username,
-    logged: true,
-    sessionTimeOut: new Date().getTime() + config().session.sessionTimeOut
-  })),
+  loginSuccess: createAction(
+    LoginActionKeys.LOGIN_SUCCESS,
+    (token: Token, username: string, currentTimeOut?: number) => ({
+      type: LoginActionKeys.LOGIN_SUCCESS,
+      token: token,
+      username: username,
+      logged: true,
+      sessionTimeOut: currentTimeOut || new Date().getTime() + config().session.sessionTimeOut
+    })
+  ),
   loginFailure: createAction(LoginActionKeys.LOGIN_FAILURE, (error: any) => ({
     type: LoginActionKeys.LOGIN_FAILURE,
     error: error
@@ -73,7 +76,8 @@ export const LoginActions = {
               dispatch(
                 LoginActions.loginSuccess(
                   actualState['authentication']['token'],
-                  actualState['authentication']['username']
+                  actualState['authentication']['username'],
+                  actualState['authentication']['sessionTimeOut']
                 )
               );
               dispatch(HelpDropdownActions.refresh());

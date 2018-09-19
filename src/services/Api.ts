@@ -299,8 +299,15 @@ export const getWorkloadValidations = (
 
 export const getErrorMsg = (msg: string, error: AxiosError) => {
   let errorMessage = msg;
-  if (error && error.response && error.response.data && error.response.data['error']) {
-    errorMessage = `${msg} Error: [ ${error.response.data['error']} ]`;
+  if (error && error.response) {
+    if (error.response.data && error.response.data['error']) {
+      errorMessage = `${msg}, Error: [ ${error.response.data['error']} ]`;
+    } else if (error.response.statusText) {
+      errorMessage = `${msg}, Error: [ ${error.response.statusText} ]`;
+      if (error.response.status === 401) {
+        errorMessage += ' Have your session expired? Try logging again.';
+      }
+    }
   }
   return errorMessage;
 };

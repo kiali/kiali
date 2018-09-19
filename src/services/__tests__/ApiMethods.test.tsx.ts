@@ -3,9 +3,9 @@ import { AxiosError } from 'axios';
 import { authentication } from '../../utils/Authentication';
 
 describe('#GetErrorMessage', () => {
-  it('should return a errorMessage', () => {
-    const errormsg = 'Error sample';
-    let axErr: AxiosError = {
+  const errormsg = 'Error sample';
+  it('should return an error message with status', () => {
+    const axErr: AxiosError = {
       config: { method: 'GET' },
       name: 'AxiosError',
       message: 'Error in Response',
@@ -17,9 +17,11 @@ describe('#GetErrorMessage', () => {
         config: {}
       }
     };
-    expect(API.getErrorMsg(errormsg, axErr)).toEqual(errormsg);
+    expect(API.getErrorMsg(errormsg, axErr)).toEqual(`${errormsg}, Error: [ InternalError ]`);
+  });
+  it('should return an error message with data', () => {
     const responseServerError = 'Internal Error';
-    axErr = {
+    const axErr: AxiosError = {
       config: { method: 'GET' },
       name: 'AxiosError',
       message: 'Error in Response',
@@ -31,7 +33,24 @@ describe('#GetErrorMessage', () => {
         config: {}
       }
     };
-    expect(API.getErrorMsg(errormsg, axErr)).toEqual(`${errormsg} Error: [ ${responseServerError} ]`);
+    expect(API.getErrorMsg(errormsg, axErr)).toEqual(`${errormsg}, Error: [ ${responseServerError} ]`);
+  });
+  it('should return specific error message for unauthorized', () => {
+    const axErr: AxiosError = {
+      config: { method: 'GET' },
+      name: 'AxiosError',
+      message: 'Error in Response',
+      response: {
+        data: null,
+        status: 401,
+        statusText: 'Unauthorized',
+        headers: null,
+        config: {}
+      }
+    };
+    expect(API.getErrorMsg(errormsg, axErr)).toEqual(
+      `${errormsg}, Error: [ Unauthorized ] Have your session expired? Try logging again.`
+    );
   });
 });
 

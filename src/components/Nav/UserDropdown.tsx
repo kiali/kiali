@@ -35,7 +35,6 @@ class UserDropdown extends React.Component<UserProps, UserState> {
       this.setState({ timeCountDownSeconds: this.timeLeft() / MILLISECONDS });
     }, 1000);
 
-    console.debug('Added timers [' + checkSessionTimerId + ', ' + timeLeftTimerId + ']');
     this.setState({
       checkSessionTimerId: checkSessionTimerId,
       timeLeftTimerId: timeLeftTimerId
@@ -45,11 +44,9 @@ class UserDropdown extends React.Component<UserProps, UserState> {
   componentWillUnmount() {
     if (this.state.checkSessionTimerId) {
       clearInterval(this.state.checkSessionTimerId);
-      console.debug('Removed timer [' + this.state.checkSessionTimerId + ']');
     }
     if (this.state.timeLeftTimerId) {
       clearInterval(this.state.timeLeftTimerId);
-      console.log('Removed timer [' + this.state.timeLeftTimerId + ']');
     }
   }
 
