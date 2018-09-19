@@ -30,21 +30,20 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
   };
 
   render() {
+    const uiVersion =
+      process.env.REACT_APP_GIT_HASH == ''
+        ? process.env.REACT_APP_VERSION
+        : `${process.env.REACT_APP_VERSION} (${process.env.REACT_APP_GIT_HASH})`;
+    const coreVersion =
+      this.props.status[KIALI_CORE_COMMIT_HASH] == ''
+        ? this.props.status[KIALI_CORE_VERSION]
+        : `${this.props.status[KIALI_CORE_VERSION]} (${this.props.status[KIALI_CORE_COMMIT_HASH]})`;
+
     return (
       <AboutModal show={this.state.showModal} onHide={this.close} productTitle={<img src={KialiLogo} />}>
         <AboutModal.Versions>
-          <AboutModal.VersionItem
-            label="kiali-ui"
-            versionText={`${process.env.REACT_APP_VERSION} (${process.env.REACT_APP_GIT_HASH})`}
-          />
-          <AboutModal.VersionItem
-            label="kiali"
-            versionText={
-              this.props.status
-                ? `${this.props.status[KIALI_CORE_VERSION]} (${this.props.status[KIALI_CORE_COMMIT_HASH]})`
-                : 'Unknown'
-            }
-          />
+          <AboutModal.VersionItem label="kiali-ui" versionText={uiVersion!} />
+          <AboutModal.VersionItem label="kiali" versionText={coreVersion!} />
           <h3>Components </h3>
           {this.props.components &&
             this.props.components.map(component => (
