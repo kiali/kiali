@@ -4,7 +4,7 @@ import { TimeSeries } from '../../types/Metrics';
 import { style } from 'typestyle';
 
 type MetricsChartBaseProps = {
-  familyName: string;
+  chartName: string;
   onExpandRequested?: () => void;
 };
 
@@ -19,15 +19,28 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
   protected abstract get controlKey(): string;
   protected abstract get seriesData(): any;
 
-  protected nameTimeSeries = (groupName: string, matrix: TimeSeries[]): TimeSeries[] => {
-    const tsName = this.props.familyName.replace('Output: ', '').replace('Input: ', '');
-
+  protected nameTimeSeries = (matrix: TimeSeries[], groupName?: string): TimeSeries[] => {
     matrix.forEach(ts => {
-      const labels = Object.keys(ts.metric).map(k => ts.metric[k]);
-
-      ts.name = tsName + groupName;
-      if (labels.length !== 0) {
-        ts.name += '{' + labels.join(',') + '}';
+      const labels = Object.keys(ts.metric)
+        .map(k => ts.metric[k])
+        .filter(label => label !== 'source' && label !== 'destination')
+        .join(',');
+      if (groupName) {
+        if (labels === '') {
+          // Ex: average // quantile 0.999 // etc.
+          ts.name = groupName;
+        } else {
+          // Ex: policy: average // stadium: quantile 0.999 // etc.
+          ts.name = labels + ': ' + groupName;
+        }
+      } else {
+        if (labels === '') {
+          // Ex: Request volume (ops)
+          ts.name = this.props.chartName;
+        } else {
+          // Ex: policy // stadium // etc.
+          ts.name = labels;
+        }
       }
     });
     return matrix;
@@ -83,8 +96,8 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
         {this.props.onExpandRequested && this.renderExpand()}
         <LineChart
           style={{ height: this.props.onExpandRequested ? height : '99%' }}
-          id={this.props.familyName}
-          title={{ text: this.props.familyName }}
+          id={this.props.chartName}
+          title={{ text: this.props.chartName }}
           data={data}
           axis={this.axisDefinition}
           point={{ show: false }}

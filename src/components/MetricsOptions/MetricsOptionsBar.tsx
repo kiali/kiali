@@ -5,6 +5,7 @@ import ValueSelectHelper from './ValueSelectHelper';
 import MetricsOptions from '../../types/MetricsOptions';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import { HistoryManager } from '../../app/History';
+import { MetricsSettings, Quantiles, MetricsSettingsDropdown } from './MetricsSettings';
 
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
@@ -18,6 +19,7 @@ interface MetricsOptionsState {
   pollInterval: number;
   duration: number;
   groupByLabels: string[];
+  metricsSettings: MetricsSettings;
 }
 
 interface GroupByLabel {
@@ -72,7 +74,12 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     this.state = {
       pollInterval: this.initialPollInterval(),
       duration: this.initialDuration(),
-      groupByLabels: this.groupByLabelsHelper.selected
+      groupByLabels: this.groupByLabelsHelper.selected,
+      metricsSettings: {
+        showAverage: true,
+        showQuantiles: [Quantiles.MEDIAN, Quantiles.Q0_95, Quantiles.Q0_99],
+        groupingLabels: []
+      }
     };
   }
 
@@ -126,7 +133,9 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     this.props.onOptionsChanged({
       duration: this.state.duration,
       byLabelsIn: labelsIn,
-      byLabelsOut: labelsOut
+      byLabelsOut: labelsOut,
+      avg: this.state.metricsSettings.showAverage,
+      quantiles: this.state.metricsSettings.showQuantiles
     });
   }
 
@@ -136,11 +145,18 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     });
   };
 
+  onMetricsSettingsChanged = (settings: MetricsSettings) => {
+    this.setState({ metricsSettings: settings }, () => {
+      this.reportOptions();
+    });
+  };
+
   render() {
     return (
       <Toolbar>
         {this.groupByLabelsHelper.renderDropdown()}
         <FormGroup>
+          <MetricsSettingsDropdown onChanged={this.onMetricsSettingsChanged} {...this.state.metricsSettings} />
           <ToolbarDropdown
             id={'metrics_filter_reporter'}
             disabled={false}

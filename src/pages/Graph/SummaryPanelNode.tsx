@@ -115,7 +115,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         : undefined;
     let byLabelsOut = data.isRoot ? ['destination_service_namespace'] : undefined;
 
-    const promise = getNodeMetrics(nodeMetricType, target, props, filters, byLabelsIn, byLabelsOut);
+    const promise = getNodeMetrics(nodeMetricType, target, props, filters, undefined, byLabelsIn, byLabelsOut);
     this.metricsPromise = makeCancelablePromise(promise);
     this.metricsPromise.promise
       .then(response => {

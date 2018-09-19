@@ -1,6 +1,22 @@
-import { TimeSeries } from '../types/Metrics';
+import { TimeSeries, Histogram } from '../types/Metrics';
 
 export default {
+  histogramToC3Columns(histogram: Histogram) {
+    const stats = Object.keys(histogram);
+    if (stats.length === 0 || histogram[stats[0]].matrix.length === 0) {
+      return [['x'], ['']];
+    }
+
+    let series = [(['x'] as any[]).concat(histogram[stats[0]].matrix[0].values.map(dp => dp[0] * 1000))];
+    stats.forEach(stat => {
+      const statSeries = histogram[stat].matrix.map(mat => {
+        return [mat.name as any].concat(mat.values.map(dp => dp[1]));
+      });
+      series = series.concat(statSeries);
+    });
+    return series;
+  },
+
   toC3Columns(matrix?: TimeSeries[], title?: string) {
     if (!matrix || matrix.length === 0) {
       return [['x'], [title || '']];
@@ -19,12 +35,5 @@ export default {
 
     // timestamps + data is the format required by C3 (all concatenated: an array with arrays)
     return [xseries, ...yseries];
-  },
-
-  toC3ValueColumns(matrix: TimeSeries[], title?: string) {
-    return matrix.map(mat => {
-      let yseries: any = [title || mat.name];
-      return yseries.concat(mat.values.map(dp => dp[1]));
-    });
   }
 };

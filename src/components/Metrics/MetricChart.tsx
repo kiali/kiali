@@ -4,7 +4,7 @@ import MetricsChartBase from './MetricsChartBase';
 
 type MetricChartProps = {
   series: TimeSeries[];
-  familyName: string;
+  chartName: string;
   onExpandRequested?: () => void;
 };
 
@@ -16,16 +16,16 @@ export default class MetricsChart extends MetricsChartBase<MetricChartProps> {
 
     const labelNames = Object.keys(this.props.series[0].metric);
     if (labelNames.length === 0) {
-      return this.props.familyName;
+      return this.props.chartName;
     }
 
-    return this.props.familyName + '-' + labelNames.join('-');
+    return this.props.chartName + '-' + labelNames.join('-');
   }
 
   protected get seriesData() {
     return {
       x: 'x',
-      columns: graphUtils.toC3Columns(this.nameTimeSeries('', this.props.series))
+      columns: graphUtils.toC3Columns(this.nameTimeSeries(this.props.series))
     };
   }
 }

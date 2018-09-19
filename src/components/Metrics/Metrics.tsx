@@ -24,7 +24,7 @@ const expandedChartBackLinkStyle = style({
 });
 
 type ChartDefinition = {
-  familyName: string;
+  name: string;
   component: any;
   metrics?: MetricGroup | Histogram;
 };
@@ -74,23 +74,23 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
 
   getChartsDef(): { [key: string]: ChartDefinition } {
     let inboundCharts = {
-      request_count_in: { familyName: 'Request volume (ops)', component: MetricChart },
-      request_duration_in: { familyName: 'Request duration (seconds)', component: HistogramChart },
-      request_size_in: { familyName: 'Request size (bytes)', component: HistogramChart },
-      response_size_in: { familyName: 'Response size (bytes)', component: HistogramChart },
-      tcp_received_in: { familyName: 'TCP received (bps)', component: MetricChart },
-      tcp_sent_in: { familyName: 'TCP sent (bps)', component: MetricChart }
+      request_count_in: { name: 'Request volume (ops)', component: MetricChart },
+      request_duration_in: { name: 'Request duration (seconds)', component: HistogramChart },
+      request_size_in: { name: 'Request size (bytes)', component: HistogramChart },
+      response_size_in: { name: 'Response size (bytes)', component: HistogramChart },
+      tcp_received_in: { name: 'TCP received (bps)', component: MetricChart },
+      tcp_sent_in: { name: 'TCP sent (bps)', component: MetricChart }
     };
     let charts: { [key: string]: ChartDefinition } = inboundCharts;
 
     if (this.props.metricsType === 'outbound') {
       charts = {
-        request_count_out: { familyName: 'Request volume (ops)', component: MetricChart },
-        request_duration_out: { familyName: 'Request duration (seconds)', component: HistogramChart },
-        request_size_out: { familyName: 'Request size (bytes)', component: HistogramChart },
-        response_size_out: { familyName: 'Response size (bytes)', component: HistogramChart },
-        tcp_received_out: { familyName: 'TCP received (bps)', component: MetricChart },
-        tcp_sent_out: { familyName: 'TCP sent (bps)', component: MetricChart }
+        request_count_out: { name: 'Request volume (ops)', component: MetricChart },
+        request_duration_out: { name: 'Request duration (seconds)', component: HistogramChart },
+        request_size_out: { name: 'Request size (bytes)', component: HistogramChart },
+        response_size_out: { name: 'Response size (bytes)', component: HistogramChart },
+        tcp_received_out: { name: 'TCP received (bps)', component: MetricChart },
+        tcp_sent_out: { name: 'TCP sent (bps)', component: MetricChart }
       };
     }
 
@@ -295,7 +295,7 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     }
     const props: any = {
       key: chartKey + this.state.metricReporter,
-      familyName: chart.familyName
+      chartName: chart.name
     };
     if ((chart.metrics as MetricGroup).matrix) {
       props.series = (chart.metrics as MetricGroup).matrix;
