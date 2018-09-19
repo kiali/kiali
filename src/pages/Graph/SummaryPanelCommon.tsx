@@ -113,15 +113,18 @@ export const nodeData = (node: any): NodeData => {
 };
 
 export const getNodeMetricType = (data: NodeData) => {
-  if (data.workload) {
-    // note - this also works for NodeType UNKNOWN because workload="unknown"
-    return NodeMetricType.WORKLOAD;
-  } else if (data.nodeType === NodeType.APP) {
-    return NodeMetricType.APP;
-  } else if (data.nodeType === NodeType.SERVICE) {
-    return NodeMetricType.SERVICE;
+  switch (data.nodeType) {
+    case NodeType.WORKLOAD:
+    case NodeType.UNKNOWN:
+      return NodeMetricType.WORKLOAD;
+    case NodeType.APP:
+      // treat versioned app like a workload to narrow to the specific version
+      return data.workload ? NodeMetricType.WORKLOAD : NodeMetricType.APP;
+    case NodeType.SERVICE:
+      return NodeMetricType.SERVICE;
+    default:
+      return undefined;
   }
-  return undefined;
 };
 
 export const getNodeMetrics = (
