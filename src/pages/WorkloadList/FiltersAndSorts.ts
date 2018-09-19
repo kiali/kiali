@@ -152,8 +152,40 @@ export namespace WorkloadListFilters {
     action: FILTER_ACTION_APPEND,
     filterValues: [
       {
+        id: WorkloadType.CronJob,
+        title: WorkloadType.CronJob
+      },
+      {
+        id: WorkloadType.DaemonSet,
+        title: WorkloadType.DaemonSet
+      },
+      {
         id: WorkloadType.Deployment,
         title: WorkloadType.Deployment
+      },
+      {
+        id: WorkloadType.DeploymentConfig,
+        title: WorkloadType.DeploymentConfig
+      },
+      {
+        id: WorkloadType.Job,
+        title: WorkloadType.Job
+      },
+      {
+        id: WorkloadType.Pod,
+        title: WorkloadType.Pod
+      },
+      {
+        id: WorkloadType.ReplicaSet,
+        title: WorkloadType.ReplicaSet
+      },
+      {
+        id: WorkloadType.ReplicationController,
+        title: WorkloadType.ReplicationController
+      },
+      {
+        id: WorkloadType.StatefulSet,
+        title: WorkloadType.StatefulSet
       }
     ]
   };

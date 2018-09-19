@@ -75,7 +75,7 @@ describe('Health', () => {
     expect(health.getGlobalStatus()).toEqual(H.HEALTHY);
     expect(health.getReport()).toEqual([]);
   });
-  it('should aggregate degraded deployment', () => {
+  it('should aggregate degraded workload', () => {
     const health = new H.AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ available: 1, replicas: 1, name: 'a' }, { available: 1, replicas: 2, name: 'b' }],
@@ -83,7 +83,7 @@ describe('Health', () => {
       60
     );
     expect(health.getGlobalStatus()).toEqual(H.DEGRADED);
-    expect(health.getReport()).toEqual(['Pod deployment degraded']);
+    expect(health.getReport()).toEqual(['Pod workload degraded']);
   });
   it('should aggregate failing envoy', () => {
     const health = new H.AppHealth(
@@ -114,7 +114,7 @@ describe('Health', () => {
     );
     expect(health.getGlobalStatus()).toEqual(H.FAILURE);
     expect(health.getReport()).toEqual([
-      'No active deployment!',
+      'No active workload!',
       'Envoy health degraded',
       'Error rate failure: 20.00%>=20%'
     ]);

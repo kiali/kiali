@@ -36,7 +36,7 @@ describe('HealthIndicator', () => {
     expect(html).toContain('pficon-ok');
   });
 
-  it('renders deployments degraded', () => {
+  it('renders workloads degraded', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 1, replicas: 10 }, { name: 'B', available: 2, replicas: 2 }],
@@ -55,7 +55,7 @@ describe('HealthIndicator', () => {
     expect(wrapper).toMatchSnapshot();
     html = wrapper.html();
     expect(html).toContain('pficon-warning');
-    expect(html).toContain('Pod deployment degraded');
+    expect(html).toContain('Pod workload degraded');
   });
 
   it('renders envoy failure', () => {
@@ -77,11 +77,11 @@ describe('HealthIndicator', () => {
     expect(wrapper).toMatchSnapshot();
     html = wrapper.html();
     expect(html).toContain('pficon-error');
-    expect(html).toContain('Pod deployment degraded');
+    expect(html).toContain('Pod workload degraded');
     expect(html).toContain('Envoy health failure');
   });
 
-  it('renders some scaled down deployment', () => {
+  it('renders some scaled down workload', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 0, replicas: 0 }, { name: 'B', available: 2, replicas: 2 }],
@@ -100,10 +100,10 @@ describe('HealthIndicator', () => {
     expect(wrapper).toMatchSnapshot();
     html = wrapper.html();
     expect(html).toContain('pficon-ok');
-    expect(html).toContain('inactive deployment');
+    expect(html).toContain('inactive workload');
   });
 
-  it('renders all deployments down', () => {
+  it('renders all workloads down', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 0, replicas: 0 }, { name: 'B', available: 0, replicas: 0 }],
@@ -122,7 +122,7 @@ describe('HealthIndicator', () => {
     expect(wrapper).toMatchSnapshot();
     html = wrapper.html();
     expect(html).toContain('pficon-error');
-    expect(html).toContain('No active deployment');
+    expect(html).toContain('No active workload');
   });
 
   it('renders error rate failure', () => {

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as API from '../../services/Api';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { WorkloadId } from '../../types/Workload';
-import { Deployment, Validations } from '../../types/IstioObjects';
+import { emptyWorkload, Workload, WorkloadId } from '../../types/Workload';
+import { ObjectCheck, Validations } from '../../types/IstioObjects';
 import { authentication } from '../../utils/Authentication';
 import { Breadcrumb, TabContainer, Nav, NavItem, TabContent, TabPane } from 'patternfly-react';
 import WorkloadInfo from './WorkloadInfo';
@@ -13,7 +13,7 @@ import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink
 import { MetricsObjectTypes, MetricsDirection } from '../../types/Metrics';
 
 type WorkloadDetailsState = {
-  workload: Deployment;
+  workload: Workload;
   validations: Validations;
   istioEnabled: boolean;
   health?: WorkloadHealth;
@@ -27,22 +27,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
   constructor(props: RouteComponentProps<WorkloadId>) {
     super(props);
     this.state = {
-      workload: {
-        name: '',
-        type: '',
-        createdAt: '',
-        resourceVersion: '',
-        replicas: 0,
-        availableReplicas: 0,
-        unavailableReplicas: 0,
-        autoscaler: {
-          name: '',
-          createdAt: '',
-          minReplicas: 0,
-          maxReplicas: 0,
-          targetCPUUtilizationPercentage: 0
-        }
-      },
+      workload: emptyWorkload,
       validations: {},
       istioEnabled: false
     };
@@ -53,13 +38,44 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     return '/namespaces/' + this.props.match.params.namespace + '/workloads/' + this.props.match.params.workload;
   }
 
+  // All information for validations is fetched in the workload, no need to add another call
+  workloadValidations(workload: Workload): Validations {
+    const noIstiosidecar: ObjectCheck = { message: 'Pod has no Istio sidecar', severity: 'warning', path: '' };
+    const noAppLabel: ObjectCheck = { message: 'Pod has no app label', severity: 'warning', path: '' };
+    const noVersionLabel: ObjectCheck = { message: 'Pod has no version label', severity: 'warning', path: '' };
+
+    const validations: Validations = {};
+    if (workload.pods.length > 0) {
+      validations['pod'] = {};
+      workload.pods.forEach(pod => {
+        validations['pod'][pod.name] = {
+          name: pod.name,
+          objectType: 'pod',
+          valid: true,
+          checks: []
+        };
+        if (!pod.istioContainers || pod.istioContainers.length === 0) {
+          validations['pod'][pod.name].checks.push(noIstiosidecar);
+        }
+        if (!pod.labels) {
+          validations['pod'][pod.name].checks.push(noAppLabel);
+          validations['pod'][pod.name].checks.push(noVersionLabel);
+        } else {
+          if (!pod.appLabel) {
+            validations['pod'][pod.name].checks.push(noAppLabel);
+          }
+          if (!pod.versionLabel) {
+            validations['pod'][pod.name].checks.push(noVersionLabel);
+          }
+        }
+        validations['pod'][pod.name].valid = validations['pod'][pod.name].checks.length === 0;
+      });
+    }
+    return validations;
+  }
+
   fetchWorkload = () => {
     let promiseDetails = API.getWorkload(
-      authentication(),
-      this.props.match.params.namespace,
-      this.props.match.params.workload
-    );
-    let promiseValidations = API.getWorkloadValidations(
       authentication(),
       this.props.match.params.namespace,
       this.props.match.params.workload
@@ -72,15 +88,12 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
       600
     );
 
-    Promise.all([promiseDetails, promiseValidations, promiseHealth])
-      .then(([resultDetails, resultValidations, resultHealth]) => {
+    Promise.all([promiseDetails, promiseHealth])
+      .then(([resultDetails, resultHealth]) => {
         this.setState({
           workload: resultDetails.data,
-          validations: resultValidations.data,
-          istioEnabled:
-            resultDetails.data.pods && resultDetails.data.pods.length > 0
-              ? this.checkIstioEnabled(resultValidations.data)
-              : false,
+          validations: this.workloadValidations(resultDetails.data),
+          istioEnabled: resultDetails.data.istioSidecar,
           health: resultHealth
         });
       })

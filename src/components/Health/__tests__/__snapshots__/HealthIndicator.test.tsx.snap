@@ -1,24 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`HealthIndicator renders all deployments down 1`] = `
+exports[`HealthIndicator renders all workloads down 1`] = `
 ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <HealthIndicator
     health={
       AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 0,
-            "name": "A",
-            "replicas": 0,
-          },
-          Object {
-            "available": 0,
-            "name": "B",
-            "replicas": 0,
-          },
-        ],
         "envoy": Array [
           Object {
             "inbound": Object {
@@ -53,14 +41,14 @@ ShallowWrapper {
                 "text": "B: 0 / 0",
               },
             ],
-            "report": "No active deployment!",
+            "report": "No active workload!",
             "status": Object {
               "color": "#cc0000",
               "icon": "error-circle-o",
               "name": "Failure",
               "priority": 3,
             },
-            "title": "Deployments Status",
+            "title": "Workload Status",
           },
           Object {
             "children": Array [
@@ -107,6 +95,18 @@ ShallowWrapper {
           "requestCount": 0,
           "requestErrorCount": 0,
         },
+        "workloadStatuses": Array [
+          Object {
+            "available": 0,
+            "name": "A",
+            "replicas": 0,
+          },
+          Object {
+            "available": 0,
+            "name": "B",
+            "replicas": 0,
+          },
+        ],
       }
     }
     id="svc"
@@ -128,18 +128,6 @@ ShallowWrapper {
         headline="Failure"
         health={
           AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 0,
-                "name": "A",
-                "replicas": 0,
-              },
-              Object {
-                "available": 0,
-                "name": "B",
-                "replicas": 0,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -174,14 +162,14 @@ ShallowWrapper {
                     "text": "B: 0 / 0",
                   },
                 ],
-                "report": "No active deployment!",
+                "report": "No active workload!",
                 "status": Object {
                   "color": "#cc0000",
                   "icon": "error-circle-o",
                   "name": "Failure",
                   "priority": 3,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -228,6 +216,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 0,
+                "name": "A",
+                "replicas": 0,
+              },
+              Object {
+                "available": 0,
+                "name": "B",
+                "replicas": 0,
+              },
+            ],
           }
         }
         id="svc"
@@ -265,18 +265,6 @@ ShallowWrapper {
         />,
         "headline": "Failure",
         "health": AppHealth {
-          "deploymentStatuses": Array [
-            Object {
-              "available": 0,
-              "name": "A",
-              "replicas": 0,
-            },
-            Object {
-              "available": 0,
-              "name": "B",
-              "replicas": 0,
-            },
-          ],
           "envoy": Array [
             Object {
               "inbound": Object {
@@ -311,14 +299,14 @@ ShallowWrapper {
                   "text": "B: 0 / 0",
                 },
               ],
-              "report": "No active deployment!",
+              "report": "No active workload!",
               "status": Object {
                 "color": "#cc0000",
                 "icon": "error-circle-o",
                 "name": "Failure",
                 "priority": 3,
               },
-              "title": "Deployments Status",
+              "title": "Workload Status",
             },
             Object {
               "children": Array [
@@ -365,6 +353,18 @@ ShallowWrapper {
             "requestCount": 0,
             "requestErrorCount": 0,
           },
+          "workloadStatuses": Array [
+            Object {
+              "available": 0,
+              "name": "A",
+              "replicas": 0,
+            },
+            Object {
+              "available": 0,
+              "name": "B",
+              "replicas": 0,
+            },
+          ],
         },
         "id": "svc",
         "placement": undefined,
@@ -401,18 +401,6 @@ ShallowWrapper {
           headline="Failure"
           health={
             AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 0,
-                  "name": "A",
-                  "replicas": 0,
-                },
-                Object {
-                  "available": 0,
-                  "name": "B",
-                  "replicas": 0,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -447,14 +435,14 @@ ShallowWrapper {
                       "text": "B: 0 / 0",
                     },
                   ],
-                  "report": "No active deployment!",
+                  "report": "No active workload!",
                   "status": Object {
                     "color": "#cc0000",
                     "icon": "error-circle-o",
                     "name": "Failure",
                     "priority": 3,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -501,6 +489,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 0,
+                  "name": "A",
+                  "replicas": 0,
+                },
+                Object {
+                  "available": 0,
+                  "name": "B",
+                  "replicas": 0,
+                },
+              ],
             }
           }
           id="svc"
@@ -538,18 +538,6 @@ ShallowWrapper {
           />,
           "headline": "Failure",
           "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 0,
-                "name": "A",
-                "replicas": 0,
-              },
-              Object {
-                "available": 0,
-                "name": "B",
-                "replicas": 0,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -584,14 +572,14 @@ ShallowWrapper {
                     "text": "B: 0 / 0",
                   },
                 ],
-                "report": "No active deployment!",
+                "report": "No active workload!",
                 "status": Object {
                   "color": "#cc0000",
                   "icon": "error-circle-o",
                   "name": "Failure",
                   "priority": 3,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -638,6 +626,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 0,
+                "name": "A",
+                "replicas": 0,
+              },
+              Object {
+                "available": 0,
+                "name": "B",
+                "replicas": 0,
+              },
+            ],
           },
           "id": "svc",
           "placement": undefined,
@@ -675,25 +675,13 @@ ShallowWrapper {
 }
 `;
 
-exports[`HealthIndicator renders all deployments down 2`] = `
+exports[`HealthIndicator renders all workloads down 2`] = `
 ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <HealthIndicator
     health={
       AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 0,
-            "name": "A",
-            "replicas": 0,
-          },
-          Object {
-            "available": 0,
-            "name": "B",
-            "replicas": 0,
-          },
-        ],
         "envoy": Array [
           Object {
             "inbound": Object {
@@ -728,14 +716,14 @@ ShallowWrapper {
                 "text": "B: 0 / 0",
               },
             ],
-            "report": "No active deployment!",
+            "report": "No active workload!",
             "status": Object {
               "color": "#cc0000",
               "icon": "error-circle-o",
               "name": "Failure",
               "priority": 3,
             },
-            "title": "Deployments Status",
+            "title": "Workload Status",
           },
           Object {
             "children": Array [
@@ -782,6 +770,18 @@ ShallowWrapper {
           "requestCount": 0,
           "requestErrorCount": 0,
         },
+        "workloadStatuses": Array [
+          Object {
+            "available": 0,
+            "name": "A",
+            "replicas": 0,
+          },
+          Object {
+            "available": 0,
+            "name": "B",
+            "replicas": 0,
+          },
+        ],
       }
     }
     id="svc"
@@ -804,18 +804,6 @@ ShallowWrapper {
           headline="Failure"
           health={
             AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 0,
-                  "name": "A",
-                  "replicas": 0,
-                },
-                Object {
-                  "available": 0,
-                  "name": "B",
-                  "replicas": 0,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -850,14 +838,14 @@ ShallowWrapper {
                       "text": "B: 0 / 0",
                     },
                   ],
-                  "report": "No active deployment!",
+                  "report": "No active workload!",
                   "status": Object {
                     "color": "#cc0000",
                     "icon": "error-circle-o",
                     "name": "Failure",
                     "priority": 3,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -904,6 +892,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 0,
+                  "name": "A",
+                  "replicas": 0,
+                },
+                Object {
+                  "available": 0,
+                  "name": "B",
+                  "replicas": 0,
+                },
+              ],
             }
           }
           id="svc"
@@ -922,7 +922,7 @@ ShallowWrapper {
           />
         </HealthDetails>,
         <br />,
-        "No active deployment!",
+        "No active workload!",
         false,
       ],
       "style": Object {
@@ -949,18 +949,6 @@ ShallowWrapper {
           />,
           "headline": "Failure",
           "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 0,
-                "name": "A",
-                "replicas": 0,
-              },
-              Object {
-                "available": 0,
-                "name": "B",
-                "replicas": 0,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -995,14 +983,14 @@ ShallowWrapper {
                     "text": "B: 0 / 0",
                   },
                 ],
-                "report": "No active deployment!",
+                "report": "No active workload!",
                 "status": Object {
                   "color": "#cc0000",
                   "icon": "error-circle-o",
                   "name": "Failure",
                   "priority": 3,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -1049,6 +1037,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 0,
+                "name": "A",
+                "replicas": 0,
+              },
+              Object {
+                "available": 0,
+                "name": "B",
+                "replicas": 0,
+              },
+            ],
           },
           "id": "svc",
           "placement": undefined,
@@ -1082,7 +1082,7 @@ ShallowWrapper {
         "rendered": null,
         "type": "br",
       },
-      "No active deployment!",
+      "No active workload!",
       false,
     ],
     "type": "div",
@@ -1098,18 +1098,6 @@ ShallowWrapper {
             headline="Failure"
             health={
               AppHealth {
-                "deploymentStatuses": Array [
-                  Object {
-                    "available": 0,
-                    "name": "A",
-                    "replicas": 0,
-                  },
-                  Object {
-                    "available": 0,
-                    "name": "B",
-                    "replicas": 0,
-                  },
-                ],
                 "envoy": Array [
                   Object {
                     "inbound": Object {
@@ -1144,14 +1132,14 @@ ShallowWrapper {
                         "text": "B: 0 / 0",
                       },
                     ],
-                    "report": "No active deployment!",
+                    "report": "No active workload!",
                     "status": Object {
                       "color": "#cc0000",
                       "icon": "error-circle-o",
                       "name": "Failure",
                       "priority": 3,
                     },
-                    "title": "Deployments Status",
+                    "title": "Workload Status",
                   },
                   Object {
                     "children": Array [
@@ -1198,6 +1186,18 @@ ShallowWrapper {
                   "requestCount": 0,
                   "requestErrorCount": 0,
                 },
+                "workloadStatuses": Array [
+                  Object {
+                    "available": 0,
+                    "name": "A",
+                    "replicas": 0,
+                  },
+                  Object {
+                    "available": 0,
+                    "name": "B",
+                    "replicas": 0,
+                  },
+                ],
               }
             }
             id="svc"
@@ -1216,7 +1216,7 @@ ShallowWrapper {
             />
           </HealthDetails>,
           <br />,
-          "No active deployment!",
+          "No active workload!",
           false,
         ],
         "style": Object {
@@ -1243,18 +1243,6 @@ ShallowWrapper {
             />,
             "headline": "Failure",
             "health": AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 0,
-                  "name": "A",
-                  "replicas": 0,
-                },
-                Object {
-                  "available": 0,
-                  "name": "B",
-                  "replicas": 0,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -1289,14 +1277,14 @@ ShallowWrapper {
                       "text": "B: 0 / 0",
                     },
                   ],
-                  "report": "No active deployment!",
+                  "report": "No active workload!",
                   "status": Object {
                     "color": "#cc0000",
                     "icon": "error-circle-o",
                     "name": "Failure",
                     "priority": 3,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -1343,6 +1331,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 0,
+                  "name": "A",
+                  "replicas": 0,
+                },
+                Object {
+                  "available": 0,
+                  "name": "B",
+                  "replicas": 0,
+                },
+              ],
             },
             "id": "svc",
             "placement": undefined,
@@ -1376,1399 +1376,7 @@ ShallowWrapper {
           "rendered": null,
           "type": "br",
         },
-        "No active deployment!",
-        false,
-      ],
-      "type": "div",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-      },
-    },
-  },
-}
-`;
-
-exports[`HealthIndicator renders deployments degraded 1`] = `
-ShallowWrapper {
-  "length": 1,
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthIndicator
-    health={
-      AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 10,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
-        "envoy": Array [
-          Object {
-            "inbound": Object {
-              "healthy": 1,
-              "total": 1,
-            },
-            "outbound": Object {
-              "healthy": 1,
-              "total": 1,
-            },
-          },
-        ],
-        "items": Array [
-          Object {
-            "children": Array [
-              Object {
-                "status": Object {
-                  "color": "#ec7a08",
-                  "icon": "warning-triangle-o",
-                  "name": "Degraded",
-                  "priority": 2,
-                },
-                "text": "A: 1 / 10",
-              },
-              Object {
-                "status": Object {
-                  "color": "#3f9c35",
-                  "icon": "ok",
-                  "name": "Healthy",
-                  "priority": 1,
-                },
-                "text": "B: 2 / 2",
-              },
-            ],
-            "report": "Pod deployment degraded",
-            "status": Object {
-              "color": "#ec7a08",
-              "icon": "warning-triangle-o",
-              "name": "Degraded",
-              "priority": 2,
-            },
-            "title": "Deployments Status",
-          },
-          Object {
-            "children": Array [
-              Object {
-                "status": Object {
-                  "color": "#3f9c35",
-                  "icon": "ok",
-                  "name": "Healthy",
-                  "priority": 1,
-                },
-                "text": "undefined (in): 1 / 1",
-              },
-              Object {
-                "status": Object {
-                  "color": "#3f9c35",
-                  "icon": "ok",
-                  "name": "Healthy",
-                  "priority": 1,
-                },
-                "text": "undefined (out): 1 / 1",
-              },
-            ],
-            "status": Object {
-              "color": "#3f9c35",
-              "icon": "ok",
-              "name": "Healthy",
-              "priority": 1,
-            },
-            "title": "Envoy Health",
-          },
-          Object {
-            "status": Object {
-              "color": "#72767b",
-              "name": "No health information",
-              "priority": 0,
-              "text": "N/A",
-            },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
-          },
-        ],
-        "rateInterval": 600,
-        "requests": Object {
-          "requestCount": 0,
-          "requestErrorCount": 0,
-        },
-      }
-    }
-    id="svc"
-    mode={1}
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "host",
-    "props": Object {
-      "children": <HealthDetails
-        headline="Degraded"
-        health={
-          AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
-            "envoy": Array [
-              Object {
-                "inbound": Object {
-                  "healthy": 1,
-                  "total": 1,
-                },
-                "outbound": Object {
-                  "healthy": 1,
-                  "total": 1,
-                },
-              },
-            ],
-            "items": Array [
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "color": "#ec7a08",
-                      "icon": "warning-triangle-o",
-                      "name": "Degraded",
-                      "priority": 2,
-                    },
-                    "text": "A: 1 / 10",
-                  },
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "B: 2 / 2",
-                  },
-                ],
-                "report": "Pod deployment degraded",
-                "status": Object {
-                  "color": "#ec7a08",
-                  "icon": "warning-triangle-o",
-                  "name": "Degraded",
-                  "priority": 2,
-                },
-                "title": "Deployments Status",
-              },
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "undefined (in): 1 / 1",
-                  },
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "undefined (out): 1 / 1",
-                  },
-                ],
-                "status": Object {
-                  "color": "#3f9c35",
-                  "icon": "ok",
-                  "name": "Healthy",
-                  "priority": 1,
-                },
-                "title": "Envoy Health",
-              },
-              Object {
-                "status": Object {
-                  "color": "#72767b",
-                  "name": "No health information",
-                  "priority": 0,
-                  "text": "N/A",
-                },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
-              },
-            ],
-            "rateInterval": 600,
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          }
-        }
-        id="svc"
-        placement={undefined}
-      >
-        <Icon
-          className="health-icon"
-          name="warning-triangle-o"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />
-      </HealthDetails>,
-    },
-    "ref": null,
-    "rendered": Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "class",
-      "props": Object {
-        "children": <Icon
-          className="health-icon"
-          name="warning-triangle-o"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />,
-        "headline": "Degraded",
-        "health": AppHealth {
-          "deploymentStatuses": Array [
-            Object {
-              "available": 1,
-              "name": "A",
-              "replicas": 10,
-            },
-            Object {
-              "available": 2,
-              "name": "B",
-              "replicas": 2,
-            },
-          ],
-          "envoy": Array [
-            Object {
-              "inbound": Object {
-                "healthy": 1,
-                "total": 1,
-              },
-              "outbound": Object {
-                "healthy": 1,
-                "total": 1,
-              },
-            },
-          ],
-          "items": Array [
-            Object {
-              "children": Array [
-                Object {
-                  "status": Object {
-                    "color": "#ec7a08",
-                    "icon": "warning-triangle-o",
-                    "name": "Degraded",
-                    "priority": 2,
-                  },
-                  "text": "A: 1 / 10",
-                },
-                Object {
-                  "status": Object {
-                    "color": "#3f9c35",
-                    "icon": "ok",
-                    "name": "Healthy",
-                    "priority": 1,
-                  },
-                  "text": "B: 2 / 2",
-                },
-              ],
-              "report": "Pod deployment degraded",
-              "status": Object {
-                "color": "#ec7a08",
-                "icon": "warning-triangle-o",
-                "name": "Degraded",
-                "priority": 2,
-              },
-              "title": "Deployments Status",
-            },
-            Object {
-              "children": Array [
-                Object {
-                  "status": Object {
-                    "color": "#3f9c35",
-                    "icon": "ok",
-                    "name": "Healthy",
-                    "priority": 1,
-                  },
-                  "text": "undefined (in): 1 / 1",
-                },
-                Object {
-                  "status": Object {
-                    "color": "#3f9c35",
-                    "icon": "ok",
-                    "name": "Healthy",
-                    "priority": 1,
-                  },
-                  "text": "undefined (out): 1 / 1",
-                },
-              ],
-              "status": Object {
-                "color": "#3f9c35",
-                "icon": "ok",
-                "name": "Healthy",
-                "priority": 1,
-              },
-              "title": "Envoy Health",
-            },
-            Object {
-              "status": Object {
-                "color": "#72767b",
-                "name": "No health information",
-                "priority": 0,
-                "text": "N/A",
-              },
-              "text": "No requests over last 10 min",
-              "title": "Error Rate",
-            },
-          ],
-          "rateInterval": 600,
-          "requests": Object {
-            "requestCount": 0,
-            "requestErrorCount": 0,
-          },
-        },
-        "id": "svc",
-        "placement": undefined,
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "className": "health-icon",
-          "name": "warning-triangle-o",
-          "style": Object {
-            "fontSize": "18px",
-          },
-          "tabIndex": "0",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": [Function],
-    },
-    "type": "span",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": <HealthDetails
-          headline="Degraded"
-          health={
-            AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
-              "envoy": Array [
-                Object {
-                  "inbound": Object {
-                    "healthy": 1,
-                    "total": 1,
-                  },
-                  "outbound": Object {
-                    "healthy": 1,
-                    "total": 1,
-                  },
-                },
-              ],
-              "items": Array [
-                Object {
-                  "children": Array [
-                    Object {
-                      "status": Object {
-                        "color": "#ec7a08",
-                        "icon": "warning-triangle-o",
-                        "name": "Degraded",
-                        "priority": 2,
-                      },
-                      "text": "A: 1 / 10",
-                    },
-                    Object {
-                      "status": Object {
-                        "color": "#3f9c35",
-                        "icon": "ok",
-                        "name": "Healthy",
-                        "priority": 1,
-                      },
-                      "text": "B: 2 / 2",
-                    },
-                  ],
-                  "report": "Pod deployment degraded",
-                  "status": Object {
-                    "color": "#ec7a08",
-                    "icon": "warning-triangle-o",
-                    "name": "Degraded",
-                    "priority": 2,
-                  },
-                  "title": "Deployments Status",
-                },
-                Object {
-                  "children": Array [
-                    Object {
-                      "status": Object {
-                        "color": "#3f9c35",
-                        "icon": "ok",
-                        "name": "Healthy",
-                        "priority": 1,
-                      },
-                      "text": "undefined (in): 1 / 1",
-                    },
-                    Object {
-                      "status": Object {
-                        "color": "#3f9c35",
-                        "icon": "ok",
-                        "name": "Healthy",
-                        "priority": 1,
-                      },
-                      "text": "undefined (out): 1 / 1",
-                    },
-                  ],
-                  "status": Object {
-                    "color": "#3f9c35",
-                    "icon": "ok",
-                    "name": "Healthy",
-                    "priority": 1,
-                  },
-                  "title": "Envoy Health",
-                },
-                Object {
-                  "status": Object {
-                    "color": "#72767b",
-                    "name": "No health information",
-                    "priority": 0,
-                    "text": "N/A",
-                  },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
-                },
-              ],
-              "rateInterval": 600,
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            }
-          }
-          id="svc"
-          placement={undefined}
-        >
-          <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "18px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />
-        </HealthDetails>,
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "children": <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "18px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />,
-          "headline": "Degraded",
-          "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
-            "envoy": Array [
-              Object {
-                "inbound": Object {
-                  "healthy": 1,
-                  "total": 1,
-                },
-                "outbound": Object {
-                  "healthy": 1,
-                  "total": 1,
-                },
-              },
-            ],
-            "items": Array [
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "color": "#ec7a08",
-                      "icon": "warning-triangle-o",
-                      "name": "Degraded",
-                      "priority": 2,
-                    },
-                    "text": "A: 1 / 10",
-                  },
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "B: 2 / 2",
-                  },
-                ],
-                "report": "Pod deployment degraded",
-                "status": Object {
-                  "color": "#ec7a08",
-                  "icon": "warning-triangle-o",
-                  "name": "Degraded",
-                  "priority": 2,
-                },
-                "title": "Deployments Status",
-              },
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "undefined (in): 1 / 1",
-                  },
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "undefined (out): 1 / 1",
-                  },
-                ],
-                "status": Object {
-                  "color": "#3f9c35",
-                  "icon": "ok",
-                  "name": "Healthy",
-                  "priority": 1,
-                },
-                "title": "Envoy Health",
-              },
-              Object {
-                "status": Object {
-                  "color": "#72767b",
-                  "name": "No health information",
-                  "priority": 0,
-                  "text": "N/A",
-                },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
-              },
-            ],
-            "rateInterval": 600,
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          },
-          "id": "svc",
-          "placement": undefined,
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "className": "health-icon",
-            "name": "warning-triangle-o",
-            "style": Object {
-              "fontSize": "18px",
-            },
-            "tabIndex": "0",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      "type": "span",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-      },
-    },
-  },
-}
-`;
-
-exports[`HealthIndicator renders deployments degraded 2`] = `
-ShallowWrapper {
-  "length": 1,
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthIndicator
-    health={
-      AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 10,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
-        "envoy": Array [
-          Object {
-            "inbound": Object {
-              "healthy": 1,
-              "total": 1,
-            },
-            "outbound": Object {
-              "healthy": 1,
-              "total": 1,
-            },
-          },
-        ],
-        "items": Array [
-          Object {
-            "children": Array [
-              Object {
-                "status": Object {
-                  "color": "#ec7a08",
-                  "icon": "warning-triangle-o",
-                  "name": "Degraded",
-                  "priority": 2,
-                },
-                "text": "A: 1 / 10",
-              },
-              Object {
-                "status": Object {
-                  "color": "#3f9c35",
-                  "icon": "ok",
-                  "name": "Healthy",
-                  "priority": 1,
-                },
-                "text": "B: 2 / 2",
-              },
-            ],
-            "report": "Pod deployment degraded",
-            "status": Object {
-              "color": "#ec7a08",
-              "icon": "warning-triangle-o",
-              "name": "Degraded",
-              "priority": 2,
-            },
-            "title": "Deployments Status",
-          },
-          Object {
-            "children": Array [
-              Object {
-                "status": Object {
-                  "color": "#3f9c35",
-                  "icon": "ok",
-                  "name": "Healthy",
-                  "priority": 1,
-                },
-                "text": "undefined (in): 1 / 1",
-              },
-              Object {
-                "status": Object {
-                  "color": "#3f9c35",
-                  "icon": "ok",
-                  "name": "Healthy",
-                  "priority": 1,
-                },
-                "text": "undefined (out): 1 / 1",
-              },
-            ],
-            "status": Object {
-              "color": "#3f9c35",
-              "icon": "ok",
-              "name": "Healthy",
-              "priority": 1,
-            },
-            "title": "Envoy Health",
-          },
-          Object {
-            "status": Object {
-              "color": "#72767b",
-              "name": "No health information",
-              "priority": 0,
-              "text": "N/A",
-            },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
-          },
-        ],
-        "rateInterval": 600,
-        "requests": Object {
-          "requestCount": 0,
-          "requestErrorCount": 0,
-        },
-      }
-    }
-    id="svc"
-    mode={0}
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "host",
-    "props": Object {
-      "children": Array [
-        <HealthDetails
-          headline="Degraded"
-          health={
-            AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
-              "envoy": Array [
-                Object {
-                  "inbound": Object {
-                    "healthy": 1,
-                    "total": 1,
-                  },
-                  "outbound": Object {
-                    "healthy": 1,
-                    "total": 1,
-                  },
-                },
-              ],
-              "items": Array [
-                Object {
-                  "children": Array [
-                    Object {
-                      "status": Object {
-                        "color": "#ec7a08",
-                        "icon": "warning-triangle-o",
-                        "name": "Degraded",
-                        "priority": 2,
-                      },
-                      "text": "A: 1 / 10",
-                    },
-                    Object {
-                      "status": Object {
-                        "color": "#3f9c35",
-                        "icon": "ok",
-                        "name": "Healthy",
-                        "priority": 1,
-                      },
-                      "text": "B: 2 / 2",
-                    },
-                  ],
-                  "report": "Pod deployment degraded",
-                  "status": Object {
-                    "color": "#ec7a08",
-                    "icon": "warning-triangle-o",
-                    "name": "Degraded",
-                    "priority": 2,
-                  },
-                  "title": "Deployments Status",
-                },
-                Object {
-                  "children": Array [
-                    Object {
-                      "status": Object {
-                        "color": "#3f9c35",
-                        "icon": "ok",
-                        "name": "Healthy",
-                        "priority": 1,
-                      },
-                      "text": "undefined (in): 1 / 1",
-                    },
-                    Object {
-                      "status": Object {
-                        "color": "#3f9c35",
-                        "icon": "ok",
-                        "name": "Healthy",
-                        "priority": 1,
-                      },
-                      "text": "undefined (out): 1 / 1",
-                    },
-                  ],
-                  "status": Object {
-                    "color": "#3f9c35",
-                    "icon": "ok",
-                    "name": "Healthy",
-                    "priority": 1,
-                  },
-                  "title": "Envoy Health",
-                },
-                Object {
-                  "status": Object {
-                    "color": "#72767b",
-                    "name": "No health information",
-                    "priority": 0,
-                    "text": "N/A",
-                  },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
-                },
-              ],
-              "rateInterval": 600,
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            }
-          }
-          id="svc"
-          placement={undefined}
-        >
-          <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "35px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />
-        </HealthDetails>,
-        <br />,
-        "Pod deployment degraded",
-        false,
-      ],
-      "style": Object {
-        "color": "#ec7a08",
-      },
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "children": <Icon
-            className="health-icon"
-            name="warning-triangle-o"
-            style={
-              Object {
-                "fontSize": "35px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />,
-          "headline": "Degraded",
-          "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
-            "envoy": Array [
-              Object {
-                "inbound": Object {
-                  "healthy": 1,
-                  "total": 1,
-                },
-                "outbound": Object {
-                  "healthy": 1,
-                  "total": 1,
-                },
-              },
-            ],
-            "items": Array [
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "color": "#ec7a08",
-                      "icon": "warning-triangle-o",
-                      "name": "Degraded",
-                      "priority": 2,
-                    },
-                    "text": "A: 1 / 10",
-                  },
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "B: 2 / 2",
-                  },
-                ],
-                "report": "Pod deployment degraded",
-                "status": Object {
-                  "color": "#ec7a08",
-                  "icon": "warning-triangle-o",
-                  "name": "Degraded",
-                  "priority": 2,
-                },
-                "title": "Deployments Status",
-              },
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "undefined (in): 1 / 1",
-                  },
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "undefined (out): 1 / 1",
-                  },
-                ],
-                "status": Object {
-                  "color": "#3f9c35",
-                  "icon": "ok",
-                  "name": "Healthy",
-                  "priority": 1,
-                },
-                "title": "Envoy Health",
-              },
-              Object {
-                "status": Object {
-                  "color": "#72767b",
-                  "name": "No health information",
-                  "priority": 0,
-                  "text": "N/A",
-                },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
-              },
-            ],
-            "rateInterval": 600,
-            "requests": Object {
-              "requestCount": 0,
-              "requestErrorCount": 0,
-            },
-          },
-          "id": "svc",
-          "placement": undefined,
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "className": "health-icon",
-            "name": "warning-triangle-o",
-            "style": Object {
-              "fontSize": "35px",
-            },
-            "tabIndex": "0",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {},
-        "ref": null,
-        "rendered": null,
-        "type": "br",
-      },
-      "Pod deployment degraded",
-      false,
-    ],
-    "type": "div",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": Array [
-          <HealthDetails
-            headline="Degraded"
-            health={
-              AppHealth {
-                "deploymentStatuses": Array [
-                  Object {
-                    "available": 1,
-                    "name": "A",
-                    "replicas": 10,
-                  },
-                  Object {
-                    "available": 2,
-                    "name": "B",
-                    "replicas": 2,
-                  },
-                ],
-                "envoy": Array [
-                  Object {
-                    "inbound": Object {
-                      "healthy": 1,
-                      "total": 1,
-                    },
-                    "outbound": Object {
-                      "healthy": 1,
-                      "total": 1,
-                    },
-                  },
-                ],
-                "items": Array [
-                  Object {
-                    "children": Array [
-                      Object {
-                        "status": Object {
-                          "color": "#ec7a08",
-                          "icon": "warning-triangle-o",
-                          "name": "Degraded",
-                          "priority": 2,
-                        },
-                        "text": "A: 1 / 10",
-                      },
-                      Object {
-                        "status": Object {
-                          "color": "#3f9c35",
-                          "icon": "ok",
-                          "name": "Healthy",
-                          "priority": 1,
-                        },
-                        "text": "B: 2 / 2",
-                      },
-                    ],
-                    "report": "Pod deployment degraded",
-                    "status": Object {
-                      "color": "#ec7a08",
-                      "icon": "warning-triangle-o",
-                      "name": "Degraded",
-                      "priority": 2,
-                    },
-                    "title": "Deployments Status",
-                  },
-                  Object {
-                    "children": Array [
-                      Object {
-                        "status": Object {
-                          "color": "#3f9c35",
-                          "icon": "ok",
-                          "name": "Healthy",
-                          "priority": 1,
-                        },
-                        "text": "undefined (in): 1 / 1",
-                      },
-                      Object {
-                        "status": Object {
-                          "color": "#3f9c35",
-                          "icon": "ok",
-                          "name": "Healthy",
-                          "priority": 1,
-                        },
-                        "text": "undefined (out): 1 / 1",
-                      },
-                    ],
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "title": "Envoy Health",
-                  },
-                  Object {
-                    "status": Object {
-                      "color": "#72767b",
-                      "name": "No health information",
-                      "priority": 0,
-                      "text": "N/A",
-                    },
-                    "text": "No requests over last 10 min",
-                    "title": "Error Rate",
-                  },
-                ],
-                "rateInterval": 600,
-                "requests": Object {
-                  "requestCount": 0,
-                  "requestErrorCount": 0,
-                },
-              }
-            }
-            id="svc"
-            placement={undefined}
-          >
-            <Icon
-              className="health-icon"
-              name="warning-triangle-o"
-              style={
-                Object {
-                  "fontSize": "35px",
-                }
-              }
-              tabIndex="0"
-              type="pf"
-            />
-          </HealthDetails>,
-          <br />,
-          "Pod deployment degraded",
-          false,
-        ],
-        "style": Object {
-          "color": "#ec7a08",
-        },
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "children": <Icon
-              className="health-icon"
-              name="warning-triangle-o"
-              style={
-                Object {
-                  "fontSize": "35px",
-                }
-              }
-              tabIndex="0"
-              type="pf"
-            />,
-            "headline": "Degraded",
-            "health": AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
-              "envoy": Array [
-                Object {
-                  "inbound": Object {
-                    "healthy": 1,
-                    "total": 1,
-                  },
-                  "outbound": Object {
-                    "healthy": 1,
-                    "total": 1,
-                  },
-                },
-              ],
-              "items": Array [
-                Object {
-                  "children": Array [
-                    Object {
-                      "status": Object {
-                        "color": "#ec7a08",
-                        "icon": "warning-triangle-o",
-                        "name": "Degraded",
-                        "priority": 2,
-                      },
-                      "text": "A: 1 / 10",
-                    },
-                    Object {
-                      "status": Object {
-                        "color": "#3f9c35",
-                        "icon": "ok",
-                        "name": "Healthy",
-                        "priority": 1,
-                      },
-                      "text": "B: 2 / 2",
-                    },
-                  ],
-                  "report": "Pod deployment degraded",
-                  "status": Object {
-                    "color": "#ec7a08",
-                    "icon": "warning-triangle-o",
-                    "name": "Degraded",
-                    "priority": 2,
-                  },
-                  "title": "Deployments Status",
-                },
-                Object {
-                  "children": Array [
-                    Object {
-                      "status": Object {
-                        "color": "#3f9c35",
-                        "icon": "ok",
-                        "name": "Healthy",
-                        "priority": 1,
-                      },
-                      "text": "undefined (in): 1 / 1",
-                    },
-                    Object {
-                      "status": Object {
-                        "color": "#3f9c35",
-                        "icon": "ok",
-                        "name": "Healthy",
-                        "priority": 1,
-                      },
-                      "text": "undefined (out): 1 / 1",
-                    },
-                  ],
-                  "status": Object {
-                    "color": "#3f9c35",
-                    "icon": "ok",
-                    "name": "Healthy",
-                    "priority": 1,
-                  },
-                  "title": "Envoy Health",
-                },
-                Object {
-                  "status": Object {
-                    "color": "#72767b",
-                    "name": "No health information",
-                    "priority": 0,
-                    "text": "N/A",
-                  },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
-                },
-              ],
-              "rateInterval": 600,
-              "requests": Object {
-                "requestCount": 0,
-                "requestErrorCount": 0,
-              },
-            },
-            "id": "svc",
-            "placement": undefined,
-          },
-          "ref": null,
-          "rendered": Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "className": "health-icon",
-              "name": "warning-triangle-o",
-              "style": Object {
-                "fontSize": "35px",
-              },
-              "tabIndex": "0",
-              "type": "pf",
-            },
-            "ref": null,
-            "rendered": null,
-            "type": [Function],
-          },
-          "type": [Function],
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {},
-          "ref": null,
-          "rendered": null,
-          "type": "br",
-        },
-        "Pod deployment degraded",
+        "No active workload!",
         false,
       ],
       "type": "div",
@@ -2791,18 +1399,6 @@ ShallowWrapper {
   Symbol(enzyme.__unrendered__): <HealthIndicator
     health={
       AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 10,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
         "envoy": Array [
           Object {
             "inbound": Object {
@@ -2837,14 +1433,14 @@ ShallowWrapper {
                 "text": "B: 2 / 2",
               },
             ],
-            "report": "Pod deployment degraded",
+            "report": "Pod workload degraded",
             "status": Object {
               "color": "#ec7a08",
               "icon": "warning-triangle-o",
               "name": "Degraded",
               "priority": 2,
             },
-            "title": "Deployments Status",
+            "title": "Workload Status",
           },
           Object {
             "children": Array [
@@ -2892,6 +1488,18 @@ ShallowWrapper {
           "requestCount": 0,
           "requestErrorCount": 0,
         },
+        "workloadStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 10,
+          },
+          Object {
+            "available": 2,
+            "name": "B",
+            "replicas": 2,
+          },
+        ],
       }
     }
     id="svc"
@@ -2913,18 +1521,6 @@ ShallowWrapper {
         headline="Failure"
         health={
           AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -2959,14 +1555,14 @@ ShallowWrapper {
                     "text": "B: 2 / 2",
                   },
                 ],
-                "report": "Pod deployment degraded",
+                "report": "Pod workload degraded",
                 "status": Object {
                   "color": "#ec7a08",
                   "icon": "warning-triangle-o",
                   "name": "Degraded",
                   "priority": 2,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -3014,6 +1610,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 10,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
           }
         }
         id="svc"
@@ -3051,18 +1659,6 @@ ShallowWrapper {
         />,
         "headline": "Failure",
         "health": AppHealth {
-          "deploymentStatuses": Array [
-            Object {
-              "available": 1,
-              "name": "A",
-              "replicas": 10,
-            },
-            Object {
-              "available": 2,
-              "name": "B",
-              "replicas": 2,
-            },
-          ],
           "envoy": Array [
             Object {
               "inbound": Object {
@@ -3097,14 +1693,14 @@ ShallowWrapper {
                   "text": "B: 2 / 2",
                 },
               ],
-              "report": "Pod deployment degraded",
+              "report": "Pod workload degraded",
               "status": Object {
                 "color": "#ec7a08",
                 "icon": "warning-triangle-o",
                 "name": "Degraded",
                 "priority": 2,
               },
-              "title": "Deployments Status",
+              "title": "Workload Status",
             },
             Object {
               "children": Array [
@@ -3152,6 +1748,18 @@ ShallowWrapper {
             "requestCount": 0,
             "requestErrorCount": 0,
           },
+          "workloadStatuses": Array [
+            Object {
+              "available": 1,
+              "name": "A",
+              "replicas": 10,
+            },
+            Object {
+              "available": 2,
+              "name": "B",
+              "replicas": 2,
+            },
+          ],
         },
         "id": "svc",
         "placement": undefined,
@@ -3188,18 +1796,6 @@ ShallowWrapper {
           headline="Failure"
           health={
             AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -3234,14 +1830,14 @@ ShallowWrapper {
                       "text": "B: 2 / 2",
                     },
                   ],
-                  "report": "Pod deployment degraded",
+                  "report": "Pod workload degraded",
                   "status": Object {
                     "color": "#ec7a08",
                     "icon": "warning-triangle-o",
                     "name": "Degraded",
                     "priority": 2,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -3289,6 +1885,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 10,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
             }
           }
           id="svc"
@@ -3326,18 +1934,6 @@ ShallowWrapper {
           />,
           "headline": "Failure",
           "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -3372,14 +1968,14 @@ ShallowWrapper {
                     "text": "B: 2 / 2",
                   },
                 ],
-                "report": "Pod deployment degraded",
+                "report": "Pod workload degraded",
                 "status": Object {
                   "color": "#ec7a08",
                   "icon": "warning-triangle-o",
                   "name": "Degraded",
                   "priority": 2,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -3427,6 +2023,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 10,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
           },
           "id": "svc",
           "placement": undefined,
@@ -3471,18 +2079,6 @@ ShallowWrapper {
   Symbol(enzyme.__unrendered__): <HealthIndicator
     health={
       AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 10,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
         "envoy": Array [
           Object {
             "inbound": Object {
@@ -3517,14 +2113,14 @@ ShallowWrapper {
                 "text": "B: 2 / 2",
               },
             ],
-            "report": "Pod deployment degraded",
+            "report": "Pod workload degraded",
             "status": Object {
               "color": "#ec7a08",
               "icon": "warning-triangle-o",
               "name": "Degraded",
               "priority": 2,
             },
-            "title": "Deployments Status",
+            "title": "Workload Status",
           },
           Object {
             "children": Array [
@@ -3572,6 +2168,18 @@ ShallowWrapper {
           "requestCount": 0,
           "requestErrorCount": 0,
         },
+        "workloadStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 10,
+          },
+          Object {
+            "available": 2,
+            "name": "B",
+            "replicas": 2,
+          },
+        ],
       }
     }
     id="svc"
@@ -3594,18 +2202,6 @@ ShallowWrapper {
           headline="Failure"
           health={
             AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -3640,14 +2236,14 @@ ShallowWrapper {
                       "text": "B: 2 / 2",
                     },
                   ],
-                  "report": "Pod deployment degraded",
+                  "report": "Pod workload degraded",
                   "status": Object {
                     "color": "#ec7a08",
                     "icon": "warning-triangle-o",
                     "name": "Degraded",
                     "priority": 2,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -3695,6 +2291,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 10,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
             }
           }
           id="svc"
@@ -3722,7 +2330,7 @@ ShallowWrapper {
           }
         >
           <li>
-            Pod deployment degraded
+            Pod workload degraded
           </li>
           <li>
             Envoy health failure
@@ -3753,18 +2361,6 @@ ShallowWrapper {
           />,
           "headline": "Failure",
           "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 10,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -3799,14 +2395,14 @@ ShallowWrapper {
                     "text": "B: 2 / 2",
                   },
                 ],
-                "report": "Pod deployment degraded",
+                "report": "Pod workload degraded",
                 "status": Object {
                   "color": "#ec7a08",
                   "icon": "warning-triangle-o",
                   "name": "Degraded",
                   "priority": 2,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -3854,6 +2450,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 10,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
           },
           "id": "svc",
           "placement": undefined,
@@ -3895,7 +2503,7 @@ ShallowWrapper {
         "props": Object {
           "children": Array [
             <li>
-              Pod deployment degraded
+              Pod workload degraded
             </li>,
             <li>
               Envoy health failure
@@ -3912,10 +2520,10 @@ ShallowWrapper {
             "key": "0",
             "nodeType": "host",
             "props": Object {
-              "children": "Pod deployment degraded",
+              "children": "Pod workload degraded",
             },
             "ref": null,
-            "rendered": "Pod deployment degraded",
+            "rendered": "Pod workload degraded",
             "type": "li",
           },
           Object {
@@ -3946,18 +2554,6 @@ ShallowWrapper {
             headline="Failure"
             health={
               AppHealth {
-                "deploymentStatuses": Array [
-                  Object {
-                    "available": 1,
-                    "name": "A",
-                    "replicas": 10,
-                  },
-                  Object {
-                    "available": 2,
-                    "name": "B",
-                    "replicas": 2,
-                  },
-                ],
                 "envoy": Array [
                   Object {
                     "inbound": Object {
@@ -3992,14 +2588,14 @@ ShallowWrapper {
                         "text": "B: 2 / 2",
                       },
                     ],
-                    "report": "Pod deployment degraded",
+                    "report": "Pod workload degraded",
                     "status": Object {
                       "color": "#ec7a08",
                       "icon": "warning-triangle-o",
                       "name": "Degraded",
                       "priority": 2,
                     },
-                    "title": "Deployments Status",
+                    "title": "Workload Status",
                   },
                   Object {
                     "children": Array [
@@ -4047,6 +2643,18 @@ ShallowWrapper {
                   "requestCount": 0,
                   "requestErrorCount": 0,
                 },
+                "workloadStatuses": Array [
+                  Object {
+                    "available": 1,
+                    "name": "A",
+                    "replicas": 10,
+                  },
+                  Object {
+                    "available": 2,
+                    "name": "B",
+                    "replicas": 2,
+                  },
+                ],
               }
             }
             id="svc"
@@ -4074,7 +2682,7 @@ ShallowWrapper {
             }
           >
             <li>
-              Pod deployment degraded
+              Pod workload degraded
             </li>
             <li>
               Envoy health failure
@@ -4105,18 +2713,6 @@ ShallowWrapper {
             />,
             "headline": "Failure",
             "health": AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 10,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -4151,14 +2747,14 @@ ShallowWrapper {
                       "text": "B: 2 / 2",
                     },
                   ],
-                  "report": "Pod deployment degraded",
+                  "report": "Pod workload degraded",
                   "status": Object {
                     "color": "#ec7a08",
                     "icon": "warning-triangle-o",
                     "name": "Degraded",
                     "priority": 2,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -4206,6 +2802,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 10,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
             },
             "id": "svc",
             "placement": undefined,
@@ -4247,7 +2855,7 @@ ShallowWrapper {
           "props": Object {
             "children": Array [
               <li>
-                Pod deployment degraded
+                Pod workload degraded
               </li>,
               <li>
                 Envoy health failure
@@ -4264,10 +2872,10 @@ ShallowWrapper {
               "key": "0",
               "nodeType": "host",
               "props": Object {
-                "children": "Pod deployment degraded",
+                "children": "Pod workload degraded",
               },
               "ref": null,
-              "rendered": "Pod deployment degraded",
+              "rendered": "Pod workload degraded",
               "type": "li",
             },
             Object {
@@ -4305,13 +2913,6 @@ ShallowWrapper {
   Symbol(enzyme.__unrendered__): <HealthIndicator
     health={
       AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 1,
-          },
-        ],
         "envoy": Array [
           Object {
             "inbound": Object {
@@ -4343,7 +2944,7 @@ ShallowWrapper {
               "name": "Healthy",
               "priority": 1,
             },
-            "title": "Deployments Status",
+            "title": "Workload Status",
           },
           Object {
             "children": Array [
@@ -4392,6 +2993,13 @@ ShallowWrapper {
           "requestCount": 1.56,
           "requestErrorCount": 1.1,
         },
+        "workloadStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 1,
+          },
+        ],
       }
     }
     id="svc"
@@ -4413,13 +3021,6 @@ ShallowWrapper {
         headline="Failure"
         health={
           AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -4451,7 +3052,7 @@ ShallowWrapper {
                   "name": "Healthy",
                   "priority": 1,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -4500,6 +3101,13 @@ ShallowWrapper {
               "requestCount": 1.56,
               "requestErrorCount": 1.1,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+            ],
           }
         }
         id="svc"
@@ -4537,13 +3145,6 @@ ShallowWrapper {
         />,
         "headline": "Failure",
         "health": AppHealth {
-          "deploymentStatuses": Array [
-            Object {
-              "available": 1,
-              "name": "A",
-              "replicas": 1,
-            },
-          ],
           "envoy": Array [
             Object {
               "inbound": Object {
@@ -4575,7 +3176,7 @@ ShallowWrapper {
                 "name": "Healthy",
                 "priority": 1,
               },
-              "title": "Deployments Status",
+              "title": "Workload Status",
             },
             Object {
               "children": Array [
@@ -4624,6 +3225,13 @@ ShallowWrapper {
             "requestCount": 1.56,
             "requestErrorCount": 1.1,
           },
+          "workloadStatuses": Array [
+            Object {
+              "available": 1,
+              "name": "A",
+              "replicas": 1,
+            },
+          ],
         },
         "id": "svc",
         "placement": undefined,
@@ -4660,13 +3268,6 @@ ShallowWrapper {
           headline="Failure"
           health={
             AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -4698,7 +3299,7 @@ ShallowWrapper {
                     "name": "Healthy",
                     "priority": 1,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -4747,6 +3348,13 @@ ShallowWrapper {
                 "requestCount": 1.56,
                 "requestErrorCount": 1.1,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+              ],
             }
           }
           id="svc"
@@ -4784,13 +3392,6 @@ ShallowWrapper {
           />,
           "headline": "Failure",
           "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -4822,7 +3423,7 @@ ShallowWrapper {
                   "name": "Healthy",
                   "priority": 1,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -4871,6 +3472,13 @@ ShallowWrapper {
               "requestCount": 1.56,
               "requestErrorCount": 1.1,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+            ],
           },
           "id": "svc",
           "placement": undefined,
@@ -4915,13 +3523,6 @@ ShallowWrapper {
   Symbol(enzyme.__unrendered__): <HealthIndicator
     health={
       AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 1,
-          },
-        ],
         "envoy": Array [
           Object {
             "inbound": Object {
@@ -4953,7 +3554,7 @@ ShallowWrapper {
               "name": "Healthy",
               "priority": 1,
             },
-            "title": "Deployments Status",
+            "title": "Workload Status",
           },
           Object {
             "children": Array [
@@ -5002,6 +3603,13 @@ ShallowWrapper {
           "requestCount": 1.56,
           "requestErrorCount": 1.1,
         },
+        "workloadStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 1,
+          },
+        ],
       }
     }
     id="svc"
@@ -5024,13 +3632,6 @@ ShallowWrapper {
           headline="Failure"
           health={
             AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -5062,7 +3663,7 @@ ShallowWrapper {
                     "name": "Healthy",
                     "priority": 1,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -5111,6 +3712,13 @@ ShallowWrapper {
                 "requestCount": 1.56,
                 "requestErrorCount": 1.1,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+              ],
             }
           }
           id="svc"
@@ -5169,13 +3777,6 @@ ShallowWrapper {
           />,
           "headline": "Failure",
           "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -5207,7 +3808,7 @@ ShallowWrapper {
                   "name": "Healthy",
                   "priority": 1,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -5256,6 +3857,13 @@ ShallowWrapper {
               "requestCount": 1.56,
               "requestErrorCount": 1.1,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+            ],
           },
           "id": "svc",
           "placement": undefined,
@@ -5348,13 +3956,6 @@ ShallowWrapper {
             headline="Failure"
             health={
               AppHealth {
-                "deploymentStatuses": Array [
-                  Object {
-                    "available": 1,
-                    "name": "A",
-                    "replicas": 1,
-                  },
-                ],
                 "envoy": Array [
                   Object {
                     "inbound": Object {
@@ -5386,7 +3987,7 @@ ShallowWrapper {
                       "name": "Healthy",
                       "priority": 1,
                     },
-                    "title": "Deployments Status",
+                    "title": "Workload Status",
                   },
                   Object {
                     "children": Array [
@@ -5435,6 +4036,13 @@ ShallowWrapper {
                   "requestCount": 1.56,
                   "requestErrorCount": 1.1,
                 },
+                "workloadStatuses": Array [
+                  Object {
+                    "available": 1,
+                    "name": "A",
+                    "replicas": 1,
+                  },
+                ],
               }
             }
             id="svc"
@@ -5493,13 +4101,6 @@ ShallowWrapper {
             />,
             "headline": "Failure",
             "health": AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -5531,7 +4132,7 @@ ShallowWrapper {
                     "name": "Healthy",
                     "priority": 1,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -5580,6 +4181,13 @@ ShallowWrapper {
                 "requestCount": 1.56,
                 "requestErrorCount": 1.1,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+              ],
             },
             "id": "svc",
             "placement": undefined,
@@ -5679,18 +4287,6 @@ ShallowWrapper {
   Symbol(enzyme.__unrendered__): <HealthIndicator
     health={
       AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 1,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
         "envoy": Array [
           Object {
             "inbound": Object {
@@ -5731,7 +4327,7 @@ ShallowWrapper {
               "name": "Healthy",
               "priority": 1,
             },
-            "title": "Deployments Status",
+            "title": "Workload Status",
           },
           Object {
             "children": Array [
@@ -5778,6 +4374,18 @@ ShallowWrapper {
           "requestCount": 0,
           "requestErrorCount": 0,
         },
+        "workloadStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 1,
+          },
+          Object {
+            "available": 2,
+            "name": "B",
+            "replicas": 2,
+          },
+        ],
       }
     }
     id="svc"
@@ -5799,18 +4407,6 @@ ShallowWrapper {
         headline="Healthy"
         health={
           AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -5851,7 +4447,7 @@ ShallowWrapper {
                   "name": "Healthy",
                   "priority": 1,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -5898,6 +4494,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
           }
         }
         id="svc"
@@ -5935,18 +4543,6 @@ ShallowWrapper {
         />,
         "headline": "Healthy",
         "health": AppHealth {
-          "deploymentStatuses": Array [
-            Object {
-              "available": 1,
-              "name": "A",
-              "replicas": 1,
-            },
-            Object {
-              "available": 2,
-              "name": "B",
-              "replicas": 2,
-            },
-          ],
           "envoy": Array [
             Object {
               "inbound": Object {
@@ -5987,7 +4583,7 @@ ShallowWrapper {
                 "name": "Healthy",
                 "priority": 1,
               },
-              "title": "Deployments Status",
+              "title": "Workload Status",
             },
             Object {
               "children": Array [
@@ -6034,6 +4630,18 @@ ShallowWrapper {
             "requestCount": 0,
             "requestErrorCount": 0,
           },
+          "workloadStatuses": Array [
+            Object {
+              "available": 1,
+              "name": "A",
+              "replicas": 1,
+            },
+            Object {
+              "available": 2,
+              "name": "B",
+              "replicas": 2,
+            },
+          ],
         },
         "id": "svc",
         "placement": undefined,
@@ -6070,18 +4678,6 @@ ShallowWrapper {
           headline="Healthy"
           health={
             AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -6122,7 +4718,7 @@ ShallowWrapper {
                     "name": "Healthy",
                     "priority": 1,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -6169,6 +4765,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
             }
           }
           id="svc"
@@ -6206,18 +4814,6 @@ ShallowWrapper {
           />,
           "headline": "Healthy",
           "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -6258,7 +4854,7 @@ ShallowWrapper {
                   "name": "Healthy",
                   "priority": 1,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -6305,6 +4901,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
           },
           "id": "svc",
           "placement": undefined,
@@ -6349,18 +4957,6 @@ ShallowWrapper {
   Symbol(enzyme.__unrendered__): <HealthIndicator
     health={
       AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 1,
-            "name": "A",
-            "replicas": 1,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
         "envoy": Array [
           Object {
             "inbound": Object {
@@ -6401,7 +4997,7 @@ ShallowWrapper {
               "name": "Healthy",
               "priority": 1,
             },
-            "title": "Deployments Status",
+            "title": "Workload Status",
           },
           Object {
             "children": Array [
@@ -6448,6 +5044,18 @@ ShallowWrapper {
           "requestCount": 0,
           "requestErrorCount": 0,
         },
+        "workloadStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 1,
+          },
+          Object {
+            "available": 2,
+            "name": "B",
+            "replicas": 2,
+          },
+        ],
       }
     }
     id="svc"
@@ -6470,18 +5078,6 @@ ShallowWrapper {
           headline="Healthy"
           health={
             AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -6522,7 +5118,7 @@ ShallowWrapper {
                     "name": "Healthy",
                     "priority": 1,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -6569,6 +5165,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
             }
           }
           id="svc"
@@ -6614,18 +5222,6 @@ ShallowWrapper {
           />,
           "headline": "Healthy",
           "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -6666,7 +5262,7 @@ ShallowWrapper {
                   "name": "Healthy",
                   "priority": 1,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -6713,6 +5309,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 1,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
           },
           "id": "svc",
           "placement": undefined,
@@ -6762,18 +5370,6 @@ ShallowWrapper {
             headline="Healthy"
             health={
               AppHealth {
-                "deploymentStatuses": Array [
-                  Object {
-                    "available": 1,
-                    "name": "A",
-                    "replicas": 1,
-                  },
-                  Object {
-                    "available": 2,
-                    "name": "B",
-                    "replicas": 2,
-                  },
-                ],
                 "envoy": Array [
                   Object {
                     "inbound": Object {
@@ -6814,7 +5410,7 @@ ShallowWrapper {
                       "name": "Healthy",
                       "priority": 1,
                     },
-                    "title": "Deployments Status",
+                    "title": "Workload Status",
                   },
                   Object {
                     "children": Array [
@@ -6861,6 +5457,18 @@ ShallowWrapper {
                   "requestCount": 0,
                   "requestErrorCount": 0,
                 },
+                "workloadStatuses": Array [
+                  Object {
+                    "available": 1,
+                    "name": "A",
+                    "replicas": 1,
+                  },
+                  Object {
+                    "available": 2,
+                    "name": "B",
+                    "replicas": 2,
+                  },
+                ],
               }
             }
             id="svc"
@@ -6906,18 +5514,6 @@ ShallowWrapper {
             />,
             "headline": "Healthy",
             "health": AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 1,
-                  "name": "A",
-                  "replicas": 1,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -6958,7 +5554,7 @@ ShallowWrapper {
                     "name": "Healthy",
                     "priority": 1,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -7005,6 +5601,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 1,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
             },
             "id": "svc",
             "placement": undefined,
@@ -7054,25 +5662,13 @@ ShallowWrapper {
 }
 `;
 
-exports[`HealthIndicator renders some scaled down deployment 1`] = `
+exports[`HealthIndicator renders some scaled down workload 1`] = `
 ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <HealthIndicator
     health={
       AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 0,
-            "name": "A",
-            "replicas": 0,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
         "envoy": Array [
           Object {
             "inbound": Object {
@@ -7107,14 +5703,14 @@ ShallowWrapper {
                 "text": "B: 2 / 2",
               },
             ],
-            "report": "One inactive deployment",
+            "report": "One inactive workload",
             "status": Object {
               "color": "#3f9c35",
               "icon": "ok",
               "name": "Healthy",
               "priority": 1,
             },
-            "title": "Deployments Status",
+            "title": "Workload Status",
           },
           Object {
             "children": Array [
@@ -7161,6 +5757,18 @@ ShallowWrapper {
           "requestCount": 0,
           "requestErrorCount": 0,
         },
+        "workloadStatuses": Array [
+          Object {
+            "available": 0,
+            "name": "A",
+            "replicas": 0,
+          },
+          Object {
+            "available": 2,
+            "name": "B",
+            "replicas": 2,
+          },
+        ],
       }
     }
     id="svc"
@@ -7182,18 +5790,6 @@ ShallowWrapper {
         headline="Healthy"
         health={
           AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 0,
-                "name": "A",
-                "replicas": 0,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -7228,14 +5824,14 @@ ShallowWrapper {
                     "text": "B: 2 / 2",
                   },
                 ],
-                "report": "One inactive deployment",
+                "report": "One inactive workload",
                 "status": Object {
                   "color": "#3f9c35",
                   "icon": "ok",
                   "name": "Healthy",
                   "priority": 1,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -7282,6 +5878,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 0,
+                "name": "A",
+                "replicas": 0,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
           }
         }
         id="svc"
@@ -7319,18 +5927,6 @@ ShallowWrapper {
         />,
         "headline": "Healthy",
         "health": AppHealth {
-          "deploymentStatuses": Array [
-            Object {
-              "available": 0,
-              "name": "A",
-              "replicas": 0,
-            },
-            Object {
-              "available": 2,
-              "name": "B",
-              "replicas": 2,
-            },
-          ],
           "envoy": Array [
             Object {
               "inbound": Object {
@@ -7365,14 +5961,14 @@ ShallowWrapper {
                   "text": "B: 2 / 2",
                 },
               ],
-              "report": "One inactive deployment",
+              "report": "One inactive workload",
               "status": Object {
                 "color": "#3f9c35",
                 "icon": "ok",
                 "name": "Healthy",
                 "priority": 1,
               },
-              "title": "Deployments Status",
+              "title": "Workload Status",
             },
             Object {
               "children": Array [
@@ -7419,6 +6015,18 @@ ShallowWrapper {
             "requestCount": 0,
             "requestErrorCount": 0,
           },
+          "workloadStatuses": Array [
+            Object {
+              "available": 0,
+              "name": "A",
+              "replicas": 0,
+            },
+            Object {
+              "available": 2,
+              "name": "B",
+              "replicas": 2,
+            },
+          ],
         },
         "id": "svc",
         "placement": undefined,
@@ -7455,18 +6063,6 @@ ShallowWrapper {
           headline="Healthy"
           health={
             AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 0,
-                  "name": "A",
-                  "replicas": 0,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -7501,14 +6097,14 @@ ShallowWrapper {
                       "text": "B: 2 / 2",
                     },
                   ],
-                  "report": "One inactive deployment",
+                  "report": "One inactive workload",
                   "status": Object {
                     "color": "#3f9c35",
                     "icon": "ok",
                     "name": "Healthy",
                     "priority": 1,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -7555,6 +6151,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 0,
+                  "name": "A",
+                  "replicas": 0,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
             }
           }
           id="svc"
@@ -7592,18 +6200,6 @@ ShallowWrapper {
           />,
           "headline": "Healthy",
           "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 0,
-                "name": "A",
-                "replicas": 0,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -7638,14 +6234,14 @@ ShallowWrapper {
                     "text": "B: 2 / 2",
                   },
                 ],
-                "report": "One inactive deployment",
+                "report": "One inactive workload",
                 "status": Object {
                   "color": "#3f9c35",
                   "icon": "ok",
                   "name": "Healthy",
                   "priority": 1,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -7692,6 +6288,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 0,
+                "name": "A",
+                "replicas": 0,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
           },
           "id": "svc",
           "placement": undefined,
@@ -7729,25 +6337,13 @@ ShallowWrapper {
 }
 `;
 
-exports[`HealthIndicator renders some scaled down deployment 2`] = `
+exports[`HealthIndicator renders some scaled down workload 2`] = `
 ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <HealthIndicator
     health={
       AppHealth {
-        "deploymentStatuses": Array [
-          Object {
-            "available": 0,
-            "name": "A",
-            "replicas": 0,
-          },
-          Object {
-            "available": 2,
-            "name": "B",
-            "replicas": 2,
-          },
-        ],
         "envoy": Array [
           Object {
             "inbound": Object {
@@ -7782,14 +6378,14 @@ ShallowWrapper {
                 "text": "B: 2 / 2",
               },
             ],
-            "report": "One inactive deployment",
+            "report": "One inactive workload",
             "status": Object {
               "color": "#3f9c35",
               "icon": "ok",
               "name": "Healthy",
               "priority": 1,
             },
-            "title": "Deployments Status",
+            "title": "Workload Status",
           },
           Object {
             "children": Array [
@@ -7836,6 +6432,18 @@ ShallowWrapper {
           "requestCount": 0,
           "requestErrorCount": 0,
         },
+        "workloadStatuses": Array [
+          Object {
+            "available": 0,
+            "name": "A",
+            "replicas": 0,
+          },
+          Object {
+            "available": 2,
+            "name": "B",
+            "replicas": 2,
+          },
+        ],
       }
     }
     id="svc"
@@ -7858,18 +6466,6 @@ ShallowWrapper {
           headline="Healthy"
           health={
             AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 0,
-                  "name": "A",
-                  "replicas": 0,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -7904,14 +6500,14 @@ ShallowWrapper {
                       "text": "B: 2 / 2",
                     },
                   ],
-                  "report": "One inactive deployment",
+                  "report": "One inactive workload",
                   "status": Object {
                     "color": "#3f9c35",
                     "icon": "ok",
                     "name": "Healthy",
                     "priority": 1,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -7958,6 +6554,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 0,
+                  "name": "A",
+                  "replicas": 0,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
             }
           }
           id="svc"
@@ -7976,7 +6584,7 @@ ShallowWrapper {
           />
         </HealthDetails>,
         <br />,
-        "One inactive deployment",
+        "One inactive workload",
         false,
       ],
       "style": Object {
@@ -8003,18 +6611,6 @@ ShallowWrapper {
           />,
           "headline": "Healthy",
           "health": AppHealth {
-            "deploymentStatuses": Array [
-              Object {
-                "available": 0,
-                "name": "A",
-                "replicas": 0,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
             "envoy": Array [
               Object {
                 "inbound": Object {
@@ -8049,14 +6645,14 @@ ShallowWrapper {
                     "text": "B: 2 / 2",
                   },
                 ],
-                "report": "One inactive deployment",
+                "report": "One inactive workload",
                 "status": Object {
                   "color": "#3f9c35",
                   "icon": "ok",
                   "name": "Healthy",
                   "priority": 1,
                 },
-                "title": "Deployments Status",
+                "title": "Workload Status",
               },
               Object {
                 "children": Array [
@@ -8103,6 +6699,18 @@ ShallowWrapper {
               "requestCount": 0,
               "requestErrorCount": 0,
             },
+            "workloadStatuses": Array [
+              Object {
+                "available": 0,
+                "name": "A",
+                "replicas": 0,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
           },
           "id": "svc",
           "placement": undefined,
@@ -8136,7 +6744,7 @@ ShallowWrapper {
         "rendered": null,
         "type": "br",
       },
-      "One inactive deployment",
+      "One inactive workload",
       false,
     ],
     "type": "div",
@@ -8152,18 +6760,6 @@ ShallowWrapper {
             headline="Healthy"
             health={
               AppHealth {
-                "deploymentStatuses": Array [
-                  Object {
-                    "available": 0,
-                    "name": "A",
-                    "replicas": 0,
-                  },
-                  Object {
-                    "available": 2,
-                    "name": "B",
-                    "replicas": 2,
-                  },
-                ],
                 "envoy": Array [
                   Object {
                     "inbound": Object {
@@ -8198,14 +6794,14 @@ ShallowWrapper {
                         "text": "B: 2 / 2",
                       },
                     ],
-                    "report": "One inactive deployment",
+                    "report": "One inactive workload",
                     "status": Object {
                       "color": "#3f9c35",
                       "icon": "ok",
                       "name": "Healthy",
                       "priority": 1,
                     },
-                    "title": "Deployments Status",
+                    "title": "Workload Status",
                   },
                   Object {
                     "children": Array [
@@ -8252,6 +6848,18 @@ ShallowWrapper {
                   "requestCount": 0,
                   "requestErrorCount": 0,
                 },
+                "workloadStatuses": Array [
+                  Object {
+                    "available": 0,
+                    "name": "A",
+                    "replicas": 0,
+                  },
+                  Object {
+                    "available": 2,
+                    "name": "B",
+                    "replicas": 2,
+                  },
+                ],
               }
             }
             id="svc"
@@ -8270,7 +6878,7 @@ ShallowWrapper {
             />
           </HealthDetails>,
           <br />,
-          "One inactive deployment",
+          "One inactive workload",
           false,
         ],
         "style": Object {
@@ -8297,18 +6905,6 @@ ShallowWrapper {
             />,
             "headline": "Healthy",
             "health": AppHealth {
-              "deploymentStatuses": Array [
-                Object {
-                  "available": 0,
-                  "name": "A",
-                  "replicas": 0,
-                },
-                Object {
-                  "available": 2,
-                  "name": "B",
-                  "replicas": 2,
-                },
-              ],
               "envoy": Array [
                 Object {
                   "inbound": Object {
@@ -8343,14 +6939,14 @@ ShallowWrapper {
                       "text": "B: 2 / 2",
                     },
                   ],
-                  "report": "One inactive deployment",
+                  "report": "One inactive workload",
                   "status": Object {
                     "color": "#3f9c35",
                     "icon": "ok",
                     "name": "Healthy",
                     "priority": 1,
                   },
-                  "title": "Deployments Status",
+                  "title": "Workload Status",
                 },
                 Object {
                   "children": Array [
@@ -8397,6 +6993,18 @@ ShallowWrapper {
                 "requestCount": 0,
                 "requestErrorCount": 0,
               },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 0,
+                  "name": "A",
+                  "replicas": 0,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
             },
             "id": "svc",
             "placement": undefined,
@@ -8430,7 +7038,1399 @@ ShallowWrapper {
           "rendered": null,
           "type": "br",
         },
-        "One inactive deployment",
+        "One inactive workload",
+        false,
+      ],
+      "type": "div",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
+
+exports[`HealthIndicator renders workloads degraded 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <HealthIndicator
+    health={
+      AppHealth {
+        "envoy": Array [
+          Object {
+            "inbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
+            "outbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
+          },
+        ],
+        "items": Array [
+          Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#ec7a08",
+                  "icon": "warning-triangle-o",
+                  "name": "Degraded",
+                  "priority": 2,
+                },
+                "text": "A: 1 / 10",
+              },
+              Object {
+                "status": Object {
+                  "color": "#3f9c35",
+                  "icon": "ok",
+                  "name": "Healthy",
+                  "priority": 1,
+                },
+                "text": "B: 2 / 2",
+              },
+            ],
+            "report": "Pod workload degraded",
+            "status": Object {
+              "color": "#ec7a08",
+              "icon": "warning-triangle-o",
+              "name": "Degraded",
+              "priority": 2,
+            },
+            "title": "Workload Status",
+          },
+          Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#3f9c35",
+                  "icon": "ok",
+                  "name": "Healthy",
+                  "priority": 1,
+                },
+                "text": "undefined (in): 1 / 1",
+              },
+              Object {
+                "status": Object {
+                  "color": "#3f9c35",
+                  "icon": "ok",
+                  "name": "Healthy",
+                  "priority": 1,
+                },
+                "text": "undefined (out): 1 / 1",
+              },
+            ],
+            "status": Object {
+              "color": "#3f9c35",
+              "icon": "ok",
+              "name": "Healthy",
+              "priority": 1,
+            },
+            "title": "Envoy Health",
+          },
+          Object {
+            "status": Object {
+              "color": "#72767b",
+              "name": "No health information",
+              "priority": 0,
+              "text": "N/A",
+            },
+            "text": "No requests over last 10 min",
+            "title": "Error Rate",
+          },
+        ],
+        "rateInterval": 600,
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
+        "workloadStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 10,
+          },
+          Object {
+            "available": 2,
+            "name": "B",
+            "replicas": 2,
+          },
+        ],
+      }
+    }
+    id="svc"
+    mode={1}
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": <HealthDetails
+        headline="Degraded"
+        health={
+          AppHealth {
+            "envoy": Array [
+              Object {
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+              },
+            ],
+            "items": Array [
+              Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#ec7a08",
+                      "icon": "warning-triangle-o",
+                      "name": "Degraded",
+                      "priority": 2,
+                    },
+                    "text": "A: 1 / 10",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "name": "Healthy",
+                      "priority": 1,
+                    },
+                    "text": "B: 2 / 2",
+                  },
+                ],
+                "report": "Pod workload degraded",
+                "status": Object {
+                  "color": "#ec7a08",
+                  "icon": "warning-triangle-o",
+                  "name": "Degraded",
+                  "priority": 2,
+                },
+                "title": "Workload Status",
+              },
+              Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "name": "Healthy",
+                      "priority": 1,
+                    },
+                    "text": "undefined (in): 1 / 1",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "name": "Healthy",
+                      "priority": 1,
+                    },
+                    "text": "undefined (out): 1 / 1",
+                  },
+                ],
+                "status": Object {
+                  "color": "#3f9c35",
+                  "icon": "ok",
+                  "name": "Healthy",
+                  "priority": 1,
+                },
+                "title": "Envoy Health",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "No requests over last 10 min",
+                "title": "Error Rate",
+              },
+            ],
+            "rateInterval": 600,
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 10,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
+          }
+        }
+        id="svc"
+        placement={undefined}
+      >
+        <Icon
+          className="health-icon"
+          name="warning-triangle-o"
+          style={
+            Object {
+              "fontSize": "18px",
+            }
+          }
+          tabIndex="0"
+          type="pf"
+        />
+      </HealthDetails>,
+    },
+    "ref": null,
+    "rendered": Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "children": <Icon
+          className="health-icon"
+          name="warning-triangle-o"
+          style={
+            Object {
+              "fontSize": "18px",
+            }
+          }
+          tabIndex="0"
+          type="pf"
+        />,
+        "headline": "Degraded",
+        "health": AppHealth {
+          "envoy": Array [
+            Object {
+              "inbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+              "outbound": Object {
+                "healthy": 1,
+                "total": 1,
+              },
+            },
+          ],
+          "items": Array [
+            Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "color": "#ec7a08",
+                    "icon": "warning-triangle-o",
+                    "name": "Degraded",
+                    "priority": 2,
+                  },
+                  "text": "A: 1 / 10",
+                },
+                Object {
+                  "status": Object {
+                    "color": "#3f9c35",
+                    "icon": "ok",
+                    "name": "Healthy",
+                    "priority": 1,
+                  },
+                  "text": "B: 2 / 2",
+                },
+              ],
+              "report": "Pod workload degraded",
+              "status": Object {
+                "color": "#ec7a08",
+                "icon": "warning-triangle-o",
+                "name": "Degraded",
+                "priority": 2,
+              },
+              "title": "Workload Status",
+            },
+            Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "color": "#3f9c35",
+                    "icon": "ok",
+                    "name": "Healthy",
+                    "priority": 1,
+                  },
+                  "text": "undefined (in): 1 / 1",
+                },
+                Object {
+                  "status": Object {
+                    "color": "#3f9c35",
+                    "icon": "ok",
+                    "name": "Healthy",
+                    "priority": 1,
+                  },
+                  "text": "undefined (out): 1 / 1",
+                },
+              ],
+              "status": Object {
+                "color": "#3f9c35",
+                "icon": "ok",
+                "name": "Healthy",
+                "priority": 1,
+              },
+              "title": "Envoy Health",
+            },
+            Object {
+              "status": Object {
+                "color": "#72767b",
+                "name": "No health information",
+                "priority": 0,
+                "text": "N/A",
+              },
+              "text": "No requests over last 10 min",
+              "title": "Error Rate",
+            },
+          ],
+          "rateInterval": 600,
+          "requests": Object {
+            "requestCount": 0,
+            "requestErrorCount": 0,
+          },
+          "workloadStatuses": Array [
+            Object {
+              "available": 1,
+              "name": "A",
+              "replicas": 10,
+            },
+            Object {
+              "available": 2,
+              "name": "B",
+              "replicas": 2,
+            },
+          ],
+        },
+        "id": "svc",
+        "placement": undefined,
+      },
+      "ref": null,
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "className": "health-icon",
+          "name": "warning-triangle-o",
+          "style": Object {
+            "fontSize": "18px",
+          },
+          "tabIndex": "0",
+          "type": "pf",
+        },
+        "ref": null,
+        "rendered": null,
+        "type": [Function],
+      },
+      "type": [Function],
+    },
+    "type": "span",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": <HealthDetails
+          headline="Degraded"
+          health={
+            AppHealth {
+              "envoy": Array [
+                Object {
+                  "inbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
+                  "outbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
+                },
+              ],
+              "items": Array [
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#ec7a08",
+                        "icon": "warning-triangle-o",
+                        "name": "Degraded",
+                        "priority": 2,
+                      },
+                      "text": "A: 1 / 10",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "B: 2 / 2",
+                    },
+                  ],
+                  "report": "Pod workload degraded",
+                  "status": Object {
+                    "color": "#ec7a08",
+                    "icon": "warning-triangle-o",
+                    "name": "Degraded",
+                    "priority": 2,
+                  },
+                  "title": "Workload Status",
+                },
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "undefined (in): 1 / 1",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "undefined (out): 1 / 1",
+                    },
+                  ],
+                  "status": Object {
+                    "color": "#3f9c35",
+                    "icon": "ok",
+                    "name": "Healthy",
+                    "priority": 1,
+                  },
+                  "title": "Envoy Health",
+                },
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "No requests over last 10 min",
+                  "title": "Error Rate",
+                },
+              ],
+              "rateInterval": 600,
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 10,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
+            }
+          }
+          id="svc"
+          placement={undefined}
+        >
+          <Icon
+            className="health-icon"
+            name="warning-triangle-o"
+            style={
+              Object {
+                "fontSize": "18px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />
+        </HealthDetails>,
+      },
+      "ref": null,
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "children": <Icon
+            className="health-icon"
+            name="warning-triangle-o"
+            style={
+              Object {
+                "fontSize": "18px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />,
+          "headline": "Degraded",
+          "health": AppHealth {
+            "envoy": Array [
+              Object {
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+              },
+            ],
+            "items": Array [
+              Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#ec7a08",
+                      "icon": "warning-triangle-o",
+                      "name": "Degraded",
+                      "priority": 2,
+                    },
+                    "text": "A: 1 / 10",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "name": "Healthy",
+                      "priority": 1,
+                    },
+                    "text": "B: 2 / 2",
+                  },
+                ],
+                "report": "Pod workload degraded",
+                "status": Object {
+                  "color": "#ec7a08",
+                  "icon": "warning-triangle-o",
+                  "name": "Degraded",
+                  "priority": 2,
+                },
+                "title": "Workload Status",
+              },
+              Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "name": "Healthy",
+                      "priority": 1,
+                    },
+                    "text": "undefined (in): 1 / 1",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "name": "Healthy",
+                      "priority": 1,
+                    },
+                    "text": "undefined (out): 1 / 1",
+                  },
+                ],
+                "status": Object {
+                  "color": "#3f9c35",
+                  "icon": "ok",
+                  "name": "Healthy",
+                  "priority": 1,
+                },
+                "title": "Envoy Health",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "No requests over last 10 min",
+                "title": "Error Rate",
+              },
+            ],
+            "rateInterval": 600,
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 10,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
+          },
+          "id": "svc",
+          "placement": undefined,
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "className": "health-icon",
+            "name": "warning-triangle-o",
+            "style": Object {
+              "fontSize": "18px",
+            },
+            "tabIndex": "0",
+            "type": "pf",
+          },
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
+        },
+        "type": [Function],
+      },
+      "type": "span",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
+
+exports[`HealthIndicator renders workloads degraded 2`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <HealthIndicator
+    health={
+      AppHealth {
+        "envoy": Array [
+          Object {
+            "inbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
+            "outbound": Object {
+              "healthy": 1,
+              "total": 1,
+            },
+          },
+        ],
+        "items": Array [
+          Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#ec7a08",
+                  "icon": "warning-triangle-o",
+                  "name": "Degraded",
+                  "priority": 2,
+                },
+                "text": "A: 1 / 10",
+              },
+              Object {
+                "status": Object {
+                  "color": "#3f9c35",
+                  "icon": "ok",
+                  "name": "Healthy",
+                  "priority": 1,
+                },
+                "text": "B: 2 / 2",
+              },
+            ],
+            "report": "Pod workload degraded",
+            "status": Object {
+              "color": "#ec7a08",
+              "icon": "warning-triangle-o",
+              "name": "Degraded",
+              "priority": 2,
+            },
+            "title": "Workload Status",
+          },
+          Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#3f9c35",
+                  "icon": "ok",
+                  "name": "Healthy",
+                  "priority": 1,
+                },
+                "text": "undefined (in): 1 / 1",
+              },
+              Object {
+                "status": Object {
+                  "color": "#3f9c35",
+                  "icon": "ok",
+                  "name": "Healthy",
+                  "priority": 1,
+                },
+                "text": "undefined (out): 1 / 1",
+              },
+            ],
+            "status": Object {
+              "color": "#3f9c35",
+              "icon": "ok",
+              "name": "Healthy",
+              "priority": 1,
+            },
+            "title": "Envoy Health",
+          },
+          Object {
+            "status": Object {
+              "color": "#72767b",
+              "name": "No health information",
+              "priority": 0,
+              "text": "N/A",
+            },
+            "text": "No requests over last 10 min",
+            "title": "Error Rate",
+          },
+        ],
+        "rateInterval": 600,
+        "requests": Object {
+          "requestCount": 0,
+          "requestErrorCount": 0,
+        },
+        "workloadStatuses": Array [
+          Object {
+            "available": 1,
+            "name": "A",
+            "replicas": 10,
+          },
+          Object {
+            "available": 2,
+            "name": "B",
+            "replicas": 2,
+          },
+        ],
+      }
+    }
+    id="svc"
+    mode={0}
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <HealthDetails
+          headline="Degraded"
+          health={
+            AppHealth {
+              "envoy": Array [
+                Object {
+                  "inbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
+                  "outbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
+                },
+              ],
+              "items": Array [
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#ec7a08",
+                        "icon": "warning-triangle-o",
+                        "name": "Degraded",
+                        "priority": 2,
+                      },
+                      "text": "A: 1 / 10",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "B: 2 / 2",
+                    },
+                  ],
+                  "report": "Pod workload degraded",
+                  "status": Object {
+                    "color": "#ec7a08",
+                    "icon": "warning-triangle-o",
+                    "name": "Degraded",
+                    "priority": 2,
+                  },
+                  "title": "Workload Status",
+                },
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "undefined (in): 1 / 1",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "undefined (out): 1 / 1",
+                    },
+                  ],
+                  "status": Object {
+                    "color": "#3f9c35",
+                    "icon": "ok",
+                    "name": "Healthy",
+                    "priority": 1,
+                  },
+                  "title": "Envoy Health",
+                },
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "No requests over last 10 min",
+                  "title": "Error Rate",
+                },
+              ],
+              "rateInterval": 600,
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 10,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
+            }
+          }
+          id="svc"
+          placement={undefined}
+        >
+          <Icon
+            className="health-icon"
+            name="warning-triangle-o"
+            style={
+              Object {
+                "fontSize": "35px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />
+        </HealthDetails>,
+        <br />,
+        "Pod workload degraded",
+        false,
+      ],
+      "style": Object {
+        "color": "#ec7a08",
+      },
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "children": <Icon
+            className="health-icon"
+            name="warning-triangle-o"
+            style={
+              Object {
+                "fontSize": "35px",
+              }
+            }
+            tabIndex="0"
+            type="pf"
+          />,
+          "headline": "Degraded",
+          "health": AppHealth {
+            "envoy": Array [
+              Object {
+                "inbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+                "outbound": Object {
+                  "healthy": 1,
+                  "total": 1,
+                },
+              },
+            ],
+            "items": Array [
+              Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#ec7a08",
+                      "icon": "warning-triangle-o",
+                      "name": "Degraded",
+                      "priority": 2,
+                    },
+                    "text": "A: 1 / 10",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "name": "Healthy",
+                      "priority": 1,
+                    },
+                    "text": "B: 2 / 2",
+                  },
+                ],
+                "report": "Pod workload degraded",
+                "status": Object {
+                  "color": "#ec7a08",
+                  "icon": "warning-triangle-o",
+                  "name": "Degraded",
+                  "priority": 2,
+                },
+                "title": "Workload Status",
+              },
+              Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "name": "Healthy",
+                      "priority": 1,
+                    },
+                    "text": "undefined (in): 1 / 1",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "name": "Healthy",
+                      "priority": 1,
+                    },
+                    "text": "undefined (out): 1 / 1",
+                  },
+                ],
+                "status": Object {
+                  "color": "#3f9c35",
+                  "icon": "ok",
+                  "name": "Healthy",
+                  "priority": 1,
+                },
+                "title": "Envoy Health",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "No requests over last 10 min",
+                "title": "Error Rate",
+              },
+            ],
+            "rateInterval": 600,
+            "requests": Object {
+              "requestCount": 0,
+              "requestErrorCount": 0,
+            },
+            "workloadStatuses": Array [
+              Object {
+                "available": 1,
+                "name": "A",
+                "replicas": 10,
+              },
+              Object {
+                "available": 2,
+                "name": "B",
+                "replicas": 2,
+              },
+            ],
+          },
+          "id": "svc",
+          "placement": undefined,
+        },
+        "ref": null,
+        "rendered": Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "className": "health-icon",
+            "name": "warning-triangle-o",
+            "style": Object {
+              "fontSize": "35px",
+            },
+            "tabIndex": "0",
+            "type": "pf",
+          },
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
+        },
+        "type": [Function],
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {},
+        "ref": null,
+        "rendered": null,
+        "type": "br",
+      },
+      "Pod workload degraded",
+      false,
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <HealthDetails
+            headline="Degraded"
+            health={
+              AppHealth {
+                "envoy": Array [
+                  Object {
+                    "inbound": Object {
+                      "healthy": 1,
+                      "total": 1,
+                    },
+                    "outbound": Object {
+                      "healthy": 1,
+                      "total": 1,
+                    },
+                  },
+                ],
+                "items": Array [
+                  Object {
+                    "children": Array [
+                      Object {
+                        "status": Object {
+                          "color": "#ec7a08",
+                          "icon": "warning-triangle-o",
+                          "name": "Degraded",
+                          "priority": 2,
+                        },
+                        "text": "A: 1 / 10",
+                      },
+                      Object {
+                        "status": Object {
+                          "color": "#3f9c35",
+                          "icon": "ok",
+                          "name": "Healthy",
+                          "priority": 1,
+                        },
+                        "text": "B: 2 / 2",
+                      },
+                    ],
+                    "report": "Pod workload degraded",
+                    "status": Object {
+                      "color": "#ec7a08",
+                      "icon": "warning-triangle-o",
+                      "name": "Degraded",
+                      "priority": 2,
+                    },
+                    "title": "Workload Status",
+                  },
+                  Object {
+                    "children": Array [
+                      Object {
+                        "status": Object {
+                          "color": "#3f9c35",
+                          "icon": "ok",
+                          "name": "Healthy",
+                          "priority": 1,
+                        },
+                        "text": "undefined (in): 1 / 1",
+                      },
+                      Object {
+                        "status": Object {
+                          "color": "#3f9c35",
+                          "icon": "ok",
+                          "name": "Healthy",
+                          "priority": 1,
+                        },
+                        "text": "undefined (out): 1 / 1",
+                      },
+                    ],
+                    "status": Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "name": "Healthy",
+                      "priority": 1,
+                    },
+                    "title": "Envoy Health",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "No requests over last 10 min",
+                    "title": "Error Rate",
+                  },
+                ],
+                "rateInterval": 600,
+                "requests": Object {
+                  "requestCount": 0,
+                  "requestErrorCount": 0,
+                },
+                "workloadStatuses": Array [
+                  Object {
+                    "available": 1,
+                    "name": "A",
+                    "replicas": 10,
+                  },
+                  Object {
+                    "available": 2,
+                    "name": "B",
+                    "replicas": 2,
+                  },
+                ],
+              }
+            }
+            id="svc"
+            placement={undefined}
+          >
+            <Icon
+              className="health-icon"
+              name="warning-triangle-o"
+              style={
+                Object {
+                  "fontSize": "35px",
+                }
+              }
+              tabIndex="0"
+              type="pf"
+            />
+          </HealthDetails>,
+          <br />,
+          "Pod workload degraded",
+          false,
+        ],
+        "style": Object {
+          "color": "#ec7a08",
+        },
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "children": <Icon
+              className="health-icon"
+              name="warning-triangle-o"
+              style={
+                Object {
+                  "fontSize": "35px",
+                }
+              }
+              tabIndex="0"
+              type="pf"
+            />,
+            "headline": "Degraded",
+            "health": AppHealth {
+              "envoy": Array [
+                Object {
+                  "inbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
+                  "outbound": Object {
+                    "healthy": 1,
+                    "total": 1,
+                  },
+                },
+              ],
+              "items": Array [
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#ec7a08",
+                        "icon": "warning-triangle-o",
+                        "name": "Degraded",
+                        "priority": 2,
+                      },
+                      "text": "A: 1 / 10",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "B: 2 / 2",
+                    },
+                  ],
+                  "report": "Pod workload degraded",
+                  "status": Object {
+                    "color": "#ec7a08",
+                    "icon": "warning-triangle-o",
+                    "name": "Degraded",
+                    "priority": 2,
+                  },
+                  "title": "Workload Status",
+                },
+                Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "undefined (in): 1 / 1",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#3f9c35",
+                        "icon": "ok",
+                        "name": "Healthy",
+                        "priority": 1,
+                      },
+                      "text": "undefined (out): 1 / 1",
+                    },
+                  ],
+                  "status": Object {
+                    "color": "#3f9c35",
+                    "icon": "ok",
+                    "name": "Healthy",
+                    "priority": 1,
+                  },
+                  "title": "Envoy Health",
+                },
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "No requests over last 10 min",
+                  "title": "Error Rate",
+                },
+              ],
+              "rateInterval": 600,
+              "requests": Object {
+                "requestCount": 0,
+                "requestErrorCount": 0,
+              },
+              "workloadStatuses": Array [
+                Object {
+                  "available": 1,
+                  "name": "A",
+                  "replicas": 10,
+                },
+                Object {
+                  "available": 2,
+                  "name": "B",
+                  "replicas": 2,
+                },
+              ],
+            },
+            "id": "svc",
+            "placement": undefined,
+          },
+          "ref": null,
+          "rendered": Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "function",
+            "props": Object {
+              "className": "health-icon",
+              "name": "warning-triangle-o",
+              "style": Object {
+                "fontSize": "35px",
+              },
+              "tabIndex": "0",
+              "type": "pf",
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          "type": [Function],
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {},
+          "ref": null,
+          "rendered": null,
+          "type": "br",
+        },
+        "Pod workload degraded",
         false,
       ],
       "type": "div",

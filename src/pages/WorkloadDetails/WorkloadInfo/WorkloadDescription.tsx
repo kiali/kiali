@@ -1,15 +1,14 @@
 import * as React from 'react';
-import { Deployment } from '../../../types/IstioObjects';
 import { Row, Col } from 'patternfly-react';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
-import { WorkloadIcons } from '../../../types/Workload';
+import { Workload, WorkloadIcon } from '../../../types/Workload';
 import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { WorkloadHealth } from '../../../types/Health';
 
 type WorkloadDescriptionProps = {
-  workload: Deployment;
+  workload: Workload;
   istioEnabled: boolean;
   health?: WorkloadHealth;
 };
@@ -27,7 +26,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
     return workload ? (
       <PfInfoCard
         iconType="pf"
-        iconName={WorkloadIcons[workload.type] || ''}
+        iconName={WorkloadIcon}
         title={workload.name}
         istio={this.props.istioEnabled}
         items={

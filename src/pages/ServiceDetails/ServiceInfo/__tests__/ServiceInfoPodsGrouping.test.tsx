@@ -23,7 +23,10 @@ const pods: Pod[] = [
         image: 'istio-init-image',
         name: 'istio-init-container'
       }
-    ]
+    ],
+    status: '',
+    appLabel: false,
+    versionLabel: false
   },
   {
     name: 'reviews-v2-1234',
@@ -46,7 +49,10 @@ const pods: Pod[] = [
         image: 'istio-init-image',
         name: 'istio-init-container'
       }
-    ]
+    ],
+    status: '',
+    appLabel: false,
+    versionLabel: false
   },
   {
     name: 'reviews-v2-5678',
@@ -69,7 +75,10 @@ const pods: Pod[] = [
         image: 'istio-init-image',
         name: 'istio-init-container'
       }
-    ]
+    ],
+    status: '',
+    appLabel: false,
+    versionLabel: false
   },
   {
     name: 'reviews-v2-9999',
@@ -92,7 +101,10 @@ const pods: Pod[] = [
         image: 'istio-init-image',
         name: 'istio-init-container'
       }
-    ]
+    ],
+    status: '',
+    appLabel: false,
+    versionLabel: false
   }
 ];
 
