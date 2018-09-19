@@ -46,6 +46,7 @@ type NodeData struct {
 	HasMissingSC    bool            `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
 	HasVS           bool            `json:"hasVS,omitempty"`           // true (has route rule) | false
 	IsDead          bool            `json:"isDead,omitempty"`          // true (has no pods) | false
+	IsEgress        bool            `json:"isEgress,omitempty"`        // true | false
 	IsGroup         string          `json:"isGroup,omitempty"`         // set to the grouping type, current values: [ 'version' ]
 	IsInaccessible  bool            `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
 	IsMisconfigured string          `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
@@ -211,6 +212,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node may have destination service info
 		if val, ok := n.Metadata["destServices"]; ok {
 			nd.DestServices = val.(map[string]bool)
+		}
+
+		// node may be an egress service
+		if val, ok := n.Metadata["isEgress"]; ok {
+			nd.IsEgress = val.(bool)
 		}
 
 		nw := NodeWrapper{

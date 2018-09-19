@@ -104,19 +104,21 @@ func TestDeadNode(t *testing.T) {
 	workloadService := setupWorkloadService()
 	trafficMap := testTrafficMap()
 
-	assert.Equal(9, len(trafficMap))
+	assert.Equal(11, len(trafficMap))
 	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
 	unknownNode, found := trafficMap[id]
 	assert.Equal(true, found)
 	assert.Equal(graph.UnknownWorkload, unknownNode.Workload)
-	assert.Equal(8, len(unknownNode.Edges))
+	assert.Equal(10, len(unknownNode.Edges))
 
-	applyDeadNodes(trafficMap, workloadService)
+	applyDeadNodes(trafficMap, workloadService, map[string]bool{
+		"localhost.local": true,
+		"egress.io":       true})
 
-	assert.Equal(8, len(trafficMap))
+	assert.Equal(9, len(trafficMap))
 	unknownNode, found = trafficMap[id]
 	assert.Equal(true, found)
-	assert.Equal(7, len(unknownNode.Edges))
+	assert.Equal(8, len(unknownNode.Edges))
 
 	assert.Equal("testPodsWithTraffic-v1", unknownNode.Edges[0].Dest.Workload)
 	assert.Equal("testPodsNoTraffic-v1", unknownNode.Edges[1].Dest.Workload)
@@ -132,6 +134,12 @@ func TestDeadNode(t *testing.T) {
 	isDead, ok := noPodsNoTraffic.Metadata["isDead"]
 	assert.Equal(true, ok)
 	assert.Equal(true, isDead)
+
+	// Check that external services are flagged
+	id, _ = graph.Id("testNamespace", "", "", "", "egress.io", graph.GraphTypeVersionedApp)
+	externalNode, okExternal := trafficMap[id]
+	assert.Equal(true, okExternal)
+	assert.Equal(true, externalNode.Metadata["isEgress"])
 }
 
 func testTrafficMap() map[string]*graph.Node {
@@ -161,6 +169,12 @@ func testTrafficMap() map[string]*graph.Node {
 	n8 := graph.NewNode("testNamespace", "testNodeWithTcpSentOutTraffic-v1", "testNodeWithTcpSentOutTraffic", "v1", "testNodeWithTcpSentOutTraffic", graph.GraphTypeVersionedApp)
 	n8.Metadata["tcpSentRateOut"] = 74.1
 
+	n9 := graph.NewNode("testNamespace", "", "", "", "egress.io", graph.GraphTypeVersionedApp)
+	n9.Metadata["rate"] = 0.8
+
+	n10 := graph.NewNode("testNamespace", "", "", "", "egress.not.defined", graph.GraphTypeVersionedApp)
+	n10.Metadata["rate"] = 0.8
+
 	trafficMap[n0.ID] = &n0
 	trafficMap[n1.ID] = &n1
 	trafficMap[n2.ID] = &n2
@@ -170,6 +184,8 @@ func testTrafficMap() map[string]*graph.Node {
 	trafficMap[n6.ID] = &n6
 	trafficMap[n7.ID] = &n7
 	trafficMap[n8.ID] = &n8
+	trafficMap[n9.ID] = &n9
+	trafficMap[n10.ID] = &n10
 
 	e := n0.AddEdge(&n1)
 	e.Metadata["rate"] = 0.8
@@ -194,6 +210,12 @@ func testTrafficMap() map[string]*graph.Node {
 
 	e = n0.AddEdge(&n8)
 	e.Metadata["tcpSentRate"] = 74.1
+
+	e = n0.AddEdge(&n9)
+	e.Metadata["rate"] = 0.8
+
+	e = n0.AddEdge(&n10)
+	e.Metadata["rate"] = 0.8
 
 	return trafficMap
 }
