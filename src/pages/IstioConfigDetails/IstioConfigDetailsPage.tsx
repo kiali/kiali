@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Breadcrumb, Button, Col, Icon, Row } from 'patternfly-react';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
-import { ActiveFilter } from '../../types/NamespaceFilter';
+import { FilterSelected } from '../../components/Filters/StatefulFilters';
+import { ActiveFilter } from '../../types/Filters';
 import {
   aceOptions,
   IstioConfigDetails,
@@ -41,29 +41,27 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   updateFilters = (addObjectTypeFilter: boolean) => {
     let activeFilters: ActiveFilter[] = [];
     let namespaceFilter: ActiveFilter = {
-      label: 'Namespace: ' + this.props.match.params.namespace,
       category: 'Namespace',
       value: this.props.match.params.namespace.toString()
     };
     activeFilters.push(namespaceFilter);
     if (addObjectTypeFilter) {
       let objectTypeFilter: ActiveFilter = {
-        label: 'Istio Type: ' + dicIstioType[this.props.match.params.objectType],
         category: 'Istio Type',
         value: dicIstioType[this.props.match.params.objectType]
       };
       activeFilters.push(objectTypeFilter);
     }
 
-    NamespaceFilterSelected.setSelected(activeFilters);
+    FilterSelected.setSelected(activeFilters);
   };
 
-  updateNamespaceFilter = () => this.updateFilters(false);
+  updateStatefulFilters = () => this.updateFilters(false);
 
   updateTypeFilter = () => this.updateFilters(true);
 
   cleanFilter = () => {
-    NamespaceFilterSelected.setSelected([]);
+    FilterSelected.setSelected([]);
   };
 
   fetchIstioObjectDetails = () => {
@@ -235,7 +233,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <Link to="/istio" onClick={this.updateNamespaceFilter}>
+          <Link to="/istio" onClick={this.updateStatefulFilters}>
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>

@@ -1,124 +1,102 @@
 import * as React from 'react';
 import { Filter, FormControl, Toolbar } from 'patternfly-react';
-import {
-  ActiveFilter,
-  FILTER_ACTION_APPEND,
-  FILTER_ACTION_UPDATE,
-  FilterType,
-  FilterValue,
-  NamespaceFilterProps,
-  NamespaceFilterState
-} from '../../types/NamespaceFilter';
-import * as API from '../../services/Api';
-import { authentication } from '../../utils/Authentication';
+import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
+import { ListPage } from '../ListPage/ListPage';
 
-export namespace NamespaceFilterSelected {
-  let selectedFilters: ActiveFilter[] = [];
+export interface StatefulFiltersProps {
+  onFilterChange: () => void;
+  pageHooks: ListPage.Hooks;
+  initialFilters: FilterType[];
+}
+
+export interface StatefulFiltersState {
+  filterTypes: FilterType[];
+  currentFilterType: FilterType;
+  activeFilters: ActiveFilter[];
+  currentValue: string;
+}
+
+export namespace FilterSelected {
+  let selectedFilters: ActiveFilter[] | undefined = undefined;
 
   export const setSelected = (activeFilters: ActiveFilter[]) => {
     selectedFilters = activeFilters;
   };
 
   export const getSelected = (): ActiveFilter[] => {
-    return selectedFilters;
+    return selectedFilters || [];
+  };
+
+  export const isInitialized = () => {
+    return selectedFilters !== undefined;
   };
 }
 
-export const defaultNamespaceFilter = {
-  id: 'namespace',
-  title: 'Namespace',
-  placeholder: 'Filter by Namespace',
-  filterType: 'select',
-  action: FILTER_ACTION_APPEND,
-  filterValues: []
-};
-
-export class NamespaceFilter extends React.Component<NamespaceFilterProps, NamespaceFilterState> {
-  constructor(props: NamespaceFilterProps) {
+export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
+  constructor(props: StatefulFiltersProps) {
     super(props);
 
-    let initialFilters = this.initialFilterList(defaultNamespaceFilter);
-
-    if (!!this.props.initialActiveFilters && this.props.initialActiveFilters.length > 0) {
-      NamespaceFilterSelected.setSelected(this.props.initialActiveFilters);
+    let active = FilterSelected.getSelected();
+    if (!FilterSelected.isInitialized()) {
+      active = this.props.pageHooks.getFiltersFromURL(this.props.initialFilters);
+      FilterSelected.setSelected(active);
+    } else if (!this.props.pageHooks.filtersMatchURL(this.props.initialFilters, active)) {
+      active = this.props.pageHooks.setFiltersToURL(this.props.initialFilters, active);
+      FilterSelected.setSelected(active);
     }
 
     this.state = {
-      currentFilterType: initialFilters[0],
-      filterTypeList: initialFilters,
-      activeFilters: NamespaceFilterSelected.getSelected(),
+      currentFilterType: this.props.initialFilters[0],
+      filterTypes: this.props.initialFilters,
+      activeFilters: active,
       currentValue: ''
     };
   }
 
-  initialFilterList(namespaceFilter: FilterType) {
-    return this.props.initialFilters.slice().concat(namespaceFilter);
-  }
-
   componentDidMount() {
-    this.updateNamespaces();
-  }
-
-  componentDidUpdate(prevProps: NamespaceFilterProps, prevState: NamespaceFilterState, snapshot: any) {
-    const filtersExists = (prevProps.initialActiveFilters || []).every(prevFilter => {
-      return (
-        (this.props.initialActiveFilters || []).findIndex(filter => {
-          return (
-            filter.label === prevFilter.label &&
-            filter.category === prevFilter.category &&
-            filter.value === prevFilter.value
-          );
-        }) > -1
-      );
+    // Call all loaders from FilterTypes and set results in state
+    const promises = this.props.initialFilters.map(ft => {
+      if (ft.loader) {
+        return ft.loader().then(values => {
+          ft.filterValues = values;
+          return {
+            id: ft.id,
+            title: ft.title,
+            placeholder: ft.placeholder,
+            filterType: ft.filterType,
+            action: ft.action,
+            filterValues: ft.filterValues
+          };
+        });
+      } else {
+        return Promise.resolve(ft);
+      }
     });
 
-    if (
-      this.props.initialActiveFilters &&
-      prevProps.initialActiveFilters &&
-      (!filtersExists || prevProps.initialActiveFilters.length !== this.props.initialActiveFilters.length)
-    ) {
-      this.setState({
-        activeFilters: this.props.initialActiveFilters
-      });
+    Promise.all(promises).then(types => {
+      this.setState({ filterTypes: types });
+    });
+  }
+
+  componentDidUpdate(prevProps: StatefulFiltersProps, prevState: StatefulFiltersState, snapshot: any) {
+    if (!this.props.pageHooks.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)) {
+      this.props.pageHooks.setFiltersToURL(this.state.filterTypes, this.state.activeFilters);
     }
   }
 
-  updateNamespaces() {
-    API.getNamespaces(authentication())
-      .then(response => {
-        const namespaceFilter: FilterType = {
-          id: 'namespace',
-          title: 'Namespace',
-          placeholder: 'Filter by Namespace',
-          filterType: 'select',
-          action: FILTER_ACTION_APPEND,
-          filterValues: response.data.map(namespace => {
-            return { title: namespace.name, id: namespace.name };
-          })
-        };
-        const initialFilters = this.initialFilterList(namespaceFilter);
-        this.setState({ filterTypeList: initialFilters, currentFilterType: namespaceFilter });
-      })
-      .catch(error => {
-        const errMsg = API.getErrorMsg('Error fetching namespace list.', error);
-        console.error(errMsg);
-        this.props.onError(errMsg);
-      });
+  updateActiveFilters(activeFilters: ActiveFilter[]) {
+    const cleanFilters = this.props.pageHooks.setFiltersToURL(this.state.filterTypes, activeFilters);
+    FilterSelected.setSelected(cleanFilters);
+    this.setState({ activeFilters: cleanFilters });
+    this.props.onFilterChange();
   }
 
   filterAdded = (field: FilterType, value: string) => {
-    let filterText = '';
     const activeFilters = this.state.activeFilters;
-    let activeFilter: ActiveFilter = { label: '', category: '', value: '' };
-
-    if (field.title) {
-      filterText = field.title;
-      activeFilter.category = field.title;
-    }
-
-    filterText += ': ' + value;
-    activeFilter.value = value;
-    activeFilter.label = filterText;
+    const activeFilter: ActiveFilter = {
+      category: field.title,
+      value: value
+    };
 
     const typeFilterPresent = activeFilters.filter(filter => filter.category === field.title).length > 0;
 
@@ -132,9 +110,7 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
       activeFilters.push(activeFilter);
     }
 
-    this.setState({ activeFilters: activeFilters });
-    NamespaceFilterSelected.setSelected(activeFilters);
-    this.props.onFilterChange(activeFilters);
+    this.updateActiveFilters(activeFilters);
   };
 
   selectFilterType = (filterType: FilterType) => {
@@ -191,16 +167,12 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
     let index = activeFilters.indexOf(filter);
     if (index > -1) {
       let updated = [...activeFilters.slice(0, index), ...activeFilters.slice(index + 1)];
-      this.setState({ activeFilters: updated });
-      NamespaceFilterSelected.setSelected(updated);
-      this.props.onFilterChange(updated);
+      this.updateActiveFilters(updated);
     }
   };
 
   clearFilters = () => {
-    this.setState({ activeFilters: [] });
-    NamespaceFilterSelected.setSelected([]);
-    this.props.onFilterChange([]);
+    this.updateActiveFilters([]);
   };
 
   renderInput() {
@@ -238,7 +210,7 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
         <Toolbar>
           <Filter>
             <Filter.TypeSelector
-              filterTypes={this.state.filterTypeList}
+              filterTypes={this.state.filterTypes}
               currentFilterType={currentFilterType}
               onFilterTypeSelected={this.selectFilterType}
             />
@@ -253,7 +225,7 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
                   {activeFilters.map((item, index) => {
                     return (
                       <Filter.Item key={index} onRemove={this.removeFilter} filterData={item}>
-                        {item.label}
+                        {item.category + ': ' + item.value}
                       </Filter.Item>
                     );
                   })}
@@ -275,4 +247,4 @@ export class NamespaceFilter extends React.Component<NamespaceFilterProps, Names
   }
 }
 
-export default NamespaceFilter;
+export default StatefulFilters;

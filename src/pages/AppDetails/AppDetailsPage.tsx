@@ -8,7 +8,7 @@ import AppInfo from './AppInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import AppMetricsContainer from '../../containers/AppMetricsContainer';
 import { AppHealth } from '../../types/Health';
-import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
+import { FilterSelected } from '../../components/Filters/StatefulFilters';
 
 type AppDetailsState = {
   app: App;
@@ -30,10 +30,6 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
       }
     };
     this.fetchApp();
-  }
-
-  clearFilters() {
-    NamespaceFilterSelected.setSelected([]);
   }
 
   appPageURL(parsedSearch?: ParsedSearch) {
@@ -62,6 +58,19 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
       });
   };
 
+  namespaceFilters = () => {
+    FilterSelected.setSelected([
+      {
+        category: 'Namespace',
+        value: this.props.match.params.namespace.toString()
+      }
+    ]);
+  };
+
+  clearFilters() {
+    FilterSelected.setSelected([]);
+  }
+
   renderBreadcrumbs = () => {
     const urlParams = new URLSearchParams(this.props.location.search);
     const to = this.appPageURL();
@@ -87,7 +96,10 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
-          <Link to={`/applications?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}>
+          <Link
+            to={`/applications?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}
+            onClick={this.namespaceFilters}
+          >
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>

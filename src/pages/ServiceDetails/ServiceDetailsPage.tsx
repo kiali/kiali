@@ -10,7 +10,7 @@ import { authentication } from '../../utils/Authentication';
 import IstioObjectDetails from './IstioObjectDetails';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceInfo from './ServiceInfo';
-import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
+import { FilterSelected } from '../../components/Filters/StatefulFilters';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -161,8 +161,17 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       });
   };
 
+  namespaceFilters = () => {
+    FilterSelected.setSelected([
+      {
+        category: 'Namespace',
+        value: this.props.match.params.namespace.toString()
+      }
+    ]);
+  };
+
   clearFilters() {
-    NamespaceFilterSelected.setSelected([]);
+    FilterSelected.setSelected([]);
   }
 
   renderBreadcrumbs = (parsedSearch: ParsedSearch, showingDetails: boolean) => {
@@ -180,7 +189,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <Link to={`/services?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}>
+          <Link
+            to={`/services?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}
+            onClick={this.namespaceFilters}
+          >
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>

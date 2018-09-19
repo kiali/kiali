@@ -9,7 +9,7 @@ import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer';
 import { WorkloadHealth } from '../../types/Health';
-import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
+import { FilterSelected } from '../../components/Filters/StatefulFilters';
 
 type WorkloadDetailsState = {
   workload: Deployment;
@@ -100,8 +100,17 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     return istioEnabled;
   };
 
+  namespaceFilters = () => {
+    FilterSelected.setSelected([
+      {
+        category: 'Namespace',
+        value: this.props.match.params.namespace.toString()
+      }
+    ]);
+  };
+
   clearFilters() {
-    NamespaceFilterSelected.setSelected([]);
+    FilterSelected.setSelected([]);
   }
 
   renderBreadcrumbs = () => {
@@ -129,7 +138,10 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
           </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
-          <Link to={`/workloads?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}>
+          <Link
+            to={`/workloads?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}
+            onClick={this.namespaceFilters}
+          >
             Namespace: {this.props.match.params.namespace}
           </Link>
         </Breadcrumb.Item>

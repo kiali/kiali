@@ -6,21 +6,17 @@ import { AxiosError } from 'axios';
 import { AppListItem } from '../../types/AppList';
 import { AppListFilters } from './FiltersAndSorts';
 import { AppListClass } from './AppListClass';
-import {
-  defaultNamespaceFilter,
-  NamespaceFilter,
-  NamespaceFilterSelected
-} from '../../components/NamespaceFilter/NamespaceFilter';
+import { StatefulFilters, FilterSelected } from '../../components/Filters/StatefulFilters';
+import { NamespaceFilter } from '../../components/Filters/NamespaceFilter';
 import { ListView, Sort, Paginator, ToolbarRightContent, Button, Icon } from 'patternfly-react';
 import { Pagination } from '../../types/Pagination';
-import { ActiveFilter, FilterType } from '../../types/NamespaceFilter';
+import { ActiveFilter, FilterType } from '../../types/Filters';
 import { removeDuplicatesArray } from '../../utils/Common';
-import { URLParameter } from '../../types/Parameters';
 import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
 import { ListPage } from '../../components/ListPage/ListPage';
 
 const availableFilters: FilterType[] = [
-  defaultNamespaceFilter,
+  NamespaceFilter.create(),
   AppListFilters.appNameFilter,
   AppListFilters.istioSidecarFilter
 ];
@@ -51,7 +47,6 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       isSortAscending: this.props.isSortAscending,
       rateInterval: this.props.rateInterval
     };
-    this.setActiveFiltersToURL();
   }
 
   componentDidMount() {
@@ -59,7 +54,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
   }
 
   updateApps = (resetPagination?: boolean) => {
-    const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
+    const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
       .map(activeFilter => activeFilter.value);
@@ -83,32 +78,6 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       this.fetchApps(namespacesSelected, activeFilters, this.props.rateInterval, resetPagination);
     }
   };
-
-  setActiveFiltersToURL() {
-    const params = NamespaceFilterSelected.getSelected()
-      .map(activeFilter => {
-        const availableFilter = availableFilters.find(filter => {
-          return filter.title === activeFilter.category;
-        });
-
-        if (typeof availableFilter === 'undefined') {
-          NamespaceFilterSelected.setSelected(
-            NamespaceFilterSelected.getSelected().filter(nfs => {
-              return nfs.category !== activeFilter.category;
-            })
-          );
-          return null;
-        }
-
-        return {
-          name: availableFilter.id,
-          value: activeFilter.value
-        };
-      })
-      .filter(filter => filter !== null) as URLParameter[];
-
-    this.props.pageHooks.onParamChange(params, 'append', 'replace');
-  }
 
   fetchApps(namespaces: string[], filters: ActiveFilter[], rateInterval: number, resetPagination?: boolean) {
     const appsPromises = namespaces.map(namespace => API.getApps(authentication(), namespace));
@@ -147,8 +116,6 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
         isSortAscending: this.props.isSortAscending,
         rateInterval: this.props.rateInterval
       });
-
-      NamespaceFilterSelected.setSelected(this.selectedFilters());
       this.updateApps();
     }
   }
@@ -159,36 +126,8 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
       prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.rateInterval === this.props.rateInterval &&
       prevProps.isSortAscending === this.props.isSortAscending &&
-      prevProps.currentSortField.title === this.props.currentSortField.title &&
-      this.filtersMatch()
+      prevProps.currentSortField.title === this.props.currentSortField.title
     );
-  }
-
-  filtersMatch() {
-    const selectedFilters: Map<string, string[]> = new Map<string, string[]>();
-
-    NamespaceFilterSelected.getSelected().map(activeFilter => {
-      const existingValue = selectedFilters.get(activeFilter.category) || [];
-      selectedFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
-    });
-
-    const urlParams: Map<string, string[]> = new Map<string, string[]>();
-    availableFilters.forEach(filter => {
-      const params = this.props.pageHooks.getQueryParam(filter.id);
-      if (params !== undefined) {
-        const existing = urlParams.get(filter.title) || [];
-        urlParams.set(filter.title, existing.concat(params));
-      }
-    });
-
-    let equalFilters = true;
-    selectedFilters.forEach((filterValues, filterName) => {
-      const aux = urlParams.get(filterName) || [];
-      equalFilters =
-        equalFilters && filterValues.every(value => aux.includes(value)) && filterValues.length === aux.length;
-    });
-
-    return selectedFilters.size === urlParams.size && equalFilters;
   }
 
   pageSet = (page: number) => {
@@ -221,21 +160,6 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
     this.props.pageHooks.onParamChange([{ name: 'page', value: '1' }, { name: 'perPage', value: String(perPage) }]);
   };
 
-  selectedFilters() {
-    let activeFilters: ActiveFilter[] = [];
-    availableFilters.forEach(filter => {
-      (this.props.pageHooks.getQueryParam(filter.id) || []).forEach(value => {
-        activeFilters.push({
-          label: filter.title + ': ' + value,
-          category: filter.title,
-          value: value
-        });
-      });
-    });
-
-    return activeFilters;
-  }
-
   updateSortField = (sortField: AppListFilters.SortField) => {
     AppListFilters.sortAppsItems(this.state.appListItems, sortField, this.state.isSortAscending).then(sorted => {
       this.setState({
@@ -265,54 +189,10 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
     console.error(errMsg);
   }
 
-  updateParams(params: URLParameter[], looking: string, id: string, value: string) {
-    let newParams = params;
-    const index = newParams.findIndex(param => param.name === looking && param.value.length > 0);
-    if (index >= 0) {
-      newParams[index].value = value;
-    } else {
-      newParams.push({
-        name: id,
-        value: value
-      });
-    }
-    return newParams;
-  }
-
-  onFilterChange = (filters: ActiveFilter[]) => {
-    let params: URLParameter[] = [];
-    availableFilters.forEach(availableFilter => {
-      params.push({ name: availableFilter.id, value: '' });
-    });
-    filters.forEach(activeFilter => {
-      let filterId = (
-        availableFilters.find(filter => {
-          return filter.title === activeFilter.category;
-        }) || availableFilters[2]
-      ).id;
-      switch (activeFilter.category) {
-        case 'Istio Sidecar': {
-          params = this.updateParams(params, 'istiosidecar', filterId, activeFilter.value);
-          break;
-        }
-        default: {
-          params.push({
-            name: filterId,
-            value: activeFilter.value
-          });
-        }
-      }
-    });
-
+  onFilterChange = () => {
     // Resetting pagination when filters change
-    params.push({ name: 'page', value: '' });
-
-    this.props.pageHooks.onParamChange(params, 'append');
+    this.props.pageHooks.onParamChange([{ name: 'page', value: '' }]);
     this.updateApps(true);
-  };
-
-  handleError = (error: string) => {
-    this.props.pageHooks.handleError(error);
   };
 
   render() {
@@ -327,11 +207,10 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
 
     return (
       <>
-        <NamespaceFilter
-          initialFilters={[AppListFilters.appNameFilter, AppListFilters.istioSidecarFilter]}
-          initialActiveFilters={this.selectedFilters()}
+        <StatefulFilters
+          initialFilters={availableFilters}
+          pageHooks={this.props.pageHooks}
           onFilterChange={this.onFilterChange}
-          onError={this.handleError}
         >
           <Sort>
             <Sort.TypeSelector
@@ -354,7 +233,7 @@ class AppListComponent extends React.Component<AppListComponentProps, AppListCom
               <Icon name="refresh" />
             </Button>
           </ToolbarRightContent>
-        </NamespaceFilter>
+        </StatefulFilters>
         <ListView>{appItemsList}</ListView>
         <Paginator
           viewType="list"

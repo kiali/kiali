@@ -5,14 +5,11 @@ import Namespace from '../../types/Namespace';
 import { AxiosError } from 'axios';
 import { WorkloadListItem, WorkloadNamespaceResponse } from '../../types/Workload';
 import { WorkloadListFilters } from './FiltersAndSorts';
-import {
-  defaultNamespaceFilter,
-  NamespaceFilter,
-  NamespaceFilterSelected
-} from '../../components/NamespaceFilter/NamespaceFilter';
+import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
+import { NamespaceFilter } from '../../components/Filters/NamespaceFilter';
 import { ListView, Sort, Paginator, ToolbarRightContent, Button, Icon } from 'patternfly-react';
 import { Pagination } from '../../types/Pagination';
-import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType } from '../../types/NamespaceFilter';
+import { ActiveFilter, FilterType } from '../../types/Filters';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { URLParameter } from '../../types/Parameters';
 import ItemDescription from './ItemDescription';
@@ -20,7 +17,7 @@ import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
 import { ListPage } from '../../components/ListPage/ListPage';
 
 const availableFilters: FilterType[] = [
-  defaultNamespaceFilter,
+  NamespaceFilter.create(),
   WorkloadListFilters.workloadNameFilter,
   WorkloadListFilters.workloadTypeFilter,
   WorkloadListFilters.istioSidecarFilter,
@@ -54,7 +51,6 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       isSortAscending: this.props.isSortAscending,
       rateInterval: this.props.rateInterval
     };
-    this.setActiveFiltersToURL();
   }
 
   componentDidMount() {
@@ -70,7 +66,6 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
         rateInterval: this.props.rateInterval
       });
 
-      NamespaceFilterSelected.setSelected(this.selectedFilters());
       this.updateWorkloads();
     }
   }
@@ -81,40 +76,12 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.rateInterval === this.props.rateInterval &&
       prevProps.isSortAscending === this.props.isSortAscending &&
-      prevProps.currentSortField.title === this.props.currentSortField.title &&
-      this.filtersMatch()
+      prevProps.currentSortField.title === this.props.currentSortField.title
     );
   }
 
-  filtersMatch() {
-    const selectedFilters: Map<string, string[]> = new Map<string, string[]>();
-
-    NamespaceFilterSelected.getSelected().map(activeFilter => {
-      const existingValue = selectedFilters.get(activeFilter.category) || [];
-      selectedFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
-    });
-
-    let urlParams: Map<string, string[]> = new Map<string, string[]>();
-    availableFilters.forEach(filter => {
-      const param = this.props.pageHooks.getQueryParam(filter.id);
-      if (param !== undefined) {
-        const existing = urlParams.get(filter.title) || [];
-        urlParams.set(filter.title, existing.concat(param));
-      }
-    });
-
-    let equalFilters = true;
-    selectedFilters.forEach((filterValues, filterName) => {
-      const aux = urlParams.get(filterName) || [];
-      equalFilters =
-        equalFilters && filterValues.every(value => aux.includes(value)) && filterValues.length === aux.length;
-    });
-
-    return selectedFilters.size === urlParams.size && equalFilters;
-  }
-
   updateWorkloads = (resetPagination?: boolean) => {
-    const activeFilters: ActiveFilter[] = NamespaceFilterSelected.getSelected();
+    const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
       .map(activeFilter => activeFilter.value);
@@ -133,32 +100,6 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
       this.fetchWorkloads(namespacesSelected, activeFilters, resetPagination);
     }
   };
-
-  setActiveFiltersToURL() {
-    const params = NamespaceFilterSelected.getSelected()
-      .map(activeFilter => {
-        const availableFilter = availableFilters.find(filter => {
-          return filter.title === activeFilter.category;
-        });
-
-        if (typeof availableFilter === 'undefined') {
-          NamespaceFilterSelected.setSelected(
-            NamespaceFilterSelected.getSelected().filter(nfs => {
-              return nfs.category !== activeFilter.category;
-            })
-          );
-          return null;
-        }
-
-        return {
-          name: availableFilter.id,
-          value: activeFilter.value
-        };
-      })
-      .filter(filter => filter !== null) as URLParameter[];
-
-    this.props.pageHooks.onParamChange(params, 'append', 'replace');
-  }
 
   getDeploymentItems = (data: WorkloadNamespaceResponse): WorkloadListItem[] => {
     let workloadsItems: WorkloadListItem[] = [];
@@ -238,21 +179,6 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
     this.props.pageHooks.onParamChange([{ name: 'page', value: '1' }, { name: 'perPage', value: String(perPage) }]);
   };
 
-  selectedFilters() {
-    let activeFilters: ActiveFilter[] = [];
-    availableFilters.forEach(filter => {
-      (this.props.pageHooks.getQueryParam(filter.id) || []).forEach(value => {
-        activeFilters.push({
-          label: filter.title + ': ' + value,
-          category: filter.title,
-          value: value
-        });
-      });
-    });
-
-    return activeFilters;
-  }
-
   updateSortField = (sortField: WorkloadListFilters.SortField) => {
     WorkloadListFilters.sortWorkloadsItems(this.state.workloadItems, sortField, this.state.isSortAscending).then(
       sorted => {
@@ -298,38 +224,9 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
     return newParams;
   }
 
-  onFilterChange = (filters: ActiveFilter[]) => {
-    let params: URLParameter[] = [];
-
-    availableFilters.forEach(availableFilter => {
-      params.push({ name: availableFilter.id, value: '' });
-    });
-
-    filters.forEach(activeFilter => {
-      let filterId = (
-        availableFilters.find(filter => {
-          return filter.title === activeFilter.category;
-        }) || availableFilters[2]
-      ).id;
-
-      const updateableFilterIds = availableFilters
-        .filter(filter => filter.action === FILTER_ACTION_UPDATE)
-        .map(filter => filter.id);
-
-      if (updateableFilterIds.includes(filterId)) {
-        params = this.updateParams(params, filterId, activeFilter.value);
-      } else {
-        params.push({
-          name: filterId,
-          value: activeFilter.value
-        });
-      }
-    });
-
+  onFilterChange = () => {
     // Resetting pagination when filters change
-    params.push({ name: 'page', value: '' });
-
-    this.props.pageHooks.onParamChange(params, 'append');
+    this.props.pageHooks.onParamChange([{ name: 'page', value: '' }]);
     this.updateWorkloads(true);
   };
 
@@ -355,17 +252,10 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
 
     return (
       <>
-        <NamespaceFilter
-          initialFilters={[
-            WorkloadListFilters.workloadNameFilter,
-            WorkloadListFilters.workloadTypeFilter,
-            WorkloadListFilters.istioSidecarFilter,
-            WorkloadListFilters.appLabelFilter,
-            WorkloadListFilters.versionLabelFilter
-          ]}
-          initialActiveFilters={this.selectedFilters()}
+        <StatefulFilters
+          initialFilters={availableFilters}
+          pageHooks={this.props.pageHooks}
           onFilterChange={this.onFilterChange}
-          onError={this.handleError}
         >
           <Sort>
             <Sort.TypeSelector
@@ -388,7 +278,7 @@ class WorkloadListComponent extends React.Component<WorkloadListComponentProps, 
               <Icon name="refresh" />
             </Button>
           </ToolbarRightContent>
-        </NamespaceFilter>
+        </StatefulFilters>
         <ListView>{workloadList}</ListView>
         <Paginator
           viewType="list"

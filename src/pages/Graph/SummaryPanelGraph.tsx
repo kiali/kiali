@@ -6,8 +6,8 @@ import { SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
-import { NamespaceFilterSelected } from '../../components/NamespaceFilter/NamespaceFilter';
-import { ActiveFilter } from '../../types/NamespaceFilter';
+import { FilterSelected } from '../../components/Filters/StatefulFilters';
+import { ActiveFilter } from '../../types/Filters';
 import * as M from '../../types/Metrics';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
@@ -85,10 +85,10 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       .size();
     const numEdges = cy.edges().size();
     const trafficRate = getAccumulatedTrafficRate(cy.edges());
-    const servicesLink = (
+    const appsLink = (
       <Link
-        to={this.props.namespace === 'all' ? '../services' : `../services?namespace=${this.props.namespace}`}
-        onClick={this.updateServicesFilter}
+        to={this.props.namespace === 'all' ? '/applications' : `/applications?namespace=${this.props.namespace}`}
+        onClick={this.updateAppsFilter}
       >
         {this.props.namespace}
       </Link>
@@ -97,7 +97,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     return (
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
         <div className="panel-heading">
-          Namespace: {servicesLink}
+          Namespace: {appsLink}
           {this.renderTopologySummary(numNodes, numEdges)}
         </div>
         <div className="panel-body">
@@ -194,16 +194,15 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     return graphUtils.toC3Columns(series, title);
   };
 
-  private updateServicesFilter = () => {
+  private updateAppsFilter = () => {
     let filters: ActiveFilter[] = [];
     if (this.props.namespace !== 'all') {
       let activeFilter: ActiveFilter = {
-        label: 'Namespace: ' + this.props.namespace,
         category: 'Namespace',
         value: this.props.namespace.toString()
       };
       filters = [activeFilter];
     }
-    NamespaceFilterSelected.setSelected(filters);
+    FilterSelected.setSelected(filters);
   };
 }
