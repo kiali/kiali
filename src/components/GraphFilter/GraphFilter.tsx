@@ -76,7 +76,7 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
           <ToolbarDropdown
             id={'graph_filter_view_type'}
             disabled={this.props.node !== undefined || this.props.disabled}
-            handleSelect={this.updateViewType}
+            handleSelect={this.updateGraphType}
             nameDropdown={'Graph Type'}
             value={graphTypeKey}
             label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
@@ -101,11 +101,10 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
     );
   }
 
-  private updateViewType = (type: string) => {
+  private updateGraphType = (type: string) => {
     const graphType: GraphType = GraphType[type] as GraphType;
     if (this.props.graphType !== graphType) {
       this.props.onGraphTypeChange(graphType);
-      this.handleRefresh(null);
     }
   };
 }

@@ -100,16 +100,24 @@ export default class GraphPage extends React.PureComponent<GraphPageProps> {
   componentDidUpdate(prevProps: GraphPageProps) {
     const prevNamespace = prevProps.namespace;
     const prevDuration = prevProps.graphDuration;
+    const prevGraphType = prevProps.graphType;
     const prevPollInterval = prevProps.pollInterval;
     const prevInjectServiceNodes = prevProps.injectServiceNodes;
 
     const namespaceHasChanged = prevNamespace.name !== this.props.namespace.name;
     const nodeHasChanged = prevProps.node !== this.props.node;
+    const graphTypeHasChanged = prevGraphType !== this.props.graphType;
     const durationHasChanged = prevDuration.value !== this.props.graphDuration.value;
     const pollIntervalChanged = prevPollInterval !== this.props.pollInterval;
     const injectServiceNodesHasChanged = prevInjectServiceNodes !== this.props.injectServiceNodes;
 
-    if (namespaceHasChanged || nodeHasChanged || durationHasChanged || injectServiceNodesHasChanged) {
+    if (
+      namespaceHasChanged ||
+      graphTypeHasChanged ||
+      nodeHasChanged ||
+      durationHasChanged ||
+      injectServiceNodesHasChanged
+    ) {
       this.scheduleNextPollingInterval(0);
     } else if (pollIntervalChanged) {
       this.scheduleNextPollingIntervalFromProps();
