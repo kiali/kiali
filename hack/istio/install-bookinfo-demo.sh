@@ -17,6 +17,7 @@
 ISTIO_DIR=
 CLIENT_EXE_NAME="istiooc"
 NAMESPACE="bookinfo"
+RATE=1
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -50,6 +51,10 @@ while [[ $# -gt 0 ]]; do
       MYSQL_ENABLED="true"
       shift;
       ;;
+    -tg|--traffic-generator)
+      TRAFFIC_GENERATOR_ENABLED="true"
+      shift;
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -60,6 +65,7 @@ Valid command line arguments:
   -g|--gateway.yaml <file>: A custom yaml file to deploy the bookinfo-gateway resources
   --mongo: Install a Mongo DB that a ratings service will access
   --mysql: Install a MySQL DB that a ratings service will access
+  -tg|--traffic-generator: Install Kiali Traffic Generator on Bookinfo
   -h|--help : this message
 HELPMSG
       exit 1
@@ -157,5 +163,15 @@ $CLIENT_EXE get pods -n ${NAMESPACE}
 
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
-  $CLIENT_EXE expose svc productpage
+  $CLIENT_EXE expose svc productpage -n ${NAMESPACE}
+  $CLIENT_EXE expose svc istio-ingressgateway -n istio-system
+fi
+
+if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
+  echo "Installing Traffic Generator"
+  INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n istio-system)
+  curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE="http://${INGRESS_ROUTE}/productpage" RATE="${RATE}"  envsubst | oc apply -n ${NAMESPACE} -f -
+  curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | oc apply -n ${NAMESPACE} -f -
+
+
 fi

@@ -20,13 +20,13 @@ kind: Service
 metadata:
   name: details
   labels:
-    app: details-app
+    app: details${LABEL}
 spec:
   ports:
   - port: 9080
     name: http
   selector:
-    app: details-app
+    app: details${LABEL}
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -37,7 +37,7 @@ spec:
   template:
     metadata:
       labels:
-        app: details-app
+        app: details${LABEL}
         version: v1
     spec:
       containers:
@@ -55,13 +55,13 @@ kind: Service
 metadata:
   name: ratings
   labels:
-    app: ratings-app
+    app: ratings${LABEL}
 spec:
   ports:
   - port: 9080
     name: http
   selector:
-    app: ratings-app
+    app: ratings${LABEL}
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -72,7 +72,7 @@ spec:
   template:
     metadata:
       labels:
-        app: ratings-app
+        app: ratings${LABEL}
         version: v1
     spec:
       containers:
@@ -90,13 +90,13 @@ kind: Service
 metadata:
   name: reviews
   labels:
-    app: reviews-app
+    app: reviews${LABEL}
 spec:
   ports:
   - port: 9080
     name: http
   selector:
-    app: reviews-app
+    app: reviews${LABEL}
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -107,7 +107,7 @@ spec:
   template:
     metadata:
       labels:
-        app: reviews-app
+        app: reviews${LABEL}
         version: v1
     spec:
       containers:
@@ -126,7 +126,7 @@ spec:
   template:
     metadata:
       labels:
-        app: reviews-app
+        app: reviews${LABEL}
         version: v2
     spec:
       containers:
@@ -145,7 +145,7 @@ spec:
   template:
     metadata:
       labels:
-        app: reviews-app
+        app: reviews${LABEL}
         version: v3
     spec:
       containers:
@@ -163,13 +163,13 @@ kind: Service
 metadata:
   name: productpage
   labels:
-    app: productpage-app
+    app: productpage${LABEL}
 spec:
   ports:
   - port: 9080
     name: http
   selector:
-    app: productpage-app
+    app: productpage${LABEL}
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -180,7 +180,7 @@ spec:
   template:
     metadata:
       labels:
-        app: productpage-app
+        app: productpage${LABEL}
         version: v1
     spec:
       containers:

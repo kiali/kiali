@@ -4,32 +4,22 @@
 
     - name: Initialize Facts
       set_fact:
-        istio_bookinfo_deployment_path: ""
-        istio_bookinfo_gateway_path: ""
-
-
-    - name: Set Path for Istio 0.8.0
-      set_fact:
-        istio_bookinfo_deployment_path: https://raw.githubusercontent.com/istio/istio/release-0.8/samples/bookinfo/kube/bookinfo.yaml
-        istio_bookinfo_gateway_path: https://raw.githubusercontent.com/istio/istio/release-0.8/samples/bookinfo/routing/bookinfo-gateway.yaml
-      when: "istio_version == '0.8.0'"
-
-    - name: Set Path for Istio 1.0.0 (Standard Values)
-      set_fact:
-        istio_bookinfo_deployment_path: https://raw.githubusercontent.com/istio/istio/release-1.0/samples/bookinfo/platform/kube/bookinfo.yaml
-        istio_bookinfo_gateway_path: https://raw.githubusercontent.com/istio/istio/release-1.0/samples/bookinfo/networking/bookinfo-gateway.yaml
-      when: "istio_version == '1.0.0' and renamed is not defined"
-
-    - name: Set Path for Istio 1.0.0 (Renamed Values on the file)
-      set_fact:
-        istio_bookinfo_deployment_path: https://raw.githubusercontent.com/kiali/kiali/istio-1.0/hack/istio/bookinfo-rename/bookinfo-rename.yaml
-        istio_bookinfo_gateway_path: https://raw.githubusercontent.com/kiali/kiali/istio-1.0/hack/istio/bookinfo-rename/bookinfo-gateway-rename.yaml
-      when: "istio_version == '1.0.0' and renamed is defined and renamed == 'true'"
+        istio_bookinfo_mongodb_deployment_path: files/bookinfo-mongodb.yaml
+        istio_bookinfo_mongodb_service_path: files/bookinfo-ratings-v2-mongodb.yaml
+        istio_bookinfo_mysql_deployment_path: files/bookinfo-mysql.yaml
+        istio_bookinfo_mysql_service_path: files/bookinfo-ratings-v2-mysql.yaml
+        istio_bookinfo_deployment_path: files/bookinfo.yaml
+        istio_bookinfo_gateway_path: files/bookinfo-gateway.yaml
 
     - name: Define Bookinfo Namespace if is not defined
       set_fact:
         bookinfo_namespace: 'bookinfo'
       when: bookinfo_namespace is not defined
+
+    - name: Define Rename Label if is not defined
+      set_fact:
+        rename_label: ''
+      when: rename_label is not defined
 
     - name: Delete Test Bookinfo Project
       openshift_raw:
@@ -60,15 +50,32 @@
       shell: "oc adm policy add-scc-to-user privileged -z default -n {{bookinfo_namespace}}"
 
     - name: Deploy Bookinfo
-      shell: "curl {{item}}  | istioctl kube-inject -f - | oc apply -n {{bookinfo_namespace}} -f -  "
+      shell: "cat {{item}} | LABEL={{ rename_label }} envsubst  | istioctl kube-inject -f - | oc apply -n {{bookinfo_namespace}} -f -  "
       with_items:
         - "{{ istio_bookinfo_deployment_path }}"
 
-
     - name: Deploy Bookinfo Gateway
-      shell: "curl {{item}}  | oc apply -n {{bookinfo_namespace}} -f -  "
+      shell: "cat {{item}}  | oc apply -n {{bookinfo_namespace}} -f -  "
       with_items:
         - "{{ istio_bookinfo_gateway_path }}"
+
+    - name: Deploy MongoDB
+      shell: "cat {{item}} |  LABEL={{ rename_label }} envsubst  | istioctl kube-inject -f - | oc apply -n {{bookinfo_namespace}} -f -  "
+      when: "mongodb is defined and mongodb == 'true'"
+      with_items:
+        - "{{ istio_bookinfo_mongodb_deployment_path }}"
+        - "{{ istio_bookinfo_mongodb_service_path }}"
+
+    - name: Deploy MySQL
+      shell: "cat {{item}} |  LABEL={{ rename_label }} envsubst   | istioctl kube-inject -f - | oc apply -n {{bookinfo_namespace}} -f -  "
+      when: "mysql is defined and mysql == 'true'"
+      with_items:
+        - "{{ istio_bookinfo_mysql_deployment_path }}"
+        - "{{ istio_bookinfo_mysql_service_path }}"
+
+    - name: Expose Ingress Gateway
+      shell: "oc expose svc istio-ingressgateway -n istio-system"
+      ignore_errors: true
 
     - name: Expose Openshift Route for Bookinfo (useful when you trying to deploy with external traffic)
       shell: "oc expose svc productpage -n {{bookinfo_namespace}}"
@@ -91,6 +98,42 @@
         - reviews-v1
         - reviews-v2
         - reviews-v3
+      retries: 100
+      delay: 10
+
+    - name: Wait until mongodb pods are running
+      openshift_raw:
+        definition:
+          apiVersion: v1
+          kind: Deployment
+          metadata:
+            name: "{{item}}"
+            namespace: "{{ bookinfo_namespace }}"
+      register: replicaResult
+      when: "mongodb is defined and mongodb == 'true'"
+      until: (replicaResult.result.status.ready_replicas is defined and replicaResult.result.status.ready_replicas == 1) or
+           (replicaResult.result.status.readyReplicas is defined and replicaResult.result.status.readyReplicas == 1)
+      with_items:
+        - ratings-v2-mongodb
+        - mongodb-v1
+      retries: 100
+      delay: 10
+
+    - name: Wait until mysql pods are running
+      openshift_raw:
+        definition:
+          apiVersion: v1
+          kind: Deployment
+          metadata:
+            name: "{{item}}"
+            namespace: "{{ bookinfo_namespace }}"
+      register: replicaResult
+      when: "mysql is defined and mysql == 'true'"
+      until: (replicaResult.result.status.ready_replicas is defined and replicaResult.result.status.ready_replicas == 1) or
+           (replicaResult.result.status.readyReplicas is defined and replicaResult.result.status.readyReplicas == 1)
+      with_items:
+        - ratings-v2-mysql
+        - mysqldb-v1
       retries: 100
       delay: 10
 
