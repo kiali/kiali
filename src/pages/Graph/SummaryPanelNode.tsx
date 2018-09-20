@@ -98,7 +98,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     }
 
     const filters = ['request_count', 'request_error_count'];
-    let byLabelsIn = nodeMetricType === NodeMetricType.SERVICE ? ['destination_workload'] : undefined;
+    // when not injecting service nodes the only service nodes are those representing client failures. For
+    // those we want to narrow the data to only TS with 'unknown' workloads (see the related comparator in getNodeDatapoints).
+    let byLabelsIn =
+      nodeMetricType === NodeMetricType.SERVICE && !this.props.injectServiceNodes
+        ? ['destination_workload']
+        : undefined;
     let byLabelsOut = data.isRoot ? ['destination_service_namespace'] : undefined;
 
     const promise = getNodeMetrics(nodeMetricType, target, props, filters, byLabelsIn, byLabelsOut);
@@ -125,7 +130,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   showRequestCountMetrics(all: Metrics, data: NodeData, nodeMetricType: NodeMetricType) {
     let comparator;
-    if (nodeMetricType === NodeMetricType.SERVICE) {
+    if (nodeMetricType === NodeMetricType.SERVICE && !this.props.injectServiceNodes) {
       comparator = (metric: Metric) => {
         return metric['destination_workload'] === 'unknown';
       };
@@ -139,20 +144,30 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     let ecOut;
     let rcIn;
     let ecIn;
-    // ignore outgoing for non-root outsiders (because there are no outgoing edges)
+    // set outgoing unless it is a non-root outsider (because they have no outgoing edges)
     if (data.isRoot || !data.isOutsider) {
       // use source metrics for outgoing, except for:
-      // - unknown nodes with no source telemetry
-      // - it is the istio namespace
+      // - unknown nodes (no source telemetry)
+      // - istio namespace nodes (no source telemetry)
+      // - service nodes (to filter out source errors, see below)
       let useDest = data.nodeType === NodeType.UNKNOWN;
+      useDest = useDest || data.nodeType === NodeType.SERVICE;
       useDest = useDest || this.props.namespace === 'istio-system';
       metrics = useDest ? all.dest.metrics : all.source.metrics;
-      rcOut = metrics['request_count_out'];
-      ecOut = metrics['request_error_count_out'];
+      if (data.nodeType !== NodeType.SERVICE) {
+        rcOut = metrics['request_count_out'];
+        ecOut = metrics['request_error_count_out'];
+      } else {
+        // for service nodes incoming requests = outgoing requests less source side erros. Use
+        // destination-reported incoming metrics here, because destination telemetry can not
+        // include source-side errors (because the request never reaches the dest).
+        rcOut = metrics['request_count_in'];
+        ecOut = metrics['request_error_count_in'];
+      }
     }
-    // ignore incoming roots (because there are no incoming edges)
-    if (data.isRoot || !data.isOutsider) {
-      // use dest metrics for incoming, except for service nodes capturing source errors
+    // set incoming unless it is a root (because they have no incoming edges)
+    if (!data.isRoot) {
+      // use dest metrics for incoming, except for service nodes in order to capturing source errors
       metrics = data.nodeType === NodeType.SERVICE ? all.source.metrics : all.dest.metrics;
       rcIn = metrics['request_count_in'];
       ecIn = metrics['request_error_count_in'];

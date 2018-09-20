@@ -12,6 +12,8 @@ export interface SummaryData {
 export interface SummaryPanelPropType {
   data: SummaryData;
   namespace: string;
+  graphType: GraphType;
+  injectServiceNodes: boolean;
   queryTime: string;
   duration: number;
   step: number;

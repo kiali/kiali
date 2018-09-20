@@ -119,11 +119,22 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   }
 
   private getByLabelsIn = (sourceMetricType: NodeMetricType, destMetricType: NodeMetricType) => {
-    let sourceLabel = 'source_workload';
-    if (sourceMetricType === NodeMetricType.APP) {
-      sourceLabel = 'source_app';
+    let sourceLabel: string;
+    switch (sourceMetricType) {
+      case NodeMetricType.WORKLOAD:
+        sourceLabel = 'source_workload';
+        break;
+      case NodeMetricType.APP:
+        sourceLabel = 'source_app';
+        break;
+      case NodeMetricType.SERVICE:
+      default:
+        sourceLabel = 'destination_service_name';
+        break;
     }
-    if (destMetricType === NodeMetricType.SERVICE) {
+    // when not injecting service nodes the only service nodes are those representing client failures. For
+    // those we want to narrow the data to only TS with 'unknown' workloads (see the related comparator in getNodeDatapoints).
+    if (destMetricType === NodeMetricType.SERVICE && !this.props.injectServiceNodes) {
       return [sourceLabel, 'destination_workload'];
     }
     return [sourceLabel];
@@ -136,14 +147,24 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     destMetricType: NodeMetricType,
     data: NodeData
   ) => {
-    let sourceLabel = 'source_workload';
-    let sourceValue = data.workload;
-    if (sourceMetricType === NodeMetricType.APP) {
-      sourceLabel = 'source_app';
-      sourceValue = data.app;
+    let sourceLabel: string;
+    let sourceValue: string;
+    switch (sourceMetricType) {
+      case NodeMetricType.WORKLOAD:
+        sourceLabel = 'source_workload';
+        sourceValue = data.workload;
+        break;
+      case NodeMetricType.APP:
+        sourceLabel = 'source_app';
+        sourceValue = data.app;
+        break;
+      case NodeMetricType.SERVICE:
+      default:
+        sourceLabel = 'destination_service_name';
+        sourceValue = data.service;
     }
     let comparator = (metric: Metric) => {
-      if (destMetricType === NodeMetricType.SERVICE) {
+      if (destMetricType === NodeMetricType.SERVICE && !this.props.injectServiceNodes) {
         return metric[sourceLabel] === sourceValue && metric['destination_workload'] === 'unknown';
       }
       return metric[sourceLabel] === sourceValue;

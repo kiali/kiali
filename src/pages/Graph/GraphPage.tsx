@@ -200,6 +200,8 @@ export default class GraphPage extends React.PureComponent<GraphPageProps> {
               <SummaryPanel
                 data={this.props.summaryData}
                 namespace={this.props.namespace.name}
+                graphType={this.props.graphType}
+                injectServiceNodes={this.props.injectServiceNodes}
                 queryTime={this.props.graphTimestamp}
                 duration={this.props.graphDuration.value}
                 isPageVisible={this.props.isPageVisible}
