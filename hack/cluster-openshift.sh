@@ -234,9 +234,9 @@ ISTIO_ENABLED="${ISTIO_ENABLED:-true}"
 
 # If you set KIALI_ENABLED=true, then the istiooc command will install a version of Kiali for you.
 # If that is set to false, the other KIALI_ environment variables will be ignored.
-# This is ONLY supported in MAISTRA_ISTIO_OC_DOWNLOAD_PLATFORM versions of istio-3.9-0.8.0.alpha2 or higher.
+# NOTE: The USERNAME and PASSWORD settings are not used today. For future use.
 KIALI_ENABLED="${KIALI_ENABLED:-false}"
-KIALI_VERSION="${KIALI_VERSION:-istio-release-1.0}"
+KIALI_VERSION="${KIALI_VERSION:-v0.7}"
 KIALI_USERNAME="${KIALI_USERNAME:-admin}"
 KIALI_PASSWORD="${KIALI_PASSWORD:-admin}"
 
@@ -274,9 +274,9 @@ if [ "${OPENSHIFT_PERSISTENCE_DIR}" != "" ]; then
   OPENSHIFT_PERSISTENCE_ARGS="--base-dir=${OPENSHIFT_PERSISTENCE_DIR}"
 fi
 
-# If Kiali is to be installed, set the proper istiooc arguments that will be needed.
+# If Kiali is to be installed, set up some things that may be needed
 if [ "${KIALI_ENABLED}" == "true" ]; then
-  echo TODO export Kiali env vars
+  echo Kiali is enabled and will be installed.
 fi
 
 # Operator Tempate Variables - export these so the template can see them
@@ -457,6 +457,23 @@ if [ "$_CMD" = "up" ]; then
     else
       echo "You asked that Istio not be enabled, but it appears Istio has already been installed. You might want to uninstall it."
     fi
+  fi
+
+  if [ "${KIALI_ENABLED}" == "true" ]; then
+    echo "Deleting any previously existing Kiali..."
+    ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=kiali -n istio-system
+    echo "Deploying Kiali..."
+    curl https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/deploy/openshift/kiali-configmap.yaml | \
+      VERSION_LABEL=${KIALI_VERSION} envsubst | oc create -n istio-system -f -
+    curl https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/deploy/openshift/kiali-secrets.yaml | \
+      VERSION_LABEL=${KIALI_VERSION} envsubst | oc create -n istio-system -f -
+    curl https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/deploy/openshift/kiali.yaml | \
+      VERSION_LABEL=${KIALI_VERSION} \
+      IMAGE_NAME=kiali/kiali \
+      IMAGE_VERSION=${KIALI_VERSION}  \
+      NAMESPACE=istio-system \
+      VERBOSE_MODE=4 \
+      IMAGE_PULL_POLICY_TOKEN="imagePullPolicy: Always" envsubst | oc create -n istio-system -f -
   fi
 
 elif [ "$_CMD" = "down" ];then
