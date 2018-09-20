@@ -1,11 +1,13 @@
 import pytest
 import tests.conftest as conftest
 from utils.command_exec import command_exec
+from utils.timeout import timeout
 
 BOOKINFO_EXPECTED_SERVICES = 4
 BOOKINFO_EXPECTED_SERVICES_MONGODB = 5
 SERVICE_TO_VALIDATE = 'reviews'
 VIRTUAL_SERVICE_FILE = 'assets/bookinfo-reviews-80-20.yaml'
+DESTINATION_RULE_FILE = 'assets/bookinfo-destination-rule-reviews.yaml'
 
 def test_service_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_endpoint()
@@ -43,7 +45,14 @@ def test_service_detail_with_virtual_service(kiali_client):
     # Add a virtual service that will be tested
     assert command_exec.oc_apply(VIRTUAL_SERVICE_FILE, bookinfo_namespace) == True
 
-    service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
+    with timeout(seconds=10, error_message='Timed out waiting for virtual service creation'):
+      while True:
+        service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
+        if service_details != None and len (service_details.get('virtualServices')) > 0:
+          break
+
+        time.sleep(1)
+
     assert service_details != None
 
     virtual_service = service_details.get('virtualServices')[0]
@@ -70,6 +79,58 @@ def test_service_detail_with_virtual_service(kiali_client):
     assert destination.get('subset') == 'v2'
 
     assert command_exec.oc_delete(VIRTUAL_SERVICE_FILE, bookinfo_namespace) == True
+
+    with timeout(seconds=10, error_message='Timed out waiting for virtual service deletion'):
+      while True:
+        service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
+        if service_details != None and service_details.get('virtualServices') == None:
+          break
+
+        time.sleep(1)
+
+def test_service_detail_with_destination_rule(kiali_client):
+    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+
+    # Add a virtual service that will be tested
+    assert command_exec.oc_apply(DESTINATION_RULE_FILE, bookinfo_namespace) == True
+
+    with timeout(seconds=10, error_message='Timed out waiting for destination rule creation'):
+      while True:
+        service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
+        if service_details != None and len (service_details.get('destinationRules')) > 0:
+          break
+
+        time.sleep(1)
+
+    assert service_details != None
+
+    destination_rule = service_details.get('destinationRules')[0]
+    assert destination_rule != None
+    assert destination_rule.get('name') == 'reviews'
+    assert 'trafficPolicy' in destination_rule
+
+    subsets = destination_rule.get('subsets')
+    assert subsets != None
+    assert len (subsets) == 3
+
+    for i, subset in enumerate(subsets):
+      subset_number = str(i + 1)
+
+      name = subset.get('name')
+      assert name == 'v' + subset_number
+
+      labels = subset.get('labels')
+      assert labels != None and labels.get('version') == 'v' + subset_number
+
+    assert command_exec.oc_delete(DESTINATION_RULE_FILE, bookinfo_namespace) == True
+
+    with timeout(seconds=10, error_message='Timed out waiting for destination rule deletion'):
+      while True:
+        service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
+        if service_details != None and service_details.get('destinationRules') == None:
+          break
+
+        time.sleep(1)
 
 def test_service_metrics_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_endpoint()
