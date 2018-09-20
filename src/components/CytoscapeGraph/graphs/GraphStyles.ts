@@ -15,6 +15,7 @@ const EdgeTextOutlineColor = PfColors.White;
 const EdgeTextOutlineWidth = '1px';
 const EdgeTextFont = 'Verdana,Arial,Helvetica,sans-serif,FontAwesome,PatternFlyIcons-webfont';
 const EdgeTextFontSize = '6px';
+const EdgeTextFontSizeHover = '10px';
 const EdgeWidth = 1;
 const EdgeWidthSelected = 3;
 const NodeBorderWidth = '1px';
@@ -43,6 +44,7 @@ const NodeTextFont = EdgeTextFont;
 const NodeTextFontWeight = 'normal';
 const NodeTextFontWeightBadged = 'normal';
 const NodeTextFontSize = '8px';
+const NodeTextFontSizeHover = '11px';
 const NodeWidth = NodeHeight;
 
 export class GraphStyles {
@@ -363,7 +365,14 @@ export class GraphStyles {
               return NodeColorBorderFailure;
             }
             return NodeColorBorderHover;
-          }
+          },
+          'font-size': NodeTextFontSizeHover
+        }
+      },
+      {
+        selector: 'edge.mousehighlight',
+        style: {
+          'font-size': EdgeTextFontSizeHover
         }
       },
       {
