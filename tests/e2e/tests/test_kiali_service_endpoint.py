@@ -1,9 +1,11 @@
 import pytest
 import tests.conftest as conftest
+from utils.command_exec import command_exec
 
 BOOKINFO_EXPECTED_SERVICES = 4
 BOOKINFO_EXPECTED_SERVICES_MONGODB = 5
 SERVICE_TO_VALIDATE = 'reviews'
+VIRTUAL_SERVICE_FILE = 'assets/bookinfo-reviews-80-20.yaml'
 
 def test_service_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_endpoint()
@@ -34,6 +36,40 @@ def test_service_detail_endpoint(kiali_client):
     assert 'virtualServices' in service_details
     assert 'destinationRules' in service_details
     assert 'health' in service_details
+
+def test_service_detail_with_virtual_service(kiali_client):
+    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+
+    # Add a virtual service that will be tested
+    assert command_exec.oc_apply(VIRTUAL_SERVICE_FILE, bookinfo_namespace) == True
+
+    service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
+    assert service_details != None
+
+    virtual_service = service_details.get('virtualServices')[0]
+    assert virtual_service != None
+    assert virtual_service.get('name') == 'reviews'
+
+    https = virtual_service.get('http')
+    assert https != None
+    assert len (https) == 1
+
+    routes = https[0].get('route')
+    assert len (routes) == 2
+
+    assert routes[0].get('weight') == 80
+    destination = routes[0].get('destination')
+    assert destination != None
+    assert destination.get('host') == 'reviews'
+    assert destination.get('subset') == 'v1'
+
+    assert routes[1].get('weight') == 20
+    destination = routes[1].get('destination')
+    assert destination != None
+    assert destination.get('host') == 'reviews'
+    assert destination.get('subset') == 'v2'
+
+    assert command_exec.oc_delete(VIRTUAL_SERVICE_FILE, bookinfo_namespace) == True
 
 def test_service_metrics_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_endpoint()
