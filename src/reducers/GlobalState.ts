@@ -2,7 +2,7 @@ import { GlobalState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import { GlobalActionKeys } from '../actions/GlobalActions';
 
-const INITIAL_GLOBAL_STATE: GlobalState = {
+export const INITIAL_GLOBAL_STATE: GlobalState = {
   loadingCounter: 0,
   isPageVisible: true
 };

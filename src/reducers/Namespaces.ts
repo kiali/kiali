@@ -1,11 +1,11 @@
 import { NamespaceActionKeys } from '../actions/NamespaceAction';
 
-const INITIAL_STATE = {
+export const INITIAL_NAMESPACE_STATE = {
   isFetching: false,
   items: [] as Array<string>
 };
 
-const namespaces = (state = INITIAL_STATE, action) => {
+const namespaces = (state = INITIAL_NAMESPACE_STATE, action) => {
   switch (action.type) {
     case NamespaceActionKeys.NAMESPACE_REQUEST_STARTED:
       return Object.assign({}, state, {
