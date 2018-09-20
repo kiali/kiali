@@ -6,10 +6,8 @@ import { bindActionCreators } from 'redux';
 import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { KialiAppState, GraphFilterState } from '../store/Store';
 import { style } from 'typestyle';
-import { EdgeLabelMode } from '../types/GraphFilter';
 import { GraphParamsType } from '../types/Graph';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../components/Nav/NavUtils';
-import EdgeLabelRadioGroup from '../components/ToolbarDropdown/EdgeLabelRadioGroup';
 
 interface GraphDispatch {
   // Dispatch methods
@@ -75,15 +73,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
     }
   }
 
-  handleEdgeLabelModeChange = (event: any) => {
-    const edgeLabelMode: EdgeLabelMode = EdgeLabelMode.fromString(event.target.value);
-
-    this.handleFilterChangeToUrl({
-      ...this.getGraphParams(),
-      edgeLabelMode
-    });
-  };
-
   handleFilterChangeToUrl = (params: GraphParamsType) => {
     document.body.click(); // close the layover
     if (params.node) {
@@ -103,16 +92,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       showTrafficAnimation,
       showServiceNodes
     } = this.props;
-
-    const graphParams: GraphParamsType = {
-      namespace: this.props.namespace,
-      node: this.props.node,
-      graphLayout: this.props.graphLayout,
-      graphDuration: this.props.graphDuration,
-      edgeLabelMode: this.props.edgeLabelMode,
-      graphType: this.props.graphType,
-      injectServiceNodes: this.props.showServiceNodes
-    };
 
     // map or dispatchers for redux
     const {
@@ -193,13 +172,11 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
 
     const graphSettingsPopover = (
       <Popover id="layers-popover">
-        <label>Display:</label>
         {displaySettingItems}
         <div className={spacerStyle} />
         <label>Badges:</label>
         {badgeItems}
         <div className={spacerStyle} />
-        <EdgeLabelRadioGroup graphParams={graphParams} onEdgeChanged={this.handleEdgeLabelModeChange} />
       </Popover>
     );
 
@@ -209,7 +186,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       <span className={alignWithGraphHeaderStyle}>
         <OverlayTrigger overlay={graphSettingsPopover} placement="bottom" trigger={['click']} rootClose={true}>
           <Button>
-            Graph Settings <Icon name="angle-down" />
+            Display <Icon name="angle-down" />
           </Button>
         </OverlayTrigger>
       </span>

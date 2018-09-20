@@ -2,7 +2,7 @@ import * as React from 'react';
 import { PropTypes } from 'prop-types';
 
 import { GraphParamsType, GraphType } from '../../types/Graph';
-import { Duration } from '../../types/GraphFilter';
+import { Duration, EdgeLabelMode } from '../../types/GraphFilter';
 import Namespace from '../../types/Namespace';
 import GraphFilterToolbarType from '../../types/GraphFilterToolbar';
 import { store } from '../../store/ConfigStore';
@@ -33,6 +33,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
         onNamespaceChange={this.handleNamespaceChange}
         onNamespaceReturn={this.handleNamespaceReturn}
         onGraphTypeChange={this.handleGraphTypeChange}
+        onEdgeLabelModeChange={this.handleEdgeLabelModeChange}
         onRefresh={this.props.handleRefreshClick}
         {...graphParams}
       />
@@ -62,6 +63,13 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     this.handleFilterChange({
       ...this.getGraphParams(),
       graphType
+    });
+  };
+
+  handleEdgeLabelModeChange = (edgeLabelMode: EdgeLabelMode) => {
+    this.handleFilterChange({
+      ...this.getGraphParams(),
+      edgeLabelMode
     });
   };
 

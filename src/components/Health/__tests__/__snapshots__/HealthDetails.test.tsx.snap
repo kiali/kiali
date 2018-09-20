@@ -56,7 +56,7 @@ ShallowWrapper {
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last minute",
+            "text": "No requests over last min",
             "title": "Error Rate",
           },
         ],
@@ -136,7 +136,7 @@ ShallowWrapper {
             </span>
              Error Rate: 
           </strong>
-          No requests over last minute
+          No requests over last min
         </div>
       </Popover>,
       "placement": "right",
@@ -211,7 +211,7 @@ ShallowWrapper {
               </span>
                Error Rate: 
             </strong>
-            No requests over last minute
+            No requests over last min
           </div>
         </Popover>,
         "placement": "right",
@@ -292,7 +292,7 @@ ShallowWrapper {
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last minute",
+            "text": "No requests over last min",
             "title": "Error Rate",
           },
         ],
@@ -372,7 +372,7 @@ ShallowWrapper {
             </span>
              Error Rate: 
           </strong>
-          No requests over last minute
+          No requests over last min
         </div>
       </Popover>,
       "placement": "right",
@@ -447,7 +447,7 @@ ShallowWrapper {
               </span>
                Error Rate: 
             </strong>
-            No requests over last minute
+            No requests over last min
           </div>
         </Popover>,
         "placement": "right",
@@ -527,7 +527,7 @@ ShallowWrapper {
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last minute",
+            "text": "No requests over last min",
             "title": "Error Rate",
           },
         ],
@@ -607,7 +607,7 @@ ShallowWrapper {
             </span>
              Error Rate: 
           </strong>
-          No requests over last minute
+          No requests over last min
         </div>
       </Popover>,
       "placement": "right",
@@ -682,7 +682,7 @@ ShallowWrapper {
               </span>
                Error Rate: 
             </strong>
-            No requests over last minute
+            No requests over last min
           </div>
         </Popover>,
         "placement": "right",

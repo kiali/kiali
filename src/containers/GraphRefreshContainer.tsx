@@ -7,14 +7,14 @@ import GraphRefresh from '../components/GraphFilter/GraphRefresh';
 import { config } from '../config';
 
 const mapStateToProps = (state: KialiAppState) => ({
-  selected: state.graph.filterState.refreshRate
+  pollInterval: state.graph.filterState.refreshRate
 });
 
 const mapDispatchToProps = (dispatch: any) => {
   return {
     // TODO: We still need to reduxify namespace and duration to be able to use this
-    // handleRefresh: bindActionCreators(GraphDataActions.fetchGraphData, dispatch),
-    onSelect: bindActionCreators(GraphFilterActions.setRefreshRate, dispatch)
+    // onUpdatePollInterval: bindActionCreators(GraphDataActions.fetchGraphData, dispatch),
+    onUpdatePollInterval: bindActionCreators(GraphFilterActions.setRefreshRate, dispatch)
   };
 };
 

@@ -83,20 +83,20 @@ ShallowWrapper {
           disabled={false}
           handleSelect={[Function]}
           id="metrics_filter_interval_duration"
-          initialLabel="Last minute"
+          initialLabel="Last min"
           initialValue={60}
           nameDropdown="Duration"
           options={
             Object {
               "10800": "Last 3 hours",
-              "1800": "Last 30 minutes",
+              "1800": "Last 30 min",
               "21600": "Last 6 hours",
               "2592000": "Last 30 days",
-              "300": "Last 5 minutes",
+              "300": "Last 5 min",
               "3600": "Last hour",
               "43200": "Last 12 hours",
-              "60": "Last minute",
-              "600": "Last 10 minutes",
+              "60": "Last min",
+              "600": "Last 10 min",
               "604800": "Last 7 days",
               "86400": "Last day",
             }
@@ -106,18 +106,18 @@ ShallowWrapper {
           disabled={false}
           handleSelect={[Function]}
           id="metrics_filter_poll_interval"
-          initialLabel="15 seconds"
+          initialLabel="15 sec"
           initialValue={15000}
           nameDropdown="Poll Interval"
           options={
             Object {
               "0": "Pause",
-              "10000": "10 seconds",
-              "15000": "15 seconds",
-              "30000": "30 seconds",
-              "300000": "5 minutes",
-              "5000": "5 seconds",
-              "60000": "1 minute",
+              "10000": "10 sec",
+              "15000": "15 sec",
+              "30000": "30 sec",
+              "300000": "5 min",
+              "5000": "5 sec",
+              "60000": "1 min",
             }
           }
         />,
@@ -240,19 +240,19 @@ ShallowWrapper {
           "disabled": false,
           "handleSelect": [Function],
           "id": "metrics_filter_interval_duration",
-          "initialLabel": "Last minute",
+          "initialLabel": "Last min",
           "initialValue": 60,
           "nameDropdown": "Duration",
           "options": Object {
             "10800": "Last 3 hours",
-            "1800": "Last 30 minutes",
+            "1800": "Last 30 min",
             "21600": "Last 6 hours",
             "2592000": "Last 30 days",
-            "300": "Last 5 minutes",
+            "300": "Last 5 min",
             "3600": "Last hour",
             "43200": "Last 12 hours",
-            "60": "Last minute",
-            "600": "Last 10 minutes",
+            "60": "Last min",
+            "600": "Last 10 min",
             "604800": "Last 7 days",
             "86400": "Last day",
           },
@@ -269,17 +269,17 @@ ShallowWrapper {
           "disabled": false,
           "handleSelect": [Function],
           "id": "metrics_filter_poll_interval",
-          "initialLabel": "15 seconds",
+          "initialLabel": "15 sec",
           "initialValue": 15000,
           "nameDropdown": "Poll Interval",
           "options": Object {
             "0": "Pause",
-            "10000": "10 seconds",
-            "15000": "15 seconds",
-            "30000": "30 seconds",
-            "300000": "5 minutes",
-            "5000": "5 seconds",
-            "60000": "1 minute",
+            "10000": "10 sec",
+            "15000": "15 sec",
+            "30000": "30 sec",
+            "300000": "5 min",
+            "5000": "5 sec",
+            "60000": "1 min",
           },
         },
         "ref": null,
@@ -390,20 +390,20 @@ ShallowWrapper {
             disabled={false}
             handleSelect={[Function]}
             id="metrics_filter_interval_duration"
-            initialLabel="Last minute"
+            initialLabel="Last min"
             initialValue={60}
             nameDropdown="Duration"
             options={
               Object {
                 "10800": "Last 3 hours",
-                "1800": "Last 30 minutes",
+                "1800": "Last 30 min",
                 "21600": "Last 6 hours",
                 "2592000": "Last 30 days",
-                "300": "Last 5 minutes",
+                "300": "Last 5 min",
                 "3600": "Last hour",
                 "43200": "Last 12 hours",
-                "60": "Last minute",
-                "600": "Last 10 minutes",
+                "60": "Last min",
+                "600": "Last 10 min",
                 "604800": "Last 7 days",
                 "86400": "Last day",
               }
@@ -413,18 +413,18 @@ ShallowWrapper {
             disabled={false}
             handleSelect={[Function]}
             id="metrics_filter_poll_interval"
-            initialLabel="15 seconds"
+            initialLabel="15 sec"
             initialValue={15000}
             nameDropdown="Poll Interval"
             options={
               Object {
                 "0": "Pause",
-                "10000": "10 seconds",
-                "15000": "15 seconds",
-                "30000": "30 seconds",
-                "300000": "5 minutes",
-                "5000": "5 seconds",
-                "60000": "1 minute",
+                "10000": "10 sec",
+                "15000": "15 sec",
+                "30000": "30 sec",
+                "300000": "5 min",
+                "5000": "5 sec",
+                "60000": "1 min",
               }
             }
           />,
@@ -547,19 +547,19 @@ ShallowWrapper {
             "disabled": false,
             "handleSelect": [Function],
             "id": "metrics_filter_interval_duration",
-            "initialLabel": "Last minute",
+            "initialLabel": "Last min",
             "initialValue": 60,
             "nameDropdown": "Duration",
             "options": Object {
               "10800": "Last 3 hours",
-              "1800": "Last 30 minutes",
+              "1800": "Last 30 min",
               "21600": "Last 6 hours",
               "2592000": "Last 30 days",
-              "300": "Last 5 minutes",
+              "300": "Last 5 min",
               "3600": "Last hour",
               "43200": "Last 12 hours",
-              "60": "Last minute",
-              "600": "Last 10 minutes",
+              "60": "Last min",
+              "600": "Last 10 min",
               "604800": "Last 7 days",
               "86400": "Last day",
             },
@@ -576,17 +576,17 @@ ShallowWrapper {
             "disabled": false,
             "handleSelect": [Function],
             "id": "metrics_filter_poll_interval",
-            "initialLabel": "15 seconds",
+            "initialLabel": "15 sec",
             "initialValue": 15000,
             "nameDropdown": "Poll Interval",
             "options": Object {
               "0": "Pause",
-              "10000": "10 seconds",
-              "15000": "15 seconds",
-              "30000": "30 seconds",
-              "300000": "5 minutes",
-              "5000": "5 seconds",
-              "60000": "1 minute",
+              "10000": "10 sec",
+              "15000": "15 sec",
+              "30000": "30 sec",
+              "300000": "5 min",
+              "5000": "5 sec",
+              "60000": "1 min",
             },
           },
           "ref": null,
