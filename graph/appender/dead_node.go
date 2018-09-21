@@ -9,8 +9,14 @@ import (
 // - nodes for which there is no traffic reported and the related schema is missing
 //   (presumably removed from K8S). (kiali-621)
 // - service nodes for which there is no incoming error traffic and no outgoing
-//   edges (kiali-1326)
-type DeadNodeAppender struct{}
+//   edges (kiali-1326). Kiali-1526 adds an exclusion to this rule. Egress is a special
+//   terminal service node and we want to show it even if it has no incoming traffic
+//   for the time period.
+type DeadNodeAppender struct {
+	// externalServices acts as a cache. This prevents from querying multiple times
+	// the cluster for service entries when the graph is requested for all namespaces.
+	externalServices map[string]bool
+}
 
 // AppendGraph implements Appender
 func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
@@ -21,16 +27,54 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
 	business, err := business.Get()
 	checkError(err)
 
-	applyDeadNodes(trafficMap, business.Workload)
+	if a.externalServices == nil {
+		a.externalServices = resolveExternalServices(business)
+	}
+
+	applyDeadNodes(trafficMap, business.Workload, a.externalServices)
 }
 
-func applyDeadNodes(trafficMap graph.TrafficMap, wkSvc business.WorkloadService) {
+// resolveExternalServices queries the cluster API to resolve egress services
+// by using ServiceEntries resources across all namespaces in the cluster.
+// All ServiceEntries are needed, because Istio does not distinguish where the
+// ServiceEntries are created when routing egress traffic.
+func resolveExternalServices(bLayer *business.Layer) map[string]bool {
+	namespaces, err := bLayer.Namespace.GetNamespaces()
+	checkError(err)
+
+	serviceEntries := make(map[string]bool)
+	for _, ns := range namespaces {
+		istioCfg, err := bLayer.IstioConfig.GetIstioConfig(business.IstioConfigCriteria{
+			IncludeServiceEntries: true,
+			Namespace:             ns.Name,
+		})
+		checkError(err)
+
+		for _, entry := range istioCfg.ServiceEntries {
+			if entry.Hosts != nil && entry.Location == "MESH_EXTERNAL" {
+				for _, host := range entry.Hosts.([]interface{}) {
+					serviceEntries[host.(string)] = true
+				}
+			}
+		}
+	}
+
+	return serviceEntries
+}
+
+func applyDeadNodes(trafficMap graph.TrafficMap, wkSvc business.WorkloadService, serviceEntries map[string]bool) {
 	numRemoved := 0
 	for id, n := range trafficMap {
 		switch n.NodeType {
 		case graph.NodeTypeUnknown:
 			continue
 		case graph.NodeTypeService:
+			if serviceEntries[n.Service] {
+				// Flag and don't discard the node if it's an external service (kiali-1526).
+				// The flag will be passed to the UI to not place links to non-existent details pages.
+				n.Metadata["isEgress"] = true
+				continue
+			}
 			// a service node with no incoming error traffic and no outgoing edges, is dead.
 			// Incoming non-error traffic can not raise the dead because it is caused by an
 			// edge case (pod life-cycle change) that we don't want to see.
