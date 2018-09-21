@@ -21,3 +21,5 @@ export const UNIT_TIME = {
   HOUR: 3600,
   DAY: 24 * 3600
 };
+
+export type PollIntervalInMs = number;

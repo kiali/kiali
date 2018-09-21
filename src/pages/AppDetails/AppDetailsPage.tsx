@@ -8,7 +8,7 @@ import AppInfo from './AppInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import AppMetricsContainer from '../../containers/AppMetricsContainer';
 import { AppHealth } from '../../types/Health';
-import { FilterSelected } from '../../components/Filters/StatefulFilters';
+import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 
 type AppDetailsState = {
   app: App;
@@ -58,19 +58,6 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
       });
   };
 
-  namespaceFilters = () => {
-    FilterSelected.setSelected([
-      {
-        category: 'Namespace',
-        value: this.props.match.params.namespace.toString()
-      }
-    ]);
-  };
-
-  clearFilters() {
-    FilterSelected.setSelected([]);
-  }
-
   renderBreadcrumbs = () => {
     const urlParams = new URLSearchParams(this.props.location.search);
     const to = this.appPageURL();
@@ -91,17 +78,12 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass="span">
-          <Link to="/applications" onClick={this.clearFilters}>
-            Applications
-          </Link>
+          <ListPageLink target={TargetPage.APPLICATIONS}>Applications</ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
-          <Link
-            to={`/applications?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}
-            onClick={this.namespaceFilters}
-          >
+          <ListPageLink target={TargetPage.APPLICATIONS} namespace={this.props.match.params.namespace}>
             Namespace: {this.props.match.params.namespace}
-          </Link>
+          </ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
           <Link to={to}>App: {this.props.match.params.app}</Link>

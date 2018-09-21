@@ -6,15 +6,22 @@ import ServiceJaegerPage from './pages/ServiceJaeger/ServiceJaegerPage';
 import ServiceDetailsPage from './pages/ServiceDetails/ServiceDetailsPage';
 import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetailsPage';
 import WorkloadDetailsPage from './pages/WorkloadDetails/WorkloadDetailsPage';
-import { MenuItem, Path } from './types/Routes';
 import AppListPage from './pages/AppList/AppListPage';
 import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
+import OverviewPage from './pages/Overview/OverviewPage';
+import { MenuItem, Path } from './types/Routes';
 
 /**
  * Return array of objects that describe vertical menu
  * @return {array}
  */
 const navItems: MenuItem[] = [
+  {
+    iconClass: 'fa fa-tachometer',
+    title: 'Overview',
+    to: '/overview',
+    pathsActive: [/^\/overview\/(.*)/]
+  },
   {
     iconClass: 'fa pficon-topology',
     title: 'Graph',
@@ -52,9 +59,13 @@ const navItems: MenuItem[] = [
   }
 ];
 
-const defaultRoute = '/graph/namespaces/all';
+const defaultRoute = '/overview';
 
 const pathRoutes: Path[] = [
+  {
+    path: '/overview',
+    component: OverviewPage
+  },
   {
     path: '/graph/namespaces/:namespace/applications/:app/versions/:version',
     component: GraphRouteHandler

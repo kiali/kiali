@@ -1,6 +1,7 @@
 // Action Creators allow us to create typesafe utilities for dispatching actions
 import { createAction } from 'typesafe-actions';
-import { EdgeLabelMode, PollIntervalInMs } from '../types/GraphFilter';
+import { PollIntervalInMs } from '../types/Common';
+import { EdgeLabelMode } from '../types/GraphFilter';
 
 export enum GraphFilterActionKeys {
   // Toggle Actions

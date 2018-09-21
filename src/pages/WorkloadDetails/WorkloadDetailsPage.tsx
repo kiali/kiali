@@ -9,7 +9,7 @@ import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer';
 import { WorkloadHealth } from '../../types/Health';
-import { FilterSelected } from '../../components/Filters/StatefulFilters';
+import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 
 type WorkloadDetailsState = {
   workload: Deployment;
@@ -100,19 +100,6 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     return istioEnabled;
   };
 
-  namespaceFilters = () => {
-    FilterSelected.setSelected([
-      {
-        category: 'Namespace',
-        value: this.props.match.params.namespace.toString()
-      }
-    ]);
-  };
-
-  clearFilters() {
-    FilterSelected.setSelected([]);
-  }
-
   renderBreadcrumbs = () => {
     const urlParams = new URLSearchParams(this.props.location.search);
     const to = this.workloadPageURL();
@@ -133,17 +120,12 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass="span">
-          <Link to="/workloads" onClick={this.clearFilters}>
-            Workloads
-          </Link>
+          <ListPageLink target={TargetPage.WORKLOADS}>Workloads</ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
-          <Link
-            to={`/workloads?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}
-            onClick={this.namespaceFilters}
-          >
+          <ListPageLink target={TargetPage.WORKLOADS} namespace={this.props.match.params.namespace}>
             Namespace: {this.props.match.params.namespace}
-          </Link>
+          </ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
           <Link to={to}>Workload: {this.props.match.params.workload}</Link>

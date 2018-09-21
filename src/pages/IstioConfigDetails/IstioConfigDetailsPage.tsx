@@ -21,6 +21,7 @@ import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
 import { Validations } from '../../types/IstioObjects';
 import { parseAceValidations } from '../../types/AceValidations';
+import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 
 const yaml = require('js-yaml');
 
@@ -38,30 +39,14 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     this.aceEditorRef = React.createRef();
   }
 
-  updateFilters = (addObjectTypeFilter: boolean) => {
-    let activeFilters: ActiveFilter[] = [];
-    let namespaceFilter: ActiveFilter = {
-      category: 'Namespace',
-      value: this.props.match.params.namespace.toString()
-    };
-    activeFilters.push(namespaceFilter);
-    if (addObjectTypeFilter) {
-      let objectTypeFilter: ActiveFilter = {
-        category: 'Istio Type',
-        value: dicIstioType[this.props.match.params.objectType]
-      };
-      activeFilters.push(objectTypeFilter);
-    }
-
+  updateTypeFilter = () => {
+    // When updateTypeFilter is called, selected filters are already updated with namespace. Just push additional type obj
+    const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
+    activeFilters.push({
+      category: 'Istio Type',
+      value: dicIstioType[this.props.match.params.objectType]
+    });
     FilterSelected.setSelected(activeFilters);
-  };
-
-  updateStatefulFilters = () => this.updateFilters(false);
-
-  updateTypeFilter = () => this.updateFilters(true);
-
-  cleanFilter = () => {
-    FilterSelected.setSelected([]);
   };
 
   fetchIstioObjectDetails = () => {
@@ -228,19 +213,21 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass={'span'}>
-          <Link to="/istio" onClick={this.cleanFilter}>
-            Istio Config
-          </Link>
+          <ListPageLink target={TargetPage.ISTIO}>Istio Config</ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <Link to="/istio" onClick={this.updateStatefulFilters}>
+          <ListPageLink target={TargetPage.ISTIO} namespace={this.props.match.params.namespace}>
             Namespace: {this.props.match.params.namespace}
-          </Link>
+          </ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <Link to="/istio" onClick={this.updateTypeFilter}>
+          <ListPageLink
+            target={TargetPage.ISTIO}
+            namespace={this.props.match.params.namespace}
+            onClick={this.updateTypeFilter}
+          >
             Istio Object Type: {dicIstioType[this.props.match.params.objectType]}
-          </Link>
+          </ListPageLink>
         </Breadcrumb.Item>
         {titleBreadcrumb}
       </Breadcrumb>

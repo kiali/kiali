@@ -3,9 +3,10 @@ import FlexView from 'react-flexview';
 import { PropTypes } from 'prop-types';
 import { Breadcrumb } from 'patternfly-react';
 
+import { PollIntervalInMs } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { GraphParamsType, SummaryData, NodeParamsType, GraphType } from '../../types/Graph';
-import { Duration, Layout, PollIntervalInMs } from '../../types/GraphFilter';
+import { Duration, Layout } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
 import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';

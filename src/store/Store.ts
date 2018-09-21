@@ -1,5 +1,5 @@
 import { NotificationGroup } from '../types/MessageCenter';
-import { PollIntervalInMs } from '../types/GraphFilter';
+import { PollIntervalInMs } from '../types/Common';
 // Store is the Redux Data store
 
 export interface GlobalState {

@@ -10,7 +10,7 @@ import { authentication } from '../../utils/Authentication';
 import IstioObjectDetails from './IstioObjectDetails';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceInfo from './ServiceInfo';
-import { FilterSelected } from '../../components/Filters/StatefulFilters';
+import { TargetPage, ListPageLink } from '../../components/ListPage/ListPageLink';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -161,19 +161,6 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       });
   };
 
-  namespaceFilters = () => {
-    FilterSelected.setSelected([
-      {
-        category: 'Namespace',
-        value: this.props.match.params.namespace.toString()
-      }
-    ]);
-  };
-
-  clearFilters() {
-    FilterSelected.setSelected([]);
-  }
-
   renderBreadcrumbs = (parsedSearch: ParsedSearch, showingDetails: boolean) => {
     const urlParams = new URLSearchParams(this.props.location.search);
     const parsedSearchTypeHuman = parsedSearch.type === 'virtualservice' ? 'Virtual Service' : 'Destination Rule';
@@ -184,17 +171,12 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass={'span'}>
-          <Link to="/services" onClick={this.clearFilters}>
-            Services
-          </Link>
+          <ListPageLink target={TargetPage.SERVICES}>Services</ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <Link
-            to={`/services?namespace=${encodeURIComponent(this.props.match.params.namespace)}`}
-            onClick={this.namespaceFilters}
-          >
+          <ListPageLink target={TargetPage.SERVICES} namespace={this.props.match.params.namespace}>
             Namespace: {this.props.match.params.namespace}
-          </Link>
+          </ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
           <Link to={to}>Service: {this.props.match.params.service}</Link>

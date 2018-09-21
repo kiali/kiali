@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Duration, PollIntervalInMs } from '../../types/GraphFilter';
+import { PollIntervalInMs } from '../../types/Common';
+import { Duration } from '../../types/GraphFilter';
 import { Button, MenuItem, Icon, DropdownButton } from 'patternfly-react';
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
 import { config } from '../../config';

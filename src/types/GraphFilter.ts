@@ -6,8 +6,6 @@ export interface Duration {
   value: number;
 }
 
-export type PollIntervalInMs = number;
-
 export enum EdgeLabelMode {
   HIDE = 'hide',
   REQUESTS_PER_SECOND = 'requestsPerSecond',
