@@ -34,3 +34,7 @@ _output
 
 # Configuration files for the hack scripts
 hack/*.local.sh
+
+# E2E testing files
+tests/e2e/.pytest_cache
+tests/e2e/**/__pycache__
