@@ -41,9 +41,9 @@ type CytoscapeGraphType = {
   showMissingSidecars: boolean;
   showTrafficAnimation: boolean;
   showServiceNodes: boolean;
+  onReady: (cytoscapeRef: any) => void;
   onClick: (event: CytoscapeClickEvent) => void;
   onDoubleClick: (event: CytoscapeClickEvent) => void;
-  onReady: (cytoscapeRef: any) => void;
   refresh: any;
 };
 
@@ -151,7 +151,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       const eles = cy.nodes(selector);
       if (eles.length > 0) {
         this.selectTarget(eles[0]);
-        this.props.onClick({ summaryType: 'node', summaryTarget: eles[0] });
+        this.props.onClick({ summaryType: eles[0].data('isGroup') ? 'group' : 'node', summaryTarget: eles[0] });
       }
     }
     if (this.props.elements !== prevProps.elements) {
@@ -256,7 +256,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           currentTap.trigger('doubleTap');
         } else {
           lastTap = currentTap;
-
           tapEventCallback(evt);
         }
       };
@@ -277,7 +276,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     cy.on('doubleTap', (evt: any) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
 
-      if (cytoscapeEvent && cytoscapeEvent.summaryType === 'node') {
+      if (cytoscapeEvent) {
         this.handleDoubleTap(cytoscapeEvent);
       }
     });
@@ -406,11 +405,17 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   };
 
   private handleDoubleTap = (event: CytoscapeClickEvent) => {
-    if (event.summaryTarget.data('isOutside')) {
-      if (!event.summaryTarget.data('isInaccessible')) {
+    const target = event.summaryTarget;
+    const targetType = event.summaryType;
+    if (targetType !== 'node' && targetType !== 'group') {
+      return;
+    }
+
+    if (target.data('isOutside')) {
+      if (!target.data('isInaccessible')) {
         this.context.router.history.push(
           makeNamespaceGraphUrlFromParams({
-            namespace: { name: event.summaryTarget.data('namespace') },
+            namespace: { name: target.data('namespace') },
             graphLayout: this.props.graphLayout,
             graphDuration: this.props.graphDuration,
             edgeLabelMode: this.props.edgeLabelMode,
@@ -419,31 +424,32 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           })
         );
       }
-    } else {
-      const nodeType = event.summaryTarget.data('nodeType');
-      switch (event.summaryTarget.data('nodeType')) {
-        case NodeType.APP:
-        case NodeType.WORKLOAD:
-          const node: NodeParamsType = {
-            nodeType: nodeType,
-            workload: event.summaryTarget.data('workload'),
-            app: event.summaryTarget.data('app'),
-            version: event.summaryTarget.data('version')
-          };
-          this.context.router.history.push(
-            makeNodeGraphUrlFromParams(node, {
-              namespace: { name: event.summaryTarget.data('namespace') },
-              graphLayout: this.props.graphLayout,
-              graphDuration: this.props.graphDuration,
-              edgeLabelMode: this.props.edgeLabelMode,
-              graphType: this.props.graphType,
-              injectServiceNodes: this.props.injectServiceNodes
-            })
-          );
-          break;
-        default:
-          return;
-      }
+      return;
+    }
+
+    const nodeType = target.data('nodeType');
+    switch (nodeType) {
+      case NodeType.APP:
+      case NodeType.WORKLOAD:
+        const node: NodeParamsType = {
+          nodeType: nodeType,
+          workload: event.summaryTarget.data('workload'),
+          app: event.summaryTarget.data('app'),
+          version: targetType === 'group' ? '' : event.summaryTarget.data('version')
+        };
+        this.context.router.history.push(
+          makeNodeGraphUrlFromParams(node, {
+            namespace: { name: event.summaryTarget.data('namespace') },
+            graphLayout: this.props.graphLayout,
+            graphDuration: this.props.graphDuration,
+            edgeLabelMode: this.props.edgeLabelMode,
+            graphType: this.props.graphType,
+            injectServiceNodes: this.props.injectServiceNodes
+          })
+        );
+        break;
+      default:
+        return;
     }
   };
 
