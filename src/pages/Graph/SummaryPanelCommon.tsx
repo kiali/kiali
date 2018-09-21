@@ -20,6 +20,7 @@ export interface NodeData {
   hasParent: boolean;
   isOutsider: boolean;
   isRoot: boolean;
+  isEgress: boolean;
 }
 
 export enum NodeMetricType {
@@ -108,7 +109,8 @@ export const nodeData = (node: any): NodeData => {
     hasParent: !!node.data('parent'),
     service: node.data('service'),
     isOutsider: node.data('isOutsider'),
-    isRoot: node.data('isRoot')
+    isRoot: node.data('isRoot'),
+    isEgress: node.data('isEgress')
   };
 };
 
@@ -181,7 +183,7 @@ export const getDatapoints = (
 };
 
 export const renderPanelTitle = node => {
-  const { namespace, service, app, workload, nodeType } = nodeData(node);
+  const { namespace, service, app, workload, nodeType, isEgress } = nodeData(node);
   let displayName: string = 'unknown';
   let link: string | undefined;
   let displaySpan: any;
@@ -192,7 +194,9 @@ export const renderPanelTitle = node => {
       displayName = app;
       break;
     case NodeType.SERVICE:
-      link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service)}`;
+      if (!isEgress) {
+        link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service)}`;
+      }
       displayName = service;
       break;
     case NodeType.WORKLOAD:
