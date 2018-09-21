@@ -1,6 +1,6 @@
 import { createAction } from 'typesafe-actions';
 import Namespace from '../types/Namespace';
-import { Duration } from '../types/GraphFilter';
+import { Duration, EdgeLabelMode } from '../types/GraphFilter';
 import * as API from '../services/Api';
 import { authentication } from '../utils/Authentication';
 import { MessageCenterActions } from './MessageCenterActions';
@@ -83,6 +83,7 @@ export const GraphDataActions = {
     graphDuration: Duration,
     graphType: GraphType,
     injectServiceNodes: boolean,
+    edgeLabelMode: EdgeLabelMode,
     node?: NodeParamsType
   ) => {
     return dispatch => {
@@ -93,6 +94,34 @@ export const GraphDataActions = {
       if (namespace.name === 'istio-system') {
         restParams['includeIstio'] = true;
       }
+
+      // Some appenders are expensive so only specify an appender if needed.
+      let appenders: string = 'dead_node,sidecars_check,istio';
+
+      if (!node) {
+        // note we only use the unused_node appender if this is NOT a drilled-in node graph
+        appenders += ',unused_node';
+      }
+
+      switch (edgeLabelMode) {
+        case EdgeLabelMode.MTLS_ENABLED:
+          appenders += ',security_policy';
+          break;
+
+        case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE:
+          appenders += ',response_time';
+          break;
+
+        case EdgeLabelMode.REQUESTS_PER_SECOND:
+        case EdgeLabelMode.REQUESTS_PERCENT_OF_TOTAL:
+        case EdgeLabelMode.TCP_SENT:
+        case EdgeLabelMode.HIDE:
+        default:
+          break;
+      }
+      restParams['appenders'] = appenders;
+      console.debug('Fetching graph with appenders: ' + appenders);
+
       if (node) {
         return API.getNodeGraphElements(authentication(), namespace, node, restParams).then(
           response => {

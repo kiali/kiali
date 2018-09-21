@@ -6,7 +6,7 @@ import { Breadcrumb } from 'patternfly-react';
 import { PollIntervalInMs } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { GraphParamsType, SummaryData, NodeParamsType, GraphType } from '../../types/Graph';
-import { Duration, Layout } from '../../types/GraphFilter';
+import { Duration, Layout, EdgeLabelMode } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
 import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
@@ -34,6 +34,7 @@ type GraphPageProps = GraphParamsType & {
     graphDuration: Duration,
     graphType: GraphType,
     injectServiceNodes: boolean,
+    edgeLabelMode: EdgeLabelMode,
     node?: NodeParamsType
   ) => any;
   toggleLegend: () => void;
@@ -228,6 +229,7 @@ export default class GraphPage extends React.PureComponent<GraphPageProps> {
       this.props.graphDuration,
       this.props.graphType,
       this.props.injectServiceNodes,
+      this.props.edgeLabelMode,
       this.props.node
     );
     this.pollPromise = makeCancelablePromise(promise);
