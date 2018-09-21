@@ -183,13 +183,13 @@ class OverviewPage extends ListPage.Component<{}, State> {
                           <Link to={`/graph/namespaces/${encodedName}`} title="Graph">
                             <Icon type="pf" name="topology" style={{ paddingLeft: 10, paddingRight: 10 }} />
                           </Link>
-                          <ListPageLink target={TargetPage.APPLICATIONS} namespace={ns.name}>
+                          <ListPageLink target={TargetPage.APPLICATIONS} namespace={ns.name} title="Applications list">
                             <Icon type="pf" name="applications" style={{ paddingLeft: 10, paddingRight: 10 }} />
                           </ListPageLink>
-                          <ListPageLink target={TargetPage.WORKLOADS} namespace={ns.name}>
+                          <ListPageLink target={TargetPage.WORKLOADS} namespace={ns.name} title="Workloads list">
                             <Icon type="pf" name="bundle" style={{ paddingLeft: 10, paddingRight: 10 }} />
                           </ListPageLink>
-                          <ListPageLink target={TargetPage.SERVICES} namespace={ns.name}>
+                          <ListPageLink target={TargetPage.SERVICES} namespace={ns.name} title="Services list">
                             <Icon type="pf" name="service" style={{ paddingLeft: 10, paddingRight: 10 }} />
                           </ListPageLink>
                         </div>
