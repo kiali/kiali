@@ -147,7 +147,7 @@ func NewConfig() (c *Config) {
 		Password: getDefaultString(EnvServerCredentialsPassword, ""),
 	}
 	c.Server.WebRoot = strings.TrimSpace(getDefaultString(EnvWebRoot, "/"))
-	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/static-files"))
+	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/opt/kiali/console"))
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
 
 	// Prometheus configuration

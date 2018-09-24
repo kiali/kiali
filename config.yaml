@@ -14,7 +14,7 @@ server:
   # web_root: /kiali
 
   # Uncomment static_content_root_directory to set up a different directory for static front-end content.
-  # Default is /static-files
+  # Default is /opt/kiali/console
   # static_content_root_directory: /static-files
 
   # Uncomment cors_allow_all to allow serving front-end from a different host (mainly for development)
