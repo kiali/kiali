@@ -9,7 +9,6 @@ import {
   EmptyStateAction
 } from 'patternfly-react';
 import { style } from 'typestyle';
-import * as MessageCenter from '../utils/MessageCenter';
 import * as _ from 'lodash';
 import { KialiAppState } from '../store/Store';
 
@@ -38,10 +37,6 @@ const emptyStateStyle = style({
 type EmptyGraphLayoutState = {};
 
 export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
-  toggleMessageCenter = () => {
-    MessageCenter.toggleMessageCenter();
-  };
-
   shouldComponentUpdate(nextProps: EmptyGraphLayoutProps) {
     const currentIsEmpty = _.isEmpty(this.props.elements.nodes);
     const nextIsEmpty = _.isEmpty(nextProps.elements.nodes);
@@ -66,11 +61,6 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
           <EmptyStateIcon name="error-circle-o" />
           <EmptyStateTitle>Error loading Graph</EmptyStateTitle>
           <EmptyStateInfo>{this.props.error}</EmptyStateInfo>
-          <EmptyStateAction>
-            <Button bsStyle="primary" bsSize="large" onClick={this.toggleMessageCenter}>
-              Message Center
-            </Button>
-          </EmptyStateAction>
         </EmptyState>
       );
     }
