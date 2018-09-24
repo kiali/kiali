@@ -34,9 +34,9 @@ Visibility.change((e, state) => {
   }
 });
 if (Visibility.hidden()) {
-  store.dispatch(GlobalActions.setPageVisibilityHidden);
+  store.dispatch(GlobalActions.setPageVisibilityHidden());
 } else {
-  store.dispatch(GlobalActions.setPageVisibilityVisible);
+  store.dispatch(GlobalActions.setPageVisibilityVisible());
 }
 
 const getIsLoadingState = () => {

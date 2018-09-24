@@ -4,7 +4,7 @@ import { GraphActionKeys } from '../actions/GraphActions';
 import FilterStateReducer from './GraphFilterState';
 import { MILLISECONDS } from '../types/Common';
 
-const INITIAL_STATE: GraphState = {
+export const INITIAL_GRAPH_STATE: GraphState = {
   isLoading: false,
   isError: false,
   error: undefined,
@@ -24,7 +24,7 @@ const INITIAL_STATE: GraphState = {
 };
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
-const graphDataState = (state: GraphState = INITIAL_STATE, action) => {
+const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action) => {
   const filterState = FilterStateReducer(state.filterState, action);
   let newState: GraphState = {
     ...state,
@@ -54,9 +54,9 @@ const graphDataState = (state: GraphState = INITIAL_STATE, action) => {
       };
       break;
     case GraphActionKeys.GRAPH_NAMESPACE_CHANGED:
-      newState.graphData = INITIAL_STATE.graphData;
-      newState.graphDataTimestamp = INITIAL_STATE.graphDataTimestamp;
-      newState.sidePanelInfo = INITIAL_STATE.sidePanelInfo;
+      newState.graphData = INITIAL_GRAPH_STATE.graphData;
+      newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
+      newState.sidePanelInfo = INITIAL_GRAPH_STATE.sidePanelInfo;
       break;
     default:
       break;

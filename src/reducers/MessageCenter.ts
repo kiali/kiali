@@ -2,7 +2,7 @@ import { MessageType } from '../types/MessageCenter';
 import { MessageCenterState } from '../store/Store';
 import { MessageCenterActionKeys } from '../actions/MessageCenterActions';
 
-const INITIAL_STATE: MessageCenterState = {
+export const INITIAL_MESSAGE_CENTER_STATE: MessageCenterState = {
   nextId: 0,
   groups: [
     {
@@ -55,7 +55,7 @@ const updateMessage = (state: MessageCenterState, messageIds: number[], updater)
   return mergeToState(state, { groups });
 };
 
-const Messages = (state: MessageCenterState = INITIAL_STATE, action) => {
+const Messages = (state: MessageCenterState = INITIAL_MESSAGE_CENTER_STATE, action) => {
   switch (action.type) {
     case MessageCenterActionKeys.ADD_MESSAGE: {
       const { groupId, content, messageType } = action;
