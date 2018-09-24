@@ -162,8 +162,6 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         });
       });
 
-    this.metricsPromise = makeCancelablePromise(promise);
-
     this.setState({ loading: true, metricsLoadError: null });
   };
 
