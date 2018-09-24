@@ -317,4 +317,5 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   };
 }
 
+export { MetricsProps };
 export default Metrics;
