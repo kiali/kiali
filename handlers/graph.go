@@ -320,13 +320,14 @@ func addHttpTraffic(trafficMap graph.TrafficMap, val float64, code, sourceWlNs, 
 
 	var edge *graph.Edge
 	for _, e := range source.Edges {
-		if dest.ID == e.Dest.ID {
+		if dest.ID == e.Dest.ID && e.Metadata["protocol"] == "http" {
 			edge = e
 			break
 		}
 	}
 	if nil == edge {
 		edge = source.AddEdge(dest)
+		edge.Metadata["protocol"] = "http"
 	}
 
 	// A workload may mistakenly have multiple app and or version label values.
@@ -416,13 +417,14 @@ func addTcpTraffic(trafficMap graph.TrafficMap, val float64, sourceWlNs, sourceW
 
 	var edge *graph.Edge
 	for _, e := range source.Edges {
-		if dest.ID == e.Dest.ID {
+		if dest.ID == e.Dest.ID && e.Metadata["procotol"] == "tcp" {
 			edge = e
 			break
 		}
 	}
 	if nil == edge {
 		edge = source.AddEdge(dest)
+		edge.Metadata["protocol"] = "tcp"
 	}
 
 	// A workload may mistakenly have multiple app and or version label values.
@@ -501,7 +503,7 @@ func mergeTrafficMaps(trafficMap, nsTrafficMap graph.TrafficMap) {
 			for _, nsEdge := range nsNode.Edges {
 				isDupEdge := false
 				for _, e := range node.Edges {
-					if nsEdge.Dest.ID == e.Dest.ID {
+					if nsEdge.Dest.ID == e.Dest.ID && nsEdge.Metadata["protocol"] == e.Metadata["protocol"] {
 						isDupEdge = true
 						break
 					}

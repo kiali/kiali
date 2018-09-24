@@ -97,8 +97,8 @@ func nodeHash(id string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(id)))
 }
 
-func edgeHash(from string, to string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s", from, to))))
+func edgeHash(from, to, protocol string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s.%s", from, to, protocol))))
 }
 
 func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Config) {
@@ -228,7 +228,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		for _, e := range n.Edges {
 			sourceIdHash := nodeHash(n.ID)
 			destIdHash := nodeHash(e.Dest.ID)
-			edgeId := edgeHash(sourceIdHash, destIdHash)
+			protocol := ""
+			if e.Metadata["protocol"] != nil {
+				protocol = e.Metadata["protocol"].(string)
+			}
+			edgeId := edgeHash(sourceIdHash, destIdHash, protocol)
 			ed := EdgeData{
 				Id:     edgeId,
 				Source: sourceIdHash,
