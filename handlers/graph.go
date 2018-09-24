@@ -46,6 +46,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/graph/appender"
 	"github.com/kiali/kiali/graph/cytoscape"
 	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/log"
@@ -546,6 +547,16 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 
 	trafficMap := buildNodeTrafficMap(namespace, n, o, client)
 
+	for _, a := range o.Appenders {
+		switch a.(type) {
+		case appender.UnusedNodeAppender:
+			// not applicable to a node detail graph
+			continue
+		default:
+			a.AppendGraph(trafficMap, namespace)
+		}
+	}
+
 	// The appenders can add/remove/alter nodes. After the manipulations are complete
 	// we can make some final adjustments:
 	// - mark the outsiders (i.e. nodes not in the requested namespaces)
@@ -771,7 +782,7 @@ func promQuery(query string, queryTime time.Time, api v1.API) model.Vector {
 
 	// wrap with a round() to be in line with metrics api
 	query = fmt.Sprintf("round(%s,0.001)", query)
-	log.Debugf("Executing query %s@time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
+	log.Debugf("Graph query:\n%s@time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
 
 	value, err := api.Query(ctx, query, queryTime)
 	checkError(err)
