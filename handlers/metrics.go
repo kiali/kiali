@@ -52,6 +52,17 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) erro
 	if filters, ok := queryParams["filters[]"]; ok && len(filters) > 0 {
 		q.Filters = filters
 	}
+	if quantiles, ok := queryParams["quantiles[]"]; ok && len(quantiles) > 0 {
+		q.Quantiles = quantiles
+	}
+	if avgFlags, ok := queryParams["avg"]; ok && len(avgFlags) > 0 {
+		if avgFlag, err := strconv.ParseBool(avgFlags[0]); err == nil {
+			q.Avg = avgFlag
+		} else {
+			// Bad request
+			return errors.New("Bad request, cannot parse query parameter 'avg'")
+		}
+	}
 	if lblsin, ok := queryParams["byLabelsIn[]"]; ok && len(lblsin) > 0 {
 		q.ByLabelsIn = lblsin
 	}

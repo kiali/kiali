@@ -2,9 +2,7 @@ package prometheustest
 
 import (
 	"testing"
-	"time"
 
-	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -124,19 +122,13 @@ func TestGetServiceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_bytes", "{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration_seconds", "{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_bytes", "{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+	q := prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		Service:   "productpage",
-		Range: v1.Range{
-			Start: time.Unix(1000, 0),
-			End:   time.Unix(2000, 0),
-			Step:  10,
-		},
-		RateInterval: "5m",
-		RateFunc:     "rate",
-		ByLabelsIn:   []string{},
-		ByLabelsOut:  []string{},
-		Filters:      []string{}})
+	}
+	q.FillDefaults()
+	q.RateInterval = "5m"
+	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 4, len(metrics.Dest.Metrics), "Should have 4 simple metrics")
 	assert.Equal(t, 3, len(metrics.Dest.Histograms), "Should have 3 histograms")
@@ -157,9 +149,9 @@ func TestGetServiceMetrics(t *testing.T) {
 
 	assert.Equal(t, 2.5, float64(rqCountIn.Matrix[0].Values[0].Value))
 	assert.Equal(t, 4.5, float64(rqErrorCountIn.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.7, float64(rqSizeIn.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.8, float64(rqDurationIn.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.9, float64(rsSizeIn.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.7, float64(rqSizeIn["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.8, float64(rqDurationIn["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.9, float64(rsSizeIn["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 11.0, float64(tcpRecIn.Matrix[0].Values[0].Value))
 	assert.Equal(t, 13.0, float64(tcpSentIn.Matrix[0].Values[0].Value))
 }
@@ -184,19 +176,13 @@ func TestGetAppMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_bytes", "{destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration_seconds", "{destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_bytes", "{destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+	q := prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
-		Range: v1.Range{
-			Start: time.Unix(1000, 0),
-			End:   time.Unix(2000, 0),
-			Step:  10,
-		},
-		RateInterval: "5m",
-		RateFunc:     "rate",
-		ByLabelsIn:   []string{},
-		ByLabelsOut:  []string{},
-		Filters:      []string{}})
+	}
+	q.FillDefaults()
+	q.RateInterval = "5m"
+	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 8, len(metrics.Dest.Metrics), "Should have 8 simple metrics")
 	assert.Equal(t, 6, len(metrics.Dest.Histograms), "Should have 6 histograms")
@@ -233,15 +219,15 @@ func TestGetAppMetrics(t *testing.T) {
 	assert.Equal(t, 1.5, float64(rqCountOut.Matrix[0].Values[0].Value))
 	assert.Equal(t, 4.5, float64(rqErrorCountIn.Matrix[0].Values[0].Value))
 	assert.Equal(t, 3.5, float64(rqErrorCountOut.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.35, float64(rqSizeOut.Average.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.2, float64(rqSizeOut.Median.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.3, float64(rqSizeOut.Percentile95.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.4, float64(rqSizeOut.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.5, float64(rqDurationOut.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.6, float64(rsSizeOut.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.7, float64(rqSizeIn.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.8, float64(rqDurationIn.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.9, float64(rsSizeIn.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.35, float64(rqSizeOut["avg"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.2, float64(rqSizeOut["0.5"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.3, float64(rqSizeOut["0.95"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.4, float64(rqSizeOut["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.5, float64(rqDurationOut["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.6, float64(rsSizeOut["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.7, float64(rqSizeIn["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.8, float64(rqDurationIn["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.9, float64(rsSizeIn["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 11.0, float64(tcpRecIn.Matrix[0].Values[0].Value))
 	assert.Equal(t, 10.0, float64(tcpRecOut.Matrix[0].Values[0].Value))
 	assert.Equal(t, 13.0, float64(tcpSentIn.Matrix[0].Values[0].Value))
@@ -258,19 +244,14 @@ func TestGetFilteredAppMetrics(t *testing.T) {
 	mockRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m])) by (reporter), 0.001)", 2.5)
 	mockHistogram(api, "istio_request_bytes", "{source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_bytes", "{destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+	q := prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
-		Range: v1.Range{
-			Start: time.Unix(1000, 0),
-			End:   time.Unix(2000, 0),
-			Step:  10,
-		},
-		RateInterval: "5m",
-		RateFunc:     "rate",
-		ByLabelsIn:   []string{},
-		ByLabelsOut:  []string{},
-		Filters:      []string{"request_count", "request_size"}})
+	}
+	q.FillDefaults()
+	q.RateInterval = "5m"
+	q.Filters = []string{"request_count", "request_size"}
+	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 2, len(metrics.Dest.Metrics), "Should have 2 simple metrics")
 	assert.Equal(t, 2, len(metrics.Dest.Histograms), "Should have 2 histograms")
@@ -292,20 +273,14 @@ func TestGetAppMetricsInstantRates(t *testing.T) {
 	}
 	mockRange(api, "round(sum(irate(istio_requests_total{source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[1m])) by (reporter), 0.001)", 1.5)
 	mockRange(api, "round(sum(irate(istio_requests_total{destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[1m])) by (reporter), 0.001)", 2.5)
-	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+	q := prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
-		Range: v1.Range{
-			Start: time.Unix(1000, 0),
-			End:   time.Unix(2000, 0),
-			Step:  10,
-		},
-		RateInterval: "1m",
-		RateFunc:     "irate",
-		ByLabelsIn:   []string{},
-		ByLabelsOut:  []string{},
-		Filters:      []string{"request_count"},
-	})
+	}
+	q.FillDefaults()
+	q.RateFunc = "irate"
+	q.Filters = []string{"request_count"}
+	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 2, len(metrics.Dest.Metrics), "Should have 2 simple metrics")
 	assert.Equal(t, 0, len(metrics.Dest.Histograms), "Should have no histogram")
@@ -353,20 +328,14 @@ func TestGetAppMetricsUnavailable(t *testing.T) {
 	mockEmptyRange(api, "round(sum(rate(istio_requests_total{destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m])) by (reporter), 0.001)")
 	mockEmptyHistogram(api, "istio_request_bytes", "{source_app=\"productpage\",source_workload_namespace=\"bookinfo\"}[5m]")
 	mockEmptyHistogram(api, "istio_request_bytes", "{destination_app=\"productpage\",destination_workload_namespace=\"bookinfo\"}[5m]")
-	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+	q := prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
-		Range: v1.Range{
-			Start: time.Unix(1000, 0),
-			End:   time.Unix(2000, 0),
-			Step:  10,
-		},
-		RateInterval: "5m",
-		RateFunc:     "rate",
-		ByLabelsIn:   []string{},
-		ByLabelsOut:  []string{},
-		Filters:      []string{"request_count", "request_size"},
-	})
+	}
+	q.FillDefaults()
+	q.RateInterval = "5m"
+	q.Filters = []string{"request_count", "request_size"}
+	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 2, len(metrics.Dest.Metrics), "Should have 2 simple metrics")
 	assert.Equal(t, 2, len(metrics.Dest.Histograms), "Should have 2 histograms")
@@ -377,10 +346,10 @@ func TestGetAppMetricsUnavailable(t *testing.T) {
 
 	// Simple metric & histogram are empty
 	assert.Empty(t, rqCountIn.Matrix[0].Values)
-	assert.Empty(t, rqSizeIn.Average.Matrix[0].Values)
-	assert.Empty(t, rqSizeIn.Median.Matrix[0].Values)
-	assert.Empty(t, rqSizeIn.Percentile95.Matrix[0].Values)
-	assert.Empty(t, rqSizeIn.Percentile99.Matrix[0].Values)
+	assert.Empty(t, rqSizeIn["avg"].Matrix[0].Values)
+	assert.Empty(t, rqSizeIn["0.5"].Matrix[0].Values)
+	assert.Empty(t, rqSizeIn["0.95"].Matrix[0].Values)
+	assert.Empty(t, rqSizeIn["0.99"].Matrix[0].Values)
 }
 
 func TestGetServiceHealthUnavailable(t *testing.T) {
@@ -422,18 +391,12 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_bytes", "{destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration_seconds", "{destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_bytes", "{destination_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
-	metrics := client.GetMetrics(&prometheus.MetricsQuery{
+	q := prometheus.MetricsQuery{
 		Namespace: "bookinfo",
-		Range: v1.Range{
-			Start: time.Unix(1000, 0),
-			End:   time.Unix(2000, 0),
-			Step:  10,
-		},
-		RateInterval: "5m",
-		RateFunc:     "rate",
-		ByLabelsIn:   []string{},
-		ByLabelsOut:  []string{},
-		Filters:      []string{}})
+	}
+	q.FillDefaults()
+	q.RateInterval = "5m"
+	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 8, len(metrics.Dest.Metrics), "Should have 8 simple metrics")
 	assert.Equal(t, 6, len(metrics.Dest.Histograms), "Should have 6 histograms")
@@ -470,15 +433,15 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	assert.Equal(t, 1.5, float64(rqCountOut.Matrix[0].Values[0].Value))
 	assert.Equal(t, 4.5, float64(rqErrorCountIn.Matrix[0].Values[0].Value))
 	assert.Equal(t, 3.5, float64(rqErrorCountOut.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.35, float64(rqSizeOut.Average.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.2, float64(rqSizeOut.Median.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.3, float64(rqSizeOut.Percentile95.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.4, float64(rqSizeOut.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.5, float64(rqDurationOut.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.6, float64(rsSizeOut.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.7, float64(rqSizeIn.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.8, float64(rqDurationIn.Percentile99.Matrix[0].Values[0].Value))
-	assert.Equal(t, 0.9, float64(rsSizeIn.Percentile99.Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.35, float64(rqSizeOut["avg"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.2, float64(rqSizeOut["0.5"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.3, float64(rqSizeOut["0.95"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.4, float64(rqSizeOut["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.5, float64(rqDurationOut["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.6, float64(rsSizeOut["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.7, float64(rqSizeIn["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.8, float64(rqDurationIn["0.99"].Matrix[0].Values[0].Value))
+	assert.Equal(t, 0.9, float64(rsSizeIn["0.99"].Matrix[0].Values[0].Value))
 	assert.Equal(t, 11.0, float64(tcpRecIn.Matrix[0].Values[0].Value))
 	assert.Equal(t, 10.0, float64(tcpRecOut.Matrix[0].Values[0].Value))
 	assert.Equal(t, 13.0, float64(tcpSentIn.Matrix[0].Values[0].Value))
@@ -606,6 +569,7 @@ func mockHistogram(api *PromAPIMock, baseName string, suffix string, retAvg mode
 	mockRange(api, "round(histogram_quantile(0.5, "+histMetric, retMed)
 	mockRange(api, "round(histogram_quantile(0.95, "+histMetric, ret95)
 	mockRange(api, "round(histogram_quantile(0.99, "+histMetric, ret99)
+	mockRange(api, "round(histogram_quantile(0.999, "+histMetric, ret99)
 	mockRange(api, "round(sum(rate("+baseName+"_sum"+suffix+")) by (reporter) / sum(rate("+baseName+"_count"+suffix+")) by (reporter), 0.001)", retAvg)
 }
 
@@ -614,6 +578,7 @@ func mockEmptyHistogram(api *PromAPIMock, baseName string, suffix string) {
 	mockEmptyRange(api, "round(histogram_quantile(0.5, "+histMetric)
 	mockEmptyRange(api, "round(histogram_quantile(0.95, "+histMetric)
 	mockEmptyRange(api, "round(histogram_quantile(0.99, "+histMetric)
+	mockEmptyRange(api, "round(histogram_quantile(0.999, "+histMetric)
 	mockEmptyRange(api, "round(sum(rate("+baseName+"_sum"+suffix+")) by (reporter) / sum(rate("+baseName+"_count"+suffix+")) by (reporter), 0.001)")
 }
 
