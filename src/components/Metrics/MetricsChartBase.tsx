@@ -15,9 +15,17 @@ const expandBlockStyle = style({
   textAlign: 'right'
 });
 
+interface C3ChartData {
+  x: string;
+  columns: any[][];
+  unload?: string[];
+}
+
 abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends React.Component<Props> {
-  protected abstract get controlKey(): string;
-  protected abstract get seriesData(): any;
+  private previousColumns: string[] = [];
+
+  protected abstract getControlKey(): string;
+  protected abstract getSeriesData(): C3ChartData;
 
   protected nameTimeSeries = (matrix: TimeSeries[], groupName?: string): TimeSeries[] => {
     matrix.forEach(ts => {
@@ -88,11 +96,25 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
     );
   };
 
+  checkUnload(data: C3ChartData) {
+    const newColumns = data.columns.map(c => c[0] as string);
+    const diff = this.previousColumns.filter(col => !newColumns.includes(col));
+    if (diff.length > 0) {
+      data.unload = diff;
+    }
+    this.previousColumns = newColumns;
+  }
+
   render() {
-    const data = this.seriesData;
+    const data = this.getSeriesData();
+    this.checkUnload(data);
     const height = this.adjustHeight(data.columns);
+    // Note: if any direct interaction is needed with the C3 chart,
+    //  use "oninit" hook and reference "this" as the C3 chart object.
+    //  see commented code
+    // const self = this;
     return (
-      <div key={this.controlKey} style={{ height: '100%' }}>
+      <div key={this.getControlKey()} style={{ height: '100%' }}>
         {this.props.onExpandRequested && this.renderExpand()}
         <LineChart
           style={{ height: this.props.onExpandRequested ? height : '99%' }}
@@ -101,6 +123,9 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
           data={data}
           axis={this.axisDefinition}
           point={{ show: false }}
+          // oninit={function(this: any) {
+          //   self.chartRef = this;
+          // }}
         />
       </div>
     );

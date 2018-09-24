@@ -1,18 +1,19 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import { Alert, Icon } from 'patternfly-react';
-import GrafanaInfo from '../../types/GrafanaInfo';
-import { authentication } from '../../utils/Authentication';
+import { style } from 'typestyle';
+
+import history, { HistoryManager, URLParams } from '../../app/History';
+import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
 import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
-import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
+import GrafanaInfo from '../../types/GrafanaInfo';
+import { Histogram, MetricGroup, MetricsDirection, MetricsObjectTypes } from '../../types/Metrics';
 import MetricsOptions from '../../types/MetricsOptions';
+import { authentication } from '../../utils/Authentication';
+
 import HistogramChart from './HistogramChart';
 import MetricChart from './MetricChart';
-import { Histogram, MetricGroup } from '../../types/Metrics';
-import history from '../../app/History';
-import { HistoryManager } from '../../app/History';
-import { Link } from 'react-router-dom';
-import { style } from 'typestyle';
 
 const expandedChartContainerStyle = style({
   height: 'calc(100vh - 248px)'
@@ -32,7 +33,6 @@ type ChartDefinition = {
 type MetricsState = {
   alertDetails?: string;
   grafanaLink?: string;
-  pollMetrics?: number;
   metricReporter: string;
   metricData?: any;
 };
@@ -44,8 +44,8 @@ type ObjectId = {
 
 type MetricsProps = ObjectId & {
   isPageVisible?: boolean;
-  objectType: string;
-  metricsType: string;
+  objectType: MetricsObjectTypes;
+  direction: MetricsDirection;
 };
 
 class Metrics extends React.Component<MetricsProps, MetricsState> {
@@ -60,10 +60,10 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
 
     let metricReporter = 'source';
 
-    const metricReporterParam = HistoryManager.getParam('reporter');
+    const metricReporterParam = HistoryManager.getParam(URLParams.REPORTER);
     if (metricReporterParam != null) {
       metricReporter = metricReporterParam;
-    } else if (this.props.metricsType === 'inbound') {
+    } else if (this.props.direction === MetricsDirection.INBOUND) {
       metricReporter = 'destination';
     }
 
@@ -83,7 +83,7 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     };
     let charts: { [key: string]: ChartDefinition } = inboundCharts;
 
-    if (this.props.metricsType === 'outbound') {
+    if (this.props.direction === MetricsDirection.OUTBOUND) {
       charts = {
         request_count_out: { name: 'Request volume (ops)', component: MetricChart },
         request_duration_out: { name: 'Request duration (seconds)', component: HistogramChart },
@@ -115,12 +115,6 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     this.getGrafanaInfo();
   }
 
-  componentWillUnmount() {
-    if (this.state.pollMetrics) {
-      clearInterval(this.state.pollMetrics);
-    }
-  }
-
   onOptionsChanged = (options: MetricsOptions) => {
     this.options = options;
     options.filters = [
@@ -135,44 +129,28 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     options.step = intervalOpts.step;
     options.rateInterval = intervalOpts.rateInterval;
     this.fetchMetrics();
-    HistoryManager.setParam('duration', options.duration!.toString(10));
-  };
-
-  onPollIntervalChanged = (pollInterval: number) => {
-    let newRefInterval: number | undefined = undefined;
-    if (this.state.pollMetrics) {
-      clearInterval(this.state.pollMetrics);
-    }
-    if (pollInterval > 0) {
-      newRefInterval = window.setInterval(this.fetchMetrics, pollInterval);
-    }
-    this.setState({ pollMetrics: newRefInterval });
-    HistoryManager.setParam('pi', pollInterval.toString(10));
   };
 
   onReporterChanged = (reporter: string) => {
     this.setState({ metricReporter: reporter });
-    HistoryManager.setParam('reporter', reporter);
   };
 
   fetchMetrics = () => {
     let promise;
     switch (this.props.objectType) {
-      case 'service':
-        promise = API.getServiceMetrics(authentication(), this.props.namespace, this.props.object, this.options);
-        break;
-      case 'workload':
+      case MetricsObjectTypes.WORKLOAD:
         promise = API.getWorkloadMetrics(authentication(), this.props.namespace, this.props.object, this.options);
         break;
-      case 'app':
+      case MetricsObjectTypes.APP:
         promise = API.getAppMetrics(authentication(), this.props.namespace, this.props.object, this.options);
         break;
+      case MetricsObjectTypes.SERVICE:
       default:
         promise = API.getServiceMetrics(authentication(), this.props.namespace, this.props.object, this.options);
         break;
     }
-    Promise.all([promise])
-      .then(([response]) => {
+    promise
+      .then(response => {
         this.setState({ metricData: response.data });
       })
       .catch(error => {
@@ -184,12 +162,12 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   getGrafanaLink(info: GrafanaInfo): string {
     let grafanaLink;
     switch (this.props.objectType) {
-      case 'service':
+      case MetricsObjectTypes.SERVICE:
         grafanaLink = `${info.url}${info.serviceDashboardPath}?${info.varService}=${this.props.object}.${
           this.props.namespace
         }.svc.cluster.local`;
         break;
-      case 'workload':
+      case MetricsObjectTypes.WORKLOAD:
         grafanaLink = `${info.url}${info.workloadDashboardPath}?${info.varNamespace}=${this.props.namespace}&${
           info.varWorkload
         }=${this.props.object}`;
@@ -203,10 +181,9 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   getGrafanaInfo = () => {
     API.getGrafanaInfo(authentication())
       .then(response => {
-        const info: GrafanaInfo = response['data'];
-        if (info) {
+        if (response.data) {
           this.setState({
-            grafanaLink: this.getGrafanaLink(info)
+            grafanaLink: this.getGrafanaLink(response.data)
           });
         } else {
           this.setState({ grafanaLink: undefined });
@@ -238,10 +215,10 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
         {this.state.alertDetails && <Alert onDismiss={this.dismissAlert}>{this.state.alertDetails}</Alert>}
         <MetricsOptionsBar
           onOptionsChanged={this.onOptionsChanged}
-          onPollIntervalChanged={this.onPollIntervalChanged}
           onReporterChanged={this.onReporterChanged}
-          onManualRefresh={this.fetchMetrics}
+          onRefresh={this.fetchMetrics}
           metricReporter={this.state.metricReporter}
+          direction={this.props.direction}
         />
         {expandedChart ? this.renderExpandedChart(expandedChart) : this.renderMetrics()}
       </div>
@@ -253,16 +230,14 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
       return null;
     }
 
-    let charts = this.getChartsDef();
+    const charts = this.getChartsDef();
 
     return (
       <div className="card-pf">
         <div className="row row-cards-pf">
           <div className="col-xs-12">
             <div className="card-pf-accented card-pf-aggregate-status">
-              <div className="card-pf-body">
-                {Object.keys(charts).map(key => this.renderNormalChart(key, charts[key]))}
-              </div>
+              <div className="card-pf-body">{Object.keys(charts).map(key => this.renderChart(key, charts[key]))}</div>
             </div>
           </div>
           {this.state.grafanaLink && (
@@ -275,10 +250,6 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
         </div>
       </div>
     );
-  }
-
-  private renderNormalChart(chartKey: string, chart: ChartDefinition) {
-    return this.renderChart(chartKey, chart);
   }
 
   private renderExpandedChart(chartKey: string) {

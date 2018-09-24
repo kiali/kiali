@@ -9,7 +9,7 @@ type MetricChartProps = {
 };
 
 export default class MetricsChart extends MetricsChartBase<MetricChartProps> {
-  protected get controlKey(): string {
+  protected getControlKey(): string {
     if (this.props.series.length === 0) {
       return 'blank';
     }
@@ -22,7 +22,7 @@ export default class MetricsChart extends MetricsChartBase<MetricChartProps> {
     return this.props.chartName + '-' + labelNames.join('-');
   }
 
-  protected get seriesData() {
+  protected getSeriesData() {
     return {
       x: 'x',
       columns: graphUtils.toC3Columns(this.nameTimeSeries(this.props.series))

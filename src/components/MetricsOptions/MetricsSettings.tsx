@@ -2,35 +2,11 @@ import * as React from 'react';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { style } from 'typestyle';
 
-export enum Grouping {
-  LOCAL_VERSION = 'Local version',
-  REMOTE_APP = 'Remote app',
-  REMOTE_VERSION = 'Remote version',
-  RESPONSE_CODE = 'Response code'
-}
+export type Grouping = 'Local version' | 'Remote app' | 'Remote version' | 'Response code';
+const allGroupings: Grouping[] = ['Local version', 'Remote app', 'Remote version', 'Response code'];
 
-export enum Quantiles {
-  MEDIAN = '0.5',
-  Q0_95 = '0.95',
-  Q0_99 = '0.99',
-  Q0_999 = '0.999'
-}
-
-// type Label = string;
-
-// export const INBOUND_GROUPING_LABELS: Map<Grouping, Label> = new Map([
-//   [Grouping.LOCAL_VERSION, 'destination_version'],
-//   [Grouping.REMOTE_APP, 'source_app'],
-//   [Grouping.REMOTE_VERSION, 'source_version'],
-//   [Grouping.RESPONSE_CODE, 'response_code']
-// ]);
-
-// export const OUTBOUND_GROUPING_LABELS: Map<Grouping, Label> = new Map([
-//   [Grouping.LOCAL_VERSION, 'source_version'],
-//   [Grouping.REMOTE_APP, 'destination_app'],
-//   [Grouping.REMOTE_VERSION, 'destination_version'],
-//   [Grouping.RESPONSE_CODE, 'response_code']
-// ]);
+export type Quantiles = '0.5' | '0.95' | '0.99' | '0.999';
+const allQuantiles: Quantiles[] = ['0.5', '0.95', '0.99', '0.999'];
 
 export interface MetricsSettings {
   groupingLabels: Grouping[];
@@ -77,12 +53,7 @@ export class MetricsSettingsDropdown extends React.PureComponent<Props, State> {
   render() {
     const checkboxStyle = style({ marginLeft: 5 });
 
-    const displayGroupingLabels = [
-      Grouping.LOCAL_VERSION,
-      Grouping.REMOTE_APP,
-      Grouping.REMOTE_VERSION,
-      Grouping.RESPONSE_CODE
-    ].map((g, idx) => {
+    const displayGroupingLabels = allGroupings.map((g, idx) => {
       const checked = this.state.groupingLabels.includes(g);
       return (
         <div key={'groupings_' + idx}>
@@ -112,7 +83,7 @@ export class MetricsSettingsDropdown extends React.PureComponent<Props, State> {
         </label>
       </div>
     )].concat(
-      [Quantiles.MEDIAN, Quantiles.Q0_95, Quantiles.Q0_99, Quantiles.Q0_999].map((o, idx) => {
+      allQuantiles.map((o, idx) => {
         const checked = this.state.showQuantiles.includes(o);
         return (
           <div key={'histo_' + idx}>

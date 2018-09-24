@@ -10,6 +10,7 @@ import * as MessageCenter from '../../utils/MessageCenter';
 import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer';
 import { WorkloadHealth } from '../../types/Health';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
+import { MetricsObjectTypes, MetricsDirection } from '../../types/Metrics';
 
 type WorkloadDetailsState = {
   workload: Deployment;
@@ -169,16 +170,16 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                 <WorkloadMetricsContainer
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.workload}
-                  objectType={'workload'}
-                  metricsType={'inbound'}
+                  objectType={MetricsObjectTypes.WORKLOAD}
+                  direction={MetricsDirection.INBOUND}
                 />
               </TabPane>
               <TabPane eventKey="out_metrics" mountOnEnter={true} unmountOnExit={true}>
                 <WorkloadMetricsContainer
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.workload}
-                  objectType={'workload'}
-                  metricsType={'outbound'}
+                  objectType={MetricsObjectTypes.WORKLOAD}
+                  direction={MetricsDirection.OUTBOUND}
                 />
               </TabPane>
             </TabContent>

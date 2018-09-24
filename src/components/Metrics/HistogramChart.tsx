@@ -9,7 +9,7 @@ interface HistogramChartProps {
 }
 
 class HistogramChart extends MetricsChartBase<HistogramChartProps> {
-  protected get controlKey() {
+  protected getControlKey() {
     const keys = Object.keys(this.props.histogram);
     if (keys.length === 0 || this.props.histogram[keys[0]].matrix.length === 0) {
       return 'blank';
@@ -23,7 +23,7 @@ class HistogramChart extends MetricsChartBase<HistogramChartProps> {
     return this.props.chartName + '-' + labelNames.join('-');
   }
 
-  protected get seriesData() {
+  protected getSeriesData() {
     Object.keys(this.props.histogram).forEach(stat => {
       const statName = stat === 'avg' ? 'average' : 'quantile ' + stat;
       this.nameTimeSeries(this.props.histogram[stat].matrix, statName);

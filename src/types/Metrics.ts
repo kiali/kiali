@@ -26,3 +26,14 @@ export interface TimeSeries {
 
 // First is timestamp, second is value
 export type Datapoint = [number, number];
+
+export enum MetricsDirection {
+  INBOUND,
+  OUTBOUND
+}
+
+export enum MetricsObjectTypes {
+  SERVICE,
+  WORKLOAD,
+  APP
+}

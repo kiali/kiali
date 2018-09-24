@@ -5,11 +5,11 @@ ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <Metrics
+    direction={0}
     isPageVisible={true}
-    metricsType="inbound"
     namespace="ns"
     object="svc"
-    objectType="workload"
+    objectType={1}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -27,10 +27,10 @@ ShallowWrapper {
         null,
         undefined,
         <MetricsOptionsBar
+          direction={0}
           metricReporter="destination"
-          onManualRefresh={[Function]}
           onOptionsChanged={[Function]}
-          onPollIntervalChanged={[Function]}
+          onRefresh={[Function]}
           onReporterChanged={[Function]}
         />,
         <div
@@ -63,10 +63,10 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "class",
         "props": Object {
+          "direction": 0,
           "metricReporter": "destination",
-          "onManualRefresh": [Function],
           "onOptionsChanged": [Function],
-          "onPollIntervalChanged": [Function],
+          "onRefresh": [Function],
           "onReporterChanged": [Function],
         },
         "ref": null,
@@ -194,10 +194,10 @@ ShallowWrapper {
           null,
           undefined,
           <MetricsOptionsBar
+            direction={0}
             metricReporter="destination"
-            onManualRefresh={[Function]}
             onOptionsChanged={[Function]}
-            onPollIntervalChanged={[Function]}
+            onRefresh={[Function]}
             onReporterChanged={[Function]}
           />,
           <div
@@ -230,10 +230,10 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "class",
           "props": Object {
+            "direction": 0,
             "metricReporter": "destination",
-            "onManualRefresh": [Function],
             "onOptionsChanged": [Function],
-            "onPollIntervalChanged": [Function],
+            "onRefresh": [Function],
             "onReporterChanged": [Function],
           },
           "ref": null,
@@ -367,11 +367,11 @@ ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <Metrics
+    direction={0}
     isPageVisible={true}
-    metricsType="inbound"
     namespace="ns"
     object="svc"
-    objectType="service"
+    objectType={0}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -389,10 +389,10 @@ ShallowWrapper {
         null,
         undefined,
         <MetricsOptionsBar
+          direction={0}
           metricReporter="destination"
-          onManualRefresh={[Function]}
           onOptionsChanged={[Function]}
-          onPollIntervalChanged={[Function]}
+          onRefresh={[Function]}
           onReporterChanged={[Function]}
         />,
         <div
@@ -425,10 +425,10 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "class",
         "props": Object {
+          "direction": 0,
           "metricReporter": "destination",
-          "onManualRefresh": [Function],
           "onOptionsChanged": [Function],
-          "onPollIntervalChanged": [Function],
+          "onRefresh": [Function],
           "onReporterChanged": [Function],
         },
         "ref": null,
@@ -556,10 +556,10 @@ ShallowWrapper {
           null,
           undefined,
           <MetricsOptionsBar
+            direction={0}
             metricReporter="destination"
-            onManualRefresh={[Function]}
             onOptionsChanged={[Function]}
-            onPollIntervalChanged={[Function]}
+            onRefresh={[Function]}
             onReporterChanged={[Function]}
           />,
           <div
@@ -592,10 +592,10 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "class",
           "props": Object {
+            "direction": 0,
             "metricReporter": "destination",
-            "onManualRefresh": [Function],
             "onOptionsChanged": [Function],
-            "onPollIntervalChanged": [Function],
+            "onRefresh": [Function],
             "onReporterChanged": [Function],
           },
           "ref": null,
@@ -729,11 +729,11 @@ ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <Metrics
+    direction={0}
     isPageVisible={true}
-    metricsType="outbound"
     namespace="ns"
     object="svc"
-    objectType="workload"
+    objectType={1}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -751,10 +751,10 @@ ShallowWrapper {
         null,
         undefined,
         <MetricsOptionsBar
-          metricReporter="source"
-          onManualRefresh={[Function]}
+          direction={0}
+          metricReporter="destination"
           onOptionsChanged={[Function]}
-          onPollIntervalChanged={[Function]}
+          onRefresh={[Function]}
           onReporterChanged={[Function]}
         />,
         <div
@@ -787,10 +787,10 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "class",
         "props": Object {
-          "metricReporter": "source",
-          "onManualRefresh": [Function],
+          "direction": 0,
+          "metricReporter": "destination",
           "onOptionsChanged": [Function],
-          "onPollIntervalChanged": [Function],
+          "onRefresh": [Function],
           "onReporterChanged": [Function],
         },
         "ref": null,
@@ -918,10 +918,10 @@ ShallowWrapper {
           null,
           undefined,
           <MetricsOptionsBar
-            metricReporter="source"
-            onManualRefresh={[Function]}
+            direction={0}
+            metricReporter="destination"
             onOptionsChanged={[Function]}
-            onPollIntervalChanged={[Function]}
+            onRefresh={[Function]}
             onReporterChanged={[Function]}
           />,
           <div
@@ -954,10 +954,10 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "class",
           "props": Object {
-            "metricReporter": "source",
-            "onManualRefresh": [Function],
+            "direction": 0,
+            "metricReporter": "destination",
             "onOptionsChanged": [Function],
-            "onPollIntervalChanged": [Function],
+            "onRefresh": [Function],
             "onReporterChanged": [Function],
           },
           "ref": null,
