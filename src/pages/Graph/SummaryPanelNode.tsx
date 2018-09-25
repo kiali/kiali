@@ -170,6 +170,10 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       if (data.nodeType !== NodeType.SERVICE) {
         rcOut = metrics['request_count_out'];
         ecOut = metrics['request_error_count_out'];
+
+        // These will be empty if destination metrics are being used. That's fine
+        // it's not possible to report TCP metrics, because there is no TCP telemetry (either
+        // in source nor destination) in the cases where dest. metrics are used.
         tcpSentOut = metrics['tcp_sent_out'];
         tcpReceivedOut = metrics['tcp_received_out'];
       } else {
@@ -178,8 +182,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         // include source-side errors (because the request never reaches the dest).
         rcOut = metrics['request_count_in'];
         ecOut = metrics['request_error_count_in'];
-        tcpSentOut = metrics['tcp_sent_in'];
-        tcpReceivedOut = metrics['tcp_received_in'];
+
+        // Unfortunately, destination side doesn't have good TCP telemetry.
+        // Fallback to "mirror" the "in" metrics in the "out" metrics. This is
+        // the current best effort.
+        tcpSentOut = all.source.metrics['tcp_sent_in'];
+        tcpReceivedOut = all.source.metrics['tcp_received_in'];
       }
     }
     // set incoming unless it is a root (because they have no incoming edges)
@@ -188,8 +196,11 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       metrics = data.nodeType === NodeType.SERVICE ? all.source.metrics : all.dest.metrics;
       rcIn = metrics['request_count_in'];
       ecIn = metrics['request_error_count_in'];
-      tcpSentIn = metrics['tcp_sent_in'];
-      tcpReceivedIn = metrics['tcp_received_in'];
+
+      // For TCP, always use source side metrics. There is not enough data in
+      // destination reporter to correctly resolve the source of the traffic.
+      tcpSentIn = all.source.metrics['tcp_sent_in'];
+      tcpReceivedIn = all.source.metrics['tcp_received_in'];
     }
     this.setState({
       loading: false,
