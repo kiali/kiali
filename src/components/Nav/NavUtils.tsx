@@ -25,6 +25,8 @@ export const makeNodeGraphUrlFromParams = (node: NodeParamsType, params: GraphPa
       return `/graph/namespaces/${params.namespace.name}/applications/${node.app}?` + buildCommonQueryParams(params);
     case NodeType.WORKLOAD:
       return `/graph/namespaces/${params.namespace.name}/workloads/${node.workload}?` + buildCommonQueryParams(params);
+    case NodeType.SERVICE:
+      return `/graph/namespaces/${params.namespace.name}/services/${node.service}?` + buildCommonQueryParams(params);
     default:
       console.debug('makeNodeUrl defaulting to makeNamespaceUrl');
       return makeNamespaceGraphUrlFromParams(params);

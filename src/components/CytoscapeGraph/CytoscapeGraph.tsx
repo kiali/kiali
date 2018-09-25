@@ -149,6 +149,9 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
             selector = selector + "[version = '" + node.version + "']";
           }
           break;
+        case NodeType.SERVICE:
+          selector = selector + "[service = '" + node.service + "']";
+          break;
         default:
           selector = selector + "[workload = '" + node.workload + "']";
       }
@@ -426,12 +429,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     const nodeType = target.data('nodeType');
     switch (nodeType) {
       case NodeType.APP:
+      case NodeType.SERVICE:
       case NodeType.WORKLOAD:
         const node: NodeParamsType = {
           nodeType: nodeType,
           workload: event.summaryTarget.data('workload'),
           app: event.summaryTarget.data('app'),
-          version: targetType === 'group' ? '' : event.summaryTarget.data('version')
+          version: targetType === 'group' ? '' : event.summaryTarget.data('version'),
+          service: event.summaryTarget.data('service')
         };
         this.context.router.history.push(
           makeNodeGraphUrlFromParams(node, {

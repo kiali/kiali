@@ -38,6 +38,7 @@ export interface NodeParamsType {
   workload: string;
   app: string;
   version: string;
+  service: string;
 }
 
 export interface GraphParamsType {

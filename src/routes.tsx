@@ -75,6 +75,10 @@ const pathRoutes: Path[] = [
     component: GraphRouteHandler
   },
   {
+    path: '/graph/namespaces/:namespace/services/:service',
+    component: GraphRouteHandler
+  },
+  {
     path: '/graph/namespaces/:namespace/workloads/:workload',
     component: GraphRouteHandler
   },

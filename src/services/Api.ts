@@ -238,6 +238,8 @@ export const getNodeGraphElements = (auth: string, namespace: Namespace, node: N
         );
       }
       return newRequest('get', `/api/namespaces/${namespace.name}/applications/${node.app}/graph`, params, {}, auth);
+    case NodeType.SERVICE:
+      return newRequest('get', `/api/namespaces/${namespace.name}/services/${node.service}/graph`, params, {}, auth);
     case NodeType.WORKLOAD:
       return newRequest('get', `/api/namespaces/${namespace.name}/workloads/${node.workload}/graph`, params, {}, auth);
     default:

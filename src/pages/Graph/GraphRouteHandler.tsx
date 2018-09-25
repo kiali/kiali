@@ -19,6 +19,7 @@ type GraphURLProps = {
   // @todo: add back in circuit-breaker, route-rules params to Redux-Router for URL-params
   namespace: string;
   app: string;
+  service: string;
   version: string;
   workload: string;
   duration: string;
@@ -82,15 +83,30 @@ export default class GraphRouteHandler extends React.Component<RouteComponentPro
 
   static getNodeParamsFromProps(props: RouteComponentProps<GraphURLProps>): NodeParamsType | undefined {
     const app = props.match.params.app;
-    const workload = props.match.params.workload;
     const appOk = app && app !== 'unknown' && app !== 'undefined';
+    const service = props.match.params.service;
+    const serviceOk = service && service !== 'unknown' && service !== 'undefined';
+    const workload = props.match.params.workload;
     const workloadOk = workload && workload !== 'unknown' && workload !== 'undefined';
-    if (!appOk && !workloadOk) {
+    if (!appOk && !serviceOk && !workloadOk) {
       return;
     }
-    const version = props.match.params.version;
-    const nodeType = app ? NodeType.APP : NodeType.WORKLOAD;
-    const node: NodeParamsType = { nodeType: nodeType, app: app, version: version, workload: workload };
+    let nodeType;
+    let version;
+    if (appOk || workloadOk) {
+      nodeType = appOk ? NodeType.APP : NodeType.WORKLOAD;
+      version = props.match.params.version;
+    } else {
+      nodeType = NodeType.SERVICE;
+      version = '';
+    }
+    const node: NodeParamsType = {
+      nodeType: nodeType,
+      app: app,
+      version: version,
+      workload: workload,
+      service: service
+    };
     return node;
   }
 
@@ -108,6 +124,7 @@ export default class GraphRouteHandler extends React.Component<RouteComponentPro
     const layoutHasChanged = nextLayout.name !== currentState.graphLayout.name;
     const namespaceHasChanged = nextNamespace.name !== currentState.namespace.name;
     const nodeAppHasChanged = nextNode && currentState.node && nextNode.app !== currentState.node.app;
+    const nodeServiceHasChanged = nextNode && currentState.node && nextNode.service !== currentState.node.service;
     const nodeVersionHasChanged = nextNode && currentState.node && nextNode.version !== currentState.node.version;
     const nodeTypeHasChanged = nextNode && currentState.node && nextNode.nodeType !== currentState.node.nodeType;
     const nodeWorkloadHasChanged = nextNode && currentState.node && nextNode.workload !== currentState.node.workload;
@@ -115,6 +132,7 @@ export default class GraphRouteHandler extends React.Component<RouteComponentPro
       (nextNode && !currentState.node) ||
       (!nextNode && currentState.node) ||
       nodeAppHasChanged ||
+      nodeServiceHasChanged ||
       nodeVersionHasChanged ||
       nodeWorkloadHasChanged ||
       nodeTypeHasChanged;
