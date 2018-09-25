@@ -107,6 +107,10 @@ a:focus {
 .nav-pf-vertical .list-group-item {
   border-color: #18546b;
 }
-.nav-pf-vertical {
+.nav-pf-vertical .list-group .list-group-item:first-child {
   border-top: 2px solid #18546b;
 }
+.nav-pf-vertical .list-group .list-group-item.active:first-child {
+  border-top: 2px solid #438fdd;
+}
+
