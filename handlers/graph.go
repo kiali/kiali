@@ -155,7 +155,7 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 	httpMetric := "istio_requests_total"
 
 	// query prometheus for request traffic in three queries:
-	// 1) query for traffic originating from "unknown" (i.e. the internet)
+	// 1) query for traffic originating from "unknown" (i.e. the internet).
 	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code"
 	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_service_namespace="%s",response_code=~"%s"} [%vs])) by (%s)`,
 		httpMetric,
@@ -163,12 +163,10 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 		"[2345][0-9][0-9]",        // regex for valid response_codes
 		int(o.Duration.Seconds()), // range duration for the query
 		groupBy)
-
-	// fetch the unknown originating request traffic time-series
 	unkVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
-	// 2) query for traffic originating from a workload outside of the namespace
-	query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace!="%s",destination_service_namespace="%s",response_code=~"%s"} [%vs])) by (%s)`,
+	// 2) query for traffic originating from a workload outside of the namespace.  Exclude any "unknown" source telemetry (an unusual corner case)
+	query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace!="%s",source_workload!="unknown",destination_service_namespace="%s",response_code=~"%s"} [%vs])) by (%s)`,
 		httpMetric,
 		namespace,
 		namespace,
@@ -241,9 +239,9 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 		tcpGroupBy)
 	tcpUnkVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
-	// 2) query for traffic originating from a workload outside of the namespace
+	// 2) query for traffic originating from a workload outside of the namespace. Exclude any "unknown" source telemetry (an unusual corner case)
 	tcpGroupBy = "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version"
-	query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace!="%s",destination_service_namespace="%s"} [%vs])) by (%s)`,
+	query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace!="%s",source_workload!="unknown",destination_service_namespace="%s"} [%vs])) by (%s)`,
 		tcpMetric,
 		namespace,
 		namespace,
@@ -299,8 +297,9 @@ func populateTrafficMapHttp(trafficMap graph.TrafficMap, vector *model.Vector, o
 		val := float64(s.Value)
 
 		if o.InjectServiceNodes {
-			// don't inject a service node if the dest node is already a service node
-			if _, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.VendorOptions.GraphType); destNodeType != graph.NodeTypeService {
+			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
+			_, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.VendorOptions.GraphType)
+			if destSvcNameOk && destNodeType != graph.NodeTypeService {
 				addHttpTraffic(trafficMap, val, code, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName, o)
 				addHttpTraffic(trafficMap, val, code, destSvcNs, "", "", "", destSvcName, destSvcNs, destWl, destApp, destVer, destSvcName, o)
 			} else {
@@ -396,8 +395,10 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		val := float64(s.Value)
 
 		if o.InjectServiceNodes {
-			// don't inject a service node if the dest node is already a service node
-			if _, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.VendorOptions.GraphType); destNodeType != graph.NodeTypeService {
+			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
+			destSvcNameOk = destSvcName != "" && destSvcName != graph.UnknownService
+			_, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.VendorOptions.GraphType)
+			if destSvcNameOk && destNodeType != graph.NodeTypeService {
 				addTcpTraffic(trafficMap, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName, o)
 				addTcpTraffic(trafficMap, val, destSvcNs, "", "", "", destSvcName, destSvcNs, destWl, destApp, destVer, destSvcName, o)
 			} else {
