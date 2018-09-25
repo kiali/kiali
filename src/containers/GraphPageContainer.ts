@@ -1,7 +1,7 @@
 import { KialiAppState } from '../store/Store';
 import { connect } from 'react-redux';
 import Namespace from '../types/Namespace';
-import { Duration } from '../types/GraphFilter';
+import { Duration, EdgeLabelMode } from '../types/GraphFilter';
 import GraphPage from '../pages/Graph/GraphPage';
 
 import { GraphDataActions } from '../actions/GraphDataActions';
@@ -31,8 +31,12 @@ const mapDispatchToProps = (dispatch: any) => ({
     graphDuration: Duration,
     graphType: GraphType,
     injectServiceNodes: boolean,
+    edgeLabelMode: EdgeLabelMode,
     node?: NodeParamsType
-  ) => dispatch(GraphDataActions.fetchGraphData(namespace, graphDuration, graphType, injectServiceNodes, node)),
+  ) =>
+    dispatch(
+      GraphDataActions.fetchGraphData(namespace, graphDuration, graphType, injectServiceNodes, edgeLabelMode, node)
+    ),
   toggleLegend: bindActionCreators(GraphFilterActions.toggleLegend, dispatch)
 });
 

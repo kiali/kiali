@@ -9,6 +9,7 @@ import { store } from '../../store/ConfigStore';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 import GraphFilter from './GraphFilter';
 import { GraphActions } from '../../actions/GraphActions';
+import { GraphDataActions } from '../../actions/GraphDataActions';
 
 export default class GraphFilterToolbar extends React.PureComponent<GraphFilterToolbarType> {
   static contextTypes = {
@@ -71,6 +72,21 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
       ...this.getGraphParams(),
       edgeLabelMode
     });
+
+    if (edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE || edgeLabelMode === EdgeLabelMode.MTLS_ENABLED) {
+      // Server-side appenders for security and response time are not run by default unless those edge labels are specifically requested.
+      // So when switching to these edge labels, we have to ensure we make a server-side request in order to ensure those appenders are run.
+      store.dispatch(
+        GraphDataActions.fetchGraphData(
+          this.props.namespace,
+          this.props.graphDuration,
+          this.props.graphType,
+          this.props.injectServiceNodes,
+          edgeLabelMode,
+          this.props.node
+        )
+      );
+    }
   };
 
   handleFilterChange = (params: GraphParamsType) => {
