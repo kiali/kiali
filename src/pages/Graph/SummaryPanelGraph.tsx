@@ -80,11 +80,13 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       return null;
     }
 
-    const numNodes = cy
+    const baseQuery = cy
       .nodes()
       .filter('[!isGroup]')
-      .filter('[!isRoot]')
-      .size();
+      .filter('[!isRoot]');
+    const numSvc = baseQuery.filter('[nodeType="service"]').size();
+    const numWorkloads = baseQuery.filter('[nodeType="workload"]').size();
+    const numApps = baseQuery.filter('[nodeType="app"]').size();
     const numEdges = cy.edges().size();
     const trafficRate = getAccumulatedTrafficRate(cy.edges());
     const appsLink = (
@@ -100,7 +102,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
         <div className="panel-heading">
           Namespace: {appsLink}
-          {this.renderTopologySummary(numNodes, numEdges)}
+          {this.renderTopologySummary(numSvc, numWorkloads, numApps, numEdges)}
         </div>
         <div className="panel-body">
           <div>
@@ -165,12 +167,35 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     this.setState({ loading: true, metricsLoadError: null });
   };
 
-  private renderTopologySummary = (numNodes: number, numEdges: number) => (
+  private renderTopologySummary = (numSvc: number, numWorkloads: number, numApps: number, numEdges: number) => (
     <div>
-      <Icon name="service" type="pf" style={{ padding: '0 1em' }} />
-      {numNodes.toString()} {numNodes === 1 ? 'service' : 'services'}
-      <Icon name="topology" type="pf" style={{ padding: '0 1em' }} />
-      {numEdges.toString()} {numEdges === 1 ? 'link' : 'links'}
+      {numApps > 0 && (
+        <>
+          <Icon name="applications" type="pf" style={{ padding: '0 1em' }} />
+          {numApps.toString()} {numApps === 1 ? 'app' : 'apps'}
+          <br />
+        </>
+      )}
+      {numSvc > 0 && (
+        <>
+          <Icon name="service" type="pf" style={{ padding: '0 1em' }} />
+          {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
+          <br />
+        </>
+      )}
+      {numWorkloads > 0 && (
+        <>
+          <Icon name="bundle" type="pf" style={{ padding: '0 1em' }} />
+          {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
+          <br />
+        </>
+      )}
+      {numEdges > 0 && (
+        <>
+          <Icon name="topology" type="pf" style={{ padding: '0 1em' }} />
+          {numEdges.toString()} {numEdges === 1 ? 'link' : 'links'}
+        </>
+      )}
     </div>
   );
 
