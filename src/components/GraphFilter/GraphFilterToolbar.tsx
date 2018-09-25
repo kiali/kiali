@@ -77,6 +77,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
       // Server-side appenders for security and response time are not run by default unless those edge labels are specifically requested.
       // So when switching to these edge labels, we have to ensure we make a server-side request in order to ensure those appenders are run.
       store.dispatch(
+        // @ts-ignore
         GraphDataActions.fetchGraphData(
           this.props.namespace,
           this.props.graphDuration,
