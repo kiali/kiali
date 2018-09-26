@@ -4,7 +4,7 @@ import ssl
 from kiali import KialiClient
 
 ENV_FILE = './config/env.yaml'
-CIRCUIT_BREAKER_FILE = 'assets/circuitbreaker.yaml'
+CIRCUIT_BREAKER_FILE = 'assets/bookinfo-reviews-all-cb.yaml'
 VIRTUAL_SERVICE_FILE = 'assets/bookinfo-ratings-delay.yaml'
 
 @pytest.fixture(scope="session")
