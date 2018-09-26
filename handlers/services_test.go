@@ -185,6 +185,68 @@ func TestServiceMetricsBadDuration(t *testing.T) {
 	assert.Contains(t, string(actual), "cannot parse query parameter 'duration'")
 }
 
+func TestServiceMetricsCantParseQuantiles(t *testing.T) {
+	ts, api := setupServiceMetricsEndpoint(t)
+	defer ts.Close()
+
+	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := req.URL.Query()
+	q.Add("rateInterval", "5h")
+	q.Add("step", "99")
+	q.Add("quantiles[]", "0.5")
+	q.Add("quantiles[]", "abc")
+	req.URL.RawQuery = q.Encode()
+
+	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
+		// Make sure there's no client call and we fail fast
+		t.Error("Unexpected call to client while having bad request")
+	})
+
+	httpclient := &http.Client{}
+	resp, err := httpclient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, _ := ioutil.ReadAll(resp.Body)
+
+	assert.Equal(t, 400, resp.StatusCode)
+	assert.Contains(t, string(actual), "cannot parse query parameter 'quantiles'")
+}
+
+func TestServiceMetricsBadQuantiles(t *testing.T) {
+	ts, api := setupServiceMetricsEndpoint(t)
+	defer ts.Close()
+
+	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := req.URL.Query()
+	q.Add("rateInterval", "5h")
+	q.Add("step", "99")
+	q.Add("quantiles[]", "0.5")
+	q.Add("quantiles[]", "1.5")
+	req.URL.RawQuery = q.Encode()
+
+	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
+		// Make sure there's no client call and we fail fast
+		t.Error("Unexpected call to client while having bad request")
+	})
+
+	httpclient := &http.Client{}
+	resp, err := httpclient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, _ := ioutil.ReadAll(resp.Body)
+
+	assert.Equal(t, 400, resp.StatusCode)
+	assert.Contains(t, string(actual), "invalid quantile(s)")
+}
+
 func TestServiceMetricsBadStep(t *testing.T) {
 	ts, api := setupServiceMetricsEndpoint(t)
 	defer ts.Close()

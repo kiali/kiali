@@ -53,6 +53,16 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) erro
 		q.Filters = filters
 	}
 	if quantiles, ok := queryParams["quantiles[]"]; ok && len(quantiles) > 0 {
+		for _, quantile := range quantiles {
+			f, err := strconv.ParseFloat(quantile, 64)
+			if err != nil {
+				// Non parseable quantile
+				return errors.New("Bad request, cannot parse query parameter 'quantiles', float expected")
+			}
+			if f < 0 || f > 1 {
+				return errors.New("Bad request, invalid quantile(s): should be between 0 and 1")
+			}
+		}
 		q.Quantiles = quantiles
 	}
 	if avgFlags, ok := queryParams["avg"]; ok && len(avgFlags) > 0 {
