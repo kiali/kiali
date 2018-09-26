@@ -17,6 +17,7 @@ const (
 	TF                    string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
 	UnknownApp            string = "unknown"
 	UnknownNamespace      string = "unknown"
+	UnknownService        string = "unknown"
 	UnknownVersion        string = "unknown"
 	UnknownWorkload       string = "unknown"
 )
@@ -112,20 +113,22 @@ func NewTrafficMap() TrafficMap {
 }
 
 func Id(namespace, workload, app, version, service, graphType string) (id, nodeType string) {
-	// first, check for the special-case "unknown" node
-	if UnknownWorkload == workload && UnknownApp == app && "" == service {
-		return fmt.Sprintf("source-unknown"), NodeTypeUnknown
+	// first, check for the special-case "unknown" source node
+	if UnknownNamespace == namespace && UnknownWorkload == workload && UnknownApp == app && "" == service {
+		return fmt.Sprintf("unknown_source"), NodeTypeUnknown
 	}
 
 	// It is possible that a request is made for an unknown destination. For example, an Ingress
-	// request to an unknown path. In this case everything is unknown.
-	if UnknownNamespace == namespace && UnknownWorkload == workload && UnknownApp == app && UnknownApp == service {
-		return fmt.Sprintf("dest-unknown"), NodeTypeService
+	// request to an unknown path. In this case the namespace may or may not be unknown.
+	// Every other field is unknown. Allow one unknown service per namespace to help reflect these
+	// bad destinations in the graph,  it may help diagnose a problem.
+	if UnknownWorkload == workload && UnknownApp == app && UnknownService == service {
+		return fmt.Sprintf("svc_%s_unknown", namespace), NodeTypeService
 	}
 
 	workloadOk := workload != "" && workload != UnknownWorkload
 	appOk := app != "" && app != UnknownApp
-	serviceOk := service != "" && service != UnknownApp
+	serviceOk := service != "" && service != UnknownService
 
 	if !workloadOk && !appOk && !serviceOk {
 		panic(fmt.Sprintf("Failed ID gen: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))

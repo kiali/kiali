@@ -98,7 +98,7 @@
       },
       {
         "data": {
-          "id": "5c33c02dc744d0d03513a364935660b7",
+          "id": "b30b0078325bf2e1adb4d57c4c0c2665",
           "nodeType": "unknown",
           "namespace": "unknown",
           "workload": "unknown",
@@ -195,16 +195,16 @@
       },
       {
         "data": {
-          "id": "a5ad258d84d10f69c74faaaea9fe568c",
-          "source": "5c33c02dc744d0d03513a364935660b7",
+          "id": "efe83e483ada36899c34ef66a7974d31",
+          "source": "b30b0078325bf2e1adb4d57c4c0c2665",
           "target": "2c22af42b0c750749399ed2838c56054",
           "rate": "50.000"
         }
       },
       {
         "data": {
-          "id": "8803fe0a978f5ad0341e06c15d5f9a98",
-          "source": "5c33c02dc744d0d03513a364935660b7",
+          "id": "d4fc7bd6594937fa94402fcfcc9f3a95",
+          "source": "b30b0078325bf2e1adb4d57c4c0c2665",
           "target": "4ee8019fc0454770a401b89d427277bf",
           "tcpSentRate": "400.000"
         }
