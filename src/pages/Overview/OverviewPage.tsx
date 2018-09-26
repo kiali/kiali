@@ -86,12 +86,15 @@ class OverviewPage extends ListPage.Component<{}, State> {
         const namespaces: Namespace[] = namespacesResponse['data'].filter(ns => {
           return nameFilters.length === 0 || nameFilters.some(f => ns.name.includes(f.value));
         });
-        this.fetchAppsHealth(namespaces.map(namespace => namespace.name), this.currentDuration());
+        this.fetchAppsHealth(namespaces.map(namespace => namespace.name));
       })
       .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
   };
 
-  fetchAppsHealth(namespaces: string[], rateInterval: number) {
+  fetchAppsHealth(namespaces: string[]) {
+    const rateInterval = this.currentDuration();
+    const isAscending = this.isCurrentSortAscending();
+    const sortField = OverviewToolbar.findSortField(this.currentSortFieldId());
     const appsPromises = namespaces.map(namespace =>
       API.getNamespaceAppHealth(authentication(), namespace, rateInterval).then(r => ({
         namespace: namespace,
@@ -127,7 +130,8 @@ class OverviewPage extends ListPage.Component<{}, State> {
           allNamespaces.push(info);
         }
       });
-      this.setState({ namespaces: allNamespaces });
+
+      this.setState({ namespaces: FiltersAndSorts.sortFunc(allNamespaces, sortField, isAscending) });
     });
   }
 
@@ -136,7 +140,7 @@ class OverviewPage extends ListPage.Component<{}, State> {
   }
 
   sort = (sortField: FiltersAndSorts.SortField, isAscending: boolean) => {
-    const sorted = this.state.namespaces.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+    const sorted = FiltersAndSorts.sortFunc(this.state.namespaces, sortField, isAscending);
     this.setState({ namespaces: sorted });
   };
 

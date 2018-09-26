@@ -60,11 +60,11 @@ export namespace FiltersAndSorts {
       isNumeric: false,
       param: 'h',
       compare: (a: NamespaceInfo, b: NamespaceInfo) => {
-        let diff = a.appsInError.length - b.appsInError.length;
+        let diff = b.appsInError.length - a.appsInError.length;
         if (diff !== 0) {
           return diff;
         }
-        diff = a.appsInWarning.length - b.appsInWarning.length;
+        diff = b.appsInWarning.length - a.appsInWarning.length;
         if (diff !== 0) {
           return diff;
         }
@@ -73,4 +73,12 @@ export namespace FiltersAndSorts {
       }
     }
   ];
+
+  export const sortFunc = (
+    allNamespaces: NamespaceInfo[],
+    sortField: FiltersAndSorts.SortField,
+    isAscending: boolean
+  ) => {
+    return allNamespaces.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));
+  };
 }
