@@ -1,7 +1,7 @@
 import * as React from 'react';
 import FlexView from 'react-flexview';
 import { PropTypes } from 'prop-types';
-import { Breadcrumb } from 'patternfly-react';
+import { Breadcrumb, Icon, Button } from 'patternfly-react';
 
 import { PollIntervalInMs } from '../../types/Common';
 import Namespace from '../../types/Namespace';
@@ -19,6 +19,7 @@ import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
 
 import GraphLegend from '../../components/GraphFilter/GraphLegend';
+import GraphHelp from './GraphHelp';
 import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeToolbar } from '../../components/CytoscapeGraph/CytoscapeToolbar';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../../components/Nav/NavUtils';
@@ -43,6 +44,11 @@ type GraphPageProps = GraphParamsType & {
   isPageVisible: boolean;
   isError: boolean;
 };
+
+type GraphPageState = {
+  showHelp: boolean;
+};
+
 const NUMBER_OF_DATAPOINTS = 30;
 
 const containerStyle = style({
@@ -75,7 +81,7 @@ const GraphErrorBoundaryFallback = () => {
   );
 };
 
-export default class GraphPage extends React.PureComponent<GraphPageProps> {
+export default class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   static contextTypes = {
     router: PropTypes.object
   };
@@ -89,6 +95,9 @@ export default class GraphPage extends React.PureComponent<GraphPageProps> {
     super(props);
     this.errorBoundaryRef = React.createRef();
     this.cytoscapeGraphRef = React.createRef();
+    this.state = {
+      showHelp: false
+    };
   }
 
   componentDidMount() {
@@ -131,6 +140,10 @@ export default class GraphPage extends React.PureComponent<GraphPageProps> {
     ) {
       this.errorBoundaryRef.current.cleanError();
     }
+
+    if (this.props.showLegend && this.state.showHelp) {
+      this.setState({ showHelp: false });
+    }
   }
 
   handleRefreshClick = () => {
@@ -144,6 +157,15 @@ export default class GraphPage extends React.PureComponent<GraphPageProps> {
     } else {
       this.context.router.history.replace(makeNamespaceGraphUrlFromParams({ ...params, graphLayout: layout }));
     }
+  };
+
+  toggleHelp = () => {
+    if (this.props.showLegend) {
+      this.props.toggleLegend();
+    }
+    this.setState({
+      showHelp: !this.state.showHelp
+    });
   };
 
   render() {
@@ -160,7 +182,12 @@ export default class GraphPage extends React.PureComponent<GraphPageProps> {
       <>
         <FlexView className={containerStyle} column={true}>
           <Breadcrumb title={true}>
-            <Breadcrumb.Item active={true}>Graph</Breadcrumb.Item>
+            <Breadcrumb.Item active={true}>
+              Graph{' '}
+              <Button bsStyle="link" onClick={this.toggleHelp}>
+                <Icon title="Help" type="pf" name="help" />
+              </Button>
+            </Breadcrumb.Item>
           </Breadcrumb>
           <div>
             {/* Use empty div to reset the flex, this component doesn't seem to like that. It renders all its contents in the center */}
@@ -213,6 +240,7 @@ export default class GraphPage extends React.PureComponent<GraphPageProps> {
             {this.props.showLegend && (
               <GraphLegend className={graphToolbarStyle} closeLegend={this.props.toggleLegend} />
             )}
+            {this.state.showHelp && <GraphHelp className={graphToolbarStyle} closeHelp={this.toggleHelp} />}
           </FlexView>
         </FlexView>
       </>
