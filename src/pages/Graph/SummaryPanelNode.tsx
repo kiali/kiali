@@ -99,6 +99,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
+      this.metricsPromise = undefined;
     }
 
     if (!nodeMetricType || (!this.hasHttpTraffic(target) && !this.hasTcpTraffic(target))) {

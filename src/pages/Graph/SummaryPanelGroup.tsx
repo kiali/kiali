@@ -144,6 +144,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
+      this.metricsPromise = undefined;
     }
 
     if (!nodeMetricType || (!this.hasHttpTraffic(target) && !this.hasTcpTraffic(target))) {
@@ -306,7 +307,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       let { namespace, workload } = nodeData(node);
 
       if (workload) {
-        workloadList.push(<WorkloadLink workload={workload} namespace={namespace} />);
+        workloadList.push(<WorkloadLink key={workload} workload={workload} namespace={namespace} />);
         workloadList.push(', ');
       }
     });

@@ -52,11 +52,12 @@ const renderNoTrafficLegend = () => {
   );
 };
 
-const thereIsTrafficData = serieData => {
+const thereIsTrafficData = seriesData => {
   return (
-    serieData.length > 0 &&
-    serieData[0].length > 1 &&
-    serieData[1].slice(1).reduce((accum, val) => accum + parseFloat(val), 0) > 0
+    seriesData &&
+    seriesData.length > 1 &&
+    seriesData[0].length > 1 &&
+    seriesData[1].slice(1).reduce((accum, val) => accum + Number(val), 0) > 0
   );
 };
 

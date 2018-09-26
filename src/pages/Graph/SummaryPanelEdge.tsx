@@ -187,6 +187,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
+      this.metricsPromise = undefined;
     }
 
     if (!destMetricType || !sourceMetricType || (!this.hasHttpMetrics(edge) && !this.hasTcpMetrics(edge))) {
