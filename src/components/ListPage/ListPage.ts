@@ -25,6 +25,7 @@ export namespace ListPage {
     setFiltersToURL: (filterTypes: FilterType[], filters: ActiveFilter[]) => ActiveFilter[];
     filtersMatchURL: (filterTypes: FilterType[], filters: ActiveFilter[]) => boolean;
     isCurrentSortAscending: () => boolean;
+    currentSortFieldId: () => string | undefined;
     currentDuration: () => number;
     currentPollInterval: () => number;
   }
@@ -168,6 +169,10 @@ export namespace ListPage {
 
     isCurrentSortAscending(): boolean {
       return (this.getSingleQueryParam('direction') || 'asc') === 'asc';
+    }
+
+    currentSortFieldId(): string | undefined {
+      return this.getSingleQueryParam('sort');
     }
 
     currentDuration() {

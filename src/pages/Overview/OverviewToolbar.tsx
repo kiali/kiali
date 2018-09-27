@@ -26,10 +26,18 @@ type State = {
 const DURATIONS = config().toolbar.intervalDuration;
 
 class OverviewToolbar extends React.Component<Props, State> {
+  static findSortField(id?: string): FiltersAndSorts.SortField {
+    if (id) {
+      const field = FiltersAndSorts.sortFields.find(sortField => sortField.param === id);
+      return field || FiltersAndSorts.sortFields[0];
+    }
+    return FiltersAndSorts.sortFields[0];
+  }
+
   constructor(props: Props) {
     super(props);
     this.state = {
-      sortField: this.currentSortField(),
+      sortField: OverviewToolbar.findSortField(this.props.pageHooks.currentSortFieldId()),
       isSortAscending: this.props.pageHooks.isCurrentSortAscending(),
       duration: this.props.pageHooks.currentDuration(),
       pollInterval: this.props.pageHooks.currentPollInterval()
@@ -37,7 +45,7 @@ class OverviewToolbar extends React.Component<Props, State> {
   }
 
   componentDidUpdate() {
-    const urlSortField = this.currentSortField();
+    const urlSortField = OverviewToolbar.findSortField(this.props.pageHooks.currentSortFieldId());
     const urlIsSortAscending = this.props.pageHooks.isCurrentSortAscending();
     const urlDuration = this.props.pageHooks.currentDuration();
     const urlPollInterval = this.props.pageHooks.currentPollInterval();
@@ -66,20 +74,10 @@ class OverviewToolbar extends React.Component<Props, State> {
     );
   }
 
-  currentSortField(): FiltersAndSorts.SortField {
-    const fromURL = this.props.pageHooks.getSingleQueryParam('sort');
-    if (fromURL) {
-      const field = FiltersAndSorts.sortFields.find(sortField => sortField.param === fromURL);
-      return field || FiltersAndSorts.sortFields[0];
-    }
-    return FiltersAndSorts.sortFields[0];
-  }
-
   updateSortField = (sortField: FiltersAndSorts.SortField) => {
     this.props.sort(sortField, this.state.isSortAscending);
-    this.setState({ sortField: sortField }, () => {
-      this.props.pageHooks.onParamChange([{ name: 'sort', value: sortField.param }]);
-    });
+    this.props.pageHooks.onParamChange([{ name: 'sort', value: sortField.param }]);
+    this.setState({ sortField: sortField });
   };
 
   updateSortDirection = () => {
