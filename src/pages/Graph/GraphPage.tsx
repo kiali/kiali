@@ -73,6 +73,13 @@ const graphToolbarStyle = style({
   position: 'absolute'
 });
 
+const graphHelpStyle = style({
+  left: '0',
+  top: '-40px',
+  zIndex: 9999,
+  position: 'absolute'
+});
+
 const GraphErrorBoundaryFallback = () => {
   return (
     <div className={cytoscapeGraphContainerStyle}>
@@ -240,7 +247,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
             {this.props.showLegend && (
               <GraphLegend className={graphToolbarStyle} closeLegend={this.props.toggleLegend} />
             )}
-            {this.state.showHelp && <GraphHelp className={graphToolbarStyle} closeHelp={this.toggleHelp} />}
+            {this.state.showHelp && <GraphHelp className={graphHelpStyle} closeHelp={this.toggleHelp} />}
           </FlexView>
         </FlexView>
       </>

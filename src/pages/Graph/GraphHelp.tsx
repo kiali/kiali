@@ -6,7 +6,7 @@ import { Button, Icon } from 'patternfly-react';
 // The content of the graph legend is taken from the image in src/assets/img/graph-legend.svg
 // The size of content's dialog is the same as the image (it is fetched dynamically on this code)
 // Any image format that can be displayed by a browser could be used.
-const GraphHelpImage = require('../../assets/img/graph-legend.svg');
+const GraphHelpImage = require('../../assets/img/graph-help.svg');
 
 export interface GraphHelpProps {
   closeHelp: () => void;
@@ -54,7 +54,7 @@ export default class GraphHelp extends React.Component<GraphHelpProps, GraphHelp
             <Button className="close" bsClass="" onClick={this.props.closeHelp}>
               <Icon title="Close" type="pf" name="close" />
             </Button>
-            <span className="modal-title">Graph Help - how to use service graph</span>
+            <span className="modal-title">Helpful information for using the graph</span>
           </div>
           <div
             style={{ width: this.state.width, height: this.state.height }}
