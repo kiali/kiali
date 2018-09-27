@@ -44,7 +44,6 @@ func (q *MetricsQuery) FillDefaults() {
 	q.RateInterval = "1m"
 	q.RateFunc = "rate"
 	q.Avg = true
-	q.Quantiles = []string{"0.5", "0.95", "0.99"}
 }
 
 // Metrics contains all simple metrics and histograms data for both source and destination telemetry

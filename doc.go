@@ -154,11 +154,11 @@ type FiltersParam struct {
 //
 // swagger:parameters serviceMetrics appMetrics workloadMetrics
 type QuantilesParam struct {
-	// List of quantiles to fetch. When empty, [0.5, 0.95, 0.99] are fetched.
+	// List of quantiles to fetch. Ex: [0.5, 0.95, 0.99]. When empty, no quantile data is fetched.
 	//
 	// in: query
 	// required: false
-	// default: [0.5, 0.95, 0.99]
+	// default: []
 	Name string `json:"quantiles[]"`
 }
 

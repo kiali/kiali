@@ -128,6 +128,7 @@ func TestGetServiceMetrics(t *testing.T) {
 	}
 	q.FillDefaults()
 	q.RateInterval = "5m"
+	q.Quantiles = []string{"0.99"}
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 4, len(metrics.Dest.Metrics), "Should have 4 simple metrics")
@@ -182,6 +183,7 @@ func TestGetAppMetrics(t *testing.T) {
 	}
 	q.FillDefaults()
 	q.RateInterval = "5m"
+	q.Quantiles = []string{"0.5", "0.95", "0.99"}
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 8, len(metrics.Dest.Metrics), "Should have 8 simple metrics")
@@ -334,6 +336,7 @@ func TestGetAppMetricsUnavailable(t *testing.T) {
 	}
 	q.FillDefaults()
 	q.RateInterval = "5m"
+	q.Quantiles = []string{"0.5", "0.95", "0.99"}
 	q.Filters = []string{"request_count", "request_size"}
 	metrics := client.GetMetrics(&q)
 
@@ -396,6 +399,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	}
 	q.FillDefaults()
 	q.RateInterval = "5m"
+	q.Quantiles = []string{"0.5", "0.95", "0.99"}
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 8, len(metrics.Dest.Metrics), "Should have 8 simple metrics")

@@ -28,7 +28,7 @@ func TestAppMetricsDefault(t *testing.T) {
 	url := ts.URL + "/api/namespaces/ns/apps/my_app/metrics"
 	now := time.Now()
 	delta := 15 * time.Second
-	var histogramSentinel, gaugeSentinel uint32
+	var gaugeSentinel uint32
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
@@ -37,14 +37,9 @@ func TestAppMetricsDefault(t *testing.T) {
 		assert.Contains(t, query, "_app=\"my_app\"")
 		assert.Contains(t, query, "_namespace=\"ns\"")
 		assert.Contains(t, query, "[1m]")
-		if strings.Contains(query, "histogram_quantile") {
-			// Histogram specific queries
-			assert.Contains(t, query, " by (le,reporter)")
-			atomic.AddUint32(&histogramSentinel, 1)
-		} else {
-			assert.Contains(t, query, " by (reporter)")
-			atomic.AddUint32(&gaugeSentinel, 1)
-		}
+		assert.NotContains(t, query, "histogram_quantile")
+		assert.Contains(t, query, " by (reporter)")
+		atomic.AddUint32(&gaugeSentinel, 1)
 		assert.Equal(t, 15*time.Second, r.Step)
 		assert.WithinDuration(t, now, r.End, delta)
 		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
@@ -60,7 +55,6 @@ func TestAppMetricsDefault(t *testing.T) {
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
 	// Assert branch coverage
-	assert.NotZero(t, histogramSentinel)
 	assert.NotZero(t, gaugeSentinel)
 }
 
@@ -80,6 +74,8 @@ func TestAppMetricsWithParams(t *testing.T) {
 	q.Add("duration", "1000")
 	q.Add("byLabelsIn[]", "response_code")
 	q.Add("byLabelsOut[]", "response_code")
+	q.Add("quantiles[]", "0.5")
+	q.Add("quantiles[]", "0.95")
 	q.Add("filters[]", "request_count")
 	q.Add("filters[]", "request_size")
 	req.URL.RawQuery = q.Encode()

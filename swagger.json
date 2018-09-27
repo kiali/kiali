@@ -180,9 +180,9 @@
           },
           {
             "type": "string",
-            "default": "[0.5, 0.95, 0.99]",
+            "default": "[]",
             "x-go-name": "Name",
-            "description": "List of quantiles to fetch. When empty, [0.5, 0.95, 0.99] are fetched.",
+            "description": "List of quantiles to fetch. Ex: [0.5, 0.95, 0.99]. When empty, no quantile data is fetched.",
             "name": "quantiles[]",
             "in": "query"
           },
@@ -421,9 +421,9 @@
           },
           {
             "type": "string",
-            "default": "[0.5, 0.95, 0.99]",
+            "default": "[]",
             "x-go-name": "Name",
-            "description": "List of quantiles to fetch. When empty, [0.5, 0.95, 0.99] are fetched.",
+            "description": "List of quantiles to fetch. Ex: [0.5, 0.95, 0.99]. When empty, no quantile data is fetched.",
             "name": "quantiles[]",
             "in": "query"
           },
@@ -608,9 +608,9 @@
           },
           {
             "type": "string",
-            "default": "[0.5, 0.95, 0.99]",
+            "default": "[]",
             "x-go-name": "Name",
-            "description": "List of quantiles to fetch. When empty, [0.5, 0.95, 0.99] are fetched.",
+            "description": "List of quantiles to fetch. Ex: [0.5, 0.95, 0.99]. When empty, no quantile data is fetched.",
             "name": "quantiles[]",
             "in": "query"
           },
