@@ -10,11 +10,16 @@ import (
 )
 
 type UnusedNodeAppender struct {
-	GraphType string
+	GraphType   string // This appender does not operate on service graphs because it adds workload nodes.
+	IsNodeGraph bool   // This appender does not operate on node detail graphs because we want to focus on the specific node.
 }
 
 // AppendGraph implements Appender
 func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string) {
+	if graph.GraphTypeService == a.GraphType || a.IsNodeGraph {
+		return
+	}
+
 	istioClient, err := kubernetes.NewClient()
 	checkError(err)
 

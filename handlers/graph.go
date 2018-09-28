@@ -22,7 +22,7 @@ package handlers
 //   appenders:      Comma-separated list of appenders to run from [circuit_breaker, unused_service...] (default all)
 //                   Note, appenders may support appender-specific query parameters
 //   duration:       time.Duration indicating desired query range duration, (default 10m)
-//   graphType:      Determines how to present the telemetry data. app | versionedApp | workload (default workload)
+//   graphType:      Determines how to present the telemetry data. app | service | versionedApp | workload (default workload)
 //   groupBy:        If supported by vendor, visually group by a specified node attribute (default version)
 //   includeIstio:   Include istio-system (infra) services (default false)
 //   namespaces:     Comma-separated list of namespace names to use in the graph. Will override namespace path param
@@ -46,7 +46,6 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/graph/appender"
 	"github.com/kiali/kiali/graph/cytoscape"
 	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/log"
@@ -78,7 +77,7 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 		checkError(errors.New(fmt.Sprintf("Vendor [%s] not supported", o.Vendor)))
 	}
 
-	log.Debugf("Build graph for [%v] namespaces [%s]", len(o.Namespaces), o.Namespaces)
+	log.Debugf("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
 	trafficMap := graph.NewTrafficMap()
 	for _, namespace := range o.Namespaces {
@@ -98,7 +97,37 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 	markOutsiders(trafficMap, o)
 	markTrafficGenerators(trafficMap)
 
+	if graph.GraphTypeService == o.GraphType {
+		trafficMap = reduceToServiceGraph(trafficMap)
+	}
+
 	return trafficMap
+}
+
+// mergeTrafficMaps ensures that we only have unique nodes by removing duplicate
+// nodes and merging their edges.  We also need to avoid duplicate edges, it can
+// happen when an terminal node of one namespace is a root node of another:
+//   ns1 graph: unknown -> ns1:A -> ns2:B
+//   ns2 graph:   ns1:A -> ns2:B -> ns2:C
+func mergeTrafficMaps(trafficMap, nsTrafficMap graph.TrafficMap) {
+	for nsId, nsNode := range nsTrafficMap {
+		if node, isDup := trafficMap[nsId]; isDup {
+			for _, nsEdge := range nsNode.Edges {
+				isDupEdge := false
+				for _, e := range node.Edges {
+					if nsEdge.Dest.ID == e.Dest.ID && nsEdge.Metadata["protocol"] == e.Metadata["protocol"] {
+						isDupEdge = true
+						break
+					}
+				}
+				if !isDupEdge {
+					node.Edges = append(node.Edges, nsEdge)
+				}
+			}
+		} else {
+			trafficMap[nsId] = nsNode
+		}
+	}
 }
 
 func markOutsiders(trafficMap graph.TrafficMap, o options.Options) {
@@ -146,6 +175,72 @@ func markTrafficGenerators(trafficMap graph.TrafficMap) {
 		if _, isDest := destMap[n.ID]; !isDest {
 			n.Metadata["isRoot"] = true
 		}
+	}
+}
+
+// reduceToServicGraph compresses a [service-injected workload] graph by removing
+// the workload nodes such that, with exception of root nodes, the resulting graph has edges
+// only from and to service nodes.
+func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
+	reducedTrafficMap := graph.NewTrafficMap()
+
+	for id, n := range trafficMap {
+		isRoot := false
+		if val, ok := n.Metadata["isRoot"]; ok {
+			isRoot = val.(bool)
+		}
+		if isRoot {
+			reducedTrafficMap[id] = n
+			continue
+		}
+		if n.NodeType != graph.NodeTypeService {
+			continue
+		}
+
+		// handle service node, add to reduced traffic map and generate new edges
+		reducedTrafficMap[id] = n
+		workloadEdges := n.Edges
+		n.Edges = []*graph.Edge{}
+		for _, workloadEdge := range workloadEdges {
+			workload := workloadEdge.Dest
+			checkNodeType(graph.NodeTypeWorkload, workload)
+			for _, serviceEdge := range workload.Edges {
+				childService := serviceEdge.Dest
+				checkNodeType(graph.NodeTypeService, childService)
+				var edge *graph.Edge
+				for _, e := range n.Edges {
+					if childService.ID == e.Dest.ID && serviceEdge.Metadata["protocol"] == e.Metadata["protocol"] {
+						edge = e
+						break
+					}
+				}
+				if nil == edge {
+					n.Edges = append(n.Edges, serviceEdge)
+				} else {
+					addTraffic(edge, serviceEdge)
+				}
+			}
+		}
+	}
+
+	return reducedTrafficMap
+}
+
+func addTraffic(target, source *graph.Edge) {
+	protocol := target.Metadata["protocol"]
+	switch protocol {
+	case "http":
+		addToRate(target.Metadata, "rate", source.Metadata["rate"].(float64))
+	case "tcp":
+		addToRate(target.Metadata, "tcpSentRate", source.Metadata["tcpSentRate"].(float64))
+	default:
+		checkError(errors.New(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, target)))
+	}
+}
+
+func checkNodeType(expected string, n *graph.Node) {
+	if expected != n.NodeType {
+		checkError(errors.New(fmt.Sprintf("Expected nodeType [%s] for node [%+v]", expected, n)))
 	}
 }
 
@@ -298,7 +393,7 @@ func populateTrafficMapHttp(trafficMap graph.TrafficMap, vector *model.Vector, o
 
 		if o.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
-			_, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.VendorOptions.GraphType)
+			_, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.GraphType)
 			if destSvcNameOk && destNodeType != graph.NodeTypeService {
 				addHttpTraffic(trafficMap, val, code, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName, o)
 				addHttpTraffic(trafficMap, val, code, destSvcNs, "", "", "", destSvcName, destSvcNs, destWl, destApp, destVer, destSvcName, o)
@@ -397,7 +492,7 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		if o.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
 			destSvcNameOk = destSvcName != "" && destSvcName != graph.UnknownService
-			_, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.VendorOptions.GraphType)
+			_, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.GraphType)
 			if destSvcNameOk && destNodeType != graph.NodeTypeService {
 				addTcpTraffic(trafficMap, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName, o)
 				addTcpTraffic(trafficMap, val, destSvcNs, "", "", "", destSvcName, destSvcNs, destWl, destApp, destVer, destSvcName, o)
@@ -484,40 +579,14 @@ func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float
 }
 
 func addNode(trafficMap graph.TrafficMap, namespace, workload, app, version, service string, o options.Options) (*graph.Node, bool) {
-	id, nodeType := graph.Id(namespace, workload, app, version, service, o.VendorOptions.GraphType)
+	id, nodeType := graph.Id(namespace, workload, app, version, service, o.GraphType)
 	node, found := trafficMap[id]
 	if !found {
-		newNode := graph.NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, o.VendorOptions.GraphType)
+		newNode := graph.NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, o.GraphType)
 		node = &newNode
 		trafficMap[id] = node
 	}
 	return node, found
-}
-
-// mergeTrafficMaps ensures that we only have unique nodes by removing duplicate
-// nodes and merging their edges.  We also need to avoid duplicate edges, it can
-// happen when an terminal node of one namespace is a root node of another:
-//   ns1 graph: unknown -> ns1:A -> ns2:B
-//   ns2 graph:   ns1:A -> ns2:B -> ns2:C
-func mergeTrafficMaps(trafficMap, nsTrafficMap graph.TrafficMap) {
-	for nsId, nsNode := range nsTrafficMap {
-		if node, isDup := trafficMap[nsId]; isDup {
-			for _, nsEdge := range nsNode.Edges {
-				isDupEdge := false
-				for _, e := range node.Edges {
-					if nsEdge.Dest.ID == e.Dest.ID && nsEdge.Metadata["protocol"] == e.Metadata["protocol"] {
-						isDupEdge = true
-						break
-					}
-				}
-				if !isDupEdge {
-					node.Edges = append(node.Edges, nsEdge)
-				}
-			}
-		} else {
-			trafficMap[nsId] = nsNode
-		}
-	}
 }
 
 // GraphNode is a REST http.HandlerFunc handling node-detail graph
@@ -546,18 +615,12 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	namespace := o.Namespaces[0]
 	n := graph.NewNode(namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.NodeOptions.Service, o.GraphType)
 
-	log.Debugf("Build graph for node [%v]", n)
+	log.Debugf("Build graph for node [%+v]", n)
 
 	trafficMap := buildNodeTrafficMap(namespace, n, o, client)
 
 	for _, a := range o.Appenders {
-		switch a.(type) {
-		case appender.UnusedNodeAppender:
-			// not applicable to a node detail graph
-			continue
-		default:
-			a.AppendGraph(trafficMap, namespace)
-		}
+		a.AppendGraph(trafficMap, namespace)
 	}
 
 	// The appenders can add/remove/alter nodes. After the manipulations are complete
