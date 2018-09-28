@@ -1,7 +1,9 @@
+import os
 import pytest
 import yaml
 import ssl
 from kiali import KialiClient
+from utils.command_exec import command_exec
 
 ENV_FILE = './config/env.yaml'
 CIRCUIT_BREAKER_FILE = 'assets/bookinfo-reviews-all-cb.yaml'
@@ -19,7 +21,8 @@ def kiali_json():
 @pytest.fixture(scope='session')
 def kiali_client():
     config = __get_environment_config__(ENV_FILE)
-    return __get_kiali_client__(config)
+    yield __get_kiali_client__(config)
+    __remove_assets()
 
 def get_bookinfo_endpoint():
     return __get_environment_config__(ENV_FILE).get('mesh_bookinfo_namespace')
@@ -33,8 +36,19 @@ def __get_kiali_client__(config):
                            username=config.get('kiali_username'), password=config.get('kiali_password'))
     print ("\nGet Kiali Client for Kiali hostname: {}\n".format(config.get('kiali_hostname')))
 
-
 def __get_environment_config__(env_file):
     with open(env_file) as yamlfile:
         config = yaml.load(yamlfile)
     return config
+
+def __remove_assets():
+  print('Cleanning up: ')
+  namespace = get_bookinfo_endpoint()
+  file_count = 0
+  for root, dirs, files in os.walk('./assets'):
+    file_count = len(files)
+
+    for name in files:
+      command_exec.oc_delete('./assets/' + name, namespace)
+
+  print('Assets deleted: {}'.format(file_count))
