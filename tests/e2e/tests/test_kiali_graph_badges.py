@@ -1,6 +1,7 @@
 import os
 import tests.conftest as conftest
 from utils.timeout import timeout
+from utils.command_exec import command_exec
 import time
 
 DURATION = '60s'
@@ -31,38 +32,35 @@ def do_test(kiali_client, graph_params, yaml_file, badge):
     environment_configmap = conftest.__get_environment_config__(conftest.ENV_FILE)
     bookinfo_namespace = bookinfo_namespace = conftest.get_bookinfo_endpoint()
 
-
     appType = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)['graphType']
     assert appType == graph_params.get('graphType')
 
     count = get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge)
 
-    add_command_text = "oc apply -n " + bookinfo_namespace + " -f " + os.path.abspath(os.path.realpath(yaml_file))
-    add_command_result = os.popen(add_command_text).read()
-    assert add_command_result.__contains__("created") or add_command_result.__contains__("configured")
+    try:
+      assert command_exec.oc_apply(yaml_file, bookinfo_namespace) == True
 
-    graph = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)
-    assert graph is not None
+      graph = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)
+      assert graph is not None
 
-    with timeout(seconds=60, error_message='Timed out waiting for Create'):
-        while True:
-            new_count = get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge)
-            if new_count != 0 and new_count >= count:
-                break
+      with timeout(seconds=5, error_message='Timed out waiting for Create'):
+          while True:
+              new_count = get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge)
+              if new_count != 0 and new_count >= count:
+                  break
 
-            time.sleep(1)
+              time.sleep(1)
 
-    delete_command_text = "oc delete -n " + bookinfo_namespace + " -f " + os.path.abspath(os.path.realpath(yaml_file))
-    delete_command_result = os.popen(delete_command_text).read()
-    assert delete_command_result.__contains__("deleted")
+    finally:
+      assert command_exec.oc_delete(yaml_file, bookinfo_namespace) == True
 
-    with timeout(seconds=30, error_message='Timed out waiting for Delete'):
-        while True:
-            # Validate that JSON no longer has Virtual Service
-            if get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge) <= count:
-                break
+      with timeout(seconds=5, error_message='Timed out waiting for Delete'):
+          while True:
+              # Validate that JSON no longer has Virtual Service
+              if get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge) <= count:
+                  break
 
-            time.sleep(1)
+              time.sleep(1)
 
     return True
 
