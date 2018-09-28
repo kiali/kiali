@@ -2,6 +2,7 @@ import pytest
 import tests.conftest as conftest
 from utils.command_exec import command_exec
 from utils.timeout import timeout
+import time
 
 BOOKINFO_EXPECTED_SERVICES = 4
 BOOKINFO_EXPECTED_SERVICES_MONGODB = 5
@@ -48,7 +49,7 @@ def test_service_detail_with_virtual_service(kiali_client):
     with timeout(seconds=10, error_message='Timed out waiting for virtual service creation'):
       while True:
         service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
-        if service_details != None and len (service_details.get('virtualServices')) > 0:
+        if service_details != None and service_details.get('virtualServices') != None and len(service_details.get('virtualServices')) > 0:
           break
 
         time.sleep(1)
@@ -91,13 +92,13 @@ def test_service_detail_with_virtual_service(kiali_client):
 def test_service_detail_with_destination_rule(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_endpoint()
 
-    # Add a virtual service that will be tested
+    # Add a destination rule that will be tested
     assert command_exec.oc_apply(DESTINATION_RULE_FILE, bookinfo_namespace) == True
 
     with timeout(seconds=10, error_message='Timed out waiting for destination rule creation'):
       while True:
         service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
-        if service_details != None and len (service_details.get('destinationRules')) > 0:
+        if service_details != None and service_details.get('destinationRules') != None and len(service_details.get('destinationRules')) > 0:
           break
 
         time.sleep(1)
