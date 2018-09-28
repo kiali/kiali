@@ -126,7 +126,7 @@ type RateIntervalParam struct {
 	Name string `json:"rateInterval"`
 }
 
-// rateFunc: rate function
+// RateFunc: rate function
 //
 // swagger:parameters serviceMetrics appMetrics workloadMetrics
 type RateFuncParam struct {
@@ -148,6 +148,30 @@ type FiltersParam struct {
 	// required: false
 	// default: []
 	Name string `json:"filters[]"`
+}
+
+// Quantiles: list of quantiles to fetch for histograms
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type QuantilesParam struct {
+	// List of quantiles to fetch. Ex: [0.5, 0.95, 0.99]. When empty, no quantile data is fetched.
+	//
+	// in: query
+	// required: false
+	// default: []
+	Name string `json:"quantiles[]"`
+}
+
+// Average: flag to indicate if histogram average should be fetched
+//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type AvgParam struct {
+	// Flag to indicate if histogram average should be fetched. Default is true.
+	//
+	// in: query
+	// required: false
+	// default: true
+	Name string `json:"avg"`
 }
 
 // ByLabelsIn: labels for grouping input metrics

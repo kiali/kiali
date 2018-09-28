@@ -182,6 +182,22 @@
             "type": "string",
             "default": "[]",
             "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Ex: [0.5, 0.95, 0.99]. When empty, no quantile data is fetched.",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "true",
+            "x-go-name": "Name",
+            "description": "Flag to indicate if histogram average should be fetched. Default is true.",
+            "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
             "description": "List of labels to use for grouping input metrics.",
             "name": "byLabelsIn[]",
             "in": "query"
@@ -407,6 +423,22 @@
             "type": "string",
             "default": "[]",
             "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Ex: [0.5, 0.95, 0.99]. When empty, no quantile data is fetched.",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "true",
+            "x-go-name": "Name",
+            "description": "Flag to indicate if histogram average should be fetched. Default is true.",
+            "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
             "description": "List of labels to use for grouping input metrics.",
             "name": "byLabelsIn[]",
             "in": "query"
@@ -572,6 +604,22 @@
             "x-go-name": "Name",
             "description": "List of metrics to fetch. When empty, all metrics are fetched. Expected name here is the Kiali internal metric name",
             "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Ex: [0.5, 0.95, 0.99]. When empty, no quantile data is fetched.",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "true",
+            "x-go-name": "Name",
+            "description": "Flag to indicate if histogram average should be fetched. Default is true.",
+            "name": "avg",
             "in": "query"
           },
           {
@@ -1514,19 +1562,8 @@
     "Histogram": {
       "description": "Histogram contains Metric objects for several histogram-kind statistics",
       "type": "object",
-      "properties": {
-        "average": {
-          "$ref": "#/definitions/Metric"
-        },
-        "median": {
-          "$ref": "#/definitions/Metric"
-        },
-        "percentile95": {
-          "$ref": "#/definitions/Metric"
-        },
-        "percentile99": {
-          "$ref": "#/definitions/Metric"
-        }
+      "additionalProperties": {
+        "$ref": "#/definitions/Metric"
       },
       "x-go-package": "github.com/kiali/kiali/prometheus"
     },

@@ -25,6 +25,8 @@ type MetricsQuery struct {
 	RateInterval string
 	RateFunc     string
 	Filters      []string
+	Quantiles    []string
+	Avg          bool
 	ByLabelsIn   []string
 	ByLabelsOut  []string
 	Namespace    string
@@ -41,6 +43,7 @@ func (q *MetricsQuery) FillDefaults() {
 	q.Step = 15 * time.Second
 	q.RateInterval = "1m"
 	q.RateFunc = "rate"
+	q.Avg = true
 }
 
 // Metrics contains all simple metrics and histograms data for both source and destination telemetry
@@ -62,12 +65,7 @@ type Metric struct {
 }
 
 // Histogram contains Metric objects for several histogram-kind statistics
-type Histogram struct {
-	Average      *Metric `json:"average"`
-	Median       *Metric `json:"median"`
-	Percentile95 *Metric `json:"percentile95"`
-	Percentile99 *Metric `json:"percentile99"`
-}
+type Histogram = map[string]*Metric
 
 // EnvoyServiceHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster for inbound and outbound traffic
 type EnvoyServiceHealth struct {
@@ -334,73 +332,30 @@ func splitMetricTelemetry(metric *Metric) (source, dest *Metric) {
 }
 
 func splitHistoTelemetry(histo Histogram) (source, dest Histogram) {
-	source = Histogram{
-		Average: &Metric{
+	source = make(Histogram)
+	dest = make(Histogram)
+	for stat, metric := range histo {
+		sourceMetric := &Metric{
 			Matrix: []*model.SampleStream{},
-			err:    histo.Average.err},
-		Median: &Metric{
+			err:    metric.err}
+
+		destMetric := &Metric{
 			Matrix: []*model.SampleStream{},
-			err:    histo.Median.err},
-		Percentile95: &Metric{
-			Matrix: []*model.SampleStream{},
-			err:    histo.Percentile95.err},
-		Percentile99: &Metric{
-			Matrix: []*model.SampleStream{},
-			err:    histo.Percentile99.err},
-	}
-	dest = Histogram{
-		Average: &Metric{
-			Matrix: []*model.SampleStream{},
-			err:    histo.Average.err},
-		Median: &Metric{
-			Matrix: []*model.SampleStream{},
-			err:    histo.Median.err},
-		Percentile95: &Metric{
-			Matrix: []*model.SampleStream{},
-			err:    histo.Percentile95.err},
-		Percentile99: &Metric{
-			Matrix: []*model.SampleStream{},
-			err:    histo.Percentile99.err},
-	}
-	for _, s := range histo.Average.Matrix {
-		switch s.Metric["reporter"] {
-		case "source":
-			source.Average.Matrix = append(source.Average.Matrix, s)
-		case "destination":
-			dest.Average.Matrix = append(dest.Average.Matrix, s)
-		default:
-			log.Warningf("Discarding histo avg with reporter=[%s]", s.Metric["reporter"])
+			err:    metric.err}
+
+		for _, s := range metric.Matrix {
+			switch s.Metric["reporter"] {
+			case "source":
+				sourceMetric.Matrix = append(sourceMetric.Matrix, s)
+			case "destination":
+				destMetric.Matrix = append(destMetric.Matrix, s)
+			default:
+				log.Warningf("Discarding histo '%s' with reporter=[%s]", stat, s.Metric["reporter"])
+			}
 		}
-	}
-	for _, s := range histo.Median.Matrix {
-		switch s.Metric["reporter"] {
-		case "source":
-			source.Median.Matrix = append(source.Median.Matrix, s)
-		case "destination":
-			dest.Median.Matrix = append(dest.Median.Matrix, s)
-		default:
-			log.Warningf("Discarding histo median with reporter=[%s]", s.Metric["reporter"])
-		}
-	}
-	for _, s := range histo.Percentile95.Matrix {
-		switch s.Metric["reporter"] {
-		case "source":
-			source.Percentile95.Matrix = append(source.Percentile95.Matrix, s)
-		case "destination":
-			dest.Percentile95.Matrix = append(dest.Percentile95.Matrix, s)
-		default:
-			log.Warningf("Discarding histo p95 with reporter=[%s]", s.Metric["reporter"])
-		}
-	}
-	for _, s := range histo.Percentile99.Matrix {
-		switch s.Metric["reporter"] {
-		case "source":
-			source.Percentile99.Matrix = append(source.Percentile99.Matrix, s)
-		case "destination":
-			dest.Percentile99.Matrix = append(dest.Percentile99.Matrix, s)
-		default:
-			log.Warningf("Discarding histo p95 with reporter=[%s]", s.Metric["reporter"])
-		}
+
+		source[stat] = sourceMetric
+		dest[stat] = destMetric
 	}
 
 	return source, dest
@@ -418,44 +373,35 @@ func fetchRateRange(api v1.API, metricName string, labels string, grouping strin
 }
 
 func fetchHistogramRange(api v1.API, metricName string, labels string, grouping string, q *MetricsQuery) Histogram {
-	// Note: we may want to make returned stats configurable in the future
-	// Note 2: the p8s queries are not run in parallel here, but they are at the caller's place.
+	histogram := make(Histogram)
+
+	// Note: the p8s queries are not run in parallel here, but they are at the caller's place.
 	//	This is because we may not want to create too many threads in the lowest layer
-	groupingAvg := ""
-	groupingQuantile := ""
-	if grouping != "" {
-		groupingAvg = fmt.Sprintf(" by (%s)", grouping)
-		groupingQuantile = fmt.Sprintf(",%s", grouping)
+	if q.Avg {
+		groupingAvg := ""
+		if grouping != "" {
+			groupingAvg = fmt.Sprintf(" by (%s)", grouping)
+		}
+		// Average
+		// Example: sum(rate(my_histogram_sum{foo=bar}[5m])) by (baz) / sum(rate(my_histogram_count{foo=bar}[5m])) by (baz)
+		query := fmt.Sprintf(
+			"round(sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s, 0.001)", metricName, labels, q.RateInterval, groupingAvg,
+			metricName, labels, q.RateInterval, groupingAvg)
+		histogram["avg"] = fetchRange(api, query, q.Range)
 	}
 
-	// Average
-	// Example: sum(rate(my_histogram_sum{foo=bar}[5m])) by (baz) / sum(rate(my_histogram_count{foo=bar}[5m])) by (baz)
-	query := fmt.Sprintf(
-		"round(sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s, 0.001)", metricName, labels, q.RateInterval, groupingAvg,
-		metricName, labels, q.RateInterval, groupingAvg)
-	avg := fetchRange(api, query, q.Range)
+	groupingQuantile := ""
+	if grouping != "" {
+		groupingQuantile = fmt.Sprintf(",%s", grouping)
+	}
+	for _, quantile := range q.Quantiles {
+		// Example: round(histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz)), 0.001)
+		query := fmt.Sprintf(
+			"round(histogram_quantile(%s, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", quantile, metricName, labels, q.RateInterval, groupingQuantile)
+		histogram[quantile] = fetchRange(api, query, q.Range)
+	}
 
-	// Median
-	// Example: round(histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz)), 0.001)
-	query = fmt.Sprintf(
-		"round(histogram_quantile(0.5, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, q.RateInterval, groupingQuantile)
-	med := fetchRange(api, query, q.Range)
-
-	// Quantile 95
-	query = fmt.Sprintf(
-		"round(histogram_quantile(0.95, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, q.RateInterval, groupingQuantile)
-	p95 := fetchRange(api, query, q.Range)
-
-	// Quantile 99
-	query = fmt.Sprintf(
-		"round(histogram_quantile(0.99, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", metricName, labels, q.RateInterval, groupingQuantile)
-	p99 := fetchRange(api, query, q.Range)
-
-	return Histogram{
-		Average:      avg,
-		Median:       med,
-		Percentile95: p95,
-		Percentile99: p99}
+	return histogram
 }
 
 func fetchTimestamp(api v1.API, query string, t time.Time) (model.Vector, error) {
