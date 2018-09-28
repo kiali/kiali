@@ -33,14 +33,14 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	errChan := make(chan error, 5)
 
 	vs := make([]kubernetes.IstioObject, 0)
-	dr := make([]kubernetes.IstioObject, 0)
+	drs := make([]kubernetes.IstioObject, 0)
 	gws := make([]kubernetes.IstioObject, 0)
 	ses := make([]kubernetes.IstioObject, 0)
 	var pods []v1.Pod
 
 	wg.Add(5)
 	go fetch(&vs, namespace, service, in.k8s.GetVirtualServices, &wg, errChan)
-	go fetch(&dr, namespace, service, in.k8s.GetDestinationRules, &wg, errChan)
+	go fetch(&drs, namespace, service, in.k8s.GetDestinationRules, &wg, errChan)
 	go fetchNoEntry(&gws, namespace, in.k8s.GetGateways, &wg, errChan)
 	go fetchNoEntry(&ses, namespace, in.k8s.GetServiceEntries, &wg, errChan)
 	go func() {
@@ -52,23 +52,14 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		}
 	}()
 	wg.Wait()
-	/* TODO revisit if Gateways and ServiceEntries are used here, something seems missing
-	   istioDetails is not passed
-	if len(errChan) == 0 {
-		istioDetails.Gateways = gws
-		istioDetails.ServiceEntries = ses
-	} else {
-		err = <-errChan
-		return nil, err
-	}
-	*/
 	if len(errChan) != 0 {
 		err = <-errChan
 		return nil, err
 	}
 	objectCheckers := []ObjectChecker{
-		checkers.VirtualServiceChecker{namespace, dr, vs},
+		checkers.VirtualServiceChecker{namespace, drs, vs},
 		checkers.PodChecker{Pods: pods},
+		checkers.DestinationRulesChecker{DestinationRules: drs},
 	}
 
 	// Get groupal validations for same kind istio objects
