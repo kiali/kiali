@@ -23,7 +23,7 @@ const GraphRefresh: React.SFC<GraphRefreshProps> = props => {
 
   const formatRefreshText = (key, isTitle: boolean = false): string => {
     // Ensure that we have an integer (for comparisons).
-    key = parseInt(key, 10);
+    key = Number(key);
 
     if (isTitle) {
       return key !== 0 ? `Every ${props.options[key]}` : 'Paused';

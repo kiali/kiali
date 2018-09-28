@@ -91,7 +91,7 @@ export namespace ListPage {
 
     getSingleIntQueryParam = (queryName: string): number | undefined => {
       const p = this.getQueryParam(queryName);
-      return p === undefined ? undefined : parseInt(p[0], 10);
+      return p === undefined ? undefined : Number(p[0]);
     };
 
     getFiltersFromURL(filterTypes: FilterType[]): ActiveFilter[] {

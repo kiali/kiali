@@ -6,7 +6,10 @@
             "parameters",
             "statements"
         ],
-        "ban": false,
+        "ban": [
+            true,
+            "parseInt"
+        ],
         "class-name": true,
         "comment-format": [
             true,
