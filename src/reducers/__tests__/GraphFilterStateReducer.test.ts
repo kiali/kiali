@@ -9,6 +9,7 @@ describe('GraphFilterState reducer', () => {
       showCircuitBreakers: true,
       showVirtualServices: true,
       showMissingSidecars: true,
+      showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
       refreshRate: 15000
@@ -24,6 +25,7 @@ describe('GraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
+          showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
           refreshRate: 15000
@@ -38,6 +40,7 @@ describe('GraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showVirtualServices: true,
       showMissingSidecars: true,
+      showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
       refreshRate: 15000
@@ -53,6 +56,7 @@ describe('GraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
+          showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
           refreshRate: 15000
@@ -67,6 +71,7 @@ describe('GraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showVirtualServices: true,
       showMissingSidecars: true,
+      showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
       refreshRate: 15000
@@ -82,6 +87,7 @@ describe('GraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
+          showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
           refreshRate: 15000
@@ -96,6 +102,7 @@ describe('GraphFilterState reducer', () => {
       showCircuitBreakers: true,
       showVirtualServices: true,
       showMissingSidecars: true,
+      showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
       refreshRate: 15000
@@ -110,6 +117,7 @@ describe('GraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
+          showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
           refreshRate: 15000
@@ -124,6 +132,7 @@ describe('GraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showVirtualServices: false,
       showMissingSidecars: true,
+      showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
       refreshRate: 15000
@@ -138,6 +147,7 @@ describe('GraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
+          showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
           refreshRate: 15000
@@ -152,6 +162,37 @@ describe('GraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showVirtualServices: true,
       showMissingSidecars: false,
+      showSecurity: false,
+      showTrafficAnimation: false,
+      showServiceNodes: false,
+      refreshRate: 15000
+    });
+  });
+  it('should handle TOGGLE_GRAPH_SECURITY', () => {
+    expect(
+      graphFilterState(
+        {
+          showLegend: false,
+          showNodeLabels: true,
+          showCircuitBreakers: false,
+          showVirtualServices: true,
+          showMissingSidecars: true,
+          showSecurity: false,
+          showTrafficAnimation: false,
+          showServiceNodes: false,
+          refreshRate: 15000
+        },
+        {
+          type: GraphFilterActionKeys.TOGGLE_GRAPH_SECURITY
+        }
+      )
+    ).toEqual({
+      showLegend: false,
+      showNodeLabels: true,
+      showCircuitBreakers: false,
+      showVirtualServices: true,
+      showMissingSidecars: true,
+      showSecurity: true,
       showTrafficAnimation: false,
       showServiceNodes: false,
       refreshRate: 15000
@@ -166,6 +207,7 @@ describe('GraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
+          showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
           refreshRate: 15000
@@ -180,6 +222,7 @@ describe('GraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showVirtualServices: true,
       showMissingSidecars: true,
+      showSecurity: false,
       showTrafficAnimation: true,
       showServiceNodes: false,
       refreshRate: 15000
@@ -194,6 +237,7 @@ describe('GraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
+          showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
           refreshRate: 15000
@@ -208,6 +252,7 @@ describe('GraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showVirtualServices: true,
       showMissingSidecars: true,
+      showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: true,
       refreshRate: 15000
@@ -222,6 +267,7 @@ describe('GraphFilterState reducer', () => {
           showCircuitBreakers: false,
           showVirtualServices: true,
           showMissingSidecars: true,
+          showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
           refreshRate: 15000
@@ -237,6 +283,7 @@ describe('GraphFilterState reducer', () => {
       showCircuitBreakers: false,
       showVirtualServices: true,
       showMissingSidecars: true,
+      showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
       refreshRate: 10000

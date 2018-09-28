@@ -39,6 +39,7 @@ type CytoscapeGraphType = {
   showCircuitBreakers: boolean;
   showVirtualServices: boolean;
   showMissingSidecars: boolean;
+  showSecurity: boolean;
   showTrafficAnimation: boolean;
   showServiceNodes: boolean;
   onReady: (cytoscapeRef: any) => void;
@@ -110,6 +111,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.showCircuitBreakers !== nextProps.showCircuitBreakers ||
       this.props.showVirtualServices !== nextProps.showVirtualServices ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
+      this.props.showSecurity !== nextProps.showSecurity ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.showServiceNodes !== nextProps.showServiceNodes ||
       this.props.elements !== nextProps.elements ||
@@ -337,6 +339,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       graphType: this.props.graphType,
       showCircuitBreakers: this.props.showCircuitBreakers,
       showMissingSidecars: this.props.showMissingSidecars,
+      showSecurity: this.props.showSecurity,
       showNodeLabels: this.props.showNodeLabels,
       showVirtualServices: this.props.showVirtualServices
     };
@@ -581,6 +584,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
   showVirtualServices: state.graph.filterState.showVirtualServices,
   showMissingSidecars: state.graph.filterState.showMissingSidecars,
+  showSecurity: state.graph.filterState.showSecurity,
   showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
   elements: state.graph.graphData,
   isLoading: state.graph.isLoading,

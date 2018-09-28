@@ -8,6 +8,8 @@ import { KialiAppState, GraphFilterState } from '../store/Store';
 import { style } from 'typestyle';
 import { GraphParamsType } from '../types/Graph';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../components/Nav/NavUtils';
+import { GraphDataActions } from '../actions/GraphDataActions';
+import { store } from '../store/ConfigStore';
 
 interface GraphDispatch {
   // Dispatch methods
@@ -15,6 +17,7 @@ interface GraphDispatch {
   toggleGraphCircuitBreakers(): void;
   toggleGraphVirtualServices(): void;
   toggleGraphMissingSidecars(): void;
+  toggleGraphSecurity(): void;
   toggleTrafficAnimation(): void;
   toggleServiceNodes(): void;
 }
@@ -28,6 +31,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
   showVirtualServices: state.graph.filterState.showVirtualServices,
   showMissingSidecars: state.graph.filterState.showMissingSidecars,
+  showSecurity: state.graph.filterState.showSecurity,
   showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
   showServiceNodes: state.graph.filterState.showServiceNodes
 });
@@ -39,6 +43,7 @@ const mapDispatchToProps = (dispatch: any) => {
     toggleGraphCircuitBreakers: bindActionCreators(GraphFilterActions.toggleGraphCircuitBreakers, dispatch),
     toggleGraphVirtualServices: bindActionCreators(GraphFilterActions.toggleGraphVirtualServices, dispatch),
     toggleGraphMissingSidecars: bindActionCreators(GraphFilterActions.toggleGraphMissingSidecars, dispatch),
+    toggleGraphSecurity: bindActionCreators(GraphFilterActions.toggleGraphSecurity, dispatch),
     toggleTrafficAnimation: bindActionCreators(GraphFilterActions.toggleTrafficAnimation, dispatch),
     toggleServiceNodes: bindActionCreators(GraphFilterActions.toggleServiceNodes, dispatch)
   };
@@ -70,6 +75,20 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
         ...this.getGraphParams(),
         injectServiceNodes: this.props.showServiceNodes
       });
+    } else if (this.props.showSecurity && this.props.showSecurity !== prevProps.showSecurity) {
+      // when turning on security we need to perform a fetch, because we don't pull security data by default
+      store.dispatch(
+        // @ts-ignore
+        GraphDataActions.fetchGraphData(
+          this.props.namespace,
+          this.props.graphDuration,
+          this.props.graphType,
+          this.props.injectServiceNodes,
+          this.props.edgeLabelMode,
+          this.props.showSecurity,
+          this.props.node
+        )
+      );
     }
   }
 
@@ -89,6 +108,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       showVirtualServices,
       showNodeLabels,
       showMissingSidecars,
+      showSecurity,
       showTrafficAnimation,
       showServiceNodes
     } = this.props;
@@ -99,6 +119,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       toggleGraphVirtualServices,
       toggleGraphNodeLabels,
       toggleGraphMissingSidecars,
+      toggleGraphSecurity,
       toggleTrafficAnimation,
       toggleServiceNodes
     } = this.props;
@@ -142,6 +163,12 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
         labelText: 'Missing Sidecars',
         value: showMissingSidecars,
         onChange: toggleGraphMissingSidecars
+      },
+      {
+        id: 'filterSecurity',
+        labelText: 'Security',
+        value: showSecurity,
+        onChange: toggleGraphSecurity
       }
     ];
 

@@ -75,40 +75,45 @@ export class GraphStyles {
     const getEdgeLabel = (ele: any): string => {
       const cyGlobal = getCyGlobalData(ele);
       const edgeLabelMode = cyGlobal.edgeLabelMode;
+      let content = '';
 
       switch (edgeLabelMode) {
-        case EdgeLabelMode.REQUESTS_PER_SECOND: {
-          const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
-          if (rate > 0) {
-            const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
-            return pErr > 0 ? rate.toFixed(2) + ', ' + pErr.toFixed(1) + '%' : rate.toFixed(2);
+        case EdgeLabelMode.TRAFFIC_RATE_PER_SECOND: {
+          if (ele.data('rate')) {
+            const rate = Number(ele.data('rate'));
+            if (rate > 0) {
+              const pErr = ele.data('percentErr') ? Number(ele.data('percentErr')) : 0;
+              content = pErr > 0 ? rate.toFixed(2) + ', ' + pErr.toFixed(1) + '%' : rate.toFixed(2);
+            }
+          } else if (ele.data('tcpSentRate')) {
+            const rate = Number(ele.data('tcpSentRate'));
+            if (rate > 0) {
+              content = `${rate.toFixed(2)}`;
+            }
           }
-          return '';
+          break;
         }
         case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE: {
           const responseTime = ele.data('responseTime') ? parseFloat(ele.data('responseTime')) : 0;
           if (responseTime > 0) {
-            return responseTime < 1.0 ? (responseTime * 1000).toFixed(0) + 'ms' : responseTime.toFixed(2) + 's';
+            content = responseTime < 1.0 ? (responseTime * 1000).toFixed(0) + 'ms' : responseTime.toFixed(2) + 's';
           }
-          return '';
+          break;
         }
         case EdgeLabelMode.REQUESTS_PERCENT_OF_TOTAL: {
           const percentRate = ele.data('percentRate') ? parseFloat(ele.data('percentRate')) : 0;
-          return percentRate > 0 ? percentRate.toFixed(0) + '%' : '';
-        }
-        case EdgeLabelMode.MTLS_ENABLED: {
-          return ele.data('isMTLS') ? EdgeIconLock : '';
-        }
-        case EdgeLabelMode.TCP_SENT: {
-          const tcpRate = ele.data('tcpSentRate') ? parseFloat(ele.data('tcpSentRate')) : 0;
-          if (tcpRate > 0) {
-            return `${tcpRate.toFixed(2)}`;
-          }
-          return '';
+          content = percentRate > 0 ? percentRate.toFixed(0) + '%' : '';
+          break;
         }
         default:
-          return '';
+          content = '';
       }
+
+      if (cyGlobal.showSecurity && ele.data('isMTLS')) {
+        content = EdgeIconLock + ' ' + content;
+      }
+
+      return content;
     };
 
     const getNodeBackgroundImage = (ele: any): string => {
@@ -217,14 +222,6 @@ export class GraphStyles {
       return cyGlobal.showVirtualServices && ele.data('hasVS');
     };
 
-    const getTLSValue = (ele: any, tlsValue: string, nonTlsValue: string): string => {
-      if (ele.data('isMTLS') && getCyGlobalData(ele).edgeLabelMode === EdgeLabelMode.MTLS_ENABLED) {
-        return tlsValue;
-      } else {
-        return nonTlsValue;
-      }
-    };
-
     const nodeSelectedStyle = {
       'border-color': (ele: any) => {
         if (ele.hasClass(DEGRADED.name)) {
@@ -307,9 +304,7 @@ export class GraphStyles {
         selector: 'edge',
         css: {
           'curve-style': 'bezier',
-          'font-family': (ele: any) => {
-            return getTLSValue(ele, 'PatternFlyIcons-webfont', EdgeTextFont);
-          },
+          'font-family': EdgeTextFont,
           'font-size': EdgeTextFontSize,
           label: (ele: any) => {
             return getEdgeLabel(ele);

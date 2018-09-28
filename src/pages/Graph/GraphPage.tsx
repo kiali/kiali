@@ -36,12 +36,14 @@ type GraphPageProps = GraphParamsType & {
     graphType: GraphType,
     injectServiceNodes: boolean,
     edgeLabelMode: EdgeLabelMode,
+    showSecurity: boolean,
     node?: NodeParamsType
   ) => any;
   toggleLegend: () => void;
   summaryData: SummaryData | null;
   pollInterval: PollIntervalInMs;
   isPageVisible: boolean;
+  showSecurity: boolean;
   isError: boolean;
 };
 
@@ -200,6 +202,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
             {/* Use empty div to reset the flex, this component doesn't seem to like that. It renders all its contents in the center */}
             <GraphFilterToolbar
               isLoading={this.props.isLoading}
+              showSecurity={this.props.showSecurity}
               handleRefreshClick={this.handleRefreshClick}
               {...graphParams}
             />
@@ -265,6 +268,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
       this.props.graphType,
       this.props.injectServiceNodes,
       this.props.edgeLabelMode,
+      this.props.showSecurity,
       this.props.node
     );
     this.pollPromise = makeCancelablePromise(promise);

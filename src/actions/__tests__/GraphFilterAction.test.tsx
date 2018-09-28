@@ -48,6 +48,13 @@ describe('GraphFilterActions', () => {
     expect(GraphFilterActions.toggleGraphMissingSidecars()).toEqual(expectedAction);
   });
 
+  it('should toggle security', () => {
+    const expectedAction = {
+      type: GraphFilterActionKeys.TOGGLE_GRAPH_SECURITY
+    };
+    expect(GraphFilterActions.toggleGraphSecurity()).toEqual(expectedAction);
+  });
+
   it('should toggle traffic animations', () => {
     const expectedAction = {
       type: GraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION

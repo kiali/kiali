@@ -22,6 +22,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showLegend: state.graph.filterState.showLegend,
   pollInterval: state.graph.filterState.refreshRate,
   isPageVisible: state.globalState.isPageVisible,
+  showSecurity: state.graph.filterState.showSecurity,
   isError: state.graph.isError
 });
 
@@ -32,10 +33,19 @@ const mapDispatchToProps = (dispatch: any) => ({
     graphType: GraphType,
     injectServiceNodes: boolean,
     edgeLabelMode: EdgeLabelMode,
+    showSecurity: boolean,
     node?: NodeParamsType
   ) =>
     dispatch(
-      GraphDataActions.fetchGraphData(namespace, graphDuration, graphType, injectServiceNodes, edgeLabelMode, node)
+      GraphDataActions.fetchGraphData(
+        namespace,
+        graphDuration,
+        graphType,
+        injectServiceNodes,
+        edgeLabelMode,
+        showSecurity,
+        node
+      )
     ),
   toggleLegend: bindActionCreators(GraphFilterActions.toggleLegend, dispatch)
 });

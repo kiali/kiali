@@ -9,6 +9,7 @@ const INITIAL_STATE: GraphFilterState = {
   showCircuitBreakers: true,
   showVirtualServices: true,
   showMissingSidecars: true,
+  showSecurity: false,
   showTrafficAnimation: false,
   showServiceNodes: false,
   // @ todo: add disableLayers back in later
@@ -32,6 +33,8 @@ const graphFilterState = (state: GraphFilterState = INITIAL_STATE, action) => {
       return updateState(state, { showVirtualServices: !state.showVirtualServices });
     case GraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS:
       return updateState(state, { showMissingSidecars: !state.showMissingSidecars });
+    case GraphFilterActionKeys.TOGGLE_GRAPH_SECURITY:
+      return updateState(state, { showSecurity: !state.showSecurity });
     case GraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION:
       return updateState(state, { showTrafficAnimation: !state.showTrafficAnimation });
     case GraphFilterActionKeys.TOGGLE_SERVICE_NODES:

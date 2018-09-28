@@ -44,6 +44,7 @@ describe('CytoscapeGraph component test', () => {
         showCircuitBreakers={false}
         showVirtualServices={true}
         showMissingSidecars={true}
+        showSecurity={true}
         showServiceNodes={false}
         showTrafficAnimation={false}
         isLoading={false}
