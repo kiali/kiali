@@ -6,6 +6,8 @@ interface MetricsOptions {
   step?: number;
   version?: string;
   filters?: string[];
+  quantiles?: string[];
+  avg?: boolean;
   byLabelsIn?: string[];
   byLabelsOut?: string[];
 }

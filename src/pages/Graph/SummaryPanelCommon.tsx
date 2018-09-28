@@ -134,6 +134,7 @@ export const getNodeMetrics = (
   node: any,
   props: SummaryPanelPropType,
   filters: Array<string>,
+  quantiles?: Array<string>,
   byLabelsIn?: Array<string>,
   byLabelsOut?: Array<string>
 ): Promise<Response<M.Metrics>> => {
@@ -144,6 +145,7 @@ export const getNodeMetrics = (
     step: props.step,
     rateInterval: props.rateInterval,
     filters: filters,
+    quantiles: quantiles,
     byLabelsIn: byLabelsIn,
     byLabelsOut: byLabelsOut
   };

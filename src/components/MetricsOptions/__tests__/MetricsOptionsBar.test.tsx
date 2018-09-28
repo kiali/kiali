@@ -2,6 +2,7 @@ import * as React from 'react';
 import { mount, shallow } from 'enzyme';
 
 import MetricsOptionsBar from '../MetricsOptionsBar';
+import { MetricsDirection } from '../../../types/Metrics';
 
 const optionsChanged = jest.fn();
 const lastOptionsChanged = () => {
@@ -13,10 +14,10 @@ describe('MetricsOptionsBar', () => {
     const wrapper = shallow(
       <MetricsOptionsBar
         onOptionsChanged={jest.fn()}
-        onPollIntervalChanged={jest.fn()}
-        onManualRefresh={jest.fn()}
+        onRefresh={jest.fn()}
         onReporterChanged={jest.fn()}
         metricReporter={'destination'}
+        direction={MetricsDirection.INBOUND}
       />
     );
     expect(wrapper).toMatchSnapshot();
@@ -26,10 +27,10 @@ describe('MetricsOptionsBar', () => {
     const wrapper = mount(
       <MetricsOptionsBar
         onOptionsChanged={optionsChanged}
-        onPollIntervalChanged={jest.fn()}
-        onManualRefresh={jest.fn()}
+        onRefresh={jest.fn()}
         onReporterChanged={jest.fn()}
         metricReporter={'destination'}
+        direction={MetricsDirection.INBOUND}
       />
     );
     expect(optionsChanged).toHaveBeenCalledTimes(1);

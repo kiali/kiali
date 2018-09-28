@@ -5,30 +5,28 @@ ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <MetricsOptionsBar
+    direction={0}
     metricReporter="destination"
-    onManualRefresh={[MockFunction]}
     onOptionsChanged={
       [MockFunction] {
         "calls": Array [
           Array [
             Object {
+              "avg": true,
               "byLabelsIn": Array [],
               "byLabelsOut": Array [],
               "duration": 60,
+              "quantiles": Array [
+                "0.5",
+                "0.95",
+                "0.99",
+              ],
             },
           ],
         ],
       }
     }
-    onPollIntervalChanged={
-      [MockFunction] {
-        "calls": Array [
-          Array [
-            15000,
-          ],
-        ],
-      }
-    }
+    onRefresh={[MockFunction]}
     onReporterChanged={[MockFunction]}
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -44,29 +42,28 @@ ShallowWrapper {
     "nodeType": "class",
     "props": Object {
       "children": Array [
-        <getContext(Filter)>
-          <FilterValueSelector
-            className=""
-            currentValue=""
-            filterValues={
+        <FormGroup
+          bsClass="form-group"
+        >
+          <MetricsSettingsDropdown
+            groupingLabels={Array []}
+            onChanged={[Function]}
+            showAverage={true}
+            showQuantiles={
               Array [
-                "Local version",
-                "Remote app",
-                "Remote version",
-                "Response code",
+                "0.5",
+                "0.95",
+                "0.99",
               ]
             }
-            id=""
-            onFilterValueSelected={[Function]}
-            placeholder="Group by"
           />
-        </getContext(Filter)>,
+        </FormGroup>,
         <FormGroup
           bsClass="form-group"
         >
           <ToolbarDropdown
             disabled={false}
-            handleSelect={[MockFunction]}
+            handleSelect={[Function]}
             id="metrics_filter_reporter"
             initialLabel="Destination"
             nameDropdown="Reported from"
@@ -85,7 +82,7 @@ ShallowWrapper {
           id="metrics_filter_interval_duration"
           initialLabel="Last min"
           initialValue={60}
-          nameDropdown="Duration"
+          nameDropdown="Displaying"
           options={
             Object {
               "10800": "Last 3 hours",
@@ -102,43 +99,16 @@ ShallowWrapper {
             }
           }
         />,
-        <ToolbarDropdown
-          disabled={false}
-          handleSelect={[Function]}
-          id="metrics_filter_poll_interval"
-          initialLabel="15 sec"
-          initialValue={15000}
-          nameDropdown="Poll Interval"
-          options={
-            Object {
-              "0": "Pause",
-              "10000": "10 sec",
-              "15000": "15 sec",
-              "30000": "30 sec",
-              "300000": "5 min",
-              "5000": "5 sec",
-              "60000": "1 min",
-            }
-          }
-        />,
         <ToolbarRightContent
           className=""
         >
-          <Button
-            active={false}
-            block={false}
-            bsClass="btn"
-            bsStyle="default"
-            disabled={false}
-            onClick={[MockFunction]}
-          >
-            <Icon
-              name="refresh"
-              type="fa"
-            />
-          </Button>
+          <Refresh
+            handleRefresh={[MockFunction]}
+            id="metrics-refresh"
+            onSelect={[Function]}
+            pollInterval={15000}
+          />
         </ToolbarRightContent>,
-        false,
       ],
     },
     "ref": null,
@@ -146,41 +116,36 @@ ShallowWrapper {
       Object {
         "instance": null,
         "key": undefined,
-        "nodeType": "function",
+        "nodeType": "class",
         "props": Object {
-          "children": <FilterValueSelector
-            className=""
-            currentValue=""
-            filterValues={
+          "bsClass": "form-group",
+          "children": <MetricsSettingsDropdown
+            groupingLabels={Array []}
+            onChanged={[Function]}
+            showAverage={true}
+            showQuantiles={
               Array [
-                "Local version",
-                "Remote app",
-                "Remote version",
-                "Response code",
+                "0.5",
+                "0.95",
+                "0.99",
               ]
             }
-            id=""
-            onFilterValueSelected={[Function]}
-            placeholder="Group by"
           />,
         },
         "ref": null,
         "rendered": Object {
           "instance": null,
           "key": undefined,
-          "nodeType": "function",
+          "nodeType": "class",
           "props": Object {
-            "className": "",
-            "currentValue": "",
-            "filterValues": Array [
-              "Local version",
-              "Remote app",
-              "Remote version",
-              "Response code",
+            "groupingLabels": Array [],
+            "onChanged": [Function],
+            "showAverage": true,
+            "showQuantiles": Array [
+              "0.5",
+              "0.95",
+              "0.99",
             ],
-            "id": "",
-            "onFilterValueSelected": [Function],
-            "placeholder": "Group by",
           },
           "ref": null,
           "rendered": null,
@@ -196,7 +161,7 @@ ShallowWrapper {
           "bsClass": "form-group",
           "children": <ToolbarDropdown
             disabled={false}
-            handleSelect={[MockFunction]}
+            handleSelect={[Function]}
             id="metrics_filter_reporter"
             initialLabel="Destination"
             nameDropdown="Reported from"
@@ -216,7 +181,7 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "disabled": false,
-            "handleSelect": [MockFunction],
+            "handleSelect": [Function],
             "id": "metrics_filter_reporter",
             "initialLabel": "Destination",
             "nameDropdown": "Reported from",
@@ -242,7 +207,7 @@ ShallowWrapper {
           "id": "metrics_filter_interval_duration",
           "initialLabel": "Last min",
           "initialValue": 60,
-          "nameDropdown": "Duration",
+          "nameDropdown": "Displaying",
           "options": Object {
             "10800": "Last 3 hours",
             "1800": "Last 30 min",
@@ -264,46 +229,14 @@ ShallowWrapper {
       Object {
         "instance": null,
         "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "disabled": false,
-          "handleSelect": [Function],
-          "id": "metrics_filter_poll_interval",
-          "initialLabel": "15 sec",
-          "initialValue": 15000,
-          "nameDropdown": "Poll Interval",
-          "options": Object {
-            "0": "Pause",
-            "10000": "10 sec",
-            "15000": "15 sec",
-            "30000": "30 sec",
-            "300000": "5 min",
-            "5000": "5 sec",
-            "60000": "1 min",
-          },
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
         "nodeType": "function",
         "props": Object {
-          "children": <Button
-            active={false}
-            block={false}
-            bsClass="btn"
-            bsStyle="default"
-            disabled={false}
-            onClick={[MockFunction]}
-          >
-            <Icon
-              name="refresh"
-              type="fa"
-            />
-          </Button>,
+          "children": <Refresh
+            handleRefresh={[MockFunction]}
+            id="metrics-refresh"
+            onSelect={[Function]}
+            pollInterval={15000}
+          />,
           "className": "",
         },
         "ref": null,
@@ -312,35 +245,17 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "class",
           "props": Object {
-            "active": false,
-            "block": false,
-            "bsClass": "btn",
-            "bsStyle": "default",
-            "children": <Icon
-              name="refresh"
-              type="fa"
-            />,
-            "disabled": false,
-            "onClick": [MockFunction],
+            "handleRefresh": [MockFunction],
+            "id": "metrics-refresh",
+            "onSelect": [Function],
+            "pollInterval": 15000,
           },
           "ref": null,
-          "rendered": Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "name": "refresh",
-              "type": "fa",
-            },
-            "ref": null,
-            "rendered": null,
-            "type": [Function],
-          },
+          "rendered": null,
           "type": [Function],
         },
         "type": [Function],
       },
-      false,
     ],
     "type": [Function],
   },
@@ -351,29 +266,28 @@ ShallowWrapper {
       "nodeType": "class",
       "props": Object {
         "children": Array [
-          <getContext(Filter)>
-            <FilterValueSelector
-              className=""
-              currentValue=""
-              filterValues={
+          <FormGroup
+            bsClass="form-group"
+          >
+            <MetricsSettingsDropdown
+              groupingLabels={Array []}
+              onChanged={[Function]}
+              showAverage={true}
+              showQuantiles={
                 Array [
-                  "Local version",
-                  "Remote app",
-                  "Remote version",
-                  "Response code",
+                  "0.5",
+                  "0.95",
+                  "0.99",
                 ]
               }
-              id=""
-              onFilterValueSelected={[Function]}
-              placeholder="Group by"
             />
-          </getContext(Filter)>,
+          </FormGroup>,
           <FormGroup
             bsClass="form-group"
           >
             <ToolbarDropdown
               disabled={false}
-              handleSelect={[MockFunction]}
+              handleSelect={[Function]}
               id="metrics_filter_reporter"
               initialLabel="Destination"
               nameDropdown="Reported from"
@@ -392,7 +306,7 @@ ShallowWrapper {
             id="metrics_filter_interval_duration"
             initialLabel="Last min"
             initialValue={60}
-            nameDropdown="Duration"
+            nameDropdown="Displaying"
             options={
               Object {
                 "10800": "Last 3 hours",
@@ -409,43 +323,16 @@ ShallowWrapper {
               }
             }
           />,
-          <ToolbarDropdown
-            disabled={false}
-            handleSelect={[Function]}
-            id="metrics_filter_poll_interval"
-            initialLabel="15 sec"
-            initialValue={15000}
-            nameDropdown="Poll Interval"
-            options={
-              Object {
-                "0": "Pause",
-                "10000": "10 sec",
-                "15000": "15 sec",
-                "30000": "30 sec",
-                "300000": "5 min",
-                "5000": "5 sec",
-                "60000": "1 min",
-              }
-            }
-          />,
           <ToolbarRightContent
             className=""
           >
-            <Button
-              active={false}
-              block={false}
-              bsClass="btn"
-              bsStyle="default"
-              disabled={false}
-              onClick={[MockFunction]}
-            >
-              <Icon
-                name="refresh"
-                type="fa"
-              />
-            </Button>
+            <Refresh
+              handleRefresh={[MockFunction]}
+              id="metrics-refresh"
+              onSelect={[Function]}
+              pollInterval={15000}
+            />
           </ToolbarRightContent>,
-          false,
         ],
       },
       "ref": null,
@@ -453,41 +340,36 @@ ShallowWrapper {
         Object {
           "instance": null,
           "key": undefined,
-          "nodeType": "function",
+          "nodeType": "class",
           "props": Object {
-            "children": <FilterValueSelector
-              className=""
-              currentValue=""
-              filterValues={
+            "bsClass": "form-group",
+            "children": <MetricsSettingsDropdown
+              groupingLabels={Array []}
+              onChanged={[Function]}
+              showAverage={true}
+              showQuantiles={
                 Array [
-                  "Local version",
-                  "Remote app",
-                  "Remote version",
-                  "Response code",
+                  "0.5",
+                  "0.95",
+                  "0.99",
                 ]
               }
-              id=""
-              onFilterValueSelected={[Function]}
-              placeholder="Group by"
             />,
           },
           "ref": null,
           "rendered": Object {
             "instance": null,
             "key": undefined,
-            "nodeType": "function",
+            "nodeType": "class",
             "props": Object {
-              "className": "",
-              "currentValue": "",
-              "filterValues": Array [
-                "Local version",
-                "Remote app",
-                "Remote version",
-                "Response code",
+              "groupingLabels": Array [],
+              "onChanged": [Function],
+              "showAverage": true,
+              "showQuantiles": Array [
+                "0.5",
+                "0.95",
+                "0.99",
               ],
-              "id": "",
-              "onFilterValueSelected": [Function],
-              "placeholder": "Group by",
             },
             "ref": null,
             "rendered": null,
@@ -503,7 +385,7 @@ ShallowWrapper {
             "bsClass": "form-group",
             "children": <ToolbarDropdown
               disabled={false}
-              handleSelect={[MockFunction]}
+              handleSelect={[Function]}
               id="metrics_filter_reporter"
               initialLabel="Destination"
               nameDropdown="Reported from"
@@ -523,7 +405,7 @@ ShallowWrapper {
             "nodeType": "class",
             "props": Object {
               "disabled": false,
-              "handleSelect": [MockFunction],
+              "handleSelect": [Function],
               "id": "metrics_filter_reporter",
               "initialLabel": "Destination",
               "nameDropdown": "Reported from",
@@ -549,7 +431,7 @@ ShallowWrapper {
             "id": "metrics_filter_interval_duration",
             "initialLabel": "Last min",
             "initialValue": 60,
-            "nameDropdown": "Duration",
+            "nameDropdown": "Displaying",
             "options": Object {
               "10800": "Last 3 hours",
               "1800": "Last 30 min",
@@ -571,46 +453,14 @@ ShallowWrapper {
         Object {
           "instance": null,
           "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "disabled": false,
-            "handleSelect": [Function],
-            "id": "metrics_filter_poll_interval",
-            "initialLabel": "15 sec",
-            "initialValue": 15000,
-            "nameDropdown": "Poll Interval",
-            "options": Object {
-              "0": "Pause",
-              "10000": "10 sec",
-              "15000": "15 sec",
-              "30000": "30 sec",
-              "300000": "5 min",
-              "5000": "5 sec",
-              "60000": "1 min",
-            },
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
           "nodeType": "function",
           "props": Object {
-            "children": <Button
-              active={false}
-              block={false}
-              bsClass="btn"
-              bsStyle="default"
-              disabled={false}
-              onClick={[MockFunction]}
-            >
-              <Icon
-                name="refresh"
-                type="fa"
-              />
-            </Button>,
+            "children": <Refresh
+              handleRefresh={[MockFunction]}
+              id="metrics-refresh"
+              onSelect={[Function]}
+              pollInterval={15000}
+            />,
             "className": "",
           },
           "ref": null,
@@ -619,35 +469,17 @@ ShallowWrapper {
             "key": undefined,
             "nodeType": "class",
             "props": Object {
-              "active": false,
-              "block": false,
-              "bsClass": "btn",
-              "bsStyle": "default",
-              "children": <Icon
-                name="refresh"
-                type="fa"
-              />,
-              "disabled": false,
-              "onClick": [MockFunction],
+              "handleRefresh": [MockFunction],
+              "id": "metrics-refresh",
+              "onSelect": [Function],
+              "pollInterval": 15000,
             },
             "ref": null,
-            "rendered": Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "function",
-              "props": Object {
-                "name": "refresh",
-                "type": "fa",
-              },
-              "ref": null,
-              "rendered": null,
-              "type": [Function],
-            },
+            "rendered": null,
             "type": [Function],
           },
           "type": [Function],
         },
-        false,
       ],
       "type": [Function],
     },

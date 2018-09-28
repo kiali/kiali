@@ -8,12 +8,7 @@ export interface ReporterMetrics {
   histograms: { [key: string]: Histogram };
 }
 
-export interface Histogram {
-  average: MetricGroup;
-  median: MetricGroup;
-  percentile95: MetricGroup;
-  percentile99: MetricGroup;
-}
+export type Histogram = { [key: string]: MetricGroup };
 
 export interface MetricGroup {
   matrix: TimeSeries[];
@@ -31,3 +26,14 @@ export interface TimeSeries {
 
 // First is timestamp, second is value
 export type Datapoint = [number, number];
+
+export enum MetricsDirection {
+  INBOUND,
+  OUTBOUND
+}
+
+export enum MetricsObjectTypes {
+  SERVICE,
+  WORKLOAD,
+  APP
+}

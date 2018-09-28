@@ -3,6 +3,7 @@ import { mount, shallow, ReactWrapper } from 'enzyme';
 
 import Metrics from '../Metrics';
 import * as API from '../../../services/Api';
+import { MetricsDirection, MetricsObjectTypes } from '../../../types/Metrics';
 
 window['SVGPathElement'] = a => a;
 let mounted: ReactWrapper<any, any> | null;
@@ -96,7 +97,14 @@ describe('Metrics for a service', () => {
 
   it('renders initial layout', () => {
     mockGrafanaInfo({});
-    const wrapper = shallow(<Metrics namespace="ns" object="svc" objectType={'service'} metricsType={'inbound'} />);
+    const wrapper = shallow(
+      <Metrics
+        namespace="ns"
+        object="svc"
+        objectType={MetricsObjectTypes.SERVICE}
+        direction={MetricsDirection.INBOUND}
+      />
+    );
     expect(wrapper).toMatchSnapshot();
   });
 
@@ -127,7 +135,14 @@ describe('Metrics for a service', () => {
         .catch(err => done.fail(err))
     ];
     Promise.all(allMocksDone).then(() => done());
-    mounted = mount(<Metrics namespace="ns" object="svc" objectType={'service'} metricsType={'inbound'} />);
+    mounted = mount(
+      <Metrics
+        namespace="ns"
+        object="svc"
+        objectType={MetricsObjectTypes.SERVICE}
+        direction={MetricsDirection.INBOUND}
+      />
+    );
   });
 
   it(
@@ -152,7 +167,14 @@ describe('Metrics for a service', () => {
         mockGrafanaInfo({})
       ];
       Promise.all(allMocksDone).then(() => done());
-      mounted = mount(<Metrics namespace="ns" object="svc" objectType={'service'} metricsType={'inbound'} />);
+      mounted = mount(
+        <Metrics
+          namespace="ns"
+          object="svc"
+          objectType={MetricsObjectTypes.SERVICE}
+          direction={MetricsDirection.INBOUND}
+        />
+      );
     },
     10000
   ); // Increase timeout for this test
@@ -170,7 +192,14 @@ describe('Inbound Metrics for a workload', () => {
 
   it('renders initial layout', () => {
     mockGrafanaInfo({});
-    const wrapper = shallow(<Metrics namespace="ns" object="svc" objectType={'workload'} metricsType={'inbound'} />);
+    const wrapper = shallow(
+      <Metrics
+        namespace="ns"
+        object="svc"
+        objectType={MetricsObjectTypes.WORKLOAD}
+        direction={MetricsDirection.INBOUND}
+      />
+    );
     expect(wrapper).toMatchSnapshot();
   });
 
@@ -204,7 +233,14 @@ describe('Inbound Metrics for a workload', () => {
         .catch(err => done.fail(err))
     ];
     Promise.all(allMocksDone).then(() => done());
-    mounted = mount(<Metrics namespace="ns" object="svc" objectType={'workload'} metricsType={'inbound'} />);
+    mounted = mount(
+      <Metrics
+        namespace="ns"
+        object="svc"
+        objectType={MetricsObjectTypes.WORKLOAD}
+        direction={MetricsDirection.INBOUND}
+      />
+    );
   });
 
   it(
@@ -229,7 +265,14 @@ describe('Inbound Metrics for a workload', () => {
         mockGrafanaInfo({})
       ];
       Promise.all(allMocksDone).then(() => done());
-      mounted = mount(<Metrics namespace="ns" object="svc" objectType={'workload'} metricsType={'inbound'} />);
+      mounted = mount(
+        <Metrics
+          namespace="ns"
+          object="svc"
+          objectType={MetricsObjectTypes.WORKLOAD}
+          direction={MetricsDirection.INBOUND}
+        />
+      );
     },
     10000
   ); // Increase timeout for this test
@@ -247,7 +290,14 @@ describe('Outbound Metrics for a workload', () => {
 
   it('renders initial layout', () => {
     mockGrafanaInfo({});
-    const wrapper = shallow(<Metrics namespace="ns" object="svc" objectType={'workload'} metricsType={'outbound'} />);
+    const wrapper = shallow(
+      <Metrics
+        namespace="ns"
+        object="svc"
+        objectType={MetricsObjectTypes.WORKLOAD}
+        direction={MetricsDirection.INBOUND}
+      />
+    );
     expect(wrapper).toMatchSnapshot();
   });
 
@@ -281,7 +331,14 @@ describe('Outbound Metrics for a workload', () => {
         .catch(err => done.fail(err))
     ];
     Promise.all(allMocksDone).then(() => done());
-    mounted = mount(<Metrics namespace="ns" object="svc" objectType={'workload'} metricsType={'outbound'} />);
+    mounted = mount(
+      <Metrics
+        namespace="ns"
+        object="svc"
+        objectType={MetricsObjectTypes.WORKLOAD}
+        direction={MetricsDirection.INBOUND}
+      />
+    );
   });
 
   it(
@@ -306,7 +363,14 @@ describe('Outbound Metrics for a workload', () => {
         mockGrafanaInfo({})
       ];
       Promise.all(allMocksDone).then(() => done());
-      mounted = mount(<Metrics namespace="ns" object="svc" objectType={'workload'} metricsType={'outbound'} />);
+      mounted = mount(
+        <Metrics
+          namespace="ns"
+          object="svc"
+          objectType={MetricsObjectTypes.WORKLOAD}
+          direction={MetricsDirection.OUTBOUND}
+        />
+      );
     },
     10000
   ); // Increase timeout for this test

@@ -195,9 +195,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     }
 
     const filters = ['request_count', 'request_duration', 'request_error_count', 'tcp_sent', 'tcp_received'];
+    const quantiles = ['0.5', '0.95', '0.99'];
     const byLabelsIn = this.getByLabelsIn(sourceMetricType, destMetricType);
 
-    const promise = getNodeMetrics(destMetricType, edge.target(), props, filters, byLabelsIn);
+    const promise = getNodeMetrics(destMetricType, edge.target(), props, filters, quantiles, byLabelsIn);
     this.metricsPromise = makeCancelablePromise(promise);
 
     this.metricsPromise.promise
@@ -222,28 +223,28 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           sourceData
         );
         const rtAvg = this.getNodeDataPoints(
-          histograms['request_duration_in']['average'],
+          histograms['request_duration_in']['avg'],
           'Average',
           sourceMetricType,
           destMetricType,
           sourceData
         );
         const rtMed = this.getNodeDataPoints(
-          histograms['request_duration_in']['median'],
+          histograms['request_duration_in']['0.5'],
           'Median',
           sourceMetricType,
           destMetricType,
           sourceData
         );
         const rt95 = this.getNodeDataPoints(
-          histograms['request_duration_in']['percentile95'],
+          histograms['request_duration_in']['0.95'],
           '95th',
           sourceMetricType,
           destMetricType,
           sourceData
         );
         const rt99 = this.getNodeDataPoints(
-          histograms['request_duration_in']['percentile99'],
+          histograms['request_duration_in']['0.99'],
           '99th',
           sourceMetricType,
           destMetricType,

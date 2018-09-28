@@ -4,32 +4,33 @@ import MetricsChartBase from './MetricsChartBase';
 
 interface HistogramChartProps {
   histogram: Histogram;
-  familyName: string;
+  chartName: string;
   onExpandRequested?: () => void;
 }
 
 class HistogramChart extends MetricsChartBase<HistogramChartProps> {
-  protected get controlKey() {
-    if (this.props.histogram.average.matrix.length === 0) {
+  protected getControlKey() {
+    const keys = Object.keys(this.props.histogram);
+    if (keys.length === 0 || this.props.histogram[keys[0]].matrix.length === 0) {
       return 'blank';
     }
 
-    const labelNames = Object.keys(this.props.histogram.average.matrix[0].metric);
+    const labelNames = Object.keys(this.props.histogram[keys[0]].matrix[0].metric);
     if (labelNames.length === 0) {
-      return this.props.familyName;
+      return this.props.chartName;
     }
 
-    return this.props.familyName + '-' + labelNames.join('-');
+    return this.props.chartName + '-' + labelNames.join('-');
   }
 
-  protected get seriesData() {
+  protected getSeriesData() {
+    Object.keys(this.props.histogram).forEach(stat => {
+      const statName = stat === 'avg' ? 'average' : 'quantile ' + stat;
+      this.nameTimeSeries(this.props.histogram[stat].matrix, statName);
+    });
     return {
       x: 'x',
-      columns: graphUtils
-        .toC3Columns(this.nameTimeSeries('[avg]', this.props.histogram.average.matrix))
-        .concat(graphUtils.toC3ValueColumns(this.nameTimeSeries('[med]', this.props.histogram.median.matrix)))
-        .concat(graphUtils.toC3ValueColumns(this.nameTimeSeries('[p95]', this.props.histogram.percentile95.matrix)))
-        .concat(graphUtils.toC3ValueColumns(this.nameTimeSeries('[p99]', this.props.histogram.percentile99.matrix)))
+      columns: graphUtils.histogramToC3Columns(this.props.histogram)
     };
   }
 }

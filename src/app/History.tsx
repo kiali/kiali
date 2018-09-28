@@ -6,14 +6,23 @@ const history = createBrowserHistory({ basename: baseName });
 
 export default history;
 
+export enum URLParams {
+  POLL_INTERVAL = 'pi',
+  DURATION = 'duration',
+  REPORTER = 'reporter',
+  SHOW_AVERAGE = 'avg',
+  QUANTILES = 'quantiles',
+  BY_LABELS = 'bylbl'
+}
+
 export namespace HistoryManager {
-  export const setParam = (name: string, value: string) => {
+  export const setParam = (name: URLParams, value: string) => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.set(name, value);
     history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
-  export const getParam = (name: string): string | null => {
+  export const getParam = (name: URLParams): string | null => {
     const urlParams = new URLSearchParams(history.location.search);
     return urlParams.get(name);
   };
