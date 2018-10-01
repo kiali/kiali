@@ -7,6 +7,8 @@ import (
 	"github.com/kiali/kiali/services/models"
 )
 
+const DestinationRulesCheckerType = "destinationrule"
+
 type MultiMatchChecker struct {
 	DestinationRules []kubernetes.IstioObject
 }
@@ -20,8 +22,7 @@ type Host struct {
 func (m MultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	var empty struct{}
-	seenHosts := make(map[string]map[string]map[string]struct{}) // Poor man's trie
+	seenHosts := make(map[string]map[string]map[string]string) // Poor man's trie, last string is the first service's name that used the host
 
 	for _, v := range m.DestinationRules {
 		if host, ok := v.GetSpec()["host"]; ok {
@@ -31,28 +32,28 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 
 				namespaceMap, found := seenHosts[fqdn.Cluster]
 				if !found {
-					seenHosts[fqdn.Cluster] = make(map[string]map[string]struct{})
+					seenHosts[fqdn.Cluster] = make(map[string]map[string]string)
 					namespaceMap = seenHosts[fqdn.Cluster]
 				}
 
 				serviceMap, found := namespaceMap[fqdn.Namespace]
 				if !found {
-					namespaceMap[fqdn.Namespace] = make(map[string]struct{})
+					namespaceMap[fqdn.Namespace] = make(map[string]string)
 					serviceMap = namespaceMap[fqdn.Namespace]
 				}
 
 				if fqdn.Service == "*" && found {
 					// Existence of this map is enough to cause an error
-					addError(validations, destinationRulesName)
+					addError(validations, []string{destinationRulesName, serviceMap[fqdn.Service]})
 				}
 				// Search "*" first and then exact name
-				if _, found := serviceMap["*"]; found {
-					addError(validations, destinationRulesName)
+				if previous, found := serviceMap["*"]; found {
+					addError(validations, []string{destinationRulesName, previous})
 				} else {
-					if _, found := serviceMap[fqdn.Service]; found {
-						addError(validations, destinationRulesName)
+					if previous, found := serviceMap[fqdn.Service]; found {
+						addError(validations, []string{destinationRulesName, previous})
 					} else {
-						serviceMap[fqdn.Service] = empty // This will add "*" also
+						serviceMap[fqdn.Service] = destinationRulesName // This will add "*" also
 					}
 				}
 			}
@@ -62,20 +63,23 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func addError(validations models.IstioValidations, destinationRulesName string) {
-	key := models.IstioValidationKey{Name: destinationRulesName, ObjectType: "destinationrules"}
-	checks := models.BuildCheck("More than one DestinationRules for same host",
-		"warning", "spec/hosts")
-	rrValidation := &models.IstioValidation{
-		Name:       destinationRulesName,
-		ObjectType: "destinationrules",
-		Valid:      true,
-		Checks: []*models.IstioCheck{
-			&checks,
-		},
-	}
+func addError(validations models.IstioValidations, destinationRuleNames []string) models.IstioValidations {
+	for _, destinationRuleName := range destinationRuleNames {
+		key := models.IstioValidationKey{Name: destinationRuleName, ObjectType: DestinationRulesCheckerType}
+		checks := models.BuildCheck("More than one DestinationRules for same host",
+			"warning", "spec/hosts")
+		rrValidation := &models.IstioValidation{
+			Name:       destinationRuleName,
+			ObjectType: DestinationRulesCheckerType,
+			Valid:      true,
+			Checks: []*models.IstioCheck{
+				&checks,
+			},
+		}
 
-	validations.MergeValidations(models.IstioValidations{key: rrValidation})
+		validations.MergeValidations(models.IstioValidations{key: rrValidation})
+	}
+	return validations
 }
 
 func formatHostnameForPrefixSearch(hostName, namespace, clusterName string) Host {

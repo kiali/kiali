@@ -2,9 +2,10 @@ package business
 
 import (
 	"fmt"
+	"sync"
+
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"sync"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/business/checkers"
@@ -32,14 +33,14 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	errChan := make(chan error, 5)
 
 	vs := make([]kubernetes.IstioObject, 0)
-	dr := make([]kubernetes.IstioObject, 0)
+	drs := make([]kubernetes.IstioObject, 0)
 	gws := make([]kubernetes.IstioObject, 0)
 	ses := make([]kubernetes.IstioObject, 0)
 	var pods []v1.Pod
 
 	wg.Add(5)
 	go fetch(&vs, namespace, service, in.k8s.GetVirtualServices, &wg, errChan)
-	go fetch(&dr, namespace, service, in.k8s.GetDestinationRules, &wg, errChan)
+	go fetch(&drs, namespace, service, in.k8s.GetDestinationRules, &wg, errChan)
 	go fetchNoEntry(&gws, namespace, in.k8s.GetGateways, &wg, errChan)
 	go fetchNoEntry(&ses, namespace, in.k8s.GetServiceEntries, &wg, errChan)
 	go func() {
@@ -51,23 +52,14 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		}
 	}()
 	wg.Wait()
-	/* TODO revisit if Gateways and ServiceEntries are used here, something seems missing
-	   istioDetails is not passed
-	if len(errChan) == 0 {
-		istioDetails.Gateways = gws
-		istioDetails.ServiceEntries = ses
-	} else {
-		err = <-errChan
-		return nil, err
-	}
-	*/
 	if len(errChan) != 0 {
 		err = <-errChan
 		return nil, err
 	}
 	objectCheckers := []ObjectChecker{
-		checkers.VirtualServiceChecker{namespace, dr, vs},
+		checkers.VirtualServiceChecker{namespace, drs, vs},
 		checkers.PodChecker{Pods: pods},
+		checkers.DestinationRulesChecker{DestinationRules: drs},
 	}
 
 	// Get groupal validations for same kind istio objects
@@ -91,15 +83,18 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 	errChan := make(chan error, 2)
 
 	gws := make([]kubernetes.IstioObject, 0)
+	drs := make([]kubernetes.IstioObject, 0)
 	ses := make([]kubernetes.IstioObject, 0)
 
-	wg.Add(2)
+	wg.Add(3)
+	go fetch(&drs, namespace, "", in.k8s.GetDestinationRules, &wg, errChan)
 	go fetchNoEntry(&gws, namespace, in.k8s.GetGateways, &wg, errChan)
 	go fetchNoEntry(&ses, namespace, in.k8s.GetServiceEntries, &wg, errChan)
 	wg.Wait()
 	if len(errChan) == 0 {
 		istioDetails.Gateways = gws
 		istioDetails.ServiceEntries = ses
+		istioDetails.DestinationRules = drs
 	} else {
 		err = <-errChan
 		return nil, err
@@ -109,6 +104,7 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 		checkers.VirtualServiceChecker{namespace, istioDetails.DestinationRules,
 			istioDetails.VirtualServices},
 		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: istioDetails, Services: services},
+		checkers.DestinationRulesChecker{DestinationRules: drs},
 	}
 
 	return models.NamespaceValidations{namespace: runObjectCheckers(objectCheckers)}, nil
@@ -177,9 +173,16 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 			err = <-errChan
 		}
 	case "destinationrules":
-		if dr, err = in.k8s.GetDestinationRule(namespace, object); err == nil {
-			istioDetails.DestinationRules = []kubernetes.IstioObject{dr}
-			destinationRulesChecker := checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules}
+		if drs, err := in.k8s.GetDestinationRules(namespace, ""); err == nil {
+			for _, o := range drs {
+				meta := o.GetObjectMeta()
+				if meta.Name == object {
+					dr = o
+					break
+				}
+			}
+			istioDetails.DestinationRules = []kubernetes.IstioObject{dr} // Single destination rule only available here, not whole namespace
+			destinationRulesChecker := checkers.DestinationRulesChecker{DestinationRules: drs}
 			objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
 		}
 	case "serviceentries":
@@ -208,6 +211,7 @@ func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
 	for _, objectChecker := range objectCheckers {
 		objectTypeValidations.MergeValidations(objectChecker.Check())
 	}
+
 	return objectTypeValidations
 }
 
