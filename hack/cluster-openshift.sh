@@ -464,16 +464,16 @@ if [ "$_CMD" = "up" ]; then
     ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=kiali -n istio-system
     echo "Deploying Kiali..."
     curl https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/deploy/openshift/kiali-configmap.yaml | \
-      VERSION_LABEL=${KIALI_VERSION} envsubst | oc create -n istio-system -f -
+      VERSION_LABEL=${KIALI_VERSION} envsubst | ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f -
     curl https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/deploy/openshift/kiali-secrets.yaml | \
-      VERSION_LABEL=${KIALI_VERSION} envsubst | oc create -n istio-system -f -
+      VERSION_LABEL=${KIALI_VERSION} envsubst | ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f -
     curl https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/deploy/openshift/kiali.yaml | \
       VERSION_LABEL=${KIALI_VERSION} \
       IMAGE_NAME=kiali/kiali \
       IMAGE_VERSION=${KIALI_VERSION}  \
       NAMESPACE=istio-system \
       VERBOSE_MODE=4 \
-      IMAGE_PULL_POLICY_TOKEN="imagePullPolicy: Always" envsubst | oc create -n istio-system -f -
+      IMAGE_PULL_POLICY_TOKEN="imagePullPolicy: Always" envsubst | ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f -
   fi
 
 elif [ "$_CMD" = "down" ];then
