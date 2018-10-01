@@ -3,7 +3,7 @@ SHELL=/bin/bash
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v0.8.0
+VERSION ?= v0.9.0-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Indicates which version of the UI console is to be embedded
@@ -31,7 +31,7 @@ GO_VERSION_KIALI = 1.8.3
 
 # Identifies the docker image that will be built and deployed.
 DOCKER_NAME ?= kiali/kiali
-DOCKER_VERSION ?= 0.8.0
+DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
 
 # If the IMAGE_PULL_POLICY is not defined and its the short version (eg vX.Y and not vX.Y.Z)
