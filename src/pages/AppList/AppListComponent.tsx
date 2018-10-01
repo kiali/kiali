@@ -2,13 +2,13 @@ import * as React from 'react';
 import * as API from '../../services/Api';
 import { authentication } from '../../utils/Authentication';
 import Namespace from '../../types/Namespace';
-import { AppListItem } from '../../types/AppList';
+import { AppList, AppListItem } from '../../types/AppList';
 import { AppListFilters } from './FiltersAndSorts';
 import { AppListClass } from './AppListClass';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { Button, Icon, ListView, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
 import { ActiveFilter } from '../../types/Filters';
-import { removeDuplicatesArray } from '../../utils/Common';
+import { CancelablePromise, makeCancelablePromise, removeDuplicatesArray } from '../../utils/Common';
 import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
 import { ListPage } from '../../components/ListPage/ListPage';
 import { SortField } from '../../types/SortFilters';
@@ -24,6 +24,10 @@ interface AppListComponentProps extends ListComponent.Props<AppListItem> {
 }
 
 class AppListComponent extends ListComponent.Component<AppListComponentProps, AppListComponentState, AppListItem> {
+  private nsPromise?: CancelablePromise<API.Response<Namespace[]>>;
+  private appPromise?: CancelablePromise<API.Response<AppList>[]>;
+  private sortPromise?: CancelablePromise<AppListItem[]>;
+
   constructor(props: AppListComponentProps) {
     super(props);
     this.state = {
@@ -51,6 +55,10 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
     }
   }
 
+  componentWillUnmount() {
+    this.cancelAsyncs();
+  }
+
   paramsAreSynced(prevProps: AppListComponentProps) {
     return (
       prevProps.pagination.page === this.props.pagination.page &&
@@ -66,11 +74,39 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
     this.setState({ rateInterval: key });
   };
 
-  sortItemList(apps: AppListItem[], sortField: SortField<AppListItem>, isAscending: boolean) {
-    return AppListFilters.sortAppsItems(apps, sortField, isAscending);
+  sortItemList(apps: AppListItem[], sortField: SortField<AppListItem>, isAscending: boolean): Promise<AppListItem[]> {
+    let lastSort: Promise<AppListItem[]>;
+    const sorter = unsorted => {
+      this.sortPromise = makeCancelablePromise(AppListFilters.sortAppsItems(unsorted, sortField, isAscending));
+      this.sortPromise.promise
+        .then(() => {
+          this.sortPromise = undefined;
+        })
+        .catch(() => {
+          this.sortPromise = undefined;
+        });
+      return this.sortPromise.promise;
+    };
+
+    if (!this.sortPromise) {
+      // If there is no "sortPromise" set, take the received (unsorted) list of apps to sort
+      // them and update the UI with the sorted list.
+      lastSort = sorter(apps);
+    } else {
+      // If there is a "sortPromise", there may be an ongoing fetch/refresh. So, the received <apps> list argument
+      // shoudn't be used as it may represent the "old" data before the refresh. Instead, append a callback to the
+      // "sortPromise" to re-sort once the data is fetched. This ensures that the list will display the new data with
+      // the right sorting.
+      // (See other comments in the fetchApps method)
+      lastSort = this.sortPromise.promise.then(sorter);
+    }
+
+    return lastSort;
   }
 
   updateListItems(resetPagination?: boolean) {
+    this.cancelAsyncs();
+
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
@@ -80,7 +116,8 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
     namespacesSelected = removeDuplicatesArray(namespacesSelected);
 
     if (namespacesSelected.length === 0) {
-      API.getNamespaces(authentication())
+      this.nsPromise = makeCancelablePromise(API.getNamespaces(authentication()));
+      this.nsPromise.promise
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchApps(
@@ -89,8 +126,13 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
             this.props.rateInterval,
             resetPagination
           );
+          this.nsPromise = undefined;
         })
-        .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
+        .catch(namespacesError => {
+          if (!namespacesError.isCanceled) {
+            this.handleAxiosError('Could not fetch namespace list.', namespacesError);
+          }
+        });
     } else {
       this.fetchApps(namespacesSelected, activeFilters, this.props.rateInterval, resetPagination);
     }
@@ -98,30 +140,53 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
 
   fetchApps(namespaces: string[], filters: ActiveFilter[], rateInterval: number, resetPagination?: boolean) {
     const appsPromises = namespaces.map(namespace => API.getApps(authentication(), namespace));
-    Promise.all(appsPromises).then(responses => {
-      const currentPage = resetPagination ? 1 : this.state.pagination.page;
+    this.appPromise = makeCancelablePromise(Promise.all(appsPromises));
+    this.appPromise.promise
+      .then(responses => {
+        const currentPage = resetPagination ? 1 : this.state.pagination.page;
 
-      let appListItems: AppListItem[] = [];
-      responses.forEach(response => {
-        AppListFilters.filterBy(response.data, filters);
-        appListItems = appListItems.concat(AppListClass.getAppItems(response.data, rateInterval));
-      });
-
-      AppListFilters.sortAppsItems(appListItems, this.state.currentSortField, this.state.isSortAscending).then(
-        sorted => {
-          this.setState(prevState => {
-            return {
-              listItems: sorted,
-              pagination: {
-                page: currentPage,
-                perPage: prevState.pagination.perPage,
-                perPageOptions: ListPage.perPageOptions
-              }
-            };
-          });
+        let appListItems: AppListItem[] = [];
+        responses.forEach(response => {
+          AppListFilters.filterBy(response.data, filters);
+          appListItems = appListItems.concat(AppListClass.getAppItems(response.data, rateInterval));
+        });
+        if (this.sortPromise) {
+          this.sortPromise.cancel();
         }
-      );
-    });
+        // Promises for sorting are needed, because the user may have the list sorted using health/error rates
+        // and these data can be fetched only after the list is retrieved. If the user is sorting using these
+        // criteria, the update of the list is deferred after sorting is possible. This way, it's avoided the
+        // illusion of double-fetch or flickering list.
+        this.sortPromise = makeCancelablePromise(
+          AppListFilters.sortAppsItems(appListItems, this.state.currentSortField, this.state.isSortAscending)
+        );
+        this.sortPromise.promise
+          .then(sorted => {
+            this.setState(prevState => {
+              return {
+                listItems: sorted,
+                pagination: {
+                  page: currentPage,
+                  perPage: prevState.pagination.perPage,
+                  perPageOptions: ListPage.perPageOptions
+                }
+              };
+            });
+            this.sortPromise = undefined;
+          })
+          .catch(err => {
+            if (!err.isCanceled) {
+              console.debug(err);
+            }
+            this.sortPromise = undefined;
+          });
+        this.appPromise = undefined;
+      })
+      .catch(err => {
+        if (!err.isCanceled) {
+          console.debug(err);
+        }
+      });
   }
 
   render() {
@@ -174,6 +239,21 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
       </>
     );
   }
+
+  private cancelAsyncs = () => {
+    if (this.nsPromise) {
+      this.nsPromise.cancel();
+      this.nsPromise = undefined;
+    }
+    if (this.appPromise) {
+      this.appPromise.cancel();
+      this.appPromise = undefined;
+    }
+    if (this.sortPromise) {
+      this.sortPromise.cancel();
+      this.sortPromise = undefined;
+    }
+  };
 }
 
 export default AppListComponent;

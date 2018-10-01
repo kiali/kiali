@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Filter, FormControl, Toolbar } from 'patternfly-react';
 import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
 import { ListPage } from '../ListPage/ListPage';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
 
 export interface StatefulFiltersProps {
   onFilterChange: () => void;
@@ -33,6 +34,8 @@ export namespace FilterSelected {
 }
 
 export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
+  private filterTypePromise?: CancelablePromise<FilterType[]>;
+
   constructor(props: StatefulFiltersProps) {
     super(props);
 
@@ -73,14 +76,29 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       }
     });
 
-    Promise.all(promises).then(types => {
-      this.setState({ filterTypes: types });
-    });
+    this.filterTypePromise = makeCancelablePromise(Promise.all(promises));
+    this.filterTypePromise.promise
+      .then(types => {
+        this.setState({ filterTypes: types });
+        this.filterTypePromise = undefined;
+      })
+      .catch(err => {
+        if (!err.isCancelable) {
+          console.debug(err);
+        }
+      });
   }
 
   componentDidUpdate(prevProps: StatefulFiltersProps, prevState: StatefulFiltersState, snapshot: any) {
     if (!this.props.pageHooks.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)) {
       this.props.pageHooks.setFiltersToURL(this.state.filterTypes, this.state.activeFilters);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.filterTypePromise) {
+      this.filterTypePromise.cancel();
+      this.filterTypePromise = undefined;
     }
   }
 

@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { WorkloadHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import ErrorRate from './ErrorRate';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
 
 type ItemDescriptionState = {
   health?: WorkloadHealth;
@@ -18,6 +19,8 @@ type ItemDescriptionProps = {
 };
 
 class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescriptionState> {
+  private healthPromise?: CancelablePromise<WorkloadHealth>;
+
   constructor(props: ItemDescriptionProps) {
     super(props);
     this.state = {
@@ -35,8 +38,24 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
     }
   }
 
+  componentWillUnmount() {
+    if (this.healthPromise) {
+      this.healthPromise.cancel();
+      this.healthPromise = undefined;
+    }
+  }
+
   onItemChanged(item: WorkloadListItem) {
-    item.healthPromise.then(h => this.setState({ health: h })).catch(err => this.setState({ health: undefined }));
+    if (this.healthPromise) {
+      this.healthPromise.cancel();
+    }
+
+    this.healthPromise = makeCancelablePromise(item.healthPromise);
+    this.healthPromise.promise.then(h => this.setState({ health: h })).catch(err => {
+      if (!err.isCanceled) {
+        this.setState({ health: undefined });
+      }
+    });
   }
 
   render() {

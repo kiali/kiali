@@ -24,15 +24,14 @@ describe('ItemDescription', () => {
     };
   });
 
-  it('should render with promise resolving', done => {
+  it('should render with promise resolving', () => {
     const wrapper = shallow(<ItemDescription item={item} />);
     expect(wrapper.text()).toBe('');
 
     resolver(health);
-    item.healthPromise.then(() => {
+    return new Promise(r => setImmediate(r)).then(() => {
       wrapper.update();
       expect(wrapper.text()).toBe('Health: <HealthIndicator /><ServiceErrorRate />');
-      done();
     });
   });
 });
