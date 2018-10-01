@@ -20,7 +20,7 @@
 ISTIO_VERSION=
 
 # process command line args
-while [[ $# -gt 0 ]]; do
+while [ $# -gt 0 ]; do
   key="$1"
   case $key in
     -iv|--istio-version)
@@ -55,7 +55,7 @@ cd "$OUTPUT_DIR"
 OUTPUT_DIR="$(pwd)" # remove the .. references
 echo "Output Directory: ${OUTPUT_DIR}"
 
-if [ "x${ISTIO_VERSION}" == "x" ]; then
+if [ -z "${ISTIO_VERSION}" ]; then
    VERSION_WE_WANT=$(curl https://api.github.com/repos/istio/istio/releases/latest 2> /dev/null |\
          grep  "tag_name" | \
          sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
@@ -76,7 +76,7 @@ fi
 cd "./istio-${VERSION_WE_WANT}/"
 ISTIO_DIR="$(pwd)"
 echo "Istio is found here: ${ISTIO_DIR}"
-if [[ -x "${ISTIO_DIR}/bin/istioctl" ]]; then
+if [ -x "${ISTIO_DIR}/bin/istioctl" ]; then
   echo "istioctl is found here: ${ISTIO_DIR}/bin/istioctl"
   ISTIOCTL="${ISTIO_DIR}/bin/istioctl"
   ${ISTIOCTL} version
