@@ -15,6 +15,7 @@ export interface GraphFilterState {
   readonly showCircuitBreakers: boolean;
   readonly showVirtualServices: boolean;
   readonly showMissingSidecars: boolean;
+  readonly showSecurity: boolean;
   readonly showTrafficAnimation: boolean;
   readonly showServiceNodes: boolean;
   readonly refreshRate: PollIntervalInMs;

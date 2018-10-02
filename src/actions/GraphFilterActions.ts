@@ -10,6 +10,7 @@ export enum GraphFilterActionKeys {
   TOGGLE_GRAPH_CIRCUIT_BREAKERS = 'TOGGLE_GRAPH_CIRCUIT_BREAKERS',
   TOGGLE_GRAPH_VIRTUAL_SERVICES = 'TOGGLE_GRAPH_VIRTUAL_SERVICES',
   TOGGLE_GRAPH_MISSING_SIDECARS = 'TOGGLE_GRAPH_MISSING_SIDECARS',
+  TOGGLE_GRAPH_SECURITY = 'TOGGLE_GRAPH_SECURITY',
   TOGGLE_SERVICE_NODES = 'TOGGLE_SERVICE_NODES',
   TOGGLE_TRAFFIC_ANIMATION = 'TOGGLE_TRAFFIC_ANIMATION',
   SET_GRAPH_EDGE_LABEL_MODE = 'SET_GRAPH_EDGE_LABEL_MODE',
@@ -33,6 +34,7 @@ export const GraphFilterActions = {
   toggleGraphVirtualServices: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_VIRTUAL_SERVICES),
   toggleGraphCircuitBreakers: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS),
   toggleGraphMissingSidecars: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS),
+  toggleGraphSecurity: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_SECURITY),
   toggleTrafficAnimation: createAction(GraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION),
   toggleServiceNodes: createAction(GraphFilterActionKeys.TOGGLE_SERVICE_NODES),
   showGraphFilters: createAction(GraphFilterActionKeys.ENABLE_GRAPH_FILTERS, (value: boolean) => ({

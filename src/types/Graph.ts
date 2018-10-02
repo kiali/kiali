@@ -61,6 +61,7 @@ export type CytoscapeGlobalScratchData = {
   graphType: GraphType;
   showCircuitBreakers: boolean;
   showMissingSidecars: boolean;
+  showSecurity: boolean;
   showNodeLabels: boolean;
   showVirtualServices: boolean;
 };

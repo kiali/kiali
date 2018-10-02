@@ -84,6 +84,7 @@ export const GraphDataActions = {
     graphType: GraphType,
     injectServiceNodes: boolean,
     edgeLabelMode: EdgeLabelMode,
+    showSecurity: boolean,
     node?: NodeParamsType
   ) => {
     return dispatch => {
@@ -103,18 +104,17 @@ export const GraphDataActions = {
         appenders += ',unused_node';
       }
 
-      switch (edgeLabelMode) {
-        case EdgeLabelMode.MTLS_ENABLED:
-          appenders += ',security_policy';
-          break;
+      if (showSecurity) {
+        appenders += ',security_policy';
+      }
 
+      switch (edgeLabelMode) {
         case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE:
           appenders += ',response_time';
           break;
 
-        case EdgeLabelMode.REQUESTS_PER_SECOND:
+        case EdgeLabelMode.TRAFFIC_RATE_PER_SECOND:
         case EdgeLabelMode.REQUESTS_PERCENT_OF_TOTAL:
-        case EdgeLabelMode.TCP_SENT:
         case EdgeLabelMode.HIDE:
         default:
           break;

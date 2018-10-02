@@ -17,6 +17,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showCircuitBreakers: true,
     showVirtualServices: true,
     showMissingSidecars: true,
+    showSecurity: false,
     showTrafficAnimation: false,
     showServiceNodes: false,
     refreshRate: 15 * MILLISECONDS
