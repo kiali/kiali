@@ -8,6 +8,7 @@ type ResponseTimeChartTypeProp = {
   rtMed: [string, number][];
   rt95: [string, number][];
   rt99: [string, number][];
+  hide?: boolean;
 };
 
 export default class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp, {}> {
@@ -42,17 +43,21 @@ export default class ResponseTimeChart extends React.Component<ResponseTimeChart
 
     return (
       <>
-        <div>
-          <strong>{this.props.label}:</strong>
-        </div>
-        <AreaChart
-          size={{ height: 80 }}
-          color={{ pattern: [PfColors.Black, PfColors.Green400, PfColors.Blue, PfColors.Orange400] }}
-          legend={{ show: true }}
-          grid={{ y: { show: false } }}
-          axis={axis}
-          data={chartData}
-        />
+        {!this.props.hide && (
+          <div>
+            <div>
+              <strong>{this.props.label}:</strong>
+            </div>
+            <AreaChart
+              size={{ height: 80 }}
+              color={{ pattern: [PfColors.Black, PfColors.Green400, PfColors.Blue, PfColors.Orange400] }}
+              legend={{ show: true }}
+              grid={{ y: { show: false } }}
+              axis={axis}
+              data={chartData}
+            />
+          </div>
+        )}
       </>
     );
   }

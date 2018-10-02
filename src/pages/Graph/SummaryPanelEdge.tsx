@@ -1,16 +1,16 @@
 import * as React from 'react';
 import { Icon } from 'patternfly-react';
-
 import RateTable from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
-import { NodeType, SummaryPanelPropType } from '../../types/Graph';
+import { GraphType, NodeType, SummaryPanelPropType } from '../../types/Graph';
 import {
   shouldRefreshData,
   nodeData,
   getDatapoints,
   getNodeMetrics,
   getNodeMetricType,
+  renderNoTraffic,
   renderPanelTitle,
   NodeData,
   NodeMetricType
@@ -106,7 +106,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         <HeadingBlock prefix="Source" node={source} />
         <HeadingBlock prefix="Destination" node={dest} />
         <div className="panel-body">
-          {this.hasHttpMetrics(edge) && (
+          {this.hasHttpMetrics(edge) ? (
             <>
               <RateTable
                 title="HTTP Traffic (requests per second):"
@@ -117,6 +117,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
               />
               <hr />
             </>
+          ) : (
+            !this.hasTcpMetrics(edge) && renderNoTraffic()
           )}
           {this.renderCharts(edge)}
         </div>
@@ -127,23 +129,21 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   private getByLabelsIn = (sourceMetricType: NodeMetricType, destMetricType: NodeMetricType) => {
     let sourceLabel: string;
     switch (sourceMetricType) {
-      case NodeMetricType.WORKLOAD:
-        sourceLabel = 'source_workload';
-        break;
       case NodeMetricType.APP:
         sourceLabel = 'source_app';
         break;
       case NodeMetricType.SERVICE:
-      default:
         sourceLabel = 'destination_service_name';
         break;
+      case NodeMetricType.WORKLOAD:
+      // fall through, workload is default
+      default:
+        sourceLabel = 'source_workload';
+        break;
     }
-    // when not injecting service nodes the only service nodes are those representing client failures. For
-    // those we want to narrow the data to only TS with 'unknown' workloads (see the related comparator in getNodeDatapoints).
-    if (destMetricType === NodeMetricType.SERVICE && !this.props.injectServiceNodes) {
-      return [sourceLabel, 'destination_workload'];
-    }
-    return [sourceLabel];
+    // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
+    // comparator in getNodeDatapoints).
+    return this.isSpecialServiceDest(destMetricType) ? [sourceLabel, 'destination_workload'] : [sourceLabel];
   };
 
   private getNodeDataPoints = (
@@ -156,21 +156,22 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     let sourceLabel: string;
     let sourceValue: string;
     switch (sourceMetricType) {
-      case NodeMetricType.WORKLOAD:
-        sourceLabel = 'source_workload';
-        sourceValue = data.workload;
-        break;
       case NodeMetricType.APP:
         sourceLabel = 'source_app';
         sourceValue = data.app;
         break;
       case NodeMetricType.SERVICE:
-      default:
         sourceLabel = 'destination_service_name';
         sourceValue = data.service;
+        break;
+      case NodeMetricType.WORKLOAD:
+      // fall through, use workload as the default
+      default:
+        sourceLabel = 'source_workload';
+        sourceValue = data.workload;
     }
     let comparator = (metric: Metric) => {
-      if (destMetricType === NodeMetricType.SERVICE && !this.props.injectServiceNodes) {
+      if (this.isSpecialServiceDest(destMetricType)) {
         return metric[sourceLabel] === sourceValue && metric['destination_workload'] === 'unknown';
       }
       return metric[sourceLabel] === sourceValue;
@@ -190,7 +191,16 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       this.metricsPromise = undefined;
     }
 
-    if (!destMetricType || !sourceMetricType || (!this.hasHttpMetrics(edge) && !this.hasTcpMetrics(edge))) {
+    // Just return if the metric types are unset, there is no data, or charts are unsupported
+    if (
+      !destMetricType ||
+      !sourceMetricType ||
+      !this.hasSupportedCharts(edge) ||
+      (!this.hasHttpMetrics(edge) && !this.hasTcpMetrics(edge))
+    ) {
+      this.setState({
+        loading: false
+      });
       return;
     }
 
@@ -203,7 +213,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
     this.metricsPromise.promise
       .then(response => {
-        let useDest = sourceData.nodeType === NodeType.UNKNOWN;
+        let useDest = sourceData.nodeType === NodeType.UNKNOWN || sourceData.nodeType === NodeType.SERVICE;
         useDest = useDest || this.props.namespace === 'istio-system';
         const reporter = useDest ? response.data.dest : response.data.source;
         const metrics = reporter.metrics;
@@ -279,7 +289,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       })
       .catch(error => {
         if (error.isCanceled) {
-          console.log('SummaryPanelEdge: Ignore fetch error (canceled).');
+          console.debug('SummaryPanelEdge: Ignore fetch error (canceled).');
           return;
         }
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
@@ -305,9 +315,19 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   );
 
   private renderCharts = edge => {
+    if (!this.hasSupportedCharts(edge)) {
+      return (
+        <>
+          <Icon type="pf" name="info" /> Service graphs do not support service-to-service aggregate sparklines. See the
+          chart above for aggregate traffic or use the workload graph type to observe individual workload-to-service
+          edge sparklines.
+        </>
+      );
+    }
     if (this.state.loading && !this.state.reqRates) {
       return <strong>Loading charts...</strong>;
-    } else if (this.state.metricsLoadError) {
+    }
+    if (this.state.metricsLoadError) {
       return (
         <div>
           <Icon type="pf" name="warning-triangle-o" /> <strong>Error loading metrics: </strong>
@@ -348,17 +368,32 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     );
   };
 
+  private hasSupportedCharts = edge => {
+    const sourceData = nodeData(edge.source());
+    const destData = nodeData(edge.target());
+    const sourceMetricType = getNodeMetricType(sourceData);
+    const destMetricType = getNodeMetricType(destData);
+
+    // service-to-service edges are unsupported because they represent aggregations (of multiple workload to service edges)
+    const chartsSupported = sourceMetricType !== NodeMetricType.SERVICE || destMetricType !== NodeMetricType.SERVICE;
+    return chartsSupported;
+  };
+
+  // We need to handle the special case of a dest service node showing client failures. These service nodes show up in
+  // non-service graphs, even when not injecting service nodes.
+  private isSpecialServiceDest(destMetricType: NodeMetricType) {
+    return (
+      destMetricType === NodeMetricType.SERVICE &&
+      !this.props.injectServiceNodes &&
+      this.props.graphType !== GraphType.SERVICE
+    );
+  }
+
   private hasHttpMetrics = (edge): boolean => {
-    if (edge.data('rate')) {
-      return true;
-    }
-    return false;
+    return edge.data('rate') ? true : false;
   };
 
   private hasTcpMetrics = (edge): boolean => {
-    if (edge.data('tcpSentRate')) {
-      return true;
-    }
-    return false;
+    return edge.data('tcpSentRate') ? true : false;
   };
 }

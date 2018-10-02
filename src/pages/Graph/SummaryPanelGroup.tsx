@@ -12,6 +12,7 @@ import {
   nodeData,
   getNodeMetrics,
   getNodeMetricType,
+  renderNoTraffic,
   renderPanelTitle
 } from './SummaryPanelCommon';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
@@ -130,7 +131,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               View detailed charts <Icon name="angle-double-right" />
             </Link>
           </p> */}
-          {this.hasHttpTraffic(group) && this.renderHttpRates(group)}
+          {this.hasHttpTraffic(group) ? this.renderHttpRates(group) : renderNoTraffic('HTTP')}
           <div>{this.renderSparklines(group)}</div>
         </div>
       </div>

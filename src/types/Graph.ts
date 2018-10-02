@@ -22,6 +22,7 @@ export interface SummaryPanelPropType {
 
 export enum GraphType {
   APP = 'app',
+  SERVICE = 'service',
   VERSIONED_APP = 'versionedApp',
   WORKLOAD = 'workload'
 }

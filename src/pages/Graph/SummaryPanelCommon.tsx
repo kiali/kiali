@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import * as React from 'react';
+import { Icon } from 'patternfly-react';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import { Health, healthNotAvailable } from '../../types/Health';
 import MetricsOptions from '../../types/MetricsOptions';
@@ -219,6 +220,16 @@ export const renderPanelTitle = node => {
   return (
     <>
       {nodeTypeToString(nodeType)}: {displaySpan}
+    </>
+  );
+};
+
+export const renderNoTraffic = (protocol?: string) => {
+  return (
+    <>
+      <div>
+        <Icon type="pf" name="info" /> No {protocol ? protocol : ''} traffic logged.
+      </div>
     </>
   );
 };

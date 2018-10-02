@@ -7,12 +7,14 @@ type RpsChartTypeProp = {
   label: string;
   dataRps: [string, number][];
   dataErrors: [string, number][];
+  hide?: boolean;
 };
 
 type TcpChartTypeProp = {
   label: string;
   sentRates: [string, number][];
   receivedRates: [string, number][];
+  hide?: boolean;
 };
 
 type BytesAbbreviation = {
@@ -94,13 +96,17 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
 
   render() {
     return (
-      <div className={blockStyle}>
-        <div>
-          <strong>{this.props.label} min / max:</strong>
-        </div>
-        {thereIsTrafficData(this.props.dataRps) ? this.renderMinMaxStats() : renderNoTrafficLegend()}
-        {this.renderSparkline()}
-      </div>
+      <>
+        {!this.props.hide && (
+          <div className={blockStyle}>
+            <div>
+              <strong>{this.props.label} min / max:</strong>
+            </div>
+            {thereIsTrafficData(this.props.dataRps) ? this.renderMinMaxStats() : renderNoTrafficLegend()}
+            {this.renderSparkline()}
+          </div>
+        )}
+      </>
     );
   }
 
@@ -155,13 +161,17 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
 export class TcpChart extends React.Component<TcpChartTypeProp, {}> {
   render() {
     return (
-      <div className={blockStyle}>
-        <div>
-          <strong>{this.props.label} - min / max:</strong>
-        </div>
-        {this.thereIsTrafficData() ? this.renderMinMaxStats() : renderNoTrafficLegend()}
-        {this.renderSparkline()}
-      </div>
+      <>
+        {!this.props.hide && (
+          <div className={blockStyle}>
+            <div>
+              <strong>{this.props.label} - min / max:</strong>
+            </div>
+            {this.thereIsTrafficData() ? this.renderMinMaxStats() : renderNoTrafficLegend()}
+            {this.renderSparkline()}
+          </div>
+        )}
+      </>
     );
   }
 

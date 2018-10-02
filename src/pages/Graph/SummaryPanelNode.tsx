@@ -5,7 +5,7 @@ import { Icon } from 'patternfly-react';
 import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
-import { NodeType, SummaryPanelPropType } from '../../types/Graph';
+import { GraphType, NodeType, SummaryPanelPropType } from '../../types/Graph';
 import { Metrics, Metric } from '../../types/Metrics';
 import {
   shouldRefreshData,
@@ -17,6 +17,7 @@ import {
   getNodeMetrics,
   getNodeMetricType,
   getServicesLinkList,
+  renderNoTraffic,
   renderPanelTitle
 } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
@@ -108,12 +109,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     }
 
     const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
-    // when not injecting service nodes the only service nodes are those representing client failures. For
-    // those we want to narrow the data to only TS with 'unknown' workloads (see the related comparator in getNodeDatapoints).
-    let byLabelsIn =
-      nodeMetricType === NodeMetricType.SERVICE && !this.props.injectServiceNodes
-        ? ['destination_workload']
-        : undefined;
+    // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
+    // comparator in getNodeDatapoints).
+    let byLabelsIn = this.isSpecialServiceDest(nodeMetricType) ? ['destination_workload'] : undefined;
     let byLabelsOut = data.isRoot ? ['destination_service_namespace'] : undefined;
 
     const promise = getNodeMetrics(nodeMetricType, target, props, filters, undefined, byLabelsIn, byLabelsOut);
@@ -124,7 +122,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       })
       .catch(error => {
         if (error.isCanceled) {
-          console.log('SummaryPanelNode: Ignore fetch error (canceled).');
+          console.debug('SummaryPanelNode: Ignore fetch error (canceled).');
           return;
         }
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;
@@ -140,7 +138,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   showRequestCountMetrics(all: Metrics, data: NodeData, nodeMetricType: NodeMetricType) {
     let comparator;
-    if (nodeMetricType === NodeMetricType.SERVICE && !this.props.injectServiceNodes) {
+    if (this.isSpecialServiceDest(nodeMetricType)) {
       comparator = (metric: Metric) => {
         return metric['destination_workload'] === 'unknown';
       };
@@ -158,43 +156,29 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     let ecIn;
     let tcpSentIn;
     let tcpReceivedIn;
-    // set outgoing unless it is a non-root outsider (because they have no outgoing edges)
-    if (data.isRoot || !data.isOutsider) {
+    // set outgoing unless it is a non-root outsider (because they have no outgoing edges) or a
+    // service node (because they don't have "real" outgoing edges).
+    if (data.nodeType !== NodeType.SERVICE && (data.isRoot || !data.isOutsider)) {
       // use source metrics for outgoing, except for:
       // - unknown nodes (no source telemetry)
       // - istio namespace nodes (no source telemetry)
-      // - service nodes (to filter out source errors, see below)
       let useDest = data.nodeType === NodeType.UNKNOWN;
-      useDest = useDest || data.nodeType === NodeType.SERVICE;
       useDest = useDest || this.props.namespace === 'istio-system';
       metrics = useDest ? all.dest.metrics : all.source.metrics;
-      if (data.nodeType !== NodeType.SERVICE) {
-        rcOut = metrics['request_count_out'];
-        ecOut = metrics['request_error_count_out'];
+      rcOut = metrics['request_count_out'];
+      ecOut = metrics['request_error_count_out'];
 
-        // These will be empty if destination metrics are being used. That's fine
-        // it's not possible to report TCP metrics, because there is no TCP telemetry (either
-        // in source nor destination) in the cases where dest. metrics are used.
-        tcpSentOut = metrics['tcp_sent_out'];
-        tcpReceivedOut = metrics['tcp_received_out'];
-      } else {
-        // for service nodes incoming requests = outgoing requests less source side erros. Use
-        // destination-reported incoming metrics here, because destination telemetry can not
-        // include source-side errors (because the request never reaches the dest).
-        rcOut = metrics['request_count_in'];
-        ecOut = metrics['request_error_count_in'];
-
-        // Unfortunately, destination side doesn't have good TCP telemetry.
-        // Fallback to "mirror" the "in" metrics in the "out" metrics. This is
-        // the current best effort.
-        tcpSentOut = all.source.metrics['tcp_sent_in'];
-        tcpReceivedOut = all.source.metrics['tcp_received_in'];
-      }
+      // These will be empty if destination metrics are being used. That's fine
+      // it's not possible to report TCP metrics, because there is no TCP telemetry (either
+      // in source nor destination) in the cases where dest. metrics are used.
+      tcpSentOut = metrics['tcp_sent_out'];
+      tcpReceivedOut = metrics['tcp_received_out'];
     }
     // set incoming unless it is a root (because they have no incoming edges)
     if (!data.isRoot) {
-      // use dest metrics for incoming, except for service nodes in order to capturing source errors
-      metrics = data.nodeType === NodeType.SERVICE ? all.source.metrics : all.dest.metrics;
+      // use dest metrics for incoming, except for service nodes which need source metrics to capture source errors
+      const useSource = data.nodeType === NodeType.SERVICE && data.namespace !== 'istio-system';
+      metrics = useSource ? all.source.metrics : all.dest.metrics;
       rcIn = metrics['request_count_in'];
       ecIn = metrics['request_error_count_in'];
 
@@ -269,7 +253,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               </Link>
             </p>
           )} */}
-          {this.hasHttpTraffic(node) && this.renderHttpRates(node)}
+          {this.hasHttpTraffic(node) ? this.renderHttpRates(node) : renderNoTraffic('HTTP')}
           <div>{this.renderSparklines(node)}</div>
         </div>
       </div>
@@ -310,20 +294,38 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       );
     }
 
+    const isServiceNode = node.data('nodeType') === NodeType.SERVICE;
+    let serviceWithUnknownSource: boolean = false;
+    if (isServiceNode) {
+      for (const n of node.incomers()) {
+        if (NodeType.UNKNOWN === n.data('nodeType')) {
+          serviceWithUnknownSource = true;
+          break;
+        }
+      }
+    }
     let httpCharts, tcpCharts;
 
     if (this.hasHttpTraffic(node)) {
       httpCharts = (
         <>
           <RpsChart
-            label="HTTP - Inbound Request Traffic"
+            label={isServiceNode ? 'HTTP - Request Traffic' : 'HTTP - Inbound Request Traffic'}
             dataRps={this.state.requestCountIn!}
             dataErrors={this.state.errorCountIn}
           />
+          {serviceWithUnknownSource && (
+            <>
+              <div>
+                <Icon type="pf" name="info" /> Traffic from unknown not included. Use edge for details.
+              </div>
+            </>
+          )}
           <RpsChart
             label="HTTP - Outbound Request Traffic"
             dataRps={this.state.requestCountOut}
             dataErrors={this.state.errorCountOut}
+            hide={isServiceNode}
           />
           <hr />
         </>
@@ -334,7 +336,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       tcpCharts = (
         <>
           <TcpChart
-            label="TCP - Inbound Traffic"
+            label={isServiceNode ? 'TCP - Traffic' : 'TCP - Inbound Traffic'}
             receivedRates={this.state.tcpReceivedIn}
             sentRates={this.state.tcpSentIn}
           />
@@ -342,6 +344,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
             label="TCP - Outbound Traffic"
             receivedRates={this.state.tcpReceivedOut}
             sentRates={this.state.tcpSentOut}
+            hide={isServiceNode}
           />
           <hr />
         </>
@@ -380,6 +383,16 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       </>
     );
   };
+
+  // We need to handle the special case of a dest service node showing client failures. These service nodes show up in
+  // non-service graphs, even when not injecting service nodes.
+  private isSpecialServiceDest(nodeMetricType: NodeMetricType) {
+    return (
+      nodeMetricType === NodeMetricType.SERVICE &&
+      !this.props.injectServiceNodes &&
+      this.props.graphType !== GraphType.SERVICE
+    );
+  }
 
   private hasHttpTraffic = (node): boolean => {
     if (node.data('rate') || node.data('rateOut')) {
