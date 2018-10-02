@@ -23,7 +23,7 @@ const (
 	NamespaceAll              string = "all"
 	NamespaceIstioSystem      string = "istio-system"
 	defaultDuration           string = "10m"
-	defaultGraphType          string = graph.GraphTypeApp
+	defaultGraphType          string = graph.GraphTypeWorkload
 	defaultGroupBy            string = GroupByVersion
 	defaultIncludeIstio       bool   = false
 	defaultInjectServiceNodes bool   = false
@@ -53,11 +53,9 @@ type Options struct {
 	IncludeIstio         bool // include istio-system services. Ignored for istio-system ns. Default false.
 	InjectServiceNodes   bool // inject destination service nodes between source and destination nodes.
 	Namespaces           []string
+	QueryTime            int64 // unix time in seconds
+	Vendor               string
 	NodeOptions
-	QueryTime int64 // unix time in seconds
-	Workload  string
-	Vendor    string
-	Version   string
 	VendorOptions
 }
 
@@ -134,6 +132,11 @@ func NewOptions(r *http.Request) Options {
 		vendor = defaultVendor
 	}
 
+	// Service graphs require service injection
+	if graphType == graph.GraphTypeService {
+		injectServiceNodes = true
+	}
+
 	options := Options{
 		AccessibleNamespaces: accessibleNamespaces,
 		Duration:             duration,
@@ -203,8 +206,10 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		appenders = append(appenders, a)
 	}
 	if csl == AppenderAll || strings.Contains(csl, "unused_node") {
+		hasNodeOptions := o.App != "" || o.Workload != "" || o.Service != ""
 		appenders = append(appenders, appender.UnusedNodeAppender{
-			GraphType: o.GraphType,
+			GraphType:   o.GraphType,
+			IsNodeGraph: hasNodeOptions,
 		})
 	}
 	if csl == AppenderAll || strings.Contains(csl, "istio") {

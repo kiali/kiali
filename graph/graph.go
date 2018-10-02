@@ -8,6 +8,7 @@ import (
 
 const (
 	GraphTypeApp          string = "app"
+	GraphTypeService      string = "service" // Treated as graphType Workload, with service injection, and then condensed
 	GraphTypeVersionedApp string = "versionedApp"
 	GraphTypeWorkload     string = "workload"
 	NodeTypeApp           string = "app"
@@ -134,8 +135,8 @@ func Id(namespace, workload, app, version, service, graphType string) (id, nodeT
 		panic(fmt.Sprintf("Failed ID gen: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))
 	}
 
-	// handle workload graph nodes
-	if graphType == GraphTypeWorkload {
+	// handle workload graph nodes (service graphs are initially processed as workload graphs)
+	if graphType == GraphTypeWorkload || graphType == GraphTypeService {
 		// workload graph nodes are type workload or service
 		if !workloadOk && !serviceOk {
 			panic(fmt.Sprintf("Failed ID gen: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))

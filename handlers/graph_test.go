@@ -377,7 +377,7 @@ func TestNamespaceGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNamespace
-	url := ts.URL + "/api/namespaces/bookinfo/graph?appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/bookinfo/graph?graphType=versionedApp&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -487,7 +487,7 @@ func TestMultiNamespaceGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNamespace
-	url := ts.URL + "/api/namespaces/bookinfo/graph?appenders&queryTime=1523364075&namespaces=bookinfo,tutorial"
+	url := ts.URL + "/api/namespaces/bookinfo/graph?graphType=versionedApp&appenders&queryTime=1523364075&namespaces=bookinfo,tutorial"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)

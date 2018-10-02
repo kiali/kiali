@@ -1,14 +1,16 @@
 {
   "timestamp": 1523364075,
-  "graphType": "app",
+  "graphType": "versionedApp",
   "elements": {
     "nodes": [
       {
         "data": {
-          "id": "2c22af42b0c750749399ed2838c56054",
+          "id": "a1ffc0d6abdf480e17b214b85257e633",
           "nodeType": "app",
           "namespace": "bookinfo",
+          "workload": "productpage-v1",
           "app": "productpage",
+          "version": "v1",
           "destServices": {
             "productpage": true
           },
@@ -17,10 +19,12 @@
       },
       {
         "data": {
-          "id": "ba389fce1a74a05e1fcd46aca64941f8",
+          "id": "d75c918a12f72a1ea1797911cb9770f7",
           "nodeType": "app",
           "namespace": "tutorial",
+          "workload": "customer-v1",
           "app": "customer",
+          "version": "v1",
           "destServices": {
             "customer": true
           },
@@ -43,17 +47,17 @@
     "edges": [
       {
         "data": {
-          "id": "efe83e483ada36899c34ef66a7974d31",
+          "id": "e0040271cbc5fd1bcf9e605d7a2c367d",
           "source": "b30b0078325bf2e1adb4d57c4c0c2665",
-          "target": "2c22af42b0c750749399ed2838c56054",
+          "target": "a1ffc0d6abdf480e17b214b85257e633",
           "rate": "50.000"
         }
       },
       {
         "data": {
-          "id": "40ed695fef2389ae374dbc44a9b8938d",
+          "id": "7e12fa53b9413b80e96193555818be7e",
           "source": "b30b0078325bf2e1adb4d57c4c0c2665",
-          "target": "ba389fce1a74a05e1fcd46aca64941f8",
+          "target": "d75c918a12f72a1ea1797911cb9770f7",
           "rate": "50.000"
         }
       }

@@ -22,6 +22,7 @@ func TestNonTrafficScenario(t *testing.T) {
 
 	a := UnusedNodeAppender{
 		graph.GraphTypeVersionedApp,
+		false,
 	}
 	a.addUnusedNodes(trafficMap, "testNamespace", deployments)
 	assert.Equal(4, len(trafficMap))
@@ -66,6 +67,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 
 	a := UnusedNodeAppender{
 		graph.GraphTypeVersionedApp,
+		false,
 	}
 
 	trafficMap := a.oneNodeTraffic()
@@ -120,6 +122,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 
 	a := UnusedNodeAppender{
 		graph.GraphTypeVersionedApp,
+		false,
 	}
 
 	trafficMap := a.v1Traffic()
