@@ -2,7 +2,9 @@ package appender
 
 import (
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -32,6 +34,7 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *Glob
 	}
 
 	addBadging(trafficMap, globalInfo, namespaceInfo)
+	addLabels(trafficMap, globalInfo, namespaceInfo)
 }
 
 func addBadging(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
@@ -107,6 +110,27 @@ NODES:
 			if virtualService.IsValidHost(namespace, n.Service) {
 				n.Metadata["hasVS"] = true
 				continue NODES
+			}
+		}
+	}
+}
+
+// addLabels is a chance to add any missing label info to nodes when the telemetry does not provide enough information.
+func addLabels(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+	appLabelName := config.Get().IstioLabels.AppLabelName
+	for _, n := range trafficMap {
+		// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
+		if n.NodeType == graph.NodeTypeService && n.App == "" {
+			service, err := globalInfo.Business.Svc.GetServiceDefinition(namespaceInfo.Namespace, n.Service)
+			if err != nil {
+				log.Debugf("Error fetching service definition, may not apply app label correctly for namespace=%s svc=%s: %s", namespaceInfo.Namespace, n.Service, err.Error())
+				if service == nil {
+					continue
+				}
+			}
+
+			if app, ok := service.Service.Labels[appLabelName]; ok {
+				n.App = app
 			}
 		}
 	}

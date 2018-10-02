@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
@@ -57,6 +58,8 @@ func TestCBAll(t *testing.T) {
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{
 		dRule.DeepCopyIstioObject(),
 	}, nil)
+	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&coreV1.Endpoints{}, nil)
+	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&coreV1.Service{}, nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
 
 	businessLayer := business.SetWithBackends(k8s, nil)
@@ -119,6 +122,8 @@ func TestCBSubset(t *testing.T) {
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{
 		dRule.DeepCopyIstioObject(),
 	}, nil)
+	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&coreV1.Endpoints{}, nil)
+	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&coreV1.Service{}, nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
 
 	businessLayer := business.SetWithBackends(k8s, nil)
@@ -175,6 +180,8 @@ func TestVS(t *testing.T) {
 		},
 	}
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&coreV1.Endpoints{}, nil)
+	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&coreV1.Service{}, nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{
 		vService.DeepCopyIstioObject(),
 	}, nil)

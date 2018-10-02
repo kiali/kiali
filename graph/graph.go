@@ -64,8 +64,8 @@ func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, g
 	// trim unnecessary fields
 	switch nodeType {
 	case NodeTypeWorkload:
-		// maintain the app+version labeling if it is set, it can be useful for
-		// for identifying destination rules, and providing additional links
+		// maintain the app+version labeling if it is set, it can be useful
+		// for identifying destination rules, providing links, and grouping
 		if app == UnknownApp {
 			app = ""
 		}
@@ -153,12 +153,22 @@ func Id(namespace, workload, app, version, service, graphType string) (id, nodeT
 		return fmt.Sprintf("wl_%v_%v", namespace, workload), NodeTypeWorkload
 	}
 
-	// handle app nodes
+	// handle app and versionedApp graphs
+	versionOk := version != "" && version != UnknownVersion
 	if appOk {
-		// For a versionedApp graph we use workload as the Id, it allows us some protection against labeling
-		// anti-patterns. For versionless we  just use the app label to aggregate versions/workloads into one node
+		// For a versionedApp graph use workload as the Id, if available. It allows us some protection
+		// against labeling anti-patterns. It won't be there in a few cases like:
+		//   - root node of a node graph
+		//   - app box node
+		// Otherwise use what we have and alter node type as necessary
+		// For a [versionless] App graph use the app label to aggregate versions/workloads into one node
 		if graphType == GraphTypeVersionedApp {
-			return fmt.Sprintf("vapp_%v_%v", namespace, workload), NodeTypeApp
+			if workloadOk {
+				return fmt.Sprintf("vapp_%v_%v", namespace, workload), NodeTypeApp
+			}
+			if versionOk {
+				return fmt.Sprintf("vapp_%v_%v_%v", namespace, app, version), NodeTypeApp
+			}
 		}
 		return fmt.Sprintf("app_%v_%v", namespace, app), NodeTypeApp
 	}
