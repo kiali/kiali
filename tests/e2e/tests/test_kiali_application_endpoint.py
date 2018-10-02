@@ -6,7 +6,7 @@ APPLICATION_TO_VALIDATE = 'productpage'
 PARAMS = {'graphType': 'versionedApp', 'duration': '60s'}
 
 def test_application_list_endpoint(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     app_list = kiali_client.app_list(namespace=bookinfo_namespace)
     assert app_list != None
@@ -17,7 +17,7 @@ def test_application_list_endpoint(kiali_client):
     assert app_list.get('namespace').get('name') == bookinfo_namespace
 
 def test_application_details_endpoint(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     app_details = kiali_client.app_details(namespace=bookinfo_namespace, app=APPLICATION_TO_VALIDATE)
 
@@ -35,7 +35,7 @@ def test_application_details_endpoint(kiali_client):
 
 
 def test_application_health_endpoint(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     app_health = kiali_client.app_health(namespace=bookinfo_namespace, app=APPLICATION_TO_VALIDATE)
     assert app_health != None
@@ -49,7 +49,7 @@ def test_application_health_endpoint(kiali_client):
     assert 'deploymentStatuses' in app_health
 
 def test_application_metrics_endpoint(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     app_metrics = kiali_client.app_metrics(namespace=bookinfo_namespace, app=APPLICATION_TO_VALIDATE)
     assert app_metrics != None

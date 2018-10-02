@@ -24,7 +24,7 @@ def kiali_client():
     yield __get_kiali_client__(config)
     __remove_assets()
 
-def get_bookinfo_endpoint():
+def get_bookinfo_namespace():
     return __get_environment_config__(ENV_FILE).get('mesh_bookinfo_namespace')
 
 def __get_kiali_client__(config):
@@ -34,7 +34,6 @@ def __get_kiali_client__(config):
     else:
         return KialiClient(host=config.get('kiali_hostname'),
                            username=config.get('kiali_username'), password=config.get('kiali_password'))
-    print ("\nGet Kiali Client for Kiali hostname: {}\n".format(config.get('kiali_hostname')))
 
 def __get_environment_config__(env_file):
     with open(env_file) as yamlfile:
@@ -43,7 +42,7 @@ def __get_environment_config__(env_file):
 
 def __remove_assets():
   print('Cleanning up: ')
-  namespace = get_bookinfo_endpoint()
+  namespace = get_bookinfo_namespace()
   file_count = 0
   for root, dirs, files in os.walk('./assets'):
     file_count = len(files)

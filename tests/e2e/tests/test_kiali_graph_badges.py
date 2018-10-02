@@ -30,7 +30,7 @@ def test_kiali_virtual_service_app(kiali_client):
 
 def do_test(kiali_client, graph_params, yaml_file, badge):
     environment_configmap = conftest.__get_environment_config__(conftest.ENV_FILE)
-    bookinfo_namespace = bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     appType = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)['graphType']
     assert appType == graph_params.get('graphType')
@@ -43,7 +43,7 @@ def do_test(kiali_client, graph_params, yaml_file, badge):
       graph = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)
       assert graph is not None
 
-      with timeout(seconds=5, error_message='Timed out waiting for Create'):
+      with timeout(seconds=30, error_message='Timed out waiting for Create'):
           while True:
               new_count = get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge)
               if new_count != 0 and new_count >= count:
@@ -54,7 +54,7 @@ def do_test(kiali_client, graph_params, yaml_file, badge):
     finally:
       assert command_exec.oc_delete(yaml_file, bookinfo_namespace) == True
 
-      with timeout(seconds=5, error_message='Timed out waiting for Delete'):
+      with timeout(seconds=30, error_message='Timed out waiting for Delete'):
           while True:
               # Validate that JSON no longer has Virtual Service
               if get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge) <= count:

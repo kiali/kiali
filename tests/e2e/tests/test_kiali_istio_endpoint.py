@@ -4,7 +4,7 @@ import tests.conftest as conftest
 OBJECT_TYPE = 'virtualservices'
 
 def test_istio_endpoint(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
     istio = kiali_client.istio(namespace=bookinfo_namespace)
 
     assert istio != None
@@ -13,14 +13,14 @@ def test_istio_endpoint(kiali_client):
     assert bookinfo_namespace in istio.get('namespace').get('name')
 
 def test_istio_validations_endpoint(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
     istio_validations = kiali_client.istio_validations(namespace=bookinfo_namespace)
 
     assert istio_validations != None
     assert bookinfo_namespace in istio_validations
 
 def _test_istio_object_type(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     istio_object_type = kiali_client.istio_object_type(bookinfo_namespace, OBJECT_TYPE, bookinfo_namespace)
     assert istio_object_type != None
@@ -28,7 +28,7 @@ def _test_istio_object_type(kiali_client):
     assert bookinfo_namespace in istio_object_type.get('namespace').get('name')
 
 def _test_istio_object_istio_validations(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     istio_validations = kiali_client.istio_object_istio_validations(bookinfo_namespace, OBJECT_TYPE, bookinfo_namespace)
     assert istio_validations != None

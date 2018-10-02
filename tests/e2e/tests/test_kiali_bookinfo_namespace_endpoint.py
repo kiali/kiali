@@ -20,7 +20,7 @@ def test_service_graph_rest_endpoint(kiali_json):
     assert len(kiali_json.get('elements').get('edges')) >= 1
 
 def test_service_graph_bookinfo_namespace_(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     # Validate Node count
     nodes = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=PARAMS)["elements"]['nodes']
