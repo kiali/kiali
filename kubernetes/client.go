@@ -43,6 +43,7 @@ type IstioClientInterface interface {
 	GetGateway(namespace string, gateway string) (IstioObject, error)
 	GetGateways(namespace string) ([]IstioObject, error)
 	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
+	DeleteIstioObject(namespace string, objectType string, objectName string) (error)
 	GetIstioRules(namespace string) (*IstioRules, error)
 	GetIstioRuleDetails(namespace string, istiorule string) (*IstioRuleDetails, error)
 	GetNamespaceAppsDetails(namespace string) (NamespaceApps, error)

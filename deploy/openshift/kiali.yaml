@@ -175,6 +175,7 @@ rules:
   - get
   - list
   - watch
+  - delete
 ---
 apiVersion: v1
 kind: ClusterRoleBinding

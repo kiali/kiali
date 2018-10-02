@@ -170,3 +170,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 
 	return istioConfigDetail, err
 }
+
+func (in *IstioConfigService) DeleteIstioConfigDetail(namespace string, objectType string, object string) (error) {
+	return in.k8s.DeleteIstioObject(namespace,objectType,object)
+}
