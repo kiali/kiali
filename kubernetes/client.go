@@ -71,6 +71,21 @@ type IstioClient struct {
 	istioNetworkingApi *rest.RESTClient
 }
 
+// GetK8sApi returns the clientset referencing all K8s rest clients
+func (client *IstioClient) GetK8sApi() *kube.Clientset {
+	return client.k8s
+}
+
+// GetIstioConfigApi returns the istio config rest client
+func (client *IstioClient) GetIstioConfigApi() *rest.RESTClient {
+	return client.istioConfigApi
+}
+
+// GetIstioNetworkingApi returns the istio config rest client
+func (client *IstioClient) GetIstioNetworkingApi() *rest.RESTClient {
+	return client.istioNetworkingApi
+}
+
 // ConfigClient return a client with the correct configuration
 // Returns configuration if Kiali is in Cluster when InCluster is true
 // Returns configuration if Kiali is not int Cluster when InCluster is false
@@ -86,25 +101,30 @@ func ConfigClient() (*rest.Config, error) {
 
 	return &rest.Config{
 		// TODO: switch to using cluster DNS.
-		Host: "http://" + net.JoinHostPort(host, port),
+		Host:  "http://" + net.JoinHostPort(host, port),
+		QPS:   k8sQPS,
+		Burst: k8sBurst,
 	}, nil
 }
 
 // NewClient creates a new client to the Kubernetes and Istio APIs.
-// It takes the assumption that Istio is deployed into the cluster.
-// It hides the access to Kubernetes/Openshift credentials.
-// It hides the low level use of the API of Kubernetes and Istio, it should be considered as an implementation detail.
-// It returns an error on any problem.
 func NewClient() (*IstioClient, error) {
-	client := IstioClient{}
 	config, err := ConfigClient()
 
 	if err != nil {
 		return nil, err
 	}
 
-	config.QPS = k8sQPS
-	config.Burst = k8sBurst
+	return NewClientFromConfig(config)
+}
+
+// NewClientFromConfig creates a new client to the Kubernetes and Istio APIs.
+// It takes the assumption that Istio is deployed into the cluster.
+// It hides the access to Kubernetes/Openshift credentials.
+// It hides the low level use of the API of Kubernetes and Istio, it should be considered as an implementation detail.
+// It returns an error on any problem.
+func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
+	client := IstioClient{}
 
 	k8s, err := kube.NewForConfig(config)
 	if err != nil {
