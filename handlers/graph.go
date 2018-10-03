@@ -15,8 +15,7 @@ package handlers
 //
 // The current Handlers:
 //   GraphNamespace:  Generate a graph for all services in a namespace (whether source or destination)
-//   GraphWorkload:    Generate a graph centered on a specified workload, limited to
-//                    requesting and requested nodes.
+//   GraphNode:       Generate a graph centered on a specified node, limited to requesting and requested nodes.
 //
 // The handlers accept the following query parameters (some handlers may ignore some parameters):
 //   appenders:      Comma-separated list of appenders to run from [circuit_breaker, unused_service...] (default all)
