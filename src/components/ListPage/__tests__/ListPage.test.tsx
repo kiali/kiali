@@ -2,6 +2,7 @@ import { ListPage } from '../ListPage';
 import { Location } from 'history';
 import { FilterType } from '../../../types/Filters';
 import { createBrowserHistory } from 'history';
+import { ServiceListFilters } from '../../../pages/ServiceList/FiltersAndSorts';
 
 const history = createBrowserHistory({ basename: '' });
 const managedFilterTypes = [
@@ -19,10 +20,20 @@ const managedFilterTypes = [
   }
 ] as FilterType[];
 
+type DemoListState = {};
+type DemoListProps = {};
+type DemoListItem = {};
+
+class DemoListPage extends ListPage.Component<DemoListProps, DemoListState, DemoListItem> {
+  sortFields() {
+    return ServiceListFilters.sortFields;
+  }
+}
+
 describe('List page', () => {
   it('sets selected filters from URL', () => {
     const mock: any = jest.fn();
-    const listPage = new ListPage.Component({
+    const listPage = new DemoListPage({
       match: mock,
       location: {
         search: '?a=1&b=2&c=3&c=4'
@@ -49,7 +60,7 @@ describe('List page', () => {
 
   it('sets selected filters to URL', () => {
     const mock: any = jest.fn();
-    const listPage = new ListPage.Component({
+    const listPage = new DemoListPage({
       match: mock,
       location: {
         pathname: 'any',
@@ -78,7 +89,7 @@ describe('List page', () => {
 
   it('filters should match URL, ignoring order and non-managed query params', () => {
     const mock: any = jest.fn();
-    const listPage = new ListPage.Component({
+    const listPage = new DemoListPage({
       match: mock,
       location: {
         search: '?a=1&b=2&c=3&c=4'
@@ -106,7 +117,7 @@ describe('List page', () => {
 
   it('filters should not match URL', () => {
     const mock: any = jest.fn();
-    const listPage = new ListPage.Component({
+    const listPage = new DemoListPage({
       match: mock,
       location: {
         search: '?a=1&b=2&c=3&c=4'

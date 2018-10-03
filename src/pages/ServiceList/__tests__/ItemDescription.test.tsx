@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 import ItemDescription from '../ItemDescription';
 import { ServiceHealth } from '../../../types/Health';
-import { ServiceItem } from '../../../types/ServiceListComponent';
+import { ServiceListItem } from '../../../types/ServiceList';
 
 const health = new ServiceHealth(
   { inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } },
@@ -12,7 +12,7 @@ const health = new ServiceHealth(
 
 describe('ItemDescription', () => {
   let resolver;
-  let item: ServiceItem;
+  let item: ServiceListItem;
 
   beforeEach(() => {
     resolver = undefined;

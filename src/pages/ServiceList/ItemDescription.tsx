@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { ServiceItem } from '../../types/ServiceListComponent';
+import { ServiceListItem } from '../../types/ServiceList';
 import { ServiceHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import ServiceErrorRate from './ServiceErrorRate';
 
 interface Props {
-  item: ServiceItem;
+  item: ServiceListItem;
 }
 interface State {
   health?: ServiceHealth;
@@ -27,7 +27,7 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
     }
   }
 
-  onItemChanged(item: ServiceItem) {
+  onItemChanged(item: ServiceListItem) {
     item.healthPromise.then(h => this.setState({ health: h })).catch(err => this.setState({ health: undefined }));
   }
 

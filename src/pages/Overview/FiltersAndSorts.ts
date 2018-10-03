@@ -1,6 +1,7 @@
 import { FILTER_ACTION_APPEND, FilterType, FilterValue } from '../../types/Filters';
 import { FAILURE, DEGRADED, HEALTHY } from '../../types/Health';
 import { NamespaceInfo } from './NamespaceInfo';
+import { SortField } from '../../types/SortFilters';
 
 export namespace FiltersAndSorts {
   export const nameFilter: FilterType = {
@@ -38,15 +39,7 @@ export namespace FiltersAndSorts {
 
   export const availableFilters: FilterType[] = [nameFilter, healthFilter];
 
-  export interface SortField {
-    id: string;
-    title: string;
-    isNumeric: boolean;
-    param: string;
-    compare: (a: NamespaceInfo, b: NamespaceInfo) => number;
-  }
-
-  export const sortFields: SortField[] = [
+  export const sortFields: SortField<NamespaceInfo>[] = [
     {
       id: 'namespace',
       title: 'Name',
@@ -76,7 +69,7 @@ export namespace FiltersAndSorts {
 
   export const sortFunc = (
     allNamespaces: NamespaceInfo[],
-    sortField: FiltersAndSorts.SortField,
+    sortField: SortField<NamespaceInfo>,
     isAscending: boolean
   ) => {
     return allNamespaces.sort(isAscending ? sortField.compare : (a, b) => sortField.compare(b, a));

@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
-import { dicIstioType } from '../../types/IstioConfigListComponent';
+import { dicIstioType } from '../../types/IstioConfigList';
 
 const yaml = require('js-yaml');
 

@@ -1,20 +1,14 @@
 import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
+import { SortField } from '../../types/SortFilters';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { getRequestErrorsRatio, WorkloadHealth } from '../../types/Health';
+import NamespaceFilter from '../../components/Filters/NamespaceFilter';
 
 type WorkloadItemHealth = WorkloadListItem & { health: WorkloadHealth };
 
 export namespace WorkloadListFilters {
-  export interface SortField {
-    id: string;
-    title: string;
-    isNumeric: boolean;
-    param: string;
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => number;
-  }
-
-  export const sortFields: SortField[] = [
+  export const sortFields: SortField<WorkloadListItem>[] = [
     {
       id: 'namespace',
       title: 'Namespace',
@@ -114,7 +108,7 @@ export namespace WorkloadListFilters {
     }
   ];
 
-  export const workloadNameFilter: FilterType = {
+  const workloadNameFilter: FilterType = {
     id: 'workloadname',
     title: 'Workload Name',
     placeholder: 'Filter by Workload Name',
@@ -123,7 +117,7 @@ export namespace WorkloadListFilters {
     filterValues: []
   };
 
-  export const istioSidecarFilter: FilterType = {
+  const istioSidecarFilter: FilterType = {
     id: 'istio',
     title: 'Istio Sidecar',
     placeholder: 'Filter by IstioSidecar Validation',
@@ -132,7 +126,7 @@ export namespace WorkloadListFilters {
     filterValues: presenceValues
   };
 
-  export const appLabelFilter: FilterType = {
+  const appLabelFilter: FilterType = {
     id: 'applabel',
     title: 'App Label',
     placeholder: 'Filter by App Label Validation',
@@ -141,7 +135,7 @@ export namespace WorkloadListFilters {
     filterValues: presenceValues
   };
 
-  export const versionLabelFilter: FilterType = {
+  const versionLabelFilter: FilterType = {
     id: 'versionlabel',
     title: 'Version Label',
     placeholder: 'Filter by Version Label Validation',
@@ -150,7 +144,7 @@ export namespace WorkloadListFilters {
     filterValues: presenceValues
   };
 
-  export const workloadTypeFilter: FilterType = {
+  const workloadTypeFilter: FilterType = {
     id: 'workloadtype',
     title: 'Workload Type',
     placeholder: 'Filter by Workload Type',
@@ -163,6 +157,15 @@ export namespace WorkloadListFilters {
       }
     ]
   };
+
+  export const availableFilters: FilterType[] = [
+    NamespaceFilter.create(),
+    workloadNameFilter,
+    workloadTypeFilter,
+    istioSidecarFilter,
+    appLabelFilter,
+    versionLabelFilter
+  ];
 
   /** Filter Method */
   const includeName = (name: string, names: string[]) => {
@@ -272,7 +275,7 @@ export namespace WorkloadListFilters {
 
   export const sortWorkloadsItems = (
     unsorted: WorkloadListItem[],
-    sortField: WorkloadListFilters.SortField,
+    sortField: SortField<WorkloadListItem>,
     isAscending: boolean
   ): Promise<WorkloadListItem[]> => {
     if (sortField.title === 'Error Rate') {

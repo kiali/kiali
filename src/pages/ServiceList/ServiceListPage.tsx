@@ -1,22 +1,16 @@
 import * as React from 'react';
-import ServiceListComponent, { sortFields } from './ServiceListComponent';
+import ServiceListComponent from './ServiceListComponent';
 import { Breadcrumb } from 'patternfly-react';
 import { ListPage } from '../../components/ListPage/ListPage';
+import { ServiceListFilters } from './FiltersAndSorts';
+import { ServiceListItem } from '../../types/ServiceList';
 
 type ServiceListState = {};
+type ServiceListProps = {};
 
-type ServiceListProps = {
-  // none yet
-};
-
-class ServiceListPage extends ListPage.Component<ServiceListProps, ServiceListState> {
-  currentSortField() {
-    const queriedSortedField = this.getQueryParam('sort') || [sortFields[0].param];
-    return (
-      sortFields.find(sortField => {
-        return sortField.param === queriedSortedField[0];
-      }) || sortFields[0]
-    );
+class ServiceListPage extends ListPage.Component<ServiceListProps, ServiceListState, ServiceListItem> {
+  sortFields() {
+    return ServiceListFilters.sortFields;
   }
 
   render() {

@@ -8,16 +8,18 @@ import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdow
 import { config } from '../../config';
 
 import { FiltersAndSorts } from './FiltersAndSorts';
+import { SortField } from '../../types/SortFilters';
+import NamespaceInfo from './NamespaceInfo';
 
 type Props = {
   pageHooks: ListPage.Hooks;
   onRefresh: () => void;
   onError: (msg: string) => void;
-  sort: (sortField: FiltersAndSorts.SortField, isAscending: boolean) => void;
+  sort: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
 };
 
 type State = {
-  sortField: FiltersAndSorts.SortField;
+  sortField: SortField<NamespaceInfo>;
   isSortAscending: boolean;
   duration: number;
   pollInterval: number;
@@ -26,7 +28,7 @@ type State = {
 const DURATIONS = config().toolbar.intervalDuration;
 
 class OverviewToolbar extends React.Component<Props, State> {
-  static findSortField(id?: string): FiltersAndSorts.SortField {
+  static findSortField(id?: string): SortField<NamespaceInfo> {
     if (id) {
       const field = FiltersAndSorts.sortFields.find(sortField => sortField.param === id);
       return field || FiltersAndSorts.sortFields[0];
@@ -61,7 +63,7 @@ class OverviewToolbar extends React.Component<Props, State> {
   }
 
   paramsAreSynced(
-    urlSortField: FiltersAndSorts.SortField,
+    urlSortField: SortField<NamespaceInfo>,
     urlIsSortAscending: boolean,
     urlDuration: number,
     urlPollInterval: number
@@ -74,7 +76,7 @@ class OverviewToolbar extends React.Component<Props, State> {
     );
   }
 
-  updateSortField = (sortField: FiltersAndSorts.SortField) => {
+  updateSortField = (sortField: SortField<NamespaceInfo>) => {
     this.props.sort(sortField, this.state.isSortAscending);
     this.props.pageHooks.onParamChange([{ name: 'sort', value: sortField.param }]);
     this.setState({ sortField: sortField });

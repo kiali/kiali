@@ -126,13 +126,6 @@ export interface IstioService {
   labels?: { [key: string]: string };
 }
 
-export interface SortField {
-  id: string;
-  title: string;
-  isNumeric: boolean;
-  param: string;
-}
-
 export const dicIstioType = {
   Gateway: 'gateways',
   VirtualService: 'virtualservices',
@@ -253,47 +246,4 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
     })
   );
   return istioItems;
-};
-
-export const sortIstioItems = (unsorted: IstioConfigItem[], sortField: SortField, isAscending: boolean) => {
-  let sorted: IstioConfigItem[] = unsorted.sort((a: IstioConfigItem, b: IstioConfigItem) => {
-    let sortValue = -1;
-    if (sortField.id === 'namespace') {
-      sortValue = a.namespace.localeCompare(b.namespace);
-    }
-    if (sortField.id === 'istiotype') {
-      sortValue = a.type.localeCompare(b.type);
-    }
-    if (sortField.id === 'configvalidation') {
-      if (a.validation && !b.validation) {
-        sortValue = -1;
-      }
-      if (!a.validation && b.validation) {
-        sortValue = 1;
-      }
-      if (!a.validation && !b.validation) {
-        sortValue = 0;
-      }
-      if (a.validation && b.validation) {
-        if (a.validation.valid && !b.validation.valid) {
-          sortValue = -1;
-        }
-        if (!a.validation.valid && b.validation.valid) {
-          sortValue = 1;
-        }
-        if (a.validation.valid && b.validation.valid) {
-          sortValue = 0;
-        }
-        if (!a.validation.valid && !b.validation.valid) {
-          sortValue = b.validation.checks.length - a.validation.checks.length;
-        }
-      }
-    }
-    // Istioname at the end to be the default sort when sortValue === 0
-    if (sortField.id === 'istioname' || sortValue === 0) {
-      sortValue = a.name.localeCompare(b.name);
-    }
-    return isAscending ? sortValue : sortValue * -1;
-  });
-  return sorted;
 };

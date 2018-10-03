@@ -3,8 +3,9 @@ import { RouteComponentProps } from 'react-router';
 import * as MessageCenter from '../../utils/MessageCenter';
 import { URLParameter } from '../../types/Parameters';
 import { Pagination } from '../../types/Pagination';
-import { FilterType, ActiveFilter } from '../../types/Filters';
+import { ActiveFilter, FilterType } from '../../types/Filters';
 import { config } from '../../config';
+import { SortField } from '../../types/SortFilters';
 
 export namespace ListPage {
   const ACTION_APPEND = 'append';
@@ -30,7 +31,9 @@ export namespace ListPage {
     currentPollInterval: () => number;
   }
 
-  export class Component<P, S> extends React.Component<RouteComponentProps<P>, S> implements Hooks {
+  export abstract class Component<P, S, T> extends React.Component<RouteComponentProps<P>, S> implements Hooks {
+    abstract sortFields(): SortField<T>[];
+
     handleError = (error: string) => {
       MessageCenter.add(error);
     };
@@ -185,6 +188,15 @@ export namespace ListPage {
         return defaultPollInterval;
       }
       return pi;
+    }
+
+    currentSortField() {
+      const queriedSortedField = this.getQueryParam('sort') || [this.sortFields()[0].param];
+      return (
+        this.sortFields().find(sortField => {
+          return sortField.param === queriedSortedField[0];
+        }) || this.sortFields()[0]
+      );
     }
   }
 }

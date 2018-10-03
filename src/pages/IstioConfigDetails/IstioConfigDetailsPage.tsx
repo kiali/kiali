@@ -11,7 +11,7 @@ import {
   ParsedSearch,
   safeDumpOptions
 } from '../../types/IstioConfigDetails';
-import { dicIstioType } from '../../types/IstioConfigListComponent';
+import { dicIstioType } from '../../types/IstioConfigList';
 import * as MessageCenter from '../../utils/MessageCenter';
 import * as API from '../../services/Api';
 import IstioRuleInfo from './IstioRuleInfo';

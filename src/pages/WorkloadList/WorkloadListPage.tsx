@@ -3,28 +3,14 @@ import { Breadcrumb } from 'patternfly-react';
 import { ListPage } from '../../components/ListPage/ListPage';
 import WorkloadListComponent from './WorkloadListComponent';
 import { WorkloadListFilters } from './FiltersAndSorts';
+import { WorkloadListItem } from '../../types/Workload';
 
 type WorkloadListState = {};
+type WorkloadListProps = {};
 
-type WorkloadListProps = {
-  // none yet
-};
-
-export interface SortField {
-  id: string;
-  title: string;
-  isNumeric: boolean;
-  param: string;
-}
-
-class WorkloadListPage extends ListPage.Component<WorkloadListProps, WorkloadListState> {
-  currentSortField() {
-    const queriedSortedField = this.getQueryParam('sort') || [WorkloadListFilters.sortFields[0].param];
-    return (
-      WorkloadListFilters.sortFields.find(sortField => {
-        return sortField.param === queriedSortedField[0];
-      }) || WorkloadListFilters.sortFields[0]
-    );
+class WorkloadListPage extends ListPage.Component<WorkloadListProps, WorkloadListState, WorkloadListItem> {
+  sortFields() {
+    return WorkloadListFilters.sortFields;
   }
 
   render() {
@@ -34,8 +20,8 @@ class WorkloadListPage extends ListPage.Component<WorkloadListProps, WorkloadLis
           <Breadcrumb.Item active={true}>Workloads</Breadcrumb.Item>
         </Breadcrumb>
         <WorkloadListComponent
-          pagination={this.currentPagination()}
           pageHooks={this}
+          pagination={this.currentPagination()}
           currentSortField={this.currentSortField()}
           isSortAscending={this.isCurrentSortAscending()}
           rateInterval={this.currentDuration()}

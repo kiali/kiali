@@ -17,15 +17,7 @@ type ItemDescriptionState = {
 type ItemDescriptionProps = {
   workloadItem: WorkloadListItem;
   position: Number;
-  // none yet
 };
-
-export interface SortField {
-  id: string;
-  title: string;
-  isNumeric: boolean;
-  param: string;
-}
 
 class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescriptionState> {
   constructor(props: ItemDescriptionProps) {

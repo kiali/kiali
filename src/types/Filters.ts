@@ -4,6 +4,17 @@ export interface FilterValue {
   title: string;
 }
 
+export const presenceValues: FilterValue[] = [
+  {
+    id: 'present',
+    title: 'Present'
+  },
+  {
+    id: 'notpresent',
+    title: 'Not Present'
+  }
+];
+
 // FilterType maps a Patternfly property. Modify with care.
 export interface FilterType {
   id: string;
