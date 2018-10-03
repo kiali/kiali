@@ -347,10 +347,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     cy.startBatch();
 
-    if (updateLayout) {
-      // To get a more consistent layout, remove every node and start again (only when a relayout is a must)
-      cy.remove(cy.elements());
-    }
+    // Note, to resolve some layout issues for KIALI-1291 we introduced a complete wipe of cy elements prior to a layout change. This
+    // caused the issue in KIALI-1649. I'm not sure we still need the wipe, my testing shows good behavior without wiping the existing
+    // elements. So, I'm commenting it out.  If we need to re-instate it then we need to also add a fix for 1649. For that we'd probably
+    // need to gather the elements that have added classes (like Health info) and also capture any selected element. Then re-apply the
+    // settings on the replacement elements, for those elements that still exist.
+    // if (updateLayout) {
+    //   cy.remove(cy.elements());
+    // }
 
     // update the entire set of nodes and edges to keep the graph up-to-date
     cy.json({ elements: this.props.elements });

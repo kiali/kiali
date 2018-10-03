@@ -3,6 +3,7 @@ export class CoseGraph {
     return {
       name: 'cose-bilkent',
       animate: false,
+      fit: false,
       nodeDimensionsIncludeLabels: true
     };
   }

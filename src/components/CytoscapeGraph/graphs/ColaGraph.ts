@@ -3,8 +3,10 @@ export class ColaGraph {
     return {
       name: 'cola',
       animate: false,
+      fit: false,
       flow: { axis: 'x' },
-      nodeDimensionsIncludeLabels: true
+      nodeDimensionsIncludeLabels: true,
+      randomize: false
     };
   }
 }
