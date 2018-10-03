@@ -2,43 +2,56 @@ package main
 
 import (
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/graph/cytoscape"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/services/models"
 	"github.com/kiali/kiali/status"
 )
 
 /////////////////////
-// SWAGGER PARAMETERS
+// SWAGGER PARAMETERS - GENERAL
+// - keep this alphabetized
 /////////////////////
 
-// A Namespace provide a scope for names.
-// This type used to describe a set of objects.
-//
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList appDetails
+// swagger:parameters appMetrics appDetails graphApp graphAppVersion
+type AppParam struct {
+	// The app name (label value).
+	//
+	// in: path
+	// required: true
+	Name string `json:"app"`
+}
+
+// swagger:parameters graphAppVersion
+type AppVersionParam struct {
+	// The app version (label value).
+	//
+	// in: path
+	// required: false
+	Name string `json:"version"`
+}
+
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload
 type NamespaceParam struct {
-	// The id of the namespace.
+	// The namespace id.
 	//
 	// in: path
 	// required: true
 	Name string `json:"namespace"`
 }
 
-// Service identify the a service object
-//
-// swagger:parameters serviceValidations serviceDetails serviceMetrics
-type ServiceParam struct {
-	// The name of the service
+// swagger:parameters objectValidations istioConfigDetails
+type ObjectNameParam struct {
+	// The Istio object name.
 	//
 	// in: path
 	// required: true
-	Name string `json:"service"`
+	Name string `json:"object"`
 }
 
-// Istio Object Type:
-//
 // swagger:parameters objectValidations istioConfigDetails
-type ObjectType struct {
-	// The type of the istio object
+type ObjectTypeParam struct {
+	// The Istio object type.
 	//
 	// in: path
 	// required: true
@@ -46,127 +59,107 @@ type ObjectType struct {
 	Name string `json:"object_type"`
 }
 
-// Istio Object name
-//
-// swagger:parameters objectValidations istioConfigDetails
-type ObjectName struct {
-	// The name of the istio object
+// swagger:parameters serviceValidations serviceDetails serviceMetrics graphService
+type ServiceParam struct {
+	// The service name.
 	//
 	// in: path
 	// required: true
-	Name string `json:"object"`
+	Name string `json:"service"`
 }
 
-// Workload name
-//
-// swagger:parameters workloadDetails workloadValidations workloadMetrics
+// swagger:parameters workloadDetails workloadValidations workloadMetrics graphWorkload
 type WorkloadParam struct {
-	// The name of the workload
+	// The workload name.
 	//
 	// in: path
 	// required: true
 	Name string `json:"workload"`
 }
 
-// App name
-//
-// swagger:parameters appMetrics appDetails
-type AppParam struct {
-	// The name of the app
-	//
-	// in: path
-	// required: true
-	Name string `json:"app"`
-}
+/////////////////////
+// SWAGGER PARAMETERS - GRAPH
+// - keep this alphabetized
+/////////////////////
 
-// Version name
-//
-// swagger:parameters serviceMetrics appMetrics workloadMetrics
-type VersionParam struct {
-	// When provided, filters metrics for a specific version of this service
+// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+type AppendersParam struct {
+	// Comma-separated list of Appenders to run. Available appenders: [dead_node, istio_details, response_time, security_policy, sidecars_check, unused_node].
 	//
 	// in: query
 	// required: false
-	Name string `json:"version"`
+	// default: run all appenders
+	Name string `json:"appenders"`
 }
 
-// Step duration
-//
-// swagger:parameters serviceMetrics appMetrics workloadMetrics
-type StepParam struct {
-	// Duration indicating desired step between two datapoints, in seconds
+// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+type DurationGraphParam struct {
+	// Query time-range duration (Golang string duration).
 	//
 	// in: query
 	// required: false
-	// default: 15
-	Name string `json:"step"`
-}
-
-// Duration query period
-//
-// swagger:parameters serviceMetrics appMetrics workloadMetrics
-type DurationParam struct {
-	// Duration indicating desired query period, in seconds
-	//
-	// in: query
-	// required: false
-	// default: 1800
+	// default: 10m
 	Name string `json:"duration"`
 }
 
-// RateInterval for rate and histogram
-//
-// swagger:parameters serviceMetrics appMetrics workloadMetrics
-type RateIntervalParam struct {
-	// Interval used for rate and histogram calculation
+// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+type GraphTypeParam struct {
+	// Graph type. Available graph types: [app, service, versionedApp, workload].
 	//
 	// in: query
 	// required: false
-	// default: 1m
-	Name string `json:"rateInterval"`
+	// default: workload
+	Name string `json:"graphType"`
 }
 
-// RateFunc: rate function
-//
-// swagger:parameters serviceMetrics appMetrics workloadMetrics
-type RateFuncParam struct {
-	// Rate: standard 'rate' or instant 'irate'
+// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+type GroupByParam struct {
+	// App box grouping characteristic. Ignored unless graph type is versionedApp. Available groupings: [version].
 	//
 	// in: query
 	// required: false
-	// default: rate
-	Name string `json:"rateFunc"`
+	// default: version
+	Name string `json:"groupBy"`
 }
 
-// Filters: list of metrics to fetch
-//
-// swagger:parameters serviceMetrics appMetrics workloadMetrics
-type FiltersParam struct {
-	// List of metrics to fetch. When empty, all metrics are fetched. Expected name here is the Kiali internal metric name
+// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+type IncludeIstioParam struct {
+	// Flag for including istio-system (infra) services. Ignored if namespace is istio-system.
 	//
 	// in: query
 	// required: false
-	// default: []
-	Name string `json:"filters[]"`
+	// default: false
+	Name string `json:"includeIstio"`
 }
 
-// Quantiles: list of quantiles to fetch for histograms
-//
-// swagger:parameters serviceMetrics appMetrics workloadMetrics
-type QuantilesParam struct {
-	// List of quantiles to fetch. Ex: [0.5, 0.95, 0.99]. When empty, no quantile data is fetched.
+// swagger:parameters graphNamespace
+type NamespacesParam struct {
+	// Comma-separated list of namespaces to include in the graph. Overrides namespace path param.
 	//
 	// in: query
 	// required: false
-	// default: []
-	Name string `json:"quantiles[]"`
+	// default: namespace path param
+	Name string `json:"namespaces"`
 }
 
-// Average: flag to indicate if histogram average should be fetched
-//
+// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+type QueryTimeParam struct {
+	// Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.
+	//
+	// in: query
+	// required: false
+	// default: now
+	Name string `json:"queryTime"`
+}
+
+/////////////////////
+// SWAGGER PARAMETERS - METRICS
+// - keep this alphabetized
+/////////////////////
+
 // swagger:parameters serviceMetrics appMetrics workloadMetrics
 type AvgParam struct {
-	// Flag to indicate if histogram average should be fetched. Default is true.
+	// Flag for fetching histogram average. Default is true.
 	//
 	// in: query
 	// required: false
@@ -174,11 +167,9 @@ type AvgParam struct {
 	Name string `json:"avg"`
 }
 
-// ByLabelsIn: labels for grouping input metrics
-//
 // swagger:parameters serviceMetrics appMetrics workloadMetrics
 type ByLabelsInParam struct {
-	// List of labels to use for grouping input metrics.
+	// List of labels to use for grouping inbound metrics (via Prometheus 'by' clause).
 	//
 	// in: query
 	// required: false
@@ -186,11 +177,9 @@ type ByLabelsInParam struct {
 	Name string `json:"byLabelsIn[]"`
 }
 
-// ByLabelsOut: labels for grouping output metrics
-//
 // swagger:parameters serviceMetrics appMetrics workloadMetrics
 type ByLabelsOutParam struct {
-	// List of labels to use for grouping output metrics
+	// List of labels to use for grouping outbound metrics (via Prometheus 'by' clause).
 	//
 	// in: query
 	// required: false
@@ -198,15 +187,82 @@ type ByLabelsOutParam struct {
 	Name string `json:"byLabelsOut[]"`
 }
 
-// Reporter: source or destination metric reporter
-//
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type DurationParam struct {
+	// Duration of the query period, in seconds.
+	//
+	// in: query
+	// required: false
+	// default: 1800
+	Name string `json:"duration"`
+}
+
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type FiltersParam struct {
+	// List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.
+	//
+	// in: query
+	// required: false
+	// default: []
+	Name string `json:"filters[]"`
+}
+
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type QuantilesParam struct {
+	// List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].
+	//
+	// in: query
+	// required: false
+	// default: []
+	Name string `json:"quantiles[]"`
+}
+
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type RateFuncParam struct {
+	// Prometheus function used to calculate rate: 'rate' or 'irate'.
+	//
+	// in: query
+	// required: false
+	// default: rate
+	Name string `json:"rateFunc"`
+}
+
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type RateIntervalParam struct {
+	// Interval used for rate and histogram calculation.
+	//
+	// in: query
+	// required: false
+	// default: 1m
+	Name string `json:"rateInterval"`
+}
+
 // swagger:parameters serviceMetrics appMetrics workloadMetrics
 type ReporterParam struct {
-	// Reporter: source or destination
+	// Istio telemetry reporter: 'source' or 'destination'
 	//
 	// in: query
 	// required: false
 	Name string `json:"reporter"`
+}
+
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type StepParam struct {
+	// Step between [graph] datapoints, in seconds.
+	//
+	// in: query
+	// required: false
+	// default: 15
+	Name string `json:"step"`
+}
+
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
+type VersionParam struct {
+	// Filters metrics by the specified version.
+	//
+	// in: query
+	// required: false
+	Name string `json:"version"`
 }
 
 /////////////////////
@@ -281,6 +337,13 @@ type swaggStatusInfoResp struct {
 type swaggTokenGeneratedResp struct {
 	// in:body
 	Body config.TokenGenerated
+}
+
+// HTTP status code 200 and cytoscapejs Config in data
+// swagger:response graphResponse
+type GraphResponse struct {
+	// in:body
+	Body cytoscape.Config
 }
 
 // HTTP status code 200 and IstioConfigList model in data

@@ -15,7 +15,8 @@ type Route struct {
 	Authenticated bool
 }
 
-// Routes holds an array of Route
+// Routes holds an array of Route. A note on swagger documentation. The path variables and query parameters
+// are defined in ../doc.go.  YOu need to manually associate params and routes.
 type Routes struct {
 	Routes []Route
 }
@@ -549,31 +550,50 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceIstioValidations,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/graph graphs graphNamespace
+		// ---
+		// The backing JSON for a namespaces graph.
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: graphResponse
+		//
 		{
-			// Supported query parameters:
-			// appenders:      Comma-separated list of desired appenders (default all)
-			// duration:       Duration indicating desired query period (default 10m)
-			// graphType:      Graph type for the telemetry data: app | versionedApp | workload (default workload)
-			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
-			// includeIstio:   Include istio-system destinations in graph (default false)
-			// namespaces:     Comma-separated list of namespaces will override path param (path param 'all' for all namespaces)
-			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-			// vendor:         Graph format: cytoscape (default)
-
 			"GraphNamespace",
 			"GET",
 			"/api/namespaces/{namespace}/graph",
 			handlers.GraphNamespace,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/applications/{app}/versions/{version}/graph graphs graphAppVersion
+		// ---
+		// The backing JSON for a versioned app node detail graph.
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: graphResponse
+		//
 		{
-			// Supported query parameters:
-			// appenders:      Comma-separated list of desired appenders (default all)
-			// duration:       Duration indicating desired query period (default 10m)
-			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
-			// includeIstio:   Include istio-system destinations in graph (default false)
-			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-			// vendor:         Graph format: cytoscape (default)
 
 			"GraphAppVersion",
 			"GET",
@@ -581,45 +601,75 @@ func NewRoutes() (r *Routes) {
 			handlers.GraphNode,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/applications/{app}/graph graphs graphApp
+		// ---
+		// The backing JSON for an app node detail graph.
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: graphResponse
+		//
 		{
-			// Supported query parameters:
-			// appenders:      Comma-separated list of desired appenders (default all)
-			// duration:       Duration indicating desired query period (default 10m)
-			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
-			// includeIstio:   Include istio-system destinations in graph (default false)
-			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-			// vendor:         Graph format: cytoscape (default)
-
 			"GraphApp",
 			"GET",
 			"/api/namespaces/{namespace}/applications/{app}/graph",
 			handlers.GraphNode,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/services/{service}/graph graphs graphService
+		// ---
+		// The backing JSON for a service node detail graph.
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: graphResponse
+		//
 		{
-			// Supported query parameters:
-			// appenders:      Comma-separated list of desired appenders (default all)
-			// duration:       Duration indicating desired query period (default 10m)
-			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
-			// includeIstio:   Include istio-system destinations in graph (default false)
-			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-			// vendor:         Graph format: cytoscape (default)
-
 			"GraphService",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/graph",
 			handlers.GraphNode,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/graph graphs graphWorkload
+		// ---
+		// The backing JSON for a workload node detail graph.
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: graphResponse
+		//
 		{
-			// Supported query parameters:
-			// appenders:      Comma-separated list of desired appenders (default all)
-			// duration:       Duration indicating desired query period (default 10m)
-			// groupByVersion: Visually group versions of the same app (cytoscape only, default true)
-			// includeIstio:   Include istio-system destinations in graph (default false)
-			// queryTime:      Unix timestamp in seconds is query range end time (default now)
-			// vendor:         Graph format: cytoscape (default)
-
 			"GraphWorkload",
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/graph",
