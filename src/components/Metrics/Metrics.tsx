@@ -4,11 +4,12 @@ import { Alert, Icon } from 'patternfly-react';
 import { style } from 'typestyle';
 
 import history, { HistoryManager, URLParams } from '../../app/History';
-import MetricsOptionsBar from '../../components/MetricsOptions/MetricsOptionsBar';
+import MetricsOptionsBar from '../MetricsOptions/MetricsOptionsBar';
+import { MetricsLabels as L } from '../MetricsOptions/MetricsLabels';
 import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import GrafanaInfo from '../../types/GrafanaInfo';
-import { Histogram, MetricGroup, MetricsDirection, MetricsObjectTypes } from '../../types/Metrics';
+import * as M from '../../types/Metrics';
 import MetricsOptions from '../../types/MetricsOptions';
 import { authentication } from '../../utils/Authentication';
 
@@ -28,14 +29,17 @@ type ChartDefinition = {
   name: string;
   unit: string;
   component: any;
-  metrics?: MetricGroup | Histogram;
+  metrics?: M.MetricGroup | M.Histogram;
 };
+
+type ChartDefinitions = { [key: string]: ChartDefinition };
 
 type MetricsState = {
   alertDetails?: string;
   grafanaLink?: string;
   metricReporter: string;
-  metricData?: any;
+  chartDefs: ChartDefinitions;
+  labelValues: Map<L.LabelName, L.LabelValues>;
 };
 
 type ObjectId = {
@@ -45,8 +49,8 @@ type ObjectId = {
 
 type MetricsProps = ObjectId & {
   isPageVisible?: boolean;
-  objectType: MetricsObjectTypes;
-  direction: MetricsDirection;
+  objectType: M.MetricsObjectTypes;
+  direction: M.MetricsDirection;
 };
 
 class Metrics extends React.Component<MetricsProps, MetricsState> {
@@ -64,16 +68,18 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     const metricReporterParam = HistoryManager.getParam(URLParams.REPORTER);
     if (metricReporterParam != null) {
       metricReporter = metricReporterParam;
-    } else if (this.props.direction === MetricsDirection.INBOUND) {
+    } else if (this.props.direction === M.MetricsDirection.INBOUND) {
       metricReporter = 'destination';
     }
 
     this.state = {
-      metricReporter: metricReporter
+      metricReporter: metricReporter,
+      chartDefs: this.getChartsDef(),
+      labelValues: new Map()
     };
   }
 
-  getChartsDef(): { [key: string]: ChartDefinition } {
+  getChartsDef(): ChartDefinitions {
     let inboundCharts = {
       request_count_in: { name: 'Request volume', unit: 'ops', component: MetricChart },
       request_duration_in: { name: 'Request duration', unit: 's', component: HistogramChart },
@@ -82,9 +88,9 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
       tcp_received_in: { name: 'TCP received', unit: 'bps', component: MetricChart },
       tcp_sent_in: { name: 'TCP sent', unit: 'bps', component: MetricChart }
     };
-    let charts: { [key: string]: ChartDefinition } = inboundCharts;
+    let charts: ChartDefinitions = inboundCharts;
 
-    if (this.props.direction === MetricsDirection.OUTBOUND) {
+    if (this.props.direction === M.MetricsDirection.OUTBOUND) {
       charts = {
         request_count_out: { name: 'Request volume', unit: 'ops', component: MetricChart },
         request_duration_out: { name: 'Request duration', unit: 's', component: HistogramChart },
@@ -95,21 +101,15 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
       };
     }
 
-    if (this.state.metricData) {
-      Object.keys(charts).forEach(k => {
-        const chart = charts[k];
-        const reporter = this.state.metricReporter === 'destination' ? 'dest' : 'source';
-        const histo = this.state.metricData[reporter].histograms[k];
-
-        if (histo) {
-          chart.metrics = histo;
-        } else {
-          chart.metrics = this.state.metricData[reporter].metrics[k];
-        }
-      });
-    }
-
     return charts;
+  }
+
+  fillChartsMetrics(charts: ChartDefinitions, metricsData: M.Metrics) {
+    const data = this.state.metricReporter === 'destination' ? metricsData.dest : metricsData.source;
+    Object.keys(charts).forEach(k => {
+      const chart = charts[k];
+      chart.metrics = chart.component === HistogramChart ? data.histograms[k] : (chart.metrics = data.metrics[k]);
+    });
   }
 
   componentDidMount() {
@@ -137,22 +137,39 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   };
 
   fetchMetrics = () => {
-    let promise;
+    let promise: Promise<API.Response<M.Metrics>>;
     switch (this.props.objectType) {
-      case MetricsObjectTypes.WORKLOAD:
+      case M.MetricsObjectTypes.WORKLOAD:
         promise = API.getWorkloadMetrics(authentication(), this.props.namespace, this.props.object, this.options);
         break;
-      case MetricsObjectTypes.APP:
+      case M.MetricsObjectTypes.APP:
         promise = API.getAppMetrics(authentication(), this.props.namespace, this.props.object, this.options);
         break;
-      case MetricsObjectTypes.SERVICE:
+      case M.MetricsObjectTypes.SERVICE:
       default:
         promise = API.getServiceMetrics(authentication(), this.props.namespace, this.props.object, this.options);
         break;
     }
     promise
       .then(response => {
-        this.setState({ metricData: response.data });
+        const chartDefs = this.getChartsDef();
+        this.fillChartsMetrics(chartDefs, response.data);
+        const labelValues = this.extractLabelValues(chartDefs);
+        // Keep existing show flag
+        labelValues.forEach((values: L.LabelValues, key: L.LabelName) => {
+          const previous = this.state.labelValues.get(key);
+          if (previous) {
+            Object.keys(values).forEach(k => {
+              if (previous.hasOwnProperty(k)) {
+                values[k] = previous[k];
+              }
+            });
+          }
+        });
+        this.setState({
+          chartDefs: chartDefs,
+          labelValues: labelValues
+        });
       })
       .catch(error => {
         this.setState({ alertDetails: API.getErrorMsg('Cannot fetch metrics.', error) });
@@ -160,15 +177,43 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
       });
   };
 
+  extractLabelValues(chartDefs: ChartDefinitions): Map<L.LabelName, L.LabelValues> {
+    const labelsWithValues: Map<L.LabelName, L.LabelValues> = new Map();
+    const chart =
+      this.props.direction === M.MetricsDirection.OUTBOUND
+        ? chartDefs['request_count_out']
+        : chartDefs['request_count_in'];
+    if (!chart.metrics) {
+      return labelsWithValues;
+    }
+    const labelGroups =
+      this.props.direction === M.MetricsDirection.OUTBOUND ? L.REVERSE_OUTBOUND_LABELS : L.REVERSE_INBOUND_LABELS;
+    (chart.metrics as M.MetricGroup).matrix.forEach(ts => {
+      Object.keys(ts.metric).forEach(k => {
+        const labelGroup = labelGroups.get(k);
+        if (labelGroup) {
+          const value = ts.metric[k];
+          let values = labelsWithValues.get(labelGroup);
+          if (!values) {
+            values = {};
+            labelsWithValues.set(labelGroup, values);
+          }
+          values[value] = true;
+        }
+      });
+    });
+    return labelsWithValues;
+  }
+
   getGrafanaLink(info: GrafanaInfo): string {
     let grafanaLink;
     switch (this.props.objectType) {
-      case MetricsObjectTypes.SERVICE:
+      case M.MetricsObjectTypes.SERVICE:
         grafanaLink = `${info.url}${info.serviceDashboardPath}?${info.varService}=${this.props.object}.${
           this.props.namespace
         }.svc.cluster.local`;
         break;
-      case MetricsObjectTypes.WORKLOAD:
+      case M.MetricsObjectTypes.WORKLOAD:
         grafanaLink = `${info.url}${info.workloadDashboardPath}?${info.varNamespace}=${this.props.namespace}&${
           info.varWorkload
         }=${this.props.object}`;
@@ -198,7 +243,15 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
 
   dismissAlert = () => this.setState({ alertDetails: undefined });
 
+  onLabelsFiltersChanged = (labelValues: Map<L.LabelName, L.LabelValues>) => {
+    this.setState({ labelValues: labelValues });
+  };
+
   render() {
+    if (!this.props.isPageVisible) {
+      return null;
+    }
+
     const urlParams = new URLSearchParams(history.location.search);
     const expandedChart = urlParams.get('expand');
     urlParams.delete('expand');
@@ -218,8 +271,10 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
           onOptionsChanged={this.onOptionsChanged}
           onReporterChanged={this.onReporterChanged}
           onRefresh={this.fetchMetrics}
+          onLabelsFiltersChanged={this.onLabelsFiltersChanged}
           metricReporter={this.state.metricReporter}
           direction={this.props.direction}
+          labelValues={this.state.labelValues}
         />
         {expandedChart ? this.renderExpandedChart(expandedChart) : this.renderMetrics()}
       </div>
@@ -227,12 +282,7 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   }
 
   renderMetrics() {
-    if (!this.props.isPageVisible) {
-      return null;
-    }
-
-    const charts = this.getChartsDef();
-
+    const charts = this.state.chartDefs;
     return (
       <div className="card-pf">
         <div className="row row-cards-pf">
@@ -254,11 +304,20 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   }
 
   private renderExpandedChart(chartKey: string) {
-    return (
-      <div className={expandedChartContainerStyle}>
-        {this.renderChart(chartKey, this.getChartsDef()[chartKey], true)}
-      </div>
-    );
+    const charts = this.state.chartDefs;
+    return <div className={expandedChartContainerStyle}>{this.renderChart(chartKey, charts[chartKey], true)}</div>;
+  }
+
+  private convertAsPromLabels(labels: Map<L.LabelName, L.LabelValues>): Map<L.PromLabel, L.LabelValues> {
+    const promLabels = new Map<L.PromLabel, L.LabelValues>();
+    const labelGroups = this.props.direction === M.MetricsDirection.OUTBOUND ? L.OUTBOUND_LABELS : L.INBOUND_LABELS;
+    labels.forEach((val, k) => {
+      const promName = labelGroups.get(k);
+      if (promName) {
+        promLabels.set(promName, val);
+      }
+    });
+    return promLabels;
   }
 
   private renderChart(chartKey: string, chart: ChartDefinition, isExpanded: boolean = false) {
@@ -268,10 +327,11 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     const props: any = {
       key: chartKey + this.state.metricReporter,
       chartName: chart.name,
+      labelValues: this.convertAsPromLabels(this.state.labelValues),
       unit: chart.unit
     };
-    if ((chart.metrics as MetricGroup).matrix) {
-      props.series = (chart.metrics as MetricGroup).matrix;
+    if ((chart.metrics as M.MetricGroup).matrix) {
+      props.series = (chart.metrics as M.MetricGroup).matrix;
     } else {
       props.histogram = chart.metrics;
     }

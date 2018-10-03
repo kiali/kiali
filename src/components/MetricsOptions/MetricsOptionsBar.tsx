@@ -8,37 +8,25 @@ import { config } from '../../config';
 import MetricsOptions from '../../types/MetricsOptions';
 import { MetricsDirection } from '../../types/Metrics';
 
-import { MetricsSettings, Quantiles, MetricsSettingsDropdown, Grouping } from './MetricsSettings';
+import { MetricsSettings, Quantiles, MetricsSettingsDropdown } from './MetricsSettings';
+import { MetricsLabels as L } from './MetricsLabels';
 
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
   onReporterChanged: (reporter: string) => void;
   onRefresh: () => void;
+  onLabelsFiltersChanged: (labels: Map<L.LabelName, L.LabelValues>) => void;
   metricReporter: string;
   direction: MetricsDirection;
+  labelValues: Map<L.LabelName, L.LabelValues>;
 }
 
 interface MetricsOptionsState {
   pollInterval: number;
   duration: number;
   metricsSettings: MetricsSettings;
+  labelValues: Map<L.LabelName, L.LabelValues>;
 }
-
-type Label = string;
-
-const INBOUND_GROUPING_LABELS: Map<Grouping, Label> = new Map<Grouping, Label>([
-  ['Local version', 'destination_version'],
-  ['Remote app', 'source_app'],
-  ['Remote version', 'source_version'],
-  ['Response code', 'response_code']
-]);
-
-const OUTBOUND_GROUPING_LABELS: Map<Grouping, Label> = new Map<Grouping, Label>([
-  ['Local version', 'source_version'],
-  ['Remote app', 'destination_app'],
-  ['Remote version', 'destination_version'],
-  ['Response code', 'response_code']
-]);
 
 export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsState> {
   static PollIntervals = config().toolbar.pollInterval;
@@ -52,24 +40,17 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     source: 'Source'
   };
 
-  constructor(props: Props) {
-    super(props);
-
+  static getDerivedStateFromProps(props: Props, state: MetricsOptionsState) {
     const urlParams = new URLSearchParams(history.location.search);
-
-    this.state = {
-      pollInterval: this.initialPollInterval(urlParams),
-      duration: this.initialDuration(urlParams),
-      metricsSettings: this.initialMetricsSettings(urlParams)
+    return {
+      pollInterval: MetricsOptionsBar.initialPollInterval(urlParams),
+      duration: MetricsOptionsBar.initialDuration(urlParams),
+      metricsSettings: MetricsOptionsBar.initialMetricsSettings(urlParams),
+      labelValues: props.labelValues
     };
   }
 
-  componentDidMount() {
-    // Init state upstream
-    this.reportOptions();
-  }
-
-  initialPollInterval = (urlParams: URLSearchParams): number => {
+  static initialPollInterval = (urlParams: URLSearchParams): number => {
     const pi = urlParams.get(URLParams.POLL_INTERVAL);
     if (pi !== null) {
       return Number(pi);
@@ -77,7 +58,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     return MetricsOptionsBar.DefaultPollInterval;
   };
 
-  initialDuration = (urlParams: URLSearchParams): number => {
+  static initialDuration = (urlParams: URLSearchParams): number => {
     let d = urlParams.get(URLParams.DURATION);
     if (d !== null) {
       sessionStorage.setItem(URLParams.DURATION, d);
@@ -87,11 +68,11 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     return d !== null ? Number(d) : MetricsOptionsBar.DefaultDuration;
   };
 
-  initialMetricsSettings = (urlParams: URLSearchParams): MetricsSettings => {
+  static initialMetricsSettings = (urlParams: URLSearchParams): MetricsSettings => {
     const settings: MetricsSettings = {
       showAverage: true,
       showQuantiles: ['0.5', '0.95', '0.99'],
-      groupingLabels: []
+      activeLabels: []
     };
     const avg = urlParams.get(URLParams.SHOW_AVERAGE);
     if (avg !== null) {
@@ -103,10 +84,20 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     }
     const byLabels = urlParams.getAll(URLParams.BY_LABELS);
     if (byLabels.length !== 0) {
-      settings.groupingLabels = byLabels as Grouping[];
+      settings.activeLabels = byLabels as L.LabelName[];
     }
     return settings;
   };
+
+  constructor(props: Props) {
+    super(props);
+    this.state = MetricsOptionsBar.getDerivedStateFromProps(props, this.state);
+  }
+
+  componentDidMount() {
+    // Init state upstream
+    this.reportOptions();
+  }
 
   onPollIntervalChanged = (key: number) => {
     HistoryManager.setParam(URLParams.POLL_INTERVAL, String(key));
@@ -123,12 +114,12 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
 
   reportOptions() {
     // State-to-options converter (removes unnecessary properties)
-    let labelsIn: Label[] = [];
-    let labelsOut: Label[] = [];
+    let labelsIn: L.PromLabel[] = [];
+    let labelsOut: L.PromLabel[] = [];
     if (this.props.direction === MetricsDirection.INBOUND) {
-      labelsIn = this.state.metricsSettings.groupingLabels.map(lbl => INBOUND_GROUPING_LABELS.get(lbl)!);
+      labelsIn = this.state.metricsSettings.activeLabels.map(lbl => L.INBOUND_LABELS.get(lbl)!);
     } else {
-      labelsOut = this.state.metricsSettings.groupingLabels.map(lbl => OUTBOUND_GROUPING_LABELS.get(lbl)!);
+      labelsOut = this.state.metricsSettings.activeLabels.map(lbl => L.OUTBOUND_LABELS.get(lbl)!);
     }
     this.props.onOptionsChanged({
       duration: this.state.duration,
@@ -150,7 +141,7 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     urlParams.delete(URLParams.QUANTILES);
     urlParams.delete(URLParams.BY_LABELS);
     settings.showQuantiles.forEach(q => urlParams.append(URLParams.QUANTILES, q));
-    settings.groupingLabels.forEach(lbl => urlParams.append(URLParams.BY_LABELS, lbl));
+    settings.activeLabels.forEach(lbl => urlParams.append(URLParams.BY_LABELS, lbl));
     history.replace(history.location.pathname + '?' + urlParams.toString());
     this.setState({ metricsSettings: settings }, () => {
       this.reportOptions();
@@ -161,7 +152,12 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     return (
       <Toolbar>
         <FormGroup>
-          <MetricsSettingsDropdown onChanged={this.onMetricsSettingsChanged} {...this.state.metricsSettings} />
+          <MetricsSettingsDropdown
+            onChanged={this.onMetricsSettingsChanged}
+            onLabelsFiltersChanged={this.props.onLabelsFiltersChanged}
+            labelValues={this.state.labelValues}
+            {...this.state.metricsSettings}
+          />
         </FormGroup>
         <FormGroup>
           <ToolbarDropdown

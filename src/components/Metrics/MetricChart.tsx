@@ -6,6 +6,7 @@ type MetricChartProps = {
   series: TimeSeries[];
   chartName: string;
   unit: string;
+  labelValues: Map<L.PromLabel, L.LabelValues>;
   onExpandRequested?: () => void;
 };
 
@@ -24,9 +25,10 @@ export default class MetricsChart extends MetricsChartBase<MetricChartProps> {
   }
 
   protected getSeriesData() {
+    const filtered = this.props.series.filter(ts => this.isVisibleMetric(ts.metric, this.props.labelValues));
     return {
       x: 'x',
-      columns: graphUtils.toC3Columns(this.nameTimeSeries(this.props.series))
+      columns: graphUtils.toC3Columns(this.nameTimeSeries(filtered))
     };
   }
 }

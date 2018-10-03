@@ -1,41 +1,57 @@
 import * as React from 'react';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { style } from 'typestyle';
-
-export type Grouping = 'Local version' | 'Remote app' | 'Remote version' | 'Response code';
-const allGroupings: Grouping[] = ['Local version', 'Remote app', 'Remote version', 'Response code'];
+import { MetricsLabels as L } from './MetricsLabels';
 
 export type Quantiles = '0.5' | '0.95' | '0.99' | '0.999';
 const allQuantiles: Quantiles[] = ['0.5', '0.95', '0.99', '0.999'];
 
 export interface MetricsSettings {
-  groupingLabels: Grouping[];
+  activeLabels: L.LabelName[];
   showAverage: boolean;
   showQuantiles: Quantiles[];
 }
 
 interface Props extends MetricsSettings {
   onChanged: (state: MetricsSettings) => void;
+  onLabelsFiltersChanged: (labelValues: Map<L.LabelName, L.LabelValues>) => void;
+  labelValues: Map<L.LabelName, L.LabelValues>;
 }
 
-interface State extends MetricsSettings {}
+interface State extends MetricsSettings {
+  labelValues: Map<L.LabelName, L.LabelValues>;
+}
 
-export class MetricsSettingsDropdown extends React.PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      groupingLabels: props.groupingLabels,
+export class MetricsSettingsDropdown extends React.Component<Props, State> {
+  static getDerivedStateFromProps(props: Props, state: State) {
+    return {
+      activeLabels: props.activeLabels,
       showAverage: props.showAverage,
-      showQuantiles: props.showQuantiles
+      showQuantiles: props.showQuantiles,
+      labelValues: props.labelValues
     };
   }
 
-  onGroupingChanged = (label: Grouping, checked: boolean) => {
-    const newLabels = checked
-      ? [label].concat(this.state.groupingLabels)
-      : this.state.groupingLabels.filter(g => label !== g);
+  constructor(props: Props) {
+    super(props);
+    this.state = MetricsSettingsDropdown.getDerivedStateFromProps(props, this.state);
+  }
 
-    this.setState({ groupingLabels: newLabels }, () => this.props.onChanged(this.state));
+  onGroupingChanged = (label: L.LabelName, checked: boolean) => {
+    const newLabels = checked
+      ? [label].concat(this.state.activeLabels)
+      : this.state.activeLabels.filter(g => label !== g);
+
+    this.setState({ activeLabels: newLabels }, () => this.props.onChanged(this.state));
+  };
+
+  onHideLabelChanged = (label: L.LabelName, value: string, checked: boolean) => {
+    const newLabels = new Map(this.state.labelValues);
+    const lblValues = newLabels.get(label);
+    if (lblValues) {
+      lblValues[value] = checked;
+      this.setState({ labelValues: newLabels }, () => this.props.onLabelsFiltersChanged(newLabels));
+    }
   };
 
   onHistogramAverageChanged = (checked: boolean) => {
@@ -52,9 +68,25 @@ export class MetricsSettingsDropdown extends React.PureComponent<Props, State> {
 
   render() {
     const checkboxStyle = style({ marginLeft: 5 });
+    const secondLevelStyle = style({ marginLeft: 14 });
 
-    const displayGroupingLabels = allGroupings.map((g, idx) => {
-      const checked = this.state.groupingLabels.includes(g);
+    const displayGroupingLabels = L.ALL_NAMES.map((g, idx) => {
+      const checked = this.state.activeLabels.includes(g);
+      const labels = this.state.labelValues.get(g);
+      const labelsHTML = labels
+        ? Object.keys(labels).map(val => (
+            <div key={'groupings_' + idx + '_' + val} className={secondLevelStyle}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={labels[val]}
+                  onChange={event => this.onHideLabelChanged(g, val, event.target.checked)}
+                />
+                <span className={checkboxStyle}>{val}</span>
+              </label>
+            </div>
+          ))
+        : null;
       return (
         <div key={'groupings_' + idx}>
           <label>
@@ -65,6 +97,7 @@ export class MetricsSettingsDropdown extends React.PureComponent<Props, State> {
             />
             <span className={checkboxStyle}>{g}</span>
           </label>
+          {labelsHTML}
         </div>
       );
     });

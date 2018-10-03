@@ -6,7 +6,9 @@ ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <MetricsOptionsBar
     direction={0}
+    labelValues={Map {}}
     metricReporter="destination"
+    onLabelsFiltersChanged={[MockFunction]}
     onOptionsChanged={
       [MockFunction] {
         "calls": Array [
@@ -46,8 +48,10 @@ ShallowWrapper {
           bsClass="form-group"
         >
           <MetricsSettingsDropdown
-            groupingLabels={Array []}
+            activeLabels={Array []}
+            labelValues={Map {}}
             onChanged={[Function]}
+            onLabelsFiltersChanged={[MockFunction]}
             showAverage={true}
             showQuantiles={
               Array [
@@ -120,8 +124,10 @@ ShallowWrapper {
         "props": Object {
           "bsClass": "form-group",
           "children": <MetricsSettingsDropdown
-            groupingLabels={Array []}
+            activeLabels={Array []}
+            labelValues={Map {}}
             onChanged={[Function]}
+            onLabelsFiltersChanged={[MockFunction]}
             showAverage={true}
             showQuantiles={
               Array [
@@ -138,8 +144,10 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "class",
           "props": Object {
-            "groupingLabels": Array [],
+            "activeLabels": Array [],
+            "labelValues": Map {},
             "onChanged": [Function],
+            "onLabelsFiltersChanged": [MockFunction],
             "showAverage": true,
             "showQuantiles": Array [
               "0.5",
@@ -270,8 +278,10 @@ ShallowWrapper {
             bsClass="form-group"
           >
             <MetricsSettingsDropdown
-              groupingLabels={Array []}
+              activeLabels={Array []}
+              labelValues={Map {}}
               onChanged={[Function]}
+              onLabelsFiltersChanged={[MockFunction]}
               showAverage={true}
               showQuantiles={
                 Array [
@@ -344,8 +354,10 @@ ShallowWrapper {
           "props": Object {
             "bsClass": "form-group",
             "children": <MetricsSettingsDropdown
-              groupingLabels={Array []}
+              activeLabels={Array []}
+              labelValues={Map {}}
               onChanged={[Function]}
+              onLabelsFiltersChanged={[MockFunction]}
               showAverage={true}
               showQuantiles={
                 Array [
@@ -362,8 +374,10 @@ ShallowWrapper {
             "key": undefined,
             "nodeType": "class",
             "props": Object {
-              "groupingLabels": Array [],
+              "activeLabels": Array [],
+              "labelValues": Map {},
               "onChanged": [Function],
+              "onLabelsFiltersChanged": [MockFunction],
               "showAverage": true,
               "showQuantiles": Array [
                 "0.5",

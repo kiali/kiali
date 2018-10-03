@@ -2,7 +2,8 @@ import * as React from 'react';
 import { LineChart, Icon } from 'patternfly-react';
 import { style } from 'typestyle';
 import { format } from 'd3-format';
-import { TimeSeries } from '../../types/Metrics';
+import { MetricsLabels as L } from '../MetricsOptions/MetricsLabels';
+import { TimeSeries, Metric } from '../../types/Metrics';
 
 type MetricsChartBaseProps = {
   chartName: string;
@@ -32,8 +33,8 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
   protected nameTimeSeries = (matrix: TimeSeries[], groupName?: string): TimeSeries[] => {
     matrix.forEach(ts => {
       const labels = Object.keys(ts.metric)
+        .filter(k => k !== 'reporter')
         .map(k => ts.metric[k])
-        .filter(label => label !== 'source' && label !== 'destination')
         .join(',');
       if (groupName) {
         if (labels === '') {
@@ -112,6 +113,19 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
       </div>
     );
   };
+
+  protected isVisibleMetric(metric: Metric, labelValues: Map<L.PromLabel, L.LabelValues>) {
+    for (let promLabelName in metric) {
+      if (metric.hasOwnProperty(promLabelName)) {
+        const actualValue = metric[promLabelName];
+        const values = labelValues.get(promLabelName);
+        if (values && values.hasOwnProperty(actualValue) && !values[actualValue]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 
   checkUnload(data: C3ChartData) {
     const newColumns = data.columns.map(c => c[0] as string);
