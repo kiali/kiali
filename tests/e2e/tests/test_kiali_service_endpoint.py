@@ -11,7 +11,7 @@ VIRTUAL_SERVICE_FILE = 'assets/bookinfo-reviews-80-20.yaml'
 DESTINATION_RULE_FILE = 'assets/bookinfo-destination-rule-reviews.yaml'
 
 def test_service_list_endpoint(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     service_list_json = kiali_client.service_list(namespace=bookinfo_namespace)
     assert service_list_json.get('namespace').get('name') == bookinfo_namespace
@@ -26,7 +26,7 @@ def test_service_list_endpoint(kiali_client):
       assert service.get('appLabel') == True
 
 def test_service_detail_endpoint(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
     assert service_details != None
@@ -41,7 +41,7 @@ def test_service_detail_endpoint(kiali_client):
     assert 'health' in service_details
 
 def test_service_detail_with_virtual_service(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     try:
       # Add a virtual service that will be tested
@@ -92,7 +92,7 @@ def test_service_detail_with_virtual_service(kiali_client):
           time.sleep(1)
 
 def test_service_detail_with_destination_rule(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     try:
       # Add a destination rule that will be tested
@@ -138,7 +138,7 @@ def test_service_detail_with_destination_rule(kiali_client):
           time.sleep(1)
 
 def test_service_metrics_endpoint(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     service = kiali_client.service_metrics(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
     for direction in ['dest', 'source']:
@@ -156,7 +156,7 @@ def test_service_metrics_endpoint(kiali_client):
       assert 'response_size_in' in histograms
 
 def test_service_health_endpoint(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     service_health = kiali_client.service_health(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
     assert service_health != None
@@ -169,7 +169,7 @@ def test_service_health_endpoint(kiali_client):
     assert 'requests' in service_health
 
 def test_service_validations_endpoint(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_endpoint()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     service_validations = kiali_client.service_validations(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
     assert service_validations != None
