@@ -18,15 +18,6 @@ import (
 	osv1 "github.com/openshift/api/project/v1"
 )
 
-const (
-	// These constants are tweaks to the k8s client I think once are set up they won't change so no need to put them on the config
-	// Default QPS and Burst are quite low and those are not designed for a backend that should perform several
-	// queries to build an inventory of entities from a k8s backend.
-	// Other k8s clients have increased these values to a similar values.
-	k8sQPS   = 100
-	k8sBurst = 200
-)
-
 var (
 	emptyListOptions = meta_v1.ListOptions{}
 	emptyGetOptions  = meta_v1.GetOptions{}
@@ -102,8 +93,8 @@ func ConfigClient() (*rest.Config, error) {
 	return &rest.Config{
 		// TODO: switch to using cluster DNS.
 		Host:  "http://" + net.JoinHostPort(host, port),
-		QPS:   k8sQPS,
-		Burst: k8sBurst,
+		QPS:   kialiConfig.Get().KubernetesConfig.QPS,
+		Burst: kialiConfig.Get().KubernetesConfig.Burst,
 	}, nil
 }
 

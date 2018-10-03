@@ -51,6 +51,9 @@ const (
 
 	EnvIstioLabelNameApp     = "ISTIO_LABEL_NAME_APP"
 	EnvIstioLabelNameVersion = "ISTIO_LABEL_NAME_VERSION"
+
+	EnvKubernetesBurst = "KUBERNETES_BURST"
+	EnvKubernetesQPS   = "KUBERNETES_QPS"
 )
 
 // The versions that Kiali requires
@@ -117,6 +120,12 @@ type IstioLabels struct {
 	VersionLabelName string `yaml:"version_label_name,omitempty"`
 }
 
+// Kubernetes client configuration
+type KubernetesConfig struct {
+	Burst int     `yaml:"burst,omitempty"`
+	QPS   float32 `yaml:"qps,omitempty"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	Identity         security.Identity `yaml:",omitempty"`
@@ -126,6 +135,7 @@ type Config struct {
 	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
 	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
 	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
+	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -175,6 +185,10 @@ func NewConfig() (c *Config) {
 	// Token-based authentication Configuration
 	c.LoginToken.SigningKey = []byte(strings.TrimSpace(getDefaultString(EnvLoginTokenSigningKey, "kiali")))
 	c.LoginToken.ExpirationSeconds = getDefaultInt64(EnvLoginTokenExpirationSeconds, 24*3600)
+
+	// Kubernetes client Configuration
+	c.KubernetesConfig.Burst = getDefaultInt(EnvKubernetesBurst, 200)
+	c.KubernetesConfig.QPS = getDefaultFloat32(EnvKubernetesQPS, 100)
 
 	return
 }
@@ -237,6 +251,21 @@ func getDefaultBool(envvar string, defaultValue bool) (retVal bool) {
 			retVal = defaultValue
 		} else {
 			retVal = b
+		}
+	}
+	return
+}
+
+func getDefaultFloat32(envvar string, defaultValue float32) (retVal float32) {
+	retValString := os.Getenv(envvar)
+	if retValString == "" {
+		retVal = defaultValue
+	} else {
+		if f, err := strconv.ParseFloat(retValString, 32); err != nil {
+			log.Warningf("Invalid float number for envvar [%v]. err=%v", envvar, err)
+			retVal = defaultValue
+		} else {
+			retVal = float32(f)
 		}
 	}
 	return
