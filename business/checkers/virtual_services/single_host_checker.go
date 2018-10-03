@@ -41,7 +41,9 @@ func (in SingleHostChecker) Check() models.IstioValidations {
 					// - there is one virtual service with wildcard and there are other virtual services pointing
 					//   a host for that namespace
 					if targetSameHost || isNamespaceWildcard && otherServiceHosts {
-						multipleVirtualServiceCheck(*virtualService, validations)
+						if !hasGateways(virtualService) {
+							multipleVirtualServiceCheck(*virtualService, validations)
+						}
 					}
 				}
 			}
@@ -139,4 +141,12 @@ func formatHostForSearch(hostName, virtualServiceNamespace string) Host {
 	}
 
 	return host
+}
+
+func hasGateways(virtualService *kubernetes.IstioObject) bool {
+	if gateways, ok := (*virtualService).GetSpec()["gateways"]; ok {
+		vsGateways, ok := (gateways).([]interface{})
+		return ok && vsGateways != nil && len(vsGateways) > 0
+	}
+	return false
 }
