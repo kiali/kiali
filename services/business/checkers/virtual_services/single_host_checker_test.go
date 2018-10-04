@@ -5,8 +5,8 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
+	"github.com/kiali/kiali/tests/data"
 	"github.com/stretchr/testify/assert"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestOneVirtualServicePerHost(t *testing.T) {
@@ -160,35 +160,11 @@ func TestMultipleHostsPassing(t *testing.T) {
 }
 
 func buildVirtualService(name, host string) kubernetes.IstioObject {
-	vs := (&kubernetes.VirtualService{
-
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      name,
-			Namespace: "bookinfo",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				host,
-			},
-		},
-	}).DeepCopyIstioObject()
-
-	return vs
+	return buildVirtualServiceMultipleHosts(name, []string{host})
 }
 
 func buildVirtualServiceMultipleHosts(name string, hosts []string) kubernetes.IstioObject {
-	vs := (&kubernetes.VirtualService{
-
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      name,
-			Namespace: "bookinfo",
-		},
-		Spec: map[string]interface{}{
-			"hosts": hosts,
-		},
-	}).DeepCopyIstioObject()
-
-	return vs
+	return data.CreateEmptyVirtualService(name, "bookinfo", hosts)
 }
 
 func noValidationResult(t *testing.T, validations models.IstioValidations) {

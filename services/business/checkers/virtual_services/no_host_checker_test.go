@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func TestValidHost(t *testing.T) {
@@ -16,7 +16,7 @@ func TestValidHost(t *testing.T) {
 	validations, valid := NoHostChecker{
 		Namespace:      "test-namespace",
 		ServiceNames:   []string{"reviews", "other"},
-		VirtualService: fakeVirtualService(),
+		VirtualService: data.CreateVirtualService(),
 	}.Check()
 
 	assert.True(valid)
@@ -29,7 +29,7 @@ func TestNoValidHost(t *testing.T) {
 
 	assert := assert.New(t)
 
-	virtualService := fakeVirtualService()
+	virtualService := data.CreateVirtualService()
 
 	validations, valid := NoHostChecker{
 		Namespace:      "test-namespace",
@@ -81,7 +81,7 @@ func TestValidServiceEntryHost(t *testing.T) {
 
 	assert := assert.New(t)
 
-	virtualService := fakeVirtualServiceWithServiceEntryTarget()
+	virtualService := data.CreateVirtualServiceWithServiceEntryTarget()
 
 	validations, valid := NoHostChecker{
 		Namespace:      "test-namespace",
@@ -93,7 +93,7 @@ func TestValidServiceEntryHost(t *testing.T) {
 	assert.NotEmpty(validations)
 
 	// Add ServiceEntry for validity
-	serviceEntry := fakeExternalServiceEntry()
+	serviceEntry := data.CreateExternalServiceEntry()
 
 	validations, valid = NoHostChecker{
 		Namespace:         "test-namespace",
@@ -104,94 +104,4 @@ func TestValidServiceEntryHost(t *testing.T) {
 
 	assert.True(valid)
 	assert.Empty(validations)
-}
-
-func fakeVirtualService() kubernetes.IstioObject {
-	virtualService := kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "reviews",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"reviews",
-			},
-			"http": []interface{}{
-				map[string]interface{}{
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"host":   "reviews",
-								"subset": "v1",
-							},
-						},
-					},
-				},
-			},
-			"tcp": []interface{}{
-				map[string]interface{}{
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"host":   "reviews",
-								"subset": "v1",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	return &virtualService
-}
-
-// Example from https://istio.io/docs/reference/config/istio.networking.v1alpha3/#Destination
-func fakeVirtualServiceWithServiceEntryTarget() kubernetes.IstioObject {
-	return (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "my-wiki-rule",
-			Namespace: "wikipedia",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"wikipedia.org",
-			},
-			"http": []interface{}{
-				map[string]interface{}{
-					"timeout": "5s",
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"host": "wikipedia.org",
-							},
-						},
-					},
-				},
-			},
-		},
-	}).DeepCopyIstioObject()
-}
-
-func fakeExternalServiceEntry() kubernetes.IstioObject {
-	return (&kubernetes.ServiceEntry{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "external-svc-wikipedia",
-			Namespace: "wikipedia",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"wikipedia.org",
-			},
-			"location": "MESH_EXTERNAL",
-			"ports": map[string]interface{}{
-				"number":   uint64(80),
-				"name":     "example-http",
-				"protocol": "HTTP",
-			},
-			"resolution": "DNS",
-		},
-	}).DeepCopyIstioObject()
-}
-
-func fakeVirtualServiceMultipleIstioObjects() []kubernetes.IstioObject {
-	return []kubernetes.IstioObject{fakeVirtualServiceWithServiceEntryTarget(), fakeExternalServiceEntry()}
 }

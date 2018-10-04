@@ -10,6 +10,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/services/models"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func TestNoCrashOnNil(t *testing.T) {
@@ -125,65 +126,14 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	istioDetails := kubernetes.IstioDetails{}
 
 	istioDetails.VirtualServices = []kubernetes.IstioObject{
-		&kubernetes.VirtualService{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "product-vs",
-			},
-			Spec: map[string]interface{}{
-				"hosts": []interface{}{
-					"product",
-				},
-				"http": []interface{}{
-					map[string]interface{}{
-						"route": []interface{}{
-							map[string]interface{}{
-								"destination": map[string]interface{}{
-									"host":   "product",
-									"subset": "v1",
-								},
-							},
-						},
-					},
-				},
-				"tcp": []interface{}{
-					map[string]interface{}{
-						"route": []interface{}{
-							map[string]interface{}{
-								"destination": map[string]interface{}{
-									"host":   "product",
-									"subset": "v1",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+		data.AddRoutesToVirtualService("http", data.CreateRoute("product", "v1", -1),
+			data.AddRoutesToVirtualService("tcp", data.CreateRoute("product", "v1", -1),
+				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"}),
+			),
+		)}
 
 	istioDetails.DestinationRules = []kubernetes.IstioObject{
-		&kubernetes.DestinationRule{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "customer-dr",
-			},
-			Spec: map[string]interface{}{
-				"host": "customer",
-				"subsets": []interface{}{
-					map[string]interface{}{
-						"name": "v1",
-						"labels": map[string]interface{}{
-							"version": "v1",
-						},
-					},
-					map[string]interface{}{
-						"name": "v2",
-						"labels": map[string]interface{}{
-							"version": "v2",
-						},
-					},
-				},
-			},
-		},
+		data.CreateTestDestinationRule("test", "customer-dr", "customer"),
 	}
 
 	return &istioDetails

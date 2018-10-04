@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func TestServiceWellVirtualServiceValidation(t *testing.T) {
@@ -110,200 +110,69 @@ func TestSecondHTTPRouteHasNoWeight(t *testing.T) {
 }
 
 func fakeIstioObjects() kubernetes.IstioObject {
-	validVirtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "reviews-well",
-		},
-		Spec: map[string]interface{}{
-			"http": []map[string]interface{}{
-				{
-					"route": []map[string]interface{}{
-						{
-							"weight": uint64(55),
-							"destination": map[string]string{
-								"subset": "v1",
-								"host":   "reviews",
-							},
-						},
-						{
-							"weight": uint64(45),
-							"destination": map[string]string{
-								"subset": "v1",
-								"host":   "reviews",
-							},
-						},
-					},
-				},
-			},
-		},
-	}).DeepCopyIstioObject()
+	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55),
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 45),
+			data.CreateEmptyVirtualService("reviews-well", "test", []string{"reviews"}),
+		),
+	)
 
 	return validVirtualService
 }
 
 func fakeUnder100VirtualService() kubernetes.IstioObject {
-	virtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "reviews-100-minus",
-		},
-		Spec: map[string]interface{}{
-			"http": []map[string]interface{}{
-				{
-					"route": []map[string]interface{}{
-						{
-							"weight": uint64(45),
-							"destination": map[string]string{
-								"subset": "v1",
-								"host":   "reviews",
-							},
-						},
-						{
-							"weight": uint64(45),
-							"destination": map[string]string{
-								"subset": "v1",
-								"host":   "reviews",
-							},
-						},
-					},
-				},
-			},
-		},
-	}).DeepCopyIstioObject()
+	virtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 45),
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 45),
+			data.CreateEmptyVirtualService("reviews-100-minus", "test", []string{"reviews"}),
+		),
+	)
 
 	return virtualService
 }
 
 func fakeOver100VirtualService() kubernetes.IstioObject {
-	virtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "reviews-100-plus",
-		},
-		Spec: map[string]interface{}{
-			"http": []map[string]interface{}{
-				{
-					"route": []map[string]interface{}{
-						{
-							"weight": uint64(55),
-							"destination": map[string]string{
-								"subset": "v1",
-								"host":   "reviews",
-							},
-						},
-						{
-							"weight": uint64(55),
-							"destination": map[string]string{
-								"subset": "v1",
-								"host":   "reviews",
-							},
-						},
-					},
-				},
-			},
-		},
-	}).DeepCopyIstioObject()
+	virtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55),
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55),
+			data.CreateEmptyVirtualService("reviews-100-plus", "test", []string{"reviews"}),
+		),
+	)
 
 	return virtualService
 }
 
 func fakeMultipleChecks() kubernetes.IstioObject {
-	virtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "reviews-multiple",
-		},
-		Spec: map[string]interface{}{
-			"http": []map[string]interface{}{
-				{
-					"route": []map[string]interface{}{
-						{
-							"weight": uint64(55),
-							"destination": map[string]string{
-								"subset": "v1",
-								"host":   "reviews",
-							},
-						},
-						{
-							"weight": uint64(145),
-							"destination": map[string]string{
-								"subset": "v1",
-								"host":   "reviews",
-							},
-						},
-					},
-				},
-			},
-		},
-	}).DeepCopyIstioObject()
+	virtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 145),
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55),
+			data.CreateEmptyVirtualService("reviews-multiple", "test", []string{"reviews"}),
+		),
+	)
 
 	return virtualService
 }
 
 func fakeOneRouteWithoutWeight() kubernetes.IstioObject {
-	validVirtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "reviews-well",
-		},
-		Spec: map[string]interface{}{"http": []map[string]interface{}{
-			{
-				"route": []map[string]interface{}{
-					{
-						"weight": uint64(55),
-						"destination": map[string]string{
-							"subset": "v1",
-							"host":   "reviews",
-						},
-					},
-					{
-						"destination": map[string]string{
-							"subset": "v1",
-							"host":   "reviews",
-						},
-					},
-				},
-			},
-		},
-		},
-	}).DeepCopyIstioObject()
+	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", -1),
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55),
+			data.CreateEmptyVirtualService("reviews-well", "test", []string{"reviews"}),
+		),
+	)
 
 	return validVirtualService
 }
 
 func fake2HTTPRoutes() kubernetes.IstioObject {
-	validVirtualService := (&kubernetes.VirtualService{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "reviews-well",
-		},
-		Spec: map[string]interface{}{
-			"http": []map[string]interface{}{
-				{
-					"route": []map[string]interface{}{
-						{
-							"weight": uint64(55),
-							"destination": map[string]string{
-								"subset": "v1",
-								"host":   "reviews",
-							},
-						},
-						{
-							"destination": map[string]string{
-								"subset": "v1",
-								"host":   "reviews",
-							},
-						},
-					},
-				},
-				{
-					"route": []map[string]interface{}{
-						{
-							"destination": map[string]string{
-								"subset": "v1",
-								"host":   "reviews",
-							},
-						},
-					},
-				},
-			},
-		},
-	}).DeepCopyIstioObject()
+	validVirtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", -1),
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 55),
+			data.CreateEmptyVirtualService("reviews-well", "test", []string{"reviews"}),
+		),
+	)
+
+	if routeTypeInterface, found := validVirtualService.GetSpec()["http"]; found {
+		if routeTypeCasted, ok := routeTypeInterface.([]interface{}); ok {
+			duplicateRoute := data.CreateRoute("reviews", "v1", -1)
+			routeTypeCasted = append(routeTypeCasted, duplicateRoute)
+			validVirtualService.GetSpec()["http"] = routeTypeCasted
+		}
+	}
 
 	return validVirtualService
 }
