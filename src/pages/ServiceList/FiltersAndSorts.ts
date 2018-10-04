@@ -1,6 +1,6 @@
 import { ActiveFilter, FilterType, presenceValues } from '../../types/Filters';
 import { getRequestErrorsRatio, ServiceHealth } from '../../types/Health';
-import { ServiceListItem } from '../../types/ServiceList';
+import { ServiceListItem, ServiceList, ServiceOverview } from '../../types/ServiceList';
 import { SortField } from '../../types/SortFilters';
 import { removeDuplicatesArray } from '../../utils/Common';
 import NamespaceFilter from '../../components/Filters/NamespaceFilter';
@@ -77,13 +77,12 @@ export namespace ServiceListFilters {
 
   export const availableFilters: FilterType[] = [NamespaceFilter.create(), serviceNameFilter, istioFilter];
 
-  const filterByIstioSidecar = (items: ServiceListItem[], istioSidecar: boolean): ServiceListItem[] => {
+  const filterByIstioSidecar = (items: ServiceOverview[], istioSidecar: boolean): ServiceOverview[] => {
     return items.filter(item => item.istioSidecar === istioSidecar);
   };
 
-  const filterByName = (items: ServiceListItem[], names: string[]): ServiceListItem[] => {
-    let result = items;
-    result = result.filter(item => {
+  const filterByName = (items: ServiceOverview[], names: string[]): ServiceOverview[] => {
+    return items.filter(item => {
       let serviceNameFiltered = true;
       if (names.length > 0) {
         serviceNameFiltered = false;
@@ -96,11 +95,9 @@ export namespace ServiceListFilters {
       }
       return serviceNameFiltered;
     });
-    return result;
   };
 
-  export const filterBy = (items: ServiceListItem[], filters: ActiveFilter[]) => {
-    let results = items;
+  export const filterBy = (list: ServiceList, filters: ActiveFilter[]): void => {
     /** Get ServiceName filter */
     let serviceNamesSelected: string[] = filters
       .filter(activeFilter => activeFilter.category === 'Service Name')
@@ -113,17 +110,15 @@ export namespace ServiceListFilters {
     let istioSidecarValidationFilters: ActiveFilter[] = filters.filter(
       activeFilter => activeFilter.category === 'Istio Sidecar'
     );
-    let istioSidecar: boolean | undefined = undefined;
 
     if (istioSidecarValidationFilters.length > 0) {
-      istioSidecar = istioSidecarValidationFilters[0].value === 'Present';
-      results = filterByIstioSidecar(results, istioSidecar);
+      const istioSidecar = istioSidecarValidationFilters[0].value === 'Present';
+      list.services = filterByIstioSidecar(list.services, istioSidecar);
     }
 
     if (serviceNamesSelected.length > 0) {
-      results = filterByName(results, serviceNamesSelected);
+      list.services = filterByName(list.services, serviceNamesSelected);
     }
-    return results;
   };
 
   // Exported for test

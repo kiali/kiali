@@ -67,9 +67,8 @@ class WorkloadListComponent extends ListComponent.Component<
   }
 
   rateIntervalChangedHandler = (key: number) => {
-    this.setState({ rateInterval: key });
     HistoryManager.setParam(URLParams.DURATION, String(key));
-    this.updateListItems();
+    this.setState({ rateInterval: key });
   };
 
   sortItemList(workloads: WorkloadListItem[], sortField: SortField<WorkloadListItem>, isAscending: boolean) {
@@ -98,22 +97,19 @@ class WorkloadListComponent extends ListComponent.Component<
   }
 
   getDeploymentItems = (data: WorkloadNamespaceResponse): WorkloadListItem[] => {
-    let workloadsItems: WorkloadListItem[] = [];
     if (data.workloads) {
-      data.workloads.forEach(deployment => {
-        workloadsItems.push({
-          namespace: data.namespace.name,
-          workload: deployment,
-          healthPromise: API.getWorkloadHealth(
-            authentication(),
-            data.namespace.name,
-            deployment.name,
-            this.state.rateInterval
-          )
-        });
-      });
+      return data.workloads.map(deployment => ({
+        namespace: data.namespace.name,
+        workload: deployment,
+        healthPromise: API.getWorkloadHealth(
+          authentication(),
+          data.namespace.name,
+          deployment.name,
+          this.state.rateInterval
+        )
+      }));
     }
-    return workloadsItems;
+    return [];
   };
 
   fetchWorkloads(namespaces: string[], filters: ActiveFilter[], resetPagination?: boolean) {
@@ -122,9 +118,8 @@ class WorkloadListComponent extends ListComponent.Component<
       const currentPage = resetPagination ? 1 : this.state.pagination.page;
       let workloadsItems: WorkloadListItem[] = [];
       responses.forEach(response => {
-        workloadsItems = workloadsItems.concat(
-          WorkloadListFilters.filterBy(this.getDeploymentItems(response.data), filters)
-        );
+        WorkloadListFilters.filterBy(response.data, filters);
+        workloadsItems = workloadsItems.concat(this.getDeploymentItems(response.data));
       });
       WorkloadListFilters.sortWorkloadsItems(
         workloadsItems,

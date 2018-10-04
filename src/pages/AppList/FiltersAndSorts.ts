@@ -5,7 +5,7 @@ import {
   FilterType,
   presenceValues
 } from '../../types/Filters';
-import { AppListItem } from '../../types/AppList';
+import { AppListItem, AppList, AppOverview } from '../../types/AppList';
 import { SortField } from '../../types/SortFilters';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { AppHealth, getRequestErrorsRatio } from '../../types/Health';
@@ -88,9 +88,8 @@ export namespace AppListFilters {
 
   /** Filter Method */
 
-  const filterByName = (items: AppListItem[], names: string[]): AppListItem[] => {
-    let result = items;
-    result = result.filter(item => {
+  const filterByName = (items: AppOverview[], names: string[]): AppOverview[] => {
+    return items.filter(item => {
       let appNameFiltered = true;
       if (names.length > 0) {
         appNameFiltered = false;
@@ -103,15 +102,13 @@ export namespace AppListFilters {
       }
       return appNameFiltered;
     });
-    return result;
   };
 
-  const filterByIstioSidecar = (items: AppListItem[], istioSidecar: boolean): AppListItem[] => {
+  const filterByIstioSidecar = (items: AppOverview[], istioSidecar: boolean): AppOverview[] => {
     return items.filter(item => item.istioSidecar === istioSidecar);
   };
 
-  export const filterBy = (items: AppListItem[], filters: ActiveFilter[]) => {
-    let results = items;
+  export const filterBy = (appsList: AppList, filters: ActiveFilter[]): void => {
     /** Get AppName filter */
     let appNamesSelected: string[] = filters
       .filter(activeFilter => activeFilter.category === 'App Name')
@@ -128,13 +125,12 @@ export namespace AppListFilters {
 
     if (istioSidecarValidationFilters.length > 0) {
       istioSidecar = istioSidecarValidationFilters[0].value === 'Present';
-      results = filterByIstioSidecar(results, istioSidecar);
+      appsList.applications = filterByIstioSidecar(appsList.applications, istioSidecar);
     }
 
     if (appNamesSelected.length > 0) {
-      results = filterByName(results, appNamesSelected);
+      appsList.applications = filterByName(appsList.applications, appNamesSelected);
     }
-    return results;
   };
 
   /** Sort Method */

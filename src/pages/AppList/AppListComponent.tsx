@@ -62,9 +62,8 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
   }
 
   rateIntervalChangedHandler = (key: number) => {
-    this.setState({ rateInterval: key });
     HistoryManager.setParam(URLParams.DURATION, String(key));
-    this.updateListItems();
+    this.setState({ rateInterval: key });
   };
 
   sortItemList(apps: AppListItem[], sortField: SortField<AppListItem>, isAscending: boolean) {
@@ -104,9 +103,8 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
 
       let appListItems: AppListItem[] = [];
       responses.forEach(response => {
-        appListItems = appListItems.concat(
-          AppListFilters.filterBy(AppListClass.getAppItems(response.data, rateInterval), filters)
-        );
+        AppListFilters.filterBy(response.data, filters);
+        appListItems = appListItems.concat(AppListClass.getAppItems(response.data, rateInterval));
       });
 
       AppListFilters.sortAppsItems(appListItems, this.state.currentSortField, this.state.isSortAscending).then(
