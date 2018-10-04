@@ -207,6 +207,9 @@ func TestCheckDestinationRuleCircuitBreaker(t *testing.T) {
 
 	assert.False(t, CheckDestinationRuleCircuitBreaker(nil, "", "", ""))
 
+	// Note - I don't think the subset definitions here have any impact on the CB
+	// detection. They do not do any sort of override so presumably any version, including
+	// a v3 would inherit the DR-level CB definition.
 	destinationRule1 := MockIstioObject{
 		Spec: map[string]interface{}{
 			"host": "reviews",
@@ -239,8 +242,11 @@ func TestCheckDestinationRuleCircuitBreaker(t *testing.T) {
 		},
 	}
 
+	assert.True(t, CheckDestinationRuleCircuitBreaker(&destinationRule1, "", "reviews", ""))
+	assert.False(t, CheckDestinationRuleCircuitBreaker(&destinationRule1, "", "reviews-bad", ""))
 	assert.True(t, CheckDestinationRuleCircuitBreaker(&destinationRule1, "", "reviews", "v1"))
 	assert.True(t, CheckDestinationRuleCircuitBreaker(&destinationRule1, "", "reviews", "v2"))
+	assert.True(t, CheckDestinationRuleCircuitBreaker(&destinationRule1, "", "reviews", "v3"))
 	assert.False(t, CheckDestinationRuleCircuitBreaker(&destinationRule1, "", "reviews-bad", "v2"))
 
 	destinationRule2 := MockIstioObject{
@@ -275,6 +281,7 @@ func TestCheckDestinationRuleCircuitBreaker(t *testing.T) {
 		},
 	}
 
+	assert.True(t, CheckDestinationRuleCircuitBreaker(&destinationRule2, "", "reviews", ""))
 	assert.False(t, CheckDestinationRuleCircuitBreaker(&destinationRule2, "", "reviews", "v1"))
 	assert.True(t, CheckDestinationRuleCircuitBreaker(&destinationRule2, "", "reviews", "v2"))
 	assert.False(t, CheckDestinationRuleCircuitBreaker(&destinationRule2, "", "reviews-bad", "v2"))

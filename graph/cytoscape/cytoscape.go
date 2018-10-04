@@ -371,31 +371,17 @@ func groupByVersion(nodes *[]*NodeWrapper) {
 			}
 
 			// assign each app version node to the compound parent
-			hasVirtualService := false
-			nd.HasMissingSC = false
+			nd.HasMissingSC = false // TODO: this is probably unecessarily noisy
+			nd.IsInaccessible = false
 			nd.IsOutside = false
 
 			for _, n := range members {
 				n.Parent = nodeId
 
+				// copy some member attributes to to the compound node (aka app box)
 				nd.HasMissingSC = nd.HasMissingSC || n.HasMissingSC
+				nd.IsInaccessible = nd.IsInaccessible || n.IsInaccessible
 				nd.IsOutside = nd.IsOutside || n.IsOutside
-
-				// If there is a virtual service defined in version node, move it to compound parent
-				if n.HasVS {
-					n.HasVS = false
-					hasVirtualService = true
-				}
-
-				// If we have any nodes which are inaccessible, then mark the group as being inaccessible
-				// Note: all nodes here would have the same inaccessible value since they all belong to the same namespace
-				if n.IsInaccessible {
-					nd.IsInaccessible = true
-				}
-			}
-
-			if hasVirtualService {
-				nd.HasVS = true
 			}
 
 			// add the compound node to the list of nodes
