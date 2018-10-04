@@ -4,6 +4,7 @@ import { ListPage } from './ListPage';
 import { SortField } from '../../types/SortFilters';
 import { Pagination } from '../../types/Pagination';
 import * as API from '../../services/Api';
+import { HistoryManager, URLParams } from '../../app/History';
 
 export namespace ListComponent {
   export interface Props<R> {
@@ -33,7 +34,7 @@ export namespace ListComponent {
 
     onFilterChange = () => {
       // Resetting pagination when filters change
-      this.props.pageHooks.onParamChange([{ name: 'page', value: '' }]);
+      HistoryManager.deleteParam(URLParams.PAGE);
       this.updateListItems(true);
     };
 
@@ -58,8 +59,7 @@ export namespace ListComponent {
           }
         };
       });
-
-      this.props.pageHooks.onParamChange([{ name: 'page', value: String(page) }]);
+      HistoryManager.setParam(URLParams.PAGE, String(page));
     };
 
     perPageSelect = (perPage: number) => {
@@ -73,8 +73,10 @@ export namespace ListComponent {
           }
         };
       });
-
-      this.props.pageHooks.onParamChange([{ name: 'page', value: '1' }, { name: 'perPage', value: String(perPage) }]);
+      HistoryManager.setParams([
+        { name: URLParams.PAGE, value: '1' },
+        { name: URLParams.PER_PAGE, value: String(perPage) }
+      ]);
     };
 
     updateSortField = (sortField: SortField<R>) => {
@@ -83,8 +85,7 @@ export namespace ListComponent {
           currentSortField: sortField,
           listItems: sorted
         });
-
-        this.props.pageHooks.onParamChange([{ name: 'sort', value: sortField.param }]);
+        HistoryManager.setParam(URLParams.SORT, sortField.param);
       });
     };
 
@@ -94,8 +95,7 @@ export namespace ListComponent {
           isSortAscending: !this.state.isSortAscending,
           listItems: sorted
         });
-
-        this.props.pageHooks.onParamChange([{ name: 'direction', value: this.state.isSortAscending ? 'asc' : 'desc' }]);
+        HistoryManager.setParam(URLParams.DIRECTION, this.state.isSortAscending ? 'asc' : 'desc');
       });
     };
   }

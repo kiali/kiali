@@ -1,24 +1,18 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
 import * as MessageCenter from '../../utils/MessageCenter';
-import { URLParameter } from '../../types/Parameters';
 import { Pagination } from '../../types/Pagination';
 import { ActiveFilter, FilterType } from '../../types/Filters';
 import { config } from '../../config';
 import { SortField } from '../../types/SortFilters';
 
 export namespace ListPage {
-  const ACTION_APPEND = 'append';
-  const ACTION_SET = 'set';
-
   export const perPageOptions: number[] = [5, 10, 15];
   const defaultDuration = 600;
   const defaultPollInterval = config().toolbar.defaultPollInterval;
 
   export interface Hooks {
     handleError: (error: string) => void;
-    onParamChange: (params: URLParameter[], paramAction?: string, historyAction?: string) => void;
-    onParamDelete: (params: string[]) => void;
     getQueryParam: (queryName: string) => string[] | undefined;
     getSingleQueryParam: (queryName: string) => string | undefined;
     getSingleIntQueryParam: (queryName: string) => number | undefined;
@@ -36,44 +30,6 @@ export namespace ListPage {
 
     handleError = (error: string) => {
       MessageCenter.add(error);
-    };
-
-    onParamChange = (params: URLParameter[], paramAction?: string, historyAction?: string) => {
-      const urlParams = new URLSearchParams(this.props.location.search);
-
-      if (params.length > 0 && paramAction === ACTION_APPEND) {
-        params.forEach(param => {
-          urlParams.delete(param.name);
-        });
-      }
-
-      params.forEach((param: URLParameter) => {
-        if (param.value === '') {
-          urlParams.delete(param.name);
-        } else {
-          if (paramAction === ACTION_APPEND) {
-            urlParams.append(param.name, param.value);
-          } else if (!paramAction || paramAction === ACTION_SET) {
-            urlParams.set(param.name, param.value);
-          }
-        }
-      });
-
-      if (historyAction === 'replace') {
-        this.props.history.replace(this.props.location.pathname + '?' + urlParams.toString());
-      } else {
-        this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
-      }
-    };
-
-    onParamDelete = (params: string[]) => {
-      const urlParams = new URLSearchParams(this.props.location.search);
-
-      params.forEach(param => {
-        urlParams.delete(param);
-      });
-
-      this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
     };
 
     getQueryParam = (queryName: string): string[] | undefined => {

@@ -27,6 +27,7 @@ import { ServiceListFilters } from './FiltersAndSorts';
 import './ServiceListComponent.css';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
+import { HistoryManager, URLParams } from '../../app/History';
 
 interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {
   rateInterval: number;
@@ -82,7 +83,7 @@ class ServiceListComponent extends ListComponent.Component<
 
   rateIntervalChangedHandler = (key: number) => {
     this.setState({ rateInterval: key });
-    this.props.pageHooks.onParamChange([{ name: 'rate', value: String(key) }]);
+    HistoryManager.setParam(URLParams.DURATION, String(key));
     this.updateListItems();
   };
 

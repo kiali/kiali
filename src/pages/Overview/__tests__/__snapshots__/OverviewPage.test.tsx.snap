@@ -62,8 +62,6 @@ ShallowWrapper {
               "getSingleQueryParam": [Function],
               "handleError": [Function],
               "load": [Function],
-              "onParamChange": [Function],
-              "onParamDelete": [Function],
               "props": Object {
                 "history": Object {
                   "action": "POP",
@@ -233,8 +231,6 @@ ShallowWrapper {
             "getSingleQueryParam": [Function],
             "handleError": [Function],
             "load": [Function],
-            "onParamChange": [Function],
-            "onParamDelete": [Function],
             "props": Object {
               "history": Object {
                 "action": "POP",
@@ -436,8 +432,6 @@ ShallowWrapper {
                 "getSingleQueryParam": [Function],
                 "handleError": [Function],
                 "load": [Function],
-                "onParamChange": [Function],
-                "onParamDelete": [Function],
                 "props": Object {
                   "history": Object {
                     "action": "POP",
@@ -607,8 +601,6 @@ ShallowWrapper {
               "getSingleQueryParam": [Function],
               "handleError": [Function],
               "load": [Function],
-              "onParamChange": [Function],
-              "onParamDelete": [Function],
               "props": Object {
                 "history": Object {
                   "action": "POP",

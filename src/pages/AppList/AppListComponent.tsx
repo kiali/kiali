@@ -13,6 +13,7 @@ import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
 import { ListPage } from '../../components/ListPage/ListPage';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
+import { HistoryManager, URLParams } from '../../app/History';
 
 interface AppListComponentState extends ListComponent.State<AppListItem> {
   rateInterval: number;
@@ -62,7 +63,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
 
   rateIntervalChangedHandler = (key: number) => {
     this.setState({ rateInterval: key });
-    this.props.pageHooks.onParamChange([{ name: 'rate', value: String(key) }]);
+    HistoryManager.setParam(URLParams.DURATION, String(key));
     this.updateListItems();
   };
 
