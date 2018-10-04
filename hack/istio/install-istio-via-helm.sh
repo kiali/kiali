@@ -19,12 +19,14 @@
 ISTIO_DIR=
 CLIENT_EXE_NAME="oc"
 NAMESPACE="istio-system"
-USERNAME=$(echo -n 'admin' | base64)
-PASSPHRASE=$(echo -n 'admin' | base64)
+USERNAME="admin"
+PASSPHRASE="admin"
 MTLS="false"
 DELETE_ISTIO="false"
 KIALI_ENABLED="false"
 DASHBOARDS_ENABLED="false"
+USE_DEMO_VALUES="false"
+USE_DEMO_AUTH_VALUES="false"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -34,11 +36,11 @@ while [[ $# -gt 0 ]]; do
       CLIENT_EXE_NAME="$2"
       shift;shift
       ;;
-    -d|--delete-istio)
+    -di|--delete-istio)
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         DELETE_ISTIO="$2"
       else
-        echo "The --delete-istio flag must be 'true' or 'false'"
+        echo "ERROR: The --delete-istio flag must be 'true' or 'false'"
         exit 1
       fi
       shift;shift
@@ -47,7 +49,7 @@ while [[ $# -gt 0 ]]; do
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         DASHBOARDS_ENABLED="$2"
       else
-        echo "The --dashboards-enabled flag must be 'true' or 'false'"
+        echo "ERROR: The --dashboards-enabled flag must be 'true' or 'false'"
         exit 1
       fi
       shift;shift
@@ -60,7 +62,7 @@ while [[ $# -gt 0 ]]; do
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         KIALI_ENABLED="$2"
       else
-        echo "The --kiali-enabled flag must be 'true' or 'false'"
+        echo "ERROR: The --kiali-enabled flag must be 'true' or 'false'"
         exit 1
       fi
       shift;shift
@@ -69,7 +71,7 @@ while [[ $# -gt 0 ]]; do
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         MTLS="$2"
       else
-        echo "The --mtls flag must be 'true' or 'false'"
+        echo "ERROR: The --mtls flag must be 'true' or 'false'"
         exit 1
       fi
       shift;shift
@@ -86,34 +88,90 @@ while [[ $# -gt 0 ]]; do
       USERNAME="$2"
       shift;shift
       ;;
+    -ud|--use-demo)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        USE_DEMO_VALUES="$2"
+      else
+        echo "ERROR: The --use-demo flag must be 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
+    -uda|--use-demo-auth)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        USE_DEMO_AUTH_VALUES="$2"
+      else
+        echo "ERROR: The --use-demo-auth flag must be 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
-  -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc" or "istiooc"
-  -d|--delete-istio (true|false): Set to 'true' if you want to delete Istio, rather than install it (default: false)
-  -de|--dashboards-enabled (true|false): Set to 'true' if you want Jaeger and Grafana installed (default: false)
-  -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
-  -ke|--kiali-enabled (true|false): When set to true, Kiali will be installed (default: false)
-  -m|--mtls (true|false): Indicate if you want global MTLS enabled (default: false)
-  -n|--namespace <name>: Install Istio in this namespace (default: istio-system)
-  -p|--passphrase <pass>: The passphrase for the Kiali secret - this is the password to use when logging into Kiali
-  -u|--username <uname>: The username for the Kiali secret - this is the name to use when logging into Kiali
-  -h|--help : this message
+  -c|--client-exe <name>:
+       Cluster client executable name - valid values are "kubectl" or "oc" or "istiooc".
+       Default: oc
+  -di|--delete-istio (true|false):
+       Set to 'true' if you want to delete Istio, rather than install it.
+       Default: false
+  -de|--dashboards-enabled (true|false):
+       Set to 'true' if you want Jaeger and Grafana installed.
+       Ignored if --use-demo or --use-demo-auth is true.
+       Default: false
+  -id|--istio-dir <dir>:
+       Where Istio has already been downloaded. If not found, this script aborts.
+  -ke|--kiali-enabled (true|false):
+       When set to true, Kiali will be installed.
+       Ignored if --use-demo or --use-demo-auth is true.
+       Default: false
+  -m|--mtls (true|false):
+       Indicate if you want global MTLS enabled.
+       Ignored if --use-demo or --use-demo-auth is true.
+       Default: false
+  -n|--namespace <name>:
+       Install Istio in this namespace.
+       Default: istio-system
+  -p|--passphrase <pass>:
+       The passphrase for the Kiali secret - this is the password to use when logging into Kiali.
+       Default: admin
+  -u|--username <uname>:
+       The username for the Kiali secret - this is the name to use when logging into Kiali.
+       Default: admin
+  -ud|--use-demo (true|false):
+       If true, use install settings equal to the istio-demo.yaml.
+       Only one of --use-demo or --use-demo-auth is allowed to be true.
+       Default: false
+  -uda|--use-demo-auth (true|false):
+       If true, use install settings equal to the istio-demo-auth.yaml.
+       Only one of --use-demo or --use-demo-auth is allowed to be true.
+       Default: false
+  -h|--help:
+       this message
 HELPMSG
       exit 1
       ;;
     *)
-      echo "Unknown argument [$key]. Aborting."
+      echo "ERROR: Unknown argument [$key]. Aborting."
       exit 1
       ;;
   esac
 done
 
+if [ "${USE_DEMO_VALUES}" == "true" -a "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
+  echo "ERROR: Setting both --use-demo and --use-demo-auth to true is not allowed. Aborting."
+  exit 1
+fi
+if [ "${USE_DEMO_VALUES}" == "true" -o "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
+  # we know Kiali is always enabled in the demo yamls
+  KIALI_ENABLED="true"
+fi
+
 CLIENT_EXE=`which ${CLIENT_EXE_NAME}`
 if [ "$?" = "0" ]; then
   echo "The cluster client executable is found here: ${CLIENT_EXE}"
 else
-  echo "You must install the cluster client ${CLIENT_EXE_NAME} in your PATH before you can continue"
+  echo "ERROR: You must install the cluster client ${CLIENT_EXE_NAME} in your PATH before you can continue."
   exit 1
 fi
 
@@ -121,7 +179,7 @@ HELM_EXE=`which helm`
 if [ "$?" = "0" ]; then
   echo "The helm executable is found here: ${HELM_EXE}"
 else
-  echo "You must install helm in your PATH before you can continue"
+  echo "ERROR: You must install helm in your PATH before you can continue."
   exit 1
 fi
 
@@ -133,7 +191,7 @@ if [ "${ISTIO_DIR}" == "" ]; then
   if [ "$?" != "0" ]; then
     ${HACK_SCRIPT_DIR}/download-istio.sh
     if [ "$?" != "0" ]; then
-      echo "ERROR: You do not have Istio installed and it cannot be downloaded"
+      echo "ERROR: You do not have Istio installed and it cannot be downloaded."
       exit 1
     fi
   fi
@@ -177,6 +235,10 @@ fi
 
 # Create the kiali secret
 if [ "${KIALI_ENABLED}" == "true" ]; then
+
+  _ENCODED_USERNAME=$(echo -n "${USERNAME}" | base64)
+  _ENCODED_PASSPHRASE=$(echo -n "${PASSPHRASE}" | base64)
+
   echo Creating the Kiali secret
   cat <<EOF | ${CLIENT_EXE} apply -f -
 apiVersion: v1
@@ -188,13 +250,22 @@ metadata:
     app: kiali
 type: Opaque
 data:
-  username: ${USERNAME}
-  passphrase: ${PASSPHRASE}
+  username: ${_ENCODED_USERNAME}
+  passphrase: ${_ENCODED_PASSPHRASE}
 EOF
 fi
 
+# Determine if we should be using the demo values
+if [ "${USE_DEMO_VALUES}" == "true" ]; then
+  _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo.yaml"
+elif [ "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
+  _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo-auth.yaml"
+else
+  _HELM_VALUES="--set kiali.enabled=${KIALI_ENABLED} --set tracing.enabled=${DASHBOARDS_ENABLED} --set grafana.enabled=${DASHBOARDS_ENABLED} --set global.mtls.enabled=${MTLS}"
+fi
+
 # Create the install yaml via the helm template command
-${HELM_EXE} template --set kiali.enabled=${KIALI_ENABLED} --set tracing.enabled=${DASHBOARDS_ENABLED} --set grafana.enabled=${DASHBOARDS_ENABLED} --set global.mtls.enabled=${MTLS} ${ISTIO_DIR}/install/kubernetes/helm/istio --name istio --namespace istio-system > /tmp/istio.yaml
+${HELM_EXE} template ${_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace istio-system > /tmp/istio.yaml
 
 if [ "${DELETE_ISTIO}" == "true" ]; then
   echo DELETING ISTIO!
