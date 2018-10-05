@@ -19,10 +19,17 @@ type Host struct {
 	Cluster   string
 }
 
+type subset struct {
+	Name     string
+	RuleName string
+}
+
+// Check validates that no two destinationRules target the same host+subset combination
 func (m MultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	seenHosts := make(map[string]map[string]map[string]string) // Poor man's trie, last string is the first service's name that used the host
+	// Equality search is: [fqdn][subset]
+	seenHostSubsets := make(map[string]map[string]string)
 
 	for _, v := range m.DestinationRules {
 		if host, ok := v.GetSpec()["host"]; ok {
@@ -30,37 +37,65 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			if dHost, ok := host.(string); ok {
 				fqdn := formatHostnameForPrefixSearch(dHost, v.GetObjectMeta().Namespace, v.GetObjectMeta().ClusterName)
 
-				namespaceMap, found := seenHosts[fqdn.Cluster]
-				if !found {
-					seenHosts[fqdn.Cluster] = make(map[string]map[string]string)
-					namespaceMap = seenHosts[fqdn.Cluster]
-				}
+				foundSubsets := extractSubsets(v, destinationRulesName)
 
-				serviceMap, found := namespaceMap[fqdn.Namespace]
-				if !found {
-					namespaceMap[fqdn.Namespace] = make(map[string]string)
-					serviceMap = namespaceMap[fqdn.Namespace]
-				}
-
-				if fqdn.Service == "*" && found {
-					// Existence of this map is enough to cause an error
-					addError(validations, []string{destinationRulesName, serviceMap[fqdn.Service]})
+				if fqdn.Service == "*" {
+					// We need to check the matching subsets from all hosts now
+					for _, h := range seenHostSubsets {
+						checkCollisions(validations, destinationRulesName, foundSubsets, h)
+					}
+					// We add * later
 				}
 				// Search "*" first and then exact name
-				if previous, found := serviceMap["*"]; found {
-					addError(validations, []string{destinationRulesName, previous})
-				} else {
-					if previous, found := serviceMap[fqdn.Service]; found {
-						addError(validations, []string{destinationRulesName, previous})
-					} else {
-						serviceMap[fqdn.Service] = destinationRulesName // This will add "*" also
-					}
+				if previous, found := seenHostSubsets["*"]; found {
+					// Need to check subsets of "*"
+					checkCollisions(validations, destinationRulesName, foundSubsets, previous)
+				}
+
+				if previous, found := seenHostSubsets[fqdn.Service]; found {
+					// Host found, need to check underlying subsets
+					checkCollisions(validations, destinationRulesName, foundSubsets, previous)
+				}
+				// Nothing threw an error, so add these
+				if _, found := seenHostSubsets[fqdn.Service]; !found {
+					seenHostSubsets[fqdn.Service] = make(map[string]string)
+				}
+				for _, s := range foundSubsets {
+					seenHostSubsets[fqdn.Service][s.Name] = destinationRulesName
 				}
 			}
 		}
 	}
 
 	return validations
+}
+
+func extractSubsets(dr kubernetes.IstioObject, destinationRulesName string) []subset {
+	if subsets, found := dr.GetSpec()["subsets"]; found {
+		if subsetSlice, ok := subsets.([]interface{}); ok {
+			foundSubsets := make([]subset, 0, len(subsetSlice))
+			for _, se := range subsetSlice {
+				if element, ok := se.(map[string]interface{}); ok {
+					if name, found := element["name"]; found {
+						if n, ok := name.(string); ok {
+							foundSubsets = append(foundSubsets, subset{n, destinationRulesName})
+						}
+					}
+				}
+			}
+			return foundSubsets
+		}
+	}
+
+	return []subset{}
+}
+
+func checkCollisions(validations models.IstioValidations, destinationRulesName string, foundSubsets []subset, existing map[string]string) {
+	for _, s := range foundSubsets {
+		if ruleName, found := existing[s.Name]; found {
+			addError(validations, []string{destinationRulesName, ruleName})
+		}
+	}
 }
 
 func addError(validations models.IstioValidations, destinationRuleNames []string) models.IstioValidations {
