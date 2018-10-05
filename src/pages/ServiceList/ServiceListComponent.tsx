@@ -18,7 +18,7 @@ import { ActiveFilter } from '../../types/Filters';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
 import { IstioLogo } from '../../config';
 import { authentication } from '../../utils/Authentication';
-import { removeDuplicatesArray } from '../../utils/Common';
+import { CancelablePromise, makeCancelablePromise, removeDuplicatesArray } from '../../utils/Common';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import ItemDescription from './ItemDescription';
 import { ListPage } from '../../components/ListPage/ListPage';
@@ -42,6 +42,10 @@ class ServiceListComponent extends ListComponent.Component<
   ServiceListComponentState,
   ServiceListItem
 > {
+  private nsPromise?: CancelablePromise<API.Response<Namespace[]>>;
+  private servicesPromise?: CancelablePromise<API.Response<ServiceList>[]>;
+  private sortPromise?: CancelablePromise<ServiceListItem[]>;
+
   constructor(props: ServiceListComponentProps) {
     super(props);
 
@@ -71,6 +75,10 @@ class ServiceListComponent extends ListComponent.Component<
     }
   }
 
+  componentWillUnmount() {
+    this.cancelAsyncs();
+  }
+
   paramsAreSynced(prevProps: ServiceListComponentProps) {
     return (
       prevProps.pagination.page === this.props.pagination.page &&
@@ -87,10 +95,38 @@ class ServiceListComponent extends ListComponent.Component<
   };
 
   sortItemList(services: ServiceListItem[], sortField: SortField<ServiceListItem>, isAscending: boolean) {
-    return ServiceListFilters.sortServices(services, sortField, isAscending);
+    let lastSort: Promise<ServiceListItem[]>;
+    const sorter = unsorted => {
+      this.sortPromise = makeCancelablePromise(ServiceListFilters.sortServices(services, sortField, isAscending));
+      this.sortPromise.promise
+        .then(() => {
+          this.sortPromise = undefined;
+        })
+        .catch(() => {
+          this.sortPromise = undefined;
+        });
+      return this.sortPromise.promise;
+    };
+
+    if (!this.sortPromise) {
+      // If there is no "sortPromise" set, take the received (unsorted) list of services to sort
+      // them and update the UI with the sorted list.
+      lastSort = sorter(services);
+    } else {
+      // If there is a "sortPromise", there may be an ongoing fetch/refresh. So, the received <services> list argument
+      // shoudn't be used as it may represent the "old" data before the refresh. Instead, append a callback to the
+      // "sortPromise" to re-sort once the data is fetched. This ensures that the list will display the new data with
+      // the right sorting.
+      // (See other comments in the fetchServices method)
+      lastSort = this.sortPromise.promise.then(sorter);
+    }
+
+    return lastSort;
   }
 
   updateListItems(resetPagination?: boolean) {
+    this.cancelAsyncs();
+
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
       .filter(activeFilter => activeFilter.category === 'Namespace')
@@ -100,7 +136,8 @@ class ServiceListComponent extends ListComponent.Component<
     namespacesSelected = removeDuplicatesArray(namespacesSelected);
 
     if (namespacesSelected.length === 0) {
-      API.getNamespaces(authentication())
+      this.nsPromise = makeCancelablePromise(API.getNamespaces(authentication()));
+      this.nsPromise.promise
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchServices(
@@ -109,8 +146,13 @@ class ServiceListComponent extends ListComponent.Component<
             this.state.rateInterval,
             resetPagination
           );
+          this.nsPromise = undefined;
         })
-        .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
+        .catch(namespacesError => {
+          if (!namespacesError.isCanceled) {
+            this.handleAxiosError('Could not fetch namespace list.', namespacesError);
+          }
+        });
     } else {
       this.fetchServices(namespacesSelected, activeFilters, this.state.rateInterval, resetPagination);
     }
@@ -131,30 +173,53 @@ class ServiceListComponent extends ListComponent.Component<
   fetchServices(namespaces: string[], filters: ActiveFilter[], rateInterval: number, resetPagination?: boolean) {
     const servicesPromises = namespaces.map(ns => API.getServices(authentication(), ns));
 
-    Promise.all(servicesPromises).then(responses => {
-      const currentPage = resetPagination ? 1 : this.state.pagination.page;
+    this.servicesPromise = makeCancelablePromise(Promise.all(servicesPromises));
+    this.servicesPromise.promise
+      .then(responses => {
+        const currentPage = resetPagination ? 1 : this.state.pagination.page;
 
-      let serviceListItems: ServiceListItem[] = [];
-      responses.forEach(response => {
-        ServiceListFilters.filterBy(response.data, filters);
-        serviceListItems = serviceListItems.concat(this.getServiceItem(response.data, rateInterval));
-      });
-
-      ServiceListFilters.sortServices(serviceListItems, this.state.currentSortField, this.state.isSortAscending).then(
-        sorted => {
-          this.setState(prevState => {
-            return {
-              listItems: sorted,
-              pagination: {
-                page: currentPage,
-                perPage: prevState.pagination.perPage,
-                perPageOptions: ListPage.perPageOptions
-              }
-            };
-          });
+        let serviceListItems: ServiceListItem[] = [];
+        responses.forEach(response => {
+          ServiceListFilters.filterBy(response.data, filters);
+          serviceListItems = serviceListItems.concat(this.getServiceItem(response.data, rateInterval));
+        });
+        if (this.sortPromise) {
+          this.sortPromise.cancel();
         }
-      );
-    });
+        // Promises for sorting are needed, because the user may have the list sorted using health/error rates
+        // and these data can be fetched only after the list is retrieved. If the user is sorting using these
+        // criteria, the update of the list is deferred after sorting is possible. This way, it's avoided the
+        // illusion of double-fetch or flickering list.
+        this.sortPromise = makeCancelablePromise(
+          ServiceListFilters.sortServices(serviceListItems, this.state.currentSortField, this.state.isSortAscending)
+        );
+        this.sortPromise.promise
+          .then(sorted => {
+            this.setState(prevState => {
+              return {
+                listItems: sorted,
+                pagination: {
+                  page: currentPage,
+                  perPage: prevState.pagination.perPage,
+                  perPageOptions: ListPage.perPageOptions
+                }
+              };
+            });
+            this.sortPromise = undefined;
+          })
+          .catch(err => {
+            if (!err.isCanceled) {
+              console.debug(err);
+            }
+            this.sortPromise = undefined;
+          });
+        this.servicesPromise = undefined;
+      })
+      .catch(err => {
+        if (!err.isCanceled) {
+          console.debug(err);
+        }
+      });
   }
 
   render() {
@@ -229,6 +294,21 @@ class ServiceListComponent extends ListComponent.Component<
       </div>
     );
   }
+
+  private cancelAsyncs = () => {
+    if (this.nsPromise) {
+      this.nsPromise.cancel();
+      this.nsPromise = undefined;
+    }
+    if (this.servicesPromise) {
+      this.servicesPromise.cancel();
+      this.servicesPromise = undefined;
+    }
+    if (this.sortPromise) {
+      this.sortPromise.cancel();
+      this.sortPromise = undefined;
+    }
+  };
 }
 
 export default ServiceListComponent;

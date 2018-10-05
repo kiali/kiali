@@ -3,6 +3,7 @@ import { ServiceListItem } from '../../types/ServiceList';
 import { ServiceHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import ServiceErrorRate from './ServiceErrorRate';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
 
 interface Props {
   item: ServiceListItem;
@@ -12,6 +13,8 @@ interface State {
 }
 
 export default class ItemDescription extends React.PureComponent<Props, State> {
+  private healthPromise?: CancelablePromise<ServiceHealth>;
+
   constructor(props: Props) {
     super(props);
     this.state = { health: undefined };
@@ -27,8 +30,24 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
     }
   }
 
+  componentWillUnmount() {
+    if (this.healthPromise) {
+      this.healthPromise.cancel();
+      this.healthPromise = undefined;
+    }
+  }
+
   onItemChanged(item: ServiceListItem) {
-    item.healthPromise.then(h => this.setState({ health: h })).catch(err => this.setState({ health: undefined }));
+    if (this.healthPromise) {
+      this.healthPromise.cancel();
+    }
+
+    this.healthPromise = makeCancelablePromise(item.healthPromise);
+    this.healthPromise.promise.then(h => this.setState({ health: h })).catch(err => {
+      if (!err.isCanceled) {
+        this.setState({ health: undefined });
+      }
+    });
   }
 
   render() {
