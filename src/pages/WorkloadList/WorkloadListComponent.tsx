@@ -13,6 +13,7 @@ import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
 import { ListPage } from '../../components/ListPage/ListPage';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
+import { HistoryManager, URLParams } from '../../app/History';
 
 interface WorkloadListComponentState extends ListComponent.State<WorkloadListItem> {
   rateInterval: number;
@@ -67,7 +68,7 @@ class WorkloadListComponent extends ListComponent.Component<
 
   rateIntervalChangedHandler = (key: number) => {
     this.setState({ rateInterval: key });
-    this.props.pageHooks.onParamChange([{ name: 'rate', value: String(key) }]);
+    HistoryManager.setParam(URLParams.DURATION, String(key));
     this.updateListItems();
   };
 

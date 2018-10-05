@@ -10,6 +10,7 @@ import { config } from '../../config';
 import { FiltersAndSorts } from './FiltersAndSorts';
 import { SortField } from '../../types/SortFilters';
 import NamespaceInfo from './NamespaceInfo';
+import { HistoryManager, URLParams } from '../../app/History';
 
 type Props = {
   pageHooks: ListPage.Hooks;
@@ -78,24 +79,24 @@ class OverviewToolbar extends React.Component<Props, State> {
 
   updateSortField = (sortField: SortField<NamespaceInfo>) => {
     this.props.sort(sortField, this.state.isSortAscending);
-    this.props.pageHooks.onParamChange([{ name: 'sort', value: sortField.param }]);
+    HistoryManager.setParam(URLParams.SORT, sortField.param);
     this.setState({ sortField: sortField });
   };
 
   updateSortDirection = () => {
     const newDir = !this.state.isSortAscending;
     this.props.sort(this.state.sortField, newDir);
-    this.props.pageHooks.onParamChange([{ name: 'direction', value: newDir ? 'asc' : 'desc' }]);
+    HistoryManager.setParam(URLParams.DIRECTION, newDir ? 'asc' : 'desc');
     this.setState({ isSortAscending: newDir });
   };
 
   updateDuration = (duration: number) => {
-    this.props.pageHooks.onParamChange([{ name: 'duration', value: String(duration) }]);
+    HistoryManager.setParam(URLParams.DURATION, String(duration));
     this.setState({ duration: duration });
   };
 
   updatePollInterval = (pollInterval: number) => {
-    this.props.pageHooks.onParamChange([{ name: 'pi', value: String(pollInterval) }]);
+    HistoryManager.setParam(URLParams.POLL_INTERVAL, String(pollInterval));
     this.setState({ pollInterval: pollInterval });
   };
 
