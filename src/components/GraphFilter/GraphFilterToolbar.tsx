@@ -49,7 +49,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
   };
 
   handleNamespaceChange = (namespace: Namespace) => {
-    store.dispatch(GraphActions.namespaceChanged(namespace.name));
+    store.dispatch(GraphActions.changed());
     this.handleFilterChange({
       ...this.getGraphParams(),
       namespace
@@ -61,6 +61,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
   };
 
   handleGraphTypeChange = (graphType: GraphType) => {
+    store.dispatch(GraphActions.changed());
     this.handleFilterChange({
       ...this.getGraphParams(),
       graphType
