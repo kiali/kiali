@@ -1,0 +1,13 @@
+{
+  "extends": ["./tslint.json"],
+  "defaultSeverity": "error",
+  "rules": {
+    "no-debugger": true,
+    /**
+    * There is a strange issue when using no-unused-variable as part of the react build, so we are using it as separate
+    * tslint call, so please don't put that in tslint.json unless below issue gets fixed.
+    * https://github.com/Realytics/fork-ts-checker-webpack-plugin/issues/74
+    */
+    "no-unused-variable": true
+  }
+}

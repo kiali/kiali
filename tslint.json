@@ -1,5 +1,6 @@
 {
     "extends": ["tslint-react", "tslint-no-circular-imports"],
+    "defaultSeverity": "warning",
     "rules": {
         "align": [
             true,
