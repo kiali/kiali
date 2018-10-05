@@ -85,6 +85,7 @@ export const GraphDataActions = {
     injectServiceNodes: boolean,
     edgeLabelMode: EdgeLabelMode,
     showSecurity: boolean,
+    showUnusedNodes: boolean,
     node?: NodeParamsType
   ) => {
     return dispatch => {
@@ -99,8 +100,9 @@ export const GraphDataActions = {
       // Some appenders are expensive so only specify an appender if needed.
       let appenders: string = 'dead_node,sidecars_check,istio';
 
-      if (!node) {
-        // note we only use the unused_node appender if this is NOT a drilled-in node graph
+      if (!node && showUnusedNodes) {
+        // note we only use the unused_node appender if this is NOT a drilled-in node graph and
+        // the user specifically requests to see unused nodes.
         appenders += ',unused_node';
       }
 

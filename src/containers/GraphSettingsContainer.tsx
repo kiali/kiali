@@ -18,8 +18,9 @@ interface GraphDispatch {
   toggleGraphVirtualServices(): void;
   toggleGraphMissingSidecars(): void;
   toggleGraphSecurity(): void;
-  toggleTrafficAnimation(): void;
   toggleServiceNodes(): void;
+  toggleTrafficAnimation(): void;
+  toggleUnusedNodes(): void;
 }
 
 // inherit all of our Reducer state section  and Dispatch methods for redux
@@ -32,8 +33,9 @@ const mapStateToProps = (state: KialiAppState) => ({
   showVirtualServices: state.graph.filterState.showVirtualServices,
   showMissingSidecars: state.graph.filterState.showMissingSidecars,
   showSecurity: state.graph.filterState.showSecurity,
+  showServiceNodes: state.graph.filterState.showServiceNodes,
   showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
-  showServiceNodes: state.graph.filterState.showServiceNodes
+  showUnusedNodes: state.graph.filterState.showUnusedNodes
 });
 
 // Map our actions to Redux
@@ -44,8 +46,9 @@ const mapDispatchToProps = (dispatch: any) => {
     toggleGraphVirtualServices: bindActionCreators(GraphFilterActions.toggleGraphVirtualServices, dispatch),
     toggleGraphMissingSidecars: bindActionCreators(GraphFilterActions.toggleGraphMissingSidecars, dispatch),
     toggleGraphSecurity: bindActionCreators(GraphFilterActions.toggleGraphSecurity, dispatch),
+    toggleServiceNodes: bindActionCreators(GraphFilterActions.toggleServiceNodes, dispatch),
     toggleTrafficAnimation: bindActionCreators(GraphFilterActions.toggleTrafficAnimation, dispatch),
-    toggleServiceNodes: bindActionCreators(GraphFilterActions.toggleServiceNodes, dispatch)
+    toggleUnusedNodes: bindActionCreators(GraphFilterActions.toggleUnusedNodes, dispatch)
   };
 };
 
@@ -75,8 +78,12 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
         ...this.getGraphParams(),
         injectServiceNodes: this.props.showServiceNodes
       });
-    } else if (this.props.showSecurity && this.props.showSecurity !== prevProps.showSecurity) {
-      // when turning on security we need to perform a fetch, because we don't pull security data by default
+    } else if (
+      (this.props.showSecurity && this.props.showSecurity !== prevProps.showSecurity) ||
+      this.props.showUnusedNodes !== prevProps.showUnusedNodes
+    ) {
+      // when turning on security, or toggling unused node, we need to perform a fetch, because we don't pull
+      // security or unused node data by default.
       store.dispatch(
         // @ts-ignore
         GraphDataActions.fetchGraphData(
@@ -86,6 +93,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
           this.props.injectServiceNodes,
           this.props.edgeLabelMode,
           this.props.showSecurity,
+          this.props.showUnusedNodes,
           this.props.node
         )
       );
@@ -109,8 +117,9 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       showNodeLabels,
       showMissingSidecars,
       showSecurity,
+      showServiceNodes,
       showTrafficAnimation,
-      showServiceNodes
+      showUnusedNodes
     } = this.props;
 
     // map or dispatchers for redux
@@ -120,8 +129,9 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       toggleGraphNodeLabels,
       toggleGraphMissingSidecars,
       toggleGraphSecurity,
+      toggleServiceNodes,
       toggleTrafficAnimation,
-      toggleServiceNodes
+      toggleUnusedNodes
     } = this.props;
 
     const visibilityLayers: VisibilityLayersType[] = [
@@ -142,6 +152,12 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
         labelText: 'Traffic Animation',
         value: showTrafficAnimation,
         onChange: toggleTrafficAnimation
+      },
+      {
+        id: 'filterUnusedNodes',
+        labelText: 'Unused Nodes',
+        value: showUnusedNodes,
+        onChange: toggleUnusedNodes
       }
     ];
 

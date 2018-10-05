@@ -23,6 +23,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   pollInterval: state.graph.filterState.refreshRate,
   isPageVisible: state.globalState.isPageVisible,
   showSecurity: state.graph.filterState.showSecurity,
+  showUnusedNodes: state.graph.filterState.showUnusedNodes,
   isError: state.graph.isError
 });
 
@@ -34,6 +35,7 @@ const mapDispatchToProps = (dispatch: any) => ({
     injectServiceNodes: boolean,
     edgeLabelMode: EdgeLabelMode,
     showSecurity: boolean,
+    showUnusedNodes: boolean,
     node?: NodeParamsType
   ) =>
     dispatch(
@@ -44,6 +46,7 @@ const mapDispatchToProps = (dispatch: any) => ({
         injectServiceNodes,
         edgeLabelMode,
         showSecurity,
+        showUnusedNodes,
         node
       )
     ),

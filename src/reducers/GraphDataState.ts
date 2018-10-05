@@ -18,8 +18,9 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showVirtualServices: true,
     showMissingSidecars: true,
     showSecurity: false,
-    showTrafficAnimation: false,
     showServiceNodes: false,
+    showTrafficAnimation: false,
+    showUnusedNodes: false,
     refreshRate: 15 * MILLISECONDS
   }
 };

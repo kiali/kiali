@@ -37,6 +37,7 @@ type GraphPageProps = GraphParamsType & {
     injectServiceNodes: boolean,
     edgeLabelMode: EdgeLabelMode,
     showSecurity: boolean,
+    showUnusedNodes: boolean,
     node?: NodeParamsType
   ) => any;
   toggleLegend: () => void;
@@ -44,6 +45,7 @@ type GraphPageProps = GraphParamsType & {
   pollInterval: PollIntervalInMs;
   isPageVisible: boolean;
   showSecurity: boolean;
+  showUnusedNodes: boolean;
   isError: boolean;
 };
 
@@ -203,6 +205,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
             <GraphFilterToolbar
               isLoading={this.props.isLoading}
               showSecurity={this.props.showSecurity}
+              showUnusedNodes={this.props.showUnusedNodes}
               handleRefreshClick={this.handleRefreshClick}
               {...graphParams}
             />
@@ -269,6 +272,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
       this.props.injectServiceNodes,
       this.props.edgeLabelMode,
       this.props.showSecurity,
+      this.props.showUnusedNodes,
       this.props.node
     );
     this.pollPromise = makeCancelablePromise(promise);

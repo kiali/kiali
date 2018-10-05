@@ -12,6 +12,7 @@ describe('GraphFilterState reducer', () => {
       showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
+      showUnusedNodes: false,
       refreshRate: 15000
     });
   });
@@ -28,6 +29,7 @@ describe('GraphFilterState reducer', () => {
           showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
+          showUnusedNodes: false,
           refreshRate: 15000
         },
         {
@@ -43,6 +45,7 @@ describe('GraphFilterState reducer', () => {
       showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
+      showUnusedNodes: false,
       refreshRate: 15000
     });
   });
@@ -59,6 +62,7 @@ describe('GraphFilterState reducer', () => {
           showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
+          showUnusedNodes: false,
           refreshRate: 15000
         },
         {
@@ -74,6 +78,7 @@ describe('GraphFilterState reducer', () => {
       showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
+      showUnusedNodes: false,
       refreshRate: 15000
     });
   });
@@ -90,6 +95,7 @@ describe('GraphFilterState reducer', () => {
           showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
+          showUnusedNodes: false,
           refreshRate: 15000
         },
         {
@@ -105,6 +111,7 @@ describe('GraphFilterState reducer', () => {
       showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
+      showUnusedNodes: false,
       refreshRate: 15000
     });
   });
@@ -120,6 +127,7 @@ describe('GraphFilterState reducer', () => {
           showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
+          showUnusedNodes: false,
           refreshRate: 15000
         },
         {
@@ -135,6 +143,7 @@ describe('GraphFilterState reducer', () => {
       showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
+      showUnusedNodes: false,
       refreshRate: 15000
     });
   });
@@ -150,6 +159,7 @@ describe('GraphFilterState reducer', () => {
           showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
+          showUnusedNodes: false,
           refreshRate: 15000
         },
         {
@@ -165,6 +175,7 @@ describe('GraphFilterState reducer', () => {
       showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
+      showUnusedNodes: false,
       refreshRate: 15000
     });
   });
@@ -180,6 +191,7 @@ describe('GraphFilterState reducer', () => {
           showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
+          showUnusedNodes: false,
           refreshRate: 15000
         },
         {
@@ -195,6 +207,7 @@ describe('GraphFilterState reducer', () => {
       showSecurity: true,
       showTrafficAnimation: false,
       showServiceNodes: false,
+      showUnusedNodes: false,
       refreshRate: 15000
     });
   });
@@ -210,6 +223,7 @@ describe('GraphFilterState reducer', () => {
           showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
+          showUnusedNodes: false,
           refreshRate: 15000
         },
         {
@@ -225,6 +239,7 @@ describe('GraphFilterState reducer', () => {
       showSecurity: false,
       showTrafficAnimation: true,
       showServiceNodes: false,
+      showUnusedNodes: false,
       refreshRate: 15000
     });
   });
@@ -240,6 +255,7 @@ describe('GraphFilterState reducer', () => {
           showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
+          showUnusedNodes: false,
           refreshRate: 15000
         },
         {
@@ -255,6 +271,39 @@ describe('GraphFilterState reducer', () => {
       showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: true,
+      showUnusedNodes: false,
+      refreshRate: 15000
+    });
+  });
+  it('should handle TOGGLE_UNUSED_NODES', () => {
+    expect(
+      graphFilterState(
+        {
+          showLegend: false,
+          showNodeLabels: true,
+          showCircuitBreakers: false,
+          showVirtualServices: true,
+          showMissingSidecars: true,
+          showSecurity: false,
+          showTrafficAnimation: false,
+          showServiceNodes: false,
+          showUnusedNodes: false,
+          refreshRate: 15000
+        },
+        {
+          type: GraphFilterActionKeys.TOGGLE_UNUSED_NODES
+        }
+      )
+    ).toEqual({
+      showLegend: false,
+      showNodeLabels: true,
+      showCircuitBreakers: false,
+      showVirtualServices: true,
+      showMissingSidecars: true,
+      showSecurity: false,
+      showTrafficAnimation: false,
+      showServiceNodes: false,
+      showUnusedNodes: true,
       refreshRate: 15000
     });
   });
@@ -270,6 +319,7 @@ describe('GraphFilterState reducer', () => {
           showSecurity: false,
           showTrafficAnimation: false,
           showServiceNodes: false,
+          showUnusedNodes: false,
           refreshRate: 15000
         },
         {
@@ -286,6 +336,7 @@ describe('GraphFilterState reducer', () => {
       showSecurity: false,
       showTrafficAnimation: false,
       showServiceNodes: false,
+      showUnusedNodes: false,
       refreshRate: 10000
     });
   });

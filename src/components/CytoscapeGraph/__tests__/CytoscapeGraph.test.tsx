@@ -47,6 +47,7 @@ describe('CytoscapeGraph component test', () => {
         showSecurity={true}
         showServiceNodes={false}
         showTrafficAnimation={false}
+        showUnusedNodes={false}
         isLoading={false}
         isError={false}
         graphType={GraphType.VERSIONED_APP}

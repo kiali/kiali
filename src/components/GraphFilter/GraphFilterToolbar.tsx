@@ -74,8 +74,8 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     });
 
     if (edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE) {
-      // Server-side appenders for security and response time are not run by default unless those edge labels are specifically requested.
-      // So when switching to these edge labels, we have to ensure we make a server-side request in order to ensure those appenders are run.
+      // Server-side appender for response time is not run by default unless the edge label is explicitly set. So when switching
+      // to this edge label, we need to make a server-side request in order to ensure the appenders is run.
       store.dispatch(
         // @ts-ignore
         GraphDataActions.fetchGraphData(
@@ -85,6 +85,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
           this.props.injectServiceNodes,
           edgeLabelMode,
           this.props.showSecurity,
+          this.props.showUnusedNodes,
           this.props.node
         )
       );

@@ -40,8 +40,9 @@ type CytoscapeGraphType = {
   showVirtualServices: boolean;
   showMissingSidecars: boolean;
   showSecurity: boolean;
-  showTrafficAnimation: boolean;
   showServiceNodes: boolean;
+  showTrafficAnimation: boolean;
+  showUnusedNodes: boolean;
   onReady: (cytoscapeRef: any) => void;
   onClick: (event: CytoscapeClickEvent) => void;
   onDoubleClick: (event: CytoscapeClickEvent) => void;
@@ -112,8 +113,9 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.showVirtualServices !== nextProps.showVirtualServices ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
       this.props.showSecurity !== nextProps.showSecurity ||
-      this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.showServiceNodes !== nextProps.showServiceNodes ||
+      this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
+      this.props.showUnusedNodes !== nextProps.showUnusedNodes ||
       this.props.elements !== nextProps.elements ||
       this.props.isError !== nextProps.isError;
 
@@ -589,7 +591,9 @@ const mapStateToProps = (state: KialiAppState) => ({
   showVirtualServices: state.graph.filterState.showVirtualServices,
   showMissingSidecars: state.graph.filterState.showMissingSidecars,
   showSecurity: state.graph.filterState.showSecurity,
+  showServiceNodes: state.graph.filterState.showServiceNodes,
   showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
+  showUnusedNodes: state.graph.filterState.showUnusedNodes,
   elements: state.graph.graphData,
   isLoading: state.graph.isLoading,
   isError: state.graph.isError

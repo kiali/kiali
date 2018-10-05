@@ -55,11 +55,25 @@ describe('GraphFilterActions', () => {
     expect(GraphFilterActions.toggleGraphSecurity()).toEqual(expectedAction);
   });
 
+  it('should toggle service nodes', () => {
+    const expectedAction = {
+      type: GraphFilterActionKeys.TOGGLE_SERVICE_NODES
+    };
+    expect(GraphFilterActions.toggleServiceNodes()).toEqual(expectedAction);
+  });
+
   it('should toggle traffic animations', () => {
     const expectedAction = {
       type: GraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION
     };
     expect(GraphFilterActions.toggleTrafficAnimation()).toEqual(expectedAction);
+  });
+
+  it('should toggle unused nodes', () => {
+    const expectedAction = {
+      type: GraphFilterActionKeys.TOGGLE_UNUSED_NODES
+    };
+    expect(GraphFilterActions.toggleUnusedNodes()).toEqual(expectedAction);
   });
 
   it('should enable graph filters toggles', () => {

@@ -20,7 +20,13 @@ describe('GraphPage test', () => {
   it('should propagate filter params change with correct value', () => {
     const onParamsChangeMockFn = jest.fn();
     const wrapper = shallow(
-      <GraphFilterToolbar {...PARAMS} showSecurity={true} isLoading={false} handleRefreshClick={jest.fn()} />
+      <GraphFilterToolbar
+        {...PARAMS}
+        showSecurity={true}
+        showUnusedNodes={false}
+        isLoading={false}
+        handleRefreshClick={jest.fn()}
+      />
     );
 
     const toolbar = wrapper.instance() as GraphFilterToolbar;
