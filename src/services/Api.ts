@@ -14,6 +14,7 @@ import { ServiceList } from '../types/ServiceList';
 import { AppList } from '../types/AppList';
 import { App } from '../types/App';
 import { NodeParamsType, NodeType } from '../types/Graph';
+import { config } from '../config';
 
 export interface Response<T> {
   data: T;
@@ -21,7 +22,7 @@ export interface Response<T> {
 
 /**  Headers Definitions */
 
-const loginHeaders = { 'X-Auth-Type-Kiali-UI': '1' };
+const loginHeaders = config().login.headers;
 const authHeader = (auth: string) => ({ Authorization: auth });
 
 /**  Helpers to Requests */

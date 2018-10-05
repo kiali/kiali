@@ -63,6 +63,12 @@ const conf = {
       iconType: 'fa',
       linkText: 'Visit our web page'
     }
+  },
+  /**  Login configuration */
+  login: {
+    headers: {
+      'X-Auth-Type-Kiali-UI': '1'
+    }
   }
 };
 
