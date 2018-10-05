@@ -69,6 +69,53 @@ const conf = {
     headers: {
       'X-Auth-Type-Kiali-UI': '1'
     }
+  },
+  /** API configuration */
+  api: {
+    urls: {
+      apps: (namespace: String) => `api/namespaces/${namespace}/apps`,
+      app: (namespace: String, app: String) => `api/namespaces/${namespace}/apps/${app}`,
+      appGraphElements: (namespace: String, app: String, version?: String) => {
+        const baseUrl = `api/namespaces/${namespace}/applications/${app}`;
+        const hasVersion = version && version !== 'unknown';
+        const versionSuffixed = hasVersion ? `${baseUrl}/versions/${version}` : baseUrl;
+        return `${versionSuffixed}/graph`;
+      },
+      appHealth: (namespace: String, app: String) => `api/namespaces/${namespace}/apps/${app}/health`,
+      appMetrics: (namespace: String, app: String) => `api/namespaces/${namespace}/apps/${app}/metrics`,
+      grafana: 'api/grafana',
+      istioConfig: (namespace: String) => `api/namespaces/${namespace}/istio`,
+      istioConfigDetail: (namespace: String, objectType: String, object: String) =>
+        `api/namespaces/${namespace}/istio/${objectType}/${object}`,
+      istioConfigValidations: (namespace: String, objectType: String, object: String) =>
+        `api/namespaces/${namespace}/istio/${objectType}/${object}/istio_validations`,
+      jaeger: 'api/jaeger',
+      namespaces: 'api/namespaces',
+      namespaceGraphElements: (namespace: String) => `api/namespaces/${namespace}/graph`,
+      namespaceHealth: (namespace: String) => `api/namespaces/${namespace}/health`,
+      namespaceMetrics: (namespace: String) => `api/namespaces/${namespace}/metrics`,
+      namespaceValidations: (namespace: String) => `api/namespaces/${namespace}/istio_validations`,
+      services: (namespace: String) => `api/namespaces/${namespace}/services`,
+      service: (namespace: String, service: String) => `api/namespaces/${namespace}/services/${service}`,
+      serviceGraphElements: (namespace: String, service: String) =>
+        `api/namespaces/${namespace}/services/${service}/graph`,
+      serviceHealth: (namespace: String, service: String) => `api/namespaces/${namespace}/services/${service}/health`,
+      serviceMetrics: (namespace: String, service: String) => `api/namespaces/${namespace}/services/${service}/metrics`,
+      serviceValidations: (namespace: String, service: String) =>
+        `api/namespaces/${namespace}/services/${service}/istio_validations`,
+      status: 'api/status',
+      token: 'api/token',
+      workloads: (namespace: String) => `api/namespaces/${namespace}/workloads`,
+      workload: (namespace: String, workload: String) => `api/namespaces/${namespace}/workloads/${workload}`,
+      workloadGraphElements: (namespace: String, workload: String) =>
+        `api/namespaces/${namespace}/workloads/${workload}/graph`,
+      workloadHealth: (namespace: String, workload: String) =>
+        `api/namespaces/${namespace}/workloads/${workload}/health`,
+      workloadMetrics: (namespace: String, workload: String) =>
+        `api/namespaces/${namespace}/workloads/${workload}/metrics`,
+      workloadValidations: (namespace: String, workload: String) =>
+        `api/namespaces/${namespace}/workloads/${workload}/istio_validations`
+    }
   }
 };
 

@@ -28,6 +28,10 @@ export interface Response<T> {
   data: T;
 }
 
+/** API URLs */
+
+const urls = config().api.urls;
+
 /**  Headers Definitions */
 
 const loginHeaders = config().login.headers;
@@ -69,7 +73,7 @@ export const login = (username: string, password: string) => {
   return new Promise((resolve, reject) => {
     axios({
       method: HTTP_VERBS.GET,
-      url: 'api/token',
+      url: urls.token,
       headers: getHeaders(),
       auth: basicAuth(username, password)
     })
@@ -83,11 +87,11 @@ export const login = (username: string, password: string) => {
 };
 
 export const getStatus = () => {
-  return newRequest(HTTP_VERBS.GET, 'api/status', {}, {});
+  return newRequest(HTTP_VERBS.GET, urls.status, {}, {});
 };
 
 export const getNamespaces = (auth: AuthToken): Promise<Response<Namespace[]>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces`, {}, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.namespaces, {}, {}, auth);
 };
 
 export const getNamespaceMetrics = (
@@ -95,7 +99,7 @@ export const getNamespaceMetrics = (
   namespace: string,
   params: any
 ): Promise<Response<Readonly<Metrics>>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/metrics`, params, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), params, {}, auth);
 };
 
 export const getIstioConfig = (
@@ -104,7 +108,7 @@ export const getIstioConfig = (
   objects: string[]
 ): Promise<Response<IstioConfigList>> => {
   const params = objects && objects.length > 0 ? { objects: objects.join(',') } : {};
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/istio`, params, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {}, auth);
 };
 
 export const getIstioConfigDetail = (
@@ -113,11 +117,11 @@ export const getIstioConfigDetail = (
   objectType: string,
   object: string
 ): Promise<Response<IstioConfigDetails>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/istio/${objectType}/${object}`, {}, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.istioConfigDetail(namespace, objectType, object), {}, {}, auth);
 };
 
 export const getServices = (auth: AuthToken, namespace: string): Promise<Response<ServiceList>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/services`, {}, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.services(namespace), {}, {}, auth);
 };
 
 export const getServiceMetrics = (
@@ -126,15 +130,15 @@ export const getServiceMetrics = (
   service: string,
   params: MetricsOptions
 ): Promise<Response<Metrics>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/services/${service}/metrics`, params, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.serviceMetrics(namespace, service), params, {}, auth);
 };
 
 export const getApp = (auth: AuthToken, namespace: string, app: string): Promise<Response<App>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/apps/${app}`, {}, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.app(namespace, app), {}, {}, auth);
 };
 
 export const getApps = (auth: AuthToken, namespace: string): Promise<Response<AppList>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/apps`, {}, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.apps(namespace), {}, {}, auth);
 };
 
 export const getAppMetrics = (
@@ -143,7 +147,7 @@ export const getAppMetrics = (
   app: string,
   params: MetricsOptions
 ): Promise<Response<Metrics>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/apps/${app}/metrics`, params, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.appMetrics(namespace, app), params, {}, auth);
 };
 
 export const getWorkloadMetrics = (
@@ -152,7 +156,7 @@ export const getWorkloadMetrics = (
   workload: string,
   params: MetricsOptions
 ): Promise<Response<Metrics>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/workloads/${workload}/metrics`, params, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.workloadMetrics(namespace, workload), params, {}, auth);
 };
 
 export const getServiceHealth = (
@@ -162,7 +166,7 @@ export const getServiceHealth = (
   durationSec: number
 ): Promise<ServiceHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/services/${service}/health`, params, {}, auth).then(
+  return newRequest(HTTP_VERBS.GET, urls.serviceHealth(namespace, service), params, {}, auth).then(
     response => ServiceHealth.fromJson(response.data, durationSec)
   );
 };
@@ -174,7 +178,7 @@ export const getAppHealth = (
   durationSec: number
 ): Promise<AppHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/apps/${app}/health`, params, {}, auth).then(response =>
+  return newRequest(HTTP_VERBS.GET, urls.appHealth(namespace, app), params, {}, auth).then(response =>
     AppHealth.fromJson(response.data, durationSec)
   );
 };
@@ -186,7 +190,7 @@ export const getWorkloadHealth = (
   durationSec: number
 ): Promise<WorkloadHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/workloads/${workload}/health`, params, {}, auth).then(
+  return newRequest(HTTP_VERBS.GET, urls.workloadHealth(namespace, workload), params, {}, auth).then(
     response => WorkloadHealth.fromJson(response.data, durationSec)
   );
 };
@@ -202,7 +206,7 @@ export const getNamespaceAppHealth = (
   if (durationSec) {
     params.rateInterval = String(durationSec) + 's';
   }
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/health`, params, {}, auth).then(response => {
+  return newRequest(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}, auth).then(response => {
     const ret: NamespaceAppHealth = {};
     Object.keys(response.data).forEach(k => {
       ret[k] = AppHealth.fromJson(response.data[k], durationSec);
@@ -242,7 +246,7 @@ export const getNamespaceWorkloadHealth = (
   if (durationSec) {
     params.rateInterval = String(durationSec) + 's';
   }
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/health`, params, {}, auth).then(response => {
+  return newRequest(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}, auth).then(response => {
     const ret: NamespaceWorkloadHealth = {};
     Object.keys(response.data).forEach(k => {
       ret[k] = WorkloadHealth.fromJson(response.data[k], durationSec);
@@ -252,15 +256,15 @@ export const getNamespaceWorkloadHealth = (
 };
 
 export const getGrafanaInfo = (auth: AuthToken): Promise<Response<GrafanaInfo>> => {
-  return newRequest(HTTP_VERBS.GET, `api/grafana`, {}, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.grafana, {}, {}, auth);
 };
 
 export const getJaegerInfo = (auth: AuthToken): Promise<Response<JaegerInfo>> => {
-  return newRequest(HTTP_VERBS.GET, `api/jaeger`, {}, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.jaeger, {}, {}, auth);
 };
 
 export const getGraphElements = (auth: AuthToken, namespace: Namespace, params: any) => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace.name}/graph`, params, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.namespaceGraphElements(namespace.name), params, {}, auth);
 };
 
 export const getNodeGraphElements = (
@@ -271,18 +275,9 @@ export const getNodeGraphElements = (
 ) => {
   switch (node.nodeType) {
     case NodeType.APP:
-      if (node.version && node.version !== 'unknown') {
-        return newRequest(
-          HTTP_VERBS.GET,
-          `/api/namespaces/${namespace.name}/applications/${node.app}/versions/${node.version}/graph`,
-          params,
-          {},
-          auth
-        );
-      }
       return newRequest(
         HTTP_VERBS.GET,
-        `/api/namespaces/${namespace.name}/applications/${node.app}/graph`,
+        urls.appGraphElements(namespace.name, node.app, node.version),
         params,
         {},
         auth
@@ -290,7 +285,7 @@ export const getNodeGraphElements = (
     case NodeType.SERVICE:
       return newRequest(
         HTTP_VERBS.GET,
-        `/api/namespaces/${namespace.name}/services/${node.service}/graph`,
+        urls.serviceGraphElements(namespace.name, node.service),
         params,
         {},
         auth
@@ -298,7 +293,7 @@ export const getNodeGraphElements = (
     case NodeType.WORKLOAD:
       return newRequest(
         HTTP_VERBS.GET,
-        `/api/namespaces/${namespace.name}/workloads/${node.workload}/graph`,
+        urls.workloadGraphElements(namespace.name, node.workload),
         params,
         {},
         auth
@@ -310,7 +305,7 @@ export const getNodeGraphElements = (
 };
 
 export const getServiceDetail = (auth: AuthToken, namespace: string, service: string): Promise<ServiceDetailsInfo> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/services/${service}`, {}, {}, auth).then(
+  return newRequest(HTTP_VERBS.GET, urls.service(namespace, service), {}, {}, auth).then(
     (r: Response<ServiceDetailsInfo>) => {
       const info: ServiceDetailsInfo = r.data;
       info.istioSidecar = info.istioSidecar;
@@ -319,8 +314,7 @@ export const getServiceDetail = (auth: AuthToken, namespace: string, service: st
         info.health = ServiceHealth.fromJson(info.health, 600);
       }
       return info;
-    }
-  );
+  });
 };
 
 export const getServiceValidations = (
@@ -328,11 +322,11 @@ export const getServiceValidations = (
   namespace: string,
   service: string
 ): Promise<Response<Validations>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/services/${service}/istio_validations`, {}, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.serviceValidations(namespace, service), {}, {}, auth);
 };
 
 export const getNamespaceValidations = (auth: string, namespace: string): Promise<Response<NamespaceValidations>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/istio_validations`, {}, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.namespaceValidations(namespace), {}, {}, auth);
 };
 
 export const getIstioConfigValidations = (
@@ -343,7 +337,7 @@ export const getIstioConfigValidations = (
 ): Promise<Response<Validations>> => {
   return newRequest(
     HTTP_VERBS.GET,
-    `api/namespaces/${namespace}/istio/${objectType}/${object}/istio_validations`,
+    urls.istioConfigValidations(namespace, objectType, object),
     {},
     {},
     auth
@@ -351,11 +345,11 @@ export const getIstioConfigValidations = (
 };
 
 export const getWorkloads = (auth: AuthToken, namespace: string): Promise<Response<WorkloadNamespaceResponse>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/workloads`, {}, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.workloads(namespace), {}, {}, auth);
 };
 
 export const getWorkload = (auth: AuthToken, namespace: string, name: string): Promise<Response<Workload>> => {
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/workloads/${name}`, {}, {}, auth);
+  return newRequest(HTTP_VERBS.GET, urls.workload(namespace, name), {}, {}, auth);
 };
 
 export const getErrorMsg = (msg: AuthToken, error: AxiosError) => {
