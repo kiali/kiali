@@ -125,3 +125,32 @@ func TestMultiHostMatchDifferentSubsets(t *testing.T) {
 
 	assert.NotEmpty(validations)
 }
+
+func TestReviewsExample(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	destinationRules := []kubernetes.IstioObject{
+		data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
+			data.AddSubsetToDestinationRule(data.CreateSubset("v3", "v3"), data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews"))),
+		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("bookinfo", "reviews2", "reviews")),
+	}
+
+	validations := MultiMatchChecker{
+		DestinationRules: destinationRules,
+	}.Check()
+
+	assert.Empty(validations)
+
+	allMatch := data.CreateEmptyDestinationRule("bookinfo", "reviews3", "reviews")
+	allMatch.GetSpec()["subsets"] = "~"
+	destinationRules = append(destinationRules, allMatch)
+
+	validations = MultiMatchChecker{
+		DestinationRules: destinationRules,
+	}.Check()
+
+	assert.NotEmpty(validations)
+}

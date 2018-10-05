@@ -86,11 +86,24 @@ func extractSubsets(dr kubernetes.IstioObject, destinationRulesName string) []su
 			return foundSubsets
 		}
 	}
-
-	return []subset{}
+	// Matches all the subsets:~
+	return []subset{subset{"~", destinationRulesName}}
 }
 
 func checkCollisions(validations models.IstioValidations, destinationRulesName string, foundSubsets []subset, existing map[string]string) {
+	// If current subset is ~
+	if len(foundSubsets) == 1 && foundSubsets[0].Name == "~" {
+		// This should match any subset in the same hostname
+		for _, v := range existing {
+			addError(validations, []string{destinationRulesName, v})
+		}
+	}
+
+	// If we have existing subset with ~
+	if ruleName, found := existing["~"]; found {
+		addError(validations, []string{destinationRulesName, ruleName})
+	}
+
 	for _, s := range foundSubsets {
 		if ruleName, found := existing[s.Name]; found {
 			addError(validations, []string{destinationRulesName, ruleName})
@@ -101,7 +114,7 @@ func checkCollisions(validations models.IstioValidations, destinationRulesName s
 func addError(validations models.IstioValidations, destinationRuleNames []string) models.IstioValidations {
 	for _, destinationRuleName := range destinationRuleNames {
 		key := models.IstioValidationKey{Name: destinationRuleName, ObjectType: DestinationRulesCheckerType}
-		checks := models.BuildCheck("More than one DestinationRules for same host",
+		checks := models.BuildCheck("More than one DestinationRules for same host subset combination",
 			"warning", "spec/hosts")
 		rrValidation := &models.IstioValidation{
 			Name:       destinationRuleName,
