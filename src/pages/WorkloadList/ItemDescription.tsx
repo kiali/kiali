@@ -4,8 +4,6 @@ import { IstioLogo } from '../../config';
 import { WorkloadIcons, WorkloadListItem, worloadLink } from '../../types/Workload';
 import { PfColors } from '../../components/Pf/PfColors';
 import { Link } from 'react-router-dom';
-import * as API from '../../services/Api';
-import { authentication } from '../../utils/Authentication';
 import { WorkloadHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import ErrorRate from './ErrorRate';
@@ -25,34 +23,21 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
     this.state = {
       health: undefined
     };
-    this.fetchHealth();
   }
 
   componentDidMount() {
-    this.fetchHealth();
+    this.onItemChanged(this.props.workloadItem);
   }
 
   componentDidUpdate(prevProps: ItemDescriptionProps) {
     if (this.props.workloadItem !== prevProps.workloadItem) {
-      this.fetchHealth();
+      this.onItemChanged(this.props.workloadItem);
     }
   }
 
-  fetchHealth = () => {
-    API.getWorkloadHealth(
-      authentication(),
-      this.props.workloadItem.namespace,
-      this.props.workloadItem.workload.name,
-      600
-    )
-      .then(response => {
-        this.setState({ health: response });
-      })
-      .catch(error => {
-        console.log(error);
-        this.setState({ health: undefined });
-      });
-  };
+  onItemChanged(item: WorkloadListItem) {
+    item.healthPromise.then(h => this.setState({ health: h })).catch(err => this.setState({ health: undefined }));
+  }
 
   render() {
     let namespace = this.props.workloadItem.namespace;

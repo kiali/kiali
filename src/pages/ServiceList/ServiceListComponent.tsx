@@ -82,9 +82,8 @@ class ServiceListComponent extends ListComponent.Component<
   }
 
   rateIntervalChangedHandler = (key: number) => {
-    this.setState({ rateInterval: key });
     HistoryManager.setParam(URLParams.DURATION, String(key));
-    this.updateListItems();
+    this.setState({ rateInterval: key });
   };
 
   sortItemList(services: ServiceListItem[], sortField: SortField<ServiceListItem>, isAscending: boolean) {
@@ -118,19 +117,15 @@ class ServiceListComponent extends ListComponent.Component<
   }
 
   getServiceItem(data: ServiceList, rateInterval: number): ServiceListItem[] {
-    let serviceItems: ServiceListItem[] = [];
     if (data.services) {
-      data.services.forEach(service => {
-        const healthProm = API.getServiceHealth(authentication(), data.namespace.name, service.name, rateInterval);
-        serviceItems.push({
-          name: service.name,
-          istioSidecar: service.istioSidecar,
-          namespace: data.namespace.name,
-          healthPromise: healthProm
-        });
-      });
+      return data.services.map(service => ({
+        name: service.name,
+        istioSidecar: service.istioSidecar,
+        namespace: data.namespace.name,
+        healthPromise: API.getServiceHealth(authentication(), data.namespace.name, service.name, rateInterval)
+      }));
     }
-    return serviceItems;
+    return [];
   }
 
   fetchServices(namespaces: string[], filters: ActiveFilter[], rateInterval: number, resetPagination?: boolean) {
@@ -141,9 +136,8 @@ class ServiceListComponent extends ListComponent.Component<
 
       let serviceListItems: ServiceListItem[] = [];
       responses.forEach(response => {
-        serviceListItems = serviceListItems.concat(
-          ServiceListFilters.filterBy(this.getServiceItem(response.data, rateInterval), filters)
-        );
+        ServiceListFilters.filterBy(response.data, filters);
+        serviceListItems = serviceListItems.concat(this.getServiceItem(response.data, rateInterval));
       });
 
       ServiceListFilters.sortServices(serviceListItems, this.state.currentSortField, this.state.isSortAscending).then(

@@ -1,5 +1,5 @@
 import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
-import { WorkloadListItem, WorkloadType } from '../../types/Workload';
+import { WorkloadListItem, WorkloadType, WorkloadNamespaceResponse, WorkloadOverview } from '../../types/Workload';
 import { SortField } from '../../types/SortFilters';
 import { removeDuplicatesArray } from '../../utils/Common';
 import { getRequestErrorsRatio, WorkloadHealth } from '../../types/Health';
@@ -177,67 +177,52 @@ export namespace WorkloadListFilters {
     return false;
   };
 
-  const filterByType = (items: WorkloadListItem[], filter: string[]): WorkloadListItem[] => {
-    // let results: WorkloadItem[] = [];
+  const filterByType = (items: WorkloadOverview[], filter: string[]): WorkloadOverview[] => {
     if (filter && filter.length === 0) {
       return items;
     }
-    return items.filter(workload => includeName(workload.workload.type, filter));
+    return items.filter(workload => includeName(workload.type, filter));
   };
 
   const filterByLabel = (
-    items: WorkloadListItem[],
+    items: WorkloadOverview[],
     istioSidecar: boolean | undefined,
     app: boolean | undefined,
     version: boolean | undefined
-  ): WorkloadListItem[] => {
+  ): WorkloadOverview[] => {
     let result = items;
     if (istioSidecar !== undefined) {
-      result = result.filter(workload => workload.workload.istioSidecar === istioSidecar);
+      result = result.filter(workload => workload.istioSidecar === istioSidecar);
     }
 
     if (app !== undefined) {
-      result = result.filter(workload => workload.workload.appLabel === app);
+      result = result.filter(workload => workload.appLabel === app);
     }
     if (version !== undefined) {
-      result = result.filter(workload => workload.workload.versionLabel === version);
+      result = result.filter(workload => workload.versionLabel === version);
     }
     return result;
   };
 
-  const filterByName = (items: WorkloadListItem[], names: string[]): WorkloadListItem[] => {
-    let result = items;
-    result = result.filter(item => {
-      let serviceNameFiltered = true;
-      if (names.length > 0) {
-        serviceNameFiltered = false;
-        for (let i = 0; i < names.length; i++) {
-          if (item.workload.name.includes(names[i])) {
-            serviceNameFiltered = true;
-            break;
-          }
-        }
-      }
-      return serviceNameFiltered;
-    });
-    return result;
+  const filterByName = (items: WorkloadOverview[], names: string[]): WorkloadOverview[] => {
+    if (names.length === 0) {
+      return items;
+    }
+    return items.filter(item => names.some(name => item.name.includes(name)));
   };
 
-  export const filterBy = (items: WorkloadListItem[], filters: ActiveFilter[]) => {
-    let workloadTypeFilters: string[] = removeDuplicatesArray(
+  export const filterBy = (response: WorkloadNamespaceResponse, filters: ActiveFilter[]): void => {
+    const workloadTypeFilters: string[] = removeDuplicatesArray(
       filters
         .filter(activeFilter => activeFilter.category === 'Workload Type')
         .map(activeFilter => WorkloadType[activeFilter.value])
     );
 
-    let results = filterByType(items, workloadTypeFilters);
+    response.workloads = filterByType(response.workloads, workloadTypeFilters);
     /** Get WorkloadName filter */
-    let workloadNamesSelected: string[] = filters
-      .filter(activeFilter => activeFilter.category === 'Workload Name')
-      .map(activeFilter => activeFilter.value);
-
-    /** Remove duplicates  */
-    workloadNamesSelected = removeDuplicatesArray(workloadNamesSelected);
+    const workloadNamesSelected: string[] = removeDuplicatesArray(
+      filters.filter(activeFilter => activeFilter.category === 'Workload Name').map(activeFilter => activeFilter.value)
+    );
 
     /** Get IstioSidecar filter */
     let istioSidecarValidationFilters: ActiveFilter[] = filters.filter(
@@ -265,10 +250,8 @@ export namespace WorkloadListFilters {
       versionLabel = versionLabelFilters[0].value === 'Present' ? true : false;
     }
 
-    results = filterByName(results, workloadNamesSelected);
-    results = filterByLabel(results, istioSidecar, appLabel, versionLabel);
-
-    return results;
+    response.workloads = filterByName(response.workloads, workloadNamesSelected);
+    response.workloads = filterByLabel(response.workloads, istioSidecar, appLabel, versionLabel);
   };
 
   /** Sort Method */

@@ -10,19 +10,15 @@ import ItemDescription from './ItemDescription';
 
 export namespace AppListClass {
   export const getAppItems = (data: AppList, rateInterval: number): AppListItem[] => {
-    let appItems: AppListItem[] = [];
     if (data.applications) {
-      data.applications.forEach(app => {
-        const healthProm = API.getAppHealth(authentication(), data.namespace.name, app.name, rateInterval);
-        appItems.push({
-          namespace: data.namespace.name,
-          name: app.name,
-          istioSidecar: app.istioSidecar,
-          healthPromise: healthProm
-        });
-      });
+      return data.applications.map(app => ({
+        namespace: data.namespace.name,
+        name: app.name,
+        istioSidecar: app.istioSidecar,
+        healthPromise: API.getAppHealth(authentication(), data.namespace.name, app.name, rateInterval)
+      }));
     }
-    return appItems;
+    return [];
   };
 
   export const appLink = (namespace: string, app: string): string => {
