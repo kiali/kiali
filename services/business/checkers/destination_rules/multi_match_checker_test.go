@@ -153,4 +153,10 @@ func TestReviewsExample(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
+	validation, ok := validations[models.IstioValidationKey{"destinationrule", "reviews3"}]
+	assert.True(ok)
+	assert.True(validation.Valid)
+	assert.NotEmpty(validation.Checks)
+	assert.Equal("warning", validation.Checks[0].Severity)
+	assert.Equal(1, len(validation.Checks))
 }

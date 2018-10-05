@@ -125,7 +125,9 @@ func addError(validations models.IstioValidations, destinationRuleNames []string
 			},
 		}
 
-		validations.MergeValidations(models.IstioValidations{key: rrValidation})
+		if _, exists := validations[key]; !exists {
+			validations.MergeValidations(models.IstioValidations{key: rrValidation})
+		}
 	}
 	return validations
 }
