@@ -12,6 +12,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func TestGetNamespaceValidations(t *testing.T) {
@@ -65,81 +66,15 @@ func fakeCombinedIstioDetails() *kubernetes.IstioDetails {
 	istioDetails := kubernetes.IstioDetails{}
 
 	istioDetails.VirtualServices = []kubernetes.IstioObject{
-		&kubernetes.VirtualService{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "product-vs",
-			},
-			Spec: map[string]interface{}{
-				"hosts": []interface{}{
-					"product",
-				},
-				"http": []interface{}{
-					map[string]interface{}{
-						"route": []interface{}{
-							map[string]interface{}{
-								"destination": map[string]interface{}{
-									"host":   "product",
-									"subset": "v1",
-								},
-							},
-						},
-					},
-				},
-				"tcp": []interface{}{
-					map[string]interface{}{
-						"route": []interface{}{
-							map[string]interface{}{
-								"destination": map[string]interface{}{
-									"host":   "product",
-									"subset": "v1",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+		data.AddRoutesToVirtualService("http", data.CreateRoute("product", "v1", -1),
+			data.AddRoutesToVirtualService("tcp", data.CreateRoute("product", "v1", -1),
+				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"})))}
 
 	istioDetails.DestinationRules = []kubernetes.IstioObject{
-		&kubernetes.DestinationRule{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "product-dr",
-			},
-			Spec: map[string]interface{}{
-				"host": "product",
-				"subsets": []interface{}{
-					map[string]interface{}{
-						"name": "v1",
-						"labels": map[string]interface{}{
-							"version": "v1",
-						},
-					},
-				},
-			},
-		},
-		&kubernetes.DestinationRule{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "customer-dr",
-			},
-			Spec: map[string]interface{}{
-				"host": "customer",
-				"subsets": []interface{}{
-					map[string]interface{}{
-						"name": "v1",
-						"labels": map[string]interface{}{
-							"version": "v1",
-						},
-					},
-					map[string]interface{}{
-						"name": "v2",
-						"labels": map[string]interface{}{
-							"version": "v2",
-						},
-					},
-				},
-			},
-		},
+		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("test", "product-dr", "product")),
+		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
+			data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
+				data.CreateEmptyDestinationRule("test", "customer-dr", "customer"))),
 	}
 	return &istioDetails
 }
