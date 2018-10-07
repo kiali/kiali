@@ -216,7 +216,7 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 				if nil == edge {
 					n.Edges = append(n.Edges, serviceEdge)
 				} else {
-					addTraffic(edge, serviceEdge)
+					addServiceGraphTraffic(edge, serviceEdge)
 				}
 			}
 		}
@@ -225,15 +225,20 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 	return reducedTrafficMap
 }
 
-func addTraffic(target, source *graph.Edge) {
+func addServiceGraphTraffic(target, source *graph.Edge) {
 	protocol := target.Metadata["protocol"]
 	switch protocol {
 	case "http":
-		addToRate(target.Metadata, "rate", source.Metadata["rate"].(float64))
+		addToMetadataValue(target.Metadata, "rate", source.Metadata["rate"].(float64))
 	case "tcp":
-		addToRate(target.Metadata, "tcpSentRate", source.Metadata["tcpSentRate"].(float64))
+		addToMetadataValue(target.Metadata, "tcpSentRate", source.Metadata["tcpSentRate"].(float64))
 	default:
 		checkError(errors.New(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, target)))
+	}
+	// hande any appender-based edge data
+	// - responseTime is not a counter, set an average, not a total
+	if responseTime, ok := source.Metadata["responseTime"]; ok {
+		averageMetadataValue(target.Metadata, "responseTime", responseTime.(float64))
 	}
 }
 
@@ -444,12 +449,12 @@ func addHttpTraffic(trafficMap graph.TrafficMap, val float64, code, sourceWlNs, 
 	case strings.HasPrefix(string(code), "5"):
 		ck = "rate5xx"
 	}
-	addToRate(edge.Metadata, ck, val)
-	addToRate(edge.Metadata, "rate", val)
+	addToMetadataValue(edge.Metadata, ck, val)
+	addToMetadataValue(edge.Metadata, "rate", val)
 
-	addToRate(source.Metadata, "rateOut", val)
-	addToRate(dest.Metadata, ck, val)
-	addToRate(dest.Metadata, "rate", val)
+	addToMetadataValue(source.Metadata, "rateOut", val)
+	addToMetadataValue(dest.Metadata, ck, val)
+	addToMetadataValue(dest.Metadata, "rate", val)
 }
 
 func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o options.Options) {
@@ -532,17 +537,33 @@ func addTcpTraffic(trafficMap graph.TrafficMap, val float64, sourceWlNs, sourceW
 		handleMisconfiguredLabels(dest, destApp, destVer, val, o)
 	}
 
-	addToRate(edge.Metadata, "tcpSentRate", val)
-	addToRate(source.Metadata, "tcpSentRateOut", val)
-	addToRate(dest.Metadata, "tcpSentRate", val)
+	addToMetadataValue(edge.Metadata, "tcpSentRate", val)
+	addToMetadataValue(source.Metadata, "tcpSentRateOut", val)
+	addToMetadataValue(dest.Metadata, "tcpSentRate", val)
 }
 
-func addToRate(md map[string]interface{}, k string, v float64) {
+func addToMetadataValue(md map[string]interface{}, k string, v float64) {
 	if curr, ok := md[k]; ok {
 		md[k] = curr.(float64) + v
 	} else {
 		md[k] = v
 	}
+}
+
+func averageMetadataValue(md map[string]interface{}, k string, v float64) {
+	total := v
+	count := 1.0
+	kTotal := k + "_total"
+	kCount := k + "_count"
+	if prevTotal, ok := md[kTotal]; ok {
+		total += prevTotal.(float64)
+	}
+	if prevCount, ok := md[kCount]; ok {
+		count += prevCount.(float64)
+	}
+	md[kTotal] = total
+	md[kCount] = count
+	md[k] = total / count
 }
 
 func addToDestServices(md map[string]interface{}, destService string) {
