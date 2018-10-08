@@ -29,7 +29,8 @@ type ChartDefinition = {
   name: string;
   unit: string;
   component: any;
-  metrics?: M.MetricGroup | M.Histogram;
+  sourceMetrics?: M.MetricGroup | M.Histogram;
+  destMetrics?: M.MetricGroup | M.Histogram;
 };
 
 type ChartDefinitions = { [key: string]: ChartDefinition };
@@ -59,6 +60,10 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   };
 
   options: MetricsOptions;
+
+  private static isHistogram(chart: ChartDefinition): boolean {
+    return chart.component === HistogramChart;
+  }
 
   constructor(props: MetricsProps) {
     super(props);
@@ -105,10 +110,15 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   }
 
   fillChartsMetrics(charts: ChartDefinitions, metricsData: M.Metrics) {
-    const data = this.state.metricReporter === 'destination' ? metricsData.dest : metricsData.source;
     Object.keys(charts).forEach(k => {
       const chart = charts[k];
-      chart.metrics = chart.component === HistogramChart ? data.histograms[k] : (chart.metrics = data.metrics[k]);
+      if (Metrics.isHistogram(chart)) {
+        chart.sourceMetrics = metricsData.source.histograms[k];
+        chart.destMetrics = metricsData.dest.histograms[k];
+      } else {
+        chart.sourceMetrics = metricsData.source.metrics[k];
+        chart.destMetrics = metricsData.dest.metrics[k];
+      }
     });
   }
 
@@ -133,7 +143,11 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   };
 
   onReporterChanged = (reporter: string) => {
-    this.setState({ metricReporter: reporter });
+    const labelValues = this.extractLabelValues(this.state.chartDefs, reporter);
+    this.setState({
+      metricReporter: reporter,
+      labelValues: labelValues
+    });
   };
 
   fetchMetrics = () => {
@@ -154,18 +168,7 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
       .then(response => {
         const chartDefs = this.getChartsDef();
         this.fillChartsMetrics(chartDefs, response.data);
-        const labelValues = this.extractLabelValues(chartDefs);
-        // Keep existing show flag
-        labelValues.forEach((values: L.LabelValues, key: L.LabelName) => {
-          const previous = this.state.labelValues.get(key);
-          if (previous) {
-            Object.keys(values).forEach(k => {
-              if (previous.hasOwnProperty(k)) {
-                values[k] = previous[k];
-              }
-            });
-          }
-        });
+        const labelValues = this.extractLabelValues(chartDefs, this.state.metricReporter);
         this.setState({
           chartDefs: chartDefs,
           labelValues: labelValues
@@ -177,30 +180,40 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
       });
   };
 
-  extractLabelValues(chartDefs: ChartDefinitions): Map<L.LabelName, L.LabelValues> {
+  extractLabelValues(chartDefs: ChartDefinitions, reporter: string): Map<L.LabelName, L.LabelValues> {
+    // Find all labels on all series
     const labelsWithValues: Map<L.LabelName, L.LabelValues> = new Map();
-    const chart =
-      this.props.direction === M.MetricsDirection.OUTBOUND
-        ? chartDefs['request_count_out']
-        : chartDefs['request_count_in'];
-    if (!chart.metrics) {
-      return labelsWithValues;
-    }
     const labelGroups =
       this.props.direction === M.MetricsDirection.OUTBOUND ? L.REVERSE_OUTBOUND_LABELS : L.REVERSE_INBOUND_LABELS;
-    (chart.metrics as M.MetricGroup).matrix.forEach(ts => {
-      Object.keys(ts.metric).forEach(k => {
-        const labelGroup = labelGroups.get(k);
-        if (labelGroup) {
-          const value = ts.metric[k];
-          let values = labelsWithValues.get(labelGroup);
-          if (!values) {
-            values = {};
-            labelsWithValues.set(labelGroup, values);
+    const chartMetrics =
+      reporter === 'source'
+        ? (chartDef: ChartDefinition) => chartDef.sourceMetrics
+        : (chartDef: ChartDefinition) => chartDef.destMetrics;
+    for (let name in chartDefs) {
+      if (chartDefs.hasOwnProperty(name)) {
+        const chartDef = chartDefs[name];
+        const metrics = chartMetrics(chartDef);
+        if (metrics) {
+          if (Metrics.isHistogram(chartDef)) {
+            Object.keys(metrics).forEach(stat => {
+              this.extractLabelValuesOnSeries(metrics[stat].matrix, labelGroups, labelsWithValues);
+            });
+          } else {
+            this.extractLabelValuesOnSeries((metrics as M.MetricGroup).matrix, labelGroups, labelsWithValues);
           }
-          values[value] = true;
         }
-      });
+      }
+    }
+    // Keep existing show flag
+    labelsWithValues.forEach((values: L.LabelValues, key: L.LabelName) => {
+      const previous = this.state.labelValues.get(key);
+      if (previous) {
+        Object.keys(values).forEach(k => {
+          if (previous.hasOwnProperty(k)) {
+            values[k] = previous[k];
+          }
+        });
+      }
     });
     return labelsWithValues;
   }
@@ -321,7 +334,11 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   }
 
   private renderChart(chartKey: string, chart: ChartDefinition, isExpanded: boolean = false) {
-    if (!chart || !chart.metrics) {
+    if (!chart) {
+      return undefined;
+    }
+    const data = this.state.metricReporter === 'destination' ? chart.destMetrics : chart.sourceMetrics;
+    if (!data) {
       return undefined;
     }
     const props: any = {
@@ -330,10 +347,10 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
       labelValues: this.convertAsPromLabels(this.state.labelValues),
       unit: chart.unit
     };
-    if ((chart.metrics as M.MetricGroup).matrix) {
-      props.series = (chart.metrics as M.MetricGroup).matrix;
+    if (Metrics.isHistogram(chart)) {
+      props.histogram = data;
     } else {
-      props.histogram = chart.metrics;
+      props.series = (data as M.MetricGroup).matrix;
     }
 
     if (!isExpanded) {
@@ -348,6 +365,27 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     urlParams.set('expand', chartKey);
     history.push(history.location.pathname + '?' + urlParams.toString());
   };
+
+  private extractLabelValuesOnSeries(
+    series: M.TimeSeries[],
+    labelGroups: Map<L.PromLabel, L.LabelName>,
+    extracted: Map<L.LabelName, L.LabelValues>
+  ): void {
+    series.forEach(ts => {
+      Object.keys(ts.metric).forEach(k => {
+        const labelGroup = labelGroups.get(k);
+        if (labelGroup) {
+          const value = ts.metric[k];
+          let values = extracted.get(labelGroup);
+          if (!values) {
+            values = {};
+            extracted.set(labelGroup, values);
+          }
+          values[value] = true;
+        }
+      });
+    });
+  }
 }
 
 export { MetricsProps };

@@ -1,5 +1,6 @@
 import graphUtils from '../../utils/Graphing';
 import { TimeSeries } from '../../types/Metrics';
+import { MetricsLabels as L } from '../MetricsOptions/MetricsLabels';
 import MetricsChartBase from './MetricsChartBase';
 
 type MetricChartProps = {
