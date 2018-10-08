@@ -20,11 +20,12 @@ const (
 // is represented as a percentile value. The default is 95th percentile, which means that
 // 95% of requests executed in no more than the resulting milliseconds.
 type ResponseTimeAppender struct {
-	Duration     time.Duration
-	GraphType    string
-	IncludeIstio bool
-	Quantile     float64
-	QueryTime    int64 // unix time in seconds
+	Duration           time.Duration
+	GraphType          string
+	InjectServiceNodes bool
+	IncludeIstio       bool
+	Quantile           float64
+	QueryTime          int64 // unix time in seconds
 }
 
 // AppendGraph implements Appender
@@ -136,7 +137,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		lSourceApp, sourceAppOk := m["source_app"]
 		lSourceVer, sourceVerOk := m["source_version"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
-		lDestSvcName, destSvcNameOk := m["destination_service_namespace"]
+		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_app"]
 		lDestVer, destVerOk := m["destination_version"]
@@ -155,10 +156,26 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 
-		sourceId, _ := graph.Id(sourceWlNs, sourceWl, sourceApp, sourceVer, "", a.GraphType)
-		destId, _ := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, a.GraphType)
-		key := fmt.Sprintf("%s %s", sourceId, destId)
 		val := float64(s.Value)
-		responseTimeMap[key] += val
+
+		if a.InjectServiceNodes {
+			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
+			_, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, a.GraphType)
+			if destSvcNameOk && destNodeType != graph.NodeTypeService {
+				a.addResponseTime(responseTimeMap, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName)
+				a.addResponseTime(responseTimeMap, val, destSvcNs, "", "", "", destSvcName, destSvcNs, destWl, destApp, destVer, destSvcName)
+			} else {
+				a.addResponseTime(responseTimeMap, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName)
+			}
+		} else {
+			a.addResponseTime(responseTimeMap, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName)
+		}
 	}
+}
+
+func (a ResponseTimeAppender) addResponseTime(responseTimeMap map[string]float64, val float64, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, destSvcNs, destWl, destApp, destVer, destSvcName string) {
+	sourceId, _ := graph.Id(sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, a.GraphType)
+	destId, _ := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, a.GraphType)
+	key := fmt.Sprintf("%s %s", sourceId, destId)
+	responseTimeMap[key] += val
 }
