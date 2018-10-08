@@ -17,9 +17,10 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 	if err != nil {
 		return models.WorkloadList{}, err
 	}
-
-	workloadList := &models.WorkloadList{}
-	workloadList.Namespace.Name = namespace
+	workloadList := &models.WorkloadList{
+		Namespace: models.Namespace{Name: namespace},
+		Workloads: []models.WorkloadListItem{},
+	}
 	for _, deployment := range ds {
 		selector := labels.FormatLabels(deployment.Spec.Template.Labels)
 		dPods, _ := in.k8s.GetPods(namespace, selector)

@@ -2,6 +2,7 @@ package business
 
 import (
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/labels"
 
 	"k8s.io/api/apps/v1beta1"
@@ -60,8 +61,10 @@ func (in *AppService) fetchWorkloadsPerApp(namespace, labelSelector string) (app
 // GetAppList is the API handler to fetch the list of applications in a given namespace
 func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 	cfg := config.Get()
-	appList := &models.AppList{}
-	appList.Namespace = models.Namespace{Name: namespace}
+	appList := &models.AppList{
+		Namespace: models.Namespace{Name: namespace},
+		Apps:      []models.AppListItem{},
+	}
 	apps, err := in.fetchWorkloadsPerApp(namespace, cfg.IstioLabels.AppLabelName)
 	if err != nil {
 		return *appList, err
