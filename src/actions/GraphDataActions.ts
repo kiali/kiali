@@ -21,24 +21,34 @@ const decorateGraphData = (graphData: any) => {
       rate5XX: undefined,
       percentErr: undefined,
       percentRate: undefined,
-      latency: undefined,
+      responseTime: undefined,
+      isMTLS: undefined,
       isUnused: undefined,
-      isMTLS: undefined
+      tcpSentRate: undefined
     },
     nodes: {
+      app: undefined,
+      service: undefined,
       version: undefined,
+      workload: undefined,
+      destServices: undefined,
       rate: undefined,
       rate3XX: undefined,
       rate4XX: undefined,
       rate5XX: undefined,
+      rateTcpSent: undefined,
+      rateTcpSentOut: undefined,
       hasCB: undefined,
+      hasMissingSC: undefined,
       hasVS: undefined,
       isDead: undefined,
+      isEgress: undefined,
       isGroup: undefined,
+      isInaccessible: undefined,
+      isMisconfigured: undefined,
+      isOutside: undefined,
       isRoot: undefined,
-      isUnused: undefined,
-      hasMissingSC: undefined,
-      isOutside: undefined
+      isUnused: undefined
     }
   };
   if (graphData) {

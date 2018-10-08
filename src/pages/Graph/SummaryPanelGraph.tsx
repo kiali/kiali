@@ -156,7 +156,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       })
       .catch(error => {
         if (error.isCanceled) {
-          console.log('SummaryPanelGraph: Ignore fetch error (canceled).');
+          console.debug('SummaryPanelGraph: Ignore fetch error (canceled).');
           return;
         }
         const errorMsg = error.response && error.response.data.error ? error.response.data.error : error.message;

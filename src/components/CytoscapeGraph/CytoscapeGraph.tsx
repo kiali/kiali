@@ -12,6 +12,7 @@ import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 
 import { GraphActions } from '../../actions/GraphActions';
 import * as API from '../../services/Api';
+import { store } from '../../store/ConfigStore';
 import { KialiAppState } from '../../store/Store';
 import {
   CytoscapeBaseEvent,
@@ -132,6 +133,10 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
   componentDidUpdate(prevProps: CytoscapeGraphProps, prevState: CytoscapeGraphState) {
     const cy = this.getCy();
+    if (!cy) {
+      return;
+    }
+
     let updateLayout = false;
     if (
       this.nodeNeedsRelayout() ||
@@ -141,6 +146,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     ) {
       updateLayout = true;
     }
+
     this.processGraphUpdate(cy, updateLayout);
     // pre-select node if provided
     const node = this.props.node;
@@ -421,6 +427,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     if (target.data('isOutside')) {
       if (!target.data('isInaccessible')) {
+        store.dispatch(GraphActions.changed());
         this.context.router.history.push(
           makeNamespaceGraphUrlFromParams({
             namespace: { name: target.data('namespace') },
@@ -447,6 +454,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           version: targetType === 'group' ? '' : event.summaryTarget.data('version'),
           service: event.summaryTarget.data('service')
         };
+        store.dispatch(GraphActions.changed());
         this.context.router.history.push(
           makeNodeGraphUrlFromParams(node, {
             namespace: { name: event.summaryTarget.data('namespace') },
