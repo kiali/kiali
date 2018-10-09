@@ -97,7 +97,7 @@ func NewRoutes() (r *Routes) {
 			"Status",
 			"GET",
 			"/api/status",
-			handlers.Root,
+			handlers.GetStatus,
 			false,
 		},
 		// swagger:route GET /namespaces/{namespace}/istio config istioConfigList
@@ -688,6 +688,30 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/jaeger",
 			handlers.GetJaegerInfo,
+			true,
+		},
+		// swagger:route GET /authorize authorize
+		// ---
+		// Check Kiali authorization against the Kubernetes API (SelfSubjectAccessReview)
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      500: internalError
+		//      200: authorized
+		//      401: unauthorized
+		{
+			"Authorize",
+			"GET",
+			"/api/authorize",
+			handlers.CheckAuthorization,
 			true,
 		},
 	}

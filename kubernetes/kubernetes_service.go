@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"k8s.io/api/apps/v1beta1"
+	auth_v1 "k8s.io/api/authorization/v1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -259,4 +260,18 @@ func (in *IstioClient) getDeployments(namespace string, deploymentsChan chan dep
 // This method helps upper layers to send a explicit NotFound error without querying the backend.
 func NewNotFound(name, group, resource string) error {
 	return errors.NewNotFound(schema.GroupResource{Group: group, Resource: resource}, name)
+}
+
+// GetSelfSubjectAccessReview provides information on Kiali permissions
+func (in *IstioClient) GetSelfSubjectAccessReview(namespace, verb, group, resource string) (*auth_v1.SelfSubjectAccessReview, error) {
+	return in.k8s.AuthorizationV1().SelfSubjectAccessReviews().Create(&auth_v1.SelfSubjectAccessReview{
+		Spec: auth_v1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &auth_v1.ResourceAttributes{
+				Namespace: namespace,
+				Verb:      verb,
+				Group:     group,
+				Resource:  resource,
+			},
+		},
+	})
 }

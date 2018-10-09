@@ -1,5 +1,9 @@
-// status is a simple package for offering up various status information from Kiali.
+// Package status is a simple package for offering up various status information from Kiali.
 package status
+
+import (
+	"github.com/kiali/kiali/config"
+)
 
 const (
 	name           = "Kiali"
@@ -21,6 +25,8 @@ type StatusInfo struct {
 	//
 	// required: true
 	Status map[string]string `json:"status"`
+	// ReadOnly flag tells if Kiali runs in read-only mode
+	ReadOnly bool `json:"readOnly"`
 	// An array of external services installed
 	//
 	// required: true
@@ -67,6 +73,7 @@ func Put(name, value string) (previous string, hasPrevious bool) {
 
 // Get returns a copy of the current status info.
 func Get() (status StatusInfo) {
+	info.ReadOnly = config.Get().ReadOnly
 	info.ExternalServices = []ExternalServiceInfo{}
 	info.WarningMessages = []string{}
 	getVersions()

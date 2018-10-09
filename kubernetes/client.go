@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"k8s.io/api/apps/v1beta1"
+	auth_v1 "k8s.io/api/authorization/v1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -59,6 +60,7 @@ type IstioClientInterface interface {
 	GetQuotaSpecs(namespace string) ([]IstioObject, error)
 	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)
 	GetQuotaSpecBindings(namespace string) ([]IstioObject, error)
+	GetSelfSubjectAccessReview(namespace, verb, group, resource string) (*auth_v1.SelfSubjectAccessReview, error)
 	IsOpenShift() bool
 }
 
