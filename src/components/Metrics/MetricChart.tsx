@@ -5,6 +5,7 @@ import MetricsChartBase from './MetricsChartBase';
 type MetricChartProps = {
   series: TimeSeries[];
   chartName: string;
+  unit: string;
   onExpandRequested?: () => void;
 };
 

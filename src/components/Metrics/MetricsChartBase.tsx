@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { LineChart, Icon } from 'patternfly-react';
-import { TimeSeries } from '../../types/Metrics';
 import { style } from 'typestyle';
+import { format } from 'd3-format';
+import { TimeSeries } from '../../types/Metrics';
 
 type MetricsChartBaseProps = {
   chartName: string;
+  unit: string;
   onExpandRequested?: () => void;
 };
 
@@ -67,14 +69,29 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
       },
       y: {
         tick: {
-          format: val => {
-            // parseFloat is used to remove trailing zeros
-            return parseFloat(val.toFixed(5));
-          }
+          format: this.formatYAxis
         }
       }
     };
   }
+
+  formatYAxis = (val: any): string => {
+    const fmt = format('~s')(val);
+    let si = '';
+    // Insert space before SI
+    // "fmt" can be something like:
+    // - "9k" => we want "9 kB"
+    // - "9" => we want "9 B"
+    for (let i = fmt.length - 1; i >= 0; i--) {
+      const c = fmt.charAt(i);
+      if (c >= '0' && c <= '9') {
+        return fmt.substr(0, i + 1) + ' ' + si + this.props.unit;
+      }
+      si = c + si;
+    }
+    // Weird: no number found?
+    return fmt + this.props.unit;
+  };
 
   adjustHeight(columns: any[]): number {
     const series = columns.length - 1;

@@ -5,6 +5,7 @@ import MetricsChartBase from './MetricsChartBase';
 interface HistogramChartProps {
   histogram: Histogram;
   chartName: string;
+  unit: string;
   onExpandRequested?: () => void;
 }
 
