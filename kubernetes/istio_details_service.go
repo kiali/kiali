@@ -323,17 +323,19 @@ func CheckDestinationRuleCircuitBreaker(destinationRule IstioObject, namespace s
 	cfg := config.Get()
 	if dHost, ok := destinationRule.GetSpec()["host"]; ok {
 		if host, ok := dHost.(string); ok && FilterByHost(host, serviceName, namespace) {
+			// CB is set at DR level, so it's true for the service and all versions
 			if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
 				return true
-			}
-			if version == "" {
-				return false
 			}
 			if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
 				if dSubsets, ok := subsets.([]interface{}); ok {
 					for _, subset := range dSubsets {
 						if innerSubset, ok := subset.(map[string]interface{}); ok {
 							if trafficPolicy, ok := innerSubset["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
+								// set the service true if it has a subset with a CB
+								if "" == version {
+									return true
+								}
 								if labels, ok := innerSubset["labels"]; ok {
 									if dLabels, ok := labels.(map[string]interface{}); ok {
 										if versionValue, ok := dLabels[cfg.IstioLabels.VersionLabelName]; ok && versionValue == version {
