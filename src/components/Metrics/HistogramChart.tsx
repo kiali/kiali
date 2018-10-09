@@ -1,11 +1,13 @@
 import { Histogram } from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
+import { MetricsLabels as L } from '../MetricsOptions/MetricsLabels';
 import MetricsChartBase from './MetricsChartBase';
 
 interface HistogramChartProps {
   histogram: Histogram;
   chartName: string;
   unit: string;
+  labelValues: Map<L.PromLabel, L.LabelValues>;
   onExpandRequested?: () => void;
 }
 
@@ -25,13 +27,17 @@ class HistogramChart extends MetricsChartBase<HistogramChartProps> {
   }
 
   protected getSeriesData() {
+    const filtered: Histogram = {};
     Object.keys(this.props.histogram).forEach(stat => {
+      filtered[stat] = {
+        matrix: this.props.histogram[stat].matrix.filter(ts => this.isVisibleMetric(ts.metric, this.props.labelValues))
+      };
       const statName = stat === 'avg' ? 'average' : 'quantile ' + stat;
-      this.nameTimeSeries(this.props.histogram[stat].matrix, statName);
+      this.nameTimeSeries(filtered[stat].matrix, statName);
     });
     return {
       x: 'x',
-      columns: graphUtils.histogramToC3Columns(this.props.histogram)
+      columns: graphUtils.histogramToC3Columns(filtered)
     };
   }
 }

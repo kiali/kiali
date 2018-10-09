@@ -16,8 +16,10 @@ describe('MetricsOptionsBar', () => {
         onOptionsChanged={jest.fn()}
         onRefresh={jest.fn()}
         onReporterChanged={jest.fn()}
+        onLabelsFiltersChanged={jest.fn()}
         metricReporter={'destination'}
         direction={MetricsDirection.INBOUND}
+        labelValues={new Map()}
       />
     );
     expect(wrapper).toMatchSnapshot();
@@ -29,8 +31,10 @@ describe('MetricsOptionsBar', () => {
         onOptionsChanged={optionsChanged}
         onRefresh={jest.fn()}
         onReporterChanged={jest.fn()}
+        onLabelsFiltersChanged={jest.fn()}
         metricReporter={'destination'}
         direction={MetricsDirection.INBOUND}
+        labelValues={new Map()}
       />
     );
     expect(optionsChanged).toHaveBeenCalledTimes(1);

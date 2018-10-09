@@ -28,7 +28,9 @@ ShallowWrapper {
         undefined,
         <MetricsOptionsBar
           direction={0}
+          labelValues={Map {}}
           metricReporter="destination"
+          onLabelsFiltersChanged={[Function]}
           onOptionsChanged={[Function]}
           onRefresh={[Function]}
           onReporterChanged={[Function]}
@@ -64,7 +66,9 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "direction": 0,
+          "labelValues": Map {},
           "metricReporter": "destination",
+          "onLabelsFiltersChanged": [Function],
           "onOptionsChanged": [Function],
           "onRefresh": [Function],
           "onReporterChanged": [Function],
@@ -195,7 +199,9 @@ ShallowWrapper {
           undefined,
           <MetricsOptionsBar
             direction={0}
+            labelValues={Map {}}
             metricReporter="destination"
+            onLabelsFiltersChanged={[Function]}
             onOptionsChanged={[Function]}
             onRefresh={[Function]}
             onReporterChanged={[Function]}
@@ -231,7 +237,9 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "direction": 0,
+            "labelValues": Map {},
             "metricReporter": "destination",
+            "onLabelsFiltersChanged": [Function],
             "onOptionsChanged": [Function],
             "onRefresh": [Function],
             "onReporterChanged": [Function],
@@ -390,7 +398,9 @@ ShallowWrapper {
         undefined,
         <MetricsOptionsBar
           direction={0}
+          labelValues={Map {}}
           metricReporter="destination"
+          onLabelsFiltersChanged={[Function]}
           onOptionsChanged={[Function]}
           onRefresh={[Function]}
           onReporterChanged={[Function]}
@@ -426,7 +436,9 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "direction": 0,
+          "labelValues": Map {},
           "metricReporter": "destination",
+          "onLabelsFiltersChanged": [Function],
           "onOptionsChanged": [Function],
           "onRefresh": [Function],
           "onReporterChanged": [Function],
@@ -557,7 +569,9 @@ ShallowWrapper {
           undefined,
           <MetricsOptionsBar
             direction={0}
+            labelValues={Map {}}
             metricReporter="destination"
+            onLabelsFiltersChanged={[Function]}
             onOptionsChanged={[Function]}
             onRefresh={[Function]}
             onReporterChanged={[Function]}
@@ -593,7 +607,9 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "direction": 0,
+            "labelValues": Map {},
             "metricReporter": "destination",
+            "onLabelsFiltersChanged": [Function],
             "onOptionsChanged": [Function],
             "onRefresh": [Function],
             "onReporterChanged": [Function],
@@ -752,7 +768,9 @@ ShallowWrapper {
         undefined,
         <MetricsOptionsBar
           direction={0}
+          labelValues={Map {}}
           metricReporter="destination"
+          onLabelsFiltersChanged={[Function]}
           onOptionsChanged={[Function]}
           onRefresh={[Function]}
           onReporterChanged={[Function]}
@@ -788,7 +806,9 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "direction": 0,
+          "labelValues": Map {},
           "metricReporter": "destination",
+          "onLabelsFiltersChanged": [Function],
           "onOptionsChanged": [Function],
           "onRefresh": [Function],
           "onReporterChanged": [Function],
@@ -919,7 +939,9 @@ ShallowWrapper {
           undefined,
           <MetricsOptionsBar
             direction={0}
+            labelValues={Map {}}
             metricReporter="destination"
+            onLabelsFiltersChanged={[Function]}
             onOptionsChanged={[Function]}
             onRefresh={[Function]}
             onReporterChanged={[Function]}
@@ -955,7 +977,9 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "direction": 0,
+            "labelValues": Map {},
             "metricReporter": "destination",
+            "onLabelsFiltersChanged": [Function],
             "onOptionsChanged": [Function],
             "onRefresh": [Function],
             "onReporterChanged": [Function],
