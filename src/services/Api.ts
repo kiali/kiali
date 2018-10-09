@@ -204,7 +204,7 @@ export const getNamespaceAppHealth = (
     type: 'app'
   };
   if (durationSec) {
-    params.rateInterval = String(durationSec) + 's';
+    params.rateInterval = durationSec + 's';
   }
   return newRequest(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}, auth).then(response => {
     const ret: NamespaceAppHealth = {};
@@ -244,7 +244,7 @@ export const getNamespaceWorkloadHealth = (
     type: 'workload'
   };
   if (durationSec) {
-    params.rateInterval = String(durationSec) + 's';
+    params.rateInterval = durationSec + 's';
   }
   return newRequest(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}, auth).then(response => {
     const ret: NamespaceWorkloadHealth = {};
