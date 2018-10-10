@@ -356,6 +356,13 @@ server:
 in_cluster: (true\|false)
 ----
 
+|`READ_ONLY`
+|Tells if Kiali must run in read-only mode or not. This mode prevents any modification to a configuration, to Istio objects or other changes of any other kind. (default is `true`)
+[source,yaml]
+----
+read_only: (true\|false)
+----
+
 |`PROMETHEUS_SERVICE_URL`
 |The URL used to access and query the Prometheus Server. It must be accessible from Kiali pod. (default is `http://prometheus.istio-system:9090`)
 [source,yaml]

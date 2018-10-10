@@ -24,6 +24,7 @@ const (
 	EnvIstioIdentityDomain    = "ISTIO_IDENTITY_DOMAIN"
 	EnvIstioSidecarAnnotation = "ISTIO_SIDECAR_ANNOTATION"
 	EnvIstioUrlServiceVersion = "ISTIO_URL_SERVICE_VERSION"
+	EnvReadOnly               = "READ_ONLY"
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
@@ -126,6 +127,7 @@ type Config struct {
 	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
 	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
 	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
+	ReadOnly         bool              `yaml:"read_only,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -138,6 +140,7 @@ func NewConfig() (c *Config) {
 	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
 	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
+	c.ReadOnly = getDefaultBool(EnvReadOnly, false)
 
 	// Server configuration
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))

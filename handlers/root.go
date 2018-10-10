@@ -8,10 +8,10 @@ import (
 )
 
 func Root(w http.ResponseWriter, r *http.Request) {
-	getStatus(w, r)
+	GetStatus(w, r)
 }
 
-func getStatus(w http.ResponseWriter, r *http.Request) {
+func GetStatus(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSONIndent(w, http.StatusOK, status.Get())
 }
 
