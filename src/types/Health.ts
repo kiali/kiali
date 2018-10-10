@@ -353,4 +353,5 @@ export const healthNotAvailable = (): AppHealth => {
 };
 
 export type NamespaceAppHealth = { [app: string]: AppHealth };
+export type NamespaceServiceHealth = { [service: string]: ServiceHealth };
 export type NamespaceWorkloadHealth = { [workload: string]: WorkloadHealth };
