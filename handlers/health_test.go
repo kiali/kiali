@@ -1,7 +1,11 @@
 package handlers
 
 import (
+	"github.com/kiali/kiali/config"
 	"io/ioutil"
+	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/apps/v1beta2"
+	"k8s.io/api/core/v1"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,22 +15,51 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
-	"github.com/kiali/kiali/services/business"
+	osappsv1 "github.com/openshift/api/apps/v1"
+	batch_v1 "k8s.io/api/batch/v1"
+	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 )
 
 // TestNamespaceAppHealth is unit test (testing request handling, not the prometheus client behaviour)
 func TestNamespaceAppHealth(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
 	ts, k8s, prom := setupNamespaceHealthEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/health"
 
-	k8s.On("GetNamespaceAppsDetails", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
-	}).Return(k8s.FakeNamespaceApps(), nil)
+	}).Return(k8s.FakeServiceList(), nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]v1.Pod{}, nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]v1beta1.Deployment{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]v1beta2.ReplicaSet{}, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]v1.ReplicationController{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]v1beta2.StatefulSet{}, nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]osappsv1.DeploymentConfig{}, nil)
+	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]batch_v1.Job{}, nil)
+	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]batch_v1beta1.CronJob{}, nil)
 
 	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
@@ -43,7 +76,10 @@ func TestNamespaceAppHealth(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetNamespaceAppsDetails", 1)
+	k8s.AssertNumberOfCalls(t, "GetServices", 1)
+	k8s.AssertNumberOfCalls(t, "GetPods", 1)
+	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
+	k8s.AssertNumberOfCalls(t, "GetReplicaSets", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceHealth", 2)
 	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 1)
 }
@@ -62,15 +98,42 @@ func setupNamespaceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8S
 
 // TestAppHealth is unit test (testing request handling, not the prometheus client behaviour)
 func TestAppHealth(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
 	ts, k8s, prom := setupAppHealthEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/apps/reviews/health"
 
-	k8s.On("GetAppDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
-		assert.Equal(t, "reviews", args[1])
-	}).Return(k8s.FakeAppDetails(), nil)
+		assert.Equal(t, map[string]string{"app": "reviews"}, args[1])
+	}).Return([]v1.Service{k8s.FakeServiceList()[0]}, nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+		assert.Equal(t, "app=reviews", args[1])
+	}).Return([]v1.Pod{}, nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]v1beta1.Deployment{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]v1beta2.ReplicaSet{}, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]v1.ReplicationController{}, nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]osappsv1.DeploymentConfig{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]v1beta2.StatefulSet{}, nil)
+	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]batch_v1.Job{}, nil)
+	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+	}).Return([]batch_v1beta1.CronJob{}, nil)
 
 	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
@@ -87,7 +150,10 @@ func TestAppHealth(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	k8s.AssertNumberOfCalls(t, "GetAppDetails", 1)
+	k8s.AssertNumberOfCalls(t, "GetServices", 1)
+	k8s.AssertNumberOfCalls(t, "GetPods", 1)
+	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
+	k8s.AssertNumberOfCalls(t, "GetReplicaSets", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
 }
@@ -106,6 +172,8 @@ func setupAppHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClient
 
 // TestServiceHealth is unit test (testing request handling, not the prometheus client behaviour)
 func TestServiceHealth(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
 	ts, k8s, prom := setupServiceHealthEndpoint(t)
 	defer ts.Close()
 

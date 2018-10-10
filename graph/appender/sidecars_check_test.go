@@ -2,6 +2,7 @@ package appender
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 
-	"github.com/kiali/kiali/services/business"
+	"github.com/kiali/kiali/business"
 )
 
 func TestWorkloadSidecarsPasses(t *testing.T) {
@@ -22,7 +23,7 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 	k8s := kubetest.NewK8SClientMock()
 
 	k8s.On("GetDeployment", "testing", "workload-1").Return(buildFakeWorkloadDeployment(), nil)
-	k8s.On("GetPods", "testing", "wk=wk-1").Return(buildFakeWorkloadPods(), nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(buildFakeWorkloadPods(), nil)
 
 	trafficMap := buildWorkloadTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
@@ -41,7 +42,7 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	k8s := kubetest.NewK8SClientMock()
 
 	k8s.On("GetDeployment", "testing", "workload-1").Return(buildFakeWorkloadDeployment(), nil)
-	k8s.On("GetPods", "testing", "wk=wk-1").Return(buildFakeWorkloadPodsNoSidecar(), nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(buildFakeWorkloadPodsNoSidecar(), nil)
 
 	trafficMap := buildWorkloadTrafficMap()
 	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
@@ -154,6 +155,7 @@ func buildFakeWorkloadPods() []api_v1.Pod {
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Name:              "wk-1-asdf",
+				Labels:            map[string]string{"wk": "wk-1"},
 				CreationTimestamp: v1.NewTime(time.Date(2018, 8, 24, 14, 0, 0, 0, time.UTC)),
 				Annotations: map[string]string{
 					istioAnnotation: "{ \"containers\":[\"istio-proxy\"] }",

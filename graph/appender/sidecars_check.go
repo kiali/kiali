@@ -2,14 +2,11 @@ package appender
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/services/business"
-	"github.com/kiali/kiali/services/models"
-	"k8s.io/apimachinery/pkg/labels"
-
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 )
 
 type SidecarsCheckAppender struct {
@@ -85,12 +82,4 @@ func (a *SidecarsCheckAppender) getAppLabels(appLabel, app, versionLabel, versio
 		return fmt.Sprintf("%s=%s,%s=%s", appLabel, app, versionLabel, version)
 	}
 	return fmt.Sprintf("%s=%s", appLabel, app)
-}
-
-func (a *SidecarsCheckAppender) getWorkloadLabels(namespace, workload string, k8s kubernetes.IstioClientInterface) (string, error) {
-	deployment, err := k8s.GetDeployment(namespace, workload)
-	if err != nil {
-		return "", err
-	}
-	return labels.Set(deployment.Spec.Selector.MatchLabels).String(), nil
 }

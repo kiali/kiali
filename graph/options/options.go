@@ -12,9 +12,9 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/appender"
-	"github.com/kiali/kiali/services/business"
 )
 
 const (

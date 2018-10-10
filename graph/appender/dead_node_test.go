@@ -1,22 +1,46 @@
 package appender
 
 import (
+	"github.com/kiali/kiali/kubernetes"
+	"k8s.io/api/apps/v1beta2"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/services/business"
+	osappsv1 "github.com/openshift/api/apps/v1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"k8s.io/api/apps/v1beta1"
+	batch_v1 "k8s.io/api/batch/v1"
+	batch_v1beta1 "k8s.io/api/batch/v1beta1"
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func setupWorkloadService() business.WorkloadService {
 	k8s := kubetest.NewK8SClientMock()
+
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(
+		[]v1.Pod{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "testPodsWithTraffic-v1-1234",
+					Labels: map[string]string{"app": "testPodsWithTraffic", "version": "v1"},
+				},
+				Status: v1.PodStatus{
+					Message: "foo"},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "testPodsNoTraffic-v1-1234",
+					Labels: map[string]string{"app": "testPodsNoTraffic", "version": "v1"},
+				},
+				Status: v1.PodStatus{
+					Message: "foo"},
+			},
+		}, nil)
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testPodsWithTraffic-v1").Return(
 		&v1beta1.Deployment{
@@ -30,12 +54,6 @@ func setupWorkloadService() business.WorkloadService {
 					},
 				},
 			},
-		}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), "app=testPodsWithTraffic,version=v1").Return(
-		[]v1.Pod{v1.Pod{
-			Status: v1.PodStatus{
-				Message: "foo",
-			}},
 		}, nil)
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testPodsNoTraffic-v1").Return(
@@ -51,12 +69,6 @@ func setupWorkloadService() business.WorkloadService {
 				},
 			},
 		}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), "app=testPodsNoTraffic,version=v1").Return(
-		[]v1.Pod{v1.Pod{
-			Status: v1.PodStatus{
-				Message: "foo",
-			}},
-		}, nil)
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoPodsWithTraffic-v1").Return(
 		&v1beta1.Deployment{
@@ -71,8 +83,6 @@ func setupWorkloadService() business.WorkloadService {
 				},
 			},
 		}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), "app=testNoPodsWithTraffic,version=v1").Return(
-		[]v1.Pod{}, nil)
 
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoPodsNoTraffic-v1").Return(
 		&v1beta1.Deployment{
@@ -87,11 +97,22 @@ func setupWorkloadService() business.WorkloadService {
 				},
 			},
 		}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), "app=testNoPodsNoTraffic,version=v1").Return(
-		[]v1.Pod{}, nil)
 
-	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoDeploymentWithTraffic-v1").Return((*v1beta1.Deployment)(nil), nil)
-	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoDeploymentNoTraffic-v1").Return((*v1beta1.Deployment)(nil), nil)
+	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoDeploymentWithTraffic-v1").Return((*v1beta1.Deployment)(nil), kubernetes.NewNotFound("testNoDeploymentWithTraffic-v1", "test", "test"))
+	k8s.On("GetReplicaSet", mock.AnythingOfType("string"), "testNoDeploymentWithTraffic-v1").Return((*v1beta2.ReplicaSet)(nil), kubernetes.NewNotFound("testNoDeploymentWithTraffic-v1", "test", "test"))
+	k8s.On("GetReplicationController", mock.AnythingOfType("string"), "testNoDeploymentWithTraffic-v1").Return((*v1.ReplicationController)(nil), kubernetes.NewNotFound("testNoDeploymentWithTraffic-v1", "test", "test"))
+	k8s.On("GetStatefulSet", mock.AnythingOfType("string"), "testNoDeploymentWithTraffic-v1").Return((*v1beta2.StatefulSet)(nil), kubernetes.NewNotFound("testNoDeploymentWithTraffic-v1", "test", "test"))
+	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), "testNoDeploymentWithTraffic-v1").Return((*osappsv1.DeploymentConfig)(nil), kubernetes.NewNotFound("testNoDeploymentWithTraffic-v1", "test", "test"))
+	k8s.On("GetJob", mock.AnythingOfType("string"), mock.AnythingOfType("testNoDeploymentWithTraffic-v1")).Return((*batch_v1.Job)(nil), kubernetes.NewNotFound("testNoDeploymentWithTraffic-v1", "test", "test"))
+	k8s.On("GetCronJob", mock.AnythingOfType("string"), mock.AnythingOfType("testNoDeploymentWithTraffic-v1")).Return((*batch_v1beta1.CronJob)(nil), kubernetes.NewNotFound("testNoDeploymentWithTraffic-v1", "test", "test"))
+
+	k8s.On("GetDeployment", mock.AnythingOfType("string"), "testNoDeploymentNoTraffic-v1").Return((*v1beta1.Deployment)(nil), kubernetes.NewNotFound("testNoDeploymentNoTraffic-v1", "test", "test"))
+	k8s.On("GetReplicaSet", mock.AnythingOfType("string"), "testNoDeploymentNoTraffic-v1").Return((*v1beta2.ReplicaSet)(nil), kubernetes.NewNotFound("testNoDeploymentNoTraffic-v1", "test", "test"))
+	k8s.On("GetReplicationController", mock.AnythingOfType("string"), "testNoDeploymentNoTraffic-v1").Return((*v1.ReplicationController)(nil), kubernetes.NewNotFound("testNoDeploymentNoTraffic-v1", "test", "test"))
+	k8s.On("GetStatefulSet", mock.AnythingOfType("string"), "testNoDeploymentNoTraffic-v1").Return((*v1beta2.StatefulSet)(nil), kubernetes.NewNotFound("testNoDeploymentNoTraffic-v1", "test", "test"))
+	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), "testNoDeploymentNoTraffic-v1").Return((*osappsv1.DeploymentConfig)(nil), kubernetes.NewNotFound("testNoDeploymentNoTraffic-v1", "test", "test"))
+	k8s.On("GetJob", mock.AnythingOfType("string"), "testNoDeploymentNoTraffic-v1").Return((*batch_v1.Job)(nil), kubernetes.NewNotFound("testNoDeploymentNoTraffic-v1", "test", "test"))
+	k8s.On("GetCronJob", mock.AnythingOfType("string"), "testNoDeploymentNoTraffic-v1").Return((*batch_v1beta1.CronJob)(nil), kubernetes.NewNotFound("testNoDeploymentNoTraffic-v1", "test", "test"))
 
 	config.Set(config.NewConfig())
 

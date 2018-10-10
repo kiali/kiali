@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/cytoscape"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/services/models"
 	"github.com/kiali/kiali/status"
 )
 

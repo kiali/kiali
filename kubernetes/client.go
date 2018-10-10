@@ -6,6 +6,9 @@ import (
 	"os"
 
 	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/apps/v1beta2"
+	batch_v1 "k8s.io/api/batch/v1"
+	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,6 +18,7 @@ import (
 
 	kialiConfig "github.com/kiali/kiali/config"
 
+	osappsv1 "github.com/openshift/api/apps/v1"
 	osv1 "github.com/openshift/api/project/v1"
 )
 
@@ -34,10 +38,13 @@ var (
 
 // IstioClientInterface for mocks (only mocked function are necessary here)
 type IstioClientInterface interface {
-	GetAppDetails(namespace, app string) (AppDetails, error)
+	GetCronJob(namespace string, cronjobName string) (*batch_v1beta1.CronJob, error)
+	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
 	GetEndpoints(namespace string, serviceName string) (*v1.Endpoints, error)
 	GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error)
-	GetDeployments(namespace string, labelSelector string) ([]v1beta1.Deployment, error)
+	GetDeployments(namespace string) ([]v1beta1.Deployment, error)
+	GetDeploymentConfig(namespace string, deploymentconfigName string) (*osappsv1.DeploymentConfig, error)
+	GetDeploymentConfigs(namespace string) ([]osappsv1.DeploymentConfig, error)
 	GetDestinationRule(namespace string, destinationrule string) (IstioObject, error)
 	GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error)
 	GetGateway(namespace string, gateway string) (IstioObject, error)
@@ -45,14 +52,21 @@ type IstioClientInterface interface {
 	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
 	GetIstioRules(namespace string) (*IstioRules, error)
 	GetIstioRuleDetails(namespace string, istiorule string) (*IstioRuleDetails, error)
-	GetNamespaceAppsDetails(namespace string) (NamespaceApps, error)
+	GetJob(namespace string, jobName string) (*batch_v1.Job, error)
+	GetJobs(namespace string) ([]batch_v1.Job, error)
 	GetNamespaces() ([]v1.Namespace, error)
 	GetPods(namespace, labelSelector string) ([]v1.Pod, error)
-	GetProjects() (*osv1.ProjectList, error)
+	GetProjects() ([]osv1.Project, error)
+	GetReplicationController(namespace string, replicationcontrollerName string) (*v1.ReplicationController, error)
+	GetReplicationControllers(namespace string) ([]v1.ReplicationController, error)
+	GetReplicaSet(namespace string, replicasetName string) (*v1beta2.ReplicaSet, error)
+	GetReplicaSets(namespace string) ([]v1beta2.ReplicaSet, error)
 	GetService(namespace string, serviceName string) (*v1.Service, error)
 	GetServices(namespace string, selectorLabels map[string]string) ([]v1.Service, error)
 	GetServiceEntries(namespace string) ([]IstioObject, error)
 	GetServiceEntry(namespace string, serviceEntryName string) (IstioObject, error)
+	GetStatefulSet(namespace string, statefulsetName string) (*v1beta2.StatefulSet, error)
+	GetStatefulSets(namespace string) ([]v1beta2.StatefulSet, error)
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	GetQuotaSpec(namespace string, quotaSpecName string) (IstioObject, error)

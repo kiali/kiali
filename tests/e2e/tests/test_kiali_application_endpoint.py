@@ -46,7 +46,7 @@ def test_application_health_endpoint(kiali_client):
     assert 'outbound' in envoy
 
     assert 'requests' in app_health
-    assert 'deploymentStatuses' in app_health
+    assert 'workloadStatuses' in app_health
 
 def test_application_metrics_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
