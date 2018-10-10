@@ -1,14 +1,15 @@
 import * as React from 'react';
-import { Deployment, Validations } from '../../types/IstioObjects';
+import { Validations } from '../../types/IstioObjects';
 import { Row, Col, Button, Icon, TabContainer, TabContent, TabPane, Nav, NavItem } from 'patternfly-react';
 import WorkloadDescription from './WorkloadInfo/WorkloadDescription';
 import WorkloadPods from './WorkloadInfo/WorkloadPods';
 import WorkloadServices from './WorkloadInfo/WorkloadServices';
 import { severityToIconName, validationToSeverity } from '../../types/ServiceInfo';
 import { WorkloadHealth } from '../../types/Health';
+import { Workload } from '../../types/Workload';
 
 type WorkloadInfoProps = {
-  workload: Deployment;
+  workload: Workload;
   validations: Validations;
   namespace: string;
   onRefresh: () => void;

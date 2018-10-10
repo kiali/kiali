@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Badge, ListViewItem, ListViewIcon } from 'patternfly-react';
 import { IstioLogo } from '../../config';
-import { WorkloadIcons, WorkloadListItem, worloadLink } from '../../types/Workload';
+import { WorkloadIcon, WorkloadListItem, worloadLink } from '../../types/Workload';
 import { PfColors } from '../../components/Pf/PfColors';
 import { Link } from 'react-router-dom';
 import { WorkloadHealth } from '../../types/Health';
@@ -61,7 +61,7 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
   render() {
     let namespace = this.props.workloadItem.namespace;
     let object = this.props.workloadItem.workload;
-    let iconName = WorkloadIcons[object.type];
+    let iconName = WorkloadIcon;
     let iconType = 'pf';
     const heading = (
       <div className="ServiceList-Heading">

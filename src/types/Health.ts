@@ -25,7 +25,7 @@ export interface EnvoyRatio {
   total: number;
 }
 
-export interface DeploymentStatus {
+export interface WorkloadStatus {
   name: string;
   replicas: number;
   available: number;
@@ -202,11 +202,11 @@ export class ServiceHealth extends Health {
 
 export class AppHealth extends Health {
   public static fromJson = (json: any, rateInterval: number) =>
-    new AppHealth(json.envoy, json.deploymentStatuses, json.requests, rateInterval);
+    new AppHealth(json.envoy, json.workloadStatuses, json.requests, rateInterval);
 
   private static computeItems(
     envoy: EnvoyHealth[],
-    deploymentStatuses: DeploymentStatus[],
+    workloadStatuses: WorkloadStatus[],
     requests: RequestHealth,
     rateInterval: number
   ): HealthItem[] {
@@ -214,7 +214,7 @@ export class AppHealth extends Health {
     {
       // Pods
       let countInactive = 0;
-      const children: HealthSubItem[] = deploymentStatuses.map(d => {
+      const children: HealthSubItem[] = workloadStatuses.map(d => {
         const status = ratioCheck(d.available, d.replicas);
         if (status === NA) {
           countInactive++;
@@ -224,22 +224,22 @@ export class AppHealth extends Health {
           status: status
         };
       });
-      const deplStatus = children.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
+      const workloadStatus = children.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
       const item: HealthItem = {
-        title: 'Deployments Status',
-        status: deplStatus,
+        title: 'Workload Status',
+        status: workloadStatus,
         children: children
       };
-      if (countInactive > 0 && countInactive === deploymentStatuses.length) {
+      if (countInactive > 0 && countInactive === workloadStatuses.length) {
         // No active deployment => special case for failure
-        item.report = 'No active deployment!';
+        item.report = 'No active workload!';
         item.status = FAILURE;
-      } else if (deplStatus === FAILURE || deplStatus === DEGRADED) {
-        item.report = 'Pod deployment ' + deplStatus.name.toLowerCase();
+      } else if (workloadStatus === FAILURE || workloadStatus === DEGRADED) {
+        item.report = 'Pod workload ' + workloadStatus.name.toLowerCase();
       } else if (countInactive === 1) {
-        item.report = 'One inactive deployment';
+        item.report = 'One inactive workload';
       } else if (countInactive > 1) {
-        item.report = `${countInactive} inactive deployments`;
+        item.report = `${countInactive} inactive workloads`;
       }
       items.push(item);
     }
@@ -284,34 +284,34 @@ export class AppHealth extends Health {
 
   constructor(
     public envoy: EnvoyHealth[],
-    public deploymentStatuses: DeploymentStatus[],
+    public workloadStatuses: WorkloadStatus[],
     public requests: RequestHealth,
     public rateInterval: number
   ) {
-    super(AppHealth.computeItems(envoy, deploymentStatuses, requests, rateInterval));
+    super(AppHealth.computeItems(envoy, workloadStatuses, requests, rateInterval));
   }
 }
 
 export class WorkloadHealth extends Health {
   public static fromJson = (json: any, rateInterval: number) =>
-    new WorkloadHealth(json.deploymentStatus, json.requests, rateInterval);
+    new WorkloadHealth(json.workloadStatus, json.requests, rateInterval);
 
   private static computeItems(
-    deploymentStatus: DeploymentStatus,
+    workloadStatus: WorkloadStatus,
     requests: RequestHealth,
     rateInterval: number
   ): HealthItem[] {
     const items: HealthItem[] = [];
     {
       // Pods
-      const deplStatus = ratioCheck(deploymentStatus.available, deploymentStatus.replicas);
+      const workStatus = ratioCheck(workloadStatus.available, workloadStatus.replicas);
       const item: HealthItem = {
-        title: 'Deployments Status',
-        status: deplStatus,
-        text: String(deploymentStatus.available + ' / ' + deploymentStatus.replicas)
+        title: 'Workloads Status',
+        status: workStatus,
+        text: String(workloadStatus.available + ' / ' + workloadStatus.replicas)
       };
-      if (deplStatus === FAILURE || deplStatus === DEGRADED) {
-        item.report = 'Pod deployment ' + deplStatus.name.toLowerCase();
+      if (workStatus === FAILURE || workStatus === DEGRADED) {
+        item.report = 'Pod workload ' + workStatus.name.toLowerCase();
       }
       items.push(item);
     }
@@ -332,8 +332,8 @@ export class WorkloadHealth extends Health {
     return items;
   }
 
-  constructor(public deploymentStatus: DeploymentStatus, public requests: RequestHealth, public rateInterval: number) {
-    super(WorkloadHealth.computeItems(deploymentStatus, requests, rateInterval));
+  constructor(public workloadStatus: WorkloadStatus, public requests: RequestHealth, public rateInterval: number) {
+    super(WorkloadHealth.computeItems(workloadStatus, requests, rateInterval));
   }
 }
 

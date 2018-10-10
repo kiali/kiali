@@ -16,6 +16,7 @@ interface PodsGroup {
   istioContainers?: ContainerInfo[];
   istioInitContainers?: ContainerInfo[];
   numberOfPods: number;
+  status: string;
 }
 
 type WorkloadPodsProps = {
@@ -33,7 +34,7 @@ class WorkloadPods extends React.Component<WorkloadPodsProps, WorkloadPodsState>
   }
   static groupKey = (pod: Pod): string => {
     return JSON.stringify({
-      cb: pod.createdBy.map(ref => ref.name).join(','),
+      cb: pod.createdBy ? pod.createdBy.map(ref => ref.name).join(',') : '',
       ic: pod.istioContainers ? pod.istioContainers.map(ctnr => ctnr.name + ctnr.image).join(',') : '',
       iic: pod.istioInitContainers ? pod.istioInitContainers.map(ctnr => ctnr.name + ctnr.image).join(',') : ''
     });
@@ -96,7 +97,8 @@ class WorkloadPods extends React.Component<WorkloadPodsProps, WorkloadPodsState>
           createdBy: pod.createdBy,
           istioContainers: pod.istioContainers,
           istioInitContainers: pod.istioInitContainers,
-          numberOfPods: 1
+          numberOfPods: 1,
+          status: pod.status
         });
       }
     });
@@ -232,6 +234,16 @@ class WorkloadPods extends React.Component<WorkloadPodsProps, WorkloadPodsState>
           cell: {
             formatters: [this.cellFormat]
           }
+        },
+        {
+          property: 'podStatus',
+          header: {
+            label: 'Phase',
+            formatters: [this.headerFormat]
+          },
+          cell: {
+            formatters: [this.cellFormat]
+          }
         }
       ]
     };
@@ -246,12 +258,15 @@ class WorkloadPods extends React.Component<WorkloadPodsProps, WorkloadPodsState>
         name: this.renderName(group, vsIdx),
         createdAt: this.renderCreated(group),
         createdBy:
-          group.createdBy.length > 0 ? group.createdBy.map(ref => ref.name + ' (' + ref.kind + ')').join(', ') : '',
+          group.createdBy && group.createdBy.length > 0
+            ? group.createdBy.map(ref => ref.name + ' (' + ref.kind + ')').join(', ')
+            : '',
         labels: this.renderLabels(group.commonLabels, vsIdx),
         istioInitContainers: group.istioInitContainers
           ? group.istioInitContainers.map(c => `${c.image}`).join(', ')
           : '',
-        istioContainers: group.istioContainers ? group.istioContainers.map(c => `${c.image}`).join(', ') : ''
+        istioContainers: group.istioContainers ? group.istioContainers.map(c => `${c.image}`).join(', ') : '',
+        podStatus: group.status
       };
 
       return generateRows;

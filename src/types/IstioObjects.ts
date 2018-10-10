@@ -35,17 +35,6 @@ export interface Port {
   name: string;
 }
 
-export interface Autoscaler {
-  name: string;
-  labels?: { [key: string]: string };
-  createdAt: string;
-  minReplicas: number;
-  maxReplicas: number;
-  targetCPUUtilizationPercentage: number;
-  currentReplicas?: number;
-  desiredReplicas?: number;
-}
-
 export interface Pod {
   name: string;
   labels?: { [key: string]: string };
@@ -53,30 +42,18 @@ export interface Pod {
   createdBy: Reference[];
   istioContainers?: ContainerInfo[];
   istioInitContainers?: ContainerInfo[];
+  status: string;
+  appLabel: boolean;
+  versionLabel: boolean;
 }
 
 export interface Service {
-  labels?: { [key: string]: string };
-  type: string;
   name: string;
   createdAt: string;
-  namespace: Namespace;
   resourceVersion: string;
+  namespace: Namespace;
+  labels?: { [key: string]: string };
+  type: string;
   ip: string;
   ports?: Port[];
-}
-
-export interface Deployment {
-  name: string;
-  type: string;
-  templateAnnotations?: { [key: string]: string };
-  labels?: { [key: string]: string };
-  createdAt: string;
-  resourceVersion: string;
-  replicas: number;
-  availableReplicas: number;
-  unavailableReplicas: number;
-  autoscaler: Autoscaler;
-  pods?: Pod[];
-  services?: Service[];
 }

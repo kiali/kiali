@@ -8,6 +8,7 @@ ShallowWrapper {
     pods={
       Array [
         Object {
+          "appLabel": false,
           "createdAt": "2018-03-14T10:17:52Z",
           "createdBy": Array [],
           "labels": Object {
@@ -15,8 +16,11 @@ ShallowWrapper {
             "version": "v2",
           },
           "name": "reviews-v2-1234",
+          "status": "",
+          "versionLabel": false,
         },
         Object {
+          "appLabel": false,
           "createdAt": "2018-03-14T10:17:52Z",
           "createdBy": Array [],
           "labels": Object {
@@ -24,8 +28,11 @@ ShallowWrapper {
             "version": "v3",
           },
           "name": "reviews-v3-1234",
+          "status": "",
+          "versionLabel": false,
         },
         Object {
+          "appLabel": false,
           "createdAt": "2018-03-14T10:17:52Z",
           "createdBy": Array [],
           "labels": Object {
@@ -33,6 +40,8 @@ ShallowWrapper {
             "version": "v1",
           },
           "name": "reviews-v1-1234",
+          "status": "",
+          "versionLabel": false,
         },
       ]
     }

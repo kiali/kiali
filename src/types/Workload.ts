@@ -1,45 +1,58 @@
 import Namespace from './Namespace';
 import { WorkloadHealth } from './Health';
+import { Pod, Service } from './IstioObjects';
 
 export interface WorkloadId {
   namespace: string;
   workload: string;
 }
 
-interface Autoscaler {
-  name: string;
-  labels: { [key: string]: string[] };
-  createdAt: Date;
-  minReplicas: Number;
-  maxReplicas: Number;
-  targetCPUUtilizationPercentage: Number;
-  currentReplicas: Number;
-  desiredReplicas: Number;
-}
-
-export interface Deployment {
+export interface Workload {
   name: string;
   type: string;
-  templateAnnotations: { [key: string]: string[] };
-  labels: { [key: string]: string[] };
-  createdAt: Date;
+  createdAt: string;
   resourceVersion: string;
+  istioSidecar: boolean;
+  labels: { [key: string]: string };
+  appLabel: boolean;
+  versionLabel: boolean;
   replicas: Number;
   availableReplicas: Number;
-  unavailableReplicas: Number;
-  autoscaler: Autoscaler;
+  pods: Pod[];
+  services: Service[];
 }
+
+export const emptyWorkload: Workload = {
+  name: '',
+  type: '',
+  createdAt: '',
+  resourceVersion: '',
+  istioSidecar: false,
+  labels: {},
+  appLabel: false,
+  versionLabel: false,
+  replicas: 0,
+  availableReplicas: 0,
+  pods: [],
+  services: []
+};
 
 export const worloadLink = (ns: string, name: string) => {
   return `/namespaces/${ns}/workloads/${name}`;
 };
 
-export const WorkloadIcons = {
-  Deployment: 'process-automation'
-};
+export const WorkloadIcon = 'bundle';
 
 export const WorkloadType = {
-  Deployment: 'Deployment'
+  CronJob: 'CronJob',
+  DaemonSet: 'DaemonSet',
+  Deployment: 'Deployment',
+  DeploymentConfig: 'DeploymentConfig',
+  Job: 'Job',
+  Pod: 'Pod',
+  ReplicaSet: 'ReplicaSet',
+  ReplicationController: 'ReplicationController',
+  StatefulSet: 'StatefulSet'
 };
 
 export interface WorkloadOverview {

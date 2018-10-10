@@ -4,7 +4,7 @@ import PfInfoCard from '../../../components/Pf/PfInfoCard';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { AppHealth } from '../../../types/Health';
 import { App, AppWorkload } from '../../../types/App';
-import { WorkloadIcons } from '../../../types/Workload';
+import { WorkloadIcon } from '../../../types/Workload';
 import { IstioLogo } from '../../../config';
 import { Link } from 'react-router-dom';
 
@@ -52,7 +52,7 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
     /*
       Not sure if we need a common icon per Workload instead of an icon per type of Workload
      */
-    let iconName = WorkloadIcons.Deployment;
+    let iconName = WorkloadIcon;
     let iconType = 'pf';
     const heading = (
       <div className="ServiceList-Heading">
