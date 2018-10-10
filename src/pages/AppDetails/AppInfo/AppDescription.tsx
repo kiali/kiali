@@ -5,8 +5,8 @@ import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthI
 import { AppHealth } from '../../../types/Health';
 import { App, AppWorkload } from '../../../types/App';
 import { WorkloadIcon } from '../../../types/Workload';
-import { IstioLogo } from '../../../config';
 import { Link } from 'react-router-dom';
+import { IstioLogo } from '../../../logos';
 
 type AppDescriptionProps = {
   app: App;

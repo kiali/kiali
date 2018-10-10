@@ -75,9 +75,3 @@ const conf = {
 export const config = () => {
   return deepFreeze(conf) as typeof conf;
 };
-
-/** Istio logo */
-export const IstioLogo = require('./assets/img/istio-logo.svg');
-
-/** Kiali logo */
-export const KialiLogo = require('./assets/img/logo-alt.svg');
