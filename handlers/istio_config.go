@@ -121,6 +121,37 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, istioConfigDetails)
 }
 
+func IstioConfigDelete(w http.ResponseWriter, r* http.Request) {
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	objectType := params["object_type"]
+	object := params["object"]
+
+	if !checkObjectType(objectType) {
+		RespondWithError(w, http.StatusBadRequest, "Object type not found: "+objectType)
+		return
+	}
+
+	// Get business layer
+	business, err := business.Get()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+
+	err = business.IstioConfig.DeleteIstioConfigDetail(namespace,objectType,object)
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w,http.StatusInternalServerError, err.Error())
+	} else {
+		RespondWithJSON(w, http.StatusOK, "Deleted")
+	}
+	return
+
+
+}
+
 func IstioConfigValidations(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]

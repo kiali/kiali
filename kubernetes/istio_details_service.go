@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 // GetIstioDetails returns Istio details for a given namespace,
@@ -43,6 +44,15 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 	}
 
 	return &istioDetails, nil
+}
+
+func (in *IstioClient) DeleteIstioObject(namespace string, objectType string, objectName string) (error) {
+	log.Infof("DeleteIstioObject input: %s %s %s", namespace, objectType, objectName)
+	_, err := in.istioNetworkingApi.Delete().Namespace(namespace).Resource(objectType).Name(objectName).Do().Get()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetVirtualServices return all VirtualServices for a given namespace.
