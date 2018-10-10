@@ -115,7 +115,7 @@ func addError(validations models.IstioValidations, destinationRuleNames []string
 	for _, destinationRuleName := range destinationRuleNames {
 		key := models.IstioValidationKey{Name: destinationRuleName, ObjectType: DestinationRulesCheckerType}
 		checks := models.BuildCheck("More than one DestinationRules for same host subset combination",
-			"warning", "spec/hosts")
+			"warning", "spec/host")
 		rrValidation := &models.IstioValidation{
 			Name:       destinationRuleName,
 			ObjectType: DestinationRulesCheckerType,
