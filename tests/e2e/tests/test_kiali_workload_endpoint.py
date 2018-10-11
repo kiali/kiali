@@ -4,7 +4,7 @@ import tests.conftest as conftest
 WORKLOAD_TO_VALIDATE = 'details-v1'
 WORKLOAD_TYPE = 'Deployment'
 
-def test_workload_list_endpoint(kiali_client):
+def _test_workload_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     workload_list = kiali_client.workload_list(namespace=bookinfo_namespace)
@@ -16,7 +16,7 @@ def test_workload_list_endpoint(kiali_client):
       assert workload.get('appLabel') == True
       assert workload.get('versionLabel') == True
 
-def test_workload_details(kiali_client):
+def _test_workload_details(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     workload = kiali_client.workload_details(namespace=bookinfo_namespace, workload=WORKLOAD_TO_VALIDATE)
@@ -53,7 +53,7 @@ def test_workload_metrics(kiali_client):
       assert 'response_size_in' in histograms
       assert 'response_size_out' in histograms
 
-def test_workload_health(kiali_client):
+def _test_workload_health(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     workload = kiali_client.workload_health(namespace=bookinfo_namespace, workload=WORKLOAD_TO_VALIDATE)
@@ -61,7 +61,7 @@ def test_workload_health(kiali_client):
     assert WORKLOAD_TO_VALIDATE in workload.get('deploymentStatus').get('name')
     assert 'requests' in workload
 
-def test_workload_istio_validations(kiali_client):
+def _test_workload_istio_validations(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     workload = kiali_client.workload_istio_validations(namespace=bookinfo_namespace, workload=WORKLOAD_TO_VALIDATE)

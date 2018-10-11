@@ -168,7 +168,7 @@ def test_service_health_endpoint(kiali_client):
 
     assert 'requests' in service_health
 
-def test_service_validations_endpoint(kiali_client):
+def _test_service_validations_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     service_validations = kiali_client.service_validations(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)

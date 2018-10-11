@@ -7,6 +7,6 @@ class command_exec():
     return add_command_result.__contains__("created") or add_command_result.__contains__("configured")
 
   def oc_delete(yaml_file, namespace):
-    delete_command_text = "oc delete -n " + namespace + " -f " + os.path.abspath(os.path.realpath(yaml_file))
+    delete_command_text = "oc delete -n " + namespace + " -f " + os.path.abspath(os.path.realpath(yaml_file) + " 2> /dev/null")
     delete_command_result = os.popen(delete_command_text).read()
     return delete_command_result.__contains__("deleted")
