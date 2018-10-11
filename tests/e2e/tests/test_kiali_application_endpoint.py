@@ -5,7 +5,7 @@ APPLICATION_TO_VALIDATE = 'productpage'
 
 PARAMS = {'graphType': 'versionedApp', 'duration': '60s'}
 
-def test_application_list_endpoint(kiali_client):
+def _test_application_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     app_list = kiali_client.app_list(namespace=bookinfo_namespace)
