@@ -9,7 +9,14 @@ import { NamespaceValidations, Validations } from '../types/IstioObjects';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
 import JaegerInfo from '../types/JaegerInfo';
 import GrafanaInfo from '../types/GrafanaInfo';
-import { AppHealth, ServiceHealth, WorkloadHealth, NamespaceAppHealth, NamespaceWorkloadHealth } from '../types/Health';
+import {
+  AppHealth,
+  ServiceHealth,
+  WorkloadHealth,
+  NamespaceAppHealth,
+  NamespaceServiceHealth,
+  NamespaceWorkloadHealth
+} from '../types/Health';
 import { ServiceList } from '../types/ServiceList';
 import { AppList } from '../types/AppList';
 import { App } from '../types/App';
@@ -189,6 +196,26 @@ export const getNamespaceAppHealth = (
     const ret: NamespaceAppHealth = {};
     Object.keys(response.data).forEach(k => {
       ret[k] = AppHealth.fromJson(response.data[k], durationSec);
+    });
+    return ret;
+  });
+};
+
+export const getNamespaceServiceHealth = (
+  auth: string,
+  namespace: String,
+  durationSec: number
+): Promise<NamespaceServiceHealth> => {
+  const params: any = {
+    type: 'service'
+  };
+  if (durationSec) {
+    params.rateInterval = String(durationSec) + 's';
+  }
+  return newRequest('get', `api/namespaces/${namespace}/health`, params, {}, auth).then(response => {
+    const ret: NamespaceServiceHealth = {};
+    Object.keys(response.data).forEach(k => {
+      ret[k] = ServiceHealth.fromJson(response.data[k], durationSec);
     });
     return ret;
   });

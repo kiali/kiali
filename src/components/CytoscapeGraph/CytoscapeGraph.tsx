@@ -28,7 +28,7 @@ import {
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import * as H from '../../types/Health';
 import { authentication } from '../../utils/Authentication';
-import { NamespaceAppHealth, NamespaceWorkloadHealth } from '../../types/Health';
+import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
 
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 
@@ -544,38 +544,53 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     const duration = this.props.graphDuration.value;
     // Keep a map of namespace x promises in order not to fetch several times the same data per namespace
     const appHealthPerNamespace = new Map<String, Promise<NamespaceAppHealth>>();
-    const wkldHealthPerNamespace = new Map<String, Promise<NamespaceWorkloadHealth>>();
+    const serviceHealthPerNamespace = new Map<String, Promise<NamespaceServiceHealth>>();
+    const workloadHealthPerNamespace = new Map<String, Promise<NamespaceWorkloadHealth>>();
     // Asynchronously fetch health
     cy.nodes().forEach(ele => {
+      const inaccessible = ele.data('isInaccessible');
+      if (inaccessible) {
+        return;
+      }
       const namespace = ele.data('namespace');
       const nodeType = ele.data('nodeType');
-      const isInAppBox = nodeType === NodeType.APP && ele.data('parent');
-      const inaccessible = ele.data('isInaccessible');
-      if (!inaccessible) {
-        if (nodeType === NodeType.WORKLOAD || isInAppBox) {
-          const workload = ele.data('workload');
-          // Workload-based health
-          let promise = wkldHealthPerNamespace.get(namespace);
-          if (!promise) {
-            promise = API.getNamespaceWorkloadHealth(authentication(), namespace, duration);
-            wkldHealthPerNamespace.set(namespace, promise);
-          }
-          this.updateNodeHealth(ele, promise, workload);
-        } else if (nodeType === NodeType.APP) {
-          const app = ele.data('app');
-          // App-based health
-          let promise = appHealthPerNamespace.get(namespace);
-          if (!promise) {
-            promise = API.getNamespaceAppHealth(authentication(), namespace, duration);
-            appHealthPerNamespace.set(namespace, promise);
-          }
-          this.updateNodeHealth(ele, promise, app);
+      const workload = ele.data('workload');
+      const workloadOk = workload && workload !== '' && workload !== 'unknown';
+      // use workload health when workload is set and valid (workload nodes or versionApp nodes)
+      const useWorkloadHealth = nodeType === NodeType.WORKLOAD || (nodeType === NodeType.APP && workloadOk);
+
+      if (useWorkloadHealth) {
+        let promise = workloadHealthPerNamespace.get(namespace);
+        if (!promise) {
+          promise = API.getNamespaceWorkloadHealth(authentication(), namespace, duration);
+          workloadHealthPerNamespace.set(namespace, promise);
         }
+        this.updateNodeHealth(ele, promise, workload);
+      } else if (nodeType === NodeType.APP) {
+        const app = ele.data('app');
+        let promise = appHealthPerNamespace.get(namespace);
+        if (!promise) {
+          promise = API.getNamespaceAppHealth(authentication(), namespace, duration);
+          appHealthPerNamespace.set(namespace, promise);
+        }
+        this.updateNodeHealth(ele, promise, app);
+      } else if (nodeType === NodeType.SERVICE) {
+        const service = ele.data('service');
+        let promise = serviceHealthPerNamespace.get(namespace);
+        if (!promise) {
+          promise = API.getNamespaceServiceHealth(authentication(), namespace, duration);
+          serviceHealthPerNamespace.set(namespace, promise);
+        }
+        this.updateNodeHealth(ele, promise, service);
       }
     });
   }
 
-  private updateNodeHealth(ele: any, promise: Promise<H.NamespaceAppHealth | H.NamespaceWorkloadHealth>, key: string) {
+  private updateNodeHealth(
+    ele: any,
+    promise: Promise<H.NamespaceAppHealth | H.NamespaceServiceHealth | H.NamespaceWorkloadHealth>,
+    key: string
+  ) {
     ele.data('healthPromise', promise.then(nsHealth => nsHealth[key]));
     promise
       .then(nsHealth => {
