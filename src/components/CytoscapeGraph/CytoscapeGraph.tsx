@@ -443,32 +443,50 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     const nodeType = target.data('nodeType');
-    switch (nodeType) {
-      case NodeType.APP:
-      case NodeType.SERVICE:
-      case NodeType.WORKLOAD:
-        const node: NodeParamsType = {
-          nodeType: nodeType,
-          workload: event.summaryTarget.data('workload'),
-          app: event.summaryTarget.data('app'),
-          version: targetType === 'group' ? '' : event.summaryTarget.data('version'),
-          service: event.summaryTarget.data('service')
-        };
-        store.dispatch(GraphActions.changed());
-        this.context.router.history.push(
-          makeNodeGraphUrlFromParams(node, {
-            namespace: { name: event.summaryTarget.data('namespace') },
-            graphLayout: this.props.graphLayout,
-            graphDuration: this.props.graphDuration,
-            edgeLabelMode: this.props.edgeLabelMode,
-            graphType: this.props.graphType,
-            injectServiceNodes: this.props.injectServiceNodes
-          })
-        );
-        break;
-      default:
-        return;
+    const workload = target.data('workload');
+    const app = target.data('app');
+    const version = targetType === 'group' ? undefined : event.summaryTarget.data('version');
+    const service = target.data('service');
+    const targetNode: NodeParamsType = {
+      nodeType: nodeType,
+      workload: workload,
+      app: app,
+      version: version,
+      service: service
+    };
+
+    let sameNode = false;
+    if (this.props.node) {
+      sameNode = this.props.node && this.props.node.nodeType === nodeType;
+      switch (nodeType) {
+        case NodeType.APP:
+          sameNode = sameNode && this.props.node.app === app;
+          sameNode = sameNode && this.props.node.version === version;
+          break;
+        case NodeType.SERVICE:
+          sameNode = sameNode && this.props.node.service === service;
+          break;
+        case NodeType.WORKLOAD:
+          sameNode = sameNode && this.props.node.workload === workload;
+          break;
+        default:
+          sameNode = true; // don't navigate to unsupported node type
+      }
     }
+    if (sameNode) {
+      return;
+    }
+    store.dispatch(GraphActions.changed());
+    this.context.router.history.push(
+      makeNodeGraphUrlFromParams(targetNode, {
+        namespace: { name: event.summaryTarget.data('namespace') },
+        graphLayout: this.props.graphLayout,
+        graphDuration: this.props.graphDuration,
+        edgeLabelMode: this.props.edgeLabelMode,
+        graphType: this.props.graphType,
+        injectServiceNodes: this.props.injectServiceNodes
+      })
+    );
   };
 
   private handleTap = (event: CytoscapeClickEvent) => {
