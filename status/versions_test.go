@@ -69,6 +69,24 @@ func TestParseIstioRawVersion(t *testing.T) {
 			supported:  false,
 		},
 		{
+			rawVersion: "root@f72e3d3ef3c2-docker.io/istio-release-1.0-20180927-21-10-deadbeef-Clean",
+			name:       "Istio Snapshot",
+			version:    "1.0-20180927",
+			supported:  true,
+		},
+		{
+			rawVersion: "root@f72e3d3ef3c2-docker.io/istio-release-11.12-20180927-21-10-deadbeef-Clean",
+			name:       "Istio Snapshot",
+			version:    "11.12-20180927",
+			supported:  true,
+		},
+		{
+			rawVersion: "root@f72e3d3ef3c2-docker.io/istio-release-0.11-20180927-21-10-deadbeef-Clean",
+			name:       "Istio Snapshot",
+			version:    "0.11-20180927",
+			supported:  false,
+		},
+		{
 			rawVersion: "some-unknown-version-string",
 			name:       "Unknown Istio Implementation",
 			version:    "some-unknown-version-string",
