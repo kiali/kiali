@@ -40,13 +40,14 @@ class Navigation extends React.Component<PropsType> {
     this.props.checkCredentials();
   }
 
-  componentDidMount() {
-    // Change layout-pf layout-pf-fixed by
-    if (this.props.authenticated) {
-      document.documentElement.className = 'layout-pf layout-pf-fixed';
-    } else {
-      document.documentElement.className = 'login-pf';
+  setDocLayout = () => {
+    if (document.documentElement) {
+      document.documentElement.className = this.props.authenticated ? 'layout-pf layout-pf-fixed' : 'login-pf';
     }
+  };
+
+  componentDidMount() {
+    this.setDocLayout();
   }
 
   setControlledState = event => {
@@ -102,7 +103,7 @@ class Navigation extends React.Component<PropsType> {
 
   render() {
     store.subscribe(() => {
-      document.documentElement.className = this.props.authenticated ? 'layout-pf layout-pf-fixed' : 'login-pf';
+      this.setDocLayout();
     });
     return this.props.authenticated ? (
       <>

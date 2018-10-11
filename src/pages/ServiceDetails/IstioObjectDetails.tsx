@@ -128,7 +128,7 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
         </TabPane>
       );
     }
-    return;
+    return null;
   }
 
   renderTabNav() {

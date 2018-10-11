@@ -35,12 +35,15 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
   }
 
   componentDidMount() {
-    document.documentElement.className = 'login-pf';
+    const el = document.documentElement;
+    if (el) {
+      el.className = 'login-pf';
+    }
   }
 
   handleChange = (e: any) => {
     const { name, value } = e.target;
-    this.setState({ [name]: value });
+    this.setState({ [name]: value } as Pick<LoginState, keyof LoginState>);
   };
 
   handleSubmit = (e: any) => {

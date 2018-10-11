@@ -21,7 +21,7 @@ export default class MessageCenterTrigger extends React.PureComponent<PropsType,
 
   private renderSystemErrorBadge = () => {
     if (this.props.systemErrorsCount === 0) {
-      return;
+      return null;
     }
 
     return (

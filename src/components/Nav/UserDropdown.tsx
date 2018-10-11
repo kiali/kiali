@@ -66,7 +66,10 @@ class UserDropdown extends React.Component<UserProps, UserState> {
 
   handleLogout() {
     this.props.logout();
-    document.documentElement.className = 'login-pf';
+    const el = document.documentElement;
+    if (el) {
+      el.className = 'login-pf';
+    }
   }
 
   extendSession = () => {
