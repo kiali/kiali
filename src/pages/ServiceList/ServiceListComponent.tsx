@@ -16,7 +16,6 @@ import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { ActiveFilter } from '../../types/Filters';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
-import { IstioLogo } from '../../config';
 import { authentication } from '../../utils/Authentication';
 import { CancelablePromise, makeCancelablePromise, removeDuplicatesArray } from '../../utils/Common';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
@@ -28,6 +27,7 @@ import './ServiceListComponent.css';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
+import { IstioLogo } from '../../logos';
 
 interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {
   rateInterval: number;

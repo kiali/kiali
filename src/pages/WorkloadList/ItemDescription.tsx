@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Badge, ListViewItem, ListViewIcon } from 'patternfly-react';
-import { IstioLogo } from '../../config';
+import { IstioLogo } from '../../logos';
 import { WorkloadIcon, WorkloadListItem, worloadLink } from '../../types/Workload';
 import { PfColors } from '../../components/Pf/PfColors';
 import { Link } from 'react-router-dom';

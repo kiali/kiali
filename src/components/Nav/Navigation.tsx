@@ -15,7 +15,7 @@ import { store } from '../../store/ConfigStore';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 import * as API from '../../services/Api';
 import { authentication } from '../../utils/Authentication';
-import { KialiLogo } from '../../config';
+import { KialiLogo } from '../../logos';
 
 export const istioConfigTitle = 'Istio Config';
 export const servicesTitle = 'Services';

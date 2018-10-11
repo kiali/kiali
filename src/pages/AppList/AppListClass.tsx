@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { ListViewIcon, ListViewItem } from 'patternfly-react';
-import { IstioLogo } from '../../config';
 import { PfColors } from '../../components/Pf/PfColors';
 import { AppList, AppListItem } from '../../types/AppList';
 import * as API from '../../services/Api';
 import { authentication } from '../../utils/Authentication';
 import ItemDescription from './ItemDescription';
+import { IstioLogo } from '../../logos';
 
 export namespace AppListClass {
   export const getAppItems = (data: AppList, rateInterval: number): AppListItem[] => {

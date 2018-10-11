@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Icon } from 'patternfly-react';
-import { IstioLogo } from '../../config';
+import { IstioLogo } from '../../logos';
 
 interface CardProps {
   iconType?: string;
