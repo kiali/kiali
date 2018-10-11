@@ -295,7 +295,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 			selectorCheck = selector.Matches(labels.Set(d.Spec.Template.Labels))
 		}
 		if _, exist := controllers[d.Name]; !exist && selectorCheck {
-			controllers[d.Name] = d.Kind
+			controllers[d.Name] = "Deployment"
 		}
 	}
 	for _, rs := range repset {
@@ -304,7 +304,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 			selectorCheck = selector.Matches(labels.Set(rs.Spec.Template.Labels))
 		}
 		if _, exist := controllers[rs.Name]; !exist && len(rs.OwnerReferences) == 0 && selectorCheck {
-			controllers[rs.Name] = rs.Kind
+			controllers[rs.Name] = "ReplicaSet"
 		}
 	}
 	for _, rc := range repcon {
@@ -313,7 +313,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 			selectorCheck = selector.Matches(labels.Set(rc.Spec.Template.Labels))
 		}
 		if _, exist := controllers[rc.Name]; !exist && len(rc.OwnerReferences) == 0 && selectorCheck {
-			controllers[rc.Name] = rc.Kind
+			controllers[rc.Name] = "ReplicationController"
 		}
 	}
 	for _, dc := range depcon {
@@ -322,7 +322,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 			selectorCheck = selector.Matches(labels.Set(dc.Spec.Template.Labels))
 		}
 		if _, exist := controllers[dc.Name]; !exist && selectorCheck {
-			controllers[dc.Name] = dc.Kind
+			controllers[dc.Name] = "DeploymentConfig"
 		}
 	}
 	for _, fs := range fulset {
@@ -331,7 +331,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 			selectorCheck = selector.Matches(labels.Set(fs.Spec.Template.Labels))
 		}
 		if _, exist := controllers[fs.Name]; !exist && selectorCheck {
-			controllers[fs.Name] = fs.Kind
+			controllers[fs.Name] = "StatefulSet"
 		}
 	}
 
@@ -342,7 +342,10 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 	}
 	sort.Strings(cnames)
 	for _, cname := range cnames {
-		w := &models.Workload{}
+		w := &models.Workload{
+			Pods:     models.Pods{},
+			Services: models.Services{},
+		}
 		ctype := controllers[cname]
 		// Flag to add a controller if it is found
 		cnFound := true
@@ -503,7 +506,10 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 }
 
 func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, workloadName string) (*models.Workload, error) {
-	wl := &models.Workload{}
+	wl := &models.Workload{
+		Pods:     models.Pods{},
+		Services: models.Services{},
+	}
 
 	var pods []v1.Pod
 	var dp *v1beta1.Deployment
