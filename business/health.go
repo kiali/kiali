@@ -222,6 +222,50 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities nam
 	return allHealth
 }
 
+// GetNamespaceServiceHealth returns a health for all services in given Namespace (thus, it fetches data from K8S and Prometheus)
+func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval string) (models.NamespaceServiceHealth, error) {
+	services, err := in.k8s.GetServices(namespace, nil)
+	if err != nil {
+		return nil, err
+	}
+	return in.getNamespaceServiceHealth(namespace, services, rateInterval), nil
+}
+
+func (in *HealthService) getNamespaceServiceHealth(namespace string, services []v1.Service, rateInterval string) models.NamespaceServiceHealth {
+	allHealth := make(models.NamespaceServiceHealth)
+
+	// Prepare all data
+	for _, service := range services {
+		h := models.ServiceHealth{}
+		allHealth[service.Name] = &h
+	}
+
+	// Fetch services requests rates
+	rates, _ := in.prom.GetNamespaceRequestRates(namespace, rateInterval)
+
+	// Fill with collected request rates
+	fillServiceRequestRates(allHealth, rates)
+
+	var wg sync.WaitGroup
+	wg.Add(len(allHealth))
+
+	// Finally complete missing health information
+	for _, service := range services {
+		health := allHealth[service.Name]
+		go func(service v1.Service, health *models.ServiceHealth) {
+			defer wg.Done()
+			var ports []int32
+			for _, port := range service.Spec.Ports {
+				ports = append(ports, port.Port)
+			}
+			health.Envoy, _ = in.prom.GetServiceHealth(namespace, service.Name, ports)
+		}(service, health)
+	}
+
+	wg.Wait()
+	return allHealth
+}
+
 // GetNamespaceWorkloadHealth returns a health for all workloads in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceWorkloadHealth(namespace, rateInterval string) (models.NamespaceWorkloadHealth, error) {
 	wl, err := fetchWorkloads(in.k8s, namespace, "")
@@ -263,6 +307,18 @@ func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector
 		}
 		name = string(sample.Metric[lblSrc])
 		if health, ok := allHealth[name]; ok {
+			sumRequestCounters(&health.Requests, sample)
+		}
+	}
+}
+
+// fillServiceRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
+// note that these are source-reported metrics, which loses certain requests (like from unknown) but has the health advantage of including source-reported failures
+func fillServiceRequestRates(allHealth models.NamespaceServiceHealth, rates model.Vector) {
+	lblDestSvc := model.LabelName("destination_service_name")
+	for _, sample := range rates {
+		service := string(sample.Metric[lblDestSvc])
+		if health, ok := allHealth[service]; ok {
 			sumRequestCounters(&health.Requests, sample)
 		}
 	}

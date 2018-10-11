@@ -17,6 +17,7 @@ import (
 type ClientInterface interface {
 	GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyServiceHealth, error)
 	GetAllRequestRates(namespace, ratesInterval string) (model.Vector, error)
+	GetNamespaceRequestRates(namespace, ratesInterval string) (model.Vector, error)
 	GetServiceRequestRates(namespace, service, ratesInterval string) (model.Vector, error)
 	GetAppRequestRates(namespace, app, ratesInterval string) (model.Vector, model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string) (model.Vector, model.Vector, error)
@@ -117,10 +118,18 @@ func (in *Client) GetServiceHealth(namespace, servicename string, ports []int32)
 	return getServiceHealth(in.api, namespace, servicename, ports)
 }
 
-// GetAllRequestRates queries Prometheus to fetch request counters rates over a time interval within a namespace
+// GetAllRequestRates queries Prometheus to fetch request counter rates, over a time interval, for requests
+// into, internal to, or out of the namespace.
 // Returns (rates, error)
 func (in *Client) GetAllRequestRates(namespace string, ratesInterval string) (model.Vector, error) {
 	return getAllRequestRates(in.api, namespace, ratesInterval)
+}
+
+// GetNamespaceRequestRates queries Prometheus to fetch request counter rates, over a time interval, limited to
+// requests for services in the namespace.
+// Returns (rates, error)
+func (in *Client) GetNamespaceRequestRates(namespace string, ratesInterval string) (model.Vector, error) {
+	return getNamespaceRequestRates(in.api, namespace, ratesInterval)
 }
 
 // GetServiceRequestRates queries Prometheus to fetch request counters rates over a time interval

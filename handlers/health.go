@@ -27,14 +27,22 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if p.Type == "app" {
+	switch p.Type {
+	case "app":
 		health, err := business.Health.GetNamespaceAppHealth(p.Namespace, p.RateInterval)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Error while fetching app health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
-	} else {
+	case "service":
+		health, err := business.Health.GetNamespaceServiceHealth(p.Namespace, p.RateInterval)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Error while fetching service health: "+err.Error())
+			return
+		}
+		RespondWithJSON(w, http.StatusOK, health)
+	case "workload":
 		health, err := business.Health.GetNamespaceWorkloadHealth(p.Namespace, p.RateInterval)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Error while fetching workload health: "+err.Error())
@@ -129,10 +137,10 @@ func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) 
 // swagger:parameters namespaceHealth
 type namespaceHealthParams struct {
 	baseHealthParams
-	// The type of health, "app" or "workload".
+	// The type of health, "app", "service" or "workload".
 	//
 	// in: query
-	// pattern: ^(app|workload)$
+	// pattern: ^(app|service|workload)$
 	// default: app
 	Type string `json:"type"`
 }
@@ -143,9 +151,9 @@ func (p *namespaceHealthParams) extract(r *http.Request) (bool, string) {
 	p.Type = "app"
 	queryParams := r.URL.Query()
 	if healthTypes, ok := queryParams["type"]; ok && len(healthTypes) > 0 {
-		if healthTypes[0] != "app" && healthTypes[0] != "workload" {
+		if healthTypes[0] != "app" && healthTypes[0] != "service" && healthTypes[0] != "workload" {
 			// Bad request
-			return false, "Bad request, query parameter 'type' must be either 'app' or 'workload'"
+			return false, "Bad request, query parameter 'type' must be one of ['app','service','workload']"
 		}
 		p.Type = healthTypes[0]
 	}
@@ -169,23 +177,6 @@ func (p *appHealthParams) extract(r *http.Request) {
 	p.App = vars["app"]
 }
 
-// workloadHealthParams holds the path and query parameters for WorkloadHealth
-//
-// swagger:parameters workloadHealth
-type workloadHealthParams struct {
-	baseHealthParams
-	// The target workload
-	//
-	// in: path
-	Workload string `json:"workload"`
-}
-
-func (p *workloadHealthParams) extract(r *http.Request) {
-	vars := mux.Vars(r)
-	p.baseExtract(r, vars)
-	p.Workload = vars["workload"]
-}
-
 // serviceHealthParams holds the path and query parameters for ServiceHealth
 //
 // swagger:parameters serviceHealth
@@ -201,4 +192,21 @@ func (p *serviceHealthParams) extract(r *http.Request) {
 	vars := mux.Vars(r)
 	p.baseExtract(r, vars)
 	p.Service = vars["service"]
+}
+
+// workloadHealthParams holds the path and query parameters for WorkloadHealth
+//
+// swagger:parameters workloadHealth
+type workloadHealthParams struct {
+	baseHealthParams
+	// The target workload
+	//
+	// in: path
+	Workload string `json:"workload"`
+}
+
+func (p *workloadHealthParams) extract(r *http.Request) {
+	vars := mux.Vars(r)
+	p.baseExtract(r, vars)
+	p.Workload = vars["workload"]
 }

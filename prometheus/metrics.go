@@ -433,6 +433,8 @@ func replaceInvalidCharacters(metricName string) string {
 	return invalidLabelCharRE.ReplaceAllString(metricName, "_")
 }
 
+// getAllRequestRates retrieves traffic rates for requests entering, internal to, or exiting the namespace.
+// Uses source telemetry unless working on the Istio namespace.
 func getAllRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, error) {
 	reporter := "source"
 	if config.Get().IstioNamespace == namespace {
@@ -453,6 +455,22 @@ func getAllRequestRates(api v1.API, namespace string, ratesInterval string) (mod
 	// Merge results
 	all := append(in, out...)
 	return all, nil
+}
+
+// getNamespaceRequestRates retrieves traffic rates for requests entering or internal to the namespace.
+// Uses source telemetry unless working on the Istio namespace.
+func getNamespaceRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, error) {
+	reporter := "source"
+	if config.Get().IstioNamespace == namespace {
+		reporter = "destination"
+	}
+	// traffic for the namespace services
+	lblNs := fmt.Sprintf(`reporter="%s",destination_service_namespace="%s"`, reporter, namespace)
+	ns, err := getRequestRatesForLabel(api, time.Now(), lblNs, ratesInterval)
+	if err != nil {
+		return model.Vector{}, err
+	}
+	return ns, nil
 }
 
 func getServiceRequestRates(api v1.API, namespace, service, ratesInterval string) (model.Vector, error) {

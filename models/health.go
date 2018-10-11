@@ -7,6 +7,9 @@ import (
 // NamespaceAppHealth is an alias of map of app name x health
 type NamespaceAppHealth map[string]*AppHealth
 
+// NamespaceServiceHealth is an alias of map of service name x health
+type NamespaceServiceHealth map[string]*ServiceHealth
+
 // NamespaceWorkloadHealth is an alias of map of workload name x health
 type NamespaceWorkloadHealth map[string]*WorkloadHealth
 
