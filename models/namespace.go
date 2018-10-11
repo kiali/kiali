@@ -2,6 +2,7 @@ package models
 
 import (
 	"k8s.io/api/core/v1"
+	"time"
 
 	osv1 "github.com/openshift/api/project/v1"
 )
@@ -16,6 +17,13 @@ type Namespace struct {
 	// example:  istio-system
 	// required: true
 	Name string `json:"name"`
+
+	// Creation date of the namespace.
+	// There is no need to export this through the API. So, this is
+	// set to be ignored by JSON package.
+	//
+	// required: true
+	CreationTimestamp time.Time `json:"-"`
 }
 
 func CastNamespaceCollection(ns []v1.Namespace) []Namespace {
@@ -30,6 +38,7 @@ func CastNamespaceCollection(ns []v1.Namespace) []Namespace {
 func CastNamespace(ns v1.Namespace) Namespace {
 	namespace := Namespace{}
 	namespace.Name = ns.Name
+	namespace.CreationTimestamp = ns.CreationTimestamp.Time
 
 	return namespace
 }
@@ -46,6 +55,7 @@ func CastProjectCollection(ps []osv1.Project) []Namespace {
 func CastProject(p osv1.Project) Namespace {
 	namespace := Namespace{}
 	namespace.Name = p.Name
+	namespace.CreationTimestamp = p.CreationTimestamp.Time
 
 	return namespace
 }

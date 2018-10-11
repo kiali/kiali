@@ -3,6 +3,7 @@ package handlers
 import (
 	"io/ioutil"
 	"k8s.io/api/apps/v1beta2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -27,13 +29,15 @@ import (
 )
 
 func TestAppMetricsDefault(t *testing.T) {
-	ts, api := setupAppMetricsEndpoint(t)
+	ts, api, k8s := setupAppMetricsEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/apps/my_app/metrics"
 	now := time.Now()
 	delta := 15 * time.Second
 	var gaugeSentinel uint32
+
+	mockGetNamespace(k8s, "ns", time.Time{})
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
@@ -64,7 +68,7 @@ func TestAppMetricsDefault(t *testing.T) {
 }
 
 func TestAppMetricsWithParams(t *testing.T) {
-	ts, api := setupAppMetricsEndpoint(t)
+	ts, api, k8s := setupAppMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/apps/my-app/metrics", nil)
@@ -88,6 +92,8 @@ func TestAppMetricsWithParams(t *testing.T) {
 	queryTime := time.Unix(1523364075, 0)
 	delta := 2 * time.Second
 	var histogramSentinel, gaugeSentinel uint32
+
+	mockGetNamespace(k8s, "ns", time.Time{})
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
@@ -123,9 +129,10 @@ func TestAppMetricsWithParams(t *testing.T) {
 	assert.NotZero(t, gaugeSentinel)
 }
 
-func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
+func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
 	config.Set(config.NewConfig())
 	api := new(prometheustest.PromAPIMock)
+	k8s := new(kubetest.K8SClientMock)
 	prom, err := prometheus.NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -137,12 +144,14 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 		func(w http.ResponseWriter, r *http.Request) {
 			getAppMetrics(w, r, func() (*prometheus.Client, error) {
 				return prom, nil
+			}, func() (kubernetes.IstioClientInterface, error) {
+				return k8s, nil
 			})
 		}))
 
 	ts := httptest.NewServer(mr)
 	business.SetWithBackends(nil, prom)
-	return ts, api
+	return ts, api, k8s
 }
 
 func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
@@ -214,4 +223,14 @@ func TestAppDetailsEndpoint(t *testing.T) {
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
 	k8s.AssertNumberOfCalls(t, "GetServices", 1)
+}
+
+func mockGetNamespace(k8s *kubetest.K8SClientMock, name string, creationTime time.Time) {
+	nsBookinfo := corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              name,
+			CreationTimestamp: metav1.Time{Time: creationTime},
+		},
+	}
+	k8s.On("GetNamespace", name).Return(&nsBookinfo, nil)
 }

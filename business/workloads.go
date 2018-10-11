@@ -15,6 +15,7 @@ import (
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"time"
 )
 
 // Workload deals with fetching istio/kubernetes workloads related content and convert to kiali model
@@ -26,7 +27,7 @@ type WorkloadService struct {
 func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadList, error) {
 
 	workloadList := &models.WorkloadList{
-		Namespace: models.Namespace{namespace},
+		Namespace: models.Namespace{namespace, time.Time{}},
 		Workloads: []models.WorkloadListItem{},
 	}
 	ws, err := fetchWorkloads(in.k8s, namespace, "")

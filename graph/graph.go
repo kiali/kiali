@@ -4,6 +4,7 @@ package graph
 
 import (
 	"fmt"
+	"time"
 )
 
 const (
@@ -39,6 +40,11 @@ type Edge struct {
 	Source   *Node
 	Dest     *Node
 	Metadata map[string]interface{} // app-specific data
+}
+
+type NamespaceInfo struct {
+	Name     string
+	Duration time.Duration
 }
 
 // TrafficMap is a map of app Nodes, each optionally holding Edge data. Metadata

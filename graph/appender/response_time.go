@@ -20,10 +20,10 @@ const (
 // is represented as a percentile value. The default is 95th percentile, which means that
 // 95% of requests executed in no more than the resulting milliseconds.
 type ResponseTimeAppender struct {
-	Duration           time.Duration
 	GraphType          string
 	InjectServiceNodes bool
 	IncludeIstio       bool
+	Namespaces         map[string]graph.NamespaceInfo
 	Quantile           float64
 	QueryTime          int64 // unix time in seconds
 }
@@ -49,7 +49,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		log.Warningf("Replacing invalid quantile [%.2f] with default [%.2f]", a.Quantile, DefaultQuantile)
 		quantile = DefaultQuantile
 	}
-	log.Debugf("Generating responseTime using quantile [%.2f]", quantile)
+	log.Debugf("Generating responseTime using quantile [%.2f]; namespace = %v", quantile, namespace)
+	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for the responseTime info in three queries:
 	// 1) query for responseTime originating from "unknown" (i.e. the internet)
@@ -58,7 +59,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		quantile,
 		"istio_request_duration_seconds_bucket",
 		namespace,
-		int(a.Duration.Seconds()), // range duration for the query
+		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	unkVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
 
@@ -68,7 +69,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		"istio_request_duration_seconds_bucket",
 		namespace,
 		namespace,
-		int(a.Duration.Seconds()), // range duration for the query
+		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
 
@@ -77,7 +78,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		quantile,
 		"istio_request_duration_seconds_bucket",
 		namespace,
-		int(a.Duration.Seconds()), // range duration for the query
+		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
 
@@ -98,7 +99,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 				"istio_request_duration_seconds_bucket",
 				namespace,
 				namespace,
-				int(a.Duration.Seconds()), // range duration for the query
+				int(duration.Seconds()), // range duration for the query
 				groupBy)
 
 			// fetch the externally originating request traffic time-series
@@ -112,7 +113,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			"istio_request_duration_seconds_bucket",
 			namespace,
 			istioNamespace,
-			int(a.Duration.Seconds()), // range duration for the query
+			int(duration.Seconds()), // range duration for the query
 			groupBy)
 
 		// fetch the internally originating request traffic time-series

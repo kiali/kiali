@@ -15,9 +15,9 @@ import (
 // SecurityPolicyAppender is responsible for adding securityPolicy information to the graph.
 // The appender currently reports only mutual_tls security although is written in a generic way.
 type SecurityPolicyAppender struct {
-	Duration     time.Duration
 	GraphType    string
 	IncludeIstio bool
+	Namespaces   map[string]graph.NamespaceInfo
 	QueryTime    int64 // unix time in seconds
 }
 
@@ -37,6 +37,9 @@ func (a SecurityPolicyAppender) AppendGraph(trafficMap graph.TrafficMap, globalI
 }
 
 func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
+	log.Debugf("Resolving security policy for namespace = %v", namespace)
+	duration := a.Namespaces[namespace].Duration
+
 	// query prometheus for mutual_tls info in two queries:
 	// 1) query for active security originating from a workload outside the namespace
 	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy"
@@ -44,8 +47,8 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		"istio_requests_total",
 		namespace,
 		namespace,
-		"[2345][0-9][0-9]",        // regex for valid response_codes
-		int(a.Duration.Seconds()), // range duration for the query
+		"[2345][0-9][0-9]",      // regex for valid response_codes
+		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
 
@@ -58,8 +61,8 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		"istio_requests_total",
 		namespace,
 		istioCondition,
-		"[2345][0-9][0-9]",        // regex for valid response_codes
-		int(a.Duration.Seconds()), // range duration for the query
+		"[2345][0-9][0-9]",      // regex for valid response_codes
+		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API())
 

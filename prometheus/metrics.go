@@ -85,6 +85,11 @@ func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) 
 		return ret, nil
 	}
 
+	// In these Prometheus queries, only the last values are of interest. Since the
+	// <servicename> is received as a parameter from the frontend, we can assume the
+	// existence of the service and that the last values of the metrics queried won't belong
+	// to any "old/outdated" service or namespace. So, there is no need to deal with
+	// namespace lower bounds.
 	envoyClustername := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, ".", "_", -1)
 	queryPart := replaceInvalidCharacters(fmt.Sprintf("%s_%s_%s", servicename, namespace, envoyClustername))
 	now := time.Now()
@@ -435,16 +440,16 @@ func replaceInvalidCharacters(metricName string) string {
 
 // getAllRequestRates retrieves traffic rates for requests entering, internal to, or exiting the namespace.
 // Uses source telemetry unless working on the Istio namespace.
-func getAllRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, error) {
+func getAllRequestRates(api v1.API, namespace string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
 	// traffic originating outside the namespace to destinations inside the namespace
 	lbl := fmt.Sprintf(`destination_service_namespace="%s",source_workload_namespace!="%s"`, namespace, namespace)
-	fromOutside, err := getRequestRatesForLabel(api, time.Now(), lbl, ratesInterval)
+	fromOutside, err := getRequestRatesForLabel(api, queryTime, lbl, ratesInterval)
 	if err != nil {
 		return model.Vector{}, err
 	}
 	// traffic originating inside the namespace to destinations inside or outside the namespace
 	lbl = fmt.Sprintf(`source_workload_namespace="%s"`, namespace)
-	fromInside, err := getRequestRatesForLabel(api, time.Now(), lbl, ratesInterval)
+	fromInside, err := getRequestRatesForLabel(api, queryTime, lbl, ratesInterval)
 	if err != nil {
 		return model.Vector{}, err
 	}
@@ -455,33 +460,33 @@ func getAllRequestRates(api v1.API, namespace string, ratesInterval string) (mod
 
 // getNamespaceServicesRequestRates retrieves traffic rates for requests entering or internal to the namespace.
 // Uses source telemetry unless working on the Istio namespace.
-func getNamespaceServicesRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, error) {
+func getNamespaceServicesRequestRates(api v1.API, namespace string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
 	// traffic for the namespace services
 	lblNs := fmt.Sprintf(`destination_service_namespace="%s"`, namespace)
-	ns, err := getRequestRatesForLabel(api, time.Now(), lblNs, ratesInterval)
+	ns, err := getRequestRatesForLabel(api, queryTime, lblNs, ratesInterval)
 	if err != nil {
 		return model.Vector{}, err
 	}
 	return ns, nil
 }
 
-func getServiceRequestRates(api v1.API, namespace, service, ratesInterval string) (model.Vector, error) {
+func getServiceRequestRates(api v1.API, namespace, service string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
 	lbl := fmt.Sprintf(`destination_service_name="%s",destination_service_namespace="%s"`, service, namespace)
-	in, err := getRequestRatesForLabel(api, time.Now(), lbl, ratesInterval)
+	in, err := getRequestRatesForLabel(api, queryTime, lbl, ratesInterval)
 	if err != nil {
 		return model.Vector{}, err
 	}
 	return in, nil
 }
 
-func getItemRequestRates(api v1.API, namespace, item, itemLabelSuffix, ratesInterval string) (model.Vector, model.Vector, error) {
+func getItemRequestRates(api v1.API, namespace, item, itemLabelSuffix string, queryTime time.Time, ratesInterval string) (model.Vector, model.Vector, error) {
 	lblIn := fmt.Sprintf(`destination_workload_namespace="%s",destination_%s="%s"`, namespace, itemLabelSuffix, item)
 	lblOut := fmt.Sprintf(`source_workload_namespace="%s",source_%s="%s"`, namespace, itemLabelSuffix, item)
-	in, err := getRequestRatesForLabel(api, time.Now(), lblIn, ratesInterval)
+	in, err := getRequestRatesForLabel(api, queryTime, lblIn, ratesInterval)
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
 	}
-	out, err := getRequestRatesForLabel(api, time.Now(), lblOut, ratesInterval)
+	out, err := getRequestRatesForLabel(api, queryTime, lblOut, ratesInterval)
 	if err != nil {
 		return model.Vector{}, model.Vector{}, err
 	}

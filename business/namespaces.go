@@ -46,3 +46,21 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 
 	return models.CastNamespaceCollection(services), nil
 }
+
+// GetNamespace returns the definition of the specified namespace.
+func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, error) {
+	if in.hasProjects {
+		if project, err := in.k8s.GetProject(namespace); err == nil {
+			result := models.CastProject(*project)
+			return &result, nil
+		}
+	}
+
+	ns, err := in.k8s.GetNamespace(namespace)
+	if err != nil {
+		return &models.Namespace{}, err
+	}
+
+	result := models.CastNamespace(*ns)
+	return &result, nil
+}

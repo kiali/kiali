@@ -7,6 +7,7 @@ import (
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 
 	"testing"
+	"time"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -39,9 +40,10 @@ func TestGetServiceHealth(t *testing.T) {
 		assert.Equal("httpbin", args[1])
 	}).Return(prometheus.EnvoyServiceHealth{Inbound: prometheus.EnvoyRatio{Healthy: 1, Total: 1}}, nil)
 
-	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeServiceRequestCounters())
+	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), queryTime).Return(fakeServiceRequestCounters())
 
-	health, _ := hs.GetServiceHealth("ns", "httpbin", "1m")
+	health, _ := hs.GetServiceHealth("ns", "httpbin", "1m", queryTime)
 
 	k8s.AssertNumberOfCalls(t, "GetService", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
@@ -78,9 +80,10 @@ func TestGetAppHealth(t *testing.T) {
 		assert.Equal("reviews", args[1])
 	}).Return(prometheus.EnvoyServiceHealth{Inbound: prometheus.EnvoyRatio{Healthy: 1, Total: 1}}, nil)
 
-	prom.On("GetAppRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeOtherRequestCounters())
+	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	prom.On("GetAppRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), queryTime).Return(fakeOtherRequestCounters())
 
-	health, _ := hs.GetAppHealth("ns", "reviews", "1m")
+	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime)
 
 	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
@@ -108,9 +111,10 @@ func TestGetWorkloadHealth(t *testing.T) {
 	}).Return(&fakeDeploymentsHealthReview()[0], nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.Pod{}, nil)
 
-	prom.On("GetWorkloadRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeOtherRequestCounters())
+	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	prom.On("GetWorkloadRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), queryTime).Return(fakeOtherRequestCounters())
 
-	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "1m")
+	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "1m", queryTime)
 
 	k8s.AssertNumberOfCalls(t, "GetDeployment", 1)
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 1)

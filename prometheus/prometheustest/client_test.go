@@ -2,13 +2,20 @@ package prometheustest
 
 import (
 	"testing"
+	"time"
 
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	pv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util"
 )
 
 func setupMocked() (*prometheus.Client, *PromAPIMock, error) {
@@ -86,8 +93,11 @@ func TestGetSourceWorkloads(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockQuery(api, "istio_requests_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"istio-system\"}", &vector)
-	sources, err := client.GetSourceWorkloads("istio-system", "productpage")
+	mockQuery(api, "delta(istio_requests_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"istio-system\"}[50s])", &vector)
+	clock := util.ClockMock{time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)}
+	util.Clock = clock
+
+	sources, err := client.GetSourceWorkloads("istio-system", clock.Time.Add(-time.Second*50), "productpage")
 	if err != nil {
 		t.Error(err)
 		return
@@ -115,13 +125,7 @@ func TestGetServiceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_requests_total{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])) by (reporter), 0.001)", 2.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])) by (reporter), 0.001)", 4.5)
-	mockRange(api, "round(sum(rate(istio_tcp_received_bytes_total{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])) by (reporter), 0.001)", 11)
-	mockRange(api, "round(sum(rate(istio_tcp_sent_bytes_total{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])) by (reporter), 0.001)", 13)
-	mockHistogram(api, "istio_request_bytes", "{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
-	mockHistogram(api, "istio_request_duration_seconds", "{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
-	mockHistogram(api, "istio_response_bytes", "{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+
 	q := prometheus.MetricsQuery{
 		Namespace: "bookinfo",
 		Service:   "productpage",
@@ -129,6 +133,21 @@ func TestGetServiceMetrics(t *testing.T) {
 	q.FillDefaults()
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.99"}
+	expectedRange := pv1.Range{
+		Start: q.Start,
+		End:   q.End,
+		Step:  q.Step,
+	}
+
+	mockWithRange(api, expectedRange, "round(sum(rate(istio_requests_total{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])) by (reporter), 0.001)", 2.5)
+	mockWithRange(api, expectedRange, "round(sum(rate(istio_requests_total{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])) by (reporter), 0.001)", 4.5)
+	mockWithRange(api, expectedRange, "round(sum(rate(istio_tcp_received_bytes_total{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])) by (reporter), 0.001)", 11)
+	mockWithRange(api, expectedRange, "round(sum(rate(istio_tcp_sent_bytes_total{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])) by (reporter), 0.001)", 13)
+	mockHistogram(api, "istio_request_bytes", "{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
+	mockHistogram(api, "istio_request_duration_seconds", "{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_response_bytes", "{destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
+
+	// Test that range and rate interval are changed when needed (namespace bounds)
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 4, len(metrics.Dest.Metrics), "Should have 4 simple metrics")
@@ -459,6 +478,8 @@ func TestGetAllRequestRates(t *testing.T) {
 		return
 	}
 
+	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+
 	vectorQ1 := model.Vector{
 		&model.Sample{
 			Timestamp: model.Now(),
@@ -466,7 +487,7 @@ func TestGetAllRequestRates(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	mockQuery(api, `rate(istio_requests_total{destination_service_namespace="ns",source_workload_namespace!="ns"}[5m])`, &vectorQ1)
+	mockQueryWithTime(api, `rate(istio_requests_total{destination_service_namespace="ns",source_workload_namespace!="ns"}[5m])`, queryTime, &vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
@@ -474,9 +495,9 @@ func TestGetAllRequestRates(t *testing.T) {
 			Value:     model.SampleValue(2),
 			Metric:    model.Metric{"foo": "bar"}},
 	}
-	mockQuery(api, `rate(istio_requests_total{source_workload_namespace="ns"}[5m])`, &vectorQ2)
+	mockQueryWithTime(api, `rate(istio_requests_total{source_workload_namespace="ns"}[5m])`, queryTime, &vectorQ2)
 
-	rates, err := client.GetAllRequestRates("ns", "5m")
+	rates, err := client.GetAllRequestRates("ns", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 	assert.Equal(t, vectorQ2[0], rates[1])
@@ -489,6 +510,8 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 		return
 	}
 
+	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+
 	vectorQ1 := model.Vector{
 		&model.Sample{
 			Timestamp: model.Now(),
@@ -496,7 +519,7 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	mockQuery(api, `rate(istio_requests_total{destination_service_namespace="istio-system",source_workload_namespace!="istio-system"}[5m])`, &vectorQ1)
+	mockQueryWithTime(api, `rate(istio_requests_total{destination_service_namespace="istio-system",source_workload_namespace!="istio-system"}[5m])`, queryTime, &vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
@@ -504,9 +527,9 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 			Value:     model.SampleValue(2),
 			Metric:    model.Metric{"foo": "bar"}},
 	}
-	mockQuery(api, `rate(istio_requests_total{source_workload_namespace="istio-system"}[5m])`, &vectorQ2)
+	mockQueryWithTime(api, `rate(istio_requests_total{source_workload_namespace="istio-system"}[5m])`, queryTime, &vectorQ2)
 
-	rates, err := client.GetAllRequestRates("istio-system", "5m")
+	rates, err := client.GetAllRequestRates("istio-system", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 	assert.Equal(t, vectorQ2[0], rates[1])
@@ -519,6 +542,8 @@ func TestGetNamespaceServicesRequestRates(t *testing.T) {
 		return
 	}
 
+	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+
 	vectorQ1 := model.Vector{
 		&model.Sample{
 			Timestamp: model.Now(),
@@ -526,9 +551,9 @@ func TestGetNamespaceServicesRequestRates(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	mockQuery(api, `rate(istio_requests_total{destination_service_namespace="ns"}[5m])`, &vectorQ1)
+	mockQueryWithTime(api, `rate(istio_requests_total{destination_service_namespace="ns"}[5m])`, queryTime, &vectorQ1)
 
-	rates, err := client.GetNamespaceServicesRequestRates("ns", "5m")
+	rates, err := client.GetNamespaceServicesRequestRates("ns", "5m", queryTime)
 	assert.Equal(t, 1, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 }
@@ -539,6 +564,15 @@ func mockQuery(api *PromAPIMock, query string, ret *model.Vector) {
 		mock.AnythingOfType("*context.emptyCtx"),
 		query,
 		mock.AnythingOfType("time.Time")).
+		Return(*ret, nil)
+}
+
+func mockQueryWithTime(api *PromAPIMock, query string, queryTime time.Time, ret *model.Vector) {
+	api.On(
+		"Query",
+		mock.AnythingOfType("*context.emptyCtx"),
+		query,
+		queryTime).
 		Return(*ret, nil)
 }
 
@@ -576,6 +610,24 @@ func mockRange(api *PromAPIMock, query string, ret model.SampleValue) {
 	mockQueryRange(api, query, &matrix)
 }
 
+func mockWithRange(api *PromAPIMock, qRange pv1.Range, query string, ret model.SampleValue) {
+	metric := model.Metric{
+		"reporter": "destination",
+		"__name__": "whatever",
+		"instance": "whatever",
+		"job":      "whatever"}
+	matrix := model.Matrix{
+		&model.SampleStream{
+			Metric: metric,
+			Values: []model.SamplePair{model.SamplePair{Timestamp: 0, Value: ret}}}}
+	api.On(
+		"QueryRange",
+		mock.AnythingOfType("*context.emptyCtx"),
+		query,
+		qRange).
+		Return(matrix, nil)
+}
+
 func mockEmptyRange(api *PromAPIMock, query string) {
 	metric := model.Metric{
 		"reporter": "destination",
@@ -605,6 +657,16 @@ func mockEmptyHistogram(api *PromAPIMock, baseName string, suffix string) {
 	mockEmptyRange(api, "round(histogram_quantile(0.99, "+histMetric)
 	mockEmptyRange(api, "round(histogram_quantile(0.999, "+histMetric)
 	mockEmptyRange(api, "round(sum(rate("+baseName+"_sum"+suffix+")) by (reporter) / sum(rate("+baseName+"_count"+suffix+")) by (reporter), 0.001)")
+}
+
+func mockGetNamespace(k8s *kubetest.K8SClientMock, name string, creationTime time.Time) {
+	namespace := v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              name,
+			CreationTimestamp: metav1.Time{Time: creationTime},
+		},
+	}
+	k8s.On("GetNamespace", name).Return(&namespace, nil)
 }
 
 func setupExternal() (*prometheus.Client, error) {

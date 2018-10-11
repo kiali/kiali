@@ -51,10 +51,15 @@ func TestSecurityPolicy(t *testing.T) {
 
 	duration, _ := time.ParseDuration("60s")
 	appender := SecurityPolicyAppender{
-		Duration:     duration,
 		GraphType:    graph.GraphTypeVersionedApp,
 		IncludeIstio: false,
-		QueryTime:    time.Now().Unix(),
+		Namespaces: map[string]graph.NamespaceInfo{
+			"bookinfo": {
+				Name:     "bookinfo",
+				Duration: duration,
+			},
+		},
+		QueryTime: time.Now().Unix(),
 	}
 
 	appender.appendGraph(trafficMap, "bookinfo", client)

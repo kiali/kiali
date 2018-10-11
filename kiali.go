@@ -52,6 +52,7 @@ func init() {
 
 func main() {
 	defer glog.Flush()
+	util.Clock = util.RealClock{}
 
 	// process command line
 	flag.Parse()

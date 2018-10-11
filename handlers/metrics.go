@@ -2,14 +2,18 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util"
 )
 
-func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) error {
+func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery, k8s kubernetes.IstioClientInterface) error {
 	q.FillDefaults()
 	queryParams := r.URL.Query()
 	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
@@ -78,6 +82,37 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery) erro
 	}
 	if lblsout, ok := queryParams["byLabelsOut[]"]; ok && len(lblsout) > 0 {
 		q.ByLabelsOut = lblsout
+	}
+
+	// Get namespace info.
+	namespace, err := k8s.GetNamespace(q.Namespace)
+	if err != nil {
+		return err
+	}
+	// If needed, adjust interval -- Make sure query won't fetch data before the namespace creation
+	intervalStartTime, err := util.GetStartTimeForRateInterval(q.End, q.RateInterval)
+	if err != nil {
+		return err
+	}
+	if intervalStartTime.Before(namespace.CreationTimestamp.Time) {
+		q.RateInterval = fmt.Sprintf("%ds", int(q.End.Sub(namespace.CreationTimestamp.Time).Seconds()))
+		intervalStartTime = namespace.CreationTimestamp.Time
+		log.Debugf("[extractMetricsQueryParams] Interval set to: %v", q.RateInterval)
+	}
+	// If needed, adjust query start time (bound to namespace creation time)
+	log.Debugf("[extractMetricsQueryParams] Requested query start time: %v", q.Start)
+	intervalDuration := q.End.Sub(intervalStartTime)
+	allowedStart := namespace.CreationTimestamp.Time.Add(intervalDuration)
+	if q.Start.Before(allowedStart) {
+		q.Start = allowedStart
+		log.Debugf("[extractMetricsQueryParams] Query start time set to: %v", q.Start)
+
+		if q.Start.After(q.End) {
+			// This means that the query range does not fall in the range
+			// of life of the namespace. So, there are no metrics to query.
+			log.Debugf("[extractMetricsQueryParams] Query end time = %v; not querying metrics.", q.End)
+			return errors.New("after checks, query start time is after end time")
+		}
 	}
 
 	// Adjust start & end times to be a multiple of step

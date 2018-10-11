@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -27,8 +28,11 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	q.Add("filters[]", "request_size")
 	req.URL.RawQuery = q.Encode()
 
-	mq := prometheus.MetricsQuery{}
-	err = extractMetricsQueryParams(req, &mq)
+	mq := prometheus.MetricsQuery{Namespace: "ns"}
+	k8s := new(kubetest.K8SClientMock)
+	mockGetNamespace(k8s, "ns", time.Time{})
+
+	err = extractMetricsQueryParams(req, &mq, k8s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,8 +63,11 @@ func TestExtractMetricsQueryParamsStepLimitCase(t *testing.T) {
 	q.Add("duration", "1000")        // Makes start = 2018-04-10T12:24:20
 	req.URL.RawQuery = q.Encode()
 
-	mq := prometheus.MetricsQuery{}
-	err = extractMetricsQueryParams(req, &mq)
+	mq := prometheus.MetricsQuery{Namespace: "ns"}
+	k8s := new(kubetest.K8SClientMock)
+	mockGetNamespace(k8s, "ns", time.Time{})
+
+	err = extractMetricsQueryParams(req, &mq, k8s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,4 +78,55 @@ func TestExtractMetricsQueryParamsStepLimitCase(t *testing.T) {
 	assert.Equal(t, 20, mq.Start.Second())
 	assert.Equal(t, time.Unix(1523364060, 0), mq.End)
 	assert.Equal(t, 0, mq.End.Second())
+}
+
+func TestExtractMetricsQueryIntervalBoundary(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := req.URL.Query()
+	q.Add("queryTime", "1523364060") // 2018-04-10T12:41:00
+	q.Add("duration", "1000")        // Makes start = 2018-04-10T12:24:20
+	q.Add("rateInterval", "35m")
+	req.URL.RawQuery = q.Encode()
+
+	mq := prometheus.MetricsQuery{Namespace: "ns"}
+	k8s := new(kubetest.K8SClientMock)
+	mockGetNamespace(k8s, "ns", time.Date(2018, 4, 10, 12, 10, 0, 0, time.UTC))
+
+	err = extractMetricsQueryParams(req, &mq, k8s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check that start and end dates don't need normalization, already hitting step bounds
+	// Interval [12:24:20, 12:41:00] should be kept unchanged
+	assert.Equal(t, "1860s", mq.RateInterval)
+}
+
+func TestExtractMetricsQueryStartTimeBoundary(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := req.URL.Query()
+	q.Add("queryTime", "1523364060") // 2018-04-10T12:41:00
+	q.Add("duration", "1000")        // Makes start = 2018-04-10T12:24:20
+	q.Add("rateInterval", "1m")
+	req.URL.RawQuery = q.Encode()
+
+	mq := prometheus.MetricsQuery{Namespace: "ns"}
+	k8s := new(kubetest.K8SClientMock)
+	namespaceTimestamp := time.Date(2018, 4, 10, 12, 30, 0, 0, time.UTC)
+	mockGetNamespace(k8s, "ns", namespaceTimestamp)
+
+	err = extractMetricsQueryParams(req, &mq, k8s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check that start and end dates don't need normalization, already hitting step bounds
+	// Interval [12:24:20, 12:41:00] should be kept unchanged
+	assert.Equal(t, namespaceTimestamp.Add(1*time.Minute).UTC(), mq.Start.UTC())
 }

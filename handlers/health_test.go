@@ -6,9 +6,11 @@ import (
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
 	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/common/model"
@@ -19,7 +21,9 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/kiali/kiali/util"
 	osappsv1 "github.com/openshift/api/apps/v1"
+	osv1 "github.com/openshift/api/project/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 )
@@ -66,7 +70,8 @@ func TestNamespaceAppHealth(t *testing.T) {
 		assert.Contains(t, []string{"reviews", "httpbin"}, args[1])
 	}).Return(prometheus.EnvoyServiceHealth{}, nil)
 
-	prom.On("GetAllRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(model.Vector{}, nil)
+	// Test 17s on rate interval to check that rate interval is adjusted correctly.
+	prom.On("GetAllRequestRates", mock.AnythingOfType("string"), "17s", util.Clock.Now()).Return(model.Vector{}, nil)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -88,6 +93,7 @@ func setupNamespaceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8S
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
 	business.SetWithBackends(k8s, prom)
+	setupMockData(k8s)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/health", NamespaceHealth)
@@ -140,7 +146,8 @@ func TestAppHealth(t *testing.T) {
 		assert.Equal(t, "reviews", args[1])
 	}).Return(prometheus.EnvoyServiceHealth{}, nil)
 
-	prom.On("GetAppRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(model.Vector{}, model.Vector{}, nil)
+	// Test 17s on rate interval to check that rate interval is adjusted correctly.
+	prom.On("GetAppRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), "17s", util.Clock.Now()).Return(model.Vector{}, model.Vector{}, nil)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -162,6 +169,7 @@ func setupAppHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClient
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
 	business.SetWithBackends(k8s, prom)
+	setupMockData(k8s)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}/health", AppHealth)
@@ -189,7 +197,8 @@ func TestServiceHealth(t *testing.T) {
 		assert.Equal(t, "svc", args[1])
 	}).Return(prometheus.EnvoyServiceHealth{}, nil)
 
-	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(model.Vector{}, nil)
+	// Test 17s on rate interval to check that rate interval is adjusted correctly.
+	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), "17s", util.Clock.Now()).Return(model.Vector{}, nil)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -208,10 +217,24 @@ func setupServiceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SCl
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
 	business.SetWithBackends(k8s, prom)
+	setupMockData(k8s)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/health", ServiceHealth)
 
 	ts := httptest.NewServer(mr)
 	return ts, k8s, prom
+}
+
+func setupMockData(k8s *kubetest.K8SClientMock) {
+	clockTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{clockTime}
+
+	k8s.On("GetProject", "ns").Return(
+		&osv1.Project{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "ns",
+				CreationTimestamp: metav1.NewTime(clockTime.Add(-17 * time.Second)),
+			},
+		}, nil)
 }

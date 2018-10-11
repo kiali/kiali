@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -66,7 +67,7 @@ func TestWorkloadsEndpoint(t *testing.T) {
 }
 
 func TestWorkloadMetricsDefault(t *testing.T) {
-	ts, api := setupWorkloadMetricsEndpoint(t)
+	ts, api, k8s := setupWorkloadMetricsEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/workloads/my_workload/metrics"
@@ -89,6 +90,9 @@ func TestWorkloadMetricsDefault(t *testing.T) {
 		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
 	})
 
+	// Test that query range is adjusted given the namespace creation date
+	mockGetNamespace(k8s, "ns", time.Time{})
+
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -103,7 +107,7 @@ func TestWorkloadMetricsDefault(t *testing.T) {
 }
 
 func TestWorkloadMetricsWithParams(t *testing.T) {
-	ts, api := setupWorkloadMetricsEndpoint(t)
+	ts, api, k8s := setupWorkloadMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/my-workload/metrics", nil)
@@ -148,6 +152,8 @@ func TestWorkloadMetricsWithParams(t *testing.T) {
 		assert.WithinDuration(t, queryTime.Add(-1000*time.Second), r.Start, delta)
 	})
 
+	mockGetNamespace(k8s, "ns", time.Time{})
+
 	httpclient := &http.Client{}
 	resp, err := httpclient.Do(req)
 	if err != nil {
@@ -163,7 +169,7 @@ func TestWorkloadMetricsWithParams(t *testing.T) {
 }
 
 func TestWorkloadMetricsBadQueryTime(t *testing.T) {
-	ts, api := setupWorkloadMetricsEndpoint(t)
+	ts, api, _ := setupWorkloadMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/my-workload/metrics", nil)
@@ -194,7 +200,7 @@ func TestWorkloadMetricsBadQueryTime(t *testing.T) {
 }
 
 func TestWorkloadMetricsBadDuration(t *testing.T) {
-	ts, api := setupWorkloadMetricsEndpoint(t)
+	ts, api, _ := setupWorkloadMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/my-workload/metrics", nil)
@@ -224,7 +230,7 @@ func TestWorkloadMetricsBadDuration(t *testing.T) {
 }
 
 func TestWorkloadMetricsBadStep(t *testing.T) {
-	ts, api := setupWorkloadMetricsEndpoint(t)
+	ts, api, _ := setupWorkloadMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/my-workload/metrics", nil)
@@ -254,7 +260,7 @@ func TestWorkloadMetricsBadStep(t *testing.T) {
 }
 
 func TestWorkloadMetricsBadRateFunc(t *testing.T) {
-	ts, api := setupWorkloadMetricsEndpoint(t)
+	ts, api, _ := setupWorkloadMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/my-workload/metrics", nil)
@@ -282,9 +288,10 @@ func TestWorkloadMetricsBadRateFunc(t *testing.T) {
 	assert.Contains(t, string(actual), "query parameter 'rateFunc' must be either 'rate' or 'irate'")
 }
 
-func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
+func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
 	config.Set(config.NewConfig())
 	api := new(prometheustest.PromAPIMock)
+	k8s := kubetest.NewK8SClientMock()
 	prom, err := prometheus.NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -296,10 +303,12 @@ func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheuste
 		func(w http.ResponseWriter, r *http.Request) {
 			getWorkloadMetrics(w, r, func() (*prometheus.Client, error) {
 				return prom, nil
+			}, func() (kubernetes.IstioClientInterface, error) {
+				return k8s, nil
 			})
 		}))
 
 	ts := httptest.NewServer(mr)
 	business.SetWithBackends(nil, prom)
-	return ts, api
+	return ts, api, k8s
 }

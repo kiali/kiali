@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -62,17 +63,26 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 
 // WorkloadMetrics is the API handler to fetch metrics to be displayed, related to a single workload
 func WorkloadMetrics(w http.ResponseWriter, r *http.Request) {
-	getWorkloadMetrics(w, r, prometheus.NewClient)
+	getWorkloadMetrics(w, r, prometheus.NewClient, func() (kubernetes.IstioClientInterface, error) {
+		return kubernetes.NewClient()
+	})
 }
 
 // getWorkloadMetrics (mock-friendly version)
-func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error)) {
+func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error), k8sClientSupplier func() (kubernetes.IstioClientInterface, error)) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	workload := vars["workload"]
 
+	k8s, err := k8sClientSupplier()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusServiceUnavailable, "Kubernetes client error: "+err.Error())
+		return
+	}
+
 	params := prometheus.MetricsQuery{Namespace: namespace, Workload: workload}
-	err := extractMetricsQueryParams(r, &params)
+	err = extractMetricsQueryParams(r, &params, k8s)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return

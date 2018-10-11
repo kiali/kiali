@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
 )
 
 const defaultHealthRateInterval = "10m"
@@ -27,23 +30,30 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Adjust rate interval
+	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+		return
+	}
+
 	switch p.Type {
 	case "app":
-		health, err := business.Health.GetNamespaceAppHealth(p.Namespace, p.RateInterval)
+		health, err := business.Health.GetNamespaceAppHealth(p.Namespace, rateInterval, p.QueryTime)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Error while fetching app health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
 	case "service":
-		health, err := business.Health.GetNamespaceServiceHealth(p.Namespace, p.RateInterval)
+		health, err := business.Health.GetNamespaceServiceHealth(p.Namespace, rateInterval, p.QueryTime)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Error while fetching service health: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, health)
 	case "workload":
-		health, err := business.Health.GetNamespaceWorkloadHealth(p.Namespace, p.RateInterval)
+		health, err := business.Health.GetNamespaceWorkloadHealth(p.Namespace, rateInterval, p.QueryTime)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Error while fetching workload health: "+err.Error())
 			return
@@ -62,8 +72,13 @@ func AppHealth(w http.ResponseWriter, r *http.Request) {
 
 	p := appHealthParams{}
 	p.extract(r)
+	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+		return
+	}
 
-	health, err := business.Health.GetAppHealth(p.Namespace, p.App, p.RateInterval)
+	health, err := business.Health.GetAppHealth(p.Namespace, p.App, rateInterval, p.QueryTime)
 	handleHealthResponse(w, health, err)
 }
 
@@ -77,8 +92,14 @@ func WorkloadHealth(w http.ResponseWriter, r *http.Request) {
 
 	p := workloadHealthParams{}
 	p.extract(r)
+	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+		return
+	}
+	p.RateInterval = rateInterval
 
-	health, err := business.Health.GetWorkloadHealth(p.Namespace, p.Workload, p.RateInterval)
+	health, err := business.Health.GetWorkloadHealth(p.Namespace, p.Workload, rateInterval, p.QueryTime)
 	handleHealthResponse(w, health, err)
 }
 
@@ -92,8 +113,13 @@ func ServiceHealth(w http.ResponseWriter, r *http.Request) {
 
 	p := serviceHealthParams{}
 	p.extract(r)
+	rateInterval, err := adjustRateInterval(business, p.Namespace, p.RateInterval, p.QueryTime)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+		return
+	}
 
-	health, err := business.Health.GetServiceHealth(p.Namespace, p.Service, p.RateInterval)
+	health, err := business.Health.GetServiceHealth(p.Namespace, p.Service, rateInterval, p.QueryTime)
 	handleHealthResponse(w, health, err)
 }
 
@@ -121,10 +147,14 @@ type baseHealthParams struct {
 	// in: query
 	// default: 10m
 	RateInterval string `json:"rateInterval"`
+
+	// The time to use for the prometheus query
+	QueryTime time.Time
 }
 
 func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) {
 	p.RateInterval = defaultHealthRateInterval
+	p.QueryTime = util.Clock.Now()
 	queryParams := r.URL.Query()
 	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
 		p.RateInterval = rateIntervals[0]
@@ -209,4 +239,22 @@ func (p *workloadHealthParams) extract(r *http.Request) {
 	vars := mux.Vars(r)
 	p.baseExtract(r, vars)
 	p.Workload = vars["workload"]
+}
+
+func adjustRateInterval(business *business.Layer, namespace, rateInterval string, queryTime time.Time) (string, error) {
+	namespaceInfo, err := business.Namespace.GetNamespace(namespace)
+	if err != nil {
+		return "", err
+	}
+	interval, err := util.AdjustRateInterval(namespaceInfo.CreationTimestamp, queryTime, rateInterval)
+	if err != nil {
+		return "", err
+	}
+
+	if interval != rateInterval {
+		log.Debugf("Rate interval for namespace %v was adjusted to %v (original = %v, query time = %v, namespace created = %v)",
+			namespace, interval, rateInterval, queryTime, namespaceInfo.CreationTimestamp)
+	}
+
+	return interval, nil
 }

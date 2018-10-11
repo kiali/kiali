@@ -16,6 +16,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -23,7 +24,7 @@ import (
 
 // TestServiceMetricsDefault is unit test (testing request handling, not the prometheus client behaviour)
 func TestServiceMetricsDefault(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, api, k8s := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/services/svc/metrics"
@@ -46,6 +47,8 @@ func TestServiceMetricsDefault(t *testing.T) {
 		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
 	})
 
+	mockGetNamespace(k8s, "ns", time.Time{})
+
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -59,7 +62,7 @@ func TestServiceMetricsDefault(t *testing.T) {
 }
 
 func TestServiceMetricsWithParams(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, api, k8s := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -106,6 +109,8 @@ func TestServiceMetricsWithParams(t *testing.T) {
 		assert.WithinDuration(t, queryTime.Add(-1000*time.Second), r.Start, delta)
 	})
 
+	mockGetNamespace(k8s, "ns", time.Time{})
+
 	httpclient := &http.Client{}
 	resp, err := httpclient.Do(req)
 	if err != nil {
@@ -121,7 +126,7 @@ func TestServiceMetricsWithParams(t *testing.T) {
 }
 
 func TestServiceMetricsBadQueryTime(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, api, _ := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -152,7 +157,7 @@ func TestServiceMetricsBadQueryTime(t *testing.T) {
 }
 
 func TestServiceMetricsBadDuration(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, api, _ := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -182,7 +187,7 @@ func TestServiceMetricsBadDuration(t *testing.T) {
 }
 
 func TestServiceMetricsCantParseQuantiles(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, api, _ := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -213,7 +218,7 @@ func TestServiceMetricsCantParseQuantiles(t *testing.T) {
 }
 
 func TestServiceMetricsBadQuantiles(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, api, _ := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -244,7 +249,7 @@ func TestServiceMetricsBadQuantiles(t *testing.T) {
 }
 
 func TestServiceMetricsBadStep(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, api, _ := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -274,7 +279,7 @@ func TestServiceMetricsBadStep(t *testing.T) {
 }
 
 func TestServiceMetricsBadRateFunc(t *testing.T) {
-	ts, api := setupServiceMetricsEndpoint(t)
+	ts, api, _ := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -302,7 +307,7 @@ func TestServiceMetricsBadRateFunc(t *testing.T) {
 	assert.Contains(t, string(actual), "query parameter 'rateFunc' must be either 'rate' or 'irate'")
 }
 
-func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
+func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
 	config.Set(config.NewConfig())
 	k8s := kubetest.NewK8SClientMock()
 
@@ -318,11 +323,13 @@ func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustes
 		func(w http.ResponseWriter, r *http.Request) {
 			getServiceMetrics(w, r, func() (*prometheus.Client, error) {
 				return prom, nil
+			}, func() (kubernetes.IstioClientInterface, error) {
+				return k8s, nil
 			})
 		}))
 
 	ts := httptest.NewServer(mr)
 	business.SetWithBackends(k8s, prom)
-	return ts, api
-	// return nil, ts, api
+	return ts, api, k8s
+	// return nil, ts, api, k8s
 }
