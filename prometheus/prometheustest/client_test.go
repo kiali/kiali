@@ -466,7 +466,7 @@ func TestGetAllRequestRates(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	mockQuery(api, `rate(istio_requests_total{reporter="source",destination_service_namespace="ns",source_workload_namespace!="ns"}[5m])`, &vectorQ1)
+	mockQuery(api, `rate(istio_requests_total{destination_service_namespace="ns",source_workload_namespace!="ns"}[5m])`, &vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
@@ -474,7 +474,7 @@ func TestGetAllRequestRates(t *testing.T) {
 			Value:     model.SampleValue(2),
 			Metric:    model.Metric{"foo": "bar"}},
 	}
-	mockQuery(api, `rate(istio_requests_total{reporter="source",source_workload_namespace="ns"}[5m])`, &vectorQ2)
+	mockQuery(api, `rate(istio_requests_total{source_workload_namespace="ns"}[5m])`, &vectorQ2)
 
 	rates, err := client.GetAllRequestRates("ns", "5m")
 	assert.Equal(t, 2, rates.Len())
@@ -496,7 +496,7 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 			Metric:    model.Metric{"foo": "bar"},
 		},
 	}
-	mockQuery(api, `rate(istio_requests_total{reporter="destination",destination_service_namespace="istio-system",source_workload_namespace!="istio-system"}[5m])`, &vectorQ1)
+	mockQuery(api, `rate(istio_requests_total{destination_service_namespace="istio-system",source_workload_namespace!="istio-system"}[5m])`, &vectorQ1)
 
 	vectorQ2 := model.Vector{
 		&model.Sample{
@@ -504,7 +504,7 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 			Value:     model.SampleValue(2),
 			Metric:    model.Metric{"foo": "bar"}},
 	}
-	mockQuery(api, `rate(istio_requests_total{reporter="destination",source_workload_namespace="istio-system"}[5m])`, &vectorQ2)
+	mockQuery(api, `rate(istio_requests_total{source_workload_namespace="istio-system"}[5m])`, &vectorQ2)
 
 	rates, err := client.GetAllRequestRates("istio-system", "5m")
 	assert.Equal(t, 2, rates.Len())
