@@ -228,7 +228,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
     return (
       <span className={alignWithGraphHeaderStyle}>
         <OverlayTrigger overlay={graphSettingsPopover} placement="bottom" trigger={['click']} rootClose={true}>
-          <Button>
+          <Button id="graph_settings">
             Display <Icon name="angle-down" />
           </Button>
         </OverlayTrigger>

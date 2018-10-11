@@ -45,7 +45,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
           <div className="glyphicon glyphicon-fullscreen" />
         </Button>
 
-        <ButtonGroup className={cytoscapeToolbarPadStyle}>
+        <ButtonGroup id="toolbar_layout_group" className={cytoscapeToolbarPadStyle}>
           <Button
             onClick={() => {
               this.props.onLayoutChange(DagreGraph.getLayout());
@@ -78,6 +78,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
         </ButtonGroup>
 
         <Button
+          id="toolbar_toggle_legend"
           onClick={this.props.toggleLegend}
           active={this.props.isLegendActive}
           className={cytoscapeToolbarPadStyle}

@@ -19,10 +19,13 @@ import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
 
 import GraphLegend from '../../components/GraphFilter/GraphLegend';
-import GraphHelp from './GraphHelp';
 import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeToolbar } from '../../components/CytoscapeGraph/CytoscapeToolbar';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../../components/Nav/NavUtils';
+
+import StatefulTour from '../../components/Tour/StatefulTour';
+
+import graphHelp from './GraphHelpTour';
 
 type GraphPageProps = GraphParamsType & {
   graphTimestamp: string;
@@ -73,13 +76,6 @@ const cytoscapeToolbarWrapperDivStyle = style({
 const graphToolbarStyle = style({
   right: '0',
   bottom: '10px',
-  zIndex: 9999,
-  position: 'absolute'
-});
-
-const graphHelpStyle = style({
-  left: '0',
-  top: '-40px',
   zIndex: 9999,
   position: 'absolute'
 });
@@ -191,6 +187,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     };
     return (
       <>
+        <StatefulTour steps={graphHelp} isOpen={this.state.showHelp} onClose={this.toggleHelp} />
         <FlexView className={containerStyle} column={true}>
           <Breadcrumb title={true}>
             <Breadcrumb.Item active={true}>
@@ -253,7 +250,6 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
             {this.props.showLegend && (
               <GraphLegend className={graphToolbarStyle} closeLegend={this.props.toggleLegend} />
             )}
-            {this.state.showHelp && <GraphHelp className={graphHelpStyle} closeHelp={this.toggleHelp} />}
           </FlexView>
         </FlexView>
       </>
