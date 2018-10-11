@@ -286,7 +286,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 	if labelSelector != "" {
 		selector, selErr = labels.Parse(labelSelector)
 		if selErr != nil {
-			log.Errorf("%s can not be processed as selector: ", labelSelector, selErr)
+			log.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
 		}
 	}
 	for _, d := range dep {
