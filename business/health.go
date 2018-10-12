@@ -241,7 +241,7 @@ func (in *HealthService) getNamespaceServiceHealth(namespace string, services []
 	}
 
 	// Fetch services requests rates
-	rates, _ := in.prom.GetNamespaceRequestRates(namespace, rateInterval)
+	rates, _ := in.prom.GetNamespaceServicesRequestRates(namespace, rateInterval)
 
 	// Fill with collected request rates
 	fillServiceRequestRates(allHealth, rates)
@@ -303,11 +303,11 @@ func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector
 	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
 		if health, ok := allHealth[name]; ok {
-			sumRequestCounters(&health.Requests, sample)
+			health.Requests.Aggregate(sample)
 		}
 		name = string(sample.Metric[lblSrc])
 		if health, ok := allHealth[name]; ok {
-			sumRequestCounters(&health.Requests, sample)
+			health.Requests.Aggregate(sample)
 		}
 	}
 }
@@ -319,7 +319,7 @@ func fillServiceRequestRates(allHealth models.NamespaceServiceHealth, rates mode
 	for _, sample := range rates {
 		service := string(sample.Metric[lblDestSvc])
 		if health, ok := allHealth[service]; ok {
-			sumRequestCounters(&health.Requests, sample)
+			health.Requests.Aggregate(sample)
 		}
 	}
 }
@@ -331,11 +331,11 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
 		if health, ok := allHealth[name]; ok {
-			sumRequestCounters(&health.Requests, sample)
+			health.Requests.Aggregate(sample)
 		}
 		name = string(sample.Metric[lblSrc])
 		if health, ok := allHealth[name]; ok {
-			sumRequestCounters(&health.Requests, sample)
+			health.Requests.Aggregate(sample)
 		}
 	}
 }
@@ -344,7 +344,7 @@ func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterv
 	rqHealth := models.RequestHealth{}
 	inbound, _ := in.prom.GetServiceRequestRates(namespace, service, rateInterval)
 	for _, sample := range inbound {
-		sumRequestCounters(&rqHealth, sample)
+		rqHealth.Aggregate(sample)
 	}
 	return rqHealth
 }
@@ -354,7 +354,7 @@ func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval strin
 	inbound, outbound, _ := in.prom.GetAppRequestRates(namespace, app, rateInterval)
 	all := append(inbound, outbound...)
 	for _, sample := range all {
-		sumRequestCounters(&rqHealth, sample)
+		rqHealth.Aggregate(sample)
 	}
 	return rqHealth
 }
@@ -364,17 +364,9 @@ func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInte
 	inbound, outbound, _ := in.prom.GetWorkloadRequestRates(namespace, workload, rateInterval)
 	all := append(inbound, outbound...)
 	for _, sample := range all {
-		sumRequestCounters(&rqHealth, sample)
+		rqHealth.Aggregate(sample)
 	}
 	return rqHealth
-}
-
-func sumRequestCounters(rqHealth *models.RequestHealth, sample *model.Sample) {
-	rqHealth.RequestCount += float64(sample.Value)
-	responseCode := sample.Metric["response_code"][0]
-	if responseCode == '5' || responseCode == '4' {
-		rqHealth.RequestErrorCount += float64(sample.Value)
-	}
 }
 
 func castWorkloadStatuses(ws models.Workloads) []models.WorkloadStatus {

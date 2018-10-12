@@ -98,7 +98,7 @@ func (o *PromClientMock) GetAllRequestRates(namespace, ratesInterval string) (mo
 	return args.Get(0).(model.Vector), args.Error(1)
 }
 
-func (o *PromClientMock) GetNamespaceRequestRates(namespace, ratesInterval string) (model.Vector, error) {
+func (o *PromClientMock) GetNamespaceServicesRequestRates(namespace, ratesInterval string) (model.Vector, error) {
 	args := o.Called(namespace, ratesInterval)
 	return args.Get(0).(model.Vector), args.Error(1)
 }

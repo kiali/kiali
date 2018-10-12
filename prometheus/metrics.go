@@ -437,31 +437,27 @@ func replaceInvalidCharacters(metricName string) string {
 // Uses source telemetry unless working on the Istio namespace.
 func getAllRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, error) {
 	// traffic originating outside the namespace to destinations inside the namespace
-	lblIn := fmt.Sprintf(`destination_service_namespace="%s",source_workload_namespace!="%s"`, namespace, namespace)
-	in, err := getRequestRatesForLabel(api, time.Now(), lblIn, ratesInterval)
+	lbl := fmt.Sprintf(`destination_service_namespace="%s",source_workload_namespace!="%s"`, namespace, namespace)
+	fromOutside, err := getRequestRatesForLabel(api, time.Now(), lbl, ratesInterval)
 	if err != nil {
 		return model.Vector{}, err
 	}
 	// traffic originating inside the namespace to destinations inside or outside the namespace
-	lblOut := fmt.Sprintf(`source_workload_namespace="%s"`, namespace)
-	out, err := getRequestRatesForLabel(api, time.Now(), lblOut, ratesInterval)
+	lbl = fmt.Sprintf(`source_workload_namespace="%s"`, namespace)
+	fromInside, err := getRequestRatesForLabel(api, time.Now(), lbl, ratesInterval)
 	if err != nil {
 		return model.Vector{}, err
 	}
 	// Merge results
-	all := append(in, out...)
+	all := append(fromOutside, fromInside...)
 	return all, nil
 }
 
-// getNamespaceRequestRates retrieves traffic rates for requests entering or internal to the namespace.
+// getNamespaceServicesRequestRates retrieves traffic rates for requests entering or internal to the namespace.
 // Uses source telemetry unless working on the Istio namespace.
-func getNamespaceRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, error) {
-	reporter := "source"
-	if config.Get().IstioNamespace == namespace {
-		reporter = "destination"
-	}
+func getNamespaceServicesRequestRates(api v1.API, namespace string, ratesInterval string) (model.Vector, error) {
 	// traffic for the namespace services
-	lblNs := fmt.Sprintf(`reporter="%s",destination_service_namespace="%s"`, reporter, namespace)
+	lblNs := fmt.Sprintf(`destination_service_namespace="%s"`, namespace)
 	ns, err := getRequestRatesForLabel(api, time.Now(), lblNs, ratesInterval)
 	if err != nil {
 		return model.Vector{}, err

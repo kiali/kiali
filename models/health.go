@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/kiali/kiali/prometheus"
+	"github.com/prometheus/common/model"
 )
 
 // NamespaceAppHealth is an alias of map of app name x health
@@ -31,7 +32,7 @@ func EmptyAppHealth() AppHealth {
 	return AppHealth{
 		Envoy:            []EnvoyHealthWrapper{},
 		WorkloadStatuses: []WorkloadStatus{},
-		Requests:         RequestHealth{},
+		Requests:         RequestHealth{ErrorRatio: -1},
 	}
 }
 
@@ -56,6 +57,17 @@ type WorkloadStatus struct {
 
 // RequestHealth holds several stats about recent request errors
 type RequestHealth struct {
-	RequestCount      float64 `json:"requestCount"`
-	RequestErrorCount float64 `json:"requestErrorCount"`
+	requestRate float64
+	errorRate   float64
+	ErrorRatio  float64 `json:"errorRatio"`
+}
+
+// Aggregate adds the provided metric sample to internal counters and updates the error ratio
+func (in *RequestHealth) Aggregate(sample *model.Sample) {
+	in.requestRate += float64(sample.Value)
+	responseCode := sample.Metric["response_code"][0]
+	if responseCode == '5' || responseCode == '4' {
+		in.errorRate += float64(sample.Value)
+	}
+	in.ErrorRatio = in.errorRate / in.requestRate
 }
