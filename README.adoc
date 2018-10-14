@@ -495,6 +495,20 @@ login_token:
 login_token:
   expiration_seconds: VALUE
 ----
+|`KUBERNETES_BURST`
+|The Burst value of Kubernetes client (default is 200)
+[source,yaml]
+----
+kubernetes_config:
+  burst: VALUE
+----
+|`KUBERNETES_QPS`
+|The QPS value of Kubernetes client (default is 100)
+[source,yaml]
+----
+kubernetes_config:
+  qps: VALUE
+----
 |===
 
 == Configure External Services
