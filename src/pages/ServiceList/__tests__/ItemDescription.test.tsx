@@ -6,7 +6,7 @@ import { ServiceListItem } from '../../../types/ServiceList';
 
 const health = new ServiceHealth(
   { inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } },
-  { requestCount: 10, requestErrorCount: 1 },
+  { errorRatio: 0.1 },
   60
 );
 

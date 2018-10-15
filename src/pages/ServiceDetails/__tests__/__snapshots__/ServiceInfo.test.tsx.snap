@@ -116,8 +116,7 @@ ShallowWrapper {
             },
           },
           "requests": Object {
-            "requestCount": 0,
-            "requestErrorCount": 0,
+            "errorRatio": -1,
           },
         },
         "istioSidecar": false,
@@ -276,8 +275,7 @@ ShallowWrapper {
                       },
                     },
                     "requests": Object {
-                      "requestCount": 0,
-                      "requestErrorCount": 0,
+                      "errorRatio": -1,
                     },
                   }
                 }
@@ -557,8 +555,7 @@ ShallowWrapper {
                         },
                       },
                       "requests": Object {
-                        "requestCount": 0,
-                        "requestErrorCount": 0,
+                        "errorRatio": -1,
                       },
                     }
                   }
@@ -832,8 +829,7 @@ ShallowWrapper {
                         },
                       },
                       "requests": Object {
-                        "requestCount": 0,
-                        "requestErrorCount": 0,
+                        "errorRatio": -1,
                       },
                     }
                   }
@@ -949,8 +945,7 @@ ShallowWrapper {
                           },
                         },
                         "requests": Object {
-                          "requestCount": 0,
-                          "requestErrorCount": 0,
+                          "errorRatio": -1,
                         },
                       }
                     }
@@ -1080,8 +1075,7 @@ ShallowWrapper {
                         },
                       },
                       "requests": Object {
-                        "requestCount": 0,
-                        "requestErrorCount": 0,
+                        "errorRatio": -1,
                       },
                     },
                     "ip": "172.30.196.248",
@@ -2204,8 +2198,7 @@ ShallowWrapper {
                         },
                       },
                       "requests": Object {
-                        "requestCount": 0,
-                        "requestErrorCount": 0,
+                        "errorRatio": -1,
                       },
                     }
                   }
@@ -2485,8 +2478,7 @@ ShallowWrapper {
                           },
                         },
                         "requests": Object {
-                          "requestCount": 0,
-                          "requestErrorCount": 0,
+                          "errorRatio": -1,
                         },
                       }
                     }
@@ -2760,8 +2752,7 @@ ShallowWrapper {
                           },
                         },
                         "requests": Object {
-                          "requestCount": 0,
-                          "requestErrorCount": 0,
+                          "errorRatio": -1,
                         },
                       }
                     }
@@ -2877,8 +2868,7 @@ ShallowWrapper {
                             },
                           },
                           "requests": Object {
-                            "requestCount": 0,
-                            "requestErrorCount": 0,
+                            "errorRatio": -1,
                           },
                         }
                       }
@@ -3008,8 +2998,7 @@ ShallowWrapper {
                           },
                         },
                         "requests": Object {
-                          "requestCount": 0,
-                          "requestErrorCount": 0,
+                          "errorRatio": -1,
                         },
                       },
                       "ip": "172.30.196.248",

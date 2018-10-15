@@ -32,8 +32,7 @@ export interface WorkloadStatus {
 }
 
 export interface RequestHealth {
-  requestCount: number;
-  requestErrorCount: number;
+  errorRatio: number;
 }
 
 export interface Status {
@@ -123,13 +122,13 @@ const ascendingThresholdCheck = (value: number, thresholds: Thresholds): Thresho
 };
 
 export const getRequestErrorsRatio = (rh: RequestHealth): ThresholdStatus => {
-  if (rh.requestCount === 0) {
+  if (rh.errorRatio < 0) {
     return {
       value: RATIO_NA,
       status: NA
     };
   }
-  return ascendingThresholdCheck((100 * rh.requestErrorCount) / rh.requestCount, REQUESTS_THRESHOLDS);
+  return ascendingThresholdCheck(100 * rh.errorRatio, REQUESTS_THRESHOLDS);
 };
 
 export abstract class Health {
@@ -347,7 +346,7 @@ export const healthNotAvailable = (): AppHealth => {
       }
     ],
     [],
-    { requestCount: 0, requestErrorCount: 0 },
+    { errorRatio: -1 },
     60
   );
 };

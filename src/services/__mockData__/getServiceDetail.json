@@ -289,8 +289,7 @@
       }
     ],
     "requests": {
-      "requestCount": 0,
-      "requestErrorCount": 0
+      "errorRatio": -1
     }
   }
 }

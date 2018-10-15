@@ -28,31 +28,31 @@ describe('Health', () => {
     expect(status).toEqual(H.FAILURE);
   });
   it('should not get requests error ratio', () => {
-    const result = H.getRequestErrorsRatio({ requestCount: 0, requestErrorCount: 0 });
+    const result = H.getRequestErrorsRatio({ errorRatio: -1 });
     expect(result.status).toEqual(H.NA);
     expect(result.violation).toBeUndefined();
   });
   it('should get healthy requests error ratio', () => {
-    const result = H.getRequestErrorsRatio({ requestCount: 10, requestErrorCount: 0 });
+    const result = H.getRequestErrorsRatio({ errorRatio: 0 });
     expect(result.status).toEqual(H.HEALTHY);
     expect(result.value).toEqual(0);
     expect(result.violation).toBeUndefined();
   });
   it('should get degraded requests error ratio', () => {
-    const result = H.getRequestErrorsRatio({ requestCount: 10, requestErrorCount: 1 });
+    const result = H.getRequestErrorsRatio({ errorRatio: 0.1 });
     expect(result.status).toEqual(H.DEGRADED);
     expect(result.value).toEqual(10);
     expect(result.violation).toEqual('10.00%>=0.1%');
   });
   it('should get failing requests error ratio', () => {
-    const result = H.getRequestErrorsRatio({ requestCount: 10, requestErrorCount: 5 });
+    const result = H.getRequestErrorsRatio({ errorRatio: 0.5 });
     expect(result.status).toEqual(H.FAILURE);
     expect(result.value).toEqual(50);
     expect(result.violation).toEqual('50.00%>=20%');
   });
   it('should get comparable error ratio with NA', () => {
-    const r1 = H.getRequestErrorsRatio({ requestCount: 0, requestErrorCount: 0 });
-    const r2 = H.getRequestErrorsRatio({ requestCount: 10, requestErrorCount: 0 });
+    const r1 = H.getRequestErrorsRatio({ errorRatio: -1 });
+    const r2 = H.getRequestErrorsRatio({ errorRatio: 0 });
     expect(r2.value).toBeGreaterThan(r1.value);
     expect(r1.value).toBeLessThan(r2.value);
   });
@@ -60,7 +60,7 @@ describe('Health', () => {
     const health = new H.AppHealth(
       [{ inbound: { healthy: 0, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ available: 0, replicas: 1, name: 'a' }],
-      { requestCount: 1, requestErrorCount: 1 },
+      { errorRatio: 1 },
       60
     );
     expect(health.getGlobalStatus()).toEqual(H.FAILURE);
@@ -69,7 +69,7 @@ describe('Health', () => {
     const health = new H.AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ available: 1, replicas: 1, name: 'a' }, { available: 2, replicas: 2, name: 'b' }],
-      { requestCount: 5, requestErrorCount: 0 },
+      { errorRatio: 0 },
       60
     );
     expect(health.getGlobalStatus()).toEqual(H.HEALTHY);
@@ -79,7 +79,7 @@ describe('Health', () => {
     const health = new H.AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ available: 1, replicas: 1, name: 'a' }, { available: 1, replicas: 2, name: 'b' }],
-      { requestCount: 5, requestErrorCount: 0 },
+      { errorRatio: 0 },
       60
     );
     expect(health.getGlobalStatus()).toEqual(H.DEGRADED);
@@ -89,7 +89,7 @@ describe('Health', () => {
     const health = new H.AppHealth(
       [{ inbound: { healthy: 0, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ available: 1, replicas: 1, name: 'a' }, { available: 2, replicas: 2, name: 'b' }],
-      { requestCount: 5, requestErrorCount: 0 },
+      { errorRatio: 0 },
       60
     );
     expect(health.getGlobalStatus()).toEqual(H.FAILURE);
@@ -99,7 +99,7 @@ describe('Health', () => {
     const health = new H.AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ available: 1, replicas: 1, name: 'a' }, { available: 2, replicas: 2, name: 'b' }],
-      { requestCount: 5, requestErrorCount: 1 },
+      { errorRatio: 0.2 },
       60
     );
     expect(health.getGlobalStatus()).toEqual(H.FAILURE);
@@ -109,7 +109,7 @@ describe('Health', () => {
     const health = new H.AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 3 } }],
       [{ available: 0, replicas: 0, name: 'a' }, { available: 0, replicas: 0, name: 'b' }],
-      { requestCount: 5, requestErrorCount: 1 },
+      { errorRatio: 0.2 },
       60
     );
     expect(health.getGlobalStatus()).toEqual(H.FAILURE);
