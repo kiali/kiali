@@ -186,6 +186,10 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 				if ref.Controller != nil && *ref.Controller {
 					if _, exist := controllers[ref.Name]; !exist {
 						controllers[ref.Name] = ref.Kind
+					} else {
+						if controllers[ref.Name] != ref.Kind {
+							controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+						}
 					}
 				}
 			}
@@ -217,6 +221,10 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 						// Delete the child ReplicaSet and add the parent controller
 						if _, exist := controllers[ref.Name]; !exist {
 							controllers[ref.Name] = ref.Kind
+						} else {
+							if controllers[ref.Name] != ref.Kind {
+								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							}
 						}
 						delete(controllers, cname)
 					}
@@ -239,6 +247,10 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 						// Delete the child ReplicationController and add the parent controller
 						if _, exist := controllers[ref.Name]; !exist {
 							controllers[ref.Name] = ref.Kind
+						} else {
+							if controllers[ref.Name] != ref.Kind {
+								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							}
 						}
 						delete(controllers, cname)
 					}
@@ -261,6 +273,10 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 						// Delete the child Job and add the parent controller
 						if _, exist := controllers[ref.Name]; !exist {
 							controllers[ref.Name] = ref.Kind
+						} else {
+							if controllers[ref.Name] != ref.Kind {
+								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							}
 						}
 						// Jobs are special as deleting CronJob parent doesn't delete children
 						// So we need to check that parent exists before to delete children controller
@@ -307,15 +323,6 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 			controllers[rs.Name] = "ReplicaSet"
 		}
 	}
-	for _, rc := range repcon {
-		selectorCheck := true
-		if selector != nil {
-			selectorCheck = selector.Matches(labels.Set(rc.Spec.Template.Labels))
-		}
-		if _, exist := controllers[rc.Name]; !exist && len(rc.OwnerReferences) == 0 && selectorCheck {
-			controllers[rc.Name] = "ReplicationController"
-		}
-	}
 	for _, dc := range depcon {
 		selectorCheck := true
 		if selector != nil {
@@ -323,6 +330,15 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 		}
 		if _, exist := controllers[dc.Name]; !exist && selectorCheck {
 			controllers[dc.Name] = "DeploymentConfig"
+		}
+	}
+	for _, rc := range repcon {
+		selectorCheck := true
+		if selector != nil {
+			selectorCheck = selector.Matches(labels.Set(rc.Spec.Template.Labels))
+		}
+		if _, exist := controllers[rc.Name]; !exist && len(rc.OwnerReferences) == 0 && selectorCheck {
+			controllers[rc.Name] = "ReplicationController"
 		}
 	}
 	for _, fs := range fulset {
@@ -596,13 +612,6 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 		return wl, nil
 	}
 
-	if dc != nil {
-		selector := labels.Set(dc.Spec.Template.Labels).AsSelector()
-		wl.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
-		wl.ParseDeploymentConfig(dc)
-		return wl, nil
-	}
-
 	if sf != nil {
 		selector := labels.Set(sf.Spec.Template.Labels).AsSelector()
 		wl.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
@@ -621,6 +630,13 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 		selector := labels.Set(jb.Spec.Template.Labels).AsSelector()
 		wl.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
 		wl.ParseJob(jb)
+		return wl, nil
+	}
+
+	if dc != nil {
+		selector := labels.Set(dc.Spec.Template.Labels).AsSelector()
+		wl.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+		wl.ParseDeploymentConfig(dc)
 		return wl, nil
 	}
 
@@ -663,4 +679,37 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 	}
 
 	return wl, nil
+}
+
+// KIALI-1730
+// This method is used to decide the priority of the controller in the cornercase when two controllers have same labels
+// on the selector. Note that this is a situation that user should control as it is described in the documentation:
+// https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
+// But Istio only identifies one controller as workload (it doesn't note which one).
+// Kiali can select one on the list of workloads and other in the details and this should be consistent.
+var controllerOrder = map[string]int{
+	"Deployment":            6,
+	"DeploymentConfig":      5,
+	"ReplicaSet":            4,
+	"ReplicationController": 3,
+	"StatefulSet":           2,
+	"Job":                   1,
+	"DaemonSet":             0,
+	"Pod":                   -1,
+}
+
+func controllerPriority(type1, type2 string) string {
+	w1, e1 := controllerOrder[type1]
+	if !e1 {
+		log.Errorf("This controller %s is assigned in a Pod and it's not properly managed", type1)
+	}
+	w2, e2 := controllerOrder[type2]
+	if !e2 {
+		log.Errorf("This controller %s is assigned in a Pod and it's not properly managed", type2)
+	}
+	if w1 >= w2 {
+		return type1
+	} else {
+		return type2
+	}
 }
