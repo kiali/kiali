@@ -19,7 +19,47 @@ func TestOneVirtualServicePerHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	noValidationResult(t, validations)
+	emptyValidationTest(t, validations)
+
+	// First virtual service has a gateway
+	vss = []kubernetes.IstioObject{
+		buildVirtualServiceWithGateway("virtual-1", "reviews", "bookinfo-gateway"),
+		buildVirtualService("virtual-2", "ratings"),
+	}
+	validations = SingleHostChecker{
+		Namespace:       "bookinfo",
+		VirtualServices: vss,
+	}.Check()
+
+	emptyValidationTest(t, validations)
+	emptyValidationTest(t, validations)
+
+	// Second virtual service has a gateway
+	vss = []kubernetes.IstioObject{
+		buildVirtualService("virtual-1", "reviews"),
+		buildVirtualServiceWithGateway("virtual-2", "ratings", "bookinfo-gateway"),
+	}
+	validations = SingleHostChecker{
+		Namespace:       "bookinfo",
+		VirtualServices: vss,
+	}.Check()
+
+	emptyValidationTest(t, validations)
+	emptyValidationTest(t, validations)
+
+	// Both virtual services have a gateway
+	vss = []kubernetes.IstioObject{
+		buildVirtualServiceWithGateway("virtual-1", "reviews", "bookinfo-gateway"),
+		buildVirtualServiceWithGateway("virtual-2", "ratings", "bookinfo-gateway"),
+	}
+
+	validations = SingleHostChecker{
+		Namespace:       "bookinfo",
+		VirtualServices: vss,
+	}.Check()
+
+	emptyValidationTest(t, validations)
+	emptyValidationTest(t, validations)
 }
 
 func TestOneVirtualServicePerFQDNHost(t *testing.T) {
@@ -32,7 +72,7 @@ func TestOneVirtualServicePerFQDNHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	noValidationResult(t, validations)
+	emptyValidationTest(t, validations)
 }
 
 func TestOneVirtualServicePerFQDNWildcardHost(t *testing.T) {
@@ -45,7 +85,7 @@ func TestOneVirtualServicePerFQDNWildcardHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	noValidationResult(t, validations)
+	emptyValidationTest(t, validations)
 }
 
 func TestRepeatingSimpleHost(t *testing.T) {
@@ -61,6 +101,48 @@ func TestRepeatingSimpleHost(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+}
+
+func TestRepeatingSimpleHostWithGateway(t *testing.T) {
+	vss := []kubernetes.IstioObject{
+		buildVirtualServiceWithGateway("virtual-1", "reviews", "bookinfo"),
+		buildVirtualService("virtual-2", "reviews"),
+	}
+
+	validations := SingleHostChecker{
+		Namespace:       "bookinfo",
+		VirtualServices: vss,
+	}.Check()
+
+	noObjectValidationTest(t, validations, "virtual-1")
+	presentValidationTest(t, validations, "virtual-2")
+
+	vss = []kubernetes.IstioObject{
+		buildVirtualService("virtual-1", "reviews"),
+		buildVirtualServiceWithGateway("virtual-2", "reviews", "bookinfo"),
+	}
+
+	validations = SingleHostChecker{
+		Namespace:       "bookinfo",
+		VirtualServices: vss,
+	}.Check()
+
+	presentValidationTest(t, validations, "virtual-1")
+	noObjectValidationTest(t, validations, "virtual-2")
+
+	vss = []kubernetes.IstioObject{
+		buildVirtualServiceWithGateway("virtual-1", "reviews", "bookinfo"),
+		buildVirtualServiceWithGateway("virtual-2", "reviews", "bookinfo"),
+	}
+
+	validations = SingleHostChecker{
+		Namespace:       "bookinfo",
+		VirtualServices: vss,
+	}.Check()
+
+	noObjectValidationTest(t, validations, "virtual-1")
+	noObjectValidationTest(t, validations, "virtual-2")
+	emptyValidationTest(t, validations)
 }
 
 func TestRepeatingFQDNHost(t *testing.T) {
@@ -156,22 +238,39 @@ func TestMultipleHostsPassing(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	noValidationResult(t, validations)
+	emptyValidationTest(t, validations)
 }
 
 func buildVirtualService(name, host string) kubernetes.IstioObject {
 	return buildVirtualServiceMultipleHosts(name, []string{host})
 }
 
+func buildVirtualServiceWithGateway(name, host, gateway string) kubernetes.IstioObject {
+	return data.AddGatewaysToVirtualService([]string{gateway}, data.CreateEmptyVirtualService(name,
+		"bookinfo", []string{host}))
+}
+
 func buildVirtualServiceMultipleHosts(name string, hosts []string) kubernetes.IstioObject {
 	return data.CreateEmptyVirtualService(name, "bookinfo", hosts)
 }
 
-func noValidationResult(t *testing.T, validations models.IstioValidations) {
+func emptyValidationTest(t *testing.T, validations models.IstioValidations) {
 	assert := assert.New(t)
 	assert.Empty(validations)
 
-	validation, ok := validations[models.IstioValidationKey{"virtualservice", "reviews"}]
+	validation, ok := validations[models.IstioValidationKey{"virtualservice", "virtual-1"}]
+	assert.False(ok)
+	assert.Nil(validation)
+
+	validation, ok = validations[models.IstioValidationKey{"virtualservice", "virtual-2"}]
+	assert.False(ok)
+	assert.Nil(validation)
+}
+
+func noObjectValidationTest(t *testing.T, validations models.IstioValidations, name string) {
+	assert := assert.New(t)
+
+	validation, ok := validations[models.IstioValidationKey{"virtualservice", name}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
