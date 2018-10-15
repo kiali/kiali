@@ -89,6 +89,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const rate3xx = this.safeRate(edge.data('rate3XX'));
     const rate4xx = this.safeRate(edge.data('rate4XX'));
     const rate5xx = this.safeRate(edge.data('rate5XX'));
+    const hasHttpTraffic = this.hasHttpMetrics(edge);
+    const hasTcpTraffic = this.hasTcpMetrics(edge);
 
     const HeadingBlock = ({ prefix, node }) => {
       const { namespace, version } = nodeData(node);
@@ -106,7 +108,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         <HeadingBlock prefix="Source" node={source} />
         <HeadingBlock prefix="Destination" node={dest} />
         <div className="panel-body">
-          {this.hasHttpMetrics(edge) ? (
+          {hasHttpTraffic ? (
             <>
               <RateTable
                 title="HTTP Traffic (requests per second):"
@@ -118,9 +120,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
               <hr />
             </>
           ) : (
-            !this.hasTcpMetrics(edge) && renderNoTraffic()
+            !hasTcpTraffic && renderNoTraffic()
           )}
-          {this.renderCharts(edge)}
+          {this.renderCharts(edge, hasHttpTraffic, hasTcpTraffic)}
         </div>
       </div>
     );
@@ -213,7 +215,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
     this.metricsPromise.promise
       .then(response => {
-        let useDest = sourceData.nodeType === NodeType.UNKNOWN || sourceData.nodeType === NodeType.SERVICE;
+        let useDest = sourceData.nodeType === NodeType.UNKNOWN;
         useDest = useDest || this.props.namespace === 'istio-system';
         const reporter = useDest ? response.data.dest : response.data.source;
         const metrics = reporter.metrics;
@@ -314,13 +316,18 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     </div>
   );
 
-  private renderCharts = edge => {
+  private renderCharts = (edge, hasHttpTraffic, hasTcpTraffic) => {
     if (!this.hasSupportedCharts(edge)) {
-      return (
+      return hasHttpTraffic ? (
         <>
           <Icon type="pf" name="info" /> Service graphs do not support service-to-service aggregate sparklines. See the
           chart above for aggregate traffic or use the workload graph type to observe individual workload-to-service
           edge sparklines.
+        </>
+      ) : (
+        <>
+          <Icon type="pf" name="info" /> Service graphs do not support service-to-service aggregate sparklines. Use the
+          workload graph type to observe individual workload-to-service edge sparklines.
         </>
       );
     }
@@ -337,7 +344,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     }
 
     let httpCharts, tcpCharts;
-    if (this.hasHttpMetrics(edge)) {
+    if (hasHttpTraffic) {
       httpCharts = (
         <>
           <RpsChart label="HTTP Request Traffic" dataRps={this.state.reqRates!} dataErrors={this.state.errRates} />
@@ -354,7 +361,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       );
     }
 
-    if (this.hasTcpMetrics(edge)) {
+    if (hasTcpTraffic) {
       tcpCharts = (
         <TcpChart label="TCP Traffic" sentRates={this.state.tcpSent} receivedRates={this.state.tcpReceived} />
       );
