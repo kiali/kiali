@@ -22,9 +22,12 @@ var (
 	//   redhat@redhat-docker.io/maistra-0.1.0-1-3a136c90ec5e308f236e0d7ebb5c4c5e405217f4-unknown
 	// Example Maistra upstream project version is:
 	//   redhat@redhat-pulp.abc.xyz.redhat.com:8888/openshift-istio-tech-preview-0.1.0-1-3a136c90ec5e308f236e0d7ebb5c4c5e405217f4-Custom
+	// Example Istio snapshot version is:
+	//   root@f72e3d3ef3c2-docker.io/istio-release-1.0-20180927-21-10-cbe9c05c470ec1924f7bcf02334b183e7e6175cb-Clean
 	maistraProductVersionExpr = regexp.MustCompile("maistra-([0-9]+\\.[0-9]+\\.[0-9]+)")
 	maistraProjectVersionExpr = regexp.MustCompile("openshift-istio.*-([0-9]+\\.[0-9]+\\.[0-9]+)")
 	istioVersionExpr          = regexp.MustCompile("([0-9]+\\.[0-9]+\\.[0-9]+)")
+	istioSnapshotVersionExpr  = regexp.MustCompile("istio-release-([0-9]+\\.[0-9]+)(-[0-9]{8})")
 )
 
 func getVersions() {
@@ -86,7 +89,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{Name: "Unknown", Version: "Unknown"}
 
 	// First see if we detect Maistra (either product or upstream project).
-	// If it is not Maistra, see if it is upstream Istio.
+	// If it is not Maistra, see if it is upstream Istio (either a release or snapshot).
 	// If it is neither then it is some unknown Istio implementation that we do not support.
 
 	maistraVersionStringArr := maistraProductVersionExpr.FindStringSubmatch(rawVersion)
@@ -119,6 +122,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 		}
 	}
 
+	// see if it is a released version of Istio
 	istioVersionStringArr := istioVersionExpr.FindStringSubmatch(rawVersion)
 	if istioVersionStringArr != nil {
 		log.Debugf("Detected Istio version [%v]", rawVersion)
@@ -127,6 +131,23 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 			product.Version = istioVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
 			if !validateVersion(kialiConfig.IstioVersionSupported, product.Version) {
 				info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, the version should be "+kialiConfig.IstioVersionSupported)
+			}
+			// we know this is Istio upstream - either a supported or unsupported version - return now
+			return &product, nil
+		}
+	}
+
+	// see if it is a snapshot version of Istio
+	istioVersionStringArr = istioSnapshotVersionExpr.FindStringSubmatch(rawVersion)
+	if istioVersionStringArr != nil {
+		log.Debugf("Detected Istio snapshot version [%v]", rawVersion)
+		if len(istioVersionStringArr) > 2 {
+			product.Name = "Istio Snapshot"
+			majorMinor := istioVersionStringArr[1]  // regex group #1 is the "#.#" version numbers
+			snapshotStr := istioVersionStringArr[2] // regex group #2 is the date/time stamp
+			product.Version = majorMinor + snapshotStr
+			if !validateVersion(config.IstioVersionSupported, majorMinor) {
+				info.WarningMessages = append(info.WarningMessages, "Istio snapshot version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
 			}
 			// we know this is Istio upstream - either a supported or unsupported version - return now
 			return &product, nil
