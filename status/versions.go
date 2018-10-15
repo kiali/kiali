@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/go-version"
 	kube "k8s.io/client-go/kubernetes"
 
-	kialiConfig "github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
@@ -71,7 +71,7 @@ func validateVersion(istioReq string, installedVersion string) bool {
 }
 
 func istioVersion() (*ExternalServiceInfo, error) {
-	istioConfig := kialiConfig.Get().ExternalServices.Istio
+	istioConfig := config.Get().ExternalServices.Istio
 	resp, err := http.Get(istioConfig.UrlServiceVersion)
 	if err == nil {
 		defer resp.Body.Close()
@@ -98,8 +98,8 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 		if len(maistraVersionStringArr) > 1 {
 			product.Name = "Maistra"
 			product.Version = maistraVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
-			if !validateVersion(kialiConfig.MaistraVersionSupported, product.Version) {
-				info.WarningMessages = append(info.WarningMessages, "Maistra version "+product.Version+" is not supported, the version should be "+kialiConfig.MaistraVersionSupported)
+			if !validateVersion(config.MaistraVersionSupported, product.Version) {
+				info.WarningMessages = append(info.WarningMessages, "Maistra version "+product.Version+" is not supported, the version should be "+config.MaistraVersionSupported)
 			}
 
 			// we know this is Maistra - either a supported or unsupported version - return now
@@ -113,8 +113,8 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 		if len(maistraVersionStringArr) > 1 {
 			product.Name = "Maistra Project"
 			product.Version = maistraVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
-			if !validateVersion(kialiConfig.MaistraVersionSupported, product.Version) {
-				info.WarningMessages = append(info.WarningMessages, "Maistra project version "+product.Version+" is not supported, the version should be "+kialiConfig.MaistraVersionSupported)
+			if !validateVersion(config.MaistraVersionSupported, product.Version) {
+				info.WarningMessages = append(info.WarningMessages, "Maistra project version "+product.Version+" is not supported, the version should be "+config.MaistraVersionSupported)
 			}
 
 			// we know this is Maistra - either a supported or unsupported version - return now
@@ -129,8 +129,8 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 		if len(istioVersionStringArr) > 1 {
 			product.Name = "Istio"
 			product.Version = istioVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
-			if !validateVersion(kialiConfig.IstioVersionSupported, product.Version) {
-				info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, the version should be "+kialiConfig.IstioVersionSupported)
+			if !validateVersion(config.IstioVersionSupported, product.Version) {
+				info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
 			}
 			// we know this is Istio upstream - either a supported or unsupported version - return now
 			return &product, nil
@@ -169,7 +169,7 @@ type p8sResponseVersion struct {
 func prometheusVersion() (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{}
 	prometheusV := new(p8sResponseVersion)
-	prometheusUrl := kialiConfig.Get().ExternalServices.PrometheusServiceURL
+	prometheusUrl := config.Get().ExternalServices.PrometheusServiceURL
 	resp, err := http.Get(prometheusUrl + "/version")
 	if err == nil {
 		defer resp.Body.Close()
@@ -185,11 +185,11 @@ func prometheusVersion() (*ExternalServiceInfo, error) {
 
 func kubernetesVersion() (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{}
-	config, err := kubernetes.ConfigClient()
+	k8sConfig, err := kubernetes.ConfigClient()
 	if err == nil {
-		config.QPS = kialiConfig.Get().KubernetesConfig.QPS
-		config.Burst = kialiConfig.Get().KubernetesConfig.Burst
-		k8s, err := kube.NewForConfig(config)
+		k8sConfig.QPS = config.Get().KubernetesConfig.QPS
+		k8sConfig.Burst = config.Get().KubernetesConfig.Burst
+		k8s, err := kube.NewForConfig(k8sConfig)
 		if err == nil {
 			serverVersion, err := k8s.Discovery().ServerVersion()
 			if err == nil {
