@@ -16,8 +16,11 @@ import { INITIAL_STATUS_STATE } from '../reducers/HelpDropdownState';
 
 declare const window;
 
+const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
+const persistKey = 'kiali-' + (webRoot && webRoot !== '/' ? webRoot.substring(1) : 'root');
+
 const persistConfig = {
-  key: 'root',
+  key: persistKey,
   storage: storage,
   whitelist: ['authentication', 'statusState', 'userSettings']
 };
