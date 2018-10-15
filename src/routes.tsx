@@ -1,4 +1,3 @@
-import GraphRouteHandler from './pages/Graph/GraphRouteHandler';
 import WorkloadListPage from './pages/WorkloadList/WorkloadListPage';
 import ServiceListPage from './pages/ServiceList/ServiceListPage';
 import IstioConfigPage from './pages/IstioConfigList/IstioConfigListPage';
@@ -8,8 +7,10 @@ import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetail
 import WorkloadDetailsPage from './pages/WorkloadDetails/WorkloadDetailsPage';
 import AppListPage from './pages/AppList/AppListPage';
 import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
-import OverviewPage from './pages/Overview/OverviewPage';
 import { MenuItem, Path } from './types/Routes';
+
+import GraphRouteHandlerContainer from './pages/Graph/GraphRouteHandler';
+import OverviewPageContainer from './containers/OverviewPageContainer';
 
 /**
  * Return array of objects that describe vertical menu
@@ -64,27 +65,27 @@ const defaultRoute = '/overview';
 const pathRoutes: Path[] = [
   {
     path: '/overview',
-    component: OverviewPage
+    component: OverviewPageContainer
   },
   {
     path: '/graph/namespaces/:namespace/applications/:app/versions/:version',
-    component: GraphRouteHandler
+    component: GraphRouteHandlerContainer
   },
   {
     path: '/graph/namespaces/:namespace/applications/:app',
-    component: GraphRouteHandler
+    component: GraphRouteHandlerContainer
   },
   {
     path: '/graph/namespaces/:namespace/services/:service',
-    component: GraphRouteHandler
+    component: GraphRouteHandlerContainer
   },
   {
     path: '/graph/namespaces/:namespace/workloads/:workload',
-    component: GraphRouteHandler
+    component: GraphRouteHandlerContainer
   },
   {
     path: '/graph/namespaces/:namespace',
-    component: GraphRouteHandler
+    component: GraphRouteHandlerContainer
   },
   {
     path: '/namespaces/:namespace/services/:service',

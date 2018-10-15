@@ -160,7 +160,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
   handleLayoutChange = (layout: Layout) => {
     const params = this.getGraphParams();
     if (params.node) {
-      this.context.router.history.replace(makeNodeGraphUrlFromParams(params.node, { ...params, graphLayout: layout }));
+      this.context.router.history.replace(makeNodeGraphUrlFromParams({ ...params, graphLayout: layout }));
     } else {
       this.context.router.history.replace(makeNamespaceGraphUrlFromParams({ ...params, graphLayout: layout }));
     }

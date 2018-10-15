@@ -105,9 +105,14 @@ class Navigation extends React.Component<PropsType> {
     store.subscribe(() => {
       this.setDocLayout();
     });
+
     return this.props.authenticated ? (
       <>
-        <VerticalNav setControlledState={this.setControlledState} navCollapsed={this.props.navCollapsed}>
+        <VerticalNav
+          className="kiali-vertical-nav"
+          setControlledState={this.setControlledState}
+          navCollapsed={this.props.navCollapsed}
+        >
           <VerticalNav.Masthead title="Kiali">
             <VerticalNav.Brand iconImg={KialiLogo} />
             <PfSpinnerContainer />

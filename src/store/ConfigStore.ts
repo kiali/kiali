@@ -7,12 +7,12 @@ import thunk from 'redux-thunk';
 // defaults to localStorage for web and AsyncStorage for react-native
 import storage from 'redux-persist/lib/storage';
 import { INITIAL_GLOBAL_STATE } from '../reducers/GlobalState';
-import { INITIAL_NAMESPACE_STATE } from '../reducers/Namespaces';
 import { INITIAL_LOGIN_STATE } from '../reducers/LoginState';
 import { INITIAL_GRAPH_STATE } from '../reducers/GraphDataState';
 import { INITIAL_USER_SETTINGS_STATE } from '../reducers/UserSettingsState';
 import { INITIAL_MESSAGE_CENTER_STATE } from '../reducers/MessageCenter';
 import { INITIAL_STATUS_STATE } from '../reducers/HelpDropdownState';
+import { INITIAL_NAMESPACE_STATE } from '../reducers/NamespaceState';
 
 declare const window;
 

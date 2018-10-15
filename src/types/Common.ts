@@ -23,3 +23,5 @@ export const UNIT_TIME = {
 };
 
 export type PollIntervalInMs = number;
+
+export type JsonString = string;

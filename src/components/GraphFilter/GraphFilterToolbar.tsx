@@ -95,7 +95,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
 
   handleFilterChange = (params: GraphParamsType) => {
     if (this.props.node) {
-      this.context.router.history.push(makeNodeGraphUrlFromParams(this.props.node, params));
+      this.context.router.history.push(makeNodeGraphUrlFromParams(params));
     } else {
       this.context.router.history.push(makeNamespaceGraphUrlFromParams(params));
     }

@@ -1,5 +1,4 @@
 import { createBrowserHistory } from 'history';
-
 const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
 const baseName = webRoot && webRoot !== '/' ? webRoot + '/console' : '/console';
 const history = createBrowserHistory({ basename: baseName });
@@ -73,5 +72,19 @@ export namespace HistoryManager {
     } else {
       history.push(history.location.pathname + '?' + urlParams.toString());
     }
+  };
+
+  /**
+   * setGraphNamespaceParam: properly replace the namespace section of the url
+   * without going to another page -- just rewrite the namespace part of the url
+   * NOTE: We have to use the 'history.location' because we are calling
+   * this from inside 'getDerivedStateFromProps' which is 'static'
+   * and therefore doesn't have access to the 'context.router'
+   * @param namespace
+   */
+  export const setGraphNamespaceParam = (namespace: string) => {
+    const urlParams = new URLSearchParams(history.location.search);
+    const pathname = '/graph/namespaces/' + namespace;
+    history.replace(pathname + '?' + urlParams.toString());
   };
 }

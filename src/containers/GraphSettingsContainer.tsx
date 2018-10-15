@@ -103,7 +103,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
   handleFilterChangeToUrl = (params: GraphParamsType) => {
     document.body.click(); // close the layover
     if (params.node) {
-      this.context.router.history.push(makeNodeGraphUrlFromParams(params.node, params));
+      this.context.router.history.push(makeNodeGraphUrlFromParams(params));
     } else {
       this.context.router.history.push(makeNamespaceGraphUrlFromParams(params));
     }
@@ -122,7 +122,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       showUnusedNodes
     } = this.props;
 
-    // map or dispatchers for redux
+    // map our dispatchers for redux
     const {
       toggleGraphCircuitBreakers,
       toggleGraphVirtualServices,

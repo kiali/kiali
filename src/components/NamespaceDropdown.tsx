@@ -1,13 +1,13 @@
 import * as React from 'react';
-import { DropdownButton, MenuItem } from 'patternfly-react';
 
 import Namespace from '../types/Namespace';
+import ToolbarDropdown from './ToolbarDropdown/ToolbarDropdown';
 
 interface NamespaceListType {
   disabled: boolean;
   activeNamespace: Namespace;
   items: Namespace[];
-  onSelect: (newValue: Namespace) => void;
+  onSelect: (namespace: Namespace) => void;
   refresh: () => void;
 }
 
@@ -20,30 +20,25 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
     this.props.refresh();
   }
 
-  onSelectTypesafe = (value: string) => this.props.onSelect({ name: value });
-
-  onToggle = (isOpen: boolean) => (isOpen ? this.props.refresh() : undefined);
+  handleSelectNamespace = (namespace: string) => this.props.onSelect({ name: namespace });
 
   render() {
     const disabled = this.props.disabled ? true : false;
+
+    const items = this.props.items.map(ns => {
+      return ns.name;
+    });
+
     return (
-      <DropdownButton
+      <ToolbarDropdown
         disabled={disabled}
+        useName={true}
         id="namespace-selector"
-        title={this.props.activeNamespace.name}
-        onSelect={this.onSelectTypesafe}
-        onToggle={this.onToggle}
-      >
-        <MenuItem key="all" active={'all' === this.props.activeNamespace.name} eventKey="all">
-          all
-        </MenuItem>
-        {this.props.items &&
-          this.props.items.map(ns => (
-            <MenuItem key={ns.name} active={ns.name === this.props.activeNamespace.name} eventKey={ns.name}>
-              {ns.name}
-            </MenuItem>
-          ))}
-      </DropdownButton>
+        initialLabel={this.props.activeNamespace.name}
+        handleSelect={this.handleSelectNamespace}
+        value={this.props.activeNamespace.name}
+        options={items}
+      />
     );
   }
 }

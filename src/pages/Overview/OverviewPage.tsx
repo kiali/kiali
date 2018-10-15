@@ -34,7 +34,11 @@ type State = {
   showEmpty: boolean;
 };
 
-class OverviewPage extends ListPage.Component<{}, State, NamespaceInfo> {
+interface OverviewProps {
+  setActiveNamespace(name: Namespace): (namespace: Namespace) => void;
+}
+
+class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInfo> {
   private static summarizeHealthFilters() {
     const healthFilters = FilterSelected.getSelected().filter(f => f.category === FiltersAndSorts.healthFilter.title);
     if (healthFilters.length === 0) {
@@ -68,7 +72,7 @@ class OverviewPage extends ListPage.Component<{}, State, NamespaceInfo> {
     };
   }
 
-  constructor(props: RouteComponentProps<{}>) {
+  constructor(props: RouteComponentProps<OverviewProps>) {
     super(props);
     this.state = {
       namespaces: [],
@@ -149,6 +153,11 @@ class OverviewPage extends ListPage.Component<{}, State, NamespaceInfo> {
     this.setState({ namespaces: sorted });
   };
 
+  handleNamespaceClick = (namespace: string) => {
+    // @ts-ignore
+    this.props.setActiveNamespace({ name: namespace });
+  };
+
   render() {
     return (
       <>
@@ -169,7 +178,12 @@ class OverviewPage extends ListPage.Component<{}, State, NamespaceInfo> {
                   <Col xs={6} sm={3} md={3} key={ns.name}>
                     <Card matchHeight={true} accented={true} aggregated={true}>
                       <CardTitle>
-                        <Link to={`/graph/namespaces/${encodedName}`}>{ns.name}</Link>
+                        <Link
+                          to={`/graph/namespaces/${encodedName}`}
+                          onClick={() => this.handleNamespaceClick(ns.name)}
+                        >
+                          {ns.name}
+                        </Link>
                       </CardTitle>
                       <CardBody>
                         <ListPageLink target={TargetPage.APPLICATIONS} namespace={ns.name}>
@@ -189,7 +203,11 @@ class OverviewPage extends ListPage.Component<{}, State, NamespaceInfo> {
                           {nbApps === 0 && <AggregateStatusNotification>N/A</AggregateStatusNotification>}
                         </AggregateStatusNotifications>
                         <div>
-                          <Link to={`/graph/namespaces/${encodedName}`} title="Graph">
+                          <Link
+                            to={`/graph/namespaces/${encodedName}`}
+                            title="Graph"
+                            onClick={() => this.handleNamespaceClick(ns.name)}
+                          >
                             <Icon type="pf" name="topology" style={{ paddingLeft: 10, paddingRight: 10 }} />
                           </Link>
                           <ListPageLink target={TargetPage.APPLICATIONS} namespace={ns.name} title="Applications list">

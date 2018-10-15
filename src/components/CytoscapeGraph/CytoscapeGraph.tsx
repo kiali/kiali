@@ -31,6 +31,7 @@ import { authentication } from '../../utils/Authentication';
 import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
 
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
+import { NamespaceActions } from '../../actions/NamespaceAction';
 
 type CytoscapeGraphType = {
   elements?: any;
@@ -428,16 +429,17 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     if (target.data('isOutside')) {
       if (!target.data('isInaccessible')) {
         store.dispatch(GraphActions.changed());
-        this.context.router.history.push(
-          makeNamespaceGraphUrlFromParams({
-            namespace: { name: target.data('namespace') },
-            graphLayout: this.props.graphLayout,
-            graphDuration: this.props.graphDuration,
-            edgeLabelMode: this.props.edgeLabelMode,
-            graphType: this.props.graphType,
-            injectServiceNodes: this.props.injectServiceNodes
-          })
-        );
+        const graphParams: GraphParamsType = {
+          namespace: { name: target.data('namespace') },
+          graphLayout: this.props.graphLayout,
+          graphDuration: this.props.graphDuration,
+          edgeLabelMode: this.props.edgeLabelMode,
+          graphType: this.props.graphType,
+          injectServiceNodes: this.props.injectServiceNodes
+        };
+        console.warn('graphParams:');
+        console.dir(graphParams);
+        this.context.router.history.push(makeNamespaceGraphUrlFromParams(graphParams));
       }
       return;
     }
@@ -477,16 +479,17 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
     store.dispatch(GraphActions.changed());
-    this.context.router.history.push(
-      makeNodeGraphUrlFromParams(targetNode, {
-        namespace: { name: event.summaryTarget.data('namespace') },
-        graphLayout: this.props.graphLayout,
-        graphDuration: this.props.graphDuration,
-        edgeLabelMode: this.props.edgeLabelMode,
-        graphType: this.props.graphType,
-        injectServiceNodes: this.props.injectServiceNodes
-      })
-    );
+    const graphParamsWithNode: GraphParamsType = {
+      namespace: { name: event.summaryTarget.data('namespace') },
+      graphLayout: this.props.graphLayout,
+      node: targetNode,
+      graphDuration: this.props.graphDuration,
+      edgeLabelMode: this.props.edgeLabelMode,
+      graphType: this.props.graphType,
+      injectServiceNodes: this.props.injectServiceNodes
+    };
+    store.dispatch(NamespaceActions.setActiveNamespace(graphParamsWithNode.namespace));
+    this.context.router.history.push(makeNodeGraphUrlFromParams(graphParamsWithNode));
   };
 
   private handleTap = (event: CytoscapeClickEvent) => {

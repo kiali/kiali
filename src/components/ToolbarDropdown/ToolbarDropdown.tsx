@@ -3,7 +3,8 @@ import { DropdownButton, MenuItem } from 'patternfly-react';
 import PropTypes from 'prop-types';
 
 type ToolbarDropdownProps = {
-  disabled: boolean;
+  disabled?: boolean;
+  useName?: boolean;
   id?: string;
   nameDropdown?: string;
   value?: number | string;
@@ -30,7 +31,8 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
 
   onKeyChanged = (key: any) => {
     this.setState({ currentValue: key, currentName: this.props.options[key] });
-    this.props.handleSelect(key);
+    const nameOrKey = this.props.useName ? this.props.options[key] : key;
+    this.props.handleSelect(nameOrKey);
   };
 
   render() {

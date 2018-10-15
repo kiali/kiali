@@ -1,13 +1,18 @@
 import * as Api from '../services/Api';
 import { createAction } from 'typesafe-actions';
+import Namespace from '../types/Namespace';
+import { KialiAppState } from '../store/Store';
+import { JsonString } from '../types/Common';
 
 export enum NamespaceActionKeys {
   NAMESPACE_REQUEST_STARTED = 'NAMESPACE_REQUEST_STARTED',
   NAMESPACE_SUCCESS = 'NAMESPACE_SUCCESS',
-  NAMESPACE_FAILED = 'NAMESPACE_FAILED'
+  NAMESPACE_FAILED = 'NAMESPACE_FAILED',
+  SET_ACTIVE_NAMESPACE = 'SET_ACTIVE_NAMESPACE',
+  SET_PREVIOUS_GRAPH_STATE = 'SET_PREVIOUS_GRAPH_STATE'
 }
 
-const shouldFetchNamespaces = state => {
+const shouldFetchNamespaces = (state: KialiAppState) => {
   if (!state) {
     return true;
   } else {
@@ -16,6 +21,14 @@ const shouldFetchNamespaces = state => {
 };
 
 export const NamespaceActions = {
+  setActiveNamespace: createAction(NamespaceActionKeys.SET_ACTIVE_NAMESPACE, (namespace: Namespace) => ({
+    type: NamespaceActionKeys.SET_ACTIVE_NAMESPACE,
+    payload: namespace
+  })),
+  setPreviousGraphState: createAction(NamespaceActionKeys.SET_PREVIOUS_GRAPH_STATE, (state: JsonString) => ({
+    type: NamespaceActionKeys.SET_PREVIOUS_GRAPH_STATE,
+    payload: state
+  })),
   requestStarted: createAction(NamespaceActionKeys.NAMESPACE_REQUEST_STARTED),
   requestFailed: createAction(NamespaceActionKeys.NAMESPACE_FAILED),
   receiveList: createAction(NamespaceActionKeys.NAMESPACE_SUCCESS, (newList: any, receivedAt: Date) => ({
@@ -28,7 +41,13 @@ export const NamespaceActions = {
       dispatch(NamespaceActions.requestStarted());
       return Api.getNamespaces(auth)
         .then(response => response['data'])
-        .then(data => dispatch(NamespaceActions.receiveList(data, new Date())))
+        .then(data => {
+          let namespaceList: Namespace[] = [{ name: 'all' }];
+          data.forEach((aNamespace: Namespace) => {
+            namespaceList.push(aNamespace);
+          });
+          dispatch(NamespaceActions.receiveList(namespaceList, new Date()));
+        })
         .catch(() => dispatch(NamespaceActions.requestFailed()));
     };
   },
