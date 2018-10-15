@@ -9,6 +9,7 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func TestGetIstioConfig(t *testing.T) {
@@ -171,202 +172,104 @@ func mockGetIstioConfig() IstioConfigService {
 }
 
 func fakeGetGateways() []kubernetes.IstioObject {
-	gw1 := kubernetes.MockIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "gw-1",
-		},
-		Spec: map[string]interface{}{
-			"selector": map[string]interface{}{
-				"app": "my-gateway1-controller",
+	gw1 := data.CreateEmptyGateway("gw-1", map[string]string{
+		"app": "my-gateway1-controller",
+	})
+
+	gw1.GetSpec()["servers"] = []interface{}{
+		map[string]interface{}{
+			"port": map[string]interface{}{
+				"number":   80,
+				"name":     "http",
+				"protocol": "HTTP",
 			},
-			"servers": []interface{}{
-				map[string]interface{}{
-					"port": map[string]interface{}{
-						"number":   80,
-						"name":     "http",
-						"protocol": "HTTP",
-					},
-					"hosts": []interface{}{
-						"uk.bookinfo.com",
-						"eu.bookinfo.com",
-					},
-					"tls": map[string]interface{}{
-						"httpsRedirect": "true",
-					},
-				},
+			"hosts": []interface{}{
+				"uk.bookinfo.com",
+				"eu.bookinfo.com",
+			},
+			"tls": map[string]interface{}{
+				"httpsRedirect": "true",
 			},
 		},
 	}
 
-	gw2 := kubernetes.MockIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "gw-2",
-		},
-		Spec: map[string]interface{}{
-			"selector": map[string]interface{}{
-				"app": "my-gateway2-controller",
+	gw2 := data.CreateEmptyGateway("gw-2", map[string]string{
+		"app": "my-gateway2-controller",
+	})
+
+	gw2.GetSpec()["servers"] = []interface{}{
+		map[string]interface{}{
+			"port": map[string]interface{}{
+				"number":   80,
+				"name":     "http",
+				"protocol": "HTTP",
 			},
-			"servers": []interface{}{
-				map[string]interface{}{
-					"port": map[string]interface{}{
-						"number":   80,
-						"name":     "http",
-						"protocol": "HTTP",
-					},
-					"hosts": []interface{}{
-						"uk.bookinfo.com",
-						"eu.bookinfo.com",
-					},
-					"tls": map[string]interface{}{
-						"httpsRedirect": "true",
-					},
-				},
+			"hosts": []interface{}{
+				"uk.bookinfo.com",
+				"eu.bookinfo.com",
+			},
+			"tls": map[string]interface{}{
+				"httpsRedirect": "true",
 			},
 		},
 	}
 
-	return []kubernetes.IstioObject{&gw1, &gw2}
+	return []kubernetes.IstioObject{gw1, gw2}
 }
 
 func fakeGetVirtualServices() []kubernetes.IstioObject {
-	virtualService1 := kubernetes.MockIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "reviews",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"reviews",
-			},
-			"http": []interface{}{
-				map[string]interface{}{
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "reviews",
-								"subset": "v2",
-							},
-							"weight": 50,
-						},
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "reviews",
-								"subset": "v3",
-							},
-							"weight": 50,
-						},
-					},
-				},
-			},
-		},
-	}
+	virtualService1 := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v2", 50),
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v3", 50),
+			data.CreateEmptyVirtualService("reviews", "test", []string{"reviews"}),
+		),
+	)
 
-	virtualService2 := kubernetes.MockIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "details",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"details",
-			},
-			"tcp": []interface{}{
-				map[string]interface{}{
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "details",
-								"subset": "v2",
-							},
-							"weight": 50,
-						},
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "details",
-								"subset": "v3",
-							},
-							"weight": 50,
-						},
-					},
-				},
-			},
-		},
-	}
+	virtualService2 := data.AddRoutesToVirtualService("http", data.CreateRoute("details", "v2", 50),
+		data.AddRoutesToVirtualService("http", data.CreateRoute("details", "v3", 50),
+			data.CreateEmptyVirtualService("details", "test", []string{"details"}),
+		),
+	)
 
-	return []kubernetes.IstioObject{&virtualService1, &virtualService2}
+	return []kubernetes.IstioObject{virtualService1, virtualService2}
 }
 
 func fakeGetDestinationRules() []kubernetes.IstioObject {
 
-	destinationRule1 := kubernetes.MockIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "reviews-dr",
-		},
-		Spec: map[string]interface{}{
-			"name": "reviews",
-			"trafficPolicy": map[string]interface{}{
-				"connectionPool": map[string]interface{}{
-					"http": map[string]interface{}{
-						"maxRequestsPerConnection": 100,
-					},
-				},
-				"outlierDetection": map[string]interface{}{
-					"http": map[string]interface{}{
-						"consecutiveErrors": 50,
-					},
-				},
+	destinationRule1 := data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
+		data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
+			data.CreateEmptyDestinationRule("test", "reviews-dr", "reviews")))
+
+	destinationRule1.GetSpec()["trafficPolicy"] = map[string]interface{}{
+		"connectionPool": map[string]interface{}{
+			"http": map[string]interface{}{
+				"maxRequestsPerConnection": 100,
 			},
-			"subsets": []interface{}{
-				map[string]interface{}{
-					"name": "v1",
-					"labels": map[string]interface{}{
-						"version": "v1",
-					},
-				},
-				map[string]interface{}{
-					"name": "v2",
-					"labels": map[string]interface{}{
-						"version": "v2",
-					},
-				},
+		},
+		"outlierDetection": map[string]interface{}{
+			"http": map[string]interface{}{
+				"consecutiveErrors": 50,
 			},
 		},
 	}
 
-	destinationRule2 := kubernetes.MockIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "details-dr",
-		},
-		Spec: map[string]interface{}{
-			"name": "details",
-			"trafficPolicy": map[string]interface{}{
-				"connectionPool": map[string]interface{}{
-					"http": map[string]interface{}{
-						"maxRequestsPerConnection": 100,
-					},
-				},
-				"outlierDetection": map[string]interface{}{
-					"http": map[string]interface{}{
-						"consecutiveErrors": 50,
-					},
-				},
+	destinationRule2 := data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"),
+		data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"),
+			data.CreateEmptyDestinationRule("test", "details-dr", "details")))
+
+	destinationRule2.GetSpec()["trafficPolicy"] = map[string]interface{}{
+		"connectionPool": map[string]interface{}{
+			"http": map[string]interface{}{
+				"maxRequestsPerConnection": 100,
 			},
-			"subsets": []interface{}{
-				map[string]interface{}{
-					"name": "v1",
-					"labels": map[string]interface{}{
-						"version": "v1",
-					},
-				},
-				map[string]interface{}{
-					"name": "v2",
-					"labels": map[string]interface{}{
-						"version": "v2",
-					},
-				},
+		},
+		"outlierDetection": map[string]interface{}{
+			"http": map[string]interface{}{
+				"consecutiveErrors": 50,
 			},
 		},
 	}
 
-	return []kubernetes.IstioObject{&destinationRule1, &destinationRule2}
+	return []kubernetes.IstioObject{destinationRule1, destinationRule2}
 }
 
 func fakeGetServiceEntries() []kubernetes.IstioObject {

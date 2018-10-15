@@ -27,7 +27,7 @@ func TestFoundGateway(t *testing.T) {
 	assert := assert.New(t)
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway", "mesh"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([]kubernetes.IstioObject{data.CreateEmptyGateway("my-gateway")})
+	gatewayNames := kubernetes.GatewayNames([]kubernetes.IstioObject{data.CreateEmptyGateway("my-gateway", make(map[string]string))})
 
 	checker := NoGatewayChecker{
 		VirtualService: virtualService,
