@@ -7,6 +7,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
+
+	kialiConfig "github.com/kiali/kiali/config"
 )
 
 // OSRouteClient is the client struct for OpenShift Routes API over Kubernetes
@@ -43,8 +45,8 @@ func NewOSRouteClient() (*OSRouteClient, error) {
 		},
 		BearerToken:     config.BearerToken,
 		TLSClientConfig: config.TLSClientConfig,
-		QPS:             k8sQPS,
-		Burst:           k8sBurst,
+		QPS:             kialiConfig.Get().KubernetesConfig.QPS,
+		Burst:           kialiConfig.Get().KubernetesConfig.Burst,
 	}
 
 	client, err := rest.RESTClientFor(&osConfig)
