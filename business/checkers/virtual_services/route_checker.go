@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/intutil"
 )
@@ -71,7 +72,7 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 				valid = false
 				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight/%s",
 					kind, routeIdx, destWeightIdx, destinationWeight["weight"])
-				validation := models.BuildCheck("Weight must be a number", "error", path)
+				validation := buildValidation("Weight must be a number", "error", path)
 				validations = append(validations, &validation)
 			}
 
@@ -79,7 +80,7 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 				valid = false
 				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight/%d",
 					kind, routeIdx, destWeightIdx, weight)
-				validation := models.BuildCheck("Weight should be between 0 and 100",
+				validation := buildValidation("Weight should be between 0 and 100",
 					"error", path)
 				validations = append(validations, &validation)
 			}
@@ -90,17 +91,24 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 		if weightCount > 0 && weightSum != 100 {
 			valid = false
 			path := fmt.Sprintf("spec/%s[%d]/route", kind, routeIdx)
-			validation := models.BuildCheck("Weight sum should be 100", "error", path)
+			validation := buildValidation("Weight sum should be 100", "error", path)
 			validations = append(validations, &validation)
 		}
 
 		if weightCount > 0 && weightCount != destinationWeights.Len() {
 			valid = false
 			path := fmt.Sprintf("spec/%s[%d]/route", kind, routeIdx)
-			validation := models.BuildCheck("All routes should have weight", "error", path)
+			validation := buildValidation("All routes should have weight", "error", path)
 			validations = append(validations, &validation)
 		}
 	}
 
 	return validations, valid
+}
+
+func buildValidation(message, severity, path string) models.IstioCheck {
+	validation := models.BuildCheck(message, severity, path)
+	log.Infof("%s - %s. Galley should be performing this validation but it isn't. "+
+		"Make sure Galley is fully working.", severity, message)
+	return validation
 }
