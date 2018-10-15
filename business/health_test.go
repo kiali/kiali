@@ -48,8 +48,8 @@ func TestGetServiceHealth(t *testing.T) {
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
 	assert.Equal(1, health.Envoy.Inbound.Total)
 	assert.Equal(1, health.Envoy.Inbound.Healthy)
-	assert.Equal(float64(15.4), health.Requests.RequestCount)
-	assert.Equal(float64(1.4), health.Requests.RequestErrorCount)
+	// 1.4 / 15.4 = 0.09
+	assert.InDelta(float64(0.09), health.Requests.ErrorRatio, 0.01)
 }
 
 func TestGetAppHealth(t *testing.T) {
@@ -89,8 +89,8 @@ func TestGetAppHealth(t *testing.T) {
 	assert.Equal(1, health.Envoy[0].Inbound.Healthy)
 	assert.Equal(0, health.Envoy[0].Outbound.Total)
 	assert.Equal(0, health.Envoy[0].Outbound.Healthy)
-	assert.Equal(float64(6.6), health.Requests.RequestCount)
-	assert.Equal(float64(1.6), health.Requests.RequestErrorCount)
+	// 1.6 / 6.6 = 0.24
+	assert.InDelta(float64(0.24), health.Requests.ErrorRatio, 0.01)
 }
 
 func TestGetWorkloadHealth(t *testing.T) {
@@ -114,8 +114,8 @@ func TestGetWorkloadHealth(t *testing.T) {
 
 	k8s.AssertNumberOfCalls(t, "GetDeployment", 1)
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 1)
-	assert.Equal(float64(6.6), health.Requests.RequestCount)
-	assert.Equal(float64(1.6), health.Requests.RequestErrorCount)
+	// 1.6 / 6.6 = 0.24
+	assert.InDelta(float64(0.24), health.Requests.ErrorRatio, 0.01)
 }
 
 var t1 = model.Now()
