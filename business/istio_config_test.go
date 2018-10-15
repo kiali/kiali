@@ -10,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
@@ -36,11 +37,11 @@ func TestGetIstioConfig(t *testing.T) {
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Equal(0, len(istioconfigList.QuotaSpecs))
 	assert.Equal(0, len(istioconfigList.QuotaSpecBindings))
-	assert.Equal(istioconfigList.Permissions["destinationrules"], map[string]bool{
-		"create": false,
-		"update": true,
-		"delete": false,
-	})
+	assert.Equal(models.ResourcePermissions{
+		Create: false,
+		Update: true,
+		Delete: false,
+	}, istioconfigList.Permissions["destinationrules"])
 	assert.Nil(err)
 
 	criteria.IncludeGateways = true
@@ -142,11 +143,11 @@ func TestGetIstioConfigDetails(t *testing.T) {
 
 	istioConfigDetails, err := configService.GetIstioConfigDetails("test", "gateways", "gw-1")
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
-	assert.Equal(istioConfigDetails.Permissions, map[string]bool{
-		"create": false,
-		"update": true,
-		"delete": false,
-	})
+	assert.Equal(models.ResourcePermissions{
+		Create: false,
+		Update: true,
+		Delete: false,
+	}, istioConfigDetails.Permissions)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "virtualservices", "reviews")

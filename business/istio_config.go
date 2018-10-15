@@ -126,7 +126,13 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 		ssars, pxErr := in.k8s.GetSelfSubjectAccessReview(criteria.Namespace, []string{"create", "update", "delete"}, resourceTypesToAPI)
 		if pxErr == nil {
 			for _, ssar := range ssars {
-				fillPermission(istioConfigList.Permissions, ssar)
+				resource := ssar.Spec.ResourceAttributes.Resource
+				permission, ok := istioConfigList.Permissions[resource]
+				if !ok {
+					permission = models.ResourcePermissions{}
+				}
+				fillPermission(&permission, ssar)
+				istioConfigList.Permissions[resource] = permission
 			}
 		}
 	}()
@@ -149,7 +155,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 	var gw, vs, dr, se, qs, qb kubernetes.IstioObject
 	var r *kubernetes.IstioRuleDetails
 	var err error
-	permissions := make(models.ResourcePermissions)
+	permission := models.ResourcePermissions{}
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -160,7 +166,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 			ssars, permErr := in.k8s.GetSelfSubjectAccessReview(namespace, []string{"create", "update", "delete"}, resourceAndGroup)
 			if permErr == nil {
 				for _, ssar := range ssars {
-					permissions[ssar.Spec.ResourceAttributes.Verb] = ssar.Status.Allowed
+					fillPermission(&permission, ssar)
 				}
 			}
 		}
@@ -209,17 +215,18 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 	}
 
 	wg.Wait()
-	istioConfigDetail.Permissions = permissions
+	istioConfigDetail.Permissions = permission
 
 	return istioConfigDetail, err
 }
 
-func fillPermission(allPerms map[string]models.ResourcePermissions, ssar *auth_v1.SelfSubjectAccessReview) {
-	resource := ssar.Spec.ResourceAttributes.Resource
-	perm, ok := allPerms[resource]
-	if !ok {
-		perm = make(models.ResourcePermissions)
-		allPerms[resource] = perm
+func fillPermission(permission *models.ResourcePermissions, ssar *auth_v1.SelfSubjectAccessReview) {
+	switch ssar.Spec.ResourceAttributes.Verb {
+	case "create":
+		permission.Create = ssar.Status.Allowed
+	case "update":
+		permission.Update = ssar.Status.Allowed
+	case "delete":
+		permission.Delete = ssar.Status.Allowed
 	}
-	perm[ssar.Spec.ResourceAttributes.Verb] = ssar.Status.Allowed
 }
