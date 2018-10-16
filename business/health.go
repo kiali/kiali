@@ -139,41 +139,10 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, rateInterval str
 
 // GetNamespaceAppHealth returns a health for all apps in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceAppHealth(namespace, rateInterval string) (models.NamespaceAppHealth, error) {
-	var services []v1.Service
-	var ws models.Workloads
-	cfg := config.Get()
-
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	errChan := make(chan error, 2)
-
-	go func() {
-		defer wg.Done()
-		var err error
-		services, err = in.k8s.GetServices(namespace, nil)
-		if err != nil {
-			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err)
-			errChan <- err
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		var err error
-		ws, err = fetchWorkloads(in.k8s, namespace, cfg.IstioLabels.AppLabelName)
-		if err != nil {
-			log.Errorf("Error fetching Workload per namespace %s: %s", namespace, err)
-			errChan <- err
-		}
-	}()
-
-	wg.Wait()
-	if len(errChan) != 0 {
-		err := <-errChan
+	appEntities, err := fetchNamespaceApps(in.k8s, namespace, "")
+	if err != nil {
 		return nil, err
 	}
-
-	appEntities := castAppDetails(services, ws)
 	return in.getNamespaceAppHealth(namespace, appEntities, rateInterval), nil
 }
 
@@ -380,44 +349,4 @@ func castWorkloadStatuses(ws models.Workloads) []models.WorkloadStatus {
 
 	}
 	return statuses
-}
-
-// AppDetails holds Services and Workloads having the same "app" label
-type appDetails struct {
-	app       string
-	Services  []v1.Service
-	Workloads models.Workloads
-}
-
-// NamespaceApps is a map of app_name x AppDetails
-type namespaceApps = map[string]*appDetails
-
-func castAppDetails(services []v1.Service, ws models.Workloads) namespaceApps {
-	allEntities := make(namespaceApps)
-	appLabel := config.Get().IstioLabels.AppLabelName
-	for _, service := range services {
-		if app, ok := service.Spec.Selector[appLabel]; ok {
-			if appEntities, ok := allEntities[app]; ok {
-				appEntities.Services = append(appEntities.Services, service)
-			} else {
-				allEntities[app] = &appDetails{
-					app:      app,
-					Services: []v1.Service{service},
-				}
-			}
-		}
-	}
-	for _, w := range ws {
-		if app, ok := w.Labels[appLabel]; ok {
-			if appEntities, ok := allEntities[app]; ok {
-				appEntities.Workloads = append(appEntities.Workloads, w)
-			} else {
-				allEntities[app] = &appDetails{
-					app:       app,
-					Workloads: models.Workloads{w},
-				}
-			}
-		}
-	}
-	return allEntities
 }

@@ -171,6 +171,7 @@ func TestAppsEndpoint(t *testing.T) {
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]corev1.Pod{}, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]corev1.Service{}, nil)
 
 	url := ts.URL + "/api/namespaces/ns/apps"
 
@@ -212,5 +213,5 @@ func TestAppDetailsEndpoint(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
-	k8s.AssertNumberOfCalls(t, "GetServices", 2)
+	k8s.AssertNumberOfCalls(t, "GetServices", 1)
 }

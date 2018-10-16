@@ -58,3 +58,13 @@ func FilterPodsForController(controllerName string, controllerType string, allPo
 	}
 	return pods
 }
+
+func FilterServicesForSelector(selector labels.Selector, allServices []v1.Service) []v1.Service {
+	var services []v1.Service
+	for _, svc := range allServices {
+		if selector.Matches(labels.Set(svc.Spec.Selector)) {
+			services = append(services, svc)
+		}
+	}
+	return services
+}

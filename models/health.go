@@ -69,5 +69,9 @@ func (in *RequestHealth) Aggregate(sample *model.Sample) {
 	if responseCode == '5' || responseCode == '4' {
 		in.errorRate += float64(sample.Value)
 	}
-	in.ErrorRatio = in.errorRate / in.requestRate
+	if in.requestRate == 0 {
+		in.ErrorRatio = -1
+	} else {
+		in.ErrorRatio = in.errorRate / in.requestRate
+	}
 }
