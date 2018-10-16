@@ -45,6 +45,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/graph/appender"
 	"github.com/kiali/kiali/graph/cytoscape"
 	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/log"
@@ -79,12 +80,14 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 	log.Debugf("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
 	trafficMap := graph.NewTrafficMap()
+
+	globalInfo := appender.NewGlobalInfo()
 	for _, namespace := range o.Namespaces {
 		log.Debugf("Build traffic map for namespace [%s]", namespace)
 		namespaceTrafficMap := buildNamespaceTrafficMap(namespace, o, client)
-
+		namespaceInfo := appender.NewNamespaceInfo(namespace)
 		for _, a := range o.Appenders {
-			a.AppendGraph(namespaceTrafficMap, namespace)
+			a.AppendGraph(namespaceTrafficMap, globalInfo, namespaceInfo)
 		}
 		mergeTrafficMaps(trafficMap, namespaceTrafficMap)
 	}
@@ -639,8 +642,11 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 
 	trafficMap := buildNodeTrafficMap(namespace, n, o, client)
 
+	globalInfo := appender.NewGlobalInfo()
+	namespaceInfo := appender.NewNamespaceInfo(namespace)
+
 	for _, a := range o.Appenders {
-		a.AppendGraph(trafficMap, namespace)
+		a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 	}
 
 	// The appenders can add/remove/alter nodes. After the manipulations are complete

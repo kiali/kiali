@@ -8,20 +8,23 @@ import (
 type IstioAppender struct{}
 
 // AppendGraph implements Appender
-func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string) {
+func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
-	istioClient, err := kubernetes.NewClient()
-	checkError(err)
+	if globalInfo.IstioClient == nil {
+		var err error
+		globalInfo.IstioClient, err = kubernetes.NewClient()
+		checkError(err)
+	}
 
-	namespaceInfo := fetchNamespaceInfo(namespace, istioClient)
+	istioDetails := fetchIstioDetails(namespaceInfo.Namespace, globalInfo.IstioClient)
 
-	addRouteBadges(trafficMap, namespace, namespaceInfo)
+	addRouteBadges(trafficMap, namespaceInfo.Namespace, istioDetails)
 }
 
-func fetchNamespaceInfo(namespace string, istioClient *kubernetes.IstioClient) *kubernetes.IstioDetails {
+func fetchIstioDetails(namespace string, istioClient *kubernetes.IstioClient) *kubernetes.IstioDetails {
 	istioDetails, err := istioClient.GetIstioDetails(namespace, "")
 	checkError(err)
 
@@ -36,6 +39,11 @@ func addRouteBadges(trafficMap graph.TrafficMap, namespace string, istioDetails 
 func applyCircuitBreakers(trafficMap graph.TrafficMap, namespace string, istioDetails *kubernetes.IstioDetails) {
 NODES:
 	for _, n := range trafficMap {
+		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
+		if n.Namespace != namespace {
+			continue
+		}
+
 		versionOk := n.Version != "" && n.Version != graph.UnknownVersion
 		switch {
 		case n.NodeType == graph.NodeTypeService:
@@ -77,6 +85,9 @@ func applyVirtualServices(trafficMap graph.TrafficMap, namespace string, istioDe
 NODES:
 	for _, n := range trafficMap {
 		if n.NodeType != graph.NodeTypeService {
+			continue
+		}
+		if n.Namespace != namespace {
 			continue
 		}
 		for _, virtualService := range istioDetails.VirtualServices {

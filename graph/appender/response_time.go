@@ -29,15 +29,18 @@ type ResponseTimeAppender struct {
 }
 
 // AppendGraph implements Appender
-func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string) {
+func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
-	client, err := prometheus.NewClient()
-	checkError(err)
+	if globalInfo.PromClient == nil {
+		var err error
+		globalInfo.PromClient, err = prometheus.NewClient()
+		checkError(err)
+	}
 
-	a.appendGraph(trafficMap, namespace, client)
+	a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient)
 }
 
 func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {

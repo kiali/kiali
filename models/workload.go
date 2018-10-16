@@ -61,6 +61,11 @@ type WorkloadListItem struct {
 	// required: true
 	// example: true
 	VersionLabel bool `json:"versionLabel"`
+
+	// Number of current workload pods
+	// required: true
+	// example: 1
+	PodCount int `json:"podCount"`
 }
 
 type WorkloadOverviews []*WorkloadListItem
@@ -101,6 +106,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.ResourceVersion = w.ResourceVersion
 	workload.IstioSidecar = w.Pods.HasIstioSideCar()
 	workload.Labels = w.Labels
+	workload.PodCount = len(w.Pods)
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]

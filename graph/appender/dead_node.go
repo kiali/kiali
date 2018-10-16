@@ -12,76 +12,60 @@ import (
 //   edges (kiali-1326). Kiali-1526 adds an exclusion to this rule. Egress is a special
 //   terminal service node and we want to show it even if it has no incoming traffic
 //   for the time period.
-type DeadNodeAppender struct {
-	// externalServices acts as a cache. This prevents from querying multiple times
-	// the cluster for service entries when the graph is requested for all namespaces.
-	externalServices map[string]bool
-}
+type DeadNodeAppender struct{}
 
 // AppendGraph implements Appender
-func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
+func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
-	business, err := business.Get()
-	checkError(err)
-
-	if a.externalServices == nil {
-		a.externalServices = resolveExternalServices(business)
-	}
-
-	applyDeadNodes(trafficMap, business.Workload, a.externalServices)
-}
-
-// resolveExternalServices queries the cluster API to resolve egress services
-// by using ServiceEntries resources across all namespaces in the cluster.
-// All ServiceEntries are needed, because Istio does not distinguish where the
-// ServiceEntries are created when routing egress traffic.
-func resolveExternalServices(bLayer *business.Layer) map[string]bool {
-	namespaces, err := bLayer.Namespace.GetNamespaces()
-	checkError(err)
-
-	serviceEntries := make(map[string]bool)
-	for _, ns := range namespaces {
-		istioCfg, err := bLayer.IstioConfig.GetIstioConfig(business.IstioConfigCriteria{
-			IncludeServiceEntries: true,
-			Namespace:             ns.Name,
-		})
+	var err error
+	if globalInfo.Business == nil {
+		globalInfo.Business, err = business.Get()
 		checkError(err)
-
-		for _, entry := range istioCfg.ServiceEntries {
-			if entry.Hosts != nil && entry.Location == "MESH_EXTERNAL" {
-				for _, host := range entry.Hosts.([]interface{}) {
-					serviceEntries[host.(string)] = true
-				}
-			}
-		}
+	}
+	if namespaceInfo.WorkloadList == nil {
+		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
+		checkError(err)
+		namespaceInfo.WorkloadList = &workloadList
 	}
 
-	return serviceEntries
+	applyDeadNodes(trafficMap, globalInfo, namespaceInfo)
 }
 
-func applyDeadNodes(trafficMap graph.TrafficMap, wkSvc business.WorkloadService, serviceEntries map[string]bool) {
+func applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
 	numRemoved := 0
 	for id, n := range trafficMap {
 		switch n.NodeType {
 		case graph.NodeTypeUnknown:
 			continue
 		case graph.NodeTypeService:
-			if serviceEntries[n.Service] {
-				// Flag and don't discard the node if it's an external service (kiali-1526).
-				// The flag will be passed to the UI to not place links to non-existent details pages.
-				n.Metadata["isEgress"] = true
+			// a service node with outgoing edges is never considered dead (or egress)
+			if len(n.Edges) > 0 {
 				continue
 			}
+
+			// a service node with no outgoing edges may be an egress. if so flag it, don't discard it
+			// (kiali-1526). The flag will be passed to the UI to inhibit links to non-existent detail
+			// pages. An egress service should have a service entry in the current namespace.
+			if n.Namespace == namespaceInfo.Namespace {
+				isEgress, ok := namespaceInfo.ExternalServices[n.Service]
+				if !ok {
+					isEgress = isExternalService(n.Service, namespaceInfo, globalInfo)
+				}
+				if isEgress {
+					n.Metadata["isEgress"] = true
+					continue
+				}
+			}
+
 			// a service node with no incoming error traffic and no outgoing edges, is dead.
 			// Incoming non-error traffic can not raise the dead because it is caused by an
 			// edge case (pod life-cycle change) that we don't want to see.
 			rate4xx, hasRate4xx := n.Metadata["rate4xx"]
 			rate5xx, hasRate5xx := n.Metadata["rate5xx"]
-			numOutEdges := len(n.Edges)
-			if numOutEdges == 0 && (!hasRate4xx || rate4xx.(float64) == 0) && (!hasRate5xx || rate5xx.(float64) == 0) {
+			if (!hasRate4xx || rate4xx.(float64) == 0) && (!hasRate5xx || rate5xx.(float64) == 0) {
 				delete(trafficMap, id)
 				numRemoved++
 			}
@@ -103,16 +87,12 @@ func applyDeadNodes(trafficMap graph.TrafficMap, wkSvc business.WorkloadService,
 				continue
 			}
 
-			// Remove if backing deployment is not defined, flag if there are no pods
-			// Note that in the future a workload could feasibly be back by something
-			// other than a deployment; we may need to query the workload name againts
-			// various possibly entities.
-			workload, err := wkSvc.GetWorkload(n.Namespace, n.Workload, false)
-			if err != nil || workload == nil {
+			// Remove if backing workload is not defined, flag if there are no pods
+			if workload, found := getWorkload(n.Workload, namespaceInfo.WorkloadList); !found {
 				delete(trafficMap, id)
 				numRemoved++
 			} else {
-				if len(workload.Pods) == 0 {
+				if workload.PodCount == 0 {
 					n.Metadata["isDead"] = true
 				}
 			}
@@ -133,4 +113,30 @@ func applyDeadNodes(trafficMap graph.TrafficMap, wkSvc business.WorkloadService,
 		}
 		s.Edges = goodEdges
 	}
+}
+
+// resolveExternalServices queries the cluster API to resolve egress services
+// by using ServiceEntries resources across all namespaces in the cluster.
+// All ServiceEntries are needed, because Istio does not distinguish where the
+// ServiceEntries are created when routing egress traffic.
+func isExternalService(service string, namespaceInfo *NamespaceInfo, globalInfo *GlobalInfo) bool {
+	if namespaceInfo.ExternalServices == nil {
+		namespaceInfo.ExternalServices = make(map[string]bool)
+
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfig(business.IstioConfigCriteria{
+			IncludeServiceEntries: true,
+			Namespace:             namespaceInfo.Namespace,
+		})
+		checkError(err)
+
+		for _, entry := range istioCfg.ServiceEntries {
+			if entry.Hosts != nil && entry.Location == "MESH_EXTERNAL" {
+				for _, host := range entry.Hosts.([]interface{}) {
+					namespaceInfo.ExternalServices[host.(string)] = true
+				}
+			}
+		}
+	}
+
+	return namespaceInfo.ExternalServices[service]
 }

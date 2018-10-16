@@ -1,35 +1,38 @@
 package appender
 
 import (
-	"fmt"
-	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 
+	osappsv1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"k8s.io/api/apps/v1beta1"
-	api_v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/api/apps/v1beta2"
+	batch_v1 "k8s.io/api/batch/v1"
+	batch_v1beta1 "k8s.io/api/batch/v1beta1"
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-
-	"github.com/kiali/kiali/business"
 )
 
 func TestWorkloadSidecarsPasses(t *testing.T) {
 	config.Set(config.NewConfig())
-	k8s := kubetest.NewK8SClientMock()
-
-	k8s.On("GetDeployment", "testing", "workload-1").Return(buildFakeWorkloadDeployment(), nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(buildFakeWorkloadPods(), nil)
-
 	trafficMap := buildWorkloadTrafficMap()
-	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
-	business := business.SetWithBackends(k8s, nil)
+	businessLayer := setupSidecarsCheckWorkloads(buildFakeWorkloadDeployments(), buildFakeWorkloadPods())
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, business)
+	globalInfo := GlobalInfo{
+		Business: businessLayer,
+	}
+	namespaceInfo := NamespaceInfo{
+		Namespace: "testing",
+	}
+	a := SidecarsCheckAppender{}
+	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata["hasMissingSC"].(bool)
@@ -39,16 +42,18 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 
 func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	config.Set(config.NewConfig())
-	k8s := kubetest.NewK8SClientMock()
-
-	k8s.On("GetDeployment", "testing", "workload-1").Return(buildFakeWorkloadDeployment(), nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(buildFakeWorkloadPodsNoSidecar(), nil)
-
 	trafficMap := buildWorkloadTrafficMap()
-	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
-	business := business.SetWithBackends(k8s, nil)
+	businessLayer := setupSidecarsCheckWorkloads(buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, business)
+	globalInfo := GlobalInfo{
+		Business: businessLayer,
+	}
+	namespaceInfo := NamespaceInfo{
+		Namespace: "testing",
+	}
+
+	a := SidecarsCheckAppender{}
+	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	for _, node := range trafficMap {
 		flag, ok := node.Metadata["hasMissingSC"].(bool)
@@ -57,17 +62,41 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	}
 }
 
+func TestAppNoPodsPasses(t *testing.T) {
+	config.Set(config.NewConfig())
+	trafficMap := buildAppTrafficMap()
+	businessLayer := setupSidecarsCheckWorkloads([]v1beta1.Deployment{}, []v1.Pod{})
+
+	globalInfo := GlobalInfo{
+		Business: businessLayer,
+	}
+	namespaceInfo := NamespaceInfo{
+		Namespace: "testing",
+	}
+
+	a := SidecarsCheckAppender{}
+	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+
+	for _, node := range trafficMap {
+		_, ok := node.Metadata["hasMissingSC"].(bool)
+		assert.False(t, ok)
+	}
+}
+
 func TestAppSidecarsPasses(t *testing.T) {
 	config.Set(config.NewConfig())
-	k8s := kubetest.NewK8SClientMock()
-
-	k8s.On("GetPods", "testing", fmt.Sprintf("%v=myTest", config.Get().IstioLabels.AppLabelName)).Return(buildFakeWorkloadPods(), nil)
-
 	trafficMap := buildAppTrafficMap()
-	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
-	business := business.SetWithBackends(k8s, nil)
+	businessLayer := setupSidecarsCheckWorkloads([]v1beta1.Deployment{}, buildFakeWorkloadPods())
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, business)
+	globalInfo := GlobalInfo{
+		Business: businessLayer,
+	}
+	namespaceInfo := NamespaceInfo{
+		Namespace: "testing",
+	}
+
+	a := SidecarsCheckAppender{}
+	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata["hasMissingSC"].(bool)
@@ -77,14 +106,18 @@ func TestAppSidecarsPasses(t *testing.T) {
 
 func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	config.Set(config.NewConfig())
-	k8s := kubetest.NewK8SClientMock()
-	k8s.On("GetPods", "testing", fmt.Sprintf("%v=myTest", config.Get().IstioLabels.AppLabelName)).Return(buildFakeWorkloadPodsNoSidecar(), nil)
-
 	trafficMap := buildAppTrafficMap()
-	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
-	business := business.SetWithBackends(k8s, nil)
+	businessLayer := setupSidecarsCheckWorkloads([]v1beta1.Deployment{}, buildFakeWorkloadPodsNoSidecar())
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, business)
+	globalInfo := GlobalInfo{
+		Business: businessLayer,
+	}
+	namespaceInfo := NamespaceInfo{
+		Namespace: "testing",
+	}
+
+	a := SidecarsCheckAppender{}
+	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	for _, node := range trafficMap {
 		flag, ok := node.Metadata["hasMissingSC"].(bool)
@@ -94,14 +127,18 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 }
 
 func TestServicesAreAlwaysValid(t *testing.T) {
-	config.Set(config.NewConfig())
-	k8s := kubetest.NewK8SClientMock()
-
 	trafficMap := buildServiceTrafficMap()
-	sidecarsAppender := SidecarsCheckAppender{AccessibleNamespaces: map[string]bool{"testing": true}}
-	business := business.SetWithBackends(k8s, nil)
+	businessLayer := setupSidecarsCheckWorkloads([]v1beta1.Deployment{}, []v1.Pod{})
 
-	sidecarsAppender.applySidecarsChecks(trafficMap, business)
+	globalInfo := GlobalInfo{
+		Business: businessLayer,
+	}
+	namespaceInfo := NamespaceInfo{
+		Namespace: "testing",
+	}
+
+	a := SidecarsCheckAppender{}
+	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	for _, node := range trafficMap {
 		_, ok := node.Metadata["hasMissingSC"].(bool)
@@ -136,27 +173,32 @@ func buildServiceTrafficMap() graph.TrafficMap {
 	return trafficMap
 }
 
-func buildFakeWorkloadDeployment() *v1beta1.Deployment {
-	return &v1beta1.Deployment{
-		Spec: v1beta1.DeploymentSpec{
-			Template: api_v1.PodTemplateSpec{
-				ObjectMeta: v1.ObjectMeta{
-					Labels: map[string]string{"wk": "wk-1"},
+func buildFakeWorkloadDeployments() []v1beta1.Deployment {
+	return []v1beta1.Deployment{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "workload-1",
+			},
+			Spec: v1beta1.DeploymentSpec{
+				Template: v1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{"app": "myTest", "wk": "wk-1"},
+					},
 				},
 			},
 		},
 	}
 }
 
-func buildFakeWorkloadPods() []api_v1.Pod {
+func buildFakeWorkloadPods() []v1.Pod {
 	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
 
-	return []api_v1.Pod{
+	return []v1.Pod{
 		{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name:              "wk-1-asdf",
-				Labels:            map[string]string{"wk": "wk-1"},
-				CreationTimestamp: v1.NewTime(time.Date(2018, 8, 24, 14, 0, 0, 0, time.UTC)),
+				Labels:            map[string]string{"app": "myTest", "wk": "wk-1"},
+				CreationTimestamp: metav1.NewTime(time.Date(2018, 8, 24, 14, 0, 0, 0, time.UTC)),
 				Annotations: map[string]string{
 					istioAnnotation: "{ \"containers\":[\"istio-proxy\"] }",
 				},
@@ -165,11 +207,28 @@ func buildFakeWorkloadPods() []api_v1.Pod {
 	}
 }
 
-func buildFakeWorkloadPodsNoSidecar() []api_v1.Pod {
+func buildFakeWorkloadPodsNoSidecar() []v1.Pod {
 	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
 
 	podList := buildFakeWorkloadPods()
 	podList[0].ObjectMeta.Annotations[istioAnnotation] = "{}"
 
 	return podList
+}
+
+func setupSidecarsCheckWorkloads(deployments []v1beta1.Deployment, pods []v1.Pod) *business.Layer {
+	k8s := kubetest.NewK8SClientMock()
+
+	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
+	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(deployments, nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
+	k8s.On("GetJobs", mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(pods, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]v1beta2.StatefulSet{}, nil)
+	config.Set(config.NewConfig())
+
+	businessLayer := business.SetWithBackends(k8s, nil)
+	return businessLayer
 }
