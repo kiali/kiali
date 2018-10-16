@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
+	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
@@ -208,6 +209,11 @@ func (o *K8SClientMock) GetJob(namespace, jobName string) (*batch_v1.Job, error)
 func (o *K8SClientMock) GetJobs(namespace string) ([]batch_v1.Job, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]batch_v1.Job), args.Error(1)
+}
+
+func (o *K8SClientMock) GetSelfSubjectAccessReview(namespace string, verbs []string, resourceAndGroups map[string]string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	args := o.Called(namespace, verbs, resourceAndGroups)
+	return args.Get(0).([]*auth_v1.SelfSubjectAccessReview), args.Error(1)
 }
 
 func (o *K8SClientMock) FakeService() *v1.Service {

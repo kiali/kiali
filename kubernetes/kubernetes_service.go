@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
+	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
@@ -202,4 +203,44 @@ func (in *IstioClient) GetJobs(namespace string) ([]batch_v1.Job, error) {
 // This method helps upper layers to send a explicit NotFound error without querying the backend.
 func NewNotFound(name, group, resource string) error {
 	return errors.NewNotFound(schema.GroupResource{Group: group, Resource: resource}, name)
+}
+
+// GetSelfSubjectAccessReview provides information on Kiali permissions
+func (in *IstioClient) GetSelfSubjectAccessReview(namespace string, verbs []string, resourceAndGroups map[string]string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	calls := len(verbs) * len(resourceAndGroups)
+	ch := make(chan *auth_v1.SelfSubjectAccessReview, calls)
+	errChan := make(chan error)
+	for _, v := range verbs {
+		for r, g := range resourceAndGroups {
+			go func(verb, group, resource string) {
+				res, err := in.k8s.AuthorizationV1().SelfSubjectAccessReviews().Create(&auth_v1.SelfSubjectAccessReview{
+					Spec: auth_v1.SelfSubjectAccessReviewSpec{
+						ResourceAttributes: &auth_v1.ResourceAttributes{
+							Namespace: namespace,
+							Verb:      verb,
+							Group:     group,
+							Resource:  resource,
+						},
+					},
+				})
+				if err != nil {
+					errChan <- err
+				} else {
+					ch <- res
+				}
+			}(v, g, r)
+		}
+	}
+
+	var err error
+	result := []*auth_v1.SelfSubjectAccessReview{}
+	for count := 0; count < calls; count++ {
+		select {
+		case res := <-ch:
+			result = append(result, res)
+		case err = <-errChan:
+			// No op
+		}
+	}
+	return result, err
 }

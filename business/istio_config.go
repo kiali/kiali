@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	auth_v1 "k8s.io/api/authorization/v1"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -23,6 +25,16 @@ type IstioConfigCriteria struct {
 	IncludeQuotaSpecBindings bool
 }
 
+var resourceTypesToAPI = map[string]string{
+	"destinationrules":  "networking.istio.io",
+	"virtualservices":   "networking.istio.io",
+	"serviceentries":    "networking.istio.io",
+	"gateways":          "networking.istio.io",
+	"rules":             "config.istio.io",
+	"quotaspecs":        "config.istio.io",
+	"quotaspecbindings": "config.istio.io",
+}
+
 // GetIstioConfig returns a list of Istio routing objects
 // and Mixer Rules per a given Namespace.
 func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
@@ -38,12 +50,13 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 		Rules:             models.IstioRules{},
 		QuotaSpecs:        models.QuotaSpecs{},
 		QuotaSpecBindings: models.QuotaSpecBindings{},
+		Permissions:       make(map[string]models.ResourcePermissions),
 	}
 	var gg, vs, dr, se, qs, qb []kubernetes.IstioObject
 	var mr *kubernetes.IstioRules
-	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr error
+	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, pxErr error
 	var wg sync.WaitGroup
-	wg.Add(7)
+	wg.Add(8)
 
 	go func() {
 		defer wg.Done()
@@ -108,9 +121,25 @@ func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (mode
 		}
 	}()
 
+	go func() {
+		defer wg.Done()
+		ssars, pxErr := in.k8s.GetSelfSubjectAccessReview(criteria.Namespace, []string{"create", "update", "delete"}, resourceTypesToAPI)
+		if pxErr == nil {
+			for _, ssar := range ssars {
+				resource := ssar.Spec.ResourceAttributes.Resource
+				permission, ok := istioConfigList.Permissions[resource]
+				if !ok {
+					permission = models.ResourcePermissions{}
+				}
+				fillPermission(&permission, ssar)
+				istioConfigList.Permissions[resource] = permission
+			}
+		}
+	}()
+
 	wg.Wait()
 
-	for _, genErr := range []error{ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr} {
+	for _, genErr := range []error{ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, pxErr} {
 		if genErr != nil {
 			return models.IstioConfigList{}, genErr
 		}
@@ -126,6 +155,23 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 	var gw, vs, dr, se, qs, qb kubernetes.IstioObject
 	var r *kubernetes.IstioRuleDetails
 	var err error
+	permission := models.ResourcePermissions{}
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+		if api, ok := resourceTypesToAPI[objectType]; ok {
+			resourceAndGroup := map[string]string{objectType: api}
+			ssars, permErr := in.k8s.GetSelfSubjectAccessReview(namespace, []string{"create", "update", "delete"}, resourceAndGroup)
+			if permErr == nil {
+				for _, ssar := range ssars {
+					fillPermission(&permission, ssar)
+				}
+			}
+		}
+	}()
+
 	switch objectType {
 	case "gateways":
 		if gw, err = in.k8s.GetGateway(namespace, object); err == nil {
@@ -168,5 +214,19 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 		err = fmt.Errorf("Object type not found: %v", objectType)
 	}
 
+	wg.Wait()
+	istioConfigDetail.Permissions = permission
+
 	return istioConfigDetail, err
+}
+
+func fillPermission(permission *models.ResourcePermissions, ssar *auth_v1.SelfSubjectAccessReview) {
+	switch ssar.Spec.ResourceAttributes.Verb {
+	case "create":
+		permission.Create = ssar.Status.Allowed
+	case "update":
+		permission.Update = ssar.Status.Allowed
+	case "delete":
+		permission.Delete = ssar.Status.Allowed
+	}
 }
