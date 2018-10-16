@@ -82,14 +82,12 @@ spec:
             port: 20001
           initialDelaySeconds: 3
           periodSeconds: 3
-          timeoutSeconds: 45
         livenessProbe:
           httpGet:
             path: /api/status
             port: 20001
           initialDelaySeconds: 3
           periodSeconds: 3
-          timeoutSeconds: 45
         env:
         - name: ACTIVE_NAMESPACE
           valueFrom:
