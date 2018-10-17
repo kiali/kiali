@@ -29,10 +29,12 @@ func NewRouter() *mux.Router {
 
 	// Build our API server routes and install them.
 	apiRoutes := NewRoutes()
+
+	authenticationHandler, _ := config.NewAuthenticationHandler()
 	for _, route := range apiRoutes.Routes {
 		var handlerFunction http.Handler
 		if handlerFunction = route.HandlerFunc; route.Authenticated {
-			handlerFunction = config.AuthenticationHandler(handlerFunction)
+			handlerFunction = authenticationHandler.Handle(handlerFunction)
 		}
 		appRouter.
 			Methods(route.Method).

@@ -10,5 +10,5 @@ import (
 type Appender interface {
 	// AppendGraph performs the appender work on the provided traffic map. The map
 	// may be initially empty. An appender is allowed to add or remove map entries.
-	AppendGraph(trafficMap graph.TrafficMap, namespace string)
+	AppendGraph(trafficMap graph.TrafficMap, namespace string, usertoken string)
 }

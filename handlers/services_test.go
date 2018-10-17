@@ -322,7 +322,7 @@ func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustes
 		}))
 
 	ts := httptest.NewServer(mr)
-	business.SetWithBackends(k8s, prom)
+	business.SetWithBackends(k8s, kubetest.NewUserClientMock(k8s), prom)
 	return ts, api
 	// return nil, ts, api
 }

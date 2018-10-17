@@ -85,6 +85,14 @@ type IstioClient struct {
 	istioNetworkingApi *rest.RESTClient
 }
 
+type UserClientInterface interface {
+	NewClient(token string) (IstioClientInterface, error)
+}
+
+type UserClient struct {
+	baseIstioConfig *rest.Config
+}
+
 // GetK8sApi returns the clientset referencing all K8s rest clients
 func (client *IstioClient) GetK8sApi() *kube.Clientset {
 	return client.k8s
@@ -128,6 +136,38 @@ func NewClient() (*IstioClient, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return NewClientFromConfig(config)
+}
+
+// NewUserClient allows for creating of user clients to access Kubernetes APIs on a per user basis
+func NewUserClient() (*UserClient, error) {
+
+	// Get the normal configuration
+	config, err := ConfigClient()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a new config based on what was gathered above but don't specify the bearer token to use
+	istioConfig := rest.Config{
+		Host:            config.Host,
+		TLSClientConfig: config.TLSClientConfig,
+		QPS:             config.QPS,
+		Burst:           config.Burst,
+	}
+
+	return &UserClient{
+		baseIstioConfig: &istioConfig,
+	}, nil
+}
+
+// UserClient returns a new client to use a particular token.
+func (uc *UserClient) NewClient(token string) (IstioClientInterface, error) {
+	// Create a copy of the existing UserClient config and modify the bearertoken
+	config := uc.baseIstioConfig
+
+	config.BearerToken = token
 
 	return NewClientFromConfig(config)
 }

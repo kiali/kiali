@@ -14,7 +14,7 @@ type SidecarsCheckAppender struct {
 }
 
 // AppendGraph implements Appender
-func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
+func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, _ string, _ string) {
 	if len(trafficMap) == 0 {
 		return
 	}

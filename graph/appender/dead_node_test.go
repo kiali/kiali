@@ -116,7 +116,7 @@ func setupWorkloadService() business.WorkloadService {
 
 	config.Set(config.NewConfig())
 
-	return business.SetWithBackends(k8s, nil).Workload
+	return business.SetWithBackends(k8s, kubetest.NewUserClientMock(k8s), nil).Workload
 }
 
 func TestDeadNode(t *testing.T) {

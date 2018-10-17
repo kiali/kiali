@@ -19,7 +19,7 @@ type DeadNodeAppender struct {
 }
 
 // AppendGraph implements Appender
-func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
+func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, _ string, usertoken string) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -28,7 +28,7 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
 	checkError(err)
 
 	if a.externalServices == nil {
-		a.externalServices = resolveExternalServices(business)
+		a.externalServices = resolveExternalServices(business, usertoken)
 	}
 
 	applyDeadNodes(trafficMap, business.Workload, a.externalServices)
@@ -38,8 +38,8 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, _ string) {
 // by using ServiceEntries resources across all namespaces in the cluster.
 // All ServiceEntries are needed, because Istio does not distinguish where the
 // ServiceEntries are created when routing egress traffic.
-func resolveExternalServices(bLayer *business.Layer) map[string]bool {
-	namespaces, err := bLayer.Namespace.GetNamespaces()
+func resolveExternalServices(bLayer *business.Layer, usertoken string) map[string]bool {
+	namespaces, err := bLayer.Namespace.GetNamespaces(usertoken)
 	checkError(err)
 
 	serviceEntries := make(map[string]bool)

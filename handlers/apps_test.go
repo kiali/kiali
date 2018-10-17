@@ -141,7 +141,8 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 		}))
 
 	ts := httptest.NewServer(mr)
-	business.SetWithBackends(nil, prom)
+        k8s := kubetest.NewK8SClientMock()
+	business.SetWithBackends(k8s, kubetest.NewUserClientMock(k8s), prom)
 	return ts, api
 }
 
@@ -149,7 +150,7 @@ func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometh
 	config.Set(config.NewConfig())
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
-	business.SetWithBackends(k8s, prom)
+	business.SetWithBackends(k8s, kubetest.NewUserClientMock(k8s), prom)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps", AppList)

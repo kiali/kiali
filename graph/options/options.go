@@ -54,6 +54,7 @@ type Options struct {
 	InjectServiceNodes   bool // inject destination service nodes between source and destination nodes.
 	Namespaces           []string
 	QueryTime            int64 // unix time in seconds
+	Token                string
 	Vendor               string
 	NodeOptions
 	VendorOptions
@@ -79,7 +80,13 @@ func NewOptions(r *http.Request) Options {
 	namespaces := params.Get("namespaces") // csl of namespaces. Overrides namespace path param if set
 	vendor := params.Get("vendor")
 
-	accessibleNamespaces := getAccessibleNamespaces()
+	var userToken string
+        userTokenContext := r.Context().Value("user-token")
+        if userTokenContext != nil {
+		userToken = userTokenContext.(string)
+	}
+
+	accessibleNamespaces := getAccessibleNamespaces(userToken)
 
 	var namespaceNames []string
 	fetchNamespaces := namespaces == NamespaceAll || (namespaces == "" && (namespace == NamespaceAll))
@@ -144,6 +151,7 @@ func NewOptions(r *http.Request) Options {
 		InjectServiceNodes:   injectServiceNodes,
 		Namespaces:           namespaceNames,
 		QueryTime:            queryTime,
+		Token:                userToken,
 		Vendor:               vendor,
 		NodeOptions: NodeOptions{
 			App:      app,
@@ -227,12 +235,12 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 
 // getAccessibleNamespaces returns a Set of all namespaces accessible to the user.
 // The Set is implemented using the map[string]bool convention.
-func getAccessibleNamespaces() map[string]bool {
+func getAccessibleNamespaces(userToken string) map[string]bool {
 	// Get the namespaces
 	business, err := business.Get()
 	checkError(err)
 
-	namespaces, err := business.Namespace.GetNamespaces()
+	namespaces, err := business.Namespace.GetNamespaces(userToken)
 	checkError(err)
 
 	// Create a map to store the namespaces

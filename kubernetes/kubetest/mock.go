@@ -19,10 +19,26 @@ type K8SClientMock struct {
 	mock.Mock
 }
 
+type K8SUserClientMock struct {
+	mock.Mock
+	k8s	*K8SClientMock
+}
+
 func NewK8SClientMock() *K8SClientMock {
 	k8s := new(K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	return k8s
+}
+
+func NewUserClientMock(k8s *K8SClientMock) *K8SUserClientMock {
+        userClient := new(K8SUserClientMock)
+        userClient.k8s = k8s
+        userClient.On("NewClient").Return(k8s)
+        return userClient
+}
+
+func (u *K8SUserClientMock) NewClient(token string) (kubernetes.IstioClientInterface, error) {
+	return u.k8s, nil
 }
 
 func (o *K8SClientMock) GetNamespaces() ([]v1.Namespace, error) {

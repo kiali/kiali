@@ -87,7 +87,7 @@ func TestNamespaceAppHealth(t *testing.T) {
 func setupNamespaceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
-	business.SetWithBackends(k8s, prom)
+	business.SetWithBackends(k8s, kubetest.NewUserClientMock(k8s), prom)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/health", NamespaceHealth)
@@ -161,7 +161,7 @@ func TestAppHealth(t *testing.T) {
 func setupAppHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
-	business.SetWithBackends(k8s, prom)
+	business.SetWithBackends(k8s, kubetest.NewUserClientMock(k8s), prom)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}/health", AppHealth)
@@ -207,7 +207,7 @@ func TestServiceHealth(t *testing.T) {
 func setupServiceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
-	business.SetWithBackends(k8s, prom)
+	business.SetWithBackends(k8s, kubetest.NewUserClientMock(k8s), prom)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/health", ServiceHealth)

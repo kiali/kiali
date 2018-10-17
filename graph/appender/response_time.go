@@ -29,7 +29,7 @@ type ResponseTimeAppender struct {
 }
 
 // AppendGraph implements Appender
-func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string) {
+func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string, _ string) {
 	if len(trafficMap) == 0 {
 		return
 	}

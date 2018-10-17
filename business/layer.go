@@ -33,6 +33,12 @@ func Get() (*Layer, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	userk8s, err := kubernetes.NewUserClient()
+	if err != nil {
+		return nil, err
+	}
+
 	// We don't update the global layer here to keep it stateless
 	temporaryLayer := &Layer{}
 	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s}
@@ -41,12 +47,12 @@ func Get() (*Layer, error) {
 	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s}
 	temporaryLayer.Workload = WorkloadService{k8s: k8s}
 	temporaryLayer.App = AppService{k8s: k8s}
-	temporaryLayer.Namespace = NewNamespaceService(k8s)
+	temporaryLayer.Namespace = NewNamespaceService(userk8s)
 	return temporaryLayer, nil
 }
 
 // SetWithBackends creates all services with injected clients to external APIs
-func SetWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface) *Layer {
+func SetWithBackends(k8s kubernetes.IstioClientInterface, k8sUserClient kubernetes.UserClientInterface, prom prometheus.ClientInterface) *Layer {
 	layer = &Layer{}
 	layer.Health = HealthService{prom: prom, k8s: k8s}
 	layer.Svc = SvcService{prom: prom, k8s: k8s, health: &layer.Health}
@@ -54,6 +60,6 @@ func SetWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	layer.IstioConfig = IstioConfigService{k8s: k8s}
 	layer.Workload = WorkloadService{k8s: k8s}
 	layer.App = AppService{k8s: k8s}
-	layer.Namespace = NewNamespaceService(k8s)
+	layer.Namespace = NewNamespaceService(k8sUserClient)
 	return layer
 }

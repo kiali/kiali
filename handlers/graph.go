@@ -84,7 +84,7 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 		namespaceTrafficMap := buildNamespaceTrafficMap(namespace, o, client)
 
 		for _, a := range o.Appenders {
-			a.AppendGraph(namespaceTrafficMap, namespace)
+			a.AppendGraph(namespaceTrafficMap, namespace, o.Token)
 		}
 		mergeTrafficMaps(trafficMap, namespaceTrafficMap)
 	}
@@ -639,8 +639,10 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 
 	trafficMap := buildNodeTrafficMap(namespace, n, o, client)
 
+	usertoken := r.Context().Value("user-token").(string)
+
 	for _, a := range o.Appenders {
-		a.AppendGraph(trafficMap, namespace)
+		a.AppendGraph(trafficMap, namespace, usertoken)
 	}
 
 	// The appenders can add/remove/alter nodes. After the manipulations are complete

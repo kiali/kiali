@@ -62,7 +62,7 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, error) {
 	}
 	client.Inject(api)
 
-	business.SetWithBackends(k8s, nil)
+	business.SetWithBackends(k8s, kubetest.NewUserClientMock(k8s), nil)
 	return client, api, nil
 }
 

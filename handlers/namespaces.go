@@ -19,7 +19,9 @@ func NamespaceList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	namespaces, err := business.Namespace.GetNamespaces()
+	userToken := r.Context().Value("user-token").(string)
+
+	namespaces, err := business.Namespace.GetNamespaces(userToken)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

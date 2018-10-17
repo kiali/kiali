@@ -1,13 +1,32 @@
 package config
 
 import (
+	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"context"
 
 	"github.com/kiali/kiali/log"
 )
 
-func AuthenticationHandler(next http.Handler) http.Handler {
+type AuthenticationHandler struct {
+	saToken string
+}
+
+func NewAuthenticationHandler() (AuthenticationHandler, error) {
+	// Read token from the filesystem
+	saToken, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+	if err != nil {
+		return AuthenticationHandler{}, err
+	} else {
+		return AuthenticationHandler{
+			saToken: string(saToken),
+		}, nil
+	}
+}
+
+func (ahandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		statusCode := http.StatusOK
 		conf := Get()
@@ -28,7 +47,8 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 
 		switch statusCode {
 		case http.StatusOK:
-			next.ServeHTTP(w, r)
+			context := context.WithValue(r.Context(), "user-token", ahandler.saToken)
+			next.ServeHTTP(w, r.WithContext(context))
 		case http.StatusUnauthorized:
 			// If header exists return the value, must be 1 to use the API from Kiali
 			// Otherwise an empty string is returned and WWW-Authenticate will be Basic

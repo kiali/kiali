@@ -14,7 +14,7 @@ type UnusedNodeAppender struct {
 }
 
 // AppendGraph implements Appender
-func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string) {
+func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string, _ string) {
 	if graph.GraphTypeService == a.GraphType || a.IsNodeGraph {
 		return
 	}

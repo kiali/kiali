@@ -8,7 +8,7 @@ import (
 type IstioAppender struct{}
 
 // AppendGraph implements Appender
-func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string) {
+func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string, _ string) {
 	if len(trafficMap) == 0 {
 		return
 	}

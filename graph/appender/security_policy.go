@@ -22,7 +22,7 @@ type SecurityPolicyAppender struct {
 }
 
 // AppendGraph implements Appender
-func (a SecurityPolicyAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string) {
+func (a SecurityPolicyAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string, _ string) {
 	if len(trafficMap) == 0 {
 		return
 	}
