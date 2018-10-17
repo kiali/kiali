@@ -19,59 +19,62 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 	valid := true
 	validations := make([]*models.IstioCheck, 0)
 
-	http := checker.VirtualService.GetSpec()["http"]
-	if http == nil {
-		return validations, valid
-	}
-
-	// Getting a []HTTPRoute
-	slice := reflect.ValueOf(http)
-	if slice.Kind() != reflect.Slice {
-		return validations, valid
-	}
-
-	for routeIdx := 0; routeIdx < slice.Len(); routeIdx++ {
-		httpRoute, ok := slice.Index(routeIdx).Interface().(map[string]interface{})
-		if !ok || httpRoute["route"] == nil {
+	protocols := [3]string{"http", "tcp", "tls"}
+	for _, protocol := range protocols {
+		specProtocol := checker.VirtualService.GetSpec()[protocol]
+		if specProtocol == nil {
 			continue
 		}
 
-		// Getting a []DestinationWeight
-		destinationWeights := reflect.ValueOf(httpRoute["route"])
-		if destinationWeights.Kind() != reflect.Slice {
-			return validations, valid
+		// Getting a []HTTPRoute, []TLSRoute, []TCPRoute
+		slice := reflect.ValueOf(specProtocol)
+		if slice.Kind() != reflect.Slice {
+			continue
 		}
 
-		for destWeightIdx := 0; destWeightIdx < destinationWeights.Len(); destWeightIdx++ {
-			destinationWeight, ok := destinationWeights.Index(destWeightIdx).Interface().(map[string]interface{})
-			if !ok || destinationWeight["destination"] == nil {
-				valid = false
-				path := fmt.Sprintf("spec/http[%d]/route[%d]", routeIdx, destWeightIdx)
-				validation := models.BuildCheck("Destination field is mandatory", "error", path)
-				validations = append(validations, &validation)
+		for routeIdx := 0; routeIdx < slice.Len(); routeIdx++ {
+			httpRoute, ok := slice.Index(routeIdx).Interface().(map[string]interface{})
+			if !ok || httpRoute["route"] == nil {
 				continue
 			}
 
-			destination, ok := destinationWeight["destination"].(map[string]interface{})
-			if !ok {
-				continue
+			// Getting a []DestinationWeight
+			destinationWeights := reflect.ValueOf(httpRoute["route"])
+			if destinationWeights.Kind() != reflect.Slice {
+				return validations, valid
 			}
 
-			host, ok := destination["host"].(string)
-			if !ok {
-				continue
-			}
+			for destWeightIdx := 0; destWeightIdx < destinationWeights.Len(); destWeightIdx++ {
+				destinationWeight, ok := destinationWeights.Index(destWeightIdx).Interface().(map[string]interface{})
+				if !ok || destinationWeight["destination"] == nil {
+					valid = false
+					path := fmt.Sprintf("spec/%s[%d]/route[%d]", protocol, routeIdx, destWeightIdx)
+					validation := models.BuildCheck("Destination field is mandatory", "error", path)
+					validations = append(validations, &validation)
+					continue
+				}
 
-			subset, ok := destination["subset"].(string)
-			if !ok {
-				continue
-			}
+				destination, ok := destinationWeight["destination"].(map[string]interface{})
+				if !ok {
+					continue
+				}
 
-			if !checker.subsetPresent(host, subset) {
-				valid = false
-				path := fmt.Sprintf("spec/http[%d]/route[%d]/destination", routeIdx, destWeightIdx)
-				validation := models.BuildCheck("Subset not found", "warning", path)
-				validations = append(validations, &validation)
+				host, ok := destination["host"].(string)
+				if !ok {
+					continue
+				}
+
+				subset, ok := destination["subset"].(string)
+				if !ok {
+					continue
+				}
+
+				if !checker.subsetPresent(host, subset) {
+					valid = false
+					path := fmt.Sprintf("spec/%s[%d]/route[%d]/destination", protocol, routeIdx, destWeightIdx)
+					validation := models.BuildCheck("Subset not found", "warning", path)
+					validations = append(validations, &validation)
+				}
 			}
 		}
 	}
