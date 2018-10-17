@@ -367,13 +367,6 @@ type ServiceValidationResponse struct {
 	Body TypedIstioValidations
 }
 
-// Listing all istio validations for object in the namespace
-// swagger:response WorkloadValidations
-type WorkloadValidationResponse struct {
-	// in:body
-	Body TypedIstioValidations
-}
-
 // Listing all services in the namespace
 // swagger:response serviceListResponse
 type ServiceListResponse struct {
