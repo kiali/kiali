@@ -35,6 +35,7 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.Pod{}, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]v1.Service{}, nil)
 	svc := setupAppService(k8s)
 
 	appList, _ := svc.GetAppList("Namespace")
@@ -72,6 +73,8 @@ func TestGetAppFromDeployments(t *testing.T) {
 	assert.Equal(2, len(appDetails.Workloads))
 	assert.Equal("httpbin-v1", appDetails.Workloads[0].WorkloadName)
 	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
+	assert.Equal(1, len(appDetails.ServiceNames))
+	assert.Equal("httpbin", appDetails.ServiceNames[0])
 }
 
 func TestGetAppListFromReplicaSets(t *testing.T) {
@@ -91,6 +94,7 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.Pod{}, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]v1.Service{}, nil)
 	svc := setupAppService(k8s)
 
 	appList, _ := svc.GetAppList("Namespace")
@@ -128,4 +132,6 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	assert.Equal(2, len(appDetails.Workloads))
 	assert.Equal("httpbin-v1", appDetails.Workloads[0].WorkloadName)
 	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
+	assert.Equal(1, len(appDetails.ServiceNames))
+	assert.Equal("httpbin", appDetails.ServiceNames[0])
 }

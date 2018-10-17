@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -48,7 +49,11 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	// Fetch and build workload
 	workloadDetails, err := business.Workload.GetWorkload(namespace, workload, true)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		if errors.IsNotFound(err) {
+			RespondWithError(w, http.StatusNotFound, err.Error())
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 

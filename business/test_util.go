@@ -544,6 +544,9 @@ func FakeServices() []v1.Service {
 	return []v1.Service{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin"},
+			Spec: v1.ServiceSpec{
+				Selector: map[string]string{"app": "httpbin"},
+			},
 		},
 	}
 }
