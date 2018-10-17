@@ -5,14 +5,15 @@ APPLICATION_TO_VALIDATE = 'productpage'
 
 PARAMS = {'graphType': 'versionedApp', 'duration': '60s'}
 
-def _test_application_list_endpoint(kiali_client):
+def test_application_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     app_list = kiali_client.app_list(namespace=bookinfo_namespace)
     assert app_list != None
     for app in app_list.get('applications'):
       assert app.get('name') != None and app.get('name') != ''
-      assert app.get('istioSidecar') == True
+      if 'traffic-generator' not in app.get('name'):
+        assert app.get('istioSidecar') == True
 
     assert app_list.get('namespace').get('name') == bookinfo_namespace
 
@@ -31,7 +32,7 @@ def test_application_details_endpoint(kiali_client):
 
     for workload in workloads:
       assert workload.get('istioSidecar') == True
-      assert 'serviceNames' in workload and len (workload.get('serviceNames')) > 0
+      assert 'workloadName' in workload and len (workload.get('workloadName')) > 0
 
 
 def test_application_health_endpoint(kiali_client):
