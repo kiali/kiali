@@ -22,7 +22,7 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
   }
 
   istioSidecar() {
-    let istioSidecar = true;
+    let istioSidecar = this.props.app.workloads && this.props.app.workloads.length > 0 ? true : false;
     this.props.app.workloads.forEach(wkd => {
       istioSidecar = istioSidecar && wkd.istioSidecar;
     });
@@ -65,27 +65,56 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
         </div>
       </div>
     );
-    const description = (
-      <div className="services-list">
-        <div className="component-label services-title">Services</div>
-        <div>{this.renderServices(namespace, workload.workloadName, workload.serviceNames)}</div>
-      </div>
-    );
     const content = (
       <ListViewItem
         leftContent={<ListViewIcon type={iconType} name={iconName} />}
         key={`AppWorkload_${workload.workloadName}`}
         heading={heading}
-        description={description}
       />
     );
     return content;
   }
 
+  renderServiceItem(namespace: string, appName: string, serviceName: string) {
+    let iconName = 'service';
+    let iconType = 'pf';
+    const heading = (
+      <div className="ServiceList-Heading">
+        <div className="ServiceList-Title">
+          <div className="component-label">Service</div>
+          <Link to={this.serviceLink(namespace, serviceName)}>{serviceName}</Link>
+        </div>
+      </div>
+    );
+    const content = (
+      <ListViewItem
+        leftContent={<ListViewIcon type={iconType} name={iconName} />}
+        key={`AppService_${serviceName}`}
+        heading={heading}
+      />
+    );
+    return content;
+  }
+
+  renderEmptyItem(type: string) {
+    const message = 'No ' + type + ' found for this app.';
+    return <ListViewItem description={message} />;
+  }
+
   workloadList() {
     const ns = this.props.app.namespace.name;
     const workloads = this.props.app.workloads;
-    return workloads.map(wkd => this.renderWorkloadItem(ns, wkd));
+    return workloads.length > 0
+      ? workloads.map(wkd => this.renderWorkloadItem(ns, wkd))
+      : this.renderEmptyItem('workloads');
+  }
+
+  serviceList() {
+    const ns = this.props.app.namespace.name;
+    const services = this.props.app.serviceNames;
+    return services.length > 0
+      ? services.map(sn => this.renderServiceItem(ns, this.props.app.name, sn))
+      : this.renderEmptyItem('services');
   }
 
   render() {
@@ -98,8 +127,11 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
         istio={this.istioSidecar()}
         items={
           <Row>
-            <Col xs={12} sm={6} md={10} lg={10}>
+            <Col xs={12} sm={6} md={5} lg={5}>
               <ListView>{this.workloadList()}</ListView>
+            </Col>
+            <Col xs={12} sm={6} md={5} lg={5}>
+              <ListView>{this.serviceList()}</ListView>
             </Col>
             <Col xs={12} sm={6} md={2} lg={2}>
               <div className="progress-description">

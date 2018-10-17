@@ -27,7 +27,8 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
       app: {
         namespace: { name: '' },
         name: '',
-        workloads: []
+        workloads: [],
+        serviceNames: []
       }
     };
     this.fetchApp();
