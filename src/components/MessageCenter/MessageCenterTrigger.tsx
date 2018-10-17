@@ -39,12 +39,8 @@ export default class MessageCenterTrigger extends React.PureComponent<PropsType,
       <li className="drawer-pf-trigger">
         <a className="nav-item-iconic" onClick={this.props.toggleMessageCenter}>
           <PfReact.Icon name="bell" />
-          {(this.props.systemErrorsCount > 0 || this.props.newMessagesCount > 0) && (
-            <PfReact.Badge
-              className={
-                'pf-badge-bodered' + (this.props.badgeDanger || this.props.systemErrorsCount > 0 ? ' badge-danger' : '')
-              }
-            >
+          {this.props.newMessagesCount > 0 && (
+            <PfReact.Badge className={'pf-badge-bodered' + (this.props.badgeDanger ? ' badge-danger' : '')}>
               {this.props.newMessagesCount > 0 ? this.props.newMessagesCount : ' '}
             </PfReact.Badge>
           )}
