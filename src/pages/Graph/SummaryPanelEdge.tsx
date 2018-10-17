@@ -306,7 +306,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   };
 
   private safeRate = (s: string) => {
-    return s === undefined ? 0.0 : parseFloat(s);
+    return s === undefined ? 0.0 : Number(s);
   };
 
   private renderLabels = (ns: string, ver: string) => (

@@ -9,7 +9,8 @@
         ],
         "ban": [
             true,
-            "parseInt"
+            "parseInt",
+            "parseFloat"
         ],
         "class-name": true,
         "comment-format": [
