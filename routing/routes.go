@@ -291,7 +291,7 @@ func NewRoutes() (r *Routes) {
 			handlers.AppList,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/apps/{app} appDetails
+		// swagger:route GET /namespaces/{namespace}/apps/{app} apps appDetails
 		// ---
 		// Endpoint to get the app details
 		//

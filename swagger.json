@@ -924,6 +924,9 @@
           "http",
           "https"
         ],
+        "tags": [
+          "apps"
+        ],
         "operationId": "appDetails",
         "parameters": [
           {
