@@ -437,8 +437,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           graphType: this.props.graphType,
           injectServiceNodes: this.props.injectServiceNodes
         };
-        console.warn('graphParams:');
-        console.dir(graphParams);
+        store.dispatch(NamespaceActions.setActiveNamespace(graphParams.namespace));
         this.context.router.history.push(makeNamespaceGraphUrlFromParams(graphParams));
       }
       return;
