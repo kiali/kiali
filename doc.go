@@ -269,10 +269,38 @@ type VersionParam struct {
 // SWAGGER RESPONSES
 /////////////////////
 
+// BadRequestError: the client request is incorrect
+//
+// swagger:response badRequestError
+type BadRequestError struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 400
+		// default: 400
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
 // A NotFoundError is the error message that is generated when server could not find what was requested.
 //
 // swagger:response notFoundError
 type NotFoundError struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 404
+		// default: 404
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
+// A NotAcceptable is the error message that means request can't be accepted
+//
+// swagger:response notAcceptableError
+type NotAcceptableError struct {
 	// in: body
 	Body struct {
 		// HTTP status code
@@ -306,20 +334,6 @@ type serviceUnavailableError struct {
 		// HTTP status code
 		// example: 503
 		// default: 503
-		Code    int32 `json:"code"`
-		Message error `json:"message"`
-	} `json:"body"`
-}
-
-// BadRequestError: the client request is incorrect
-//
-// swagger:response badRequestError
-type BadRequestError struct {
-	// in: body
-	Body struct {
-		// HTTP status code
-		// example: 400
-		// default: 400
 		Code    int32 `json:"code"`
 		Message error `json:"message"`
 	} `json:"body"`
@@ -456,6 +470,20 @@ type AppDetailsResponse struct {
 type NamespaceListResponse struct {
 	// in:body
 	Body []models.Namespace
+}
+
+// Return all the descriptor data related to Grafana
+// swagger:response grafanaInfoResponse
+type GrafanaInfoResponse struct {
+	// in: body
+	Body models.GrafanaInfo
+}
+
+// Return all the descriptor data related to Grafana
+// swagger:response jaegerInfoResponse
+type JaegerInfoResponse struct {
+	// in: body
+	Body models.JaegerInfo
 }
 
 //////////////////

@@ -599,6 +599,22 @@ func NewRoutes() (r *Routes) {
 			handlers.GraphNode,
 			true,
 		},
+		// swagger:route GET /grafana grafanaInfo
+		// ---
+		// Get the grafana URL and other descriptors
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      406: notAcceptableError
+		//      500: internalError
+		//      200: grafanaInfoResponse
+		//      204: grafanaInfoResponse
+		//
 		{
 			"GrafanaURL",
 			"GET",
@@ -606,6 +622,20 @@ func NewRoutes() (r *Routes) {
 			handlers.GetGrafanaInfo,
 			true,
 		},
+		// swagger:route GET /jaeger jaegerInfo
+		// ---
+		// Get the jaeger URL and other descriptors
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      406: notAcceptableError
+		//      200: jaegerInfoResponse
+		//
 		{
 			"JaegerURL",
 			"GET",

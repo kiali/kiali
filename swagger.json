@@ -278,7 +278,7 @@
     },
     "/api/namespaces/{namespace}/metrics": {
       "get": {
-        "description": "Get metrics for all objects in the given namespace",
+        "description": "Endpoint to fetch metrics to be displayed, related to a namespace",
         "produces": [
           "application/json"
         ],
@@ -677,6 +677,60 @@
           },
           "503": {
             "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
+    "/grafana": {
+      "get": {
+        "description": "Get the grafana URL and other descriptors",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "grafanaInfo",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/grafanaInfoResponse"
+          },
+          "204": {
+            "$ref": "#/responses/grafanaInfoResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "406": {
+            "$ref": "#/responses/notAcceptableError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/jaeger": {
+      "get": {
+        "description": "Get the jaeger URL and other descriptors",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "jaegerInfo",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/jaegerInfoResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "406": {
+            "$ref": "#/responses/notAcceptableError"
           }
         }
       }
@@ -2029,6 +2083,37 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "GrafanaInfo": {
+      "description": "GrafanaInfo provides information to access Grafana dashboards",
+      "type": "object",
+      "properties": {
+        "serviceDashboardPath": {
+          "type": "string",
+          "x-go-name": "ServiceDashboardPath"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "URL"
+        },
+        "varNamespace": {
+          "type": "string",
+          "x-go-name": "VarNamespace"
+        },
+        "varService": {
+          "type": "string",
+          "x-go-name": "VarService"
+        },
+        "varWorkload": {
+          "type": "string",
+          "x-go-name": "VarWorkload"
+        },
+        "workloadDashboardPath": {
+          "type": "string",
+          "x-go-name": "WorkloadDashboardPath"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Histogram": {
       "description": "Histogram contains Metric objects for several histogram-kind statistics",
       "type": "object",
@@ -2245,6 +2330,17 @@
           "type": "boolean",
           "x-go-name": "Valid",
           "example": false
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "JaegerInfo": {
+      "description": "JaegerInfo provides information to access Jaeger UI",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "x-go-name": "URL"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -3426,6 +3522,12 @@
         }
       }
     },
+    "grafanaInfoResponse": {
+      "description": "Return all the descriptor data related to Grafana",
+      "schema": {
+        "$ref": "#/definitions/GrafanaInfo"
+      }
+    },
     "graphResponse": {
       "description": "HTTP status code 200 and cytoscapejs Config in data",
       "schema": {
@@ -3464,6 +3566,12 @@
         "$ref": "#/definitions/IstioConfigList"
       }
     },
+    "jaegerInfoResponse": {
+      "description": "Return all the descriptor data related to Grafana",
+      "schema": {
+        "$ref": "#/definitions/JaegerInfo"
+      }
+    },
     "metricsResponse": {
       "description": "Listing all the information related to a service",
       "schema": {
@@ -3489,6 +3597,26 @@
       "description": "Listing all istio validations for object in the namespace",
       "schema": {
         "$ref": "#/definitions/NamespaceValidations"
+      }
+    },
+    "notAcceptableError": {
+      "description": "A NotAcceptable is the error message that means request can't be accepted",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 404,
+            "x-go-name": "Code",
+            "example": 404
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
       }
     },
     "notFoundError": {
