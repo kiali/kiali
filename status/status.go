@@ -48,9 +48,15 @@ type ExternalServiceInfo struct {
 
 	// The installed version of the service
 	//
-	// required: true
+	// required: false
 	// example: 0.8.0
-	Version string `json:"version"`
+	Version string `json:"version,omitempty"`
+
+	// The service url
+	//
+	// required: false
+	// example: jaeger-query-istio-system.127.0.0.1.nip.io
+	Url string `json:"url,omitempty"`
 }
 
 func init() {
