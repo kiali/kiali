@@ -451,6 +451,13 @@ type AppDetailsResponse struct {
 	Body models.App
 }
 
+// List of Namespaces
+// swagger:response namespaceList
+type NamespaceListResponse struct {
+	// in:body
+	Body []models.Namespace
+}
+
 //////////////////
 // SWAGGER MODELS
 //////////////////

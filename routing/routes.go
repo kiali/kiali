@@ -271,6 +271,19 @@ func NewRoutes() (r *Routes) {
 			true,
 		},
 		{
+			// swagger:route GET /namespaces namespaces namespaceList
+			// ---
+			// Endpoint to get the list of the available namespaces
+			//
+			//     Produces:
+			//     - application/json
+			//
+			//     Schemes: http, https
+			//
+			// responses:
+			//      500: internalError
+			//      200: namespaceList
+			//
 			"NamespaceList",
 			"GET",
 			"/api/namespaces",

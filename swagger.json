@@ -644,6 +644,30 @@
         }
       }
     },
+    "/namespaces": {
+      "get": {
+        "description": "Endpoint to get the app details",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "namespaces"
+        ],
+        "operationId": "namespaceList",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/namespaceList"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/applications/{app}/graph": {
       "get": {
         "produces": [
@@ -3413,6 +3437,15 @@
       "description": "namespaceAppHealthResponse is a map of app name x health",
       "schema": {
         "$ref": "#/definitions/NamespaceAppHealth"
+      }
+    },
+    "namespaceList": {
+      "description": "List of Namespaces",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/namespace"
+        }
       }
     },
     "namespaceValidationsResponse": {
