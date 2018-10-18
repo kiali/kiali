@@ -78,12 +78,14 @@ spec:
         - "${VERBOSE_MODE}"
         readinessProbe:
           httpGet:
+            scheme: HTTPS
             path: /api/status
             port: 20001
           initialDelaySeconds: 3
           periodSeconds: 3
         livenessProbe:
           httpGet:
+            scheme: HTTPS
             path: /api/status
             port: 20001
           initialDelaySeconds: 3
