@@ -30,16 +30,11 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the status of Kiali
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: statusInfo
 		{
@@ -53,9 +48,6 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the authentication token
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
@@ -65,8 +57,6 @@ func NewRoutes() (r *Routes) {
 		//     authorization: user, password
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: tokenGenerated
 		{ // Request the token
@@ -80,17 +70,12 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the status of Kiali
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: statusInfo
 		{
@@ -104,17 +89,12 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the list of Istio Config of a namespace
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: istioConfigList
 		//
@@ -135,7 +115,7 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
+		//      400: badRequestError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: istioConfigDetailsResponse
@@ -151,16 +131,13 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the list of istio object validations for a service
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
+		//      400: badRequestError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: typeValidationsResponse
@@ -182,8 +159,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: serviceListResponse
 		//
@@ -204,7 +179,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: serviceDetailsResponse
@@ -220,17 +194,12 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the list of workloads for a namespace
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: workloadListResponse
 		//
@@ -245,17 +214,12 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the workload details
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: workloadDetails
 		//
@@ -270,17 +234,12 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the list of apps for a namespace
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: appListResponse
 		//
@@ -291,12 +250,9 @@ func NewRoutes() (r *Routes) {
 			handlers.AppList,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/apps/{app} appDetails
+		// swagger:route GET /namespaces/{namespace}/apps/{app} apps appDetails
 		// ---
 		// Endpoint to get the app details
-		//
-		//     Consumes:
-		//     - application/json
 		//
 		//     Produces:
 		//     - application/json
@@ -304,8 +260,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: appDetails
 		//
@@ -316,6 +270,19 @@ func NewRoutes() (r *Routes) {
 			handlers.AppDetails,
 			true,
 		},
+		// swagger:route GET /namespaces namespaces namespaceList
+		// ---
+		// Endpoint to get the list of the available namespaces
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      200: namespaceList
+		//
 		{
 			"NamespaceList",
 			"GET",
@@ -323,66 +290,63 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceList,
 			true,
 		},
+		// swagger:route GET /api/namespaces/{namespace}/services/{service}/metrics services serviceMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a single service
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
 		{
-			// swagger:route GET /api/namespaces/{namespace}/services/{service}/metrics services serviceMetrics
-			// ---
-			// Endpoint to fetch metrics to be displayed, related to a single service
-			//
-			//     Produces:
-			//     - application/json
-			//
-			//     Schemes: http, https
-			//
-			// responses:
-			//      default: genericError
-			//      404: notFoundError
-			//      500: internalError
-			//      200: metricsResponse
-			//
 			"ServiceMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/metrics",
 			handlers.ServiceMetrics,
 			true,
 		},
+		// swagger:route GET /api/namespaces/{namespace}/apps/{app}/metrics apps appMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a single app
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
 		{
-			// swagger:route GET /api/namespaces/{namespace}/apps/{app}/metrics apps appMetrics
-			// ---
-			// Endpoint to fetch metrics to be displayed, related to a single app
-			//
-			//     Produces:
-			//     - application/json
-			//
-			//     Schemes: http, https
-			//
-			// responses:
-			//      default: genericError
-			//      404: notFoundError
-			//      500: internalError
-			//      200: metricsResponse
-			//
 			"AppMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/metrics",
 			handlers.AppMetrics,
 			true,
 		},
+		// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/metrics workloads workloadMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a single workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
 		{
-			// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/metrics workloads workloadMetrics
-			// ---
-			// Endpoint to fetch metrics to be displayed, related to a single workload
-			//
-			//     Produces:
-			//     - application/json
-			//
-			//     Schemes: http, https
-			//
-			// responses:
-			//      default: genericError
-			//      404: notFoundError
-			//      500: internalError
-			//      200: metricsResponse
-			//
 			"WorkloadMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/metrics",
@@ -456,12 +420,7 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the list of istio object validations for a service
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: typeValidationsResponse
 		//
@@ -472,6 +431,20 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceIstioValidations,
 			true,
 		},
+		// swagger:route GET /api/namespaces/{namespace}/metrics namespaces namespaceMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a namespace
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
 		{
 			"NamespaceMetrics",
 			"GET",
@@ -504,17 +477,12 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the list of istio object validations for a namespace
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: namespaceValidationsResponse
 		//
@@ -529,17 +497,13 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// The backing JSON for a namespaces graph.
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
+		//      400: badRequestError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -554,17 +518,13 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// The backing JSON for a versioned app node detail graph.
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
+		//      400: badRequestError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -580,17 +540,13 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// The backing JSON for an app node detail graph.
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
+		//      400: badRequestError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -605,17 +561,13 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// The backing JSON for a service node detail graph.
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
+		//      400: badRequestError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -630,17 +582,13 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// The backing JSON for a workload node detail graph.
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
+		//      400: badRequestError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -651,6 +599,22 @@ func NewRoutes() (r *Routes) {
 			handlers.GraphNode,
 			true,
 		},
+		// swagger:route GET /grafana grafanaInfo
+		// ---
+		// Get the grafana URL and other descriptors
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      406: notAcceptableError
+		//      500: internalError
+		//      200: grafanaInfoResponse
+		//      204: grafanaInfoResponse
+		//
 		{
 			"GrafanaURL",
 			"GET",
@@ -658,6 +622,20 @@ func NewRoutes() (r *Routes) {
 			handlers.GetGrafanaInfo,
 			true,
 		},
+		// swagger:route GET /jaeger jaegerInfo
+		// ---
+		// Get the jaeger URL and other descriptors
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      406: notAcceptableError
+		//      200: jaegerInfoResponse
+		//
 		{
 			"JaegerURL",
 			"GET",

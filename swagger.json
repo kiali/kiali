@@ -20,9 +20,6 @@
     "/": {
       "get": {
         "description": "Endpoint to get the status of Kiali",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -35,14 +32,8 @@
           "200": {
             "$ref": "#/responses/statusInfo"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -222,14 +213,11 @@
           "200": {
             "$ref": "#/responses/metricsResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
-          "500": {
-            "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
           }
         }
       }
@@ -284,6 +272,43 @@
           },
           "500": {
             "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/api/namespaces/{namespace}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a namespace",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "namespaces"
+        ],
+        "operationId": "namespaceMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
           }
         }
       }
@@ -463,14 +488,11 @@
           "200": {
             "$ref": "#/responses/metricsResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
-          "500": {
-            "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
           }
         }
       }
@@ -650,23 +672,95 @@
           "200": {
             "$ref": "#/responses/metricsResponse"
           },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
+    "/grafana": {
+      "get": {
+        "description": "Get the grafana URL and other descriptors",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "grafanaInfo",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/grafanaInfoResponse"
+          },
+          "204": {
+            "$ref": "#/responses/grafanaInfoResponse"
+          },
           "404": {
             "$ref": "#/responses/notFoundError"
           },
+          "406": {
+            "$ref": "#/responses/notAcceptableError"
+          },
           "500": {
             "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/jaeger": {
+      "get": {
+        "description": "Get the jaeger URL and other descriptors",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "jaegerInfo",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/jaegerInfoResponse"
           },
-          "default": {
-            "$ref": "#/responses/genericError"
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "406": {
+            "$ref": "#/responses/notAcceptableError"
+          }
+        }
+      }
+    },
+    "/namespaces": {
+      "get": {
+        "description": "Endpoint to get the list of the available namespaces",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "namespaces"
+        ],
+        "operationId": "namespaceList",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/namespaceList"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
           }
         }
       }
     },
     "/namespaces/{namespace}/applications/{app}/graph": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -749,23 +843,17 @@
           "200": {
             "$ref": "#/responses/graphResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
     },
     "/namespaces/{namespace}/applications/{app}/versions/{version}/graph": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -856,14 +944,11 @@
           "200": {
             "$ref": "#/responses/graphResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -871,9 +956,6 @@
     "/namespaces/{namespace}/apps": {
       "get": {
         "description": "Endpoint to get the list of apps for a namespace",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -899,14 +981,8 @@
           "200": {
             "$ref": "#/responses/appListResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -914,15 +990,15 @@
     "/namespaces/{namespace}/apps/{app}": {
       "get": {
         "description": "Endpoint to get the app details",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
         "schemes": [
           "http",
           "https"
+        ],
+        "tags": [
+          "apps"
         ],
         "operationId": "appDetails",
         "parameters": [
@@ -947,23 +1023,14 @@
           "200": {
             "$ref": "#/responses/appDetails"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
     },
     "/namespaces/{namespace}/graph": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1046,14 +1113,11 @@
           "200": {
             "$ref": "#/responses/graphResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1061,9 +1125,6 @@
     "/namespaces/{namespace}/istio": {
       "get": {
         "description": "Endpoint to get the list of Istio Config of a namespace",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1089,14 +1150,8 @@
           "200": {
             "$ref": "#/responses/istioConfigList"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1146,14 +1201,14 @@
           "200": {
             "$ref": "#/responses/istioConfigDetailsResponse"
           },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
           "404": {
             "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1161,9 +1216,6 @@
     "/namespaces/{namespace}/istio/{object_type}/{object}/istio_validations": {
       "get": {
         "description": "Endpoint to get the list of istio object validations for a service",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1206,14 +1258,14 @@
           "200": {
             "$ref": "#/responses/typeValidationsResponse"
           },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
           "404": {
             "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1221,9 +1273,6 @@
     "/namespaces/{namespace}/istio_validations": {
       "get": {
         "description": "Endpoint to get the list of istio object validations for a namespace",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1249,14 +1298,8 @@
           "200": {
             "$ref": "#/responses/namespaceValidationsResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1289,14 +1332,8 @@
           "200": {
             "$ref": "#/responses/serviceListResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1342,18 +1379,12 @@
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
     },
     "/namespaces/{namespace}/services/{service}/graph": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1436,14 +1467,11 @@
           "200": {
             "$ref": "#/responses/graphResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1451,9 +1479,6 @@
     "/namespaces/{namespace}/services/{service}/istio_validations": {
       "get": {
         "description": "Endpoint to get the list of istio object validations for a service",
-        "consumes": [
-          "application/json"
-        ],
         "tags": [
           "services"
         ],
@@ -1480,14 +1505,8 @@
           "200": {
             "$ref": "#/responses/typeValidationsResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1495,9 +1514,6 @@
     "/namespaces/{namespace}/workloads": {
       "get": {
         "description": "Endpoint to get the list of workloads for a namespace",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1523,14 +1539,8 @@
           "200": {
             "$ref": "#/responses/workloadListResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1538,9 +1548,6 @@
     "/namespaces/{namespace}/workloads/{workload}": {
       "get": {
         "description": "Endpoint to get the workload details",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1574,23 +1581,14 @@
           "200": {
             "$ref": "#/responses/workloadDetails"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
     },
     "/namespaces/{namespace}/workloads/{workload}/graph": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1673,14 +1671,11 @@
           "200": {
             "$ref": "#/responses/graphResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1688,9 +1683,6 @@
     "/status": {
       "get": {
         "description": "Endpoint to get the status of Kiali",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1703,14 +1695,8 @@
           "200": {
             "$ref": "#/responses/statusInfo"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1726,9 +1712,6 @@
           }
         ],
         "description": "Endpoint to get the authentication token",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1741,14 +1724,8 @@
           "200": {
             "$ref": "#/responses/tokenGenerated"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -2106,6 +2083,37 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "GrafanaInfo": {
+      "description": "GrafanaInfo provides information to access Grafana dashboards",
+      "type": "object",
+      "properties": {
+        "serviceDashboardPath": {
+          "type": "string",
+          "x-go-name": "ServiceDashboardPath"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "URL"
+        },
+        "varNamespace": {
+          "type": "string",
+          "x-go-name": "VarNamespace"
+        },
+        "varService": {
+          "type": "string",
+          "x-go-name": "VarService"
+        },
+        "varWorkload": {
+          "type": "string",
+          "x-go-name": "VarWorkload"
+        },
+        "workloadDashboardPath": {
+          "type": "string",
+          "x-go-name": "WorkloadDashboardPath"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Histogram": {
       "description": "Histogram contains Metric objects for several histogram-kind statistics",
       "type": "object",
@@ -2322,6 +2330,17 @@
           "type": "boolean",
           "x-go-name": "Valid",
           "example": false
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "JaegerInfo": {
+      "description": "JaegerInfo provides information to access Jaeger UI",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "x-go-name": "URL"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -3503,24 +3522,10 @@
         }
       }
     },
-    "genericError": {
-      "description": "A GenericError is the default error message that is generated.",
+    "grafanaInfoResponse": {
+      "description": "Return all the descriptor data related to Grafana",
       "schema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "description": "HTTP status code",
-            "type": "integer",
-            "format": "int32",
-            "default": 400,
-            "x-go-name": "Code",
-            "example": 400
-          },
-          "message": {
-            "type": "string",
-            "x-go-name": "Message"
-          }
-        }
+        "$ref": "#/definitions/GrafanaInfo"
       }
     },
     "graphResponse": {
@@ -3561,6 +3566,12 @@
         "$ref": "#/definitions/IstioConfigList"
       }
     },
+    "jaegerInfoResponse": {
+      "description": "Return all the descriptor data related to Grafana",
+      "schema": {
+        "$ref": "#/definitions/JaegerInfo"
+      }
+    },
     "metricsResponse": {
       "description": "Listing all the information related to a service",
       "schema": {
@@ -3573,10 +3584,39 @@
         "$ref": "#/definitions/NamespaceAppHealth"
       }
     },
+    "namespaceList": {
+      "description": "List of Namespaces",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/namespace"
+        }
+      }
+    },
     "namespaceValidationsResponse": {
       "description": "Listing all istio validations for object in the namespace",
       "schema": {
         "$ref": "#/definitions/NamespaceValidations"
+      }
+    },
+    "notAcceptableError": {
+      "description": "A NotAcceptable is the error message that means request can't be accepted",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 404,
+            "x-go-name": "Code",
+            "example": 404
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
       }
     },
     "notFoundError": {
@@ -3615,6 +3655,26 @@
       "description": "Listing all services in the namespace",
       "schema": {
         "$ref": "#/definitions/ServiceList"
+      }
+    },
+    "serviceUnavailableError": {
+      "description": "A Internal is the error message that means something has gone wrong",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 503,
+            "x-go-name": "Code",
+            "example": 503
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
       }
     },
     "statusInfo": {

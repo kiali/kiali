@@ -31,7 +31,7 @@ type AppVersionParam struct {
 	Name string `json:"version"`
 }
 
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics
 type NamespaceParam struct {
 	// The namespace id.
 	//
@@ -269,10 +269,10 @@ type VersionParam struct {
 // SWAGGER RESPONSES
 /////////////////////
 
-// A GenericError is the default error message that is generated.
+// BadRequestError: the client request is incorrect
 //
-// swagger:response genericError
-type GenericError struct {
+// swagger:response badRequestError
+type BadRequestError struct {
 	// in: body
 	Body struct {
 		// HTTP status code
@@ -297,6 +297,20 @@ type NotFoundError struct {
 	} `json:"body"`
 }
 
+// A NotAcceptable is the error message that means request can't be accepted
+//
+// swagger:response notAcceptableError
+type NotAcceptableError struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 404
+		// default: 404
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
 // A Internal is the error message that means something has gone wrong
 //
 // swagger:response internalError
@@ -311,15 +325,15 @@ type InternalError struct {
 	} `json:"body"`
 }
 
-// BadRequestError: the client request is incorrect
+// A Internal is the error message that means something has gone wrong
 //
-// swagger:response badRequestError
-type BadRequestError struct {
+// swagger:response serviceUnavailableError
+type serviceUnavailableError struct {
 	// in: body
 	Body struct {
 		// HTTP status code
-		// example: 400
-		// default: 400
+		// example: 503
+		// default: 503
 		Code    int32 `json:"code"`
 		Message error `json:"message"`
 	} `json:"body"`
@@ -363,13 +377,6 @@ type NamespaceValidationResponse struct {
 // Listing all istio validations for object in the namespace
 // swagger:response typeValidationsResponse
 type ServiceValidationResponse struct {
-	// in:body
-	Body TypedIstioValidations
-}
-
-// Listing all istio validations for object in the namespace
-// swagger:response WorkloadValidations
-type WorkloadValidationResponse struct {
 	// in:body
 	Body TypedIstioValidations
 }
@@ -456,6 +463,27 @@ type IstioConfigDetailsResponse struct {
 type AppDetailsResponse struct {
 	// in:body
 	Body models.App
+}
+
+// List of Namespaces
+// swagger:response namespaceList
+type NamespaceListResponse struct {
+	// in:body
+	Body []models.Namespace
+}
+
+// Return all the descriptor data related to Grafana
+// swagger:response grafanaInfoResponse
+type GrafanaInfoResponse struct {
+	// in: body
+	Body models.GrafanaInfo
+}
+
+// Return all the descriptor data related to Grafana
+// swagger:response jaegerInfoResponse
+type JaegerInfoResponse struct {
+	// in: body
+	Body models.JaegerInfo
 }
 
 //////////////////
