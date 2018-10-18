@@ -47,7 +47,6 @@ type CytoscapeGraphType = {
   showUnusedNodes: boolean;
   onReady: (cytoscapeRef: any) => void;
   onClick: (event: CytoscapeClickEvent) => void;
-  onDoubleClick: (event: CytoscapeClickEvent) => void;
   refresh: any;
 };
 
