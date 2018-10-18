@@ -270,83 +270,83 @@ func NewRoutes() (r *Routes) {
 			handlers.AppDetails,
 			true,
 		},
+		// swagger:route GET /namespaces namespaces namespaceList
+		// ---
+		// Endpoint to get the list of the available namespaces
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      200: namespaceList
+		//
 		{
-			// swagger:route GET /namespaces namespaces namespaceList
-			// ---
-			// Endpoint to get the list of the available namespaces
-			//
-			//     Produces:
-			//     - application/json
-			//
-			//     Schemes: http, https
-			//
-			// responses:
-			//      500: internalError
-			//      200: namespaceList
-			//
 			"NamespaceList",
 			"GET",
 			"/api/namespaces",
 			handlers.NamespaceList,
 			true,
 		},
+		// swagger:route GET /api/namespaces/{namespace}/services/{service}/metrics services serviceMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a single service
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
 		{
-			// swagger:route GET /api/namespaces/{namespace}/services/{service}/metrics services serviceMetrics
-			// ---
-			// Endpoint to fetch metrics to be displayed, related to a single service
-			//
-			//     Produces:
-			//     - application/json
-			//
-			//     Schemes: http, https
-			//
-			// responses:
-			//      400: badRequestError
-			//      503: serviceUnavailableError
-			//      200: metricsResponse
-			//
 			"ServiceMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/metrics",
 			handlers.ServiceMetrics,
 			true,
 		},
+		// swagger:route GET /api/namespaces/{namespace}/apps/{app}/metrics apps appMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a single app
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
 		{
-			// swagger:route GET /api/namespaces/{namespace}/apps/{app}/metrics apps appMetrics
-			// ---
-			// Endpoint to fetch metrics to be displayed, related to a single app
-			//
-			//     Produces:
-			//     - application/json
-			//
-			//     Schemes: http, https
-			//
-			// responses:
-			//      400: badRequestError
-			//      503: serviceUnavailableError
-			//      200: metricsResponse
-			//
 			"AppMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/metrics",
 			handlers.AppMetrics,
 			true,
 		},
+		// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/metrics workloads workloadMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a single workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
 		{
-			// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/metrics workloads workloadMetrics
-			// ---
-			// Endpoint to fetch metrics to be displayed, related to a single workload
-			//
-			//     Produces:
-			//     - application/json
-			//
-			//     Schemes: http, https
-			//
-			// responses:
-			//      400: badRequestError
-			//      503: serviceUnavailableError
-			//      200: metricsResponse
-			//
 			"WorkloadMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/metrics",
