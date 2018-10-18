@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -29,10 +29,7 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 
 	mq := prometheus.MetricsQuery{Namespace: "ns"}
-	k8s := new(kubetest.K8SClientMock)
-	mockGetNamespace(k8s, "ns", time.Time{})
-
-	err = extractMetricsQueryParams(req, &mq, k8s)
+	err = extractMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,10 +61,7 @@ func TestExtractMetricsQueryParamsStepLimitCase(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 
 	mq := prometheus.MetricsQuery{Namespace: "ns"}
-	k8s := new(kubetest.K8SClientMock)
-	mockGetNamespace(k8s, "ns", time.Time{})
-
-	err = extractMetricsQueryParams(req, &mq, k8s)
+	err = extractMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,10 +86,7 @@ func TestExtractMetricsQueryIntervalBoundary(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 
 	mq := prometheus.MetricsQuery{Namespace: "ns"}
-	k8s := new(kubetest.K8SClientMock)
-	mockGetNamespace(k8s, "ns", time.Date(2018, 4, 10, 12, 10, 0, 0, time.UTC))
-
-	err = extractMetricsQueryParams(req, &mq, k8s)
+	err = extractMetricsQueryParams(req, &mq, buildNamespace("ns", time.Date(2018, 4, 10, 12, 10, 0, 0, time.UTC)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,11 +108,9 @@ func TestExtractMetricsQueryStartTimeBoundary(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 
 	mq := prometheus.MetricsQuery{Namespace: "ns"}
-	k8s := new(kubetest.K8SClientMock)
 	namespaceTimestamp := time.Date(2018, 4, 10, 12, 30, 0, 0, time.UTC)
-	mockGetNamespace(k8s, "ns", namespaceTimestamp)
 
-	err = extractMetricsQueryParams(req, &mq, k8s)
+	err = extractMetricsQueryParams(req, &mq, buildNamespace("ns", namespaceTimestamp))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,4 +118,11 @@ func TestExtractMetricsQueryStartTimeBoundary(t *testing.T) {
 	// Check that start and end dates don't need normalization, already hitting step bounds
 	// Interval [12:24:20, 12:41:00] should be kept unchanged
 	assert.Equal(t, namespaceTimestamp.Add(1*time.Minute).UTC(), mq.Start.UTC())
+}
+
+func buildNamespace(name string, creationTime time.Time) *models.Namespace {
+	return &models.Namespace{
+		Name:              name,
+		CreationTimestamp: creationTime,
+	}
 }

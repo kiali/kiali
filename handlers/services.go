@@ -54,19 +54,25 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplie
 		RespondWithError(w, http.StatusServiceUnavailable, "Kubernetes client error: "+err.Error())
 		return
 	}
-
-	params := prometheus.MetricsQuery{Namespace: namespace, Service: service}
-	err = extractMetricsQueryParams(r, &params, k8s)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
 	prometheusClient, err := promClientSupplier()
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
 		return
 	}
+
+	namespaceInfo := checkNamespaceAccess(w, k8s, prometheusClient, namespace)
+	if namespaceInfo == nil {
+		return
+	}
+
+	params := prometheus.MetricsQuery{Namespace: namespace, Service: service}
+	err = extractMetricsQueryParams(r, &params, namespaceInfo)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	metrics := prometheusClient.GetMetrics(&params)
 	RespondWithJSON(w, http.StatusOK, metrics)
 }

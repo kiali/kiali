@@ -132,6 +132,11 @@ rules:
   - get
   - list
   - watch
+- apiGroups: ["project.openshift.io"]
+  resources:
+  - projects
+  verbs:
+  - get
 - apiGroups: ["route.openshift.io"]
   resources:
   - routes

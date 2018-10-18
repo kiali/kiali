@@ -3,6 +3,9 @@ package business
 import (
 	"regexp"
 
+	osv1 "github.com/openshift/api/project/v1"
+	kv1 "k8s.io/api/core/v1"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -79,17 +82,20 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 	defer promtimer.ObserveNow(&err)
 
 	if in.hasProjects {
-		if project, err2 := in.k8s.GetProject(namespace); err2 == nil {
-			result := models.CastProject(*project)
-			return &result, nil
+		var project *osv1.Project
+		project, err = in.k8s.GetProject(namespace)
+		if err != nil {
+			return nil, err
 		}
+		result := models.CastProject(*project)
+		return &result, nil
+	} else {
+		var ns *kv1.Namespace
+		ns, err = in.k8s.GetNamespace(namespace)
+		if err != nil {
+			return nil, err
+		}
+		result := models.CastNamespace(*ns)
+		return &result, nil
 	}
-
-	ns, err := in.k8s.GetNamespace(namespace)
-	if err != nil {
-		return &models.Namespace{}, err
-	}
-
-	result := models.CastNamespace(*ns)
-	return &result, nil
 }
