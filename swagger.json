@@ -35,14 +35,8 @@
           "200": {
             "$ref": "#/responses/statusInfo"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -222,14 +216,11 @@
           "200": {
             "$ref": "#/responses/metricsResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
-          "500": {
-            "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
           }
         }
       }
@@ -463,14 +454,11 @@
           "200": {
             "$ref": "#/responses/metricsResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
-          "500": {
-            "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
           }
         }
       }
@@ -650,14 +638,11 @@
           "200": {
             "$ref": "#/responses/metricsResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
-          "500": {
-            "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
           }
         }
       }
@@ -749,14 +734,11 @@
           "200": {
             "$ref": "#/responses/graphResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -856,14 +838,11 @@
           "200": {
             "$ref": "#/responses/graphResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -899,14 +878,8 @@
           "200": {
             "$ref": "#/responses/appListResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -950,14 +923,8 @@
           "200": {
             "$ref": "#/responses/appDetails"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1049,14 +1016,11 @@
           "200": {
             "$ref": "#/responses/graphResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1092,14 +1056,8 @@
           "200": {
             "$ref": "#/responses/istioConfigList"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1149,14 +1107,14 @@
           "200": {
             "$ref": "#/responses/istioConfigDetailsResponse"
           },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
           "404": {
             "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1209,14 +1167,14 @@
           "200": {
             "$ref": "#/responses/typeValidationsResponse"
           },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
           "404": {
             "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1252,14 +1210,8 @@
           "200": {
             "$ref": "#/responses/namespaceValidationsResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1292,14 +1244,8 @@
           "200": {
             "$ref": "#/responses/serviceListResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1345,9 +1291,6 @@
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1439,14 +1382,11 @@
           "200": {
             "$ref": "#/responses/graphResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1483,14 +1423,8 @@
           "200": {
             "$ref": "#/responses/typeValidationsResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1526,14 +1460,8 @@
           "200": {
             "$ref": "#/responses/workloadListResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1577,14 +1505,8 @@
           "200": {
             "$ref": "#/responses/workloadDetails"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1676,14 +1598,11 @@
           "200": {
             "$ref": "#/responses/graphResponse"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1706,14 +1625,8 @@
           "200": {
             "$ref": "#/responses/statusInfo"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -1744,14 +1657,8 @@
           "200": {
             "$ref": "#/responses/tokenGenerated"
           },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
           "500": {
             "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
           }
         }
       }
@@ -3506,26 +3413,6 @@
         }
       }
     },
-    "genericError": {
-      "description": "A GenericError is the default error message that is generated.",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "description": "HTTP status code",
-            "type": "integer",
-            "format": "int32",
-            "default": 400,
-            "x-go-name": "Code",
-            "example": 400
-          },
-          "message": {
-            "type": "string",
-            "x-go-name": "Message"
-          }
-        }
-      }
-    },
     "graphResponse": {
       "description": "HTTP status code 200 and cytoscapejs Config in data",
       "schema": {
@@ -3618,6 +3505,26 @@
       "description": "Listing all services in the namespace",
       "schema": {
         "$ref": "#/definitions/ServiceList"
+      }
+    },
+    "serviceUnavailableError": {
+      "description": "A Internal is the error message that means something has gone wrong",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 503,
+            "x-go-name": "Code",
+            "example": 503
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
       }
     },
     "statusInfo": {

@@ -38,8 +38,6 @@ func NewRoutes() (r *Routes) {
 		//
 		//     Schemes: http, https
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: statusInfo
 		{
@@ -65,8 +63,6 @@ func NewRoutes() (r *Routes) {
 		//     authorization: user, password
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: tokenGenerated
 		{ // Request the token
@@ -89,8 +85,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: statusInfo
 		{
@@ -113,8 +107,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: istioConfigList
 		//
@@ -135,7 +127,7 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
+		//      400: badRequestError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: istioConfigDetailsResponse
@@ -160,7 +152,7 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
+		//      400: badRequestError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: typeValidationsResponse
@@ -182,8 +174,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: serviceListResponse
 		//
@@ -204,7 +194,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: serviceDetailsResponse
@@ -229,8 +218,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: workloadListResponse
 		//
@@ -254,8 +241,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: workloadDetails
 		//
@@ -279,8 +264,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: appListResponse
 		//
@@ -304,8 +287,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: appDetails
 		//
@@ -334,9 +315,8 @@ func NewRoutes() (r *Routes) {
 			//     Schemes: http, https
 			//
 			// responses:
-			//      default: genericError
-			//      404: notFoundError
-			//      500: internalError
+			//      400: badRequestError
+			//      503: serviceUnavailableError
 			//      200: metricsResponse
 			//
 			"ServiceMetrics",
@@ -356,9 +336,8 @@ func NewRoutes() (r *Routes) {
 			//     Schemes: http, https
 			//
 			// responses:
-			//      default: genericError
-			//      404: notFoundError
-			//      500: internalError
+			//      400: badRequestError
+			//      503: serviceUnavailableError
 			//      200: metricsResponse
 			//
 			"AppMetrics",
@@ -378,9 +357,8 @@ func NewRoutes() (r *Routes) {
 			//     Schemes: http, https
 			//
 			// responses:
-			//      default: genericError
-			//      404: notFoundError
-			//      500: internalError
+			//      400: badRequestError
+			//      503: serviceUnavailableError
 			//      200: metricsResponse
 			//
 			"WorkloadMetrics",
@@ -460,8 +438,6 @@ func NewRoutes() (r *Routes) {
 		//     - application/json
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: typeValidationsResponse
 		//
@@ -513,8 +489,6 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
 		//      200: namespaceValidationsResponse
 		//
@@ -538,8 +512,7 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
+		//      400: badRequestError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -563,8 +536,7 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
+		//      400: badRequestError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -589,8 +561,7 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
+		//      400: badRequestError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -614,8 +585,7 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
+		//      400: badRequestError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -639,8 +609,7 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
+		//      400: badRequestError
 		//      500: internalError
 		//      200: graphResponse
 		//

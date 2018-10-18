@@ -269,20 +269,6 @@ type VersionParam struct {
 // SWAGGER RESPONSES
 /////////////////////
 
-// A GenericError is the default error message that is generated.
-//
-// swagger:response genericError
-type GenericError struct {
-	// in: body
-	Body struct {
-		// HTTP status code
-		// example: 400
-		// default: 400
-		Code    int32 `json:"code"`
-		Message error `json:"message"`
-	} `json:"body"`
-}
-
 // A NotFoundError is the error message that is generated when server could not find what was requested.
 //
 // swagger:response notFoundError
@@ -306,6 +292,20 @@ type InternalError struct {
 		// HTTP status code
 		// example: 500
 		// default: 500
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
+// A Internal is the error message that means something has gone wrong
+//
+// swagger:response serviceUnavailableError
+type serviceUnavailableError struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 503
+		// default: 503
 		Code    int32 `json:"code"`
 		Message error `json:"message"`
 	} `json:"body"`
