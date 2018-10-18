@@ -20,9 +20,6 @@
     "/": {
       "get": {
         "description": "Endpoint to get the status of Kiali",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -649,9 +646,6 @@
     },
     "/namespaces/{namespace}/applications/{app}/graph": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -745,9 +739,6 @@
     },
     "/namespaces/{namespace}/applications/{app}/versions/{version}/graph": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -850,9 +841,6 @@
     "/namespaces/{namespace}/apps": {
       "get": {
         "description": "Endpoint to get the list of apps for a namespace",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -887,9 +875,6 @@
     "/namespaces/{namespace}/apps/{app}": {
       "get": {
         "description": "Endpoint to get the app details",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -931,9 +916,6 @@
     },
     "/namespaces/{namespace}/graph": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1028,9 +1010,6 @@
     "/namespaces/{namespace}/istio": {
       "get": {
         "description": "Endpoint to get the list of Istio Config of a namespace",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1122,9 +1101,6 @@
     "/namespaces/{namespace}/istio/{object_type}/{object}/istio_validations": {
       "get": {
         "description": "Endpoint to get the list of istio object validations for a service",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1182,9 +1158,6 @@
     "/namespaces/{namespace}/istio_validations": {
       "get": {
         "description": "Endpoint to get the list of istio object validations for a namespace",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1297,9 +1270,6 @@
     },
     "/namespaces/{namespace}/services/{service}/graph": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1394,9 +1364,6 @@
     "/namespaces/{namespace}/services/{service}/istio_validations": {
       "get": {
         "description": "Endpoint to get the list of istio object validations for a service",
-        "consumes": [
-          "application/json"
-        ],
         "tags": [
           "services"
         ],
@@ -1432,9 +1399,6 @@
     "/namespaces/{namespace}/workloads": {
       "get": {
         "description": "Endpoint to get the list of workloads for a namespace",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1469,9 +1433,6 @@
     "/namespaces/{namespace}/workloads/{workload}": {
       "get": {
         "description": "Endpoint to get the workload details",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1513,9 +1474,6 @@
     },
     "/namespaces/{namespace}/workloads/{workload}/graph": {
       "get": {
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1610,9 +1568,6 @@
     "/status": {
       "get": {
         "description": "Endpoint to get the status of Kiali",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],
@@ -1642,9 +1597,6 @@
           }
         ],
         "description": "Endpoint to get the authentication token",
-        "consumes": [
-          "application/json"
-        ],
         "produces": [
           "application/json"
         ],

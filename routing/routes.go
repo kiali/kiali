@@ -30,9 +30,6 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the status of Kiali
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
@@ -50,9 +47,6 @@ func NewRoutes() (r *Routes) {
 		// swagger:route GET /token GetToken
 		// ---
 		// Endpoint to get the authentication token
-		//
-		//     Consumes:
-		//     - application/json
 		//
 		//     Produces:
 		//     - application/json
@@ -76,9 +70,6 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the status of Kiali
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
@@ -97,9 +88,6 @@ func NewRoutes() (r *Routes) {
 		// swagger:route GET /namespaces/{namespace}/istio config istioConfigList
 		// ---
 		// Endpoint to get the list of Istio Config of a namespace
-		//
-		//     Consumes:
-		//     - application/json
 		//
 		//     Produces:
 		//     - application/json
@@ -142,9 +130,6 @@ func NewRoutes() (r *Routes) {
 		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object}/istio_validations config objectValidations
 		// ---
 		// Endpoint to get the list of istio object validations for a service
-		//
-		//     Consumes:
-		//     - application/json
 		//
 		//     Produces:
 		//     - application/json
@@ -209,9 +194,6 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the list of workloads for a namespace
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
@@ -231,9 +213,6 @@ func NewRoutes() (r *Routes) {
 		// swagger:route GET /namespaces/{namespace}/workloads/{workload} workloads workloadDetails
 		// ---
 		// Endpoint to get the workload details
-		//
-		//     Consumes:
-		//     - application/json
 		//
 		//     Produces:
 		//     - application/json
@@ -255,9 +234,6 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the list of apps for a namespace
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
@@ -277,9 +253,6 @@ func NewRoutes() (r *Routes) {
 		// swagger:route GET /namespaces/{namespace}/apps/{app} apps appDetails
 		// ---
 		// Endpoint to get the app details
-		//
-		//     Consumes:
-		//     - application/json
 		//
 		//     Produces:
 		//     - application/json
@@ -434,9 +407,6 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the list of istio object validations for a service
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		// responses:
 		//      500: internalError
 		//      200: typeValidationsResponse
@@ -480,9 +450,6 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// Endpoint to get the list of istio object validations for a namespace
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
@@ -502,9 +469,6 @@ func NewRoutes() (r *Routes) {
 		// swagger:route GET /namespaces/{namespace}/graph graphs graphNamespace
 		// ---
 		// The backing JSON for a namespaces graph.
-		//
-		//     Consumes:
-		//     - application/json
 		//
 		//     Produces:
 		//     - application/json
@@ -526,9 +490,6 @@ func NewRoutes() (r *Routes) {
 		// swagger:route GET /namespaces/{namespace}/applications/{app}/versions/{version}/graph graphs graphAppVersion
 		// ---
 		// The backing JSON for a versioned app node detail graph.
-		//
-		//     Consumes:
-		//     - application/json
 		//
 		//     Produces:
 		//     - application/json
@@ -552,9 +513,6 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// The backing JSON for an app node detail graph.
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
@@ -576,9 +534,6 @@ func NewRoutes() (r *Routes) {
 		// ---
 		// The backing JSON for a service node detail graph.
 		//
-		//     Consumes:
-		//     - application/json
-		//
 		//     Produces:
 		//     - application/json
 		//
@@ -599,9 +554,6 @@ func NewRoutes() (r *Routes) {
 		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/graph graphs graphWorkload
 		// ---
 		// The backing JSON for a workload node detail graph.
-		//
-		//     Consumes:
-		//     - application/json
 		//
 		//     Produces:
 		//     - application/json
