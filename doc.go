@@ -31,7 +31,7 @@ type AppVersionParam struct {
 	Name string `json:"version"`
 }
 
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload
 type NamespaceParam struct {
 	// The namespace id.
 	//
@@ -363,13 +363,6 @@ type NamespaceValidationResponse struct {
 // Listing all istio validations for object in the namespace
 // swagger:response typeValidationsResponse
 type ServiceValidationResponse struct {
-	// in:body
-	Body TypedIstioValidations
-}
-
-// Listing all istio validations for object in the namespace
-// swagger:response WorkloadValidations
-type WorkloadValidationResponse struct {
 	// in:body
 	Body TypedIstioValidations
 }
