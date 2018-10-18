@@ -58,11 +58,11 @@ export class GraphStyles {
     };
 
     const getEdgeColor = (ele: any): string => {
-      const rate = ele.data('rate') ? parseFloat(ele.data('rate')) : 0;
+      const rate = ele.data('rate') ? Number(ele.data('rate')) : 0;
       if (rate === 0 || ele.data('isUnused')) {
         return EdgeColorDead;
       }
-      const pErr = ele.data('percentErr') ? parseFloat(ele.data('percentErr')) : 0;
+      const pErr = ele.data('percentErr') ? Number(ele.data('percentErr')) : 0;
       if (pErr > REQUESTS_THRESHOLDS.failure) {
         return EdgeColorFailure;
       }
@@ -94,14 +94,14 @@ export class GraphStyles {
           break;
         }
         case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE: {
-          const responseTime = ele.data('responseTime') ? parseFloat(ele.data('responseTime')) : 0;
+          const responseTime = ele.data('responseTime') ? Number(ele.data('responseTime')) : 0;
           if (responseTime > 0) {
             content = responseTime < 1.0 ? (responseTime * 1000).toFixed(0) + 'ms' : responseTime.toFixed(2) + 's';
           }
           break;
         }
         case EdgeLabelMode.REQUESTS_PERCENT_OF_TOTAL: {
-          const percentRate = ele.data('percentRate') ? parseFloat(ele.data('percentRate')) : 0;
+          const percentRate = ele.data('percentRate') ? Number(ele.data('percentRate')) : 0;
           content = percentRate > 0 ? percentRate.toFixed(0) + '%' : '';
           break;
         }

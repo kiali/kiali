@@ -1,4 +1,4 @@
-const safeRate = (rate: string) => (rate ? parseFloat(rate) : 0.0);
+const safeRate = (rate: string) => (rate ? Number(rate) : 0.0);
 const RATE = 'rate';
 const RATE3XX = 'rate3XX';
 const RATE4XX = 'rate4XX';
