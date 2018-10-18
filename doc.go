@@ -31,7 +31,7 @@ type AppVersionParam struct {
 	Name string `json:"version"`
 }
 
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics
 type NamespaceParam struct {
 	// The namespace id.
 	//

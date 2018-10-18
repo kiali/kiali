@@ -276,6 +276,43 @@
         }
       }
     },
+    "/api/namespaces/{namespace}/metrics": {
+      "get": {
+        "description": "Get metrics for all objects in the given namespace",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "namespaces"
+        ],
+        "operationId": "namespaceMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
     "/api/namespaces/{namespace}/services/{service}/health": {
       "get": {
         "description": "Get health associated to the given service",
@@ -646,7 +683,7 @@
     },
     "/namespaces": {
       "get": {
-        "description": "Endpoint to get the app details",
+        "description": "Endpoint to get the list of the available namespaces",
         "produces": [
           "application/json"
         ],

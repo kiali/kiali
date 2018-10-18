@@ -431,6 +431,20 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceIstioValidations,
 			true,
 		},
+		// swagger:route GET /api/namespaces/{namespace}/metrics namespaces namespaceMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a namespace
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
 		{
 			"NamespaceMetrics",
 			"GET",
