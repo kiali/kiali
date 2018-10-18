@@ -266,11 +266,11 @@
             "in": "query"
           },
           {
-            "pattern": "^(app|workload)$",
+            "pattern": "^(app|service|workload)$",
             "type": "string",
             "default": "app",
             "x-go-name": "Type",
-            "description": "The type of health, \"app\" or \"workload\".",
+            "description": "The type of health, \"app\", \"service\" or \"workload\".",
             "name": "type",
             "in": "query"
           }
@@ -1685,57 +1685,6 @@
         }
       }
     },
-    "/namespaces/{namespace}/workloads/{workload}/istio_validations": {
-      "get": {
-        "description": "Endpoint to get the list of istio object validations for a workload",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "workloads"
-        ],
-        "operationId": "workloadValidations",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace id.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The workload name.",
-            "name": "workload",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/WorkloadValidations"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          },
-          "default": {
-            "$ref": "#/responses/genericError"
-          }
-        }
-      }
-    },
     "/status": {
       "get": {
         "description": "Endpoint to get the status of Kiali",
@@ -1822,21 +1771,22 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Addresses": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Address"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "App": {
       "type": "object",
       "required": [
         "namespace",
         "name",
-        "workloads"
+        "workloads",
+        "serviceNames"
       ],
       "properties": {
         "name": {
@@ -1848,28 +1798,29 @@
         "namespace": {
           "$ref": "#/definitions/namespace"
         },
+        "serviceNames": {
+          "description": "List of service names linked with an application",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ServiceNames"
+        },
         "workloads": {
           "description": "Workloads for a given application",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/WorkloadSvc"
+            "$ref": "#/definitions/WorkloadItem"
           },
           "x-go-name": "Workloads"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "AppHealth": {
       "description": "AppHealth contains aggregated health from various sources, for a given app",
       "type": "object",
       "properties": {
-        "deploymentStatuses": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DeploymentStatus"
-          },
-          "x-go-name": "DeploymentStatuses"
-        },
         "envoy": {
           "type": "array",
           "items": {
@@ -1879,9 +1830,16 @@
         },
         "requests": {
           "$ref": "#/definitions/RequestHealth"
+        },
+        "workloadStatuses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WorkloadStatus"
+          },
+          "x-go-name": "WorkloadStatuses"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "AppList": {
       "type": "object",
@@ -1902,7 +1860,7 @@
           "$ref": "#/definitions/namespace"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "AppListItem": {
       "description": "AppListItem has the necessary information to display the console app list",
@@ -1925,7 +1883,7 @@
           "example": "reviews"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Config": {
       "type": "object",
@@ -1958,28 +1916,7 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
-    },
-    "DeploymentStatus": {
-      "description": "DeploymentStatus gives the available / total replicas in a deployment of a pod",
-      "type": "object",
-      "properties": {
-        "available": {
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "AvailableReplicas"
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "replicas": {
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "Replicas"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "EdgeData": {
       "type": "object",
@@ -2080,14 +2017,14 @@
           "$ref": "#/definitions/Ports"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Endpoints": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Endpoint"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "EnvoyHealthWrapper": {
       "description": "EnvoyHealthWrapper wraps EnvoyServiceHealth with the service name",
@@ -2104,7 +2041,7 @@
           "x-go-name": "Service"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "EnvoyRatio": {
       "description": "EnvoyRatio is the number of healthy members versus total members",
@@ -2160,14 +2097,14 @@
           "x-go-name": "Servers"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Gateways": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Gateway"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Histogram": {
       "description": "Histogram contains Metric objects for several histogram-kind statistics",
@@ -2204,7 +2141,7 @@
           "example": "error"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioConfigDetails": {
       "type": "object",
@@ -2238,7 +2175,7 @@
           "$ref": "#/definitions/virtualService"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioConfigList": {
       "description": "This type is used for returning a response of IstioConfigList",
@@ -2273,7 +2210,7 @@
           "$ref": "#/definitions/virtualServices"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioHandler": {
       "type": "object",
@@ -2291,7 +2228,7 @@
           "x-go-name": "Spec"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioInstance": {
       "type": "object",
@@ -2309,7 +2246,7 @@
           "x-go-name": "Template"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioRuleAction": {
       "type": "object",
@@ -2325,7 +2262,7 @@
           "x-go-name": "Instances"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioRuleDetails": {
       "type": "object",
@@ -2349,7 +2286,7 @@
           "$ref": "#/definitions/namespace"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "IstioValidation": {
       "type": "object",
@@ -2387,7 +2324,7 @@
           "example": false
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Matrix": {
       "type": "array",
@@ -2434,7 +2371,7 @@
       "additionalProperties": {
         "$ref": "#/definitions/AppHealth"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "NamespaceValidations": {
       "description": "List of validations grouped by namespace",
@@ -2576,6 +2513,10 @@
       "description": "Pod holds a subset of v1.Pod data that is meaningful in Kiali",
       "type": "object",
       "properties": {
+        "appLabel": {
+          "type": "boolean",
+          "x-go-name": "AppLabel"
+        },
         "createdAt": {
           "type": "string",
           "x-go-name": "CreatedAt"
@@ -2611,9 +2552,17 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        },
+        "versionLabel": {
+          "type": "boolean",
+          "x-go-name": "VersionLabel"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Pods": {
       "description": "Pods alias for list of Pod structs",
@@ -2621,7 +2570,7 @@
       "items": {
         "$ref": "#/definitions/Pod"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Port": {
       "type": "object",
@@ -2640,14 +2589,14 @@
           "x-go-name": "Protocol"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Ports": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Port"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "QuotaSpec": {
       "type": "object",
@@ -2669,7 +2618,7 @@
           "x-go-name": "Rules"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "QuotaSpecBinding": {
       "type": "object",
@@ -2695,21 +2644,21 @@
           "x-go-name": "Services"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "QuotaSpecBindings": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/QuotaSpecBinding"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "QuotaSpecs": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/QuotaSpec"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Reference": {
       "description": "Reference holds some information on the pod creator",
@@ -2724,7 +2673,7 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "ReporterMetrics": {
       "description": "ReporterMetrics contains all simple metrics and histograms data for one reporter's telemetry",
@@ -2751,18 +2700,13 @@
       "description": "RequestHealth holds several stats about recent request errors",
       "type": "object",
       "properties": {
-        "requestCount": {
+        "errorRatio": {
           "type": "number",
           "format": "double",
-          "x-go-name": "RequestCount"
-        },
-        "requestErrorCount": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "RequestErrorCount"
+          "x-go-name": "ErrorRatio"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "SamplePair": {
       "type": "object",
@@ -2837,7 +2781,7 @@
           "x-go-name": "Type"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "ServiceDetails": {
       "type": "object",
@@ -2875,14 +2819,14 @@
           "$ref": "#/definitions/WorkloadOverviews"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "ServiceEntries": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/ServiceEntry"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "ServiceEntry": {
       "type": "object",
@@ -2924,7 +2868,7 @@
           "x-go-name": "ResourceVersion"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "ServiceHealth": {
       "description": "ServiceHealth contains aggregated health from various sources, for a given service",
@@ -2937,7 +2881,7 @@
           "$ref": "#/definitions/RequestHealth"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "ServiceList": {
       "type": "object",
@@ -2953,7 +2897,7 @@
           "x-go-name": "Services"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "ServiceOverview": {
       "type": "object",
@@ -2982,14 +2926,14 @@
           "example": "reviews-v1"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Services": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Service"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "SourceWorkload": {
       "description": "SourceWorkload holds workload identifiers used for service dependencies",
@@ -3004,7 +2948,7 @@
           "x-go-name": "Namespace"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "StatusInfo": {
       "description": "This is used for returning a response of Kiali Status",
@@ -3087,15 +3031,22 @@
       "required": [
         "name",
         "type",
-        "templateAnnotations",
-        "labels",
         "createdAt",
         "resourceVersion",
+        "istioSidecar",
+        "appLabel",
+        "versionLabel",
         "replicas",
         "availableReplicas",
         "unavailableReplicas"
       ],
       "properties": {
+        "appLabel": {
+          "description": "Define if Pods related to this Workload has the label App",
+          "type": "boolean",
+          "x-go-name": "AppLabel",
+          "example": true
+        },
         "availableReplicas": {
           "description": "Number of available replicas",
           "type": "integer",
@@ -3109,8 +3060,14 @@
           "x-go-name": "CreatedAt",
           "example": "2018-07-31T12:24:17Z"
         },
+        "istioSidecar": {
+          "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
+          "type": "boolean",
+          "x-go-name": "IstioSidecar",
+          "example": true
+        },
         "labels": {
-          "description": "Kubernetes labels",
+          "description": "Workload labels",
           "type": "object",
           "additionalProperties": {
             "type": "string"
@@ -3118,10 +3075,10 @@
           "x-go-name": "Labels"
         },
         "name": {
-          "description": "Workload name",
+          "description": "Name of the workload",
           "type": "string",
           "x-go-name": "Name",
-          "example": "reviews"
+          "example": "reviews-v1"
         },
         "pods": {
           "$ref": "#/definitions/Pods"
@@ -3142,14 +3099,6 @@
         "services": {
           "$ref": "#/definitions/Services"
         },
-        "templateAnnotations": {
-          "description": "Kubernetes annotations",
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "TemplateAnnotations"
-        },
         "type": {
           "description": "Type of the workload",
           "type": "string",
@@ -3162,22 +3111,50 @@
           "format": "int32",
           "x-go-name": "UnavailableReplicas",
           "example": 1
+        },
+        "versionLabel": {
+          "description": "Define if Pods related to this Workload has the label Version",
+          "type": "boolean",
+          "x-go-name": "VersionLabel",
+          "example": true
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "WorkloadHealth": {
       "description": "WorkloadHealth contains aggregated health from various sources, for a given workload",
       "type": "object",
       "properties": {
-        "deploymentStatus": {
-          "$ref": "#/definitions/DeploymentStatus"
-        },
         "requests": {
           "$ref": "#/definitions/RequestHealth"
+        },
+        "workloadStatus": {
+          "$ref": "#/definitions/WorkloadStatus"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "WorkloadItem": {
+      "type": "object",
+      "required": [
+        "workloadName",
+        "istioSidecar"
+      ],
+      "properties": {
+        "istioSidecar": {
+          "description": "Define if all Pods related to the Workload has an IstioSidecar deployed",
+          "type": "boolean",
+          "x-go-name": "IstioSidecar",
+          "example": true
+        },
+        "workloadName": {
+          "description": "Name of a workload member of an application",
+          "type": "string",
+          "x-go-name": "WorkloadName",
+          "example": "reviews-v1"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "WorkloadList": {
       "type": "object",
@@ -3198,7 +3175,7 @@
           "x-go-name": "Workloads"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "WorkloadListItem": {
       "description": "WorkloadListItem has the necessary information to display the console workload list",
@@ -3206,6 +3183,8 @@
       "required": [
         "name",
         "type",
+        "createdAt",
+        "resourceVersion",
         "istioSidecar",
         "appLabel",
         "versionLabel"
@@ -3217,53 +3196,20 @@
           "x-go-name": "AppLabel",
           "example": true
         },
-        "istioSidecar": {
-          "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
-          "type": "boolean",
-          "x-go-name": "IstioSidecar",
-          "example": true
-        },
-        "name": {
-          "description": "Name of the workload",
-          "type": "string",
-          "x-go-name": "Name",
-          "example": "reviews-v1"
-        },
-        "type": {
-          "description": "Type of the workload",
-          "type": "string",
-          "x-go-name": "Type",
-          "example": "deployment"
-        },
-        "versionLabel": {
-          "description": "Define if Pods related to this Workload has the label Version",
-          "type": "boolean",
-          "x-go-name": "VersionLabel",
-          "example": true
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/services/models"
-    },
-    "WorkloadOverview": {
-      "description": "Useful to display a link to the workload details page.",
-      "type": "object",
-      "title": "WorkloadOverview has the summary information of a workload.",
-      "required": [
-        "name",
-        "type",
-        "createdAt",
-        "resourceVersion",
-        "labels"
-      ],
-      "properties": {
         "createdAt": {
           "description": "Creation timestamp (in RFC3339 format)",
           "type": "string",
           "x-go-name": "CreatedAt",
           "example": "2018-07-31T12:24:17Z"
         },
+        "istioSidecar": {
+          "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
+          "type": "boolean",
+          "x-go-name": "IstioSidecar",
+          "example": true
+        },
         "labels": {
-          "description": "Kubernetes labels",
+          "description": "Workload labels",
           "type": "object",
           "additionalProperties": {
             "type": "string"
@@ -3287,47 +3233,43 @@
           "type": "string",
           "x-go-name": "Type",
           "example": "deployment"
+        },
+        "versionLabel": {
+          "description": "Define if Pods related to this Workload has the label Version",
+          "type": "boolean",
+          "x-go-name": "VersionLabel",
+          "example": true
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "WorkloadOverviews": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/WorkloadOverview"
+        "$ref": "#/definitions/WorkloadListItem"
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
-    "WorkloadSvc": {
+    "WorkloadStatus": {
+      "description": "WorkloadStatus gives the available / total replicas in a deployment of a pod",
       "type": "object",
-      "required": [
-        "workloadName",
-        "istioSidecar",
-        "serviceNames"
-      ],
       "properties": {
-        "istioSidecar": {
-          "description": "Define if all Pods related to the Workload has an IstioSidecar deployed",
-          "type": "boolean",
-          "x-go-name": "IstioSidecar",
-          "example": true
+        "available": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "AvailableReplicas"
         },
-        "serviceNames": {
-          "description": "List of service names linked with a workload",
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "ServiceNames"
-        },
-        "workloadName": {
-          "description": "Name of a workload member of an application",
+        "name": {
           "type": "string",
-          "x-go-name": "WorkloadName",
-          "example": "reviews-v1"
+          "x-go-name": "Name"
+        },
+        "replicas": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "Replicas"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "destinationRule": {
       "description": "This is used for returning a DestinationRule",
@@ -3368,7 +3310,7 @@
         }
       },
       "x-go-name": "DestinationRule",
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "destinationRules": {
       "description": "This is used for returning an array of DestinationRules",
@@ -3378,15 +3320,14 @@
         "$ref": "#/definitions/destinationRule"
       },
       "x-go-name": "DestinationRules",
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "externalServiceInfo": {
       "description": "This is used for returning a response of Kiali Status",
       "type": "object",
       "title": "Status response model",
       "required": [
-        "name",
-        "version"
+        "name"
       ],
       "properties": {
         "name": {
@@ -3394,6 +3335,12 @@
           "type": "string",
           "x-go-name": "Name",
           "example": "Istio"
+        },
+        "url": {
+          "description": "The service url",
+          "type": "string",
+          "x-go-name": "Url",
+          "example": "jaeger-query-istio-system.127.0.0.1.nip.io"
         },
         "version": {
           "description": "The installed version of the service",
@@ -3428,7 +3375,7 @@
         }
       },
       "x-go-name": "IstioRule",
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "istioRules": {
       "description": "This type type is used for returning an array of IstioRules",
@@ -3438,7 +3385,7 @@
         "$ref": "#/definitions/istioRule"
       },
       "x-go-name": "IstioRules",
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "namespace": {
       "description": "A Namespace provide a scope for names\nThis type is used to describe a set of objects.",
@@ -3455,7 +3402,7 @@
         }
       },
       "x-go-name": "Namespace",
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "virtualService": {
       "description": "This type is used for returning a VirtualService",
@@ -3504,7 +3451,7 @@
         }
       },
       "x-go-name": "VirtualService",
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "virtualServices": {
       "description": "This type is used for returning an array of VirtualServices",
@@ -3514,16 +3461,10 @@
         "$ref": "#/definitions/virtualService"
       },
       "x-go-name": "VirtualServices",
-      "x-go-package": "github.com/kiali/kiali/services/models"
+      "x-go-package": "github.com/kiali/kiali/models"
     }
   },
   "responses": {
-    "WorkloadValidations": {
-      "description": "Listing all istio validations for object in the namespace",
-      "schema": {
-        "$ref": "#/definitions/TypedIstioValidations"
-      }
-    },
     "appDetails": {
       "description": "Detailed information of an specific app",
       "schema": {
