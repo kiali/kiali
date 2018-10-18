@@ -137,7 +137,7 @@ const parseMarker = (
   }
 
   // Once start is calculated, we should calculate the end of the element iterating by rows
-  for (let row = aceMarker.startRow + 1; row < maxRows; row++) {
+  for (let row = aceMarker.startRow + 1; row < maxRows + 1; row++) {
     // It searches by row and column, starting from the beginning of the line
     for (let col = 0; col <= aceMarker.startCol; col++) {
       let endTokenPos = rowColToPos(yaml, row, col);
