@@ -89,7 +89,7 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 		for _, a := range o.Appenders {
 			a.AppendGraph(namespaceTrafficMap, globalInfo, namespaceInfo)
 		}
-		mergeTrafficMaps(trafficMap, namespaceTrafficMap)
+		mergeTrafficMaps(trafficMap, namespace, namespaceTrafficMap)
 	}
 
 	// The appenders can add/remove/alter nodes. After the manipulations are complete
@@ -107,13 +107,22 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 }
 
 // mergeTrafficMaps ensures that we only have unique nodes by removing duplicate
-// nodes and merging their edges.  We also need to avoid duplicate edges, it can
+// nodes and merging their edges.  When removing a duplicate prefer an instance
+// from the namespace being merged-in because it is guaranteed to have all appender
+// information applied. We also need to avoid duplicate edges, it can
 // happen when an terminal node of one namespace is a root node of another:
 //   ns1 graph: unknown -> ns1:A -> ns2:B
 //   ns2 graph:   ns1:A -> ns2:B -> ns2:C
-func mergeTrafficMaps(trafficMap, nsTrafficMap graph.TrafficMap) {
+func mergeTrafficMaps(trafficMap graph.TrafficMap, ns string, nsTrafficMap graph.TrafficMap) {
 	for nsId, nsNode := range nsTrafficMap {
 		if node, isDup := trafficMap[nsId]; isDup {
+			if nsNode.Namespace == ns {
+				// prefer nsNode (see above comment), so do a swap
+				trafficMap[nsId] = nsNode
+				temp := node
+				node = nsNode
+				nsNode = temp
+			}
 			for _, nsEdge := range nsNode.Edges {
 				isDupEdge := false
 				for _, e := range node.Edges {
