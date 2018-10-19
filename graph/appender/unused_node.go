@@ -14,18 +14,23 @@ type UnusedNodeAppender struct {
 }
 
 // AppendGraph implements Appender
-func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, namespace string) {
+func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
 	if graph.GraphTypeService == a.GraphType || a.IsNodeGraph {
 		return
 	}
 
-	business, err := business.Get()
-	checkError(err)
+	if globalInfo.Business == nil {
+		var err error
+		globalInfo.Business, err = business.Get()
+		checkError(err)
+	}
+	if namespaceInfo.WorkloadList == nil {
+		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
+		checkError(err)
+		namespaceInfo.WorkloadList = &workloadList
+	}
 
-	workloads, err := business.Workload.GetWorkloadList(namespace)
-	checkError(err)
-
-	a.addUnusedNodes(trafficMap, namespace, workloads.Workloads)
+	a.addUnusedNodes(trafficMap, namespaceInfo.Namespace, namespaceInfo.WorkloadList.Workloads)
 }
 
 func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespace string, workloads []models.WorkloadListItem) {
