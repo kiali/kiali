@@ -1,4 +1,12 @@
-export const KEY_CODES = { TAB_KEY: 9, ENTER_KEY: 13, ESCAPE_KEY: 27 };
+export const KEY_CODES = {
+  TAB_KEY: 9,
+  ENTER_KEY: 13,
+  ESCAPE_KEY: 27
+};
+
+export type AuthToken = string;
+
+export type AppenderString = string;
 
 export const HTTP_CODES = {
   OK: 200,
@@ -13,6 +21,14 @@ export const HTTP_CODES = {
   GATEWAY_TIMEOUT: 504
 };
 
+export enum HTTP_VERBS {
+  DELETE = 'DELETE',
+  GET = 'get',
+  PATCH = 'patch',
+  POST = 'post',
+  PUT = 'put'
+}
+
 export const MILLISECONDS = 1000;
 
 export const UNIT_TIME = {
@@ -22,6 +38,8 @@ export const UNIT_TIME = {
   DAY: 24 * 3600
 };
 
-export type PollIntervalInMs = number;
+export type TimeInMilliseconds = number;
+
+export type PollIntervalInMs = TimeInMilliseconds;
 
 export type JsonString = string;

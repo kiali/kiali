@@ -6,6 +6,7 @@ import { authentication } from '../utils/Authentication';
 import { MessageCenterActions } from './MessageCenterActions';
 import { GraphDataActionKeys } from './GraphDataActionKeys';
 import { GraphType, NodeParamsType } from '../types/Graph';
+import { AppenderString } from '../types/Common';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 
@@ -108,7 +109,7 @@ export const GraphDataActions = {
       }
 
       // Some appenders are expensive so only specify an appender if needed.
-      let appenders: string = 'dead_node,sidecars_check,istio';
+      let appenders: AppenderString = 'dead_node,sidecars_check,istio';
 
       if (!node && showUnusedNodes) {
         // note we only use the unused_node appender if this is NOT a drilled-in node graph and
