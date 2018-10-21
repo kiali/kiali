@@ -204,7 +204,7 @@ export const getNamespaceAppHealth = (
     type: 'app'
   };
   if (durationSec) {
-    params.rateInterval = durationSec + 's';
+    params.rateInterval = String(durationSec) + 's';
   }
   return newRequest(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}, auth).then(response => {
     const ret: NamespaceAppHealth = {};
@@ -226,7 +226,7 @@ export const getNamespaceServiceHealth = (
   if (durationSec) {
     params.rateInterval = String(durationSec) + 's';
   }
-  return newRequest(HTTP_VERBS.GET, `api/namespaces/${namespace}/health`, params, {}, auth).then(response => {
+  return newRequest(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}, auth).then(response => {
     const ret: NamespaceServiceHealth = {};
     Object.keys(response.data).forEach(k => {
       ret[k] = ServiceHealth.fromJson(response.data[k], durationSec);
@@ -244,7 +244,7 @@ export const getNamespaceWorkloadHealth = (
     type: 'workload'
   };
   if (durationSec) {
-    params.rateInterval = durationSec + 's';
+    params.rateInterval = String(durationSec) + 's';
   }
   return newRequest(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}, auth).then(response => {
     const ret: NamespaceWorkloadHealth = {};
