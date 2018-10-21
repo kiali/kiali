@@ -112,9 +112,7 @@ const conf = {
       workloadHealth: (namespace: string, workload: string) =>
         `api/namespaces/${namespace}/workloads/${workload}/health`,
       workloadMetrics: (namespace: string, workload: string) =>
-        `api/namespaces/${namespace}/workloads/${workload}/metrics`,
-      workloadValidations: (namespace: string, workload: string) =>
-        `api/namespaces/${namespace}/workloads/${workload}/istio_validations`
+        `api/namespaces/${namespace}/workloads/${workload}/metrics`
     }
   }
 };

@@ -166,8 +166,8 @@ export const getServiceHealth = (
   durationSec: number
 ): Promise<ServiceHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest(HTTP_VERBS.GET, urls.serviceHealth(namespace, service), params, {}, auth).then(
-    response => ServiceHealth.fromJson(response.data, durationSec)
+  return newRequest(HTTP_VERBS.GET, urls.serviceHealth(namespace, service), params, {}, auth).then(response =>
+    ServiceHealth.fromJson(response.data, durationSec)
   );
 };
 
@@ -190,8 +190,8 @@ export const getWorkloadHealth = (
   durationSec: number
 ): Promise<WorkloadHealth> => {
   const params = durationSec ? { rateInterval: String(durationSec) + 's' } : {};
-  return newRequest(HTTP_VERBS.GET, urls.workloadHealth(namespace, workload), params, {}, auth).then(
-    response => WorkloadHealth.fromJson(response.data, durationSec)
+  return newRequest(HTTP_VERBS.GET, urls.workloadHealth(namespace, workload), params, {}, auth).then(response =>
+    WorkloadHealth.fromJson(response.data, durationSec)
   );
 };
 
@@ -283,21 +283,9 @@ export const getNodeGraphElements = (
         auth
       );
     case NodeType.SERVICE:
-      return newRequest(
-        HTTP_VERBS.GET,
-        urls.serviceGraphElements(namespace.name, node.service),
-        params,
-        {},
-        auth
-      );
+      return newRequest(HTTP_VERBS.GET, urls.serviceGraphElements(namespace.name, node.service), params, {}, auth);
     case NodeType.WORKLOAD:
-      return newRequest(
-        HTTP_VERBS.GET,
-        urls.workloadGraphElements(namespace.name, node.workload),
-        params,
-        {},
-        auth
-      );
+      return newRequest(HTTP_VERBS.GET, urls.workloadGraphElements(namespace.name, node.workload), params, {}, auth);
     default:
       // default to namespace graph
       return getGraphElements(auth, namespace, params);
@@ -314,7 +302,8 @@ export const getServiceDetail = (auth: AuthToken, namespace: string, service: st
         info.health = ServiceHealth.fromJson(info.health, 600);
       }
       return info;
-  });
+    }
+  );
 };
 
 export const getServiceValidations = (
@@ -335,13 +324,7 @@ export const getIstioConfigValidations = (
   objectType: string,
   object: string
 ): Promise<Response<Validations>> => {
-  return newRequest(
-    HTTP_VERBS.GET,
-    urls.istioConfigValidations(namespace, objectType, object),
-    {},
-    {},
-    auth
-  );
+  return newRequest(HTTP_VERBS.GET, urls.istioConfigValidations(namespace, objectType, object), {}, {}, auth);
 };
 
 export const getWorkloads = (auth: AuthToken, namespace: string): Promise<Response<WorkloadNamespaceResponse>> => {
