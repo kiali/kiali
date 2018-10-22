@@ -315,14 +315,18 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
+	notfound := fmt.Errorf("not found")
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&FakeDepSyncedWithRS()[0], nil)
-	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
-	k8s.On("GetReplicaSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
-	k8s.On("GetReplicationController", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.StatefulSet{}, nil)
+	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osappsv1.DeploymentConfig{}, notfound)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
+	k8s.On("GetStatefulSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&v1beta2.StatefulSet{}, notfound)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodsSyncedWithDeployments(), nil)
+	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
+	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
+
 	svc := setupWorkloadService(k8s)
 
 	workload, _ := svc.GetWorkload("Namespace", "details-v1", false)
@@ -344,12 +348,12 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&v1beta1.Deployment{}, notfound)
 	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osappsv1.DeploymentConfig{}, notfound)
-	k8s.On("GetReplicaSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&v1beta2.ReplicaSet{}, notfound)
-	k8s.On("GetReplicationController", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&v1.ReplicationController{}, notfound)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
 	k8s.On("GetStatefulSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&v1beta2.StatefulSet{}, notfound)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodsFromDaemonSet(), nil)
-	k8s.On("GetCronJob", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&batch_v1beta1.CronJob{}, notfound)
-	k8s.On("GetJob", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&batch_v1.Job{}, notfound)
+	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
+	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	svc := setupWorkloadService(k8s)
 
 	workload, _ := svc.GetWorkload("Namespace", "daemon-controller", false)
@@ -375,4 +379,36 @@ func TestGetPods(t *testing.T) {
 
 	assert.Equal(1, len(pods))
 	assert.Equal("details-v1-3618568057-dnkjp", pods[0].Name)
+}
+
+func TestDuplicatedControllers(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("IsOpenShift").Return(true)
+	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDuplicatedDeployments(), nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDuplicatedReplicaSets(), nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDuplicatedStatefulSets(), nil)
+	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
+	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodsSyncedWithDuplicated(), nil)
+
+	notfound := fmt.Errorf("not found")
+	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&FakeDuplicatedDeployments()[0], nil)
+	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osappsv1.DeploymentConfig{}, notfound)
+	k8s.On("GetStatefulSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&FakeDuplicatedStatefulSets()[0], nil)
+
+	svc := setupWorkloadService(k8s)
+
+	workloadList, _ := svc.GetWorkloadList("Namespace")
+	workloads := workloadList.Workloads
+
+	workload, _ := svc.GetWorkload("Namespace", "duplicated-v1", false)
+
+	assert.Equal(workloads[0].Type, workload.Type)
 }
