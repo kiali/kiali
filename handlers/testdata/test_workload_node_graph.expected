@@ -1,0 +1,197 @@
+{
+  "timestamp": 1523364075,
+  "graphType": "workload",
+  "elements": {
+    "nodes": [
+      {
+        "data": {
+          "id": "5cd385c1ee3309ae40828b5702ae57fb",
+          "nodeType": "workload",
+          "namespace": "bookinfo",
+          "workload": "details-v1",
+          "app": "details",
+          "version": "v1",
+          "destServices": {
+            "details": true
+          },
+          "rate": "80.000",
+          "rate3XX": "20.000",
+          "rate4XX": "20.000",
+          "rate5XX": "20.000"
+        }
+      },
+      {
+        "data": {
+          "id": "240c2314cefc993c5d9479a5c349fbd2",
+          "nodeType": "workload",
+          "namespace": "bookinfo",
+          "workload": "productpage-v1",
+          "app": "productpage",
+          "version": "v1",
+          "destServices": {
+            "productpage": true
+          },
+          "rate": "170.000",
+          "rateOut": "160.000",
+          "rateTcpSentOut": "31.000"
+        }
+      },
+      {
+        "data": {
+          "id": "fc3e7c5bb695ef8ed8ab2c5f6ac4725b",
+          "nodeType": "workload",
+          "namespace": "bookinfo",
+          "workload": "reviews-v1",
+          "app": "reviews",
+          "version": "v1",
+          "destServices": {
+            "reviews": true
+          },
+          "rate": "20.000"
+        }
+      },
+      {
+        "data": {
+          "id": "9e97011b2086f59a90626cfd5cf23fbf",
+          "nodeType": "workload",
+          "namespace": "bookinfo",
+          "workload": "reviews-v2",
+          "app": "reviews",
+          "version": "v2",
+          "destServices": {
+            "reviews": true
+          },
+          "rate": "20.000"
+        }
+      },
+      {
+        "data": {
+          "id": "731126638001dfa2b6cbeb3b326b6678",
+          "nodeType": "workload",
+          "namespace": "bookinfo",
+          "workload": "reviews-v3",
+          "app": "reviews",
+          "version": "v3",
+          "destServices": {
+            "reviews": true
+          },
+          "rate": "20.000"
+        }
+      },
+      {
+        "data": {
+          "id": "9c4a705d62316000f11544ec6d27cdc6",
+          "nodeType": "workload",
+          "namespace": "bookinfo",
+          "workload": "tcp-v1",
+          "app": "tcp",
+          "version": "v1",
+          "destServices": {
+            "tcp": true
+          },
+          "rateTcpSent": "31.000"
+        }
+      },
+      {
+        "data": {
+          "id": "c72e12859eac1424516065e6a64c92e0",
+          "nodeType": "workload",
+          "namespace": "istio-system",
+          "workload": "ingressgateway-unknown",
+          "app": "ingressgateway",
+          "rateOut": "100.000",
+          "isInaccessible": true,
+          "isOutside": true,
+          "isRoot": true
+        }
+      },
+      {
+        "data": {
+          "id": "b30b0078325bf2e1adb4d57c4c0c2665",
+          "nodeType": "unknown",
+          "namespace": "unknown",
+          "workload": "unknown",
+          "app": "unknown",
+          "version": "unknown",
+          "rateOut": "50.000",
+          "isRoot": true
+        }
+      }
+    ],
+    "edges": [
+      {
+        "data": {
+          "id": "710c2bf1d8a5b3fc854451e7346e05f5",
+          "source": "240c2314cefc993c5d9479a5c349fbd2",
+          "target": "240c2314cefc993c5d9479a5c349fbd2",
+          "rate": "20.000",
+          "percentRate": "12.500"
+        }
+      },
+      {
+        "data": {
+          "id": "df66cffc756bf9983dd453837e4e14a7",
+          "source": "240c2314cefc993c5d9479a5c349fbd2",
+          "target": "5cd385c1ee3309ae40828b5702ae57fb",
+          "rate": "80.000",
+          "rate3XX": "20.000",
+          "rate4XX": "20.000",
+          "rate5XX": "20.000",
+          "percentErr": "50.000",
+          "percentRate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "1da31b81ccaf408abccbc57071458462",
+          "source": "240c2314cefc993c5d9479a5c349fbd2",
+          "target": "731126638001dfa2b6cbeb3b326b6678",
+          "rate": "20.000",
+          "percentRate": "12.500"
+        }
+      },
+      {
+        "data": {
+          "id": "cc4b63704dba836d37dd97aacf75afee",
+          "source": "240c2314cefc993c5d9479a5c349fbd2",
+          "target": "9c4a705d62316000f11544ec6d27cdc6",
+          "tcpSentRate": "31.000"
+        }
+      },
+      {
+        "data": {
+          "id": "c2ab8814859ec0974c5efd597b5bb4fd",
+          "source": "240c2314cefc993c5d9479a5c349fbd2",
+          "target": "9e97011b2086f59a90626cfd5cf23fbf",
+          "rate": "20.000",
+          "percentRate": "12.500"
+        }
+      },
+      {
+        "data": {
+          "id": "943e5cc1b00d97a8a344fe1efd941130",
+          "source": "240c2314cefc993c5d9479a5c349fbd2",
+          "target": "fc3e7c5bb695ef8ed8ab2c5f6ac4725b",
+          "rate": "20.000",
+          "percentRate": "12.500"
+        }
+      },
+      {
+        "data": {
+          "id": "b38eaa93622c6c652c3daf15b31a476d",
+          "source": "b30b0078325bf2e1adb4d57c4c0c2665",
+          "target": "240c2314cefc993c5d9479a5c349fbd2",
+          "rate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "347e210a97f5235b5a60b810ef1bfaa6",
+          "source": "c72e12859eac1424516065e6a64c92e0",
+          "target": "240c2314cefc993c5d9479a5c349fbd2",
+          "rate": "100.000"
+        }
+      }
+    ]
+  }
+}

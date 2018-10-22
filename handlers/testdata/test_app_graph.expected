@@ -1,0 +1,214 @@
+{
+  "timestamp": 1523364075,
+  "graphType": "app",
+  "elements": {
+    "nodes": [
+      {
+        "data": {
+          "id": "66bce9783dc2dbb5fecb178b0108484e",
+          "nodeType": "app",
+          "namespace": "bankapp",
+          "app": "pricing",
+          "destServices": {
+            "pricing": true
+          },
+          "rate": "20.000",
+          "isInaccessible": true,
+          "isOutside": true
+        }
+      },
+      {
+        "data": {
+          "id": "6cdb3cf3ee9a17772f13b295368e112a",
+          "nodeType": "app",
+          "namespace": "bookinfo",
+          "app": "details",
+          "destServices": {
+            "details": true
+          },
+          "rate": "80.000",
+          "rate3XX": "20.000",
+          "rate4XX": "20.000",
+          "rate5XX": "20.000"
+        }
+      },
+      {
+        "data": {
+          "id": "2c22af42b0c750749399ed2838c56054",
+          "nodeType": "app",
+          "namespace": "bookinfo",
+          "app": "productpage",
+          "destServices": {
+            "productpage": true
+          },
+          "rate": "170.000",
+          "rateOut": "160.000",
+          "rateTcpSentOut": "31.000"
+        }
+      },
+      {
+        "data": {
+          "id": "c219903556c3afdb05eda7e610aba628",
+          "nodeType": "app",
+          "namespace": "bookinfo",
+          "app": "ratings",
+          "destServices": {
+            "ratings": true
+          },
+          "rate": "40.000"
+        }
+      },
+      {
+        "data": {
+          "id": "37ddc91db761d432f3fff1943802cad7",
+          "nodeType": "app",
+          "namespace": "bookinfo",
+          "app": "reviews",
+          "destServices": {
+            "reviews": true
+          },
+          "rate": "100.000",
+          "rateOut": "100.000"
+        }
+      },
+      {
+        "data": {
+          "id": "4ee8019fc0454770a401b89d427277bf",
+          "nodeType": "app",
+          "namespace": "bookinfo",
+          "app": "tcp",
+          "destServices": {
+            "tcp": true
+          },
+          "rateTcpSent": "581.000"
+        }
+      },
+      {
+        "data": {
+          "id": "19950ddefadd370bf5434953c1944c80",
+          "nodeType": "app",
+          "namespace": "istio-system",
+          "app": "ingressgateway",
+          "rateOut": "100.000",
+          "rateTcpSentOut": "150.000",
+          "isInaccessible": true,
+          "isOutside": true,
+          "isRoot": true
+        }
+      },
+      {
+        "data": {
+          "id": "b30b0078325bf2e1adb4d57c4c0c2665",
+          "nodeType": "unknown",
+          "namespace": "unknown",
+          "workload": "unknown",
+          "app": "unknown",
+          "version": "unknown",
+          "rateOut": "50.000",
+          "rateTcpSentOut": "400.000",
+          "isRoot": true
+        }
+      }
+    ],
+    "edges": [
+      {
+        "data": {
+          "id": "2c8bf7e7efb0982b18c76d507200a8b7",
+          "source": "19950ddefadd370bf5434953c1944c80",
+          "target": "2c22af42b0c750749399ed2838c56054",
+          "rate": "100.000"
+        }
+      },
+      {
+        "data": {
+          "id": "18fa6836a929941e8deabad5fa1cae62",
+          "source": "19950ddefadd370bf5434953c1944c80",
+          "target": "4ee8019fc0454770a401b89d427277bf",
+          "tcpSentRate": "150.000"
+        }
+      },
+      {
+        "data": {
+          "id": "e9ffbf24e385c93dfa124d81e2ac33a7",
+          "source": "2c22af42b0c750749399ed2838c56054",
+          "target": "2c22af42b0c750749399ed2838c56054",
+          "rate": "20.000",
+          "percentRate": "12.500"
+        }
+      },
+      {
+        "data": {
+          "id": "ff5217a9064e30e4fb875256dab56037",
+          "source": "2c22af42b0c750749399ed2838c56054",
+          "target": "37ddc91db761d432f3fff1943802cad7",
+          "rate": "60.000",
+          "percentRate": "37.500"
+        }
+      },
+      {
+        "data": {
+          "id": "16a0c4225bbdbd471e6e7b8fd438733d",
+          "source": "2c22af42b0c750749399ed2838c56054",
+          "target": "4ee8019fc0454770a401b89d427277bf",
+          "tcpSentRate": "31.000"
+        }
+      },
+      {
+        "data": {
+          "id": "89fa162a49acca6ff974afd30aab2ff0",
+          "source": "2c22af42b0c750749399ed2838c56054",
+          "target": "6cdb3cf3ee9a17772f13b295368e112a",
+          "rate": "80.000",
+          "rate3XX": "20.000",
+          "rate4XX": "20.000",
+          "rate5XX": "20.000",
+          "percentErr": "50.000",
+          "percentRate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "4aaf7cb151db415f3ba4918be2296c38",
+          "source": "37ddc91db761d432f3fff1943802cad7",
+          "target": "37ddc91db761d432f3fff1943802cad7",
+          "rate": "40.000",
+          "percentRate": "40.000"
+        }
+      },
+      {
+        "data": {
+          "id": "edb2cdfc2a757d260aa847d55e9eadde",
+          "source": "37ddc91db761d432f3fff1943802cad7",
+          "target": "66bce9783dc2dbb5fecb178b0108484e",
+          "rate": "20.000",
+          "percentRate": "20.000"
+        }
+      },
+      {
+        "data": {
+          "id": "a553e38605904d17c50ab1d0db84f113",
+          "source": "37ddc91db761d432f3fff1943802cad7",
+          "target": "c219903556c3afdb05eda7e610aba628",
+          "rate": "40.000",
+          "percentRate": "40.000"
+        }
+      },
+      {
+        "data": {
+          "id": "efe83e483ada36899c34ef66a7974d31",
+          "source": "b30b0078325bf2e1adb4d57c4c0c2665",
+          "target": "2c22af42b0c750749399ed2838c56054",
+          "rate": "50.000"
+        }
+      },
+      {
+        "data": {
+          "id": "d4fc7bd6594937fa94402fcfcc9f3a95",
+          "source": "b30b0078325bf2e1adb4d57c4c0c2665",
+          "target": "4ee8019fc0454770a401b89d427277bf",
+          "tcpSentRate": "400.000"
+        }
+      }
+    ]
+  }
+}

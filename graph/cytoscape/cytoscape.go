@@ -124,6 +124,8 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 			return nodes[i].Data.App < nodes[j].Data.App
 		case nodes[i].Data.Version != nodes[j].Data.Version:
 			return nodes[i].Data.Version < nodes[j].Data.Version
+		case nodes[i].Data.Service != nodes[j].Data.Service:
+			return nodes[i].Data.Service < nodes[j].Data.Service
 		default:
 			return nodes[i].Data.Workload < nodes[j].Data.Workload
 		}

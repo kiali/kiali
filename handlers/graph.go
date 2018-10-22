@@ -819,7 +819,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 	// Section for TCP services
 	tcpMetric := "istio_tcp_sent_bytes_total"
 
-	tcpGroupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_workload_namespace,destination_service_name,destination_workload,destination_app,destination_version"
+	tcpGroupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version"
 	switch n.NodeType {
 	case graph.NodeTypeWorkload:
 		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s)`,
@@ -851,7 +851,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 			namespace,
 			n.Service,
 			int(interval.Seconds()), // range duration for the query
-			groupBy)
+			tcpGroupBy)
 	default:
 		checkError(errors.New(fmt.Sprintf("NodeType [%s] not supported", n.NodeType)))
 	}
@@ -865,7 +865,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 			namespace,
 			n.Workload,
 			int(interval.Seconds()), // range duration for the query
-			groupBy)
+			tcpGroupBy)
 	case graph.NodeTypeApp:
 		if n.Version != "" && n.Version != graph.UnknownVersion {
 			query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_app="%s",source_version="%s"} [%vs])) by (%s)`,
@@ -874,14 +874,14 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 				n.App,
 				n.Version,
 				int(interval.Seconds()), // range duration for the query
-				groupBy)
+				tcpGroupBy)
 		} else {
 			query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_app="%s"} [%vs])) by (%s)`,
 				tcpMetric,
 				namespace,
 				n.App,
 				int(interval.Seconds()), // range duration for the query
-				groupBy)
+				tcpGroupBy)
 		}
 	case graph.NodeTypeService:
 		query = ""
