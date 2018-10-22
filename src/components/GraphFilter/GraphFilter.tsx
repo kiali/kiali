@@ -33,7 +33,19 @@ const namespaceStyle = style({
 
 export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
   // GraphFilter should be minimal and used for assembling those filtering components.
+
+  /**
+   *  Key-value pair object representation of GraphType enum.  Values are human-readable versions of enum keys.
+   *
+   *  Example:  GraphType => {'APP': 'App', 'VERSIONED_APP': 'VersionedApp'}
+   */
   static readonly GRAPH_TYPES = _.mapValues(GraphType, val => _.capitalize(_.startCase(val)));
+
+  /**
+   *  Key-value pair object representation of EdgeLabelMode
+   *
+   *  Example:  EdgeLabelMode =>{'TRAFFIC_RATE_PER_SECOND': 'TrafficRatePerSecond'}
+   */
   static readonly EDGE_LABEL_MODES = _.mapValues(_.omitBy(EdgeLabelMode, _.isFunction), val =>
     _.capitalize(_.startCase(val as EdgeLabelMode))
   );

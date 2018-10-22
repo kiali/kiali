@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { PropTypes } from 'prop-types';
 
 import { GraphParamsType, GraphType } from '../../types/Graph';
 import { Duration, EdgeLabelMode } from '../../types/GraphFilter';
@@ -13,7 +12,7 @@ import { GraphDataActions } from '../../actions/GraphDataActions';
 
 export default class GraphFilterToolbar extends React.PureComponent<GraphFilterToolbarType> {
   static contextTypes = {
-    router: PropTypes.object
+    router: () => null
   };
 
   render() {

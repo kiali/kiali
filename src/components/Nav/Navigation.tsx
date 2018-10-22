@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { VerticalNav } from 'patternfly-react';
-import PropTypes from 'prop-types';
 import { navItems } from '../../routes';
 import RenderPage from './RenderPage';
 import { matchPath } from 'react-router';
@@ -30,7 +29,7 @@ type PropsType = {
 
 class Navigation extends React.Component<PropsType> {
   static contextTypes = {
-    router: PropTypes.object
+    router: () => null
   };
 
   constructor(props: any) {

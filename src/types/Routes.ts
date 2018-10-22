@@ -1,5 +1,3 @@
-import { PropTypes } from 'prop-types';
-
 export interface MenuItem {
   iconClass: string;
   title: string;
@@ -9,5 +7,5 @@ export interface MenuItem {
 
 export interface Path {
   path: string;
-  component: PropTypes.object;
+  component: any;
 }

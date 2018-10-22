@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-import { PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 
 import { GraphParamsType, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
@@ -30,7 +29,7 @@ type GraphURLProps = {
   workload: string;
   duration: string;
   graphType: string;
-  injectServiceNodes: boolean;
+  injectServiceNodes: string;
   layout: string;
 };
 
@@ -57,7 +56,7 @@ const mapDispatchToProps = (dispatch: Dispatch<any>) => {
  */
 export class GraphRouteHandler extends React.Component<RouteComponentProps<GraphURLProps>, GraphParamsType> {
   static contextTypes = {
-    router: PropTypes.object
+    router: () => null
   };
 
   static readonly graphParamsDefaults: GraphParamsType = {

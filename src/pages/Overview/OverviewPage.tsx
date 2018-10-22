@@ -72,6 +72,7 @@ class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInf
     };
   }
 
+  // @ts-ignore
   constructor(props: RouteComponentProps<OverviewProps>) {
     super(props);
     this.state = {

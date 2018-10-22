@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
-import { PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { GraphFilterActions } from '../actions/GraphFilterActions';
@@ -61,7 +60,7 @@ interface VisibilityLayersType {
 
 class GraphSettings extends React.PureComponent<GraphSettingsProps> {
   static contextTypes = {
-    router: PropTypes.object
+    router: () => null
   };
 
   constructor(props: GraphSettingsProps) {

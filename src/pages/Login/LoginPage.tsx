@@ -1,6 +1,5 @@
 import React from 'react';
 import { Alert, Row, Col, Form, FormGroup, FormControl, Button, HelpBlock } from 'patternfly-react';
-import PropTypes from 'prop-types';
 import { KEY_CODES } from '../../types/Common';
 
 const kialiTitle = require('../../assets/img/logo-login.svg');
@@ -20,7 +19,7 @@ type LoginState = {
 
 export default class LoginPage extends React.Component<LoginProps, LoginState> {
   static contextTypes = {
-    store: PropTypes.object
+    store: () => null
   };
   constructor(props: LoginProps) {
     super(props);

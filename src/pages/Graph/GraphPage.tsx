@@ -1,6 +1,5 @@
 import * as React from 'react';
 import FlexView from 'react-flexview';
-import { PropTypes } from 'prop-types';
 import { Breadcrumb, Icon, Button } from 'patternfly-react';
 
 import { PollIntervalInMs } from '../../types/Common';
@@ -90,7 +89,7 @@ const GraphErrorBoundaryFallback = () => {
 
 export default class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   static contextTypes = {
-    router: PropTypes.object
+    router: () => null
   };
 
   private pollTimeoutRef?: number;

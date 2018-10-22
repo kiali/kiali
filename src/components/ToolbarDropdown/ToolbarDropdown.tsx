@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { DropdownButton, MenuItem } from 'patternfly-react';
-import PropTypes from 'prop-types';
 
 type ToolbarDropdownProps = {
   disabled?: boolean;
@@ -11,8 +10,8 @@ type ToolbarDropdownProps = {
   initialValue?: number | string;
   label?: string;
   initialLabel?: string;
-  handleSelect: PropTypes.func;
-  options: PropTypes.Map<string | number, string>;
+  handleSelect: Function;
+  options: { [key: string]: string };
 };
 
 type ToolbarDropdownState = {

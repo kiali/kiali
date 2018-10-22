@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
 import ReactResizeDetector from 'react-resize-detector';
 
 import { GraphHighlighter } from './graphs/GraphHighlighter';
@@ -73,7 +72,7 @@ type InitialValues = {
 // exporting this class for testing
 export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, CytoscapeGraphState> {
   static contextTypes = {
-    router: PropTypes.object
+    router: () => null
   };
   // for dbl-click support
   static doubleTapMs = 350;
