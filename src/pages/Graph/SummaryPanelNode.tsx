@@ -376,8 +376,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         )}
         {hasMissingSC && (
           <div>
-            <Icon name="blueprint" type="pf" style={{ width: '10px', fontSize: '0.7em' }} />
-            Has Missing Sidecars
+            <Icon name="exclamation" type="fa" style={{ width: '10px' }} />
+            Has Missing Sidecar
           </div>
         )}
       </>
