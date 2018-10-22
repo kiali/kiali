@@ -575,19 +575,19 @@ func GatewayNames(gateways []IstioObject) map[string]struct{} {
 	return names
 }
 
-// ValidateVirtualServiceGateways checks all VirtualService gateways (except mesh, which is reserved word) and checks that they're found from the given list of gatewayNames
-func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames map[string]struct{}) bool {
+// ValidateVirtualServiceGateways checks all VirtualService gateways (except mesh, which is reserved word) and checks that they're found from the given list of gatewayNames. Also return index of missing gatways to show clearer error path in editor
+func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames map[string]struct{}) (bool, int) {
 	if gatewaysSpec, found := spec["gateways"]; found {
 		if gateways, ok := gatewaysSpec.([]interface{}); ok {
-			for _, g := range gateways {
+			for index, g := range gateways {
 				if gate, ok := g.(string); ok {
 					if _, found := gatewayNames[gate]; !found && gate != "mesh" {
-						return false
+						return false, index
 					}
 				}
 			}
 		}
 	}
-	// No gateways defined or all found
-	return true
+	// No gateways defined or all found. Return -1 indicates no missing gateway
+	return true, -1
 }
