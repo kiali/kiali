@@ -481,6 +481,18 @@ external_services:
     url: VALUE
 ----
 
+|`API_NAMESPACES_EXCLUDE`
+|An optional list of namespaces/projects excluded from the list of namespaces provided by the API and UI. Regex is supported. This does not affect explicit namespace access.
+[source,yaml]
+----
+api:
+  namespaces:
+    exclude:
+    - namespacePattern1
+    - namespacePattern2
+    - etc..
+----
+
 |`LOGIN_TOKEN_SIGNING_KEY`
 |The signing key used to generate tokens for user authentication. (default is `kiali`)
 [source,yaml]
