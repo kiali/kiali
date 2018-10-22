@@ -183,7 +183,7 @@ func TestServiceParse(t *testing.T) {
 
 	service := Service{}
 	service.Name = "service"
-	service.Namespace = Namespace{"namespace"}
+	service.Namespace = Namespace{Name: "namespace"}
 
 	service.Parse(fakeService())
 	assert.Equal("labelName1", service.Labels["label1"])

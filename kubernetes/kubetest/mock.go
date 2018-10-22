@@ -25,9 +25,19 @@ func NewK8SClientMock() *K8SClientMock {
 	return k8s
 }
 
+func (o *K8SClientMock) GetNamespace(namespace string) (*v1.Namespace, error) {
+	args := o.Called(namespace)
+	return args.Get(0).(*v1.Namespace), args.Error(1)
+}
+
 func (o *K8SClientMock) GetNamespaces() ([]v1.Namespace, error) {
 	args := o.Called()
 	return args.Get(0).([]v1.Namespace), args.Error(1)
+}
+
+func (o *K8SClientMock) GetProject(project string) (*osv1.Project, error) {
+	args := o.Called(project)
+	return args.Get(0).(*osv1.Project), args.Error(1)
 }
 
 func (o *K8SClientMock) GetProjects() ([]osv1.Project, error) {

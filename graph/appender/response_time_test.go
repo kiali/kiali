@@ -106,11 +106,16 @@ func TestResponseTime(t *testing.T) {
 
 	duration, _ := time.ParseDuration("60s")
 	appender := ResponseTimeAppender{
-		Duration:     duration,
 		GraphType:    graph.GraphTypeVersionedApp,
 		IncludeIstio: false,
-		Quantile:     0.95,
-		QueryTime:    time.Now().Unix(),
+		Namespaces: map[string]graph.NamespaceInfo{
+			"bookinfo": {
+				Name:     "bookinfo",
+				Duration: duration,
+			},
+		},
+		Quantile:  0.95,
+		QueryTime: time.Now().Unix(),
 	}
 
 	appender.appendGraph(trafficMap, "bookinfo", client)

@@ -14,13 +14,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
 // TestNamespaceMetricsDefault is unit test (testing request handling, not the prometheus client behaviour)
 func TestNamespaceMetricsDefault(t *testing.T) {
-	ts, api := setupNamespaceMetricsEndpoint(t)
+	ts, api, k8s := setupNamespaceMetricsEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/metrics"
@@ -42,6 +44,8 @@ func TestNamespaceMetricsDefault(t *testing.T) {
 		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
 	})
 
+	mockGetNamespace(k8s, "ns", time.Time{})
+
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -55,7 +59,7 @@ func TestNamespaceMetricsDefault(t *testing.T) {
 }
 
 func TestNamespaceMetricsWithParams(t *testing.T) {
-	ts, api := setupNamespaceMetricsEndpoint(t)
+	ts, api, k8s := setupNamespaceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/metrics", nil)
@@ -100,6 +104,8 @@ func TestNamespaceMetricsWithParams(t *testing.T) {
 		assert.WithinDuration(t, queryTime.Add(-1000*time.Second), r.Start, delta)
 	})
 
+	mockGetNamespace(k8s, "ns", time.Time{})
+
 	httpclient := &http.Client{}
 	resp, err := httpclient.Do(req)
 	if err != nil {
@@ -114,8 +120,8 @@ func TestNamespaceMetricsWithParams(t *testing.T) {
 	assert.NotZero(t, gaugeSentinel)
 }
 
-func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
-	client, api, err := setupMocked()
+func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
+	client, api, k8s, err := setupMocked()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,9 +131,11 @@ func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 		func(w http.ResponseWriter, r *http.Request) {
 			getNamespaceMetrics(w, r, func() (*prometheus.Client, error) {
 				return client, nil
+			}, func() (kubernetes.IstioClientInterface, error) {
+				return k8s, nil
 			})
 		}))
 
 	ts := httptest.NewServer(mr)
-	return ts, api
+	return ts, api, k8s
 }

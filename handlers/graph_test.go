@@ -24,7 +24,7 @@ import (
 
 // Setup mock
 
-func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, error) {
+func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K8SClientMock, error) {
 	config.Set(config.NewConfig())
 	k8s := new(kubetest.K8SClientMock)
 
@@ -34,6 +34,11 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, error) {
 				v1.Namespace{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "bookinfo",
+					},
+				},
+				v1.Namespace{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "tutorial",
 					},
 				},
 			},
@@ -58,12 +63,12 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, error) {
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	client.Inject(api)
 
 	business.SetWithBackends(k8s, nil)
-	return client, api, nil
+	return client, api, k8s, nil
 }
 
 func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector) {
@@ -351,7 +356,7 @@ func TestNamespaceGraph(t *testing.T) {
 			Metric: q5m0,
 			Value:  31}}
 
-	client, api, err := setupMocked()
+	client, api, _, err := setupMocked()
 	if err != nil {
 		t.Error(err)
 		return
@@ -455,7 +460,7 @@ func TestMultiNamespaceGraph(t *testing.T) {
 	q11 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
 	v11 := model.Vector{}
 
-	client, api, err := setupMocked()
+	client, api, _, err := setupMocked()
 	if err != nil {
 		t.Error(err)
 		return

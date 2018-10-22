@@ -7,8 +7,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util"
 )
 
 // ServiceList is the API handler to fetch the list of services in a given namespace
@@ -35,17 +37,26 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 
 // ServiceMetrics is the API handler to fetch metrics to be displayed, related to a single service
 func ServiceMetrics(w http.ResponseWriter, r *http.Request) {
-	getServiceMetrics(w, r, prometheus.NewClient)
+	getServiceMetrics(w, r, prometheus.NewClient, func() (kubernetes.IstioClientInterface, error) {
+		return kubernetes.NewClient()
+	})
 }
 
 // getServiceMetrics (mock-friendly version)
-func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error)) {
+func getServiceMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error), k8sClientSupplier func() (kubernetes.IstioClientInterface, error)) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	service := vars["service"]
 
+	k8s, err := k8sClientSupplier()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusServiceUnavailable, "Kubernetes client error: "+err.Error())
+		return
+	}
+
 	params := prometheus.MetricsQuery{Namespace: namespace, Service: service}
-	err := extractMetricsQueryParams(r, &params)
+	err = extractMetricsQueryParams(r, &params, k8s)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -100,7 +111,14 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := mux.Vars(r)
-	service, err := business.Svc.GetService(params["namespace"], params["service"], rateInterval)
+	queryTime := util.Clock.Now()
+	rateInterval, err = adjustRateInterval(business, params["namespace"], rateInterval, queryTime)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+		return
+	}
+
+	service, err := business.Svc.GetService(params["namespace"], params["service"], rateInterval, queryTime)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			RespondWithError(w, http.StatusNotFound, err.Error())

@@ -2,6 +2,7 @@ package business
 
 import (
 	"sync"
+	"time"
 
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -15,9 +16,9 @@ import (
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type SvcService struct {
-	prom   prometheus.ClientInterface
-	k8s    kubernetes.IstioClientInterface
-	health *HealthService
+	prom          prometheus.ClientInterface
+	k8s           kubernetes.IstioClientInterface
+	businessLayer *Layer
 }
 
 // GetServiceList returns a list of all services for a given Namespace
@@ -83,7 +84,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []v1.Ser
 }
 
 // GetService returns a single service
-func (in *SvcService) GetService(namespace, service, interval string) (*models.ServiceDetails, error) {
+func (in *SvcService) GetService(namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
 
 	var svc *v1.Service
 	var eps *v1.Endpoints
@@ -141,7 +142,7 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 
 	go func() {
 		defer wg.Done()
-		hth = in.health.getServiceHealth(namespace, service, interval, svc)
+		hth = in.businessLayer.Health.getServiceHealth(namespace, service, interval, queryTime, svc)
 	}()
 
 	go func() {
@@ -165,7 +166,13 @@ func (in *SvcService) GetService(namespace, service, interval string) (*models.S
 	go func() {
 		defer wg.Done()
 		var err error
-		sWk, err = in.prom.GetSourceWorkloads(namespace, service)
+		ns, err := in.businessLayer.Namespace.GetNamespace(namespace)
+		if err != nil {
+			log.Errorf("Error fetching details of namespace %s: %s", namespace, err)
+			errChan <- err
+		}
+
+		sWk, err = in.prom.GetSourceWorkloads(ns.Name, ns.CreationTimestamp, service)
 		if err != nil {
 			log.Errorf("Error fetching SourceWorkloads per namespace %s and service %s: %s", namespace, service, err)
 			errChan <- err

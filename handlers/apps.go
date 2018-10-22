@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -61,17 +62,26 @@ func AppDetails(w http.ResponseWriter, r *http.Request) {
 
 // AppMetrics is the API handler to fetch metrics to be displayed, related to an app-label grouping
 func AppMetrics(w http.ResponseWriter, r *http.Request) {
-	getAppMetrics(w, r, prometheus.NewClient)
+	getAppMetrics(w, r, prometheus.NewClient, func() (kubernetes.IstioClientInterface, error) {
+		return kubernetes.NewClient()
+	})
 }
 
 // getAppMetrics (mock-friendly version)
-func getAppMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error)) {
+func getAppMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error), k8sClientSupplier func() (kubernetes.IstioClientInterface, error)) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	app := vars["app"]
 
+	k8s, err := k8sClientSupplier()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusServiceUnavailable, "Kubernetes client error: "+err.Error())
+		return
+	}
+
 	params := prometheus.MetricsQuery{Namespace: namespace, App: app}
-	err := extractMetricsQueryParams(r, &params)
+	err = extractMetricsQueryParams(r, &params, k8s)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return

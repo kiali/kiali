@@ -36,7 +36,7 @@ func Get() (*Layer, error) {
 	// We don't update the global layer here to keep it stateless
 	temporaryLayer := &Layer{}
 	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s}
-	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, health: &temporaryLayer.Health}
+	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Validations = IstioValidationsService{k8s: k8s}
 	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s}
 	temporaryLayer.Workload = WorkloadService{k8s: k8s}
@@ -49,7 +49,7 @@ func Get() (*Layer, error) {
 func SetWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface) *Layer {
 	layer = &Layer{}
 	layer.Health = HealthService{prom: prom, k8s: k8s}
-	layer.Svc = SvcService{prom: prom, k8s: k8s, health: &layer.Health}
+	layer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: layer}
 	layer.Validations = IstioValidationsService{k8s: k8s}
 	layer.IstioConfig = IstioConfigService{k8s: k8s}
 	layer.Workload = WorkloadService{k8s: k8s}

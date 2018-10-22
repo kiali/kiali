@@ -15,6 +15,17 @@ import (
 	osv1 "github.com/openshift/api/project/v1"
 )
 
+// GetNamespace fetches and returns the specified namespace definition
+// from the cluster
+func (in *IstioClient) GetNamespace(namespace string) (*v1.Namespace, error) {
+	ns, err := in.k8s.CoreV1().Namespaces().Get(namespace, emptyGetOptions)
+	if err != nil {
+		return &v1.Namespace{}, err
+	}
+
+	return ns, nil
+}
+
 // GetNamespaces returns a list of all namespaces of the cluster.
 // It returns a list of all namespaces of the cluster.
 // It returns an error on any problem.
@@ -25,6 +36,21 @@ func (in *IstioClient) GetNamespaces() ([]v1.Namespace, error) {
 	}
 
 	return namespaces.Items, nil
+}
+
+// GetProject fetches and returns the definition of the project with
+// the specified name by querying the cluster API. GetProject will fail
+// if the underlying cluster is not Openshift.
+func (in *IstioClient) GetProject(name string) (*osv1.Project, error) {
+	result := &osv1.Project{}
+
+	err := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects", name).Do().Into(result)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (in *IstioClient) GetProjects() ([]osv1.Project, error) {
