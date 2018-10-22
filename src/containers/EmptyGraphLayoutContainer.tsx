@@ -11,10 +11,19 @@ import {
 import { style } from 'typestyle';
 import * as _ from 'lodash';
 import { KialiAppState } from '../store/Store';
+import { GraphFilterActions } from '../actions/GraphFilterActions';
+import { bindActionCreators } from 'redux';
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    error: state.graph.error
+    error: state.graph.error,
+    isDisplayingUnusedNodes: state.graph.filterState.showUnusedNodes
+  };
+};
+
+const mapDispatchToProps = (dispatch: any) => {
+  return {
+    displayUnusedNodes: bindActionCreators(GraphFilterActions.toggleUnusedNodes, dispatch)
   };
 };
 
@@ -22,6 +31,8 @@ type EmptyGraphLayoutProps = {
   elements?: any;
   namespace?: string;
   action?: any;
+  displayUnusedNodes: () => void;
+  isDisplayingUnusedNodes: boolean;
   isLoading?: boolean;
   isError: boolean;
   error?: string;
@@ -80,12 +91,24 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
           <EmptyStateTitle>Empty Graph</EmptyStateTitle>
           <EmptyStateInfo>
             There is currently no graph available for namespace <b>{this.props.namespace}</b>. This could either mean
-            there are no service mesh available in this namespace or that nothing has accessed the service mesh. Please
-            try accessing something in the service mesh and click 'Refresh'.
+            there is no service mesh available for this namespace or the service mesh has yet to see request traffic.
+            {this.props.isDisplayingUnusedNodes && (
+              <> You are currently displaying 'Unused nodes', send requests to the service mesh and click 'Refresh'.</>
+            )}
+            {!this.props.isDisplayingUnusedNodes && (
+              <>
+                {' '}
+                You can enable 'Unused nodes' to display service mesh nodes that have yet to see any request traffic.
+              </>
+            )}
           </EmptyStateInfo>
           <EmptyStateAction>
-            <Button bsStyle="primary" bsSize="large" onClick={this.props.action}>
-              Refresh
+            <Button
+              bsStyle="primary"
+              bsSize="large"
+              onClick={this.props.isDisplayingUnusedNodes ? this.props.action : this.props.displayUnusedNodes}
+            >
+              {(this.props.isDisplayingUnusedNodes && <>Refresh</>) || <>Display unused nodes</>}
             </Button>
           </EmptyStateAction>
         </EmptyState>
@@ -98,6 +121,6 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
 
 const EmptyGraphLayoutContainer = connect(
   mapStateToProps,
-  null
+  mapDispatchToProps
 )(EmptyGraphLayout);
 export default EmptyGraphLayoutContainer;
