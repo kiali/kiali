@@ -71,6 +71,13 @@
           },
           {
             "type": "string",
+            "format": "date-time",
+            "description": "The time to use for the prometheus query",
+            "name": "QueryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "x-go-name": "App",
             "description": "The target app",
             "name": "app",
@@ -254,6 +261,13 @@
             "in": "query"
           },
           {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time to use for the prometheus query",
+            "name": "QueryTime",
+            "in": "query"
+          },
+          {
             "pattern": "^(app|service|workload)$",
             "type": "string",
             "default": "app",
@@ -342,6 +356,13 @@
             "x-go-name": "RateInterval",
             "description": "The rate interval used for fetching error rate",
             "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time to use for the prometheus query",
+            "name": "QueryTime",
             "in": "query"
           },
           {
@@ -526,6 +547,13 @@
             "x-go-name": "RateInterval",
             "description": "The rate interval used for fetching error rate",
             "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time to use for the prometheus query",
+            "name": "QueryTime",
             "in": "query"
           },
           {
@@ -3055,6 +3083,7 @@
         "istioSidecar",
         "appLabel",
         "versionLabel",
+        "podCount",
         "replicas",
         "availableReplicas",
         "unavailableReplicas"
@@ -3098,6 +3127,13 @@
           "type": "string",
           "x-go-name": "Name",
           "example": "reviews-v1"
+        },
+        "podCount": {
+          "description": "Number of current workload pods",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PodCount",
+          "example": 1
         },
         "pods": {
           "$ref": "#/definitions/Pods"
@@ -3206,7 +3242,8 @@
         "resourceVersion",
         "istioSidecar",
         "appLabel",
-        "versionLabel"
+        "versionLabel",
+        "podCount"
       ],
       "properties": {
         "appLabel": {
@@ -3240,6 +3277,13 @@
           "type": "string",
           "x-go-name": "Name",
           "example": "reviews-v1"
+        },
+        "podCount": {
+          "description": "Number of current workload pods",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PodCount",
+          "example": 1
         },
         "resourceVersion": {
           "description": "Kubernetes ResourceVersion",
