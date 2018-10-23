@@ -30,15 +30,16 @@ var (
 
 // IstioClientInterface for mocks (only mocked function are necessary here)
 type IstioClientInterface interface {
+	DeleteIstioObject(api, namespace, resourceType, name string) error
 	GetCronJob(namespace string, cronjobName string) (*batch_v1beta1.CronJob, error)
 	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
-	GetEndpoints(namespace string, serviceName string) (*v1.Endpoints, error)
 	GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error)
 	GetDeployments(namespace string) ([]v1beta1.Deployment, error)
 	GetDeploymentConfig(namespace string, deploymentconfigName string) (*osappsv1.DeploymentConfig, error)
 	GetDeploymentConfigs(namespace string) ([]osappsv1.DeploymentConfig, error)
 	GetDestinationRule(namespace string, destinationrule string) (IstioObject, error)
 	GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error)
+	GetEndpoints(namespace string, serviceName string) (*v1.Endpoints, error)
 	GetGateway(namespace string, gateway string) (IstioObject, error)
 	GetGateways(namespace string) ([]IstioObject, error)
 	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
@@ -51,10 +52,15 @@ type IstioClientInterface interface {
 	GetPods(namespace, labelSelector string) ([]v1.Pod, error)
 	GetProject(project string) (*osv1.Project, error)
 	GetProjects() ([]osv1.Project, error)
+	GetQuotaSpec(namespace string, quotaSpecName string) (IstioObject, error)
+	GetQuotaSpecs(namespace string) ([]IstioObject, error)
+	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)
+	GetQuotaSpecBindings(namespace string) ([]IstioObject, error)
 	GetReplicationController(namespace string, replicationcontrollerName string) (*v1.ReplicationController, error)
 	GetReplicationControllers(namespace string) ([]v1.ReplicationController, error)
 	GetReplicaSet(namespace string, replicasetName string) (*v1beta2.ReplicaSet, error)
 	GetReplicaSets(namespace string) ([]v1beta2.ReplicaSet, error)
+	GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetService(namespace string, serviceName string) (*v1.Service, error)
 	GetServices(namespace string, selectorLabels map[string]string) ([]v1.Service, error)
 	GetServiceEntries(namespace string) ([]IstioObject, error)
@@ -63,11 +69,6 @@ type IstioClientInterface interface {
 	GetStatefulSets(namespace string) ([]v1beta2.StatefulSet, error)
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
-	GetQuotaSpec(namespace string, quotaSpecName string) (IstioObject, error)
-	GetQuotaSpecs(namespace string) ([]IstioObject, error)
-	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)
-	GetQuotaSpecBindings(namespace string) ([]IstioObject, error)
-	GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	IsOpenShift() bool
 }
 

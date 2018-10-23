@@ -123,7 +123,7 @@ func isExternalService(service string, namespaceInfo *NamespaceInfo, globalInfo 
 	if namespaceInfo.ExternalServices == nil {
 		namespaceInfo.ExternalServices = make(map[string]bool)
 
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfig(business.IstioConfigCriteria{
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
 			IncludeServiceEntries: true,
 			Namespace:             namespaceInfo.Namespace,
 		})

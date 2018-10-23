@@ -226,6 +226,11 @@ func (o *K8SClientMock) GetSelfSubjectAccessReview(namespace, api, resourceType 
 	return args.Get(0).([]*auth_v1.SelfSubjectAccessReview), args.Error(1)
 }
 
+func (o *K8SClientMock) DeleteIstioObject(api, namespace, objectType, objectName string) error {
+	args := o.Called(api, namespace, objectType, objectName)
+	return args.Error(0)
+}
+
 func (o *K8SClientMock) FakeService() *v1.Service {
 	return &v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
