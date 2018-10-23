@@ -257,17 +257,35 @@ EOF
   fi
 fi
 
-# Determine if we should be using the demo values
+# Determine if we should be using the demo values. If so, see if the demo yaml already exists, otherwise,
+# we will use the demo values file to build it.
+rm -f /tmp/istio.yaml
+if [ -f "/tmp/istio.yaml" ]; then
+  echo "ERROR: There is an existing /tmp/istio.yaml installation file in the way that cannot be deleted"
+  exit 1
+fi
+
 if [ "${USE_DEMO_VALUES}" == "true" ]; then
-  _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo.yaml"
+  if [ -f "${ISTIO_DIR}/install/kubernetes/istio-demo.yaml" ]; then
+    cp "${ISTIO_DIR}/install/kubernetes/istio-demo.yaml" /tmp/istio.yaml
+  else
+    _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo.yaml"
+  fi
 elif [ "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
-  _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo-auth.yaml"
+  if [ -f "${ISTIO_DIR}/install/kubernetes/istio-demo-auth.yaml" ]; then
+    cp "${ISTIO_DIR}/install/kubernetes/istio-demo-auth.yaml" /tmp/istio.yaml
+  else
+    _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo-auth.yaml"
+  fi
 else
   _HELM_VALUES="--set kiali.enabled=${KIALI_ENABLED} --set tracing.enabled=${DASHBOARDS_ENABLED} --set grafana.enabled=${DASHBOARDS_ENABLED} --set global.mtls.enabled=${MTLS}"
 fi
 
 # Create the install yaml via the helm template command
-${HELM_EXE} template ${_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace istio-system > /tmp/istio.yaml
+if [ ! -f "/tmp/istio.yaml" ]; then
+  echo Generating install yaml via Helm
+  ${HELM_EXE} template ${_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace istio-system > /tmp/istio.yaml
+fi
 
 if [ "${DELETE_ISTIO}" == "true" ]; then
   echo DELETING ISTIO!
