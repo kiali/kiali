@@ -71,18 +71,6 @@ spec:
         - "/kiali-configuration/config.yaml"
         - "-v"
         - "${VERBOSE_MODE}"
-        readinessProbe:
-          httpGet:
-            path: /api/status
-            port: 20001
-          initialDelaySeconds: 3
-          periodSeconds: 3
-        livenessProbe:
-          httpGet:
-            path: /api/status
-            port: 20001
-          initialDelaySeconds: 3
-          periodSeconds: 3
         env:
         - name: ACTIVE_NAMESPACE
           valueFrom:
