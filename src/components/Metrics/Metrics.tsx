@@ -8,7 +8,7 @@ import MetricsOptionsBar from '../MetricsOptions/MetricsOptionsBar';
 import { MetricsLabels as L } from '../MetricsOptions/MetricsLabels';
 import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
-import GrafanaInfo from '../../types/GrafanaInfo';
+import { GrafanaInfo } from '../../store/Store';
 import * as M from '../../types/Metrics';
 import MetricsOptions from '../../types/MetricsOptions';
 import { authentication } from '../../utils/Authentication';
@@ -37,7 +37,6 @@ type ChartDefinitions = { [key: string]: ChartDefinition };
 
 type MetricsState = {
   alertDetails?: string;
-  grafanaLink?: string;
   metricReporter: string;
   chartDefs: ChartDefinitions;
   labelValues: Map<L.LabelName, L.LabelValues>;
@@ -50,6 +49,7 @@ type ObjectId = {
 
 type MetricsProps = ObjectId & {
   isPageVisible?: boolean;
+  grafanaInfo?: GrafanaInfo;
   objectType: M.MetricsObjectTypes;
   direction: M.MetricsDirection;
 };
@@ -120,10 +120,6 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
         chart.destMetrics = metricsData.dest.metrics[k];
       }
     });
-  }
-
-  componentDidMount() {
-    this.getGrafanaInfo();
   }
 
   onOptionsChanged = (options: MetricsOptions) => {
@@ -218,41 +214,29 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     return labelsWithValues;
   }
 
-  getGrafanaLink(info: GrafanaInfo): string {
-    let grafanaLink;
-    switch (this.props.objectType) {
-      case M.MetricsObjectTypes.SERVICE:
-        grafanaLink = `${info.url}${info.serviceDashboardPath}?${info.varService}=${this.props.object}.${
-          this.props.namespace
-        }.svc.cluster.local`;
-        break;
-      case M.MetricsObjectTypes.WORKLOAD:
-        grafanaLink = `${info.url}${info.workloadDashboardPath}?${info.varNamespace}=${this.props.namespace}&${
-          info.varWorkload
-        }=${this.props.object}`;
-        break;
-      default:
-        grafanaLink = `${info.url}${info.workloadDashboardPath}?${info.varNamespace}=${this.props.namespace}`;
+  getGrafanaLink(): string {
+    if (this.props.grafanaInfo) {
+      let grafanaLink;
+      switch (this.props.objectType) {
+        case M.MetricsObjectTypes.SERVICE:
+          grafanaLink = `${this.props.grafanaInfo.url}${this.props.grafanaInfo.serviceDashboardPath}?${
+            this.props.grafanaInfo.varService
+          }=${this.props.object}.${this.props.namespace}.svc.cluster.local`;
+          break;
+        case M.MetricsObjectTypes.WORKLOAD:
+          grafanaLink = `${this.props.grafanaInfo.url}${this.props.grafanaInfo.workloadDashboardPath}?${
+            this.props.grafanaInfo.varNamespace
+          }=${this.props.namespace}&${this.props.grafanaInfo.varWorkload}=${this.props.object}`;
+          break;
+        default:
+          grafanaLink = `${this.props.grafanaInfo.url}${this.props.grafanaInfo.workloadDashboardPath}?${
+            this.props.grafanaInfo.varNamespace
+          }=${this.props.namespace}`;
+      }
+      return grafanaLink;
     }
-    return grafanaLink;
+    return '';
   }
-
-  getGrafanaInfo = () => {
-    API.getGrafanaInfo(authentication())
-      .then(response => {
-        if (response.data) {
-          this.setState({
-            grafanaLink: this.getGrafanaLink(response.data)
-          });
-        } else {
-          this.setState({ grafanaLink: undefined });
-        }
-      })
-      .catch(error => {
-        this.setState({ grafanaLink: undefined });
-        console.error(error);
-      });
-  };
 
   dismissAlert = () => this.setState({ alertDetails: undefined });
 
@@ -304,9 +288,9 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
               <div className="card-pf-body">{Object.keys(charts).map(key => this.renderChart(key, charts[key]))}</div>
             </div>
           </div>
-          {this.state.grafanaLink && (
+          {this.props.grafanaInfo && (
             <span id="grafana-link">
-              <a href={this.state.grafanaLink} target="_blank">
+              <a href={this.getGrafanaLink()} target="_blank">
                 View in Grafana
               </a>
             </span>

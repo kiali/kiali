@@ -6,6 +6,16 @@ ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <Metrics
     direction={0}
+    grafanaInfo={
+      Object {
+        "serviceDashboardPath": "/dashboard/db/istio-dashboard",
+        "url": "http://172.30.139.113:3000",
+        "varNamespace": "var-namespace",
+        "varService": "var-service",
+        "varWorkload": "var-workload",
+        "workloadDashboardPath": "/dashboard/db/istio-dashboard",
+      }
+    }
     isPageVisible={true}
     namespace="ns"
     object="svc"
@@ -52,6 +62,16 @@ ShallowWrapper {
                 />
               </div>
             </div>
+            <span
+              id="grafana-link"
+            >
+              <a
+                href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                target="_blank"
+              >
+                View in Grafana
+              </a>
+            </span>
           </div>
         </div>,
       ],
@@ -96,6 +116,16 @@ ShallowWrapper {
                 />
               </div>
             </div>
+            <span
+              id="grafana-link"
+            >
+              <a
+                href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                target="_blank"
+              >
+                View in Grafana
+              </a>
+            </span>
           </div>,
           "className": "card-pf",
         },
@@ -117,7 +147,16 @@ ShallowWrapper {
                   />
                 </div>
               </div>,
-              undefined,
+              <span
+                id="grafana-link"
+              >
+                <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>
+              </span>,
             ],
             "className": "row row-cards-pf",
           },
@@ -179,7 +218,35 @@ ShallowWrapper {
               },
               "type": "div",
             },
-            undefined,
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>,
+                "id": "grafana-link",
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": "View in Grafana",
+                  "href": "http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc",
+                  "target": "_blank",
+                },
+                "ref": null,
+                "rendered": "View in Grafana",
+                "type": "a",
+              },
+              "type": "span",
+            },
           ],
           "type": "div",
         },
@@ -223,6 +290,16 @@ ShallowWrapper {
                   />
                 </div>
               </div>
+              <span
+                id="grafana-link"
+              >
+                <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>
+              </span>
             </div>
           </div>,
         ],
@@ -267,6 +344,16 @@ ShallowWrapper {
                   />
                 </div>
               </div>
+              <span
+                id="grafana-link"
+              >
+                <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>
+              </span>
             </div>,
             "className": "card-pf",
           },
@@ -288,7 +375,16 @@ ShallowWrapper {
                     />
                   </div>
                 </div>,
-                undefined,
+                <span
+                  id="grafana-link"
+                >
+                  <a
+                    href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                    target="_blank"
+                  >
+                    View in Grafana
+                  </a>
+                </span>,
               ],
               "className": "row row-cards-pf",
             },
@@ -350,7 +446,35 @@ ShallowWrapper {
                 },
                 "type": "div",
               },
-              undefined,
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <a
+                    href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                    target="_blank"
+                  >
+                    View in Grafana
+                  </a>,
+                  "id": "grafana-link",
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": "View in Grafana",
+                    "href": "http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc",
+                    "target": "_blank",
+                  },
+                  "ref": null,
+                  "rendered": "View in Grafana",
+                  "type": "a",
+                },
+                "type": "span",
+              },
             ],
             "type": "div",
           },
@@ -376,6 +500,16 @@ ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <Metrics
     direction={0}
+    grafanaInfo={
+      Object {
+        "serviceDashboardPath": "/dashboard/db/istio-dashboard",
+        "url": "http://172.30.139.113:3000",
+        "varNamespace": "var-namespace",
+        "varService": "var-service",
+        "varWorkload": "var-workload",
+        "workloadDashboardPath": "/dashboard/db/istio-dashboard",
+      }
+    }
     isPageVisible={true}
     namespace="ns"
     object="svc"
@@ -422,6 +556,16 @@ ShallowWrapper {
                 />
               </div>
             </div>
+            <span
+              id="grafana-link"
+            >
+              <a
+                href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local"
+                target="_blank"
+              >
+                View in Grafana
+              </a>
+            </span>
           </div>
         </div>,
       ],
@@ -466,6 +610,16 @@ ShallowWrapper {
                 />
               </div>
             </div>
+            <span
+              id="grafana-link"
+            >
+              <a
+                href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local"
+                target="_blank"
+              >
+                View in Grafana
+              </a>
+            </span>
           </div>,
           "className": "card-pf",
         },
@@ -487,7 +641,16 @@ ShallowWrapper {
                   />
                 </div>
               </div>,
-              undefined,
+              <span
+                id="grafana-link"
+              >
+                <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>
+              </span>,
             ],
             "className": "row row-cards-pf",
           },
@@ -549,7 +712,35 @@ ShallowWrapper {
               },
               "type": "div",
             },
-            undefined,
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>,
+                "id": "grafana-link",
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": "View in Grafana",
+                  "href": "http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local",
+                  "target": "_blank",
+                },
+                "ref": null,
+                "rendered": "View in Grafana",
+                "type": "a",
+              },
+              "type": "span",
+            },
           ],
           "type": "div",
         },
@@ -593,6 +784,16 @@ ShallowWrapper {
                   />
                 </div>
               </div>
+              <span
+                id="grafana-link"
+              >
+                <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>
+              </span>
             </div>
           </div>,
         ],
@@ -637,6 +838,16 @@ ShallowWrapper {
                   />
                 </div>
               </div>
+              <span
+                id="grafana-link"
+              >
+                <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>
+              </span>
             </div>,
             "className": "card-pf",
           },
@@ -658,7 +869,16 @@ ShallowWrapper {
                     />
                   </div>
                 </div>,
-                undefined,
+                <span
+                  id="grafana-link"
+                >
+                  <a
+                    href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local"
+                    target="_blank"
+                  >
+                    View in Grafana
+                  </a>
+                </span>,
               ],
               "className": "row row-cards-pf",
             },
@@ -720,7 +940,35 @@ ShallowWrapper {
                 },
                 "type": "div",
               },
-              undefined,
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <a
+                    href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local"
+                    target="_blank"
+                  >
+                    View in Grafana
+                  </a>,
+                  "id": "grafana-link",
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": "View in Grafana",
+                    "href": "http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local",
+                    "target": "_blank",
+                  },
+                  "ref": null,
+                  "rendered": "View in Grafana",
+                  "type": "a",
+                },
+                "type": "span",
+              },
             ],
             "type": "div",
           },
@@ -746,6 +994,16 @@ ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <Metrics
     direction={0}
+    grafanaInfo={
+      Object {
+        "serviceDashboardPath": "/dashboard/db/istio-dashboard",
+        "url": "http://172.30.139.113:3000",
+        "varNamespace": "var-namespace",
+        "varService": "var-service",
+        "varWorkload": "var-workload",
+        "workloadDashboardPath": "/dashboard/db/istio-dashboard",
+      }
+    }
     isPageVisible={true}
     namespace="ns"
     object="svc"
@@ -792,6 +1050,16 @@ ShallowWrapper {
                 />
               </div>
             </div>
+            <span
+              id="grafana-link"
+            >
+              <a
+                href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                target="_blank"
+              >
+                View in Grafana
+              </a>
+            </span>
           </div>
         </div>,
       ],
@@ -836,6 +1104,16 @@ ShallowWrapper {
                 />
               </div>
             </div>
+            <span
+              id="grafana-link"
+            >
+              <a
+                href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                target="_blank"
+              >
+                View in Grafana
+              </a>
+            </span>
           </div>,
           "className": "card-pf",
         },
@@ -857,7 +1135,16 @@ ShallowWrapper {
                   />
                 </div>
               </div>,
-              undefined,
+              <span
+                id="grafana-link"
+              >
+                <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>
+              </span>,
             ],
             "className": "row row-cards-pf",
           },
@@ -919,7 +1206,35 @@ ShallowWrapper {
               },
               "type": "div",
             },
-            undefined,
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>,
+                "id": "grafana-link",
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": "View in Grafana",
+                  "href": "http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc",
+                  "target": "_blank",
+                },
+                "ref": null,
+                "rendered": "View in Grafana",
+                "type": "a",
+              },
+              "type": "span",
+            },
           ],
           "type": "div",
         },
@@ -963,6 +1278,16 @@ ShallowWrapper {
                   />
                 </div>
               </div>
+              <span
+                id="grafana-link"
+              >
+                <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>
+              </span>
             </div>
           </div>,
         ],
@@ -1007,6 +1332,16 @@ ShallowWrapper {
                   />
                 </div>
               </div>
+              <span
+                id="grafana-link"
+              >
+                <a
+                  href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                  target="_blank"
+                >
+                  View in Grafana
+                </a>
+              </span>
             </div>,
             "className": "card-pf",
           },
@@ -1028,7 +1363,16 @@ ShallowWrapper {
                     />
                   </div>
                 </div>,
-                undefined,
+                <span
+                  id="grafana-link"
+                >
+                  <a
+                    href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                    target="_blank"
+                  >
+                    View in Grafana
+                  </a>
+                </span>,
               ],
               "className": "row row-cards-pf",
             },
@@ -1090,7 +1434,35 @@ ShallowWrapper {
                 },
                 "type": "div",
               },
-              undefined,
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <a
+                    href="http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc"
+                    target="_blank"
+                  >
+                    View in Grafana
+                  </a>,
+                  "id": "grafana-link",
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": "View in Grafana",
+                    "href": "http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc",
+                    "target": "_blank",
+                  },
+                  "ref": null,
+                  "rendered": "View in Grafana",
+                  "type": "a",
+                },
+                "type": "span",
+              },
             ],
             "type": "div",
           },

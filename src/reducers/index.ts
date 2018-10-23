@@ -8,6 +8,7 @@ import graphDataState from './GraphDataState';
 import globalState from './GlobalState';
 import namespaceState from './NamespaceState';
 import UserSettingsState from './UserSettingsState';
+import GrafanaState from './GrafanaState';
 
 const rootReducer = combineReducers<KialiAppState>({
   authentication: LoginState,
@@ -16,7 +17,8 @@ const rootReducer = combineReducers<KialiAppState>({
   namespaces: namespaceState,
   globalState: globalState,
   graph: graphDataState,
-  userSettings: UserSettingsState
+  userSettings: UserSettingsState,
+  grafanaInfo: GrafanaState
 });
 
 export default rootReducer;

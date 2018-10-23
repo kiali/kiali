@@ -3,6 +3,7 @@ import * as API from '../services/Api';
 import { Token } from '../store/Store';
 import { HTTP_CODES } from '../types/Common';
 import { HelpDropdownActions } from './HelpDropdownActions';
+import { GrafanaActions } from './GrafanaActions';
 import { config } from '../config';
 
 export enum LoginActionKeys {
@@ -81,6 +82,7 @@ export const LoginActions = {
                 )
               );
               dispatch(HelpDropdownActions.refresh());
+              dispatch(GrafanaActions.getInfo(auth));
             },
             error => {
               /** Logout user */

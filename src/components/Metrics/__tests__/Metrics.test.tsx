@@ -103,6 +103,14 @@ describe('Metrics for a service', () => {
         object="svc"
         objectType={MetricsObjectTypes.SERVICE}
         direction={MetricsDirection.INBOUND}
+        grafanaInfo={{
+          url: 'http://172.30.139.113:3000',
+          serviceDashboardPath: '/dashboard/db/istio-dashboard',
+          workloadDashboardPath: '/dashboard/db/istio-dashboard',
+          varService: 'var-service',
+          varNamespace: 'var-namespace',
+          varWorkload: 'var-workload'
+        }}
       />
     );
     expect(wrapper).toMatchSnapshot();
@@ -116,22 +124,6 @@ describe('Metrics for a service', () => {
           expect(mounted!.find('.card-pf-body')).toHaveLength(1);
           mounted!.find('.card-pf-body').forEach(pfCard => expect(pfCard.children().length === 0));
         })
-        .catch(err => done.fail(err)),
-      mockGrafanaInfo({
-        url: 'http://172.30.139.113:3000',
-        serviceDashboardPath: '/dashboard/db/istio-dashboard',
-        varService: 'var-service'
-      })
-        .then(() => {
-          mounted!.update();
-          expect(mounted!.find('#grafana-link > a').map(div => div.getElement().props)).toEqual([
-            {
-              children: 'View in Grafana',
-              href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-service=svc.ns.svc.cluster.local',
-              target: '_blank'
-            }
-          ]);
-        })
         .catch(err => done.fail(err))
     ];
     Promise.all(allMocksDone).then(() => done());
@@ -141,6 +133,14 @@ describe('Metrics for a service', () => {
         object="svc"
         objectType={MetricsObjectTypes.SERVICE}
         direction={MetricsDirection.INBOUND}
+        grafanaInfo={{
+          url: 'http://172.30.139.113:3000',
+          serviceDashboardPath: '/dashboard/db/istio-dashboard',
+          workloadDashboardPath: '/dashboard/db/istio-dashboard',
+          varService: 'var-service',
+          varNamespace: 'var-namespace',
+          varWorkload: 'var-workload'
+        }}
       />
     );
   });
@@ -163,8 +163,7 @@ describe('Metrics for a service', () => {
             mounted!.update();
             expect(mounted!.find('LineChart')).toHaveLength(4);
           })
-          .catch(err => done.fail(err)),
-        mockGrafanaInfo({})
+          .catch(err => done.fail(err))
       ];
       Promise.all(allMocksDone).then(() => done());
       mounted = mount(
@@ -173,6 +172,14 @@ describe('Metrics for a service', () => {
           object="svc"
           objectType={MetricsObjectTypes.SERVICE}
           direction={MetricsDirection.INBOUND}
+          grafanaInfo={{
+            url: 'http://172.30.139.113:3000',
+            serviceDashboardPath: '/dashboard/db/istio-dashboard',
+            workloadDashboardPath: '/dashboard/db/istio-dashboard',
+            varService: 'var-service',
+            varNamespace: 'var-namespace',
+            varWorkload: 'var-workload'
+          }}
         />
       );
     },
@@ -191,13 +198,20 @@ describe('Inbound Metrics for a workload', () => {
   });
 
   it('renders initial layout', () => {
-    mockGrafanaInfo({});
     const wrapper = shallow(
       <Metrics
         namespace="ns"
         object="svc"
         objectType={MetricsObjectTypes.WORKLOAD}
         direction={MetricsDirection.INBOUND}
+        grafanaInfo={{
+          url: 'http://172.30.139.113:3000',
+          serviceDashboardPath: '/dashboard/db/istio-dashboard',
+          workloadDashboardPath: '/dashboard/db/istio-dashboard',
+          varService: 'var-service',
+          varNamespace: 'var-namespace',
+          varWorkload: 'var-workload'
+        }}
       />
     );
     expect(wrapper).toMatchSnapshot();
@@ -211,25 +225,6 @@ describe('Inbound Metrics for a workload', () => {
           expect(mounted!.find('.card-pf-body')).toHaveLength(1);
           mounted!.find('.card-pf-body').forEach(pfCard => expect(pfCard.children().length === 0));
         })
-        .catch(err => done.fail(err)),
-      mockGrafanaInfo({
-        url: 'http://172.30.139.113:3000',
-        serviceDashboardPath: '/dashboard/db/istio-dashboard',
-        workloadDashboardPath: '/dashboard/db/istio-dashboard',
-        varService: 'var-service',
-        varNamespace: 'var-namespace',
-        varWorkload: 'var-workload'
-      })
-        .then(() => {
-          mounted!.update();
-          expect(mounted!.find('#grafana-link > a').map(div => div.getElement().props)).toEqual([
-            {
-              children: 'View in Grafana',
-              href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc',
-              target: '_blank'
-            }
-          ]);
-        })
         .catch(err => done.fail(err))
     ];
     Promise.all(allMocksDone).then(() => done());
@@ -239,6 +234,14 @@ describe('Inbound Metrics for a workload', () => {
         object="svc"
         objectType={MetricsObjectTypes.WORKLOAD}
         direction={MetricsDirection.INBOUND}
+        grafanaInfo={{
+          url: 'http://172.30.139.113:3000',
+          serviceDashboardPath: '/dashboard/db/istio-dashboard',
+          workloadDashboardPath: '/dashboard/db/istio-dashboard',
+          varService: 'var-service',
+          varNamespace: 'var-namespace',
+          varWorkload: 'var-workload'
+        }}
       />
     );
   });
@@ -261,8 +264,7 @@ describe('Inbound Metrics for a workload', () => {
             mounted!.update();
             expect(mounted!.find('LineChart')).toHaveLength(4);
           })
-          .catch(err => done.fail(err)),
-        mockGrafanaInfo({})
+          .catch(err => done.fail(err))
       ];
       Promise.all(allMocksDone).then(() => done());
       mounted = mount(
@@ -271,6 +273,14 @@ describe('Inbound Metrics for a workload', () => {
           object="svc"
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={MetricsDirection.INBOUND}
+          grafanaInfo={{
+            url: 'http://172.30.139.113:3000',
+            serviceDashboardPath: '/dashboard/db/istio-dashboard',
+            workloadDashboardPath: '/dashboard/db/istio-dashboard',
+            varService: 'var-service',
+            varNamespace: 'var-namespace',
+            varWorkload: 'var-workload'
+          }}
         />
       );
     },
@@ -289,13 +299,20 @@ describe('Outbound Metrics for a workload', () => {
   });
 
   it('renders initial layout', () => {
-    mockGrafanaInfo({});
     const wrapper = shallow(
       <Metrics
         namespace="ns"
         object="svc"
         objectType={MetricsObjectTypes.WORKLOAD}
         direction={MetricsDirection.INBOUND}
+        grafanaInfo={{
+          url: 'http://172.30.139.113:3000',
+          serviceDashboardPath: '/dashboard/db/istio-dashboard',
+          workloadDashboardPath: '/dashboard/db/istio-dashboard',
+          varService: 'var-service',
+          varNamespace: 'var-namespace',
+          varWorkload: 'var-workload'
+        }}
       />
     );
     expect(wrapper).toMatchSnapshot();
@@ -309,25 +326,6 @@ describe('Outbound Metrics for a workload', () => {
           expect(mounted!.find('.card-pf-body')).toHaveLength(1);
           mounted!.find('.card-pf-body').forEach(pfCard => expect(pfCard.children().length === 0));
         })
-        .catch(err => done.fail(err)),
-      mockGrafanaInfo({
-        url: 'http://172.30.139.113:3000',
-        serviceDashboardPath: '/dashboard/db/istio-dashboard',
-        workloadDashboardPath: '/dashboard/db/istio-dashboard',
-        varService: 'var-service',
-        varNamespace: 'var-namespace',
-        varWorkload: 'var-workload'
-      })
-        .then(() => {
-          mounted!.update();
-          expect(mounted!.find('#grafana-link > a').map(div => div.getElement().props)).toEqual([
-            {
-              children: 'View in Grafana',
-              href: 'http://172.30.139.113:3000/dashboard/db/istio-dashboard?var-namespace=ns&var-workload=svc',
-              target: '_blank'
-            }
-          ]);
-        })
         .catch(err => done.fail(err))
     ];
     Promise.all(allMocksDone).then(() => done());
@@ -337,6 +335,14 @@ describe('Outbound Metrics for a workload', () => {
         object="svc"
         objectType={MetricsObjectTypes.WORKLOAD}
         direction={MetricsDirection.INBOUND}
+        grafanaInfo={{
+          url: 'http://172.30.139.113:3000',
+          serviceDashboardPath: '/dashboard/db/istio-dashboard',
+          workloadDashboardPath: '/dashboard/db/istio-dashboard',
+          varService: 'var-service',
+          varNamespace: 'var-namespace',
+          varWorkload: 'var-workload'
+        }}
       />
     );
   });
@@ -359,8 +365,7 @@ describe('Outbound Metrics for a workload', () => {
             mounted!.update();
             expect(mounted!.find('LineChart')).toHaveLength(4);
           })
-          .catch(err => done.fail(err)),
-        mockGrafanaInfo({})
+          .catch(err => done.fail(err))
       ];
       Promise.all(allMocksDone).then(() => done());
       mounted = mount(
@@ -369,6 +374,14 @@ describe('Outbound Metrics for a workload', () => {
           object="svc"
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={MetricsDirection.OUTBOUND}
+          grafanaInfo={{
+            url: 'http://172.30.139.113:3000',
+            serviceDashboardPath: '/dashboard/db/istio-dashboard',
+            workloadDashboardPath: '/dashboard/db/istio-dashboard',
+            varService: 'var-service',
+            varNamespace: 'var-namespace',
+            varWorkload: 'var-workload'
+          }}
         />
       );
     },

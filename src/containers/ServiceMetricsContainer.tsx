@@ -4,7 +4,8 @@ import { RouteComponentProps, withRouter } from 'react-router';
 import Metrics, { MetricsProps } from '../components/Metrics/Metrics';
 
 const mapStateToProps = (state: KialiAppState) => ({
-  isPageVisible: state.globalState.isPageVisible
+  isPageVisible: state.globalState.isPageVisible,
+  grafanaInfo: state.grafanaInfo
 });
 
 const ServiceMetricsConnected = withRouter<RouteComponentProps<{}> & MetricsProps>(connect(mapStateToProps)(Metrics));

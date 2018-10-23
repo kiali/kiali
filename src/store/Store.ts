@@ -68,7 +68,8 @@ export interface LoginState {
 
 export interface Component {
   name: string;
-  version: string;
+  version?: string;
+  url?: string;
 }
 
 export interface StatusState {
@@ -85,11 +86,21 @@ export interface UserSettings {
   interface: InterfaceSettings;
 }
 
+export interface GrafanaInfo {
+  url: string;
+  serviceDashboardPath: string;
+  workloadDashboardPath: string;
+  varNamespace: string;
+  varService: string;
+  varWorkload: string;
+}
+
 // This defines the Kiali Global Application State
 export interface KialiAppState {
   // Global state === across multiple pages
   // could also be session state
   globalState: GlobalState;
+  grafanaInfo?: GrafanaInfo;
   statusState: StatusState;
   /** Page Settings */
   authentication: LoginState;

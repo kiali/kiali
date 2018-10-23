@@ -12,6 +12,7 @@ const _tester = (path: string, expectedMenuPath: string) => {
       checkCredentials={jest.fn()}
       navCollapsed={false}
       setNavCollapsed={jest.fn()}
+      jaegerUrl={''}
     />
   );
 

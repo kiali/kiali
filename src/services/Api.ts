@@ -8,7 +8,7 @@ import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
 import { NamespaceValidations, Validations } from '../types/IstioObjects';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
 import JaegerInfo from '../types/JaegerInfo';
-import GrafanaInfo from '../types/GrafanaInfo';
+import { GrafanaInfo } from '../store/Store';
 import {
   AppHealth,
   ServiceHealth,

@@ -13,6 +13,7 @@ import { INITIAL_USER_SETTINGS_STATE } from '../reducers/UserSettingsState';
 import { INITIAL_MESSAGE_CENTER_STATE } from '../reducers/MessageCenter';
 import { INITIAL_STATUS_STATE } from '../reducers/HelpDropdownState';
 import { INITIAL_NAMESPACE_STATE } from '../reducers/NamespaceState';
+import { INITIAL_GRAFANA_STATE } from '../reducers/GrafanaState';
 
 declare const window;
 
@@ -49,7 +50,8 @@ let initialStore: KialiAppState = {
   authentication: INITIAL_LOGIN_STATE,
   messageCenter: INITIAL_MESSAGE_CENTER_STATE,
   graph: INITIAL_GRAPH_STATE,
-  userSettings: INITIAL_USER_SETTINGS_STATE
+  userSettings: INITIAL_USER_SETTINGS_STATE,
+  grafanaInfo: INITIAL_GRAFANA_STATE
 };
 
 // pass an optional param to rehydrate state on app start
