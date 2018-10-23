@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	auth_v1 "k8s.io/api/authorization/v1"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -21,6 +23,16 @@ type IstioConfigCriteria struct {
 	IncludeRules             bool
 	IncludeQuotaSpecs        bool
 	IncludeQuotaSpecBindings bool
+}
+
+var resourceTypesToAPI = map[string]string{
+	"destinationrules":  "networking.istio.io",
+	"virtualservices":   "networking.istio.io",
+	"serviceentries":    "networking.istio.io",
+	"gateways":          "networking.istio.io",
+	"rules":             "config.istio.io",
+	"quotaspecs":        "config.istio.io",
+	"quotaspecbindings": "config.istio.io",
 }
 
 // GetIstioConfig returns a list of Istio routing objects
@@ -126,6 +138,22 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 	var gw, vs, dr, se, qs, qb kubernetes.IstioObject
 	var r *kubernetes.IstioRuleDetails
 	var err error
+	permission := models.ResourcePermissions{}
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+		if api, ok := resourceTypesToAPI[objectType]; ok {
+			ssars, permErr := in.k8s.GetSelfSubjectAccessReview(namespace, api, objectType, []string{"create", "update", "delete"})
+			if permErr == nil {
+				for _, ssar := range ssars {
+					fillPermission(&permission, ssar)
+				}
+			}
+		}
+	}()
+
 	switch objectType {
 	case "gateways":
 		if gw, err = in.k8s.GetGateway(namespace, object); err == nil {
@@ -168,5 +196,19 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 		err = fmt.Errorf("Object type not found: %v", objectType)
 	}
 
+	wg.Wait()
+	istioConfigDetail.Permissions = permission
+
 	return istioConfigDetail, err
+}
+
+func fillPermission(permission *models.ResourcePermissions, ssar *auth_v1.SelfSubjectAccessReview) {
+	switch ssar.Spec.ResourceAttributes.Verb {
+	case "create":
+		permission.Create = ssar.Status.Allowed
+	case "update":
+		permission.Update = ssar.Status.Allowed
+	case "delete":
+		permission.Delete = ssar.Status.Allowed
+	}
 }

@@ -5,10 +5,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	auth_v1 "k8s.io/api/authorization/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
@@ -136,6 +138,11 @@ func TestGetIstioConfigDetails(t *testing.T) {
 
 	istioConfigDetails, err := configService.GetIstioConfigDetails("test", "gateways", "gw-1")
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
+	assert.Equal(models.ResourcePermissions{
+		Create: false,
+		Update: true,
+		Delete: false,
+	}, istioConfigDetails.Permissions)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "virtualservices", "reviews")
@@ -407,6 +414,49 @@ func fakeGetQuotaSpecBindings() []kubernetes.IstioObject {
 	return []kubernetes.IstioObject{&quotaSpec}
 }
 
+func fakeGetSelfSubjectAccessReview() []*auth_v1.SelfSubjectAccessReview {
+	create := auth_v1.SelfSubjectAccessReview{
+		Spec: auth_v1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &auth_v1.ResourceAttributes{
+				Namespace: "test",
+				Verb:      "create",
+				Resource:  "destinationrules",
+			},
+		},
+		Status: auth_v1.SubjectAccessReviewStatus{
+			Allowed: false,
+			Reason:  "not authorized",
+		},
+	}
+	update := auth_v1.SelfSubjectAccessReview{
+		Spec: auth_v1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &auth_v1.ResourceAttributes{
+				Namespace: "test",
+				Verb:      "update",
+				Resource:  "destinationrules",
+			},
+		},
+		Status: auth_v1.SubjectAccessReviewStatus{
+			Allowed: true,
+			Reason:  "authorized",
+		},
+	}
+	delete := auth_v1.SelfSubjectAccessReview{
+		Spec: auth_v1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &auth_v1.ResourceAttributes{
+				Namespace: "test",
+				Verb:      "delete",
+				Resource:  "destinationrules",
+			},
+		},
+		Status: auth_v1.SubjectAccessReviewStatus{
+			Allowed: false,
+			Reason:  "not authorized",
+		},
+	}
+	return []*auth_v1.SelfSubjectAccessReview{&create, &update, &delete}
+}
+
 func mockGetIstioConfigDetails() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetGateway", "test", "gw-1").Return(fakeGetGateways()[0], nil)
@@ -416,6 +466,7 @@ func mockGetIstioConfigDetails() IstioConfigService {
 	k8s.On("GetIstioRuleDetails", "test", "checkfromcustomer").Return(fakeGetIstioRuleDetails(), nil)
 	k8s.On("GetQuotaSpec", "test", "request-count").Return(fakeGetQuotaSpecs()[0], nil)
 	k8s.On("GetQuotaSpecBinding", "test", "request-count").Return(fakeGetQuotaSpecBindings()[0], nil)
+	k8s.On("GetSelfSubjectAccessReview", "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)
 
 	return IstioConfigService{k8s: k8s}
 }
