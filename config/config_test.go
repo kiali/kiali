@@ -40,6 +40,18 @@ func TestDefaults(t *testing.T) {
 	if conf.Server.CORSAllowAll {
 		t.Error("server CORS default setting is wrong")
 	}
+
+	if len(conf.Api.Namespaces.Exclude) != 4 {
+		t.Error("Api namespace exclude default setting is wrong")
+	} else {
+		// our default exclusion list: default,istio-operator,kube.*,openshift.*
+		if conf.Api.Namespaces.Exclude[0] != "default" ||
+			conf.Api.Namespaces.Exclude[1] != "istio-operator" ||
+			conf.Api.Namespaces.Exclude[2] != "kube.*" ||
+			conf.Api.Namespaces.Exclude[3] != "openshift.*" {
+			t.Errorf("Api namespace exclude default list is wrong: %+v", conf.Api.Namespaces.Exclude)
+		}
+	}
 }
 
 func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {
@@ -62,6 +74,31 @@ func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {
 	}
 	if conf.Server.StaticContentRootDirectory != "/tmp" {
 		t.Errorf("Failed to unmarshal static content root directory:\n%v", conf)
+	}
+}
+
+func TestMarshalUnmarshalApiConfig(t *testing.T) {
+	testConf := Config{
+		Api: ApiConfig{
+			Namespaces: ApiNamespacesConfig{
+				Exclude: []string{"default", "kube.*"},
+			},
+		},
+	}
+
+	yamlString, err := Marshal(&testConf)
+	if err != nil {
+		t.Errorf("Failed to marshal: %v", err)
+	}
+	if yamlString != "api:\n  namespaces:\n    exclude:\n    - default\n    - kube.*\n" {
+		t.Errorf("Failed to marshal Api:\n%q", yamlString)
+	}
+	conf, err := Unmarshal(yamlString)
+	if err != nil {
+		t.Errorf("Failed to unmarshal: %v", err)
+	}
+	if len(conf.Api.Namespaces.Exclude) != 2 {
+		t.Errorf("Failed to unmarshal Api:\n%+v", conf.Api)
 	}
 }
 

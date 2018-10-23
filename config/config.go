@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -24,6 +25,7 @@ const (
 	EnvIstioIdentityDomain    = "ISTIO_IDENTITY_DOMAIN"
 	EnvIstioSidecarAnnotation = "ISTIO_SIDECAR_ANNOTATION"
 	EnvIstioUrlServiceVersion = "ISTIO_URL_SERVICE_VERSION"
+	EnvApiNamespacesExclude   = "API_NAMESPACES_EXCLUDE"
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
@@ -126,6 +128,16 @@ type KubernetesConfig struct {
 	QPS   float32 `yaml:"qps,omitempty"`
 }
 
+// Exclude Blacklist holds regex strings defining a blacklist
+type ApiConfig struct {
+	Namespaces ApiNamespacesConfig
+}
+
+// Exclude Blacklist holds regex strings defining a blacklist
+type ApiNamespacesConfig struct {
+	Exclude []string
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	Identity         security.Identity `yaml:",omitempty"`
@@ -136,6 +148,7 @@ type Config struct {
 	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
 	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
 	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
+	Api              ApiConfig         `yaml:"api,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -148,6 +161,7 @@ func NewConfig() (c *Config) {
 	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
 	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
+	c.Api.Namespaces.Exclude = getDefaultStringArray(EnvApiNamespacesExclude, "default,istio-operator,kube.*,openshift.*")
 
 	// Server configuration
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
@@ -190,6 +204,17 @@ func NewConfig() (c *Config) {
 	c.KubernetesConfig.Burst = getDefaultInt(EnvKubernetesBurst, 200)
 	c.KubernetesConfig.QPS = getDefaultFloat32(EnvKubernetesQPS, 100)
 
+	trimmedExclusionPatterns := []string{}
+	for _, entry := range c.Api.Namespaces.Exclude {
+		exclusionPattern := strings.TrimSpace(entry)
+		if _, err := regexp.Compile(exclusionPattern); err != nil {
+			log.Errorf("Invalid namespace exclude entry, [%s] is not a valid regex pattern: %v", exclusionPattern, err)
+		} else {
+			trimmedExclusionPatterns = append(trimmedExclusionPatterns, strings.TrimSpace(exclusionPattern))
+		}
+	}
+	c.Api.Namespaces.Exclude = trimmedExclusionPatterns
+
 	return
 }
 
@@ -208,6 +233,15 @@ func getDefaultString(envvar string, defaultValue string) (retVal string) {
 	if retVal == "" {
 		retVal = defaultValue
 	}
+	return
+}
+
+func getDefaultStringArray(envvar string, defaultValue string) (retVal []string) {
+	csv := os.Getenv(envvar)
+	if csv == "" {
+		csv = defaultValue
+	}
+	retVal = strings.Split(csv, ",")
 	return
 }
 
