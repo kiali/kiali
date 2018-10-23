@@ -7,6 +7,7 @@ import (
 	auth_v1 "k8s.io/api/authorization/v1"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -150,6 +151,8 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 				for _, ssar := range ssars {
 					fillPermission(&permission, ssar)
 				}
+			} else {
+				log.Errorf("Error getting permissions [namespace: %s, api: %s, objectType: %s]: %v", namespace, api, objectType, permErr)
 			}
 		}
 	}()
