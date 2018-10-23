@@ -48,7 +48,7 @@ describe('MetricsOptionsBar', () => {
       .first();
     elt.simulate('click');
     expect(optionsChanged).toHaveBeenCalledTimes(2);
-    const expectedDuration = Object.keys(MetricsOptionsBar.Durations)[0];
+    const expectedDuration: number = Number(Object.keys(MetricsOptionsBar.Durations)[0]);
     expect(lastOptionsChanged()).toHaveProperty('duration', expectedDuration);
   });
 });
