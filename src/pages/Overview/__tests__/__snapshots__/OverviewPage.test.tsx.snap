@@ -91,7 +91,6 @@ ShallowWrapper {
               "sort": [Function],
               "state": Object {
                 "namespaces": Array [],
-                "showEmpty": false,
               },
               "updater": Updater {
                 "_callbacks": Array [],
@@ -261,7 +260,6 @@ ShallowWrapper {
             "sort": [Function],
             "state": Object {
               "namespaces": Array [],
-              "showEmpty": false,
             },
             "updater": Updater {
               "_callbacks": Array [],
@@ -463,7 +461,6 @@ ShallowWrapper {
                 "sort": [Function],
                 "state": Object {
                   "namespaces": Array [],
-                  "showEmpty": false,
                 },
                 "updater": Updater {
                   "_callbacks": Array [],
@@ -633,7 +630,6 @@ ShallowWrapper {
               "sort": [Function],
               "state": Object {
                 "namespaces": Array [],
-                "showEmpty": false,
               },
               "updater": Updater {
                 "_callbacks": Array [],

@@ -31,7 +31,6 @@ import { SortField } from '../../types/SortFilters';
 
 type State = {
   namespaces: NamespaceInfo[];
-  showEmpty: boolean;
 };
 
 interface OverviewProps {
@@ -43,6 +42,7 @@ class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInf
     const healthFilters = FilterSelected.getSelected().filter(f => f.category === FiltersAndSorts.healthFilter.title);
     if (healthFilters.length === 0) {
       return {
+        noFilter: true,
         showInError: true,
         showInWarning: true,
         showInSuccess: true
@@ -66,6 +66,7 @@ class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInf
       }
     });
     return {
+      noFilter: false,
       showInError: showInError,
       showInWarning: showInWarning,
       showInSuccess: showInSuccess
@@ -76,8 +77,7 @@ class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInf
   constructor(props: RouteComponentProps<OverviewProps>) {
     super(props);
     this.state = {
-      namespaces: [],
-      showEmpty: false
+      namespaces: []
     };
   }
 
@@ -120,8 +120,8 @@ class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInf
           appsInWarning: [],
           appsInSuccess: []
         };
-        const { showInError, showInWarning, showInSuccess } = OverviewPage.summarizeHealthFilters();
-        let show = false;
+        const { showInError, showInWarning, showInSuccess, noFilter } = OverviewPage.summarizeHealthFilters();
+        let show = noFilter;
         Object.keys(response.appHealth).forEach(app => {
           const health: AppHealth = response.appHealth[app];
           const status = health.getGlobalStatus();
@@ -171,9 +171,6 @@ class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInf
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
               {this.state.namespaces.map(ns => {
                 const nbApps = ns.appsInError.length + ns.appsInWarning.length + ns.appsInSuccess.length;
-                if (!this.state.showEmpty && nbApps === 0) {
-                  return undefined;
-                }
                 const encodedName = encodeURIComponent(ns.name);
                 return (
                   <Col xs={6} sm={3} md={3} key={ns.name}>
