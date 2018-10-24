@@ -2195,6 +2195,9 @@
           "type": "string",
           "x-go-name": "ObjectType"
         },
+        "permissions": {
+          "$ref": "#/definitions/ResourcePermissions"
+        },
         "quotaSpec": {
           "$ref": "#/definitions/QuotaSpec"
         },
@@ -2751,6 +2754,25 @@
           "type": "number",
           "format": "double",
           "x-go-name": "ErrorRatio"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ResourcePermissions": {
+      "description": "ResourcePermissions holds permission flags for an object type\nTrue means allowed.",
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "x-go-name": "Create"
+        },
+        "delete": {
+          "type": "boolean",
+          "x-go-name": "Delete"
+        },
+        "update": {
+          "type": "boolean",
+          "x-go-name": "Update"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
