@@ -206,41 +206,42 @@ fi
 
 echo "Istio is found here: ${ISTIO_DIR}"
 
-# Create the istio-system namespace
-# If OpenShift, we need to do some additional things - see:
-#   https://istio.io/docs/setup/kubernetes/platform-setup/openshift/
-echo Creating the namespace: ${NAMESPACE}
-if [[ "${CLIENT_EXE}" = *"oc" ]]; then
-  ${CLIENT_EXE} new-project ${NAMESPACE}
-  echo Performing additional commands for OpenShift
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-ingress-service-account -n istio-system
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z default -n istio-system
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z prometheus -n istio-system
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-egressgateway-service-account -n istio-system
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-citadel-service-account -n istio-system
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-ingressgateway-service-account -n istio-system
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-cleanup-old-ca-service-account -n istio-system
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-mixer-post-install-account -n istio-system
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-mixer-service-account -n istio-system
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-pilot-service-account -n istio-system
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-sidecar-injector-service-account -n istio-system
-  ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-galley-service-account -n istio-system
-  if [ "${DASHBOARDS_ENABLED}" == "true" ]; then
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z grafana -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z jaeger -n istio-system
+# When installing Istio (i.e. not deleting it) perform some preparation steps
+if [ "${DELETE_ISTIO}" != "true" ]; then
+  # Create the istio-system namespace
+  # If OpenShift, we need to do some additional things - see:
+  #   https://istio.io/docs/setup/kubernetes/platform-setup/openshift/
+  echo Creating the namespace: ${NAMESPACE}
+  if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+    ${CLIENT_EXE} new-project ${NAMESPACE}
+    echo Performing additional commands for OpenShift
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-ingress-service-account -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z default -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z prometheus -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-egressgateway-service-account -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-citadel-service-account -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-ingressgateway-service-account -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-cleanup-old-ca-service-account -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-mixer-post-install-account -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-mixer-service-account -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-pilot-service-account -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-sidecar-injector-service-account -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-galley-service-account -n istio-system
+    if [ "${DASHBOARDS_ENABLED}" == "true" -o "${USE_DEMO_VALUES}" == "true" -o "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
+      ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z grafana -n istio-system
+      ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z jaeger -n istio-system
+    fi
+  else
+    ${CLIENT_EXE} create namespace ${NAMESPACE}
   fi
-else
-  ${CLIENT_EXE} create namespace ${NAMESPACE}
-fi
 
-# Create the kiali secret
-if [ "${KIALI_ENABLED}" == "true" ]; then
+  # Create the kiali secret
+  if [ "${KIALI_ENABLED}" == "true" ]; then
+    _ENCODED_USERNAME=$(echo -n "${USERNAME}" | base64)
+    _ENCODED_PASSPHRASE=$(echo -n "${PASSPHRASE}" | base64)
 
-  _ENCODED_USERNAME=$(echo -n "${USERNAME}" | base64)
-  _ENCODED_PASSPHRASE=$(echo -n "${PASSPHRASE}" | base64)
-
-  echo Creating the Kiali secret
-  cat <<EOF | ${CLIENT_EXE} apply -f -
+    echo Creating the Kiali secret
+    cat <<EOF | ${CLIENT_EXE} apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
@@ -253,19 +254,38 @@ data:
   username: ${_ENCODED_USERNAME}
   passphrase: ${_ENCODED_PASSPHRASE}
 EOF
+  fi
 fi
 
-# Determine if we should be using the demo values
+# Determine if we should be using the demo values. If so, see if the demo yaml already exists, otherwise,
+# we will use the demo values file to build it.
+rm -f /tmp/istio.yaml
+if [ -f "/tmp/istio.yaml" ]; then
+  echo "ERROR: There is an existing /tmp/istio.yaml installation file in the way that cannot be deleted"
+  exit 1
+fi
+
 if [ "${USE_DEMO_VALUES}" == "true" ]; then
-  _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo.yaml"
+  if [ -f "${ISTIO_DIR}/install/kubernetes/istio-demo.yaml" ]; then
+    cp "${ISTIO_DIR}/install/kubernetes/istio-demo.yaml" /tmp/istio.yaml
+  else
+    _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo.yaml"
+  fi
 elif [ "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
-  _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo-auth.yaml"
+  if [ -f "${ISTIO_DIR}/install/kubernetes/istio-demo-auth.yaml" ]; then
+    cp "${ISTIO_DIR}/install/kubernetes/istio-demo-auth.yaml" /tmp/istio.yaml
+  else
+    _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo-auth.yaml"
+  fi
 else
   _HELM_VALUES="--set kiali.enabled=${KIALI_ENABLED} --set tracing.enabled=${DASHBOARDS_ENABLED} --set grafana.enabled=${DASHBOARDS_ENABLED} --set global.mtls.enabled=${MTLS}"
 fi
 
 # Create the install yaml via the helm template command
-${HELM_EXE} template ${_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace istio-system > /tmp/istio.yaml
+if [ ! -f "/tmp/istio.yaml" ]; then
+  echo Generating install yaml via Helm
+  ${HELM_EXE} template ${_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace istio-system > /tmp/istio.yaml
+fi
 
 if [ "${DELETE_ISTIO}" == "true" ]; then
   echo DELETING ISTIO!
