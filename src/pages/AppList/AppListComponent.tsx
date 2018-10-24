@@ -201,11 +201,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
 
     return (
       <>
-        <StatefulFilters
-          initialFilters={AppListFilters.availableFilters}
-          pageHooks={this.props.pageHooks}
-          onFilterChange={this.onFilterChange}
-        >
+        <StatefulFilters initialFilters={AppListFilters.availableFilters} onFilterChange={this.onFilterChange}>
           <Sort>
             <Sort.TypeSelector
               sortTypes={AppListFilters.sortFields}

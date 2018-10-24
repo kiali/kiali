@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { mount, shallow, ReactWrapper } from 'enzyme';
-import { createBrowserHistory } from 'history';
 import OverviewPage from '../OverviewPage';
 import { FilterSelected } from '../../../components/Filters/StatefulFilters';
 import * as API from '../../../services/Api';
@@ -37,13 +36,11 @@ const mockNamespaceHealth = (obj: NamespaceAppHealth): Promise<void> => {
 };
 
 let mounted: ReactWrapper<any, any> | null;
-const mock: any = jest.fn();
-const history = createBrowserHistory({ basename: '' });
 
 const mountPage = () => {
   mounted = mount(
     <Router>
-      <OverviewPage match={mock} location={mock} history={history} staticContext={mock} />
+      <OverviewPage setActiveNamespace={jest.fn()} />
     </Router>
   );
 };
@@ -59,7 +56,7 @@ describe('Overview page', () => {
   });
 
   it('renders initial layout', () => {
-    const wrapper = shallow(<OverviewPage match={mock} location={mock} history={history} staticContext={mock} />);
+    const wrapper = shallow(<OverviewPage setActiveNamespace={jest.fn()} />);
     expect(wrapper).toMatchSnapshot();
   });
 

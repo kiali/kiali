@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
 import { Link } from 'react-router-dom';
 import {
   AggregateStatusNotification,
@@ -37,7 +36,7 @@ interface OverviewProps {
   setActiveNamespace(name: Namespace): (namespace: Namespace) => void;
 }
 
-class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInfo> {
+class OverviewPage extends React.Component<OverviewProps, State> {
   private static summarizeHealthFilters() {
     const healthFilters = FilterSelected.getSelected().filter(f => f.category === FiltersAndSorts.healthFilter.title);
     if (healthFilters.length === 0) {
@@ -73,8 +72,7 @@ class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInf
     };
   }
 
-  // @ts-ignore
-  constructor(props: RouteComponentProps<OverviewProps>) {
+  constructor(props: OverviewProps) {
     super(props);
     this.state = {
       namespaces: []
@@ -102,9 +100,9 @@ class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInf
   };
 
   fetchAppsHealth(namespaces: string[]) {
-    const rateInterval = this.currentDuration();
-    const isAscending = this.isCurrentSortAscending();
-    const sortField = OverviewToolbar.findSortField(this.currentSortFieldId());
+    const rateInterval = ListPage.currentDuration();
+    const isAscending = ListPage.isCurrentSortAscending();
+    const sortField = ListPage.currentSortField(FiltersAndSorts.sortFields);
     const appsPromises = namespaces.map(namespace =>
       API.getNamespaceAppHealth(authentication(), namespace, rateInterval).then(r => ({
         namespace: namespace,
@@ -146,7 +144,7 @@ class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInf
   }
 
   handleAxiosError(message: string, error: AxiosError) {
-    this.handleError(API.getErrorMsg(message, error));
+    ListPage.handleError(API.getErrorMsg(message, error));
   }
 
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean) => {
@@ -155,7 +153,6 @@ class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInf
   };
 
   handleNamespaceClick = (namespace: string) => {
-    // @ts-ignore
     this.props.setActiveNamespace({ name: namespace });
   };
 
@@ -165,7 +162,7 @@ class OverviewPage extends ListPage.Component<OverviewProps, State, NamespaceInf
         <Breadcrumb title={true}>
           <Breadcrumb.Item active={true}>Namespaces</Breadcrumb.Item>
         </Breadcrumb>
-        <OverviewToolbar onRefresh={this.load} onError={this.handleError} sort={this.sort} pageHooks={this} />
+        <OverviewToolbar onRefresh={this.load} onError={ListPage.handleError} sort={this.sort} />
         <div className="cards-pf">
           <CardGrid matchHeight={true}>
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>

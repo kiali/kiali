@@ -340,11 +340,7 @@ class IstioConfigListComponent extends ListComponent.Component<
     let ruleListComponent;
     ruleListComponent = (
       <>
-        <StatefulFilters
-          initialFilters={IstioConfigListFilters.availableFilters}
-          pageHooks={this.props.pageHooks}
-          onFilterChange={this.onFilterChange}
-        >
+        <StatefulFilters initialFilters={IstioConfigListFilters.availableFilters} onFilterChange={this.onFilterChange}>
           <Sort>
             <Sort.TypeSelector
               sortTypes={IstioConfigListFilters.sortFields}

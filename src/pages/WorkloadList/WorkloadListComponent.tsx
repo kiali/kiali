@@ -228,11 +228,7 @@ class WorkloadListComponent extends ListComponent.Component<
 
     return (
       <>
-        <StatefulFilters
-          initialFilters={WorkloadListFilters.availableFilters}
-          pageHooks={this.props.pageHooks}
-          onFilterChange={this.onFilterChange}
-        >
+        <StatefulFilters initialFilters={WorkloadListFilters.availableFilters} onFilterChange={this.onFilterChange}>
           <Sort>
             <Sort.TypeSelector
               sortTypes={WorkloadListFilters.sortFields}

@@ -8,7 +8,6 @@ import { HistoryManager, URLParams } from '../../app/History';
 
 export namespace ListComponent {
   export interface Props<R> {
-    pageHooks: ListPage.Hooks;
     pagination: Pagination;
     currentSortField: SortField<R>;
     isSortAscending: boolean;
@@ -39,7 +38,7 @@ export namespace ListComponent {
     };
 
     handleError = (error: string) => {
-      this.props.pageHooks.handleError(error);
+      ListPage.handleError(error);
     };
 
     handleAxiosError(message: string, error: AxiosError) {

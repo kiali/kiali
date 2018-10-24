@@ -256,11 +256,7 @@ class ServiceListComponent extends ListComponent.Component<
     }
     return (
       <div>
-        <StatefulFilters
-          initialFilters={ServiceListFilters.availableFilters}
-          pageHooks={this.props.pageHooks}
-          onFilterChange={this.onFilterChange}
-        >
+        <StatefulFilters initialFilters={ServiceListFilters.availableFilters} onFilterChange={this.onFilterChange}>
           <Sort>
             <Sort.TypeSelector
               sortTypes={ServiceListFilters.sortFields}
