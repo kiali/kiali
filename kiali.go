@@ -28,6 +28,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/server"
 	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/util"
@@ -90,6 +91,9 @@ func main() {
 		util.UpdateBaseURL(webRoot)
 		util.ConfigToJS()
 	}
+
+	// prepare our internal metrics so Prometheus can scrape them
+	internalmetrics.RegisterInternalMetrics()
 
 	// Start listening to requests
 	server := server.NewServer()
