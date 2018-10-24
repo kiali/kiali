@@ -10,6 +10,8 @@ import:
   version: v6.0.0
 - package: k8s.io/apimachinery
   version: release-1.9
+- package: github.com/golang/protobuf
+  version: v1.2.0
 - package: github.com/prometheus/client_golang
   version: v0.9.0-pre1
 - package: github.com/prometheus/common
