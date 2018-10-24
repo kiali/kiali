@@ -1,6 +1,7 @@
 package business
 
 import (
+	"fmt"
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -100,15 +101,24 @@ func TestGetWorkloadHealth(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
+	notfound := fmt.Errorf("not found")
 	k8s := new(kubetest.K8SClientMock)
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
 	hs := HealthService{k8s: k8s, prom: prom}
+	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal("ns", args[0])
 		assert.Equal("reviews-v1", args[1])
 	}).Return(&fakeDeploymentsHealthReview()[0], nil)
+	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osappsv1.DeploymentConfig{}, notfound)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
+	k8s.On("GetStatefulSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&v1beta2.StatefulSet{}, notfound)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodsFromDaemonSet(), nil)
+	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
+	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.Pod{}, nil)
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)

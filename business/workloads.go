@@ -523,30 +523,30 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 }
 
 func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, workloadName string) (*models.Workload, error) {
+	var pods []v1.Pod
+	var repcon []v1.ReplicationController
+	var dep *v1beta1.Deployment
+	var repset []v1beta2.ReplicaSet
+	var depcon *osappsv1.DeploymentConfig
+	var fulset *v1beta2.StatefulSet
+	var jbs []batch_v1.Job
+	var conjbs []batch_v1beta1.CronJob
+
 	wl := &models.Workload{
 		Pods:     models.Pods{},
 		Services: models.Services{},
 	}
 
-	var pods []v1.Pod
-	var dp *v1beta1.Deployment
-	var rs *v1beta2.ReplicaSet
-	var rc *v1.ReplicationController
-	var dc *osappsv1.DeploymentConfig
-	var sf *v1beta2.StatefulSet
-	var cj *batch_v1beta1.CronJob
-	var jb *batch_v1.Job
-
 	wg := sync.WaitGroup{}
-	wg.Add(2)
-	errChan := make(chan error, 1)
+	wg.Add(8)
+	errChan := make(chan error, 8)
 
 	go func() {
 		defer wg.Done()
 		var err error
 		pods, err = k8s.GetPods(namespace, "")
 		if err != nil {
-			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
+			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
 			errChan <- err
 		}
 	}()
@@ -554,35 +554,69 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 	go func() {
 		defer wg.Done()
 		var err error
-		dp, err = k8s.GetDeployment(namespace, workloadName)
+		dep, err = k8s.GetDeployment(namespace, workloadName)
 		if err != nil {
-			dp = nil
-			rs, err = k8s.GetReplicaSet(namespace, workloadName)
+			dep = nil
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err error
+		repset, err = k8s.GetReplicaSets(namespace)
+		if err != nil {
+			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", namespace, err)
+			errChan <- err
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err error
+		repcon, err = k8s.GetReplicationControllers(namespace)
+		if err != nil {
+			log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
+			errChan <- err
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err error
+		if k8s.IsOpenShift() {
+			depcon, err = k8s.GetDeploymentConfig(namespace, workloadName)
 			if err != nil {
-				rs = nil
-				rc, err = k8s.GetReplicationController(namespace, workloadName)
-				if err != nil {
-					rc = nil
-					sf, err = k8s.GetStatefulSet(namespace, workloadName)
-					if err != nil {
-						sf = nil
-						cj, err = k8s.GetCronJob(namespace, workloadName)
-						if err != nil {
-							cj = nil
-							jb, err = k8s.GetJob(namespace, workloadName)
-							if err != nil {
-								jb = nil
-								if k8s.IsOpenShift() {
-									dc, err = k8s.GetDeploymentConfig(namespace, workloadName)
-									if err != nil {
-										dc = nil
-									}
-								}
-							}
-						}
-					}
-				}
+				depcon = nil
 			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err error
+		fulset, err = k8s.GetStatefulSet(namespace, workloadName)
+		if err != nil {
+			fulset = nil
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err error
+		conjbs, err = k8s.GetCronJobs(namespace)
+		if err != nil {
+			log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
+			errChan <- err
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err error
+		jbs, err = k8s.GetJobs(namespace)
+		if err != nil {
+			log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
+			errChan <- err
 		}
 	}()
 
@@ -592,94 +626,290 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 		return wl, err
 	}
 
-	if dp != nil {
-		selector := labels.Set(dp.Spec.Template.Labels).AsSelector()
-		wl.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
-		wl.ParseDeployment(dp)
-		return wl, nil
-	}
+	// Key: name of controller; Value: type of controller
+	controllers := map[string]string{}
 
-	if rs != nil {
-		selector := labels.Set(rs.Spec.Template.Labels).AsSelector()
-		wl.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
-		wl.ParseReplicaSet(rs)
-		return wl, nil
-	}
-
-	if rc != nil {
-		selector := labels.Set(rc.Spec.Template.Labels).AsSelector()
-		wl.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
-		wl.ParseReplicationController(rc)
-		return wl, nil
-	}
-
-	if sf != nil {
-		selector := labels.Set(sf.Spec.Template.Labels).AsSelector()
-		wl.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
-		wl.ParseStatefulSet(sf)
-		return wl, nil
-	}
-
-	if cj != nil {
-		selector := labels.Set(cj.Spec.JobTemplate.Spec.Template.Labels).AsSelector()
-		wl.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
-		wl.ParseCronJob(cj)
-		return wl, nil
-	}
-
-	if jb != nil {
-		selector := labels.Set(jb.Spec.Template.Labels).AsSelector()
-		wl.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
-		wl.ParseJob(jb)
-		return wl, nil
-	}
-
-	if dc != nil {
-		selector := labels.Set(dc.Spec.Template.Labels).AsSelector()
-		wl.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
-		wl.ParseDeploymentConfig(dc)
-		return wl, nil
-	}
-
-	// Workload is a controller not listed or a pod
-	ctype := ""
-	found := false
-	iFound := -1
-	for i, pod := range pods {
-		if pod.Name == workloadName {
-			ctype = "Pod"
-			found = true
-			iFound = i
-			break
-		}
-		for _, ref := range pod.OwnerReferences {
-			if ref.Controller != nil && *ref.Controller && ref.Name == workloadName {
-				ctype = ref.Kind
-				break
+	// Find controllers from pods
+	for _, pod := range pods {
+		if len(pod.OwnerReferences) != 0 {
+			for _, ref := range pod.OwnerReferences {
+				if ref.Controller != nil && *ref.Controller {
+					if _, exist := controllers[ref.Name]; !exist {
+						controllers[ref.Name] = ref.Kind
+					} else {
+						if controllers[ref.Name] != ref.Kind {
+							controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+						}
+					}
+				}
+			}
+		} else {
+			if _, exist := controllers[pod.Name]; !exist {
+				// Pod without controller
+				controllers[pod.Name] = "Pod"
 			}
 		}
-		if ctype != "" {
-			break
+	}
+
+	// Resolve ReplicaSets from Deployments
+	// Resolve ReplicationControllers from DeploymentConfigs
+	// Resolve Jobs from CronJobs
+	for cname, ctype := range controllers {
+		if ctype == "ReplicaSet" {
+			found := false
+			iFound := -1
+			for i, rs := range repset {
+				if rs.Name == cname {
+					iFound = i
+					found = true
+					break
+				}
+			}
+			if found && len(repset[iFound].OwnerReferences) > 0 {
+				for _, ref := range repset[iFound].OwnerReferences {
+					if ref.Controller != nil && *ref.Controller {
+						// Delete the child ReplicaSet and add the parent controller
+						if _, exist := controllers[ref.Name]; !exist {
+							controllers[ref.Name] = ref.Kind
+						} else {
+							if controllers[ref.Name] != ref.Kind {
+								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							}
+						}
+						delete(controllers, cname)
+					}
+				}
+			}
+		}
+		if ctype == "ReplicationController" {
+			found := false
+			iFound := -1
+			for i, rc := range repcon {
+				if rc.Name == cname {
+					iFound = i
+					found = true
+					break
+				}
+			}
+			if found && len(repcon[iFound].OwnerReferences) > 0 {
+				for _, ref := range repcon[iFound].OwnerReferences {
+					if ref.Controller != nil && *ref.Controller {
+						// Delete the child ReplicationController and add the parent controller
+						if _, exist := controllers[ref.Name]; !exist {
+							controllers[ref.Name] = ref.Kind
+						} else {
+							if controllers[ref.Name] != ref.Kind {
+								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							}
+						}
+						delete(controllers, cname)
+					}
+				}
+			}
+		}
+		if ctype == "Job" {
+			found := false
+			iFound := -1
+			for i, jb := range jbs {
+				if jb.Name == cname {
+					iFound = i
+					found = true
+					break
+				}
+			}
+			if found && len(jbs[iFound].OwnerReferences) > 0 {
+				for _, ref := range jbs[iFound].OwnerReferences {
+					if ref.Controller != nil && *ref.Controller {
+						// Delete the child Job and add the parent controller
+						if _, exist := controllers[ref.Name]; !exist {
+							controllers[ref.Name] = ref.Kind
+						} else {
+							if controllers[ref.Name] != ref.Kind {
+								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							}
+						}
+						// Jobs are special as deleting CronJob parent doesn't delete children
+						// So we need to check that parent exists before to delete children controller
+						cnExist := false
+						for _, cnj := range conjbs {
+							if cnj.Name == ref.Name {
+								cnExist = true
+								break
+							}
+						}
+						if cnExist {
+							delete(controllers, cname)
+						}
+					}
+				}
+			}
 		}
 	}
 
-	if found && ctype == "Pod" {
-		wl.ParsePod(&pods[iFound])
-		wl.SetPods([]v1.Pod{pods[iFound]})
-		return wl, nil
+	// Cornercase, check for controllers without pods, to show them as a workload
+	if dep != nil {
+		if _, exist := controllers[dep.Name]; !exist {
+			controllers[dep.Name] = "Deployment"
+		}
+	}
+	for _, rs := range repset {
+		if _, exist := controllers[rs.Name]; !exist && len(rs.OwnerReferences) == 0 {
+			controllers[rs.Name] = "ReplicaSet"
+		}
+	}
+	if depcon != nil {
+		if _, exist := controllers[depcon.Name]; !exist {
+			controllers[depcon.Name] = "DeploymentConfig"
+		}
+	}
+	for _, rc := range repcon {
+		if _, exist := controllers[rc.Name]; !exist && len(rc.OwnerReferences) == 0 {
+			controllers[rc.Name] = "ReplicationController"
+		}
+	}
+	if fulset != nil {
+		if _, exist := controllers[fulset.Name]; !exist {
+			controllers[fulset.Name] = "StatefulSet"
+		}
 	}
 
-	if ctype != "" {
-		cPods := kubernetes.FilterPodsForController(workloadName, ctype, pods)
-		wl.ParsePods(workloadName, ctype, cPods)
-		wl.SetPods(cPods)
-		return wl, nil
-	} else {
-		// Workload Not found
-		return wl, kubernetes.NewNotFound("kiali", "workload", workloadName)
-	}
+	// Build workload from controllers
 
-	return wl, nil
+	if _, exist := controllers[workloadName]; exist {
+		w := models.Workload{
+			Pods:     models.Pods{},
+			Services: models.Services{},
+		}
+		ctype := controllers[workloadName]
+		// Flag to add a controller if it is found
+		cnFound := true
+		switch ctype {
+		case "Deployment":
+			if dep.Name == workloadName {
+				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
+				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.ParseDeployment(dep)
+			} else {
+				log.Errorf("Workload %s is not found as Deployment", workloadName)
+				cnFound = false
+			}
+		case "ReplicaSet":
+			found := false
+			iFound := -1
+			for i, rs := range repset {
+				if rs.Name == workloadName {
+					found = true
+					iFound = i
+					break
+				}
+			}
+			if found {
+				selector := labels.Set(repset[iFound].Spec.Template.Labels).AsSelector()
+				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.ParseReplicaSet(&repset[iFound])
+			} else {
+				log.Errorf("Workload %s is not found as ReplicaSet", workloadName)
+				cnFound = false
+			}
+		case "ReplicationController":
+			found := false
+			iFound := -1
+			for i, rc := range repcon {
+				if rc.Name == workloadName {
+					found = true
+					iFound = i
+					break
+				}
+			}
+			if found {
+				selector := labels.Set(repcon[iFound].Spec.Template.Labels).AsSelector()
+				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.ParseReplicationController(&repcon[iFound])
+			} else {
+				log.Errorf("Workload %s is not found as ReplicationController", workloadName)
+				cnFound = false
+			}
+		case "DeploymentConfig":
+			if depcon.Name == workloadName {
+				selector := labels.Set(depcon.Spec.Template.Labels).AsSelector()
+				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.ParseDeploymentConfig(depcon)
+			} else {
+				log.Errorf("Workload %s is not found as DeploymentConfig", workloadName)
+				cnFound = false
+			}
+		case "StatefulSet":
+			if fulset.Name == workloadName {
+				selector := labels.Set(fulset.Spec.Template.Labels).AsSelector()
+				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.ParseStatefulSet(fulset)
+			} else {
+				log.Errorf("Workload %s is not found as StatefulSet", workloadName)
+				cnFound = false
+			}
+		case "Pod":
+			found := false
+			iFound := -1
+			for i, pod := range pods {
+				if pod.Name == workloadName {
+					found = true
+					iFound = i
+					break
+				}
+			}
+			if found {
+				w.SetPods([]v1.Pod{pods[iFound]})
+				w.ParsePod(&pods[iFound])
+			} else {
+				log.Errorf("Workload %s is not found as Pod", workloadName)
+				cnFound = false
+			}
+		case "Job":
+			found := false
+			iFound := -1
+			for i, jb := range jbs {
+				if jb.Name == workloadName {
+					found = true
+					iFound = i
+					break
+				}
+			}
+			if found {
+				selector := labels.Set(jbs[iFound].Spec.Template.Labels).AsSelector()
+				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.ParseJob(&jbs[iFound])
+			} else {
+				log.Errorf("Workload %s is not found as Job", workloadName)
+				cnFound = false
+			}
+		case "CronJob":
+			found := false
+			iFound := -1
+			for i, cjb := range conjbs {
+				if cjb.Name == workloadName {
+					found = true
+					iFound = i
+					break
+				}
+			}
+			if found {
+				selector := labels.Set(conjbs[iFound].Spec.JobTemplate.Spec.Template.Labels).AsSelector()
+				w.SetPods(kubernetes.FilterPodsForSelector(selector, pods))
+				w.ParseCronJob(&conjbs[iFound])
+			} else {
+				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", workloadName)
+				cnFound = false
+			}
+		default:
+			cPods := kubernetes.FilterPodsForController(workloadName, ctype, pods)
+			w.SetPods(cPods)
+			w.ParsePods(workloadName, ctype, cPods)
+		}
+		if cnFound {
+			return &w, nil
+		}
+	}
+	return wl, kubernetes.NewNotFound(workloadName, "Kiali", "Workload")
 }
 
 // KIALI-1730
