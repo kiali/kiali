@@ -2629,11 +2629,7 @@
       "type": "object",
       "properties": {
         "envoy": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/EnvoyHealthWrapper"
-          },
-          "x-go-name": "Envoy"
+          "$ref": "#/definitions/EnvoyMembershipRatio"
         },
         "requests": {
           "$ref": "#/definitions/RequestHealth"
@@ -2879,25 +2875,8 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "EnvoyHealthWrapper": {
-      "description": "EnvoyHealthWrapper wraps EnvoyServiceHealth with the service name",
-      "type": "object",
-      "properties": {
-        "inbound": {
-          "$ref": "#/definitions/EnvoyRatio"
-        },
-        "outbound": {
-          "$ref": "#/definitions/EnvoyRatio"
-        },
-        "service": {
-          "type": "string",
-          "x-go-name": "Service"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "EnvoyRatio": {
-      "description": "EnvoyRatio is the number of healthy members versus total members",
+    "EnvoyMembershipRatio": {
+      "description": "EnvoyMembershipRatio is the number of healthy members versus total members",
       "type": "object",
       "properties": {
         "healthy": {
@@ -2909,19 +2888,6 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "Total"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/prometheus"
-    },
-    "EnvoyServiceHealth": {
-      "description": "EnvoyServiceHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster for inbound and outbound traffic",
-      "type": "object",
-      "properties": {
-        "inbound": {
-          "$ref": "#/definitions/EnvoyRatio"
-        },
-        "outbound": {
-          "$ref": "#/definitions/EnvoyRatio"
         }
       },
       "x-go-package": "github.com/kiali/kiali/prometheus"
@@ -3891,9 +3857,6 @@
       "description": "ServiceHealth contains aggregated health from various sources, for a given service",
       "type": "object",
       "properties": {
-        "envoy": {
-          "$ref": "#/definitions/EnvoyServiceHealth"
-        },
         "requests": {
           "$ref": "#/definitions/RequestHealth"
         }

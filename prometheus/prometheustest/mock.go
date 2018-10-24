@@ -88,9 +88,29 @@ type PromClientMock struct {
 	mock.Mock
 }
 
-func (o *PromClientMock) GetServiceHealth(namespace, servicename string, ports []int32) (prometheus.EnvoyServiceHealth, error) {
-	args := o.Called(namespace, servicename, ports)
-	return args.Get(0).(prometheus.EnvoyServiceHealth), args.Error(1)
+// MockEnvoyMembershipRatio mocks GetEnvoyMembershipRatio for given namespace and app, returning provided healthy/total
+func (o *PromClientMock) MockEnvoyMembershipRatio(namespace, app string, healthy, total int) {
+	o.On("GetEnvoyMembershipRatio", namespace, app).Return(prometheus.EnvoyMembershipRatio{Healthy: healthy, Total: total}, nil)
+}
+
+// MockAppRequestRates mocks GetAppRequestRates for given namespace and app, returning in & out vectors
+func (o *PromClientMock) MockAppRequestRates(namespace, app string, in, out model.Vector) {
+	o.On("GetAppRequestRates", namespace, app, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, out, nil)
+}
+
+// MockServiceRequestRates mocks GetServiceRequestRates for given namespace and service, returning in vector
+func (o *PromClientMock) MockServiceRequestRates(namespace, service string, in model.Vector) {
+	o.On("GetServiceRequestRates", namespace, service, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, nil)
+}
+
+// MockWorkloadRequestRates mocks GetWorkloadRequestRates for given namespace and workload, returning in & out vectors
+func (o *PromClientMock) MockWorkloadRequestRates(namespace, wkld string, in, out model.Vector) {
+	o.On("GetWorkloadRequestRates", namespace, wkld, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, out, nil)
+}
+
+func (o *PromClientMock) GetEnvoyMembershipRatio(namespace, app string) (prometheus.EnvoyMembershipRatio, error) {
+	args := o.Called(namespace, app)
+	return args.Get(0).(prometheus.EnvoyMembershipRatio), args.Error(1)
 }
 
 func (o *PromClientMock) GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error) {

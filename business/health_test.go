@@ -2,6 +2,7 @@ package business
 
 import (
 	"fmt"
+
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
-	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	osappsv1 "github.com/openshift/api/apps/v1"
 	"github.com/prometheus/common/model"
@@ -31,26 +31,13 @@ func TestGetServiceHealth(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	hs := HealthService{k8s: k8s, prom: prom}
-	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal("ns", args[0])
-		assert.Equal("httpbin", args[1])
-	}).Return(kubetest.FakeService(), nil)
-
-	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
-		assert.Equal("ns", args[0])
-		assert.Equal("httpbin", args[1])
-	}).Return(prometheus.EnvoyServiceHealth{Inbound: prometheus.EnvoyRatio{Healthy: 1, Total: 1}}, nil)
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
-	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), queryTime).Return(fakeServiceRequestCounters())
+	prom.MockServiceRequestRates("ns", "httpbin", serviceRates)
 
 	health, _ := hs.GetServiceHealth("ns", "httpbin", "1m", queryTime)
 
-	k8s.AssertNumberOfCalls(t, "GetService", 1)
-	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
-	assert.Equal(1, health.Envoy.Inbound.Total)
-	assert.Equal(1, health.Envoy.Inbound.Healthy)
 	// 1.4 / 15.4 = 0.09
 	assert.InDelta(float64(0.09), health.Requests.ErrorRatio, 0.01)
 	assert.Equal(float64(1.4)/float64(15.4), health.Requests.InboundErrorRatio)
@@ -78,23 +65,16 @@ func TestGetAppHealth(t *testing.T) {
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 
-	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
-		assert.Equal("ns", args[0])
-		assert.Equal("reviews", args[1])
-	}).Return(prometheus.EnvoyServiceHealth{Inbound: prometheus.EnvoyRatio{Healthy: 1, Total: 1}}, nil)
-
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
-	prom.On("GetAppRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), queryTime).Return(fakeOtherRequestCounters())
+	prom.MockEnvoyMembershipRatio("ns", "reviews", 1, 1)
+	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
 
 	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime)
 
-	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
+	prom.AssertNumberOfCalls(t, "GetEnvoyMembershipRatio", 1)
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
-	assert.Equal(1, len(health.Envoy))
-	assert.Equal(1, health.Envoy[0].Inbound.Total)
-	assert.Equal(1, health.Envoy[0].Inbound.Healthy)
-	assert.Equal(0, health.Envoy[0].Outbound.Total)
-	assert.Equal(0, health.Envoy[0].Outbound.Healthy)
+	assert.Equal(1, health.Envoy.Total)
+	assert.Equal(1, health.Envoy.Healthy)
 	// 1.6 / 6.6 = 0.24
 	assert.Equal(float64((1.6+3.5)/(1.6+5+3.5)), health.Requests.ErrorRatio)
 	assert.Equal(float64(1), health.Requests.InboundErrorRatio)
@@ -126,7 +106,7 @@ func TestGetWorkloadHealth(t *testing.T) {
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.Pod{}, nil)
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
-	prom.On("GetWorkloadRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), queryTime).Return(fakeOtherRequestCounters())
+	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
 
 	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "1m", queryTime)
 
@@ -138,71 +118,64 @@ func TestGetWorkloadHealth(t *testing.T) {
 	assert.Equal(float64(3.5/(5+3.5)), health.Requests.OutboundErrorRatio)
 }
 
-var t1 = model.Now()
-var sampleReviewsToHttpbin200 = model.Sample{
-	Metric: model.Metric{
-		"source_service":      "reviews.tutorial.svc.cluster.local",
-		"destination_service": "httpbin.tutorial.svc.cluster.local",
-		"response_code":       "200",
-	},
-	Value:     model.SampleValue(5),
-	Timestamp: t1,
-}
-var sampleReviewsToHttpbin400 = model.Sample{
-	Metric: model.Metric{
-		"source_service":      "reviews.tutorial.svc.cluster.local",
-		"destination_service": "httpbin.tutorial.svc.cluster.local",
-		"response_code":       "400",
-	},
-	Value:     model.SampleValue(3.5),
-	Timestamp: t1,
-}
-var sampleUnknownToHttpbin200 = model.Sample{
-	Metric: model.Metric{
-		"destination_service": "httpbin.tutorial.svc.cluster.local",
-		"source_service":      "unknown",
-		"response_code":       "200",
-	},
-	Value:     model.SampleValue(14),
-	Timestamp: t1,
-}
-var sampleUnknownToHttpbin404 = model.Sample{
-	Metric: model.Metric{
-		"destination_service": "httpbin.tutorial.svc.cluster.local",
-		"source_service":      "unknown",
-		"response_code":       "404",
-	},
-	Value:     model.SampleValue(1.4),
-	Timestamp: t1,
-}
-var sampleUnknownToReviews500 = model.Sample{
-	Metric: model.Metric{
-		"destination_service": "reviews.tutorial.svc.cluster.local",
-		"source_service":      "unknown",
-		"response_code":       "500",
-	},
-	Value:     model.SampleValue(1.6),
-	Timestamp: t1,
-}
-
-func fakeServiceRequestCounters() (model.Vector, error) {
-	in := model.Vector{
+var (
+	sampleReviewsToHttpbin200 = model.Sample{
+		Metric: model.Metric{
+			"source_service":      "reviews.tutorial.svc.cluster.local",
+			"destination_service": "httpbin.tutorial.svc.cluster.local",
+			"response_code":       "200",
+		},
+		Value:     model.SampleValue(5),
+		Timestamp: model.Now(),
+	}
+	sampleReviewsToHttpbin400 = model.Sample{
+		Metric: model.Metric{
+			"source_service":      "reviews.tutorial.svc.cluster.local",
+			"destination_service": "httpbin.tutorial.svc.cluster.local",
+			"response_code":       "400",
+		},
+		Value:     model.SampleValue(3.5),
+		Timestamp: model.Now(),
+	}
+	sampleUnknownToHttpbin200 = model.Sample{
+		Metric: model.Metric{
+			"destination_service": "httpbin.tutorial.svc.cluster.local",
+			"source_service":      "unknown",
+			"response_code":       "200",
+		},
+		Value:     model.SampleValue(14),
+		Timestamp: model.Now(),
+	}
+	sampleUnknownToHttpbin404 = model.Sample{
+		Metric: model.Metric{
+			"destination_service": "httpbin.tutorial.svc.cluster.local",
+			"source_service":      "unknown",
+			"response_code":       "404",
+		},
+		Value:     model.SampleValue(1.4),
+		Timestamp: model.Now(),
+	}
+	sampleUnknownToReviews500 = model.Sample{
+		Metric: model.Metric{
+			"destination_service": "reviews.tutorial.svc.cluster.local",
+			"source_service":      "unknown",
+			"response_code":       "500",
+		},
+		Value:     model.SampleValue(1.6),
+		Timestamp: model.Now(),
+	}
+	serviceRates = model.Vector{
 		&sampleUnknownToHttpbin200,
 		&sampleUnknownToHttpbin404,
 	}
-	return in, nil
-}
-
-func fakeOtherRequestCounters() (model.Vector, model.Vector, error) {
-	in := model.Vector{
+	otherRatesIn = model.Vector{
 		&sampleUnknownToReviews500,
 	}
-	out := model.Vector{
+	otherRatesOut = model.Vector{
 		&sampleReviewsToHttpbin200,
 		&sampleReviewsToHttpbin400,
 	}
-	return in, out, nil
-}
+)
 
 func fakeServicesHealthReview() []v1.Service {
 	return []v1.Service{

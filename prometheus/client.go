@@ -18,7 +18,7 @@ import (
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyServiceHealth, error)
+	GetEnvoyMembershipRatio(namespace, app string) (EnvoyMembershipRatio, error)
 	GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
@@ -169,11 +169,10 @@ func (in *Client) GetMetrics(query *IstioMetricsQuery) Metrics {
 	return getMetrics(in.api, query)
 }
 
-// GetServiceHealth returns the Health related to the provided service identified by its namespace and service name.
-// It reads Envoy metrics, inbound and outbound
+// GetEnvoyMembershipRatio returns the Envoy Health (Membership ratio) related to the provided app and namespace.
 // When the health is unavailable, total number of members will be 0.
-func (in *Client) GetServiceHealth(namespace, servicename string, ports []int32) (EnvoyServiceHealth, error) {
-	return getServiceHealth(in.api, namespace, servicename, ports)
+func (in *Client) GetEnvoyMembershipRatio(namespace, app string) (EnvoyMembershipRatio, error) {
+	return getEnvoyMembershipRatio(in.api, namespace, app)
 }
 
 // GetAllRequestRates queries Prometheus to fetch request counter rates, over a time interval, for requests

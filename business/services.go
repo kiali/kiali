@@ -106,7 +106,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 
 	wg := sync.WaitGroup{}
 	wg.Add(8)
-	errChan := make(chan error, 6)
+	errChan := make(chan error, 7)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
 
@@ -121,7 +121,11 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 
 	go func() {
 		defer wg.Done()
-		hth = in.businessLayer.Health.getServiceHealth(namespace, service, interval, queryTime, svc)
+		var err2 error
+		hth, err2 = in.businessLayer.Health.GetServiceHealth(namespace, service, interval, queryTime)
+		if err2 != nil {
+			errChan <- err2
+		}
 	}()
 
 	go func() {

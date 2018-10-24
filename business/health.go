@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/util"
 )
 
 // HealthService deals with fetching health from various sources and convert to kiali model
@@ -22,133 +23,73 @@ type HealthService struct {
 	k8s  kubernetes.IstioClientInterface
 }
 
-// GetServiceHealth returns a service health from just Namespace and service (thus, it fetches data from K8S and Prometheus)
-func (in *HealthService) GetServiceHealth(namespace, service, rateInterval string, queryTime time.Time) (*models.ServiceHealth, error) {
+// GetServiceHealth returns a service health (service request error rate)
+func (in *HealthService) GetServiceHealth(namespace, service, rateInterval string, queryTime time.Time) (models.ServiceHealth, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetServiceHealth")
 	defer promtimer.ObserveNow(&err)
 
-	svc, err := in.k8s.GetService(namespace, service)
-	if err != nil {
-		return nil, err
-	}
-	h := in.getServiceHealth(namespace, service, rateInterval, queryTime, svc)
-	return &h, nil
-}
-
-func (in *HealthService) getServiceHealth(namespace, service, rateInterval string, queryTime time.Time, svc *v1.Service) models.ServiceHealth {
-	var envoyHealth prometheus.EnvoyServiceHealth
-	var ports []int32
-	for _, port := range svc.Spec.Ports {
-		ports = append(ports, port.Port)
-	}
-	envoyHealth, _ = in.prom.GetServiceHealth(namespace, service, ports)
-	rqHealth := in.getServiceRequestsHealth(namespace, service, rateInterval, queryTime)
-	return models.ServiceHealth{
-		Envoy:    envoyHealth,
-		Requests: rqHealth,
-	}
+	rqHealth, err := in.getServiceRequestsHealth(namespace, service, rateInterval, queryTime)
+	return models.ServiceHealth{Requests: rqHealth}, err
 }
 
 // GetAppHealth returns an app health from just Namespace and app name (thus, it fetches data from K8S and Prometheus)
-func (in *HealthService) GetAppHealth(namespace, app, rateInterval string, queryTime time.Time) (*models.AppHealth, error) {
+func (in *HealthService) GetAppHealth(namespace, app, rateInterval string, queryTime time.Time) (models.AppHealth, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetAppHealth")
 	defer promtimer.ObserveNow(&err)
 
-	var services []v1.Service
-	var ws models.Workloads
-
 	appLabel := config.Get().IstioLabels.AppLabelName
-
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	errChan := make(chan error, 2)
 
 	selectorLabels := make(map[string]string)
 	selectorLabels[appLabel] = app
 	labelSelector := labels.FormatLabels(selectorLabels)
 
-	go func() {
-		defer wg.Done()
-		var err error
-		services, err = in.k8s.GetServices(namespace, selectorLabels)
-		if err != nil {
-			log.Errorf("Error fetching Services per namespace %s and app %s: %s", namespace, app, err)
-			errChan <- err
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		var err error
-		ws, err = fetchWorkloads(in.k8s, namespace, labelSelector)
-		if err != nil {
-			log.Errorf("Error fetching Workloads per namespace %s and app %s: %s", namespace, app, err)
-			errChan <- err
-		}
-	}()
-
-	wg.Wait()
-	if len(errChan) != 0 {
-		err := <-errChan
-		return nil, err
+	ws, err := fetchWorkloads(in.k8s, namespace, labelSelector)
+	if err != nil {
+		log.Errorf("Error fetching Workloads per namespace %s and app %s: %s", namespace, app, err)
+		return models.AppHealth{}, err
 	}
 
-	h := in.getAppHealth(namespace, app, rateInterval, queryTime, services, ws)
-	return &h, nil
+	return in.getAppHealth(namespace, app, rateInterval, queryTime, ws)
 }
 
-func (in *HealthService) getAppHealth(namespace, app, rateInterval string, queryTime time.Time, services []v1.Service, ws models.Workloads) models.AppHealth {
+func (in *HealthService) getAppHealth(namespace, app, rateInterval string, queryTime time.Time, ws models.Workloads) (models.AppHealth, error) {
 	health := models.EmptyAppHealth()
 
-	var wg sync.WaitGroup
-	wg.Add(len(services))
-
-	for _, service := range services {
-		go func(service v1.Service) {
-			defer wg.Done()
-			var ports []int32
-			for _, port := range service.Spec.Ports {
-				ports = append(ports, port.Port)
-			}
-			envoy, _ := in.prom.GetServiceHealth(namespace, service.Name, ports)
-			health.Envoy = append(health.Envoy, models.EnvoyHealthWrapper{
-				Service:            service.Name,
-				EnvoyServiceHealth: envoy,
-			})
-		}(service)
-	}
+	envoy, errEnvoy := in.prom.GetEnvoyMembershipRatio(namespace, app)
+	health.Envoy = envoy
 
 	// Fetch services requests rates
-	health.Requests = in.getAppRequestsHealth(namespace, app, rateInterval, queryTime)
+	rate, errRate := in.getAppRequestsHealth(namespace, app, rateInterval, queryTime)
+	health.Requests = rate
 
 	// Deployment status
 	health.WorkloadStatuses = castWorkloadStatuses(ws)
 
-	wg.Wait()
-	return health
+	return health, util.CoalesceErrors(errEnvoy, errRate)
 }
 
 // GetWorkloadHealth returns a workload health from just Namespace and workload (thus, it fetches data from K8S and Prometheus)
-func (in *HealthService) GetWorkloadHealth(namespace, workload, rateInterval string, queryTime time.Time) (*models.WorkloadHealth, error) {
+func (in *HealthService) GetWorkloadHealth(namespace, workload, rateInterval string, queryTime time.Time) (models.WorkloadHealth, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetWorkloadHealth")
 	defer promtimer.ObserveNow(&err)
 
-	// Fill all parts
-	health := models.WorkloadHealth{}
 	w, err := fetchWorkload(in.k8s, namespace, workload)
 	if err != nil {
-		return nil, err
+		return models.WorkloadHealth{}, err
 	}
-	health.WorkloadStatus = models.WorkloadStatus{
-		Name:              w.Name,
-		Replicas:          w.Replicas,
-		AvailableReplicas: w.AvailableReplicas}
 
-	health.Requests = in.getWorkloadRequestsHealth(namespace, workload, rateInterval, queryTime)
-	return &health, nil
+	rate, err := in.getWorkloadRequestsHealth(namespace, workload, rateInterval, queryTime)
+	return models.WorkloadHealth{
+		WorkloadStatus: models.WorkloadStatus{
+			Name:              w.Name,
+			Replicas:          w.Replicas,
+			AvailableReplicas: w.AvailableReplicas,
+		},
+		Requests: rate,
+	}, err
 }
 
 // GetNamespaceAppHealth returns a health for all apps in given Namespace (thus, it fetches data from K8S and Prometheus)
@@ -161,10 +102,10 @@ func (in *HealthService) GetNamespaceAppHealth(namespace, rateInterval string, q
 	if err != nil {
 		return nil, err
 	}
-	return in.getNamespaceAppHealth(namespace, appEntities, rateInterval, queryTime), nil
+	return in.getNamespaceAppHealth(namespace, appEntities, rateInterval, queryTime)
 }
 
-func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities namespaceApps, rateInterval string, queryTime time.Time) models.NamespaceAppHealth {
+func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities namespaceApps, rateInterval string, queryTime time.Time) (models.NamespaceAppHealth, error) {
 	allHealth := make(models.NamespaceAppHealth)
 
 	// Prepare all data
@@ -176,7 +117,7 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities nam
 	}
 
 	// Fetch services requests rates
-	rates, _ := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
+	rates, errRate := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
 
 	// Fill with collected request rates
 	fillAppRequestRates(allHealth, rates)
@@ -185,28 +126,19 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities nam
 	wg.Add(len(allHealth))
 
 	// Finally complete missing health information
-	for app, health := range allHealth {
-		go func(app string, health *models.AppHealth, entities *appDetails) {
+	for a, h := range allHealth {
+		go func(app string, health *models.AppHealth) {
 			defer wg.Done()
-			if entities != nil {
+			if entities := appEntities[app]; entities != nil {
 				health.WorkloadStatuses = castWorkloadStatuses(entities.Workloads)
-				for _, service := range entities.Services {
-					var ports []int32
-					for _, port := range service.Spec.Ports {
-						ports = append(ports, port.Port)
-					}
-					envoy, _ := in.prom.GetServiceHealth(namespace, service.Name, ports)
-					health.Envoy = append(health.Envoy, models.EnvoyHealthWrapper{
-						Service:            service.Name,
-						EnvoyServiceHealth: envoy,
-					})
-				}
+				envoy, _ := in.prom.GetEnvoyMembershipRatio(namespace, app)
+				health.Envoy = envoy
 			}
-		}(app, health, appEntities[app])
+		}(a, h)
 	}
 
 	wg.Wait()
-	return allHealth
+	return allHealth, errRate
 }
 
 // GetNamespaceServiceHealth returns a health for all services in given Namespace (thus, it fetches data from K8S and Prometheus)
@@ -237,23 +169,6 @@ func (in *HealthService) getNamespaceServiceHealth(namespace string, services []
 	// Fill with collected request rates
 	fillServiceRequestRates(allHealth, rates)
 
-	var wg sync.WaitGroup
-	wg.Add(len(allHealth))
-
-	// Finally complete missing health information
-	for _, service := range services {
-		health := allHealth[service.Name]
-		go func(service v1.Service, health *models.ServiceHealth) {
-			defer wg.Done()
-			var ports []int32
-			for _, port := range service.Spec.Ports {
-				ports = append(ports, port.Port)
-			}
-			health.Envoy, _ = in.prom.GetServiceHealth(namespace, service.Name, ports)
-		}(service, health)
-	}
-
-	wg.Wait()
 	return allHealth
 }
 
@@ -335,37 +250,37 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 	}
 }
 
-func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterval string, queryTime time.Time) models.RequestHealth {
+func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
-	inbound, _ := in.prom.GetServiceRequestRates(namespace, service, rateInterval, queryTime)
+	inbound, err := in.prom.GetServiceRequestRates(namespace, service, rateInterval, queryTime)
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
 	}
-	return rqHealth
+	return rqHealth, err
 }
 
-func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval string, queryTime time.Time) models.RequestHealth {
+func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
-	inbound, outbound, _ := in.prom.GetAppRequestRates(namespace, app, rateInterval, queryTime)
+	inbound, outbound, err := in.prom.GetAppRequestRates(namespace, app, rateInterval, queryTime)
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
 	}
 	for _, sample := range outbound {
 		rqHealth.AggregateOutbound(sample)
 	}
-	return rqHealth
+	return rqHealth, err
 }
 
-func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInterval string, queryTime time.Time) models.RequestHealth {
+func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInterval string, queryTime time.Time) (models.RequestHealth, error) {
 	rqHealth := models.NewEmptyRequestHealth()
-	inbound, outbound, _ := in.prom.GetWorkloadRequestRates(namespace, workload, rateInterval, queryTime)
+	inbound, outbound, err := in.prom.GetWorkloadRequestRates(namespace, workload, rateInterval, queryTime)
 	for _, sample := range inbound {
 		rqHealth.AggregateInbound(sample)
 	}
 	for _, sample := range outbound {
 		rqHealth.AggregateOutbound(sample)
 	}
-	return rqHealth
+	return rqHealth, err
 }
 
 func castWorkloadStatuses(ws models.Workloads) []models.WorkloadStatus {

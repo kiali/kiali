@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
@@ -20,89 +19,49 @@ var (
 	invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 )
 
-func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) (EnvoyServiceHealth, error) {
-	ret := EnvoyServiceHealth{}
-	if len(ports) == 0 {
-		return ret, nil
-	}
+func getEnvoyMembershipRatio(api v1.API, namespace, app string) (EnvoyMembershipRatio, error) {
+	ret := EnvoyMembershipRatio{}
 
 	// In these Prometheus queries, only the last values are of interest. Since the
 	// <servicename> is received as a parameter from the frontend, we can assume the
 	// existence of the service and that the last values of the metrics queried won't belong
 	// to any "old/outdated" service or namespace. So, there is no need to deal with
 	// namespace lower bounds.
-	envoyClustername := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, ".", "_", -1)
-	queryPart := replaceInvalidCharacters(fmt.Sprintf("%s_%s_%s", servicename, namespace, envoyClustername))
 	now := time.Now()
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	var errH, errT error
+	labels := fmt.Sprintf(`app="%s",namespace="%s"`, app, namespace)
 
-	inboundHealthyChan, inboundTotalChan, outboundHealthyChan, outboundTotalChan := make(chan model.SampleValue, len(ports)), make(chan model.SampleValue, len(ports)), make(chan model.SampleValue, len(ports)), make(chan model.SampleValue, len(ports))
-	errChan := make(chan error)
-
-	// Note: metric names below probably depend on some istio configuration.
-	// They should anyway change soon in a more prometheus-friendly way,
-	// see https://github.com/istio/istio/issues/4854 and https://github.com/istio/istio/pull/5069
-
-	for _, _port := range ports {
-		// Inbound
-		go func(port int) {
-			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_%d__%s_membership_healthy", port, queryPart), now)
-			if err != nil {
-				errChan <- err
-			} else if len(vec) > 0 {
-				inboundHealthyChan <- vec[0].Value
-			} else {
-				inboundHealthyChan <- 0
-			}
-		}(int(_port))
-		go func(port int) {
-			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_inbound_%d__%s_membership_total", port, queryPart), now)
-			if err != nil {
-				errChan <- err
-			} else if len(vec) > 0 {
-				inboundTotalChan <- vec[0].Value
-			} else {
-				inboundTotalChan <- 0
-			}
-		}(int(_port))
-		// Outbound
-		go func(port int) {
-			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_%d__%s_membership_healthy", port, queryPart), now)
-			if err != nil {
-				errChan <- err
-			} else if len(vec) > 0 {
-				outboundHealthyChan <- vec[0].Value
-			} else {
-				outboundHealthyChan <- 0
-			}
-		}(int(_port))
-		go func(port int) {
-			vec, err := fetchTimestamp(api, fmt.Sprintf("envoy_cluster_outbound_%d__%s_membership_total", port, queryPart), now)
-			if err != nil {
-				errChan <- err
-			} else if len(vec) > 0 {
-				outboundTotalChan <- vec[0].Value
-			} else {
-				outboundTotalChan <- 0
-			}
-		}(int(_port))
-	}
-
-	var err error
-	for count := 0; count < len(ports)*4; count++ {
-		select {
-		case v := <-inboundHealthyChan:
-			ret.Inbound.Healthy += int(v)
-		case v := <-inboundTotalChan:
-			ret.Inbound.Total += int(v)
-		case v := <-outboundHealthyChan:
-			ret.Outbound.Healthy += int(v)
-		case v := <-outboundTotalChan:
-			ret.Outbound.Total += int(v)
-		case err = <-errChan:
-			// No op
+	go func() {
+		defer wg.Done()
+		vec, err := fetchTimestamp(api, "sum(envoy_cluster_membership_healthy{"+labels+"})", now)
+		if err != nil {
+			errH = err
+		} else if len(vec) > 0 {
+			ret.Healthy = int(vec[0].Value)
+		} else {
+			ret.Healthy = 0
 		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		vec, err := fetchTimestamp(api, "sum(envoy_cluster_membership_total{"+labels+"})", now)
+		if err != nil {
+			errT = err
+		} else if len(vec) > 0 {
+			ret.Total = int(vec[0].Value)
+		} else {
+			ret.Total = 0
+		}
+	}()
+
+	wg.Wait()
+	if errH != nil {
+		return ret, errH
 	}
-	return ret, err
+	return ret, errT
 }
 
 func getMetrics(api v1.API, q *IstioMetricsQuery) Metrics {
