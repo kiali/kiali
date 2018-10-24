@@ -8,6 +8,7 @@ import (
 	auth_v1 "k8s.io/api/authorization/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -469,4 +470,135 @@ func mockGetIstioConfigDetails() IstioConfigService {
 	k8s.On("GetSelfSubjectAccessReview", "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)
 
 	return IstioConfigService{k8s: k8s}
+}
+
+func TestIsVirtualService(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	virtualServiceIstioObject := kubernetes.MockIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "reviews",
+		},
+		Spec: map[string]interface{}{
+			"hosts": []interface{}{
+				"reviews",
+			},
+			"http": []interface{}{
+				map[string]interface{}{
+					"route": []interface{}{
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"host":   "reviews",
+								"subset": "v2",
+							},
+							"weight": 50,
+						},
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"host":   "reviews",
+								"subset": "v3",
+							},
+							"weight": 50,
+						},
+					},
+				},
+			},
+		},
+	}
+	virtualService := models.VirtualService{}
+	virtualService.Parse(virtualServiceIstioObject.DeepCopyIstioObject())
+
+	assert.False(t, virtualService.IsVirtualService("", ""))
+	assert.False(t, virtualService.IsVirtualService("", "ratings"))
+	assert.True(t, virtualService.IsVirtualService("", "reviews"))
+}
+
+func TestHasCircuitBreaker(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Note - I don't think the subset definitions here have any impact on the CB
+	// detection. They do not do any sort of override so presumably any version, including
+	// a v3 would inherit the DR-level CB definition.
+	destinationRule1 := kubernetes.MockIstioObject{
+		Spec: map[string]interface{}{
+			"host": "reviews",
+			"trafficPolicy": map[string]interface{}{
+				"connectionPool": map[string]interface{}{
+					"http": map[string]interface{}{
+						"maxRequestsPerConnection": 100,
+					},
+				},
+				"outlierDetection": map[string]interface{}{
+					"http": map[string]interface{}{
+						"consecutiveErrors": 50,
+					},
+				},
+			},
+			"subsets": []interface{}{
+				map[string]interface{}{
+					"name": "v1",
+					"labels": map[string]interface{}{
+						"version": "v1",
+					},
+				},
+				map[string]interface{}{
+					"name": "v2",
+					"labels": map[string]interface{}{
+						"version": "v2",
+					},
+				},
+			},
+		},
+	}
+	dRule1 := models.DestinationRule{}
+	dRule1.Parse(destinationRule1.DeepCopyIstioObject())
+
+	assert.False(t, dRule1.HasCircuitBreaker("", "", ""))
+	assert.True(t, dRule1.HasCircuitBreaker("", "reviews", ""))
+	assert.False(t, dRule1.HasCircuitBreaker("", "reviews-bad", ""))
+	assert.True(t, dRule1.HasCircuitBreaker("", "reviews", "v1"))
+	assert.True(t, dRule1.HasCircuitBreaker("", "reviews", "v2"))
+	assert.True(t, dRule1.HasCircuitBreaker("", "reviews", "v3"))
+	assert.False(t, dRule1.HasCircuitBreaker("", "reviews-bad", "v2"))
+
+	destinationRule2 := kubernetes.MockIstioObject{
+		Spec: map[string]interface{}{
+			"host": "reviews",
+			"subsets": []interface{}{
+				map[string]interface{}{
+					"name": "v1",
+					"labels": map[string]interface{}{
+						"version": "v1",
+					},
+				},
+				map[string]interface{}{
+					"name": "v2",
+					"labels": map[string]interface{}{
+						"version": "v2",
+					},
+					"trafficPolicy": map[string]interface{}{
+						"connectionPool": map[string]interface{}{
+							"http": map[string]interface{}{
+								"maxRequestsPerConnection": 100,
+							},
+						},
+						"outlierDetection": map[string]interface{}{
+							"http": map[string]interface{}{
+								"consecutiveErrors": 50,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	dRule2 := models.DestinationRule{}
+	dRule2.Parse(destinationRule2.DeepCopyIstioObject())
+
+	assert.True(t, dRule2.HasCircuitBreaker("", "reviews", ""))
+	assert.False(t, dRule2.HasCircuitBreaker("", "reviews", "v1"))
+	assert.True(t, dRule2.HasCircuitBreaker("", "reviews", "v2"))
+	assert.False(t, dRule2.HasCircuitBreaker("", "reviews-bad", "v2"))
 }

@@ -56,3 +56,18 @@ func (vService *VirtualService) Parse(virtualService kubernetes.IstioObject) {
 	vService.Tcp = virtualService.GetSpec()["tcp"]
 	vService.Tls = virtualService.GetSpec()["tls"]
 }
+
+// IsVirtualService returns true if VirtualService hosts applies to the service
+func (vService *VirtualService) IsVirtualService(namespace string, serviceName string) bool {
+	if serviceName == "" {
+		return false
+	}
+	if hosts, ok := vService.Hosts.([]interface{}); ok {
+		for _, host := range hosts {
+			if kubernetes.FilterByHost(host.(string), serviceName, namespace) {
+				return true
+			}
+		}
+	}
+	return false
+}

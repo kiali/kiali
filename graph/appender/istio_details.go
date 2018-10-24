@@ -1,8 +1,9 @@
 package appender
 
 import (
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 )
 
 const IstioAppenderName = "istio"
@@ -24,30 +25,29 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *Glob
 		return
 	}
 
-	if globalInfo.IstioClient == nil {
+	if globalInfo.Business == nil {
 		var err error
-		globalInfo.IstioClient, err = kubernetes.NewClient()
+		globalInfo.Business, err = business.Get()
 		checkError(err)
 	}
 
-	istioDetails := fetchIstioDetails(namespaceInfo.Namespace, globalInfo.IstioClient)
-
-	addRouteBadges(trafficMap, namespaceInfo.Namespace, istioDetails)
+	addBadging(trafficMap, globalInfo, namespaceInfo)
 }
 
-func fetchIstioDetails(namespace string, istioClient *kubernetes.IstioClient) *kubernetes.IstioDetails {
-	istioDetails, err := istioClient.GetIstioDetails(namespace, "")
+func addBadging(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+	// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in NamespaceInfo
+	istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+		IncludeDestinationRules: true,
+		IncludeVirtualServices:  true,
+		Namespace:               namespaceInfo.Namespace,
+	})
 	checkError(err)
 
-	return istioDetails
+	applyCircuitBreakers(trafficMap, namespaceInfo.Namespace, istioCfg)
+	applyVirtualServices(trafficMap, namespaceInfo.Namespace, istioCfg)
 }
 
-func addRouteBadges(trafficMap graph.TrafficMap, namespace string, istioDetails *kubernetes.IstioDetails) {
-	applyCircuitBreakers(trafficMap, namespace, istioDetails)
-	applyVirtualServices(trafficMap, namespace, istioDetails)
-}
-
-func applyCircuitBreakers(trafficMap graph.TrafficMap, namespace string, istioDetails *kubernetes.IstioDetails) {
+func applyCircuitBreakers(trafficMap graph.TrafficMap, namespace string, istioCfg models.IstioConfigList) {
 NODES:
 	for _, n := range trafficMap {
 		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
@@ -55,11 +55,13 @@ NODES:
 			continue
 		}
 
+		// Note, Because DestinationRules are applied to services we limit CB badges to service nodes and app nodes.
+		// Whether we should add to workload nodes is debatable, we could add it later if needed.
 		versionOk := n.Version != "" && n.Version != graph.UnknownVersion
 		switch {
 		case n.NodeType == graph.NodeTypeService:
-			for _, destinationRule := range istioDetails.DestinationRules {
-				if kubernetes.CheckDestinationRuleCircuitBreaker(destinationRule, namespace, n.Service, "") {
+			for _, destinationRule := range istioCfg.DestinationRules {
+				if destinationRule.HasCircuitBreaker(namespace, n.Service, "") {
 					n.Metadata["hasCB"] = true
 					continue NODES
 				}
@@ -67,8 +69,8 @@ NODES:
 		case !versionOk && (n.NodeType == graph.NodeTypeApp):
 			if destServices, ok := n.Metadata["destServices"]; ok {
 				for serviceName, _ := range destServices.(map[string]bool) {
-					for _, destinationRule := range istioDetails.DestinationRules {
-						if kubernetes.CheckDestinationRuleCircuitBreaker(destinationRule, namespace, serviceName, "") {
+					for _, destinationRule := range istioCfg.DestinationRules {
+						if destinationRule.HasCircuitBreaker(namespace, serviceName, "") {
 							n.Metadata["hasCB"] = true
 							continue NODES
 						}
@@ -78,8 +80,8 @@ NODES:
 		case versionOk:
 			if destServices, ok := n.Metadata["destServices"]; ok {
 				for serviceName, _ := range destServices.(map[string]bool) {
-					for _, destinationRule := range istioDetails.DestinationRules {
-						if kubernetes.CheckDestinationRuleCircuitBreaker(destinationRule, namespace, serviceName, n.Version) {
+					for _, destinationRule := range istioCfg.DestinationRules {
+						if destinationRule.HasCircuitBreaker(namespace, serviceName, n.Version) {
 							n.Metadata["hasCB"] = true
 							continue NODES
 						}
@@ -92,7 +94,7 @@ NODES:
 	}
 }
 
-func applyVirtualServices(trafficMap graph.TrafficMap, namespace string, istioDetails *kubernetes.IstioDetails) {
+func applyVirtualServices(trafficMap graph.TrafficMap, namespace string, istioCfg models.IstioConfigList) {
 NODES:
 	for _, n := range trafficMap {
 		if n.NodeType != graph.NodeTypeService {
@@ -101,8 +103,8 @@ NODES:
 		if n.Namespace != namespace {
 			continue
 		}
-		for _, virtualService := range istioDetails.VirtualServices {
-			if kubernetes.CheckVirtualService(virtualService, namespace, n.Service) {
+		for _, virtualService := range istioCfg.VirtualServices {
+			if virtualService.IsVirtualService(namespace, n.Service) {
 				n.Metadata["hasVS"] = true
 				continue NODES
 			}
