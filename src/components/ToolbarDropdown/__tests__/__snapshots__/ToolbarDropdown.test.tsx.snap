@@ -55,6 +55,7 @@ ShallowWrapper {
           disabled={false}
           id="graph_filter_interval_duration"
           onSelect={[Function]}
+          onToggle={[Function]}
           title="Last min"
         >
           <MenuItem
@@ -307,6 +308,7 @@ ShallowWrapper {
           "disabled": false,
           "id": "graph_filter_interval_duration",
           "onSelect": [Function],
+          "onToggle": [Function],
           "title": "Last min",
         },
         "ref": null,
@@ -525,6 +527,7 @@ ShallowWrapper {
             disabled={false}
             id="graph_filter_interval_duration"
             onSelect={[Function]}
+            onToggle={[Function]}
             title="Last min"
           >
             <MenuItem
@@ -777,6 +780,7 @@ ShallowWrapper {
             "disabled": false,
             "id": "graph_filter_interval_duration",
             "onSelect": [Function],
+            "onToggle": [Function],
             "title": "Last min",
           },
           "ref": null,
@@ -1046,6 +1050,7 @@ ShallowWrapper {
           disabled={false}
           id="metrics_filter_poll_interval"
           onSelect={[Function]}
+          onToggle={[Function]}
           title="15 sec"
         >
           <MenuItem
@@ -1218,6 +1223,7 @@ ShallowWrapper {
           "disabled": false,
           "id": "metrics_filter_poll_interval",
           "onSelect": [Function],
+          "onToggle": [Function],
           "title": "15 sec",
         },
         "ref": null,
@@ -1368,6 +1374,7 @@ ShallowWrapper {
             disabled={false}
             id="metrics_filter_poll_interval"
             onSelect={[Function]}
+            onToggle={[Function]}
             title="15 sec"
           >
             <MenuItem
@@ -1540,6 +1547,7 @@ ShallowWrapper {
             "disabled": false,
             "id": "metrics_filter_poll_interval",
             "onSelect": [Function],
+            "onToggle": [Function],
             "title": "15 sec",
           },
           "ref": null,
@@ -1737,6 +1745,7 @@ ShallowWrapper {
           disabled={false}
           id="graph_filter_layouts"
           onSelect={[Function]}
+          onToggle={[Function]}
           title="Cola"
         >
           <MenuItem
@@ -1829,6 +1838,7 @@ ShallowWrapper {
           "disabled": false,
           "id": "graph_filter_layouts",
           "onSelect": [Function],
+          "onToggle": [Function],
           "title": "Cola",
         },
         "ref": null,
@@ -1911,6 +1921,7 @@ ShallowWrapper {
             disabled={false}
             id="graph_filter_layouts"
             onSelect={[Function]}
+            onToggle={[Function]}
             title="Cola"
           >
             <MenuItem
@@ -2003,6 +2014,7 @@ ShallowWrapper {
             "disabled": false,
             "id": "graph_filter_layouts",
             "onSelect": [Function],
+            "onToggle": [Function],
             "title": "Cola",
           },
           "ref": null,
@@ -2140,6 +2152,7 @@ ShallowWrapper {
           disabled={false}
           id="graph_filter_interval_duration"
           onSelect={[Function]}
+          onToggle={[Function]}
           title="Last min"
         >
           <MenuItem
@@ -2392,6 +2405,7 @@ ShallowWrapper {
           "disabled": false,
           "id": "graph_filter_interval_duration",
           "onSelect": [Function],
+          "onToggle": [Function],
           "title": "Last min",
         },
         "ref": null,
@@ -2610,6 +2624,7 @@ ShallowWrapper {
             disabled={false}
             id="graph_filter_interval_duration"
             onSelect={[Function]}
+            onToggle={[Function]}
             title="Last min"
           >
             <MenuItem
@@ -2862,6 +2877,7 @@ ShallowWrapper {
             "disabled": false,
             "id": "graph_filter_interval_duration",
             "onSelect": [Function],
+            "onToggle": [Function],
             "title": "Last min",
           },
           "ref": null,
@@ -3131,6 +3147,7 @@ ShallowWrapper {
           disabled={false}
           id="metrics_filter_poll_interval"
           onSelect={[Function]}
+          onToggle={[Function]}
           title="15 sec"
         >
           <MenuItem
@@ -3303,6 +3320,7 @@ ShallowWrapper {
           "disabled": false,
           "id": "metrics_filter_poll_interval",
           "onSelect": [Function],
+          "onToggle": [Function],
           "title": "15 sec",
         },
         "ref": null,
@@ -3453,6 +3471,7 @@ ShallowWrapper {
             disabled={false}
             id="metrics_filter_poll_interval"
             onSelect={[Function]}
+            onToggle={[Function]}
             title="15 sec"
           >
             <MenuItem
@@ -3625,6 +3644,7 @@ ShallowWrapper {
             "disabled": false,
             "id": "metrics_filter_poll_interval",
             "onSelect": [Function],
+            "onToggle": [Function],
             "title": "15 sec",
           },
           "ref": null,
@@ -3822,6 +3842,7 @@ ShallowWrapper {
           disabled={false}
           id="graph_filter_layouts"
           onSelect={[Function]}
+          onToggle={[Function]}
           title="Cola"
         >
           <MenuItem
@@ -3914,6 +3935,7 @@ ShallowWrapper {
           "disabled": false,
           "id": "graph_filter_layouts",
           "onSelect": [Function],
+          "onToggle": [Function],
           "title": "Cola",
         },
         "ref": null,
@@ -3996,6 +4018,7 @@ ShallowWrapper {
             disabled={false}
             id="graph_filter_layouts"
             onSelect={[Function]}
+            onToggle={[Function]}
             title="Cola"
           >
             <MenuItem
@@ -4088,6 +4111,7 @@ ShallowWrapper {
             "disabled": false,
             "id": "graph_filter_layouts",
             "onSelect": [Function],
+            "onToggle": [Function],
             "title": "Cola",
           },
           "ref": null,

@@ -21,6 +21,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
   }
 
   handleSelectNamespace = (namespace: string) => this.props.onSelect({ name: namespace });
+  handleToggle = (isOpen: boolean) => isOpen && this.props.refresh();
 
   render() {
     const disabled = this.props.disabled ? true : false;
@@ -41,6 +42,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
         handleSelect={this.handleSelectNamespace}
         value={this.props.activeNamespace.name}
         options={items}
+        onToggle={this.handleToggle}
       />
     );
   }

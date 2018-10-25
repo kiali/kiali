@@ -12,6 +12,7 @@ type ToolbarDropdownProps = {
   initialLabel?: string;
   handleSelect: Function;
   options: { [key: string]: string };
+  onToggle?: (isOpen: boolean) => void;
 };
 
 type ToolbarDropdownState = {
@@ -45,6 +46,7 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
           title={this.props.label || this.state.currentName}
           onSelect={this.onKeyChanged}
           id={this.props.id}
+          onToggle={(isOpen: boolean) => this.props.onToggle && this.props.onToggle(isOpen)}
         >
           {Object.keys(this.props.options).map(key => (
             <MenuItem key={key} active={key === (this.props.value || this.state.currentValue)} eventKey={key}>
