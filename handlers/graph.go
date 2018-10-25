@@ -679,6 +679,9 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 	httpMetric := "istio_requests_total"
 	interval := o.Namespaces[namespace].Duration
 
+	// create map to aggregate traffic by response code
+	trafficMap := graph.NewTrafficMap()
+
 	// query prometheus for request traffic in two queries:
 	// 1) query for incoming traffic
 	var query string
@@ -712,6 +715,18 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 				groupBy)
 		}
 	case graph.NodeTypeService:
+		// for service requests we want source reporting to capture source-reported errors.  But unknown only generates destination telemetry.  So
+		// perform a special query just to capture [successful] request telemetry from unknown.
+		query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_service_namespace="%s",destination_service_name="%s",response_code=~"%s"} [%vs])) by (%s)`,
+			httpMetric,
+			namespace,
+			n.Service,
+			"[2345][0-9][0-9]",      // regex for valid response_codes
+			int(interval.Seconds()), // range duration for the query
+			groupBy)
+		vector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+		populateTrafficMapHttp(trafficMap, &vector, o)
+
 		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_service_name="%s",response_code=~"%s"} [%vs])) by (%s)`,
 			httpMetric,
 			namespace,
@@ -760,8 +775,6 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 	}
 	outVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
-	// create map to aggregate traffic by response code
-	trafficMap := graph.NewTrafficMap()
 	populateTrafficMapHttp(trafficMap, &inVector, o)
 	populateTrafficMapHttp(trafficMap, &outVector, o)
 
@@ -846,6 +859,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 				tcpGroupBy)
 		}
 	case graph.NodeTypeService:
+		// TODO: Do we need to handle requests from unknown in a special way (like in HTTP above)? Not sure how tcp is reported from unknown.
 		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_service_name="%s"} [%vs])) by (%s)`,
 			tcpMetric,
 			namespace,

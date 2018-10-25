@@ -1121,8 +1121,11 @@ func TestWorkloadNodeGraph(t *testing.T) {
 }
 
 func TestServiceNodeGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name="productpage",response_code=~"[2345][0-9][0-9]"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)`
-	q0m0 := model.Metric{
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo",destination_service_name="productpage",response_code=~"[2345][0-9][0-9]"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)`
+	v0 := model.Vector{}
+
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name="productpage",response_code=~"[2345][0-9][0-9]"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,response_code),0.001)`
+	q1m0 := model.Metric{
 		"source_workload_namespace":     "istio-system",
 		"source_workload":               "ingressgateway-unknown",
 		"source_app":                    "ingressgateway",
@@ -1133,13 +1136,13 @@ func TestServiceNodeGraph(t *testing.T) {
 		"destination_app":               "productpage",
 		"destination_version":           "v1",
 		"response_code":                 "200"}
-	v0 := model.Vector{
+	v1 := model.Vector{
 		&model.Sample{
-			Metric: q0m0,
+			Metric: q1m0,
 			Value:  100}}
 
-	q1 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
-	q1m0 := model.Metric{
+	q2 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q2m0 := model.Metric{
 		"source_workload_namespace":     "istio-system",
 		"source_workload":               "ingressgateway-unknown",
 		"source_app":                    "ingressgateway",
@@ -1149,9 +1152,9 @@ func TestServiceNodeGraph(t *testing.T) {
 		"destination_workload":          "productpage-v1",
 		"destination_app":               "productpage",
 		"destination_version":           "v1"}
-	v1 := model.Vector{
+	v2 := model.Vector{
 		&model.Sample{
-			Metric: q1m0,
+			Metric: q2m0,
 			Value:  31}}
 
 	client, api, _, err := setupMocked()
@@ -1161,6 +1164,7 @@ func TestServiceNodeGraph(t *testing.T) {
 
 	mockQuery(api, q0, &v0)
 	mockQuery(api, q1, &v1)
+	mockQuery(api, q2, &v2)
 
 	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
 
