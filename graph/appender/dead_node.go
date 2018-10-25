@@ -5,6 +5,8 @@ import (
 	"github.com/kiali/kiali/graph"
 )
 
+const DeadNodeAppenderName = "deadNode"
+
 // DeadNodeAppender is responsible for removing from the graph unwanted nodes:
 // - nodes for which there is no traffic reported and the related schema is missing
 //   (presumably removed from K8S). (kiali-621)
@@ -12,7 +14,13 @@ import (
 //   edges (kiali-1326). Kiali-1526 adds an exclusion to this rule. Egress is a special
 //   terminal service node and we want to show it even if it has no incoming traffic
 //   for the time period.
+// Name: deadNode
 type DeadNodeAppender struct{}
+
+// Name implements Appender
+func (a DeadNodeAppender) Name() string {
+	return DeadNodeAppenderName
+}
 
 // AppendGraph implements Appender
 func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {

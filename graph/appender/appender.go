@@ -72,4 +72,7 @@ type Appender interface {
 	// AppendGraph performs the appender work on the provided traffic map. The map
 	// may be initially empty. An appender is allowed to add or remove map entries.
 	AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo)
+
+	// Name returns a unique appender name and which is the name used to identify the appender (e.g in 'appenders' query param)
+	Name() string
 }

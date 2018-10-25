@@ -8,9 +8,19 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
+const UnusedNodeAppenderName = "unusedNode"
+
+// UnusedNodeAppender looks for services that have never seen request traffic.  It adds nodes to represent the
+// unused definitions.  The added node types depend on the graph type and/or labeling on the definition.
+// Name: unusedNode
 type UnusedNodeAppender struct {
 	GraphType   string // This appender does not operate on service graphs because it adds workload nodes.
 	IsNodeGraph bool   // This appender does not operate on node detail graphs because we want to focus on the specific node.
+}
+
+// Name implements Appender
+func (a UnusedNodeAppender) Name() string {
+	return UnusedNodeAppenderName
 }
 
 // AppendGraph implements Appender

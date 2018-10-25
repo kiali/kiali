@@ -187,10 +187,10 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 	// To reduce processing, next run appenders that don't apply to unused services
 	// Add orphan (unused) services
 	// Run remaining appenders
-	if csl == AppenderAll || strings.Contains(csl, "dead_node") {
+	if csl == AppenderAll || strings.Contains(csl, appender.DeadNodeAppenderName) || strings.Contains(csl, "dead_node") {
 		appenders = append(appenders, appender.DeadNodeAppender{})
 	}
-	if csl == AppenderAll || strings.Contains(csl, "response_time") {
+	if csl == AppenderAll || strings.Contains(csl, appender.ResponseTimeAppenderName) || strings.Contains(csl, "response_time") {
 		quantile := appender.DefaultQuantile
 		if _, ok := params["responseTimeQuantile"]; ok {
 			if responseTimeQuantile, err := strconv.ParseFloat(params.Get("responseTimeQuantile"), 64); err == nil {
@@ -207,7 +207,7 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		}
 		appenders = append(appenders, a)
 	}
-	if csl == AppenderAll || strings.Contains(csl, "security_policy") {
+	if csl == AppenderAll || strings.Contains(csl, appender.SecurityPolicyAppenderName) || strings.Contains(csl, "security_policy") {
 		a := appender.SecurityPolicyAppender{
 			GraphType:    o.GraphType,
 			IncludeIstio: o.IncludeIstio,
@@ -216,17 +216,17 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		}
 		appenders = append(appenders, a)
 	}
-	if csl == AppenderAll || strings.Contains(csl, "unused_node") {
+	if csl == AppenderAll || strings.Contains(csl, appender.UnusedNodeAppenderName) || strings.Contains(csl, "unused_node") {
 		hasNodeOptions := o.App != "" || o.Workload != "" || o.Service != ""
 		appenders = append(appenders, appender.UnusedNodeAppender{
 			GraphType:   o.GraphType,
 			IsNodeGraph: hasNodeOptions,
 		})
 	}
-	if csl == AppenderAll || strings.Contains(csl, "istio") {
+	if csl == AppenderAll || strings.Contains(csl, appender.IstioAppenderName) || strings.Contains(csl, "istio") {
 		appenders = append(appenders, appender.IstioAppender{})
 	}
-	if csl == AppenderAll || strings.Contains(csl, "sidecars_check") {
+	if csl == AppenderAll || strings.Contains(csl, appender.SidecarsCheckAppenderName) || strings.Contains(csl, "sidecars_check") {
 		appenders = append(appenders, appender.SidecarsCheckAppender{})
 	}
 

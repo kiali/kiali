@@ -13,12 +13,14 @@ import (
 )
 
 const (
-	DefaultQuantile = 0.95 // 95th percentile
+	DefaultQuantile          = 0.95 // 95th percentile
+	ResponseTimeAppenderName = "responseTime"
 )
 
 // ResponseTimeAppender is responsible for adding responseTime information to the graph. ResponseTime
 // is represented as a percentile value. The default is 95th percentile, which means that
 // 95% of requests executed in no more than the resulting milliseconds.
+// Name: responseTime
 type ResponseTimeAppender struct {
 	GraphType          string
 	InjectServiceNodes bool
@@ -26,6 +28,11 @@ type ResponseTimeAppender struct {
 	Namespaces         map[string]graph.NamespaceInfo
 	Quantile           float64
 	QueryTime          int64 // unix time in seconds
+}
+
+// Name implements Appender
+func (a ResponseTimeAppender) Name() string {
+	return ResponseTimeAppenderName
 }
 
 // AppendGraph implements Appender
