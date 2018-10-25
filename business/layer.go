@@ -14,6 +14,7 @@ type Layer struct {
 	Workload    WorkloadService
 	App         AppService
 	Namespace   NamespaceService
+	k8s         kubernetes.IstioClientInterface
 }
 
 // Global business.Layer; currently only used for tests to inject mocks,
@@ -33,16 +34,9 @@ func Get() (*Layer, error) {
 	if err != nil {
 		return nil, err
 	}
-	// We don't update the global layer here to keep it stateless
-	temporaryLayer := &Layer{}
-	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s}
-	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.Validations = IstioValidationsService{k8s: k8s}
-	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s}
-	temporaryLayer.Workload = WorkloadService{k8s: k8s}
-	temporaryLayer.App = AppService{k8s: k8s}
-	temporaryLayer.Namespace = NewNamespaceService(k8s)
-	return temporaryLayer, nil
+	// Business needs to maintain a minimal state as kubernetes package will maintain a cache
+	SetWithBackends(k8s, prom)
+	return layer, nil
 }
 
 // SetWithBackends creates all services with injected clients to external APIs
@@ -55,5 +49,12 @@ func SetWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	layer.Workload = WorkloadService{k8s: k8s}
 	layer.App = AppService{k8s: k8s}
 	layer.Namespace = NewNamespaceService(k8s)
+	layer.k8s = k8s
 	return layer
+}
+
+func (in *Layer) Stop() {
+	if in.k8s != nil {
+		in.k8s.Stop()
+	}
 }

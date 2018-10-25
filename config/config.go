@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -54,8 +55,9 @@ const (
 	EnvIstioLabelNameApp     = "ISTIO_LABEL_NAME_APP"
 	EnvIstioLabelNameVersion = "ISTIO_LABEL_NAME_VERSION"
 
-	EnvKubernetesBurst = "KUBERNETES_BURST"
-	EnvKubernetesQPS   = "KUBERNETES_QPS"
+	EnvKubernetesBurst         = "KUBERNETES_BURST"
+	EnvKubernetesQPS           = "KUBERNETES_QPS"
+	EnvKubernetesCacheDuration = "KUBERNETES_CACHE_DURATION"
 )
 
 // The versions that Kiali requires
@@ -124,8 +126,9 @@ type IstioLabels struct {
 
 // Kubernetes client configuration
 type KubernetesConfig struct {
-	Burst int     `yaml:"burst,omitempty"`
-	QPS   float32 `yaml:"qps,omitempty"`
+	Burst         int     `yaml:"burst,omitempty"`
+	QPS           float32 `yaml:"qps,omitempty"`
+	CacheDuration int64   `yaml:"cache_duration,omitempty"`
 }
 
 // Exclude Blacklist holds regex strings defining a blacklist
@@ -203,6 +206,7 @@ func NewConfig() (c *Config) {
 	// Kubernetes client Configuration
 	c.KubernetesConfig.Burst = getDefaultInt(EnvKubernetesBurst, 200)
 	c.KubernetesConfig.QPS = getDefaultFloat32(EnvKubernetesQPS, 100)
+	c.KubernetesConfig.CacheDuration = getDefaultInt64(EnvKubernetesCacheDuration, time.Duration(5*time.Minute).Nanoseconds())
 
 	trimmedExclusionPatterns := []string{}
 	for _, entry := range c.Api.Namespaces.Exclude {

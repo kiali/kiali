@@ -8,7 +8,6 @@ import (
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -67,26 +66,30 @@ func (in *IstioClient) GetProjects() ([]osv1.Project, error) {
 }
 
 func (in *IstioClient) IsOpenShift() bool {
-	_, err := in.k8s.RESTClient().Get().AbsPath("/version/openshift").Do().Raw()
-	if err != nil {
-		return false
+	if in.isOpenShift == nil {
+		isOpenShift := false
+		_, err := in.k8s.RESTClient().Get().AbsPath("/version/openshift").Do().Raw()
+		if err == nil {
+			isOpenShift = true
+		}
+		in.isOpenShift = &isOpenShift
 	}
-	return true
+	return *in.isOpenShift
 }
 
 // GetServices returns a list of services for a given namespace.
 // If selectorLabels is defined the list of services is filtered for those that matches Services selector labels.
 // It returns an error on any problem.
 func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]string) ([]v1.Service, error) {
-	allServices, err := in.k8s.CoreV1().Services(namespace).List(emptyListOptions)
-	if err != nil {
-		return nil, err
+	allServices, found := in.k8sCache.GetServices(namespace)
+	if !found {
+		allServices = []v1.Service{}
 	}
 	if selectorLabels == nil {
-		return allServices.Items, nil
+		return allServices, nil
 	}
 	var services []v1.Service
-	for _, svc := range allServices.Items {
+	for _, svc := range allServices {
 		svcSelector := labels.Set(svc.Spec.Selector).AsSelector()
 		if svcSelector.Matches(labels.Set(selectorLabels)) {
 			services = append(services, svc)
@@ -98,18 +101,20 @@ func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]s
 // GetDeployment returns the definition of a specific deployment.
 // It returns an error on any problem.
 func (in *IstioClient) GetDeployment(namespace, deploymentName string) (*v1beta1.Deployment, error) {
-	return in.k8s.AppsV1beta1().Deployments(namespace).Get(deploymentName, emptyGetOptions)
+	if dep, exist := in.k8sCache.GetDeployment(namespace, deploymentName); exist {
+		return dep, nil
+	}
+	return nil, NewNotFound(deploymentName, "apps/v1beta1", "Deployment")
 }
 
 // GetDeployments returns an array of deployments for a given namespace and a set of labels.
-// An empty labelSelector will fetch all Deployments for a namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetDeployments(namespace string) ([]v1beta1.Deployment, error) {
-	dl, err := in.k8s.AppsV1beta1().Deployments(namespace).List(emptyListOptions)
-	if err != nil {
-		return nil, err
+	dl, found := in.k8sCache.GetDeployments(namespace)
+	if !found {
+		dl = []v1beta1.Deployment{}
 	}
-	return dl.Items, nil
+	return dl, nil
 }
 
 // GetDeployment returns the definition of a specific deployment.
@@ -135,94 +140,87 @@ func (in *IstioClient) GetDeploymentConfigs(namespace string) ([]osappsv1.Deploy
 	return result.Items, nil
 }
 
-func (in *IstioClient) GetReplicaSet(namespace string, replicasetName string) (*v1beta2.ReplicaSet, error) {
-	return in.k8s.AppsV1beta2().ReplicaSets(namespace).Get(replicasetName, emptyGetOptions)
-}
-
 func (in *IstioClient) GetReplicaSets(namespace string) ([]v1beta2.ReplicaSet, error) {
-	rs, err := in.k8s.AppsV1beta2().ReplicaSets(namespace).List(emptyListOptions)
-	if err != nil {
-		return nil, err
+	rs, found := in.k8sCache.GetReplicaSets(namespace)
+	if !found {
+		rs = []v1beta2.ReplicaSet{}
 	}
-	return rs.Items, nil
+	return rs, nil
 }
 
 func (in *IstioClient) GetStatefulSet(namespace string, statefulsetName string) (*v1beta2.StatefulSet, error) {
-	return in.k8s.AppsV1beta2().StatefulSets(namespace).Get(statefulsetName, emptyGetOptions)
+	if ss, exist := in.k8sCache.GetStatefulSet(namespace, statefulsetName); exist {
+		return ss, nil
+	}
+	return nil, NewNotFound(statefulsetName, "apps/v1beta2", "StatefulSet")
 }
 
 func (in *IstioClient) GetStatefulSets(namespace string) ([]v1beta2.StatefulSet, error) {
-	sf, err := in.k8s.AppsV1beta2().StatefulSets(namespace).List(emptyListOptions)
-	if err != nil {
-		return nil, err
+	sf, found := in.k8sCache.GetStatefulSets(namespace)
+	if !found {
+		sf = []v1beta2.StatefulSet{}
 	}
-	return sf.Items, nil
-}
-
-func (in *IstioClient) GetReplicationController(namespace string, replicasetName string) (*v1.ReplicationController, error) {
-	return in.k8s.CoreV1().ReplicationControllers(namespace).Get(replicasetName, emptyGetOptions)
+	return sf, nil
 }
 
 func (in *IstioClient) GetReplicationControllers(namespace string) ([]v1.ReplicationController, error) {
-	rc, err := in.k8s.CoreV1().ReplicationControllers(namespace).List(emptyListOptions)
-	if err != nil {
-		return nil, err
+	rc, found := in.k8sCache.GetReplicationControllers(namespace)
+	if !found {
+		rc = []v1.ReplicationController{}
 	}
-	return rc.Items, nil
+	return rc, nil
 }
 
 // GetService returns the definition of a specific service.
 // It returns an error on any problem.
 func (in *IstioClient) GetService(namespace, serviceName string) (*v1.Service, error) {
-	return in.k8s.CoreV1().Services(namespace).Get(serviceName, emptyGetOptions)
+	if svc, exist := in.k8sCache.GetService(namespace, serviceName); exist {
+		return svc, nil
+	}
+	return nil, NewNotFound(serviceName, "core/v1", "Service")
 }
 
 // GetEndpoints return the list of endpoint of a specific service.
 // It returns an error on any problem.
 func (in *IstioClient) GetEndpoints(namespace, serviceName string) (*v1.Endpoints, error) {
-	return in.k8s.CoreV1().Endpoints(namespace).Get(serviceName, emptyGetOptions)
+	if endpoints, exist := in.k8sCache.GetEndpoints(namespace, serviceName); exist {
+		return endpoints, nil
+	}
+	return nil, NewNotFound(serviceName, "core/v1", "Endpoints")
 }
 
 // GetPods returns the pods definitions for a given set of labels.
 // An empty labelSelector will fetch all pods found per a namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetPods(namespace, labelSelector string) ([]v1.Pod, error) {
-	// An empty selector is ambiguous in the go client, could mean either "select all" or "select none"
-	// Here we assume empty == select all
-	// (see also https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors)
-	pods, err := in.k8s.CoreV1().Pods(namespace).List(meta_v1.ListOptions{LabelSelector: labelSelector})
-	if err != nil {
-		return nil, err
+	pods, found := in.k8sCache.GetPods(namespace)
+	if !found {
+		pods = []v1.Pod{}
 	}
-	return pods.Items, nil
-}
-
-// GetCronJob returns the definition of a specific CronJob.
-// It returns an error on any problem.
-func (in *IstioClient) GetCronJob(namespace, cronjobName string) (*batch_v1beta1.CronJob, error) {
-	return in.k8s.BatchV1beta1().CronJobs(namespace).Get(cronjobName, emptyGetOptions)
+	if labelSelector != "" {
+		selector, err := labels.Parse(labelSelector)
+		if err != nil {
+			return pods, err
+		}
+		pods = FilterPodsForSelector(selector, pods)
+	}
+	return pods, nil
 }
 
 func (in *IstioClient) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error) {
-	cj, err := in.k8s.BatchV1beta1().CronJobs(namespace).List(emptyListOptions)
-	if err != nil {
-		return nil, err
+	cronjobs, found := in.k8sCache.GetCronJobs(namespace)
+	if !found {
+		cronjobs = []batch_v1beta1.CronJob{}
 	}
-	return cj.Items, nil
-}
-
-// GetJob returns the definition of a specific Job.
-// It returns an error on any problem.
-func (in *IstioClient) GetJob(namespace, jobName string) (*batch_v1.Job, error) {
-	return in.k8s.BatchV1().Jobs(namespace).Get(jobName, emptyGetOptions)
+	return cronjobs, nil
 }
 
 func (in *IstioClient) GetJobs(namespace string) ([]batch_v1.Job, error) {
-	js, err := in.k8s.BatchV1().Jobs(namespace).List(emptyListOptions)
-	if err != nil {
-		return nil, err
+	jobs, found := in.k8sCache.GetJobs(namespace)
+	if !found {
+		jobs = []batch_v1.Job{}
 	}
-	return js.Items, nil
+	return jobs, nil
 }
 
 // NewNotFound is a helper method to create a NotFound error similar as used by the kubernetes client.

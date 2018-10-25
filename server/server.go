@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/kiali/kiali/business"
 	"net/http"
 
 	"github.com/kiali/kiali/config"
@@ -58,6 +59,12 @@ func (s *Server) Start() {
 // Stop the HTTP server
 func (s *Server) Stop() {
 	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
+	layer, err := business.Get()
+	if err != nil {
+		log.Errorf("Error stopping business layer: %s", err)
+	} else {
+		layer.Stop()
+	}
 	s.httpServer.Close()
 }
 
