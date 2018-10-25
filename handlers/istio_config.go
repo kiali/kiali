@@ -28,7 +28,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	istioConfig, err := business.IstioConfig.GetIstioConfig(criteria)
+	istioConfig, err := business.IstioConfig.GetIstioConfigList(criteria)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -95,7 +95,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	object := params["object"]
 
 	if !checkObjectType(objectType) {
-		RespondWithError(w, http.StatusBadRequest, "Object type not found: "+objectType)
+		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
 		return
 	}
 
@@ -121,6 +121,39 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, istioConfigDetails)
 }
 
+func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	objectType := params["object_type"]
+	object := params["object"]
+
+	api := business.GetIstioAPI(objectType)
+	if api == "" {
+		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
+		return
+	}
+
+	// Get business layer
+	business, err := business.Get()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	err = business.IstioConfig.DeleteIstioConfigDetail(api, namespace, objectType, object)
+	if err != nil {
+		log.Error(err)
+		if errors.IsNotFound(err) {
+			RespondWithError(w, http.StatusNotFound, err.Error())
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+		}
+	} else {
+		RespondWithJSON(w, http.StatusOK, "Deleted")
+	}
+	return
+}
+
 func IstioConfigValidations(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
@@ -128,7 +161,7 @@ func IstioConfigValidations(w http.ResponseWriter, r *http.Request) {
 	object := params["object"]
 
 	if !checkObjectType(objectType) {
-		RespondWithError(w, http.StatusBadRequest, "Object type not found: "+objectType)
+		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
 		return
 	}
 
@@ -155,16 +188,5 @@ func IstioConfigValidations(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkObjectType(objectType string) bool {
-	switch objectType {
-	case
-		"gateways",
-		"virtualservices",
-		"destinationrules",
-		"serviceentries",
-		"rules",
-		"quotaspecs",
-		"quotaspecbindings":
-		return true
-	}
-	return false
+	return business.GetIstioAPI(objectType) != ""
 }

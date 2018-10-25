@@ -14,7 +14,7 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func TestGetIstioConfig(t *testing.T) {
+func TestGetIstioConfigList(t *testing.T) {
 	assert := assert.New(t)
 	criteria := IstioConfigCriteria{
 		Namespace:               "test",
@@ -26,9 +26,9 @@ func TestGetIstioConfig(t *testing.T) {
 		IncludeQuotaSpecs:       false,
 	}
 
-	configService := mockGetIstioConfig()
+	configService := mockGetIstioConfigList()
 
-	istioconfigList, err := configService.GetIstioConfig(criteria)
+	istioconfigList, err := configService.GetIstioConfigList(criteria)
 
 	assert.Equal(0, len(istioconfigList.Gateways))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
@@ -41,7 +41,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	criteria.IncludeGateways = true
 
-	istioconfigList, err = configService.GetIstioConfig(criteria)
+	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
@@ -54,7 +54,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	criteria.IncludeVirtualServices = true
 
-	istioconfigList, err = configService.GetIstioConfig(criteria)
+	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -67,7 +67,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	criteria.IncludeDestinationRules = true
 
-	istioconfigList, err = configService.GetIstioConfig(criteria)
+	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -80,7 +80,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	criteria.IncludeServiceEntries = true
 
-	istioconfigList, err = configService.GetIstioConfig(criteria)
+	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -93,7 +93,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	criteria.IncludeRules = true
 
-	istioconfigList, err = configService.GetIstioConfig(criteria)
+	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -106,7 +106,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	criteria.IncludeQuotaSpecs = true
 
-	istioconfigList, err = configService.GetIstioConfig(criteria)
+	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -119,7 +119,7 @@ func TestGetIstioConfig(t *testing.T) {
 
 	criteria.IncludeQuotaSpecBindings = true
 
-	istioconfigList, err = configService.GetIstioConfig(criteria)
+	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -165,7 +165,7 @@ func TestGetIstioConfigDetails(t *testing.T) {
 	assert.Error(err)
 }
 
-func mockGetIstioConfig() IstioConfigService {
+func mockGetIstioConfigList() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetGateways", mock.AnythingOfType("string")).Return(fakeGetGateways(), nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetVirtualServices(), nil)

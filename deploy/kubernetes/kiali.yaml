@@ -124,7 +124,6 @@ rules:
   - watch
 - apiGroups: ["config.istio.io"]
   resources:
-  - rules
   - circonuses
   - deniers
   - fluentds
@@ -149,12 +148,20 @@ rules:
   - quotas
   - reportnothings
   - servicecontrolreports
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["config.istio.io"]
+  resources:
+  - rules
   - quotaspecs
   - quotaspecbindings
   verbs:
   - get
   - list
   - watch
+  - delete
 - apiGroups: ["networking.istio.io"]
   resources:
   - virtualservices
@@ -165,6 +172,7 @@ rules:
   - get
   - list
   - watch
+  - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

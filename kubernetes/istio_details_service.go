@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 // GetIstioDetails returns Istio details for a given namespace,
@@ -43,6 +44,18 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 	}
 
 	return &istioDetails, nil
+}
+
+// DeleteIstioObject deletes an Istio object from either config api or networking api
+func (in *IstioClient) DeleteIstioObject(api, namespace, resourceType, name string) error {
+	log.Infof("DeleteIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
+	var err error
+	if api == istioConfigGroupVersion.Group {
+		_, err = in.istioConfigApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
+	} else {
+		_, err = in.istioNetworkingApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
+	}
+	return err
 }
 
 // GetVirtualServices return all VirtualServices for a given namespace.

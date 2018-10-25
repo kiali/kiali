@@ -1,6 +1,7 @@
 package business
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -36,11 +37,11 @@ var resourceTypesToAPI = map[string]string{
 	"quotaspecbindings": "config.istio.io",
 }
 
-// GetIstioConfig returns a list of Istio routing objects
-// and Mixer Rules per a given Namespace.
-func (in *IstioConfigService) GetIstioConfig(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
+// GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
+// per a given Namespace.
+func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
 	if criteria.Namespace == "" {
-		return models.IstioConfigList{}, fmt.Errorf("GetIstioConfig needs a non null Namespace")
+		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
 	}
 	istioConfigList := models.IstioConfigList{
 		Namespace:         models.Namespace{Name: criteria.Namespace},
@@ -214,4 +215,15 @@ func fillPermission(permission *models.ResourcePermissions, ssar *auth_v1.SelfSu
 	case "delete":
 		permission.Delete = ssar.Status.Allowed
 	}
+}
+
+// GetIstioAPI provides the Kubernetes API that manages this Istio resource type
+// or empty string if it's not managed
+func GetIstioAPI(resourceType string) string {
+	return resourceTypesToAPI[resourceType]
+}
+
+// DeleteIstioConfigDetail deletes the given Istio resource
+func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceType, name string) error {
+	return in.k8s.DeleteIstioObject(api, namespace, resourceType, name)
 }
