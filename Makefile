@@ -20,6 +20,11 @@ CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 JAEGER_URL ?= http://jaeger-query-istio-system.127.0.0.1.nip.io
 GRAFANA_URL ?= http://grafana-istio-system.127.0.0.1.nip.io
 
+# oAuth Configuration for Openshift
+OAUTH_ENABLED ?= false
+DEFAULT_OAUTH_SECRET ?= kiali-oauth
+OAUTH_SECRET ?= ${DEFAULT_OAUTH_SECRET}
+
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of
 # "app: kiali" and "version: ${VERSION_LABEL}"
@@ -270,14 +275,26 @@ docker-push:
 openshift-deploy: openshift-undeploy
 	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
 	@echo Deploying to OpenShift project ${NAMESPACE}
-	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} JAEGER_URL=${JAEGER_URL} GRAFANA_URL=${GRAFANA_URL} envsubst | ${OC} create -n ${NAMESPACE} -f -
+
+	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} JAEGER_URL=${JAEGER_URL} GRAFANA_URL=${GRAFANA_URL} OAUTH_SECRET=${OAUTH_SECRET} OAUTH_ENABLED=${OAUTH_ENABLED} envsubst | ${OC} create -n ${NAMESPACE} -f -
 	cat deploy/openshift/kiali-secrets.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
 	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} envsubst | ${OC} create -n ${NAMESPACE} -f -
+
+ifneq ($(OAUTH_ENABLED),false)
+	@echo Deploying oAuth support for Kiali on ${NAMESPACE}
+	PROTOCOL="$$(if [[ $$(${OC} get routes -n ${NAMESPACE} kiali -o jsonpath=\"{.spec.tls.termination}\") != '' ]]; then echo https; else echo http; fi)" REDIRECT_URL="$${PROTOCOL}://$$(${OC} get routes -n ${NAMESPACE} kiali -o jsonpath={.spec.host})" envsubst < deploy/openshift/kiali-oauth.yaml | ${OC} create -n ${NAMESPACE} -f -
+endif
 
 ## openshift-undeploy: Undeploy from Openshift project.
 openshift-undeploy: .openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
 	${OC} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=kiali -n ${NAMESPACE}
+
+ifneq ($(OAUTH_ENABLED),false)
+	@# This is necessary because using the selector on the previous command does
+	@# not remove oauthclients for some reason.
+	${OC} delete oauthclient kiali || true
+endif
 
 ## openshift-reload-image: Refreshing image in Openshift project.
 openshift-reload-image: .openshift-validate

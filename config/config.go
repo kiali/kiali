@@ -9,10 +9,9 @@ import (
 	"strings"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Environment vars can define some default values.
@@ -58,6 +57,9 @@ const (
 	EnvKubernetesBurst         = "KUBERNETES_BURST"
 	EnvKubernetesQPS           = "KUBERNETES_QPS"
 	EnvKubernetesCacheDuration = "KUBERNETES_CACHE_DURATION"
+
+	EnvOAuthEnabled = "OAUTH_ENABLED"
+	EnvOAuthSecret  = "OAUTH_SECRET"
 )
 
 // The versions that Kiali requires
@@ -141,6 +143,12 @@ type ApiNamespacesConfig struct {
 	Exclude []string
 }
 
+// OAuth for Openshift configuration
+type OAuthConfig struct {
+	Enabled bool   `yaml:"enabled,omitempty"`
+	Secret  string `yaml:"secret,omitempty"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	Identity         security.Identity `yaml:",omitempty"`
@@ -152,6 +160,7 @@ type Config struct {
 	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
 	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
 	Api              ApiConfig         `yaml:"api,omitempty"`
+	OAuth            OAuthConfig       `yaml:"oauth,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -218,6 +227,8 @@ func NewConfig() (c *Config) {
 		}
 	}
 	c.Api.Namespaces.Exclude = trimmedExclusionPatterns
+	c.OAuth.Enabled = getDefaultBool(EnvOAuthEnabled, false)
+	c.OAuth.Secret = getDefaultString(EnvOAuthSecret, "kiali-oauth")
 
 	return
 }

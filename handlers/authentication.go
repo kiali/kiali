@@ -1,21 +1,40 @@
-package config
+package handlers
 
 import (
 	"net/http"
 	"strings"
 
+	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
 
 func AuthenticationHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		statusCode := http.StatusOK
-		conf := Get()
+		conf := config.Get()
 		if strings.Contains(r.Header.Get("Authorization"), "Bearer") {
-			err := ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
-			if err != nil {
-				log.Warning("Token error: ", err)
-				statusCode = http.StatusUnauthorized
+
+			if conf.OAuth.Enabled {
+				business, err := business.Get()
+
+				if err != nil {
+					log.Warning("Token error: ", err)
+					statusCode = http.StatusUnauthorized
+				} else {
+					err := business.OpenshiftOAuth.ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+
+					if err != nil {
+						log.Warning("Token error: ", err)
+						statusCode = http.StatusUnauthorized
+					}
+				}
+			} else {
+				err := config.ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+				if err != nil {
+					log.Warning("Token error: ", err)
+					statusCode = http.StatusUnauthorized
+				}
 			}
 		} else if conf.Server.Credentials.Username != "" || conf.Server.Credentials.Password != "" {
 			u, p, ok := r.BasicAuth()
