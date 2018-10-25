@@ -6,7 +6,17 @@ import (
 	"github.com/kiali/kiali/graph"
 )
 
+const SidecarsCheckAppenderName = "sidecarsCheck"
+
+// SidecarsCheckAppender flags nodes whose backing workloads are missing at least one Envoy sidecar. Note that
+// a node with no backing workloads is not flagged.
+// Name: sidecarsCheck
 type SidecarsCheckAppender struct{}
+
+// Name implements Appender
+func (a SidecarsCheckAppender) Name() string {
+	return SidecarsCheckAppenderName
+}
 
 // AppendGraph implements Appender
 func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {

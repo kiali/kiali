@@ -12,13 +12,21 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
+const SecurityPolicyAppenderName = "securityPolicy"
+
 // SecurityPolicyAppender is responsible for adding securityPolicy information to the graph.
 // The appender currently reports only mutual_tls security although is written in a generic way.
+// Name: securityPolicy
 type SecurityPolicyAppender struct {
 	GraphType    string
 	IncludeIstio bool
 	Namespaces   map[string]graph.NamespaceInfo
 	QueryTime    int64 // unix time in seconds
+}
+
+// Name implements Appender
+func (a SecurityPolicyAppender) Name() string {
+	return SecurityPolicyAppenderName
 }
 
 // AppendGraph implements Appender

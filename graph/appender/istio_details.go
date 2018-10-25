@@ -5,7 +5,18 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
+const IstioAppenderName = "istio"
+
+// IstioAppender is responsible for badging nodes with special Istio significance:
+// - CircuitBreaker: n.Metadata["hasCB"] = true
+// - VirtualService: n.Metadata["hasVS"] = true
+// Name: istio
 type IstioAppender struct{}
+
+// Name implements Appender
+func (a IstioAppender) Name() string {
+	return IstioAppenderName
+}
 
 // AppendGraph implements Appender
 func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
