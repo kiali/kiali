@@ -143,7 +143,11 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 	err = business.IstioConfig.DeleteIstioConfigDetail(api, namespace, objectType, object)
 	if err != nil {
 		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		if errors.IsNotFound(err) {
+			RespondWithError(w, http.StatusNotFound, err.Error())
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+		}
 	} else {
 		RespondWithJSON(w, http.StatusOK, "Deleted")
 	}
