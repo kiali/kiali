@@ -60,7 +60,7 @@ func NewRoutes() (r *Routes) {
 		//      500: internalError
 		//      200: tokenGenerated
 		{ // Request the token
-			"Status",
+			"Token",
 			"GET",
 			"/api/token",
 			handlers.GetToken,
@@ -143,7 +143,7 @@ func NewRoutes() (r *Routes) {
 		//      200: delete
 		//
 		{
-			"IstioConfigDetail",
+			"IstioConfigDelete",
 			"DELETE",
 			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
 			handlers.IstioConfigDelete,
@@ -165,7 +165,7 @@ func NewRoutes() (r *Routes) {
 		//      200: typeValidationsResponse
 		//
 		{
-			"IstioConfigValidation",
+			"IstioConfigValidations",
 			"GET",
 			"/api/namespaces/{namespace}/istio/{object_type}/{object}/istio_validations",
 			handlers.IstioConfigValidations,
@@ -246,7 +246,7 @@ func NewRoutes() (r *Routes) {
 		//      200: workloadDetails
 		//
 		{
-			"workloadDetails",
+			"WorkloadDetails",
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}",
 			handlers.WorkloadDetails,
@@ -286,7 +286,7 @@ func NewRoutes() (r *Routes) {
 		//      200: appDetails
 		//
 		{
-			"appDetails",
+			"AppDetails",
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}",
 			handlers.AppDetails,
