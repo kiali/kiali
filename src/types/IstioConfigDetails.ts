@@ -3,6 +3,7 @@ import { DestinationPolicy, DestinationRule, RouteRule, VirtualService } from '.
 import { RuleAction } from './IstioRuleInfo';
 import { AceOptions } from 'react-ace';
 import { Gateway, QuotaSpec, QuotaSpecBinding, ServiceEntry } from './IstioConfigList';
+import { ResourcePermissions } from './Permissions';
 
 export interface IstioConfigId {
   namespace: string;
@@ -28,6 +29,7 @@ export interface IstioConfigDetails {
   rule: IstioRuleDetails;
   quotaSpec: QuotaSpec;
   quotaSpecBinding: QuotaSpecBinding;
+  permissions: ResourcePermissions;
 }
 
 export const aceOptions: AceOptions = {

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Breadcrumb, Button, Col, Icon, Row } from 'patternfly-react';
+import { Breadcrumb, Button, Col, DropdownButton, Icon, MenuItem, MessageDialog, Row } from 'patternfly-react';
 import { Link, RouteComponentProps } from 'react-router-dom';
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { ActiveFilter } from '../../types/Filters';
@@ -28,6 +28,7 @@ const yaml = require('js-yaml');
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
   validations?: Validations;
+  showConfirmModal: boolean;
 }
 
 class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioConfigId>, IstioConfigDetailsState> {
@@ -35,7 +36,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   constructor(props: RouteComponentProps<IstioConfigId>) {
     super(props);
-    this.state = {};
+    this.state = { showConfirmModal: false };
     this.aceEditorRef = React.createRef();
   }
 
@@ -160,6 +161,33 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     }
   }
 
+  onAction = (key: string) => {
+    if (key === 'delete') {
+      this.setState({ showConfirmModal: true });
+    }
+  };
+
+  onDelete = () => {
+    this.hideConfirmModal();
+    API.deleteIstioConfigDetail(
+      authentication(),
+      this.props.match.params.namespace,
+      this.props.match.params.objectType,
+      this.props.match.params.object
+    )
+      .then(r => {
+        // Back to list page
+        ListPageLink.navigateTo(TargetPage.ISTIO, this.props.match.params.namespace);
+      })
+      .catch(error => {
+        MessageCenter.add(API.getErrorMsg('Could not delete IstioConfig details.', error));
+      });
+  };
+
+  hideConfirmModal = () => {
+    this.setState({ showConfirmModal: false });
+  };
+
   renderEditor = (routingObject: any) => {
     const yamlSource = yaml.safeDump(routingObject, safeDumpOptions);
     const aceValidations = parseAceValidations(yamlSource, this.state.validations);
@@ -167,9 +195,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       <div className="container-fluid container-cards-pf">
         <Row className="row-cards-pf">
           <Col>
-            <Button onClick={this.fetchIstioObjectDetails} style={{ float: 'right' }}>
-              <Icon name="refresh" />
-            </Button>
+            {this.renderRightToolbar()}
             <h1>{this.props.match.params.objectType + ': ' + this.props.match.params.object}</h1>
             <AceEditor
               ref={this.aceEditorRef}
@@ -187,6 +213,39 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           </Col>
         </Row>
       </div>
+    );
+  };
+
+  renderRightToolbar = () => {
+    let canDelete = false;
+    if (this.state.istioObjectDetails) {
+      canDelete = this.state.istioObjectDetails.permissions.delete;
+    }
+    return (
+      <span style={{ float: 'right' }}>
+        <Button onClick={this.fetchIstioObjectDetails}>
+          <Icon name="refresh" />
+        </Button>&nbsp;
+        <DropdownButton id="actions" title="Actions" onSelect={this.onAction} pullRight={true}>
+          <MenuItem key="delete" eventKey="delete" disabled={!canDelete}>
+            Delete
+          </MenuItem>
+        </DropdownButton>
+        <MessageDialog
+          show={this.state.showConfirmModal}
+          primaryAction={this.onDelete}
+          secondaryAction={this.hideConfirmModal}
+          onHide={this.hideConfirmModal}
+          primaryActionButtonContent="Delete"
+          secondaryActionButtonContent="Cancel"
+          primaryActionButtonBsStyle="danger"
+          title="Confirm Delete"
+          primaryContent={`Are you sure you want to delete the Istio object '${this.props.match.params.object}'? `}
+          secondaryContent="It cannot be undone. Make sure this is something you really want to do!"
+          accessibleName="deleteConfirmationDialog"
+          accessibleDescription="deleteConfirmationDialogContent"
+        />
+      </span>
     );
   };
 
@@ -261,8 +320,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           <IstioRuleInfo
             namespace={this.state.istioObjectDetails.namespace.name}
             rule={this.state.istioObjectDetails.rule}
-            onRefresh={this.fetchIstioObjectDetails}
             parsedSearch={parsedRuleParams}
+            rightToolbar={this.renderRightToolbar}
           />
         ) : (
           undefined

@@ -1,6 +1,7 @@
 import Namespace from './Namespace';
 import { DestinationRule, VirtualService } from './ServiceInfo';
 import { ObjectValidation } from './IstioObjects';
+import { ResourcePermissions } from './Permissions';
 
 export interface IstioConfigItem {
   namespace: string;
@@ -25,6 +26,7 @@ export interface IstioConfigList {
   rules: IstioRule[];
   quotaSpecs: QuotaSpec[];
   quotaSpecBindings: QuotaSpecBinding[];
+  permissions: { [key: string]: ResourcePermissions };
 }
 
 export interface Gateway {
@@ -166,7 +168,8 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]) => {
     serviceEntries: unfiltered.serviceEntries.filter(se => includeName(se.name, names)),
     rules: unfiltered.rules.filter(r => includeName(r.name, names)),
     quotaSpecs: unfiltered.quotaSpecs.filter(qs => includeName(qs.name, names)),
-    quotaSpecBindings: unfiltered.quotaSpecBindings.filter(qsb => includeName(qsb.name, names))
+    quotaSpecBindings: unfiltered.quotaSpecBindings.filter(qsb => includeName(qsb.name, names)),
+    permissions: unfiltered.permissions
   };
   return filtered;
 };

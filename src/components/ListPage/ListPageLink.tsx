@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { FilterSelected } from '../Filters/StatefulFilters';
+import history from '../../app/History';
 
 export enum TargetPage {
   APPLICATIONS = 'applications',
@@ -17,46 +18,50 @@ type Props = {
 };
 
 export class ListPageLink extends React.PureComponent<Props, {}> {
+  static navigateTo(target: TargetPage, namespace?: string) {
+    const info = ListPageLink.buildLinkInfo(target, namespace);
+    info.updateFilters();
+    history.push(info.to);
+  }
+
+  private static buildLinkInfo(target: TargetPage, namespace?: string) {
+    if (namespace) {
+      return {
+        to: `/${target}?namespace=${encodeURIComponent(namespace)}`,
+        updateFilters: () => {
+          FilterSelected.setSelected([
+            {
+              category: 'Namespace',
+              value: namespace
+            }
+          ]);
+        }
+      };
+    }
+    return {
+      to: `/${target}`,
+      updateFilters: () => {
+        FilterSelected.setSelected([]);
+      }
+    };
+  }
+
   constructor(props: Props) {
     super(props);
   }
 
-  filterNamespace = () => {
-    FilterSelected.setSelected([
-      {
-        category: 'Namespace',
-        value: this.props.namespace!
-      }
-    ]);
-    if (this.props.onClick) {
-      this.props.onClick();
-    }
-  };
-
-  clearNamespace = () => {
-    FilterSelected.setSelected([]);
-    if (this.props.onClick) {
-      this.props.onClick();
-    }
-  };
-
   render() {
-    if (this.props.namespace) {
-      return (
-        <Link
-          to={`/${this.props.target}?namespace=${encodeURIComponent(this.props.namespace)}`}
-          title={this.props.title}
-          onClick={this.filterNamespace}
-        >
-          {this.props.children}
-        </Link>
-      );
-    } else {
-      return (
-        <Link to={`/${this.props.target}`} title={this.props.title} onClick={this.clearNamespace}>
-          {this.props.children}
-        </Link>
-      );
-    }
+    const info = ListPageLink.buildLinkInfo(this.props.target, this.props.namespace);
+    const onClick = () => {
+      info.updateFilters();
+      if (this.props.onClick) {
+        this.props.onClick();
+      }
+    };
+    return (
+      <Link to={info.to} title={this.props.title} onClick={onClick}>
+        {this.props.children}
+      </Link>
+    );
   }
 }

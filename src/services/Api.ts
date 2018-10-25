@@ -51,7 +51,7 @@ const basicAuth = (username: string, password: string) => {
 };
 
 const newRequest = <T>(method: HTTP_VERBS, url: string, queryParams: any, data: any, auth?: AuthToken) => {
-  return new Promise<Response<Readonly<T>>>((resolve, reject) => {
+  return new Promise<Response<T>>((resolve, reject) => {
     axios({
       method: method,
       url: url,
@@ -118,6 +118,15 @@ export const getIstioConfigDetail = (
   object: string
 ): Promise<Response<IstioConfigDetails>> => {
   return newRequest(HTTP_VERBS.GET, urls.istioConfigDetail(namespace, objectType, object), {}, {}, auth);
+};
+
+export const deleteIstioConfigDetail = (
+  auth: AuthToken,
+  namespace: string,
+  objectType: string,
+  object: string
+): Promise<Response<string>> => {
+  return newRequest(HTTP_VERBS.DELETE, urls.istioConfigDetail(namespace, objectType, object), {}, {}, auth);
 };
 
 export const getServices = (auth: AuthToken, namespace: string): Promise<Response<ServiceList>> => {

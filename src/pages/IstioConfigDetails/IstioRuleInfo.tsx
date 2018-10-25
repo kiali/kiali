@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ListView, ListViewItem, Row, Col, Table, Card, CardTitle, CardBody, Icon, Button } from 'patternfly-react';
+import { ListView, ListViewItem, Row, Col, Table, Card, CardTitle, CardBody, Icon } from 'patternfly-react';
 import * as resolve from 'table-resolver';
 import './IstioRuleInfo.css';
 import { aceOptions, safeDumpOptions, IstioRuleDetails, ParsedSearch } from '../../types/IstioConfigDetails';
@@ -14,8 +14,8 @@ const yaml = require('js-yaml');
 interface IstioRuleInfoProps {
   namespace: string;
   rule: IstioRuleDetails;
-  onRefresh: () => void;
   parsedSearch?: ParsedSearch;
+  rightToolbar: () => JSX.Element;
 }
 
 class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
@@ -181,10 +181,7 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
           <Row className="row-cards-pf">
             <Col>
               <div style={{ float: 'right' }}>
-                <Link to={{ pathname: this.getPathname() }}>Back to Rule</Link>{' '}
-                <Button onClick={this.props.onRefresh}>
-                  <Icon name="refresh" />
-                </Button>
+                <Link to={{ pathname: this.getPathname() }}>Back to Rule</Link> {this.props.rightToolbar()}
               </div>
               <h1>{dicIstioType[this.props.parsedSearch.type] + ': ' + this.props.parsedSearch.name}</h1>
               <AceEditor
@@ -208,6 +205,7 @@ class IstioRuleInfo extends React.Component<IstioRuleInfoProps> {
           <CardTitle>
             <strong>Rule: </strong>
             {this.props.rule.name}
+            {this.props.rightToolbar()}
           </CardTitle>
           <CardBody>
             <strong>Match: </strong>

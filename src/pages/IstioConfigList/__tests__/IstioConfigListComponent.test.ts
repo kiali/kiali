@@ -13,7 +13,8 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     serviceEntries: [],
     rules: [],
     quotaSpecs: [],
-    quotaSpecBindings: []
+    quotaSpecBindings: [],
+    permissions: {}
   };
   names.forEach(name => {
     testData.gateways.push({ name: name + '0', createdAt: 't0', resourceVersion: 'r0' });
