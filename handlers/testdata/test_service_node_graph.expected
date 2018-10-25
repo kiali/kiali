@@ -1,0 +1,57 @@
+{
+  "timestamp": 1523364075,
+  "graphType": "workload",
+  "elements": {
+    "nodes": [
+      {
+        "data": {
+          "id": "240c2314cefc993c5d9479a5c349fbd2",
+          "nodeType": "workload",
+          "namespace": "bookinfo",
+          "workload": "productpage-v1",
+          "app": "productpage",
+          "version": "v1",
+          "destServices": {
+            "productpage": true
+          },
+          "rate": "100.000",
+          "rateTcpSent": "31.000"
+        }
+      },
+      {
+        "data": {
+          "id": "c72e12859eac1424516065e6a64c92e0",
+          "nodeType": "workload",
+          "namespace": "istio-system",
+          "workload": "ingressgateway-unknown",
+          "app": "ingressgateway",
+          "version": "unknown",
+          "rateOut": "100.000",
+          "rateTcpSentOut": "31.000",
+          "isInaccessible": true,
+          "isMisconfigured": "labels=[version]",
+          "isOutside": true,
+          "isRoot": true
+        }
+      }
+    ],
+    "edges": [
+      {
+        "data": {
+          "id": "347e210a97f5235b5a60b810ef1bfaa6",
+          "source": "c72e12859eac1424516065e6a64c92e0",
+          "target": "240c2314cefc993c5d9479a5c349fbd2",
+          "rate": "100.000"
+        }
+      },
+      {
+        "data": {
+          "id": "c3fa6dedc4a1b3d61a3bb48dcb46dafa",
+          "source": "c72e12859eac1424516065e6a64c92e0",
+          "target": "240c2314cefc993c5d9479a5c349fbd2",
+          "tcpSentRate": "31.000"
+        }
+      }
+    ]
+  }
+}
