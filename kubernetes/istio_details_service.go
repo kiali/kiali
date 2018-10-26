@@ -266,36 +266,6 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 	return quotaSpecBinding.DeepCopyIstioObject(), nil
 }
 
-// CheckVirtualService returns true if virtualService object is defined for the service.
-// It returns false otherwise.
-func CheckVirtualService(virtualService IstioObject, namespace string, serviceName string) bool {
-	if virtualService == nil || virtualService.GetSpec() == nil || serviceName == "" {
-		return false
-	}
-	if hosts, ok := virtualService.GetSpec()["hosts"]; ok {
-		for _, host := range hosts.([]interface{}) {
-			if FilterByHost(host.(string), serviceName, namespace) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// CheckVirtualServiceSubset returns true if virtualService object has defined a route on a service for any subset passed as parameter.
-// It returns false otherwise.
-// TODO: Is this used?
-func CheckVirtualServiceSubset(virtualService IstioObject, namespace string, serviceName string, subsets []string) bool {
-	if virtualService == nil || virtualService.GetSpec() == nil || subsets == nil {
-		return false
-	}
-	routeProtocols := []string{"http", "tcp"}
-	if len(subsets) > 0 && FilterByRouteAndSubset(virtualService.GetSpec(), routeProtocols, serviceName, namespace, subsets) {
-		return true
-	}
-	return false
-}
-
 // GetDestinationRulesSubsets returns an array of subset names where a specific version is defined for a given service
 func GetDestinationRulesSubsets(destinationRules []IstioObject, serviceName, version string) []string {
 	cfg := config.Get()
@@ -325,96 +295,7 @@ func GetDestinationRulesSubsets(destinationRules []IstioObject, serviceName, ver
 	return foundSubsets
 }
 
-// CheckDestinationRuleCircuitBreaker returns true if the destinationRule object includes a trafficPolicy configuration
-// on connectionPool or outlierDetection.
-// TrafficPolicy configuration can be defined at service level or per subset defined by a version.
-// It returns false otherwise.
-func CheckDestinationRuleCircuitBreaker(destinationRule IstioObject, namespace string, serviceName string, version string) bool {
-	if destinationRule == nil || destinationRule.GetSpec() == nil {
-		return false
-	}
-	cfg := config.Get()
-	if dHost, ok := destinationRule.GetSpec()["host"]; ok {
-		if host, ok := dHost.(string); ok && FilterByHost(host, serviceName, namespace) {
-			// CB is set at DR level, so it's true for the service and all versions
-			if trafficPolicy, ok := destinationRule.GetSpec()["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
-				return true
-			}
-			if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
-				if dSubsets, ok := subsets.([]interface{}); ok {
-					for _, subset := range dSubsets {
-						if innerSubset, ok := subset.(map[string]interface{}); ok {
-							if trafficPolicy, ok := innerSubset["trafficPolicy"]; ok && checkTrafficPolicy(trafficPolicy) {
-								// set the service true if it has a subset with a CB
-								if "" == version {
-									return true
-								}
-								if labels, ok := innerSubset["labels"]; ok {
-									if dLabels, ok := labels.(map[string]interface{}); ok {
-										if versionValue, ok := dLabels[cfg.IstioLabels.VersionLabelName]; ok && versionValue == version {
-											return true
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return false
-}
-
-// Helper method to check if a trafficPolicy has defined a connetionPool or outlierDetection element
-func checkTrafficPolicy(trafficPolicy interface{}) bool {
-	if trafficPolicy == nil {
-		return false
-	}
-	if dTrafficPolicy, ok := trafficPolicy.(map[string]interface{}); ok {
-		if _, ok := dTrafficPolicy["connectionPool"]; ok {
-			return true
-		}
-		if _, ok := dTrafficPolicy["outlierDetection"]; ok {
-			return true
-		}
-	}
-	return false
-}
-
-func FilterByDestination(spec map[string]interface{}, namespace string, serviceName string, version string) bool {
-	if spec == nil {
-		return false
-	}
-	cfg := config.Get()
-	if destination, ok := spec["destination"]; ok {
-		dest, ok := destination.(map[string]interface{})
-		if !ok {
-			return false
-		}
-		if dNamespace, ok := dest["namespace"]; ok && dNamespace != namespace {
-			return false
-		}
-		if dName, ok := dest["name"]; ok && dName != serviceName {
-			return false
-		}
-
-		if dLabels, ok := dest["labels"]; ok && version != "" {
-			if labels, ok := dLabels.(map[string]interface{}); ok {
-				if versionValue, ok := labels[cfg.IstioLabels.VersionLabelName]; ok && versionValue == version {
-					return true
-				}
-				return false
-			}
-		} else {
-			// It has not labels defined, but destination is defined on whole service
-			return true
-		}
-	}
-	return false
-}
-
-func FilterByHost(host string, serviceName string, namespace string) bool {
+func FilterByHost(host, serviceName, namespace string) bool {
 	// Check single name
 	if host == serviceName {
 		return true

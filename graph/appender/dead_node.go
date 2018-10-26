@@ -131,6 +131,7 @@ func isExternalService(service string, namespaceInfo *NamespaceInfo, globalInfo 
 	if namespaceInfo.ExternalServices == nil {
 		namespaceInfo.ExternalServices = make(map[string]bool)
 
+		// Currently no other appenders use ServiceEntries, so they are not cached in NamespaceInfo
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
 			IncludeServiceEntries: true,
 			Namespace:             namespaceInfo.Namespace,
