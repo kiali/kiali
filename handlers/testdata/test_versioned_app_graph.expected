@@ -14,7 +14,7 @@
           "destServices": {
             "pricing": true
           },
-          "rate": "20.000",
+          "rate": "20.00",
           "isInaccessible": true,
           "isOutside": true
         }
@@ -39,10 +39,10 @@
           "destServices": {
             "details": true
           },
-          "rate": "80.000",
-          "rate3XX": "20.000",
-          "rate4XX": "20.000",
-          "rate5XX": "20.000"
+          "rate": "80.00",
+          "rate3XX": "20.00",
+          "rate4XX": "20.00",
+          "rate5XX": "20.00"
         }
       },
       {
@@ -56,9 +56,9 @@
           "destServices": {
             "productpage": true
           },
-          "rate": "170.000",
-          "rateOut": "160.000",
-          "rateTcpSentOut": "31.000"
+          "rate": "170.00",
+          "rateOut": "160.00",
+          "rateTcpSentOut": "31.00"
         }
       },
       {
@@ -72,7 +72,7 @@
           "destServices": {
             "ratings": true
           },
-          "rate": "40.000"
+          "rate": "40.00"
         }
       },
       {
@@ -87,7 +87,7 @@
           "destServices": {
             "reviews": true
           },
-          "rate": "20.000"
+          "rate": "20.00"
         }
       },
       {
@@ -102,8 +102,8 @@
           "destServices": {
             "reviews": true
           },
-          "rate": "40.000",
-          "rateOut": "40.000"
+          "rate": "40.00",
+          "rateOut": "40.00"
         }
       },
       {
@@ -118,8 +118,8 @@
           "destServices": {
             "reviews": true
           },
-          "rate": "40.000",
-          "rateOut": "60.000"
+          "rate": "40.00",
+          "rateOut": "60.00"
         }
       },
       {
@@ -133,7 +133,7 @@
           "destServices": {
             "tcp": true
           },
-          "rateTcpSent": "581.000"
+          "rateTcpSent": "581.00"
         }
       },
       {
@@ -144,8 +144,8 @@
           "workload": "ingressgateway-unknown",
           "app": "ingressgateway",
           "version": "unknown",
-          "rateOut": "100.000",
-          "rateTcpSentOut": "150.000",
+          "rateOut": "100.00",
+          "rateTcpSentOut": "150.00",
           "isInaccessible": true,
           "isOutside": true,
           "isRoot": true
@@ -159,8 +159,8 @@
           "workload": "unknown",
           "app": "unknown",
           "version": "unknown",
-          "rateOut": "50.000",
-          "rateTcpSentOut": "400.000",
+          "rateOut": "50.00",
+          "rateTcpSentOut": "400.00",
           "isRoot": true
         }
       }
@@ -171,8 +171,8 @@
           "id": "ddf45549de5e603dee9a0cd9c83f9cfb",
           "source": "5cb6f79f37cb95cf40ea6fb23779b0e6",
           "target": "08d6a5dd6e290fbc42e259053b86a762",
-          "rate": "20.000",
-          "percentRate": "50.000"
+          "rate": "20.00",
+          "percentRate": "50.00"
         }
       },
       {
@@ -180,8 +180,8 @@
           "id": "e23d51a059f4d5e45ed6ae625f9b9a5f",
           "source": "5cb6f79f37cb95cf40ea6fb23779b0e6",
           "target": "5cb6f79f37cb95cf40ea6fb23779b0e6",
-          "rate": "20.000",
-          "percentRate": "50.000"
+          "rate": "20.00",
+          "percentRate": "50.00"
         }
       },
       {
@@ -189,7 +189,7 @@
           "id": "9f5ad0240b6a9e430d3dc2bcb2b3daaa",
           "source": "933d90e5172f69af1baa035e8a8ad27c",
           "target": "2a4ce65a837db250466f2cbf1cdd7357",
-          "tcpSentRate": "150.000"
+          "tcpSentRate": "150.00"
         }
       },
       {
@@ -197,7 +197,7 @@
           "id": "8088ca79aa13e423747334c532144c4f",
           "source": "933d90e5172f69af1baa035e8a8ad27c",
           "target": "a1ffc0d6abdf480e17b214b85257e633",
-          "rate": "100.000"
+          "rate": "100.00"
         }
       },
       {
@@ -205,7 +205,7 @@
           "id": "fa6b92c07cf9c0ba681192a89cde4ec6",
           "source": "a1ffc0d6abdf480e17b214b85257e633",
           "target": "2a4ce65a837db250466f2cbf1cdd7357",
-          "tcpSentRate": "31.000"
+          "tcpSentRate": "31.00"
         }
       },
       {
@@ -213,12 +213,12 @@
           "id": "9f6a2ed75734d99002d37ac867190b9e",
           "source": "a1ffc0d6abdf480e17b214b85257e633",
           "target": "50113397f439f05f3280ad0772b9b307",
-          "rate": "80.000",
-          "rate3XX": "20.000",
-          "rate4XX": "20.000",
-          "rate5XX": "20.000",
-          "percentErr": "50.000",
-          "percentRate": "50.000"
+          "rate": "80.00",
+          "rate3XX": "20.00",
+          "rate4XX": "20.00",
+          "rate5XX": "20.00",
+          "percentErr": "50.00",
+          "percentRate": "50.00"
         }
       },
       {
@@ -226,8 +226,8 @@
           "id": "0d38eb7edb4da38dac33b79a24c3c208",
           "source": "a1ffc0d6abdf480e17b214b85257e633",
           "target": "5cb6f79f37cb95cf40ea6fb23779b0e6",
-          "rate": "20.000",
-          "percentRate": "12.500"
+          "rate": "20.00",
+          "percentRate": "12.50"
         }
       },
       {
@@ -235,8 +235,8 @@
           "id": "4ab6875deb3c0cbec4c8f260841f3d24",
           "source": "a1ffc0d6abdf480e17b214b85257e633",
           "target": "a1ffc0d6abdf480e17b214b85257e633",
-          "rate": "20.000",
-          "percentRate": "12.500"
+          "rate": "20.00",
+          "percentRate": "12.50"
         }
       },
       {
@@ -244,8 +244,8 @@
           "id": "1e0acd7daba1b394b6d5be3cb5caf68b",
           "source": "a1ffc0d6abdf480e17b214b85257e633",
           "target": "acd188a125352509e86ce104323c5d4f",
-          "rate": "20.000",
-          "percentRate": "12.500"
+          "rate": "20.00",
+          "percentRate": "12.50"
         }
       },
       {
@@ -253,8 +253,8 @@
           "id": "d99fa824b2d85a2053f51fe3bd94ef60",
           "source": "a1ffc0d6abdf480e17b214b85257e633",
           "target": "dd4c5162b7f38a52e7f984766f88d807",
-          "rate": "20.000",
-          "percentRate": "12.500"
+          "rate": "20.00",
+          "percentRate": "12.50"
         }
       },
       {
@@ -262,7 +262,7 @@
           "id": "d5054f4fd0140de3542ad2764d0f20bf",
           "source": "b30b0078325bf2e1adb4d57c4c0c2665",
           "target": "2a4ce65a837db250466f2cbf1cdd7357",
-          "tcpSentRate": "400.000"
+          "tcpSentRate": "400.00"
         }
       },
       {
@@ -270,7 +270,7 @@
           "id": "e0040271cbc5fd1bcf9e605d7a2c367d",
           "source": "b30b0078325bf2e1adb4d57c4c0c2665",
           "target": "a1ffc0d6abdf480e17b214b85257e633",
-          "rate": "50.000"
+          "rate": "50.00"
         }
       },
       {
@@ -278,8 +278,8 @@
           "id": "4fe76972070982cc0fe01b5d42836ca1",
           "source": "dd4c5162b7f38a52e7f984766f88d807",
           "target": "08d6a5dd6e290fbc42e259053b86a762",
-          "rate": "20.000",
-          "percentRate": "33.333"
+          "rate": "20.00",
+          "percentRate": "33.33"
         }
       },
       {
@@ -287,8 +287,8 @@
           "id": "5d3f0ce188557ed9741bda52cb245ff4",
           "source": "dd4c5162b7f38a52e7f984766f88d807",
           "target": "87100ff76f5122d56e8aa75d018b5d67",
-          "rate": "20.000",
-          "percentRate": "33.333"
+          "rate": "20.00",
+          "percentRate": "33.33"
         }
       },
       {
@@ -296,8 +296,8 @@
           "id": "1959f1719d95c1a853a435a5807df1c3",
           "source": "dd4c5162b7f38a52e7f984766f88d807",
           "target": "dd4c5162b7f38a52e7f984766f88d807",
-          "rate": "20.000",
-          "percentRate": "33.333"
+          "rate": "20.00",
+          "percentRate": "33.33"
         }
       }
     ]

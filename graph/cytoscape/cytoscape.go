@@ -254,37 +254,37 @@ func addNodeTelemetry(s *graph.Node, nd *NodeData) {
 	rate := getRate(s.Metadata, "rate")
 
 	if rate > 0.0 {
-		nd.Rate = fmt.Sprintf("%.3f", rate)
+		nd.Rate = fmt.Sprintf("%.2f", rate)
 
 		rate3xx := getRate(s.Metadata, "rate3xx")
 		rate4xx := getRate(s.Metadata, "rate4xx")
 		rate5xx := getRate(s.Metadata, "rate5xx")
 
 		if rate3xx > 0.0 {
-			nd.Rate3xx = fmt.Sprintf("%.3f", rate3xx)
+			nd.Rate3xx = fmt.Sprintf("%.2f", rate3xx)
 		}
 		if rate4xx > 0.0 {
-			nd.Rate4xx = fmt.Sprintf("%.3f", rate4xx)
+			nd.Rate4xx = fmt.Sprintf("%.2f", rate4xx)
 		}
 		if rate5xx > 0.0 {
-			nd.Rate5xx = fmt.Sprintf("%.3f", rate5xx)
+			nd.Rate5xx = fmt.Sprintf("%.2f", rate5xx)
 		}
 	}
 
 	rateOut := getRate(s.Metadata, "rateOut")
 
 	if rateOut > 0.0 {
-		nd.RateOut = fmt.Sprintf("%.3f", rateOut)
+		nd.RateOut = fmt.Sprintf("%.2f", rateOut)
 	}
 
 	tcpSent := getRate(s.Metadata, "tcpSentRate")
 	tcpSentOut := getRate(s.Metadata, "tcpSentRateOut")
 
 	if tcpSent > 0.0 {
-		nd.RateTcpSent = fmt.Sprintf("%.3f", tcpSent)
+		nd.RateTcpSent = fmt.Sprintf("%.2f", tcpSent)
 	}
 	if tcpSentOut > 0.0 {
-		nd.RateTcpSentOut = fmt.Sprintf("%.3f", tcpSentOut)
+		nd.RateTcpSentOut = fmt.Sprintf("%.2f", tcpSentOut)
 	}
 }
 
@@ -305,28 +305,28 @@ func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
 		rateErr := rate4xx + rate5xx
 		percentErr := rateErr / rate * 100.0
 
-		ed.Rate = fmt.Sprintf("%.3f", rate)
+		ed.Rate = fmt.Sprintf("%.2f", rate)
 		if rate3xx > 0.0 {
-			ed.Rate3xx = fmt.Sprintf("%.3f", rate3xx)
+			ed.Rate3xx = fmt.Sprintf("%.2f", rate3xx)
 		}
 		if rate4xx > 0.0 {
-			ed.Rate4xx = fmt.Sprintf("%.3f", rate4xx)
+			ed.Rate4xx = fmt.Sprintf("%.2f", rate4xx)
 		}
 		if rate5xx > 0.0 {
-			ed.Rate5xx = fmt.Sprintf("%.3f", rate5xx)
+			ed.Rate5xx = fmt.Sprintf("%.2f", rate5xx)
 		}
 		if percentErr > 0.0 {
-			ed.PercentErr = fmt.Sprintf("%.3f", percentErr)
+			ed.PercentErr = fmt.Sprintf("%.2f", percentErr)
 		}
 
 		if val, ok := e.Metadata["responseTime"]; ok {
 			responseTime := val.(float64)
-			ed.ResponseTime = fmt.Sprintf("%.3f", responseTime)
+			ed.ResponseTime = fmt.Sprintf("%.2f", responseTime)
 		}
 
 		percentRate := rate / getRate(e.Source.Metadata, "rateOut") * 100.0
 		if percentRate < 100.0 {
-			ed.PercentRate = fmt.Sprintf("%.3f", percentRate)
+			ed.PercentRate = fmt.Sprintf("%.2f", percentRate)
 		}
 	} else {
 		if val, ok := e.Source.Metadata["isUnused"]; ok {
@@ -340,7 +340,7 @@ func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
 
 	tcpSentRate := getRate(e.Metadata, "tcpSentRate")
 	if tcpSentRate > 0.0 {
-		ed.TcpSentRate = fmt.Sprintf("%.3f", tcpSentRate)
+		ed.TcpSentRate = fmt.Sprintf("%.2f", tcpSentRate)
 	}
 }
 

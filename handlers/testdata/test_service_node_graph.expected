@@ -14,8 +14,8 @@
           "destServices": {
             "productpage": true
           },
-          "rate": "100.000",
-          "rateTcpSent": "31.000"
+          "rate": "100.00",
+          "rateTcpSent": "31.00"
         }
       },
       {
@@ -26,8 +26,8 @@
           "workload": "ingressgateway-unknown",
           "app": "ingressgateway",
           "version": "unknown",
-          "rateOut": "100.000",
-          "rateTcpSentOut": "31.000",
+          "rateOut": "100.00",
+          "rateTcpSentOut": "31.00",
           "isInaccessible": true,
           "isMisconfigured": "labels=[version]",
           "isOutside": true,
@@ -41,7 +41,7 @@
           "id": "347e210a97f5235b5a60b810ef1bfaa6",
           "source": "c72e12859eac1424516065e6a64c92e0",
           "target": "240c2314cefc993c5d9479a5c349fbd2",
-          "rate": "100.000"
+          "rate": "100.00"
         }
       },
       {
@@ -49,7 +49,7 @@
           "id": "c3fa6dedc4a1b3d61a3bb48dcb46dafa",
           "source": "c72e12859eac1424516065e6a64c92e0",
           "target": "240c2314cefc993c5d9479a5c349fbd2",
-          "tcpSentRate": "31.000"
+          "tcpSentRate": "31.00"
         }
       }
     ]
