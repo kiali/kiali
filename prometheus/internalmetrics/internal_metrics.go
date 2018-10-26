@@ -1,16 +1,13 @@
+// Package internalmetrics provides functionality to collect Prometheus metrics.
 package internalmetrics
 
 import (
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
-)
-
-const (
-	// GRAPH_KIND_NAMESPACE is a main graph showing everything in namespace(s)
-	GRAPH_KIND_NAMESPACE string = "namespace"
-	// GRAPH_KIND_NODE is a "drilled down" graph that is focused on a particular node
-	GRAPH_KIND_NODE string = "node"
+	// Because this package is used all throughout the codebase, be VERY careful adding new
+	// kiali imports here. Most likely you will encounter an import cycle error that will
+	// cause a compilation failure.
 )
 
 // These constants define the different label names for the different metric timeseries

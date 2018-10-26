@@ -69,15 +69,15 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 	o := options.NewOptions(r)
 
 	// time how long it takes to generate this graph
-	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(internalmetrics.GRAPH_KIND_NAMESPACE, o.GraphType, o.InjectServiceNodes)
+	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
 
 	trafficMap := graphNamespaces(o, client)
-	generateGraph(trafficMap, w, o, internalmetrics.GRAPH_KIND_NAMESPACE)
+	generateGraph(trafficMap, w, o)
 
 	// update metrics
-	internalmetrics.IncrementGraphsGenerated(internalmetrics.GRAPH_KIND_NAMESPACE, o.GraphType, o.InjectServiceNodes)
-	internalmetrics.SetGraphNodes(internalmetrics.GRAPH_KIND_NAMESPACE, o.GraphType, o.InjectServiceNodes, len(trafficMap))
+	internalmetrics.IncrementGraphsGenerated(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
+	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes, len(trafficMap))
 }
 
 func graphNamespaces(o options.Options, client *prometheus.Client) graph.TrafficMap {
@@ -658,7 +658,7 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	}
 
 	// time how long it takes to generate this graph
-	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(internalmetrics.GRAPH_KIND_NODE, o.GraphType, o.InjectServiceNodes)
+	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
 
 	// Here, it's true that o.Namespaces has only one item. So, it's safe to use "for" knowing
@@ -689,11 +689,11 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	markOutsiders(trafficMap, o)
 	markTrafficGenerators(trafficMap)
 
-	generateGraph(trafficMap, w, o, internalmetrics.GRAPH_KIND_NODE)
+	generateGraph(trafficMap, w, o)
 
 	// update metrics
-	internalmetrics.IncrementGraphsGenerated(internalmetrics.GRAPH_KIND_NODE, o.GraphType, o.InjectServiceNodes)
-	internalmetrics.SetGraphNodes(internalmetrics.GRAPH_KIND_NODE, o.GraphType, o.InjectServiceNodes, len(trafficMap))
+	internalmetrics.IncrementGraphsGenerated(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
+	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes, len(trafficMap))
 }
 
 // buildNodeTrafficMap returns a map of all nodes requesting or requested by the target node (key=id).
@@ -932,10 +932,10 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 	return trafficMap
 }
 
-func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options.Options, graphKind string) {
+func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options.Options) {
 	log.Debugf("Generating config for [%s] service graph...", o.Vendor)
 
-	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(graphKind, o.GraphType, o.InjectServiceNodes)
+	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
 
 	var vendorConfig interface{}
