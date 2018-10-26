@@ -1,15 +1,14 @@
-import {
-  ActiveFilter,
-  FILTER_ACTION_APPEND,
-  FILTER_ACTION_UPDATE,
-  FilterType,
-  presenceValues
-} from '../../types/Filters';
+import { ActiveFilter, FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
 import { AppListItem, AppList, AppOverview } from '../../types/AppList';
 import { SortField } from '../../types/SortFilters';
-import { removeDuplicatesArray } from '../../utils/Common';
 import { AppHealth, getRequestErrorsRatio } from '../../types/Health';
 import NamespaceFilter from '../../components/Filters/NamespaceFilter';
+import {
+  istioSidecarFilter,
+  healthFilter,
+  getPresenceFilterValue,
+  getFilterSelectedValues
+} from 'src/components/Filters/CommonFilters';
 
 type AppListItemHealth = AppListItem & { health: AppHealth };
 
@@ -75,16 +74,13 @@ export namespace AppListFilters {
     filterValues: []
   };
 
-  const istioSidecarFilter: FilterType = {
-    id: 'istiosidecar',
-    title: 'Istio Sidecar',
-    placeholder: 'Filter by IstioSidecar Validation',
-    filterType: 'select',
-    action: FILTER_ACTION_UPDATE,
-    filterValues: presenceValues
-  };
-
-  export const availableFilters: FilterType[] = [NamespaceFilter.create(), appNameFilter, istioSidecarFilter];
+  export const availableFilters: FilterType[] = [
+    NamespaceFilter.create(),
+    appNameFilter,
+    istioSidecarFilter,
+    healthFilter
+  ];
+  export const namespaceFilter = availableFilters[0];
 
   /** Filter Method */
 
@@ -109,28 +105,20 @@ export namespace AppListFilters {
   };
 
   export const filterBy = (appsList: AppList, filters: ActiveFilter[]): void => {
-    /** Get AppName filter */
-    let appNamesSelected: string[] = filters
-      .filter(activeFilter => activeFilter.category === 'App Name')
-      .map(activeFilter => activeFilter.value);
-
-    /** Remove duplicates  */
-    appNamesSelected = removeDuplicatesArray(appNamesSelected);
-
-    /** Get IstioSidecar filter */
-    let istioSidecarValidationFilters: ActiveFilter[] = filters.filter(
-      activeFilter => activeFilter.category === 'Istio Sidecar'
-    );
-    let istioSidecar: boolean | undefined = undefined;
-
-    if (istioSidecarValidationFilters.length > 0) {
-      istioSidecar = istioSidecarValidationFilters[0].value === 'Present';
+    const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
+    if (istioSidecar !== undefined) {
       appsList.applications = filterByIstioSidecar(appsList.applications, istioSidecar);
     }
 
+    const appNamesSelected = getFilterSelectedValues(appNameFilter, filters);
     if (appNamesSelected.length > 0) {
       appsList.applications = filterByName(appsList.applications, appNamesSelected);
     }
+
+    // const healthSelected = getFilterSelectedValues(healthFilter, filters);
+    // if (healthSelected.length > 0) {
+    //   appsList.applications = filterByHealth(appsList.applications, healthSelected);
+    // }
   };
 
   /** Sort Method */

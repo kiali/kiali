@@ -35,7 +35,7 @@ export namespace IstioConfigListFilters {
     }
   ];
 
-  const istioNameFilter: FilterType = {
+  export const istioNameFilter: FilterType = {
     id: 'istioname',
     title: 'Istio Name',
     placeholder: 'Filter by Istio Name',
@@ -44,7 +44,7 @@ export namespace IstioConfigListFilters {
     filterValues: []
   };
 
-  const istioTypeFilter: FilterType = {
+  export const istioTypeFilter: FilterType = {
     id: 'istiotype',
     title: 'Istio Type',
     placeholder: 'Filter by Istio Type',
@@ -82,7 +82,7 @@ export namespace IstioConfigListFilters {
     ]
   };
 
-  const configValidationFilter: FilterType = {
+  export const configValidationFilter: FilterType = {
     id: 'configvalidation',
     title: 'Config',
     placeholder: 'Filter by Config Validation',
@@ -114,6 +114,7 @@ export namespace IstioConfigListFilters {
     istioNameFilter,
     configValidationFilter
   ];
+  export const namespaceFilter = availableFilters[0];
 
   export const sortIstioItems = (
     unsorted: IstioConfigItem[],

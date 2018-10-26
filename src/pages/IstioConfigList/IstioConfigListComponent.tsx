@@ -25,12 +25,12 @@ import { PfColors } from '../../components/Pf/PfColors';
 import { authentication } from '../../utils/Authentication';
 import { NamespaceValidations } from '../../types/IstioObjects';
 import { ConfigIndicator } from '../../components/ConfigValidation/ConfigIndicator';
-import { removeDuplicatesArray } from '../../utils/Common';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { IstioConfigListFilters } from './FiltersAndSorts';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { SortField } from '../../types/SortFilters';
+import { getFilterSelectedValues } from 'src/components/Filters/CommonFilters';
 
 interface IstioConfigListComponentState extends ListComponent.State<IstioConfigItem> {}
 interface IstioConfigListComponentProps extends ListComponent.Props<IstioConfigItem> {}
@@ -93,24 +93,13 @@ class IstioConfigListComponent extends ListComponent.Component<
     this.promises.cancelAll();
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
-    let namespacesSelected: string[] = activeFilters
-      .filter(activeFilter => activeFilter.category === 'Namespace')
-      .map(activeFilter => activeFilter.value);
-    let istioTypeFilters: string[] = activeFilters
-      .filter(activeFilter => activeFilter.category === 'Istio Type')
-      .map(activeFilter => dicIstioType[activeFilter.value]);
-    let istioNameFilters: string[] = activeFilters
-      .filter(activeFilter => activeFilter.category === 'Istio Name')
-      .map(activeFilter => activeFilter.value);
-    let configValidationFilters: string[] = activeFilters
-      .filter(activeFilter => activeFilter.category === 'Config')
-      .map(activeFilter => activeFilter.value);
-
-    /** Remove duplicates  */
-    namespacesSelected = removeDuplicatesArray(namespacesSelected);
-    istioTypeFilters = removeDuplicatesArray(istioTypeFilters);
-    istioNameFilters = removeDuplicatesArray(istioNameFilters);
-    configValidationFilters = removeDuplicatesArray(configValidationFilters);
+    const namespacesSelected = getFilterSelectedValues(IstioConfigListFilters.namespaceFilter, activeFilters);
+    const istioTypeFilters = getFilterSelectedValues(IstioConfigListFilters.istioTypeFilter, activeFilters);
+    const istioNameFilters = getFilterSelectedValues(IstioConfigListFilters.istioNameFilter, activeFilters);
+    const configValidationFilters = getFilterSelectedValues(
+      IstioConfigListFilters.configValidationFilter,
+      activeFilters
+    );
 
     if (namespacesSelected.length === 0) {
       this.promises

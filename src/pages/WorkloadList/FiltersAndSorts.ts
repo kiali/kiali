@@ -1,9 +1,15 @@
-import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
+import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType, WorkloadNamespaceResponse, WorkloadOverview } from '../../types/Workload';
 import { SortField } from '../../types/SortFilters';
-import { removeDuplicatesArray } from '../../utils/Common';
 import { getRequestErrorsRatio, WorkloadHealth } from '../../types/Health';
 import NamespaceFilter from '../../components/Filters/NamespaceFilter';
+import {
+  presenceValues,
+  istioSidecarFilter,
+  healthFilter,
+  getFilterSelectedValues,
+  getPresenceFilterValue
+} from 'src/components/Filters/CommonFilters';
 
 type WorkloadItemHealth = WorkloadListItem & { health: WorkloadHealth };
 
@@ -97,17 +103,6 @@ export namespace WorkloadListFilters {
     }
   ];
 
-  const presenceValues: FilterValue[] = [
-    {
-      id: 'present',
-      title: 'Present'
-    },
-    {
-      id: 'notpresent',
-      title: 'Not Present'
-    }
-  ];
-
   const workloadNameFilter: FilterType = {
     id: 'workloadname',
     title: 'Workload Name',
@@ -115,15 +110,6 @@ export namespace WorkloadListFilters {
     filterType: 'text',
     action: FILTER_ACTION_APPEND,
     filterValues: []
-  };
-
-  const istioSidecarFilter: FilterType = {
-    id: 'istio',
-    title: 'Istio Sidecar',
-    placeholder: 'Filter by IstioSidecar Validation',
-    filterType: 'select',
-    action: FILTER_ACTION_UPDATE,
-    filterValues: presenceValues
   };
 
   const appLabelFilter: FilterType = {
@@ -195,9 +181,11 @@ export namespace WorkloadListFilters {
     workloadNameFilter,
     workloadTypeFilter,
     istioSidecarFilter,
+    healthFilter,
     appLabelFilter,
     versionLabelFilter
   ];
+  export const namespaceFilter = availableFilters[0];
 
   /** Filter Method */
   const includeName = (name: string, names: string[]) => {
@@ -244,44 +232,13 @@ export namespace WorkloadListFilters {
   };
 
   export const filterBy = (response: WorkloadNamespaceResponse, filters: ActiveFilter[]): void => {
-    const workloadTypeFilters: string[] = removeDuplicatesArray(
-      filters
-        .filter(activeFilter => activeFilter.category === 'Workload Type')
-        .map(activeFilter => WorkloadType[activeFilter.value])
-    );
+    const workloadTypeFilters = getFilterSelectedValues(workloadTypeFilter, filters);
+    const workloadNamesSelected = getFilterSelectedValues(workloadNameFilter, filters);
+    const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
+    const appLabel = getPresenceFilterValue(appLabelFilter, filters);
+    const versionLabel = getPresenceFilterValue(versionLabelFilter, filters);
 
     response.workloads = filterByType(response.workloads, workloadTypeFilters);
-    /** Get WorkloadName filter */
-    const workloadNamesSelected: string[] = removeDuplicatesArray(
-      filters.filter(activeFilter => activeFilter.category === 'Workload Name').map(activeFilter => activeFilter.value)
-    );
-
-    /** Get IstioSidecar filter */
-    let istioSidecarValidationFilters: ActiveFilter[] = filters.filter(
-      activeFilter => activeFilter.category === 'Istio Sidecar'
-    );
-    let istioSidecar: boolean | undefined = undefined;
-
-    if (istioSidecarValidationFilters.length > 0) {
-      istioSidecar = istioSidecarValidationFilters[0].value === 'Present' ? true : false;
-    }
-
-    /** Get Label app filter */
-    let appLabelFilters: ActiveFilter[] = filters.filter(activeFilter => activeFilter.category === 'App Label');
-    let appLabel: boolean | undefined = undefined;
-
-    if (appLabelFilters.length > 0) {
-      appLabel = appLabelFilters[0].value === 'Present' ? true : false;
-    }
-
-    /** Get Label version filter */
-    let versionLabelFilters: ActiveFilter[] = filters.filter(activeFilter => activeFilter.category === 'Version Label');
-    let versionLabel: boolean | undefined = undefined;
-
-    if (versionLabelFilters.length > 0) {
-      versionLabel = versionLabelFilters[0].value === 'Present' ? true : false;
-    }
-
     response.workloads = filterByName(response.workloads, workloadNamesSelected);
     response.workloads = filterByLabel(response.workloads, istioSidecar, appLabel, versionLabel);
   };

@@ -7,7 +7,6 @@ import { WorkloadListFilters } from './FiltersAndSorts';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { Button, Icon, ListView, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
 import { ActiveFilter } from '../../types/Filters';
-import { removeDuplicatesArray } from '../../utils/Common';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import ItemDescription from './ItemDescription';
 import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
@@ -15,6 +14,7 @@ import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
+import { getFilterSelectedValues } from 'src/components/Filters/CommonFilters';
 
 interface WorkloadListComponentState extends ListComponent.State<WorkloadListItem> {
   rateInterval: number;
@@ -90,12 +90,7 @@ class WorkloadListComponent extends ListComponent.Component<
     this.promises.cancelAll();
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
-    let namespacesSelected: string[] = activeFilters
-      .filter(activeFilter => activeFilter.category === 'Namespace')
-      .map(activeFilter => activeFilter.value);
-
-    /** Remove duplicates  */
-    namespacesSelected = removeDuplicatesArray(namespacesSelected);
+    const namespacesSelected = getFilterSelectedValues(WorkloadListFilters.namespaceFilter, activeFilters);
 
     if (namespacesSelected.length === 0) {
       this.promises
