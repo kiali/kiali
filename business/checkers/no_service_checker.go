@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	"github.com/kiali/kiali/business/checkers/destination_rules"
+	"github.com/kiali/kiali/business/checkers/destinationrules"
 	"github.com/kiali/kiali/business/checkers/virtual_services"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -12,6 +12,7 @@ type NoServiceChecker struct {
 	Namespace    string
 	IstioDetails *kubernetes.IstioDetails
 	Services     []v1.Service
+	WorkloadList models.WorkloadList
 }
 
 func (in NoServiceChecker) Check() models.IstioValidations {
@@ -21,6 +22,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 		return validations
 	}
 
+	services := getServices(in.Services, in.WorkloadList)
 	serviceNames := getServiceNames(in.Services)
 	serviceHosts := kubernetes.ServiceEntryHostnames(in.IstioDetails.ServiceEntries)
 	gatewayNames := kubernetes.GatewayNames(in.IstioDetails.Gateways)
@@ -30,7 +32,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 		validations.MergeValidations(runGatewayCheck(virtualService, gatewayNames))
 	}
 	for _, destinationRule := range in.IstioDetails.DestinationRules {
-		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, serviceNames))
+		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, services))
 	}
 
 	return validations
@@ -74,10 +76,10 @@ func runGatewayCheck(virtualService kubernetes.IstioObject, gatewayNames map[str
 	return vsvalidations
 }
 
-func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, serviceNames []string) models.IstioValidations {
-	result, valid := destination_rules.NoHostChecker{
+func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, services map[string][]string) models.IstioValidations {
+	result, valid := destinationrules.NoDestinationChecker{
 		Namespace:       namespace,
-		ServiceNames:    serviceNames,
+		Services:        services,
 		DestinationRule: destinationRule,
 	}.Check()
 
@@ -93,12 +95,26 @@ func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace s
 	return drvalidations
 }
 
+func getServices(services []v1.Service, workloads models.WorkloadList) map[string][]string {
+	serviceMap := make(map[string][]string, len(services))
+	for _, item := range services {
+		serviceMap[item.Name] = []string{}
+	}
+	for _, wl := range workloads.Workloads {
+		if wl.AppLabel && wl.VersionLabel {
+			if versionList, found := serviceMap[wl.Labels["app"]]; found {
+				versionList = append(versionList, wl.Labels["version"])
+				serviceMap[wl.Labels["app"]] = versionList
+			}
+		}
+	}
+	return serviceMap
+}
+
 func getServiceNames(services []v1.Service) []string {
 	serviceNames := make([]string, 0)
-	if services != nil {
-		for _, item := range services {
-			serviceNames = append(serviceNames, item.Name)
-		}
+	for _, item := range services {
+		serviceNames = append(serviceNames, item.Name)
 	}
 	return serviceNames
 }

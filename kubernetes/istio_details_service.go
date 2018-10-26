@@ -295,6 +295,40 @@ func GetDestinationRulesSubsets(destinationRules []IstioObject, serviceName, ver
 	return foundSubsets
 }
 
+// ValidateDestinationRulesSubsets compares availableVersions to the ones found in the subsets definitions and returns indexes of those that were not found
+func ValidateDestinationRulesSubsets(destinationRules []IstioObject, serviceName string, availableVersions []string) []int {
+	cfg := config.Get()
+	missingSubsets := make([]int, 0)
+	for _, destinationRule := range destinationRules {
+		if dHost, ok := destinationRule.GetSpec()["host"]; ok {
+			if host, ok := dHost.(string); ok && FilterByHost(host, serviceName, destinationRule.GetObjectMeta().Namespace) {
+				if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
+					if dSubsets, ok := subsets.([]interface{}); ok {
+					subSetScan:
+						for i, subset := range dSubsets {
+							if innerSubset, ok := subset.(map[string]interface{}); ok {
+								if labels, ok := innerSubset["labels"]; ok {
+									if dLabels, ok := labels.(map[string]interface{}); ok {
+										if versionValue, ok := dLabels[cfg.IstioLabels.VersionLabelName]; ok {
+											for _, v := range availableVersions {
+												if v == versionValue {
+													continue subSetScan
+												}
+											}
+											missingSubsets = append(missingSubsets, i)
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return missingSubsets
+}
+
 func FilterByHost(host, serviceName, namespace string) bool {
 	// Check single name
 	if host == serviceName {
