@@ -29,6 +29,7 @@ type MetricsType struct {
 	GraphNodes               *prometheus.GaugeVec
 	GraphGenerationTime      *prometheus.SummaryVec
 	GraphAppenderTime        *prometheus.SummaryVec
+	GraphMarshalTime         *prometheus.SummaryVec
 	APIProcessingTime        *prometheus.SummaryVec
 	PrometheusProcessingTime *prometheus.SummaryVec
 }
@@ -65,6 +66,13 @@ var Metrics = MetricsType{
 		},
 		[]string{labelAppender},
 	),
+	GraphMarshalTime: prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name: "kiali_graph_marshal_duration_seconds",
+			Help: "The time required to marshal and return the JSON for a graph.",
+		},
+		[]string{labelGraphKind, labelGraphType, labelWithServiceNodes},
+	),
 	APIProcessingTime: prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "kiali_api_processing_duration_seconds",
@@ -88,6 +96,7 @@ func RegisterInternalMetrics() {
 		Metrics.GraphNodes,
 		Metrics.GraphGenerationTime,
 		Metrics.GraphAppenderTime,
+		Metrics.GraphMarshalTime,
 		Metrics.APIProcessingTime,
 		Metrics.PrometheusProcessingTime,
 	)
@@ -140,6 +149,21 @@ func GetGraphGenerationTimePrometheusTimer(graphKind string, graphType string, w
 func GetGraphAppenderTimePrometheusTimer(appenderName string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.GraphAppenderTime.With(prometheus.Labels{
 		labelAppender: appenderName,
+	}))
+	return timer
+}
+
+// GetGraphMarshalTimePrometheusTimer returns a timer that can be used to store
+// a value for the graph marshal time metric. The timer is ticking immediately
+// when this function returns.
+// Typical usage is as follows:
+//    promtimer := GetGraphMarshalTimePrometheusTimer(...)
+//    defer promtimer.ObserveDuration()
+func GetGraphMarshalTimePrometheusTimer(graphKind string, graphType string, withServiceNodes bool) *prometheus.Timer {
+	timer := prometheus.NewTimer(Metrics.GraphMarshalTime.With(prometheus.Labels{
+		labelGraphKind:        graphKind,
+		labelGraphType:        graphType,
+		labelWithServiceNodes: strconv.FormatBool(withServiceNodes),
 	}))
 	return timer
 }

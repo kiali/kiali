@@ -73,7 +73,7 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 	defer promtimer.ObserveDuration()
 
 	trafficMap := graphNamespaces(o, client)
-	generateGraph(trafficMap, w, o)
+	generateGraph(trafficMap, w, o, internalmetrics.GRAPH_KIND_NAMESPACE)
 
 	// update metrics
 	internalmetrics.IncrementGraphsGenerated(internalmetrics.GRAPH_KIND_NAMESPACE, o.GraphType, o.InjectServiceNodes)
@@ -689,7 +689,7 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	markOutsiders(trafficMap, o)
 	markTrafficGenerators(trafficMap)
 
-	generateGraph(trafficMap, w, o)
+	generateGraph(trafficMap, w, o, internalmetrics.GRAPH_KIND_NODE)
 
 	// update metrics
 	internalmetrics.IncrementGraphsGenerated(internalmetrics.GRAPH_KIND_NODE, o.GraphType, o.InjectServiceNodes)
@@ -932,8 +932,11 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 	return trafficMap
 }
 
-func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options.Options) {
+func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options.Options, graphKind string) {
 	log.Debugf("Generating config for [%s] service graph...", o.Vendor)
+
+	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(graphKind, o.GraphType, o.InjectServiceNodes)
+	defer promtimer.ObserveDuration()
 
 	var vendorConfig interface{}
 	switch o.Vendor {
