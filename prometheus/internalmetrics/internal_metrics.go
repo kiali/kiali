@@ -24,11 +24,11 @@ const (
 type MetricsType struct {
 	GraphsGenerated          *prometheus.CounterVec
 	GraphNodes               *prometheus.GaugeVec
-	GraphGenerationTime      *prometheus.SummaryVec
-	GraphAppenderTime        *prometheus.SummaryVec
-	GraphMarshalTime         *prometheus.SummaryVec
-	APIProcessingTime        *prometheus.SummaryVec
-	PrometheusProcessingTime *prometheus.SummaryVec
+	GraphGenerationTime      *prometheus.HistogramVec
+	GraphAppenderTime        *prometheus.HistogramVec
+	GraphMarshalTime         *prometheus.HistogramVec
+	APIProcessingTime        *prometheus.HistogramVec
+	PrometheusProcessingTime *prometheus.HistogramVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -49,36 +49,36 @@ var Metrics = MetricsType{
 		},
 		[]string{labelGraphKind, labelGraphType, labelWithServiceNodes},
 	),
-	GraphGenerationTime: prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
+	GraphGenerationTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
 			Name: "kiali_graph_generation_duration_seconds",
 			Help: "The time required to generate a graph.",
 		},
 		[]string{labelGraphKind, labelGraphType, labelWithServiceNodes},
 	),
-	GraphAppenderTime: prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
+	GraphAppenderTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
 			Name: "kiali_graph_appender_duration_seconds",
 			Help: "The time required to execute an appender while generating a graph.",
 		},
 		[]string{labelAppender},
 	),
-	GraphMarshalTime: prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
+	GraphMarshalTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
 			Name: "kiali_graph_marshal_duration_seconds",
 			Help: "The time required to marshal and return the JSON for a graph.",
 		},
 		[]string{labelGraphKind, labelGraphType, labelWithServiceNodes},
 	),
-	APIProcessingTime: prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
+	APIProcessingTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
 			Name: "kiali_api_processing_duration_seconds",
 			Help: "The time required to execute an API request.",
 		},
 		[]string{labelName},
 	),
-	PrometheusProcessingTime: prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
+	PrometheusProcessingTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
 			Name: "kiali_prometheus_processing_duration_seconds",
 			Help: "The time required to execute a Prometheus query.",
 		},
