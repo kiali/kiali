@@ -104,7 +104,7 @@ NODES:
 			continue
 		}
 		for _, virtualService := range istioCfg.VirtualServices {
-			if virtualService.IsVirtualService(namespace, n.Service) {
+			if virtualService.IsValidHost(namespace, n.Service) {
 				n.Metadata["hasVS"] = true
 				continue NODES
 			}

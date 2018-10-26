@@ -4,7 +4,6 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -14,9 +13,8 @@ import (
 // can re-use the information.  A new instance is generated for graph and
 // is initially empty.
 type GlobalInfo struct {
-	Business    *business.Layer
-	IstioClient *kubernetes.IstioClient
-	PromClient  *prometheus.Client
+	Business   *business.Layer
+	PromClient *prometheus.Client
 }
 
 func NewGlobalInfo() *GlobalInfo {

@@ -472,7 +472,7 @@ func mockGetIstioConfigDetails() IstioConfigService {
 	return IstioConfigService{k8s: k8s}
 }
 
-func TestIsVirtualService(t *testing.T) {
+func TestIsValidHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
@@ -509,9 +509,9 @@ func TestIsVirtualService(t *testing.T) {
 	virtualService := models.VirtualService{}
 	virtualService.Parse(virtualServiceIstioObject.DeepCopyIstioObject())
 
-	assert.False(t, virtualService.IsVirtualService("", ""))
-	assert.False(t, virtualService.IsVirtualService("", "ratings"))
-	assert.True(t, virtualService.IsVirtualService("", "reviews"))
+	assert.False(t, virtualService.IsValidHost("", ""))
+	assert.False(t, virtualService.IsValidHost("", "ratings"))
+	assert.True(t, virtualService.IsValidHost("", "reviews"))
 }
 
 func TestHasCircuitBreaker(t *testing.T) {
