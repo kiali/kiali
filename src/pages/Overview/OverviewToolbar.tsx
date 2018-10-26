@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Sort, ToolbarRightContent } from 'patternfly-react';
 
 import { StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { ListPage } from '../../components/ListPage/ListPage';
+import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import Refresh from '../../components/Refresh/Refresh';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { config } from '../../config';
@@ -31,18 +31,18 @@ class OverviewToolbar extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      sortField: ListPage.currentSortField(FiltersAndSorts.sortFields),
-      isSortAscending: ListPage.isCurrentSortAscending(),
-      duration: ListPage.currentDuration(),
-      pollInterval: ListPage.currentPollInterval()
+      sortField: ListPagesHelper.currentSortField(FiltersAndSorts.sortFields),
+      isSortAscending: ListPagesHelper.isCurrentSortAscending(),
+      duration: ListPagesHelper.currentDuration(),
+      pollInterval: ListPagesHelper.currentPollInterval()
     };
   }
 
   componentDidUpdate() {
-    const urlSortField = ListPage.currentSortField(FiltersAndSorts.sortFields);
-    const urlIsSortAscending = ListPage.isCurrentSortAscending();
-    const urlDuration = ListPage.currentDuration();
-    const urlPollInterval = ListPage.currentPollInterval();
+    const urlSortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
+    const urlIsSortAscending = ListPagesHelper.isCurrentSortAscending();
+    const urlDuration = ListPagesHelper.currentDuration();
+    const urlPollInterval = ListPagesHelper.currentPollInterval();
     if (!this.paramsAreSynced(urlSortField, urlIsSortAscending, urlDuration, urlPollInterval)) {
       this.setState({
         sortField: urlSortField,

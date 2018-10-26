@@ -26,7 +26,7 @@ import { authentication } from '../../utils/Authentication';
 import { NamespaceValidations } from '../../types/IstioObjects';
 import { ConfigIndicator } from '../../components/ConfigValidation/ConfigIndicator';
 import { CancelablePromise, makeCancelablePromise, removeDuplicatesArray } from '../../utils/Common';
-import { ListPage } from '../../components/ListPage/ListPage';
+import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { IstioConfigListFilters } from './FiltersAndSorts';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { SortField } from '../../types/SortFilters';
@@ -219,7 +219,7 @@ class IstioConfigListComponent extends ListComponent.Component<
               pagination: {
                 page: currentPage,
                 perPage: prevState.pagination.perPage,
-                perPageOptions: ListPage.perPageOptions
+                perPageOptions: ListPagesHelper.perPageOptions
               }
             };
           });

@@ -1,11 +1,11 @@
-import history from '../../app/History';
+import history, { URLParams } from '../../app/History';
 import { config } from '../../config';
 import { ActiveFilter, FilterType } from '../../types/Filters';
 import { Pagination } from '../../types/Pagination';
 import { SortField } from '../../types/SortFilters';
 import * as MessageCenter from '../../utils/MessageCenter';
 
-export namespace ListPage {
+export namespace ListPagesHelper {
   export const perPageOptions: number[] = [5, 10, 15];
   const defaultDuration = 600;
   const defaultPollInterval = config().toolbar.defaultPollInterval;
@@ -64,7 +64,7 @@ export namespace ListPage {
       urlParams.append(filterType.id, activeFilter.value);
     });
     // Resetting pagination when filters change
-    urlParams.delete('page');
+    urlParams.delete(URLParams.PAGE);
     history.push(history.location.pathname + '?' + urlParams.toString());
     return cleanFilters;
   };
@@ -102,26 +102,26 @@ export namespace ListPage {
 
   export const currentPagination = (): Pagination => {
     return {
-      page: getSingleIntQueryParam('page') || 1,
-      perPage: getSingleIntQueryParam('perPage') || perPageOptions[1],
+      page: getSingleIntQueryParam(URLParams.PAGE) || 1,
+      perPage: getSingleIntQueryParam(URLParams.PER_PAGE) || perPageOptions[1],
       perPageOptions: perPageOptions
     };
   };
 
   export const isCurrentSortAscending = (): boolean => {
-    return (getSingleQueryParam('direction') || 'asc') === 'asc';
+    return (getSingleQueryParam(URLParams.DIRECTION) || 'asc') === 'asc';
   };
 
   export const currentSortFieldId = (): string | undefined => {
-    return getSingleQueryParam('sort');
+    return getSingleQueryParam(URLParams.SORT);
   };
 
   export const currentDuration = (): number => {
-    return getSingleIntQueryParam('duration') || defaultDuration;
+    return getSingleIntQueryParam(URLParams.DURATION) || defaultDuration;
   };
 
   export const currentPollInterval = (): number => {
-    const pi = getSingleIntQueryParam('pi');
+    const pi = getSingleIntQueryParam(URLParams.POLL_INTERVAL);
     if (pi === undefined) {
       return defaultPollInterval;
     }
@@ -129,7 +129,7 @@ export namespace ListPage {
   };
 
   export const currentSortField = <T>(sortFields: SortField<T>[]): SortField<T> => {
-    const queriedSortedField = getQueryParam('sort') || [sortFields[0].param];
+    const queriedSortedField = getQueryParam(URLParams.SORT) || [sortFields[0].param];
     return (
       sortFields.find(sortField => {
         return sortField.param === queriedSortedField[0];

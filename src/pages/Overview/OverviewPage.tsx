@@ -15,7 +15,7 @@ import {
 import { AxiosError } from 'axios';
 
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
-import { ListPage } from '../../components/ListPage/ListPage';
+import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import * as API from '../../services/Api';
 import { AppHealth, DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
 import Namespace from '../../types/Namespace';
@@ -100,9 +100,9 @@ class OverviewPage extends React.Component<OverviewProps, State> {
   };
 
   fetchAppsHealth(namespaces: string[]) {
-    const rateInterval = ListPage.currentDuration();
-    const isAscending = ListPage.isCurrentSortAscending();
-    const sortField = ListPage.currentSortField(FiltersAndSorts.sortFields);
+    const rateInterval = ListPagesHelper.currentDuration();
+    const isAscending = ListPagesHelper.isCurrentSortAscending();
+    const sortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
     const appsPromises = namespaces.map(namespace =>
       API.getNamespaceAppHealth(authentication(), namespace, rateInterval).then(r => ({
         namespace: namespace,
@@ -144,7 +144,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   handleAxiosError(message: string, error: AxiosError) {
-    ListPage.handleError(API.getErrorMsg(message, error));
+    ListPagesHelper.handleError(API.getErrorMsg(message, error));
   }
 
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean) => {
@@ -162,7 +162,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         <Breadcrumb title={true}>
           <Breadcrumb.Item active={true}>Namespaces</Breadcrumb.Item>
         </Breadcrumb>
-        <OverviewToolbar onRefresh={this.load} onError={ListPage.handleError} sort={this.sort} />
+        <OverviewToolbar onRefresh={this.load} onError={ListPagesHelper.handleError} sort={this.sort} />
         <div className="cards-pf">
           <CardGrid matchHeight={true}>
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>

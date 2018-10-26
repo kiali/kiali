@@ -10,7 +10,7 @@ import { Button, Icon, ListView, Paginator, Sort, ToolbarRightContent } from 'pa
 import { ActiveFilter } from '../../types/Filters';
 import { CancelablePromise, makeCancelablePromise, removeDuplicatesArray } from '../../utils/Common';
 import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
-import { ListPage } from '../../components/ListPage/ListPage';
+import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
@@ -168,7 +168,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
                 pagination: {
                   page: currentPage,
                   perPage: prevState.pagination.perPage,
-                  perPageOptions: ListPage.perPageOptions
+                  perPageOptions: ListPagesHelper.perPageOptions
                 }
               };
             });
