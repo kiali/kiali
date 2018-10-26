@@ -28,7 +28,7 @@ import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
 import { IstioLogo } from '../../logos';
-import { getFilterSelectedValues } from 'src/components/Filters/CommonFilters';
+import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 
 interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {
   rateInterval: number;
@@ -147,13 +147,14 @@ class ServiceListComponent extends ListComponent.Component<
     this.promises
       .registerAll('services', servicesPromises)
       .then(responses => {
-        const currentPage = resetPagination ? 1 : this.state.pagination.page;
-
         let serviceListItems: ServiceListItem[] = [];
         responses.forEach(response => {
-          ServiceListFilters.filterBy(response.data, filters);
           serviceListItems = serviceListItems.concat(this.getServiceItem(response.data, rateInterval));
         });
+        return ServiceListFilters.filterBy(serviceListItems, filters);
+      })
+      .then(serviceListItems => {
+        const currentPage = resetPagination ? 1 : this.state.pagination.page;
         this.promises.cancel('sort');
         this.sortItemList(serviceListItems, this.state.currentSortField, this.state.isSortAscending)
           .then(sorted => {

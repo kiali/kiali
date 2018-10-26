@@ -1,14 +1,15 @@
 import { ActiveFilter, FilterType, FILTER_ACTION_APPEND } from '../../types/Filters';
 import { getRequestErrorsRatio, ServiceHealth } from '../../types/Health';
-import { ServiceListItem, ServiceList, ServiceOverview } from '../../types/ServiceList';
+import { ServiceListItem } from '../../types/ServiceList';
 import { SortField } from '../../types/SortFilters';
 import NamespaceFilter from '../../components/Filters/NamespaceFilter';
 import {
   istioSidecarFilter,
   healthFilter,
   getPresenceFilterValue,
-  getFilterSelectedValues
-} from 'src/components/Filters/CommonFilters';
+  getFilterSelectedValues,
+  filterByHealth
+} from '../../components/Filters/CommonFilters';
 
 type ServiceItemHealth = ServiceListItem & { health: ServiceHealth };
 
@@ -79,11 +80,11 @@ export namespace ServiceListFilters {
   ];
   export const namespaceFilter = availableFilters[0];
 
-  const filterByIstioSidecar = (items: ServiceOverview[], istioSidecar: boolean): ServiceOverview[] => {
+  const filterByIstioSidecar = (items: ServiceListItem[], istioSidecar: boolean): ServiceListItem[] => {
     return items.filter(item => item.istioSidecar === istioSidecar);
   };
 
-  const filterByName = (items: ServiceOverview[], names: string[]): ServiceOverview[] => {
+  const filterByName = (items: ServiceListItem[], names: string[]): ServiceListItem[] => {
     return items.filter(item => {
       let serviceNameFiltered = true;
       if (names.length > 0) {
@@ -99,16 +100,28 @@ export namespace ServiceListFilters {
     });
   };
 
-  export const filterBy = (list: ServiceList, filters: ActiveFilter[]): void => {
+  export const filterBy = (
+    items: ServiceListItem[],
+    filters: ActiveFilter[]
+  ): Promise<ServiceListItem[]> | ServiceListItem[] => {
+    let ret = items;
     const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
     if (istioSidecar !== undefined) {
-      list.services = filterByIstioSidecar(list.services, istioSidecar);
+      ret = filterByIstioSidecar(ret, istioSidecar);
     }
 
     const serviceNamesSelected = getFilterSelectedValues(serviceNameFilter, filters);
     if (serviceNamesSelected.length > 0) {
-      list.services = filterByName(list.services, serviceNamesSelected);
+      ret = filterByName(ret, serviceNamesSelected);
     }
+
+    // We may have to perform a second round of filtering, using data fetched asynchronously (health)
+    // If not, exit fast
+    const healthSelected = getFilterSelectedValues(healthFilter, filters);
+    if (healthSelected.length > 0) {
+      return filterByHealth(ret, healthSelected);
+    }
+    return ret;
   };
 
   // Exported for test

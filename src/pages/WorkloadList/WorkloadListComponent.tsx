@@ -14,7 +14,7 @@ import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
-import { getFilterSelectedValues } from 'src/components/Filters/CommonFilters';
+import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 
 interface WorkloadListComponentState extends ListComponent.State<WorkloadListItem> {
   rateInterval: number;
@@ -130,12 +130,14 @@ class WorkloadListComponent extends ListComponent.Component<
     this.promises
       .registerAll('workloads', workloadsConfigPromises)
       .then(responses => {
-        const currentPage = resetPagination ? 1 : this.state.pagination.page;
         let workloadsItems: WorkloadListItem[] = [];
         responses.forEach(response => {
-          WorkloadListFilters.filterBy(response.data, filters);
           workloadsItems = workloadsItems.concat(this.getDeploymentItems(response.data));
         });
+        return WorkloadListFilters.filterBy(workloadsItems, filters);
+      })
+      .then(workloadsItems => {
+        const currentPage = resetPagination ? 1 : this.state.pagination.page;
         this.promises.cancel('sort');
         this.sortItemList(workloadsItems, this.state.currentSortField, this.state.isSortAscending)
           .then(sorted => {

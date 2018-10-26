@@ -1,5 +1,5 @@
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
-import { AppListItem, AppList, AppOverview } from '../../types/AppList';
+import { AppListItem } from '../../types/AppList';
 import { SortField } from '../../types/SortFilters';
 import { AppHealth, getRequestErrorsRatio } from '../../types/Health';
 import NamespaceFilter from '../../components/Filters/NamespaceFilter';
@@ -7,8 +7,9 @@ import {
   istioSidecarFilter,
   healthFilter,
   getPresenceFilterValue,
-  getFilterSelectedValues
-} from 'src/components/Filters/CommonFilters';
+  getFilterSelectedValues,
+  filterByHealth
+} from '../../components/Filters/CommonFilters';
 
 type AppListItemHealth = AppListItem & { health: AppHealth };
 
@@ -84,7 +85,7 @@ export namespace AppListFilters {
 
   /** Filter Method */
 
-  const filterByName = (items: AppOverview[], names: string[]): AppOverview[] => {
+  const filterByName = (items: AppListItem[], names: string[]): AppListItem[] => {
     return items.filter(item => {
       let appNameFiltered = true;
       if (names.length > 0) {
@@ -100,25 +101,32 @@ export namespace AppListFilters {
     });
   };
 
-  const filterByIstioSidecar = (items: AppOverview[], istioSidecar: boolean): AppOverview[] => {
+  const filterByIstioSidecar = (items: AppListItem[], istioSidecar: boolean): AppListItem[] => {
     return items.filter(item => item.istioSidecar === istioSidecar);
   };
 
-  export const filterBy = (appsList: AppList, filters: ActiveFilter[]): void => {
+  export const filterBy = (
+    appsList: AppListItem[],
+    filters: ActiveFilter[]
+  ): Promise<AppListItem[]> | AppListItem[] => {
+    let ret = appsList;
     const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
     if (istioSidecar !== undefined) {
-      appsList.applications = filterByIstioSidecar(appsList.applications, istioSidecar);
+      ret = filterByIstioSidecar(ret, istioSidecar);
     }
 
     const appNamesSelected = getFilterSelectedValues(appNameFilter, filters);
     if (appNamesSelected.length > 0) {
-      appsList.applications = filterByName(appsList.applications, appNamesSelected);
+      ret = filterByName(ret, appNamesSelected);
     }
 
-    // const healthSelected = getFilterSelectedValues(healthFilter, filters);
-    // if (healthSelected.length > 0) {
-    //   appsList.applications = filterByHealth(appsList.applications, healthSelected);
-    // }
+    // We may have to perform a second round of filtering, using data fetched asynchronously (health)
+    // If not, exit fast
+    const healthSelected = getFilterSelectedValues(healthFilter, filters);
+    if (healthSelected.length > 0) {
+      return filterByHealth(ret, healthSelected);
+    }
+    return ret;
   };
 
   /** Sort Method */

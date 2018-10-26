@@ -1,6 +1,6 @@
 import { FILTER_ACTION_APPEND, FilterType, FILTER_ACTION_UPDATE, FilterValue, ActiveFilter } from '../../types/Filters';
-import { HEALTHY, DEGRADED, FAILURE, NA } from 'src/types/Health';
-import { removeDuplicatesArray } from 'src/utils/Common';
+import { HEALTHY, DEGRADED, FAILURE, NA, Health } from '../../types/Health';
+import { removeDuplicatesArray } from '../../utils/Common';
 
 export const presenceValues: FilterValue[] = [
   {
@@ -61,4 +61,16 @@ export const getPresenceFilterValue = (filter: FilterType, activeFilters: Active
     return presenceFilters[0].value === 'Present';
   }
   return undefined;
+};
+
+export const filterByHealth = <T extends { healthPromise: Promise<Health> }>(
+  items: T[],
+  filterValues: string[]
+): Promise<T[]> => {
+  const itemsWithHealthPromises = items.map(item => item.healthPromise.then(h => ({ health: h, item: item })));
+  return Promise.all(itemsWithHealthPromises).then(itemsWithHealth => {
+    return itemsWithHealth
+      .filter(itemWithHealth => filterValues.includes(itemWithHealth.health.getGlobalStatus().name))
+      .map(itemWithHealth => itemWithHealth.item);
+  });
 };

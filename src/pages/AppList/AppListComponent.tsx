@@ -14,7 +14,7 @@ import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
-import { getFilterSelectedValues } from 'src/components/Filters/CommonFilters';
+import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 
 interface AppListComponentState extends ListComponent.State<AppListItem> {
   rateInterval: number;
@@ -114,13 +114,14 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
     this.promises
       .registerAll('apps', appsPromises)
       .then(responses => {
-        const currentPage = resetPagination ? 1 : this.state.pagination.page;
-
         let appListItems: AppListItem[] = [];
         responses.forEach(response => {
-          AppListFilters.filterBy(response.data, filters);
           appListItems = appListItems.concat(AppListClass.getAppItems(response.data, rateInterval));
         });
+        return AppListFilters.filterBy(appListItems, filters);
+      })
+      .then(appListItems => {
+        const currentPage = resetPagination ? 1 : this.state.pagination.page;
         this.promises.cancel('sort');
         this.sortItemList(appListItems, this.state.currentSortField, this.state.isSortAscending)
           .then(sorted => {

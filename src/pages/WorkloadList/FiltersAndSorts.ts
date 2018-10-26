@@ -1,5 +1,5 @@
 import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
-import { WorkloadListItem, WorkloadType, WorkloadNamespaceResponse, WorkloadOverview } from '../../types/Workload';
+import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { SortField } from '../../types/SortFilters';
 import { getRequestErrorsRatio, WorkloadHealth } from '../../types/Health';
 import NamespaceFilter from '../../components/Filters/NamespaceFilter';
@@ -8,8 +8,9 @@ import {
   istioSidecarFilter,
   healthFilter,
   getFilterSelectedValues,
-  getPresenceFilterValue
-} from 'src/components/Filters/CommonFilters';
+  getPresenceFilterValue,
+  filterByHealth
+} from '../../components/Filters/CommonFilters';
 
 type WorkloadItemHealth = WorkloadListItem & { health: WorkloadHealth };
 
@@ -197,50 +198,61 @@ export namespace WorkloadListFilters {
     return false;
   };
 
-  const filterByType = (items: WorkloadOverview[], filter: string[]): WorkloadOverview[] => {
+  const filterByType = (items: WorkloadListItem[], filter: string[]): WorkloadListItem[] => {
     if (filter && filter.length === 0) {
       return items;
     }
-    return items.filter(workload => includeName(workload.type, filter));
+    return items.filter(item => includeName(item.workload.type, filter));
   };
 
   const filterByLabel = (
-    items: WorkloadOverview[],
+    items: WorkloadListItem[],
     istioSidecar: boolean | undefined,
     app: boolean | undefined,
     version: boolean | undefined
-  ): WorkloadOverview[] => {
+  ): WorkloadListItem[] => {
     let result = items;
     if (istioSidecar !== undefined) {
-      result = result.filter(workload => workload.istioSidecar === istioSidecar);
+      result = result.filter(item => item.workload.istioSidecar === istioSidecar);
     }
-
     if (app !== undefined) {
-      result = result.filter(workload => workload.appLabel === app);
+      result = result.filter(item => item.workload.appLabel === app);
     }
     if (version !== undefined) {
-      result = result.filter(workload => workload.versionLabel === version);
+      result = result.filter(item => item.workload.versionLabel === version);
     }
     return result;
   };
 
-  const filterByName = (items: WorkloadOverview[], names: string[]): WorkloadOverview[] => {
+  const filterByName = (items: WorkloadListItem[], names: string[]): WorkloadListItem[] => {
     if (names.length === 0) {
       return items;
     }
-    return items.filter(item => names.some(name => item.name.includes(name)));
+    return items.filter(item => names.some(name => item.workload.name.includes(name)));
   };
 
-  export const filterBy = (response: WorkloadNamespaceResponse, filters: ActiveFilter[]): void => {
+  export const filterBy = (
+    items: WorkloadListItem[],
+    filters: ActiveFilter[]
+  ): Promise<WorkloadListItem[]> | WorkloadListItem[] => {
     const workloadTypeFilters = getFilterSelectedValues(workloadTypeFilter, filters);
     const workloadNamesSelected = getFilterSelectedValues(workloadNameFilter, filters);
     const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
     const appLabel = getPresenceFilterValue(appLabelFilter, filters);
     const versionLabel = getPresenceFilterValue(versionLabelFilter, filters);
 
-    response.workloads = filterByType(response.workloads, workloadTypeFilters);
-    response.workloads = filterByName(response.workloads, workloadNamesSelected);
-    response.workloads = filterByLabel(response.workloads, istioSidecar, appLabel, versionLabel);
+    let ret = items;
+    ret = filterByType(ret, workloadTypeFilters);
+    ret = filterByName(ret, workloadNamesSelected);
+    ret = filterByLabel(ret, istioSidecar, appLabel, versionLabel);
+
+    // We may have to perform a second round of filtering, using data fetched asynchronously (health)
+    // If not, exit fast
+    const healthSelected = getFilterSelectedValues(healthFilter, filters);
+    if (healthSelected.length > 0) {
+      return filterByHealth(ret, healthSelected);
+    }
+    return ret;
   };
 
   /** Sort Method */

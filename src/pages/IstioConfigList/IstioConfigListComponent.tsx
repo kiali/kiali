@@ -30,7 +30,7 @@ import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { IstioConfigListFilters } from './FiltersAndSorts';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { SortField } from '../../types/SortFilters';
-import { getFilterSelectedValues } from 'src/components/Filters/CommonFilters';
+import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 
 interface IstioConfigListComponentState extends ListComponent.State<IstioConfigItem> {}
 interface IstioConfigListComponentProps extends ListComponent.Props<IstioConfigItem> {}
