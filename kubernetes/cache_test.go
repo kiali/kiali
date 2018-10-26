@@ -13,74 +13,71 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/tools/cache"
 )
 
 func TestCacheGet(t *testing.T) {
 	assert := assert.New(t)
 
 	clientset := fake.NewSimpleClientset(fakeRuntimeObjects()...)
-	stopCh := make(chan struct{})
-	c := newCacheController(clientset, 0, stopCh)
-	defer c.StopControlChannel()
-	go c.Run(stopCh)
-
-	if !cache.WaitForCacheSync(stopCh, c.HasSynced) {
+	c := newCacheController(clientset, 0)
+	defer c.Stop()
+	c.Start()
+	if !c.WaitForSync() {
 		t.Fatal("Failed to sync")
 	}
 	namespaces := []string{"ns1", "ns2", "ns3"}
 	objsPerNs := 3
 	for _, namespace := range namespaces {
-		pods, existPods := c.GetPods(namespace)
-		assert.True(existPods)
+		pods, errPods := c.GetPods(namespace)
+		assert.Nil(errPods)
 		assert.Equal(objsPerNs, len(pods))
 
-		rc, existRc := c.GetReplicationControllers(namespace)
-		assert.True(existRc)
+		rc, errRc := c.GetReplicationControllers(namespace)
+		assert.Nil(errRc)
 		assert.Equal(objsPerNs, len(rc))
 
-		deps, existDeps := c.GetDeployments(namespace)
-		assert.True(existDeps)
+		deps, errDeps := c.GetDeployments(namespace)
+		assert.Nil(errDeps)
 		assert.Equal(objsPerNs, len(deps))
 
-		rs, existRs := c.GetReplicaSets(namespace)
-		assert.True(existRs)
+		rs, errRs := c.GetReplicaSets(namespace)
+		assert.Nil(errRs)
 		assert.Equal(objsPerNs, len(rs))
 
-		ss, existSs := c.GetStatefulSets(namespace)
-		assert.True(existSs)
+		ss, errSs := c.GetStatefulSets(namespace)
+		assert.Nil(errSs)
 		assert.Equal(objsPerNs, len(ss))
 
-		jobs, existJobs := c.GetJobs(namespace)
-		assert.True(existJobs)
+		jobs, errJobs := c.GetJobs(namespace)
+		assert.Nil(errJobs)
 		assert.Equal(objsPerNs, len(jobs))
 
-		cronjobs, existCronjobs := c.GetCronJobs(namespace)
-		assert.True(existCronjobs)
+		cronjobs, errCronjobs := c.GetCronJobs(namespace)
+		assert.Nil(errCronjobs)
 		assert.Equal(objsPerNs, len(cronjobs))
 
-		services, existServices := c.GetServices(namespace)
-		assert.True(existServices)
+		services, errServices := c.GetServices(namespace)
+		assert.Nil(errServices)
 		assert.Equal(objsPerNs, len(services))
 	}
 
-	dep, existDep := c.GetDeployment("ns3", "dep2")
-	assert.True(existDep)
+	dep, errDep := c.GetDeployment("ns3", "dep2")
+	assert.Nil(errDep)
 	assert.Equal("ns3", dep.Namespace)
 	assert.Equal("dep2", dep.Name)
 
-	ss, existSs := c.GetStatefulSet("ns3", "ss2")
-	assert.True(existSs)
+	ss, errSs := c.GetStatefulSet("ns3", "ss2")
+	assert.Nil(errSs)
 	assert.Equal("ns3", ss.Namespace)
 	assert.Equal("ss2", ss.Name)
 
-	svc, existSvc := c.GetService("ns3", "service2")
-	assert.True(existSvc)
+	svc, errSvc := c.GetService("ns3", "service2")
+	assert.Nil(errSvc)
 	assert.Equal("ns3", svc.Namespace)
 	assert.Equal("service2", svc.Name)
 
-	ep, existEp := c.GetEndpoints("ns3", "endpoints2")
-	assert.True(existEp)
+	ep, errEp := c.GetEndpoints("ns3", "endpoints2")
+	assert.Nil(errEp)
 	assert.Equal("ns3", ep.Namespace)
 	assert.Equal("endpoints2", ep.Name)
 }

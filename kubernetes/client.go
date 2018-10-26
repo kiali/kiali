@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"errors"
 	"fmt"
-	"k8s.io/client-go/tools/cache"
 	"net"
 	"os"
 	"time"
@@ -149,10 +148,10 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 	// Init global cache
 	if client.k8sCache == nil {
 		client.stopCache = make(chan struct{})
-		client.k8sCache = newCacheController(client.k8s, time.Duration(kialiConfig.Get().KubernetesConfig.CacheDuration), client.stopCache)
-		go client.k8sCache.Run(client.stopCache)
-		if !cache.WaitForCacheSync(client.stopCache, client.k8sCache.HasSynced) {
-			return nil, errors.New("K8S cache cannot connect with the backend")
+		client.k8sCache = newCacheController(client.k8s, time.Duration(kialiConfig.Get().KubernetesConfig.CacheDuration))
+		client.k8sCache.Start()
+		if !client.k8sCache.WaitForSync() {
+			return nil, errors.New("Cache cannot connect with the k8s API on host: " + config.Host)
 		}
 	}
 
@@ -220,6 +219,6 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 
 func (in *IstioClient) Stop() {
 	if in.k8sCache != nil {
-		in.k8sCache.StopControlChannel()
+		in.k8sCache.Stop()
 	}
 }
