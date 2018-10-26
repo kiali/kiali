@@ -97,7 +97,7 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 		namespaceTrafficMap := buildNamespaceTrafficMap(namespace.Name, o, client)
 		namespaceInfo := appender.NewNamespaceInfo(namespace.Name)
 		for _, a := range o.Appenders {
-			appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a)
+			appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
 			a.AppendGraph(namespaceTrafficMap, globalInfo, namespaceInfo)
 			appenderTimer.ObserveDuration()
 		}
@@ -677,7 +677,7 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	namespaceInfo := appender.NewNamespaceInfo(namespace.Name)
 
 	for _, a := range o.Appenders {
-		appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a)
+		appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
 		a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 		appenderTimer.ObserveDuration()
 	}
@@ -959,8 +959,10 @@ func promQuery(query string, queryTime time.Time, api v1.API) model.Vector {
 	query = fmt.Sprintf("round(%s,0.001)", query)
 	log.Debugf("Graph query:\n%s@time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
 
+	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Generation")
 	value, err := api.Query(ctx, query, queryTime)
 	checkError(err)
+	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 
 	switch t := value.Type(); t {
 	case model.ValVector: // Instant Vector

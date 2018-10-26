@@ -13,6 +13,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 var (
@@ -495,9 +496,11 @@ func getItemRequestRates(api v1.API, namespace, item, itemLabelSuffix string, qu
 
 func getRequestRatesForLabel(api v1.API, time time.Time, labels, ratesInterval string) (model.Vector, error) {
 	query := fmt.Sprintf("rate(istio_requests_total{%s}[%s])", labels, ratesInterval)
+	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Metrics-GetRequestRates")
 	result, err := api.Query(context.Background(), query, time)
 	if err != nil {
 		return model.Vector{}, err
 	}
+	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 	return result.(model.Vector), nil
 }

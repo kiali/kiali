@@ -4,8 +4,6 @@ import (
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/kiali/kiali/graph/appender"
 )
 
 const (
@@ -22,15 +20,17 @@ const (
 	labelWithServiceNodes = "with_service_nodes"
 	labelAppender         = "appender"
 	labelName             = "name"
+	labelQueryID          = "query_id"
 )
 
 // MetricsType defines all of Kiali's own internal metrics.
 type MetricsType struct {
-	GraphsGenerated     *prometheus.CounterVec
-	GraphNodes          *prometheus.GaugeVec
-	GraphGenerationTime *prometheus.SummaryVec
-	GraphAppenderTime   *prometheus.SummaryVec
-	APIProcessingTime   *prometheus.SummaryVec
+	GraphsGenerated          *prometheus.CounterVec
+	GraphNodes               *prometheus.GaugeVec
+	GraphGenerationTime      *prometheus.SummaryVec
+	GraphAppenderTime        *prometheus.SummaryVec
+	APIProcessingTime        *prometheus.SummaryVec
+	PrometheusProcessingTime *prometheus.SummaryVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -72,6 +72,13 @@ var Metrics = MetricsType{
 		},
 		[]string{labelName},
 	),
+	PrometheusProcessingTime: prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name: "kiali_prometheus_processing_duration_seconds",
+			Help: "The time required to execute a Prometheus query.",
+		},
+		[]string{labelQueryID},
+	),
 }
 
 // RegisterInternalMetrics must be called at startup to prepare the Prometheus scrape endpoint.
@@ -82,6 +89,7 @@ func RegisterInternalMetrics() {
 		Metrics.GraphGenerationTime,
 		Metrics.GraphAppenderTime,
 		Metrics.APIProcessingTime,
+		Metrics.PrometheusProcessingTime,
 	)
 }
 
@@ -129,8 +137,7 @@ func GetGraphGenerationTimePrometheusTimer(graphKind string, graphType string, w
 //    promtimer := GetGraphAppenderTimePrometheusTimer(...)
 //    ... run the appender ...
 //    promtimer.ObserveDuration()
-func GetGraphAppenderTimePrometheusTimer(appender appender.Appender) *prometheus.Timer {
-	appenderName := appender.Name()
+func GetGraphAppenderTimePrometheusTimer(appenderName string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.GraphAppenderTime.With(prometheus.Labels{
 		labelAppender: appenderName,
 	}))
@@ -146,6 +153,29 @@ func GetGraphAppenderTimePrometheusTimer(appender appender.Appender) *prometheus
 func GetAPIProcessingTimePrometheusTimer(apiName string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.APIProcessingTime.With(prometheus.Labels{
 		labelName: apiName,
+	}))
+	return timer
+}
+
+// GetPrometheusProcessingTimePrometheusTimer returns a timer that can be used to store
+// a value for the Prometheus query processing time metric. The timer is ticking immediately
+// when this function returns.
+//
+// Note that the queryID parameter is simply some string that can be used to
+// identify a particular set of Prometheus queries. This queryID does not necessarily have to
+// identify a unique query (indeed, if you do that, that might cause too many timeseries to
+// be collected), but it only needs to identify a set of queries. For example, perhaps there
+// are a series of similar Prometheus queries used to generate a graph - in this case,
+// the processing time for all of those queries can be combined into a single metric timeseries
+// by passing in a queryID of "graph-generation".
+//
+// Typical usage is as follows:
+//    promtimer := GetPrometheusProcessingTimePrometheusTimer(...)
+//    ... execute the query ...
+//    promtimer.ObserveDuration()
+func GetPrometheusProcessingTimePrometheusTimer(queryID string) *prometheus.Timer {
+	timer := prometheus.NewTimer(Metrics.PrometheusProcessingTime.With(prometheus.Labels{
+		labelQueryID: queryID,
 	}))
 	return timer
 }
