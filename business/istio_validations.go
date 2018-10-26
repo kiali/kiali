@@ -20,6 +20,11 @@ type ObjectChecker interface {
 // GetServiceValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers.
 func (in *IstioValidationsService) GetServiceValidations(namespace, service string) (models.IstioValidations, error) {
+	// Ensure the service exists
+	if _, err := in.k8s.GetService(namespace, service); err != nil {
+		return nil, err
+	}
+
 	// Get Gateways and ServiceEntries to validate VirtualServices
 	var err error
 	wg := sync.WaitGroup{}
@@ -46,6 +51,11 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 }
 
 func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (models.NamespaceValidations, error) {
+	// Ensure the Namespace exists
+	if _, err := in.k8s.GetNamespace(namespace); err != nil {
+		return nil, err
+	}
+
 	// Get all the Istio objects from a Namespace
 	istioDetails, err := in.k8s.GetIstioDetails(namespace, "")
 	if err != nil {

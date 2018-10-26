@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -52,7 +53,11 @@ func NamespaceIstioValidations(w http.ResponseWriter, r *http.Request) {
 
 	istioValidations, err := business.Validations.GetNamespaceValidations(namespace)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error checking istio object consistency: "+err.Error())
+		if errors.IsNotFound(err) {
+			RespondWithError(w, http.StatusNotFound, err.Error())
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, "Error checking istio object consistency: "+err.Error())
+		}
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, istioValidations)

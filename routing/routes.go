@@ -221,6 +221,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//      500: internalError
+		//      404: notFoundError
 		//      200: workloadDetails
 		//
 		{
@@ -261,6 +262,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//      500: internalError
+		//      404: notFoundError
 		//      200: appDetails
 		//
 		{
@@ -422,6 +424,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//      500: internalError
+		//      404: notFoundError
 		//      200: typeValidationsResponse
 		//
 		{
@@ -484,6 +487,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//      500: internalError
+		//      404: notFoundError
 		//      200: namespaceValidationsResponse
 		//
 		{
