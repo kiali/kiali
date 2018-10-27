@@ -51,13 +51,13 @@ type (
 		maxSyncCount    int
 		isErrorState    bool
 		lastError       error
-		lastErrorLock   sync.RWMutex
+		lastErrorLock   sync.Mutex
 		controllers     map[string]cache.SharedIndexInformer
 	}
 )
 
 var (
-	lastCacheErrorLock sync.RWMutex
+	lastCacheErrorLock sync.Mutex
 	errorCallbacks     []func(error)
 )
 
