@@ -416,19 +416,36 @@ type BuildSource struct {
 	// secrets represents a list of secrets and their destinations that will
 	// be used only for the build.
 	Secrets []SecretBuildSource `json:"secrets,omitempty" protobuf:"bytes,8,rep,name=secrets"`
+
+	// configMaps represents a list of configMaps and their destinations that will
+	// be used for the build.
+	ConfigMaps []ConfigMapBuildSource `json:"configMaps,omitempty" protobuf:"bytes,9,rep,name=configMaps"`
 }
 
-// ImageSource is used to describe build source that will be extracted from an image. A reference of
-// type ImageStreamTag, ImageStreamImage or DockerImage may be used. A pull secret can be specified
-// to pull the image from an external registry or override the default service account secret if pulling
-// from the internal registry. A list of paths to copy from the image and their respective destination
-// within the build directory must be specified in the paths array.
+// ImageSource is used to describe build source that will be extracted from an image or used during a
+// multi stage build. A reference of type ImageStreamTag, ImageStreamImage or DockerImage may be used.
+// A pull secret can be specified to pull the image from an external registry or override the default
+// service account secret if pulling from the internal registry. Image sources can either be used to
+// extract content from an image and place it into the build context along with the repository source,
+// or used directly during a multi-stage Docker build to allow content to be copied without overwriting
+// the contents of the repository source (see the 'paths' and 'as' fields).
 type ImageSource struct {
 	// from is a reference to an ImageStreamTag, ImageStreamImage, or DockerImage to
 	// copy source from.
 	From corev1.ObjectReference `json:"from" protobuf:"bytes,1,opt,name=from"`
 
-	// paths is a list of source and destination paths to copy from the image.
+	// A list of image names that this source will be used in place of during a multi-stage Docker image
+	// build. For instance, a Dockerfile that uses "COPY --from=nginx:latest" will first check for an image
+	// source that has "nginx:latest" in this field before attempting to pull directly. If the Dockerfile
+	// does not reference an image source it is ignored. This field and paths may both be set, in which case
+	// the contents will be used twice.
+	// +optional
+	As []string `json:"as" protobuf:"bytes,4,rep,name=as"`
+
+	// paths is a list of source and destination paths to copy from the image. This content will be copied
+	// into the build context prior to starting the build. If no paths are set, the build context will
+	// not be altered.
+	// +optional
 	Paths []ImageSourcePath `json:"paths" protobuf:"bytes,2,rep,name=paths"`
 
 	// pullSecret is a reference to a secret to be used to pull the image from a registry
@@ -462,6 +479,24 @@ type SecretBuildSource struct {
 	// For the Source build strategy, these will be injected into a container
 	// where the assemble script runs. Later, when the script finishes, all files
 	// injected will be truncated to zero length.
+	// For the Docker build strategy, these will be copied into the build
+	// directory, where the Dockerfile is located, so users can ADD or COPY them
+	// during docker build.
+	DestinationDir string `json:"destinationDir,omitempty" protobuf:"bytes,2,opt,name=destinationDir"`
+}
+
+// ConfigMapBuildSource describes a configmap and its destination directory that will be
+// used only at the build time. The content of the configmap referenced here will
+// be copied into the destination directory instead of mounting.
+type ConfigMapBuildSource struct {
+	// configMap is a reference to an existing configmap that you want to use in your
+	// build.
+	ConfigMap corev1.LocalObjectReference `json:"configMap" protobuf:"bytes,1,opt,name=configMap"`
+
+	// destinationDir is the directory where the files from the configmap should be
+	// available for the build time.
+	// For the Source build strategy, these will be injected into a container
+	// where the assemble script runs.
 	// For the Docker build strategy, these will be copied into the build
 	// directory, where the Dockerfile is located, so users can ADD or COPY them
 	// during docker build.
@@ -933,6 +968,9 @@ type ImageChangeTrigger struct {
 	// will be used. Only one ImageChangeTrigger with an empty From reference is allowed in
 	// a build configuration.
 	From *corev1.ObjectReference `json:"from,omitempty" protobuf:"bytes,2,opt,name=from"`
+
+	// paused is true if this trigger is temporarily disabled. Optional.
+	Paused bool `json:"paused,omitempty" protobuf:"varint,3,opt,name=paused"`
 }
 
 // BuildTriggerPolicy describes a policy for a single trigger that results in a new Build.
@@ -1032,6 +1070,17 @@ type GenericWebHookEvent struct {
 
 // GitInfo is the aggregated git information for a generic webhook post
 type GitInfo struct {
+	GitBuildSource    `json:",inline" protobuf:"bytes,1,opt,name=gitBuildSource"`
+	GitSourceRevision `json:",inline" protobuf:"bytes,2,opt,name=gitSourceRevision"`
+
+	// Refs is a list of GitRefs for the provided repo - generally sent
+	// when used from a post-receive hook. This field is optional and is
+	// used when sending multiple refs
+	Refs []GitRefInfo `json:"refs" protobuf:"bytes,3,rep,name=refs"`
+}
+
+// GitRefInfo is a single ref
+type GitRefInfo struct {
 	GitBuildSource    `json:",inline" protobuf:"bytes,1,opt,name=gitBuildSource"`
 	GitSourceRevision `json:",inline" protobuf:"bytes,2,opt,name=gitSourceRevision"`
 }

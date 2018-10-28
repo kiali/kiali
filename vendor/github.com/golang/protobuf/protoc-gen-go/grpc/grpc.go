@@ -160,13 +160,11 @@ func (g *grpc) generateService(file *generator.FileDescriptor, service *pb.Servi
 	deprecated := service.GetOptions().GetDeprecated()
 
 	g.P()
-	g.P(fmt.Sprintf(`// %sClient is the client API for %s service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.`, servName, servName))
+	g.P("// Client API for ", servName, " service")
+	g.P()
 
 	// Client interface.
 	if deprecated {
-		g.P("//")
 		g.P(deprecationComment)
 	}
 	g.P("type ", servName, "Client interface {")
@@ -209,13 +207,14 @@ func (g *grpc) generateService(file *generator.FileDescriptor, service *pb.Servi
 		g.generateClientMethod(servName, fullServName, serviceDescVar, method, descExpr)
 	}
 
+	g.P("// Server API for ", servName, " service")
+	g.P()
+
 	// Server interface.
-	serverType := servName + "Server"
-	g.P("// ", serverType, " is the server API for ", servName, " service.")
 	if deprecated {
-		g.P("//")
 		g.P(deprecationComment)
 	}
+	serverType := servName + "Server"
 	g.P("type ", serverType, " interface {")
 	for i, method := range service.Method {
 		g.gen.PrintComments(fmt.Sprintf("%s,2,%d", path, i)) // 2 means method in a service.
@@ -308,7 +307,7 @@ func (g *grpc) generateClientMethod(servName, fullServName, serviceDescVar strin
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
 		g.P("out := new(", outType, ")")
 		// TODO: Pass descExpr to Invoke.
-		g.P(`err := c.cc.Invoke(ctx, "`, sname, `", in, out, opts...)`)
+		g.P("err := ", grpcPkg, `.Invoke(ctx, "`, sname, `", in, out, c.cc, opts...)`)
 		g.P("if err != nil { return nil, err }")
 		g.P("return out, nil")
 		g.P("}")
@@ -316,7 +315,7 @@ func (g *grpc) generateClientMethod(servName, fullServName, serviceDescVar strin
 		return
 	}
 	streamType := unexport(servName) + methName + "Client"
-	g.P("stream, err := c.cc.NewStream(ctx, ", descExpr, `, "`, sname, `", opts...)`)
+	g.P("stream, err := ", grpcPkg, ".NewClientStream(ctx, ", descExpr, `, c.cc, "`, sname, `", opts...)`)
 	g.P("if err != nil { return nil, err }")
 	g.P("x := &", streamType, "{stream}")
 	if !method.GetClientStreaming() {

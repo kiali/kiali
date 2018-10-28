@@ -75,11 +75,6 @@ func init() {
 		case jsoniter.NumberValue:
 			var number json.Number
 			iter.ReadVal(&number)
-			u64, err := strconv.ParseUint(string(number), 10, 64)
-			if err == nil {
-				*(*interface{})(ptr) = u64
-				return
-			}
 			i64, err := strconv.ParseInt(string(number), 10, 64)
 			if err == nil {
 				*(*interface{})(ptr) = i64
@@ -112,11 +107,29 @@ func CaseSensitiveJsonIterator() jsoniter.API {
 
 var caseSensitiveJsonIterator = CaseSensitiveJsonIterator()
 
+// gvkWithDefaults returns group kind and version defaulting from provided default
+func gvkWithDefaults(actual, defaultGVK schema.GroupVersionKind) schema.GroupVersionKind {
+	if len(actual.Kind) == 0 {
+		actual.Kind = defaultGVK.Kind
+	}
+	if len(actual.Version) == 0 && len(actual.Group) == 0 {
+		actual.Group = defaultGVK.Group
+		actual.Version = defaultGVK.Version
+	}
+	if len(actual.Version) == 0 && actual.Group == defaultGVK.Group {
+		actual.Version = defaultGVK.Version
+	}
+	return actual
+}
+
 // Decode attempts to convert the provided data into YAML or JSON, extract the stored schema kind, apply the provided default gvk, and then
-// load that data into an object matching the desired schema kind or the provided into. If into is *runtime.Unknown, the raw data will be
-// extracted and no decoding will be performed. If into is not registered with the typer, then the object will be straight decoded using
-// normal JSON/YAML unmarshalling. If into is provided and the original data is not fully qualified with kind/version/group, the type of
-// the into will be used to alter the returned gvk. On success or most errors, the method will return the calculated schema kind.
+// load that data into an object matching the desired schema kind or the provided into.
+// If into is *runtime.Unknown, the raw data will be extracted and no decoding will be performed.
+// If into is not registered with the typer, then the object will be straight decoded using normal JSON/YAML unmarshalling.
+// If into is provided and the original data is not fully qualified with kind/version/group, the type of the into will be used to alter the returned gvk.
+// If into is nil or data's gvk different from into's gvk, it will generate a new Object with ObjectCreater.New(gvk)
+// On success or most errors, the method will return the calculated schema kind.
+// The gvk calculate priority will be originalData > default gvk > into
 func (s *Serializer) Decode(originalData []byte, gvk *schema.GroupVersionKind, into runtime.Object) (runtime.Object, *schema.GroupVersionKind, error) {
 	if versioned, ok := into.(*runtime.VersionedObjects); ok {
 		into = versioned.Last()
@@ -143,17 +156,7 @@ func (s *Serializer) Decode(originalData []byte, gvk *schema.GroupVersionKind, i
 	}
 
 	if gvk != nil {
-		// apply kind and version defaulting from provided default
-		if len(actual.Kind) == 0 {
-			actual.Kind = gvk.Kind
-		}
-		if len(actual.Version) == 0 && len(actual.Group) == 0 {
-			actual.Group = gvk.Group
-			actual.Version = gvk.Version
-		}
-		if len(actual.Version) == 0 && actual.Group == gvk.Group {
-			actual.Version = gvk.Version
-		}
+		*actual = gvkWithDefaults(*actual, *gvk)
 	}
 
 	if unk, ok := into.(*runtime.Unknown); ok && unk != nil {
@@ -175,17 +178,7 @@ func (s *Serializer) Decode(originalData []byte, gvk *schema.GroupVersionKind, i
 		case err != nil:
 			return nil, actual, err
 		default:
-			typed := types[0]
-			if len(actual.Kind) == 0 {
-				actual.Kind = typed.Kind
-			}
-			if len(actual.Version) == 0 && len(actual.Group) == 0 {
-				actual.Group = typed.Group
-				actual.Version = typed.Version
-			}
-			if len(actual.Version) == 0 && actual.Group == typed.Group {
-				actual.Version = typed.Version
-			}
+			*actual = gvkWithDefaults(*actual, types[0])
 		}
 	}
 

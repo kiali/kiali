@@ -84,7 +84,7 @@ var xxx_messageInfo_DeprecatedRequest proto.InternalMessageInfo
 // Deprecated: Do not use.
 type DeprecatedResponse struct {
 	// DeprecatedField contains a DeprecatedEnum.
-	DeprecatedField      DeprecatedEnum `protobuf:"varint,1,opt,name=deprecated_field,json=deprecatedField,proto3,enum=deprecated.DeprecatedEnum" json:"deprecated_field,omitempty"` // Deprecated: Do not use.
+	DeprecatedField      DeprecatedEnum `protobuf:"varint,1,opt,name=deprecated_field,json=deprecatedField,enum=deprecated.DeprecatedEnum" json:"deprecated_field,omitempty"` // Deprecated: Do not use.
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -136,10 +136,8 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// DeprecatedServiceClient is the client API for DeprecatedService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-//
+// Client API for DeprecatedService service
+
 // Deprecated: Do not use.
 type DeprecatedServiceClient interface {
 	// DeprecatedCall takes a DeprecatedRequest and returns a DeprecatedResponse.
@@ -158,15 +156,15 @@ func NewDeprecatedServiceClient(cc *grpc.ClientConn) DeprecatedServiceClient {
 // Deprecated: Do not use.
 func (c *deprecatedServiceClient) DeprecatedCall(ctx context.Context, in *DeprecatedRequest, opts ...grpc.CallOption) (*DeprecatedResponse, error) {
 	out := new(DeprecatedResponse)
-	err := c.cc.Invoke(ctx, "/deprecated.DeprecatedService/DeprecatedCall", in, out, opts...)
+	err := grpc.Invoke(ctx, "/deprecated.DeprecatedService/DeprecatedCall", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// DeprecatedServiceServer is the server API for DeprecatedService service.
-//
+// Server API for DeprecatedService service
+
 // Deprecated: Do not use.
 type DeprecatedServiceServer interface {
 	// DeprecatedCall takes a DeprecatedRequest and returns a DeprecatedResponse.
