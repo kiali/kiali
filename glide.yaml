@@ -11,7 +11,7 @@ import:
 - package: k8s.io/apimachinery
   version: kubernetes-1.11.1
 - package: github.com/golang/protobuf
-  version: b4deda0973fb4c70b50d226b1af49f3da59f5265
+  version: v1.2.0
 - package: github.com/prometheus/client_golang
   version: v0.9.0-pre1
 - package: github.com/prometheus/common
