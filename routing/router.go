@@ -4,7 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // NewRouter creates the router with all API routes and the static files handler
@@ -30,8 +33,9 @@ func NewRouter() *mux.Router {
 	// Build our API server routes and install them.
 	apiRoutes := NewRoutes()
 	for _, route := range apiRoutes.Routes {
-		var handlerFunction http.Handler
-		if handlerFunction = route.HandlerFunc; route.Authenticated {
+		var handlerFunction http.Handler = route.HandlerFunc
+		handlerFunction = metricHandler(handlerFunction, route)
+		if route.Authenticated {
 			handlerFunction = config.AuthenticationHandler(handlerFunction)
 		}
 		appRouter.
@@ -40,6 +44,9 @@ func NewRouter() *mux.Router {
 			Name(route.Name).
 			Handler(handlerFunction)
 	}
+
+	// The Prometheus scrape endpoint - this reports our internal metrics
+	appRouter.PathPrefix("/metrics").Handler(promhttp.Handler())
 
 	// All client-side routes are prefixed with /console.
 	// They are forwarded to index.html and will be handled by react-router.
@@ -57,4 +64,12 @@ func NewRouter() *mux.Router {
 	appRouter.PathPrefix("/").Handler(staticFileServer)
 
 	return rootRouter
+}
+
+func metricHandler(next http.Handler, route Route) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		promtimer := internalmetrics.GetAPIProcessingTimePrometheusTimer(route.Name)
+		defer promtimer.ObserveDuration()
+		next.ServeHTTP(w, r)
+	})
 }

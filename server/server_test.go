@@ -77,6 +77,7 @@ func TestSecureComm(t *testing.T) {
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
 	apiURLWithAuthentication := serverURL + "/api/token"
 	apiURL := serverURL + "/api"
+	metricsURL := serverURL + "/metrics"
 
 	config.Set(conf)
 
@@ -129,6 +130,16 @@ func TestSecureComm(t *testing.T) {
 
 	if _, err = getRequestResults(t, httpClient, apiURL, basicCredentials); err != nil {
 		t.Fatalf("Failed: Basic Auth API URL: %v", err)
+	}
+
+	// this makes sure the Prometheus metrics endpoint can start (we made an API call above; there should be metrics)
+	if s, err := getRequestResults(t, httpClient, metricsURL, basicCredentials); err != nil {
+		t.Fatalf("Failed: Basic Auth Metrics URL: %v", err)
+	} else {
+		// makes sure we did get the metrics endpoint
+		if !strings.Contains(s, "HELP go_") || !strings.Contains(s, "TYPE go_") {
+			t.Fatalf("Failed: Metrics URL returned bad results - there are no kial metrics:\n%s", s)
+		}
 	}
 
 	// TEST WITH AN INVALID USER

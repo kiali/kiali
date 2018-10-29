@@ -1,4 +1,4 @@
-// Options package holds the option settings for a single graph generation.
+// Package options holds the option settings for a single graph generation.
 package options
 
 import (
@@ -28,6 +28,11 @@ const (
 	defaultIncludeIstio       bool   = false
 	defaultInjectServiceNodes bool   = false
 	defaultVendor             string = "cytoscape"
+)
+
+const (
+	graphKindNamespace string = "namespace"
+	graphKindNode      string = "node"
 )
 
 // NodeOptions are those that apply only to node-detail graphs
@@ -172,6 +177,18 @@ func NewOptions(r *http.Request) Options {
 	options.Appenders = appenders
 
 	return options
+}
+
+// GetGraphKind will return the kind of graph represented by the options.
+func (o *Options) GetGraphKind() string {
+	if o.NodeOptions.App != "" ||
+		o.NodeOptions.Version != "" ||
+		o.NodeOptions.Workload != "" ||
+		o.NodeOptions.Service != "" {
+		return graphKindNode
+	} else {
+		return graphKindNamespace
+	}
 }
 
 func parseAppenders(params url.Values, o Options) []appender.Appender {

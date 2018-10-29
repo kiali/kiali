@@ -50,6 +50,7 @@ import (
 	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // GraphNamespace is a REST http.HandlerFunc handling namespace-wide graph
@@ -66,8 +67,17 @@ func GraphNamespace(w http.ResponseWriter, r *http.Request) {
 // graphNamespace provides a testing hook that can supply a mock client
 func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
 	o := options.NewOptions(r)
+
+	// time how long it takes to generate this graph
+	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
+	defer promtimer.ObserveDuration()
+
 	trafficMap := graphNamespaces(o, client)
 	generateGraph(trafficMap, w, o)
+
+	// update metrics
+	internalmetrics.IncrementGraphsGenerated(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
+	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes, len(trafficMap))
 }
 
 func graphNamespaces(o options.Options, client *prometheus.Client) graph.TrafficMap {
@@ -87,7 +97,9 @@ func graphNamespaces(o options.Options, client *prometheus.Client) graph.Traffic
 		namespaceTrafficMap := buildNamespaceTrafficMap(namespace.Name, o, client)
 		namespaceInfo := appender.NewNamespaceInfo(namespace.Name)
 		for _, a := range o.Appenders {
+			appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
 			a.AppendGraph(namespaceTrafficMap, globalInfo, namespaceInfo)
+			appenderTimer.ObserveDuration()
 		}
 		mergeTrafficMaps(trafficMap, namespace.Name, namespaceTrafficMap)
 	}
@@ -645,6 +657,10 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 		checkError(errors.New(fmt.Sprintf("Node graph does not support the 'namespaces' query parameter or the 'all' namespace")))
 	}
 
+	// time how long it takes to generate this graph
+	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
+	defer promtimer.ObserveDuration()
+
 	// Here, it's true that o.Namespaces has only one item. So, it's safe to use "for" knowing
 	// that only one iteration will happen.
 	var n graph.Node
@@ -661,7 +677,9 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	namespaceInfo := appender.NewNamespaceInfo(namespace.Name)
 
 	for _, a := range o.Appenders {
+		appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
 		a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+		appenderTimer.ObserveDuration()
 	}
 
 	// The appenders can add/remove/alter nodes. After the manipulations are complete
@@ -672,6 +690,10 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	markTrafficGenerators(trafficMap)
 
 	generateGraph(trafficMap, w, o)
+
+	// update metrics
+	internalmetrics.IncrementGraphsGenerated(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
+	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes, len(trafficMap))
 }
 
 // buildNodeTrafficMap returns a map of all nodes requesting or requested by the target node (key=id).
@@ -913,6 +935,9 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options.Options) {
 	log.Debugf("Generating config for [%s] service graph...", o.Vendor)
 
+	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
+	defer promtimer.ObserveDuration()
+
 	var vendorConfig interface{}
 	switch o.Vendor {
 	case "cytoscape":
@@ -937,8 +962,10 @@ func promQuery(query string, queryTime time.Time, api v1.API) model.Vector {
 	query = fmt.Sprintf("round(%s,0.001)", query)
 	log.Debugf("Graph query:\n%s@time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
 
+	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Generation")
 	value, err := api.Query(ctx, query, queryTime)
 	checkError(err)
+	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 
 	switch t := value.Type(); t {
 	case model.ValVector: // Instant Vector

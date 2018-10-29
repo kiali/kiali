@@ -12,6 +12,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util"
 )
 
@@ -78,10 +79,12 @@ func (in *Client) GetSourceWorkloads(namespace string, namespaceCreationTime tim
 	query := fmt.Sprintf("delta(istio_requests_total{reporter=\"%s\",destination_service_name=\"%s\",destination_service_namespace=\"%s\"}[%vs])",
 		reporter, servicename, namespace, int(queryInterval.Seconds()))
 	log.Debugf("GetSourceWorkloads query: %s", query)
+	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("GetSourceWorkloads")
 	result, err := in.api.Query(context.Background(), query, queryTime)
 	if err != nil {
 		return nil, err
 	}
+	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 	routes := make(map[string][]Workload)
 	switch result.Type() {
 	case model.ValVector:
