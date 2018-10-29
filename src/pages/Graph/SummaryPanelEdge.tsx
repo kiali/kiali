@@ -215,10 +215,11 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
     this.metricsPromise.promise
       .then(response => {
+        // HTTP
         let useDest = sourceData.nodeType === NodeType.UNKNOWN;
-        useDest = useDest || this.props.namespace === 'istio-system';
-        const reporter = useDest ? response.data.dest : response.data.source;
-        const metrics = reporter.metrics;
+        useDest = useDest || this.props.namespace === 'istio-system' || sourceData.nodeType === NodeType.SERVICE;
+        let reporter = useDest ? response.data.dest : response.data.source;
+        let metrics = reporter.metrics;
         const histograms = reporter.histograms;
         const reqRates = this.getNodeDataPoints(
           metrics['request_count_in'],
@@ -262,6 +263,11 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           destMetricType,
           sourceData
         );
+        // TCP (uses slightly different reporting)
+        useDest = sourceData.nodeType === NodeType.UNKNOWN;
+        useDest = useDest || this.props.namespace === 'istio-system';
+        reporter = useDest ? response.data.dest : response.data.source;
+        metrics = reporter.metrics;
         const tcpSentRates = this.getNodeDataPoints(
           metrics['tcp_sent_in'],
           'Sent',
