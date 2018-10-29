@@ -172,7 +172,7 @@ func (in *IstioClient) GetPods(namespace, labelSelector string) ([]v1.Pod, error
 	if labelSelector != "" {
 		selector, err := labels.Parse(labelSelector)
 		if err != nil {
-			return pods, err
+			return []v1.Pod{}, err
 		}
 		pods = FilterPodsForSelector(selector, pods)
 	}
