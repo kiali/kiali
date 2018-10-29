@@ -1,5 +1,5 @@
-hash: 51c5693b9e6642714c7a9a907ef8bb5e433e118306e80c76ded23be7ae31d7e4
-updated: 2018-10-28T14:12:58.182805904+01:00
+hash: 4b4653cebaafc25f21ce8c2f813fc4eb7319a52d1f6e436742d0e3da91cb7547
+updated: 2018-10-29T13:31:17.527284837+01:00
 imports:
 - name: github.com/beorn7/perks
   version: 3a771d992973f24aa725d07868b467d1ddfceafb
@@ -255,4 +255,6 @@ imports:
   - util/connrotation
   - util/flowcontrol
   - util/integer
+- name: k8s.io/kube-openapi
+  version: 91cfa479c814065e420cee7ed227db0f63a5854e
 testImports: []
