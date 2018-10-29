@@ -138,7 +138,7 @@ func TestSecureComm(t *testing.T) {
 	} else {
 		// makes sure we did get the metrics endpoint
 		if !strings.Contains(s, "HELP go_") || !strings.Contains(s, "TYPE go_") {
-				t.Fatalf("Failed: Metrics URL returned bad results - there are no kial metrics:\n%s", s)
+			t.Fatalf("Failed: Metrics URL returned bad results - there are no kial metrics:\n%s", s)
 		}
 	}
 
