@@ -64,6 +64,10 @@ endif
 #  5=TRACE
 VERBOSE_MODE ?= 4
 
+# Indicates the log level for some specific module
+# See https://godoc.org/github.com/golang/glog
+VERBOSE_MODULE ?= "reflector=3"
+
 # Declares the namespace where the objects are to be deployed.
 # For OpenShift, this is the name of the project.
 NAMESPACE ?= istio-system
@@ -159,7 +163,7 @@ test-e2e:
 ## run: Run kiali binary
 run:
 	@echo Running...
-	@${GOPATH}/bin/kiali -v ${VERBOSE_MODE} -config config.yaml
+	@${GOPATH}/bin/kiali -v ${VERBOSE_MODE} -vmodule ${VERBOSE_MODULE} ${VERBOSE_MODE} -config config.yaml
 
 #
 # dep targets - dependency management
@@ -272,7 +276,7 @@ openshift-deploy: openshift-undeploy
 	@echo Deploying to OpenShift project ${NAMESPACE}
 	cat deploy/openshift/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} JAEGER_URL=${JAEGER_URL} GRAFANA_URL=${GRAFANA_URL} envsubst | ${OC} create -n ${NAMESPACE} -f -
 	cat deploy/openshift/kiali-secrets.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
-	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} envsubst | ${OC} create -n ${NAMESPACE} -f -
+	cat deploy/openshift/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} VERBOSE_MODULE=${VERBOSE_MODULE} IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} envsubst | ${OC} create -n ${NAMESPACE} -f -
 
 ## openshift-undeploy: Undeploy from Openshift project.
 openshift-undeploy: .openshift-validate
@@ -294,7 +298,7 @@ k8s-deploy: k8s-undeploy
 	@echo Deploying to Kubernetes namespace ${NAMESPACE}
 	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} JAEGER_URL=${JAEGER_URL} GRAFANA_URL=${GRAFANA_URL} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
 	cat deploy/kubernetes/kiali-secrets.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
-	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
+	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} VERBOSE_MODULE=${VERBOSE_MODULE} IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
 
 ## k8s-undeploy: Undeploy docker image in Kubernetes namespace.
 k8s-undeploy: .k8s-validate

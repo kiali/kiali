@@ -71,6 +71,8 @@ spec:
         - "/kiali-configuration/config.yaml"
         - "-v"
         - "${VERBOSE_MODE}"
+        - "-vmodule"
+        - "${VERBOSE_MODULE}"
         env:
         - name: ACTIVE_NAMESPACE
           valueFrom:
