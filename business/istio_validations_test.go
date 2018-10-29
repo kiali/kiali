@@ -58,6 +58,7 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().DestinationRules, nil)
 	k8s.On("GetServiceEntries", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().ServiceEntries, nil)
 	k8s.On("GetGateways", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().Gateways, nil)
+	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(fakeNamespace(), nil)
 
 	return IstioValidationsService{k8s: k8s}
 }
@@ -77,6 +78,14 @@ func fakeCombinedIstioDetails() *kubernetes.IstioDetails {
 				data.CreateEmptyDestinationRule("test", "customer-dr", "customer"))),
 	}
 	return &istioDetails
+}
+
+func fakeNamespace() *v1.Namespace {
+	return &v1.Namespace{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "test",
+		},
+	}
 }
 
 func fakeCombinedServices(services []string) []v1.Service {

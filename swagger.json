@@ -1051,6 +1051,9 @@
           "200": {
             "$ref": "#/responses/appDetails"
           },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/responses/internalError"
           }
@@ -1326,6 +1329,9 @@
           "200": {
             "$ref": "#/responses/namespaceValidationsResponse"
           },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/responses/internalError"
           }
@@ -1533,6 +1539,9 @@
           "200": {
             "$ref": "#/responses/typeValidationsResponse"
           },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/responses/internalError"
           }
@@ -1608,6 +1617,9 @@
         "responses": {
           "200": {
             "$ref": "#/responses/workloadDetails"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalError"
