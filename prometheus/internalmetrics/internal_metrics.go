@@ -16,8 +16,8 @@ const (
 	labelGraphType        = "graph_type"
 	labelWithServiceNodes = "with_service_nodes"
 	labelAppender         = "appender"
-	labelName             = "name"
-	labelQueryID          = "query_id"
+	labelRoute            = "route"
+	labelQueryGroup       = "query_group"
 )
 
 // MetricsType defines all of Kiali's own internal metrics.
@@ -73,16 +73,16 @@ var Metrics = MetricsType{
 	APIProcessingTime: prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name: "kiali_api_processing_duration_seconds",
-			Help: "The time required to execute an API request.",
+			Help: "The time required to execute a particular REST API route request.",
 		},
-		[]string{labelName},
+		[]string{labelRoute},
 	),
 	PrometheusProcessingTime: prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name: "kiali_prometheus_processing_duration_seconds",
 			Help: "The time required to execute a Prometheus query.",
 		},
-		[]string{labelQueryID},
+		[]string{labelQueryGroup},
 	),
 }
 
@@ -171,9 +171,9 @@ func GetGraphMarshalTimePrometheusTimer(graphKind string, graphType string, with
 // Typical usage is as follows:
 //    promtimer := GetAPIProcessingTimePrometheusTimer(...)
 //    defer promtimer.ObserveDuration()
-func GetAPIProcessingTimePrometheusTimer(apiName string) *prometheus.Timer {
+func GetAPIProcessingTimePrometheusTimer(apiRouteName string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.APIProcessingTime.With(prometheus.Labels{
-		labelName: apiName,
+		labelRoute: apiRouteName,
 	}))
 	return timer
 }
@@ -182,21 +182,21 @@ func GetAPIProcessingTimePrometheusTimer(apiName string) *prometheus.Timer {
 // a value for the Prometheus query processing time metric. The timer is ticking immediately
 // when this function returns.
 //
-// Note that the queryID parameter is simply some string that can be used to
-// identify a particular set of Prometheus queries. This queryID does not necessarily have to
+// Note that the queryGroup parameter is simply some string that can be used to
+// identify a particular set of Prometheus queries. This queryGroup does not necessarily have to
 // identify a unique query (indeed, if you do that, that might cause too many timeseries to
 // be collected), but it only needs to identify a set of queries. For example, perhaps there
-// are a series of similar Prometheus queries used to generate a graph - in this case,
+// is a group of similar Prometheus queries used to generate a graph - in this case,
 // the processing time for all of those queries can be combined into a single metric timeseries
-// by passing in a queryID of "graph-generation".
+// by passing in a queryGroup of "Graph-Generation".
 //
 // Typical usage is as follows:
 //    promtimer := GetPrometheusProcessingTimePrometheusTimer(...)
 //    ... execute the query ...
 //    promtimer.ObserveDuration()
-func GetPrometheusProcessingTimePrometheusTimer(queryID string) *prometheus.Timer {
+func GetPrometheusProcessingTimePrometheusTimer(queryGroup string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.PrometheusProcessingTime.With(prometheus.Labels{
-		labelQueryID: queryID,
+		labelQueryGroup: queryGroup,
 	}))
 	return timer
 }
