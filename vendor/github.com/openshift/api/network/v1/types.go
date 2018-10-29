@@ -30,6 +30,8 @@ type ClusterNetwork struct {
 	PluginName string `json:"pluginName,omitempty" protobuf:"bytes,5,opt,name=pluginName"`
 	// ClusterNetworks is a list of ClusterNetwork objects that defines the global overlay network's L3 space by specifying a set of CIDR and netmasks that the SDN can allocate addressed from.
 	ClusterNetworks []ClusterNetworkEntry `json:"clusterNetworks" protobuf:"bytes,6,rep,name=clusterNetworks"`
+	// VXLANPort sets the VXLAN destination port used by the cluster. It is set by the master configuration file on startup and cannot be edited manually. Valid values for VXLANPort are integers 1-65535 inclusive and if unset defaults to 4789. Changing VXLANPort allows users to resolve issues between openshift SDN and other software trying to use the same VXLAN destination port.
+	VXLANPort *uint32 `json:"vxlanPort,omitempty" protobuf:"varint,7,opt,name=vxlanPort"`
 }
 
 // ClusterNetworkEntry defines an individual cluster network. The CIDRs cannot overlap with other cluster network CIDRs, CIDRs reserved for external ips, CIDRs reserved for service networks, and CIDRs reserved for ingress ips.
@@ -69,9 +71,16 @@ type HostSubnet struct {
 	// Subnet is the CIDR range of the overlay network assigned to the node for its pods
 	Subnet string `json:"subnet" protobuf:"bytes,4,opt,name=subnet"`
 
-	// EgressIPs is the list of automatic egress IP addresses currently hosted by this node
+	// EgressIPs is the list of automatic egress IP addresses currently hosted by this node.
+	// If EgressCIDRs is empty, this can be set by hand; if EgressCIDRs is set then the
+	// master will overwrite the value here with its own allocation of egress IPs.
 	// +optional
 	EgressIPs []string `json:"egressIPs,omitempty" protobuf:"bytes,5,rep,name=egressIPs"`
+	// EgressCIDRs is the list of CIDR ranges available for automatically assigning
+	// egress IPs to this node from. If this field is set then EgressIPs should be
+	// treated as read-only.
+	// +optional
+	EgressCIDRs []string `json:"egressCIDRs,omitempty" protobuf:"bytes,6,rep,name=egressCIDRs"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

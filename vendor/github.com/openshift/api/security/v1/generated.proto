@@ -125,6 +125,30 @@ message PodSecurityPolicySubjectReviewStatus {
   optional k8s.io.api.core.v1.PodTemplateSpec template = 3;
 }
 
+// RangeAllocation is used so we can easily expose a RangeAllocation typed for security group
+message RangeAllocation {
+  // Standard object's metadata.
+  // More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // range is a string representing a unique label for a range of uids, "1000000000-2000000000/10000".
+  optional string range = 2;
+
+  // data is a byte array representing the serialized state of a range allocation.  It is a bitmap
+  // with each bit set to one to represent a range is taken.
+  optional bytes data = 3;
+}
+
+// RangeAllocationList is a list of RangeAllocations objects
+message RangeAllocationList {
+  // More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of RangeAllocations.
+  repeated RangeAllocation items = 2;
+}
+
 // RunAsUserStrategyOptions defines the strategy type and any options used to create the strategy.
 message RunAsUserStrategyOptions {
   // Type is the strategy that will dictate what RunAsUser is used in the SecurityContext.
@@ -199,6 +223,7 @@ message SecurityContextConstraints {
   // AllowedFlexVolumes is a whitelist of allowed Flexvolumes.  Empty or nil indicates that all
   // Flexvolumes may be used.  This parameter is effective only when the usage of the Flexvolumes
   // is allowed in the "Volumes" field.
+  // +optional
   repeated AllowedFlexVolume allowedFlexVolumes = 21;
 
   // AllowHostNetwork determines if the policy allows the use of HostNetwork in the pod spec.
@@ -212,6 +237,16 @@ message SecurityContextConstraints {
 
   // AllowHostIPC determines if the policy allows host ipc in the containers.
   optional bool allowHostIPC = 12;
+
+  // DefaultAllowPrivilegeEscalation controls the default setting for whether a
+  // process can gain more privileges than its parent process.
+  // +optional
+  optional bool defaultAllowPrivilegeEscalation = 22;
+
+  // AllowPrivilegeEscalation determines if a pod can request to allow
+  // privilege escalation. If unspecified, defaults to true.
+  // +optional
+  optional bool allowPrivilegeEscalation = 23;
 
   // SELinuxContext is the strategy that will dictate what labels will be set in the SecurityContext.
   optional SELinuxContextStrategyOptions seLinuxContext = 13;
@@ -246,6 +281,27 @@ message SecurityContextConstraints {
   // used to generate a value for a pod the first non-wildcard profile will be used as
   // the default.
   repeated string seccompProfiles = 20;
+
+  // AllowedUnsafeSysctls is a list of explicitly allowed unsafe sysctls, defaults to none.
+  // Each entry is either a plain sysctl name or ends in "*" in which case it is considered
+  // as a prefix of allowed sysctls. Single * means all unsafe sysctls are allowed.
+  // Kubelet has to whitelist all allowed unsafe sysctls explicitly to avoid rejection.
+  // 
+  // Examples:
+  // e.g. "foo/*" allows "foo/bar", "foo/baz", etc.
+  // e.g. "foo.*" allows "foo.bar", "foo.baz", etc.
+  // +optional
+  repeated string allowedUnsafeSysctls = 24;
+
+  // ForbiddenSysctls is a list of explicitly forbidden sysctls, defaults to none.
+  // Each entry is either a plain sysctl name or ends in "*" in which case it is considered
+  // as a prefix of forbidden sysctls. Single * means all sysctls are forbidden.
+  // 
+  // Examples:
+  // e.g. "foo/*" forbids "foo/bar", "foo/baz", etc.
+  // e.g. "foo.*" forbids "foo.bar", "foo.baz", etc.
+  // +optional
+  repeated string forbiddenSysctls = 25;
 }
 
 // SecurityContextConstraintsList is a list of SecurityContextConstraints objects
