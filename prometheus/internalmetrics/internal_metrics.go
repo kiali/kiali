@@ -18,6 +18,9 @@ const (
 	labelAppender         = "appender"
 	labelRoute            = "route"
 	labelQueryGroup       = "query_group"
+	labelPackage          = "package"
+	labelType             = "type"
+	labelFunction         = "function"
 )
 
 // MetricsType defines all of Kiali's own internal metrics.
@@ -29,6 +32,7 @@ type MetricsType struct {
 	GraphMarshalTime         *prometheus.HistogramVec
 	APIProcessingTime        *prometheus.HistogramVec
 	PrometheusProcessingTime *prometheus.HistogramVec
+	GoFunctionProcessingTime *prometheus.HistogramVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -84,6 +88,13 @@ var Metrics = MetricsType{
 		},
 		[]string{labelQueryGroup},
 	),
+	GoFunctionProcessingTime: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "kiali_go_function_processing_duration_seconds",
+			Help: "The time required to execute a particular Go function.",
+		},
+		[]string{labelPackage, labelType, labelFunction},
+	),
 }
 
 // RegisterInternalMetrics must be called at startup to prepare the Prometheus scrape endpoint.
@@ -96,6 +107,7 @@ func RegisterInternalMetrics() {
 		Metrics.GraphMarshalTime,
 		Metrics.APIProcessingTime,
 		Metrics.PrometheusProcessingTime,
+		Metrics.GoFunctionProcessingTime,
 	)
 }
 
@@ -197,6 +209,24 @@ func GetAPIProcessingTimePrometheusTimer(apiRouteName string) *prometheus.Timer 
 func GetPrometheusProcessingTimePrometheusTimer(queryGroup string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.PrometheusProcessingTime.With(prometheus.Labels{
 		labelQueryGroup: queryGroup,
+	}))
+	return timer
+}
+
+// GetGoFunctionProcessingTimePrometheusTimer returns a timer that can be used to store
+// a value for the Go Function processing time metric. If the Go Function is not on
+// a type (i.e. is a global function), pass in an empty string for goType.
+// The timer is ticking immediately when this function returns.
+// Typical usage is as follows:
+//    func someFunction(...) {
+//      promtimer := GetGoFunctionProcessingTimePrometheusTimer(...)
+//      defer promtimer.ObserveDuration()
+//      ... the rest of the function ...
+func GetGoFunctionProcessingTimePrometheusTimer(goPkg string, goType string, goFunc string) *prometheus.Timer {
+	timer := prometheus.NewTimer(Metrics.GoFunctionProcessingTime.With(prometheus.Labels{
+		labelPackage:  goPkg,
+		labelType:     goType,
+		labelFunction: goFunc,
 	}))
 	return timer
 }

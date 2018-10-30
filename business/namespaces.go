@@ -6,6 +6,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // Namespace deals with fetching k8s namespaces / OpenShift projects and convert to kiali model
@@ -32,6 +33,9 @@ func NewNamespaceService(k8s kubernetes.IstioClientInterface) NamespaceService {
 
 // Returns a list of the given namespaces / projects
 func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "NamespaceService", "GetNamespaces")
+	defer promtimer.ObserveDuration()
+
 	namespaces := []models.Namespace{}
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
 	if in.hasProjects {
