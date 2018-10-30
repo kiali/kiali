@@ -71,11 +71,6 @@ func (o *K8SClientMock) GetDeploymentConfigs(namespace string) ([]osappsv1.Deplo
 	return args.Get(0).([]osappsv1.DeploymentConfig), args.Error(1)
 }
 
-func (o *K8SClientMock) GetReplicaSet(namespace string, replicasetName string) (*v1beta2.ReplicaSet, error) {
-	args := o.Called(namespace, replicasetName)
-	return args.Get(0).(*v1beta2.ReplicaSet), args.Error(1)
-}
-
 func (o *K8SClientMock) GetReplicaSets(namespace string) ([]v1beta2.ReplicaSet, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]v1beta2.ReplicaSet), args.Error(1)
@@ -94,11 +89,6 @@ func (o *K8SClientMock) GetStatefulSets(namespace string) ([]v1beta2.StatefulSet
 func (o *K8SClientMock) GetReplicationControllers(namespace string) ([]v1.ReplicationController, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]v1.ReplicationController), args.Error(1)
-}
-
-func (o *K8SClientMock) GetReplicationController(namespace string, replicationControllerName string) (*v1.ReplicationController, error) {
-	args := o.Called(namespace, replicationControllerName)
-	return args.Get(0).(*v1.ReplicationController), args.Error(1)
 }
 
 func (o *K8SClientMock) GetService(namespace string, serviceName string) (*v1.Service, error) {
@@ -201,19 +191,9 @@ func (o *K8SClientMock) GetQuotaSpecBinding(namespace string, quotaSpecBindingNa
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetCronJob(namespace, cronjobName string) (*batch_v1beta1.CronJob, error) {
-	args := o.Called(namespace, cronjobName)
-	return args.Get(0).(*batch_v1beta1.CronJob), args.Error(1)
-}
-
 func (o *K8SClientMock) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]batch_v1beta1.CronJob), args.Error(1)
-}
-
-func (o *K8SClientMock) GetJob(namespace, jobName string) (*batch_v1.Job, error) {
-	args := o.Called(namespace, jobName)
-	return args.Get(0).(*batch_v1.Job), args.Error(1)
 }
 
 func (o *K8SClientMock) GetJobs(namespace string) ([]batch_v1.Job, error) {
@@ -229,6 +209,9 @@ func (o *K8SClientMock) GetSelfSubjectAccessReview(namespace, api, resourceType 
 func (o *K8SClientMock) DeleteIstioObject(api, namespace, objectType, objectName string) error {
 	args := o.Called(api, namespace, objectType, objectName)
 	return args.Error(0)
+}
+
+func (o *K8SClientMock) Stop() {
 }
 
 func (o *K8SClientMock) FakeService() *v1.Service {

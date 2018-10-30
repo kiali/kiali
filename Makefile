@@ -62,7 +62,7 @@ endif
 # <4=INFO
 #  4=DEBUG
 #  5=TRACE
-VERBOSE_MODE ?= 4
+VERBOSE_MODE ?= 3
 
 # Declares the namespace where the objects are to be deployed.
 # For OpenShift, this is the name of the project.

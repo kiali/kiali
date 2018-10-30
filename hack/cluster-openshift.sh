@@ -472,7 +472,7 @@ if [ "$_CMD" = "up" ]; then
       IMAGE_NAME=kiali/kiali \
       IMAGE_VERSION=${KIALI_VERSION}  \
       NAMESPACE=istio-system \
-      VERBOSE_MODE=4 \
+      VERBOSE_MODE=3 \
       IMAGE_PULL_POLICY_TOKEN="imagePullPolicy: Always" envsubst | ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f -
   fi
 

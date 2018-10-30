@@ -1,9 +1,11 @@
 package kubernetes
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
@@ -18,6 +20,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	kialiConfig "github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 
 	osappsv1 "github.com/openshift/api/apps/v1"
 	osv1 "github.com/openshift/api/project/v1"
@@ -31,7 +34,6 @@ var (
 // IstioClientInterface for mocks (only mocked function are necessary here)
 type IstioClientInterface interface {
 	DeleteIstioObject(api, namespace, resourceType, name string) error
-	GetCronJob(namespace string, cronjobName string) (*batch_v1beta1.CronJob, error)
 	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
 	GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error)
 	GetDeployments(namespace string) ([]v1beta1.Deployment, error)
@@ -45,7 +47,6 @@ type IstioClientInterface interface {
 	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
 	GetIstioRules(namespace string) (*IstioRules, error)
 	GetIstioRuleDetails(namespace string, istiorule string) (*IstioRuleDetails, error)
-	GetJob(namespace string, jobName string) (*batch_v1.Job, error)
 	GetJobs(namespace string) ([]batch_v1.Job, error)
 	GetNamespace(namespace string) (*v1.Namespace, error)
 	GetNamespaces() ([]v1.Namespace, error)
@@ -56,9 +57,7 @@ type IstioClientInterface interface {
 	GetQuotaSpecs(namespace string) ([]IstioObject, error)
 	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)
 	GetQuotaSpecBindings(namespace string) ([]IstioObject, error)
-	GetReplicationController(namespace string, replicationcontrollerName string) (*v1.ReplicationController, error)
 	GetReplicationControllers(namespace string) ([]v1.ReplicationController, error)
-	GetReplicaSet(namespace string, replicasetName string) (*v1beta2.ReplicaSet, error)
 	GetReplicaSets(namespace string) ([]v1beta2.ReplicaSet, error)
 	GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetService(namespace string, serviceName string) (*v1.Service, error)
@@ -70,6 +69,7 @@ type IstioClientInterface interface {
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	IsOpenShift() bool
+	Stop()
 }
 
 // IstioClient is the client struct for Kubernetes and Istio APIs
@@ -79,6 +79,12 @@ type IstioClient struct {
 	k8s                *kube.Clientset
 	istioConfigApi     *rest.RESTClient
 	istioNetworkingApi *rest.RESTClient
+	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
+	// It is represented as a pointer to include the initialization phase.
+	// See kubernetes_service.go#IsOpenShift() for more details.
+	isOpenShift *bool
+	k8sCache    cacheController
+	stopCache   chan struct{}
 }
 
 // GetK8sApi returns the clientset referencing all K8s rest clients
@@ -102,13 +108,18 @@ func (client *IstioClient) GetIstioNetworkingApi() *rest.RESTClient {
 // It returns an error on any problem
 func ConfigClient() (*rest.Config, error) {
 	if kialiConfig.Get().InCluster {
-		return rest.InClusterConfig()
+		incluster, err := rest.InClusterConfig()
+		if err != nil {
+			return nil, err
+		}
+		incluster.QPS = kialiConfig.Get().KubernetesConfig.QPS
+		incluster.Burst = kialiConfig.Get().KubernetesConfig.Burst
+		return incluster, nil
 	}
 	host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
 	if len(host) == 0 || len(port) == 0 {
 		return nil, fmt.Errorf("unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined")
 	}
-
 	return &rest.Config{
 		// TODO: switch to using cluster DNS.
 		Host:  "http://" + net.JoinHostPort(host, port),
@@ -135,12 +146,23 @@ func NewClient() (*IstioClient, error) {
 // It returns an error on any problem.
 func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 	client := IstioClient{}
+	log.Infof("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)
 
 	k8s, err := kube.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 	client.k8s = k8s
+
+	// Init global cache
+	if client.k8sCache == nil {
+		client.stopCache = make(chan struct{})
+		client.k8sCache = newCacheController(client.k8s, time.Duration(kialiConfig.Get().KubernetesConfig.CacheDuration))
+		client.k8sCache.Start()
+		if !client.k8sCache.WaitForSync() {
+			return nil, errors.New("Cache cannot connect with the k8s API on host: " + config.Host)
+		}
+	}
 
 	// Istio is a CRD extension of Kubernetes API, so any custom type should be registered here.
 	// KnownTypes registers the Istio objects we use, as soon as we get more info we will increase the number of types.
@@ -202,4 +224,10 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 	}
 
 	return &client, nil
+}
+
+func (in *IstioClient) Stop() {
+	if in.k8sCache != nil {
+		in.k8sCache.Stop()
+	}
 }

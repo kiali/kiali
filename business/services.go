@@ -85,7 +85,6 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []v1.Ser
 
 // GetService returns a single service
 func (in *SvcService) GetService(namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
-
 	var svc *v1.Service
 	var eps *v1.Endpoints
 
