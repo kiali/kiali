@@ -2,14 +2,16 @@ package business
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/log"
+	"sync"
+
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"sync"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // AppService deals with fetching Workloads group by "app" label, which will be identified as an "application"
@@ -40,6 +42,9 @@ func (in *AppService) fetchWorkloadsPerApp(namespace, labelSelector string) (app
 
 // GetAppList is the API handler to fetch the list of applications in a given namespace
 func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "AppService", "GetAppList")
+	defer promtimer.ObserveDuration()
+
 	appList := &models.AppList{
 		Namespace: models.Namespace{Name: namespace},
 		Apps:      []models.AppListItem{},
@@ -66,6 +71,9 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 
 // GetApp is the API handler to fetch the details for a given namespace and app name
 func (in *AppService) GetApp(namespace string, appName string) (models.App, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "AppService", "GetApp")
+	defer promtimer.ObserveDuration()
+
 	appInstance := &models.App{Namespace: models.Namespace{Name: namespace}, Name: appName}
 	namespaceApps, err := fetchNamespaceApps(in.k8s, namespace, appName)
 	if err != nil {
