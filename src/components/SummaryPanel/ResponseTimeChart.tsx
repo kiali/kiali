@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AreaChart } from 'patternfly-react';
+import { AreaChart, Icon } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
 
 type ResponseTimeChartTypeProp = {
@@ -15,6 +15,11 @@ export default class ResponseTimeChart extends React.Component<ResponseTimeChart
   constructor(props: ResponseTimeChartTypeProp) {
     super(props);
   }
+
+  thereIsTrafficData = () => {
+    console.log(this.props.rtAvg);
+    return this.props.rtAvg && this.props.rtAvg.length > 1 && this.props.rtAvg[0].length > 1;
+  };
 
   render() {
     const axis: any = {
@@ -48,14 +53,20 @@ export default class ResponseTimeChart extends React.Component<ResponseTimeChart
             <div>
               <strong>{this.props.label}:</strong>
             </div>
-            <AreaChart
-              size={{ height: 80 }}
-              color={{ pattern: [PfColors.Black, PfColors.Green400, PfColors.Blue, PfColors.Orange400] }}
-              legend={{ show: true }}
-              grid={{ y: { show: false } }}
-              axis={axis}
-              data={chartData}
-            />
+            {this.thereIsTrafficData() ? (
+              <AreaChart
+                size={{ height: 80 }}
+                color={{ pattern: [PfColors.Black, PfColors.Green400, PfColors.Blue, PfColors.Orange400] }}
+                legend={{ show: true }}
+                grid={{ y: { show: false } }}
+                axis={axis}
+                data={chartData}
+              />
+            ) : (
+              <div>
+                <Icon type="pf" name="info" /> Not enough traffic to generate chart.
+              </div>
+            )}
           </div>
         )}
       </>

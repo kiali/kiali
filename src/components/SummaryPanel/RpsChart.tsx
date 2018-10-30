@@ -49,7 +49,7 @@ const blockStyle = style({
 const renderNoTrafficLegend = () => {
   return (
     <div>
-      <Icon type="pf" name="info" /> No traffic logged.
+      <Icon type="pf" name="info" /> Not enough traffic to generate chart.
     </div>
   );
 };
