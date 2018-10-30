@@ -3,11 +3,12 @@ import { authentication } from '../../utils/Authentication';
 import { FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
 
 export class NamespaceFilter {
+  static id = 'namespace';
   static category = 'Namespace';
 
   static create = (): FilterType => {
     return {
-      id: 'namespace',
+      id: NamespaceFilter.id,
       title: NamespaceFilter.category,
       placeholder: 'Filter by Namespace',
       filterType: 'select',
