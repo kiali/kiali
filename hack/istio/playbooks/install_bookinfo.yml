@@ -16,6 +16,11 @@
         bookinfo_namespace: 'bookinfo'
       when: bookinfo_namespace is not defined
 
+    - name: Define Bookinfo Version if is not defined
+      set_fact:
+        bookinfo_version: '1.9.0'
+      when: bookinfo_version is not defined
+
     - name: Define Rename Label if is not defined
       set_fact:
         rename_label: ''
@@ -50,7 +55,7 @@
       shell: "oc adm policy add-scc-to-user privileged -z default -n {{bookinfo_namespace}}"
 
     - name: Deploy Bookinfo
-      shell: "cat {{item}} | LABEL={{ rename_label }} envsubst  | istioctl kube-inject -f - | oc apply -n {{bookinfo_namespace}} -f -  "
+      shell: "cat {{item}} | LABEL={{ rename_label }} VERSION={{ bookinfo_version }} envsubst   | istioctl kube-inject -f - | oc apply -n {{bookinfo_namespace}} -f -  "
       with_items:
         - "{{ istio_bookinfo_deployment_path }}"
 
@@ -60,14 +65,14 @@
         - "{{ istio_bookinfo_gateway_path }}"
 
     - name: Deploy MongoDB
-      shell: "cat {{item}} |  LABEL={{ rename_label }} envsubst  | istioctl kube-inject -f - | oc apply -n {{bookinfo_namespace}} -f -  "
+      shell: "cat {{item}} |  LABEL={{ rename_label }} VERSION={{ bookinfo_version }} envsubst   | istioctl kube-inject -f - | oc apply -n {{bookinfo_namespace}} -f -  "
       when: "mongodb is defined and mongodb == 'true'"
       with_items:
         - "{{ istio_bookinfo_mongodb_deployment_path }}"
         - "{{ istio_bookinfo_mongodb_service_path }}"
 
     - name: Deploy MySQL
-      shell: "cat {{item}} |  LABEL={{ rename_label }} envsubst   | istioctl kube-inject -f - | oc apply -n {{bookinfo_namespace}} -f -  "
+      shell: "cat {{item}} |  LABEL={{ rename_label }} VERSION={{ bookinfo_version }} envsubst    | istioctl kube-inject -f - | oc apply -n {{bookinfo_namespace}} -f -  "
       when: "mysql is defined and mysql == 'true'"
       with_items:
         - "{{ istio_bookinfo_mysql_deployment_path }}"
