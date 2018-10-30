@@ -2,9 +2,9 @@ package server
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/business"
 	"net/http"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/routing"

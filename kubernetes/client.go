@@ -19,8 +19,8 @@ import (
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"github.com/kiali/kiali/log"
 	kialiConfig "github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 
 	osappsv1 "github.com/openshift/api/apps/v1"
 	osv1 "github.com/openshift/api/project/v1"
