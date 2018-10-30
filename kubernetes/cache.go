@@ -137,7 +137,7 @@ func (c *controllerImpl) run(stop <-chan struct{}) {
 
 func (c *controllerImpl) HasSynced() bool {
 	if c.syncCount > c.maxSyncCount {
-		log.Errorf("Max attempts reached syncing cache. Error connecting to k8s API ")
+		log.Errorf("Max attempts reached syncing cache. Error connecting to k8s API: %d > %d", c.syncCount, c.maxSyncCount)
 		c.Stop()
 		return false
 	}

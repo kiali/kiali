@@ -79,7 +79,9 @@ type IstioClient struct {
 	k8s                *kube.Clientset
 	istioConfigApi     *rest.RESTClient
 	istioNetworkingApi *rest.RESTClient
-	// isOpenShift can be cached per client
+	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
+	// It is represented as a pointer to include the initialization phase.
+	// See kubernetes_service.go#IsOpenShift() for more details.
 	isOpenShift *bool
 	k8sCache    cacheController
 	stopCache   chan struct{}
