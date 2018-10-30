@@ -10,7 +10,7 @@ import { ActiveFilter } from '../../types/Filters';
 import { CancelablePromise, makeCancelablePromise, removeDuplicatesArray } from '../../utils/Common';
 import ItemDescription from './ItemDescription';
 import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
-import { ListPage } from '../../components/ListPage/ListPage';
+import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
@@ -189,7 +189,7 @@ class WorkloadListComponent extends ListComponent.Component<
                 pagination: {
                   page: currentPage,
                   perPage: prevState.pagination.perPage,
-                  perPageOptions: ListPage.perPageOptions
+                  perPageOptions: ListPagesHelper.perPageOptions
                 }
               };
             });
@@ -228,11 +228,7 @@ class WorkloadListComponent extends ListComponent.Component<
 
     return (
       <>
-        <StatefulFilters
-          initialFilters={WorkloadListFilters.availableFilters}
-          pageHooks={this.props.pageHooks}
-          onFilterChange={this.onFilterChange}
-        >
+        <StatefulFilters initialFilters={WorkloadListFilters.availableFilters} onFilterChange={this.onFilterChange}>
           <Sort>
             <Sort.TypeSelector
               sortTypes={WorkloadListFilters.sortFields}

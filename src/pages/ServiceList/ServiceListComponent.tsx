@@ -20,7 +20,7 @@ import { authentication } from '../../utils/Authentication';
 import { CancelablePromise, makeCancelablePromise, removeDuplicatesArray } from '../../utils/Common';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import ItemDescription from './ItemDescription';
-import { ListPage } from '../../components/ListPage/ListPage';
+import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { ServiceListFilters } from './FiltersAndSorts';
 
 import './ServiceListComponent.css';
@@ -201,7 +201,7 @@ class ServiceListComponent extends ListComponent.Component<
                 pagination: {
                   page: currentPage,
                   perPage: prevState.pagination.perPage,
-                  perPageOptions: ListPage.perPageOptions
+                  perPageOptions: ListPagesHelper.perPageOptions
                 }
               };
             });
@@ -256,11 +256,7 @@ class ServiceListComponent extends ListComponent.Component<
     }
     return (
       <div>
-        <StatefulFilters
-          initialFilters={ServiceListFilters.availableFilters}
-          pageHooks={this.props.pageHooks}
-          onFilterChange={this.onFilterChange}
-        >
+        <StatefulFilters initialFilters={ServiceListFilters.availableFilters} onFilterChange={this.onFilterChange}>
           <Sort>
             <Sort.TypeSelector
               sortTypes={ServiceListFilters.sortFields}

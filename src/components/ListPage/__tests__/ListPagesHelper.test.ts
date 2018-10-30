@@ -1,10 +1,7 @@
-import { ListPage } from '../ListPage';
-import { Location } from 'history';
+import history from '../../../app/History';
+import { ListPagesHelper } from '../ListPagesHelper';
 import { FilterType } from '../../../types/Filters';
-import { createBrowserHistory } from 'history';
-import { ServiceListFilters } from '../../../pages/ServiceList/FiltersAndSorts';
 
-const history = createBrowserHistory({ basename: '' });
 const managedFilterTypes = [
   {
     id: 'a',
@@ -20,28 +17,10 @@ const managedFilterTypes = [
   }
 ] as FilterType[];
 
-type DemoListState = {};
-type DemoListProps = {};
-type DemoListItem = {};
-
-class DemoListPage extends ListPage.Component<DemoListProps, DemoListState, DemoListItem> {
-  sortFields() {
-    return ServiceListFilters.sortFields;
-  }
-}
-
 describe('List page', () => {
   it('sets selected filters from URL', () => {
-    const mock: any = jest.fn();
-    const listPage = new DemoListPage({
-      match: mock,
-      location: {
-        search: '?a=1&b=2&c=3&c=4'
-      } as Location,
-      history: history,
-      staticContext: mock
-    });
-    const filters = listPage.getFiltersFromURL(managedFilterTypes);
+    history.push('?a=1&b=2&c=3&c=4');
+    const filters = ListPagesHelper.getFiltersFromURL(managedFilterTypes);
     expect(filters).toEqual([
       {
         category: 'A',
@@ -59,17 +38,8 @@ describe('List page', () => {
   });
 
   it('sets selected filters to URL', () => {
-    const mock: any = jest.fn();
-    const listPage = new DemoListPage({
-      match: mock,
-      location: {
-        pathname: 'any',
-        search: '?a=10&b=20&c=30&c=40'
-      } as Location,
-      history: history,
-      staticContext: mock
-    });
-    const cleanFilters = listPage.setFiltersToURL(managedFilterTypes, [
+    history.push('?a=10&b=20&c=30&c=40');
+    const cleanFilters = ListPagesHelper.setFiltersToURL(managedFilterTypes, [
       {
         category: 'A',
         value: '1'
@@ -83,22 +53,14 @@ describe('List page', () => {
         value: '4'
       }
     ]);
-    expect(listPage.props.history.location.search).toEqual('?b=20&a=1&c=3&c=4');
+    expect(history.location.search).toEqual('?b=20&a=1&c=3&c=4');
     expect(cleanFilters).toHaveLength(3);
   });
 
   it('filters should match URL, ignoring order and non-managed query params', () => {
-    const mock: any = jest.fn();
-    const listPage = new DemoListPage({
-      match: mock,
-      location: {
-        search: '?a=1&b=2&c=3&c=4'
-      } as Location,
-      history: history,
-      staticContext: mock
-    });
+    history.push('?a=1&b=2&c=3&c=4');
     // Make sure order is ignored
-    const match = listPage.filtersMatchURL(managedFilterTypes, [
+    const match = ListPagesHelper.filtersMatchURL(managedFilterTypes, [
       {
         category: 'C',
         value: '3'
@@ -116,17 +78,9 @@ describe('List page', () => {
   });
 
   it('filters should not match URL', () => {
-    const mock: any = jest.fn();
-    const listPage = new DemoListPage({
-      match: mock,
-      location: {
-        search: '?a=1&b=2&c=3&c=4'
-      } as Location,
-      history: history,
-      staticContext: mock
-    });
+    history.push('?a=1&b=2&c=3&c=4');
     // Incorrect value
-    let match = listPage.filtersMatchURL(managedFilterTypes, [
+    let match = ListPagesHelper.filtersMatchURL(managedFilterTypes, [
       {
         category: 'A',
         value: '1'
@@ -143,7 +97,7 @@ describe('List page', () => {
     expect(match).toBe(false);
 
     // Missing value from selection
-    match = listPage.filtersMatchURL(managedFilterTypes, [
+    match = ListPagesHelper.filtersMatchURL(managedFilterTypes, [
       {
         category: 'A',
         value: '1'
@@ -156,7 +110,7 @@ describe('List page', () => {
     expect(match).toBe(false);
 
     // Missing value from URL
-    match = listPage.filtersMatchURL(managedFilterTypes, [
+    match = ListPagesHelper.filtersMatchURL(managedFilterTypes, [
       {
         category: 'A',
         value: '1'
@@ -177,7 +131,7 @@ describe('List page', () => {
     expect(match).toBe(false);
 
     // Missing key from selection
-    match = listPage.filtersMatchURL(managedFilterTypes, [
+    match = ListPagesHelper.filtersMatchURL(managedFilterTypes, [
       {
         category: 'A',
         value: '1'
@@ -186,7 +140,7 @@ describe('List page', () => {
     expect(match).toBe(false);
 
     // Missing key from URL
-    match = listPage.filtersMatchURL(managedFilterTypes, [
+    match = ListPagesHelper.filtersMatchURL(managedFilterTypes, [
       {
         category: 'A',
         value: '1'

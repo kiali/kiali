@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { AxiosError } from 'axios';
-import { ListPage } from './ListPage';
+import { ListPagesHelper } from './ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { Pagination } from '../../types/Pagination';
 import * as API from '../../services/Api';
@@ -8,7 +8,6 @@ import { HistoryManager, URLParams } from '../../app/History';
 
 export namespace ListComponent {
   export interface Props<R> {
-    pageHooks: ListPage.Hooks;
     pagination: Pagination;
     currentSortField: SortField<R>;
     isSortAscending: boolean;
@@ -39,7 +38,7 @@ export namespace ListComponent {
     };
 
     handleError = (error: string) => {
-      this.props.pageHooks.handleError(error);
+      ListPagesHelper.handleError(error);
     };
 
     handleAxiosError(message: string, error: AxiosError) {
@@ -55,7 +54,7 @@ export namespace ListComponent {
           pagination: {
             page: page,
             perPage: prevState.pagination.perPage,
-            perPageOptions: ListPage.perPageOptions
+            perPageOptions: ListPagesHelper.perPageOptions
           }
         };
       });
@@ -69,7 +68,7 @@ export namespace ListComponent {
           pagination: {
             page: 1,
             perPage: perPage,
-            perPageOptions: ListPage.perPageOptions
+            perPageOptions: ListPagesHelper.perPageOptions
           }
         };
       });

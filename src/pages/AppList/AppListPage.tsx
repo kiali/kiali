@@ -1,34 +1,23 @@
 import * as React from 'react';
 import { Breadcrumb } from 'patternfly-react';
-import { ListPage } from '../../components/ListPage/ListPage';
+import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import AppListComponent from './AppListComponent';
 import { AppListFilters } from './FiltersAndSorts';
-import { AppListItem } from '../../types/AppList';
 
-type AppListState = {};
-type AppListProps = {};
-
-class AppListPage extends ListPage.Component<AppListProps, AppListState, AppListItem> {
-  sortFields() {
-    return AppListFilters.sortFields;
-  }
-
-  render() {
-    return (
-      <>
-        <Breadcrumb title={true}>
-          <Breadcrumb.Item active={true}>Applications</Breadcrumb.Item>
-        </Breadcrumb>
-        <AppListComponent
-          pageHooks={this}
-          pagination={this.currentPagination()}
-          currentSortField={this.currentSortField()}
-          isSortAscending={this.isCurrentSortAscending()}
-          rateInterval={this.currentDuration()}
-        />
-      </>
-    );
-  }
-}
+const AppListPage: React.SFC<{}> = () => {
+  return (
+    <>
+      <Breadcrumb title={true}>
+        <Breadcrumb.Item active={true}>Applications</Breadcrumb.Item>
+      </Breadcrumb>
+      <AppListComponent
+        pagination={ListPagesHelper.currentPagination()}
+        currentSortField={ListPagesHelper.currentSortField(AppListFilters.sortFields)}
+        isSortAscending={ListPagesHelper.isCurrentSortAscending()}
+        rateInterval={ListPagesHelper.currentDuration()}
+      />
+    </>
+  );
+};
 
 export default AppListPage;

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Sort, ToolbarRightContent } from 'patternfly-react';
 
 import { StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { ListPage } from '../../components/ListPage/ListPage';
+import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import Refresh from '../../components/Refresh/Refresh';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { config } from '../../config';
@@ -13,7 +13,6 @@ import NamespaceInfo from './NamespaceInfo';
 import { HistoryManager, URLParams } from '../../app/History';
 
 type Props = {
-  pageHooks: ListPage.Hooks;
   onRefresh: () => void;
   onError: (msg: string) => void;
   sort: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
@@ -29,29 +28,21 @@ type State = {
 const DURATIONS = config().toolbar.intervalDuration;
 
 class OverviewToolbar extends React.Component<Props, State> {
-  static findSortField(id?: string): SortField<NamespaceInfo> {
-    if (id) {
-      const field = FiltersAndSorts.sortFields.find(sortField => sortField.param === id);
-      return field || FiltersAndSorts.sortFields[0];
-    }
-    return FiltersAndSorts.sortFields[0];
-  }
-
   constructor(props: Props) {
     super(props);
     this.state = {
-      sortField: OverviewToolbar.findSortField(this.props.pageHooks.currentSortFieldId()),
-      isSortAscending: this.props.pageHooks.isCurrentSortAscending(),
-      duration: this.props.pageHooks.currentDuration(),
-      pollInterval: this.props.pageHooks.currentPollInterval()
+      sortField: ListPagesHelper.currentSortField(FiltersAndSorts.sortFields),
+      isSortAscending: ListPagesHelper.isCurrentSortAscending(),
+      duration: ListPagesHelper.currentDuration(),
+      pollInterval: ListPagesHelper.currentPollInterval()
     };
   }
 
   componentDidUpdate() {
-    const urlSortField = OverviewToolbar.findSortField(this.props.pageHooks.currentSortFieldId());
-    const urlIsSortAscending = this.props.pageHooks.isCurrentSortAscending();
-    const urlDuration = this.props.pageHooks.currentDuration();
-    const urlPollInterval = this.props.pageHooks.currentPollInterval();
+    const urlSortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
+    const urlIsSortAscending = ListPagesHelper.isCurrentSortAscending();
+    const urlDuration = ListPagesHelper.currentDuration();
+    const urlPollInterval = ListPagesHelper.currentPollInterval();
     if (!this.paramsAreSynced(urlSortField, urlIsSortAscending, urlDuration, urlPollInterval)) {
       this.setState({
         sortField: urlSortField,
@@ -102,11 +93,7 @@ class OverviewToolbar extends React.Component<Props, State> {
 
   render() {
     return (
-      <StatefulFilters
-        initialFilters={FiltersAndSorts.availableFilters}
-        pageHooks={this.props.pageHooks}
-        onFilterChange={this.props.onRefresh}
-      >
+      <StatefulFilters initialFilters={FiltersAndSorts.availableFilters} onFilterChange={this.props.onRefresh}>
         <Sort>
           <Sort.TypeSelector
             sortTypes={FiltersAndSorts.sortFields}
