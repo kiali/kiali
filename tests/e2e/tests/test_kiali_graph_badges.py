@@ -4,9 +4,9 @@ from utils.command_exec import command_exec
 import time
 
 DURATION = '60s'
-VERSIONED_APP_PARAMS = {'graphType': 'versionedApp', 'duration': DURATION}
-WORKLOAD_PARAMS      = {'graphType': 'workload', 'duration': DURATION}
-APP_PARAMS           = {'graphType': 'app', 'duration': DURATION}
+VERSIONED_APP_PARAMS = {'graphType': 'versionedApp', 'duration': DURATION, 'injectServiceNodes': 'true'}
+WORKLOAD_PARAMS      = {'graphType': 'workload', 'duration': DURATION, 'injectServiceNodes': 'true'}
+APP_PARAMS           = {'graphType': 'app', 'duration': DURATION, 'injectServiceNodes': 'true'}
 
 CB_BADGE = 'hasCB'
 VS_BADGE = "hasVS"
