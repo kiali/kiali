@@ -83,8 +83,10 @@ type IstioClient struct {
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
 	isOpenShift *bool
-	k8sCache    cacheController
-	stopCache   chan struct{}
+	// Cache controller is a global cache for all k8s objects fetched by kiali in multiple namespaces.
+	// It doesn't support reduced permissions scenarios yet, don't forget to disabled on those use cases.
+	k8sCache  cacheController
+	stopCache chan struct{}
 }
 
 // GetK8sApi returns the clientset referencing all K8s rest clients
@@ -154,8 +156,11 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 	}
 	client.k8s = k8s
 
-	// Init global cache
-	if client.k8sCache == nil {
+	// Init client cache
+	// Note that cache will work only in full permissions scenarios (similar permissions as mixer/istio-telemetry component)
+	kialiK8sCfg := kialiConfig.Get().KubernetesConfig
+	if client.k8sCache == nil && kialiK8sCfg.CacheEnabled {
+		log.Infof("Kiali K8S Cache enabled")
 		client.stopCache = make(chan struct{})
 		client.k8sCache = newCacheController(client.k8s, time.Duration(kialiConfig.Get().KubernetesConfig.CacheDuration))
 		client.k8sCache.Start()
