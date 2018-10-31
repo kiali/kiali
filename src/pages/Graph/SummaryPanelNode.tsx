@@ -21,7 +21,7 @@ import {
 import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Response } from '../../services/Api';
 
 type SummaryPanelStateType = {

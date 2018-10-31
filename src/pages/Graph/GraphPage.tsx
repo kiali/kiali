@@ -14,7 +14,7 @@ import GraphFilterToolbar from '../../components/GraphFilter/GraphFilterToolbar'
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import { style } from 'typestyle';
 
-import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
 
 import GraphLegend from '../../components/GraphFilter/GraphLegend';

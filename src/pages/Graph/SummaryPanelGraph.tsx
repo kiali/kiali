@@ -12,7 +12,7 @@ import { authentication } from '../../utils/Authentication';
 import { shouldRefreshData, getDatapoints } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 
 type SummaryPanelGraphState = {
   loading: boolean;

@@ -18,7 +18,7 @@ import {
 import Label from '../../components/Label/Label';
 import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
 import { Response } from '../../services/Api';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 
 type SummaryPanelEdgeState = {
   loading: boolean;

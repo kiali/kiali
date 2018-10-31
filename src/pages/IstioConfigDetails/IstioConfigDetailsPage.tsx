@@ -75,7 +75,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         });
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig details.', error));
+        MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig details', error));
       });
   };
 

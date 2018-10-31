@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Filter, FormControl, Toolbar } from 'patternfly-react';
 import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
 import { ListPagesHelper } from '../ListPage/ListPagesHelper';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
+import { PromisesRegistry } from '../../utils/CancelablePromises';
 
 export interface StatefulFiltersProps {
   onFilterChange: () => void;
@@ -33,7 +33,7 @@ export namespace FilterSelected {
 }
 
 export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
-  private filterTypePromise?: CancelablePromise<FilterType[]>;
+  private promises = new PromisesRegistry();
 
   constructor(props: StatefulFiltersProps) {
     super(props);
@@ -57,7 +57,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   componentDidMount() {
     // Call all loaders from FilterTypes and set results in state
-    const promises = this.props.initialFilters.map(ft => {
+    const filterTypePromises = this.props.initialFilters.map(ft => {
       if (ft.loader) {
         return ft.loader().then(values => {
           ft.filterValues = values;
@@ -75,17 +75,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       }
     });
 
-    this.filterTypePromise = makeCancelablePromise(Promise.all(promises));
-    this.filterTypePromise.promise
-      .then(types => {
-        this.setState({ filterTypes: types });
-        this.filterTypePromise = undefined;
-      })
-      .catch(err => {
-        if (!err.isCancelable) {
-          console.debug(err);
-        }
-      });
+    this.promises.registerAll('filterType', filterTypePromises).then(types => this.setState({ filterTypes: types }));
   }
 
   componentDidUpdate(prevProps: StatefulFiltersProps, prevState: StatefulFiltersState, snapshot: any) {
@@ -95,10 +85,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   }
 
   componentWillUnmount() {
-    if (this.filterTypePromise) {
-      this.filterTypePromise.cancel();
-      this.filterTypePromise = undefined;
-    }
+    this.promises.cancelAll();
   }
 
   updateActiveFilters(activeFilters: ActiveFilter[]) {

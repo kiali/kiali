@@ -7,7 +7,8 @@ import { WorkloadListFilters } from './FiltersAndSorts';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { Button, Icon, ListView, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
 import { ActiveFilter } from '../../types/Filters';
-import { CancelablePromise, makeCancelablePromise, removeDuplicatesArray } from '../../utils/Common';
+import { removeDuplicatesArray } from '../../utils/Common';
+import { PromisesRegistry } from '../../utils/CancelablePromises';
 import ItemDescription from './ItemDescription';
 import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
@@ -28,9 +29,7 @@ class WorkloadListComponent extends ListComponent.Component<
   WorkloadListComponentState,
   WorkloadListItem
 > {
-  private nsPromise?: CancelablePromise<API.Response<Namespace[]>>;
-  private workloadsPromise?: CancelablePromise<API.Response<WorkloadNamespaceResponse>[]>;
-  private sortPromise?: CancelablePromise<WorkloadListItem[]>;
+  private promises = new PromisesRegistry();
 
   constructor(props: WorkloadListComponentProps) {
     super(props);
@@ -61,7 +60,7 @@ class WorkloadListComponent extends ListComponent.Component<
   }
 
   componentWillUnmount() {
-    this.cancelAsyncs();
+    this.promises.cancelAll();
   }
 
   paramsAreSynced(prevProps: WorkloadListComponentProps) {
@@ -80,39 +79,15 @@ class WorkloadListComponent extends ListComponent.Component<
   };
 
   sortItemList(workloads: WorkloadListItem[], sortField: SortField<WorkloadListItem>, isAscending: boolean) {
-    let lastSort: Promise<WorkloadListItem[]>;
-    const sorter = unsorted => {
-      this.sortPromise = makeCancelablePromise(
-        WorkloadListFilters.sortWorkloadsItems(workloads, sortField, isAscending)
-      );
-      this.sortPromise.promise
-        .then(() => {
-          this.sortPromise = undefined;
-        })
-        .catch(() => {
-          this.sortPromise = undefined;
-        });
-      return this.sortPromise.promise;
-    };
-
-    if (!this.sortPromise) {
-      // If there is no "sortPromise" set, take the received (unsorted) list of workloads to sort
-      // them and update the UI with the sorted list.
-      lastSort = sorter(workloads);
-    } else {
-      // If there is a "sortPromise", there may be an ongoing fetch/refresh. So, the received <workloads> list argument
-      // shoudn't be used as it may represent the "old" data before the refresh. Instead, append a callback to the
-      // "sortPromise" to re-sort once the data is fetched. This ensures that the list will display the new data with
-      // the right sorting.
-      // (See other comments in the fetchWorkloads method)
-      lastSort = this.sortPromise.promise.then(sorter);
-    }
-
-    return lastSort;
+    // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
+    // This ensures that the list will display the new data with the right sorting
+    return this.promises.registerChained('sort', workloads, unsorted =>
+      WorkloadListFilters.sortWorkloadsItems(unsorted, sortField, isAscending)
+    );
   }
 
   updateListItems(resetPagination?: boolean) {
-    this.cancelAsyncs();
+    this.promises.cancelAll();
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
@@ -123,16 +98,15 @@ class WorkloadListComponent extends ListComponent.Component<
     namespacesSelected = removeDuplicatesArray(namespacesSelected);
 
     if (namespacesSelected.length === 0) {
-      this.nsPromise = makeCancelablePromise(API.getNamespaces(authentication()));
-      this.nsPromise.promise
+      this.promises
+        .register('namespaces', API.getNamespaces(authentication()))
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchWorkloads(namespaces.map(namespace => namespace.name), activeFilters, resetPagination);
-          this.nsPromise = undefined;
         })
         .catch(namespacesError => {
           if (!namespacesError.isCanceled) {
-            this.handleAxiosError('Could not fetch namespace list.', namespacesError);
+            this.handleAxiosError('Could not fetch namespace list', namespacesError);
           }
         });
     } else {
@@ -158,8 +132,8 @@ class WorkloadListComponent extends ListComponent.Component<
 
   fetchWorkloads(namespaces: string[], filters: ActiveFilter[], resetPagination?: boolean) {
     const workloadsConfigPromises = namespaces.map(namespace => API.getWorkloads(authentication(), namespace));
-    this.workloadsPromise = makeCancelablePromise(Promise.all(workloadsConfigPromises));
-    this.workloadsPromise.promise
+    this.promises
+      .registerAll('workloads', workloadsConfigPromises)
       .then(responses => {
         const currentPage = resetPagination ? 1 : this.state.pagination.page;
         let workloadsItems: WorkloadListItem[] = [];
@@ -167,21 +141,8 @@ class WorkloadListComponent extends ListComponent.Component<
           WorkloadListFilters.filterBy(response.data, filters);
           workloadsItems = workloadsItems.concat(this.getDeploymentItems(response.data));
         });
-        if (this.sortPromise) {
-          this.sortPromise.cancel();
-        }
-        // Promises for sorting are needed, because the user may have the list sorted using health/error rates
-        // and these data can be fetched only after the list is retrieved. If the user is sorting using these
-        // criteria, the update of the list is deferred after sorting is possible. This way, it's avoided the
-        // illusion of double-fetch or flickering list.
-        this.sortPromise = makeCancelablePromise(
-          WorkloadListFilters.sortWorkloadsItems(
-            workloadsItems,
-            this.state.currentSortField,
-            this.state.isSortAscending
-          )
-        );
-        this.sortPromise.promise
+        this.promises.cancel('sort');
+        this.sortItemList(workloadsItems, this.state.currentSortField, this.state.isSortAscending)
           .then(sorted => {
             this.setState(prevState => {
               return {
@@ -193,19 +154,16 @@ class WorkloadListComponent extends ListComponent.Component<
                 }
               };
             });
-            this.sortPromise = undefined;
           })
           .catch(err => {
             if (!err.isCanceled) {
               console.debug(err);
             }
-            this.sortPromise = undefined;
           });
-        this.workloadsPromise = undefined;
       })
       .catch(err => {
         if (!err.isCanceled) {
-          console.debug(err);
+          this.handleAxiosError('Could not fetch workloads list', err);
         }
       });
   }
@@ -262,21 +220,6 @@ class WorkloadListComponent extends ListComponent.Component<
       </>
     );
   }
-
-  private cancelAsyncs = () => {
-    if (this.nsPromise) {
-      this.nsPromise.cancel();
-      this.nsPromise = undefined;
-    }
-    if (this.workloadsPromise) {
-      this.workloadsPromise.cancel();
-      this.workloadsPromise = undefined;
-    }
-    if (this.sortPromise) {
-      this.sortPromise.cancel();
-      this.sortPromise = undefined;
-    }
-  };
 }
 
 export default WorkloadListComponent;

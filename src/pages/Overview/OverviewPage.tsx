@@ -96,7 +96,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         });
         this.fetchAppsHealth(namespaces.map(namespace => namespace.name));
       })
-      .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list.', namespacesError));
+      .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list', namespacesError));
   };
 
   fetchAppsHealth(namespaces: string[]) {

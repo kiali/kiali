@@ -3,7 +3,7 @@ import { ServiceListItem } from '../../types/ServiceList';
 import { ServiceHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import ServiceErrorRate from './ServiceErrorRate';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
+import { PromisesRegistry } from '../../utils/CancelablePromises';
 
 interface Props {
   item: ServiceListItem;
@@ -13,7 +13,7 @@ interface State {
 }
 
 export default class ItemDescription extends React.PureComponent<Props, State> {
-  private healthPromise?: CancelablePromise<ServiceHealth>;
+  private promises = new PromisesRegistry();
 
   constructor(props: Props) {
     super(props);
@@ -31,23 +31,19 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    if (this.healthPromise) {
-      this.healthPromise.cancel();
-      this.healthPromise = undefined;
-    }
+    this.promises.cancelAll();
   }
 
   onItemChanged(item: ServiceListItem) {
-    if (this.healthPromise) {
-      this.healthPromise.cancel();
-    }
-
-    this.healthPromise = makeCancelablePromise(item.healthPromise);
-    this.healthPromise.promise.then(h => this.setState({ health: h })).catch(err => {
-      if (!err.isCanceled) {
-        this.setState({ health: undefined });
-      }
-    });
+    this.promises
+      .register('health', item.healthPromise)
+      .then(h => this.setState({ health: h }))
+      .catch(err => {
+        if (!err.isCanceled) {
+          this.setState({ health: undefined });
+          throw err;
+        }
+      });
   }
 
   render() {

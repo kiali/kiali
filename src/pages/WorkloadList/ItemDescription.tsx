@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { WorkloadHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import ErrorRate from './ErrorRate';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
+import { PromisesRegistry } from '../../utils/CancelablePromises';
 
 type ItemDescriptionState = {
   health?: WorkloadHealth;
@@ -19,7 +19,7 @@ type ItemDescriptionProps = {
 };
 
 class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescriptionState> {
-  private healthPromise?: CancelablePromise<WorkloadHealth>;
+  private promises = new PromisesRegistry();
 
   constructor(props: ItemDescriptionProps) {
     super(props);
@@ -39,23 +39,19 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
   }
 
   componentWillUnmount() {
-    if (this.healthPromise) {
-      this.healthPromise.cancel();
-      this.healthPromise = undefined;
-    }
+    this.promises.cancelAll();
   }
 
   onItemChanged(item: WorkloadListItem) {
-    if (this.healthPromise) {
-      this.healthPromise.cancel();
-    }
-
-    this.healthPromise = makeCancelablePromise(item.healthPromise);
-    this.healthPromise.promise.then(h => this.setState({ health: h })).catch(err => {
-      if (!err.isCanceled) {
-        this.setState({ health: undefined });
-      }
-    });
+    this.promises
+      .register('health', item.healthPromise)
+      .then(h => this.setState({ health: h }))
+      .catch(err => {
+        if (!err.isCanceled) {
+          this.setState({ health: undefined });
+          throw err;
+        }
+      });
   }
 
   render() {

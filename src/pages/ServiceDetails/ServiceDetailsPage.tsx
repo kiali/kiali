@@ -158,7 +158,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
         });
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch Service Details.', error));
+        MessageCenter.add(API.getErrorMsg('Could not fetch Service Details', error));
       });
   };
 

@@ -17,7 +17,8 @@ import Namespace from '../../types/Namespace';
 import { ActiveFilter } from '../../types/Filters';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
 import { authentication } from '../../utils/Authentication';
-import { CancelablePromise, makeCancelablePromise, removeDuplicatesArray } from '../../utils/Common';
+import { removeDuplicatesArray } from '../../utils/Common';
+import { PromisesRegistry } from '../../utils/CancelablePromises';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import ItemDescription from './ItemDescription';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
@@ -42,9 +43,7 @@ class ServiceListComponent extends ListComponent.Component<
   ServiceListComponentState,
   ServiceListItem
 > {
-  private nsPromise?: CancelablePromise<API.Response<Namespace[]>>;
-  private servicesPromise?: CancelablePromise<API.Response<ServiceList>[]>;
-  private sortPromise?: CancelablePromise<ServiceListItem[]>;
+  private promises = new PromisesRegistry();
 
   constructor(props: ServiceListComponentProps) {
     super(props);
@@ -76,7 +75,7 @@ class ServiceListComponent extends ListComponent.Component<
   }
 
   componentWillUnmount() {
-    this.cancelAsyncs();
+    this.promises.cancelAll();
   }
 
   paramsAreSynced(prevProps: ServiceListComponentProps) {
@@ -95,37 +94,15 @@ class ServiceListComponent extends ListComponent.Component<
   };
 
   sortItemList(services: ServiceListItem[], sortField: SortField<ServiceListItem>, isAscending: boolean) {
-    let lastSort: Promise<ServiceListItem[]>;
-    const sorter = unsorted => {
-      this.sortPromise = makeCancelablePromise(ServiceListFilters.sortServices(services, sortField, isAscending));
-      this.sortPromise.promise
-        .then(() => {
-          this.sortPromise = undefined;
-        })
-        .catch(() => {
-          this.sortPromise = undefined;
-        });
-      return this.sortPromise.promise;
-    };
-
-    if (!this.sortPromise) {
-      // If there is no "sortPromise" set, take the received (unsorted) list of services to sort
-      // them and update the UI with the sorted list.
-      lastSort = sorter(services);
-    } else {
-      // If there is a "sortPromise", there may be an ongoing fetch/refresh. So, the received <services> list argument
-      // shoudn't be used as it may represent the "old" data before the refresh. Instead, append a callback to the
-      // "sortPromise" to re-sort once the data is fetched. This ensures that the list will display the new data with
-      // the right sorting.
-      // (See other comments in the fetchServices method)
-      lastSort = this.sortPromise.promise.then(sorter);
-    }
-
-    return lastSort;
+    // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
+    // This ensures that the list will display the new data with the right sorting
+    return this.promises.registerChained('sort', services, unsorted =>
+      ServiceListFilters.sortServices(unsorted, sortField, isAscending)
+    );
   }
 
   updateListItems(resetPagination?: boolean) {
-    this.cancelAsyncs();
+    this.promises.cancelAll();
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
     let namespacesSelected: string[] = activeFilters
@@ -136,8 +113,8 @@ class ServiceListComponent extends ListComponent.Component<
     namespacesSelected = removeDuplicatesArray(namespacesSelected);
 
     if (namespacesSelected.length === 0) {
-      this.nsPromise = makeCancelablePromise(API.getNamespaces(authentication()));
-      this.nsPromise.promise
+      this.promises
+        .register('namespaces', API.getNamespaces(authentication()))
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchServices(
@@ -146,11 +123,10 @@ class ServiceListComponent extends ListComponent.Component<
             this.state.rateInterval,
             resetPagination
           );
-          this.nsPromise = undefined;
         })
         .catch(namespacesError => {
           if (!namespacesError.isCanceled) {
-            this.handleAxiosError('Could not fetch namespace list.', namespacesError);
+            this.handleAxiosError('Could not fetch namespace list', namespacesError);
           }
         });
     } else {
@@ -173,8 +149,8 @@ class ServiceListComponent extends ListComponent.Component<
   fetchServices(namespaces: string[], filters: ActiveFilter[], rateInterval: number, resetPagination?: boolean) {
     const servicesPromises = namespaces.map(ns => API.getServices(authentication(), ns));
 
-    this.servicesPromise = makeCancelablePromise(Promise.all(servicesPromises));
-    this.servicesPromise.promise
+    this.promises
+      .registerAll('services', servicesPromises)
       .then(responses => {
         const currentPage = resetPagination ? 1 : this.state.pagination.page;
 
@@ -183,17 +159,8 @@ class ServiceListComponent extends ListComponent.Component<
           ServiceListFilters.filterBy(response.data, filters);
           serviceListItems = serviceListItems.concat(this.getServiceItem(response.data, rateInterval));
         });
-        if (this.sortPromise) {
-          this.sortPromise.cancel();
-        }
-        // Promises for sorting are needed, because the user may have the list sorted using health/error rates
-        // and these data can be fetched only after the list is retrieved. If the user is sorting using these
-        // criteria, the update of the list is deferred after sorting is possible. This way, it's avoided the
-        // illusion of double-fetch or flickering list.
-        this.sortPromise = makeCancelablePromise(
-          ServiceListFilters.sortServices(serviceListItems, this.state.currentSortField, this.state.isSortAscending)
-        );
-        this.sortPromise.promise
+        this.promises.cancel('sort');
+        this.sortItemList(serviceListItems, this.state.currentSortField, this.state.isSortAscending)
           .then(sorted => {
             this.setState(prevState => {
               return {
@@ -205,19 +172,16 @@ class ServiceListComponent extends ListComponent.Component<
                 }
               };
             });
-            this.sortPromise = undefined;
           })
           .catch(err => {
             if (!err.isCanceled) {
               console.debug(err);
             }
-            this.sortPromise = undefined;
           });
-        this.servicesPromise = undefined;
       })
       .catch(err => {
         if (!err.isCanceled) {
-          console.debug(err);
+          this.handleAxiosError('Could not fetch services list', err);
         }
       });
   }
@@ -290,21 +254,6 @@ class ServiceListComponent extends ListComponent.Component<
       </div>
     );
   }
-
-  private cancelAsyncs = () => {
-    if (this.nsPromise) {
-      this.nsPromise.cancel();
-      this.nsPromise = undefined;
-    }
-    if (this.servicesPromise) {
-      this.servicesPromise.cancel();
-      this.servicesPromise = undefined;
-    }
-    if (this.sortPromise) {
-      this.sortPromise.cancel();
-      this.sortPromise = undefined;
-    }
-  };
 }
 
 export default ServiceListComponent;

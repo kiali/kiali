@@ -56,7 +56,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
         });
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch App Details.', error));
+        MessageCenter.add(API.getErrorMsg('Could not fetch App Details', error));
       });
   };
 
