@@ -528,7 +528,7 @@ kubernetes_config:
 
 Kubernetes cache is not compatible with reduced permissions scenearios.
 
-(default is true)
+(default is false)
 [source,yaml]
 ----
 kubernetes_config:

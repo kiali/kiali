@@ -208,7 +208,7 @@ func NewConfig() (c *Config) {
 	// Kubernetes client Configuration
 	c.KubernetesConfig.Burst = getDefaultInt(EnvKubernetesBurst, 200)
 	c.KubernetesConfig.QPS = getDefaultFloat32(EnvKubernetesQPS, 175)
-	c.KubernetesConfig.CacheEnabled = getDefaultBool(EnvKubernetesCacheEnabled, true)
+	c.KubernetesConfig.CacheEnabled = getDefaultBool(EnvKubernetesCacheEnabled, false)
 	c.KubernetesConfig.CacheDuration = getDefaultInt64(EnvKubernetesCacheDuration, time.Duration(5*time.Minute).Nanoseconds())
 
 	trimmedExclusionPatterns := []string{}
