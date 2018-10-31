@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import * as React from 'react';
 import { Icon } from 'patternfly-react';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
@@ -22,6 +21,7 @@ export interface NodeData {
   isOutsider: boolean;
   isRoot: boolean;
   isEgress: boolean;
+  isInaccessible: boolean;
 }
 
 export enum NodeMetricType {
@@ -58,48 +58,6 @@ export const updateHealth = (summaryTarget: any, stateSetter: (hs: HealthState) 
   }
 };
 
-export const nodeTypeToString = (nodeType: string) => {
-  if (nodeType === NodeType.UNKNOWN) {
-    return 'service';
-  }
-
-  return nodeType;
-};
-
-export const getServicesLinkList = (cyNodes: any) => {
-  let namespace = '';
-  if (cyNodes.data) {
-    namespace = cyNodes.data('namespace');
-  } else {
-    namespace = cyNodes[0].data('namespace');
-  }
-
-  let services = new Set();
-  let linkList: any[] = [];
-
-  cyNodes.forEach(node => {
-    if (node.data('destServices')) {
-      Object.keys(node.data('destServices')).forEach(k => {
-        services.add(k);
-      });
-    }
-  });
-
-  services.forEach(svc => {
-    linkList.push(
-      <span key={svc}>
-        <Link to={`/namespaces/${namespace}/services/${svc}`}>{svc}</Link>
-      </span>
-    );
-    linkList.push(', ');
-  });
-  if (linkList.length > 0) {
-    linkList.pop();
-  }
-
-  return linkList;
-};
-
 export const nodeData = (node: any): NodeData => {
   return {
     namespace: node.data('namespace'),
@@ -111,7 +69,8 @@ export const nodeData = (node: any): NodeData => {
     service: node.data('service'),
     isOutsider: node.data('isOutsider'),
     isRoot: node.data('isRoot'),
-    isEgress: node.data('isEgress')
+    isEgress: node.data('isEgress'),
+    isInaccessible: node.data('isInaccessible')
   };
 };
 
@@ -183,45 +142,6 @@ export const getDatapoints = (
     }
   }
   return graphUtils.toC3Columns(series, title);
-};
-
-export const renderPanelTitle = node => {
-  const { namespace, service, app, workload, nodeType, isEgress } = nodeData(node);
-  let displayName: string = 'unknown';
-  let link: string | undefined;
-  let displaySpan: any;
-
-  switch (nodeType) {
-    case NodeType.APP:
-      link = `/namespaces/${encodeURIComponent(namespace)}/applications/${encodeURIComponent(app)}`;
-      displayName = app;
-      break;
-    case NodeType.SERVICE:
-      if (!isEgress) {
-        link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service)}`;
-      }
-      displayName = service;
-      break;
-    case NodeType.WORKLOAD:
-      link = `/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload)}`;
-      displayName = workload;
-      break;
-    default:
-      // NOOP
-      break;
-  }
-
-  if (link) {
-    displaySpan = <Link to={link}>{displayName}</Link>;
-  } else {
-    displaySpan = displayName;
-  }
-
-  return (
-    <>
-      {nodeTypeToString(nodeType)}: {displaySpan}
-    </>
-  );
 };
 
 export const renderNoTraffic = (protocol?: string) => {

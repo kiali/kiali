@@ -3,17 +3,17 @@ import { Icon } from 'patternfly-react';
 
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
-import { SummaryPanelPropType } from '../../types/Graph';
+import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
+import { renderLink, renderTitle } from './SummaryLink';
 import {
   shouldRefreshData,
   updateHealth,
   nodeData,
   getNodeMetrics,
   getNodeMetricType,
-  renderNoTraffic,
-  renderPanelTitle
+  renderNoTraffic
 } from './SummaryPanelCommon';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
@@ -21,7 +21,6 @@ import { Health } from '../../types/Health';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/Common';
-import WorkloadLink from './WorkloadLink';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -90,7 +89,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   render() {
     const group = this.props.data.summaryTarget;
-    const { namespace } = nodeData(group);
+    const data = nodeData(group);
+    const { namespace } = data;
 
     const workloadList = this.renderWorkloadList(group);
 
@@ -110,7 +110,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               />
             )
           )}
-          <span>{[' ', renderPanelTitle(group)]}</span>
+          <span>{[' ', renderTitle(data)]}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
             <Label name="namespace" value={namespace} key={namespace} />
             {this.renderVersionBadges()}
@@ -305,10 +305,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     let workloadList: any[] = [];
 
     group.children().forEach(node => {
-      let { namespace, workload } = nodeData(node);
+      const data = nodeData(node);
 
-      if (workload) {
-        workloadList.push(<WorkloadLink key={workload} workload={workload} namespace={namespace} />);
+      if (data.workload) {
+        workloadList.push(renderLink(data, NodeType.WORKLOAD));
         workloadList.push(', ');
       }
     });

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import WorkloadLink from './WorkloadLink';
+import { renderDestServicesLinks, renderLink, renderTitle } from './SummaryLink';
 import { Icon } from 'patternfly-react';
 
 import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
@@ -16,9 +16,7 @@ import {
   getDatapoints,
   getNodeMetrics,
   getNodeMetricType,
-  getServicesLinkList,
-  renderNoTraffic,
-  renderPanelTitle
+  renderNoTraffic
 } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
 import Label from '../../components/Label/Label';
@@ -202,11 +200,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   render() {
     const node = this.props.data.summaryTarget;
-    const { namespace, nodeType, workload } = nodeData(node);
-    const servicesList = nodeType !== NodeType.SERVICE && getServicesLinkList([node]);
+    const data: NodeData = nodeData(node);
+    const { namespace, nodeType, workload } = data;
+    const servicesList = nodeType !== NodeType.SERVICE && renderDestServicesLinks(node);
 
     const shouldRenderSvcList = servicesList && servicesList.length > 0;
-    const shouldRenderWorkload = nodeType !== NodeType.WORKLOAD && workload;
+    const shouldRenderWorkload = nodeType !== NodeType.WORKLOAD && nodeType !== NodeType.UNKNOWN && workload;
 
     return (
       <div className="panel panel-default" style={SummaryPanelNode.panelStyle}>
@@ -224,7 +223,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               />
             )
           )}
-          <span> {renderPanelTitle(node)}</span>
+          <span> {renderTitle(data)}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
             <Label name="namespace" value={namespace} />
             {node.data('version') && <Label name="version" value={node.data('version')} />}
@@ -241,7 +240,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           {shouldRenderWorkload && (
             <div>
               <strong>Workload: </strong>
-              <WorkloadLink namespace={namespace} workload={workload} />
+              {renderLink(data, NodeType.WORKLOAD)}
             </div>
           )}
           {(shouldRenderSvcList || shouldRenderWorkload) && <hr />}

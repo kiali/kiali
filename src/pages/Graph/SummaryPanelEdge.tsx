@@ -4,6 +4,7 @@ import RateTable from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
 import { GraphType, NodeType, SummaryPanelPropType } from '../../types/Graph';
+import { renderTitle } from './SummaryLink';
 import {
   shouldRefreshData,
   nodeData,
@@ -11,7 +12,6 @@ import {
   getNodeMetrics,
   getNodeMetricType,
   renderNoTraffic,
-  renderPanelTitle,
   NodeData,
   NodeMetricType
 } from './SummaryPanelCommon';
@@ -93,10 +93,11 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const hasTcpTraffic = this.hasTcpMetrics(edge);
 
     const HeadingBlock = ({ prefix, node }) => {
-      const { namespace, version } = nodeData(node);
+      const data = nodeData(node);
+      const { namespace, version } = data;
       return (
         <div className="panel-heading label-collection">
-          {prefix} {renderPanelTitle(node)}
+          <strong>{prefix}</strong> {renderTitle(data)}
           <br />
           {this.renderLabels(namespace, version)}
         </div>
