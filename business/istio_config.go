@@ -10,6 +10,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 type IstioConfigService struct {
@@ -40,6 +41,9 @@ var resourceTypesToAPI = map[string]string{
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
 func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioConfigService", "GetIstioConfigList")
+	defer promtimer.ObserveDuration()
+
 	if criteria.Namespace == "" {
 		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
 	}
@@ -134,6 +138,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 }
 
 func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType string, object string) (models.IstioConfigDetails, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioConfigService", "GetIstioConfigDetails")
+	defer promtimer.ObserveDuration()
+
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
@@ -225,5 +232,7 @@ func GetIstioAPI(resourceType string) string {
 
 // DeleteIstioConfigDetail deletes the given Istio resource
 func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceType, name string) error {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioConfigService", "DeleteIstioConfigDetail")
+	defer promtimer.ObserveDuration()
 	return in.k8s.DeleteIstioObject(api, namespace, resourceType, name)
 }

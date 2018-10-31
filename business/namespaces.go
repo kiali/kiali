@@ -73,6 +73,9 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 
 // GetNamespace returns the definition of the specified namespace.
 func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "NamespaceService", "GetNamespace")
+	defer promtimer.ObserveDuration()
+
 	if in.hasProjects {
 		if project, err := in.k8s.GetProject(namespace); err == nil {
 			result := models.CastProject(*project)

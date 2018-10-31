@@ -3,19 +3,20 @@ package business
 import (
 	"sort"
 	"sync"
+	"time"
 
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/models"
 	osappsv1 "github.com/openshift/api/apps/v1"
-
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"time"
+
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // Workload deals with fetching istio/kubernetes workloads related content and convert to kiali model
@@ -25,6 +26,8 @@ type WorkloadService struct {
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
 func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadList, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "WorkloadService", "GetWorkloadList")
+	defer promtimer.ObserveDuration()
 
 	workloadList := &models.WorkloadList{
 		Namespace: models.Namespace{namespace, time.Time{}},
@@ -47,6 +50,9 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 // GetWorkload is the API handler to fetch details of a specific workload.
 // If includeServices is set true, the Workload will fetch all services related
 func (in *WorkloadService) GetWorkload(namespace string, workloadName string, includeServices bool) (*models.Workload, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "WorkloadService", "GetWorkload")
+	defer promtimer.ObserveDuration()
+
 	workload, err := fetchWorkload(in.k8s, namespace, workloadName)
 	if err != nil {
 		return nil, err
@@ -64,6 +70,9 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 }
 
 func (in *WorkloadService) GetPods(namespace string, labelSelector string) (models.Pods, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "WorkloadService", "GetPods")
+	defer promtimer.ObserveDuration()
+
 	ps, err := in.k8s.GetPods(namespace, labelSelector)
 	if err != nil {
 		return nil, err
