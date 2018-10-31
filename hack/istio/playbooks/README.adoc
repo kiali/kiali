@@ -12,6 +12,9 @@
 All the Bookinfo Demo pods and services are installed in the "bookinfo" namespace by default. If you want to define a different namespace from bookinfo, please set `-e bookinfo_namespace='your_namespace'`
 
 
+[NOTE]
+Bookinfo Version should be defined according to Istio Release. Check https://github.com/istio/istio/blob/master/samples/bookinfo/platform/kube/bookinfo.yaml
+
 - In order to uninstall it, simply delete that namespace via something like `kubectl delete namespace bookinfo` or
 `oc delete project bookinfo` (or namespace that you used)
 
