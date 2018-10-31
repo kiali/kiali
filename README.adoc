@@ -515,12 +515,35 @@ kubernetes_config:
   burst: VALUE
 ----
 |`KUBERNETES_QPS`
-|The QPS value of Kubernetes client (default is 100)
+|The QPS value of Kubernetes client (default is 175)
 [source,yaml]
 ----
 kubernetes_config:
   qps: VALUE
 ----
+|`KUBERNETES_CACHE_ENABLED`
+|Flag to use a Kubernetes cache for watching changes and updating pods and controllers data asynchronously.
+
+*Important*
+
+Kubernetes cache is not compatible with reduced permissions scenearios.
+
+(default is true)
+[source,yaml]
+----
+kubernetes_config:
+  cache_enabled: VALUE
+----
+|`KUBERNETES_CACHE_DURATION`
+|The ratio interval (expressed in nanoseconds) used for the cache to perform a full refresh.
+
+(default is 300000000)
+[source,yaml]
+----
+kubernetes_config:
+  cache_duration: VALUE
+----
+
 |===
 
 == Configure External Services
