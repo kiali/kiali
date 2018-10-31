@@ -133,7 +133,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var ws models.Workloads
 
 	wg = sync.WaitGroup{}
-	wg.Add(6)
+	wg.Add(8)
 	errChan = make(chan error, 6)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
@@ -196,6 +196,18 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		}
 	}()
 
+	var vsUpdate, vsDelete bool
+	go func() {
+		defer wg.Done()
+		vsUpdate, vsDelete = getUpdateDeletePermissions(in.k8s, namespace, VirtualServices)
+	}()
+
+	var drUpdate, drDelete bool
+	go func() {
+		defer wg.Done()
+		drUpdate, drDelete = getUpdateDeletePermissions(in.k8s, namespace, DestinationRules)
+	}()
+
 	wg.Wait()
 	if len(errChan) != 0 {
 		err = <-errChan
@@ -213,8 +225,8 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	s.SetService(svc)
 	s.SetPods(kubernetes.FilterPodsForEndpoints(eps, pods))
 	s.SetEndpoints(eps)
-	s.SetVirtualServices(vs)
-	s.SetDestinationRules(dr)
+	s.SetVirtualServices(vs, vsUpdate, vsDelete)
+	s.SetDestinationRules(dr, drUpdate, drDelete)
 	s.SetSourceWorkloads(sWk)
 	return &s, nil
 }

@@ -2774,10 +2774,6 @@
       "description": "ResourcePermissions holds permission flags for an object type\nTrue means allowed.",
       "type": "object",
       "properties": {
-        "create": {
-          "type": "boolean",
-          "x-go-name": "Create"
-        },
         "delete": {
           "type": "boolean",
           "x-go-name": "Delete"
@@ -3411,10 +3407,19 @@
     },
     "destinationRules": {
       "description": "This is used for returning an array of DestinationRules",
-      "type": "array",
+      "type": "object",
       "title": "DestinationRules destinationRules",
-      "items": {
-        "$ref": "#/definitions/destinationRule"
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/destinationRule"
+          },
+          "x-go-name": "Items"
+        },
+        "permissions": {
+          "$ref": "#/definitions/ResourcePermissions"
+        }
       },
       "x-go-name": "DestinationRules",
       "x-go-package": "github.com/kiali/kiali/models"
@@ -3551,11 +3556,20 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "virtualServices": {
-      "description": "This type is used for returning an array of VirtualServices",
-      "type": "array",
+      "description": "This type is used for returning an array of VirtualServices with some permission flags",
+      "type": "object",
       "title": "VirtualServices virtualServices",
-      "items": {
-        "$ref": "#/definitions/virtualService"
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/virtualService"
+          },
+          "x-go-name": "Items"
+        },
+        "permissions": {
+          "$ref": "#/definitions/ResourcePermissions"
+        }
       },
       "x-go-name": "VirtualServices",
       "x-go-package": "github.com/kiali/kiali/models"

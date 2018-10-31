@@ -64,25 +64,25 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	}
 
 	types := strings.Split(objects, ",")
-	if checkType(types, "gateways") {
+	if checkType(types, business.Gateways) {
 		criteria.IncludeGateways = true
 	}
-	if checkType(types, "virtualservices") {
+	if checkType(types, business.VirtualServices) {
 		criteria.IncludeVirtualServices = true
 	}
-	if checkType(types, "destinationrules") {
+	if checkType(types, business.DestinationRules) {
 		criteria.IncludeDestinationRules = true
 	}
-	if checkType(types, "serviceentries") {
+	if checkType(types, business.ServiceEntries) {
 		criteria.IncludeServiceEntries = true
 	}
-	if checkType(types, "rules") {
+	if checkType(types, business.Rules) {
 		criteria.IncludeRules = true
 	}
-	if checkType(types, "quotaspecs") {
+	if checkType(types, business.QuotaSpecs) {
 		criteria.IncludeQuotaSpecs = true
 	}
-	if checkType(types, "quotaspecbindings") {
+	if checkType(types, business.QuotaSpecBindings) {
 		criteria.IncludeQuotaSpecBindings = true
 	}
 	return criteria

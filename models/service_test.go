@@ -21,8 +21,8 @@ func TestServiceDetailParsing(t *testing.T) {
 	service.SetService(fakeService())
 	service.SetEndpoints(fakeEndpoints())
 	service.SetPods(fakePods())
-	service.SetVirtualServices(fakeVirtualService())
-	service.SetDestinationRules(fakeDestinationRules())
+	service.SetVirtualServices(fakeVirtualService(), false, false)
+	service.SetDestinationRules(fakeDestinationRules(), false, false)
 	service.SetSourceWorkloads(fakeSourceWorkloads())
 
 	// Kubernetes Details
@@ -49,7 +49,7 @@ func TestServiceDetailParsing(t *testing.T) {
 			}}})
 
 	assert.Equal(service.VirtualServices, VirtualServices{
-		VirtualService{
+		Items: []VirtualService{VirtualService{
 			Name:            "reviews",
 			CreatedAt:       "2018-03-08T17:47:00+03:00",
 			ResourceVersion: "1234",
@@ -77,55 +77,55 @@ func TestServiceDetailParsing(t *testing.T) {
 				},
 			},
 		},
-		VirtualService{
-			Name:            "ratings",
-			CreatedAt:       "2018-03-08T17:47:00+03:00",
-			ResourceVersion: "1234",
-			Hosts: []interface{}{
-				"reviews",
-			},
-			Http: []interface{}{
-				map[string]interface{}{
-					"match": []interface{}{
-						map[string]interface{}{
-							"headers": map[string]interface{}{
-								"cookie": map[string]interface{}{
-									"regex": "^(.*?;)?(user=jason)(;.*)?$",
+			VirtualService{
+				Name:            "ratings",
+				CreatedAt:       "2018-03-08T17:47:00+03:00",
+				ResourceVersion: "1234",
+				Hosts: []interface{}{
+					"reviews",
+				},
+				Http: []interface{}{
+					map[string]interface{}{
+						"match": []interface{}{
+							map[string]interface{}{
+								"headers": map[string]interface{}{
+									"cookie": map[string]interface{}{
+										"regex": "^(.*?;)?(user=jason)(;.*)?$",
+									},
+								},
+							},
+						},
+						"fault": map[string]interface{}{
+							"delay": map[string]interface{}{
+								"percent":    100,
+								"fixedDelay": "7s",
+							},
+						},
+						"route": []interface{}{
+							map[string]interface{}{
+								"destination": map[string]interface{}{
+									"name":   "ratings",
+									"subset": "v1",
 								},
 							},
 						},
 					},
-					"fault": map[string]interface{}{
-						"delay": map[string]interface{}{
-							"percent":    100,
-							"fixedDelay": "7s",
-						},
-					},
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "ratings",
-								"subset": "v1",
-							},
-						},
-					},
-				},
-				map[string]interface{}{
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "ratings",
-								"subset": "v1",
+					map[string]interface{}{
+						"route": []interface{}{
+							map[string]interface{}{
+								"destination": map[string]interface{}{
+									"name":   "ratings",
+									"subset": "v1",
+								},
 							},
 						},
 					},
 				},
 			},
-		},
-	})
+		}})
 
 	assert.Equal(service.DestinationRules, DestinationRules{
-		DestinationRule{
+		Items: []DestinationRule{DestinationRule{
 			Name:            "reviews-destination",
 			CreatedAt:       "2018-03-08T17:47:00+03:00",
 			ResourceVersion: "1234",
@@ -145,31 +145,31 @@ func TestServiceDetailParsing(t *testing.T) {
 				},
 			},
 		},
-		DestinationRule{
-			Name:            "bookinfo-ratings",
-			CreatedAt:       "2018-03-08T17:47:00+03:00",
-			ResourceVersion: "1234",
-			Host:            "ratings",
-			TrafficPolicy: map[string]interface{}{
-				"loadBalancer": map[string]interface{}{
-					"simple": "LEAST_CONN",
-				},
-			},
-			Subsets: []interface{}{
-				map[string]interface{}{
-					"name": "testversion",
-					"labels": map[string]interface{}{
-						"version": "v3",
+			DestinationRule{
+				Name:            "bookinfo-ratings",
+				CreatedAt:       "2018-03-08T17:47:00+03:00",
+				ResourceVersion: "1234",
+				Host:            "ratings",
+				TrafficPolicy: map[string]interface{}{
+					"loadBalancer": map[string]interface{}{
+						"simple": "LEAST_CONN",
 					},
-					"trafficPolicy": map[string]interface{}{
-						"loadBalancer": map[string]interface{}{
-							"simple": "ROUND_ROBIN",
+				},
+				Subsets: []interface{}{
+					map[string]interface{}{
+						"name": "testversion",
+						"labels": map[string]interface{}{
+							"version": "v3",
+						},
+						"trafficPolicy": map[string]interface{}{
+							"loadBalancer": map[string]interface{}{
+								"simple": "ROUND_ROBIN",
+							},
 						},
 					},
 				},
 			},
-		},
-	})
+		}})
 
 	assert.Equal(service.Dependencies, map[string][]SourceWorkload{
 		"v1": {SourceWorkload{Name: "unknown", Namespace: "ns"}, SourceWorkload{Name: "products-v1", Namespace: "ns"}, SourceWorkload{Name: "reviews-v2", Namespace: "ns"}},

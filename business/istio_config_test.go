@@ -32,8 +32,8 @@ func TestGetIstioConfigList(t *testing.T) {
 	istioconfigList, err := configService.GetIstioConfigList(criteria)
 
 	assert.Equal(0, len(istioconfigList.Gateways))
-	assert.Equal(0, len(istioconfigList.VirtualServices))
-	assert.Equal(0, len(istioconfigList.DestinationRules))
+	assert.Equal(0, len(istioconfigList.VirtualServices.Items))
+	assert.Equal(0, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Equal(0, len(istioconfigList.QuotaSpecs))
@@ -45,8 +45,8 @@ func TestGetIstioConfigList(t *testing.T) {
 	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(0, len(istioconfigList.VirtualServices))
-	assert.Equal(0, len(istioconfigList.DestinationRules))
+	assert.Equal(0, len(istioconfigList.VirtualServices.Items))
+	assert.Equal(0, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Equal(0, len(istioconfigList.QuotaSpecs))
@@ -58,8 +58,8 @@ func TestGetIstioConfigList(t *testing.T) {
 	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices))
-	assert.Equal(0, len(istioconfigList.DestinationRules))
+	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
+	assert.Equal(0, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Equal(0, len(istioconfigList.QuotaSpecs))
@@ -71,8 +71,8 @@ func TestGetIstioConfigList(t *testing.T) {
 	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices))
-	assert.Equal(2, len(istioconfigList.DestinationRules))
+	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
+	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(0, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Equal(0, len(istioconfigList.QuotaSpecs))
@@ -84,8 +84,8 @@ func TestGetIstioConfigList(t *testing.T) {
 	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices))
-	assert.Equal(2, len(istioconfigList.DestinationRules))
+	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
+	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(1, len(istioconfigList.ServiceEntries))
 	assert.Equal(0, len(istioconfigList.Rules))
 	assert.Equal(0, len(istioconfigList.QuotaSpecs))
@@ -97,8 +97,8 @@ func TestGetIstioConfigList(t *testing.T) {
 	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices))
-	assert.Equal(2, len(istioconfigList.DestinationRules))
+	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
+	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(1, len(istioconfigList.ServiceEntries))
 	assert.Equal(1, len(istioconfigList.Rules))
 	assert.Equal(0, len(istioconfigList.QuotaSpecs))
@@ -110,8 +110,8 @@ func TestGetIstioConfigList(t *testing.T) {
 	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices))
-	assert.Equal(2, len(istioconfigList.DestinationRules))
+	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
+	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(1, len(istioconfigList.ServiceEntries))
 	assert.Equal(1, len(istioconfigList.Rules))
 	assert.Equal(1, len(istioconfigList.QuotaSpecs))
@@ -123,8 +123,8 @@ func TestGetIstioConfigList(t *testing.T) {
 	istioconfigList, err = configService.GetIstioConfigList(criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
-	assert.Equal(2, len(istioconfigList.VirtualServices))
-	assert.Equal(2, len(istioconfigList.DestinationRules))
+	assert.Equal(2, len(istioconfigList.VirtualServices.Items))
+	assert.Equal(2, len(istioconfigList.DestinationRules.Items))
 	assert.Equal(1, len(istioconfigList.ServiceEntries))
 	assert.Equal(1, len(istioconfigList.Rules))
 	assert.Equal(1, len(istioconfigList.QuotaSpecs))
@@ -139,11 +139,8 @@ func TestGetIstioConfigDetails(t *testing.T) {
 
 	istioConfigDetails, err := configService.GetIstioConfigDetails("test", "gateways", "gw-1")
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
-	assert.Equal(models.ResourcePermissions{
-		Create: false,
-		Update: true,
-		Delete: false,
-	}, istioConfigDetails.Permissions)
+	assert.True(istioConfigDetails.Permissions.Update)
+	assert.False(istioConfigDetails.Permissions.Delete)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "virtualservices", "reviews")

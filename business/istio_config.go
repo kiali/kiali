@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	auth_v1 "k8s.io/api/authorization/v1"
-
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -28,14 +26,24 @@ type IstioConfigCriteria struct {
 	IncludeQuotaSpecBindings bool
 }
 
+const (
+	VirtualServices   = "virtualservices"
+	DestinationRules  = "destinationrules"
+	ServiceEntries    = "serviceentries"
+	Gateways          = "gateways"
+	Rules             = "rules"
+	QuotaSpecs        = "quotaspecs"
+	QuotaSpecBindings = "quotaspecbindings"
+)
+
 var resourceTypesToAPI = map[string]string{
-	"destinationrules":  "networking.istio.io",
-	"virtualservices":   "networking.istio.io",
-	"serviceentries":    "networking.istio.io",
-	"gateways":          "networking.istio.io",
-	"rules":             "config.istio.io",
-	"quotaspecs":        "config.istio.io",
-	"quotaspecbindings": "config.istio.io",
+	DestinationRules:  "networking.istio.io",
+	VirtualServices:   "networking.istio.io",
+	ServiceEntries:    "networking.istio.io",
+	Gateways:          "networking.istio.io",
+	Rules:             "config.istio.io",
+	QuotaSpecs:        "config.istio.io",
+	QuotaSpecBindings: "config.istio.io",
 }
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
@@ -149,59 +157,50 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 	istioConfigDetail.ObjectType = objectType
 	var gw, vs, dr, se, qs, qb kubernetes.IstioObject
 	var r *kubernetes.IstioRuleDetails
-	permission := models.ResourcePermissions{}
 	var wg sync.WaitGroup
 	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
-		if api, ok := resourceTypesToAPI[objectType]; ok {
-			ssars, permErr := in.k8s.GetSelfSubjectAccessReview(namespace, api, objectType, []string{"create", "update", "delete"})
-			if permErr == nil {
-				for _, ssar := range ssars {
-					fillPermission(&permission, ssar)
-				}
-			} else {
-				log.Errorf("Error getting permissions [namespace: %s, api: %s, objectType: %s]: %v", namespace, api, objectType, permErr)
-			}
+		canUpdate, canDelete := getUpdateDeletePermissions(in.k8s, namespace, objectType)
+		istioConfigDetail.Permissions = models.ResourcePermissions{
+			Update: canUpdate,
+			Delete: canDelete,
 		}
 	}()
 
 	switch objectType {
-	case "gateways":
+	case Gateways:
 		if gw, err = in.k8s.GetGateway(namespace, object); err == nil {
 			istioConfigDetail.Gateway = &models.Gateway{}
 			istioConfigDetail.Gateway.Parse(gw)
 		}
-	case "virtualservices":
+	case VirtualServices:
 		if vs, err = in.k8s.GetVirtualService(namespace, object); err == nil {
 			istioConfigDetail.VirtualService = &models.VirtualService{}
 			istioConfigDetail.VirtualService.Parse(vs)
 		}
-	case "destinationrules":
+	case DestinationRules:
 		if dr, err = in.k8s.GetDestinationRule(namespace, object); err == nil {
 			istioConfigDetail.DestinationRule = &models.DestinationRule{}
 			istioConfigDetail.DestinationRule.Parse(dr)
 		}
-	case "serviceentries":
+	case ServiceEntries:
 		if se, err = in.k8s.GetServiceEntry(namespace, object); err == nil {
 			istioConfigDetail.ServiceEntry = &models.ServiceEntry{}
 			istioConfigDetail.ServiceEntry.Parse(se)
 		}
-	case "rules":
+	case Rules:
 		if r, err = in.k8s.GetIstioRuleDetails(namespace, object); err == nil {
-			istioConfigDetail.ObjectType = "rules"
 			istioConfigDetail.Rule = models.CastIstioRuleDetails(r)
 		}
-	case "quotaspecs":
+	case QuotaSpecs:
 		if qs, err = in.k8s.GetQuotaSpec(namespace, object); err == nil {
-			istioConfigDetail.ObjectType = "quotaspecs"
 			istioConfigDetail.QuotaSpec = &models.QuotaSpec{}
 			istioConfigDetail.QuotaSpec.Parse(qs)
 		}
-	case "quotaspecbindings":
+	case QuotaSpecBindings:
 		if qb, err = in.k8s.GetQuotaSpecBinding(namespace, object); err == nil {
-			istioConfigDetail.ObjectType = "quotaspecbindings"
 			istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
 			istioConfigDetail.QuotaSpecBinding.Parse(qb)
 		}
@@ -210,20 +209,8 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 	}
 
 	wg.Wait()
-	istioConfigDetail.Permissions = permission
 
 	return istioConfigDetail, err
-}
-
-func fillPermission(permission *models.ResourcePermissions, ssar *auth_v1.SelfSubjectAccessReview) {
-	switch ssar.Spec.ResourceAttributes.Verb {
-	case "create":
-		permission.Create = ssar.Status.Allowed
-	case "update":
-		permission.Update = ssar.Status.Allowed
-	case "delete":
-		permission.Delete = ssar.Status.Allowed
-	}
 }
 
 // GetIstioAPI provides the Kubernetes API that manages this Istio resource type
@@ -238,4 +225,26 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceTy
 	defer promtimer.ObserveNow(&err)
 	err = in.k8s.DeleteIstioObject(api, namespace, resourceType, name)
 	return
+}
+
+func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, objectType string) (bool, bool) {
+	var canUpdate, canDelete bool
+	if api, ok := resourceTypesToAPI[objectType]; ok {
+		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, objectType, []string{"update", "delete"})
+		if permErr == nil {
+			for _, ssar := range ssars {
+				if ssar.Spec.ResourceAttributes != nil {
+					switch ssar.Spec.ResourceAttributes.Verb {
+					case "update":
+						canUpdate = ssar.Status.Allowed
+					case "delete":
+						canDelete = ssar.Status.Allowed
+					}
+				}
+			}
+		} else {
+			log.Errorf("Error getting permissions [namespace: %s, api: %s, objectType: %s]: %v", namespace, api, objectType, permErr)
+		}
+	}
+	return canUpdate, canDelete
 }

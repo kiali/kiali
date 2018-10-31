@@ -60,7 +60,7 @@ NODES:
 		versionOk := n.Version != "" && n.Version != graph.UnknownVersion
 		switch {
 		case n.NodeType == graph.NodeTypeService:
-			for _, destinationRule := range istioCfg.DestinationRules {
+			for _, destinationRule := range istioCfg.DestinationRules.Items {
 				if destinationRule.HasCircuitBreaker(namespace, n.Service, "") {
 					n.Metadata["hasCB"] = true
 					continue NODES
@@ -69,7 +69,7 @@ NODES:
 		case !versionOk && (n.NodeType == graph.NodeTypeApp):
 			if destServices, ok := n.Metadata["destServices"]; ok {
 				for serviceName, _ := range destServices.(map[string]bool) {
-					for _, destinationRule := range istioCfg.DestinationRules {
+					for _, destinationRule := range istioCfg.DestinationRules.Items {
 						if destinationRule.HasCircuitBreaker(namespace, serviceName, "") {
 							n.Metadata["hasCB"] = true
 							continue NODES
@@ -80,7 +80,7 @@ NODES:
 		case versionOk:
 			if destServices, ok := n.Metadata["destServices"]; ok {
 				for serviceName, _ := range destServices.(map[string]bool) {
-					for _, destinationRule := range istioCfg.DestinationRules {
+					for _, destinationRule := range istioCfg.DestinationRules.Items {
 						if destinationRule.HasCircuitBreaker(namespace, serviceName, n.Version) {
 							n.Metadata["hasCB"] = true
 							continue NODES
@@ -103,7 +103,7 @@ NODES:
 		if n.Namespace != namespace {
 			continue
 		}
-		for _, virtualService := range istioCfg.VirtualServices {
+		for _, virtualService := range istioCfg.VirtualServices.Items {
 			if virtualService.IsValidHost(namespace, n.Service) {
 				n.Metadata["hasVS"] = true
 				continue NODES
