@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Alert, Icon } from 'patternfly-react';
 import { style } from 'typestyle';
+import assign from 'lodash/fp/assign';
 
 import history, { HistoryManager, URLParams } from '../../app/History';
 import MetricsOptionsBar from '../MetricsOptions/MetricsOptionsBar';
@@ -240,8 +241,17 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
 
   dismissAlert = () => this.setState({ alertDetails: undefined });
 
-  onLabelsFiltersChanged = (labelValues: Map<L.LabelName, L.LabelValues>) => {
-    this.setState({ labelValues: labelValues });
+  onLabelsFiltersChanged = (label: L.LabelName, value: string, checked: boolean) => {
+    let newLabels = new Map();
+    this.state.labelValues.forEach((val, key) => {
+      let newVal = assign(val)({});
+      if (key === label) {
+        newVal[value] = checked;
+      }
+      newLabels.set(key, newVal);
+    });
+
+    this.setState({ labelValues: newLabels });
   };
 
   render() {

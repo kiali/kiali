@@ -45,10 +45,11 @@ describe('MetricsOptionsBar', () => {
     let elt = wrapper
       .find('#metrics_filter_interval_duration')
       .find('SafeAnchor')
-      .first();
+      .at(1);
     elt.simulate('click');
+    wrapper.setProps({}); // Force re-render
     expect(optionsChanged).toHaveBeenCalledTimes(2);
-    const expectedDuration: number = Number(Object.keys(MetricsOptionsBar.Durations)[0]);
+    const expectedDuration: number = Number(Object.keys(MetricsOptionsBar.Durations)[1]);
     expect(lastOptionsChanged()).toHaveProperty('duration', expectedDuration);
   });
 });

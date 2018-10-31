@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
+import isEqual from 'lodash/fp/isEqual';
 
 import Refresh from '../Refresh/Refresh';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
@@ -15,20 +16,13 @@ interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
   onReporterChanged: (reporter: string) => void;
   onRefresh: () => void;
-  onLabelsFiltersChanged: (labels: Map<L.LabelName, L.LabelValues>) => void;
+  onLabelsFiltersChanged: (label: L.LabelName, value: string, checked: boolean) => void;
   metricReporter: string;
   direction: MetricsDirection;
   labelValues: Map<L.LabelName, L.LabelValues>;
 }
 
-interface MetricsOptionsState {
-  pollInterval: number;
-  duration: number;
-  metricsSettings: MetricsSettings;
-  labelValues: Map<L.LabelName, L.LabelValues>;
-}
-
-export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsState> {
+export class MetricsOptionsBar extends React.Component<Props> {
   static PollIntervals = config().toolbar.pollInterval;
   static DefaultPollInterval = config().toolbar.defaultPollInterval;
 
@@ -40,15 +34,10 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     source: 'Source'
   };
 
-  static getDerivedStateFromProps(props: Props, state: MetricsOptionsState) {
-    const urlParams = new URLSearchParams(history.location.search);
-    return {
-      pollInterval: MetricsOptionsBar.initialPollInterval(urlParams),
-      duration: MetricsOptionsBar.initialDuration(urlParams),
-      metricsSettings: MetricsOptionsBar.initialMetricsSettings(urlParams),
-      labelValues: props.labelValues
-    };
-  }
+  private metricsSettings: MetricsSettings;
+  private duration: number;
+  private pollInterval: number;
+  private shouldReportOptions: boolean;
 
   static initialPollInterval = (urlParams: URLSearchParams): number => {
     const pi = urlParams.get(URLParams.POLL_INTERVAL);
@@ -78,9 +67,13 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     if (avg !== null) {
       settings.showAverage = avg === 'true';
     }
-    const quantiles = urlParams.getAll(URLParams.QUANTILES);
-    if (quantiles.length !== 0) {
-      settings.showQuantiles = quantiles as Quantiles[];
+    const quantiles = urlParams.get(URLParams.QUANTILES);
+    if (quantiles !== null) {
+      if (quantiles.trim().length !== 0) {
+        settings.showQuantiles = quantiles.split(' ').map(val => val.trim() as Quantiles);
+      } else {
+        settings.showQuantiles = [];
+      }
     }
     const byLabels = urlParams.getAll(URLParams.BY_LABELS);
     if (byLabels.length !== 0) {
@@ -91,7 +84,6 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
 
   constructor(props: Props) {
     super(props);
-    this.state = MetricsOptionsBar.getDerivedStateFromProps(props, this.state);
   }
 
   componentDidMount() {
@@ -99,17 +91,20 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     this.reportOptions();
   }
 
+  componentDidUpdate(prevProps: Props) {
+    if (this.shouldReportOptions) {
+      this.shouldReportOptions = false;
+      this.reportOptions();
+    }
+  }
+
   onPollIntervalChanged = (key: number) => {
     HistoryManager.setParam(URLParams.POLL_INTERVAL, String(key));
-    this.setState({ pollInterval: key });
   };
 
   onDurationChanged = (key: number) => {
     sessionStorage.setItem(URLParams.DURATION, String(key));
     HistoryManager.setParam(URLParams.DURATION, String(key));
-    this.setState({ duration: key }, () => {
-      this.reportOptions();
-    });
   };
 
   reportOptions() {
@@ -117,16 +112,16 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
     let labelsIn: L.PromLabel[] = [];
     let labelsOut: L.PromLabel[] = [];
     if (this.props.direction === MetricsDirection.INBOUND) {
-      labelsIn = this.state.metricsSettings.activeLabels.map(lbl => L.INBOUND_LABELS.get(lbl)!);
+      labelsIn = this.metricsSettings.activeLabels.map(lbl => L.INBOUND_LABELS.get(lbl)!);
     } else {
-      labelsOut = this.state.metricsSettings.activeLabels.map(lbl => L.OUTBOUND_LABELS.get(lbl)!);
+      labelsOut = this.metricsSettings.activeLabels.map(lbl => L.OUTBOUND_LABELS.get(lbl)!);
     }
     this.props.onOptionsChanged({
-      duration: this.state.duration,
+      duration: this.duration,
       byLabelsIn: labelsIn,
       byLabelsOut: labelsOut,
-      avg: this.state.metricsSettings.showAverage,
-      quantiles: this.state.metricsSettings.showQuantiles
+      avg: this.metricsSettings.showAverage,
+      quantiles: this.metricsSettings.showQuantiles
     });
   }
 
@@ -138,25 +133,23 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
   onMetricsSettingsChanged = (settings: MetricsSettings) => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.set(URLParams.SHOW_AVERAGE, String(settings.showAverage));
-    urlParams.delete(URLParams.QUANTILES);
+    urlParams.set(URLParams.QUANTILES, settings.showQuantiles.join(' '));
     urlParams.delete(URLParams.BY_LABELS);
-    settings.showQuantiles.forEach(q => urlParams.append(URLParams.QUANTILES, q));
     settings.activeLabels.forEach(lbl => urlParams.append(URLParams.BY_LABELS, lbl));
     history.replace(history.location.pathname + '?' + urlParams.toString());
-    this.setState({ metricsSettings: settings }, () => {
-      this.reportOptions();
-    });
   };
 
   render() {
+    this.processUrlParams();
+
     return (
       <Toolbar>
         <FormGroup>
           <MetricsSettingsDropdown
             onChanged={this.onMetricsSettingsChanged}
             onLabelsFiltersChanged={this.props.onLabelsFiltersChanged}
-            labelValues={this.state.labelValues}
-            {...this.state.metricsSettings}
+            labelValues={this.props.labelValues}
+            {...this.metricsSettings}
           />
         </FormGroup>
         <FormGroup>
@@ -175,8 +168,8 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
           disabled={false}
           handleSelect={this.onDurationChanged}
           nameDropdown={'Displaying'}
-          initialValue={this.state.duration}
-          initialLabel={String(MetricsOptionsBar.Durations[this.state.duration])}
+          initialValue={this.duration}
+          initialLabel={String(MetricsOptionsBar.Durations[this.duration])}
           options={MetricsOptionsBar.Durations}
         />
         <ToolbarRightContent>
@@ -184,12 +177,28 @@ export class MetricsOptionsBar extends React.Component<Props, MetricsOptionsStat
             id="metrics-refresh"
             handleRefresh={this.props.onRefresh}
             onSelect={this.onPollIntervalChanged}
-            pollInterval={this.state.pollInterval}
+            pollInterval={this.pollInterval}
           />
         </ToolbarRightContent>
       </Toolbar>
     );
   }
+
+  private processUrlParams = () => {
+    const urlParams = new URLSearchParams(history.location.search);
+    const pollInterval = MetricsOptionsBar.initialPollInterval(urlParams);
+    const duration = MetricsOptionsBar.initialDuration(urlParams);
+    const metricsSettings = MetricsOptionsBar.initialMetricsSettings(urlParams);
+
+    this.shouldReportOptions =
+      pollInterval !== this.pollInterval ||
+      duration !== this.duration ||
+      !isEqual(metricsSettings)(this.metricsSettings);
+
+    this.pollInterval = pollInterval;
+    this.duration = duration;
+    this.metricsSettings = metricsSettings;
+  };
 }
 
 export default MetricsOptionsBar;
