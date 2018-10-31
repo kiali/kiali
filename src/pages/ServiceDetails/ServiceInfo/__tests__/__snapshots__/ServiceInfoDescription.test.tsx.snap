@@ -69,8 +69,8 @@ ShallowWrapper {
         <Col
           bsClass="col"
           componentClass="div"
-          lg={2}
-          md={2}
+          lg={5}
+          md={5}
           sm={6}
           xs={12}
         >
@@ -125,9 +125,9 @@ ShallowWrapper {
         <Col
           bsClass="col"
           componentClass="div"
-          lg={3}
-          md={3}
-          sm={6}
+          lg={2}
+          md={2}
+          sm={4}
           xs={12}
         >
           <div
@@ -148,8 +148,8 @@ ShallowWrapper {
         <Col
           bsClass="col"
           componentClass="div"
-          lg={5}
-          md={5}
+          lg={3}
+          md={3}
           sm={6}
           xs={12}
         >
@@ -252,8 +252,8 @@ ShallowWrapper {
           <Col
             bsClass="col"
             componentClass="div"
-            lg={2}
-            md={2}
+            lg={5}
+            md={5}
             sm={6}
             xs={12}
           >
@@ -308,9 +308,9 @@ ShallowWrapper {
           <Col
             bsClass="col"
             componentClass="div"
-            lg={3}
-            md={3}
-            sm={6}
+            lg={2}
+            md={2}
+            sm={4}
             xs={12}
           >
             <div
@@ -331,8 +331,8 @@ ShallowWrapper {
           <Col
             bsClass="col"
             componentClass="div"
-            lg={5}
-            md={5}
+            lg={3}
+            md={3}
             sm={6}
             xs={12}
           >
