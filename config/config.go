@@ -57,6 +57,7 @@ const (
 
 	EnvKubernetesBurst         = "KUBERNETES_BURST"
 	EnvKubernetesQPS           = "KUBERNETES_QPS"
+	EnvKubernetesCacheEnabled  = "KUBERNETES_CACHE_ENABLED"
 	EnvKubernetesCacheDuration = "KUBERNETES_CACHE_DURATION"
 )
 
@@ -128,6 +129,7 @@ type IstioLabels struct {
 type KubernetesConfig struct {
 	Burst         int     `yaml:"burst,omitempty"`
 	QPS           float32 `yaml:"qps,omitempty"`
+	CacheEnabled  bool    `yaml:"cache_enabled,omitempty"`
 	CacheDuration int64   `yaml:"cache_duration,omitempty"`
 }
 
@@ -206,6 +208,7 @@ func NewConfig() (c *Config) {
 	// Kubernetes client Configuration
 	c.KubernetesConfig.Burst = getDefaultInt(EnvKubernetesBurst, 200)
 	c.KubernetesConfig.QPS = getDefaultFloat32(EnvKubernetesQPS, 175)
+	c.KubernetesConfig.CacheEnabled = getDefaultBool(EnvKubernetesCacheEnabled, true)
 	c.KubernetesConfig.CacheDuration = getDefaultInt64(EnvKubernetesCacheDuration, time.Duration(5*time.Minute).Nanoseconds())
 
 	trimmedExclusionPatterns := []string{}
