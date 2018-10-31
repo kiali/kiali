@@ -33,6 +33,7 @@ type MetricsType struct {
 	APIProcessingTime        *prometheus.HistogramVec
 	PrometheusProcessingTime *prometheus.HistogramVec
 	GoFunctionProcessingTime *prometheus.HistogramVec
+	GoFunctionFailures       *prometheus.CounterVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -95,6 +96,56 @@ var Metrics = MetricsType{
 		},
 		[]string{labelPackage, labelType, labelFunction},
 	),
+	GoFunctionFailures: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kiali_go_function_failures_total",
+			Help: "Counts the total number of failures encountered by a particular Go function.",
+		},
+		[]string{labelPackage, labelType, labelFunction},
+	),
+}
+
+// SuccessOrFailureMetricType let's you capture metrics for both successes and failures,
+// where successes are tracked using a duration histogram and failures are tracked with a counter.
+// Typical usage is:
+// func SomeFunction(...) (..., err error) {
+//     sof := GetSuccessOrFailureMetricTypeObject()
+//     defer sof.ObserveNow(&err)
+//     ... do the work of SomeFunction here...
+// }
+//
+// If a function doesn't support returning an error, then call ObserveDuration directly:
+//
+// func SomeFunction(...) (...) {
+//     sof := GetSuccessOrFailureMetricTypeObject()
+//     defer sof.ObserveDuration()
+//     ... do the work of SomeFunction here...
+//
+// If a function doesn't support returning an error, but you still need to report a failure,
+// call Inc() directly to increment the failure counter:
+//
+// func SomeFunction(...) (...) {
+//     sof := GetSuccessOrFailureMetricTypeObject()
+//     defer func() { if (somethingBadHappened) { sof.Inc() } else { sof.ObserveDuration() }}()
+//     ... do the work of SomeFunction here...
+// }
+type SuccessOrFailureMetricType struct {
+	*prometheus.Timer
+	prometheus.Counter
+}
+
+// ObserveNow will observe a duration unless *err is not nil
+// in which case the error counter will be incremented instead.
+// We use a pointer to err because this function is normally
+// invoked via 'defer' and so the actual value of the error
+// won't be set until the actual invocation of this function.
+// (read the docs on 'defer' if you don't get it).
+func (sof *SuccessOrFailureMetricType) ObserveNow(err *error) {
+	if *err == nil {
+		sof.ObserveDuration()
+	} else {
+		sof.Inc()
+	}
 }
 
 // RegisterInternalMetrics must be called at startup to prepare the Prometheus scrape endpoint.
@@ -108,6 +159,7 @@ func RegisterInternalMetrics() {
 		Metrics.APIProcessingTime,
 		Metrics.PrometheusProcessingTime,
 		Metrics.GoFunctionProcessingTime,
+		Metrics.GoFunctionFailures,
 	)
 }
 
@@ -213,20 +265,23 @@ func GetPrometheusProcessingTimePrometheusTimer(queryGroup string) *prometheus.T
 	return timer
 }
 
-// GetGoFunctionProcessingTimePrometheusTimer returns a timer that can be used to store
-// a value for the Go Function processing time metric. If the Go Function is not on
-// a type (i.e. is a global function), pass in an empty string for goType.
+// GetGoFunctionMetric returns a SuccessOrFailureMetricType object that can be used to store
+// a duration value for the Go Function processing time metric when the function is successful,
+// or increments the failure counter if not successful.
+// If the Go Function is not on a type (i.e. is a global function), pass in an empty string for goType.
 // The timer is ticking immediately when this function returns.
-// Typical usage is as follows:
-//    func someFunction(...) {
-//      promtimer := GetGoFunctionProcessingTimePrometheusTimer(...)
-//      defer promtimer.ObserveDuration()
-//      ... the rest of the function ...
-func GetGoFunctionProcessingTimePrometheusTimer(goPkg string, goType string, goFunc string) *prometheus.Timer {
-	timer := prometheus.NewTimer(Metrics.GoFunctionProcessingTime.With(prometheus.Labels{
-		labelPackage:  goPkg,
-		labelType:     goType,
-		labelFunction: goFunc,
-	}))
-	return timer
+// See the comments for SuccessOrFailureMetricType for documentation on how to use the returned object.
+func GetGoFunctionMetric(goPkg string, goType string, goFunc string) SuccessOrFailureMetricType {
+	return SuccessOrFailureMetricType{
+		prometheus.NewTimer(Metrics.GoFunctionProcessingTime.With(prometheus.Labels{
+			labelPackage:  goPkg,
+			labelType:     goType,
+			labelFunction: goFunc,
+		})),
+		Metrics.GoFunctionFailures.With(prometheus.Labels{
+			labelPackage:  goPkg,
+			labelType:     goType,
+			labelFunction: goFunc,
+		}),
+	}
 }

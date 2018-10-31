@@ -21,8 +21,9 @@ type ObjectChecker interface {
 // GetServiceValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers.
 func (in *IstioValidationsService) GetServiceValidations(namespace, service string) (models.IstioValidations, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioValidationsService", "GetServiceValidations")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioValidationsService", "GetServiceValidations")
+	defer promtimer.ObserveNow(&err)
 
 	// Ensure the service exists
 	if _, err := in.k8s.GetService(namespace, service); err != nil {
@@ -30,7 +31,6 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	}
 
 	// Get Gateways and ServiceEntries to validate VirtualServices
-	var err error
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, 2)
 
@@ -55,8 +55,9 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 }
 
 func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (models.NamespaceValidations, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioValidationsService", "GetNamespaceValidations")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioValidationsService", "GetNamespaceValidations")
+	defer promtimer.ObserveNow(&err)
 
 	// Ensure the Namespace exists
 	if _, err := in.k8s.GetNamespace(namespace); err != nil {
@@ -107,8 +108,9 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 }
 
 func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, objectType string, object string) (models.IstioValidations, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioValidationsService", "GetIstioObjectValidations")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioValidationsService", "GetIstioObjectValidations")
+	defer promtimer.ObserveNow(&err)
 
 	services, err := in.k8s.GetServices(namespace, nil)
 	if err != nil {

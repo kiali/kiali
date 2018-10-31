@@ -24,8 +24,9 @@ type SvcService struct {
 
 // GetServiceList returns a list of all services for a given Namespace
 func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "SvcService", "GetServiceList")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceList")
+	defer promtimer.ObserveNow(&err)
 
 	var svcs []v1.Service
 	var pods []v1.Pod
@@ -36,27 +37,27 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 
 	go func() {
 		defer wg.Done()
-		var err error
-		svcs, err = in.k8s.GetServices(namespace, nil)
-		if err != nil {
-			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err)
-			errChan <- err
+		var err2 error
+		svcs, err2 = in.k8s.GetServices(namespace, nil)
+		if err2 != nil {
+			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err2)
+			errChan <- err2
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		var err error
-		pods, err = in.k8s.GetPods(namespace, "")
-		if err != nil {
-			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
-			errChan <- err
+		var err2 error
+		pods, err2 = in.k8s.GetPods(namespace, "")
+		if err2 != nil {
+			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err2)
+			errChan <- err2
 		}
 	}()
 
 	wg.Wait()
 	if len(errChan) != 0 {
-		err := <-errChan
+		err = <-errChan
 		return nil, err
 	}
 
@@ -88,8 +89,9 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []v1.Ser
 
 // GetService returns a single service
 func (in *SvcService) GetService(namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "SvcService", "GetService")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetService")
+	defer promtimer.ObserveNow(&err)
 
 	var svc *v1.Service
 	var eps *v1.Endpoints
@@ -100,27 +102,27 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 
 	go func() {
 		defer wg.Done()
-		var err error
-		svc, err = in.k8s.GetService(namespace, service)
-		if err != nil {
-			log.Errorf("Error fetching Service per namespace %s and service %s: %s", namespace, service, err)
-			errChan <- err
+		var err2 error
+		svc, err2 = in.k8s.GetService(namespace, service)
+		if err2 != nil {
+			log.Errorf("Error fetching Service per namespace %s and service %s: %s", namespace, service, err2)
+			errChan <- err2
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		var err error
-		eps, err = in.k8s.GetEndpoints(namespace, service)
-		if err != nil {
-			log.Errorf("Error fetching Endpoints per namespace %s and service %s: %s", namespace, service, err)
-			errChan <- err
+		var err2 error
+		eps, err2 = in.k8s.GetEndpoints(namespace, service)
+		if err2 != nil {
+			log.Errorf("Error fetching Endpoints per namespace %s and service %s: %s", namespace, service, err2)
+			errChan <- err2
 		}
 	}()
 
 	wg.Wait()
 	if len(errChan) != 0 {
-		err := <-errChan
+		err = <-errChan
 		return nil, err
 	}
 
@@ -138,10 +140,10 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 
 	go func() {
 		defer wg.Done()
-		var err error
-		pods, err = in.k8s.GetPods(namespace, labelsSelector)
-		if err != nil {
-			errChan <- err
+		var err2 error
+		pods, err2 = in.k8s.GetPods(namespace, labelsSelector)
+		if err2 != nil {
+			errChan <- err2
 		}
 	}()
 
@@ -152,51 +154,51 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 
 	go func() {
 		defer wg.Done()
-		var err error
-		vs, err = in.k8s.GetVirtualServices(namespace, service)
-		if err != nil {
-			errChan <- err
+		var err2 error
+		vs, err2 = in.k8s.GetVirtualServices(namespace, service)
+		if err2 != nil {
+			errChan <- err2
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		var err error
-		dr, err = in.k8s.GetDestinationRules(namespace, service)
-		if err != nil {
-			errChan <- err
+		var err2 error
+		dr, err2 = in.k8s.GetDestinationRules(namespace, service)
+		if err2 != nil {
+			errChan <- err2
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		var err error
-		ns, err := in.businessLayer.Namespace.GetNamespace(namespace)
-		if err != nil {
-			log.Errorf("Error fetching details of namespace %s: %s", namespace, err)
-			errChan <- err
+		var err2 error
+		ns, err2 := in.businessLayer.Namespace.GetNamespace(namespace)
+		if err2 != nil {
+			log.Errorf("Error fetching details of namespace %s: %s", namespace, err2)
+			errChan <- err2
 		}
 
-		sWk, err = in.prom.GetSourceWorkloads(ns.Name, ns.CreationTimestamp, service)
-		if err != nil {
-			log.Errorf("Error fetching SourceWorkloads per namespace %s and service %s: %s", namespace, service, err)
-			errChan <- err
+		sWk, err2 = in.prom.GetSourceWorkloads(ns.Name, ns.CreationTimestamp, service)
+		if err2 != nil {
+			log.Errorf("Error fetching SourceWorkloads per namespace %s and service %s: %s", namespace, service, err2)
+			errChan <- err2
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		var err error
-		ws, err = fetchWorkloads(in.k8s, namespace, labelsSelector)
-		if err != nil {
-			log.Errorf("Error fetching Workloads per namespace %s and service %s: %s", namespace, service, err)
-			errChan <- err
+		var err2 error
+		ws, err2 = fetchWorkloads(in.k8s, namespace, labelsSelector)
+		if err2 != nil {
+			log.Errorf("Error fetching Workloads per namespace %s and service %s: %s", namespace, service, err2)
+			errChan <- err2
 		}
 	}()
 
 	wg.Wait()
 	if len(errChan) != 0 {
-		err := <-errChan
+		err = <-errChan
 		return nil, err
 	}
 

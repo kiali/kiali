@@ -24,8 +24,9 @@ type HealthService struct {
 
 // GetServiceHealth returns a service health from just Namespace and service (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetServiceHealth(namespace, service, rateInterval string, queryTime time.Time) (*models.ServiceHealth, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "HealthService", "GetServiceHealth")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetServiceHealth")
+	defer promtimer.ObserveNow(&err)
 
 	svc, err := in.k8s.GetService(namespace, service)
 	if err != nil {
@@ -51,8 +52,9 @@ func (in *HealthService) getServiceHealth(namespace, service, rateInterval strin
 
 // GetAppHealth returns an app health from just Namespace and app name (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetAppHealth(namespace, app, rateInterval string, queryTime time.Time) (*models.AppHealth, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "HealthService", "GetAppHealth")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetAppHealth")
+	defer promtimer.ObserveNow(&err)
 
 	var services []v1.Service
 	var ws models.Workloads
@@ -130,8 +132,9 @@ func (in *HealthService) getAppHealth(namespace, app, rateInterval string, query
 
 // GetWorkloadHealth returns a workload health from just Namespace and workload (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetWorkloadHealth(namespace, workload, rateInterval string, queryTime time.Time) (*models.WorkloadHealth, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "HealthService", "GetWorkloadHealth")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetWorkloadHealth")
+	defer promtimer.ObserveNow(&err)
 
 	// Fill all parts
 	health := models.WorkloadHealth{}
@@ -150,8 +153,9 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, rateInterval str
 
 // GetNamespaceAppHealth returns a health for all apps in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceAppHealth(namespace, rateInterval string, queryTime time.Time) (models.NamespaceAppHealth, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "HealthService", "GetNamespaceAppHealth")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceAppHealth")
+	defer promtimer.ObserveNow(&err)
 
 	appEntities, err := fetchNamespaceApps(in.k8s, namespace, "")
 	if err != nil {
@@ -207,8 +211,9 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities nam
 
 // GetNamespaceServiceHealth returns a health for all services in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval string, queryTime time.Time) (models.NamespaceServiceHealth, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "HealthService", "GetNamespaceServiceHealth")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceServiceHealth")
+	defer promtimer.ObserveNow(&err)
 
 	services, err := in.k8s.GetServices(namespace, nil)
 	if err != nil {
@@ -254,8 +259,9 @@ func (in *HealthService) getNamespaceServiceHealth(namespace string, services []
 
 // GetNamespaceWorkloadHealth returns a health for all workloads in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceWorkloadHealth(namespace, rateInterval string, queryTime time.Time) (models.NamespaceWorkloadHealth, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "HealthService", "GetNamespaceWorkloadHealth")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceWorkloadHealth")
+	defer promtimer.ObserveNow(&err)
 
 	wl, err := fetchWorkloads(in.k8s, namespace, "")
 	if err != nil {
