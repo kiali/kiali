@@ -12,6 +12,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
@@ -23,6 +24,8 @@ type SvcService struct {
 
 // GetServiceList returns a list of all services for a given Namespace
 func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "SvcService", "GetServiceList")
+	defer promtimer.ObserveDuration()
 
 	var svcs []v1.Service
 	var pods []v1.Pod
@@ -85,6 +88,9 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []v1.Ser
 
 // GetService returns a single service
 func (in *SvcService) GetService(namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "SvcService", "GetService")
+	defer promtimer.ObserveDuration()
+
 	var svc *v1.Service
 	var eps *v1.Endpoints
 

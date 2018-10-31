@@ -7,6 +7,7 @@ import (
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 type IstioValidationsService struct {
@@ -20,6 +21,9 @@ type ObjectChecker interface {
 // GetServiceValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers.
 func (in *IstioValidationsService) GetServiceValidations(namespace, service string) (models.IstioValidations, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioValidationsService", "GetServiceValidations")
+	defer promtimer.ObserveDuration()
+
 	// Ensure the service exists
 	if _, err := in.k8s.GetService(namespace, service); err != nil {
 		return nil, err
@@ -51,6 +55,9 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 }
 
 func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (models.NamespaceValidations, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioValidationsService", "GetNamespaceValidations")
+	defer promtimer.ObserveDuration()
+
 	// Ensure the Namespace exists
 	if _, err := in.k8s.GetNamespace(namespace); err != nil {
 		return nil, err
@@ -100,6 +107,9 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 }
 
 func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, objectType string, object string) (models.IstioValidations, error) {
+	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioValidationsService", "GetIstioObjectValidations")
+	defer promtimer.ObserveDuration()
+
 	services, err := in.k8s.GetServices(namespace, nil)
 	if err != nil {
 		return nil, err
