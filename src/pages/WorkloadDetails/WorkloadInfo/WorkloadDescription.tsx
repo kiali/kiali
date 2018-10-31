@@ -31,7 +31,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
         istio={this.props.istioEnabled}
         items={
           <Row>
-            <Col xs={12} sm={6} md={2} lg={2}>
+            <Col xs={12} sm={8} md={6} lg={6}>
               <div className="progress-description">
                 <strong>Labels</strong>
               </div>
@@ -52,8 +52,8 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
                 <strong>Resource Version</strong> {workload.resourceVersion}
               </div>
             </Col>
-            <Col xs={12} sm={6} md={8} lg={8} />
-            <Col xs={12} sm={6} md={2} lg={2}>
+            <Col xs={12} sm={4} md={4} lg={4} />
+            <Col xs={12} sm={4} md={2} lg={2}>
               <div className="progress-description">
                 <strong>Health</strong>
               </div>
