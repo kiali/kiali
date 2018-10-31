@@ -284,6 +284,9 @@ fi
 # Create the install yaml via the helm template command
 if [ ! -f "/tmp/istio.yaml" ]; then
   echo Generating install yaml via Helm
+  ${HELM_EXE} init --client-only
+  ${HELM_EXE} repo add istio.io https://raw.githubusercontent.com/istio/istio.io/master/static/charts
+  ${HELM_EXE} dep update "${ISTIO_DIR}/install/kubernetes/helm/istio"
   ${HELM_EXE} template ${_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace istio-system > /tmp/istio.yaml
 fi
 
