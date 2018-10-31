@@ -14,56 +14,45 @@ export interface MetricsSettings {
 
 interface Props extends MetricsSettings {
   onChanged: (state: MetricsSettings) => void;
-  onLabelsFiltersChanged: (labelValues: Map<L.LabelName, L.LabelValues>) => void;
+  onLabelsFiltersChanged: (label: L.LabelName, value: string, checked: boolean) => void;
   labelValues: Map<L.LabelName, L.LabelValues>;
 }
 
-interface State extends MetricsSettings {
-  labelValues: Map<L.LabelName, L.LabelValues>;
-}
-
-export class MetricsSettingsDropdown extends React.Component<Props, State> {
-  static getDerivedStateFromProps(props: Props, state: State) {
-    return {
-      activeLabels: props.activeLabels,
-      showAverage: props.showAverage,
-      showQuantiles: props.showQuantiles,
-      labelValues: props.labelValues
-    };
-  }
-
+export class MetricsSettingsDropdown extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
-    this.state = MetricsSettingsDropdown.getDerivedStateFromProps(props, this.state);
   }
 
   onGroupingChanged = (label: L.LabelName, checked: boolean) => {
     const newLabels = checked
-      ? [label].concat(this.state.activeLabels)
-      : this.state.activeLabels.filter(g => label !== g);
+      ? [label].concat(this.props.activeLabels)
+      : this.props.activeLabels.filter(g => label !== g);
 
-    this.setState({ activeLabels: newLabels }, () => this.props.onChanged(this.state));
-  };
-
-  onHideLabelChanged = (label: L.LabelName, value: string, checked: boolean) => {
-    const newLabels = new Map(this.state.labelValues);
-    const lblValues = newLabels.get(label);
-    if (lblValues) {
-      lblValues[value] = checked;
-      this.setState({ labelValues: newLabels }, () => this.props.onLabelsFiltersChanged(newLabels));
-    }
+    this.props.onChanged({
+      showAverage: this.props.showAverage,
+      showQuantiles: this.props.showQuantiles,
+      activeLabels: newLabels
+    });
   };
 
   onHistogramAverageChanged = (checked: boolean) => {
-    this.setState({ showAverage: checked }, () => this.props.onChanged(this.state));
+    this.props.onChanged({
+      showAverage: checked,
+      showQuantiles: this.props.showQuantiles,
+      activeLabels: this.props.activeLabels
+    });
   };
 
   onHistogramOptionsChanged = (quantile: Quantiles, checked: boolean) => {
     const newQuantiles = checked
-      ? [quantile].concat(this.state.showQuantiles)
-      : this.state.showQuantiles.filter(q => quantile !== q);
+      ? [quantile].concat(this.props.showQuantiles)
+      : this.props.showQuantiles.filter(q => quantile !== q);
 
-    this.setState({ showQuantiles: newQuantiles }, () => this.props.onChanged(this.state));
+    this.props.onChanged({
+      showAverage: this.props.showAverage,
+      showQuantiles: newQuantiles,
+      activeLabels: this.props.activeLabels
+    });
   };
 
   render() {
@@ -71,8 +60,8 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     const secondLevelStyle = style({ marginLeft: 14 });
 
     const displayGroupingLabels = L.ALL_NAMES.map((g, idx) => {
-      const checked = this.state.activeLabels.includes(g);
-      const labels = this.state.labelValues.get(g);
+      const checked = this.props.activeLabels.includes(g);
+      const labels = this.props.labelValues.get(g);
       const labelsHTML = labels
         ? Object.keys(labels).map(val => (
             <div key={'groupings_' + idx + '_' + val} className={secondLevelStyle}>
@@ -80,7 +69,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
                 <input
                   type="checkbox"
                   checked={labels[val]}
-                  onChange={event => this.onHideLabelChanged(g, val, event.target.checked)}
+                  onChange={event => this.props.onLabelsFiltersChanged(g, val, event.target.checked)}
                 />
                 <span className={checkboxStyle}>{val}</span>
               </label>
@@ -97,7 +86,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
             />
             <span className={checkboxStyle}>{g}</span>
           </label>
-          {labelsHTML}
+          {checked && labelsHTML}
         </div>
       );
     });
@@ -109,7 +98,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         <label>
           <input
             type="checkbox"
-            checked={this.state.showAverage}
+            checked={this.props.showAverage}
             onChange={event => this.onHistogramAverageChanged(event.target.checked)}
           />
           <span className={checkboxStyle}>Average</span>
@@ -117,7 +106,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
       </div>
     )].concat(
       allQuantiles.map((o, idx) => {
-        const checked = this.state.showQuantiles.includes(o);
+        const checked = this.props.showQuantiles.includes(o);
         return (
           <div key={'histo_' + idx}>
             <label>
