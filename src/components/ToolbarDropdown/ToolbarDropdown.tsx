@@ -7,8 +7,8 @@ type ToolbarDropdownProps = {
   id?: string;
   nameDropdown?: string;
   value?: number | string;
-  initialValue?: number | string;
   label?: string;
+  initialValue?: number | string;
   initialLabel?: string;
   handleSelect: Function;
   options: { [key: string]: string };
@@ -24,8 +24,8 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
   constructor(props: ToolbarDropdownProps) {
     super(props);
     this.state = {
-      currentValue: props.initialValue,
-      currentName: props.initialLabel
+      currentValue: props.value || props.initialValue,
+      currentName: props.label || props.initialLabel
     };
   }
 

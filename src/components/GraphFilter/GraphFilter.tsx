@@ -81,7 +81,6 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
             )}
             <NamespaceDropdownContainer
               disabled={this.props.node || this.props.disabled}
-              activeNamespace={this.props.namespace}
               onSelect={this.props.onNamespaceChange}
             />
           </FormGroup>
