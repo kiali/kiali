@@ -41,8 +41,9 @@ var resourceTypesToAPI = map[string]string{
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
 func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioConfigService", "GetIstioConfigList")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GetIstioConfigList")
+	defer promtimer.ObserveNow(&err)
 
 	if criteria.Namespace == "" {
 		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
@@ -130,7 +131,8 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	for _, genErr := range []error{ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr} {
 		if genErr != nil {
-			return models.IstioConfigList{}, genErr
+			err = genErr
+			return models.IstioConfigList{}, err
 		}
 	}
 
@@ -138,15 +140,15 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 }
 
 func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType string, object string) (models.IstioConfigDetails, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioConfigService", "GetIstioConfigDetails")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GetIstioConfigDetails")
+	defer promtimer.ObserveNow(&err)
 
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
 	var gw, vs, dr, se, qs, qb kubernetes.IstioObject
 	var r *kubernetes.IstioRuleDetails
-	var err error
 	permission := models.ResourcePermissions{}
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -231,8 +233,9 @@ func GetIstioAPI(resourceType string) string {
 }
 
 // DeleteIstioConfigDetail deletes the given Istio resource
-func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceType, name string) error {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "IstioConfigService", "DeleteIstioConfigDetail")
-	defer promtimer.ObserveDuration()
-	return in.k8s.DeleteIstioObject(api, namespace, resourceType, name)
+func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceType, name string) (err error) {
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "DeleteIstioConfigDetail")
+	defer promtimer.ObserveNow(&err)
+	err = in.k8s.DeleteIstioObject(api, namespace, resourceType, name)
+	return
 }

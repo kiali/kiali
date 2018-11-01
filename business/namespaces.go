@@ -33,14 +33,15 @@ func NewNamespaceService(k8s kubernetes.IstioClientInterface) NamespaceService {
 
 // Returns a list of the given namespaces / projects
 func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "NamespaceService", "GetNamespaces")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "NamespaceService", "GetNamespaces")
+	defer promtimer.ObserveNow(&err)
 
 	namespaces := []models.Namespace{}
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
 	if in.hasProjects {
-		projects, err := in.k8s.GetProjects()
-		if err == nil {
+		projects, err2 := in.k8s.GetProjects()
+		if err2 == nil {
 			// Everything is good, return the projects we got from OpenShift / kube-project
 			namespaces = models.CastProjectCollection(projects)
 		}
@@ -73,11 +74,12 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 
 // GetNamespace returns the definition of the specified namespace.
 func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "NamespaceService", "GetNamespace")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "NamespaceService", "GetNamespace")
+	defer promtimer.ObserveNow(&err)
 
 	if in.hasProjects {
-		if project, err := in.k8s.GetProject(namespace); err == nil {
+		if project, err2 := in.k8s.GetProject(namespace); err2 == nil {
 			result := models.CastProject(*project)
 			return &result, nil
 		}

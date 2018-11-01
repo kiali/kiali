@@ -42,8 +42,9 @@ func (in *AppService) fetchWorkloadsPerApp(namespace, labelSelector string) (app
 
 // GetAppList is the API handler to fetch the list of applications in a given namespace
 func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "AppService", "GetAppList")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "AppService", "GetAppList")
+	defer promtimer.ObserveNow(&err)
 
 	appList := &models.AppList{
 		Namespace: models.Namespace{Name: namespace},
@@ -71,8 +72,9 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 
 // GetApp is the API handler to fetch the details for a given namespace and app name
 func (in *AppService) GetApp(namespace string, appName string) (models.App, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "AppService", "GetApp")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "AppService", "GetApp")
+	defer promtimer.ObserveNow(&err)
 
 	appInstance := &models.App{Namespace: models.Namespace{Name: namespace}, Name: appName}
 	namespaceApps, err := fetchNamespaceApps(in.k8s, namespace, appName)

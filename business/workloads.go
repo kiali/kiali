@@ -26,8 +26,9 @@ type WorkloadService struct {
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
 func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadList, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "WorkloadService", "GetWorkloadList")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetWorkloadList")
+	defer promtimer.ObserveNow(&err)
 
 	workloadList := &models.WorkloadList{
 		Namespace: models.Namespace{namespace, time.Time{}},
@@ -50,8 +51,9 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 // GetWorkload is the API handler to fetch details of a specific workload.
 // If includeServices is set true, the Workload will fetch all services related
 func (in *WorkloadService) GetWorkload(namespace string, workloadName string, includeServices bool) (*models.Workload, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "WorkloadService", "GetWorkload")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetWorkload")
+	defer promtimer.ObserveNow(&err)
 
 	workload, err := fetchWorkload(in.k8s, namespace, workloadName)
 	if err != nil {
@@ -70,8 +72,9 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 }
 
 func (in *WorkloadService) GetPods(namespace string, labelSelector string) (models.Pods, error) {
-	promtimer := internalmetrics.GetGoFunctionProcessingTimePrometheusTimer("business", "WorkloadService", "GetPods")
-	defer promtimer.ObserveDuration()
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetPods")
+	defer promtimer.ObserveNow(&err)
 
 	ps, err := in.k8s.GetPods(namespace, labelSelector)
 	if err != nil {
