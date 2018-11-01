@@ -26,8 +26,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
   render() {
     const disabled = this.props.disabled ? true : false;
 
-    // convert namespace array to an object {"ns1": "ns1"} to make it
-    // compatible with <ToolbarDropdown />
+    // convert namespace array to an object {"ns1": "ns1"} to make it compatible with <ToolbarDropdown />
     const items: { [key: string]: string } = this.props.items.reduce((list, item) => {
       list[item.name] = item.name;
       return list;
@@ -35,13 +34,13 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
 
     return (
       <ToolbarDropdown
-        disabled={disabled}
-        useName={true}
         id="namespace-selector"
-        initialLabel={this.props.activeNamespace.name}
-        handleSelect={this.handleSelectNamespace}
-        value={this.props.activeNamespace.name}
+        disabled={disabled}
         options={items}
+        value={this.props.activeNamespace.name}
+        label={this.props.activeNamespace.name}
+        useName={true}
+        handleSelect={this.handleSelectNamespace}
         onToggle={this.handleToggle}
       />
     );
