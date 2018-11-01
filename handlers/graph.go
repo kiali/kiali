@@ -53,26 +53,25 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
-// GraphNamespace is a REST http.HandlerFunc handling namespace-wide graph
-// config generation.
-func GraphNamespace(w http.ResponseWriter, r *http.Request) {
+// GraphNamespaces is a REST http.HandlerFunc handling graph generation for 1 or more namespaces
+func GraphNamespaces(w http.ResponseWriter, r *http.Request) {
 	defer handlePanic(w)
 
 	client, err := prometheus.NewClient()
 	checkError(err)
 
-	graphNamespace(w, r, client)
+	graphNamespaces(w, r, client)
 }
 
-// graphNamespace provides a testing hook that can supply a mock client
-func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
+// graphNamespaces provides a testing hook that can supply a mock client
+func graphNamespaces(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
 	o := options.NewOptions(r)
 
 	// time how long it takes to generate this graph
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
 
-	trafficMap := graphNamespaces(o, client)
+	trafficMap := buildNamespacesTrafficMap(o, client)
 	generateGraph(trafficMap, w, o)
 
 	// update metrics
@@ -80,7 +79,7 @@ func graphNamespace(w http.ResponseWriter, r *http.Request, client *prometheus.C
 	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes, len(trafficMap))
 }
 
-func graphNamespaces(o options.Options, client *prometheus.Client) graph.TrafficMap {
+func buildNamespacesTrafficMap(o options.Options, client *prometheus.Client) graph.TrafficMap {
 	switch o.Vendor {
 	case "cytoscape":
 	default:
@@ -176,7 +175,7 @@ func isOutside(n *graph.Node, namespaces map[string]graph.NamespaceInfo) bool {
 	return true
 }
 
-func isInaccessible(n *graph.Node, accessibleNamespaces map[string]bool) bool {
+func isInaccessible(n *graph.Node, accessibleNamespaces map[string]time.Time) bool {
 	if _, found := accessibleNamespaces[n.Namespace]; !found {
 		return true
 	} else {
