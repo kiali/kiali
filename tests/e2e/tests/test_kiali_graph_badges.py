@@ -28,10 +28,13 @@ def test_kiali_virtual_service_app(kiali_client):
 
 
 def do_test(kiali_client, graph_params, yaml_file, badge):
-    bookinfo_namespace = bookinfo_namespace = conftest.get_bookinfo_namespace()
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
+    json = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)
 
-    appType = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)['graphType']
-    assert appType == graph_params.get('graphType')
+    print("Debug: Start do_test: JSON: {}".format(json))
+
+    assert badge not in json
+    assert json['graphType'] == graph_params.get('graphType')
 
     count = get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge)
 
@@ -41,13 +44,17 @@ def do_test(kiali_client, graph_params, yaml_file, badge):
       graph = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)
       assert graph is not None
 
-      with timeout(seconds=30, error_message='Timed out waiting for Create'):
+      try:
+        with timeout(seconds=30, error_message='Timed out waiting for Create'):
           while True:
               new_count = get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge)
               if new_count != 0 and new_count >= count:
                   break
 
               time.sleep(1)
+      except:
+        print ("Timeout Exception - Nodes: {}".format(kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)["elements"]['nodes']))
+        raise Exception("Timeout - Waiting for badge: {}".format(badge))
 
     finally:
       assert command_exec.oc_delete(yaml_file, bookinfo_namespace) == True

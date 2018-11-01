@@ -3,8 +3,6 @@ import tests.conftest as conftest
 
 APPLICATION_TO_VALIDATE = 'productpage'
 
-PARAMS = {'graphType': 'versionedApp', 'duration': '60s'}
-
 def test_application_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
