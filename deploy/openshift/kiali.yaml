@@ -90,7 +90,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: kiali
-              key: password
+              key: passphrase
         volumeMounts:
         - name: kiali-configuration
           mountPath: "/kiali-configuration"
