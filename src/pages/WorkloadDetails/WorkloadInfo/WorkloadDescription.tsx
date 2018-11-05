@@ -23,6 +23,10 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
 
   render() {
     const workload = this.props.workload;
+    const isTemplateLabels =
+      workload &&
+      ['Deployment', 'ReplicaSet', 'ReplicationController', 'DeploymentConfig', 'StatefulSet'].indexOf(workload.type) >=
+        0;
     return workload ? (
       <PfInfoCard
         iconType="pf"
@@ -33,7 +37,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
           <Row>
             <Col xs={12} sm={8} md={6} lg={6}>
               <div className="progress-description">
-                <strong>Labels</strong>
+                <strong>{isTemplateLabels ? 'Template Labels' : 'Labels'}</strong>
               </div>
               <div className="label-collection">
                 {Object.keys(workload.labels || {}).map((key, i) => (
