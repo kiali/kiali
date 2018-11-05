@@ -567,9 +567,9 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
     const duration = this.props.graphDuration.value;
     // Keep a map of namespace x promises in order not to fetch several times the same data per namespace
-    const appHealthPerNamespace = new Map<String, Promise<NamespaceAppHealth>>();
-    const serviceHealthPerNamespace = new Map<String, Promise<NamespaceServiceHealth>>();
-    const workloadHealthPerNamespace = new Map<String, Promise<NamespaceWorkloadHealth>>();
+    const appHealthPerNamespace = new Map<string, Promise<NamespaceAppHealth>>();
+    const serviceHealthPerNamespace = new Map<string, Promise<NamespaceServiceHealth>>();
+    const workloadHealthPerNamespace = new Map<string, Promise<NamespaceWorkloadHealth>>();
     // Asynchronously fetch health
     cy.nodes().forEach(ele => {
       const inaccessible = ele.data('isInaccessible');
