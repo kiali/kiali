@@ -36,3 +36,16 @@ func (se *ServiceEntry) Parse(serviceEntry kubernetes.IstioObject) {
 	se.Resolution = serviceEntry.GetSpec()["resolution"]
 	se.Endpoints = serviceEntry.GetSpec()["endpoints"]
 }
+
+func (se *ServiceEntry) Spec() (map[string]interface{}) {
+	spec := make(map[string]interface{})
+	spec["spec"] = make(map[string]interface{})
+	innerSpec := spec["spec"].(map[string]interface{})
+	innerSpec["hosts"] = se.Hosts
+	innerSpec["addresses"] = se.Addresses
+	innerSpec["ports"] = se.Ports
+	innerSpec["location"] = se.Location
+	innerSpec["resolution"] = se.Resolution
+	innerSpec["endpoints"] = se.Endpoints
+	return spec
+}

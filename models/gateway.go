@@ -28,3 +28,12 @@ func (gw *Gateway) Parse(gateway kubernetes.IstioObject) {
 	gw.Servers = gateway.GetSpec()["servers"]
 	gw.Selector = gateway.GetSpec()["selector"]
 }
+
+func (gw *Gateway) Spec() (map[string]interface{}) {
+	spec := make(map[string]interface{})
+	spec["spec"] = make(map[string]interface{})
+	innerSpec := spec["spec"].(map[string]interface{})
+	innerSpec["servers"] = gw.Servers
+	innerSpec["selector"] = gw.Selector
+	return spec
+}

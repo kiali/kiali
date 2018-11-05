@@ -219,6 +219,96 @@ func GetIstioAPI(resourceType string) string {
 	return resourceTypesToAPI[resourceType]
 }
 
+// UpdateIstioConfigDetail updates the given IstioConfigDetails resource
+func (in *IstioConfigService) UpdateIstioConfigDetail(istioConfigDetail models.IstioConfigDetails) (models.IstioConfigDetails, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "UpdateIstioConfigDetail")
+	defer promtimer.ObserveNow(&err)
+
+	namespace := istioConfigDetail.Namespace.Name
+	objectType := istioConfigDetail.ObjectType
+
+	var ugw, uvs, udr, use, uqs, uqsb kubernetes.IstioObject
+	var gw *models.Gateway
+	var vs *models.VirtualService
+	var dr *models.DestinationRule
+	var se *models.ServiceEntry
+	var qs *models.QuotaSpec
+	var qsb *models.QuotaSpecBinding
+
+	switch objectType {
+	case Gateways:
+		gw = istioConfigDetail.Gateway
+		if gw != nil {
+			if ugw, err = in.k8s.UpdateGateway(namespace, gw.Name, gw.Spec()); err == nil {
+				istioConfigDetail.Gateway = &models.Gateway{}
+				istioConfigDetail.Gateway.Parse(ugw)
+			}
+		} else {
+			err = fmt.Errorf("Cannot update an empty Gateway")
+		}
+	case VirtualServices:
+		vs = istioConfigDetail.VirtualService
+		if vs != nil {
+			if uvs, err = in.k8s.UpdateVirtualService(namespace, vs.Name, vs.Spec()); err == nil {
+				istioConfigDetail.VirtualService = &models.VirtualService{}
+				istioConfigDetail.VirtualService.Parse(uvs)
+			}
+		} else {
+			err = fmt.Errorf("Cannot update an empty VirtualService")
+		}
+	case DestinationRules:
+		dr = istioConfigDetail.DestinationRule
+		if dr != nil {
+			if udr, err = in.k8s.UpdateDestinationRule(namespace, dr.Name, dr.Spec()); err == nil {
+				istioConfigDetail.DestinationRule = &models.DestinationRule{}
+				istioConfigDetail.DestinationRule.Parse(udr)
+			}
+		} else {
+			err = fmt.Errorf("Cannot update an empty DestinationRule")
+		}
+	case ServiceEntries:
+		se = istioConfigDetail.ServiceEntry
+		if se != nil {
+			if use, err = in.k8s.UpdateServiceEntry(namespace, se.Name, se.Spec()); err == nil {
+				istioConfigDetail.ServiceEntry = &models.ServiceEntry{}
+				istioConfigDetail.ServiceEntry.Parse(use)
+			}
+		} else {
+			err = fmt.Errorf("Cannot update an empty ServiceEntry")
+		}
+	case Rules:
+		err = fmt.Errorf("Update of Istio Rules are not yet implemented")
+	case QuotaSpecs:
+		qs = istioConfigDetail.QuotaSpec
+		if qs != nil {
+			if uqs, err = in.k8s.UpdateQuotaSpec(namespace, qs.Name, qs.Spec()); err == nil {
+				istioConfigDetail.QuotaSpec = &models.QuotaSpec{}
+				istioConfigDetail.QuotaSpec.Parse(uqs)
+			}
+		} else {
+			err = fmt.Errorf("Cannot update an empty QuotaSpec")
+		}
+	case QuotaSpecBindings:
+		qsb = istioConfigDetail.QuotaSpecBinding
+		if qsb != nil {
+			if uqsb, err = in.k8s.UpdateQuotaSpecBinding(namespace, qsb.Name, qsb.Spec()); err == nil {
+				istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
+				istioConfigDetail.QuotaSpecBinding.Parse(uqsb)
+			}
+		} else {
+			err = fmt.Errorf("Cannot update an empty QuotaSpecBinding")
+		}
+	default:
+		err = fmt.Errorf("Object type not found: %v", istioConfigDetail.ObjectType)
+	}
+
+	if err != nil {
+		return models.IstioConfigDetails{}, err
+	}
+	return istioConfigDetail, nil
+}
+
 // DeleteIstioConfigDetail deletes the given Istio resource
 func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceType, name string) (err error) {
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "DeleteIstioConfigDetail")

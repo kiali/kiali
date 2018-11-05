@@ -127,6 +127,28 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigDetails,
 			true,
 		},
+		// swagger:route PATCH /namespaces/{namespace}/istio/{object_type}/{object}
+		// ---
+		// Endpoint to modify the Istio Config of an (arbitrary) Istio object
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: istioConfigUpdated
+		//
+		{
+			"IstioConfigDetailsUpdate",
+			"PATCH",
+			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
+			handlers.IstioConfigUpdate,
+			true,
+		},
 		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object}
 		// ---
 		// Endpoint to delete the Istio Config of an (arbitrary) Istio object

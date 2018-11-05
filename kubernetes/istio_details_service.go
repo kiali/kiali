@@ -1,7 +1,9 @@
 package kubernetes
 
 import (
+	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/types"
 	"strings"
 	"sync"
 
@@ -98,6 +100,23 @@ func (in *IstioClient) GetVirtualService(namespace string, virtualservice string
 	return virtualService.DeepCopyIstioObject(), nil
 }
 
+func (in *IstioClient) UpdateVirtualService(namespace string, virtualservice string, spec map[string]interface{}) (IstioObject, error) {
+	jsonPatch, err := json.Marshal(spec)
+	if err != nil {
+		return nil, err
+	}
+	result, err := in.istioNetworkingApi.Patch(types.MergePatchType).Namespace(namespace).Resource(virtualServices).SubResource(virtualservice).Body(jsonPatch).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	virtualService, ok := result.(*VirtualService)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService object", namespace, virtualservice)
+	}
+	return virtualService.DeepCopyIstioObject(), nil
+}
+
 // GetGateways return all Gateways for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
@@ -119,6 +138,23 @@ func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
 
 func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject, error) {
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(gateways).SubResource(gateway).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	gatewayObject, ok := result.(*Gateway)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a Gateway object", namespace, gateway)
+	}
+	return gatewayObject.DeepCopyIstioObject(), nil
+}
+
+func (in *IstioClient) UpdateGateway(namespace string, gateway string, spec map[string]interface{}) (IstioObject, error) {
+	jsonPatch, err := json.Marshal(spec)
+	if err != nil {
+		return nil, err
+	}
+	result, err := in.istioNetworkingApi.Patch(types.MergePatchType).Namespace(namespace).Resource(gateways).SubResource(gateway).Body(jsonPatch).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +193,24 @@ func (in *IstioClient) GetServiceEntry(namespace string, serviceEntryName string
 
 	serviceEntry, ok := result.(*ServiceEntry)
 	if !ok {
-		return nil, fmt.Errorf("%s/%v doesn't return a ServiceEntry object", namespace, serviceEntry)
+		return nil, fmt.Errorf("%s/%v doesn't return a ServiceEntry object", namespace, serviceEntryName)
+	}
+	return serviceEntry.DeepCopyIstioObject(), nil
+}
+
+func (in *IstioClient) UpdateServiceEntry(namespace string, serviceEntryName string, spec map[string]interface{}) (IstioObject, error) {
+	jsonPatch, err := json.Marshal(spec)
+	if err != nil {
+		return nil, err
+	}
+	result, err := in.istioNetworkingApi.Patch(types.MergePatchType).Namespace(namespace).Resource(serviceentries).SubResource(serviceEntryName).Body(jsonPatch).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	serviceEntry, ok := result.(*ServiceEntry)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a ServiceEntry object", namespace, serviceEntryName)
 	}
 	return serviceEntry.DeepCopyIstioObject(), nil
 }
@@ -202,6 +255,23 @@ func (in *IstioClient) GetDestinationRule(namespace string, destinationrule stri
 	return destinationRule.DeepCopyIstioObject(), nil
 }
 
+func (in *IstioClient) UpdateDestinationRule(namespace string, destinationrule string, spec map[string]interface{}) (IstioObject, error) {
+	jsonPatch, err := json.Marshal(spec)
+	if err != nil {
+		return nil, err
+	}
+	result, err := in.istioNetworkingApi.Patch(types.MergePatchType).Namespace(namespace).Resource(destinationRules).SubResource(destinationrule).Body(jsonPatch).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	destinationRule, ok := result.(*DestinationRule)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a DestinationRule object", namespace, destinationrule)
+	}
+	return destinationRule.DeepCopyIstioObject(), nil
+}
+
 // GetQuotaSpecs returns all QuotaSpecs objects for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetQuotaSpecs(namespace string) ([]IstioObject, error) {
@@ -223,6 +293,23 @@ func (in *IstioClient) GetQuotaSpecs(namespace string) ([]IstioObject, error) {
 
 func (in *IstioClient) GetQuotaSpec(namespace string, quotaSpecName string) (IstioObject, error) {
 	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(quotaspecs).SubResource(quotaSpecName).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	quotaSpec, ok := result.(*QuotaSpec)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a QuotaSpec object", namespace, quotaSpecName)
+	}
+	return quotaSpec.DeepCopyIstioObject(), nil
+}
+
+func (in *IstioClient) UpdateQuotaSpec(namespace string, quotaSpecName string, spec map[string]interface{}) (IstioObject, error) {
+	jsonPatch, err := json.Marshal(spec)
+	if err != nil {
+		return nil, err
+	}
+	result, err := in.istioConfigApi.Patch(types.MergePatchType).Namespace(namespace).Resource(quotaspecs).SubResource(quotaSpecName).Body(jsonPatch).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -265,6 +352,24 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 	}
 	return quotaSpecBinding.DeepCopyIstioObject(), nil
 }
+
+func (in *IstioClient) UpdateQuotaSpecBinding(namespace string, quotaSpecBindingName string, spec map[string]interface{}) (IstioObject, error) {
+	jsonPatch, err := json.Marshal(spec)
+	if err != nil {
+		return nil, err
+	}
+	result, err := in.istioConfigApi.Patch(types.MergePatchType).Namespace(namespace).Resource(quotaspecbindings).SubResource(quotaSpecBindingName).Body(jsonPatch).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	quotaSpecBinding, ok := result.(*QuotaSpecBinding)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a QuotaSpecBinding object", namespace, quotaSpecBindingName)
+	}
+	return quotaSpecBinding.DeepCopyIstioObject(), nil
+}
+
 
 // GetDestinationRulesSubsets returns an array of subset names where a specific version is defined for a given service
 func GetDestinationRulesSubsets(destinationRules []IstioObject, serviceName, version string) []string {

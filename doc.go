@@ -486,6 +486,12 @@ type JaegerInfoResponse struct {
 	Body models.JaegerInfo
 }
 
+// swagger:response istioConfigUpdated
+type IstioConfigUpdatedResponse struct {
+	// in: body
+	Body string
+}
+
 //////////////////
 // SWAGGER MODELS
 //////////////////

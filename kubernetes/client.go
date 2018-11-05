@@ -68,6 +68,12 @@ type IstioClientInterface interface {
 	GetStatefulSets(namespace string) ([]v1beta2.StatefulSet, error)
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
+	UpdateDestinationRule(namespace string, destinationrule string, spec map[string]interface{}) (IstioObject, error)
+	UpdateGateway(namespace string, gateway string, spec map[string]interface{}) (IstioObject, error)
+	UpdateServiceEntry(namespace string, serviceEntryName string, spec map[string]interface{}) (IstioObject, error)
+	UpdateQuotaSpec(namespace string, quotaSpecName string, spec map[string]interface{}) (IstioObject, error)
+	UpdateQuotaSpecBinding(namespace string, quotaSpecBindingName string, spec map[string]interface{}) (IstioObject, error)
+	UpdateVirtualService(namespace string, virtualservice string, spec map[string]interface{}) (IstioObject, error)
 	IsOpenShift() bool
 	Stop()
 }

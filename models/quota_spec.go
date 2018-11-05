@@ -26,3 +26,11 @@ func (qs *QuotaSpec) Parse(quotaSpec kubernetes.IstioObject) {
 	qs.ResourceVersion = quotaSpec.GetObjectMeta().ResourceVersion
 	qs.Rules = quotaSpec.GetSpec()["rules"]
 }
+
+func (qs *QuotaSpec) Spec() (map[string]interface{}) {
+	spec := make(map[string]interface{})
+	spec["spec"] = make(map[string]interface{})
+	innerSpec := spec["spec"].(map[string]interface{})
+	innerSpec["rules"] = qs.Rules
+	return spec
+}

@@ -58,6 +58,16 @@ func (dRule *DestinationRule) Parse(destinationRule kubernetes.IstioObject) {
 	dRule.Subsets = destinationRule.GetSpec()["subsets"]
 }
 
+func (dRule *DestinationRule) Spec() (map[string]interface{}) {
+	spec := make(map[string]interface{})
+	spec["spec"] = make(map[string]interface{})
+	innerSpec := spec["spec"].(map[string]interface{})
+	innerSpec["host"] = dRule.Host
+	innerSpec["trafficPolicy"] = dRule.TrafficPolicy
+	innerSpec["subsets"] = dRule.Subsets
+	return spec
+}
+
 func (dRule *DestinationRule) HasCircuitBreaker(namespace string, serviceName string, version string) bool {
 	if host, ok := dRule.Host.(string); ok && kubernetes.FilterByHost(host, serviceName, namespace) {
 		// CB is set at DR level, so it's true for the service and all versions

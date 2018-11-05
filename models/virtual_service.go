@@ -61,6 +61,18 @@ func (vService *VirtualService) Parse(virtualService kubernetes.IstioObject) {
 	vService.Tls = virtualService.GetSpec()["tls"]
 }
 
+func (vService *VirtualService) Spec() (map[string]interface{}) {
+	spec := make(map[string]interface{})
+	spec["spec"] = make(map[string]interface{})
+	innerSpec := spec["spec"].(map[string]interface{})
+	innerSpec["hosts"] = vService.Hosts
+	innerSpec["gateways"] = vService.Gateways
+	innerSpec["http"] = vService.Http
+	innerSpec["tcp"] = vService.Tcp
+	innerSpec["tls"] = vService.Tls
+	return spec
+}
+
 // IsValidHost returns true if VirtualService hosts applies to the service
 func (vService *VirtualService) IsValidHost(namespace string, serviceName string) bool {
 	if serviceName == "" {
