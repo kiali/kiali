@@ -45,57 +45,69 @@
       ]
     }
   ],
-  "virtualServices": [
-    {
-      "name": "reviews",
-      "createdAt": "2018-07-02T13:44:01+02:00",
-      "resourceVersion": "393057",
-      "hosts": ["reviews"],
-      "gateways": null,
-      "http": [
-        {
-          "route": [
-            {
-              "destination": {
-                "host": "reviews",
-                "subset": "v1"
+  "virtualServices": {
+    "items": [
+      {
+        "name": "reviews",
+        "createdAt": "2018-07-02T13:44:01+02:00",
+        "resourceVersion": "393057",
+        "hosts": ["reviews"],
+        "gateways": null,
+        "http": [
+          {
+            "route": [
+              {
+                "destination": {
+                  "host": "reviews",
+                  "subset": "v1"
+                }
               }
-            }
-          ]
-        }
-      ],
-      "tcp": null
+            ]
+          }
+        ],
+        "tcp": null
+      }
+    ],
+    "permissions": {
+      "update": false,
+      "delete": false
     }
-  ],
-  "destinationRules": [
-    {
-      "name": "reviews",
-      "createdAt": "2018-07-02T13:44:01+02:00",
-      "resourceVersion": "393061",
-      "host": "reviews",
-      "trafficPolicy": null,
-      "subsets": [
-        {
-          "labels": {
-            "version": "v1"
+  },
+  "destinationRules": {
+    "items": [
+      {
+        "name": "reviews",
+        "createdAt": "2018-07-02T13:44:01+02:00",
+        "resourceVersion": "393061",
+        "host": "reviews",
+        "trafficPolicy": null,
+        "subsets": [
+          {
+            "labels": {
+              "version": "v1"
+            },
+            "name": "v1"
           },
-          "name": "v1"
-        },
-        {
-          "labels": {
-            "version": "v2"
+          {
+            "labels": {
+              "version": "v2"
+            },
+            "name": "v2"
           },
-          "name": "v2"
-        },
-        {
-          "labels": {
-            "version": "v3"
-          },
-          "name": "v3"
-        }
-      ]
+          {
+            "labels": {
+              "version": "v3"
+            },
+            "name": "v3"
+          }
+        ]
+      }
+    ],
+    "permissions": {
+      "update": false,
+      "delete": false
     }
-  ],
+  },
   "dependencies": {},
   "pods": [
     {

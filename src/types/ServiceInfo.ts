@@ -1,6 +1,7 @@
 import { ServiceHealth } from './Health';
 import { PfColors } from '../components/Pf/PfColors';
 import { Pod, Port, ObjectCheck, ObjectValidation } from './IstioObjects';
+import { ResourcePermissions } from './Permissions';
 
 export interface Endpoints {
   addresses?: EndpointAddress[];
@@ -261,6 +262,11 @@ export interface VirtualService {
   tls?: TLSRoute[];
 }
 
+export interface VirtualServices {
+  items: VirtualService[];
+  permissions: ResourcePermissions;
+}
+
 // Destination Rule
 
 export interface ConsistentHashLB {
@@ -332,6 +338,11 @@ export interface DestinationRule {
   subsets?: Subset[];
 }
 
+export interface DestinationRules {
+  items: DestinationRule[];
+  permissions: ResourcePermissions;
+}
+
 export interface SourceWorkload {
   name: string;
   namespace: string;
@@ -360,8 +371,8 @@ export interface ServiceDetailsInfo {
   service: Service;
   endpoints?: Endpoints[];
   istioSidecar: boolean;
-  virtualServices?: VirtualService[];
-  destinationRules?: DestinationRule[];
+  virtualServices: VirtualServices;
+  destinationRules: DestinationRules;
   dependencies?: { [key: string]: SourceWorkload[] };
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];

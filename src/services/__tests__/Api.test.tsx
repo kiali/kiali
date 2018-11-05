@@ -63,8 +63,8 @@ describe('#GetServiceDetail using Promises', () => {
       expect(data.ports).toBeInstanceOf(Array);
       expect(data.endpoints).toBeInstanceOf(Array);
       expect(data.pods).toBeInstanceOf(Array);
-      expect(data.virtualServices).toBeInstanceOf(Array);
-      expect(data.destinationRules).toBeInstanceOf(Array);
+      expect(data.virtualServices.items).toBeInstanceOf(Array);
+      expect(data.destinationRules.items).toBeInstanceOf(Array);
       expect(data.dependencies).toBeInstanceOf(Object);
     });
   });

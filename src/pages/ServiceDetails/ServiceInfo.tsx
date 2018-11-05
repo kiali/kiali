@@ -57,17 +57,14 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
       hasDestinationRuleChecks: false
     };
 
-    const virtualServices = this.props.serviceDetails.virtualServices || [];
-    const destinationRules = this.props.serviceDetails.destinationRules || [];
-
-    validationChecks.hasVirtualServiceChecks = virtualServices.some(
+    validationChecks.hasVirtualServiceChecks = this.props.serviceDetails.virtualServices.items.some(
       virtualService =>
         this.props.validations['virtualservice'] &&
         this.props.validations['virtualservice'][virtualService.name] &&
         this.props.validations['virtualservice'][virtualService.name].checks.length > 0
     );
 
-    validationChecks.hasDestinationRuleChecks = destinationRules.some(
+    validationChecks.hasDestinationRuleChecks = this.props.serviceDetails.destinationRules.items.some(
       destinationRule =>
         this.props.validations['destinationrule'] &&
         this.props.validations['destinationrule'][destinationRule.name] &&
@@ -148,19 +145,19 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       {'Source Workloads (' + Object.keys(dependencies).length + ')'}
                     </NavItem>
                     <NavItem eventKey={'virtualservices'}>
-                      {'Virtual Services (' + virtualServices.length + ')'}
+                      {'Virtual Services (' + virtualServices.items.length + ')'}
                       {validationChecks.hasVirtualServiceChecks
                         ? getValidationIcon(
-                            (this.props.serviceDetails.virtualServices || []).map(a => a.name),
+                            (this.props.serviceDetails.virtualServices.items || []).map(a => a.name),
                             'virtualservice'
                           )
                         : undefined}
                     </NavItem>
                     <NavItem eventKey={'destinationrules'}>
-                      {'Destination Rules (' + destinationRules.length + ')'}
+                      {'Destination Rules (' + destinationRules.items.length + ')'}
                       {validationChecks.hasDestinationRuleChecks
                         ? getValidationIcon(
-                            (this.props.serviceDetails.destinationRules || []).map(a => a.name),
+                            (this.props.serviceDetails.destinationRules.items || []).map(a => a.name),
                             'destinationrule'
                           )
                         : undefined}
@@ -178,17 +175,20 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       )}
                     </TabPane>
                     <TabPane eventKey={'virtualservices'}>
-                      {(virtualServices.length > 0 || this.props.serviceDetails.istioSidecar) && (
+                      {(virtualServices.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoVirtualServices
-                          virtualServices={virtualServices}
+                          virtualServices={virtualServices.items}
                           editorLink={editorLink}
                           validations={this.props.validations!['virtualservice']}
                         />
                       )}
                     </TabPane>
                     <TabPane eventKey={'destinationrules'}>
-                      {(destinationRules.length > 0 || this.props.serviceDetails.istioSidecar) && (
-                        <ServiceInfoDestinationRules destinationRules={destinationRules} editorLink={editorLink} />
+                      {(destinationRules.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
+                        <ServiceInfoDestinationRules
+                          destinationRules={destinationRules.items}
+                          editorLink={editorLink}
+                        />
                       )}
                     </TabPane>
                   </TabContent>

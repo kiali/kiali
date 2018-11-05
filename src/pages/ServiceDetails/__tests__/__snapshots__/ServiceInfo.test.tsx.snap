@@ -30,35 +30,41 @@ ShallowWrapper {
     serviceDetails={
       Object {
         "dependencies": Object {},
-        "destinationRules": Array [
-          Object {
-            "createdAt": "2018-07-02T13:44:01+02:00",
-            "host": "reviews",
-            "name": "reviews",
-            "resourceVersion": "393061",
-            "subsets": Array [
-              Object {
-                "labels": Object {
-                  "version": "v1",
+        "destinationRules": Object {
+          "items": Array [
+            Object {
+              "createdAt": "2018-07-02T13:44:01+02:00",
+              "host": "reviews",
+              "name": "reviews",
+              "resourceVersion": "393061",
+              "subsets": Array [
+                Object {
+                  "labels": Object {
+                    "version": "v1",
+                  },
+                  "name": "v1",
                 },
-                "name": "v1",
-              },
-              Object {
-                "labels": Object {
-                  "version": "v2",
+                Object {
+                  "labels": Object {
+                    "version": "v2",
+                  },
+                  "name": "v2",
                 },
-                "name": "v2",
-              },
-              Object {
-                "labels": Object {
-                  "version": "v3",
+                Object {
+                  "labels": Object {
+                    "version": "v3",
+                  },
+                  "name": "v3",
                 },
-                "name": "v3",
-              },
-            ],
-            "trafficPolicy": null,
+              ],
+              "trafficPolicy": null,
+            },
+          ],
+          "permissions": Object {
+            "delete": false,
+            "update": false,
           },
-        ],
+        },
         "endpoints": Array [
           Object {
             "addresses": Array [
@@ -137,30 +143,36 @@ ShallowWrapper {
           "resourceVersion": "2652",
           "type": "ClusterIP",
         },
-        "virtualServices": Array [
-          Object {
-            "createdAt": "2018-07-02T13:44:01+02:00",
-            "gateways": null,
-            "hosts": Array [
-              "reviews",
-            ],
-            "http": Array [
-              Object {
-                "route": Array [
-                  Object {
-                    "destination": Object {
-                      "host": "reviews",
-                      "subset": "v1",
+        "virtualServices": Object {
+          "items": Array [
+            Object {
+              "createdAt": "2018-07-02T13:44:01+02:00",
+              "gateways": null,
+              "hosts": Array [
+                "reviews",
+              ],
+              "http": Array [
+                Object {
+                  "route": Array [
+                    Object {
+                      "destination": Object {
+                        "host": "reviews",
+                        "subset": "v1",
+                      },
                     },
-                  },
-                ],
-              },
-            ],
-            "name": "reviews",
-            "resourceVersion": "393057",
-            "tcp": null,
+                  ],
+                },
+              ],
+              "name": "reviews",
+              "resourceVersion": "393057",
+              "tcp": null,
+            },
+          ],
+          "permissions": Object {
+            "delete": false,
+            "update": false,
           },
-        ],
+        },
       }
     }
     validations={Object {}}

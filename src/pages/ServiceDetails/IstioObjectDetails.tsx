@@ -9,6 +9,8 @@ import 'brace/theme/eclipse';
 import VirtualServiceDetail from './ServiceInfo/IstioObjectDetails/VirtualServiceDetail';
 import './ServiceInfo/IstioObjectDetails/IstioObjectDetails.css';
 import { Link } from 'react-router-dom';
+import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
+import { ResourcePermissions } from '../../types/Permissions';
 
 const yaml = require('js-yaml');
 
@@ -30,6 +32,8 @@ type IstioObjectDetailsProps = {
   onSelectTab: (tabName: string, tabKey?: string) => void;
   activeTab: (tabName: string, whenEmpty: string) => string;
   servicePageURL: string;
+  permissions: ResourcePermissions;
+  onDelete: () => void;
 };
 
 type IstioObjectDetailsState = {
@@ -152,6 +156,13 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
     const defaultDetailTab = this.isVirtualService() ? 'overview' : 'yaml';
     return (
       <div className="container-fluid container-cards-pf">
+        <div style={{ float: 'right' }}>
+          <IstioActionDropdown
+            objectName={this.props.object.name}
+            canDelete={this.props.permissions.delete}
+            onDelete={this.props.onDelete}
+          />
+        </div>
         <Row className="row-cards-pf">
           <Col>
             <TabContainer

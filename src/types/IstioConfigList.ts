@@ -1,5 +1,5 @@
 import Namespace from './Namespace';
-import { DestinationRule, VirtualService } from './ServiceInfo';
+import { DestinationRule, DestinationRules, VirtualService, VirtualServices } from './ServiceInfo';
 import { ObjectValidation } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
 
@@ -20,8 +20,8 @@ export interface IstioConfigItem {
 export interface IstioConfigList {
   namespace: Namespace;
   gateways: Gateway[];
-  virtualServices: VirtualService[];
-  destinationRules: DestinationRule[];
+  virtualServices: VirtualServices;
+  destinationRules: DestinationRules;
   serviceEntries: ServiceEntry[];
   rules: IstioRule[];
   quotaSpecs: QuotaSpec[];
@@ -156,22 +156,27 @@ const includeName = (name: string, names: string[]) => {
   return false;
 };
 
-export const filterByName = (unfiltered: IstioConfigList, names: string[]) => {
+export const filterByName = (unfiltered: IstioConfigList, names: string[]): IstioConfigList => {
   if (names && names.length === 0) {
     return unfiltered;
   }
-  let filtered: IstioConfigList = {
+  return {
     namespace: unfiltered.namespace,
     gateways: unfiltered.gateways.filter(gw => includeName(gw.name, names)),
-    virtualServices: unfiltered.virtualServices.filter(vs => includeName(vs.name, names)),
-    destinationRules: unfiltered.destinationRules.filter(dr => includeName(dr.name, names)),
+    virtualServices: {
+      permissions: unfiltered.virtualServices.permissions,
+      items: unfiltered.virtualServices.items.filter(vs => includeName(vs.name, names))
+    },
+    destinationRules: {
+      permissions: unfiltered.destinationRules.permissions,
+      items: unfiltered.destinationRules.items.filter(dr => includeName(dr.name, names))
+    },
     serviceEntries: unfiltered.serviceEntries.filter(se => includeName(se.name, names)),
     rules: unfiltered.rules.filter(r => includeName(r.name, names)),
     quotaSpecs: unfiltered.quotaSpecs.filter(qs => includeName(qs.name, names)),
     quotaSpecBindings: unfiltered.quotaSpecBindings.filter(qsb => includeName(qsb.name, names)),
     permissions: unfiltered.permissions
   };
-  return filtered;
 };
 
 export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFilters: string[]): IstioConfigItem[] => {
@@ -210,7 +215,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
   istioConfigList.gateways.forEach(gw =>
     istioItems.push({ namespace: istioConfigList.namespace.name, type: 'gateway', name: gw.name, gateway: gw })
   );
-  istioConfigList.virtualServices.forEach(vs =>
+  istioConfigList.virtualServices.items.forEach(vs =>
     istioItems.push({
       namespace: istioConfigList.namespace.name,
       type: 'virtualservice',
@@ -218,7 +223,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
       virtualService: vs
     })
   );
-  istioConfigList.destinationRules.forEach(dr =>
+  istioConfigList.destinationRules.items.forEach(dr =>
     istioItems.push({
       namespace: istioConfigList.namespace.name,
       type: 'destinationrule',

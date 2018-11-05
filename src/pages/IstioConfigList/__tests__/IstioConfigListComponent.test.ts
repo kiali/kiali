@@ -8,8 +8,8 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
       name: 'test'
     },
     gateways: [],
-    virtualServices: [],
-    destinationRules: [],
+    virtualServices: { items: [], permissions: { update: false, delete: false } },
+    destinationRules: { items: [], permissions: { update: false, delete: false } },
     serviceEntries: [],
     rules: [],
     quotaSpecs: [],
@@ -18,8 +18,8 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
   };
   names.forEach(name => {
     testData.gateways.push({ name: name + '0', createdAt: 't0', resourceVersion: 'r0' });
-    testData.virtualServices.push({ name: name + '1', createdAt: 't1', resourceVersion: 'r1' });
-    testData.destinationRules.push({ name: name + '2', createdAt: 't2', resourceVersion: 'r2' });
+    testData.virtualServices.items.push({ name: name + '1', createdAt: 't1', resourceVersion: 'r1' });
+    testData.destinationRules.items.push({ name: name + '2', createdAt: 't2', resourceVersion: 'r2' });
     testData.serviceEntries.push({ name: name + '3', createdAt: 't3', resourceVersion: 'r3' });
     testData.rules.push({ name: name + '4', match: '', actions: [] });
     testData.quotaSpecs.push({ name: name + '5', createdAt: 't5', resourceVersion: 'r5' });
@@ -35,15 +35,15 @@ describe('IstioConfigListComponent#filterByName', () => {
     let filtered = filterByName(unfiltered, ['white', 'red']);
     expect(filtered).toBeDefined();
     expect(filtered.gateways.length).toBe(2);
-    expect(filtered.virtualServices.length).toBe(2);
-    expect(filtered.destinationRules.length).toBe(2);
+    expect(filtered.virtualServices.items.length).toBe(2);
+    expect(filtered.destinationRules.items.length).toBe(2);
     expect(filtered.serviceEntries.length).toBe(2);
     expect(filtered.rules.length).toBe(2);
     expect(filtered.quotaSpecs.length).toBe(2);
     expect(filtered.quotaSpecBindings.length).toBe(2);
 
-    expect(filtered.virtualServices[0].name).toBe('white1');
-    expect(filtered.destinationRules[0].name).toBe('white2');
+    expect(filtered.virtualServices.items[0].name).toBe('white1');
+    expect(filtered.destinationRules.items[0].name).toBe('white2');
     expect(filtered.serviceEntries[0].name).toBe('white3');
     expect(filtered.rules[0].name).toBe('white4');
     expect(filtered.quotaSpecs[0].name).toBe('white5');
@@ -52,8 +52,8 @@ describe('IstioConfigListComponent#filterByName', () => {
     filtered = filterByName(unfiltered, ['bad']);
     expect(filtered).toBeDefined();
     expect(filtered.gateways.length).toBe(0);
-    expect(filtered.virtualServices.length).toBe(0);
-    expect(filtered.destinationRules.length).toBe(0);
+    expect(filtered.virtualServices.items.length).toBe(0);
+    expect(filtered.destinationRules.items.length).toBe(0);
     expect(filtered.serviceEntries.length).toBe(0);
     expect(filtered.rules.length).toBe(0);
     expect(filtered.quotaSpecs.length).toBe(0);

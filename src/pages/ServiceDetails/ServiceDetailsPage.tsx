@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Link, RouteComponentProps } from 'react-router-dom';
 import { Breadcrumb, Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
+import history from '../../app/History';
 import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
@@ -36,6 +37,20 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
           createdAt: '',
           resourceVersion: '',
           ip: ''
+        },
+        virtualServices: {
+          items: [],
+          permissions: {
+            update: false,
+            delete: false
+          }
+        },
+        destinationRules: {
+          items: [],
+          permissions: {
+            update: false,
+            delete: false
+          }
         }
       }
     };
@@ -50,28 +65,7 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   }
 
   validateParams(parsed: ParsedSearch): boolean {
-    if (!parsed.type || !parsed.name) {
-      return false;
-    }
-    // Check we have the right parameter
-    let validateTypes = ['virtualservice', 'destinationrule'];
-    if (parsed.type && validateTypes.indexOf(parsed.type) < 0) {
-      return false;
-    }
-    if (parsed.type === 'virtualservice' && this.state.serviceDetailsInfo.virtualServices) {
-      for (let i = 0; i < this.state.serviceDetailsInfo.virtualServices.length; i++) {
-        if (parsed.name === this.state.serviceDetailsInfo.virtualServices[i].name) {
-          return true;
-        }
-      }
-    } else if (parsed.type === 'destinationrule' && this.state.serviceDetailsInfo.destinationRules) {
-      for (let i = 0; i < this.state.serviceDetailsInfo.destinationRules.length; i++) {
-        if (parsed.name === this.state.serviceDetailsInfo.destinationRules[i].name) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return this.searchObject(parsed) !== undefined;
   }
 
   // Helper method to extract search urls with format
@@ -93,18 +87,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
   }
 
   searchObject(parsed: ParsedSearch) {
-    if (parsed.type === 'virtualservice' && this.state.serviceDetailsInfo.virtualServices) {
-      for (let i = 0; i < this.state.serviceDetailsInfo.virtualServices.length; i++) {
-        if (parsed.name === this.state.serviceDetailsInfo.virtualServices[i].name) {
-          return this.state.serviceDetailsInfo.virtualServices[i];
-        }
-      }
-    } else if (parsed.type === 'destinationrule' && this.state.serviceDetailsInfo.destinationRules) {
-      for (let i = 0; i < this.state.serviceDetailsInfo.destinationRules.length; i++) {
-        if (parsed.name === this.state.serviceDetailsInfo.destinationRules[i].name) {
-          return this.state.serviceDetailsInfo.destinationRules[i];
-        }
-      }
+    if (parsed.type === 'virtualservice') {
+      return this.state.serviceDetailsInfo.virtualServices.items.find(vs => parsed.name === vs.name);
+    } else if (parsed.type === 'destinationrule') {
+      return this.state.serviceDetailsInfo.destinationRules.items.find(dr => parsed.name === dr.name);
     }
     return undefined;
   }
@@ -162,6 +148,17 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       });
   };
 
+  onDeleteIstioObject = (type: string, name: string) => {
+    API.deleteIstioConfigDetail(authentication(), this.props.match.params.namespace, type, name)
+      .then(r => {
+        this.fetchBackend();
+        history.push(this.servicePageURL());
+      })
+      .catch(error => {
+        MessageCenter.add(API.getErrorMsg('Could not delete Istio object', error));
+      });
+  };
+
   renderBreadcrumbs = (parsedSearch: ParsedSearch, showingDetails: boolean) => {
     const urlParams = new URLSearchParams(this.props.location.search);
     const parsedSearchTypeHuman = parsedSearch.type === 'virtualservice' ? 'Virtual Service' : 'Destination Rule';
@@ -210,6 +207,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
     const parsedSearch = this.parseSearch();
     const istioObject = this.searchObject(parsedSearch);
     const editorVisible = parsedSearch.name && parsedSearch.type;
+    const permissions =
+      parsedSearch.type === 'virtualservice'
+        ? this.state.serviceDetailsInfo.virtualServices.permissions
+        : this.state.serviceDetailsInfo.destinationRules.permissions;
     return (
       <>
         {this.renderBreadcrumbs(parsedSearch, !!(editorVisible && istioObject))}
@@ -220,6 +221,8 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
             onSelectTab={this.tabSelectHandler}
             activeTab={this.activeTab}
             servicePageURL={this.servicePageURL(parsedSearch)}
+            onDelete={() => this.onDeleteIstioObject(parsedSearch.type! + 's', parsedSearch.name!)}
+            permissions={permissions}
           />
         ) : (
           <TabContainer
