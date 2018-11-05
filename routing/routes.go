@@ -85,6 +85,25 @@ func NewRoutes() (r *Routes) {
 			handlers.Root,
 			false,
 		},
+		// swagger:route GET /config getConfig
+		// ---
+		// Endpoint to get the config of Kiali
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      200: statusInfo
+		{
+			"Config",
+			"GET",
+			"/api/config",
+			handlers.Config,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/istio config istioConfigList
 		// ---
 		// Endpoint to get the list of Istio Config of a namespace

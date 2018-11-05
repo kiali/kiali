@@ -709,6 +709,27 @@
         }
       }
     },
+    "/config": {
+      "get": {
+        "description": "Endpoint to get the config of Kiali",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "getConfig",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/statusInfo"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/grafana": {
       "get": {
         "description": "Get the grafana URL and other descriptors",
