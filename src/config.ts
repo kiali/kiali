@@ -95,6 +95,7 @@ const conf = {
       namespaceHealth: (namespace: string) => `api/namespaces/${namespace}/health`,
       namespaceMetrics: (namespace: string) => `api/namespaces/${namespace}/metrics`,
       namespaceValidations: (namespace: string) => `api/namespaces/${namespace}/istio_validations`,
+      serverConfig: `api/config`,
       services: (namespace: string) => `api/namespaces/${namespace}/services`,
       service: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}`,
       serviceGraphElements: (namespace: string, service: string) =>
@@ -119,4 +120,25 @@ const conf = {
 
 export const config = () => {
   return deepFreeze(conf) as typeof conf;
+};
+
+export interface ServerConfig {
+  istioNamespace: string;
+  istioLabels: { [key: string]: string };
+}
+
+let serverConf: ServerConfig = {
+  istioNamespace: 'istio-system',
+  istioLabels: {
+    AppLabelName: 'app',
+    VersionLabelName: 'version'
+  }
+};
+
+export const setServerConfig = (newServerConf: ServerConfig) => {
+  serverConf = newServerConf;
+};
+
+export const serverConfig = () => {
+  return deepFreeze(serverConf) as typeof serverConf;
 };

@@ -21,6 +21,7 @@ import { Health } from '../../types/Health';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import { serverConfig } from '../../config';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -162,7 +163,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       .then(response => {
         // use source metrics for outgoing, except for:
         // - is is the istio namespace
-        let useDest = this.props.namespace === 'istio-system';
+        let useDest = this.props.namespace === serverConfig().istioNamespace;
         let metrics = useDest ? response.data.dest.metrics : response.data.source.metrics;
         const rcOut = metrics['request_count_out'];
         const ecOut = metrics['request_error_count_out'];

@@ -4,7 +4,7 @@ import { Token } from '../store/Store';
 import { HTTP_CODES } from '../types/Common';
 import { HelpDropdownActions } from './HelpDropdownActions';
 import { GrafanaActions } from './GrafanaActions';
-import { config } from '../config';
+import { config, setServerConfig, ServerConfig } from '../config';
 
 export enum LoginActionKeys {
   LOGIN_REQUEST = 'LOGIN_REQUEST',
@@ -71,8 +71,8 @@ export const LoginActions = {
           const token = getState().authentication.token.token;
           /** Check if the token is valid */
           const auth = `Bearer ${token}`;
-          API.getNamespaces(auth).then(
-            status => {
+          API.getServerConfig(auth).then(
+            response => {
               /** Login success */
               dispatch(
                 LoginActions.loginSuccess(
@@ -83,6 +83,11 @@ export const LoginActions = {
               );
               dispatch(HelpDropdownActions.refresh());
               dispatch(GrafanaActions.getInfo(auth));
+              const serverConfig: ServerConfig = {
+                istioNamespace: response.data.istioNamespace,
+                istioLabels: response.data.istioLabels
+              };
+              setServerConfig(serverConfig);
             },
             error => {
               /** Logout user */

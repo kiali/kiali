@@ -23,6 +23,7 @@ import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Response } from '../../services/Api';
+import { serverConfig } from '../../config';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -161,7 +162,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       // - unknown nodes (no source telemetry)
       // - istio namespace nodes (no source telemetry)
       let useDest = data.nodeType === NodeType.UNKNOWN;
-      useDest = useDest || this.props.namespace === 'istio-system';
+      useDest = useDest || this.props.namespace === serverConfig().istioNamespace;
       metrics = useDest ? all.dest.metrics : all.source.metrics;
       rcOut = metrics['request_count_out'];
       ecOut = metrics['request_error_count_out'];
@@ -175,7 +176,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     // set incoming unless it is a root (because they have no incoming edges)
     if (!data.isRoot) {
       // use dest metrics for incoming, except for service nodes which need source metrics to capture source errors
-      const useSource = data.nodeType === NodeType.SERVICE && data.namespace !== 'istio-system';
+      const useSource = data.nodeType === NodeType.SERVICE && data.namespace !== serverConfig().istioNamespace;
       metrics = useSource ? all.source.metrics : all.dest.metrics;
       rcIn = metrics['request_count_in'];
       ecIn = metrics['request_error_count_in'];

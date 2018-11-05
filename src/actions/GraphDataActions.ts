@@ -7,6 +7,7 @@ import { MessageCenterActions } from './MessageCenterActions';
 import { GraphDataActionKeys } from './GraphDataActionKeys';
 import { GraphType, NodeParamsType } from '../types/Graph';
 import { AppenderString } from '../types/Common';
+import { serverConfig } from '../config';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
 
@@ -103,8 +104,7 @@ export const GraphDataActions = {
       dispatch(GraphDataActions.getGraphDataStart());
       const duration = graphDuration.value;
       let restParams = { duration: duration + 's', graphType: graphType, injectServiceNodes: injectServiceNodes };
-      // TODO: this namespace should not be hardcoded
-      if (namespace.name === 'istio-system') {
+      if (namespace.name === serverConfig().istioNamespace) {
         restParams['includeIstio'] = true;
       }
 

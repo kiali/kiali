@@ -21,7 +21,7 @@ import { ServiceList } from '../types/ServiceList';
 import { AppList } from '../types/AppList';
 import { App } from '../types/App';
 import { GraphParamsType, NodeParamsType, NodeType } from '../types/Graph';
-import { config } from '../config';
+import { config, ServerConfig } from '../config';
 import { AuthToken, HTTP_VERBS } from '../types/Common';
 
 export interface Response<T> {
@@ -299,6 +299,10 @@ export const getNodeGraphElements = (
       // default to namespace graph
       return getGraphElements(auth, namespace, params);
   }
+};
+
+export const getServerConfig = (auth: AuthToken): Promise<Response<ServerConfig>> => {
+  return newRequest(HTTP_VERBS.GET, urls.serverConfig, {}, {}, auth);
 };
 
 export const getServiceDetail = (auth: AuthToken, namespace: string, service: string): Promise<ServiceDetailsInfo> => {

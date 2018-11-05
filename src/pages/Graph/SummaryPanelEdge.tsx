@@ -19,6 +19,7 @@ import Label from '../../components/Label/Label';
 import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import { serverConfig } from '../../config';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -218,7 +219,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       .then(response => {
         // HTTP
         let useDest = sourceData.nodeType === NodeType.UNKNOWN;
-        useDest = useDest || this.props.namespace === 'istio-system' || sourceData.nodeType === NodeType.SERVICE;
+        useDest =
+          useDest || this.props.namespace === serverConfig().istioNamespace || sourceData.nodeType === NodeType.SERVICE;
         let reporter = useDest ? response.data.dest : response.data.source;
         let metrics = reporter.metrics;
         const histograms = reporter.histograms;
@@ -266,7 +268,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         );
         // TCP (uses slightly different reporting)
         useDest = sourceData.nodeType === NodeType.UNKNOWN;
-        useDest = useDest || this.props.namespace === 'istio-system';
+        useDest = useDest || this.props.namespace === serverConfig().istioNamespace;
         reporter = useDest ? response.data.dest : response.data.source;
         metrics = reporter.metrics;
         const tcpSentRates = this.getNodeDataPoints(
