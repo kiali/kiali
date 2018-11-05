@@ -221,6 +221,16 @@ var (
 			collection:   &stdioList{},
 			groupVersion: &istioConfigGroupVersion,
 		},
+		handlerLabel: {
+			object: &handler{
+				TypeMeta: meta_v1.TypeMeta{
+					Kind:       handlerType,
+					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+				},
+			},
+			collection:   &handlerList{},
+			groupVersion: &istioConfigGroupVersion,
+		},
 		// Templates
 		apikeyLabel: {
 			object: &apikey{
@@ -362,6 +372,7 @@ var (
 		stackdriverType:    stackdrivers,
 		statsdType:         statsds,
 		stdioType:          stdios,
+		handlerType:        handlers,
 		// Templates
 		apikeyType:               apikeys,
 		authorizationType:        authorizations,

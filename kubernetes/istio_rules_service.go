@@ -74,6 +74,11 @@ func (in *IstioClient) getActionDetails(namespace string, istiorule string, acti
 		return nil, fmt.Errorf("Istio Rule %s/%s has a handler for a different namespace", namespace, istiorule)
 	}
 
+	// KIALI-1819 Istio 1.1.x has introduced generic handlers
+	if hType == "" {
+		hType = handlerType
+	}
+
 	handlerChan, instancesChan := make(chan istioResponse), make(chan istioResponse)
 
 	go in.getActionHandler(namespace, hType, hName, handlerChan)

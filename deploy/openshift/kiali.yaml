@@ -160,6 +160,7 @@ rules:
   - stackdrivers
   - statsds
   - stdios
+  - handlers
   - apikeys
   - authorizations
   - checknothings
