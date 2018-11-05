@@ -35,7 +35,6 @@ type IstioConfigDetails struct {
 // ResourcePermissions holds permission flags for an object type
 // True means allowed.
 type ResourcePermissions struct {
-	Create bool `json:"create"`
 	Update bool `json:"update"`
 	Delete bool `json:"delete"`
 }

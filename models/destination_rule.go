@@ -12,7 +12,10 @@ import (
 // swagger:model destinationRules
 // An array of destinationRule
 // swagger:allOf
-type DestinationRules []DestinationRule
+type DestinationRules struct {
+	Permissions ResourcePermissions `json:"permissions"`
+	Items       []DestinationRule   `json:"items"`
+}
 
 // DestinationRule destinationRule
 //
@@ -38,10 +41,11 @@ type DestinationRule struct {
 }
 
 func (dRules *DestinationRules) Parse(destinationRules []kubernetes.IstioObject) {
+	dRules.Items = []DestinationRule{}
 	for _, dr := range destinationRules {
 		destinationRule := DestinationRule{}
 		destinationRule.Parse(dr)
-		*dRules = append(*dRules, destinationRule)
+		dRules.Items = append(dRules.Items, destinationRule)
 	}
 }
 

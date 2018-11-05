@@ -6,12 +6,15 @@ import (
 
 // VirtualServices virtualServices
 //
-// This type is used for returning an array of VirtualServices
+// This type is used for returning an array of VirtualServices with some permission flags
 //
 // swagger:model virtualServices
 // An array of virtualService
 // swagger:allOf
-type VirtualServices []VirtualService
+type VirtualServices struct {
+	Permissions ResourcePermissions `json:"permissions"`
+	Items       []VirtualService    `json:"items"`
+}
 
 // VirtualService virtualService
 //
@@ -39,10 +42,11 @@ type VirtualService struct {
 }
 
 func (vServices *VirtualServices) Parse(virtualServices []kubernetes.IstioObject) {
+	vServices.Items = []VirtualService{}
 	for _, vs := range virtualServices {
 		virtualService := VirtualService{}
 		virtualService.Parse(vs)
-		*vServices = append(*vServices, virtualService)
+		vServices.Items = append(vServices.Items, virtualService)
 	}
 }
 

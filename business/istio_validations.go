@@ -131,9 +131,9 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	wg := sync.WaitGroup{}
 
 	switch objectType {
-	case "gateways":
+	case Gateways:
 		// Validations on Gateways are not yet in place
-	case "virtualservices":
+	case VirtualServices:
 		wg.Add(3)
 		errChan := make(chan error, 3)
 		go fetch(&vss, namespace, "", in.k8s.GetVirtualServices, &wg, errChan)
@@ -155,7 +155,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		} else {
 			err = <-errChan
 		}
-	case "destinationrules":
+	case DestinationRules:
 		if drs, err := in.k8s.GetDestinationRules(namespace, ""); err == nil {
 			for _, o := range drs {
 				meta := o.GetObjectMeta()
@@ -168,13 +168,13 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 			destinationRulesChecker := checkers.DestinationRulesChecker{DestinationRules: drs}
 			objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
 		}
-	case "serviceentries":
+	case ServiceEntries:
 		// Validations on ServiceEntries are not yet in place
-	case "rules":
+	case Rules:
 		// Validations on Istio Rules are not yet in place
-	case "quotaspecs":
+	case QuotaSpecs:
 		// Validations on QuotaSpecs are not yet in place
-	case "quotaspecbindings":
+	case QuotaSpecBindings:
 		// Validations on QuotaSpecBindings are not yet in place
 	default:
 		err = fmt.Errorf("Object type not found: %v", objectType)
