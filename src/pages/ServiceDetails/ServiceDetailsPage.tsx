@@ -19,13 +19,17 @@ type ServiceDetailsState = {
   validations: Validations;
 };
 
+interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
+  jaegerUrl: string;
+}
+
 interface ParsedSearch {
   type?: string;
   name?: string;
 }
 
-class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, ServiceDetailsState> {
-  constructor(props: RouteComponentProps<ServiceId>) {
+class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
+  constructor(props: ServiceDetailsProps) {
     super(props);
     this.state = {
       validations: {},
@@ -159,6 +163,10 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
       });
   };
 
+  navigateToJaeger = () => {
+    window.open(this.props.jaegerUrl + `/search?service=${this.props.match.params.service}`, '_blank');
+  };
+
   renderBreadcrumbs = (parsedSearch: ParsedSearch, showingDetails: boolean) => {
     const urlParams = new URLSearchParams(this.props.location.search);
     const parsedSearchTypeHuman = parsedSearch.type === 'virtualservice' ? 'Virtual Service' : 'Destination Rule';
@@ -289,18 +297,6 @@ class ServiceDetails extends React.Component<RouteComponentProps<ServiceId>, Ser
 
       this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
     };
-  };
-
-  private navigateToJaeger = () => {
-    API.getJaegerInfo(authentication())
-      .then(response => {
-        let data = response['data'];
-        window.open(data.url + `/search?service=${this.props.match.params.service}`, '_blank');
-      })
-      .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch Jaeger info', error));
-        console.log(error);
-      });
   };
 }
 

@@ -2,7 +2,6 @@ import WorkloadListPage from './pages/WorkloadList/WorkloadListPage';
 import ServiceListPage from './pages/ServiceList/ServiceListPage';
 import IstioConfigPage from './pages/IstioConfigList/IstioConfigListPage';
 import ServiceJaegerPage from './pages/ServiceJaeger/ServiceJaegerPage';
-import ServiceDetailsPage from './pages/ServiceDetails/ServiceDetailsPage';
 import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetailsPage';
 import WorkloadDetailsPage from './pages/WorkloadDetails/WorkloadDetailsPage';
 import AppListPage from './pages/AppList/AppListPage';
@@ -11,6 +10,7 @@ import { MenuItem, Path } from './types/Routes';
 
 import GraphRouteHandlerContainer from './pages/Graph/GraphRouteHandler';
 import OverviewPageContainer from './containers/OverviewPageContainer';
+import ServiceDetailsPageContainer from './containers/ServiceDetailsPageContainer';
 
 /**
  * Return array of objects that describe vertical menu
@@ -89,7 +89,7 @@ const pathRoutes: Path[] = [
   },
   {
     path: '/namespaces/:namespace/services/:service',
-    component: ServiceDetailsPage
+    component: ServiceDetailsPageContainer
   },
   {
     path: '/namespaces/:namespace/istio/:objectType/:object',
