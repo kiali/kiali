@@ -227,7 +227,9 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           <span> {renderTitle(data)}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
             <Label name="namespace" value={namespace} />
-            {node.data('version') && <Label name="version" value={node.data('version')} />}
+            {node.data('version') && (
+              <Label name={serverConfig().istioLabels['VersionLabelName']} value={node.data('version')} />
+            )}
           </div>
           {this.renderBadgeSummary(node.data('hasCB'), node.data('hasVS'), node.data('hasMissingSC'))}
         </div>
