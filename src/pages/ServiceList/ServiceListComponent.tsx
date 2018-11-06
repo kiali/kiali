@@ -17,7 +17,6 @@ import Namespace from '../../types/Namespace';
 import { ActiveFilter } from '../../types/Filters';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
 import { authentication } from '../../utils/Authentication';
-import { removeDuplicatesArray } from '../../utils/Common';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import ItemDescription from './ItemDescription';
@@ -29,6 +28,7 @@ import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
 import { IstioLogo } from '../../logos';
+import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 
 interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {
   rateInterval: number;
@@ -105,12 +105,7 @@ class ServiceListComponent extends ListComponent.Component<
     this.promises.cancelAll();
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
-    let namespacesSelected: string[] = activeFilters
-      .filter(activeFilter => activeFilter.category === 'Namespace')
-      .map(activeFilter => activeFilter.value);
-
-    /** Remove Duplicates */
-    namespacesSelected = removeDuplicatesArray(namespacesSelected);
+    const namespacesSelected = getFilterSelectedValues(ServiceListFilters.namespaceFilter, activeFilters);
 
     if (namespacesSelected.length === 0) {
       this.promises
@@ -152,13 +147,14 @@ class ServiceListComponent extends ListComponent.Component<
     this.promises
       .registerAll('services', servicesPromises)
       .then(responses => {
-        const currentPage = resetPagination ? 1 : this.state.pagination.page;
-
         let serviceListItems: ServiceListItem[] = [];
         responses.forEach(response => {
-          ServiceListFilters.filterBy(response.data, filters);
           serviceListItems = serviceListItems.concat(this.getServiceItem(response.data, rateInterval));
         });
+        return ServiceListFilters.filterBy(serviceListItems, filters);
+      })
+      .then(serviceListItems => {
+        const currentPage = resetPagination ? 1 : this.state.pagination.page;
         this.promises.cancel('sort');
         this.sortItemList(serviceListItems, this.state.currentSortField, this.state.isSortAscending)
           .then(sorted => {

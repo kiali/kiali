@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { FilterSelected } from '../Filters/StatefulFilters';
 import history from '../../app/History';
+import NamespaceFilter from '../Filters/NamespaceFilter';
 
 export enum TargetPage {
   APPLICATIONS = 'applications',
@@ -31,7 +32,7 @@ export class ListPageLink extends React.PureComponent<Props, {}> {
         updateFilters: () => {
           FilterSelected.setSelected([
             {
-              category: 'Namespace',
+              category: NamespaceFilter.category,
               value: namespace
             }
           ]);

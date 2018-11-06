@@ -1,12 +1,10 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
 import RateTable from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
-import { FilterSelected } from '../../components/Filters/StatefulFilters';
-import { ActiveFilter } from '../../types/Filters';
+import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { shouldRefreshData, getDatapoints } from './SummaryPanelCommon';
@@ -89,19 +87,15 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     const numApps = baseQuery.filter('[nodeType="app"]').size();
     const numEdges = cy.edges().size();
     const trafficRate = getAccumulatedTrafficRate(cy.edges());
-    const appsLink = (
-      <Link
-        to={this.props.namespace === 'all' ? '/applications' : `/applications?namespace=${this.props.namespace}`}
-        onClick={this.updateAppsFilter}
-      >
-        {this.props.namespace}
-      </Link>
-    );
+    const namespace = this.props.namespace === 'all' ? undefined : this.props.namespace;
 
     return (
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
         <div className="panel-heading">
-          Namespace: {appsLink}
+          Namespace:
+          <ListPageLink target={TargetPage.APPLICATIONS} namespace={namespace}>
+            {' ' + this.props.namespace}
+          </ListPageLink>
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numEdges)}
         </div>
         <div className="panel-body">
@@ -224,17 +218,5 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         <TcpChart label="TCP - Total Traffic" receivedRates={this.state.tcpReceived} sentRates={this.state.tcpSent} />
       </>
     );
-  };
-
-  private updateAppsFilter = () => {
-    let filters: ActiveFilter[] = [];
-    if (this.props.namespace !== 'all') {
-      let activeFilter: ActiveFilter = {
-        category: 'Namespace',
-        value: this.props.namespace.toString()
-      };
-      filters = [activeFilter];
-    }
-    FilterSelected.setSelected(filters);
   };
 }

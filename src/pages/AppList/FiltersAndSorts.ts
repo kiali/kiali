@@ -1,15 +1,15 @@
-import {
-  ActiveFilter,
-  FILTER_ACTION_APPEND,
-  FILTER_ACTION_UPDATE,
-  FilterType,
-  presenceValues
-} from '../../types/Filters';
-import { AppListItem, AppList, AppOverview } from '../../types/AppList';
+import { ActiveFilter, FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
+import { AppListItem } from '../../types/AppList';
 import { SortField } from '../../types/SortFilters';
-import { removeDuplicatesArray } from '../../utils/Common';
 import { AppHealth, getRequestErrorsRatio } from '../../types/Health';
 import NamespaceFilter from '../../components/Filters/NamespaceFilter';
+import {
+  istioSidecarFilter,
+  healthFilter,
+  getPresenceFilterValue,
+  getFilterSelectedValues,
+  filterByHealth
+} from '../../components/Filters/CommonFilters';
 
 type AppListItemHealth = AppListItem & { health: AppHealth };
 
@@ -75,20 +75,17 @@ export namespace AppListFilters {
     filterValues: []
   };
 
-  const istioSidecarFilter: FilterType = {
-    id: 'istiosidecar',
-    title: 'Istio Sidecar',
-    placeholder: 'Filter by IstioSidecar Validation',
-    filterType: 'select',
-    action: FILTER_ACTION_UPDATE,
-    filterValues: presenceValues
-  };
-
-  export const availableFilters: FilterType[] = [NamespaceFilter.create(), appNameFilter, istioSidecarFilter];
+  export const availableFilters: FilterType[] = [
+    NamespaceFilter.create(),
+    appNameFilter,
+    istioSidecarFilter,
+    healthFilter
+  ];
+  export const namespaceFilter = availableFilters[0];
 
   /** Filter Method */
 
-  const filterByName = (items: AppOverview[], names: string[]): AppOverview[] => {
+  const filterByName = (items: AppListItem[], names: string[]): AppListItem[] => {
     return items.filter(item => {
       let appNameFiltered = true;
       if (names.length > 0) {
@@ -104,33 +101,32 @@ export namespace AppListFilters {
     });
   };
 
-  const filterByIstioSidecar = (items: AppOverview[], istioSidecar: boolean): AppOverview[] => {
+  const filterByIstioSidecar = (items: AppListItem[], istioSidecar: boolean): AppListItem[] => {
     return items.filter(item => item.istioSidecar === istioSidecar);
   };
 
-  export const filterBy = (appsList: AppList, filters: ActiveFilter[]): void => {
-    /** Get AppName filter */
-    let appNamesSelected: string[] = filters
-      .filter(activeFilter => activeFilter.category === 'App Name')
-      .map(activeFilter => activeFilter.value);
-
-    /** Remove duplicates  */
-    appNamesSelected = removeDuplicatesArray(appNamesSelected);
-
-    /** Get IstioSidecar filter */
-    let istioSidecarValidationFilters: ActiveFilter[] = filters.filter(
-      activeFilter => activeFilter.category === 'Istio Sidecar'
-    );
-    let istioSidecar: boolean | undefined = undefined;
-
-    if (istioSidecarValidationFilters.length > 0) {
-      istioSidecar = istioSidecarValidationFilters[0].value === 'Present';
-      appsList.applications = filterByIstioSidecar(appsList.applications, istioSidecar);
+  export const filterBy = (
+    appsList: AppListItem[],
+    filters: ActiveFilter[]
+  ): Promise<AppListItem[]> | AppListItem[] => {
+    let ret = appsList;
+    const istioSidecar = getPresenceFilterValue(istioSidecarFilter, filters);
+    if (istioSidecar !== undefined) {
+      ret = filterByIstioSidecar(ret, istioSidecar);
     }
 
+    const appNamesSelected = getFilterSelectedValues(appNameFilter, filters);
     if (appNamesSelected.length > 0) {
-      appsList.applications = filterByName(appsList.applications, appNamesSelected);
+      ret = filterByName(ret, appNamesSelected);
     }
+
+    // We may have to perform a second round of filtering, using data fetched asynchronously (health)
+    // If not, exit fast
+    const healthSelected = getFilterSelectedValues(healthFilter, filters);
+    if (healthSelected.length > 0) {
+      return filterByHealth(ret, healthSelected);
+    }
+    return ret;
   };
 
   /** Sort Method */
