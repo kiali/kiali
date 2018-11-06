@@ -8,7 +8,8 @@
 #
 # If you do not yet have it, this script will download a copy of Istio.
 #
-# You must have "helm" version 2.10 or higher installed and in your PATH.
+# You should have "helm" version 2.10 or higher installed and in your PATH.
+# If you do not, a temporary helm will be installed locally.
 #
 # See --help for more details on options to this script.
 #
@@ -188,8 +189,15 @@ HELM_EXE=`which helm`
 if [ "$?" = "0" ]; then
   echo "The helm executable is found here: ${HELM_EXE}"
 else
-  echo "ERROR: You must install helm in your PATH before you can continue."
-  exit 1
+  TMP_HELM_DIR=${TMP_HELM_DIR:-/tmp/helm-install}
+  mkdir -p ${TMP_HELM_DIR}
+  export PATH=${PATH}:${TMP_HELM_DIR}
+  echo "You do not have helm installed in your PATH. A temporary helm installation will be downloaded to ${TMP_HELM_DIR}..."
+  curl https://raw.githubusercontent.com/helm/helm/master/scripts/get > ${TMP_HELM_DIR}/get_helm.sh
+  chmod 700 ${TMP_HELM_DIR}/get_helm.sh
+  HELM_INSTALL_DIR=${TMP_HELM_DIR} ${TMP_HELM_DIR}/get_helm.sh --no-sudo
+  HELM_EXE=${TMP_HELM_DIR}/helm
+  echo "Helm temporarily installed at ${HELM_EXE}. Version is: $(${HELM_EXE} version)"
 fi
 
 if [ "${ISTIO_DIR}" == "" ]; then
@@ -291,8 +299,6 @@ else
     _KIALI_TAG_ARG="--set kiali.tag=${KIALI_TAG}"
   fi
   _HELM_VALUES="--set kiali.enabled=${KIALI_ENABLED} ${_KIALI_TAG_ARG} --set tracing.enabled=${DASHBOARDS_ENABLED} --set grafana.enabled=${DASHBOARDS_ENABLED} --set global.mtls.enabled=${MTLS}"
-  echo $_HELM_VALUES
-  exit 1
 fi
 
 # Create the install yaml via the helm template command
