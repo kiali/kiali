@@ -7,7 +7,6 @@ describe('Namespaces reducer', () => {
     expect(namespaceState(undefined, {})).toEqual({
       isFetching: false,
       activeNamespace: { name: 'all' },
-      previousGraphState: undefined,
       items: ['all'],
       lastUpdated: undefined
     });
@@ -16,7 +15,6 @@ describe('Namespaces reducer', () => {
   it('should handle ACTIVE_NAMESPACE', () => {
     const currentState = {
       activeNamespace: { name: 'all' },
-      previousGraphState: undefined,
       isFetching: false,
       items: [],
       lastUpdated: undefined
@@ -27,29 +25,6 @@ describe('Namespaces reducer', () => {
     };
     const expectedState = {
       activeNamespace: { name: 'istio' },
-      previousGraphState: undefined,
-      isFetching: false,
-      items: [],
-      lastUpdated: undefined
-    };
-    expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
-  });
-
-  it('should handle PREVIOUS_GRAPH_STATE', () => {
-    const currentState = {
-      activeNamespace: { name: 'all' },
-      previousGraphState: undefined,
-      isFetching: false,
-      items: [],
-      lastUpdated: undefined
-    };
-    const requestStartedAction = {
-      type: NamespaceActionKeys.SET_PREVIOUS_GRAPH_STATE,
-      payload: 'abc'
-    };
-    const expectedState = {
-      activeNamespace: { name: 'all' },
-      previousGraphState: 'abc',
       isFetching: false,
       items: [],
       lastUpdated: undefined
@@ -60,7 +35,6 @@ describe('Namespaces reducer', () => {
   it('should handle NAMESPACE_REQUEST_STARTED', () => {
     const currentState = {
       activeNamespace: { name: 'all' },
-      previousGraphState: undefined,
       isFetching: false,
       items: [],
       lastUpdated: undefined
@@ -70,7 +44,6 @@ describe('Namespaces reducer', () => {
     };
     const expectedState = {
       activeNamespace: { name: 'all' },
-      previousGraphState: undefined,
       isFetching: true,
       items: [],
       lastUpdated: undefined
@@ -81,7 +54,6 @@ describe('Namespaces reducer', () => {
   it('should handle NAMESPACE_FAILED', () => {
     const currentState = {
       activeNamespace: { name: 'all' },
-      previousGraphState: undefined,
       isFetching: true,
       items: []
     };
@@ -90,7 +62,6 @@ describe('Namespaces reducer', () => {
     };
     const expectedState = {
       activeNamespace: { name: 'all' },
-      previousGraphState: undefined,
       isFetching: false,
       items: []
     };
@@ -101,7 +72,6 @@ describe('Namespaces reducer', () => {
     const currentDate = new Date();
     const currentState = {
       activeNamespace: { name: 'all' },
-      previousGraphState: undefined,
       isFetching: true,
       items: ['old', 'namespace'],
       lastUpdated: undefined
@@ -113,7 +83,6 @@ describe('Namespaces reducer', () => {
     };
     const expectedState = {
       activeNamespace: { name: 'all' },
-      previousGraphState: undefined,
       isFetching: false,
       items: ['a', 'b', 'c'],
       lastUpdated: currentDate

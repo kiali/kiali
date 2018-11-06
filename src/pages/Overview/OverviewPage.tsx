@@ -152,10 +152,6 @@ class OverviewPage extends React.Component<OverviewProps, State> {
     this.setState({ namespaces: sorted });
   };
 
-  handleNamespaceClick = (namespace: string) => {
-    this.props.setActiveNamespace({ name: namespace });
-  };
-
   render() {
     return (
       <>
@@ -168,17 +164,12 @@ class OverviewPage extends React.Component<OverviewProps, State> {
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
               {this.state.namespaces.map(ns => {
                 const nbApps = ns.appsInError.length + ns.appsInWarning.length + ns.appsInSuccess.length;
-                const encodedName = encodeURIComponent(ns.name);
+                const encodedNsName = encodeURIComponent(ns.name);
                 return (
                   <Col xs={6} sm={3} md={3} key={ns.name}>
                     <Card matchHeight={true} accented={true} aggregated={true}>
                       <CardTitle>
-                        <Link
-                          to={`/graph/namespaces/${encodedName}`}
-                          onClick={() => this.handleNamespaceClick(ns.name)}
-                        >
-                          {ns.name}
-                        </Link>
+                        <Link to={`/graph/namespaces?namespaces=` + encodedNsName}>{ns.name}</Link>
                       </CardTitle>
                       <CardBody>
                         <ListPageLink target={TargetPage.APPLICATIONS} namespace={ns.name}>
@@ -198,11 +189,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
                           {nbApps === 0 && <AggregateStatusNotification>N/A</AggregateStatusNotification>}
                         </AggregateStatusNotifications>
                         <div>
-                          <Link
-                            to={`/graph/namespaces/${encodedName}`}
-                            title="Graph"
-                            onClick={() => this.handleNamespaceClick(ns.name)}
-                          >
+                          <Link to={`/graph/namespaces?namespaces=` + ns.name} title="Graph">
                             <Icon type="pf" name="topology" style={{ paddingLeft: 10, paddingRight: 10 }} />
                           </Link>
                           <ListPageLink target={TargetPage.APPLICATIONS} namespace={ns.name} title="Applications list">

@@ -35,14 +35,6 @@ describe('NamespaceActions', () => {
     expect(NamespaceActions.setActiveNamespace({ name: 'istio' })).toEqual(expectedAction);
   });
 
-  it('should set previous graph state', () => {
-    const expectedAction = {
-      type: NamespaceActionKeys.SET_PREVIOUS_GRAPH_STATE,
-      payload: "{a: 'b'}"
-    };
-    expect(NamespaceActions.setPreviousGraphState("{a: 'b'}")).toEqual(expectedAction);
-  });
-
   it('request is success', () => {
     const currentDate = new Date();
     const expectedAction = {

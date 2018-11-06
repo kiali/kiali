@@ -4,7 +4,6 @@ import { NamespaceState } from '../store/Store';
 
 export const INITIAL_NAMESPACE_STATE: NamespaceState = {
   activeNamespace: { name: 'all' },
-  previousGraphState: undefined,
   isFetching: false,
   items: ['all'],
   lastUpdated: undefined
@@ -15,11 +14,6 @@ const namespaces = (state: NamespaceState = INITIAL_NAMESPACE_STATE, action) => 
     case NamespaceActionKeys.SET_ACTIVE_NAMESPACE:
       return updateState(state, {
         activeNamespace: { name: action.payload.name }
-      });
-
-    case NamespaceActionKeys.SET_PREVIOUS_GRAPH_STATE:
-      return updateState(state, {
-        previousGraphState: action.payload
       });
 
     case NamespaceActionKeys.NAMESPACE_REQUEST_STARTED:

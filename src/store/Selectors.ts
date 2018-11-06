@@ -11,13 +11,6 @@ export const activeNamespaceSelector = createSelector(
   namespace => namespace // identity function in this case, but as a Namespace type
 );
 
-const previousGraphState = (state: KialiAppState) => state.namespaces.previousGraphState;
-
-export const previousGraphStateSelector = createSelector(
-  previousGraphState,
-  x => x // identity function
-);
-
 const namespaceItems = (state: KialiAppState) => state.namespaces.items;
 
 export const namespaceItemsSelector = createSelector(

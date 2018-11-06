@@ -27,11 +27,18 @@ import StatefulTour from '../../components/Tour/StatefulTour';
 import graphHelp from './GraphHelpTour';
 
 type GraphPageProps = GraphParamsType & {
-  graphTimestamp: string;
-  graphData: any;
+  isError: boolean;
   isLoading: boolean;
-  showLegend: boolean;
+  isPageVisible: boolean;
   isReady: boolean;
+  graphData: any;
+  graphTimestamp: string;
+  pollInterval: PollIntervalInMs;
+  showLegend: boolean;
+  showSecurity: boolean;
+  showUnusedNodes: boolean;
+  summaryData: SummaryData | null;
+  // functions
   fetchGraphData: (
     namespace: Namespace,
     graphDuration: Duration,
@@ -43,12 +50,8 @@ type GraphPageProps = GraphParamsType & {
     node?: NodeParamsType
   ) => any;
   toggleLegend: () => void;
-  summaryData: SummaryData | null;
-  pollInterval: PollIntervalInMs;
-  isPageVisible: boolean;
-  showSecurity: boolean;
-  showUnusedNodes: boolean;
-  isError: boolean;
+  // redux store props (to avoid ts-ignore)
+  activeNamespace: Namespace;
 };
 
 type GraphPageState = {
@@ -115,13 +118,29 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
   }
 
   componentDidUpdate(prevProps: GraphPageProps) {
-    const prevNamespace = prevProps.namespace;
+    // Show a complete URL for the rendered graph
+    // Note: `history.replace` simply changes the address bar text, not re-navigation
+    const graphParams: GraphParamsType = {
+      node: this.props.node,
+      graphLayout: this.props.graphLayout,
+      edgeLabelMode: this.props.edgeLabelMode,
+      graphDuration: this.props.graphDuration,
+      graphType: this.props.graphType,
+      injectServiceNodes: this.props.injectServiceNodes
+    };
+    if (this.props.node) {
+      this.context.router.history.replace(makeNodeGraphUrlFromParams({ ...graphParams }));
+    } else {
+      this.context.router.history.replace(makeNamespaceGraphUrlFromParams({ ...graphParams }));
+    }
+
+    const prevActiveNamespace = prevProps.activeNamespace;
     const prevDuration = prevProps.graphDuration;
     const prevGraphType = prevProps.graphType;
     const prevPollInterval = prevProps.pollInterval;
     const prevInjectServiceNodes = prevProps.injectServiceNodes;
 
-    const namespaceHasChanged = prevNamespace.name !== this.props.namespace.name;
+    const activeNamespaceHasChanged = prevActiveNamespace.name !== this.props.activeNamespace.name;
     const nodeHasChanged = prevProps.node !== this.props.node;
     const graphTypeHasChanged = prevGraphType !== this.props.graphType;
     const durationHasChanged = prevDuration.value !== this.props.graphDuration.value;
@@ -129,7 +148,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     const injectServiceNodesHasChanged = prevInjectServiceNodes !== this.props.injectServiceNodes;
 
     if (
-      namespaceHasChanged ||
+      activeNamespaceHasChanged ||
       graphTypeHasChanged ||
       nodeHasChanged ||
       durationHasChanged ||
@@ -142,7 +161,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     if (
       prevProps.graphLayout.name !== this.props.graphLayout.name ||
       prevProps.graphData !== this.props.graphData ||
-      namespaceHasChanged
+      activeNamespaceHasChanged
     ) {
       this.errorBoundaryRef.current.cleanError();
     }
@@ -158,6 +177,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
 
   handleLayoutChange = (layout: Layout) => {
     const params = this.getGraphParams();
+    // TODO: This should be done via redux
     if (params.node) {
       this.context.router.history.replace(makeNodeGraphUrlFromParams({ ...params, graphLayout: layout }));
     } else {
@@ -176,7 +196,6 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
 
   render() {
     const graphParams: GraphParamsType = {
-      namespace: this.props.namespace,
       node: this.props.node,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
@@ -184,6 +203,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
       graphType: this.props.graphType,
       injectServiceNodes: this.props.injectServiceNodes
     };
+
     return (
       <>
         <StatefulTour steps={graphHelp} isOpen={this.state.showHelp} onClose={this.toggleHelp} />
@@ -237,7 +257,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
             {this.props.summaryData ? (
               <SummaryPanel
                 data={this.props.summaryData}
-                namespace={this.props.namespace.name}
+                namespace={this.props.activeNamespace.name}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
                 queryTime={this.props.graphTimestamp}
@@ -261,7 +281,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
 
   private loadGraphDataFromBackend = () => {
     const promise = this.props.fetchGraphData(
-      this.props.namespace,
+      this.props.node ? this.props.node.namespace : this.props.activeNamespace,
       this.props.graphDuration,
       this.props.graphType,
       this.props.injectServiceNodes,
@@ -326,7 +346,6 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
 
   private getGraphParams: () => GraphParamsType = () => {
     return {
-      namespace: this.props.namespace,
       node: this.props.node,
       graphDuration: this.props.graphDuration,
       graphLayout: this.props.graphLayout,

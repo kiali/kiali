@@ -42,8 +42,8 @@ describe('#getJaegerInfo using Promises', () => {
 });
 
 describe('#GetGraphElements using Promises', () => {
-  it('should load service detail data', () => {
-    return API.getGraphElements('ISTIO_SYSTEM', null).then(({ data }) => {
+  it('should load graph data', () => {
+    return API.getGraphElements({ namespaces: 'ISTIO_SYSTEM' }).then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.elements.nodes).toBeDefined();
       expect(data.elements.nodes).toBeInstanceOf(Array);

@@ -91,7 +91,7 @@ const conf = {
         `api/namespaces/${namespace}/istio/${objectType}/${object}/istio_validations`,
       jaeger: 'api/jaeger',
       namespaces: 'api/namespaces',
-      namespaceGraphElements: (namespace: string) => `api/namespaces/${namespace}/graph`,
+      namespacesGraphElements: `api/namespaces/graph`,
       namespaceHealth: (namespace: string) => `api/namespaces/${namespace}/health`,
       namespaceMetrics: (namespace: string) => `api/namespaces/${namespace}/metrics`,
       namespaceValidations: (namespace: string) => `api/namespaces/${namespace}/istio_validations`,

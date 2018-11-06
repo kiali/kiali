@@ -27,7 +27,6 @@ describe('CytoscapeGraph component test', () => {
 
     const wrapper = shallow(
       <CytoscapeGraph
-        namespace={{ name: testNamespace }}
         elements={GRAPH_DATA[testNamespace].elements}
         graphLayout={myLayout}
         graphDuration={myDuration}

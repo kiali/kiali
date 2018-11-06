@@ -35,15 +35,15 @@ export enum NodeType {
 }
 
 export interface NodeParamsType {
-  nodeType: NodeType;
-  workload: string;
   app: string;
-  version: string;
+  namespace: Namespace;
+  nodeType: NodeType;
   service: string;
+  version: string;
+  workload: string;
 }
 
 export interface GraphParamsType {
-  namespace: Namespace;
   node?: NodeParamsType;
   graphDuration: Duration;
   graphLayout: Layout;

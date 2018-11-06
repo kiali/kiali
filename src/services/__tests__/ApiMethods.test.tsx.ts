@@ -108,7 +108,7 @@ describe('#Test Methods return a Promise', () => {
   });
 
   it('#getGraphElements', () => {
-    const result = API.getGraphElements(authentication(), { name: 'istio-system' }, {});
+    const result = API.getGraphElements(authentication(), { namespaces: 'istio-system' });
     evaluatePromise(result);
   });
 

@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { GraphParamsType, GraphType } from '../../types/Graph';
 import { Duration, EdgeLabelMode } from '../../types/GraphFilter';
-import Namespace from '../../types/Namespace';
 import GraphFilterToolbarType from '../../types/GraphFilterToolbar';
 import { store } from '../../store/ConfigStore';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
@@ -17,7 +16,6 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
 
   render() {
     const graphParams: GraphParamsType = {
-      namespace: this.props.namespace,
       node: this.props.node,
       graphLayout: this.props.graphLayout,
       graphDuration: this.props.graphDuration,
@@ -30,7 +28,6 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
       <GraphFilter
         disabled={this.props.isLoading}
         onDurationChange={this.handleDurationChange}
-        onNamespaceChange={this.handleNamespaceChange}
         onNamespaceReturn={this.handleNamespaceReturn}
         onGraphTypeChange={this.handleGraphTypeChange}
         onEdgeLabelModeChange={this.handleEdgeLabelModeChange}
@@ -47,15 +44,8 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     });
   };
 
-  handleNamespaceChange = (namespace: Namespace) => {
-    store.dispatch(GraphActions.changed());
-    this.handleFilterChange({
-      ...this.getGraphParams(),
-      namespace
-    });
-  };
-
   handleNamespaceReturn = () => {
+    // TODO: This should be handled by a redux action that sets the node to undefined
     this.context.router.history.push(makeNamespaceGraphUrlFromParams({ ...this.getGraphParams(), node: undefined }));
   };
 
@@ -79,7 +69,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
       store.dispatch(
         // @ts-ignore
         GraphDataActions.fetchGraphData(
-          this.props.namespace,
+          store.getState().namespaces.activeNamespace,
           this.props.graphDuration,
           this.props.graphType,
           this.props.injectServiceNodes,
@@ -102,7 +92,6 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
 
   private getGraphParams: () => GraphParamsType = () => {
     return {
-      namespace: this.props.namespace,
       node: this.props.node,
       graphDuration: this.props.graphDuration,
       graphLayout: this.props.graphLayout,

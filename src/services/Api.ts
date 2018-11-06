@@ -272,8 +272,8 @@ export const getJaegerInfo = (auth: AuthToken): Promise<Response<JaegerInfo>> =>
   return newRequest(HTTP_VERBS.GET, urls.jaeger, {}, {}, auth);
 };
 
-export const getGraphElements = (auth: AuthToken, namespace: Namespace, params: any) => {
-  return newRequest(HTTP_VERBS.GET, urls.namespaceGraphElements(namespace.name), params, {}, auth);
+export const getGraphElements = (auth: AuthToken, params: any) => {
+  return newRequest(HTTP_VERBS.GET, urls.namespacesGraphElements, params, {}, auth);
 };
 
 export const getNodeGraphElements = (
@@ -297,7 +297,7 @@ export const getNodeGraphElements = (
       return newRequest(HTTP_VERBS.GET, urls.workloadGraphElements(namespace.name, node.workload), params, {}, auth);
     default:
       // default to namespace graph
-      return getGraphElements(auth, namespace, params);
+      return getGraphElements(auth, { namespaces: namespace.name, ...params });
   }
 };
 

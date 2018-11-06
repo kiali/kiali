@@ -7,14 +7,12 @@ import { Duration, EdgeLabelMode } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
 import { GraphParamsType, GraphType } from '../../types/Graph';
-import Namespace from '../../types/Namespace';
 import GraphRefreshContainer from '../../containers/GraphRefreshContainer';
 import GraphSettingsContainer from '../../containers/GraphSettingsContainer';
 
 export interface GraphFilterProps extends GraphParamsType {
   disabled: boolean;
   onDurationChange: (newDuration: Duration) => void;
-  onNamespaceChange: (newValue: Namespace) => void;
   onNamespaceReturn: () => void;
   onGraphTypeChange: (newType: GraphType) => void;
   onEdgeLabelModeChange: (newEdgeLabelMode: EdgeLabelMode) => void;
@@ -79,10 +77,7 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
             ) : (
               <label className={namespaceStyle}>Namespace:</label>
             )}
-            <NamespaceDropdownContainer
-              disabled={this.props.node || this.props.disabled}
-              onSelect={this.props.onNamespaceChange}
-            />
+            <NamespaceDropdownContainer disabled={this.props.node || this.props.disabled} />
           </FormGroup>
           <FormGroup className={zeroPaddingLeft}>
             <GraphSettingsContainer {...this.props} />

@@ -29,7 +29,7 @@ import * as H from '../../types/Health';
 import { authentication } from '../../utils/Authentication';
 import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
 
-import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
+import { makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 
 type CytoscapeGraphType = {
@@ -100,11 +100,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   }
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
-    this.namespaceChanged = this.namespaceChanged || this.props.namespace.name !== nextProps.namespace.name;
     this.nodeChanged = this.nodeChanged || this.props.node !== nextProps.node;
-    this.resetSelection = this.props.namespace.name !== nextProps.namespace.name;
     let result =
-      this.props.namespace.name !== nextProps.namespace.name ||
       this.props.node !== nextProps.node ||
       this.props.graphLayout !== nextProps.graphLayout ||
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
@@ -181,7 +178,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={this.onResize} />
         <EmptyGraphLayout
           elements={this.props.elements}
-          namespace={this.props.namespace.name}
+          namespace={store.getState().namespaces.activeNamespace.name}
           action={this.props.refresh}
           isLoading={this.props.isLoading}
           isError={this.props.isError}
@@ -432,27 +429,19 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     if (target.data('isOutside')) {
       if (!target.data('isInaccessible')) {
-        store.dispatch(GraphActions.changed());
-        const graphParams: GraphParamsType = {
-          namespace: { name: target.data('namespace') },
-          graphLayout: this.props.graphLayout,
-          graphDuration: this.props.graphDuration,
-          edgeLabelMode: this.props.edgeLabelMode,
-          graphType: this.props.graphType,
-          injectServiceNodes: this.props.injectServiceNodes
-        };
-        store.dispatch(NamespaceActions.setActiveNamespace(graphParams.namespace));
-        this.context.router.history.push(makeNamespaceGraphUrlFromParams(graphParams));
+        store.dispatch(NamespaceActions.setActiveNamespace({ name: target.data('namespace') }));
       }
       return;
     }
 
+    const namespace = target.data('namespace');
     const nodeType = target.data('nodeType');
     const workload = target.data('workload');
     const app = target.data('app');
     const version = targetType === 'group' ? undefined : event.summaryTarget.data('version');
     const service = target.data('service');
     const targetNode: NodeParamsType = {
+      namespace: { name: namespace },
       nodeType: nodeType,
       workload: workload,
       app: app,
@@ -483,7 +472,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
     store.dispatch(GraphActions.changed());
     const graphParamsWithNode: GraphParamsType = {
-      namespace: { name: event.summaryTarget.data('namespace') },
       graphLayout: this.props.graphLayout,
       node: targetNode,
       graphDuration: this.props.graphDuration,
@@ -491,7 +479,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       graphType: this.props.graphType,
       injectServiceNodes: this.props.injectServiceNodes
     };
-    store.dispatch(NamespaceActions.setActiveNamespace(graphParamsWithNode.namespace));
     this.context.router.history.push(makeNodeGraphUrlFromParams(graphParamsWithNode));
   };
 

@@ -32,9 +32,9 @@ export const getJaegerInfo = () => {
   return mockPromiseFromFile(`./src/services/__mockData__/getJaegerInfo.json`);
 };
 
-export const getGraphElements = (namespace: string, params: any) => {
-  if (GraphData.hasOwnProperty(namespace)) {
-    return Promise.resolve({ data: GraphData[namespace] });
+export const getGraphElements = (params: any) => {
+  if (GraphData.hasOwnProperty(params.namespaces)) {
+    return Promise.resolve({ data: GraphData[params.namespaces] });
   } else {
     return Promise.resolve({ data: {} });
   }

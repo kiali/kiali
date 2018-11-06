@@ -1,6 +1,7 @@
 import { NotificationGroup } from '../types/MessageCenter';
 import Namespace from '../types/Namespace';
-import { JsonString, PollIntervalInMs } from '../types/Common';
+import { PollIntervalInMs } from '../types/Common';
+
 // Store is the Redux Data store
 
 export interface GlobalState {
@@ -10,7 +11,6 @@ export interface GlobalState {
 
 export interface NamespaceState {
   readonly activeNamespace: Namespace;
-  readonly previousGraphState?: JsonString;
   readonly items?: string[];
   readonly isFetching: boolean;
   readonly lastUpdated?: Date;

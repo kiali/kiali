@@ -1,84 +1,80 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-import { connect } from 'react-redux';
 
 import { GraphParamsType, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import * as LayoutDictionary from '../../components/CytoscapeGraph/graphs/LayoutDictionary';
 import GraphPage from '../../containers/GraphPageContainer';
-import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../../components/Nav/NavUtils';
 import { config } from '../../config';
 import * as Enum from '../../utils/Enum';
-import { KialiAppState } from '../../store/Store';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import Namespace from '../../types/Namespace';
-import { JsonString } from '../../types/Common';
-import { activeNamespaceSelector, previousGraphStateSelector } from '../../store/Selectors';
-import { Dispatch } from 'redux';
-import { HistoryManager } from '../../app/History';
+import { store } from '../../store/ConfigStore';
 
 const URLSearchParams = require('url-search-params');
 
+/**
+ * GraphRouteHandler handles bookmarkability. It parses the URL and updates state to
+ * reflect information in the URL path variable and query parameters.  After rendering the
+ * graph reflecting the URL it's job is done, it should not react to internal state changes.
+ */
+
+// We hold non-redux-managed graph state (i.e. GraphParamsType) in session state
 const SESSION_KEY = 'graph-params';
 
-type GraphURLProps = {
-  namespace: string;
+// GraphURLPathProps holds path variable values.  Currenly all path variables are
+// relevant only to a node graph
+type GraphURLPathProps = {
   app: string;
+  namespace: string;
   service: string;
   version: string;
   workload: string;
-  duration: string;
-  graphType: string;
-  injectServiceNodes: string;
-  layout: string;
 };
 
-const mapStateToProps = (state: KialiAppState) => {
-  return {
-    activeNamespace: activeNamespaceSelector(state),
-    previousGraphState: previousGraphStateSelector(state)
-  };
-};
-
-const mapDispatchToProps = (dispatch: Dispatch<any>) => {
-  return {
-    setActiveNamespace: (namespace: Namespace) => {
-      dispatch(NamespaceActions.setActiveNamespace(namespace));
-    },
-    setPreviousGraphState: (graphState: JsonString) => {
-      dispatch(NamespaceActions.setPreviousGraphState(graphState));
-    }
-  };
+// GraphURLPathProps holds query param values.  It combines information held in redux state
+// and session state (no information should be managed in both).
+//
+// A note on 'keepState': This is necessary to support the 'Graph' option in the left
+// navigation menu.  Clicking on 'Graph' looks like a fresh URL navigation and therefore should
+// override the current state, but actually the UX is better when keeping the state.  This allows
+// the user to navigate around and when they come back to the graph be presented with their
+// previous settings.
+type GraphURLQueryProps = GraphParamsType & {
+  keepState: boolean;
+  namespaces: Namespace;
 };
 
 /**
  * Handle URL parameters for Graph page
  */
-export class GraphRouteHandler extends React.Component<RouteComponentProps<GraphURLProps>, GraphParamsType> {
+export default class GraphRouteHandler extends React.Component<
+  RouteComponentProps<GraphURLPathProps>,
+  GraphURLQueryProps
+> {
   static contextTypes = {
     router: () => null
   };
 
   static readonly graphParamsDefaults: GraphParamsType = {
-    namespace: { name: 'all' },
+    edgeLabelMode: EdgeLabelMode.HIDE,
     graphDuration: { value: config().toolbar.defaultDuration },
     graphLayout: LayoutDictionary.getLayout({ name: '' }),
-    edgeLabelMode: EdgeLabelMode.HIDE,
     graphType: GraphType.VERSIONED_APP,
     injectServiceNodes: false
   };
 
-  static parsePropsFromUrl = (queryString: string): GraphParamsType => {
+  static parsePropsFromQueryParams = (queryString: string): GraphURLQueryProps => {
     const urlParams = new URLSearchParams(queryString);
 
-    const _duration = urlParams.get('duration')
-      ? { value: urlParams.get('duration') }
-      : GraphRouteHandler.graphParamsDefaults.graphDuration;
     const _edgeLabelMode = Enum.fromValue(
       EdgeLabelMode,
       urlParams.get('edges'),
       GraphRouteHandler.graphParamsDefaults.edgeLabelMode
     );
+    const _graphDuration = urlParams.has('duration')
+      ? { value: urlParams.get('duration') }
+      : GraphRouteHandler.graphParamsDefaults.graphDuration;
     const _graphType = Enum.fromValue(
       GraphType,
       urlParams.get('graphType'),
@@ -87,27 +83,34 @@ export class GraphRouteHandler extends React.Component<RouteComponentProps<Graph
     const _injectServiceNodes = urlParams.has('injectServiceNodes')
       ? urlParams.get('injectServiceNodes') === 'true'
       : GraphRouteHandler.graphParamsDefaults.injectServiceNodes;
+    const _keepState = urlParams.has('keepState') ? urlParams.get('keepState') === 'true' : false;
+    const _namespaces = urlParams.has('namespaces') ? { name: urlParams.get('namespaces') } : { name: 'all' };
 
-    return {
-      namespace: { name: 'all' },
-      graphDuration: _duration,
-      graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
+    const result = {
       edgeLabelMode: _edgeLabelMode,
+      graphDuration: _graphDuration,
+      graphLayout: LayoutDictionary.getLayout({ name: urlParams.get('layout') }),
       graphType: _graphType,
-      injectServiceNodes: _injectServiceNodes
+      injectServiceNodes: _injectServiceNodes,
+      keepState: _keepState,
+      namespaces: _namespaces
     };
+    return result;
   };
 
-  static getNodeParamsFromProps(props: RouteComponentProps<GraphURLProps>): NodeParamsType | undefined {
+  static getNodeParamsFromProps(props: RouteComponentProps<GraphURLPathProps>): NodeParamsType | undefined {
     const app = props.match.params.app;
     const appOk = app && app !== 'unknown' && app !== 'undefined';
+    const namespace = props.match.params.namespace;
+    const namespaceOk = namespace && namespace !== 'unknown' && namespace !== 'undefined';
     const service = props.match.params.service;
     const serviceOk = service && service !== 'unknown' && service !== 'undefined';
     const workload = props.match.params.workload;
     const workloadOk = workload && workload !== 'unknown' && workload !== 'undefined';
-    if (!appOk && !serviceOk && !workloadOk) {
+    if (!appOk && !namespaceOk && !serviceOk && !workloadOk) {
       return;
     }
+
     let nodeType;
     let version;
     if (appOk || workloadOk) {
@@ -118,31 +121,42 @@ export class GraphRouteHandler extends React.Component<RouteComponentProps<Graph
       version = '';
     }
     const node: NodeParamsType = {
-      nodeType: nodeType,
       app: app,
+      namespace: { name: namespace },
+      nodeType: nodeType,
+      service: service,
       version: version,
-      workload: workload,
-      service: service
+      workload: workload
     };
     return node;
   }
 
-  static getDerivedStateFromProps(props: RouteComponentProps<GraphURLProps>, currentState: GraphParamsType) {
-    // at this point, the namespace in the url is incorrect, we need to rewrite the url
-    // to use the redux namespace
-    // @ts-ignore
-    const nextNamespace = props.activeNamespace;
+  static getDerivedStateFromProps(props: RouteComponentProps<GraphURLPathProps>, currentState: GraphParamsType) {
     const nextNode = GraphRouteHandler.getNodeParamsFromProps(props);
+
     const {
+      edgeLabelMode: nextEdgeLabelMode,
       graphDuration: nextDuration,
       graphLayout: nextLayout,
-      edgeLabelMode: nextEdgeLabelMode,
       graphType: nextGraphType,
-      injectServiceNodes: nextInjectServiceNodes
-    } = GraphRouteHandler.parsePropsFromUrl(props.location.search);
+      injectServiceNodes: nextInjectServiceNodes,
+      keepState: keepState,
+      namespaces: nextNamespaces
+    } = GraphRouteHandler.parsePropsFromQueryParams(props.location.search);
 
+    // for an explanation of 'keepState' see the above comment.
+    if (keepState) {
+      return null;
+    }
+
+    const currentNamespaces = store.getState().namespaces.activeNamespace;
+
+    const durationHasChanged = nextDuration.value !== currentState.graphDuration.value;
+    const edgeLabelModeChanged = nextEdgeLabelMode !== currentState.edgeLabelMode;
+    const graphTypeChanged = nextGraphType !== currentState.graphType;
+    const injectServiceNodesChanged = nextInjectServiceNodes !== currentState.injectServiceNodes;
     const layoutHasChanged = nextLayout.name !== currentState.graphLayout.name;
-    const namespaceHasChanged = nextNamespace.name !== currentState.namespace.name;
+    const namespaceHasChanged = !nextNode && nextNamespaces.name !== currentNamespaces.name;
     const nodeAppHasChanged = nextNode && currentState.node && nextNode.app !== currentState.node.app;
     const nodeServiceHasChanged = nextNode && currentState.node && nextNode.service !== currentState.node.service;
     const nodeVersionHasChanged = nextNode && currentState.node && nextNode.version !== currentState.node.version;
@@ -156,57 +170,47 @@ export class GraphRouteHandler extends React.Component<RouteComponentProps<Graph
       nodeVersionHasChanged ||
       nodeWorkloadHasChanged ||
       nodeTypeHasChanged;
-    const durationHasChanged = nextDuration.value !== currentState.graphDuration.value;
-    const edgeLabelModeChanged = nextEdgeLabelMode !== currentState.edgeLabelMode;
-    const graphTypeChanged = nextGraphType !== currentState.graphType;
-    const injectServiceNodesChanged = nextInjectServiceNodes !== currentState.injectServiceNodes;
+
+    // update the redux store with the URL information
+    if (namespaceHasChanged) {
+      store.dispatch(NamespaceActions.setActiveNamespace(nextNamespaces));
+    }
 
     if (
-      layoutHasChanged ||
-      namespaceHasChanged ||
       durationHasChanged ||
       edgeLabelModeChanged ||
+      injectServiceNodesChanged ||
       graphTypeChanged ||
-      nodeHasChanged ||
-      injectServiceNodesChanged
+      layoutHasChanged ||
+      nodeHasChanged
     ) {
-      const newParams: GraphParamsType = {
-        namespace: nextNamespace,
-        node: nextNode,
+      const newGraphParams: GraphParamsType = {
+        edgeLabelMode: nextEdgeLabelMode,
         graphDuration: nextDuration,
         graphLayout: nextLayout,
-        edgeLabelMode: nextEdgeLabelMode,
         graphType: nextGraphType,
-        injectServiceNodes: nextInjectServiceNodes
+        injectServiceNodes: nextInjectServiceNodes,
+        node: nextNode
       };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(newGraphParams));
 
-      // if the node is set then we are on zoomed in subview and
-      // we don't want to change the url because
-      // the handleDoubleTap has already changed the url
-      if (!newParams.node) {
-        HistoryManager.setGraphNamespaceParam(nextNamespace.name);
-      }
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(newParams));
-      return { ...newParams };
+      // Do we really need to return anything other than null?
+      return { ...newGraphParams };
     }
+
     return null;
   }
 
-  constructor(routeProps: RouteComponentProps<GraphURLProps>) {
+  constructor(routeProps: RouteComponentProps<GraphURLPathProps>) {
     super(routeProps);
     const previousParamsStr = sessionStorage.getItem(SESSION_KEY);
-    const graphParams: GraphParamsType = previousParamsStr
+    const graphParams: GraphURLQueryProps = previousParamsStr
       ? this.ensureGraphParamsDefaults(JSON.parse(previousParamsStr))
       : {
-          namespace: { name: routeProps.match.params.namespace },
           node: GraphRouteHandler.getNodeParamsFromProps(routeProps),
-          ...GraphRouteHandler.parsePropsFromUrl(routeProps.location.search)
+          ...GraphRouteHandler.parsePropsFromQueryParams(routeProps.location.search)
         };
     this.state = graphParams;
-  }
-
-  componentDidMount() {
-    this.updateGraphUrl();
   }
 
   render() {
@@ -217,23 +221,8 @@ export class GraphRouteHandler extends React.Component<RouteComponentProps<Graph
     );
   }
 
-  private updateGraphUrl() {
-    // Note: `history.replace` simply changes the address bar text, not re-navigation
-    if (this.state.node) {
-      this.context.router.history.replace(makeNodeGraphUrlFromParams(this.state));
-    } else {
-      this.context.router.history.replace(makeNamespaceGraphUrlFromParams(this.state));
-    }
-  }
-
   // Set default values in case we have an old state that is missing something
-  private ensureGraphParamsDefaults(graphParams: any): GraphParamsType {
+  private ensureGraphParamsDefaults(graphParams: any): GraphURLQueryProps {
     return { ...GraphRouteHandler.graphParamsDefaults, ...graphParams };
   }
 }
-
-const GraphRouteHandlerContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(GraphRouteHandler);
-export default GraphRouteHandlerContainer;

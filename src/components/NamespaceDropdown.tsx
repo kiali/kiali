@@ -20,7 +20,10 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
     this.props.refresh();
   }
 
-  handleSelectNamespace = (namespace: string) => this.props.onSelect({ name: namespace });
+  handleSelectNamespace = (namespace: string) => {
+    this.props.onSelect({ name: namespace });
+  };
+
   handleToggle = (isOpen: boolean) => isOpen && this.props.refresh();
 
   render() {

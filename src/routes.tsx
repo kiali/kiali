@@ -8,7 +8,7 @@ import AppListPage from './pages/AppList/AppListPage';
 import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
 import { MenuItem, Path } from './types/Routes';
 
-import GraphRouteHandlerContainer from './pages/Graph/GraphRouteHandler';
+import GraphRouteHandler from './pages/Graph/GraphRouteHandler';
 import OverviewPageContainer from './containers/OverviewPageContainer';
 import ServiceDetailsPageContainer from './containers/ServiceDetailsPageContainer';
 
@@ -26,7 +26,7 @@ const navItems: MenuItem[] = [
   {
     iconClass: 'fa pficon-topology',
     title: 'Graph',
-    to: '/graph/namespaces/all',
+    to: '/graph/namespaces?keepState=true',
     pathsActive: [/^\/graph\/(.*)/]
   },
   {
@@ -68,24 +68,24 @@ const pathRoutes: Path[] = [
     component: OverviewPageContainer
   },
   {
-    path: '/graph/namespaces/:namespace/applications/:app/versions/:version',
-    component: GraphRouteHandlerContainer
+    path: '/graph/node/namespaces/:namespace/applications/:app/versions/:version',
+    component: GraphRouteHandler
   },
   {
-    path: '/graph/namespaces/:namespace/applications/:app',
-    component: GraphRouteHandlerContainer
+    path: '/graph/node/namespaces/:namespace/applications/:app',
+    component: GraphRouteHandler
   },
   {
-    path: '/graph/namespaces/:namespace/services/:service',
-    component: GraphRouteHandlerContainer
+    path: '/graph/node/namespaces/:namespace/services/:service',
+    component: GraphRouteHandler
   },
   {
-    path: '/graph/namespaces/:namespace/workloads/:workload',
-    component: GraphRouteHandlerContainer
+    path: '/graph/node/namespaces/:namespace/workloads/:workload',
+    component: GraphRouteHandler
   },
   {
-    path: '/graph/namespaces/:namespace',
-    component: GraphRouteHandlerContainer
+    path: '/graph/namespaces',
+    component: GraphRouteHandler
   },
   {
     path: '/namespaces/:namespace/services/:service',

@@ -8,8 +8,10 @@ import { GraphDataActions } from '../actions/GraphDataActions';
 import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { bindActionCreators } from 'redux';
 import { GraphType, NodeParamsType } from '../types/Graph';
+import { activeNamespaceSelector } from '../store/Selectors';
 
 const mapStateToProps = (state: KialiAppState) => ({
+  activeNamespace: activeNamespaceSelector(state),
   graphTimestamp: state.graph.graphDataTimestamp,
   graphData: state.graph.graphData,
   isLoading: state.graph.isLoading,

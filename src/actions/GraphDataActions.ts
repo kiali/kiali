@@ -155,7 +155,11 @@ export const GraphDataActions = {
           }
         );
       }
-      return API.getGraphElements(authentication(), namespace, restParams).then(
+
+      if (namespace.name !== 'all') {
+        restParams['namespaces'] = namespace.name;
+      }
+      return API.getGraphElements(authentication(), restParams).then(
         response => {
           const responseData: any = response['data'];
           const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
