@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ##############################################################################
-# install-istio-via-helm.sh
+# install-istio-kiali-via-helm.sh
 #
 # Installs the Istio into your cluster (either Kubernetes or OpenShift)
 # using Helm.
