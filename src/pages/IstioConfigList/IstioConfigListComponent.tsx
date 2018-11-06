@@ -94,7 +94,9 @@ class IstioConfigListComponent extends ListComponent.Component<
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
     const namespacesSelected = getFilterSelectedValues(IstioConfigListFilters.namespaceFilter, activeFilters);
-    const istioTypeFilters = getFilterSelectedValues(IstioConfigListFilters.istioTypeFilter, activeFilters);
+    const istioTypeFilters = getFilterSelectedValues(IstioConfigListFilters.istioTypeFilter, activeFilters).map(
+      value => dicIstioType[value]
+    );
     const istioNameFilters = getFilterSelectedValues(IstioConfigListFilters.istioNameFilter, activeFilters);
     const configValidationFilters = getFilterSelectedValues(
       IstioConfigListFilters.configValidationFilter,
