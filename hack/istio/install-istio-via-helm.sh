@@ -67,6 +67,10 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -kt|--kiali-tag)
+      KIALI_TAG="$2"
+      shift;shift
+      ;;
     -m|--mtls)
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         MTLS="$2"
@@ -125,6 +129,11 @@ Valid command line arguments:
        When set to true, Kiali will be installed.
        Ignored if --use-demo or --use-demo-auth is true.
        Default: false
+  -kt|--kiali-tag <tag>:
+       Defines the docker tag that will identify the image to be pulled when Kiali is deployed.
+       If you want the latest-and-greatest image, set this to "latest".
+       If you have locally built your own development version of Kiali, set this to "dev".
+       Default: the tag default defined by the Istio Helm chart
   -m|--mtls (true|false):
        Indicate if you want global MTLS enabled.
        Ignored if --use-demo or --use-demo-auth is true.
@@ -278,7 +287,12 @@ elif [ "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
     _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo-auth.yaml"
   fi
 else
-  _HELM_VALUES="--set kiali.enabled=${KIALI_ENABLED} --set tracing.enabled=${DASHBOARDS_ENABLED} --set grafana.enabled=${DASHBOARDS_ENABLED} --set global.mtls.enabled=${MTLS}"
+  if [ "${KIALI_TAG}" != "" ]; then
+    _KIALI_TAG_ARG="--set kiali.tag=${KIALI_TAG}"
+  fi
+  _HELM_VALUES="--set kiali.enabled=${KIALI_ENABLED} ${_KIALI_TAG_ARG} --set tracing.enabled=${DASHBOARDS_ENABLED} --set grafana.enabled=${DASHBOARDS_ENABLED} --set global.mtls.enabled=${MTLS}"
+  echo $_HELM_VALUES
+  exit 1
 fi
 
 # Create the install yaml via the helm template command
