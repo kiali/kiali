@@ -16,6 +16,3 @@ data:
         url: ${JAEGER_URL}
       grafana:
         url: ${GRAFANA_URL}
-    identity:
-      cert_file: /kiali-cert/tls.crt
-      private_key_file: /kiali-cert/tls.key

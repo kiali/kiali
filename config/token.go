@@ -22,12 +22,19 @@ type TokenClaim struct {
 //
 // swagger:model TokenGenerated
 type TokenGenerated struct {
+	// The provided username
+	// A string representing the username for the user
+	// example: admin
+	// required: true
+	Username string `json:"username"`
+
 	// The authentication token
 	// A string with the authentication token for the user
 	//
 	// example: zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD
 	// required: true
 	Token string `json:"token"`
+
 	// The expired time for the token
 	// A string with the Datetime when the token will be expired
 	//
@@ -52,7 +59,7 @@ func GenerateToken(username string) (TokenGenerated, error) {
 		return TokenGenerated{}, err
 	}
 
-	return TokenGenerated{Token: ss, ExpiredAt: timeExpire.String()}, nil
+	return TokenGenerated{Username: username, Token: ss, ExpiredAt: timeExpire.String()}, nil
 }
 
 // ValidateToken checks if the input token is still valid

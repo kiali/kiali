@@ -11,14 +11,20 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		statusCode := http.StatusOK
 		conf := Get()
-		if strings.Contains(r.Header.Get("Authorization"), "Bearer") {
+
+		token := r.Header.Get("X-Forwarded-Access-Token")
+		if token != "" {
+			// No-op, user is logged in (request is not proxied if user is available)
+		} else if strings.Contains(r.Header.Get("Authorization"), "Bearer") {
 			err := ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+
 			if err != nil {
 				log.Warning("Token error: ", err)
 				statusCode = http.StatusUnauthorized
 			}
 		} else if conf.Server.Credentials.Username != "" || conf.Server.Credentials.Password != "" {
 			u, p, ok := r.BasicAuth()
+
 			if !ok || conf.Server.Credentials.Username != u || conf.Server.Credentials.Password != p {
 				statusCode = http.StatusUnauthorized
 			}
