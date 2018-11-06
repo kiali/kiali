@@ -207,7 +207,13 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     return this.props.data.summaryTarget
       .children()
       .toArray()
-      .map((c, i) => <Label key={c.data('version')} name="version" value={c.data('version')} />);
+      .map((c, i) => (
+        <Label
+          key={c.data('version')}
+          name={serverConfig().istioLabels['VersionLabelName']}
+          value={c.data('version')}
+        />
+      ));
   };
 
   private renderBadgeSummary = (hasVS: boolean) => {

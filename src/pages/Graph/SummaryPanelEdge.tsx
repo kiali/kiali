@@ -321,7 +321,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   private renderLabels = (ns: string, ver: string) => (
     <div style={{ paddingTop: '3px' }}>
       <Label name="namespace" value={ns} />
-      {ver && <Label name="version" value={ver} />}
+      {ver && <Label name={serverConfig().istioLabels['VersionLabelName']} value={ver} />}
     </div>
   );
 
