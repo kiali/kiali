@@ -93,6 +93,10 @@ while [[ $# -gt 0 ]]; do
       USERNAME="$2"
       shift;shift
       ;;
+    -s|--set)
+      CUSTOM_HELM_VALUES="${CUSTOM_HELM_VALUES} --set $2"
+      shift;shift
+      ;;
     -ud|--use-demo)
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         USE_DEMO_VALUES="$2"
@@ -134,6 +138,7 @@ Valid command line arguments:
        Defines the docker tag that will identify the image to be pulled when Kiali is deployed.
        If you want the latest-and-greatest image, set this to "latest".
        If you have locally built your own development version of Kiali, set this to "dev".
+       Ignored if --use-demo or --use-demo-auth is true.
        Default: the tag default defined by the Istio Helm chart
   -m|--mtls (true|false):
        Indicate if you want global MTLS enabled.
@@ -148,6 +153,8 @@ Valid command line arguments:
   -u|--username <uname>:
        The username for the Kiali secret - this is the name to use when logging into Kiali.
        Default: admin
+  -s|--set <name=value>:
+       Sets a name/value pair for a custom helm value.
   -ud|--use-demo (true|false):
        If true, use install settings equal to the istio-demo.yaml.
        Only one of --use-demo or --use-demo-auth is allowed to be true.
@@ -307,7 +314,7 @@ if [ ! -f "/tmp/istio.yaml" ]; then
   ${HELM_EXE} init --client-only
   ${HELM_EXE} repo add istio.io https://raw.githubusercontent.com/istio/istio.io/master/static/charts
   ${HELM_EXE} dep update "${ISTIO_DIR}/install/kubernetes/helm/istio"
-  ${HELM_EXE} template ${_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace istio-system > /tmp/istio.yaml
+  ${HELM_EXE} template ${_HELM_VALUES} ${CUSTOM_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace istio-system > /tmp/istio.yaml
 fi
 
 if [ "${DELETE_ISTIO}" == "true" ]; then
