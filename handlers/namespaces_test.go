@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	osv1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,7 +24,7 @@ import (
 
 // TestNamespaceMetricsDefault is unit test (testing request handling, not the prometheus client behaviour)
 func TestNamespaceMetricsDefault(t *testing.T) {
-	ts, api, k8s := setupNamespaceMetricsEndpoint(t)
+	ts, api, _ := setupNamespaceMetricsEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/metrics"
@@ -44,8 +46,6 @@ func TestNamespaceMetricsDefault(t *testing.T) {
 		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
 	})
 
-	mockGetNamespace(k8s, "ns", time.Time{})
-
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -59,7 +59,7 @@ func TestNamespaceMetricsDefault(t *testing.T) {
 }
 
 func TestNamespaceMetricsWithParams(t *testing.T) {
-	ts, api, k8s := setupNamespaceMetricsEndpoint(t)
+	ts, api, _ := setupNamespaceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/metrics", nil)
@@ -104,8 +104,6 @@ func TestNamespaceMetricsWithParams(t *testing.T) {
 		assert.WithinDuration(t, queryTime.Add(-1000*time.Second), r.Start, delta)
 	})
 
-	mockGetNamespace(k8s, "ns", time.Time{})
-
 	httpclient := &http.Client{}
 	resp, err := httpclient.Do(req)
 	if err != nil {
@@ -120,11 +118,30 @@ func TestNamespaceMetricsWithParams(t *testing.T) {
 	assert.NotZero(t, gaugeSentinel)
 }
 
+func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
+	ts, _, k8s := setupNamespaceMetricsEndpoint(t)
+	defer ts.Close()
+
+	url := ts.URL + "/api/namespaces/my_namespace/metrics"
+
+	var nsNil *osv1.Project
+	k8s.On("GetProject", "my_namespace").Return(nsNil, errors.New("no privileges"))
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	k8s.AssertCalled(t, "GetProject", "my_namespace")
+}
+
 func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
 	client, api, k8s, err := setupMocked()
 	if err != nil {
 		t.Fatal(err)
 	}
+	k8s.On("GetProject", "ns").Return(&osv1.Project{}, nil)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/metrics", http.HandlerFunc(

@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"errors"
 	"io/ioutil"
 	"k8s.io/api/apps/v1beta2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -29,15 +29,13 @@ import (
 )
 
 func TestAppMetricsDefault(t *testing.T) {
-	ts, api, k8s := setupAppMetricsEndpoint(t)
+	ts, api, _ := setupAppMetricsEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/apps/my_app/metrics"
 	now := time.Now()
 	delta := 15 * time.Second
 	var gaugeSentinel uint32
-
-	mockGetNamespace(k8s, "ns", time.Time{})
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
@@ -68,7 +66,7 @@ func TestAppMetricsDefault(t *testing.T) {
 }
 
 func TestAppMetricsWithParams(t *testing.T) {
-	ts, api, k8s := setupAppMetricsEndpoint(t)
+	ts, api, _ := setupAppMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/apps/my-app/metrics", nil)
@@ -92,8 +90,6 @@ func TestAppMetricsWithParams(t *testing.T) {
 	queryTime := time.Unix(1523364075, 0)
 	delta := 2 * time.Second
 	var histogramSentinel, gaugeSentinel uint32
-
-	mockGetNamespace(k8s, "ns", time.Time{})
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
@@ -129,6 +125,24 @@ func TestAppMetricsWithParams(t *testing.T) {
 	assert.NotZero(t, gaugeSentinel)
 }
 
+func TestAppMetricsInaccessibleNamespace(t *testing.T) {
+	ts, _, k8s := setupAppMetricsEndpoint(t)
+	defer ts.Close()
+
+	url := ts.URL + "/api/namespaces/my_namespace/apps/my_app/metrics"
+
+	var nsNil *corev1.Namespace
+	k8s.On("GetNamespace", "my_namespace").Return(nsNil, errors.New("no privileges"))
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	k8s.AssertCalled(t, "GetNamespace", "my_namespace")
+}
+
 func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
 	config.Set(config.NewConfig())
 	api := new(prometheustest.PromAPIMock)
@@ -138,6 +152,8 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 		t.Fatal(err)
 	}
 	prom.Inject(api)
+	k8s.On("IsOpenShift").Return(false)
+	k8s.On("GetNamespace", "ns").Return(&corev1.Namespace{}, nil)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}/metrics", http.HandlerFunc(
@@ -223,14 +239,4 @@ func TestAppDetailsEndpoint(t *testing.T) {
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
 	k8s.AssertNumberOfCalls(t, "GetServices", 1)
-}
-
-func mockGetNamespace(k8s *kubetest.K8SClientMock, name string, creationTime time.Time) {
-	nsBookinfo := corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              name,
-			CreationTimestamp: metav1.Time{Time: creationTime},
-		},
-	}
-	k8s.On("GetNamespace", name).Return(&nsBookinfo, nil)
 }

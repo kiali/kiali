@@ -41,16 +41,22 @@ func Get() (*Layer, error) {
 
 // SetWithBackends creates all services with injected clients to external APIs
 func SetWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface) *Layer {
-	layer = &Layer{}
-	layer.Health = HealthService{prom: prom, k8s: k8s}
-	layer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: layer}
-	layer.Validations = IstioValidationsService{k8s: k8s}
-	layer.IstioConfig = IstioConfigService{k8s: k8s}
-	layer.Workload = WorkloadService{k8s: k8s}
-	layer.App = AppService{k8s: k8s}
-	layer.Namespace = NewNamespaceService(k8s)
-	layer.k8s = k8s
+	layer = NewWithBackends(k8s, prom)
 	return layer
+}
+
+// NewWithBackends creates the business layer using the passed k8s and prom clients
+func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface) *Layer {
+	temporaryLayer := &Layer{}
+	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s}
+	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.Validations = IstioValidationsService{k8s: k8s}
+	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s}
+	temporaryLayer.Workload = WorkloadService{k8s: k8s}
+	temporaryLayer.App = AppService{k8s: k8s}
+	temporaryLayer.Namespace = NewNamespaceService(k8s)
+	temporaryLayer.k8s = k8s
+	return temporaryLayer
 }
 
 func (in *Layer) Stop() {

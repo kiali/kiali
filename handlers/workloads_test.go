@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"io/ioutil"
 	"k8s.io/api/apps/v1beta2"
 	"net/http"
@@ -18,6 +19,7 @@ import (
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	osappsv1 "github.com/openshift/api/apps/v1"
+	osv1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -67,7 +69,7 @@ func TestWorkloadsEndpoint(t *testing.T) {
 }
 
 func TestWorkloadMetricsDefault(t *testing.T) {
-	ts, api, k8s := setupWorkloadMetricsEndpoint(t)
+	ts, api, _ := setupWorkloadMetricsEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/workloads/my_workload/metrics"
@@ -90,9 +92,6 @@ func TestWorkloadMetricsDefault(t *testing.T) {
 		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
 	})
 
-	// Test that query range is adjusted given the namespace creation date
-	mockGetNamespace(k8s, "ns", time.Time{})
-
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -107,7 +106,7 @@ func TestWorkloadMetricsDefault(t *testing.T) {
 }
 
 func TestWorkloadMetricsWithParams(t *testing.T) {
-	ts, api, k8s := setupWorkloadMetricsEndpoint(t)
+	ts, api, _ := setupWorkloadMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/my-workload/metrics", nil)
@@ -151,8 +150,6 @@ func TestWorkloadMetricsWithParams(t *testing.T) {
 		assert.WithinDuration(t, queryTime, r.End, delta)
 		assert.WithinDuration(t, queryTime.Add(-1000*time.Second), r.Start, delta)
 	})
-
-	mockGetNamespace(k8s, "ns", time.Time{})
 
 	httpclient := &http.Client{}
 	resp, err := httpclient.Do(req)
@@ -288,6 +285,24 @@ func TestWorkloadMetricsBadRateFunc(t *testing.T) {
 	assert.Contains(t, string(actual), "query parameter 'rateFunc' must be either 'rate' or 'irate'")
 }
 
+func TestWorkloadMetricsInaccessibleNamespace(t *testing.T) {
+	ts, _, k8s := setupWorkloadMetricsEndpoint(t)
+	defer ts.Close()
+
+	url := ts.URL + "/api/namespaces/my_namespace/workloads/my_workload/metrics"
+
+	var nsNil *osv1.Project
+	k8s.On("GetProject", "my_namespace").Return(nsNil, errors.New("no privileges"))
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	k8s.AssertCalled(t, "GetProject", "my_namespace")
+}
+
 func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
 	config.Set(config.NewConfig())
 	api := new(prometheustest.PromAPIMock)
@@ -297,6 +312,7 @@ func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheuste
 		t.Fatal(err)
 	}
 	prom.Inject(api)
+	k8s.On("GetProject", "ns").Return(&osv1.Project{}, nil)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/metrics", http.HandlerFunc(

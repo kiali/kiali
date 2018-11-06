@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	osv1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,7 +26,7 @@ import (
 
 // TestServiceMetricsDefault is unit test (testing request handling, not the prometheus client behaviour)
 func TestServiceMetricsDefault(t *testing.T) {
-	ts, api, k8s := setupServiceMetricsEndpoint(t)
+	ts, api, _ := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/services/svc/metrics"
@@ -47,8 +49,6 @@ func TestServiceMetricsDefault(t *testing.T) {
 		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
 	})
 
-	mockGetNamespace(k8s, "ns", time.Time{})
-
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -62,7 +62,7 @@ func TestServiceMetricsDefault(t *testing.T) {
 }
 
 func TestServiceMetricsWithParams(t *testing.T) {
-	ts, api, k8s := setupServiceMetricsEndpoint(t)
+	ts, api, _ := setupServiceMetricsEndpoint(t)
 	defer ts.Close()
 
 	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/services/svc/metrics", nil)
@@ -108,8 +108,6 @@ func TestServiceMetricsWithParams(t *testing.T) {
 		assert.WithinDuration(t, queryTime, r.End, delta)
 		assert.WithinDuration(t, queryTime.Add(-1000*time.Second), r.Start, delta)
 	})
-
-	mockGetNamespace(k8s, "ns", time.Time{})
 
 	httpclient := &http.Client{}
 	resp, err := httpclient.Do(req)
@@ -307,6 +305,24 @@ func TestServiceMetricsBadRateFunc(t *testing.T) {
 	assert.Contains(t, string(actual), "query parameter 'rateFunc' must be either 'rate' or 'irate'")
 }
 
+func TestServiceMetricsInaccessibleNamespace(t *testing.T) {
+	ts, _, k8s := setupServiceMetricsEndpoint(t)
+	defer ts.Close()
+
+	url := ts.URL + "/api/namespaces/my_namespace/services/svc/metrics"
+
+	var nsNil *osv1.Project
+	k8s.On("GetProject", "my_namespace").Return(nsNil, errors.New("no privileges"))
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	k8s.AssertCalled(t, "GetProject", "my_namespace")
+}
+
 func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock, *kubetest.K8SClientMock) {
 	config.Set(config.NewConfig())
 	k8s := kubetest.NewK8SClientMock()
@@ -317,6 +333,7 @@ func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustes
 		t.Fatal(err)
 	}
 	prom.Inject(api)
+	k8s.On("GetProject", "ns").Return(&osv1.Project{}, nil)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/metrics", http.HandlerFunc(

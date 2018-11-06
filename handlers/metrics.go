@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
 
-func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery, k8s kubernetes.IstioClientInterface) error {
+func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery, namespaceInfo *models.Namespace) error {
 	q.FillDefaults()
 	queryParams := r.URL.Query()
 	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
@@ -84,25 +84,20 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery, k8s 
 		q.ByLabelsOut = lblsout
 	}
 
-	// Get namespace info.
-	namespace, err := k8s.GetNamespace(q.Namespace)
-	if err != nil {
-		return err
-	}
 	// If needed, adjust interval -- Make sure query won't fetch data before the namespace creation
 	intervalStartTime, err := util.GetStartTimeForRateInterval(q.End, q.RateInterval)
 	if err != nil {
 		return err
 	}
-	if intervalStartTime.Before(namespace.CreationTimestamp.Time) {
-		q.RateInterval = fmt.Sprintf("%ds", int(q.End.Sub(namespace.CreationTimestamp.Time).Seconds()))
-		intervalStartTime = namespace.CreationTimestamp.Time
+	if intervalStartTime.Before(namespaceInfo.CreationTimestamp) {
+		q.RateInterval = fmt.Sprintf("%ds", int(q.End.Sub(namespaceInfo.CreationTimestamp).Seconds()))
+		intervalStartTime = namespaceInfo.CreationTimestamp
 		log.Debugf("[extractMetricsQueryParams] Interval set to: %v", q.RateInterval)
 	}
 	// If needed, adjust query start time (bound to namespace creation time)
 	log.Debugf("[extractMetricsQueryParams] Requested query start time: %v", q.Start)
 	intervalDuration := q.End.Sub(intervalStartTime)
-	allowedStart := namespace.CreationTimestamp.Time.Add(intervalDuration)
+	allowedStart := namespaceInfo.CreationTimestamp.Add(intervalDuration)
 	if q.Start.Before(allowedStart) {
 		q.Start = allowedStart
 		log.Debugf("[extractMetricsQueryParams] Query start time set to: %v", q.Start)
