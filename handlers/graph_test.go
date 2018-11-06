@@ -382,7 +382,7 @@ func TestAppGraph(t *testing.T) {
 	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/graph", http.HandlerFunc(
+	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			fut(w, r, client)
 		}))
@@ -390,8 +390,8 @@ func TestAppGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespace
-	url := ts.URL + "/api/namespaces/bookinfo/graph?graphType=app&appenders&queryTime=1523364075"
+	fut = graphNamespaces
+	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=app&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -416,7 +416,7 @@ func TestVersionedAppGraph(t *testing.T) {
 	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/graph", http.HandlerFunc(
+	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			fut(w, r, client)
 		}))
@@ -424,8 +424,8 @@ func TestVersionedAppGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespace
-	url := ts.URL + "/api/namespaces/bookinfo/graph?graphType=versionedApp&appenders&queryTime=1523364075"
+	fut = graphNamespaces
+	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=versionedApp&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -450,7 +450,7 @@ func TestServiceGraph(t *testing.T) {
 	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/graph", http.HandlerFunc(
+	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			fut(w, r, client)
 		}))
@@ -458,8 +458,8 @@ func TestServiceGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespace
-	url := ts.URL + "/api/namespaces/bookinfo/graph?graphType=service&appenders&queryTime=1523364075"
+	fut = graphNamespaces
+	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=service&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -484,7 +484,7 @@ func TestWorkloadGraph(t *testing.T) {
 	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/graph", http.HandlerFunc(
+	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			fut(w, r, client)
 		}))
@@ -492,8 +492,8 @@ func TestWorkloadGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespace
-	url := ts.URL + "/api/namespaces/bookinfo/graph?graphType=workload&appenders&queryTime=1523364075"
+	fut = graphNamespaces
+	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1297,7 +1297,7 @@ func TestComplexGraph(t *testing.T) {
 	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/graph", http.HandlerFunc(
+	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			fut(w, r, client)
 		}))
@@ -1305,8 +1305,8 @@ func TestComplexGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespace
-	url := ts.URL + "/api/namespaces/bookinfo/graph?graphType=versionedApp&appenders=&queryTime=1523364075&namespaces=bookinfo,tutorial"
+	fut = graphNamespaces
+	url := ts.URL + "/api/namespaces/graph?graphType=versionedApp&appenders=&queryTime=1523364075&namespaces=bookinfo,tutorial"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)

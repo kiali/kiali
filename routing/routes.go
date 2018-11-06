@@ -538,7 +538,7 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceIstioValidations,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/graph graphs graphNamespace
+		// swagger:route GET /namespaces/graph graphs graphNamespaces
 		// ---
 		// The backing JSON for a namespaces graph.
 		//
@@ -553,10 +553,10 @@ func NewRoutes() (r *Routes) {
 		//      200: graphResponse
 		//
 		{
-			"GraphNamespace",
+			"GraphNamespaces",
 			"GET",
-			"/api/namespaces/{namespace}/graph",
-			handlers.GraphNamespace,
+			"/api/namespaces/graph",
+			handlers.GraphNamespaces,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/applications/{app}/versions/{version}/graph graphs graphAppVersion

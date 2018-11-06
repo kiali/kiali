@@ -808,6 +808,91 @@
         }
       }
     },
+    "/namespaces/graph": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "graphs"
+        ],
+        "summary": "The backing JSON for a namespaces graph.",
+        "operationId": "graphNamespaces",
+        "parameters": [
+          {
+            "type": "string",
+            "default": "run all appenders",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, responseTime, securityPolicy, sidecarsCheck, unusedNode].",
+            "name": "appenders",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "x-go-name": "Name",
+            "description": "Query time-range duration (Golang string duration).",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "workload",
+            "x-go-name": "Name",
+            "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
+            "name": "graphType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "version",
+            "x-go-name": "Name",
+            "description": "App box grouping characteristic. Ignored unless graph type is versionedApp. Available groupings: [version].",
+            "name": "groupBy",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
+            "name": "includeIstio",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "all accessible namespaces",
+            "x-go-name": "Name",
+            "description": "Comma-separated list of namespaces to include in the graph.",
+            "name": "namespaces",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "now",
+            "x-go-name": "Name",
+            "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
+            "name": "queryTime",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/graphResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/applications/{app}/graph": {
       "get": {
         "produces": [
@@ -1074,99 +1159,6 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
-    "/namespaces/{namespace}/graph": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "graphs"
-        ],
-        "summary": "The backing JSON for a namespaces graph.",
-        "operationId": "graphNamespace",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace id.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "run all appenders",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, responseTime, securityPolicy, sidecarsCheck, unusedNode].",
-            "name": "appenders",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "10m",
-            "x-go-name": "Name",
-            "description": "Query time-range duration (Golang string duration).",
-            "name": "duration",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "workload",
-            "x-go-name": "Name",
-            "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
-            "name": "graphType",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "version",
-            "x-go-name": "Name",
-            "description": "App box grouping characteristic. Ignored unless graph type is versionedApp. Available groupings: [version].",
-            "name": "groupBy",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "false",
-            "x-go-name": "Name",
-            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
-            "name": "includeIstio",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "namespace path param",
-            "x-go-name": "Name",
-            "description": "Comma-separated list of namespaces to include in the graph. Overrides namespace path param.",
-            "name": "namespaces",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "now",
-            "x-go-name": "Name",
-            "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
-            "name": "queryTime",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/graphResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
           },
           "500": {
             "$ref": "#/responses/internalError"

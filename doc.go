@@ -82,7 +82,7 @@ type WorkloadParam struct {
 // - keep this alphabetized
 /////////////////////
 
-// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type AppendersParam struct {
 	// Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, responseTime, securityPolicy, sidecarsCheck, unusedNode].
 	//
@@ -92,7 +92,7 @@ type AppendersParam struct {
 	Name string `json:"appenders"`
 }
 
-// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type DurationGraphParam struct {
 	// Query time-range duration (Golang string duration).
 	//
@@ -102,7 +102,7 @@ type DurationGraphParam struct {
 	Name string `json:"duration"`
 }
 
-// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type GraphTypeParam struct {
 	// Graph type. Available graph types: [app, service, versionedApp, workload].
 	//
@@ -112,7 +112,7 @@ type GraphTypeParam struct {
 	Name string `json:"graphType"`
 }
 
-// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type GroupByParam struct {
 	// App box grouping characteristic. Ignored unless graph type is versionedApp. Available groupings: [version].
 	//
@@ -122,7 +122,7 @@ type GroupByParam struct {
 	Name string `json:"groupBy"`
 }
 
-// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type IncludeIstioParam struct {
 	// Flag for including istio-system (infra) services. Ignored if namespace is istio-system.
 	//
@@ -132,17 +132,17 @@ type IncludeIstioParam struct {
 	Name string `json:"includeIstio"`
 }
 
-// swagger:parameters graphNamespace
+// swagger:parameters graphNamespaces
 type NamespacesParam struct {
-	// Comma-separated list of namespaces to include in the graph. Overrides namespace path param.
+	// Comma-separated list of namespaces to include in the graph.
 	//
 	// in: query
 	// required: false
-	// default: namespace path param
+	// default: all accessible namespaces
 	Name string `json:"namespaces"`
 }
 
-// swagger:parameters graphApp graphAppVersion graphNamespace graphService graphWorkload
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type QueryTimeParam struct {
 	// Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.
 	//

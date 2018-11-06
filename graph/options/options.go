@@ -20,8 +20,7 @@ import (
 const (
 	AppenderAll               string = "_all_"
 	GroupByVersion            string = "version"
-	NamespaceAll              string = "all"
-	NamespaceIstioSystem      string = "istio-system"
+	NamespaceIstio            string = "istio-system"
 	defaultDuration           string = "10m"
 	defaultGraphType          string = graph.GraphTypeWorkload
 	defaultGroupBy            string = GroupByVersion
@@ -37,10 +36,11 @@ const (
 
 // NodeOptions are those that apply only to node-detail graphs
 type NodeOptions struct {
-	App      string
-	Service  string
-	Version  string
-	Workload string
+	App       string
+	Namespace string
+	Service   string
+	Version   string
+	Workload  string
 }
 
 // VendorOptions are those that are supplied to the vendor-specific generators.
@@ -52,7 +52,7 @@ type VendorOptions struct {
 
 // Options are all supported graph generation options.
 type Options struct {
-	AccessibleNamespaces map[string]bool
+	AccessibleNamespaces map[string]time.Time
 	Appenders            []appender.Appender
 	Duration             time.Duration
 	IncludeIstio         bool // include istio-system services. Ignored for istio-system ns. Default false.
@@ -65,40 +65,40 @@ type Options struct {
 }
 
 func NewOptions(r *http.Request) Options {
-	// path variables
+	// path variables (0 or more will be set)
 	vars := mux.Vars(r)
 	app := vars["app"]
-	version := vars["version"]
-	requestedNamespace := vars["namespace"]
+	namespace := vars["namespace"]
 	service := vars["service"]
+	version := vars["version"]
 	workload := vars["workload"]
 
 	// query params
 	params := r.URL.Query()
 	duration, durationErr := time.ParseDuration(params.Get("duration"))
-	includeIstio, includeIstioErr := strconv.ParseBool(params.Get("includeIstio"))
-	injectServiceNodes, injectServiceNodesErr := strconv.ParseBool(params.Get("injectServiceNodes"))
 	graphType := params.Get("graphType")
 	groupBy := params.Get("groupBy")
+	includeIstio, includeIstioErr := strconv.ParseBool(params.Get("includeIstio"))
+	injectServiceNodes, injectServiceNodesErr := strconv.ParseBool(params.Get("injectServiceNodes"))
+	namespaces := params.Get("namespaces") // csl of namespaces.
 	queryTime, queryTimeErr := strconv.ParseInt(params.Get("queryTime"), 10, 64)
-	requestedNamespaces := params.Get("namespaces") // csl of namespaces. Overrides namespace path param if set
 	vendor := params.Get("vendor")
 
 	// Set defaults, if needed.
 	if durationErr != nil {
 		duration, _ = time.ParseDuration(defaultDuration)
 	}
-	if includeIstioErr != nil {
-		includeIstio = defaultIncludeIstio
-	}
-	if injectServiceNodesErr != nil {
-		injectServiceNodes = defaultInjectServiceNodes
-	}
 	if "" == graphType {
 		graphType = defaultGraphType
 	}
 	if "" == groupBy {
 		groupBy = defaultGroupBy
+	}
+	if includeIstioErr != nil {
+		includeIstio = defaultIncludeIstio
+	}
+	if injectServiceNodesErr != nil {
+		injectServiceNodes = defaultInjectServiceNodes
 	}
 	if queryTimeErr != nil {
 		queryTime = time.Now().Unix()
@@ -107,42 +107,40 @@ func NewOptions(r *http.Request) Options {
 		vendor = defaultVendor
 	}
 
-	// Process namespaces options
-	accessibleNamespaces, namespaceTimestamps := getAccessibleNamespaces()
+	// Process namespaces options:
+	namespaceMap := make(map[string]graph.NamespaceInfo)
+	accessibleNamespaces := getAccessibleNamespaces()
 
-	namespaces := make(map[string]graph.NamespaceInfo)
-	fetchNamespaces := requestedNamespaces == NamespaceAll || (requestedNamespaces == "" && (requestedNamespace == NamespaceAll))
-	if fetchNamespaces {
-		for namespace := range accessibleNamespaces {
+	// If path variable is set then it is the only relevant namespace (it's a node graph)
+	// Else if namespaces query param is set it specifies the relevant namespaces
+	// Else the request is for all [accessible] namespaces
+	if namespace != "" {
+		namespaces = namespace
+	}
+
+	if namespaces == "" {
+		for accessibleNamespace, creationTime := range accessibleNamespaces {
 			// The istio-system namespace is only shown when explicitly requested. Note that the
 			// 'includeIstio' option doesn't apply here, that option affects what is done in
 			// non-istio-system namespaces.
-			if namespace != NamespaceIstioSystem {
-				namespaces[namespace] = graph.NamespaceInfo{
-					Name:     namespace,
-					Duration: resolveNamespaceDuration(namespaceTimestamps[namespace], duration, queryTime),
+			if accessibleNamespace != NamespaceIstio {
+				namespaceMap[accessibleNamespace] = graph.NamespaceInfo{
+					Name:     accessibleNamespace,
+					Duration: resolveNamespaceDuration(creationTime, duration, queryTime),
 				}
 			}
 		}
-	} else if requestedNamespaces != "" {
-		namespacesList := strings.Split(requestedNamespaces, ",")
-		for _, namespaceName := range namespacesList {
-			if _, found := accessibleNamespaces[namespaceName]; found {
-				namespaces[namespaceName] = graph.NamespaceInfo{
-					Name:     namespaceName,
-					Duration: resolveNamespaceDuration(namespaceTimestamps[namespaceName], duration, queryTime),
+	} else {
+		for _, namespaceToken := range strings.Split(namespaces, ",") {
+			namespaceToken = strings.TrimSpace(namespaceToken)
+			if creationTime, found := accessibleNamespaces[namespaceToken]; found {
+				namespaceMap[namespaceToken] = graph.NamespaceInfo{
+					Name:     namespaceToken,
+					Duration: resolveNamespaceDuration(creationTime, duration, queryTime),
 				}
 			} else {
-				checkError(errors.New(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceName)))
-			}
-		}
-	} else if requestedNamespace != "" {
-		if _, found := accessibleNamespaces[requestedNamespace]; !found {
-			checkError(errors.New(fmt.Sprintf("Requested namespace [%s] is not accessible.", requestedNamespace)))
-		} else {
-			namespaces[requestedNamespace] = graph.NamespaceInfo{
-				Name:     requestedNamespace,
-				Duration: resolveNamespaceDuration(namespaceTimestamps[requestedNamespace], duration, queryTime),
+				// TODO: Should this return Forbidden status?
+				checkError(errors.New(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceToken)))
 			}
 		}
 	}
@@ -157,14 +155,15 @@ func NewOptions(r *http.Request) Options {
 		Duration:             duration,
 		IncludeIstio:         includeIstio,
 		InjectServiceNodes:   injectServiceNodes,
-		Namespaces:           namespaces,
+		Namespaces:           namespaceMap,
 		QueryTime:            queryTime,
 		Vendor:               vendor,
 		NodeOptions: NodeOptions{
-			App:      app,
-			Service:  service,
-			Version:  version,
-			Workload: workload,
+			App:       app,
+			Namespace: namespace,
+			Service:   service,
+			Version:   version,
+			Workload:  workload,
 		},
 		VendorOptions: VendorOptions{
 			GraphType: graphType,
@@ -251,9 +250,10 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 }
 
 // getAccessibleNamespaces returns a Set of all namespaces accessible to the user.
-// The Set is implemented using the map[string]bool convention.
-// Additionally, a map with the creation timestamps of the namespaces is returned.
-func getAccessibleNamespaces() (map[string]bool, map[string]time.Time) {
+// The Set is implemented using the map convention. Each map entry is set to the
+// creation timestamp of the namespace, to be used to ensure valid time ranges for
+// queries against the namespace.
+func getAccessibleNamespaces() map[string]time.Time {
 	// Get the namespaces
 	business, err := business.Get()
 	checkError(err)
@@ -262,14 +262,12 @@ func getAccessibleNamespaces() (map[string]bool, map[string]time.Time) {
 	checkError(err)
 
 	// Create a map to store the namespaces
-	namespaceMap := make(map[string]bool)
-	namespaceTimestamps := make(map[string]time.Time)
+	namespaceMap := make(map[string]time.Time)
 	for _, namespace := range namespaces {
-		namespaceMap[namespace.Name] = true
-		namespaceTimestamps[namespace.Name] = namespace.CreationTimestamp
+		namespaceMap[namespace.Name] = namespace.CreationTimestamp
 	}
 
-	return namespaceMap, namespaceTimestamps
+	return namespaceMap
 }
 
 func checkError(err error) {
