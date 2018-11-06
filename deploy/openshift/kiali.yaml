@@ -160,6 +160,7 @@ rules:
   - stackdrivers
   - statsds
   - stdios
+  - handlers
   - apikeys
   - authorizations
   - checknothings
@@ -170,12 +171,6 @@ rules:
   - quotas
   - reportnothings
   - servicecontrolreports
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups: ["config.istio.io"]
-  resources:
   - rules
   - quotaspecs
   - quotaspecbindings

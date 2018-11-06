@@ -59,8 +59,8 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	istioConfigList := models.IstioConfigList{
 		Namespace:         models.Namespace{Name: criteria.Namespace},
 		Gateways:          models.Gateways{},
-		VirtualServices:   models.VirtualServices{},
-		DestinationRules:  models.DestinationRules{},
+		VirtualServices:   models.VirtualServices{Items: []models.VirtualService{}},
+		DestinationRules:  models.DestinationRules{Items: []models.DestinationRule{}},
 		ServiceEntries:    models.ServiceEntries{},
 		Rules:             models.IstioRules{},
 		QuotaSpecs:        models.QuotaSpecs{},
