@@ -10,6 +10,7 @@
         istio_bookinfo_mysql_service_path: files/bookinfo-ratings-v2-mysql.yaml
         istio_bookinfo_deployment_path: files/bookinfo.yaml
         istio_bookinfo_gateway_path: files/bookinfo-gateway.yaml
+        check_retries: "{{ check_retries | default(50) }}"
 
     - name: Define Bookinfo Namespace if is not defined
       set_fact:
@@ -46,8 +47,8 @@
         verify_ssl: false
       register: projectStatus
       until: projectStatus.changed == true
-      retries: 100
-      delay: 20
+      retries: "{{ hostvars['localhost']['check_retries'] }}"
+      delay: 10
       with_items:
         - "{{ bookinfo_namespace }}"
 
@@ -103,7 +104,7 @@
         - reviews-v1
         - reviews-v2
         - reviews-v3
-      retries: 100
+      retries: "{{ hostvars['localhost']['check_retries'] }}"
       delay: 10
 
     - name: Wait until mongodb pods are running
@@ -121,7 +122,7 @@
       with_items:
         - ratings-v2-mongodb
         - mongodb-v1
-      retries: 100
+      retries: "{{ hostvars['localhost']['check_retries'] }}"
       delay: 10
 
     - name: Wait until mysql pods are running
@@ -139,7 +140,7 @@
       with_items:
         - ratings-v2-mysql
         - mysqldb-v1
-      retries: 100
+      retries: "{{ hostvars['localhost']['check_retries'] }}"
       delay: 10
 
     - name: Get Openshift Route
