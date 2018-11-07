@@ -50,9 +50,9 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
             this.props.components.map(component => (
               <AboutModal.VersionItem
                 key={component.name}
-                label={component.name}
+                label={component.version ? component.name : `${component.name}URL`}
                 versionText={`${component.version ? component.version : ''} ${
-                  component.url ? `(${component.url})` : ''
+                  component.version ? (component.url ? `(${component.url})` : '') : component.url
                 }`}
               />
             ))}
