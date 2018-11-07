@@ -2,13 +2,12 @@ import { connect } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { KialiAppState } from '../store/Store';
 import { UserSettingsActions } from '../actions/UserSettingsActions';
-import { durationIntervalSelector, refreshIntervalSelector } from '../store/Selectors';
+import { refreshIntervalSelector } from '../store/Selectors';
 import Refresh from '../components/Refresh/Refresh';
 
 const mapStateToProps = (state: KialiAppState) => ({
   selected: refreshIntervalSelector(state),
-  pollInterval: refreshIntervalSelector(state),
-  graphDuration: durationIntervalSelector(state)
+  pollInterval: refreshIntervalSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<any>) => {

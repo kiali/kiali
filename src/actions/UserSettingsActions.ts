@@ -1,9 +1,9 @@
 import { createAction } from 'typesafe-actions';
-import { DurationIntervalInSeconds, PollIntervalInMs } from '../types/Common';
+import { DurationInSeconds, PollIntervalInMs } from '../types/Common';
 
 export enum UserSettingsActionKeys {
   NAV_COLLAPSE = 'NAV_COLLAPSE',
-  SET_DURATION_INTERVAL = 'SET_DURATION_INTERVAL',
+  SET_DURATION = 'SET_DURATION',
   SET_REFRESH_INTERVAL = 'SET_REFRESH_INTERVAL'
 }
 
@@ -12,13 +12,10 @@ export const UserSettingsActions = {
     type: UserSettingsActionKeys.NAV_COLLAPSE,
     collapse: collapsed
   })),
-  setDurationInterval: createAction(
-    UserSettingsActionKeys.SET_DURATION_INTERVAL,
-    (duration: DurationIntervalInSeconds) => ({
-      type: UserSettingsActionKeys.SET_DURATION_INTERVAL,
-      payload: duration
-    })
-  ),
+  setDuration: createAction(UserSettingsActionKeys.SET_DURATION, (duration: DurationInSeconds) => ({
+    type: UserSettingsActionKeys.SET_DURATION,
+    payload: duration
+  })),
   setRefreshInterval: createAction(
     UserSettingsActionKeys.SET_REFRESH_INTERVAL,
     (refreshInterval: PollIntervalInMs) => ({

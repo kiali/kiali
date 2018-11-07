@@ -10,6 +10,8 @@ import { NamespaceActions } from '../../actions/NamespaceAction';
 import Namespace from '../../types/Namespace';
 import { store } from '../../store/ConfigStore';
 import GraphPageContainer from '../../containers/GraphPageContainer';
+import { DurationInSeconds } from '../../types/Common';
+import { UserSettingsActions } from '../../actions/UserSettingsActions';
 
 const URLSearchParams = require('url-search-params');
 
@@ -32,8 +34,8 @@ type GraphURLPathProps = {
   workload: string;
 };
 
-// GraphURLPathProps holds query param values.  It combines information held in redux state
-// and session state (no information should be managed in both).
+// GraphURLPathProps holds query param values.  It combines information held in session
+// state (GraphParamsType) and redux state. (no information should be managed in both).
 //
 // A note on 'keepState': This is necessary to support the 'Graph' option in the left
 // navigation menu.  Clicking on 'Graph' looks like a fresh URL navigation and therefore should
@@ -41,6 +43,7 @@ type GraphURLPathProps = {
 // the user to navigate around and when they come back to the graph be presented with their
 // previous settings.
 type GraphURLQueryProps = GraphParamsType & {
+  graphDuration: DurationInSeconds;
   keepState: boolean;
   namespaces: Namespace;
 };
@@ -48,14 +51,16 @@ type GraphURLQueryProps = GraphParamsType & {
 /**
  * Handle URL parameters for Graph page
  */
-export class GraphRouteHandler extends React.Component<RouteComponentProps<GraphURLPathProps>, GraphURLQueryProps> {
+export default class GraphRouteHandler extends React.Component<
+  RouteComponentProps<GraphURLPathProps>,
+  GraphURLQueryProps
+> {
   static contextTypes = {
     router: () => null
   };
 
   static readonly graphParamsDefaults: GraphParamsType = {
     edgeLabelMode: EdgeLabelMode.HIDE,
-    graphDuration: { value: config().toolbar.defaultDuration },
     graphLayout: LayoutDictionary.getLayout({ name: '' }),
     graphType: GraphType.VERSIONED_APP,
     injectServiceNodes: false
@@ -70,8 +75,8 @@ export class GraphRouteHandler extends React.Component<RouteComponentProps<Graph
       GraphRouteHandler.graphParamsDefaults.edgeLabelMode
     );
     const _graphDuration = urlParams.has('duration')
-      ? { value: urlParams.get('duration') }
-      : GraphRouteHandler.graphParamsDefaults.graphDuration;
+      ? Number(urlParams.get('duration'))
+      : config().toolbar.defaultDuration;
     const _graphType = Enum.fromValue(
       GraphType,
       urlParams.get('graphType'),
@@ -133,6 +138,7 @@ export class GraphRouteHandler extends React.Component<RouteComponentProps<Graph
 
     const {
       edgeLabelMode: nextEdgeLabelMode,
+      graphDuration: nextGraphDuration,
       graphLayout: nextLayout,
       graphType: nextGraphType,
       injectServiceNodes: nextInjectServiceNodes,
@@ -145,16 +151,15 @@ export class GraphRouteHandler extends React.Component<RouteComponentProps<Graph
       return null;
     }
 
-    const currentNamespaces = store.getState().namespaces.activeNamespace;
-    // @ts-ignore
-    const reduxDuration = props.duration; // from redux
+    const reduxNamespaces = store.getState().namespaces.activeNamespace;
+    const reduxDuration = store.getState().userSettings.duration;
 
-    const durationHasChanged = reduxDuration !== currentState.graphDuration.value;
+    const durationHasChanged = nextGraphDuration !== reduxDuration;
     const edgeLabelModeChanged = nextEdgeLabelMode !== currentState.edgeLabelMode;
     const graphTypeChanged = nextGraphType !== currentState.graphType;
     const injectServiceNodesChanged = nextInjectServiceNodes !== currentState.injectServiceNodes;
     const layoutHasChanged = nextLayout.name !== currentState.graphLayout.name;
-    const namespaceHasChanged = !nextNode && nextNamespaces.name !== currentNamespaces.name;
+    const namespaceHasChanged = !nextNode && nextNamespaces.name !== reduxNamespaces.name;
     const nodeAppHasChanged = nextNode && currentState.node && nextNode.app !== currentState.node.app;
     const nodeServiceHasChanged = nextNode && currentState.node && nextNode.service !== currentState.node.service;
     const nodeVersionHasChanged = nextNode && currentState.node && nextNode.version !== currentState.node.version;
@@ -170,21 +175,16 @@ export class GraphRouteHandler extends React.Component<RouteComponentProps<Graph
       nodeTypeHasChanged;
 
     // update the redux store with the URL information
+    if (durationHasChanged) {
+      store.dispatch(UserSettingsActions.setDuration(nextGraphDuration));
+    }
     if (namespaceHasChanged) {
       store.dispatch(NamespaceActions.setActiveNamespace(nextNamespaces));
     }
 
-    if (
-      durationHasChanged ||
-      edgeLabelModeChanged ||
-      injectServiceNodesChanged ||
-      graphTypeChanged ||
-      layoutHasChanged ||
-      nodeHasChanged
-    ) {
+    if (edgeLabelModeChanged || injectServiceNodesChanged || graphTypeChanged || layoutHasChanged || nodeHasChanged) {
       const newGraphParams: GraphParamsType = {
         edgeLabelMode: nextEdgeLabelMode,
-        graphDuration: { value: reduxDuration },
         graphLayout: nextLayout,
         graphType: nextGraphType,
         injectServiceNodes: nextInjectServiceNodes,

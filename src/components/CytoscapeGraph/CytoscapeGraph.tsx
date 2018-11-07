@@ -474,7 +474,6 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     const graphParamsWithNode: GraphParamsType = {
       graphLayout: this.props.graphLayout,
       node: targetNode,
-      graphDuration: this.props.graphDuration,
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,
       injectServiceNodes: this.props.injectServiceNodes
@@ -552,7 +551,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     if (!cy) {
       return;
     }
-    const duration = this.props.graphDuration.value;
+    const duration = store.getState().userSettings.duration;
     // Keep a map of namespace x promises in order not to fetch several times the same data per namespace
     const appHealthPerNamespace = new Map<string, Promise<NamespaceAppHealth>>();
     const serviceHealthPerNamespace = new Map<string, Promise<NamespaceServiceHealth>>();

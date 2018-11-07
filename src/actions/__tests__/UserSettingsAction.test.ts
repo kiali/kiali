@@ -1,9 +1,9 @@
 import { UserSettingsActionKeys, UserSettingsActions } from '../UserSettingsActions';
 
 describe('UserSettingsActions', () => {
-  it('should set the duration interval', () => {
-    expect(UserSettingsActions.setDurationInterval(60)).toEqual({
-      type: UserSettingsActionKeys.SET_DURATION_INTERVAL,
+  it('should set the duration', () => {
+    expect(UserSettingsActions.setDuration(60)).toEqual({
+      type: UserSettingsActionKeys.SET_DURATION,
       payload: 60
     });
   });

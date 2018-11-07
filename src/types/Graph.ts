@@ -1,4 +1,4 @@
-import { Duration, Layout, EdgeLabelMode } from './GraphFilter';
+import { Layout, EdgeLabelMode } from './GraphFilter';
 import Namespace from './Namespace';
 
 // SummaryData will have two fields:
@@ -45,7 +45,6 @@ export interface NodeParamsType {
 
 export interface GraphParamsType {
   node?: NodeParamsType;
-  graphDuration: Duration;
   graphLayout: Layout;
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;

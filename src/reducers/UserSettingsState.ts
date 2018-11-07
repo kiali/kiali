@@ -5,7 +5,7 @@ import { updateState } from '../utils/Reducer';
 
 export const INITIAL_USER_SETTINGS_STATE: UserSettings = {
   interface: { navCollapse: false },
-  durationInterval: config().toolbar.defaultDuration,
+  duration: config().toolbar.defaultDuration,
   refreshInterval: config().toolbar.defaultPollInterval
 };
 
@@ -15,9 +15,9 @@ const UserSettingsState = (state: UserSettings = INITIAL_USER_SETTINGS_STATE, ac
       return updateState(state, {
         interface: { navCollapse: action.collapse }
       });
-    case UserSettingsActionKeys.SET_DURATION_INTERVAL:
+    case UserSettingsActionKeys.SET_DURATION:
       return updateState(state, {
-        durationInterval: action.payload
+        duration: action.payload
       });
     case UserSettingsActionKeys.SET_REFRESH_INTERVAL:
       return updateState(state, {

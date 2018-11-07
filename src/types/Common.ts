@@ -42,6 +42,6 @@ export type TimeInMilliseconds = number;
 export type TimeInSeconds = number;
 
 export type PollIntervalInMs = TimeInMilliseconds;
-export type DurationIntervalInSeconds = TimeInSeconds;
+export type DurationInSeconds = TimeInSeconds;
 
 export type JsonString = string;

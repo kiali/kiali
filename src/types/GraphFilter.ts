@@ -2,10 +2,6 @@ export interface Layout {
   name: string;
 }
 
-export interface Duration {
-  value: number;
-}
-
 export enum EdgeLabelMode {
   HIDE = 'hide',
   TRAFFIC_RATE_PER_SECOND = 'trafficRatePerSecond',
