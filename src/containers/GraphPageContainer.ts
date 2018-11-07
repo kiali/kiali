@@ -1,7 +1,7 @@
 import { KialiAppState } from '../store/Store';
 import { connect } from 'react-redux';
 import Namespace from '../types/Namespace';
-import { Duration, EdgeLabelMode } from '../types/GraphFilter';
+import { EdgeLabelMode } from '../types/GraphFilter';
 import GraphPage from '../pages/Graph/GraphPage';
 
 import { GraphDataActions } from '../actions/GraphDataActions';
@@ -9,10 +9,12 @@ import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { bindActionCreators } from 'redux';
 import { GraphType, NodeParamsType } from '../types/Graph';
 import { refreshIntervalSelector } from '../store/Selectors';
-import { activeNamespaceSelector } from '../store/Selectors';
+import { activeNamespaceSelector, durationSelector } from '../store/Selectors';
+import { DurationInSeconds } from '../types/Common';
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespace: activeNamespaceSelector(state),
+  duration: durationSelector(state),
   graphTimestamp: state.graph.graphDataTimestamp,
   graphData: state.graph.graphData,
   isLoading: state.graph.isLoading,
@@ -33,7 +35,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: any) => ({
   fetchGraphData: (
     namespace: Namespace,
-    graphDuration: Duration,
+    duration: DurationInSeconds,
     graphType: GraphType,
     injectServiceNodes: boolean,
     edgeLabelMode: EdgeLabelMode,
@@ -44,7 +46,7 @@ const mapDispatchToProps = (dispatch: any) => ({
     dispatch(
       GraphDataActions.fetchGraphData(
         namespace,
-        graphDuration,
+        duration,
         graphType,
         injectServiceNodes,
         edgeLabelMode,

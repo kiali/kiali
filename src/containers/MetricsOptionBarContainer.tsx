@@ -1,19 +1,19 @@
 import { connect } from 'react-redux';
 import { KialiAppState } from '../store/Store';
 import { UserSettingsActions } from '../actions/UserSettingsActions';
-import { durationIntervalSelector } from '../store/Selectors';
+import { durationSelector } from '../store/Selectors';
 import MetricsOptionsBar from '../components/MetricsOptions/MetricsOptionsBar';
-import { Duration } from '../types/GraphFilter';
 import { Dispatch } from 'redux';
+import { DurationInSeconds } from '../types/Common';
 
 const mapStateToProps = (state: KialiAppState) => ({
-  duration: durationIntervalSelector(state)
+  duration: durationSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<any>) => {
   return {
-    setDuration: (duration: Duration) => {
-      dispatch(UserSettingsActions.setDurationInterval(duration.value));
+    setDuration: (duration: DurationInSeconds) => {
+      dispatch(UserSettingsActions.setDuration(duration));
     }
   };
 };

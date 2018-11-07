@@ -3,7 +3,7 @@ import { store } from '../../store/ConfigStore';
 
 const buildCommonQueryParams = (params: GraphParamsType): string => {
   let q = `layout=${params.graphLayout.name}`;
-  q += `&duration=${params.graphDuration.value}`;
+  q += `&duration=${store.getState().userSettings.duration}`;
   q += `&edges=${params.edgeLabelMode}`;
   q += `&graphType=${params.graphType}`;
   q += `&injectServiceNodes=${params.injectServiceNodes}`;

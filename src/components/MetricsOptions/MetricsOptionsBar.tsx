@@ -10,8 +10,7 @@ import { MetricsDirection } from '../../types/Metrics';
 
 import { MetricsSettings, Quantiles, MetricsSettingsDropdown } from './MetricsSettings';
 import { MetricsLabels as L } from './MetricsLabels';
-import { DurationIntervalInSeconds } from '../../types/Common';
-import { Duration } from '../../types/GraphFilter';
+import { DurationInSeconds } from '../../types/Common';
 import RefreshContainer from '../../containers/RefreshContainer';
 
 interface Props {
@@ -23,8 +22,8 @@ interface Props {
   metricReporter: string;
   direction: MetricsDirection;
   labelValues: Map<L.LabelName, L.LabelValues>;
-  duration: DurationIntervalInSeconds;
-  setDuration: (duration: Duration) => void;
+  duration: DurationInSeconds;
+  setDuration: (duration: DurationInSeconds) => void;
 }
 
 export class MetricsOptionsBar extends React.Component<Props> {
@@ -50,10 +49,7 @@ export class MetricsOptionsBar extends React.Component<Props> {
     return MetricsOptionsBar.DefaultPollInterval;
   };
 
-  static initialDuration = (
-    urlParams: URLSearchParams,
-    defaultDuration: DurationIntervalInSeconds
-  ): DurationIntervalInSeconds => {
+  static initialDuration = (urlParams: URLSearchParams, defaultDuration: DurationInSeconds): DurationInSeconds => {
     let d = urlParams.get(URLParams.DURATION);
     if (d !== null) {
       sessionStorage.setItem(URLParams.DURATION, d);
@@ -110,7 +106,7 @@ export class MetricsOptionsBar extends React.Component<Props> {
   };
 
   onDurationChanged = (key: number) => {
-    this.props.setDuration({ value: key }); // send a Redux action to change duration
+    this.props.setDuration(key); // send a Redux action to change duration
     sessionStorage.setItem(URLParams.DURATION, String(key));
     HistoryManager.setParam(URLParams.DURATION, String(key));
   };

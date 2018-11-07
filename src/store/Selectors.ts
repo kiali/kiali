@@ -25,9 +25,9 @@ export const refreshIntervalSelector = createSelector(
   x => x // identity function
 );
 
-const durationInterval = (state: KialiAppState) => state.userSettings.durationInterval;
+const duration = (state: KialiAppState) => state.userSettings.duration;
 
-export const durationIntervalSelector = createSelector(
-  durationInterval,
+export const durationSelector = createSelector(
+  duration,
   x => x // identity function
 );

@@ -5,18 +5,22 @@ import { KialiAppState } from '../store/Store';
 import GraphRefresh from '../components/GraphFilter/GraphRefresh';
 import { config } from '../config';
 import { UserSettingsActions } from '../actions/UserSettingsActions';
-import { durationIntervalSelector, refreshIntervalSelector } from '../store/Selectors';
+import { durationSelector, refreshIntervalSelector } from '../store/Selectors';
+import { DurationInSeconds } from '../types/Common';
 
 const mapStateToProps = (state: KialiAppState) => ({
+  duration: durationSelector(state),
   selected: refreshIntervalSelector(state),
-  pollInterval: refreshIntervalSelector(state),
-  graphDuration: durationIntervalSelector(state)
+  pollInterval: refreshIntervalSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<any>) => {
   return {
     onSelect: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch),
-    onUpdatePollInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch)
+    onUpdatePollInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch),
+    onUpdateDuration: (duration: DurationInSeconds) => {
+      dispatch(UserSettingsActions.setDuration(duration));
+    }
   };
 };
 
@@ -27,6 +31,6 @@ const GraphRefreshContainer = connect(
   mapDispatchToProps
 )(GraphRefresh);
 
-export const GraphRefreshWithDefaultOptions = props => {
-  return <GraphRefreshContainer options={pollIntervalDefaults} {...props} />;
+export const GraphRefreshContainerDefaultRefreshIntervals = props => {
+  return <GraphRefreshContainer refreshIntervals={pollIntervalDefaults} {...props} />;
 };

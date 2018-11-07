@@ -87,7 +87,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
         // @ts-ignore
         GraphDataActions.fetchGraphData(
           store.getState().namespaces.activeNamespace,
-          this.props.graphDuration,
+          store.getState().userSettings.duration,
           this.props.graphType,
           this.props.injectServiceNodes,
           this.props.edgeLabelMode,
@@ -238,7 +238,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
   private getGraphParams: () => GraphParamsType = () => {
     return {
       node: this.props.node,
-      graphDuration: this.props.graphDuration,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,

@@ -2,10 +2,10 @@ import * as React from 'react';
 import FlexView from 'react-flexview';
 import { Breadcrumb, Icon, Button } from 'patternfly-react';
 
-import { PollIntervalInMs } from '../../types/Common';
+import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { GraphParamsType, SummaryData, NodeParamsType, GraphType } from '../../types/Graph';
-import { Duration, Layout, EdgeLabelMode } from '../../types/GraphFilter';
+import { Layout, EdgeLabelMode } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
 import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
@@ -41,7 +41,7 @@ type GraphPageProps = GraphParamsType & {
   // functions
   fetchGraphData: (
     namespace: Namespace,
-    graphDuration: Duration,
+    duration: DurationInSeconds,
     graphType: GraphType,
     injectServiceNodes: boolean,
     edgeLabelMode: EdgeLabelMode,
@@ -52,6 +52,7 @@ type GraphPageProps = GraphParamsType & {
   toggleLegend: () => void;
   // redux store props (to avoid ts-ignore)
   activeNamespace: Namespace;
+  duration: DurationInSeconds;
 };
 
 type GraphPageState = {
@@ -124,7 +125,6 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
       node: this.props.node,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
-      graphDuration: this.props.graphDuration,
       graphType: this.props.graphType,
       injectServiceNodes: this.props.injectServiceNodes
     };
@@ -135,7 +135,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     }
 
     const prevActiveNamespace = prevProps.activeNamespace;
-    const prevDuration = prevProps.graphDuration;
+    const prevDuration = prevProps.duration;
     const prevGraphType = prevProps.graphType;
     const prevPollInterval = prevProps.pollInterval;
     const prevInjectServiceNodes = prevProps.injectServiceNodes;
@@ -143,7 +143,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     const activeNamespaceHasChanged = prevActiveNamespace.name !== this.props.activeNamespace.name;
     const nodeHasChanged = prevProps.node !== this.props.node;
     const graphTypeHasChanged = prevGraphType !== this.props.graphType;
-    const durationHasChanged = prevDuration.value !== this.props.graphDuration.value;
+    const durationHasChanged = prevDuration !== this.props.duration;
     const pollIntervalChanged = prevPollInterval !== this.props.pollInterval;
     const injectServiceNodesHasChanged = prevInjectServiceNodes !== this.props.injectServiceNodes;
 
@@ -199,7 +199,6 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
       node: this.props.node,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
-      graphDuration: this.props.graphDuration,
       graphType: this.props.graphType,
       injectServiceNodes: this.props.injectServiceNodes
     };
@@ -261,9 +260,9 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
                 queryTime={this.props.graphTimestamp}
-                duration={this.props.graphDuration.value}
+                duration={this.props.duration}
                 isPageVisible={this.props.isPageVisible}
-                {...computePrometheusQueryInterval(this.props.graphDuration.value, NUMBER_OF_DATAPOINTS)}
+                {...computePrometheusQueryInterval(this.props.duration, NUMBER_OF_DATAPOINTS)}
               />
             ) : null}
             {this.props.showLegend && (
@@ -282,7 +281,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
   private loadGraphDataFromBackend = () => {
     const promise = this.props.fetchGraphData(
       this.props.node ? this.props.node.namespace : this.props.activeNamespace,
-      this.props.graphDuration,
+      this.props.duration,
       this.props.graphType,
       this.props.injectServiceNodes,
       this.props.edgeLabelMode,
@@ -347,7 +346,6 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
   private getGraphParams: () => GraphParamsType = () => {
     return {
       node: this.props.node,
-      graphDuration: this.props.graphDuration,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,

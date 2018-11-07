@@ -1,13 +1,13 @@
 import * as React from 'react';
 
 import { GraphParamsType, GraphType } from '../../types/Graph';
-import { Duration, EdgeLabelMode } from '../../types/GraphFilter';
+import { EdgeLabelMode } from '../../types/GraphFilter';
 import GraphFilterToolbarType from '../../types/GraphFilterToolbar';
 import { store } from '../../store/ConfigStore';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphDataActions } from '../../actions/GraphDataActions';
-import GraphFilterContainer from '../../containers/GraphFilterContainer';
+import GraphFilter from '../../components/GraphFilter/GraphFilter';
 
 export default class GraphFilterToolbar extends React.PureComponent<GraphFilterToolbarType> {
   static contextTypes = {
@@ -18,16 +18,14 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     const graphParams: GraphParamsType = {
       node: this.props.node,
       graphLayout: this.props.graphLayout,
-      graphDuration: this.props.graphDuration,
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,
       injectServiceNodes: this.props.injectServiceNodes
     };
 
     return (
-      <GraphFilterContainer
+      <GraphFilter
         disabled={this.props.isLoading}
-        onDurationChange={this.handleDurationChange}
         onNamespaceReturn={this.handleNamespaceReturn}
         onGraphTypeChange={this.handleGraphTypeChange}
         onEdgeLabelModeChange={this.handleEdgeLabelModeChange}
@@ -36,13 +34,6 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
       />
     );
   }
-
-  handleDurationChange = (graphDuration: Duration) => {
-    this.handleUrlFilterChange({
-      ...this.getGraphParams(),
-      graphDuration
-    });
-  };
 
   handleNamespaceReturn = () => {
     // TODO: This should be handled by a redux action that sets the node to undefined
@@ -70,7 +61,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
         // @ts-ignore
         GraphDataActions.fetchGraphData(
           store.getState().namespaces.activeNamespace,
-          this.props.graphDuration,
+          store.getState().userSettings.duration,
           this.props.graphType,
           this.props.injectServiceNodes,
           edgeLabelMode,
@@ -93,7 +84,6 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
   private getGraphParams: () => GraphParamsType = () => {
     return {
       node: this.props.node,
-      graphDuration: this.props.graphDuration,
       graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,

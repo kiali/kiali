@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 
 import { CytoscapeGraph } from '../CytoscapeGraph';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
-import { Duration, Layout, EdgeLabelMode } from '../../../types/GraphFilter';
+import { Layout, EdgeLabelMode } from '../../../types/GraphFilter';
 import EmptyGraphLayout from '../../../containers/EmptyGraphLayoutContainer';
 import { GraphType } from '../../../types/Graph';
 
@@ -22,14 +22,12 @@ const testReadyHandler = () => {
 describe('CytoscapeGraph component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
-    const myDuration: Duration = { value: 300 };
     const myEdgeLabelMode: EdgeLabelMode = EdgeLabelMode.HIDE;
 
     const wrapper = shallow(
       <CytoscapeGraph
         elements={GRAPH_DATA[testNamespace].elements}
         graphLayout={myLayout}
-        graphDuration={myDuration}
         edgeLabelMode={myEdgeLabelMode}
         onClick={testClickHandler}
         onReady={testReadyHandler}

@@ -1,6 +1,6 @@
 import { NotificationGroup } from '../types/MessageCenter';
 import Namespace from '../types/Namespace';
-import { DurationIntervalInSeconds, PollIntervalInMs } from '../types/Common';
+import { DurationInSeconds, PollIntervalInMs } from '../types/Common';
 
 // Store is the Redux Data store
 
@@ -84,7 +84,7 @@ export interface InterfaceSettings {
 export interface UserSettings {
   interface: InterfaceSettings;
   refreshInterval: PollIntervalInMs;
-  durationInterval: DurationIntervalInSeconds;
+  duration: DurationInSeconds;
 }
 
 export interface GrafanaInfo {

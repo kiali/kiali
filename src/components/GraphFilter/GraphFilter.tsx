@@ -3,21 +3,20 @@ import { style } from 'typestyle';
 import { Toolbar, FormGroup, Button } from 'patternfly-react';
 import * as _ from 'lodash';
 
-import { Duration, EdgeLabelMode } from '../../types/GraphFilter';
+import { EdgeLabelMode } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
 import { GraphParamsType, GraphType } from '../../types/Graph';
 import GraphSettingsContainer from '../../containers/GraphSettingsContainer';
-import { GraphRefreshWithDefaultOptions } from '../../containers/GraphRefreshContainer';
+import { GraphRefreshContainerDefaultRefreshIntervals } from '../../containers/GraphRefreshContainer';
+import { store } from '../../store/ConfigStore';
 
 export interface GraphFilterProps extends GraphParamsType {
   disabled: boolean;
-  onDurationChange: (newDuration: Duration) => void;
   onNamespaceReturn: () => void;
   onGraphTypeChange: (newType: GraphType) => void;
   onEdgeLabelModeChange: (newEdgeLabelMode: EdgeLabelMode) => void;
   onRefresh: () => void;
-  setDuration: (duration: Duration) => void; // set duration via Redux
 }
 
 type GraphFilterPropsReadOnly = Readonly<GraphFilterProps>;
@@ -54,13 +53,6 @@ export default class GraphFilter extends React.PureComponent<GraphFilterPropsRea
   constructor(props: GraphFilterProps) {
     super(props);
   }
-
-  handleDuration = (duration: number) => {
-    if (this.props.graphDuration.value !== duration) {
-      this.props.setDuration({ value: duration }); // inform Redux of duration change
-      this.props.onDurationChange({ value: duration });
-    }
-  };
 
   handleRefresh = () => {
     this.props.onRefresh();
@@ -104,12 +96,11 @@ export default class GraphFilter extends React.PureComponent<GraphFilterPropsRea
             options={GraphFilter.GRAPH_TYPES}
           />
           <Toolbar.RightContent>
-            <GraphRefreshWithDefaultOptions
+            <GraphRefreshContainerDefaultRefreshIntervals
               id="graph_refresh_container"
               disabled={this.props.disabled}
               handleRefresh={this.handleRefresh}
-              graphDuration={this.props.graphDuration}
-              onUpdateGraphDuration={this.handleDuration}
+              duration={store.getState().userSettings.duration}
             />
           </Toolbar.RightContent>
         </Toolbar>

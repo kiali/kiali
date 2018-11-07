@@ -1,12 +1,12 @@
 import { createAction } from 'typesafe-actions';
 import Namespace from '../types/Namespace';
-import { Duration, EdgeLabelMode } from '../types/GraphFilter';
+import { EdgeLabelMode } from '../types/GraphFilter';
 import * as API from '../services/Api';
 import { authentication } from '../utils/Authentication';
 import { MessageCenterActions } from './MessageCenterActions';
 import { GraphDataActionKeys } from './GraphDataActionKeys';
 import { GraphType, NodeParamsType } from '../types/Graph';
-import { AppenderString } from '../types/Common';
+import { AppenderString, DurationInSeconds } from '../types/Common';
 import { serverConfig } from '../config';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
@@ -92,7 +92,7 @@ export const GraphDataActions = {
   // action creator that performs the async request
   fetchGraphData: (
     namespace: Namespace,
-    graphDuration: Duration,
+    duration: DurationInSeconds,
     graphType: GraphType,
     injectServiceNodes: boolean,
     edgeLabelMode: EdgeLabelMode,
@@ -102,7 +102,6 @@ export const GraphDataActions = {
   ) => {
     return dispatch => {
       dispatch(GraphDataActions.getGraphDataStart());
-      const duration = graphDuration.value;
       let restParams = { duration: duration + 's', graphType: graphType, injectServiceNodes: injectServiceNodes };
       if (namespace.name === serverConfig().istioNamespace) {
         restParams['includeIstio'] = true;
