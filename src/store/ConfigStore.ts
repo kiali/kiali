@@ -23,7 +23,7 @@ const persistKey = 'kiali-' + (webRoot && webRoot !== '/' ? webRoot.substring(1)
 const persistConfig = {
   key: persistKey,
   storage: storage,
-  whitelist: ['authentication', 'statusState', 'userSettings']
+  whitelist: ['authentication', 'statusState']
 };
 
 const composeEnhancers =

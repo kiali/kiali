@@ -5,9 +5,9 @@ import { Duration, EdgeLabelMode } from '../../types/GraphFilter';
 import GraphFilterToolbarType from '../../types/GraphFilterToolbar';
 import { store } from '../../store/ConfigStore';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
-import GraphFilter from './GraphFilter';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphDataActions } from '../../actions/GraphDataActions';
+import GraphFilterContainer from '../../containers/GraphFilterContainer';
 
 export default class GraphFilterToolbar extends React.PureComponent<GraphFilterToolbarType> {
   static contextTypes = {
@@ -25,7 +25,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     };
 
     return (
-      <GraphFilter
+      <GraphFilterContainer
         disabled={this.props.isLoading}
         onDurationChange={this.handleDurationChange}
         onNamespaceReturn={this.handleNamespaceReturn}
@@ -38,7 +38,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
   }
 
   handleDurationChange = (graphDuration: Duration) => {
-    this.handleFilterChange({
+    this.handleUrlFilterChange({
       ...this.getGraphParams(),
       graphDuration
     });
@@ -51,14 +51,14 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
 
   handleGraphTypeChange = (graphType: GraphType) => {
     store.dispatch(GraphActions.changed());
-    this.handleFilterChange({
+    this.handleUrlFilterChange({
       ...this.getGraphParams(),
       graphType
     });
   };
 
   handleEdgeLabelModeChange = (edgeLabelMode: EdgeLabelMode) => {
-    this.handleFilterChange({
+    this.handleUrlFilterChange({
       ...this.getGraphParams(),
       edgeLabelMode
     });
@@ -82,7 +82,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     }
   };
 
-  handleFilterChange = (params: GraphParamsType) => {
+  handleUrlFilterChange = (params: GraphParamsType) => {
     if (this.props.node) {
       this.context.router.history.push(makeNodeGraphUrlFromParams(params));
     } else {

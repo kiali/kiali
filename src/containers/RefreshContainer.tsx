@@ -1,11 +1,9 @@
-import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { KialiAppState } from '../store/Store';
-import GraphRefresh from '../components/GraphFilter/GraphRefresh';
-import { config } from '../config';
 import { UserSettingsActions } from '../actions/UserSettingsActions';
 import { durationIntervalSelector, refreshIntervalSelector } from '../store/Selectors';
+import Refresh from '../components/Refresh/Refresh';
 
 const mapStateToProps = (state: KialiAppState) => ({
   selected: refreshIntervalSelector(state),
@@ -20,13 +18,9 @@ const mapDispatchToProps = (dispatch: Dispatch<any>) => {
   };
 };
 
-const pollIntervalDefaults = config().toolbar.pollInterval;
-
-const GraphRefreshContainer = connect(
+const RefreshContainer = connect(
   mapStateToProps,
   mapDispatchToProps
-)(GraphRefresh);
+)(Refresh);
 
-export const GraphRefreshWithDefaultOptions = props => {
-  return <GraphRefreshContainer options={pollIntervalDefaults} {...props} />;
-};
+export default RefreshContainer;

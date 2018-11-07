@@ -1,7 +1,6 @@
 import { GraphFilterState } from '../store/Store';
 import { GraphFilterActionKeys } from '../actions/GraphFilterActions';
 import { updateState } from '../utils/Reducer';
-import { config } from '../config';
 
 const INITIAL_STATE: GraphFilterState = {
   showLegend: false,
@@ -12,11 +11,10 @@ const INITIAL_STATE: GraphFilterState = {
   showSecurity: false,
   showServiceNodes: false,
   showTrafficAnimation: false,
-  showUnusedNodes: false,
+  showUnusedNodes: false
   // @ todo: add disableLayers back in later
   // disableLayers: false
   // edgeLabelMode: EdgeLabelMode.HIDE,
-  refreshRate: config().toolbar.defaultPollInterval
 };
 
 // This Reducer allows changes to the 'graphFilterState' portion of Redux Store
@@ -44,8 +42,6 @@ const graphFilterState = (state: GraphFilterState = INITIAL_STATE, action) => {
       return updateState(state, { showUnusedNodes: !state.showUnusedNodes });
     case GraphFilterActionKeys.ENABLE_GRAPH_FILTERS:
       return updateState(state, { disableLayers: action.payload });
-    case GraphFilterActionKeys.SET_GRAPH_REFRESH_RATE:
-      return updateState(state, { refreshRate: action.payload });
     default:
       return state;
   }

@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
 import isEqual from 'lodash/fp/isEqual';
 
-import Refresh from '../Refresh/Refresh';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import history, { URLParams, HistoryManager } from '../../app/History';
 import { config } from '../../config';
@@ -11,15 +10,21 @@ import { MetricsDirection } from '../../types/Metrics';
 
 import { MetricsSettings, Quantiles, MetricsSettingsDropdown } from './MetricsSettings';
 import { MetricsLabels as L } from './MetricsLabels';
+import { DurationIntervalInSeconds } from '../../types/Common';
+import { Duration } from '../../types/GraphFilter';
+import RefreshContainer from '../../containers/RefreshContainer';
 
 interface Props {
   onOptionsChanged: (opts: MetricsOptions) => void;
   onReporterChanged: (reporter: string) => void;
   onRefresh: () => void;
+  onUpdatePollInterval: (pollInterval: number) => void;
   onLabelsFiltersChanged: (label: L.LabelName, value: string, checked: boolean) => void;
   metricReporter: string;
   direction: MetricsDirection;
   labelValues: Map<L.LabelName, L.LabelValues>;
+  duration: DurationIntervalInSeconds;
+  setDuration: (duration: Duration) => void;
 }
 
 export class MetricsOptionsBar extends React.Component<Props> {
@@ -27,7 +32,6 @@ export class MetricsOptionsBar extends React.Component<Props> {
   static DefaultPollInterval = config().toolbar.defaultPollInterval;
 
   static Durations = config().toolbar.intervalDuration;
-  static DefaultDuration = config().toolbar.defaultDuration;
 
   static ReporterOptions: { [key: string]: string } = {
     destination: 'Destination',
@@ -35,7 +39,6 @@ export class MetricsOptionsBar extends React.Component<Props> {
   };
 
   private metricsSettings: MetricsSettings;
-  private duration: number;
   private pollInterval: number;
   private shouldReportOptions: boolean;
 
@@ -47,14 +50,17 @@ export class MetricsOptionsBar extends React.Component<Props> {
     return MetricsOptionsBar.DefaultPollInterval;
   };
 
-  static initialDuration = (urlParams: URLSearchParams): number => {
+  static initialDuration = (
+    urlParams: URLSearchParams,
+    defaultDuration: DurationIntervalInSeconds
+  ): DurationIntervalInSeconds => {
     let d = urlParams.get(URLParams.DURATION);
     if (d !== null) {
       sessionStorage.setItem(URLParams.DURATION, d);
       return Number(d);
     }
     d = sessionStorage.getItem(URLParams.DURATION);
-    return d !== null ? Number(d) : MetricsOptionsBar.DefaultDuration;
+    return d !== null ? Number(d) : defaultDuration;
   };
 
   static initialMetricsSettings = (urlParams: URLSearchParams): MetricsSettings => {
@@ -99,10 +105,12 @@ export class MetricsOptionsBar extends React.Component<Props> {
   }
 
   onPollIntervalChanged = (key: number) => {
+    this.props.onUpdatePollInterval(key); // send a Redux action to change duration
     HistoryManager.setParam(URLParams.POLL_INTERVAL, String(key));
   };
 
   onDurationChanged = (key: number) => {
+    this.props.setDuration({ value: key }); // send a Redux action to change duration
     sessionStorage.setItem(URLParams.DURATION, String(key));
     HistoryManager.setParam(URLParams.DURATION, String(key));
   };
@@ -117,7 +125,7 @@ export class MetricsOptionsBar extends React.Component<Props> {
       labelsOut = this.metricsSettings.activeLabels.map(lbl => L.OUTBOUND_LABELS.get(lbl)!);
     }
     this.props.onOptionsChanged({
-      duration: this.duration,
+      duration: this.props.duration,
       byLabelsIn: labelsIn,
       byLabelsOut: labelsOut,
       avg: this.metricsSettings.showAverage,
@@ -168,12 +176,12 @@ export class MetricsOptionsBar extends React.Component<Props> {
           disabled={false}
           handleSelect={this.onDurationChanged}
           nameDropdown={'Displaying'}
-          initialValue={this.duration}
-          initialLabel={String(MetricsOptionsBar.Durations[this.duration])}
+          initialValue={this.props.duration}
+          initialLabel={String(MetricsOptionsBar.Durations[this.props.duration])}
           options={MetricsOptionsBar.Durations}
         />
         <ToolbarRightContent>
-          <Refresh
+          <RefreshContainer
             id="metrics-refresh"
             handleRefresh={this.props.onRefresh}
             onSelect={this.onPollIntervalChanged}
@@ -187,16 +195,15 @@ export class MetricsOptionsBar extends React.Component<Props> {
   private processUrlParams = () => {
     const urlParams = new URLSearchParams(history.location.search);
     const pollInterval = MetricsOptionsBar.initialPollInterval(urlParams);
-    const duration = MetricsOptionsBar.initialDuration(urlParams);
+    const duration = MetricsOptionsBar.initialDuration(urlParams, this.props.duration);
     const metricsSettings = MetricsOptionsBar.initialMetricsSettings(urlParams);
 
     this.shouldReportOptions =
       pollInterval !== this.pollInterval ||
-      duration !== this.duration ||
+      duration !== this.props.duration ||
       !isEqual(metricsSettings)(this.metricsSettings);
 
     this.pollInterval = pollInterval;
-    this.duration = duration;
     this.metricsSettings = metricsSettings;
   };
 }

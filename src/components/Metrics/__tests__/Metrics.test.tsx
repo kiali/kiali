@@ -1,9 +1,11 @@
 import * as React from 'react';
 import { mount, shallow, ReactWrapper } from 'enzyme';
+import { Provider } from 'react-redux';
 
 import Metrics from '../Metrics';
 import * as API from '../../../services/Api';
 import { MetricsDirection, MetricsObjectTypes } from '../../../types/Metrics';
+import { store } from '../../../store/ConfigStore';
 
 window['SVGPathElement'] = a => a;
 let mounted: ReactWrapper<any, any> | null;
@@ -98,20 +100,22 @@ describe('Metrics for a service', () => {
   it('renders initial layout', () => {
     mockGrafanaInfo({});
     const wrapper = shallow(
-      <Metrics
-        namespace="ns"
-        object="svc"
-        objectType={MetricsObjectTypes.SERVICE}
-        direction={MetricsDirection.INBOUND}
-        grafanaInfo={{
-          url: 'http://172.30.139.113:3000',
-          serviceDashboardPath: '/dashboard/db/istio-dashboard',
-          workloadDashboardPath: '/dashboard/db/istio-dashboard',
-          varService: 'var-service',
-          varNamespace: 'var-namespace',
-          varWorkload: 'var-workload'
-        }}
-      />
+      <Provider store={store}>
+        <Metrics
+          namespace="ns"
+          object="svc"
+          objectType={MetricsObjectTypes.SERVICE}
+          direction={MetricsDirection.INBOUND}
+          grafanaInfo={{
+            url: 'http://172.30.139.113:3000',
+            serviceDashboardPath: '/dashboard/db/istio-dashboard',
+            workloadDashboardPath: '/dashboard/db/istio-dashboard',
+            varService: 'var-service',
+            varNamespace: 'var-namespace',
+            varWorkload: 'var-workload'
+          }}
+        />
+      </Provider>
     );
     expect(wrapper).toMatchSnapshot();
   });
@@ -128,20 +132,22 @@ describe('Metrics for a service', () => {
     ];
     Promise.all(allMocksDone).then(() => done());
     mounted = mount(
-      <Metrics
-        namespace="ns"
-        object="svc"
-        objectType={MetricsObjectTypes.SERVICE}
-        direction={MetricsDirection.INBOUND}
-        grafanaInfo={{
-          url: 'http://172.30.139.113:3000',
-          serviceDashboardPath: '/dashboard/db/istio-dashboard',
-          workloadDashboardPath: '/dashboard/db/istio-dashboard',
-          varService: 'var-service',
-          varNamespace: 'var-namespace',
-          varWorkload: 'var-workload'
-        }}
-      />
+      <Provider store={store}>
+        <Metrics
+          namespace="ns"
+          object="svc"
+          objectType={MetricsObjectTypes.SERVICE}
+          direction={MetricsDirection.INBOUND}
+          grafanaInfo={{
+            url: 'http://172.30.139.113:3000',
+            serviceDashboardPath: '/dashboard/db/istio-dashboard',
+            workloadDashboardPath: '/dashboard/db/istio-dashboard',
+            varService: 'var-service',
+            varNamespace: 'var-namespace',
+            varWorkload: 'var-workload'
+          }}
+        />
+      </Provider>
     );
   });
 
@@ -167,20 +173,22 @@ describe('Metrics for a service', () => {
       ];
       Promise.all(allMocksDone).then(() => done());
       mounted = mount(
-        <Metrics
-          namespace="ns"
-          object="svc"
-          objectType={MetricsObjectTypes.SERVICE}
-          direction={MetricsDirection.INBOUND}
-          grafanaInfo={{
-            url: 'http://172.30.139.113:3000',
-            serviceDashboardPath: '/dashboard/db/istio-dashboard',
-            workloadDashboardPath: '/dashboard/db/istio-dashboard',
-            varService: 'var-service',
-            varNamespace: 'var-namespace',
-            varWorkload: 'var-workload'
-          }}
-        />
+        <Provider store={store}>
+          <Metrics
+            namespace="ns"
+            object="svc"
+            objectType={MetricsObjectTypes.SERVICE}
+            direction={MetricsDirection.INBOUND}
+            grafanaInfo={{
+              url: 'http://172.30.139.113:3000',
+              serviceDashboardPath: '/dashboard/db/istio-dashboard',
+              workloadDashboardPath: '/dashboard/db/istio-dashboard',
+              varService: 'var-service',
+              varNamespace: 'var-namespace',
+              varWorkload: 'var-workload'
+            }}
+          />
+        </Provider>
       );
     },
     10000
@@ -199,20 +207,22 @@ describe('Inbound Metrics for a workload', () => {
 
   it('renders initial layout', () => {
     const wrapper = shallow(
-      <Metrics
-        namespace="ns"
-        object="svc"
-        objectType={MetricsObjectTypes.WORKLOAD}
-        direction={MetricsDirection.INBOUND}
-        grafanaInfo={{
-          url: 'http://172.30.139.113:3000',
-          serviceDashboardPath: '/dashboard/db/istio-dashboard',
-          workloadDashboardPath: '/dashboard/db/istio-dashboard',
-          varService: 'var-service',
-          varNamespace: 'var-namespace',
-          varWorkload: 'var-workload'
-        }}
-      />
+      <Provider store={store}>
+        <Metrics
+          namespace="ns"
+          object="svc"
+          objectType={MetricsObjectTypes.WORKLOAD}
+          direction={MetricsDirection.INBOUND}
+          grafanaInfo={{
+            url: 'http://172.30.139.113:3000',
+            serviceDashboardPath: '/dashboard/db/istio-dashboard',
+            workloadDashboardPath: '/dashboard/db/istio-dashboard',
+            varService: 'var-service',
+            varNamespace: 'var-namespace',
+            varWorkload: 'var-workload'
+          }}
+        />
+      </Provider>
     );
     expect(wrapper).toMatchSnapshot();
   });
@@ -229,20 +239,22 @@ describe('Inbound Metrics for a workload', () => {
     ];
     Promise.all(allMocksDone).then(() => done());
     mounted = mount(
-      <Metrics
-        namespace="ns"
-        object="svc"
-        objectType={MetricsObjectTypes.WORKLOAD}
-        direction={MetricsDirection.INBOUND}
-        grafanaInfo={{
-          url: 'http://172.30.139.113:3000',
-          serviceDashboardPath: '/dashboard/db/istio-dashboard',
-          workloadDashboardPath: '/dashboard/db/istio-dashboard',
-          varService: 'var-service',
-          varNamespace: 'var-namespace',
-          varWorkload: 'var-workload'
-        }}
-      />
+      <Provider store={store}>
+        <Metrics
+          namespace="ns"
+          object="svc"
+          objectType={MetricsObjectTypes.WORKLOAD}
+          direction={MetricsDirection.INBOUND}
+          grafanaInfo={{
+            url: 'http://172.30.139.113:3000',
+            serviceDashboardPath: '/dashboard/db/istio-dashboard',
+            workloadDashboardPath: '/dashboard/db/istio-dashboard',
+            varService: 'var-service',
+            varNamespace: 'var-namespace',
+            varWorkload: 'var-workload'
+          }}
+        />
+      </Provider>
     );
   });
 
@@ -268,20 +280,22 @@ describe('Inbound Metrics for a workload', () => {
       ];
       Promise.all(allMocksDone).then(() => done());
       mounted = mount(
-        <Metrics
-          namespace="ns"
-          object="svc"
-          objectType={MetricsObjectTypes.WORKLOAD}
-          direction={MetricsDirection.INBOUND}
-          grafanaInfo={{
-            url: 'http://172.30.139.113:3000',
-            serviceDashboardPath: '/dashboard/db/istio-dashboard',
-            workloadDashboardPath: '/dashboard/db/istio-dashboard',
-            varService: 'var-service',
-            varNamespace: 'var-namespace',
-            varWorkload: 'var-workload'
-          }}
-        />
+        <Provider store={store}>
+          <Metrics
+            namespace="ns"
+            object="svc"
+            objectType={MetricsObjectTypes.WORKLOAD}
+            direction={MetricsDirection.INBOUND}
+            grafanaInfo={{
+              url: 'http://172.30.139.113:3000',
+              serviceDashboardPath: '/dashboard/db/istio-dashboard',
+              workloadDashboardPath: '/dashboard/db/istio-dashboard',
+              varService: 'var-service',
+              varNamespace: 'var-namespace',
+              varWorkload: 'var-workload'
+            }}
+          />
+        </Provider>
       );
     },
     10000
@@ -300,20 +314,22 @@ describe('Outbound Metrics for a workload', () => {
 
   it('renders initial layout', () => {
     const wrapper = shallow(
-      <Metrics
-        namespace="ns"
-        object="svc"
-        objectType={MetricsObjectTypes.WORKLOAD}
-        direction={MetricsDirection.INBOUND}
-        grafanaInfo={{
-          url: 'http://172.30.139.113:3000',
-          serviceDashboardPath: '/dashboard/db/istio-dashboard',
-          workloadDashboardPath: '/dashboard/db/istio-dashboard',
-          varService: 'var-service',
-          varNamespace: 'var-namespace',
-          varWorkload: 'var-workload'
-        }}
-      />
+      <Provider store={store}>
+        <Metrics
+          namespace="ns"
+          object="svc"
+          objectType={MetricsObjectTypes.WORKLOAD}
+          direction={MetricsDirection.INBOUND}
+          grafanaInfo={{
+            url: 'http://172.30.139.113:3000',
+            serviceDashboardPath: '/dashboard/db/istio-dashboard',
+            workloadDashboardPath: '/dashboard/db/istio-dashboard',
+            varService: 'var-service',
+            varNamespace: 'var-namespace',
+            varWorkload: 'var-workload'
+          }}
+        />
+      </Provider>
     );
     expect(wrapper).toMatchSnapshot();
   });
@@ -330,20 +346,22 @@ describe('Outbound Metrics for a workload', () => {
     ];
     Promise.all(allMocksDone).then(() => done());
     mounted = mount(
-      <Metrics
-        namespace="ns"
-        object="svc"
-        objectType={MetricsObjectTypes.WORKLOAD}
-        direction={MetricsDirection.INBOUND}
-        grafanaInfo={{
-          url: 'http://172.30.139.113:3000',
-          serviceDashboardPath: '/dashboard/db/istio-dashboard',
-          workloadDashboardPath: '/dashboard/db/istio-dashboard',
-          varService: 'var-service',
-          varNamespace: 'var-namespace',
-          varWorkload: 'var-workload'
-        }}
-      />
+      <Provider store={store}>
+        <Metrics
+          namespace="ns"
+          object="svc"
+          objectType={MetricsObjectTypes.WORKLOAD}
+          direction={MetricsDirection.INBOUND}
+          grafanaInfo={{
+            url: 'http://172.30.139.113:3000',
+            serviceDashboardPath: '/dashboard/db/istio-dashboard',
+            workloadDashboardPath: '/dashboard/db/istio-dashboard',
+            varService: 'var-service',
+            varNamespace: 'var-namespace',
+            varWorkload: 'var-workload'
+          }}
+        />
+      </Provider>
     );
   });
 
@@ -369,20 +387,22 @@ describe('Outbound Metrics for a workload', () => {
       ];
       Promise.all(allMocksDone).then(() => done());
       mounted = mount(
-        <Metrics
-          namespace="ns"
-          object="svc"
-          objectType={MetricsObjectTypes.WORKLOAD}
-          direction={MetricsDirection.OUTBOUND}
-          grafanaInfo={{
-            url: 'http://172.30.139.113:3000',
-            serviceDashboardPath: '/dashboard/db/istio-dashboard',
-            workloadDashboardPath: '/dashboard/db/istio-dashboard',
-            varService: 'var-service',
-            varNamespace: 'var-namespace',
-            varWorkload: 'var-workload'
-          }}
-        />
+        <Provider store={store}>
+          <Metrics
+            namespace="ns"
+            object="svc"
+            objectType={MetricsObjectTypes.WORKLOAD}
+            direction={MetricsDirection.OUTBOUND}
+            grafanaInfo={{
+              url: 'http://172.30.139.113:3000',
+              serviceDashboardPath: '/dashboard/db/istio-dashboard',
+              workloadDashboardPath: '/dashboard/db/istio-dashboard',
+              varService: 'var-service',
+              varNamespace: 'var-namespace',
+              varWorkload: 'var-workload'
+            }}
+          />
+        </Provider>
       );
     },
     10000

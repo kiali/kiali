@@ -28,7 +28,7 @@ describe('GraphPage test', () => {
     );
 
     const toolbar = wrapper.instance() as GraphFilterToolbar;
-    toolbar.handleFilterChange = onParamsChangeMockFn;
+    toolbar.handleUrlFilterChange = onParamsChangeMockFn;
 
     const newDuration: Duration = { value: 1800 };
     toolbar.handleDurationChange(newDuration); // simulate duration change

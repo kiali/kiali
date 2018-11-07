@@ -7,8 +7,8 @@ import { Duration, EdgeLabelMode } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
 import { GraphParamsType, GraphType } from '../../types/Graph';
-import GraphRefreshContainer from '../../containers/GraphRefreshContainer';
 import GraphSettingsContainer from '../../containers/GraphSettingsContainer';
+import { GraphRefreshWithDefaultOptions } from '../../containers/GraphRefreshContainer';
 
 export interface GraphFilterProps extends GraphParamsType {
   disabled: boolean;
@@ -17,7 +17,10 @@ export interface GraphFilterProps extends GraphParamsType {
   onGraphTypeChange: (newType: GraphType) => void;
   onEdgeLabelModeChange: (newEdgeLabelMode: EdgeLabelMode) => void;
   onRefresh: () => void;
+  setDuration: (duration: Duration) => void; // set duration via Redux
 }
+
+type GraphFilterPropsReadOnly = Readonly<GraphFilterProps>;
 
 const zeroPaddingLeft = style({
   marginLeft: '20px',
@@ -29,7 +32,7 @@ const namespaceStyle = style({
   marginRight: '5px'
 });
 
-export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
+export default class GraphFilter extends React.PureComponent<GraphFilterPropsReadOnly> {
   // GraphFilter should be minimal and used for assembling those filtering components.
 
   /**
@@ -52,13 +55,14 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
     super(props);
   }
 
-  updateDuration = (value: number) => {
-    if (this.props.graphDuration.value !== value) {
-      this.props.onDurationChange({ value: value });
+  handleDuration = (duration: number) => {
+    if (this.props.graphDuration.value !== duration) {
+      this.props.setDuration({ value: duration }); // inform Redux of duration change
+      this.props.onDurationChange({ value: duration });
     }
   };
 
-  handleRefresh = (e: any) => {
+  handleRefresh = () => {
     this.props.onRefresh();
   };
 
@@ -75,7 +79,7 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
                 Back To Namespace
               </Button>
             ) : (
-              <label className={namespaceStyle}>Namespace:</label>
+              <label className={namespaceStyle}>Namespace</label>
             )}
             <NamespaceDropdownContainer disabled={this.props.node || this.props.disabled} />
           </FormGroup>
@@ -100,12 +104,12 @@ export default class GraphFilter extends React.PureComponent<GraphFilterProps> {
             options={GraphFilter.GRAPH_TYPES}
           />
           <Toolbar.RightContent>
-            <GraphRefreshContainer
+            <GraphRefreshWithDefaultOptions
               id="graph_refresh_container"
               disabled={this.props.disabled}
               handleRefresh={this.handleRefresh}
               graphDuration={this.props.graphDuration}
-              onUpdateGraphDuration={this.updateDuration}
+              onUpdateGraphDuration={this.handleDuration}
             />
           </Toolbar.RightContent>
         </Toolbar>

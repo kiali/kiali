@@ -4,12 +4,12 @@ import { RouteComponentProps } from 'react-router-dom';
 import { GraphParamsType, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import * as LayoutDictionary from '../../components/CytoscapeGraph/graphs/LayoutDictionary';
-import GraphPage from '../../containers/GraphPageContainer';
 import { config } from '../../config';
 import * as Enum from '../../utils/Enum';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import Namespace from '../../types/Namespace';
 import { store } from '../../store/ConfigStore';
+import GraphPageContainer from '../../containers/GraphPageContainer';
 
 const URLSearchParams = require('url-search-params');
 
@@ -48,10 +48,7 @@ type GraphURLQueryProps = GraphParamsType & {
 /**
  * Handle URL parameters for Graph page
  */
-export default class GraphRouteHandler extends React.Component<
-  RouteComponentProps<GraphURLPathProps>,
-  GraphURLQueryProps
-> {
+export class GraphRouteHandler extends React.Component<RouteComponentProps<GraphURLPathProps>, GraphURLQueryProps> {
   static contextTypes = {
     router: () => null
   };
@@ -136,7 +133,6 @@ export default class GraphRouteHandler extends React.Component<
 
     const {
       edgeLabelMode: nextEdgeLabelMode,
-      graphDuration: nextDuration,
       graphLayout: nextLayout,
       graphType: nextGraphType,
       injectServiceNodes: nextInjectServiceNodes,
@@ -150,8 +146,10 @@ export default class GraphRouteHandler extends React.Component<
     }
 
     const currentNamespaces = store.getState().namespaces.activeNamespace;
+    // @ts-ignore
+    const reduxDuration = props.duration; // from redux
 
-    const durationHasChanged = nextDuration.value !== currentState.graphDuration.value;
+    const durationHasChanged = reduxDuration !== currentState.graphDuration.value;
     const edgeLabelModeChanged = nextEdgeLabelMode !== currentState.edgeLabelMode;
     const graphTypeChanged = nextGraphType !== currentState.graphType;
     const injectServiceNodesChanged = nextInjectServiceNodes !== currentState.injectServiceNodes;
@@ -186,7 +184,7 @@ export default class GraphRouteHandler extends React.Component<
     ) {
       const newGraphParams: GraphParamsType = {
         edgeLabelMode: nextEdgeLabelMode,
-        graphDuration: nextDuration,
+        graphDuration: { value: reduxDuration },
         graphLayout: nextLayout,
         graphType: nextGraphType,
         injectServiceNodes: nextInjectServiceNodes,
@@ -216,7 +214,7 @@ export default class GraphRouteHandler extends React.Component<
   render() {
     return (
       <>
-        <GraphPage {...this.state} />
+        <GraphPageContainer {...this.state} />
       </>
     );
   }

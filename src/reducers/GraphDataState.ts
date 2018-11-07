@@ -2,7 +2,6 @@ import { GraphState } from '../store/Store';
 import { GraphDataActionKeys } from '../actions/GraphDataActionKeys';
 import { GraphActionKeys } from '../actions/GraphActions';
 import FilterStateReducer from './GraphFilterState';
-import { MILLISECONDS } from '../types/Common';
 
 export const INITIAL_GRAPH_STATE: GraphState = {
   isLoading: false,
@@ -20,8 +19,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showSecurity: false,
     showServiceNodes: false,
     showTrafficAnimation: false,
-    showUnusedNodes: false,
-    refreshRate: 15 * MILLISECONDS
+    showUnusedNodes: false
   }
 };
 

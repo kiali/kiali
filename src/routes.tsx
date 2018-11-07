@@ -8,9 +8,9 @@ import AppListPage from './pages/AppList/AppListPage';
 import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
 import { MenuItem, Path } from './types/Routes';
 
-import GraphRouteHandler from './pages/Graph/GraphRouteHandler';
 import OverviewPageContainer from './containers/OverviewPageContainer';
 import ServiceDetailsPageContainer from './containers/ServiceDetailsPageContainer';
+import GraphRouteHandlerContainer from './containers/GraphRouteHandlerContainer';
 
 /**
  * Return array of objects that describe vertical menu
@@ -69,23 +69,23 @@ const pathRoutes: Path[] = [
   },
   {
     path: '/graph/node/namespaces/:namespace/applications/:app/versions/:version',
-    component: GraphRouteHandler
+    component: GraphRouteHandlerContainer
   },
   {
     path: '/graph/node/namespaces/:namespace/applications/:app',
-    component: GraphRouteHandler
+    component: GraphRouteHandlerContainer
   },
   {
     path: '/graph/node/namespaces/:namespace/services/:service',
-    component: GraphRouteHandler
+    component: GraphRouteHandlerContainer
   },
   {
     path: '/graph/node/namespaces/:namespace/workloads/:workload',
-    component: GraphRouteHandler
+    component: GraphRouteHandlerContainer
   },
   {
     path: '/graph/namespaces',
-    component: GraphRouteHandler
+    component: GraphRouteHandlerContainer
   },
   {
     path: '/namespaces/:namespace/services/:service',

@@ -6,7 +6,6 @@ export enum GraphActionKeys {
   GRAPH_SIDE_PANEL_SHOW_INFO = 'GRAPH_SIDE_PANEL_SHOW_INFO'
 }
 
-// synchronous action creators
 export const GraphActions = {
   changed: createAction(GraphActionKeys.GRAPH_CHANGED, () => ({
     type: GraphActionKeys.GRAPH_CHANGED

@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { PollIntervalInMs } from '../../types/Common';
-import { Duration } from '../../types/GraphFilter';
+import { DurationIntervalInSeconds, PollIntervalInMs } from '../../types/Common';
 import { Button, MenuItem, Icon, DropdownButton } from 'patternfly-react';
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
 import { config } from '../../config';
+import { style } from 'typestyle';
 
 type GraphRefreshProps = {
   id: string;
@@ -13,13 +13,13 @@ type GraphRefreshProps = {
   options: {
     [interval: number]: string;
   };
-  graphDuration: Duration;
+  graphDuration: DurationIntervalInSeconds;
   onUpdateGraphDuration: (duration: number) => void;
   disabled: boolean;
 };
 
 const GraphRefresh: React.SFC<GraphRefreshProps> = props => {
-  const INTERVAL_DURATION = config().toolbar.intervalDuration;
+  const INTERVAL_DURATION_LIST = config().toolbar.intervalDuration;
 
   const formatRefreshText = (key, isTitle: boolean = false): string => {
     // Ensure that we have an integer (for comparisons).
@@ -32,16 +32,24 @@ const GraphRefresh: React.SFC<GraphRefreshProps> = props => {
     }
   };
 
+  const intervalDurationLabelStyle = style({
+    paddingRight: '0.5em',
+    marginLeft: '1.5em'
+  });
+  const refreshButtonStyle = style({
+    paddingLeft: '0.5em'
+  });
+
   return (
     <>
-      <label style={{ paddingRight: '0.5em', marginLeft: '1.5em' }}>Fetching</label>
+      <label className={intervalDurationLabelStyle}>Fetching</label>
       <ToolbarDropdown
         id={'graph_filter_interval_duration'}
         disabled={props.disabled}
         handleSelect={props.onUpdateGraphDuration}
-        value={props.graphDuration.value}
-        label={String(INTERVAL_DURATION[props.graphDuration.value])}
-        options={INTERVAL_DURATION}
+        value={props.graphDuration}
+        label={String(INTERVAL_DURATION_LIST[props.graphDuration])}
+        options={INTERVAL_DURATION_LIST}
       />
       <DropdownButton
         id="graph_refresh_dropdown"
@@ -61,7 +69,7 @@ const GraphRefresh: React.SFC<GraphRefreshProps> = props => {
           );
         })}
       </DropdownButton>
-      <span style={{ paddingLeft: '0.5em' }}>
+      <span className={refreshButtonStyle}>
         <Button id="refresh_button" onClick={props.handleRefresh} disabled={props.disabled}>
           <Icon name="refresh" />
         </Button>

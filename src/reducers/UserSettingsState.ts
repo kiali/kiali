@@ -1,15 +1,27 @@
 import { UserSettings } from '../store/Store';
 import { UserSettingsActionKeys } from '../actions/UserSettingsActions';
+import { config } from '../config';
+import { updateState } from '../utils/Reducer';
 
 export const INITIAL_USER_SETTINGS_STATE: UserSettings = {
-  interface: { navCollapse: false }
+  interface: { navCollapse: false },
+  durationInterval: config().toolbar.defaultDuration,
+  refreshInterval: config().toolbar.defaultPollInterval
 };
 
 const UserSettingsState = (state: UserSettings = INITIAL_USER_SETTINGS_STATE, action) => {
   switch (action.type) {
     case UserSettingsActionKeys.NAV_COLLAPSE:
-      return Object.assign({}, INITIAL_USER_SETTINGS_STATE, {
+      return updateState(state, {
         interface: { navCollapse: action.collapse }
+      });
+    case UserSettingsActionKeys.SET_DURATION_INTERVAL:
+      return updateState(state, {
+        durationInterval: action.payload
+      });
+    case UserSettingsActionKeys.SET_REFRESH_INTERVAL:
+      return updateState(state, {
+        refreshInterval: action.payload
       });
     default:
       return state;

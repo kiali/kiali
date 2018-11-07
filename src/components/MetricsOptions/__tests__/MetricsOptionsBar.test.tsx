@@ -1,55 +1,59 @@
 import * as React from 'react';
 import { mount, shallow } from 'enzyme';
-
+import { Provider } from 'react-redux';
 import MetricsOptionsBar from '../MetricsOptionsBar';
 import { MetricsDirection } from '../../../types/Metrics';
+import { config } from '../../../config';
+import { store } from '../../../store/ConfigStore';
 
 const optionsChanged = jest.fn();
-const lastOptionsChanged = () => {
-  return optionsChanged.mock.calls[optionsChanged.mock.calls.length - 1][0];
-};
 
 describe('MetricsOptionsBar', () => {
   it('renders initial layout', () => {
     const wrapper = shallow(
-      <MetricsOptionsBar
-        onOptionsChanged={jest.fn()}
-        onRefresh={jest.fn()}
-        onReporterChanged={jest.fn()}
-        onLabelsFiltersChanged={jest.fn()}
-        metricReporter={'destination'}
-        direction={MetricsDirection.INBOUND}
-        labelValues={new Map()}
-      />
+      <Provider store={store}>
+        <MetricsOptionsBar
+          duration={config().toolbar.defaultDuration}
+          setDuration={jest.fn()}
+          onOptionsChanged={jest.fn()}
+          onRefresh={jest.fn()}
+          onUpdatePollInterval={jest.fn()}
+          onReporterChanged={jest.fn()}
+          onLabelsFiltersChanged={jest.fn()}
+          metricReporter={'destination'}
+          direction={MetricsDirection.INBOUND}
+          labelValues={new Map()}
+        />
+      </Provider>
     );
     expect(wrapper).toMatchSnapshot();
   });
 
   it('changes trigger parent callback', () => {
     const wrapper = mount(
-      <MetricsOptionsBar
-        onOptionsChanged={optionsChanged}
-        onRefresh={jest.fn()}
-        onReporterChanged={jest.fn()}
-        onLabelsFiltersChanged={jest.fn()}
-        metricReporter={'destination'}
-        direction={MetricsDirection.INBOUND}
-        labelValues={new Map()}
-      />
+      <Provider store={store}>
+        <MetricsOptionsBar
+          duration={config().toolbar.defaultDuration}
+          setDuration={jest.fn()}
+          onOptionsChanged={optionsChanged}
+          onRefresh={jest.fn()}
+          onUpdatePollInterval={jest.fn()}
+          onReporterChanged={jest.fn()}
+          onLabelsFiltersChanged={jest.fn()}
+          metricReporter={'destination'}
+          direction={MetricsDirection.INBOUND}
+          labelValues={new Map()}
+        />
+      </Provider>
     );
     expect(optionsChanged).toHaveBeenCalledTimes(1);
-    const opts = lastOptionsChanged();
-    // Step = duration / ticks
-    expect(opts).toHaveProperty('duration', MetricsOptionsBar.DefaultDuration);
 
-    let elt = wrapper
+    const elt = wrapper
       .find('#metrics_filter_interval_duration')
       .find('SafeAnchor')
       .at(1);
     elt.simulate('click');
     wrapper.setProps({}); // Force re-render
     expect(optionsChanged).toHaveBeenCalledTimes(2);
-    const expectedDuration: number = Number(Object.keys(MetricsOptionsBar.Durations)[1]);
-    expect(lastOptionsChanged()).toHaveProperty('duration', expectedDuration);
   });
 });
