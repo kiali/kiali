@@ -28,6 +28,7 @@ KIALI_ENABLED="false"
 DASHBOARDS_ENABLED="false"
 USE_DEMO_VALUES="false"
 USE_DEMO_AUTH_VALUES="false"
+HELM_REPO_TO_ADD="https://storage.googleapis.com/istio-prerelease/daily-build/master-latest-daily/charts"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -53,6 +54,10 @@ while [[ $# -gt 0 ]]; do
         echo "ERROR: The --dashboards-enabled flag must be 'true' or 'false'"
         exit 1
       fi
+      shift;shift
+      ;;
+    -hr|--helm-repo)
+      HELM_REPO_TO_ADD="$2"
       shift;shift
       ;;
     -id|--istio-dir)
@@ -128,6 +133,9 @@ Valid command line arguments:
        Set to 'true' if you want Jaeger and Grafana installed.
        Ignored if --use-demo or --use-demo-auth is true.
        Default: false
+  -hr|--helm-repo <url>:
+       Will add this Istio Helm repo which contains remote Istio dependencies.
+       Default: ${HELM_REPO_TO_ADD}
   -id|--istio-dir <dir>:
        Where Istio has already been downloaded. If not found, this script aborts.
   -ke|--kiali-enabled (true|false):
@@ -310,10 +318,13 @@ fi
 
 # Create the install yaml via the helm template command
 if [ ! -f "/tmp/istio.yaml" ]; then
-  echo Generating install yaml via Helm
+  echo Initializing client-side helm...
   ${HELM_EXE} init --client-only
-  ${HELM_EXE} repo add istio.io https://raw.githubusercontent.com/istio/istio.io/master/static/charts
+  echo Adding Helm repo: ${HELM_REPO_TO_ADD}
+  ${HELM_EXE} repo add istio.io ${HELM_REPO_TO_ADD}
+  echo Updating Helm dependencies...
   ${HELM_EXE} dep update "${ISTIO_DIR}/install/kubernetes/helm/istio"
+  echo Building Helm yaml for Istio...
   ${HELM_EXE} template ${_HELM_VALUES} ${CUSTOM_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace istio-system > /tmp/istio.yaml
 fi
 
