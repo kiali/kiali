@@ -10,7 +10,7 @@ def test_kiali_reduced_cluster_permissins(kiali_client):
         while True:
             access = None
             try:
-                kiali_client.graph_namespace(namespace='bookinfo')
+                kiali_client.graph_namespaces(params={'duration': '1m', 'namespaces': 'bookinfo'})
             except:
                 # Will reach there if the graph is NOT accessable
                 access = False
@@ -26,7 +26,7 @@ def test_kiali_reduced_cluster_permissins(kiali_client):
             access = True
             try:
                 # Will reach there if the graph is NOT accessable
-                kiali_client.graph_namespace(namespace='bookinfo')
+                kiali_client.graph_namespaces(params={'duration': '1m', 'namespaces': 'bookinfo'})
             except:
                 access = False
 

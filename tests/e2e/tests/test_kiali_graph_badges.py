@@ -29,7 +29,8 @@ def test_kiali_virtual_service_app(kiali_client):
 
 def do_test(kiali_client, graph_params, yaml_file, badge):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
-    json = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)
+    graph_params["namespaces"] = bookinfo_namespace
+    json = kiali_client.graph_namespaces(params=graph_params)
 
     print("Debug: Start do_test: JSON: {}".format(json))
 
@@ -41,7 +42,7 @@ def do_test(kiali_client, graph_params, yaml_file, badge):
     try:
       assert command_exec.oc_apply(yaml_file, bookinfo_namespace) == True
 
-      graph = kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)
+      graph = kiali_client.graph_namespaces(params=graph_params)
       assert graph is not None
 
       try:
@@ -53,7 +54,7 @@ def do_test(kiali_client, graph_params, yaml_file, badge):
 
               time.sleep(1)
       except:
-        print ("Timeout Exception - Nodes: {}".format(kiali_client.graph_namespace(namespace=bookinfo_namespace, params=graph_params)["elements"]['nodes']))
+        print ("Timeout Exception - Nodes: {}".format(kiali_client.graph_namespaces(params=graph_params)["elements"]['nodes']))
         raise Exception("Timeout - Waiting for badge: {}".format(badge))
 
     finally:
@@ -71,7 +72,7 @@ def do_test(kiali_client, graph_params, yaml_file, badge):
 
 def get_badge_count(kiali_client, namespace, graph_params, badge):
 
-    nodes = kiali_client.graph_namespace(namespace=namespace, params=graph_params)["elements"]['nodes']
+    nodes = kiali_client.graph_namespaces(params=graph_params)["elements"]['nodes']
     assert nodes is not None
 
     count = 0

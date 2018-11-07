@@ -15,8 +15,7 @@ def kiali_json():
     config = __get_environment_config__(ENV_FILE)
     client = __get_kiali_client__(config)
 
-    return client.graph_namespace(namespace=config.get('mesh_bookinfo_namespace'),
-                                  params={'duration': '1m'})
+    return client.graph_namespaces(params={'duration': '1m', 'namespaces': config.get('mesh_bookinfo_namespace')})
 
 @pytest.fixture(scope='session')
 def kiali_client():
