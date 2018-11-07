@@ -41,14 +41,13 @@ func TestDefaults(t *testing.T) {
 		t.Error("server CORS default setting is wrong")
 	}
 
-	if len(conf.Api.Namespaces.Exclude) != 4 {
+	if len(conf.Api.Namespaces.Exclude) != 3 {
 		t.Error("Api namespace exclude default setting is wrong")
 	} else {
-		// our default exclusion list: default,istio-operator,kube.*,openshift.*
-		if conf.Api.Namespaces.Exclude[0] != "default" ||
-			conf.Api.Namespaces.Exclude[1] != "istio-operator" ||
-			conf.Api.Namespaces.Exclude[2] != "kube.*" ||
-			conf.Api.Namespaces.Exclude[3] != "openshift.*" {
+		// our default exclusion list: istio-operator,kube.*,openshift.*
+		if conf.Api.Namespaces.Exclude[0] != "istio-operator" ||
+			conf.Api.Namespaces.Exclude[1] != "kube.*" ||
+			conf.Api.Namespaces.Exclude[2] != "openshift.*" {
 			t.Errorf("Api namespace exclude default list is wrong: %+v", conf.Api.Namespaces.Exclude)
 		}
 	}
@@ -81,7 +80,7 @@ func TestMarshalUnmarshalApiConfig(t *testing.T) {
 	testConf := Config{
 		Api: ApiConfig{
 			Namespaces: ApiNamespacesConfig{
-				Exclude: []string{"default", "kube.*"},
+				Exclude: []string{"istio-operator", "kube.*"},
 			},
 		},
 	}
@@ -90,7 +89,7 @@ func TestMarshalUnmarshalApiConfig(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to marshal: %v", err)
 	}
-	if yamlString != "api:\n  namespaces:\n    exclude:\n    - default\n    - kube.*\n" {
+	if yamlString != "api:\n  namespaces:\n    exclude:\n    - istio-operator\n    - kube.*\n" {
 		t.Errorf("Failed to marshal Api:\n%q", yamlString)
 	}
 	conf, err := Unmarshal(yamlString)
