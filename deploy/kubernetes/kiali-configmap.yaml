@@ -7,6 +7,7 @@ metadata:
     version: ${VERSION_LABEL}
 data:
   config.yaml: |
+    istio_namespace: ${ISTIO_NAMESPACE}
     server:
       port: 20001
       web_root: /
