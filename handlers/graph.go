@@ -75,7 +75,6 @@ func graphNamespaces(w http.ResponseWriter, r *http.Request, client *prometheus.
 	generateGraph(trafficMap, w, o)
 
 	// update metrics
-	internalmetrics.IncrementGraphsGenerated(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
 	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes, len(trafficMap))
 }
 
@@ -691,7 +690,6 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	generateGraph(trafficMap, w, o)
 
 	// update metrics
-	internalmetrics.IncrementGraphsGenerated(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
 	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes, len(trafficMap))
 }
 

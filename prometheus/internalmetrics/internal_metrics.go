@@ -25,7 +25,6 @@ const (
 
 // MetricsType defines all of Kiali's own internal metrics.
 type MetricsType struct {
-	GraphsGenerated          *prometheus.CounterVec
 	GraphNodes               *prometheus.GaugeVec
 	GraphGenerationTime      *prometheus.HistogramVec
 	GraphAppenderTime        *prometheus.HistogramVec
@@ -40,13 +39,6 @@ type MetricsType struct {
 // These metrics can be accessed directly to update their values, or
 // you can use available utility functions defined below.
 var Metrics = MetricsType{
-	GraphsGenerated: prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "kiali_graphs_generated_total",
-			Help: "The total number of graphs Kiali has generated.",
-		},
-		[]string{labelGraphKind, labelGraphType, labelWithServiceNodes},
-	),
 	GraphNodes: prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "kiali_graph_nodes",
@@ -151,7 +143,6 @@ func (sof *SuccessOrFailureMetricType) ObserveNow(err *error) {
 // RegisterInternalMetrics must be called at startup to prepare the Prometheus scrape endpoint.
 func RegisterInternalMetrics() {
 	prometheus.MustRegister(
-		Metrics.GraphsGenerated,
 		Metrics.GraphNodes,
 		Metrics.GraphGenerationTime,
 		Metrics.GraphAppenderTime,
@@ -166,15 +157,6 @@ func RegisterInternalMetrics() {
 //
 // The following are utility functions that can be used to update the internal metrics.
 //
-
-// IncrementGraphsGenerated increments the counter for the given graph type
-func IncrementGraphsGenerated(graphKind string, graphType string, withServiceNodes bool) {
-	Metrics.GraphsGenerated.With(prometheus.Labels{
-		labelGraphKind:        graphKind,
-		labelGraphType:        graphType,
-		labelWithServiceNodes: strconv.FormatBool(withServiceNodes),
-	}).Inc()
-}
 
 // SetGraphNodes sets the node count metric
 func SetGraphNodes(graphKind string, graphType string, withServiceNodes bool, nodeCount int) {
