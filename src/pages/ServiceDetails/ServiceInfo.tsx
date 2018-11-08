@@ -16,7 +16,7 @@ import {
 import ServiceId from '../../types/ServiceId';
 import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
 import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
-import { ServiceDetailsInfo, severityToIconName, validationToSeverity } from '../../types/ServiceInfo';
+import { ServiceDetailsInfo, severityToIconName, SourceWorkload, validationToSeverity } from '../../types/ServiceInfo';
 import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
@@ -72,6 +72,19 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     );
 
     return validationChecks;
+  }
+
+  differentSourcesCount(): number {
+    const dependencies = this.props.serviceDetails.dependencies || {};
+
+    let differentDependencies = new Set();
+    Object.keys(dependencies).forEach(key => {
+      dependencies[key].forEach((dependency: SourceWorkload) => {
+        differentDependencies.add(dependency.name);
+      });
+    });
+
+    return differentDependencies.size;
   }
 
   render() {
@@ -141,9 +154,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                 <div>
                   <Nav bsClass="nav nav-tabs nav-tabs-pf">
                     <NavItem eventKey={'workloads'}>{'Workloads (' + Object.keys(workloads).length + ')'}</NavItem>
-                    <NavItem eventKey={'sources'}>
-                      {'Source Workloads (' + Object.keys(dependencies).length + ')'}
-                    </NavItem>
+                    <NavItem eventKey={'sources'}>{'Source Workloads (' + this.differentSourcesCount() + ')'}</NavItem>
                     <NavItem eventKey={'virtualservices'}>
                       {'Virtual Services (' + virtualServices.items.length + ')'}
                       {validationChecks.hasVirtualServiceChecks
