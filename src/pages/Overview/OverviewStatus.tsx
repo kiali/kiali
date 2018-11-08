@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { AggregateStatusNotification, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 
+import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { Status } from '../../types/Health';
 
 type Props = {
   id: string;
+  namespace: string;
   status: Status;
   items: string[];
 };
@@ -35,8 +37,14 @@ class OverviewStatus extends React.Component<Props, {}> {
         rootClose={true}
       >
         <AggregateStatusNotification>
-          <Icon type="pf" name={this.props.status.icon} />
-          {length}
+          <ListPageLink
+            target={TargetPage.APPLICATIONS}
+            namespace={this.props.namespace}
+            health={this.props.status.name}
+          >
+            <Icon type="pf" name={this.props.status.icon} />
+            {length}
+          </ListPageLink>
         </AggregateStatusNotification>
       </OverlayTrigger>
     );

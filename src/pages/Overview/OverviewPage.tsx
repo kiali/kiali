@@ -178,13 +178,28 @@ class OverviewPage extends React.Component<OverviewProps, State> {
                         </ListPageLink>
                         <AggregateStatusNotifications>
                           {ns.appsInError.length > 0 && (
-                            <OverviewStatus id={ns.name + '-failure'} status={FAILURE} items={ns.appsInError} />
+                            <OverviewStatus
+                              id={ns.name + '-failure'}
+                              namespace={ns.name}
+                              status={FAILURE}
+                              items={ns.appsInError}
+                            />
                           )}
                           {ns.appsInWarning.length > 0 && (
-                            <OverviewStatus id={ns.name + '-degraded'} status={DEGRADED} items={ns.appsInWarning} />
+                            <OverviewStatus
+                              id={ns.name + '-degraded'}
+                              namespace={ns.name}
+                              status={DEGRADED}
+                              items={ns.appsInWarning}
+                            />
                           )}
                           {ns.appsInSuccess.length > 0 && (
-                            <OverviewStatus id={ns.name + '-healthy'} status={HEALTHY} items={ns.appsInSuccess} />
+                            <OverviewStatus
+                              id={ns.name + '-healthy'}
+                              namespace={ns.name}
+                              status={HEALTHY}
+                              items={ns.appsInSuccess}
+                            />
                           )}
                           {nbApps === 0 && <AggregateStatusNotification>N/A</AggregateStatusNotification>}
                         </AggregateStatusNotifications>
