@@ -9,6 +9,7 @@ export enum URLParams {
   BY_LABELS = 'bylbl',
   DIRECTION = 'direction',
   DURATION = 'duration',
+  OVERVIEW_TYPE = 'otype',
   PAGE = 'page',
   PER_PAGE = 'perPage',
   POLL_INTERVAL = 'pi',

@@ -44,7 +44,7 @@ const mountPage = () => {
   mounted = mount(
     <Provider store={store}>
       <Router>
-        <OverviewPage setActiveNamespace={jest.fn()} />
+        <OverviewPage />
       </Router>
     </Provider>
   );
@@ -61,7 +61,7 @@ describe('Overview page', () => {
   });
 
   it('renders initial layout', () => {
-    const wrapper = shallow(<OverviewPage setActiveNamespace={jest.fn()} />);
+    const wrapper = shallow(<OverviewPage />);
     expect(wrapper).toMatchSnapshot();
   });
 
