@@ -66,7 +66,7 @@ export const renderLink = (data: NodeData, nodeType?: NodeType) => {
   return (
     <>
       {link}
-      {isInaccessible(data) && <Icon name="lock" type="fa" style={{ width: '10px' }} />}
+      {isInaccessible(data) && <Icon name="private" type="pf" style={{ 'padding-left': '2px', width: '10px' }} />}
     </>
   );
 };
@@ -77,7 +77,7 @@ export const renderTitle = (data: NodeData) => {
   return (
     <>
       <strong>{nodeTypeToString(data.nodeType)}:</strong> {link}{' '}
-      {isInaccessible(data) && <Icon name="lock" type="fa" style={{ width: '10px' }} />}
+      {isInaccessible(data) && <Icon name="private" type="pf" style={{ 'padding-left': '2px', width: '10px' }} />}
     </>
   );
 };
