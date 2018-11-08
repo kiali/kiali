@@ -50,9 +50,9 @@ func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	temporaryLayer := &Layer{}
 	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s}
 	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.Validations = IstioValidationsService{k8s: k8s}
 	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s}
 	temporaryLayer.Workload = WorkloadService{k8s: k8s}
+	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, ws: temporaryLayer.Workload}
 	temporaryLayer.App = AppService{k8s: k8s}
 	temporaryLayer.Namespace = NewNamespaceService(k8s)
 	temporaryLayer.k8s = k8s

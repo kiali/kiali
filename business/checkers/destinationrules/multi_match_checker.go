@@ -1,4 +1,4 @@
-package destination_rules
+package destinationrules
 
 import (
 	"strings"
@@ -35,7 +35,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 		if host, ok := v.GetSpec()["host"]; ok {
 			destinationRulesName := v.GetObjectMeta().Name
 			if dHost, ok := host.(string); ok {
-				fqdn := formatHostnameForPrefixSearch(dHost, v.GetObjectMeta().Namespace, v.GetObjectMeta().ClusterName)
+				fqdn := FormatHostnameForPrefixSearch(dHost, v.GetObjectMeta().Namespace, v.GetObjectMeta().ClusterName)
 
 				foundSubsets := extractSubsets(v, destinationRulesName)
 
@@ -132,7 +132,8 @@ func addError(validations models.IstioValidations, destinationRuleNames []string
 	return validations
 }
 
-func formatHostnameForPrefixSearch(hostName, namespace, clusterName string) Host {
+// FormatHostnameForPrefixSearch formats given DR host information to a FQDN format
+func FormatHostnameForPrefixSearch(hostName, namespace, clusterName string) Host {
 	domainParts := strings.Split(hostName, ".")
 	host := Host{
 		Service: domainParts[0],

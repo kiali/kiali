@@ -134,7 +134,7 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 		)}
 
 	istioDetails.DestinationRules = []kubernetes.IstioObject{
-		data.CreateTestDestinationRule("test", "customer-dr", "customer"),
+		data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
 	}
 
 	return &istioDetails

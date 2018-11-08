@@ -1,4 +1,4 @@
-package destination_rules
+package destinationrules
 
 import (
 	"testing"
