@@ -7,7 +7,7 @@ import GraphFilterToolbarType from '../../types/GraphFilterToolbar';
 import Namespace from '../../types/Namespace';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 import { GraphDataActions } from '../../actions/GraphDataActions';
-import GraphFilterContainer from '../../components/GraphFilter/GraphFilter';
+import GraphFilter from '../../components/GraphFilter/GraphFilter';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespaceSelector, durationSelector } from '../../store/Selectors';
 
@@ -26,7 +26,7 @@ export class GraphFilterToolbar extends React.PureComponent<GraphFilterToolbarTy
     };
 
     return (
-      <GraphFilterContainer
+      <GraphFilter
         disabled={this.props.isLoading}
         onNamespaceReturn={this.handleNamespaceReturn}
         onGraphTypeChange={this.handleGraphTypeChange}

@@ -1,21 +1,16 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
 import { style } from 'typestyle';
 import { Toolbar, FormGroup, Button } from 'patternfly-react';
 import * as _ from 'lodash';
-import { DurationInSeconds } from '../../types/Common';
 import { GraphParamsType, GraphType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
 import GraphSettingsContainer from '../../containers/GraphSettingsContainer';
 import { GraphRefreshContainerDefaultRefreshIntervals } from '../../containers/GraphRefreshContainer';
-import { KialiAppState } from '../../store/Store';
-import { durationSelector } from '../../store/Selectors';
 
 export interface GraphFilterProps extends GraphParamsType {
   disabled: boolean;
-  duration: DurationInSeconds;
   onNamespaceReturn: () => void;
   onGraphTypeChange: (newType: GraphType) => void;
   onEdgeLabelModeChange: (newEdgeLabelMode: EdgeLabelMode) => void;
@@ -34,7 +29,7 @@ const namespaceStyle = style({
   marginRight: '5px'
 });
 
-export class GraphFilter extends React.PureComponent<GraphFilterPropsReadOnly> {
+export default class GraphFilter extends React.PureComponent<GraphFilterPropsReadOnly> {
   // GraphFilter should be minimal and used for assembling those filtering components.
 
   /**
@@ -105,7 +100,6 @@ export class GraphFilter extends React.PureComponent<GraphFilterPropsReadOnly> {
               id="graph_refresh_container"
               disabled={this.props.disabled}
               handleRefresh={this.handleRefresh}
-              duration={this.props.duration}
             />
           </Toolbar.RightContent>
         </Toolbar>
@@ -127,13 +121,3 @@ export class GraphFilter extends React.PureComponent<GraphFilterPropsReadOnly> {
     }
   };
 }
-
-const mapStateToProps = (state: KialiAppState) => ({
-  duration: durationSelector(state)
-});
-
-const GraphFilterContainer = connect(
-  mapStateToProps,
-  null
-)(GraphFilter);
-export default GraphFilterContainer;
