@@ -93,6 +93,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
         "workloadStatuses": Array [
           Object {
@@ -214,6 +216,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -350,6 +354,8 @@ ShallowWrapper {
           "rateInterval": 600,
           "requests": Object {
             "errorRatio": -1,
+            "inboundErrorRatio": -1,
+            "outboundErrorRatio": -1,
           },
           "workloadStatuses": Array [
             Object {
@@ -485,6 +491,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -621,6 +629,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -774,6 +784,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
         "workloadStatuses": Array [
           Object {
@@ -896,6 +908,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -1040,6 +1054,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -1188,6 +1204,8 @@ ShallowWrapper {
                 "rateInterval": 600,
                 "requests": Object {
                   "errorRatio": -1,
+                  "inboundErrorRatio": -1,
+                  "outboundErrorRatio": -1,
                 },
                 "workloadStatuses": Array [
                   Object {
@@ -1332,6 +1350,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -1498,6 +1518,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
         "workloadStatuses": Array [
           Object {
@@ -1620,6 +1642,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -1757,6 +1781,8 @@ ShallowWrapper {
           "rateInterval": 600,
           "requests": Object {
             "errorRatio": -1,
+            "inboundErrorRatio": -1,
+            "outboundErrorRatio": -1,
           },
           "workloadStatuses": Array [
             Object {
@@ -1893,6 +1919,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -2030,6 +2058,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -2184,6 +2214,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
         "workloadStatuses": Array [
           Object {
@@ -2307,6 +2339,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -2465,6 +2499,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -2657,6 +2693,8 @@ ShallowWrapper {
                 "rateInterval": 600,
                 "requests": Object {
                   "errorRatio": -1,
+                  "inboundErrorRatio": -1,
+                  "outboundErrorRatio": -1,
                 },
                 "workloadStatuses": Array [
                   Object {
@@ -2815,6 +2853,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -3001,6 +3041,26 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#ec7a08",
+                  "icon": "warning-triangle-o",
+                  "name": "Degraded",
+                  "priority": 2,
+                },
+                "text": "10.00% inbound error",
+              },
+              Object {
+                "status": Object {
+                  "color": "#cc0000",
+                  "icon": "error-circle-o",
+                  "name": "Failure",
+                  "priority": 3,
+                },
+                "text": "20.00% outbound error",
+              },
+            ],
             "report": "Error rate failure: 30.00%>=20%",
             "status": Object {
               "color": "#cc0000",
@@ -3015,6 +3075,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": 0.3,
+          "inboundErrorRatio": 0.1,
+          "outboundErrorRatio": 0.2,
         },
         "workloadStatuses": Array [
           Object {
@@ -3109,6 +3171,26 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#ec7a08",
+                      "icon": "warning-triangle-o",
+                      "name": "Degraded",
+                      "priority": 2,
+                    },
+                    "text": "10.00% inbound error",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#cc0000",
+                      "icon": "error-circle-o",
+                      "name": "Failure",
+                      "priority": 3,
+                    },
+                    "text": "20.00% outbound error",
+                  },
+                ],
                 "report": "Error rate failure: 30.00%>=20%",
                 "status": Object {
                   "color": "#cc0000",
@@ -3123,6 +3205,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": 0.3,
+              "inboundErrorRatio": 0.1,
+              "outboundErrorRatio": 0.2,
             },
             "workloadStatuses": Array [
               Object {
@@ -3232,6 +3316,26 @@ ShallowWrapper {
               "title": "Envoy Health",
             },
             Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "color": "#ec7a08",
+                    "icon": "warning-triangle-o",
+                    "name": "Degraded",
+                    "priority": 2,
+                  },
+                  "text": "10.00% inbound error",
+                },
+                Object {
+                  "status": Object {
+                    "color": "#cc0000",
+                    "icon": "error-circle-o",
+                    "name": "Failure",
+                    "priority": 3,
+                  },
+                  "text": "20.00% outbound error",
+                },
+              ],
               "report": "Error rate failure: 30.00%>=20%",
               "status": Object {
                 "color": "#cc0000",
@@ -3246,6 +3350,8 @@ ShallowWrapper {
           "rateInterval": 600,
           "requests": Object {
             "errorRatio": 0.3,
+            "inboundErrorRatio": 0.1,
+            "outboundErrorRatio": 0.2,
           },
           "workloadStatuses": Array [
             Object {
@@ -3354,6 +3460,26 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#ec7a08",
+                        "icon": "warning-triangle-o",
+                        "name": "Degraded",
+                        "priority": 2,
+                      },
+                      "text": "10.00% inbound error",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#cc0000",
+                        "icon": "error-circle-o",
+                        "name": "Failure",
+                        "priority": 3,
+                      },
+                      "text": "20.00% outbound error",
+                    },
+                  ],
                   "report": "Error rate failure: 30.00%>=20%",
                   "status": Object {
                     "color": "#cc0000",
@@ -3368,6 +3494,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": 0.3,
+                "inboundErrorRatio": 0.1,
+                "outboundErrorRatio": 0.2,
               },
               "workloadStatuses": Array [
                 Object {
@@ -3477,6 +3605,26 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#ec7a08",
+                      "icon": "warning-triangle-o",
+                      "name": "Degraded",
+                      "priority": 2,
+                    },
+                    "text": "10.00% inbound error",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#cc0000",
+                      "icon": "error-circle-o",
+                      "name": "Failure",
+                      "priority": 3,
+                    },
+                    "text": "20.00% outbound error",
+                  },
+                ],
                 "report": "Error rate failure: 30.00%>=20%",
                 "status": Object {
                   "color": "#cc0000",
@@ -3491,6 +3639,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": 0.3,
+              "inboundErrorRatio": 0.1,
+              "outboundErrorRatio": 0.2,
             },
             "workloadStatuses": Array [
               Object {
@@ -3617,6 +3767,26 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#ec7a08",
+                  "icon": "warning-triangle-o",
+                  "name": "Degraded",
+                  "priority": 2,
+                },
+                "text": "10.00% inbound error",
+              },
+              Object {
+                "status": Object {
+                  "color": "#cc0000",
+                  "icon": "error-circle-o",
+                  "name": "Failure",
+                  "priority": 3,
+                },
+                "text": "20.00% outbound error",
+              },
+            ],
             "report": "Error rate failure: 30.00%>=20%",
             "status": Object {
               "color": "#cc0000",
@@ -3631,6 +3801,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": 0.3,
+          "inboundErrorRatio": 0.1,
+          "outboundErrorRatio": 0.2,
         },
         "workloadStatuses": Array [
           Object {
@@ -3726,6 +3898,26 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#ec7a08",
+                        "icon": "warning-triangle-o",
+                        "name": "Degraded",
+                        "priority": 2,
+                      },
+                      "text": "10.00% inbound error",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#cc0000",
+                        "icon": "error-circle-o",
+                        "name": "Failure",
+                        "priority": 3,
+                      },
+                      "text": "20.00% outbound error",
+                    },
+                  ],
                   "report": "Error rate failure: 30.00%>=20%",
                   "status": Object {
                     "color": "#cc0000",
@@ -3740,6 +3932,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": 0.3,
+                "inboundErrorRatio": 0.1,
+                "outboundErrorRatio": 0.2,
               },
               "workloadStatuses": Array [
                 Object {
@@ -3870,6 +4064,26 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#ec7a08",
+                      "icon": "warning-triangle-o",
+                      "name": "Degraded",
+                      "priority": 2,
+                    },
+                    "text": "10.00% inbound error",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#cc0000",
+                      "icon": "error-circle-o",
+                      "name": "Failure",
+                      "priority": 3,
+                    },
+                    "text": "20.00% outbound error",
+                  },
+                ],
                 "report": "Error rate failure: 30.00%>=20%",
                 "status": Object {
                   "color": "#cc0000",
@@ -3884,6 +4098,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": 0.3,
+              "inboundErrorRatio": 0.1,
+              "outboundErrorRatio": 0.2,
             },
             "workloadStatuses": Array [
               Object {
@@ -4048,6 +4264,26 @@ ShallowWrapper {
                     "title": "Envoy Health",
                   },
                   Object {
+                    "children": Array [
+                      Object {
+                        "status": Object {
+                          "color": "#ec7a08",
+                          "icon": "warning-triangle-o",
+                          "name": "Degraded",
+                          "priority": 2,
+                        },
+                        "text": "10.00% inbound error",
+                      },
+                      Object {
+                        "status": Object {
+                          "color": "#cc0000",
+                          "icon": "error-circle-o",
+                          "name": "Failure",
+                          "priority": 3,
+                        },
+                        "text": "20.00% outbound error",
+                      },
+                    ],
                     "report": "Error rate failure: 30.00%>=20%",
                     "status": Object {
                       "color": "#cc0000",
@@ -4062,6 +4298,8 @@ ShallowWrapper {
                 "rateInterval": 600,
                 "requests": Object {
                   "errorRatio": 0.3,
+                  "inboundErrorRatio": 0.1,
+                  "outboundErrorRatio": 0.2,
                 },
                 "workloadStatuses": Array [
                   Object {
@@ -4192,6 +4430,26 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#ec7a08",
+                        "icon": "warning-triangle-o",
+                        "name": "Degraded",
+                        "priority": 2,
+                      },
+                      "text": "10.00% inbound error",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#cc0000",
+                        "icon": "error-circle-o",
+                        "name": "Failure",
+                        "priority": 3,
+                      },
+                      "text": "20.00% outbound error",
+                    },
+                  ],
                   "report": "Error rate failure: 30.00%>=20%",
                   "status": Object {
                     "color": "#cc0000",
@@ -4206,6 +4464,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": 0.3,
+                "inboundErrorRatio": 0.1,
+                "outboundErrorRatio": 0.2,
               },
               "workloadStatuses": Array [
                 Object {
@@ -4408,6 +4668,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
         "workloadStatuses": Array [
           Object {
@@ -4528,6 +4790,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -4663,6 +4927,8 @@ ShallowWrapper {
           "rateInterval": 600,
           "requests": Object {
             "errorRatio": -1,
+            "inboundErrorRatio": -1,
+            "outboundErrorRatio": -1,
           },
           "workloadStatuses": Array [
             Object {
@@ -4797,6 +5063,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -4932,6 +5200,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -5084,6 +5354,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
         "workloadStatuses": Array [
           Object {
@@ -5205,6 +5477,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -5348,6 +5622,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -5495,6 +5771,8 @@ ShallowWrapper {
                 "rateInterval": 600,
                 "requests": Object {
                   "errorRatio": -1,
+                  "inboundErrorRatio": -1,
+                  "outboundErrorRatio": -1,
                 },
                 "workloadStatuses": Array [
                   Object {
@@ -5638,6 +5916,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -5803,6 +6083,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
         "workloadStatuses": Array [
           Object {
@@ -5924,6 +6206,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -6060,6 +6344,8 @@ ShallowWrapper {
           "rateInterval": 600,
           "requests": Object {
             "errorRatio": -1,
+            "inboundErrorRatio": -1,
+            "outboundErrorRatio": -1,
           },
           "workloadStatuses": Array [
             Object {
@@ -6195,6 +6481,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -6331,6 +6619,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -6484,6 +6774,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
         "workloadStatuses": Array [
           Object {
@@ -6606,6 +6898,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -6750,6 +7044,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -6898,6 +7194,8 @@ ShallowWrapper {
                 "rateInterval": 600,
                 "requests": Object {
                   "errorRatio": -1,
+                  "inboundErrorRatio": -1,
+                  "outboundErrorRatio": -1,
                 },
                 "workloadStatuses": Array [
                   Object {
@@ -7042,6 +7340,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -7207,6 +7507,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
         "workloadStatuses": Array [
           Object {
@@ -7328,6 +7630,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -7464,6 +7768,8 @@ ShallowWrapper {
           "rateInterval": 600,
           "requests": Object {
             "errorRatio": -1,
+            "inboundErrorRatio": -1,
+            "outboundErrorRatio": -1,
           },
           "workloadStatuses": Array [
             Object {
@@ -7599,6 +7905,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -7735,6 +8043,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -7888,6 +8198,8 @@ ShallowWrapper {
         "rateInterval": 600,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
         "workloadStatuses": Array [
           Object {
@@ -8010,6 +8322,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {
@@ -8154,6 +8468,8 @@ ShallowWrapper {
             "rateInterval": 600,
             "requests": Object {
               "errorRatio": -1,
+              "inboundErrorRatio": -1,
+              "outboundErrorRatio": -1,
             },
             "workloadStatuses": Array [
               Object {
@@ -8302,6 +8618,8 @@ ShallowWrapper {
                 "rateInterval": 600,
                 "requests": Object {
                   "errorRatio": -1,
+                  "inboundErrorRatio": -1,
+                  "outboundErrorRatio": -1,
                 },
                 "workloadStatuses": Array [
                   Object {
@@ -8446,6 +8764,8 @@ ShallowWrapper {
               "rateInterval": 600,
               "requests": Object {
                 "errorRatio": -1,
+                "inboundErrorRatio": -1,
+                "outboundErrorRatio": -1,
               },
               "workloadStatuses": Array [
                 Object {

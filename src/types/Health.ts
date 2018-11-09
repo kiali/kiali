@@ -33,6 +33,8 @@ export interface WorkloadStatus {
 
 export interface RequestHealth {
   errorRatio: number;
+  inboundErrorRatio: number;
+  outboundErrorRatio: number;
 }
 
 export interface Status {
@@ -121,18 +123,45 @@ const ascendingThresholdCheck = (value: number, thresholds: Thresholds): Thresho
   return { value: value, status: HEALTHY };
 };
 
-export const getRequestErrorsRatio = (rh: RequestHealth): ThresholdStatus => {
-  if (rh.errorRatio < 0) {
+export const getRequestErrorsRatio = (rh: RequestHealth, propName?: keyof RequestHealth): ThresholdStatus => {
+  if (propName === undefined) {
+    propName = 'errorRatio';
+  }
+
+  if (rh[propName] < 0) {
     return {
       value: RATIO_NA,
       status: NA
     };
   }
-  return ascendingThresholdCheck(100 * rh.errorRatio, REQUESTS_THRESHOLDS);
+  return ascendingThresholdCheck(100 * rh[propName], REQUESTS_THRESHOLDS);
 };
 
 export abstract class Health {
   items: HealthItem[];
+
+  protected static getErrorsRatioDetail(rh: RequestHealth, direction: 'inbound' | 'outbound'): HealthSubItem {
+    const errorRatio = getRequestErrorsRatio(rh, `${direction}ErrorRatio` as keyof RequestHealth);
+    const health: HealthSubItem = {
+      status: errorRatio.status,
+      text: errorRatio.status === NA ? `No ${direction} requests` : `${errorRatio.value.toFixed(2)}% ${direction} error`
+    };
+
+    return health;
+  }
+
+  protected static adjustOverallHealth(health: HealthItem) {
+    // Show in the overall requests health status, the one of the highest priority
+    if (health.children === undefined) {
+      return;
+    }
+
+    health.children.forEach(child => {
+      if (child.status.priority > health.status.priority) {
+        health.status = child.status;
+      }
+    });
+  }
 
   constructor(items: HealthItem[]) {
     this.items = items;
@@ -276,6 +305,16 @@ export class AppHealth extends Health {
       if (reqErrorsRatio.violation) {
         item.report = `Error rate ${reqErrorsRatio.status.name.toLowerCase()}: ${reqErrorsRatio.violation}`;
       }
+
+      if (reqErrorsRatio.status !== NA) {
+        // Inbound and outbound detail
+        item.children = [
+          this.getErrorsRatioDetail(requests, 'inbound'),
+          this.getErrorsRatioDetail(requests, 'outbound')
+        ];
+      }
+
+      this.adjustOverallHealth(item);
       items.push(item);
     }
     return items;
@@ -326,6 +365,16 @@ export class WorkloadHealth extends Health {
       if (reqErrorsRatio.violation) {
         item.report = `Error rate ${reqErrorsRatio.status.name.toLowerCase()}: ${reqErrorsRatio.violation}`;
       }
+
+      if (reqErrorsRatio.status !== NA) {
+        // Inbound and outbound detail
+        item.children = [
+          this.getErrorsRatioDetail(requests, 'inbound'),
+          this.getErrorsRatioDetail(requests, 'outbound')
+        ];
+      }
+
+      this.adjustOverallHealth(item);
       items.push(item);
     }
     return items;
@@ -346,7 +395,7 @@ export const healthNotAvailable = (): AppHealth => {
       }
     ],
     [],
-    { errorRatio: -1 },
+    { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
     60
   );
 };

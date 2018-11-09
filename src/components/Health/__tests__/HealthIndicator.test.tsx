@@ -19,7 +19,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 1, replicas: 1 }, { name: 'B', available: 2, replicas: 2 }],
-      { errorRatio: -1 },
+      { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
       600
     );
 
@@ -40,7 +40,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 1, replicas: 10 }, { name: 'B', available: 2, replicas: 2 }],
-      { errorRatio: -1 },
+      { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
       600
     );
 
@@ -62,7 +62,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 0, total: 10 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 1, replicas: 10 }, { name: 'B', available: 2, replicas: 2 }],
-      { errorRatio: -1 },
+      { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
       600
     );
 
@@ -85,7 +85,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 0, replicas: 0 }, { name: 'B', available: 2, replicas: 2 }],
-      { errorRatio: -1 },
+      { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
       600
     );
 
@@ -107,7 +107,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 1 }, outbound: { healthy: 1, total: 1 } }],
       [{ name: 'A', available: 0, replicas: 0 }, { name: 'B', available: 0, replicas: 0 }],
-      { errorRatio: -1 },
+      { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
       600
     );
 
@@ -129,7 +129,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ inbound: { healthy: 1, total: 10 }, outbound: { healthy: 1, total: 10 } }],
       [{ name: 'A', available: 1, replicas: 1 }],
-      { errorRatio: 0.3 },
+      { errorRatio: 0.3, inboundErrorRatio: 0.1, outboundErrorRatio: 0.2 },
       600
     );
 
