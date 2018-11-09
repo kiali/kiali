@@ -278,7 +278,8 @@ openshift-deploy: openshift-undeploy
 	cat deploy/openshift/deployment.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} envsubst | ${OC} create -n ${NAMESPACE} -f -
 	cat deploy/openshift/clusterrole.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
 	cat deploy/openshift/clusterrolebinding.yaml | VERSION_LABEL=${VERSION_LABEL} NAMESPACE=${NAMESPACE} envsubst | ${OC} create -n ${NAMESPACE} -f -
-	
+	cat deploy/openshift/ingress.yaml | VERSION_LABEL=${VERSION_LABEL} | ${OC} create -n ${NAMESPACE} -f -
+
 ## openshift-undeploy: Undeploy from Openshift project.
 openshift-undeploy: .openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
