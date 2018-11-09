@@ -268,22 +268,20 @@ docker-push:
 
 ## openshift-deploy: Deploy docker image in Openshift project.
 openshift-deploy: openshift-undeploy
-	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
-	@echo Deploying to OpenShift project ${NAMESPACE}
-	cat deploy/openshift/configmap.yaml | VERSION_LABEL=${VERSION_LABEL} JAEGER_URL=${JAEGER_URL} GRAFANA_URL=${GRAFANA_URL} ISTIO_NAMESPACE=${NAMESPACE}  envsubst | ${OC} create -n ${NAMESPACE} -f -
-	cat deploy/openshift/secret.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
-	cat deploy/openshift/serviceaccount.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
-	cat deploy/openshift/service.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
-	cat deploy/openshift/route.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
-	cat deploy/openshift/deployment.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} envsubst | ${OC} create -n ${NAMESPACE} -f -
-	cat deploy/openshift/clusterrole.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${OC} create -n ${NAMESPACE} -f -
-	cat deploy/openshift/clusterrolebinding.yaml | VERSION_LABEL=${VERSION_LABEL} NAMESPACE=${NAMESPACE} envsubst | ${OC} create -n ${NAMESPACE} -f -
-	cat deploy/openshift/ingress.yaml | VERSION_LABEL=${VERSION_LABEL} | ${OC} create -n ${NAMESPACE} -f -
+	IMAGE_NAME="${DOCKER_NAME}" \
+IMAGE_VERSION="${DOCKER_VERSION}" \
+IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} \
+VERSION_LABEL="${VERSION_LABEL}" \
+NAMESPACE="${NAMESPACE}" \
+JAEGER_URL="${JAEGER_URL}" \
+GRAFANA_URL="${GRAFANA_URL}"  \
+VERBOSE_MODE="${VERBOSE_MODE}" \
+deploy/openshift/deploy-kiali-to-openshift.sh
 
 ## openshift-undeploy: Undeploy from Openshift project.
 openshift-undeploy: .openshift-validate
 	@echo Undeploying from OpenShift project ${NAMESPACE}
-	${OC} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=kiali -n ${NAMESPACE}
+	${OC} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules,ingresses --selector=app=kiali -n ${NAMESPACE}
 
 ## openshift-reload-image: Refreshing image in Openshift project.
 openshift-reload-image: .openshift-validate
