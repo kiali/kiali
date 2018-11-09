@@ -79,7 +79,6 @@ func TestNamespaceAppHealth(t *testing.T) {
 	k8s.AssertNumberOfCalls(t, "GetServices", 1)
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
-	k8s.AssertNumberOfCalls(t, "GetReplicaSets", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceHealth", 2)
 	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 1)
 }
@@ -125,9 +124,6 @@ func TestAppHealth(t *testing.T) {
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
 	}).Return([]osappsv1.DeploymentConfig{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]v1beta2.StatefulSet{}, nil)
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
 	}).Return([]batch_v1.Job{}, nil)
@@ -153,7 +149,6 @@ func TestAppHealth(t *testing.T) {
 	k8s.AssertNumberOfCalls(t, "GetServices", 1)
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
-	k8s.AssertNumberOfCalls(t, "GetReplicaSets", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
 }
