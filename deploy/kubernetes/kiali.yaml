@@ -102,7 +102,7 @@ metadata:
     app: kiali
     version: ${VERSION_LABEL}
 rules:
-- apiGroups: ["", "apps", "autoscaling", "batch"]
+- apiGroups: ["", "apps", "autoscaling"]
   resources:
   - configmaps
   - namespaces
@@ -113,11 +113,6 @@ rules:
   - endpoints
   - deployments
   - horizontalpodautoscalers
-  - replicasets
-  - statefulsets
-  - replicationcontrollers
-  - jobs
-  - cronjobs
   verbs:
   - get
   - list
