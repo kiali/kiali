@@ -8,9 +8,9 @@ import { GraphParamsType, SummaryData, NodeParamsType, GraphType } from '../../t
 import { Layout, EdgeLabelMode } from '../../types/GraphFilter';
 
 import SummaryPanel from './SummaryPanel';
-import CytoscapeGraph from '../../components/CytoscapeGraph/CytoscapeGraph';
+import CytoscapeGraphContainer from '../../components/CytoscapeGraph/CytoscapeGraph';
 import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
-import GraphFilterToolbar from '../../components/GraphFilter/GraphFilterToolbar';
+import GraphFilterToolbarContainer from '../../components/GraphFilter/GraphFilterToolbar';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import { style } from 'typestyle';
 
@@ -217,7 +217,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
           </Breadcrumb>
           <div>
             {/* Use empty div to reset the flex, this component doesn't seem to like that. It renders all its contents in the center */}
-            <GraphFilterToolbar
+            <GraphFilterToolbarContainer
               isLoading={this.props.isLoading}
               showSecurity={this.props.showSecurity}
               showUnusedNodes={this.props.showUnusedNodes}
@@ -231,7 +231,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
               onError={this.notifyError}
               fallBackComponent={<GraphErrorBoundaryFallback />}
             >
-              <CytoscapeGraph
+              <CytoscapeGraphContainer
                 {...graphParams}
                 isLoading={this.props.isLoading}
                 elements={this.props.graphData}

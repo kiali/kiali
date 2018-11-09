@@ -19,6 +19,10 @@ const testReadyHandler = () => {
   console.log('ready');
 };
 
+const testSetHandler = () => {
+  console.log('set');
+};
+
 describe('CytoscapeGraph component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
@@ -26,12 +30,15 @@ describe('CytoscapeGraph component test', () => {
 
     const wrapper = shallow(
       <CytoscapeGraph
+        activeNamespace={{ name: testNamespace }}
+        duration={60}
         elements={GRAPH_DATA[testNamespace].elements}
         graphLayout={myLayout}
         edgeLabelMode={myEdgeLabelMode}
         onClick={testClickHandler}
         onReady={testReadyHandler}
         refresh={testClickHandler}
+        setActiveNamespace={testSetHandler}
         showNodeLabels={true}
         showCircuitBreakers={false}
         showVirtualServices={true}

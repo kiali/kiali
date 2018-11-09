@@ -1,15 +1,17 @@
 import * as React from 'react';
-
-import { GraphParamsType, GraphType } from '../../types/Graph';
+import { connect } from 'react-redux';
+import { DurationInSeconds } from '../../types/Common';
+import { GraphParamsType, GraphType, NodeParamsType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import GraphFilterToolbarType from '../../types/GraphFilterToolbar';
-import { store } from '../../store/ConfigStore';
+import Namespace from '../../types/Namespace';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
-import { GraphActions } from '../../actions/GraphActions';
 import { GraphDataActions } from '../../actions/GraphDataActions';
-import GraphFilter from '../../components/GraphFilter/GraphFilter';
+import GraphFilterContainer from '../../components/GraphFilter/GraphFilter';
+import { KialiAppState } from '../../store/Store';
+import { activeNamespaceSelector, durationSelector } from '../../store/Selectors';
 
-export default class GraphFilterToolbar extends React.PureComponent<GraphFilterToolbarType> {
+export class GraphFilterToolbar extends React.PureComponent<GraphFilterToolbarType> {
   static contextTypes = {
     router: () => null
   };
@@ -24,7 +26,7 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     };
 
     return (
-      <GraphFilter
+      <GraphFilterContainer
         disabled={this.props.isLoading}
         onNamespaceReturn={this.handleNamespaceReturn}
         onGraphTypeChange={this.handleGraphTypeChange}
@@ -41,7 +43,6 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
   };
 
   handleGraphTypeChange = (graphType: GraphType) => {
-    store.dispatch(GraphActions.changed());
     this.handleUrlFilterChange({
       ...this.getGraphParams(),
       graphType
@@ -57,18 +58,15 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     if (edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE) {
       // Server-side appender for response time is not run by default unless the edge label is explicitly set. So when switching
       // to this edge label, we need to make a server-side request in order to ensure the appenders is run.
-      store.dispatch(
-        // @ts-ignore
-        GraphDataActions.fetchGraphData(
-          store.getState().namespaces.activeNamespace,
-          store.getState().userSettings.duration,
-          this.props.graphType,
-          this.props.injectServiceNodes,
-          edgeLabelMode,
-          this.props.showSecurity,
-          this.props.showUnusedNodes,
-          this.props.node
-        )
+      this.props.fetchGraphData(
+        this.props.activeNamespace,
+        this.props.duration,
+        this.props.graphType,
+        this.props.injectServiceNodes,
+        edgeLabelMode,
+        this.props.showSecurity,
+        this.props.showUnusedNodes,
+        this.props.node
       );
     }
   };
@@ -91,3 +89,39 @@ export default class GraphFilterToolbar extends React.PureComponent<GraphFilterT
     };
   };
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  activeNamespace: activeNamespaceSelector(state),
+  duration: durationSelector(state)
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  fetchGraphData: (
+    namespace: Namespace,
+    duration: DurationInSeconds,
+    graphType: GraphType,
+    injectServiceNodes: boolean,
+    edgeLabelMode: EdgeLabelMode,
+    showSecurity: boolean,
+    showUnusedNodes: boolean,
+    node?: NodeParamsType
+  ) =>
+    dispatch(
+      GraphDataActions.fetchGraphData(
+        namespace,
+        duration,
+        graphType,
+        injectServiceNodes,
+        edgeLabelMode,
+        showSecurity,
+        showUnusedNodes,
+        node
+      )
+    )
+});
+
+const GraphFilterToolbarContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(GraphFilterToolbar);
+export default GraphFilterToolbarContainer;

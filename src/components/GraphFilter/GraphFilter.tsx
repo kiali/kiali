@@ -1,18 +1,21 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import { style } from 'typestyle';
 import { Toolbar, FormGroup, Button } from 'patternfly-react';
 import * as _ from 'lodash';
-
+import { DurationInSeconds } from '../../types/Common';
+import { GraphParamsType, GraphType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import NamespaceDropdownContainer from '../../containers/NamespaceDropdownContainer';
-import { GraphParamsType, GraphType } from '../../types/Graph';
 import GraphSettingsContainer from '../../containers/GraphSettingsContainer';
 import { GraphRefreshContainerDefaultRefreshIntervals } from '../../containers/GraphRefreshContainer';
-import { store } from '../../store/ConfigStore';
+import { KialiAppState } from '../../store/Store';
+import { durationSelector } from '../../store/Selectors';
 
 export interface GraphFilterProps extends GraphParamsType {
   disabled: boolean;
+  duration: DurationInSeconds;
   onNamespaceReturn: () => void;
   onGraphTypeChange: (newType: GraphType) => void;
   onEdgeLabelModeChange: (newEdgeLabelMode: EdgeLabelMode) => void;
@@ -31,7 +34,7 @@ const namespaceStyle = style({
   marginRight: '5px'
 });
 
-export default class GraphFilter extends React.PureComponent<GraphFilterPropsReadOnly> {
+export class GraphFilter extends React.PureComponent<GraphFilterPropsReadOnly> {
   // GraphFilter should be minimal and used for assembling those filtering components.
 
   /**
@@ -68,12 +71,14 @@ export default class GraphFilter extends React.PureComponent<GraphFilterPropsRea
           <FormGroup className={zeroPaddingLeft}>
             {this.props.node ? (
               <Button className={namespaceStyle} onClick={this.props.onNamespaceReturn}>
-                Back To Namespace
+                Back to Full Graph...
               </Button>
             ) : (
-              <label className={namespaceStyle}>Namespace</label>
+              <>
+                <label className={namespaceStyle}>Namespace</label>
+                <NamespaceDropdownContainer disabled={this.props.disabled} />
+              </>
             )}
-            <NamespaceDropdownContainer disabled={this.props.node || this.props.disabled} />
           </FormGroup>
           <FormGroup className={zeroPaddingLeft}>
             <GraphSettingsContainer {...this.props} />
@@ -100,7 +105,7 @@ export default class GraphFilter extends React.PureComponent<GraphFilterPropsRea
               id="graph_refresh_container"
               disabled={this.props.disabled}
               handleRefresh={this.handleRefresh}
-              duration={store.getState().userSettings.duration}
+              duration={this.props.duration}
             />
           </Toolbar.RightContent>
         </Toolbar>
@@ -122,3 +127,13 @@ export default class GraphFilter extends React.PureComponent<GraphFilterPropsRea
     }
   };
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  duration: durationSelector(state)
+});
+
+const GraphFilterContainer = connect(
+  mapStateToProps,
+  null
+)(GraphFilter);
+export default GraphFilterContainer;

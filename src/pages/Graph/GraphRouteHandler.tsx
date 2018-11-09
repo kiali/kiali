@@ -12,6 +12,7 @@ import { store } from '../../store/ConfigStore';
 import GraphPageContainer from '../../containers/GraphPageContainer';
 import { DurationInSeconds } from '../../types/Common';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
+import { GraphActions } from '../../actions/GraphActions';
 
 const URLSearchParams = require('url-search-params');
 
@@ -180,6 +181,9 @@ export default class GraphRouteHandler extends React.Component<
     }
     if (namespaceHasChanged) {
       store.dispatch(NamespaceActions.setActiveNamespace(nextNamespaces));
+    }
+    if (graphTypeChanged || namespaceHasChanged || nodeHasChanged) {
+      store.dispatch(GraphActions.changed());
     }
 
     if (edgeLabelModeChanged || injectServiceNodesChanged || graphTypeChanged || layoutHasChanged || nodeHasChanged) {

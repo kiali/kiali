@@ -2,16 +2,29 @@ import * as React from 'react';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import { DurationInSeconds } from '../types/Common';
+import { GraphParamsType, GraphType, NodeParamsType } from '../types/Graph';
+import { EdgeLabelMode } from '../types/GraphFilter';
+import Namespace from '../types/Namespace';
 import { GraphFilterActions } from '../actions/GraphFilterActions';
-import { KialiAppState, GraphFilterState } from '../store/Store';
 import { style } from 'typestyle';
-import { GraphParamsType } from '../types/Graph';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../components/Nav/NavUtils';
 import { GraphDataActions } from '../actions/GraphDataActions';
-import { store } from '../store/ConfigStore';
+import { KialiAppState, GraphFilterState } from '../store/Store';
+import { activeNamespaceSelector, durationSelector } from '../store/Selectors';
 
 interface GraphDispatch {
   // Dispatch methods
+  fetchGraphData: (
+    namespace: Namespace,
+    duration: DurationInSeconds,
+    graphType: GraphType,
+    injectServiceNodes: boolean,
+    edgeLabelMode: EdgeLabelMode,
+    showSecurity: boolean,
+    showUnusedNodes: boolean,
+    node?: NodeParamsType
+  ) => void;
   toggleGraphNodeLabels(): void;
   toggleGraphCircuitBreakers(): void;
   toggleGraphVirtualServices(): void;
@@ -23,33 +36,12 @@ interface GraphDispatch {
 }
 
 // inherit all of our Reducer state section  and Dispatch methods for redux
-type GraphSettingsProps = GraphDispatch & GraphFilterState & GraphParamsType;
-
-// Allow Redux to map sections of our global app state to our props
-const mapStateToProps = (state: KialiAppState) => ({
-  showNodeLabels: state.graph.filterState.showNodeLabels,
-  showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
-  showVirtualServices: state.graph.filterState.showVirtualServices,
-  showMissingSidecars: state.graph.filterState.showMissingSidecars,
-  showSecurity: state.graph.filterState.showSecurity,
-  showServiceNodes: state.graph.filterState.showServiceNodes,
-  showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
-  showUnusedNodes: state.graph.filterState.showUnusedNodes
-});
-
-// Map our actions to Redux
-const mapDispatchToProps = (dispatch: any) => {
-  return {
-    toggleGraphNodeLabels: bindActionCreators(GraphFilterActions.toggleGraphNodeLabel, dispatch),
-    toggleGraphCircuitBreakers: bindActionCreators(GraphFilterActions.toggleGraphCircuitBreakers, dispatch),
-    toggleGraphVirtualServices: bindActionCreators(GraphFilterActions.toggleGraphVirtualServices, dispatch),
-    toggleGraphMissingSidecars: bindActionCreators(GraphFilterActions.toggleGraphMissingSidecars, dispatch),
-    toggleGraphSecurity: bindActionCreators(GraphFilterActions.toggleGraphSecurity, dispatch),
-    toggleServiceNodes: bindActionCreators(GraphFilterActions.toggleServiceNodes, dispatch),
-    toggleTrafficAnimation: bindActionCreators(GraphFilterActions.toggleTrafficAnimation, dispatch),
-    toggleUnusedNodes: bindActionCreators(GraphFilterActions.toggleUnusedNodes, dispatch)
+type GraphSettingsProps = GraphDispatch &
+  GraphFilterState &
+  GraphParamsType & {
+    activeNamespace: Namespace;
+    duration: DurationInSeconds;
   };
-};
 
 interface VisibilityLayersType {
   id: string;
@@ -83,18 +75,15 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
     ) {
       // when turning on security, or toggling unused node, we need to perform a fetch, because we don't pull
       // security or unused node data by default.
-      store.dispatch(
-        // @ts-ignore
-        GraphDataActions.fetchGraphData(
-          store.getState().namespaces.activeNamespace,
-          store.getState().userSettings.duration,
-          this.props.graphType,
-          this.props.injectServiceNodes,
-          this.props.edgeLabelMode,
-          this.props.showSecurity,
-          this.props.showUnusedNodes,
-          this.props.node
-        )
+      this.props.fetchGraphData(
+        this.props.activeNamespace,
+        this.props.duration,
+        this.props.graphType,
+        this.props.injectServiceNodes,
+        this.props.edgeLabelMode,
+        this.props.showSecurity,
+        this.props.showUnusedNodes,
+        this.props.node
       );
     }
   }
@@ -245,6 +234,56 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
     };
   };
 }
+
+// Allow Redux to map sections of our global app state to our props
+const mapStateToProps = (state: KialiAppState) => ({
+  activeNamespace: activeNamespaceSelector(state),
+  duration: durationSelector(state),
+  showNodeLabels: state.graph.filterState.showNodeLabels,
+  showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
+  showVirtualServices: state.graph.filterState.showVirtualServices,
+  showMissingSidecars: state.graph.filterState.showMissingSidecars,
+  showSecurity: state.graph.filterState.showSecurity,
+  showServiceNodes: state.graph.filterState.showServiceNodes,
+  showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
+  showUnusedNodes: state.graph.filterState.showUnusedNodes
+});
+
+// Map our actions to Redux
+const mapDispatchToProps = (dispatch: any) => {
+  return {
+    fetchGraphData: (
+      namespace: Namespace,
+      duration: DurationInSeconds,
+      graphType: GraphType,
+      injectServiceNodes: boolean,
+      edgeLabelMode: EdgeLabelMode,
+      showSecurity: boolean,
+      showUnusedNodes: boolean,
+      node?: NodeParamsType
+    ) =>
+      dispatch(
+        GraphDataActions.fetchGraphData(
+          namespace,
+          duration,
+          graphType,
+          injectServiceNodes,
+          edgeLabelMode,
+          showSecurity,
+          showUnusedNodes,
+          node
+        )
+      ),
+    toggleGraphNodeLabels: bindActionCreators(GraphFilterActions.toggleGraphNodeLabel, dispatch),
+    toggleGraphCircuitBreakers: bindActionCreators(GraphFilterActions.toggleGraphCircuitBreakers, dispatch),
+    toggleGraphVirtualServices: bindActionCreators(GraphFilterActions.toggleGraphVirtualServices, dispatch),
+    toggleGraphMissingSidecars: bindActionCreators(GraphFilterActions.toggleGraphMissingSidecars, dispatch),
+    toggleGraphSecurity: bindActionCreators(GraphFilterActions.toggleGraphSecurity, dispatch),
+    toggleServiceNodes: bindActionCreators(GraphFilterActions.toggleServiceNodes, dispatch),
+    toggleTrafficAnimation: bindActionCreators(GraphFilterActions.toggleTrafficAnimation, dispatch),
+    toggleUnusedNodes: bindActionCreators(GraphFilterActions.toggleUnusedNodes, dispatch)
+  };
+};
 
 // hook up to Redux for our State to be mapped to props
 const GraphSettingsContainer = connect(
