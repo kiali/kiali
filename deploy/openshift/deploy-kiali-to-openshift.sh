@@ -71,10 +71,11 @@ YAML_DIR=${YAML_DIR:-$(dirname $(readlink -f "$0"))}
 echo Deploying Kiali to OpenShift project ${NAMESPACE}
 for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service route ingress
 do
-  yaml_file="${YAML_DIR}/${yaml}.yaml"
-  if [ -f "${yaml_file}" ]; then
-    echo "Using YAML file: ${yaml_file}"
-    cat ${yaml_file} | envsubst | oc create -n ${NAMESPACE} -f -
+  yaml_file="${yaml}.yaml"
+  yaml_path="${YAML_DIR}/${yaml}.yaml"
+  if [ -f "${yaml_path}" ]; then
+    echo "Using YAML file: ${yaml_path}"
+    cat ${yaml_path} | envsubst | oc create -n ${NAMESPACE} -f -
   else
     yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
     echo "Using YAML downloaded from: ${yaml_url}"
