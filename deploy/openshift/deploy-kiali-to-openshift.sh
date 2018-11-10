@@ -1,12 +1,17 @@
-#! /bin/sh
+#!/bin/bash
 
 ##############################################################################
 # deploy-kiali-to-openshift.sh
 #
 # This script deploys the Kiali components into OpenShift.
+#
 # To customize the behavior of this script, you can set one or more of the
 # environment variables used by this script.
 # See below for all the environment variables used.
+#
+# This script assumes all the OpenShift YAML files exist in the same
+# directory where this script is found. If an expected YAML file is missing,
+# an attempt will be made to download it.
 #
 # To use this script, the "oc" command must be in your PATH.
 # This script utilizes "envsubst" - make sure that command line tool
@@ -60,6 +65,22 @@ fi
 # Figure out where that is using a method that is valid for bash and sh.
 
 YAML_DIR=$(dirname $(readlink -f "$0"))
+
+# If we are missing one or more of the yaml files, pull them down
+
+for yaml in configmap secret serviceaccount service route deployment clusterrole clusterrolebinding ingress
+do
+  yaml_file="${yaml}.yaml"
+  if [ ! -f "${YAML_DIR}/${yaml_file}" ]; then
+    yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
+    echo "Downloading ${yaml_file} from ${yaml_url}"
+    curl -s -f -o "${YAML_DIR}/${yaml_file}" $yaml_url
+    if [ ! -f "${YAML_DIR}/${yaml_file}" ]; then
+      echo "Missig YAML file ${yaml_file} and cannot download it."
+      exit 1
+    fi
+  fi
+done
 
 # Now deploy all the Kiali components to OpenShift
 
