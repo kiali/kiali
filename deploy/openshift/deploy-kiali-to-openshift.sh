@@ -61,6 +61,25 @@ else
   exit 1
 fi
 
+# Determine what tool to use to download files. This supports environments that have either wget or curl.
+get_downloader() {
+  if [ ! "$downloader" ] ; then
+    # Use wget command if available, otherwise try curl
+    if which wget > /dev/null ; then
+      downloader="wget -q -O -"
+    fi
+    if [ ! "$downloader" ] ; then
+      if which curl > /dev/null ; then
+        downloader="curl -s"
+      fi
+    fi
+    if [ ! "$downloader" ] ; then
+      echo "ERROR: You must install either curl or wget to allow downloading"
+      exit 1
+    fi
+  fi
+}
+
 # It is assumed the yaml files are in the same location as this script.
 # Figure out where that is using a method that is valid for bash and sh.
 
@@ -77,9 +96,10 @@ do
     echo "Using YAML file: ${yaml_path}"
     cat ${yaml_path} | envsubst | oc create -n ${NAMESPACE} -f -
   else
+    get_downloader
     yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
-    echo "Using YAML downloaded from: ${yaml_url}"
-    curl ${yaml_url} | envsubst | oc create -n ${NAMESPACE} -f -
+    echo "Downloading YAML via: ${downloader} ${yaml_url}"
+    ${downloader} ${yaml_url} | envsubst | oc create -n ${NAMESPACE} -f -
   fi
   if [ "$?" != "0" ]; then
     echo "Failed to deploy to OpenShift. Aborting."
