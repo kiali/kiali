@@ -18,18 +18,23 @@
 # is installed and in your PATH.
 ##############################################################################
 
-# Ask the user for the credentials if necessary.
-# (note: the "=" inside ${} is on purpose - if the envvar is explicitly empty, it will stay that way)
-KIALI_USERNAME="${KIALI_USERNAME=admin}"
-KIALI_PASSPHRASE="${KIALI_PASSPHRASE=admin}"
-
-# If the username or passphrase is empty, we are being told that we need to ask the user
-if [ "$KIALI_USERNAME" == "" ]; then
-  KIALI_USERNAME=$(read -p 'What do you want to use for the Kiali Username: ' val && echo -n $val)
+# The credentials can be specified either as already base64 encoded, or in plain text.
+# If the username or passphrase plain text variable is set but empty, the user will be asked for a value.
+if [ "${KIALI_USERNAME_BASE64}" == "" ]; then
+  KIALI_USERNAME="${KIALI_USERNAME=admin}" # (note: the "=" inside ${} is on purpose
+  if [ "$KIALI_USERNAME" == "" ]; then
+    KIALI_USERNAME=$(read -p 'What do you want to use for the Kiali Username: ' val && echo -n $val)
+  fi
+  KIALI_USERNAME_BASE64="$(echo -n ${KIALI_USERNAME} | base64)"
 fi
-if [ "$KIALI_PASSPHRASE" == "" ]; then
-  KIALI_PASSPHRASE=$(read -sp 'What do you want to use for the Kiali Passphrase: ' val && echo -n $val)
-  echo
+
+if [ "${KIALI_PASSPHRASE_BASE64}" == "" ]; then
+  KIALI_PASSPHRASE="${KIALI_PASSPHRASE=admin}" # (note: the "=" inside ${} is on purpose
+  if [ "$KIALI_PASSPHRASE" == "" ]; then
+    KIALI_PASSPHRASE=$(read -sp 'What do you want to use for the Kiali Passphrase: ' val && echo -n $val)
+    echo
+  fi
+  KIALI_PASSPHRASE_BASE64="$(echo -n ${KIALI_PASSPHRASE} | base64)"
 fi
 
 export IMAGE_NAME="${IMAGE_NAME:-kiali/kiali}"
@@ -41,8 +46,8 @@ export ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-$NAMESPACE}"
 export JAEGER_URL="${JAEGER_URL:-http://jaeger-query-istio-system.127.0.0.1.nip.io}"
 export GRAFANA_URL="${GRAFANA_URL:-http://grafana-istio-system.127.0.0.1.nip.io}"
 export VERBOSE_MODE="${VERBOSE_MODE:-3}"
-export KIALI_USERNAME_BASE64="$(echo -n ${KIALI_USERNAME} | base64)"
-export KIALI_PASSPHRASE_BASE64="$(echo -n ${KIALI_PASSPHRASE} | base64)"
+export KIALI_USERNAME_BASE64
+export KIALI_PASSPHRASE_BASE64
 
 # Make sure we have access to all required tools
 
