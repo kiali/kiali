@@ -12,11 +12,11 @@ The summary of the process as follows:
 * Update Makefile
 * Create the Release PR
 * Tag Git Repo
+* Update JIRA issues included with the release
 * Notify Istio and Openshift Istio Teams for changes:
 ** Istio Helm Charts
 ** Istio Ansible Installer
 ** Openshift Istio Ansible Installer (istiooc)
-* Update JIRA issues included with the release
 * Send out notifications (twitter, mailing lists, IRC)
 
 == Creating a new JIRA issue
@@ -136,6 +136,30 @@ snapshot version (see "Prepare For The Next Release" below).
 Note that, in the example above, the docker image pushed to DockerHub will not
 be tagged with "latest" but will instead be tagged with "1.0.0.Final."
 
+== Updating JIRA issues
+
+Edit all issues in `Ready to Release` state with `Fix-Version`:
+
+* Use this query https://issues.jboss.org/issues/?filter=12336798
+* Use Tools>Bulk Change>All XX issue(s)
+* Select all issues and press `Next`
+* `Edit issues`
+* `Change Fix Version/s`>`Add to existing`>Pick the version to release>Unselect `Send mail for this update`>Next>Confirm
+
+Transition all issues to `Released`:
+* Use this query https://issues.jboss.org/issues/?filter=12337486
+* Use Tools>Bulk Change>All XX issue(s)
+* Select all issues and press `Next`
+* `Transition issues`
+* `Released`>Next
+* Unselect `Send mail for this update`>Next>Confirm
+
+After that, close the release issues, and then, create a new `Release` in JIRA
+for the next release.
+
+Mark the current version as released, and create a new minor version:
+https://issues.jboss.org/projects/KIALI?selectedItem=com.atlassian.jira.jira-projects-plugin:release-page
+
 == Notify Istio and Openshift Istio Teams for changes
 
 There are no fixed steps for releasing a new version on the Istio installer,
@@ -152,14 +176,6 @@ This has been done a few times before, so they can be used as references:
 * https://github.com/istio/istio/pull/7007
 
 Those PRs cover both the ansible-installer and the helm installer updates.
-
-== Updating JIRA issues
-
-Here, we move all issues tagged as `Ready to Release` to `Released`, with
-`Fix-Version` set to the actual release version.
-
-After that, close the release issues, and then, create a new `Release` in JIRA
-for the next release.
 
 == Send out notifications
 
