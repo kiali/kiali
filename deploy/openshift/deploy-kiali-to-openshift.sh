@@ -38,7 +38,7 @@ if [ "${KIALI_PASSPHRASE_BASE64}" == "" ]; then
 fi
 
 export IMAGE_NAME="${IMAGE_NAME:-kiali/kiali}"
-export IMAGE_VERSION="${IMAGE_VERSION:-v0.10}"
+export IMAGE_VERSION="${IMAGE_VERSION:-v0.10.0}"
 export VERSION_LABEL="${VERSION_LABEL:-$IMAGE_VERSION}"
 export IMAGE_PULL_POLICY_TOKEN="${IMAGE_PULL_POLICY_TOKEN:-imagePullPolicy: Always}"
 export NAMESPACE="${NAMESPACE:-istio-system}"
