@@ -47,17 +47,25 @@ def test_service_detail_with_virtual_service(kiali_client):
       # Add a virtual service that will be tested
       assert command_exec.oc_apply(VIRTUAL_SERVICE_FILE, bookinfo_namespace) == True
 
-      with timeout(seconds=10, error_message='Timed out waiting for virtual service creation'):
+      with timeout(seconds=30, error_message='Timed out waiting for virtual service creation'):
         while True:
           service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
-          if service_details != None and service_details.get('virtualServices') != None and len(service_details.get('virtualServices')) > 0:
+          if service_details != None and service_details.get('virtualServices') != None and len(service_details.get('virtualServices').get('items')) > 0:
             break
 
           time.sleep(1)
 
       assert service_details != None
 
-      virtual_service = service_details.get('virtualServices')[0]
+      virtual_service_descriptor = service_details.get('virtualServices')
+      assert virtual_service_descriptor != None
+
+      permissions = virtual_service_descriptor.get('permissions')
+      assert permissions != None
+      assert permissions.get('update') == False
+      assert permissions.get('delete') == True
+
+      virtual_service = virtual_service_descriptor.get('items')[0]
       assert virtual_service != None
       assert virtual_service.get('name') == 'reviews'
 
@@ -83,10 +91,10 @@ def test_service_detail_with_virtual_service(kiali_client):
     finally:
       assert command_exec.oc_delete(VIRTUAL_SERVICE_FILE, bookinfo_namespace) == True
 
-      with timeout(seconds=10, error_message='Timed out waiting for virtual service deletion'):
+      with timeout(seconds=30, error_message='Timed out waiting for virtual service deletion'):
         while True:
           service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
-          if service_details != None and service_details.get('virtualServices') == None:
+          if service_details != None and len(service_details.get('virtualServices').get('items')) == 0:
             break
 
           time.sleep(1)
@@ -98,17 +106,25 @@ def test_service_detail_with_destination_rule(kiali_client):
       # Add a destination rule that will be tested
       assert command_exec.oc_apply(DESTINATION_RULE_FILE, bookinfo_namespace) == True
 
-      with timeout(seconds=10, error_message='Timed out waiting for destination rule creation'):
+      with timeout(seconds=30, error_message='Timed out waiting for destination rule creation'):
         while True:
           service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
-          if service_details != None and service_details.get('destinationRules') != None and len(service_details.get('destinationRules')) > 0:
+          if service_details != None and service_details.get('destinationRules') != None and len(service_details.get('destinationRules').get('items')) > 0:
             break
 
           time.sleep(1)
 
       assert service_details != None
 
-      destination_rule = service_details.get('destinationRules')[0]
+      destination_rule_descriptor = service_details.get('destinationRules')
+      assert destination_rule_descriptor != None
+
+      permissions = destination_rule_descriptor.get('permissions')
+      assert permissions != None
+      assert permissions.get('update') == False
+      assert permissions.get('delete') == True
+
+      destination_rule = destination_rule_descriptor.get('items')[0]
       assert destination_rule != None
       assert destination_rule.get('name') == 'reviews'
       assert 'trafficPolicy' in destination_rule
@@ -129,10 +145,10 @@ def test_service_detail_with_destination_rule(kiali_client):
     finally:
       assert command_exec.oc_delete(DESTINATION_RULE_FILE, bookinfo_namespace) == True
 
-      with timeout(seconds=10, error_message='Timed out waiting for destination rule deletion'):
+      with timeout(seconds=30, error_message='Timed out waiting for destination rule deletion'):
         while True:
           service_details = kiali_client.service_details(namespace=bookinfo_namespace, service=SERVICE_TO_VALIDATE)
-          if service_details != None and service_details.get('destinationRules') == None:
+          if service_details != None and len(service_details.get('destinationRules').get('items')) == 0:
             break
 
           time.sleep(1)
