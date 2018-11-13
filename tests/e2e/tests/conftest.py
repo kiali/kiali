@@ -61,3 +61,10 @@ def get_istio_clusterrole_file():
       yaml_content = re.sub("heritage: {{.+}}\n", "", yaml_content)
       yaml_content = re.sub("release: {{.+}}", "", yaml_content)
       return yaml.load(yaml_content)
+
+
+def get_kiali_clusterrole_file():
+    yaml_content = requests.get(__get_environment_config__(ENV_FILE).get('kiali_clusterrole_file_address')).content.decode("utf-8")
+
+    yaml_content = re.sub("\${VERSION_LABEL}", "0.10", yaml_content)
+    return yaml.load(yaml_content)
