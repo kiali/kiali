@@ -9,6 +9,178 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+const (
+	// Networking
+
+	destinationRules        = "destinationrules"
+	destinationRuleType     = "DestinationRule"
+	destinationRuleTypeList = "DestinationRuleList"
+	destinationRuleLabel    = "destination-rule"
+
+	gateways        = "gateways"
+	gatewayType     = "Gateway"
+	gatewayTypeList = "GatewayList"
+	gatewayLabel    = "gateway"
+
+	serviceentries       = "serviceentries"
+	serviceentryType     = "ServiceEntry"
+	serviceentryTypeList = "ServiceEntryList"
+	serviceentryLabel    = "serviceentry"
+
+	virtualServices        = "virtualservices"
+	virtualServiceType     = "VirtualService"
+	virtualServiceTypeList = "VirtualServiceList"
+	virtualServiceLabel    = "virtual-service"
+
+	// Quotas
+
+	quotaspecs        = "quotaspecs"
+	quotaspecType     = "QuotaSpec"
+	quotaspecTypeList = "QuotaSpecList"
+	quotaspecLabel    = "quotaspec"
+
+	quotaspecbindings        = "quotaspecbindings"
+	quotaspecbindingType     = "QuotaSpecBinding"
+	quotaspecbindingTypeList = "QuotaSpecBindingList"
+	quotaspecbindingLabel    = "quotaspecbinding"
+
+	// Config - Rules
+
+	rules        = "rules"
+	ruleType     = "rule"
+	ruleTypeList = "ruleList"
+	ruleLabel    = "rule"
+
+	// Config - Adapters
+
+	circonuses       = "circonuses"
+	circonusType     = "circonus"
+	circonusTypeList = "circonusList"
+	circonusLabel    = "circonus"
+
+	deniers        = "deniers"
+	denierType     = "denier"
+	denierTypeList = "denierList"
+	denierLabel    = "denier"
+
+	fluentds        = "fluentds"
+	fluentdType     = "fluentd"
+	fluentdTypeList = "fluentdList"
+	fluentdLabel    = "fluentd"
+
+	handlers        = "handlers"
+	handlerType     = "handler"
+	handlerTypeList = "handlerList"
+	handlerLabel    = "handler"
+
+	kubernetesenvs        = "kubernetesenvs"
+	kubernetesenvType     = "kubernetesenv"
+	kubernetesenvTypeList = "kubernetesenvList"
+	kubernetesenvLabel    = "kubernetesenv"
+
+	listcheckers        = "listcheckers"
+	listcheckerType     = "listchecker"
+	listcheckerTypeList = "listcheckerList"
+	listcheckerLabel    = "listchecker"
+
+	memquotas        = "memquotas"
+	memquotaType     = "memquota"
+	memquotaTypeList = "memquotaList"
+	memquotaLabel    = "memquota"
+
+	opas        = "opas"
+	opaType     = "opa"
+	opaTypeList = "opaList"
+	opaLabel    = "opa"
+
+	prometheuses       = "prometheuses"
+	prometheusType     = "prometheus"
+	prometheusTypeList = "prometheusList"
+	prometheusLabel    = "prometheus"
+
+	rbacs        = "rbacs"
+	rbacType     = "rbac"
+	rbacTypeList = "rbacList"
+	rbacLabel    = "rbac"
+
+	servicecontrols        = "servicecontrols"
+	servicecontrolType     = "servicecontrol"
+	servicecontrolTypeList = "servicecontrolList"
+	servicecontrolLabel    = "servicecontrol"
+
+	solarwindses       = "solarwindses"
+	solarwindsType     = "solarwinds"
+	solarwindsTypeList = "solarwindsList"
+	solarwindsLabel    = "solarwinds"
+
+	stackdrivers        = "stackdrivers"
+	stackdriverType     = "stackdriver"
+	stackdriverTypeList = "stackdriverList"
+	stackdriverLabel    = "stackdriver"
+
+	statsds        = "statsds"
+	statsdType     = "statsd"
+	statsdTypeList = "statsdList"
+	statsdLabel    = "statsd"
+
+	stdios        = "stdios"
+	stdioType     = "stdio"
+	stdioTypeList = "stdioList"
+	stdioLabel    = "stdio"
+
+	// Config - Templates
+
+	apikeys        = "apikeys"
+	apikeyType     = "apikey"
+	apikeyTypeList = "apikeyList"
+	apikeyLabel    = "apikey"
+
+	authorizations        = "authorizations"
+	authorizationType     = "authorization"
+	authorizationTypeList = "authorizationList"
+	authorizationLabel    = "authorization"
+
+	checknothings        = "checknothings"
+	checknothingType     = "checknothing"
+	checknothingTypeList = "checknothingList"
+	checknothingLabel    = "checknothing"
+
+	kuberneteses       = "kuberneteses"
+	kubernetesType     = "kubernetes"
+	kubernetesTypeList = "kubernetesList"
+	kubernetesLabel    = "kubernetes"
+
+	listEntries       = "listentries"
+	listEntryType     = "listentry"
+	listEntryTypeList = "listentryList"
+	listEntryLabel    = "listentry"
+
+	logentries       = "logentries"
+	logentryType     = "logentry"
+	logentryTypeList = "logentryList"
+	logentryLabel    = "logentry"
+
+	metrics        = "metrics"
+	metricType     = "metric"
+	metricTypeList = "metricList"
+	metricLabel    = "metric"
+
+	quotas        = "quotas"
+	quotaType     = "quota"
+	quotaTypeList = "quotaList"
+	quotaLabel    = "quota"
+
+	reportnothings        = "reportnothings"
+	reportnothingType     = "reportnothing"
+	reportnothingTypeList = "reportnothingList"
+	reportnothingLabel    = "reportnothing"
+
+	servicecontrolreports        = "servicecontrolreports"
+	servicecontrolreportType     = "servicecontrolreport"
+	servicecontrolreportTypeList = "servicecontrolreportList"
+	servicecontrolreportLabel    = "servicecontrolreport"
+)
+
 var (
 	istioConfigGroupVersion = schema.GroupVersion{
 		Group:   "config.istio.io",
@@ -26,332 +198,205 @@ var (
 	// This is used to tell Istio REST client which objects are supported for decoding.
 	// When adding a new Istio type we should add a new object here.
 	istioKnownTypes = map[string]struct {
-		object       IstioObject
-		collection   IstioObjectList
-		groupVersion *schema.GroupVersion
+		objectKind     string
+		collectionKind string
+		apiVersion     string
+		groupVersion   *schema.GroupVersion
 	}{
 		gatewayLabel: {
-			object: &Gateway{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       gatewayType,
-					APIVersion: istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
-				},
-			},
-			collection:   &GatewayList{},
-			groupVersion: &istioNetworkingGroupVersion,
+			objectKind:     gatewayType,
+			collectionKind: gatewayTypeList,
+			apiVersion:     istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
+			groupVersion:   &istioNetworkingGroupVersion,
 		},
 		virtualServiceLabel: {
-			object: &VirtualService{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       virtualServiceType,
-					APIVersion: istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
-				},
-			},
-			collection:   &VirtualServiceList{},
-			groupVersion: &istioNetworkingGroupVersion,
+			objectKind:     virtualServiceType,
+			collectionKind: virtualServiceTypeList,
+			apiVersion:     istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
+			groupVersion:   &istioNetworkingGroupVersion,
 		},
 		destinationRuleLabel: {
-			object: &DestinationRule{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       destinationRuleType,
-					APIVersion: istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
-				},
-			},
-			collection:   &DestinationRuleList{},
-			groupVersion: &istioNetworkingGroupVersion,
+			objectKind:     destinationRuleType,
+			collectionKind: destinationRuleTypeList,
+			apiVersion:     istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
+			groupVersion:   &istioNetworkingGroupVersion,
 		},
 		serviceentryLabel: {
-			object: &ServiceEntry{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       serviceentryType,
-					APIVersion: istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
-				},
-			},
-			collection:   &ServiceEntryList{},
-			groupVersion: &istioNetworkingGroupVersion,
+			objectKind:     serviceentryType,
+			collectionKind: serviceentryTypeList,
+			apiVersion:     istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
+			groupVersion:   &istioNetworkingGroupVersion,
 		},
 		ruleLabel: {
-			object: &rule{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       ruleType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &ruleList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     ruleType,
+			collectionKind: ruleTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		// Adapters
 		circonusLabel: {
-			object: &circonus{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       circonusType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &circonusList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     circonusType,
+			collectionKind: circonusTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		denierLabel: {
-			object: &denier{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       denierType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &denierList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     denierType,
+			collectionKind: denierTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		fluentdLabel: {
-			object: &fluentd{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       fluentdType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &fluentdList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     fluentdType,
+			collectionKind: fluentdTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		kubernetesenvLabel: {
-			object: &kubernetesenv{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       kubernetesenvType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &kubernetesenvList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     kubernetesenvType,
+			collectionKind: kubernetesenvTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		listcheckerLabel: {
-			object: &listchecker{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       listcheckerType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &listcheckerList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     listcheckerType,
+			collectionKind: listcheckerTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		memquotaLabel: {
-			object: &memquota{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       memquotaType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &memquotaList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     memquotaType,
+			collectionKind: memquotaTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		opaLabel: {
-			object: &opa{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       opaType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &opaList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     opaType,
+			collectionKind: opaTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		prometheusLabel: {
-			object: &prometheus{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       prometheusType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &prometheusList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     prometheusType,
+			collectionKind: prometheusTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		rbacLabel: {
-			object: &rbac{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       rbacType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &rbacList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     rbacType,
+			collectionKind: rbacTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		servicecontrolLabel: {
-			object: &servicecontrol{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       servicecontrolType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &servicecontrolList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     servicecontrolType,
+			collectionKind: serviceentryTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		solarwindsLabel: {
-			object: &solarwinds{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       solarwindsType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &solarwindsList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     solarwindsType,
+			collectionKind: solarwindsTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		stackdriverLabel: {
-			object: &stackdriver{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       stackdriverType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &stackdriverList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     stackdriverType,
+			collectionKind: stackdriverTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		statsdLabel: {
-			object: &statsd{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       statsdType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &statsdList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     statsdType,
+			collectionKind: stackdriverTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		stdioLabel: {
-			object: &stdio{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       stdioType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &stdioList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     stdioType,
+			collectionKind: stdioTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		handlerLabel: {
-			object: &handler{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       handlerType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &handlerList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     handlerType,
+			collectionKind: handlerTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		// Templates
 		apikeyLabel: {
-			object: &apikey{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       apikeyType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &apikeyList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     apikeyType,
+			collectionKind: apikeyTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		authorizationLabel: {
-			object: &authorization{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       authorizationType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &authorizationList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     authorizationType,
+			collectionKind: authorizationTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		checknothingLabel: {
-			object: &checknothing{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       checknothingType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &checknothingList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     checknothingType,
+			collectionKind: checknothingTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		kubernetesLabel: {
-			object: &kubernetes{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       kubernetesType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &kubernetesList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     kubernetesType,
+			collectionKind: kubernetesTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		listEntryLabel: {
-			object: &listentry{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       listEntryType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &listentryList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     listEntryType,
+			collectionKind: listcheckerTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		logentryLabel: {
-			object: &logentry{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       logentryType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &logentryList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     logentryType,
+			collectionKind: logentryTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		metricLabel: {
-			object: &metric{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       metricType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &metricList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     metricType,
+			collectionKind: metricTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		quotaLabel: {
-			object: &quota{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       quotaType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &quotaList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     quotaType,
+			collectionKind: quotaTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		reportnothingLabel: {
-			object: &reportnothing{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       reportnothingType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &reportnothingList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     reportnothingType,
+			collectionKind: reportnothingTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		servicecontrolreportLabel: {
-			object: &servicecontrolreport{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       servicecontrolreportType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &servicecontrolreportList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     servicecontrolreportType,
+			collectionKind: servicecontrolreportTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		// QuotaSpec and QuotaSpecBinding
 		quotaspecLabel: {
-			object: &QuotaSpec{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       quotaspecType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &QuotaSpecList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     quotaspecType,
+			collectionKind: quotaspecTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 		quotaspecbindingLabel: {
-			object: &QuotaSpecBinding{
-				TypeMeta: meta_v1.TypeMeta{
-					Kind:       quotaspecbindingType,
-					APIVersion: istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-				},
-			},
-			collection:   &QuotaSpecBindingList{},
-			groupVersion: &istioConfigGroupVersion,
+			objectKind:     quotaspecbindingType,
+			collectionKind: quotaspecbindingTypeList,
+			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
+			groupVersion:   &istioConfigGroupVersion,
 		},
 	}
 	// A map to get the plural for a Istio type using the singlar type
@@ -458,3 +503,116 @@ type istioResponse struct {
 type actionsType = []interface{}
 type actionType = map[string]interface{}
 type instancesType = []interface{}
+
+// GenericIstioObject is a type to test Istio types defined by Istio as a Kubernetes extension.
+
+type GenericIstioObject struct {
+	meta_v1.TypeMeta   `json:",inline"`
+	meta_v1.ObjectMeta `json:"metadata"`
+	Spec               map[string]interface{} `json:"spec"`
+}
+
+// GenericIstioObjectList is the generic Kubernetes API list wrapper
+type GenericIstioObjectList struct {
+	meta_v1.TypeMeta `json:",inline"`
+	meta_v1.ListMeta `json:"metadata"`
+	Items            []GenericIstioObject `json:"items"`
+}
+
+// GetSpec from a wrapper
+func (in *GenericIstioObject) GetSpec() map[string]interface{} {
+	return in.Spec
+}
+
+// SetSpec for a wrapper
+func (in *GenericIstioObject) SetSpec(spec map[string]interface{}) {
+	in.Spec = spec
+}
+
+// GetObjectMeta from a wrapper
+func (in *GenericIstioObject) GetObjectMeta() meta_v1.ObjectMeta {
+	return in.ObjectMeta
+}
+
+// SetObjectMeta for a wrapper
+func (in *GenericIstioObject) SetObjectMeta(metadata meta_v1.ObjectMeta) {
+	in.ObjectMeta = metadata
+}
+
+// GetItems from a wrapper
+func (in *GenericIstioObjectList) GetItems() []IstioObject {
+	out := make([]IstioObject, len(in.Items))
+	for i := range in.Items {
+		out[i] = &in.Items[i]
+	}
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *GenericIstioObject) DeepCopyInto(out *GenericIstioObject) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	out.Spec = in.Spec
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GenericIstioObject.
+func (in *GenericIstioObject) DeepCopy() *GenericIstioObject {
+	if in == nil {
+		return nil
+	}
+	out := new(GenericIstioObject)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
+func (in *GenericIstioObject) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+
+	return nil
+}
+
+// DeepCopyIstioObject is an autogenerated deepcopy function, copying the receiver, creating a new IstioObject.
+func (in *GenericIstioObject) DeepCopyIstioObject() IstioObject {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+
+	return nil
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *GenericIstioObjectList) DeepCopyInto(out *GenericIstioObjectList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	out.ListMeta = in.ListMeta
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]GenericIstioObject, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new GenericIstioObjectList.
+func (in *GenericIstioObjectList) DeepCopy() *GenericIstioObjectList {
+	if in == nil {
+		return nil
+	}
+	out := new(GenericIstioObjectList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
+func (in *GenericIstioObjectList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+
+	return nil
+}

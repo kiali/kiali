@@ -270,7 +270,7 @@ func fakePods() []v1.Pod {
 func fakeVirtualService() []kubernetes.IstioObject {
 	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:47 +0300")
 
-	virtualService1 := kubernetes.MockIstioObject{
+	virtualService1 := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "reviews",
 			CreationTimestamp: meta_v1.NewTime(t2),
@@ -302,7 +302,7 @@ func fakeVirtualService() []kubernetes.IstioObject {
 			},
 		},
 	}
-	virtualService2 := kubernetes.MockIstioObject{
+	virtualService2 := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "ratings",
 			CreationTimestamp: meta_v1.NewTime(t2),
@@ -357,7 +357,7 @@ func fakeVirtualService() []kubernetes.IstioObject {
 func fakeDestinationRules() []kubernetes.IstioObject {
 	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:47 +0300")
 
-	destinationRule1 := kubernetes.MockIstioObject{
+	destinationRule1 := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "reviews-destination",
 			CreationTimestamp: meta_v1.NewTime(t2),
@@ -381,7 +381,7 @@ func fakeDestinationRules() []kubernetes.IstioObject {
 			},
 		},
 	}
-	destinationRule2 := kubernetes.MockIstioObject{
+	destinationRule2 := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "bookinfo-ratings",
 			CreationTimestamp: meta_v1.NewTime(t2),

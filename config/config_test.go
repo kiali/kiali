@@ -104,8 +104,8 @@ func TestMarshalUnmarshalApiConfig(t *testing.T) {
 func TestMarshalUnmarshal(t *testing.T) {
 	testConf := Config{
 		Server: Server{
-			Address: "foo-test",
-			Port:    321,
+			Address:                    "foo-test",
+			Port:                       321,
 			StaticContentRootDirectory: "/tmp",
 		},
 	}

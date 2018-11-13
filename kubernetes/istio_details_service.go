@@ -66,7 +66,7 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	if err != nil {
 		return nil, err
 	}
-	virtualServiceList, ok := result.(*VirtualServiceList)
+	virtualServiceList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService list", namespace, serviceName)
 	}
@@ -91,7 +91,7 @@ func (in *IstioClient) GetVirtualService(namespace string, virtualservice string
 		return nil, err
 	}
 
-	virtualService, ok := result.(*VirtualService)
+	virtualService, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService object", namespace, virtualservice)
 	}
@@ -105,7 +105,7 @@ func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
 	if err != nil {
 		return nil, err
 	}
-	gatewayList, ok := result.(*GatewayList)
+	gatewayList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a Gateway list", namespace)
 	}
@@ -123,7 +123,7 @@ func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject
 		return nil, err
 	}
 
-	gatewayObject, ok := result.(*Gateway)
+	gatewayObject, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a Gateway object", namespace, gateway)
 	}
@@ -137,7 +137,7 @@ func (in *IstioClient) GetServiceEntries(namespace string) ([]IstioObject, error
 	if err != nil {
 		return nil, err
 	}
-	serviceEntriesList, ok := result.(*ServiceEntryList)
+	serviceEntriesList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a ServiceEntry list", namespace)
 	}
@@ -155,7 +155,7 @@ func (in *IstioClient) GetServiceEntry(namespace string, serviceEntryName string
 		return nil, err
 	}
 
-	serviceEntry, ok := result.(*ServiceEntry)
+	serviceEntry, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%v doesn't return a ServiceEntry object", namespace, serviceEntry)
 	}
@@ -170,7 +170,7 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 	if err != nil {
 		return nil, err
 	}
-	destinationRuleList, ok := result.(*DestinationRuleList)
+	destinationRuleList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a DestinationRule list", namespace, serviceName)
 	}
@@ -195,7 +195,7 @@ func (in *IstioClient) GetDestinationRule(namespace string, destinationrule stri
 	if err != nil {
 		return nil, err
 	}
-	destinationRule, ok := result.(*DestinationRule)
+	destinationRule, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a DestinationRule object", namespace, destinationrule)
 	}
@@ -209,7 +209,7 @@ func (in *IstioClient) GetQuotaSpecs(namespace string) ([]IstioObject, error) {
 	if err != nil {
 		return nil, err
 	}
-	quotaSpecList, ok := result.(*QuotaSpecList)
+	quotaSpecList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a QuotaSpecList list", namespace)
 	}
@@ -227,7 +227,7 @@ func (in *IstioClient) GetQuotaSpec(namespace string, quotaSpecName string) (Ist
 		return nil, err
 	}
 
-	quotaSpec, ok := result.(*QuotaSpec)
+	quotaSpec, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a QuotaSpec object", namespace, quotaSpecName)
 	}
@@ -241,7 +241,7 @@ func (in *IstioClient) GetQuotaSpecBindings(namespace string) ([]IstioObject, er
 	if err != nil {
 		return nil, err
 	}
-	quotaSpecBindingList, ok := result.(*QuotaSpecBindingList)
+	quotaSpecBindingList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a QuotaSpecBindingList list", namespace)
 	}
@@ -259,7 +259,7 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 		return nil, err
 	}
 
-	quotaSpecBinding, ok := result.(*QuotaSpecBinding)
+	quotaSpecBinding, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a QuotaSpecBinding object", namespace, quotaSpecBindingName)
 	}
