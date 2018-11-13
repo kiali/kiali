@@ -2,6 +2,8 @@ import os
 import pytest
 import yaml
 import ssl
+import re
+import requests
 from kiali import KialiClient
 from utils.command_exec import command_exec
 
@@ -50,3 +52,19 @@ def __remove_assets():
       command_exec.oc_delete('./assets/' + name, namespace)
 
   print('Assets deleted: {}'.format(file_count))
+
+def get_istio_clusterrole_file():
+      yaml_content = requests.get( __get_environment_config__(ENV_FILE).get('istio_clusterrole_permissions_file_address')).content.decode("utf-8")
+
+      yaml_content = re.sub("app: {{.+}}", "app: kiali", yaml_content)
+      yaml_content = re.sub("chart: {{.+}}", "version: 0.10 ", yaml_content)
+      yaml_content = re.sub("heritage: {{.+}}\n", "", yaml_content)
+      yaml_content = re.sub("release: {{.+}}", "", yaml_content)
+      return yaml.load(yaml_content)
+
+
+def get_kiali_clusterrole_file():
+    yaml_content = requests.get(__get_environment_config__(ENV_FILE).get('kiali_clusterrole_file_address')).content.decode("utf-8")
+
+    yaml_content = re.sub("\${VERSION_LABEL}", "0.10", yaml_content)
+    return yaml.load(yaml_content)
