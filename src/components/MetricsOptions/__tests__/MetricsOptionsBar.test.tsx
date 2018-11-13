@@ -3,7 +3,6 @@ import { mount, shallow } from 'enzyme';
 import { Provider } from 'react-redux';
 import MetricsOptionsBar from '../MetricsOptionsBar';
 import { MetricsDirection } from '../../../types/Metrics';
-import { config } from '../../../config';
 import { store } from '../../../store/ConfigStore';
 
 const optionsChanged = jest.fn();
@@ -13,8 +12,6 @@ describe('MetricsOptionsBar', () => {
     const wrapper = shallow(
       <Provider store={store}>
         <MetricsOptionsBar
-          duration={config().toolbar.defaultDuration}
-          setDuration={jest.fn()}
           onOptionsChanged={jest.fn()}
           onRefresh={jest.fn()}
           onReporterChanged={jest.fn()}
@@ -32,8 +29,6 @@ describe('MetricsOptionsBar', () => {
     const wrapper = mount(
       <Provider store={store}>
         <MetricsOptionsBar
-          duration={config().toolbar.defaultDuration}
-          setDuration={jest.fn()}
           onOptionsChanged={optionsChanged}
           onRefresh={jest.fn()}
           onReporterChanged={jest.fn()}

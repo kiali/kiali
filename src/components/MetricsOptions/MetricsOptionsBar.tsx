@@ -2,16 +2,16 @@ import * as React from 'react';
 import { Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
 import isEqual from 'lodash/fp/isEqual';
 
+import RefreshContainer from '../../containers/RefreshContainer';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import history, { URLParams, HistoryManager } from '../../app/History';
 import { config } from '../../config';
 import MetricsOptions from '../../types/MetricsOptions';
+import { DurationInSeconds } from '../../types/Common';
 import { MetricsDirection } from '../../types/Metrics';
 
 import { MetricsSettings, Quantiles, MetricsSettingsDropdown } from './MetricsSettings';
 import { MetricsLabels as L } from './MetricsLabels';
-import { DurationInSeconds } from '../../types/Common';
-import RefreshContainer from '../../containers/RefreshContainer';
 
 export interface MetricsOptionsBarProps {
   onOptionsChanged: (opts: MetricsOptions) => void;
@@ -21,21 +21,20 @@ export interface MetricsOptionsBarProps {
   metricReporter: string;
   direction: MetricsDirection;
   labelValues: Map<L.LabelName, L.LabelValues>;
-  duration: DurationInSeconds;
-  setDuration: (duration: DurationInSeconds) => void;
 }
 
 export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
   static DefaultPollInterval = config().toolbar.defaultPollInterval;
-
   static Durations = config().toolbar.intervalDuration;
-
+  // Default to 10 minutes. Showing timeseries to only 1 minute doesn't make so much sense.
+  static DefaultDuration = 600;
   static ReporterOptions: { [key: string]: string } = {
     destination: 'Destination',
     source: 'Source'
   };
 
   private metricsSettings: MetricsSettings;
+  private duration: DurationInSeconds;
   private pollInterval: number;
   private shouldReportOptions: boolean;
 
@@ -47,14 +46,14 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
     return MetricsOptionsBar.DefaultPollInterval;
   };
 
-  static initialDuration = (urlParams: URLSearchParams, defaultDuration: DurationInSeconds): DurationInSeconds => {
+  static initialDuration = (urlParams: URLSearchParams): DurationInSeconds => {
     let d = urlParams.get(URLParams.DURATION);
     if (d !== null) {
       sessionStorage.setItem(URLParams.DURATION, d);
       return Number(d);
     }
     d = sessionStorage.getItem(URLParams.DURATION);
-    return d !== null ? Number(d) : defaultDuration;
+    return d !== null ? Number(d) : MetricsOptionsBar.DefaultDuration;
   };
 
   static initialMetricsSettings = (urlParams: URLSearchParams): MetricsSettings => {
@@ -99,7 +98,6 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
   }
 
   onDurationChanged = (key: number) => {
-    this.props.setDuration(key); // send a Redux action to change duration
     sessionStorage.setItem(URLParams.DURATION, String(key));
     HistoryManager.setParam(URLParams.DURATION, String(key));
   };
@@ -114,7 +112,7 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
       labelsOut = this.metricsSettings.activeLabels.map(lbl => L.OUTBOUND_LABELS.get(lbl)!);
     }
     this.props.onOptionsChanged({
-      duration: this.props.duration,
+      duration: this.duration,
       byLabelsIn: labelsIn,
       byLabelsOut: labelsOut,
       avg: this.metricsSettings.showAverage,
@@ -165,8 +163,8 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
           disabled={false}
           handleSelect={this.onDurationChanged}
           nameDropdown={'Displaying'}
-          initialValue={this.props.duration}
-          initialLabel={String(MetricsOptionsBar.Durations[this.props.duration])}
+          initialValue={this.duration}
+          initialLabel={String(MetricsOptionsBar.Durations[this.duration])}
           options={MetricsOptionsBar.Durations}
         />
         <ToolbarRightContent>
@@ -179,16 +177,17 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
   private processUrlParams = () => {
     const urlParams = new URLSearchParams(history.location.search);
     const pollInterval = MetricsOptionsBar.initialPollInterval(urlParams);
-    const duration = MetricsOptionsBar.initialDuration(urlParams, this.props.duration);
+    const duration = MetricsOptionsBar.initialDuration(urlParams);
     const metricsSettings = MetricsOptionsBar.initialMetricsSettings(urlParams);
 
     this.shouldReportOptions =
       pollInterval !== this.pollInterval ||
-      duration !== this.props.duration ||
+      duration !== this.duration ||
       !isEqual(metricsSettings)(this.metricsSettings);
 
     this.pollInterval = pollInterval;
     this.metricsSettings = metricsSettings;
+    this.duration = duration;
   };
 }
 
