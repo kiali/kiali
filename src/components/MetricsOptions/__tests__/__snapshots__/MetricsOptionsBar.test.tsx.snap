@@ -24,7 +24,6 @@ ShallowWrapper {
       onOptionsChanged={[MockFunction]}
       onRefresh={[MockFunction]}
       onReporterChanged={[MockFunction]}
-      onUpdatePollInterval={[MockFunction]}
       setDuration={[MockFunction]}
     />
   </Provider>,
@@ -49,7 +48,6 @@ ShallowWrapper {
       "onOptionsChanged": [MockFunction],
       "onRefresh": [MockFunction],
       "onReporterChanged": [MockFunction],
-      "onUpdatePollInterval": [MockFunction],
       "setDuration": [MockFunction],
     },
     "ref": null,
@@ -70,7 +68,6 @@ ShallowWrapper {
         "onOptionsChanged": [MockFunction],
         "onRefresh": [MockFunction],
         "onReporterChanged": [MockFunction],
-        "onUpdatePollInterval": [MockFunction],
         "setDuration": [MockFunction],
       },
       "ref": null,

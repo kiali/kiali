@@ -13,11 +13,10 @@ import { MetricsLabels as L } from './MetricsLabels';
 import { DurationInSeconds } from '../../types/Common';
 import RefreshContainer from '../../containers/RefreshContainer';
 
-interface Props {
+export interface MetricsOptionsBarProps {
   onOptionsChanged: (opts: MetricsOptions) => void;
   onReporterChanged: (reporter: string) => void;
   onRefresh: () => void;
-  onUpdatePollInterval: (pollInterval: number) => void;
   onLabelsFiltersChanged: (label: L.LabelName, value: string, checked: boolean) => void;
   metricReporter: string;
   direction: MetricsDirection;
@@ -26,8 +25,7 @@ interface Props {
   setDuration: (duration: DurationInSeconds) => void;
 }
 
-export class MetricsOptionsBar extends React.Component<Props> {
-  static PollIntervals = config().toolbar.pollInterval;
+export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
   static DefaultPollInterval = config().toolbar.defaultPollInterval;
 
   static Durations = config().toolbar.intervalDuration;
@@ -84,7 +82,7 @@ export class MetricsOptionsBar extends React.Component<Props> {
     return settings;
   };
 
-  constructor(props: Props) {
+  constructor(props: MetricsOptionsBarProps) {
     super(props);
   }
 
@@ -93,17 +91,12 @@ export class MetricsOptionsBar extends React.Component<Props> {
     this.reportOptions();
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: MetricsOptionsBarProps) {
     if (this.shouldReportOptions) {
       this.shouldReportOptions = false;
       this.reportOptions();
     }
   }
-
-  onPollIntervalChanged = (key: number) => {
-    this.props.onUpdatePollInterval(key); // send a Redux action to change duration
-    HistoryManager.setParam(URLParams.POLL_INTERVAL, String(key));
-  };
 
   onDurationChanged = (key: number) => {
     this.props.setDuration(key); // send a Redux action to change duration
@@ -177,12 +170,7 @@ export class MetricsOptionsBar extends React.Component<Props> {
           options={MetricsOptionsBar.Durations}
         />
         <ToolbarRightContent>
-          <RefreshContainer
-            id="metrics-refresh"
-            handleRefresh={this.props.onRefresh}
-            onSelect={this.onPollIntervalChanged}
-            pollInterval={this.pollInterval}
-          />
+          <RefreshContainer id="metrics-refresh" handleRefresh={this.props.onRefresh} />
         </ToolbarRightContent>
       </Toolbar>
     );
