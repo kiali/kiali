@@ -76,17 +76,30 @@ $ git push origin v1.0.0
 Sometimes there's the need of adding a hotfix to an already released version.
 That's what the `patch` number on the version is.
 
-The first step is to create a new branch for the version:
+The first step is to create a new patch branch for the major/minor version if it
+does not yet exist. Create the patch branch based on the release tag:
 
 [source, bash]
 ----
-$ git checkout -b v1.0.1 v1.0.0
-$ git push origin v1.0.1
+$ git checkout -b v1.0 v1.0.0
+$ git push origin v1.0
 ----
 
 Then we cherry-pick the commits that we need, or create PRs targeting this
 branch. Note that commits pushed to this branch might need to be mirrored on
 master, else those commits will be lost.
 
-After the fixes have been added, create the tag (as seen on the last step), and
-that's it.
+Don't forget to change `package.json` to bump up the release version. So
+in our example, you would commit a change to the version such that it is
+"1.0.1" in `package.json`.
+
+After the fixes have been committed/merged to the new patch branch,
+create a new patch-version tag:
+
+[source, bash]
+----
+$ git tag v1.0.1 <hash-of-last-commit-to-v1.0-patch-branch>
+$ git push origin v1.0.1
+----
+
+And that's it. The new patch release of the UI will be uploaded to the npm repo.
