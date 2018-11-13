@@ -66,7 +66,7 @@ index c1f7f80..aa0c54a 100644
 
  # Identifies the current build.
  # These will be embedded in the app and displayed when it starts.
--VERSION ?= v0.5.1-SNAPSHOT
+-VERSION ?= v0.9.0-SNAPSHOT
 +VERSION ?= v1.0.0
  COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
@@ -77,7 +77,8 @@ By default, the Makefile gets the latest version of the UI, so we'll also
 change the console version on the Makefile:
 
 One thing to keep in mind is that CONSOLE_VERSION comes from the npm
-repository, and may not be the same as VERSION. You can get the console version
+repository, and may not be the same as VERSION (though currently
+the Kiali team is keeping them the same). You can get the console version
 link:https://www.npmjs.com/package/@kiali/kiali-ui?activeTab=versions[here].
 
 [source, diff]
@@ -91,7 +92,7 @@ index c1f7f80..1d05ff3 100644
  # later want to change the CONSOLE_VERSION then you must run
  # the 'clean' target first before re-running the 'docker' target.
 -CONSOLE_VERSION ?= latest
-+CONSOLE_VERSION ?= v1.0.0
++CONSOLE_VERSION ?= 1.0.0
  CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 
  # Version label is used in the OpenShift/K8S resources to identify
@@ -206,7 +207,7 @@ index c1f7f80..4a8af40 100644
  # Identifies the current build.
  # These will be embedded in the app and displayed when it starts.
 -VERSION ?= v1.0.0
-+VERSION ?= v1.1.0
++VERSION ?= v1.1.0-SNAPSHOT
  COMMIT_HASH ?= $(shell git rev-parse HEAD)
  
  # Indicates which version of the UI console is to be embedded
@@ -214,7 +215,7 @@ index c1f7f80..4a8af40 100644
  # WARNING: If you have previously run the 'docker' target but
  # later want to change the CONSOLE_VERSION then you must run
  # the 'clean' target first before re-running the 'docker' target.
--CONSOLE_VERSION ?= v1.0.0-SNAPSHOT.Something
+-CONSOLE_VERSION ?= 1.0.0
 +CONSOLE_VERSION ?= latest
  CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
  
@@ -251,17 +252,32 @@ release tag/branch builds.
 Sometimes there's the need of adding a hotfix to an already released version.
 That's what the `patch` number on the version is.
 
-The first step is to create a new branch for the version:
+The first step is to create a new patch branch for the major/minor version if it
+does not yet exist. Create the patch branch based on the release tag:
 
 [source, bash]
 ----
-$ git checkout -b v1.0.1 v1.0.0
-$ git push origin v1.0.1
+$ git checkout -b v1.0 v1.0.0
+$ git push origin v1.0
 ----
 
 Then we cherry-pick the commits that we need, or create PRs targeting this
 branch. Note that commits pushed to this branch might need to be mirrored on
 master, else those commits will be lost.
 
-After the fixes have been added, create the tag (as seen on the last step), and
-that's it.
+Don't forget to change the Makefile to bump up the VERSION and CONSOLE_VERSION.
+So in our example, you would commit a change to the version such that it is
+"1.0.1".
+
+After the fixes have been committed/merged to the new patch branch,
+create a new patch-version tag:
+
+[source, bash]
+----
+$ git tag v1.0.1 <hash-of-last-commit-to-v1.0-patch-branch>
+$ git push origin v1.0.1
+----
+
+Now make sure the Docker Hub tag v1.0 points to the new v1.0.1 image.
+
+And that's it.
