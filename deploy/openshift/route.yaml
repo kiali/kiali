@@ -10,5 +10,5 @@ spec:
     termination: reencrypt
   to:
     kind: Service
-    targetPort: 20001
+    targetPort: 20002
     name: kiali

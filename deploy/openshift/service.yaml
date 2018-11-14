@@ -12,7 +12,7 @@ spec:
   ports:
   - name: tcp
     protocol: TCP
-    port: 20001
+    port: 20002
   selector:
     app: kiali
     version: ${VERSION_LABEL}

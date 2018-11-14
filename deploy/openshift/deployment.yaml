@@ -25,6 +25,32 @@ spec:
     spec:
       serviceAccount: kiali-service-account
       containers:
+      - image: openshift/oauth-proxy:v1.1.0
+        name: kiali-proxy
+        args:
+        - -provider=openshift
+        - -https-address=:20002
+        - -http-address=
+        - -email-domain=*
+        - -upstream=http://localhost:20001
+        - -openshift-service-account=kiali
+        - '-openshift-sar={"resource": "namespaces", "verb": "get"}'
+        - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}'
+        - -tls-cert=/etc/tls/private/tls.crt
+        - -tls-key=/etc/tls/private/tls.key
+        - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
+        - -openshift-ca=/etc/pki/tls/cert.pem
+        - -openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        - -cookie-secret=kiali-16bytes-1234
+        - -skip-provider-button
+        - -pass-access-token
+        ports:
+        - containerPort: 20002
+          name: proxy
+        resources: {}
+        volumeMounts:
+        - mountPath: /etc/tls/private
+          name: kiali-cert
       - image: ${IMAGE_NAME}:${IMAGE_VERSION}
         ${IMAGE_PULL_POLICY_TOKEN}
         name: kiali
