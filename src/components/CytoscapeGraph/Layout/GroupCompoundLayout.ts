@@ -8,17 +8,16 @@
   real layout is run.
 
   Is composed of:
-   - A compound layout (see included VerticalLayout class) that does the layout of the children of a compound node.
+   - A compound layout (dagre in this case) does the layout of the children of a compound node.
    - A Synthetic edge generator to help with the creation of synthetic edges (more info below).
    - The actual GroupCompoundLayout class which is type of cy Layout and can be used along it.
 
   The algorithm is roughly as follow:
 
   1. For every compound node:
-    a. Compute how much size is required depending on our compound layout -In the included VerticalLayout we sum up the
-       height of each children plus a padding between each child-.
-    b. With the size of the compound, set the width and height of the node using `cy.style`, so that the real layout
-       honors the size when doing the layout.
+    a. The compound layout is run for every compound and their relative positions (to the parent) are saved for later use.
+    b. Get the resulting bounding box of the compound, set the width and height of the node using `cy.style`, so that
+       the real layout honors the size when doing the layout.
     c. For every edge that goes to a child (or comes from a child), create a synthetic edge that goes to (or comes from) the compound node and remove the original
        edge. We can cull away repeated edges as they are not needed.
     d. Remove the children. This is important, else cytoscape won't honor the size specified in previous step.
@@ -29,16 +28,27 @@
   3. Remove the synthetic edges.
   4. For every original parent node:
     a. Add back its children and edges.
-    b. Layout the children using the selected compound layout -In the included VerticalLayout, we stack vertically every children
-       setting the relative position of each one to be on top of each other-.
+    b. Set the relative position to parent of every children -saved in 1.a-
 
  */
 
-const NAMESPACE_KEY = '_group_compound_layout';
-const BOUNDING_BOX = 'bounding-box';
-const CHILDREN_KEY = 'children';
-const STYLES_KEY = 'styles';
-const BETWEEN_NODES_PADDING = 3;
+export const COMPOUND_PARENT_NODE_CLASS = '__compoundLayoutParentNodeClass';
+
+const NAMESPACE_KEY = 'group_compound_layout';
+const CHILDREN_KEY = NAMESPACE_KEY + 'children';
+const STYLES_KEY = NAMESPACE_KEY + 'styles';
+const RELATIVE_POSITION_KEY = NAMESPACE_KEY + 'relative_position';
+
+// We can't fully rely on the reported position of the compound nodes, as they are relative to contents
+// Since we are moving a lots of params without waiting for a refresh (maybe related that we are in a batch) we are
+// computing this value using the bounding box, for the parents we use the bounding box of all the elements.
+// The position is the center of the box, so we are using the top left corner and adding half the width / height.
+const positionFromBoundingBox = boundingBox => {
+  return {
+    x: boundingBox.x1 + boundingBox.w * 0.5,
+    y: boundingBox.y1 + boundingBox.h * 0.5
+  };
+};
 
 // Styles used to have more control on how the compound nodes are going to be seen by the Layout algorithm.
 interface OverridenStyles {
@@ -82,82 +92,6 @@ class SyntheticEdgeGenerator {
 }
 
 /**
- * CompoundLayout interface, used to plug in to the GroupCompoundLayout other kinds of layouts for the contents of a
- * compound node. Examples to implement would be
- *   VerticalLayout:
- *    __________
- *   |          |
- *   | [ node ] |
- *   | [ node ] |
- *   | [ node ] |
- *   | [ node ] |
- *   |__________|
- *
- *   HorizontalLayout:
- *    ________________________________________
- *   |                                        |
- *   | [ node ]  [ node ]  [ node ]  [ node ] |
- *   |________________________________________|
- *
- *
- *   or a MatrixLayout:
- *    ____________________
- *   |                    |
- *   | [ node ]  [ node ] |
- *   | [ node ]  [ node ] |
- *   |____________________|
- *
- */
-interface CompoundLayout {
-  size(compound: any); // Gets the size required for this compound node to place every children
-  layout(compound: any); // Layouts the children of this compound node.
-}
-
-/**
- * Implements a vertical layout for the children of a compound node.
- */
-class VerticalLayout implements CompoundLayout {
-  /**
-   * This will get the size required for a vertical layout by:
-   * adding all the heights of the contents plus a padding for every space between a node.
-   * finding the max width value to use.
-   */
-  size(compound: any) {
-    const size = compound.children().reduce(
-      (accBoundingBox, child) => {
-        const localBoundingBox = child.boundingBox();
-        // The bounding box reported before adding and after adding differs, I think is related to removing/adding
-        // in a batch, save that value for later
-        child.data(NAMESPACE_KEY + BOUNDING_BOX, localBoundingBox);
-        accBoundingBox.height += localBoundingBox.h;
-        accBoundingBox.width = Math.max(accBoundingBox.width, localBoundingBox.w);
-        return accBoundingBox;
-      },
-      { width: 0, height: 0 }
-    );
-    size.height += (compound.children().length - 1) * BETWEEN_NODES_PADDING;
-    return size;
-  }
-
-  /**
-   * This will layout the children using a vertical layout, starting on 0,0 we position the nodes relative to the parent
-   * and saving the previous position to use as starting point for the news child.
-   */
-  layout(compound: any) {
-    const position = { x: 0, y: 0 };
-    compound.children().each(child => {
-      // Retrieve saved bounding box to use, immediately delete as won't be used anymore.
-      const boundingBox = child.data(NAMESPACE_KEY + BOUNDING_BOX);
-      child.removeData(NAMESPACE_KEY + BOUNDING_BOX);
-      // It looks like the relativePosition is given by the center, i haven't been able to confirm this (in the code) but
-      // i'm using its bounding box to place it
-      child.relativePosition({ x: position.x - boundingBox.w * 0.5, y: position.y - boundingBox.h * 0.5 });
-      position.y += boundingBox.h + BETWEEN_NODES_PADDING;
-    });
-  }
-}
-
-/**
  * Main class for the GroupCompoundLayout, used to bridge with cytoscape to make it easier to integrate with current code
  */
 export default class GroupCompoundLayout {
@@ -165,26 +99,50 @@ export default class GroupCompoundLayout {
   readonly cy;
   readonly elements;
   readonly syntheticEdgeGenerator;
-  readonly compoundLayout: CompoundLayout;
 
   constructor(options: any) {
     this.options = { ...options };
     this.cy = this.options.cy;
     this.elements = this.options.eles;
     this.syntheticEdgeGenerator = new SyntheticEdgeGenerator();
-    this.compoundLayout = new VerticalLayout();
   }
 
   /**
    * This code gets executed on the cy.layout(...).run() is our entrypoint of this algorithm.
    */
   run() {
-    const { realLayout } = this.options;
+    const { realLayout, compoundLayoutOptions } = this.options;
     const parents = this.parents();
 
-    // (1.a) Prepare parents by assigning a size
+    // (1.a) Prepare parents by assigning a size and running the compound layout
     parents.each(parent => {
-      const boundingBox = this.compoundLayout.size(parent);
+      const children = parent.children();
+      const targetElements = children.add(children.edgesTo(children));
+
+      // We expect a discrete layout here
+      const compoundLayout = targetElements.layout(compoundLayoutOptions);
+      compoundLayout.run();
+
+      const boundingBox = targetElements.boundingBox();
+
+      const parentPosition = positionFromBoundingBox(boundingBox);
+
+      // Save the relative positions, as we will need them later.
+      parent.children().each(child => {
+        // Need to build the relativePosition.
+        // For some reason we can't trust our current relativePosition and position of the parent node
+        // It might be related that we are running in a batch operation or something else.
+        // Luckily we can build our own relativePosition with the parent and children boundingBox
+        const childPosition = positionFromBoundingBox(child.boundingBox());
+        const relativePosition = {
+          x: childPosition.x - parentPosition.x,
+          y: childPosition.y - parentPosition.y
+        };
+
+        // Can't use scratchPad here because we are going to remove this element.
+        child.data(RELATIVE_POSITION_KEY, relativePosition);
+      });
+
       const backupStyles: OverridenStyles = {
         shape: parent.style('shape'),
         height: parent.style('height'),
@@ -193,15 +151,16 @@ export default class GroupCompoundLayout {
 
       const newStyles: OverridenStyles = {
         shape: 'rectangle',
-        height: `${boundingBox.height}px`,
-        width: `${boundingBox.width}px`
+        height: `${boundingBox.h}px`,
+        width: `${boundingBox.w}px`
       };
       // Saves a backup of current styles to restore them after we finish
-      this.setScratch(parent, STYLES_KEY, backupStyles);
+      parent.scratch(STYLES_KEY, backupStyles);
+      parent.addClass(COMPOUND_PARENT_NODE_CLASS);
       // (1.b) Set the size
       parent.style(newStyles);
       // Save the children as jsons in the parent scratchpad for later
-      this.setScratch(parent, CHILDREN_KEY, parent.children().jsons());
+      parent.scratch(CHILDREN_KEY, parent.children().jsons());
     });
 
     //  Remove the children and its edges and add synthetic edges for every edge that touches a child node.
@@ -240,14 +199,20 @@ export default class GroupCompoundLayout {
       // Add and position the children nodes according to the layout
       parents.each(parent => {
         // (4.a) Add back the children and the edges
-        this.cy.add(this.getScratch(parent, CHILDREN_KEY));
+        this.cy.add(parent.scratch(CHILDREN_KEY));
         // (4.b) Layout the children using our compound layout.
-        this.compoundLayout.layout(parent);
-        parent.style(this.getScratch(parent, STYLES_KEY));
+        parent.children().each(child => {
+          const relativePosition = child.data(RELATIVE_POSITION_KEY);
+          child.relativePosition(relativePosition);
+          child.removeData(RELATIVE_POSITION_KEY);
+        });
+
+        parent.style(parent.scratch(STYLES_KEY));
+        parent.removeClass(COMPOUND_PARENT_NODE_CLASS);
 
         // Discard the saved values
-        this.setScratch(parent, CHILDREN_KEY, undefined);
-        this.setScratch(parent, STYLES_KEY, undefined);
+        parent.removeScratch(CHILDREN_KEY);
+        parent.removeScratch(STYLES_KEY);
       });
       // (4.a) Add the real edges, we already added the children nodes.
       this.cy.add(
@@ -262,13 +227,5 @@ export default class GroupCompoundLayout {
 
   parents() {
     return this.elements.nodes('$node > node');
-  }
-
-  getScratch(element: any, key: string) {
-    return element.scratch(NAMESPACE_KEY + key);
-  }
-
-  setScratch(element: any, key: string, value: any) {
-    element.scratch(NAMESPACE_KEY + key, value);
   }
 }

@@ -2,6 +2,7 @@ import { PfColors } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
 import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
+import { COMPOUND_PARENT_NODE_CLASS } from '../Layout/GroupCompoundLayout';
 
 export const DimClass = 'mousedim';
 
@@ -282,7 +283,7 @@ export class GraphStyles {
       },
       {
         // version group
-        selector: '$node > node',
+        selector: `$node > node, node.${COMPOUND_PARENT_NODE_CLASS}`,
         css: {
           'text-valign': 'top',
           'text-halign': 'right',

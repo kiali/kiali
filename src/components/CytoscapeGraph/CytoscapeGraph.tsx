@@ -32,6 +32,7 @@ import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } f
 import { makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { DurationInSeconds } from '../../types/Common';
+import { DagreGraph } from './graphs/DagreGraph';
 
 type CytoscapeGraphType = {
   activeNamespace: Namespace;
@@ -355,14 +356,13 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     cy.startBatch();
 
-    // Note, to resolve some layout issues for KIALI-1291 we introduced a complete wipe of cy elements prior to a layout change. This
-    // caused the issue in KIALI-1649. I'm not sure we still need the wipe, my testing shows good behavior without wiping the existing
-    // elements. So, I'm commenting it out.  If we need to re-instate it then we need to also add a fix for 1649. For that we'd probably
-    // need to gather the elements that have added classes (like Health info) and also capture any selected element. Then re-apply the
-    // settings on the replacement elements, for those elements that still exist.
-    // if (updateLayout) {
-    //   cy.remove(cy.elements());
-    // }
+    // KIALI-1291 issue was caused because because some layouts (can't tell if all) do reuse the existing positions.
+    // We got some issues when changing from/to cola/cose, as the nodes started to get far away from each other.
+    // Previously we deleted the nodes prior to a layout update, this was too much and it seems that only reseting the
+    // positions to 0,0 makes the layout more predictable.
+    if (updateLayout) {
+      cy.nodes().positions({ x: 0, y: 0 });
+    }
 
     // update the entire set of nodes and edges to keep the graph up-to-date
     cy.json({ elements: this.props.elements });
@@ -374,7 +374,13 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       const layoutOptions = LayoutDictionary.getLayout(this.props.graphLayout);
       if (cy.nodes('$node > node').length > 0) {
         // if there is any parent node, run the group-compound-layout
-        cy.layout({ ...layoutOptions, name: 'group-compound-layout', realLayout: this.props.graphLayout.name }).run();
+        cy.layout({
+          ...layoutOptions,
+          name: 'group-compound-layout',
+          realLayout: this.props.graphLayout.name,
+          // Currently we do not support non discrete layouts for the compounds, but this can be supported if needed.
+          compoundLayoutOptions: LayoutDictionary.getLayout(DagreGraph.getLayout())
+        }).run();
       } else {
         cy.layout(layoutOptions).run();
       }
