@@ -294,11 +294,15 @@ openshift-reload-image: .openshift-validate
 
 ## k8s-deploy: Deploy docker image in Kubernetes namespace.
 k8s-deploy: k8s-undeploy
-	@if ! which envsubst > /dev/null 2>&1; then echo "You are missing 'envsubst'. Please install it and retry. If on MacOS, you can get this by installing the gettext package"; exit 1; fi
-	@echo Deploying to Kubernetes namespace ${NAMESPACE}
-	cat deploy/kubernetes/kiali-configmap.yaml | VERSION_LABEL=${VERSION_LABEL} ISTIO_NAMESPACE=${NAMESPACE} JAEGER_URL=${JAEGER_URL} GRAFANA_URL=${GRAFANA_URL} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
-	cat deploy/kubernetes/kiali-secrets.yaml | VERSION_LABEL=${VERSION_LABEL} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
-	cat deploy/kubernetes/kiali.yaml | IMAGE_NAME=${DOCKER_NAME} IMAGE_VERSION=${DOCKER_VERSION} NAMESPACE=${NAMESPACE} VERSION_LABEL=${VERSION_LABEL} VERBOSE_MODE=${VERBOSE_MODE} IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} envsubst | ${KUBECTL} create -n ${NAMESPACE} -f -
+	IMAGE_NAME="${DOCKER_NAME}" \
+IMAGE_VERSION="${DOCKER_VERSION}" \
+IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} \
+VERSION_LABEL="${VERSION_LABEL}" \
+NAMESPACE="${NAMESPACE}" \
+JAEGER_URL="${JAEGER_URL}" \
+GRAFANA_URL="${GRAFANA_URL}"  \
+VERBOSE_MODE="${VERBOSE_MODE}" \
+deploy/kubernetes/deploy-kiali-to-kubernetes.sh
 
 ## k8s-undeploy: Undeploy docker image in Kubernetes namespace.
 k8s-undeploy: .k8s-validate

@@ -1,0 +1,58 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kiali
+  labels:
+    app: kiali
+    version: ${VERSION_LABEL}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kiali
+      version: ${VERSION_LABEL}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      name: kiali
+      labels:
+        app: kiali
+        version: ${VERSION_LABEL}
+    spec:
+      serviceAccount: kiali
+      containers:
+      - image: ${IMAGE_NAME}:${IMAGE_VERSION}
+        ${IMAGE_PULL_POLICY_TOKEN}
+        name: kiali
+        command:
+        - "/opt/kiali/kiali"
+        - "-config"
+        - "/kiali-configuration/config.yaml"
+        - "-v"
+        - "${VERBOSE_MODE}"
+        env:
+        - name: ACTIVE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: SERVER_CREDENTIALS_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: kiali
+              key: username
+        - name: SERVER_CREDENTIALS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kiali
+              key: passphrase
+        volumeMounts:
+        - name: kiali-configuration
+          mountPath: "/kiali-configuration"
+      volumes:
+      - name: kiali-configuration
+        configMap:
+          name: kiali
