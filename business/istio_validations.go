@@ -37,20 +37,28 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, 2)
 
+	istioDetails := kubernetes.IstioDetails{}
 	vs := make([]kubernetes.IstioObject, 0)
 	drs := make([]kubernetes.IstioObject, 0)
+	var services []v1.Service
+	var workloads models.WorkloadList
 
-	wg.Add(2)
+	wg.Add(4)
 	go fetch(&vs, namespace, service, in.k8s.GetVirtualServices, &wg, errChan)
 	go fetch(&drs, namespace, service, in.k8s.GetDestinationRules, &wg, errChan)
+	go in.serviceFetcher(&services, namespace, errChan, &wg)
+	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
 	wg.Wait()
 	if len(errChan) != 0 {
 		err = <-errChan
 		return nil, err
 	}
+	istioDetails.DestinationRules = drs
+	istioDetails.VirtualServices = vs
 	objectCheckers := []ObjectChecker{
 		checkers.VirtualServiceChecker{namespace, drs, vs},
 		checkers.DestinationRulesChecker{DestinationRules: drs},
+		checkers.NoServiceChecker{Namespace: namespace, Services: services, IstioDetails: &istioDetails, WorkloadList: workloads},
 	}
 
 	// Get group validations for same kind istio objects
