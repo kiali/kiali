@@ -106,6 +106,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		Server: Server{
 			Address: "foo-test",
 			Port:    321,
+
 			StaticContentRootDirectory: "/tmp",
 		},
 	}

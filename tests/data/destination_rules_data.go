@@ -6,7 +6,7 @@ import (
 )
 
 func CreateEmptyDestinationRule(namespace string, name string, host string) kubernetes.IstioObject {
-	destinationRule := (&kubernetes.DestinationRule{
+	destinationRule := (&kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:        name,
 			Namespace:   namespace,

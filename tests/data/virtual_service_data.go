@@ -6,7 +6,7 @@ import (
 )
 
 func CreateEmptyVirtualService(name string, namespace string, hosts []string) kubernetes.IstioObject {
-	return (&kubernetes.VirtualService{
+	return (&kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:        name,
 			Namespace:   namespace,
@@ -80,7 +80,7 @@ func CreateVirtualServiceWithServiceEntryTarget() kubernetes.IstioObject {
 }
 
 func CreateExternalServiceEntry() kubernetes.IstioObject {
-	return (&kubernetes.ServiceEntry{
+	return (&kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "external-svc-wikipedia",
 			Namespace: "wikipedia",

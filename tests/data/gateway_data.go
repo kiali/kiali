@@ -10,7 +10,7 @@ func CreateEmptyGateway(name string, selector map[string]string) kubernetes.Isti
 	for k, v := range selector {
 		iSelector[k] = v
 	}
-	gateway := kubernetes.Gateway{
+	gateway := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: name,
 		},

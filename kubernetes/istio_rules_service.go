@@ -13,7 +13,7 @@ func (in *IstioClient) GetIstioRules(namespace string) (*IstioRules, error) {
 	if err != nil {
 		return nil, err
 	}
-	ruleList, ok := result.(*ruleList)
+	ruleList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a rules list", namespace)
 	}
@@ -28,17 +28,12 @@ func (in *IstioClient) GetIstioRules(namespace string) (*IstioRules, error) {
 }
 
 // GetIstioRuleDetails returns the handlers and instances details for a given mixer rule.
-// On this version, the following handlers and instances are supported:
-// 		- listchecker
-// 		- listentry
-//		- denier
-// 		- checknothing
 func (in *IstioClient) GetIstioRuleDetails(namespace string, istiorule string) (*IstioRuleDetails, error) {
 	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(rules).SubResource(istiorule).Do().Get()
 	if err != nil {
 		return nil, err
 	}
-	mRule, ok := result.(*rule)
+	mRule, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a Rule", namespace, istiorule)
 	}

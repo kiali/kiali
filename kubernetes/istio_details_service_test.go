@@ -30,7 +30,7 @@ func TestGetDestinationRulesSubsets(t *testing.T) {
 
 	assert.Equal(t, []string{}, GetDestinationRulesSubsets(nil, "", ""))
 
-	destinationRule1 := MockIstioObject{
+	destinationRule1 := GenericIstioObject{
 		Spec: map[string]interface{}{
 			"host": "reviews",
 			"subsets": []interface{}{
@@ -49,7 +49,7 @@ func TestGetDestinationRulesSubsets(t *testing.T) {
 			},
 		},
 	}
-	destinationRule2 := MockIstioObject{
+	destinationRule2 := GenericIstioObject{
 		Spec: map[string]interface{}{
 			"host": "reviews",
 			"trafficPolicy": map[string]interface{}{

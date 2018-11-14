@@ -278,7 +278,7 @@ func fakeGetDestinationRules() []kubernetes.IstioObject {
 }
 
 func fakeGetServiceEntries() []kubernetes.IstioObject {
-	serviceEntry := kubernetes.MockIstioObject{
+	serviceEntry := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "googleapis",
 		},
@@ -299,7 +299,7 @@ func fakeGetServiceEntries() []kubernetes.IstioObject {
 }
 
 func fakeGetIstioRules() *kubernetes.IstioRules {
-	stdioRule := kubernetes.MockIstioObject{}
+	stdioRule := kubernetes.GenericIstioObject{}
 	stdioRule.Name = "stdio"
 	stdioRule.Spec = map[string]interface{}{
 		"match": "true",
@@ -318,7 +318,7 @@ func fakeGetIstioRules() *kubernetes.IstioRules {
 }
 
 func fakeCheckFromCustomerRule() kubernetes.IstioObject {
-	checkfromcustomerRule := kubernetes.MockIstioObject{}
+	checkfromcustomerRule := kubernetes.GenericIstioObject{}
 	checkfromcustomerRule.Name = "checkfromcustomer"
 	checkfromcustomerRule.Spec = map[string]interface{}{
 		"match": "destination.labels[\"app\"] == \"preference\"",
@@ -336,7 +336,7 @@ func fakeCheckFromCustomerRule() kubernetes.IstioObject {
 
 func fakeCheckFromCustomerActions() []*kubernetes.IstioRuleAction {
 	actions := make([]*kubernetes.IstioRuleAction, 0)
-	handler := kubernetes.MockIstioObject{}
+	handler := kubernetes.GenericIstioObject{}
 	handler.Name = "preferencewhitelist"
 	handler.Spec = map[string]interface{}{
 		"overrides": []string{
@@ -345,7 +345,7 @@ func fakeCheckFromCustomerActions() []*kubernetes.IstioRuleAction {
 		"blacklist": false,
 		"adapter":   "listchecker",
 	}
-	instance := kubernetes.MockIstioObject{}
+	instance := kubernetes.GenericIstioObject{}
 	instance.Name = "preferencesource"
 	instance.Spec = map[string]interface{}{
 		"value":    "source.labels[\"app\"]",
@@ -367,7 +367,7 @@ func fakeGetIstioRuleDetails() *kubernetes.IstioRuleDetails {
 }
 
 func fakeGetQuotaSpecs() []kubernetes.IstioObject {
-	quotaSpec := kubernetes.MockIstioObject{}
+	quotaSpec := kubernetes.GenericIstioObject{}
 	quotaSpec.Name = "request-count"
 	quotaSpec.Spec = map[string]interface{}{
 		"rules": []interface{}{
@@ -385,7 +385,7 @@ func fakeGetQuotaSpecs() []kubernetes.IstioObject {
 }
 
 func fakeGetQuotaSpecBindings() []kubernetes.IstioObject {
-	quotaSpec := kubernetes.MockIstioObject{}
+	quotaSpec := kubernetes.GenericIstioObject{}
 	quotaSpec.Name = "request-count"
 	quotaSpec.Spec = map[string]interface{}{
 		"quotaSpecs": []interface{}{
@@ -473,7 +473,7 @@ func TestIsValidHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	virtualServiceIstioObject := kubernetes.MockIstioObject{
+	virtualServiceIstioObject := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "reviews",
 		},
@@ -518,7 +518,7 @@ func TestHasCircuitBreaker(t *testing.T) {
 	// Note - I don't think the subset definitions here have any impact on the CB
 	// detection. They do not do any sort of override so presumably any version, including
 	// a v3 would inherit the DR-level CB definition.
-	destinationRule1 := kubernetes.MockIstioObject{
+	destinationRule1 := kubernetes.GenericIstioObject{
 		Spec: map[string]interface{}{
 			"host": "reviews",
 			"trafficPolicy": map[string]interface{}{
@@ -560,7 +560,7 @@ func TestHasCircuitBreaker(t *testing.T) {
 	assert.True(t, dRule1.HasCircuitBreaker("", "reviews", "v3"))
 	assert.False(t, dRule1.HasCircuitBreaker("", "reviews-bad", "v2"))
 
-	destinationRule2 := kubernetes.MockIstioObject{
+	destinationRule2 := kubernetes.GenericIstioObject{
 		Spec: map[string]interface{}{
 			"host": "reviews",
 			"subsets": []interface{}{

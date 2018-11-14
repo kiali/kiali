@@ -82,7 +82,7 @@ func TestIstioRuleWithNotSupportedHandlersOrInstances(t *testing.T) {
 }
 
 func fakeCheckFromCustomerRule() kubernetes.IstioObject {
-	checkfromcustomerRule := kubernetes.MockIstioObject{}
+	checkfromcustomerRule := kubernetes.GenericIstioObject{}
 	checkfromcustomerRule.Name = "checkfromcustomer"
 	checkfromcustomerRule.Spec = map[string]interface{}{
 		"match": "destination.labels[\"app\"] == \"preference\"",
@@ -99,7 +99,7 @@ func fakeCheckFromCustomerRule() kubernetes.IstioObject {
 }
 
 func fakeDenyCustomerRule() kubernetes.IstioObject {
-	denycustomerRule := kubernetes.MockIstioObject{}
+	denycustomerRule := kubernetes.GenericIstioObject{}
 	denycustomerRule.Name = "denycustomer"
 	denycustomerRule.Spec = map[string]interface{}{
 		"match": "destination.labels[\"app\"] == \"preference\" && source.labels[\"app\"]==\"customer\"",
@@ -127,7 +127,7 @@ func fakeIstioRules() *kubernetes.IstioRules {
 
 func fakeCheckFromCustomerActions() []*kubernetes.IstioRuleAction {
 	actions := make([]*kubernetes.IstioRuleAction, 0)
-	handler := kubernetes.MockIstioObject{}
+	handler := kubernetes.GenericIstioObject{}
 	handler.Name = "preferencewhitelist"
 	handler.Spec = map[string]interface{}{
 		"overrides": []string{
@@ -136,7 +136,7 @@ func fakeCheckFromCustomerActions() []*kubernetes.IstioRuleAction {
 		"blacklist": false,
 		"adapter":   "listchecker",
 	}
-	instance := kubernetes.MockIstioObject{}
+	instance := kubernetes.GenericIstioObject{}
 	instance.Name = "preferencesource"
 	instance.Spec = map[string]interface{}{
 		"value":    "source.labels[\"app\"]",
@@ -159,7 +159,7 @@ func fakeCheckFromCustomerDetails() *kubernetes.IstioRuleDetails {
 }
 
 func fakeStdioRule() kubernetes.IstioObject {
-	stdioRule := kubernetes.MockIstioObject{}
+	stdioRule := kubernetes.GenericIstioObject{}
 	stdioRule.Name = "stdio"
 	stdioRule.Spec = map[string]interface{}{
 		"match": "true",

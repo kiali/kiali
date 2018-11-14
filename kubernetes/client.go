@@ -175,7 +175,9 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 	schemeBuilder := runtime.NewSchemeBuilder(
 		func(scheme *runtime.Scheme) error {
 			for _, kind := range istioKnownTypes {
-				scheme.AddKnownTypes(*kind.groupVersion, kind.object, kind.collection)
+				gv := kind.groupVersion
+				scheme.AddKnownTypeWithName(gv.WithKind(kind.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(gv.WithKind(kind.collectionKind), &GenericIstioObjectList{})
 			}
 			meta_v1.AddToGroupVersion(scheme, istioConfigGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, istioNetworkingGroupVersion)

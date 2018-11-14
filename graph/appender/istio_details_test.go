@@ -45,7 +45,7 @@ func TestCBAll(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	k8s := kubetest.NewK8SClientMock()
-	dRule := kubernetes.DestinationRule{
+	dRule := kubernetes.GenericIstioObject{
 		ObjectMeta: v1.ObjectMeta{
 			Name: "dRule-1",
 		},
@@ -102,7 +102,7 @@ func TestCBSubset(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	k8s := kubetest.NewK8SClientMock()
-	dRule := kubernetes.DestinationRule{
+	dRule := kubernetes.GenericIstioObject{
 		ObjectMeta: v1.ObjectMeta{
 			Name: "dRule-1",
 		},
@@ -164,7 +164,7 @@ func TestVS(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	k8s := kubetest.NewK8SClientMock()
-	vService := kubernetes.VirtualService{
+	vService := kubernetes.GenericIstioObject{
 		ObjectMeta: v1.ObjectMeta{
 			Name: "vService-1",
 		},
