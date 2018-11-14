@@ -28,10 +28,10 @@ debug() {
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 # The default version of the istiooc command to be downloaded
-DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.11.0+maistra-0.3.0"
+DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.11.0+maistra-0.4.0"
 
 # The default installation custom resource used to define what to install
-DEFAULT_MAISTRA_INSTALL_YAML="https://raw.githubusercontent.com/Maistra/openshift-ansible/maistra-0.3/istio/cr-minimal.yaml"
+DEFAULT_MAISTRA_INSTALL_YAML="https://raw.githubusercontent.com/Maistra/openshift-ansible/maistra-0.4/istio/cr-minimal.yaml"
 
 # set the default openshift address here so that it can be used for the usage text
 #
@@ -108,8 +108,8 @@ while [[ $# -gt 0 ]]; do
       KIALI_USERNAME="$2"
       shift;shift
       ;;
-    -kp|--kiali-password)
-      KIALI_PASSWORD="$2"
+    -kp|--kiali-passphrase)
+      KIALI_PASSPHRASE="$2"
       shift;shift
       ;;
     --cluster-options)
@@ -158,13 +158,12 @@ Valid options:
       The username needed when logging into Kiali.
       Default: admin
       Used only for the 'up' command.
-  -kp|--kiali-password <password>
-      The password needed when logging into Kiali.
+  -kp|--kiali-passphrase <passphrase>
+      The passphrase needed when logging into Kiali.
       Default: admin
       Used only for the 'up' command.
   -kv|--kiali-version <version>
       The Kiali version to be installed in OpenShift.
-      Default: v0.5.0
       Used only for the 'up' command.
   -p|--persistence-dir <dir>
       When set, OpenShift will persist data to this directory.
@@ -234,11 +233,10 @@ ISTIO_ENABLED="${ISTIO_ENABLED:-true}"
 
 # If you set KIALI_ENABLED=true, then the istiooc command will install a version of Kiali for you.
 # If that is set to false, the other KIALI_ environment variables will be ignored.
-# NOTE: The USERNAME and PASSWORD settings are not used today. For future use.
 KIALI_ENABLED="${KIALI_ENABLED:-false}"
-KIALI_VERSION="${KIALI_VERSION:-v0.7}"
+KIALI_VERSION="${KIALI_VERSION:-v0.10.1}"
 KIALI_USERNAME="${KIALI_USERNAME:-admin}"
-KIALI_PASSWORD="${KIALI_PASSWORD:-admin}"
+KIALI_PASSPHRASE="${KIALI_PASSPHRASE:-admin}"
 
 #--------------------------------------------------------------
 # Variables below have values derived from the variables above.
@@ -304,7 +302,7 @@ debug "ENVIRONMENT:
   KIALI_ENABLED=$KIALI_ENABLED
   KIALI_VERSION=$KIALI_VERSION
   KIALI_USERNAME=$KIALI_USERNAME
-  KIALI_PASSWORD=$KIALI_PASSWORD
+  KIALI_PASSPHRASE=$KIALI_PASSPHRASE
   ISTIO_ENABLED=$ISTIO_ENABLED
   ISTIO_VERSION=$ISTIO_VERSION
   ENABLE_ARG=$ENABLE_ARG
@@ -460,20 +458,39 @@ if [ "$_CMD" = "up" ]; then
   fi
 
   if [ "${KIALI_ENABLED}" == "true" ]; then
+    echo "Wait for Istio to fully start (this is going to take a while)..."
+
+    echo -n "Waiting for Istio Deployments to be created..."
+    while [ "$(oc get pods -l job-name=openshift-ansible-istio-installer-job -n istio-system -o jsonpath='{.items..status.conditions[0].reason}' 2> /dev/null)" != "PodCompleted" ]
+    do
+      sleep 5
+      echo -n '.'
+    done
+    echo "done."
+
+    for app in $(oc get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
+    do
+      echo -n "Waiting for ${app} to be ready..."
+      readyReplicas="0"
+      while [ "$?" != "0" -o "$readyReplicas" == "0" ]
+      do
+        sleep 1
+        echo -n '.'
+        readyReplicas="$(oc get deployment.app/${app} -n istio-system -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
+      done
+      echo "done."
+    done
+
     echo "Deleting any previously existing Kiali..."
     ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=kiali -n istio-system
     echo "Deploying Kiali..."
-    curl https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/deploy/openshift/kiali-configmap.yaml | \
-      VERSION_LABEL=${KIALI_VERSION} envsubst | ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f -
-    curl https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/deploy/openshift/kiali-secrets.yaml | \
-      VERSION_LABEL=${KIALI_VERSION} envsubst | ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f -
-    curl https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/deploy/openshift/kiali.yaml | \
-      VERSION_LABEL=${KIALI_VERSION} \
-      IMAGE_NAME=kiali/kiali \
-      IMAGE_VERSION=${KIALI_VERSION}  \
-      NAMESPACE=istio-system \
-      VERBOSE_MODE=3 \
-      IMAGE_PULL_POLICY_TOKEN="imagePullPolicy: Always" envsubst | ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f -
+    # TODO - instead of master in the URL, it should be literally ${VERSION_LABEL} - do this when we release 0.11
+    # TODO - instead of master for the value of VERSION_LABEL, it should be ${KIALI_VERSION} - do it when 0.11 is released
+    curl https://raw.githubusercontent.com/kiali/kiali/master/deploy/openshift/deploy-kiali-to-openshift.sh | \
+    VERSION_LABEL=master \
+    IMAGE_VERSION=${KIALI_VERSION}  \
+    KIALI_USERNAME=${KIALI_USERNAME}  \
+    KIALI_PASSPHRASE=${KIALI_PASSPHRASE} sh
   fi
 
 elif [ "$_CMD" = "down" ];then
