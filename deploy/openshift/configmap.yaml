@@ -16,3 +16,4 @@ data:
         url: ${JAEGER_URL}
       grafana:
         url: ${GRAFANA_URL}
+    auth_strategy: ${AUTH_STRATEGY}

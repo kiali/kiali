@@ -9,6 +9,7 @@ import (
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
+	AuthStrategy   string             `json:"authStrategy,omitempty"`
 	IstioNamespace string             `json:"istioNamespace,omitempty"`
 	IstioLabels    config.IstioLabels `json:"istioLabels,omitempty"`
 }
@@ -20,6 +21,7 @@ func Config(w http.ResponseWriter, r *http.Request) {
 
 	config := config.Get()
 	publicConfig := PublicConfig{
+		AuthStrategy:   config.AuthStrategy,
 		IstioNamespace: config.IstioNamespace,
 		IstioLabels:    config.IstioLabels,
 	}

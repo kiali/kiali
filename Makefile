@@ -77,6 +77,10 @@ GO_BUILD_ENVVARS = \
 	GOARCH=amd64 \
 	CGO_ENABLED=0 \
 
+# What kind of strategy should we use to login an user.
+# Values: oauth/login/none
+AUTH_STRATEGY ?= login
+
 .PHONY: help
 all: help
 help: Makefile
@@ -259,6 +263,7 @@ NAMESPACE="${NAMESPACE}" \
 JAEGER_URL="${JAEGER_URL}" \
 GRAFANA_URL="${GRAFANA_URL}"  \
 VERBOSE_MODE="${VERBOSE_MODE}" \
+AUTH_STRATEGY="${AUTH_STRATEGY}" \
 deploy/openshift/deploy-kiali-to-openshift.sh
 
 ## openshift-undeploy: Undeploy from Openshift project.
@@ -285,6 +290,7 @@ NAMESPACE="${NAMESPACE}" \
 JAEGER_URL="${JAEGER_URL}" \
 GRAFANA_URL="${GRAFANA_URL}"  \
 VERBOSE_MODE="${VERBOSE_MODE}" \
+AUTH_STRATEGY="${AUTH_STRATEGY}" \
 deploy/kubernetes/deploy-kiali-to-kubernetes.sh
 
 ## k8s-undeploy: Undeploy docker image in Kubernetes namespace.

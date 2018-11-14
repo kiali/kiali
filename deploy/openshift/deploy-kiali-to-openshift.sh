@@ -18,23 +18,40 @@
 # is installed and in your PATH.
 ##############################################################################
 
-# The credentials can be specified either as already base64 encoded, or in plain text.
-# If the username or passphrase plain text variable is set but empty, the user will be asked for a value.
-if [ "${KIALI_USERNAME_BASE64}" == "" ]; then
-  KIALI_USERNAME="${KIALI_USERNAME=admin}" # note: the "=" inside ${} is on purpose
-  if [ "$KIALI_USERNAME" == "" ]; then
-    KIALI_USERNAME=$(read -p 'What do you want to use for the Kiali Username: ' val && echo -n $val)
-  fi
-  KIALI_USERNAME_BASE64="$(echo -n ${KIALI_USERNAME} | base64)"
-fi
+# The Auth Strategy we are going to use:
+# - oauth: OAuth from Openshift
+# - login: username/password
+# - none:  anonymous usage
+export AUTH_STRATEGY="${AUTH_STRATEGY:-oauth}"
 
-if [ "${KIALI_PASSPHRASE_BASE64}" == "" ]; then
-  KIALI_PASSPHRASE="${KIALI_PASSPHRASE=admin}" # note: the "=" inside ${} is on purpose
-  if [ "$KIALI_PASSPHRASE" == "" ]; then
-    KIALI_PASSPHRASE=$(read -sp 'What do you want to use for the Kiali Passphrase: ' val && echo -n $val)
-    echo
+# If OAuth is enabled, we just use the default proxy configuration. If not, we
+# ask for credentials and use the default login page strategy, as well as
+# setting the proxy to bypass everything.
+if [ "${AUTH_STRATEGY}" == "oauth" ]; then
+  export AUTH_BYPASS=""
+else
+  # The credentials can be specified either as already base64 encoded, or in plain text.
+  # If the username or passphrase plain text variable is set but empty, the user will be asked for a value.
+  #
+  # We do not ask for usernames and passwords if oauth is enabled.
+  if [ "${KIALI_USERNAME_BASE64}" == "" ]; then
+    KIALI_USERNAME="${KIALI_USERNAME=admin}" # note: the "=" inside ${} is on purpose
+    if [ "$KIALI_USERNAME" == "" ]; then
+      KIALI_USERNAME=$(read -p 'What do you want to use for the Kiali Username: ' val && echo -n $val)
+    fi
+    KIALI_USERNAME_BASE64="$(echo -n ${KIALI_USERNAME} | base64)"
   fi
-  KIALI_PASSPHRASE_BASE64="$(echo -n ${KIALI_PASSPHRASE} | base64)"
+
+  if [ "${KIALI_PASSPHRASE_BASE64}" == "" ]; then
+    KIALI_PASSPHRASE="${KIALI_PASSPHRASE=admin}" # note: the "=" inside ${} is on purpose
+    if [ "$KIALI_PASSPHRASE" == "" ]; then
+      KIALI_PASSPHRASE=$(read -sp 'What do you want to use for the Kiali Passphrase: ' val && echo -n $val)
+      echo
+    fi
+    KIALI_PASSPHRASE_BASE64="$(echo -n ${KIALI_PASSPHRASE} | base64)"
+  fi
+
+  export AUTH_BYPASS="- -bypass-auth-except-for='^/path-that-does-not-exist-so-we-bypass-everything-except-it'"
 fi
 
 export IMAGE_NAME="${IMAGE_NAME:-kiali/kiali}"

@@ -44,6 +44,7 @@ spec:
         - -cookie-secret=kiali-16bytes-1234
         - -skip-provider-button
         - -pass-access-token
+        ${AUTH_BYPASS}
         ports:
         - containerPort: 20002
           name: proxy

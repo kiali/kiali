@@ -52,6 +52,8 @@ const (
 
 	EnvJaegerURL = "JAEGER_URL"
 
+	EnvAuthStrategy = "AUTH_STRATEGY"
+
 	EnvLoginTokenSigningKey        = "LOGIN_TOKEN_SIGNING_KEY"
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
 	EnvIstioNamespace              = "ISTIO_NAMESPACE"
@@ -162,6 +164,7 @@ type Config struct {
 	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
 	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
 	API              ApiConfig         `yaml:"api,omitempty"`
+	AuthStrategy     string            `yaml:"auth_strategy,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -175,6 +178,9 @@ func NewConfig() (c *Config) {
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
 	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
 	c.API.Namespaces.Exclude = getDefaultStringArray(EnvApiNamespacesExclude, "istio-operator,kube.*,openshift.*,ibm.*")
+
+	// Auth configuration
+	c.AuthStrategy = strings.TrimSpace(getDefaultString(EnvAuthStrategy, "login"))
 
 	// Server configuration
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))

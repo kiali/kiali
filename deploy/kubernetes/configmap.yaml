@@ -19,3 +19,4 @@ data:
     identity:
       cert_file: /kiali-cert/cert-chain.pem
       private_key_file: /kiali-cert/key.pem
+    auth_strategy: ${AUTH_STRATEGY}
