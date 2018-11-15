@@ -146,7 +146,7 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object} config istioConfigDetails
+		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object} config istioConfigAdapterTemplateDetails
 		// ---
 		// Endpoint to get the Istio Config of an Istio object used for templates and adapters that is necessary to define a subtype
 		//

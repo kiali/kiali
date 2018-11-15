@@ -1200,6 +1200,72 @@
         }
       }
     },
+    "/namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}": {
+      "get": {
+        "description": "Endpoint to get the Istio Config of an Istio object used for templates and adapters that is necessary to define a subtype",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "config"
+        ],
+        "operationId": "istioConfigAdapterTemplateDetails",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object name.",
+            "name": "object",
+            "in": "path",
+            "required": true
+          },
+          {
+            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object type.",
+            "name": "object_type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "pattern": "^(adapters|templates)$",
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object subtype.",
+            "name": "object_subtype",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/istioConfigDetailsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/istio/{object_type}/{object}": {
       "get": {
         "description": "Endpoint to get the Istio Config of an Istio object",
@@ -2207,6 +2273,9 @@
     "IstioConfigDetails": {
       "type": "object",
       "properties": {
+        "adapter": {
+          "$ref": "#/definitions/istioAdapter"
+        },
         "destinationRule": {
           "$ref": "#/definitions/destinationRule"
         },
@@ -2230,10 +2299,13 @@
           "$ref": "#/definitions/QuotaSpecBinding"
         },
         "rule": {
-          "$ref": "#/definitions/IstioRuleDetails"
+          "$ref": "#/definitions/istioRule"
         },
         "serviceEntry": {
           "$ref": "#/definitions/ServiceEntry"
+        },
+        "template": {
+          "$ref": "#/definitions/istioTemplate"
         },
         "virtualService": {
           "$ref": "#/definitions/virtualService"
@@ -2249,6 +2321,9 @@
         "namespace"
       ],
       "properties": {
+        "adapters": {
+          "$ref": "#/definitions/istioAdapters"
+        },
         "destinationRules": {
           "$ref": "#/definitions/destinationRules"
         },
@@ -2270,84 +2345,11 @@
         "serviceEntries": {
           "$ref": "#/definitions/ServiceEntries"
         },
+        "templates": {
+          "$ref": "#/definitions/istioTemplates"
+        },
         "virtualServices": {
           "$ref": "#/definitions/virtualServices"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "IstioHandler": {
-      "type": "object",
-      "properties": {
-        "adapter": {
-          "type": "string",
-          "x-go-name": "Adapter"
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "spec": {
-          "type": "object",
-          "x-go-name": "Spec"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "IstioInstance": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "spec": {
-          "type": "object",
-          "x-go-name": "Spec"
-        },
-        "template": {
-          "type": "string",
-          "x-go-name": "Template"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "IstioRuleAction": {
-      "type": "object",
-      "properties": {
-        "handler": {
-          "$ref": "#/definitions/IstioHandler"
-        },
-        "instances": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/IstioInstance"
-          },
-          "x-go-name": "Instances"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "IstioRuleDetails": {
-      "type": "object",
-      "properties": {
-        "actions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/IstioRuleAction"
-          },
-          "x-go-name": "Actions"
-        },
-        "match": {
-          "type": "object",
-          "x-go-name": "Match"
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "namespace": {
-          "$ref": "#/definitions/namespace"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -3477,6 +3479,37 @@
       "x-go-name": "ExternalServiceInfo",
       "x-go-package": "github.com/kiali/kiali/status"
     },
+    "istioAdapter": {
+      "description": "This type type is used for returning a IstioAdapter",
+      "type": "object",
+      "title": "IstioAdapter istioAdapter",
+      "properties": {
+        "adapter": {
+          "type": "string",
+          "x-go-name": "Adapter"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "spec": {
+          "type": "object",
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-name": "IstioAdapter",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "istioAdapters": {
+      "description": "This type type is used for returning an array of IstioAdapters",
+      "type": "array",
+      "title": "IstioAdapters istioAdapters",
+      "items": {
+        "$ref": "#/definitions/istioAdapter"
+      },
+      "x-go-name": "IstioAdapters",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "istioRule": {
       "description": "This type type is used for returning a IstioRule",
       "type": "object",
@@ -3510,6 +3543,37 @@
         "$ref": "#/definitions/istioRule"
       },
       "x-go-name": "IstioRules",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "istioTemplate": {
+      "description": "This type type is used for returning a IstioTemplate",
+      "type": "object",
+      "title": "IstioTemplate istioTemplate",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "spec": {
+          "type": "object",
+          "x-go-name": "Spec"
+        },
+        "template": {
+          "type": "string",
+          "x-go-name": "Template"
+        }
+      },
+      "x-go-name": "IstioTemplate",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "istioTemplates": {
+      "description": "This type type is used for returning an array of IstioTemplates",
+      "type": "array",
+      "title": "IstioTemplates istioTemplates",
+      "items": {
+        "$ref": "#/definitions/istioTemplate"
+      },
+      "x-go-name": "IstioTemplates",
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "namespace": {
