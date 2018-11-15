@@ -116,6 +116,10 @@ while [[ $# -gt 0 ]]; do
       CLUSTER_OPTIONS="$2"
       shift;shift
       ;;
+    -nw|--no-wait-for-istio)
+      WAIT_FOR_ISTIO=false
+      shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 
@@ -164,6 +168,13 @@ Valid options:
       Used only for the 'up' command.
   -kv|--kiali-version <version>
       The Kiali version to be installed in OpenShift.
+      Used only for the 'up' command.
+  -nw|--no-wait-for-istio
+      When specified, this script will not wait for Istio to be up and running before exiting.
+      Note that waiting is required when --kiali-enabled is true - the Kiali install
+      will not start until after all Istio components are up and running. Thus this option
+      is ignored when --kiali-enabled is true.
+      This will also be ignored when --istio-enabled is false.
       Used only for the 'up' command.
   -p|--persistence-dir <dir>
       When set, OpenShift will persist data to this directory.
@@ -230,6 +241,9 @@ OPENSHIFT_PERSISTENCE_DIR="${OPENSHIFT_PERSISTENCE_DIR=/var/lib/origin/persisten
 
 # If ISTIO_ENABLED=true, then the istiooc command will install a version of Istio for you.
 ISTIO_ENABLED="${ISTIO_ENABLED:-true}"
+
+# By default, wait for Istio to be up and running before the script ends.
+WAIT_FOR_ISTIO="${WAIT_FOR_ISTIO:-true}"
 
 # If you set KIALI_ENABLED=true, then the istiooc command will install a version of Kiali for you.
 # If that is set to false, the other KIALI_ environment variables will be ignored.
@@ -457,30 +471,35 @@ if [ "$_CMD" = "up" ]; then
     fi
   fi
 
-  if [ "${KIALI_ENABLED}" == "true" ]; then
-    echo "Wait for Istio to fully start (this is going to take a while)..."
+  # If Istio is enabled, it should be installing now - if we need to, wait for it to finish
+  if [ "${ISTIO_ENABLED}" == "true" ] ; then
+    if [ "${KIALI_ENABLED}" == "true" -o "${WAIT_FOR_ISTIO}" == "true" ]; then
+      echo "Wait for Istio to fully start (this is going to take a while)..."
 
-    echo -n "Waiting for Istio Deployments to be created..."
-    while [ "$(oc get pods -l job-name=openshift-ansible-istio-installer-job -n istio-system -o jsonpath='{.items..status.conditions[0].reason}' 2> /dev/null)" != "PodCompleted" ]
-    do
-      sleep 5
-      echo -n '.'
-    done
-    echo "done."
-
-    for app in $(oc get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
-    do
-      echo -n "Waiting for ${app} to be ready..."
-      readyReplicas="0"
-      while [ "$?" != "0" -o "$readyReplicas" == "0" ]
+      echo -n "Waiting for Istio Deployments to be created..."
+      while [ "$(oc get pods -l job-name=openshift-ansible-istio-installer-job -n istio-system -o jsonpath='{.items..status.conditions[0].reason}' 2> /dev/null)" != "PodCompleted" ]
       do
-        sleep 1
-        echo -n '.'
-        readyReplicas="$(oc get deployment.app/${app} -n istio-system -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
+         sleep 5
+         echo -n '.'
       done
       echo "done."
-    done
 
+      for app in $(oc get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
+      do
+         echo -n "Waiting for ${app} to be ready..."
+         readyReplicas="0"
+         while [ "$?" != "0" -o "$readyReplicas" == "0" ]
+         do
+            sleep 1
+            echo -n '.'
+            readyReplicas="$(oc get deployment.app/${app} -n istio-system -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
+         done
+         echo "done."
+      done
+    fi
+  fi
+
+  if [ "${KIALI_ENABLED}" == "true" ]; then
     echo "Deleting any previously existing Kiali..."
     ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=kiali -n istio-system
     echo "Deploying Kiali..."
