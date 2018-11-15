@@ -27,12 +27,16 @@ type AppHealth struct {
 	Requests         RequestHealth        `json:"requests"`
 }
 
+func NewEmptyRequestHealth() RequestHealth {
+	return RequestHealth{ErrorRatio: -1, InboundErrorRatio: -1, OutboundErrorRatio: -1}
+}
+
 // EmptyAppHealth create an empty AppHealth
 func EmptyAppHealth() AppHealth {
 	return AppHealth{
 		Envoy:            []EnvoyHealthWrapper{},
 		WorkloadStatuses: []WorkloadStatus{},
-		Requests:         RequestHealth{ErrorRatio: -1},
+		Requests:         NewEmptyRequestHealth(),
 	}
 }
 
@@ -57,21 +61,48 @@ type WorkloadStatus struct {
 
 // RequestHealth holds several stats about recent request errors
 type RequestHealth struct {
-	requestRate float64
-	errorRate   float64
-	ErrorRatio  float64 `json:"errorRatio"`
+	inboundErrorRate    float64
+	outboundErrorRate   float64
+	inboundRequestRate  float64
+	outboundRequestRate float64
+
+	ErrorRatio         float64 `json:"errorRatio"`
+	InboundErrorRatio  float64 `json:"inboundErrorRatio"`
+	OutboundErrorRatio float64 `json:"outboundErrorRatio"`
 }
 
-// Aggregate adds the provided metric sample to internal counters and updates the error ratio
-func (in *RequestHealth) Aggregate(sample *model.Sample) {
-	in.requestRate += float64(sample.Value)
-	responseCode := sample.Metric["response_code"][0]
-	if responseCode == '5' || responseCode == '4' {
-		in.errorRate += float64(sample.Value)
-	}
-	if in.requestRate == 0 {
+// AggregateInbound adds the provided metric sample to internal inbound counters and updates error ratios
+func (in *RequestHealth) AggregateInbound(sample *model.Sample) {
+	aggregate(sample, &in.inboundRequestRate, &in.inboundErrorRate, &in.InboundErrorRatio)
+	in.updateGlobalErrorRatio()
+}
+
+// AggregateOutbound adds the provided metric sample to internal outbound counters and updates error ratios
+func (in *RequestHealth) AggregateOutbound(sample *model.Sample) {
+	aggregate(sample, &in.outboundRequestRate, &in.outboundErrorRate, &in.OutboundErrorRatio)
+	in.updateGlobalErrorRatio()
+}
+
+func (in *RequestHealth) updateGlobalErrorRatio() {
+	globalRequestRate := in.inboundRequestRate + in.outboundRequestRate
+	globalErrorRate := in.inboundErrorRate + in.outboundErrorRate
+
+	if globalRequestRate == 0 {
 		in.ErrorRatio = -1
 	} else {
-		in.ErrorRatio = in.errorRate / in.requestRate
+		in.ErrorRatio = globalErrorRate / globalRequestRate
+	}
+}
+
+func aggregate(sample *model.Sample, requestRate, errorRate, errorRatio *float64) {
+	*requestRate += float64(sample.Value)
+	responseCode := sample.Metric["response_code"][0]
+	if responseCode == '5' || responseCode == '4' {
+		*errorRate += float64(sample.Value)
+	}
+	if *requestRate == 0 {
+		*errorRatio = -1
+	} else {
+		*errorRatio = *errorRate / *requestRate
 	}
 }

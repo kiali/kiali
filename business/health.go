@@ -298,11 +298,11 @@ func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector
 	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
 		if health, ok := allHealth[name]; ok {
-			health.Requests.Aggregate(sample)
+			health.Requests.AggregateInbound(sample)
 		}
 		name = string(sample.Metric[lblSrc])
 		if health, ok := allHealth[name]; ok {
-			health.Requests.Aggregate(sample)
+			health.Requests.AggregateOutbound(sample)
 		}
 	}
 }
@@ -314,7 +314,7 @@ func fillServiceRequestRates(allHealth models.NamespaceServiceHealth, rates mode
 	for _, sample := range rates {
 		service := string(sample.Metric[lblDestSvc])
 		if health, ok := allHealth[service]; ok {
-			health.Requests.Aggregate(sample)
+			health.Requests.AggregateInbound(sample)
 		}
 	}
 }
@@ -326,40 +326,44 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
 		if health, ok := allHealth[name]; ok {
-			health.Requests.Aggregate(sample)
+			health.Requests.AggregateInbound(sample)
 		}
 		name = string(sample.Metric[lblSrc])
 		if health, ok := allHealth[name]; ok {
-			health.Requests.Aggregate(sample)
+			health.Requests.AggregateOutbound(sample)
 		}
 	}
 }
 
 func (in *HealthService) getServiceRequestsHealth(namespace, service, rateInterval string, queryTime time.Time) models.RequestHealth {
-	rqHealth := models.RequestHealth{}
+	rqHealth := models.NewEmptyRequestHealth()
 	inbound, _ := in.prom.GetServiceRequestRates(namespace, service, rateInterval, queryTime)
 	for _, sample := range inbound {
-		rqHealth.Aggregate(sample)
+		rqHealth.AggregateInbound(sample)
 	}
 	return rqHealth
 }
 
 func (in *HealthService) getAppRequestsHealth(namespace, app, rateInterval string, queryTime time.Time) models.RequestHealth {
-	rqHealth := models.RequestHealth{}
+	rqHealth := models.NewEmptyRequestHealth()
 	inbound, outbound, _ := in.prom.GetAppRequestRates(namespace, app, rateInterval, queryTime)
-	all := append(inbound, outbound...)
-	for _, sample := range all {
-		rqHealth.Aggregate(sample)
+	for _, sample := range inbound {
+		rqHealth.AggregateInbound(sample)
+	}
+	for _, sample := range outbound {
+		rqHealth.AggregateOutbound(sample)
 	}
 	return rqHealth
 }
 
 func (in *HealthService) getWorkloadRequestsHealth(namespace, workload, rateInterval string, queryTime time.Time) models.RequestHealth {
-	rqHealth := models.RequestHealth{}
+	rqHealth := models.NewEmptyRequestHealth()
 	inbound, outbound, _ := in.prom.GetWorkloadRequestRates(namespace, workload, rateInterval, queryTime)
-	all := append(inbound, outbound...)
-	for _, sample := range all {
-		rqHealth.Aggregate(sample)
+	for _, sample := range inbound {
+		rqHealth.AggregateInbound(sample)
+	}
+	for _, sample := range outbound {
+		rqHealth.AggregateOutbound(sample)
 	}
 	return rqHealth
 }

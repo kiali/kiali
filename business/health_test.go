@@ -53,6 +53,8 @@ func TestGetServiceHealth(t *testing.T) {
 	assert.Equal(1, health.Envoy.Inbound.Healthy)
 	// 1.4 / 15.4 = 0.09
 	assert.InDelta(float64(0.09), health.Requests.ErrorRatio, 0.01)
+	assert.Equal(float64(1.4)/float64(15.4), health.Requests.InboundErrorRatio)
+	assert.Equal(float64(-1), health.Requests.OutboundErrorRatio)
 }
 
 func TestGetAppHealth(t *testing.T) {
@@ -94,7 +96,9 @@ func TestGetAppHealth(t *testing.T) {
 	assert.Equal(0, health.Envoy[0].Outbound.Total)
 	assert.Equal(0, health.Envoy[0].Outbound.Healthy)
 	// 1.6 / 6.6 = 0.24
-	assert.InDelta(float64(0.24), health.Requests.ErrorRatio, 0.01)
+	assert.Equal(float64((1.6+3.5)/(1.6+5+3.5)), health.Requests.ErrorRatio)
+	assert.Equal(float64(1), health.Requests.InboundErrorRatio)
+	assert.Equal(float64(3.5/(5+3.5)), health.Requests.OutboundErrorRatio)
 }
 
 func TestGetWorkloadHealth(t *testing.T) {
@@ -129,7 +133,9 @@ func TestGetWorkloadHealth(t *testing.T) {
 	k8s.AssertNumberOfCalls(t, "GetDeployment", 1)
 	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 1)
 	// 1.6 / 6.6 = 0.24
-	assert.InDelta(float64(0.24), health.Requests.ErrorRatio, 0.01)
+	assert.Equal(float64((1.6+3.5)/(1.6+5+3.5)), health.Requests.ErrorRatio)
+	assert.Equal(float64(1), health.Requests.InboundErrorRatio)
+	assert.Equal(float64(3.5/(5+3.5)), health.Requests.OutboundErrorRatio)
 }
 
 var t1 = model.Now()
@@ -140,6 +146,15 @@ var sampleReviewsToHttpbin200 = model.Sample{
 		"response_code":       "200",
 	},
 	Value:     model.SampleValue(5),
+	Timestamp: t1,
+}
+var sampleReviewsToHttpbin400 = model.Sample{
+	Metric: model.Metric{
+		"source_service":      "reviews.tutorial.svc.cluster.local",
+		"destination_service": "httpbin.tutorial.svc.cluster.local",
+		"response_code":       "400",
+	},
+	Value:     model.SampleValue(3.5),
 	Timestamp: t1,
 }
 var sampleUnknownToHttpbin200 = model.Sample{
@@ -184,6 +199,7 @@ func fakeOtherRequestCounters() (model.Vector, model.Vector, error) {
 	}
 	out := model.Vector{
 		&sampleReviewsToHttpbin200,
+		&sampleReviewsToHttpbin400,
 	}
 	return in, out, nil
 }
