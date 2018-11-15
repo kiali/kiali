@@ -1,10 +1,13 @@
 import * as React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { Provider } from 'react-redux';
+
 import { mount, shallow, ReactWrapper } from 'enzyme';
 import OverviewPage from '../OverviewPage';
 import { FilterSelected } from '../../../components/Filters/StatefulFilters';
 import * as API from '../../../services/Api';
 import { AppHealth, NamespaceAppHealth, HEALTHY, FAILURE, DEGRADED } from '../../../types/Health';
+import { store } from '../../../store/ConfigStore';
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -39,9 +42,11 @@ let mounted: ReactWrapper<any, any> | null;
 
 const mountPage = () => {
   mounted = mount(
-    <Router>
-      <OverviewPage setActiveNamespace={jest.fn()} />
-    </Router>
+    <Provider store={store}>
+      <Router>
+        <OverviewPage setActiveNamespace={jest.fn()} />
+      </Router>
+    </Provider>
   );
 };
 

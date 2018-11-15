@@ -4,12 +4,17 @@ import { Button, MenuItem, Icon, DropdownButton } from 'patternfly-react';
 import { config } from '../../config';
 import { PollIntervalInMs } from '../../types/Common';
 
-type Props = {
+type ComponentProps = {
   id: string;
-  pollInterval?: PollIntervalInMs;
   handleRefresh: () => void;
-  onSelect: (selected: PollIntervalInMs) => void;
 };
+
+type ReduxProps = {
+  pollInterval: PollIntervalInMs;
+  setRefreshInterval: (pollInterval: PollIntervalInMs) => void;
+};
+
+type Props = ComponentProps & ReduxProps;
 
 type State = {
   pollInterval?: PollIntervalInMs;
@@ -46,7 +51,7 @@ class Refresh extends React.Component<Props, State> {
       newRefInterval = window.setInterval(this.props.handleRefresh, pollInterval);
     }
     this.setState({ pollerRef: newRefInterval, pollInterval: pollInterval });
-    this.props.onSelect(pollInterval);
+    this.props.setRefreshInterval(pollInterval); // notify redux of the change
   };
 
   render() {

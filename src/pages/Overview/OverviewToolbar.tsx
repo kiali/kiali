@@ -3,7 +3,6 @@ import { Sort, ToolbarRightContent } from 'patternfly-react';
 
 import { StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
-import Refresh from '../../components/Refresh/Refresh';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { config } from '../../config';
 
@@ -11,6 +10,8 @@ import { FiltersAndSorts } from './FiltersAndSorts';
 import { SortField } from '../../types/SortFilters';
 import NamespaceInfo from './NamespaceInfo';
 import { HistoryManager, URLParams } from '../../app/History';
+import { PollIntervalInMs } from '../../types/Common';
+import RefreshContainer from '../../containers/RefreshContainer';
 
 type Props = {
   onRefresh: () => void;
@@ -86,7 +87,7 @@ class OverviewToolbar extends React.Component<Props, State> {
     this.setState({ duration: duration });
   };
 
-  updatePollInterval = (pollInterval: number) => {
+  updatePollInterval = (pollInterval: PollIntervalInMs) => {
     HistoryManager.setParam(URLParams.POLL_INTERVAL, String(pollInterval));
     this.setState({ pollInterval: pollInterval });
   };
@@ -116,7 +117,7 @@ class OverviewToolbar extends React.Component<Props, State> {
           options={DURATIONS}
         />
         <ToolbarRightContent>
-          <Refresh
+          <RefreshContainer
             id="overview-refresh"
             handleRefresh={this.props.onRefresh}
             onSelect={this.updatePollInterval}
