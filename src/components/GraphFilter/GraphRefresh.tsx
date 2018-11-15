@@ -12,17 +12,21 @@ import { style } from 'typestyle';
 type GraphRefreshProps = {
   id: string;
   handleRefresh: () => void;
-  onUpdatePollInterval: (selected: PollIntervalInMs) => void;
-  onUpdateDuration: (duration: DurationInSeconds) => void;
-  pollInterval: PollIntervalInMs;
   refreshIntervals: {
     [interval: number]: string;
   };
-  duration: DurationInSeconds;
   disabled: boolean;
 };
 
-const GraphRefresh: React.SFC<GraphRefreshProps> = props => {
+type ReduxProps = {
+  duration: DurationInSeconds;
+  pollInterval: PollIntervalInMs;
+
+  onUpdatePollInterval: (selected: PollIntervalInMs) => void;
+  onUpdateDuration: (duration: DurationInSeconds) => void;
+};
+
+const GraphRefresh: React.SFC<GraphRefreshProps & ReduxProps> = props => {
   const DURATION_LIST = config().toolbar.intervalDuration;
 
   const formatRefreshText = (key, isTitle: boolean = false): string => {

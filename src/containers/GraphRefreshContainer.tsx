@@ -10,13 +10,11 @@ import { DurationInSeconds } from '../types/Common';
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  selected: refreshIntervalSelector(state),
   pollInterval: refreshIntervalSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<any>) => {
   return {
-    onSelect: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch),
     onUpdatePollInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch),
     onUpdateDuration: (duration: DurationInSeconds) => {
       dispatch(UserSettingsActions.setDuration(duration));
