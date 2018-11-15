@@ -22,6 +22,8 @@ type IstioConfigCriteria struct {
 	IncludeDestinationRules  bool
 	IncludeServiceEntries    bool
 	IncludeRules             bool
+	IncludeAdapters          bool
+	IncludeTemplates         bool
 	IncludeQuotaSpecs        bool
 	IncludeQuotaSpecBindings bool
 }
@@ -32,6 +34,8 @@ const (
 	ServiceEntries    = "serviceentries"
 	Gateways          = "gateways"
 	Rules             = "rules"
+	Adapters          = "adapters"
+	Templates         = "templates"
 	QuotaSpecs        = "quotaspecs"
 	QuotaSpecBindings = "quotaspecbindings"
 )
@@ -41,6 +45,8 @@ var resourceTypesToAPI = map[string]string{
 	VirtualServices:   "networking.istio.io",
 	ServiceEntries:    "networking.istio.io",
 	Gateways:          "networking.istio.io",
+	Adapters:          "config.istio.io",
+	Templates:         "config.istio.io",
 	Rules:             "config.istio.io",
 	QuotaSpecs:        "config.istio.io",
 	QuotaSpecBindings: "config.istio.io",
@@ -63,14 +69,15 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		DestinationRules:  models.DestinationRules{Items: []models.DestinationRule{}},
 		ServiceEntries:    models.ServiceEntries{},
 		Rules:             models.IstioRules{},
+		Adapters:          models.IstioAdapters{},
+		Templates:         models.IstioTemplates{},
 		QuotaSpecs:        models.QuotaSpecs{},
 		QuotaSpecBindings: models.QuotaSpecBindings{},
 	}
-	var gg, vs, dr, se, qs, qb []kubernetes.IstioObject
-	var mr *kubernetes.IstioRules
-	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr error
+	var gg, vs, dr, se, qs, qb, aa, tt, mr []kubernetes.IstioObject
+	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr error
 	var wg sync.WaitGroup
-	wg.Add(7)
+	wg.Add(9)
 
 	go func() {
 		defer wg.Done()
@@ -119,6 +126,24 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func() {
 		defer wg.Done()
+		if criteria.IncludeAdapters {
+			if aa, aaErr = in.k8s.GetAdapters(criteria.Namespace); aaErr == nil {
+				istioConfigList.Adapters = models.CastIstioAdaptersCollection(aa)
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if criteria.IncludeTemplates {
+			if tt, ttErr = in.k8s.GetTemplates(criteria.Namespace); ttErr == nil {
+				istioConfigList.Templates = models.CastIstioTemplatesCollection(tt)
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
 		if criteria.IncludeQuotaSpecs {
 			if qs, qsErr = in.k8s.GetQuotaSpecs(criteria.Namespace); qsErr == nil {
 				(&istioConfigList.QuotaSpecs).Parse(qs)
@@ -137,7 +162,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	wg.Wait()
 
-	for _, genErr := range []error{ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr} {
+	for _, genErr := range []error{ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr} {
 		if genErr != nil {
 			err = genErr
 			return models.IstioConfigList{}, err
@@ -147,7 +172,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	return istioConfigList, nil
 }
 
-func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType string, object string) (models.IstioConfigDetails, error) {
+func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objectSubtype, object string) (models.IstioConfigDetails, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GetIstioConfigDetails")
 	defer promtimer.ObserveNow(&err)
@@ -155,8 +180,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var gw, vs, dr, se, qs, qb kubernetes.IstioObject
-	var r *kubernetes.IstioRuleDetails
+	var gw, vs, dr, se, qs, qb, r, a, t kubernetes.IstioObject
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -191,8 +215,19 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace string, objectType
 			istioConfigDetail.ServiceEntry.Parse(se)
 		}
 	case Rules:
-		if r, err = in.k8s.GetIstioRuleDetails(namespace, object); err == nil {
-			istioConfigDetail.Rule = models.CastIstioRuleDetails(r)
+		if r, err = in.k8s.GetIstioRule(namespace, object); err == nil {
+			istioRule := models.CastIstioRule(r)
+			istioConfigDetail.Rule = &istioRule
+		}
+	case Adapters:
+		if a, err = in.k8s.GetAdapter(namespace, objectSubtype, object); err == nil {
+			adapter := models.CastIstioAdapter(a)
+			istioConfigDetail.Adapter = &adapter
+		}
+	case Templates:
+		if t, err = in.k8s.GetTemplate(namespace, objectSubtype, object); err == nil {
+			template := models.CastIstioTemplate(t)
+			istioConfigDetail.Template = &template
 		}
 	case QuotaSpecs:
 		if qs, err = in.k8s.GetQuotaSpec(namespace, object); err == nil {

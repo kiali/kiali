@@ -137,29 +137,29 @@ func TestGetIstioConfigDetails(t *testing.T) {
 
 	configService := mockGetIstioConfigDetails()
 
-	istioConfigDetails, err := configService.GetIstioConfigDetails("test", "gateways", "gw-1")
+	istioConfigDetails, err := configService.GetIstioConfigDetails("test", "gateways", "", "gw-1")
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
 	assert.True(istioConfigDetails.Permissions.Update)
 	assert.False(istioConfigDetails.Permissions.Delete)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "virtualservices", "reviews")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "virtualservices", "", "reviews")
 	assert.Equal("reviews", istioConfigDetails.VirtualService.Name)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "destinationrules", "reviews-dr")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "destinationrules", "", "reviews-dr")
 	assert.Equal("reviews-dr", istioConfigDetails.DestinationRule.Name)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules", "checkfromcustomer")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules", "", "checkfromcustomer")
 	assert.Equal("checkfromcustomer", istioConfigDetails.Rule.Name)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "serviceentries", "googleapis")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "serviceentries", "", "googleapis")
 	assert.Equal("googleapis", istioConfigDetails.ServiceEntry.Name)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules-bad", "stdio")
+	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules-bad", "", "stdio")
 	assert.Error(err)
 }
 
@@ -298,7 +298,7 @@ func fakeGetServiceEntries() []kubernetes.IstioObject {
 	return []kubernetes.IstioObject{&serviceEntry}
 }
 
-func fakeGetIstioRules() *kubernetes.IstioRules {
+func fakeGetIstioRules() []kubernetes.IstioObject {
 	stdioRule := kubernetes.GenericIstioObject{}
 	stdioRule.Name = "stdio"
 	stdioRule.Spec = map[string]interface{}{
@@ -312,9 +312,7 @@ func fakeGetIstioRules() *kubernetes.IstioRules {
 			},
 		},
 	}
-	return &kubernetes.IstioRules{
-		Rules: []kubernetes.IstioObject{&stdioRule},
-	}
+	return []kubernetes.IstioObject{&stdioRule}
 }
 
 func fakeCheckFromCustomerRule() kubernetes.IstioObject {
@@ -332,38 +330,6 @@ func fakeCheckFromCustomerRule() kubernetes.IstioObject {
 		},
 	}
 	return &checkfromcustomerRule
-}
-
-func fakeCheckFromCustomerActions() []*kubernetes.IstioRuleAction {
-	actions := make([]*kubernetes.IstioRuleAction, 0)
-	handler := kubernetes.GenericIstioObject{}
-	handler.Name = "preferencewhitelist"
-	handler.Spec = map[string]interface{}{
-		"overrides": []string{
-			"recommendation",
-		},
-		"blacklist": false,
-		"adapter":   "listchecker",
-	}
-	instance := kubernetes.GenericIstioObject{}
-	instance.Name = "preferencesource"
-	instance.Spec = map[string]interface{}{
-		"value":    "source.labels[\"app\"]",
-		"template": "listentry",
-	}
-
-	actions = append(actions, &kubernetes.IstioRuleAction{
-		Handler:   &handler,
-		Instances: []kubernetes.IstioObject{&instance},
-	})
-	return actions
-}
-
-func fakeGetIstioRuleDetails() *kubernetes.IstioRuleDetails {
-	istioRulesDetails := kubernetes.IstioRuleDetails{}
-	istioRulesDetails.Rule = fakeCheckFromCustomerRule()
-	istioRulesDetails.Actions = fakeCheckFromCustomerActions()
-	return &istioRulesDetails
 }
 
 func fakeGetQuotaSpecs() []kubernetes.IstioObject {
@@ -461,7 +427,7 @@ func mockGetIstioConfigDetails() IstioConfigService {
 	k8s.On("GetVirtualService", "test", "reviews").Return(fakeGetVirtualServices()[0], nil)
 	k8s.On("GetDestinationRule", "test", "reviews-dr").Return(fakeGetDestinationRules()[0], nil)
 	k8s.On("GetServiceEntry", "test", "googleapis").Return(fakeGetServiceEntries()[0], nil)
-	k8s.On("GetIstioRuleDetails", "test", "checkfromcustomer").Return(fakeGetIstioRuleDetails(), nil)
+	k8s.On("GetIstioRule", "test", "checkfromcustomer").Return(fakeCheckFromCustomerRule(), nil)
 	k8s.On("GetQuotaSpec", "test", "request-count").Return(fakeGetQuotaSpecs()[0], nil)
 	k8s.On("GetQuotaSpecBinding", "test", "request-count").Return(fakeGetQuotaSpecBindings()[0], nil)
 	k8s.On("GetSelfSubjectAccessReview", "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)

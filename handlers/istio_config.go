@@ -56,6 +56,8 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	criteria.IncludeDestinationRules = defaultInclude
 	criteria.IncludeServiceEntries = defaultInclude
 	criteria.IncludeRules = defaultInclude
+	criteria.IncludeAdapters = defaultInclude
+	criteria.IncludeTemplates = defaultInclude
 	criteria.IncludeQuotaSpecs = defaultInclude
 	criteria.IncludeQuotaSpecBindings = defaultInclude
 
@@ -79,6 +81,12 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	if checkType(types, business.Rules) {
 		criteria.IncludeRules = true
 	}
+	if checkType(types, business.Adapters) {
+		criteria.IncludeAdapters = true
+	}
+	if checkType(types, business.Templates) {
+		criteria.IncludeTemplates = true
+	}
 	if checkType(types, business.QuotaSpecs) {
 		criteria.IncludeQuotaSpecs = true
 	}
@@ -92,6 +100,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	objectType := params["object_type"]
+	objectSubtype := params["object_subtype"]
 	object := params["object"]
 
 	if !checkObjectType(objectType) {
@@ -106,7 +115,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(namespace, objectType, object)
+	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(namespace, objectType, objectSubtype, object)
 	if errors.IsNotFound(err) {
 		RespondWithError(w, http.StatusNotFound, err.Error())
 		return

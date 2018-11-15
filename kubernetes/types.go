@@ -15,53 +15,44 @@ const (
 	destinationRules        = "destinationrules"
 	destinationRuleType     = "DestinationRule"
 	destinationRuleTypeList = "DestinationRuleList"
-	destinationRuleLabel    = "destination-rule"
 
 	gateways        = "gateways"
 	gatewayType     = "Gateway"
 	gatewayTypeList = "GatewayList"
-	gatewayLabel    = "gateway"
 
 	serviceentries       = "serviceentries"
 	serviceentryType     = "ServiceEntry"
 	serviceentryTypeList = "ServiceEntryList"
-	serviceentryLabel    = "serviceentry"
 
 	virtualServices        = "virtualservices"
 	virtualServiceType     = "VirtualService"
 	virtualServiceTypeList = "VirtualServiceList"
-	virtualServiceLabel    = "virtual-service"
 
 	// Quotas
 
 	quotaspecs        = "quotaspecs"
 	quotaspecType     = "QuotaSpec"
 	quotaspecTypeList = "QuotaSpecList"
-	quotaspecLabel    = "quotaspec"
 
 	quotaspecbindings        = "quotaspecbindings"
 	quotaspecbindingType     = "QuotaSpecBinding"
 	quotaspecbindingTypeList = "QuotaSpecBindingList"
-	quotaspecbindingLabel    = "quotaspecbinding"
 
 	// Config - Rules
 
 	rules        = "rules"
 	ruleType     = "rule"
 	ruleTypeList = "ruleList"
-	ruleLabel    = "rule"
 
 	// Config - Adapters
 
 	circonuses       = "circonuses"
 	circonusType     = "circonus"
 	circonusTypeList = "circonusList"
-	circonusLabel    = "circonus"
 
 	deniers        = "deniers"
 	denierType     = "denier"
 	denierTypeList = "denierList"
-	denierLabel    = "denier"
 
 	fluentds        = "fluentds"
 	fluentdType     = "fluentd"
@@ -71,341 +62,275 @@ const (
 	handlers        = "handlers"
 	handlerType     = "handler"
 	handlerTypeList = "handlerList"
-	handlerLabel    = "handler"
 
 	kubernetesenvs        = "kubernetesenvs"
 	kubernetesenvType     = "kubernetesenv"
 	kubernetesenvTypeList = "kubernetesenvList"
-	kubernetesenvLabel    = "kubernetesenv"
 
 	listcheckers        = "listcheckers"
 	listcheckerType     = "listchecker"
 	listcheckerTypeList = "listcheckerList"
-	listcheckerLabel    = "listchecker"
 
 	memquotas        = "memquotas"
 	memquotaType     = "memquota"
 	memquotaTypeList = "memquotaList"
-	memquotaLabel    = "memquota"
 
 	opas        = "opas"
 	opaType     = "opa"
 	opaTypeList = "opaList"
-	opaLabel    = "opa"
 
 	prometheuses       = "prometheuses"
 	prometheusType     = "prometheus"
 	prometheusTypeList = "prometheusList"
-	prometheusLabel    = "prometheus"
 
 	rbacs        = "rbacs"
 	rbacType     = "rbac"
 	rbacTypeList = "rbacList"
-	rbacLabel    = "rbac"
 
 	servicecontrols        = "servicecontrols"
 	servicecontrolType     = "servicecontrol"
 	servicecontrolTypeList = "servicecontrolList"
-	servicecontrolLabel    = "servicecontrol"
 
 	solarwindses       = "solarwindses"
 	solarwindsType     = "solarwinds"
 	solarwindsTypeList = "solarwindsList"
-	solarwindsLabel    = "solarwinds"
 
 	stackdrivers        = "stackdrivers"
 	stackdriverType     = "stackdriver"
 	stackdriverTypeList = "stackdriverList"
-	stackdriverLabel    = "stackdriver"
 
 	statsds        = "statsds"
 	statsdType     = "statsd"
 	statsdTypeList = "statsdList"
-	statsdLabel    = "statsd"
 
 	stdios        = "stdios"
 	stdioType     = "stdio"
 	stdioTypeList = "stdioList"
-	stdioLabel    = "stdio"
 
 	// Config - Templates
 
 	apikeys        = "apikeys"
 	apikeyType     = "apikey"
 	apikeyTypeList = "apikeyList"
-	apikeyLabel    = "apikey"
 
 	authorizations        = "authorizations"
 	authorizationType     = "authorization"
 	authorizationTypeList = "authorizationList"
-	authorizationLabel    = "authorization"
 
 	checknothings        = "checknothings"
 	checknothingType     = "checknothing"
 	checknothingTypeList = "checknothingList"
-	checknothingLabel    = "checknothing"
 
 	kuberneteses       = "kuberneteses"
 	kubernetesType     = "kubernetes"
 	kubernetesTypeList = "kubernetesList"
-	kubernetesLabel    = "kubernetes"
 
 	listEntries       = "listentries"
 	listEntryType     = "listentry"
 	listEntryTypeList = "listentryList"
-	listEntryLabel    = "listentry"
 
 	logentries       = "logentries"
 	logentryType     = "logentry"
 	logentryTypeList = "logentryList"
-	logentryLabel    = "logentry"
 
 	metrics        = "metrics"
 	metricType     = "metric"
 	metricTypeList = "metricList"
-	metricLabel    = "metric"
 
 	quotas        = "quotas"
 	quotaType     = "quota"
 	quotaTypeList = "quotaList"
-	quotaLabel    = "quota"
 
 	reportnothings        = "reportnothings"
 	reportnothingType     = "reportnothing"
 	reportnothingTypeList = "reportnothingList"
-	reportnothingLabel    = "reportnothing"
 
 	servicecontrolreports        = "servicecontrolreports"
 	servicecontrolreportType     = "servicecontrolreport"
 	servicecontrolreportTypeList = "servicecontrolreportList"
-	servicecontrolreportLabel    = "servicecontrolreport"
 )
 
 var (
-	istioConfigGroupVersion = schema.GroupVersion{
+	configGroupVersion = schema.GroupVersion{
 		Group:   "config.istio.io",
 		Version: "v1alpha2",
 	}
-	istioNetworkingGroupVersion = schema.GroupVersion{
+	apiConfigVersion = configGroupVersion.Group + "/" + configGroupVersion.Version
+
+	networkingGroupVersion = schema.GroupVersion{
 		Group:   "networking.istio.io",
 		Version: "v1alpha3",
 	}
-	osRouteGroupVersion = schema.GroupVersion{
+	apiNetworkingVersion = networkingGroupVersion.Group + "/" + networkingGroupVersion.Version
+
+	routeGroupVersion = schema.GroupVersion{
 		Group:   "route.openshift.io",
 		Version: "v1",
 	}
 
-	// This is used to tell Istio REST client which objects are supported for decoding.
-	// When adding a new Istio type we should add a new object here.
-	istioKnownTypes = map[string]struct {
+	networkingTypes = []struct {
 		objectKind     string
 		collectionKind string
-		apiVersion     string
-		groupVersion   *schema.GroupVersion
 	}{
-		gatewayLabel: {
+		{
 			objectKind:     gatewayType,
 			collectionKind: gatewayTypeList,
-			apiVersion:     istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
-			groupVersion:   &istioNetworkingGroupVersion,
 		},
-		virtualServiceLabel: {
+		{
 			objectKind:     virtualServiceType,
 			collectionKind: virtualServiceTypeList,
-			apiVersion:     istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
-			groupVersion:   &istioNetworkingGroupVersion,
 		},
-		destinationRuleLabel: {
+		{
 			objectKind:     destinationRuleType,
 			collectionKind: destinationRuleTypeList,
-			apiVersion:     istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
-			groupVersion:   &istioNetworkingGroupVersion,
 		},
-		serviceentryLabel: {
+		{
 			objectKind:     serviceentryType,
 			collectionKind: serviceentryTypeList,
-			apiVersion:     istioNetworkingGroupVersion.Group + "/" + istioNetworkingGroupVersion.Version,
-			groupVersion:   &istioNetworkingGroupVersion,
-		},
-		ruleLabel: {
-			objectKind:     ruleType,
-			collectionKind: ruleTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		// Adapters
-		circonusLabel: {
-			objectKind:     circonusType,
-			collectionKind: circonusTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		denierLabel: {
-			objectKind:     denierType,
-			collectionKind: denierTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		fluentdLabel: {
-			objectKind:     fluentdType,
-			collectionKind: fluentdTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		kubernetesenvLabel: {
-			objectKind:     kubernetesenvType,
-			collectionKind: kubernetesenvTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		listcheckerLabel: {
-			objectKind:     listcheckerType,
-			collectionKind: listcheckerTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		memquotaLabel: {
-			objectKind:     memquotaType,
-			collectionKind: memquotaTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		opaLabel: {
-			objectKind:     opaType,
-			collectionKind: opaTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		prometheusLabel: {
-			objectKind:     prometheusType,
-			collectionKind: prometheusTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		rbacLabel: {
-			objectKind:     rbacType,
-			collectionKind: rbacTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		servicecontrolLabel: {
-			objectKind:     servicecontrolType,
-			collectionKind: serviceentryTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		solarwindsLabel: {
-			objectKind:     solarwindsType,
-			collectionKind: solarwindsTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		stackdriverLabel: {
-			objectKind:     stackdriverType,
-			collectionKind: stackdriverTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		statsdLabel: {
-			objectKind:     statsdType,
-			collectionKind: stackdriverTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		stdioLabel: {
-			objectKind:     stdioType,
-			collectionKind: stdioTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		handlerLabel: {
-			objectKind:     handlerType,
-			collectionKind: handlerTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		// Templates
-		apikeyLabel: {
-			objectKind:     apikeyType,
-			collectionKind: apikeyTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		authorizationLabel: {
-			objectKind:     authorizationType,
-			collectionKind: authorizationTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		checknothingLabel: {
-			objectKind:     checknothingType,
-			collectionKind: checknothingTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		kubernetesLabel: {
-			objectKind:     kubernetesType,
-			collectionKind: kubernetesTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		listEntryLabel: {
-			objectKind:     listEntryType,
-			collectionKind: listcheckerTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		logentryLabel: {
-			objectKind:     logentryType,
-			collectionKind: logentryTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		metricLabel: {
-			objectKind:     metricType,
-			collectionKind: metricTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		quotaLabel: {
-			objectKind:     quotaType,
-			collectionKind: quotaTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		reportnothingLabel: {
-			objectKind:     reportnothingType,
-			collectionKind: reportnothingTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		servicecontrolreportLabel: {
-			objectKind:     servicecontrolreportType,
-			collectionKind: servicecontrolreportTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		// QuotaSpec and QuotaSpecBinding
-		quotaspecLabel: {
-			objectKind:     quotaspecType,
-			collectionKind: quotaspecTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
-		},
-		quotaspecbindingLabel: {
-			objectKind:     quotaspecbindingType,
-			collectionKind: quotaspecbindingTypeList,
-			apiVersion:     istioConfigGroupVersion.Group + "/" + istioConfigGroupVersion.Version,
-			groupVersion:   &istioConfigGroupVersion,
 		},
 	}
+
+	configTypes = []struct {
+		objectKind     string
+		collectionKind string
+	}{
+		{
+			objectKind:     ruleType,
+			collectionKind: ruleTypeList,
+		},
+		// Quota specs depends on Quota template but are not a "template" object itselft
+		{
+			objectKind:     quotaspecType,
+			collectionKind: quotaspecTypeList,
+		},
+		{
+			objectKind:     quotaspecbindingType,
+			collectionKind: quotaspecbindingTypeList,
+		},
+	}
+
+	// TODO Adapters and Templates can be loaded from external config for easy maintenance
+
+	adapterTypes = []struct {
+		objectKind     string
+		collectionKind string
+	}{
+		{
+			objectKind:     circonusType,
+			collectionKind: circonusTypeList,
+		},
+		{
+			objectKind:     denierType,
+			collectionKind: denierTypeList,
+		},
+		{
+			objectKind:     fluentdType,
+			collectionKind: fluentdTypeList,
+		},
+		{
+			objectKind:     handlerType,
+			collectionKind: handlerTypeList,
+		},
+		{
+			objectKind:     kubernetesenvType,
+			collectionKind: kubernetesenvTypeList,
+		},
+		{
+			objectKind:     listcheckerType,
+			collectionKind: listcheckerTypeList,
+		},
+		{
+			objectKind:     memquotaType,
+			collectionKind: memquotaTypeList,
+		},
+		{
+			objectKind:     opaType,
+			collectionKind: opaTypeList,
+		},
+		{
+			objectKind:     prometheusType,
+			collectionKind: prometheusTypeList,
+		},
+		{
+			objectKind:     rbacType,
+			collectionKind: rbacTypeList,
+		},
+		{
+			objectKind:     servicecontrolType,
+			collectionKind: servicecontrolTypeList,
+		},
+		{
+			objectKind:     solarwindsType,
+			collectionKind: solarwindsTypeList,
+		},
+		{
+			objectKind:     stackdriverType,
+			collectionKind: stackdriverTypeList,
+		},
+		{
+			objectKind:     statsdType,
+			collectionKind: statsdTypeList,
+		},
+		{
+			objectKind:     stdioType,
+			collectionKind: stdioTypeList,
+		},
+	}
+
+	templateTypes = []struct {
+		objectKind     string
+		collectionKind string
+	}{
+		{
+			objectKind:     apikeyType,
+			collectionKind: apikeyTypeList,
+		},
+		{
+			objectKind:     authorizationType,
+			collectionKind: authorizationTypeList,
+		},
+		{
+			objectKind:     checknothingType,
+			collectionKind: checknothingTypeList,
+		},
+		{
+			objectKind:     kubernetesType,
+			collectionKind: kubernetesTypeList,
+		},
+		{
+			objectKind:     listEntryType,
+			collectionKind: listEntryTypeList,
+		},
+		{
+			objectKind:     logentryType,
+			collectionKind: logentryTypeList,
+		},
+		{
+			objectKind:     metricType,
+			collectionKind: metricTypeList,
+		},
+		{
+			objectKind:     quotaType,
+			collectionKind: quotaTypeList,
+		},
+		{
+			objectKind:     reportnothingType,
+			collectionKind: reportnothingTypeList,
+		},
+		{
+			objectKind:     servicecontrolreportType,
+			collectionKind: servicecontrolreportTypeList,
+		},
+	}
+
 	// A map to get the plural for a Istio type using the singlar type
 	// Used for fetch istio actions details, so only applied to handlers (adapters) and instances (templates) types
-	istioTypePlurals = map[string]string{
-		// Adapters
+	// It should be one entry per adapter/template
+	adapterPlurals = map[string]string{
 		circonusType:       circonuses,
 		denierType:         deniers,
 		fluentdType:        fluentds,
+		handlerType:        handlers,
 		kubernetesenvType:  kubernetesenvs,
 		listcheckerType:    listcheckers,
 		memquotaType:       memquotas,
@@ -417,8 +342,9 @@ var (
 		stackdriverType:    stackdrivers,
 		statsdType:         statsds,
 		stdioType:          stdios,
-		handlerType:        handlers,
-		// Templates
+	}
+
+	templatePlurals = map[string]string{
 		apikeyType:               apikeys,
 		authorizationType:        authorizations,
 		checknothingType:         checknothings,
@@ -476,33 +402,11 @@ type IstioDetails struct {
 	Gateways         []IstioObject `json:"gateways"`
 }
 
-// IstioRules is a wrapper to group all mixer rules related to a Namespace.
-// Rules can have match expressions that may dynamically affect to several services.
-type IstioRules struct {
-	Rules []IstioObject `json:"rules"`
-}
-
-// IstioRuleAction is a wrapper to group a handler object and a list of instances per a specific action.
-type IstioRuleAction struct {
-	Handler   IstioObject   `json:"handler"`
-	Instances []IstioObject `json:"instances"`
-}
-
-// IstioRuleDetails is a wrapper to group a mixer rule with its actions.
-type IstioRuleDetails struct {
-	Rule    IstioObject        `json:"rule"`
-	Actions []*IstioRuleAction `json:"actions"`
-}
-
 type istioResponse struct {
 	result  IstioObject
 	results []IstioObject
 	err     error
 }
-
-type actionsType = []interface{}
-type actionType = map[string]interface{}
-type instancesType = []interface{}
 
 // GenericIstioObject is a type to test Istio types defined by Istio as a Kubernetes extension.
 
@@ -571,7 +475,6 @@ func (in *GenericIstioObject) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
-
 	return nil
 }
 
@@ -580,7 +483,6 @@ func (in *GenericIstioObject) DeepCopyIstioObject() IstioObject {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
-
 	return nil
 }
 
@@ -613,6 +515,5 @@ func (in *GenericIstioObjectList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
-
 	return nil
 }

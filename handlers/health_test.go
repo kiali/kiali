@@ -39,7 +39,7 @@ func TestNamespaceAppHealth(t *testing.T) {
 
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
-	}).Return(k8s.FakeServiceList(), nil)
+	}).Return(kubetest.FakeServiceList(), nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
 	}).Return([]v1.Pod{}, nil)
@@ -114,7 +114,7 @@ func TestAppHealth(t *testing.T) {
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
 		assert.Equal(t, map[string]string{"app": "reviews"}, args[1])
-	}).Return([]v1.Service{k8s.FakeServiceList()[0]}, nil)
+	}).Return([]v1.Service{kubetest.FakeServiceList()[0]}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
 		assert.Equal(t, "app=reviews", args[1])
@@ -190,7 +190,7 @@ func TestServiceHealth(t *testing.T) {
 	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
 		assert.Equal(t, "svc", args[1])
-	}).Return(k8s.FakeService(), nil)
+	}).Return(kubetest.FakeService(), nil)
 
 	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])

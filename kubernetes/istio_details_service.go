@@ -50,7 +50,7 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 func (in *IstioClient) DeleteIstioObject(api, namespace, resourceType, name string) error {
 	log.Infof("DeleteIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
 	var err error
-	if api == istioConfigGroupVersion.Group {
+	if api == configGroupVersion.Group {
 		_, err = in.istioConfigApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
 	} else {
 		_, err = in.istioNetworkingApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()

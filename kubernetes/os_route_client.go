@@ -39,7 +39,7 @@ func NewOSRouteClient() (*OSRouteClient, error) {
 		Host:    config.Host,
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{
-			GroupVersion:         &osRouteGroupVersion,
+			GroupVersion:         &routeGroupVersion,
 			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)},
 			ContentType:          runtime.ContentTypeJSON,
 		},

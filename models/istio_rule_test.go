@@ -40,45 +40,16 @@ func TestIstioRulesParsing(t *testing.T) {
 func TestIstioRuleDetailsParsing(t *testing.T) {
 	assert := assert.New(t)
 
-	istioDetails := CastIstioRuleDetails(fakeCheckFromCustomerDetails())
-	assert.Equal(1, len(istioDetails.Actions))
-	handler := istioDetails.Actions[0].Handler
-	assert.Equal("preferencewhitelist", handler.Name)
-	assert.Equal("listchecker", handler.Adapter)
-	handlerSpec, ok := (handler.Spec).(map[string]interface{})
-	assert.True(ok)
-	overrides, ok := handlerSpec["overrides"]
-	assert.True(ok)
-	overridesList, ok := overrides.([]string)
-	assert.True(ok)
-	assert.Equal(1, len(overridesList))
-	assert.Equal("recommendation", overridesList[0])
-	blacklist, ok := handlerSpec["blacklist"]
-	assert.True(ok)
-	blackListValue, ok := blacklist.(bool)
-	assert.True(ok)
-	assert.Equal(false, blackListValue)
-	_, ok = handlerSpec["adapter"]
-	assert.False(ok)
-	instances := istioDetails.Actions[0].Instances
-	assert.Equal(1, len(instances))
-	assert.Equal("preferencesource", instances[0].Name)
-	assert.Equal("listentry", instances[0].Template)
-	instanceSpec, ok := (instances[0].Spec).(map[string]interface{})
-	assert.True(ok)
-	value, ok := instanceSpec["value"]
-	assert.True(ok)
-	assert.Equal("source.labels[\"app\"]", value)
-}
+	istioRule := CastIstioRule(fakeCheckFromCustomerRule())
+	assert.Equal("checkfromcustomer", istioRule.Name)
+	assert.Equal("destination.labels[\"app\"] == \"preference\"", istioRule.Match)
+	assert.NotNil(istioRule.Actions)
 
-func TestIstioRuleWithNotSupportedHandlersOrInstances(t *testing.T) {
-	assert := assert.New(t)
-	istioDetails := CastIstioRuleDetails(fakeRuleNotSupportedHandlersDetails())
-	assert.Equal(1, len(istioDetails.Actions))
-	assert.Nil(istioDetails.Actions[0].Handler)
-	instances := istioDetails.Actions[0].Instances
-	assert.Equal(1, len(instances))
-	assert.Nil(instances[0])
+	istioAdapter := CastIstioAdapter(fakeListCheckerAdapter())
+	assert.Equal("preferencewhitelist", istioAdapter.Name)
+
+	istioTemplate := CastIstioTemplate(fakeListEntryTemplate())
+	assert.Equal("preferencesource", istioTemplate.Name)
 }
 
 func fakeCheckFromCustomerRule() kubernetes.IstioObject {
@@ -115,18 +86,14 @@ func fakeDenyCustomerRule() kubernetes.IstioObject {
 	return &denycustomerRule
 }
 
-func fakeIstioRules() *kubernetes.IstioRules {
-	fakeRules := kubernetes.IstioRules{}
-
-	fakeRules.Rules = []kubernetes.IstioObject{
+func fakeIstioRules() []kubernetes.IstioObject {
+	return []kubernetes.IstioObject{
 		fakeCheckFromCustomerRule(),
 		fakeDenyCustomerRule(),
 	}
-	return &fakeRules
 }
 
-func fakeCheckFromCustomerActions() []*kubernetes.IstioRuleAction {
-	actions := make([]*kubernetes.IstioRuleAction, 0)
+func fakeListCheckerAdapter() kubernetes.IstioObject {
 	handler := kubernetes.GenericIstioObject{}
 	handler.Name = "preferencewhitelist"
 	handler.Spec = map[string]interface{}{
@@ -136,57 +103,15 @@ func fakeCheckFromCustomerActions() []*kubernetes.IstioRuleAction {
 		"blacklist": false,
 		"adapter":   "listchecker",
 	}
+	return handler.DeepCopyIstioObject()
+}
+
+func fakeListEntryTemplate() kubernetes.IstioObject {
 	instance := kubernetes.GenericIstioObject{}
 	instance.Name = "preferencesource"
 	instance.Spec = map[string]interface{}{
 		"value":    "source.labels[\"app\"]",
 		"template": "listentry",
 	}
-
-	actions = append(actions, &kubernetes.IstioRuleAction{
-		Handler:   &handler,
-		Instances: []kubernetes.IstioObject{&instance},
-	})
-
-	return actions
-}
-
-func fakeCheckFromCustomerDetails() *kubernetes.IstioRuleDetails {
-	istioRulesDetails := kubernetes.IstioRuleDetails{}
-	istioRulesDetails.Rule = fakeCheckFromCustomerRule()
-	istioRulesDetails.Actions = fakeCheckFromCustomerActions()
-	return &istioRulesDetails
-}
-
-func fakeStdioRule() kubernetes.IstioObject {
-	stdioRule := kubernetes.GenericIstioObject{}
-	stdioRule.Name = "stdio"
-	stdioRule.Spec = map[string]interface{}{
-		"match": "true",
-		"actions": []map[string]interface{}{
-			{
-				"handler": "handler.stdio",
-				"instances": []string{
-					"accesslog.logentry",
-				},
-			},
-		},
-	}
-	return &stdioRule
-}
-
-func fakeSdtioUnsupportedHandlersInstances() []*kubernetes.IstioRuleAction {
-	actions := make([]*kubernetes.IstioRuleAction, 0)
-	actions = append(actions, &kubernetes.IstioRuleAction{
-		Handler:   nil,
-		Instances: []kubernetes.IstioObject{nil},
-	})
-	return actions
-}
-
-func fakeRuleNotSupportedHandlersDetails() *kubernetes.IstioRuleDetails {
-	istioRuleDetails := kubernetes.IstioRuleDetails{}
-	istioRuleDetails.Rule = fakeStdioRule()
-	istioRuleDetails.Actions = fakeSdtioUnsupportedHandlersInstances()
-	return &istioRuleDetails
+	return instance.DeepCopyIstioObject()
 }

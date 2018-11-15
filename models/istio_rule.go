@@ -32,36 +32,51 @@ type IstioRule struct {
 	Actions interface{} `json:"actions"`
 }
 
-type IstioRuleDetails struct {
-	Name      string             `json:"name"`
-	Namespace Namespace          `json:"namespace"`
-	Match     interface{}        `json:"match"`
-	Actions   []*IstioRuleAction `json:"actions"`
-}
+// IstioAdapters istioAdapters
+//
+// This type type is used for returning an array of IstioAdapters
+//
+// swagger:model istioAdapters
+// An array of istioAdapter
+// swagger:allOf
+type IstioAdapters []IstioAdapter
 
-type IstioRuleAction struct {
-	Handler   *IstioHandler    `json:"handler"`
-	Instances []*IstioInstance `json:"instances"`
-}
-
-type IstioHandler struct {
+// IstioAdapter istioAdapter
+//
+// This type type is used for returning a IstioAdapter
+//
+// swagger:model istioAdapter
+type IstioAdapter struct {
 	Name    string      `json:"name"`
 	Adapter string      `json:"adapter"`
 	Spec    interface{} `json:"spec"`
 }
 
-type IstioInstance struct {
+// IstioTemplates istioTemplates
+//
+// This type type is used for returning an array of IstioTemplates
+//
+// swagger:model istioTemplates
+// An array of istioTemplates
+// swagger:allOf
+type IstioTemplates []IstioTemplate
+
+// IstioTemplate istioTemplate
+//
+// This type type is used for returning a IstioTemplate
+//
+// swagger:model istioTemplate
+type IstioTemplate struct {
 	Name     string      `json:"name"`
 	Template string      `json:"template"`
 	Spec     interface{} `json:"spec"`
 }
 
-func CastIstioRulesCollection(rules *kubernetes.IstioRules) IstioRules {
-	istioRules := make([]IstioRule, len(rules.Rules))
-	for i, rule := range rules.Rules {
+func CastIstioRulesCollection(rules []kubernetes.IstioObject) IstioRules {
+	istioRules := make([]IstioRule, len(rules))
+	for i, rule := range rules {
 		istioRules[i] = CastIstioRule(rule)
 	}
-
 	return istioRules
 }
 
@@ -70,60 +85,37 @@ func CastIstioRule(rule kubernetes.IstioObject) IstioRule {
 	istioRule.Name = rule.GetObjectMeta().Name
 	istioRule.Match = rule.GetSpec()["match"]
 	istioRule.Actions = rule.GetSpec()["actions"]
-
 	return istioRule
 }
 
-func CastIstioRuleDetails(rule *kubernetes.IstioRuleDetails) *IstioRuleDetails {
-	istioRuleDetails := IstioRuleDetails{}
-	istioRuleDetails.Name = rule.Rule.GetObjectMeta().Name
-	istioRuleDetails.Match = rule.Rule.GetSpec()["match"]
-	istioRuleDetails.Actions = CastIstioRuleActions(rule.Actions)
-
-	return &istioRuleDetails
+func CastIstioAdaptersCollection(adapters []kubernetes.IstioObject) IstioAdapters {
+	istioAdapters := make([]IstioAdapter, len(adapters))
+	for i, adapter := range adapters {
+		istioAdapters[i] = CastIstioAdapter(adapter)
+	}
+	return istioAdapters
 }
 
-func CastIstioRuleActions(actions []*kubernetes.IstioRuleAction) []*IstioRuleAction {
-	istioActions := make([]*IstioRuleAction, len(actions))
-	for i, action := range actions {
-		istioActions[i] = CastIstioRuleAction(action)
-	}
-	return istioActions
+func CastIstioAdapter(adapter kubernetes.IstioObject) IstioAdapter {
+	istioAdapter := IstioAdapter{}
+	istioAdapter.Name = adapter.GetObjectMeta().Name
+	istioAdapter.Adapter = adapter.GetObjectMeta().Labels["adapter"]
+	istioAdapter.Spec = adapter.GetSpec()
+	return istioAdapter
 }
 
-func CastIstioRuleAction(action *kubernetes.IstioRuleAction) *IstioRuleAction {
-	istioAction := IstioRuleAction{}
-	if action == nil {
-		return &istioAction
+func CastIstioTemplatesCollection(templates []kubernetes.IstioObject) IstioTemplates {
+	istioTemplates := make([]IstioTemplate, len(templates))
+	for i, template := range templates {
+		istioTemplates[i] = CastIstioTemplate(template)
 	}
-	istioAction.Handler = CastIstioHandler(action.Handler)
-	istioAction.Instances = make([]*IstioInstance, len(action.Instances))
-	for i, instance := range action.Instances {
-		istioAction.Instances[i] = CastIstioInstance(instance)
-	}
-	return &istioAction
+	return istioTemplates
 }
 
-func CastIstioHandler(handler kubernetes.IstioObject) *IstioHandler {
-	istioHandler := IstioHandler{}
-	if handler == nil {
-		return nil
-	}
-	istioHandler.Name = handler.GetObjectMeta().Name
-	istioHandler.Adapter = handler.GetSpec()["adapter"].(string)
-	delete(handler.GetSpec(), "adapter")
-	istioHandler.Spec = handler.GetSpec()
-	return &istioHandler
-}
-
-func CastIstioInstance(instance kubernetes.IstioObject) *IstioInstance {
-	istioInstance := IstioInstance{}
-	if instance == nil {
-		return nil
-	}
-	istioInstance.Name = instance.GetObjectMeta().Name
-	istioInstance.Template = instance.GetSpec()["template"].(string)
-	delete(instance.GetSpec(), "template")
-	istioInstance.Spec = instance.GetSpec()
-	return &istioInstance
+func CastIstioTemplate(template kubernetes.IstioObject) IstioTemplate {
+	istioTemplate := IstioTemplate{}
+	istioTemplate.Name = template.GetObjectMeta().Name
+	istioTemplate.Template = template.GetObjectMeta().Labels["template"]
+	istioTemplate.Spec = template.GetSpec()
+	return istioTemplate
 }
