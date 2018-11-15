@@ -2,24 +2,40 @@
 import tests.conftest as conftest
 
 
-def test_assert_istio_has_kiali_clusterroles_on_istio(istio_cluster_role_biding=None):
+def test_assert_istio_has_kiali_clusterroles_on_istio():
     istio = conftest.get_istio_clusterrole_file()
     assert istio is not None
 
 
-def test_assert_kiali_clusters_are_valid():
-    kiali = conftest.get_kiali_clusterrole_file()
-    assert kiali is not None
+def test_assert_kiali_openshift_clusters_are_valid():
+    kiali_openshift = conftest.get_kiali_clusterrole_file(file_type='Openshift')
+    assert kiali_openshift is not None
+
+
+def test_assert_kiali_kurbenetes_clusters_are_valid():
+    kiali_kubernetes = conftest.get_kiali_clusterrole_file(file_type="Kubernetes")
+    assert kiali_kubernetes is not None
 
 
 def test_assert_equivalence_cluster_roles():
-    kiali = conftest.get_kiali_clusterrole_file()['rules']
+    kiali_openshift = conftest.get_kiali_clusterrole_file(file_type='Openshift')['rules']
+    kiali_kubernetes = conftest.get_kiali_clusterrole_file(file_type="Kubernetes")['rules']
+
+
     istio = conftest.get_istio_clusterrole_file()['rules']
 
-    # Comparing if kiali has the same resources as Istio
-    assert sorted(kiali[0]) == sorted(istio[0])
-    assert sorted(kiali[1]) == sorted(istio[1])
-    assert sorted(kiali[2]) == sorted(istio[2])
+    # Comparing if kiali openshift clusterrole has the same resources as Istio clusterrole
+    assert sorted(kiali_openshift[0]) == sorted(istio[0])
+    assert sorted(kiali_openshift[1]) == sorted(istio[1])
+    assert sorted(kiali_openshift[2]) == sorted(istio[2])
+
+    # Comparing if kiali kubernetes clusterrole has the same resources as Istio clusterrole
+    assert sorted(kiali_kubernetes[0]) == sorted(istio[0])
+    assert sorted(kiali_kubernetes[1]) == sorted(istio[1])
+    assert sorted(kiali_kubernetes[2]) == sorted(istio[2])
+
+
+
 
 
 
