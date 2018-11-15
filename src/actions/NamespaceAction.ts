@@ -1,14 +1,13 @@
 import * as Api from '../services/Api';
-import { createAction } from 'typesafe-actions';
+import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
 import Namespace from '../types/Namespace';
 import { KialiAppState } from '../store/Store';
 
-export enum NamespaceActionKeys {
+enum NamespaceActionKeys {
   NAMESPACE_REQUEST_STARTED = 'NAMESPACE_REQUEST_STARTED',
   NAMESPACE_SUCCESS = 'NAMESPACE_SUCCESS',
   NAMESPACE_FAILED = 'NAMESPACE_FAILED',
-  SET_ACTIVE_NAMESPACE = 'SET_ACTIVE_NAMESPACE',
-  SET_PREVIOUS_GRAPH_STATE = 'SET_PREVIOUS_GRAPH_STATE'
+  SET_ACTIVE_NAMESPACE = 'SET_ACTIVE_NAMESPACE'
 }
 
 const shouldFetchNamespaces = (state: KialiAppState) => {
@@ -20,17 +19,18 @@ const shouldFetchNamespaces = (state: KialiAppState) => {
 };
 
 export const NamespaceActions = {
-  setActiveNamespace: createAction(NamespaceActionKeys.SET_ACTIVE_NAMESPACE, (namespace: Namespace) => ({
-    type: NamespaceActionKeys.SET_ACTIVE_NAMESPACE,
-    payload: namespace
-  })),
+  setActiveNamespace: createStandardAction(NamespaceActionKeys.SET_ACTIVE_NAMESPACE)<Namespace>(),
   requestStarted: createAction(NamespaceActionKeys.NAMESPACE_REQUEST_STARTED),
   requestFailed: createAction(NamespaceActionKeys.NAMESPACE_FAILED),
-  receiveList: createAction(NamespaceActionKeys.NAMESPACE_SUCCESS, (newList: any, receivedAt: Date) => ({
-    type: NamespaceActionKeys.NAMESPACE_SUCCESS,
-    list: newList,
-    receivedAt: receivedAt
-  })),
+  receiveList: createAction(NamespaceActionKeys.NAMESPACE_SUCCESS, resolve => (newList: any, receivedAt: Date) =>
+    resolve({
+      list: newList,
+      receivedAt: receivedAt
+    })
+  )
+};
+
+export const NamespaceThunkActions = {
   asyncFetchNamespaces: (auth: any) => {
     return dispatch => {
       dispatch(NamespaceActions.requestStarted());
@@ -59,7 +59,7 @@ export const NamespaceActions = {
         }
         const auth = 'Bearer ' + getState().authentication.token.token;
         // Dispatch a thunk from thunk!
-        return dispatch(NamespaceActions.asyncFetchNamespaces(auth));
+        return dispatch(NamespaceThunkActions.asyncFetchNamespaces(auth));
       } else {
         // Let the calling code know there's nothing to wait for.
         return Promise.resolve();
@@ -67,3 +67,5 @@ export const NamespaceActions = {
     };
   }
 };
+
+export type NamespaceAction = ActionType<typeof NamespaceActions>;

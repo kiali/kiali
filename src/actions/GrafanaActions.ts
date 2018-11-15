@@ -1,23 +1,18 @@
-import { createAction } from 'typesafe-actions';
+import { ActionType, createStandardAction } from 'typesafe-actions';
 import { GrafanaInfo } from '../store/Store';
 import * as API from '../services/Api';
 import { MessageCenterActions } from './MessageCenterActions';
 import { MessageType } from '../types/MessageCenter';
 
-export enum GrafanaActionKeys {
+enum GrafanaActionKeys {
   SET_INFO = 'SET_INFO'
 }
 
 export const GrafanaActions = {
-  setinfo: createAction(GrafanaActionKeys.SET_INFO, (grafanaInfo: GrafanaInfo) => ({
-    type: GrafanaActionKeys.SET_INFO,
-    url: grafanaInfo.url,
-    serviceDashboardPath: grafanaInfo.serviceDashboardPath,
-    workloadDashboardPath: grafanaInfo.workloadDashboardPath,
-    varNamespace: grafanaInfo.varNamespace,
-    varService: grafanaInfo.varService,
-    varWorkload: grafanaInfo.varWorkload
-  })),
+  setinfo: createStandardAction(GrafanaActionKeys.SET_INFO)<GrafanaInfo>()
+};
+
+export const GrafanaThunkActions = {
   getInfo: (auth: string) => {
     return dispatch => {
       API.getGrafanaInfo(auth)
@@ -36,3 +31,5 @@ export const GrafanaActions = {
     };
   }
 };
+
+export type GrafanaAction = ActionType<typeof GrafanaActions>;

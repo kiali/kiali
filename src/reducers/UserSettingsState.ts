@@ -1,7 +1,9 @@
+import { getType } from 'typesafe-actions';
 import { UserSettings } from '../store/Store';
-import { UserSettingsActionKeys } from '../actions/UserSettingsActions';
 import { config } from '../config';
 import { updateState } from '../utils/Reducer';
+import { KialiAppAction } from '../actions/KialiAppAction';
+import { UserSettingsActions } from '../actions/UserSettingsActions';
 
 export const INITIAL_USER_SETTINGS_STATE: UserSettings = {
   interface: { navCollapse: false },
@@ -9,17 +11,17 @@ export const INITIAL_USER_SETTINGS_STATE: UserSettings = {
   refreshInterval: config().toolbar.defaultPollInterval
 };
 
-const UserSettingsState = (state: UserSettings = INITIAL_USER_SETTINGS_STATE, action) => {
+const UserSettingsState = (state: UserSettings = INITIAL_USER_SETTINGS_STATE, action: KialiAppAction): UserSettings => {
   switch (action.type) {
-    case UserSettingsActionKeys.NAV_COLLAPSE:
+    case getType(UserSettingsActions.navCollapse):
       return updateState(state, {
-        interface: { navCollapse: action.collapse }
+        interface: { navCollapse: action.payload.collapse }
       });
-    case UserSettingsActionKeys.SET_DURATION:
+    case getType(UserSettingsActions.setDuration):
       return updateState(state, {
         duration: action.payload
       });
-    case UserSettingsActionKeys.SET_REFRESH_INTERVAL:
+    case getType(UserSettingsActions.setRefreshInterval):
       return updateState(state, {
         refreshInterval: action.payload
       });

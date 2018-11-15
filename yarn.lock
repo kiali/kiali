@@ -9898,10 +9898,10 @@ typelevel-ts@^0.3.1:
   resolved "https://registry.yarnpkg.com/typelevel-ts/-/typelevel-ts-0.3.2.tgz#af03275e232278f6d5f6216d0f7f302a8ed924fa"
   integrity sha512-jT+j42FvdVuvN6RX04/fxjjtzyZZ7Ilj0kIZAx0NwN2Shzv72peeu+kPGw4DG9DUXE+dHIRYfhs7eqE5f2nQPQ==
 
-typesafe-actions@1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/typesafe-actions/-/typesafe-actions-1.1.2.tgz#af88ede3ee254be425c3e0e02de11b182830ae48"
-  integrity sha512-4SparTfwBOWjegg89Ls5Ia0L6N8mXu7tb/REA5KYEfRohsLM9Uc8jtAa8bRAhtCg1cQJnvJJMjljI7dfu1JjVg==
+typesafe-actions@2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/typesafe-actions/-/typesafe-actions-2.0.4.tgz#31c8f8df3566d549eb52edb64a75997e970c17d0"
+  integrity sha512-3qnSDBNtH3mfekmM9w/IVlsqiUT4I5m+mpLp5tV2Ua/28BfaehqUg6eQNC8+cTk+oufbXcubLiWvKS/61qgleQ==
 
 typescript@3.1.3:
   version "3.1.3"

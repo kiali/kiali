@@ -1,8 +1,8 @@
-import { createAction } from 'typesafe-actions';
+import { ActionType, createAction } from 'typesafe-actions';
 import Namespace from '../types/Namespace';
 import { EdgeLabelMode } from '../types/GraphFilter';
 import * as API from '../services/Api';
-import { authentication } from '../utils/Authentication';
+import { authenticationToken } from '../utils/AuthenticationToken';
 import { MessageCenterActions } from './MessageCenterActions';
 import { GraphDataActionKeys } from './GraphDataActionKeys';
 import { GraphType, NodeParamsType } from '../types/Graph';
@@ -77,18 +77,19 @@ export const GraphDataActions = {
   getGraphDataStart: createAction(GraphDataActionKeys.GET_GRAPH_DATA_START),
   getGraphDataSuccess: createAction(
     GraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
-    (timestamp: number, graphData: any) => ({
-      type: GraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
-      timestamp: timestamp,
-      graphData: decorateGraphData(graphData)
-    })
+    resolve => (timestamp: number, graphData: any) =>
+      resolve({
+        timestamp: timestamp,
+        graphData: decorateGraphData(graphData)
+      })
   ),
-  getGraphDataFailure: createAction(GraphDataActionKeys.GET_GRAPH_DATA_FAILURE, (error: any) => ({
-    type: GraphDataActionKeys.GET_GRAPH_DATA_FAILURE,
-    error: error
-  })),
-  handleLegend: createAction(GraphDataActionKeys.HANDLE_LEGEND),
+  getGraphDataFailure: createAction(GraphDataActionKeys.GET_GRAPH_DATA_FAILURE, resolve => (error: any) =>
+    resolve({ error: error })
+  ),
+  handleLegend: createAction(GraphDataActionKeys.HANDLE_LEGEND)
+};
 
+export const GraphDataThunkActions = {
   // action creator that performs the async request
   fetchGraphData: (
     namespace: Namespace,
@@ -100,7 +101,7 @@ export const GraphDataActions = {
     showUnusedNodes: boolean,
     node?: NodeParamsType
   ) => {
-    return dispatch => {
+    return (dispatch, getState) => {
       dispatch(GraphDataActions.getGraphDataStart());
       let restParams = { duration: duration + 's', graphType: graphType, injectServiceNodes: injectServiceNodes };
       if (namespace.name === serverConfig().istioNamespace) {
@@ -135,7 +136,7 @@ export const GraphDataActions = {
       console.debug('Fetching graph with appenders: ' + appenders);
 
       if (node) {
-        return API.getNodeGraphElements(authentication(), namespace, node, restParams).then(
+        return API.getNodeGraphElements(authenticationToken(getState()), namespace, node, restParams).then(
           response => {
             const responseData: any = response['data'];
             const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
@@ -158,7 +159,7 @@ export const GraphDataActions = {
       if (namespace.name !== 'all') {
         restParams['namespaces'] = namespace.name;
       }
-      return API.getGraphElements(authentication(), restParams).then(
+      return API.getGraphElements(authenticationToken(getState()), restParams).then(
         response => {
           const responseData: any = response['data'];
           const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
@@ -179,3 +180,5 @@ export const GraphDataActions = {
     };
   }
 };
+
+export type GraphDataAction = ActionType<typeof GraphDataActions>;

@@ -1,9 +1,9 @@
 import globalState from '../GlobalState';
-import { GlobalActionKeys } from '../../actions/GlobalActions';
+import { GlobalActions } from '../../actions/GlobalActions';
 
 describe('GlobalState reducer', () => {
   it('should return the initial state', () => {
-    expect(globalState(undefined, {})).toEqual({
+    expect(globalState(undefined, GlobalActions.nil())).toEqual({
       loadingCounter: 0,
       isPageVisible: true
     });
@@ -16,9 +16,7 @@ describe('GlobalState reducer', () => {
           loadingCounter: 0,
           isPageVisible: true
         },
-        {
-          type: GlobalActionKeys.INCREMENT_LOADING_COUNTER
-        }
+        GlobalActions.incrementLoadingCounter()
       )
     ).toEqual({
       loadingCounter: 1,
@@ -33,9 +31,7 @@ describe('GlobalState reducer', () => {
           loadingCounter: 1,
           isPageVisible: true
         },
-        {
-          type: GlobalActionKeys.DECREMENT_LOADING_COUNTER
-        }
+        GlobalActions.decrementLoadingCounter()
       )
     ).toEqual({
       loadingCounter: 0,
@@ -50,9 +46,7 @@ describe('GlobalState reducer', () => {
           loadingCounter: 1,
           isPageVisible: true
         },
-        {
-          type: GlobalActionKeys.INCREMENT_LOADING_COUNTER
-        }
+        GlobalActions.incrementLoadingCounter()
       )
     ).toEqual({
       loadingCounter: 2,
@@ -67,9 +61,7 @@ describe('GlobalState reducer', () => {
           loadingCounter: 2,
           isPageVisible: true
         },
-        {
-          type: GlobalActionKeys.DECREMENT_LOADING_COUNTER
-        }
+        GlobalActions.decrementLoadingCounter()
       )
     ).toEqual({
       loadingCounter: 1,
@@ -83,9 +75,7 @@ describe('GlobalState reducer', () => {
           loadingCounter: 0,
           isPageVisible: false
         },
-        {
-          type: GlobalActionKeys.SET_PAGE_VISIBILITY_VISIBLE
-        }
+        GlobalActions.setPageVisibilityVisible()
       )
     ).toEqual({
       loadingCounter: 0,
@@ -99,9 +89,7 @@ describe('GlobalState reducer', () => {
           loadingCounter: 0,
           isPageVisible: true
         },
-        {
-          type: GlobalActionKeys.SET_PAGE_VISIBILITY_HIDDEN
-        }
+        GlobalActions.setPageVisibilityHidden()
       )
     ).toEqual({
       loadingCounter: 0,

@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { MessageCenterActions } from '../actions/MessageCenterActions';
+import { MessageCenterActions, MessageCenterThunkActions } from '../actions/MessageCenterActions';
 import { MessageCenter, MessageCenterTrigger } from '../components/MessageCenter';
 import { MessageType } from '../types/MessageCenter';
 
@@ -18,8 +18,8 @@ const mapDispatchToPropsMessageCenter = dispatch => {
     onExpandDrawer: () => dispatch(MessageCenterActions.togleExpandedMessageCenter()),
     onHideDrawer: () => dispatch(MessageCenterActions.hideMessageCenter()),
     onToggleGroup: group => dispatch(MessageCenterActions.toggleGroup(group.id)),
-    onMarkGroupAsRead: group => dispatch(MessageCenterActions.markGroupAsRead(group.id)),
-    onClearGroup: group => dispatch(MessageCenterActions.clearGroup(group.id)),
+    onMarkGroupAsRead: group => dispatch(MessageCenterThunkActions.markGroupAsRead(group.id)),
+    onClearGroup: group => dispatch(MessageCenterThunkActions.clearGroup(group.id)),
     onNotificationClick: message => dispatch(MessageCenterActions.markAsRead(message.id)),
     onDismissNotification: (message, group, userDismissed) => {
       if (userDismissed) {
@@ -68,8 +68,8 @@ const mapStateToPropsMessageCenterTrigger = state => {
 
 const mapDispatchToPropsMessageCenterTrigger = dispatch => {
   return {
-    toggleMessageCenter: () => dispatch(MessageCenterActions.toggleMessageCenter()),
-    toggleSystemErrorsCenter: () => dispatch(MessageCenterActions.toggleSystemErrorsCenter())
+    toggleMessageCenter: () => dispatch(MessageCenterThunkActions.toggleMessageCenter()),
+    toggleSystemErrorsCenter: () => dispatch(MessageCenterThunkActions.toggleSystemErrorsCenter())
   };
 };
 

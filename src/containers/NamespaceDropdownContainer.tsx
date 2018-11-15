@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { NamespaceActions } from '../actions/NamespaceAction';
+import { NamespaceActions, NamespaceThunkActions } from '../actions/NamespaceAction';
 import { NamespaceDropdown } from '../components/NamespaceDropdown';
 import Namespace from '../types/Namespace';
 import { KialiAppState } from '../store/Store';
@@ -17,7 +17,7 @@ const mapStateToProps = (state: KialiAppState) => {
 const mapDispatchToProps = (dispatch: Dispatch<any>) => {
   return {
     refresh: () => {
-      dispatch(NamespaceActions.fetchNamespacesIfNeeded());
+      dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
     },
     onSelect: (namespace: Namespace) => {
       dispatch(NamespaceActions.setActiveNamespace(namespace));

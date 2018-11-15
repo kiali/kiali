@@ -4,7 +4,7 @@ import Namespace from '../types/Namespace';
 import { EdgeLabelMode } from '../types/GraphFilter';
 import GraphPage from '../pages/Graph/GraphPage';
 
-import { GraphDataActions } from '../actions/GraphDataActions';
+import { GraphDataThunkActions } from '../actions/GraphDataActions';
 import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { bindActionCreators } from 'redux';
 import { GraphType, NodeParamsType } from '../types/Graph';
@@ -44,7 +44,7 @@ const mapDispatchToProps = (dispatch: any) => ({
     node?: NodeParamsType
   ) =>
     dispatch(
-      GraphDataActions.fetchGraphData(
+      GraphDataThunkActions.fetchGraphData(
         namespace,
         duration,
         graphType,

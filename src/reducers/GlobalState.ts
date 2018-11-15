@@ -1,6 +1,8 @@
 import { GlobalState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
-import { GlobalActionKeys } from '../actions/GlobalActions';
+import { GlobalActions } from '../actions/GlobalActions';
+import { KialiAppAction } from '../actions/KialiAppAction';
+import { getType } from 'typesafe-actions';
 
 export const INITIAL_GLOBAL_STATE: GlobalState = {
   loadingCounter: 0,
@@ -8,15 +10,15 @@ export const INITIAL_GLOBAL_STATE: GlobalState = {
 };
 
 // This Reducer allows changes to the 'globalState' portion of Redux Store
-const globalState = (state: GlobalState = INITIAL_GLOBAL_STATE, action) => {
+const globalState = (state: GlobalState = INITIAL_GLOBAL_STATE, action: KialiAppAction): GlobalState => {
   switch (action.type) {
-    case GlobalActionKeys.INCREMENT_LOADING_COUNTER:
+    case getType(GlobalActions.incrementLoadingCounter):
       return updateState(state, { loadingCounter: state.loadingCounter + 1 });
-    case GlobalActionKeys.DECREMENT_LOADING_COUNTER:
+    case getType(GlobalActions.decrementLoadingCounter):
       return updateState(state, { loadingCounter: Math.max(0, state.loadingCounter - 1) });
-    case GlobalActionKeys.SET_PAGE_VISIBILITY_HIDDEN:
+    case getType(GlobalActions.setPageVisibilityHidden):
       return updateState(state, { isPageVisible: false });
-    case GlobalActionKeys.SET_PAGE_VISIBILITY_VISIBLE:
+    case getType(GlobalActions.setPageVisibilityVisible):
       return updateState(state, { isPageVisible: true });
     default:
       return state;

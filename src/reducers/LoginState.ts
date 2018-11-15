@@ -1,5 +1,7 @@
+import { getType } from 'typesafe-actions';
 import { LoginState } from '../store/Store';
-import { LoginActionKeys } from '../actions/LoginActions';
+import { KialiAppAction } from '../actions/KialiAppAction';
+import { LoginActions } from '../actions/LoginActions';
 
 export const INITIAL_LOGIN_STATE: LoginState = {
   token: undefined,
@@ -12,36 +14,36 @@ export const INITIAL_LOGIN_STATE: LoginState = {
 };
 
 // This Reducer allows changes to the 'LoginState' portion of Redux Store
-const LoginState = (state: LoginState = INITIAL_LOGIN_STATE, action) => {
+const LoginState = (state: LoginState = INITIAL_LOGIN_STATE, action: KialiAppAction): LoginState => {
   switch (action.type) {
-    case LoginActionKeys.LOGIN_REQUEST:
+    case getType(LoginActions.loginRequest):
       return Object.assign({}, INITIAL_LOGIN_STATE, {
         logging: true
       });
-    case LoginActionKeys.LOGIN_SUCCESS:
+    case getType(LoginActions.loginSuccess):
       return Object.assign({}, INITIAL_LOGIN_STATE, {
         logged: true,
-        token: action.token,
-        username: action.username,
-        sessionTimeOut: action.sessionTimeOut
+        token: action.payload.token,
+        username: action.payload.username,
+        sessionTimeOut: action.payload.sessionTimeOut
       });
-    case LoginActionKeys.LOGIN_EXTEND:
+    case getType(LoginActions.loginExtend):
       return Object.assign({}, INITIAL_LOGIN_STATE, {
         logged: true,
-        token: action.token,
-        username: action.username,
-        sessionTimeOut: action.sessionTimeOut
+        token: action.payload.token,
+        username: action.payload.username,
+        sessionTimeOut: action.payload.sessionTimeOut
       });
-    case LoginActionKeys.LOGIN_FAILURE:
+    case getType(LoginActions.loginFailure):
       let message = 'Error connecting to Kiali';
-      if (action.error.request.status === 401) {
+      if (action.payload.error.request.status === 401) {
         message = 'Unauthorized. Error in username or password';
       }
       return Object.assign({}, INITIAL_LOGIN_STATE, {
         error: true,
         message: message
       });
-    case LoginActionKeys.LOGOUT_SUCCESS:
+    case getType(LoginActions.logoutSuccess):
       return INITIAL_LOGIN_STATE;
     default:
       return state;

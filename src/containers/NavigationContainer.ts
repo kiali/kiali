@@ -1,8 +1,8 @@
-import { KialiAppState, Component } from '../store/Store';
 import { connect } from 'react-redux';
+import { KialiAppState, Component } from '../store/Store';
 import Navigation from '../components/Nav/Navigation';
-import { LoginActions } from '../actions/LoginActions';
-import { UserSettingsActions } from '../actions/UserSettingsActions';
+import { LoginThunkActions } from '../actions/LoginActions';
+import { UserSettingsThunkActions } from '../actions/UserSettingsActions';
 
 const getJaegerUrl = (components: Component[]) => {
   const jaegerinfo = components.find(comp => comp.name === 'Jaeger');
@@ -16,8 +16,8 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
-  checkCredentials: () => dispatch(LoginActions.checkCredentials()),
-  setNavCollapsed: (collapse: boolean) => dispatch(UserSettingsActions.setNavCollapsed(!collapse))
+  checkCredentials: () => dispatch(LoginThunkActions.checkCredentials()),
+  setNavCollapsed: (collapse: boolean) => dispatch(UserSettingsThunkActions.setNavCollapsed(!collapse))
 });
 
 const NavigationConnected = connect(

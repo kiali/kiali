@@ -9,8 +9,9 @@ import globalState from './GlobalState';
 import namespaceState from './NamespaceState';
 import UserSettingsState from './UserSettingsState';
 import GrafanaState from './GrafanaState';
+import { KialiAppAction } from '../actions/KialiAppAction';
 
-const rootReducer = combineReducers<KialiAppState>({
+const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   authentication: LoginState,
   statusState: HelpDropdownState,
   messageCenter,

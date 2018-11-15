@@ -1,5 +1,7 @@
+import { getType } from 'typesafe-actions';
 import { StatusState } from '../store/Store';
-import { HelpDropdownActionKeys } from '../actions/HelpDropdownActions';
+import { KialiAppAction } from '../actions/KialiAppAction';
+import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 
 export const INITIAL_STATUS_STATE: StatusState = {
   status: {},
@@ -8,13 +10,13 @@ export const INITIAL_STATUS_STATE: StatusState = {
 };
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
-const HelpDropdownState = (state: StatusState = INITIAL_STATUS_STATE, action) => {
+const HelpDropdownState = (state: StatusState = INITIAL_STATUS_STATE, action: KialiAppAction): StatusState => {
   switch (action.type) {
-    case HelpDropdownActionKeys.STATUS_REFRESH:
+    case getType(HelpDropdownActions.statusRefresh):
       return Object.assign({}, INITIAL_STATUS_STATE, {
-        status: action.status,
-        components: action.components,
-        warningMessages: action.warningMessages
+        status: action.payload.status,
+        components: action.payload.components,
+        warningMessages: action.payload.warningMessages
       });
     default:
       return state;

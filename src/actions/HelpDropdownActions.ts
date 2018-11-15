@@ -1,23 +1,26 @@
-import { createAction } from 'typesafe-actions';
+import { ActionType, createAction } from 'typesafe-actions';
 import * as API from '../services/Api';
 import { Component } from '../store/Store';
 import { MessageType } from '../types/MessageCenter';
 import { MessageCenterActions } from './MessageCenterActions';
 
-export enum HelpDropdownActionKeys {
+enum HelpDropdownActionKeys {
   STATUS_REFRESH = 'STATUS_REFRESH'
 }
 
 export const HelpDropdownActions = {
   statusRefresh: createAction(
     HelpDropdownActionKeys.STATUS_REFRESH,
-    (status: { [key: string]: string }, components: Component[], warningMessages: string[]) => ({
-      type: HelpDropdownActionKeys.STATUS_REFRESH,
-      status: status,
-      components: components,
-      warningMessages: warningMessages
-    })
-  ),
+    resolve => (status: { [key: string]: string }, components: Component[], warningMessages: string[]) =>
+      resolve({
+        status: status,
+        components: components,
+        warningMessages: warningMessages
+      })
+  )
+};
+
+export const HelpDropdownThunkActions = {
   refresh: () => {
     return dispatch => {
       API.getStatus().then(
@@ -46,3 +49,5 @@ export const HelpDropdownActions = {
     };
   }
 };
+
+export type HelpDropdownAction = ActionType<typeof HelpDropdownActions>;

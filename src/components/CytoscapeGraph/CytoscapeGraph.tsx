@@ -9,7 +9,7 @@ import TrafficRender from './TrafficAnimation/TrafficRenderer';
 import EmptyGraphLayout from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
-import { GraphActions } from '../../actions/GraphActions';
+import { GraphActions, GraphThunkActions } from '../../actions/GraphActions';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespaceSelector, durationSelector } from '../../store/Selectors';
@@ -645,7 +645,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: any) => ({
   onClick: (event: CytoscapeClickEvent) => dispatch(GraphActions.showSidePanelInfo(event)),
-  onReady: (cy: any) => dispatch(GraphActions.graphRendered(cy)),
+  onReady: (cy: any) => dispatch(GraphThunkActions.graphRendered(cy)),
   setActiveNamespace: (namespace: Namespace) => dispatch(NamespaceActions.setActiveNamespace(namespace))
 });
 

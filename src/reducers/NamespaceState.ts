@@ -1,6 +1,8 @@
-import { NamespaceActionKeys } from '../actions/NamespaceAction';
+import { getType } from 'typesafe-actions';
 import { updateState } from '../utils/Reducer';
 import { NamespaceState } from '../store/Store';
+import { KialiAppAction } from '../actions/KialiAppAction';
+import { NamespaceActions } from '../actions/NamespaceAction';
 
 export const INITIAL_NAMESPACE_STATE: NamespaceState = {
   activeNamespace: { name: 'all' },
@@ -9,26 +11,26 @@ export const INITIAL_NAMESPACE_STATE: NamespaceState = {
   lastUpdated: undefined
 };
 
-const namespaces = (state: NamespaceState = INITIAL_NAMESPACE_STATE, action) => {
+const namespaces = (state: NamespaceState = INITIAL_NAMESPACE_STATE, action: KialiAppAction): NamespaceState => {
   switch (action.type) {
-    case NamespaceActionKeys.SET_ACTIVE_NAMESPACE:
+    case getType(NamespaceActions.setActiveNamespace):
       return updateState(state, {
         activeNamespace: { name: action.payload.name }
       });
 
-    case NamespaceActionKeys.NAMESPACE_REQUEST_STARTED:
+    case getType(NamespaceActions.requestStarted):
       return updateState(state, {
         isFetching: true
       });
 
-    case NamespaceActionKeys.NAMESPACE_SUCCESS:
+    case getType(NamespaceActions.receiveList):
       return updateState(state, {
         isFetching: false,
-        items: action.list,
-        lastUpdated: action.receivedAt
+        items: action.payload.list,
+        lastUpdated: action.payload.receivedAt
       });
 
-    case NamespaceActionKeys.NAMESPACE_FAILED:
+    case getType(NamespaceActions.requestFailed):
       return updateState(state, {
         isFetching: false
       });

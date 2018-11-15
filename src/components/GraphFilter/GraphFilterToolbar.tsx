@@ -6,7 +6,7 @@ import { EdgeLabelMode } from '../../types/GraphFilter';
 import GraphFilterToolbarType from '../../types/GraphFilterToolbar';
 import Namespace from '../../types/Namespace';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
-import { GraphDataActions } from '../../actions/GraphDataActions';
+import { GraphDataThunkActions } from '../../actions/GraphDataActions';
 import GraphFilter from '../../components/GraphFilter/GraphFilter';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespaceSelector, durationSelector } from '../../store/Selectors';
@@ -107,7 +107,7 @@ const mapDispatchToProps = (dispatch: any) => ({
     node?: NodeParamsType
   ) =>
     dispatch(
-      GraphDataActions.fetchGraphData(
+      GraphDataThunkActions.fetchGraphData(
         namespace,
         duration,
         graphType,

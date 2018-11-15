@@ -1,6 +1,9 @@
 import { MessageType } from '../types/MessageCenter';
 import { MessageCenterState } from '../store/Store';
-import { MessageCenterActionKeys } from '../actions/MessageCenterActions';
+import { KialiAppAction } from '../actions/KialiAppAction';
+import { getType } from 'typesafe-actions';
+import { MessageCenterActions } from '../actions/MessageCenterActions';
+import { updateState } from '../utils/Reducer';
 
 export const INITIAL_MESSAGE_CENTER_STATE: MessageCenterState = {
   nextId: 0,
@@ -24,8 +27,6 @@ export const INITIAL_MESSAGE_CENTER_STATE: MessageCenterState = {
   expanded: false,
   expandedGroupId: 'default'
 };
-
-const mergeToState = (prevState, toMerge) => ({ ...prevState, ...toMerge });
 
 const createMessage = (id: number, content: string, type: MessageType) => {
   return {
@@ -52,13 +53,16 @@ const updateMessage = (state: MessageCenterState, messageIds: number[], updater)
     });
     return group;
   });
-  return mergeToState(state, { groups });
+  return updateState(state, { groups });
 };
 
-const Messages = (state: MessageCenterState = INITIAL_MESSAGE_CENTER_STATE, action) => {
+const Messages = (
+  state: MessageCenterState = INITIAL_MESSAGE_CENTER_STATE,
+  action: KialiAppAction
+): MessageCenterState => {
   switch (action.type) {
-    case MessageCenterActionKeys.ADD_MESSAGE: {
-      const { groupId, content, messageType } = action;
+    case getType(MessageCenterActions.addMessage): {
+      const { groupId, content, messageType } = action.payload;
       const groups = state.groups.map(group => {
         if (group.id === groupId) {
           group = Object.assign({}, group, {
@@ -68,10 +72,10 @@ const Messages = (state: MessageCenterState = INITIAL_MESSAGE_CENTER_STATE, acti
         }
         return group;
       });
-      return mergeToState(state, { groups: groups, nextId: state.nextId + 1 });
+      return updateState(state, { groups: groups, nextId: state.nextId + 1 });
     }
-    case MessageCenterActionKeys.REMOVE_MESSAGE: {
-      const messageId = action.messageId;
+    case getType(MessageCenterActions.removeMessage): {
+      const messageId = action.payload.messageId;
       const groups = state.groups.map(group => {
         group = Object.assign({}, group, {
           messages: group.messages.filter(message => {
@@ -80,36 +84,40 @@ const Messages = (state: MessageCenterState = INITIAL_MESSAGE_CENTER_STATE, acti
         });
         return group;
       });
-      return mergeToState(state, { groups });
+      return updateState(state, { groups });
     }
-    case MessageCenterActionKeys.MARK_MESSAGE_AS_READ: {
-      return updateMessage(state, action.messageId, message => ({ ...message, seen: true, show_notification: false }));
+    case getType(MessageCenterActions.markAsRead): {
+      return updateMessage(state, action.payload.messageId, message => ({
+        ...message,
+        seen: true,
+        show_notification: false
+      }));
     }
-    case MessageCenterActionKeys.HIDE_NOTIFICATION: {
-      return updateMessage(state, action.messageId, message => ({ ...message, show_notification: false }));
+    case getType(MessageCenterActions.hideNotification): {
+      return updateMessage(state, action.payload.messageId, message => ({ ...message, show_notification: false }));
     }
-    case MessageCenterActionKeys.SHOW:
+    case getType(MessageCenterActions.showMessageCenter):
       if (state.hidden) {
-        return mergeToState(state, { hidden: false });
+        return updateState(state, { hidden: false });
       }
       return state;
-    case MessageCenterActionKeys.HIDE:
+    case getType(MessageCenterActions.hideMessageCenter):
       if (!state.hidden) {
-        return mergeToState(state, { hidden: true });
+        return updateState(state, { hidden: true });
       }
       return state;
-    case MessageCenterActionKeys.TOGGLE_EXPAND:
-      return mergeToState(state, { expanded: !state.expanded });
-    case MessageCenterActionKeys.TOGGLE_GROUP: {
-      const { groupId } = action;
+    case getType(MessageCenterActions.togleExpandedMessageCenter):
+      return updateState(state, { expanded: !state.expanded });
+    case getType(MessageCenterActions.toggleGroup): {
+      const { groupId } = action.payload;
       if (state.expandedGroupId === groupId) {
-        return mergeToState(state, { expandedGroupId: undefined });
+        return updateState(state, { expandedGroupId: undefined });
       }
-      return mergeToState(state, { expandedGroupId: groupId });
+      return updateState(state, { expandedGroupId: groupId });
     }
-    case MessageCenterActionKeys.EXPAND_GROUP: {
-      const { groupId } = action;
-      return mergeToState(state, { expandedGroupId: groupId });
+    case getType(MessageCenterActions.expandGroup): {
+      const { groupId } = action.payload;
+      return updateState(state, { expandedGroupId: groupId });
     }
 
     default:

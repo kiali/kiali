@@ -1,9 +1,10 @@
 import graphFilterState from '../GraphFilterState';
-import { GraphFilterActionKeys } from '../../actions/GraphFilterActions';
+import { GraphFilterActions } from '../../actions/GraphFilterActions';
+import { GlobalActions } from '../../actions/GlobalActions';
 
 describe('GraphFilterState reducer', () => {
   it('should return the initial state', () => {
-    expect(graphFilterState(undefined, {})).toEqual({
+    expect(graphFilterState(undefined, GlobalActions.nil())).toEqual({
       showLegend: false,
       showNodeLabels: true,
       showCircuitBreakers: true,
@@ -30,9 +31,7 @@ describe('GraphFilterState reducer', () => {
           showServiceNodes: false,
           showUnusedNodes: false
         },
-        {
-          type: GraphFilterActionKeys.TOGGLE_LEGEND
-        }
+        GraphFilterActions.toggleLegend()
       )
     ).toEqual({
       showLegend: true,
@@ -61,9 +60,7 @@ describe('GraphFilterState reducer', () => {
           showServiceNodes: false,
           showUnusedNodes: false
         },
-        {
-          type: GraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL
-        }
+        GraphFilterActions.toggleGraphNodeLabel()
       )
     ).toEqual({
       showLegend: false,
@@ -92,9 +89,7 @@ describe('GraphFilterState reducer', () => {
           showServiceNodes: false,
           showUnusedNodes: false
         },
-        {
-          type: GraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS
-        }
+        GraphFilterActions.toggleGraphCircuitBreakers()
       )
     ).toEqual({
       showLegend: false,
@@ -122,9 +117,7 @@ describe('GraphFilterState reducer', () => {
           showServiceNodes: false,
           showUnusedNodes: false
         },
-        {
-          type: GraphFilterActionKeys.TOGGLE_GRAPH_VIRTUAL_SERVICES
-        }
+        GraphFilterActions.toggleGraphVirtualServices()
       )
     ).toEqual({
       showLegend: false,
@@ -152,9 +145,7 @@ describe('GraphFilterState reducer', () => {
           showServiceNodes: false,
           showUnusedNodes: false
         },
-        {
-          type: GraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS
-        }
+        GraphFilterActions.toggleGraphMissingSidecars()
       )
     ).toEqual({
       showLegend: false,
@@ -182,9 +173,7 @@ describe('GraphFilterState reducer', () => {
           showServiceNodes: false,
           showUnusedNodes: false
         },
-        {
-          type: GraphFilterActionKeys.TOGGLE_GRAPH_SECURITY
-        }
+        GraphFilterActions.toggleGraphSecurity()
       )
     ).toEqual({
       showLegend: false,
@@ -212,9 +201,7 @@ describe('GraphFilterState reducer', () => {
           showServiceNodes: false,
           showUnusedNodes: false
         },
-        {
-          type: GraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION
-        }
+        GraphFilterActions.toggleTrafficAnimation()
       )
     ).toEqual({
       showLegend: false,
@@ -242,9 +229,7 @@ describe('GraphFilterState reducer', () => {
           showServiceNodes: false,
           showUnusedNodes: false
         },
-        {
-          type: GraphFilterActionKeys.TOGGLE_SERVICE_NODES
-        }
+        GraphFilterActions.toggleServiceNodes()
       )
     ).toEqual({
       showLegend: false,
@@ -272,9 +257,7 @@ describe('GraphFilterState reducer', () => {
           showServiceNodes: false,
           showUnusedNodes: false
         },
-        {
-          type: GraphFilterActionKeys.TOGGLE_UNUSED_NODES
-        }
+        GraphFilterActions.toggleUnusedNodes()
       )
     ).toEqual({
       showLegend: false,

@@ -1,4 +1,4 @@
-import { MessageCenterActions, MessageCenterActionKeys } from '../MessageCenterActions';
+import { MessageCenterActions, MessageCenterThunkActions } from '../MessageCenterActions';
 import { MessageType } from '../../types/MessageCenter';
 
 import thunk from 'redux-thunk';
@@ -9,116 +9,58 @@ const mockStore = configureMockStore(middlewares);
 
 describe('MessageCenterActions', () => {
   it('should add a message', () => {
-    const expectedAction = {
-      type: MessageCenterActionKeys.ADD_MESSAGE,
+    const expectedPayload = {
       content: 'my message',
       groupId: 'great-messages',
       messageType: MessageType.WARNING
     };
-    expect(MessageCenterActions.addMessage('my message', 'great-messages', MessageType.WARNING)).toEqual(
-      expectedAction
-    );
+    const action = MessageCenterActions.addMessage('my message', 'great-messages', MessageType.WARNING);
+    expect(action.payload).toEqual(expectedPayload);
   });
   it('should remove a single message', () => {
-    const expectedAction = {
-      type: MessageCenterActionKeys.REMOVE_MESSAGE,
-      messageId: [5]
-    };
-    expect(MessageCenterActions.removeMessage(5)).toEqual(expectedAction);
+    const action = MessageCenterActions.removeMessage(5);
+    expect(action.payload.messageId).toEqual([5]);
   });
   it('should remove multiple messages', () => {
-    const expectedAction = {
-      type: MessageCenterActionKeys.REMOVE_MESSAGE,
-      messageId: [5, 6, 8]
-    };
-    expect(MessageCenterActions.removeMessage([5, 6, 8])).toEqual(expectedAction);
+    const action = MessageCenterActions.removeMessage([5, 6, 8]);
+    expect(action.payload.messageId).toEqual([5, 6, 8]);
   });
   it('should mark as read a single message', () => {
-    const expectedAction = {
-      type: MessageCenterActionKeys.MARK_MESSAGE_AS_READ,
-      messageId: [3]
-    };
-    expect(MessageCenterActions.markAsRead(3)).toEqual(expectedAction);
+    const action = MessageCenterActions.markAsRead(3);
+    expect(action.payload.messageId).toEqual([3]);
   });
   it('should mark as read multiple messages', () => {
-    const expectedAction = {
-      type: MessageCenterActionKeys.MARK_MESSAGE_AS_READ,
-      messageId: [1, 2, 3, 4]
-    };
-    expect(MessageCenterActions.markAsRead([1, 2, 3, 4])).toEqual(expectedAction);
+    const action = MessageCenterActions.markAsRead([1, 2, 3, 4]);
+    expect(action.payload.messageId).toEqual([1, 2, 3, 4]);
   });
   it('should toggle group', () => {
-    const expectedAction = {
-      type: MessageCenterActionKeys.TOGGLE_GROUP,
-      groupId: 'my-awesome-group'
-    };
-    expect(MessageCenterActions.toggleGroup('my-awesome-group')).toEqual(expectedAction);
+    const action = MessageCenterActions.toggleGroup('my-awesome-group');
+    expect(action.payload.groupId).toEqual('my-awesome-group');
   });
   it('should hide a single notification', () => {
-    const expectedAction = {
-      type: MessageCenterActionKeys.HIDE_NOTIFICATION,
-      messageId: [2]
-    };
-    expect(MessageCenterActions.hideNotification(2)).toEqual(expectedAction);
+    const action = MessageCenterActions.hideNotification(2);
+    expect(action.payload.messageId).toEqual([2]);
   });
   it('should hide a multiple notifications', () => {
-    const expectedAction = {
-      type: MessageCenterActionKeys.HIDE_NOTIFICATION,
-      messageId: [8, 9, 7]
-    };
-    expect(MessageCenterActions.hideNotification([8, 9, 7])).toEqual(expectedAction);
-  });
-  it('should show the message center', () => {
-    const expectedAction = {
-      type: MessageCenterActionKeys.SHOW
-    };
-    expect(MessageCenterActions.showMessageCenter()).toEqual(expectedAction);
-  });
-  it('should hide the message center', () => {
-    const expectedAction = {
-      type: MessageCenterActionKeys.HIDE
-    };
-    expect(MessageCenterActions.hideMessageCenter()).toEqual(expectedAction);
-  });
-  it('should toggle the exapended state of the message center', () => {
-    const expectedAction = {
-      type: MessageCenterActionKeys.TOGGLE_EXPAND
-    };
-    expect(MessageCenterActions.togleExpandedMessageCenter()).toEqual(expectedAction);
+    const action = MessageCenterActions.hideNotification([8, 9, 7]);
+    expect(action.payload.messageId).toEqual([8, 9, 7]);
   });
   it('should open a closed message center', () => {
-    const expectedActions = [
-      {
-        type: MessageCenterActionKeys.SHOW
-      },
-      {
-        groupId: 'default',
-        type: 'EXPAND_GROUP'
-      }
-    ];
+    const expectedActions = [MessageCenterActions.showMessageCenter(), MessageCenterActions.expandGroup('default')];
     const store = mockStore({ messageCenter: { hidden: true } });
-    return store.dispatch(MessageCenterActions.toggleMessageCenter()).then(() => {
+    return store.dispatch(MessageCenterThunkActions.toggleMessageCenter()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
   it('should close an opened message center', () => {
-    const expectedActions = [
-      {
-        type: MessageCenterActionKeys.HIDE
-      }
-    ];
+    const expectedActions = [MessageCenterActions.hideMessageCenter()];
     const store = mockStore({ messageCenter: { hidden: false } });
-    return store.dispatch(MessageCenterActions.toggleMessageCenter()).then(() => {
+    return store.dispatch(MessageCenterThunkActions.toggleMessageCenter()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
   it('should only mark selected group as read', () => {
-    const expectedActions = [
-      {
-        type: MessageCenterActionKeys.MARK_MESSAGE_AS_READ,
-        messageId: [1, 2, 3]
-      }
-    ];
+    const expectedActions = [MessageCenterActions.markAsRead([1, 2, 3])];
     const store = mockStore({
       messageCenter: {
         groups: [
@@ -133,17 +75,12 @@ describe('MessageCenterActions', () => {
         ]
       }
     });
-    return store.dispatch(MessageCenterActions.markGroupAsRead('my-group')).then(() => {
+    return store.dispatch(MessageCenterThunkActions.markGroupAsRead('my-group')).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
   it('should only clear messages of selected group', () => {
-    const expectedActions = [
-      {
-        type: MessageCenterActionKeys.REMOVE_MESSAGE,
-        messageId: [5, 6, 7]
-      }
-    ];
+    const expectedActions = [MessageCenterActions.removeMessage([5, 6, 7])];
     const store = mockStore({
       messageCenter: {
         groups: [
@@ -158,7 +95,7 @@ describe('MessageCenterActions', () => {
         ]
       }
     });
-    return store.dispatch(MessageCenterActions.clearGroup('other')).then(() => {
+    return store.dispatch(MessageCenterThunkActions.clearGroup('other')).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });

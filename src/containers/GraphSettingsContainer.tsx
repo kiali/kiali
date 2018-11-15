@@ -9,7 +9,7 @@ import Namespace from '../types/Namespace';
 import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { style } from 'typestyle';
 import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../components/Nav/NavUtils';
-import { GraphDataActions } from '../actions/GraphDataActions';
+import { GraphDataThunkActions } from '../actions/GraphDataActions';
 import { KialiAppState, GraphFilterState } from '../store/Store';
 import { activeNamespaceSelector, durationSelector } from '../store/Selectors';
 
@@ -263,7 +263,7 @@ const mapDispatchToProps = (dispatch: any) => {
       node?: NodeParamsType
     ) =>
       dispatch(
-        GraphDataActions.fetchGraphData(
+        GraphDataThunkActions.fetchGraphData(
           namespace,
           duration,
           graphType,

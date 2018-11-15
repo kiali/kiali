@@ -1,31 +1,22 @@
-import { createAction } from 'typesafe-actions';
+import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
 import { DurationInSeconds, PollIntervalInMs } from '../types/Common';
 
-export enum UserSettingsActionKeys {
+enum UserSettingsActionKeys {
   NAV_COLLAPSE = 'NAV_COLLAPSE',
   SET_DURATION = 'SET_DURATION',
   SET_REFRESH_INTERVAL = 'SET_REFRESH_INTERVAL'
 }
 
 export const UserSettingsActions = {
-  navCollapse: createAction(UserSettingsActionKeys.NAV_COLLAPSE, (collapsed: boolean) => ({
-    type: UserSettingsActionKeys.NAV_COLLAPSE,
-    collapse: collapsed
-  })),
-  setDuration: createAction(UserSettingsActionKeys.SET_DURATION, (duration: DurationInSeconds) => ({
-    type: UserSettingsActionKeys.SET_DURATION,
-    payload: duration
-  })),
-  setRefreshInterval: createAction(
-    UserSettingsActionKeys.SET_REFRESH_INTERVAL,
-    (refreshInterval: PollIntervalInMs) => ({
-      type: UserSettingsActionKeys.SET_REFRESH_INTERVAL,
-      payload: refreshInterval
-    })
+  navCollapse: createAction(UserSettingsActionKeys.NAV_COLLAPSE, resolve => (collapsed: boolean) =>
+    resolve({ collapse: collapsed })
   ),
-  setNavCollapsed: (collapsed: boolean) => {
-    return dispatch => {
-      dispatch(UserSettingsActions.navCollapse(collapsed));
-    };
-  }
+  setDuration: createStandardAction(UserSettingsActionKeys.SET_DURATION)<DurationInSeconds>(),
+  setRefreshInterval: createStandardAction(UserSettingsActionKeys.SET_REFRESH_INTERVAL)<PollIntervalInMs>()
 };
+
+export const UserSettingsThunkActions = {
+  setNavCollapsed: (collapsed: boolean) => dispatch => dispatch(UserSettingsActions.navCollapse(collapsed))
+};
+
+export type UserSettingsAction = ActionType<typeof UserSettingsActions>;

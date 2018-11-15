@@ -1,10 +1,10 @@
-// import { NamespaceActionKeys } from '../../actions/NamespaceAction';
 import namespaceState from '../NamespaceState';
-import { NamespaceActionKeys } from '../../actions/NamespaceAction';
+import { GlobalActions } from '../../actions/GlobalActions';
+import { NamespaceActions } from '../../actions/NamespaceAction';
 
 describe('Namespaces reducer', () => {
   it('should return the initial state', () => {
-    expect(namespaceState(undefined, {})).toEqual({
+    expect(namespaceState(undefined, GlobalActions.nil())).toEqual({
       isFetching: false,
       activeNamespace: { name: 'all' },
       items: ['all'],
@@ -19,10 +19,7 @@ describe('Namespaces reducer', () => {
       items: [],
       lastUpdated: undefined
     };
-    const requestStartedAction = {
-      type: NamespaceActionKeys.SET_ACTIVE_NAMESPACE,
-      payload: { name: 'istio' }
-    };
+    const requestStartedAction = NamespaceActions.setActiveNamespace({ name: 'istio' });
     const expectedState = {
       activeNamespace: { name: 'istio' },
       isFetching: false,
@@ -39,9 +36,7 @@ describe('Namespaces reducer', () => {
       items: [],
       lastUpdated: undefined
     };
-    const requestStartedAction = {
-      type: NamespaceActionKeys.NAMESPACE_REQUEST_STARTED
-    };
+    const requestStartedAction = NamespaceActions.requestStarted();
     const expectedState = {
       activeNamespace: { name: 'all' },
       isFetching: true,
@@ -57,9 +52,7 @@ describe('Namespaces reducer', () => {
       isFetching: true,
       items: []
     };
-    const requestStartedAction = {
-      type: NamespaceActionKeys.NAMESPACE_FAILED
-    };
+    const requestStartedAction = NamespaceActions.requestFailed();
     const expectedState = {
       activeNamespace: { name: 'all' },
       isFetching: false,
@@ -76,11 +69,7 @@ describe('Namespaces reducer', () => {
       items: ['old', 'namespace'],
       lastUpdated: undefined
     };
-    const requestStartedAction = {
-      type: NamespaceActionKeys.NAMESPACE_SUCCESS,
-      list: ['a', 'b', 'c'],
-      receivedAt: currentDate
-    };
+    const requestStartedAction = NamespaceActions.receiveList(['a', 'b', 'c'], currentDate);
     const expectedState = {
       activeNamespace: { name: 'all' },
       isFetching: false,

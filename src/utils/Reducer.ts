@@ -1,6 +1,3 @@
-export const updateState = (oldState, updatedState) => {
-  return {
-    ...oldState,
-    ...updatedState
-  };
+export const updateState = <S>(oldState: S, updatedState: Partial<S>): S => {
+  return Object.assign({}, oldState, updatedState);
 };

@@ -1,6 +1,7 @@
 import MessageCenter from '../MessageCenter';
-import { MessageCenterActionKeys } from '../../actions/MessageCenterActions';
 import { MessageType } from '../../types/MessageCenter';
+import { GlobalActions } from '../../actions/GlobalActions';
+import { MessageCenterActions } from '../../actions/MessageCenterActions';
 
 describe('MessageCenter reducer', () => {
   const RealDate = Date;
@@ -15,7 +16,7 @@ describe('MessageCenter reducer', () => {
   });
 
   it('should return the initial state', () => {
-    expect(MessageCenter(undefined, {})).toEqual({
+    expect(MessageCenter(undefined, GlobalActions.nil())).toEqual({
       expanded: false,
       expandedGroupId: 'default',
       groups: [
@@ -57,12 +58,7 @@ describe('MessageCenter reducer', () => {
           hidden: true,
           nextId: 0
         },
-        {
-          type: MessageCenterActionKeys.ADD_MESSAGE,
-          groupId: 'default',
-          content: 'my new message',
-          messageType: MessageType.WARNING
-        }
+        MessageCenterActions.addMessage('my new message', 'default', MessageType.WARNING)
       )
     ).toEqual({
       expanded: false,
@@ -133,10 +129,7 @@ describe('MessageCenter reducer', () => {
           hidden: true,
           nextId: 1
         },
-        {
-          type: MessageCenterActionKeys.REMOVE_MESSAGE,
-          messageId: [0, 2]
-        }
+        MessageCenterActions.removeMessage([0, 2])
       )
     ).toEqual({
       expanded: false,
@@ -207,10 +200,7 @@ describe('MessageCenter reducer', () => {
           hidden: true,
           nextId: 1
         },
-        {
-          type: MessageCenterActionKeys.MARK_MESSAGE_AS_READ,
-          messageId: [0, 1]
-        }
+        MessageCenterActions.markAsRead([0, 1])
       )
     ).toEqual({
       expanded: false,
@@ -289,10 +279,7 @@ describe('MessageCenter reducer', () => {
           hidden: true,
           nextId: 1
         },
-        {
-          type: MessageCenterActionKeys.HIDE_NOTIFICATION,
-          messageId: [0]
-        }
+        MessageCenterActions.hideNotification(0)
       )
     ).toEqual({
       expanded: false,
@@ -345,9 +332,7 @@ describe('MessageCenter reducer', () => {
           hidden: true,
           nextId: 0
         },
-        {
-          type: MessageCenterActionKeys.SHOW
-        }
+        MessageCenterActions.showMessageCenter()
       )
     ).toEqual({
       expanded: false,
@@ -383,9 +368,7 @@ describe('MessageCenter reducer', () => {
           hidden: false,
           nextId: 0
         },
-        {
-          type: MessageCenterActionKeys.HIDE
-        }
+        MessageCenterActions.hideMessageCenter()
       )
     ).toEqual({
       expanded: false,
@@ -421,9 +404,7 @@ describe('MessageCenter reducer', () => {
           hidden: false,
           nextId: 0
         },
-        {
-          type: MessageCenterActionKeys.TOGGLE_EXPAND
-        }
+        MessageCenterActions.togleExpandedMessageCenter()
       )
     ).toEqual({
       expanded: true,
@@ -459,10 +440,7 @@ describe('MessageCenter reducer', () => {
           hidden: false,
           nextId: 0
         },
-        {
-          type: MessageCenterActionKeys.TOGGLE_GROUP,
-          groupId: 'default'
-        }
+        MessageCenterActions.toggleGroup('default')
       )
     ).toEqual({
       expanded: false,
@@ -498,10 +476,7 @@ describe('MessageCenter reducer', () => {
           hidden: false,
           nextId: 0
         },
-        {
-          type: MessageCenterActionKeys.TOGGLE_GROUP,
-          groupId: 'default'
-        }
+        MessageCenterActions.toggleGroup('default')
       )
     ).toEqual({
       expanded: false,

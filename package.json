@@ -90,7 +90,7 @@
     "redux-thunk": "2.3.0",
     "reselect": "3.0.1",
     "ssri": "6.0.0",
-    "typesafe-actions": "1.1.2",
+    "typesafe-actions": "2.0.4",
     "typestyle": "2.0.1",
     "url-search-params": "1.1.0",
     "visibilityjs": "2.0.2"

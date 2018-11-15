@@ -1,9 +1,10 @@
 import UserSettingsState from '../UserSettingsState';
-import { UserSettingsActionKeys } from '../../actions/UserSettingsActions';
+import { GlobalActions } from '../../actions/GlobalActions';
+import { UserSettingsActions } from '../../actions/UserSettingsActions';
 
 describe('UserSettingsState reducer', () => {
   it('should return the initial state', () => {
-    expect(UserSettingsState(undefined, {})).toEqual({
+    expect(UserSettingsState(undefined, GlobalActions.nil())).toEqual({
       interface: { navCollapse: false },
       duration: 60,
       refreshInterval: 15000
@@ -18,10 +19,7 @@ describe('UserSettingsState reducer', () => {
           duration: 60,
           refreshInterval: 60
         },
-        {
-          type: UserSettingsActionKeys.NAV_COLLAPSE,
-          collapse: true
-        }
+        UserSettingsActions.navCollapse(true)
       )
     ).toEqual({
       interface: { navCollapse: true },
@@ -38,10 +36,7 @@ describe('UserSettingsState reducer', () => {
           duration: 60,
           refreshInterval: 60
         },
-        {
-          type: UserSettingsActionKeys.SET_DURATION,
-          payload: 120
-        }
+        UserSettingsActions.setDuration(120)
       )
     ).toEqual({
       interface: { navCollapse: false },
@@ -58,10 +53,7 @@ describe('UserSettingsState reducer', () => {
           duration: 60,
           refreshInterval: 60
         },
-        {
-          type: UserSettingsActionKeys.SET_REFRESH_INTERVAL,
-          payload: 120
-        }
+        UserSettingsActions.setRefreshInterval(120)
       )
     ).toEqual({
       interface: { navCollapse: false },

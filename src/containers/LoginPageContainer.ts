@@ -2,7 +2,7 @@ import { KialiAppState } from '../store/Store';
 import { connect } from 'react-redux';
 import LoginPage from '../pages/Login/LoginPage';
 
-import { LoginActions } from '../actions/LoginActions';
+import { LoginThunkActions } from '../actions/LoginActions';
 
 const mapStateToProps = (state: KialiAppState) => ({
   token: state.authentication.token,
@@ -13,7 +13,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
-  authenticate: (username: string, password: string) => dispatch(LoginActions.authenticate(username, password))
+  authenticate: (username: string, password: string) => dispatch(LoginThunkActions.authenticate(username, password))
 });
 
 const LoginPageConnected = connect(

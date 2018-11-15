@@ -1,8 +1,8 @@
 // Action Creators allow us to create typesafe utilities for dispatching actions
-import { createAction } from 'typesafe-actions';
+import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
 import { EdgeLabelMode } from '../types/GraphFilter';
 
-export enum GraphFilterActionKeys {
+enum GraphFilterActionKeys {
   // Toggle Actions
   TOGGLE_LEGEND = 'TOGGLE_LEGEND',
   TOGGLE_GRAPH_NODE_LABEL = 'TOGGLE_GRAPH_NODE_LABEL',
@@ -22,13 +22,7 @@ export const GraphFilterActions = {
   // Toggle actions
   toggleGraphNodeLabel: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL),
   toggleLegend: createAction(GraphFilterActionKeys.TOGGLE_LEGEND),
-  setGraphEdgeLabelMode: createAction(
-    GraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
-    (edgeLabelMode: EdgeLabelMode) => ({
-      type: GraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE,
-      payload: edgeLabelMode
-    })
-  ),
+  setGraphEdgeLabelMode: createStandardAction(GraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE)<EdgeLabelMode>(),
   toggleGraphVirtualServices: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_VIRTUAL_SERVICES),
   toggleGraphCircuitBreakers: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS),
   toggleGraphMissingSidecars: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS),
@@ -36,8 +30,7 @@ export const GraphFilterActions = {
   toggleServiceNodes: createAction(GraphFilterActionKeys.TOGGLE_SERVICE_NODES),
   toggleTrafficAnimation: createAction(GraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION),
   toggleUnusedNodes: createAction(GraphFilterActionKeys.TOGGLE_UNUSED_NODES),
-  showGraphFilters: createAction(GraphFilterActionKeys.ENABLE_GRAPH_FILTERS, (value: boolean) => ({
-    type: GraphFilterActionKeys.ENABLE_GRAPH_FILTERS,
-    payload: value
-  }))
+  showGraphFilters: createStandardAction(GraphFilterActionKeys.ENABLE_GRAPH_FILTERS)<boolean>()
 };
+
+export type GraphFilterAction = ActionType<typeof GraphFilterActions>;

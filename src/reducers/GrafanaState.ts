@@ -1,5 +1,7 @@
+import { getType } from 'typesafe-actions';
 import { GrafanaInfo } from '../store/Store';
-import { GrafanaActionKeys } from '../actions/GrafanaActions';
+import { GrafanaActions } from '../actions/GrafanaActions';
+import { KialiAppAction } from '../actions/KialiAppAction';
 
 export const INITIAL_GRAFANA_STATE: GrafanaInfo = {
   url: '',
@@ -11,16 +13,16 @@ export const INITIAL_GRAFANA_STATE: GrafanaInfo = {
 };
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
-const GrafanaState = (state: GrafanaInfo = INITIAL_GRAFANA_STATE, action) => {
+const GrafanaState = (state: GrafanaInfo = INITIAL_GRAFANA_STATE, action: KialiAppAction): GrafanaInfo => {
   switch (action.type) {
-    case GrafanaActionKeys.SET_INFO:
+    case getType(GrafanaActions.setinfo):
       return Object.assign({}, INITIAL_GRAFANA_STATE, {
-        url: action.url,
-        serviceDashboardPath: action.serviceDashboardPath,
-        workloadDashboardPath: action.workloadDashboardPath,
-        varNamespace: action.varNamespace,
-        varService: action.varService,
-        varWorkload: action.varWorkload
+        url: action.payload.url,
+        serviceDashboardPath: action.payload.serviceDashboardPath,
+        workloadDashboardPath: action.payload.workloadDashboardPath,
+        varNamespace: action.payload.varNamespace,
+        varService: action.payload.varService,
+        varWorkload: action.payload.varWorkload
       });
     default:
       return state;

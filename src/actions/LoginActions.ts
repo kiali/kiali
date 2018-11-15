@@ -1,12 +1,12 @@
-import { createAction } from 'typesafe-actions';
+import { ActionType, createAction } from 'typesafe-actions';
 import * as API from '../services/Api';
 import { Token } from '../store/Store';
 import { HTTP_CODES } from '../types/Common';
-import { HelpDropdownActions } from './HelpDropdownActions';
-import { GrafanaActions } from './GrafanaActions';
+import { HelpDropdownThunkActions } from './HelpDropdownActions';
+import { GrafanaThunkActions } from './GrafanaActions';
 import { config, setServerConfig, ServerConfig } from '../config';
 
-export enum LoginActionKeys {
+enum LoginActionKeys {
   LOGIN_REQUEST = 'LOGIN_REQUEST',
   LOGIN_EXTEND = 'LOGIN_EXTEND',
   LOGIN_SUCCESS = 'LOGIN_SUCCESS',
@@ -14,35 +14,48 @@ export enum LoginActionKeys {
   LOGOUT_SUCCESS = 'LOGOUT_SUCCESS'
 }
 
+export interface LoginPayload {
+  logged?: boolean;
+  sessionTimeOut?: number;
+  token: Token;
+  username: string;
+}
+
+export interface LoginFailurePayload {
+  error: any;
+}
+
 // synchronous action creators
 export const LoginActions = {
   loginRequest: createAction(LoginActionKeys.LOGIN_REQUEST),
-  loginExtend: createAction(LoginActionKeys.LOGIN_EXTEND, (token: Token, username: string, currentTimeOut: number) => ({
-    type: LoginActionKeys.LOGIN_EXTEND,
-    token: token,
-    username: username,
-    sessionTimeOut: currentTimeOut + config().session.extendedSessionTimeOut
-  })),
+  loginExtend: createAction(
+    LoginActionKeys.LOGIN_EXTEND,
+    resolve => (token: Token, username: string, currentTimeOut: number) =>
+      resolve({
+        token: token,
+        username: username,
+        sessionTimeOut: currentTimeOut + config().session.extendedSessionTimeOut
+      } as LoginPayload)
+  ),
   loginSuccess: createAction(
     LoginActionKeys.LOGIN_SUCCESS,
-    (token: Token, username: string, currentTimeOut?: number) => ({
-      type: LoginActionKeys.LOGIN_SUCCESS,
-      token: token,
-      username: username,
-      logged: true,
-      sessionTimeOut: currentTimeOut || new Date().getTime() + config().session.sessionTimeOut
-    })
+    resolve => (token: Token, username: string, currentTimeOut?: number) =>
+      resolve({
+        token: token,
+        username: username,
+        logged: true,
+        sessionTimeOut: currentTimeOut || new Date().getTime() + config().session.sessionTimeOut
+      } as LoginPayload)
   ),
-  loginFailure: createAction(LoginActionKeys.LOGIN_FAILURE, (error: any) => ({
-    type: LoginActionKeys.LOGIN_FAILURE,
-    error: error
-  })),
-  logoutSuccess: createAction(LoginActionKeys.LOGOUT_SUCCESS, () => ({
-    type: LoginActionKeys.LOGOUT_SUCCESS,
-    token: undefined,
-    username: undefined,
-    logged: false
-  })),
+  loginFailure: createAction(LoginActionKeys.LOGIN_FAILURE, resolve => (error: any) =>
+    resolve({ error: error } as LoginFailurePayload)
+  ),
+  logoutSuccess: createAction(LoginActionKeys.LOGOUT_SUCCESS, resolve => () =>
+    resolve({ logged: false } as LoginPayload)
+  )
+};
+
+export const LoginThunkActions = {
   extendSession: () => {
     return (dispatch, getState) => {
       const actualState = getState() || {};
@@ -81,8 +94,8 @@ export const LoginActions = {
                   actualState['authentication']['sessionTimeOut']
                 )
               );
-              dispatch(HelpDropdownActions.refresh());
-              dispatch(GrafanaActions.getInfo(auth));
+              dispatch(HelpDropdownThunkActions.refresh());
+              dispatch(GrafanaThunkActions.getInfo(auth));
               const serverConfig: ServerConfig = {
                 istioNamespace: response.data.istioNamespace,
                 istioLabels: response.data.istioLabels
@@ -107,7 +120,7 @@ export const LoginActions = {
       API.login(username, password).then(
         token => {
           dispatch(LoginActions.loginSuccess(token['data'], username));
-          dispatch(HelpDropdownActions.refresh());
+          dispatch(HelpDropdownThunkActions.refresh());
         },
         error => {
           dispatch(LoginActions.loginFailure(error));
@@ -116,3 +129,5 @@ export const LoginActions = {
     };
   }
 };
+
+export type LoginAction = ActionType<typeof LoginActions>;

@@ -1,6 +1,8 @@
+import { getType } from 'typesafe-actions';
+import { GraphActions } from '../actions/GraphActions';
+import { GraphDataActions } from '../actions/GraphDataActions';
+import { KialiAppAction } from '../actions/KialiAppAction';
 import { GraphState } from '../store/Store';
-import { GraphDataActionKeys } from '../actions/GraphDataActionKeys';
-import { GraphActionKeys } from '../actions/GraphActions';
 import FilterStateReducer from './GraphFilterState';
 
 export const INITIAL_GRAPH_STATE: GraphState = {
@@ -24,7 +26,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
 };
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
-const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action) => {
+const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAppAction): GraphState => {
   const filterState = FilterStateReducer(state.filterState, action);
   let newState: GraphState = {
     ...state,
@@ -32,28 +34,28 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action) => {
   };
 
   switch (action.type) {
-    case GraphDataActionKeys.GET_GRAPH_DATA_START:
+    case getType(GraphDataActions.getGraphDataStart):
       newState.isLoading = true;
       newState.isError = false;
       break;
-    case GraphDataActionKeys.GET_GRAPH_DATA_SUCCESS:
+    case getType(GraphDataActions.getGraphDataSuccess):
       newState.isLoading = false;
       newState.isError = false;
-      newState.graphDataTimestamp = action.timestamp;
-      newState.graphData = action.graphData;
+      newState.graphDataTimestamp = action.payload.timestamp;
+      newState.graphData = action.payload.graphData;
       break;
-    case GraphDataActionKeys.GET_GRAPH_DATA_FAILURE:
+    case getType(GraphDataActions.getGraphDataFailure):
       newState.isLoading = false;
       newState.isError = true;
-      newState.error = action.error;
+      newState.error = action.payload.error;
       break;
-    case GraphActionKeys.GRAPH_SIDE_PANEL_SHOW_INFO:
+    case getType(GraphActions.showSidePanelInfo):
       newState.sidePanelInfo = {
-        kind: action.summaryType,
-        graphReference: action.summaryTarget
+        kind: action.payload.summaryType,
+        graphReference: action.payload.summaryTarget
       };
       break;
-    case GraphActionKeys.GRAPH_CHANGED:
+    case getType(GraphActions.changed):
       newState.graphData = INITIAL_GRAPH_STATE.graphData;
       newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
       newState.sidePanelInfo = INITIAL_GRAPH_STATE.sidePanelInfo;

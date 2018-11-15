@@ -1,6 +1,8 @@
+import { getType } from 'typesafe-actions';
 import { GraphFilterState } from '../store/Store';
-import { GraphFilterActionKeys } from '../actions/GraphFilterActions';
 import { updateState } from '../utils/Reducer';
+import { KialiAppAction } from '../actions/KialiAppAction';
+import { GraphFilterActions } from '../actions/GraphFilterActions';
 
 const INITIAL_STATE: GraphFilterState = {
   showLegend: false,
@@ -18,30 +20,30 @@ const INITIAL_STATE: GraphFilterState = {
 };
 
 // This Reducer allows changes to the 'graphFilterState' portion of Redux Store
-const graphFilterState = (state: GraphFilterState = INITIAL_STATE, action) => {
+const graphFilterState = (state: GraphFilterState = INITIAL_STATE, action: KialiAppAction): GraphFilterState => {
   switch (action.type) {
-    case GraphFilterActionKeys.TOGGLE_LEGEND:
+    case getType(GraphFilterActions.toggleLegend):
       return updateState(state, { showLegend: !state.showLegend });
-    case GraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL:
+    case getType(GraphFilterActions.toggleGraphNodeLabel):
       return updateState(state, { showNodeLabels: !state.showNodeLabels });
-    case GraphFilterActionKeys.SET_GRAPH_EDGE_LABEL_MODE:
-      return updateState(state, { edgeLabelMode: action.payload });
-    case GraphFilterActionKeys.TOGGLE_GRAPH_CIRCUIT_BREAKERS:
+    // case getType(GraphFilterActions.setGraphEdgeLabelMode):
+    //   return updateState(state, { edgeLabelMode: action.payload });
+    case getType(GraphFilterActions.toggleGraphCircuitBreakers):
       return updateState(state, { showCircuitBreakers: !state.showCircuitBreakers });
-    case GraphFilterActionKeys.TOGGLE_GRAPH_VIRTUAL_SERVICES:
+    case getType(GraphFilterActions.toggleGraphVirtualServices):
       return updateState(state, { showVirtualServices: !state.showVirtualServices });
-    case GraphFilterActionKeys.TOGGLE_GRAPH_MISSING_SIDECARS:
+    case getType(GraphFilterActions.toggleGraphMissingSidecars):
       return updateState(state, { showMissingSidecars: !state.showMissingSidecars });
-    case GraphFilterActionKeys.TOGGLE_GRAPH_SECURITY:
+    case getType(GraphFilterActions.toggleGraphSecurity):
       return updateState(state, { showSecurity: !state.showSecurity });
-    case GraphFilterActionKeys.TOGGLE_SERVICE_NODES:
+    case getType(GraphFilterActions.toggleServiceNodes):
       return updateState(state, { showServiceNodes: !state.showServiceNodes });
-    case GraphFilterActionKeys.TOGGLE_TRAFFIC_ANIMATION:
+    case getType(GraphFilterActions.toggleTrafficAnimation):
       return updateState(state, { showTrafficAnimation: !state.showTrafficAnimation });
-    case GraphFilterActionKeys.TOGGLE_UNUSED_NODES:
+    case getType(GraphFilterActions.toggleUnusedNodes):
       return updateState(state, { showUnusedNodes: !state.showUnusedNodes });
-    case GraphFilterActionKeys.ENABLE_GRAPH_FILTERS:
-      return updateState(state, { disableLayers: action.payload });
+    // case getType(GraphFilterActions.showGraphFilters):
+    //   return updateState(state, { disableLayers: action.payload });
     default:
       return state;
   }
