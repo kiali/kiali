@@ -49,7 +49,7 @@ export namespace IstioConfigListFilters {
           } else if (!a.validation.valid && b.validation.valid) {
             sortValue = 1;
           } else if (a.validation.valid && b.validation.valid) {
-            sortValue = 0;
+            sortValue = a.validation.checks.length - b.validation.checks.length;
           } else if (!a.validation.valid && !b.validation.valid) {
             sortValue = b.validation.checks.length - a.validation.checks.length;
           }
