@@ -55,6 +55,28 @@ export const LoginActions = {
   )
 };
 
+const performLogin = (dispatch: any, username?: string, password?: string) => {
+  dispatch(LoginActions.loginRequest());
+
+  let anonymous = username === undefined;
+  let loginUser: string = username === undefined ? 'anonymous' : username;
+  let loginPass: string = password === undefined ? 'anonymous' : password;
+
+  API.login(loginUser, loginPass).then(
+    token => {
+      dispatch(LoginActions.loginSuccess(token['data'], loginUser));
+      dispatch(HelpDropdownThunkActions.refresh());
+    },
+    error => {
+      if (anonymous) {
+        dispatch(LoginActions.logoutSuccess());
+      } else {
+        dispatch(LoginActions.loginFailure(error));
+      }
+    }
+  );
+};
+
 export const LoginThunkActions = {
   extendSession: () => {
     return (dispatch, getState) => {
@@ -73,12 +95,13 @@ export const LoginThunkActions = {
       const actualState = getState() || {};
       /** Check if there is a token in session */
       if (actualState['authentication']['token'] === undefined) {
-        /** Logout user */
-        dispatch(LoginActions.logoutSuccess());
+        /** log in as anonymous user - this will logout the user if no anonymous access is allowed */
+        performLogin(dispatch);
       } else {
         /** Check the session timeout */
         if (new Date().getTime() > getState().authentication.sessionTimeOut) {
-          dispatch(LoginActions.logoutSuccess());
+          // if anonymous access is allowed, re-login automatically; otherwise, log out
+          performLogin(dispatch);
         } else {
           /** Get the token storage in redux-store */
           const token = getState().authentication.token.token;
@@ -115,18 +138,7 @@ export const LoginThunkActions = {
   },
   // action creator that performs the async request
   authenticate: (username: string, password: string) => {
-    return dispatch => {
-      dispatch(LoginActions.loginRequest());
-      API.login(username, password).then(
-        token => {
-          dispatch(LoginActions.loginSuccess(token['data'], username));
-          dispatch(HelpDropdownThunkActions.refresh());
-        },
-        error => {
-          dispatch(LoginActions.loginFailure(error));
-        }
-      );
-    };
+    return dispatch => performLogin(dispatch, username, password);
   }
 };
 

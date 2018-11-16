@@ -17,7 +17,7 @@ window.getComputedStyle = jest.fn().mockImplementation(element => {
   return computedStyle;
 });
 
-jest.mock('../../services/Api');
+// jest.mock('../../services/Api');
 
 process.env.REACT_APP_NAME = 'kiali-ui-test';
 process.env.REACT_APP_VERSION = '1.0.1';
