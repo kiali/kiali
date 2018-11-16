@@ -6,10 +6,10 @@ import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetail
 import WorkloadDetailsPage from './pages/WorkloadDetails/WorkloadDetailsPage';
 import AppListPage from './pages/AppList/AppListPage';
 import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
+import OverviewPage from './pages/Overview/OverviewPage';
 import GraphRouteHandler from './pages/Graph/GraphRouteHandler';
 import { MenuItem, Path } from './types/Routes';
 
-import OverviewPageContainer from './containers/OverviewPageContainer';
 import ServiceDetailsPageContainer from './containers/ServiceDetailsPageContainer';
 
 /**
@@ -65,7 +65,7 @@ const defaultRoute = '/overview';
 const pathRoutes: Path[] = [
   {
     path: '/overview',
-    component: OverviewPageContainer
+    component: OverviewPage
   },
   {
     path: '/graph/node/namespaces/:namespace/applications/:app/versions/:version',
