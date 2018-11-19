@@ -27,9 +27,17 @@ type IstioRule struct {
 	// The name of the istioRule
 	//
 	// required: true
-	Name    string      `json:"name"`
-	Match   interface{} `json:"match"`
-	Actions interface{} `json:"actions"`
+	Name string `json:"name"`
+	// The creation date of the virtualService
+	//
+	// required: true
+	CreatedAt string `json:"createdAt"`
+	// The resource version of the virtualService
+	//
+	// required: true
+	ResourceVersion string      `json:"resourceVersion"`
+	Match           interface{} `json:"match"`
+	Actions         interface{} `json:"actions"`
 }
 
 // IstioAdapters istioAdapters
@@ -47,8 +55,16 @@ type IstioAdapters []IstioAdapter
 //
 // swagger:model istioAdapter
 type IstioAdapter struct {
-	Name    string `json:"name"`
-	Adapter string `json:"adapter"`
+	Name string `json:"name"`
+	// The creation date of the virtualService
+	//
+	// required: true
+	CreatedAt string `json:"createdAt"`
+	// The resource version of the virtualService
+	//
+	// required: true
+	ResourceVersion string `json:"resourceVersion"`
+	Adapter         string `json:"adapter"`
 	// We need to bring the plural to use it from the UI to build the API
 	Adapters string      `json:"adapters"`
 	Spec     interface{} `json:"spec"`
@@ -69,8 +85,16 @@ type IstioTemplates []IstioTemplate
 //
 // swagger:model istioTemplate
 type IstioTemplate struct {
-	Name     string `json:"name"`
-	Template string `json:"template"`
+	Name string `json:"name"`
+	// The creation date of the virtualService
+	//
+	// required: true
+	CreatedAt string `json:"createdAt"`
+	// The resource version of the virtualService
+	//
+	// required: true
+	ResourceVersion string `json:"resourceVersion"`
+	Template        string `json:"template"`
 	// We need to bring the plural to use it from the UI to build the API
 	Templates string      `json:"templates"`
 	Spec      interface{} `json:"spec"`
@@ -87,6 +111,8 @@ func CastIstioRulesCollection(rules []kubernetes.IstioObject) IstioRules {
 func CastIstioRule(rule kubernetes.IstioObject) IstioRule {
 	istioRule := IstioRule{}
 	istioRule.Name = rule.GetObjectMeta().Name
+	istioRule.CreatedAt = formatTime(rule.GetObjectMeta().CreationTimestamp.Time)
+	istioRule.ResourceVersion = rule.GetObjectMeta().ResourceVersion
 	istioRule.Match = rule.GetSpec()["match"]
 	istioRule.Actions = rule.GetSpec()["actions"]
 	return istioRule
@@ -103,6 +129,8 @@ func CastIstioAdaptersCollection(adapters []kubernetes.IstioObject) IstioAdapter
 func CastIstioAdapter(adapter kubernetes.IstioObject) IstioAdapter {
 	istioAdapter := IstioAdapter{}
 	istioAdapter.Name = adapter.GetObjectMeta().Name
+	istioAdapter.CreatedAt = formatTime(adapter.GetObjectMeta().CreationTimestamp.Time)
+	istioAdapter.ResourceVersion = adapter.GetObjectMeta().ResourceVersion
 	istioAdapter.Adapter = adapter.GetObjectMeta().Labels["adapter"]
 	istioAdapter.Adapters = adapter.GetObjectMeta().Labels["adapters"]
 	istioAdapter.Spec = adapter.GetSpec()
@@ -120,6 +148,8 @@ func CastIstioTemplatesCollection(templates []kubernetes.IstioObject) IstioTempl
 func CastIstioTemplate(template kubernetes.IstioObject) IstioTemplate {
 	istioTemplate := IstioTemplate{}
 	istioTemplate.Name = template.GetObjectMeta().Name
+	istioTemplate.CreatedAt = formatTime(template.GetObjectMeta().CreationTimestamp.Time)
+	istioTemplate.ResourceVersion = template.GetObjectMeta().ResourceVersion
 	istioTemplate.Template = template.GetObjectMeta().Labels["template"]
 	istioTemplate.Templates = template.GetObjectMeta().Labels["templates"]
 	istioTemplate.Spec = template.GetSpec()
