@@ -261,11 +261,16 @@ func GetIstioAPI(resourceType string) string {
 }
 
 // DeleteIstioConfigDetail deletes the given Istio resource
-func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceType, name string) (err error) {
+func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name string) (err error) {
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "DeleteIstioConfigDetail")
 	defer promtimer.ObserveNow(&err)
-	err = in.k8s.DeleteIstioObject(api, namespace, resourceType, name)
-	return
+
+	if resourceType == Adapters || resourceType == Templates {
+		err = in.k8s.DeleteIstioObject(api, namespace, resourceSubtype, name)
+	} else {
+		err = in.k8s.DeleteIstioObject(api, namespace, resourceType, name)
+	}
+	return err
 }
 
 func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, objectType string) (bool, bool) {

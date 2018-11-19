@@ -134,6 +134,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	objectType := params["object_type"]
+	objectSubtype := params["object_subtype"]
 	object := params["object"]
 
 	api := business.GetIstioAPI(objectType)
@@ -148,8 +149,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-
-	err = business.IstioConfig.DeleteIstioConfigDetail(api, namespace, objectType, object)
+	err = business.IstioConfig.DeleteIstioConfigDetail(api, namespace, objectType, objectSubtype, object)
 	if err != nil {
 		log.Error(err)
 		if errors.IsNotFound(err) {

@@ -199,6 +199,28 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigDetails,
 			true,
 		},
+		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}
+		// ---
+		// Endpoint to delete the Istio Config of an Istio object used for templates and adapters
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: delete
+		//
+		{
+			"IstioConfigDeleteSubtype",
+			"DELETE",
+			"/api/namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}",
+			handlers.IstioConfigDelete,
+			true,
+		},
 		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object}
 		// ---
 		// Endpoint to delete the Istio Config of an (arbitrary) Istio object
