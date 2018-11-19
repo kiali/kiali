@@ -139,17 +139,23 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
   generateSubsets(subsets: Subset[]) {
     let childrenList: any = [];
     subsets.map(subset => {
-      Object.keys(subset.labels).forEach((key, v) =>
-        childrenList.push(
-          <li key={this.generateKey() + '_k' + v}>
-            <span style={{ float: 'left', paddingRight: '10px', paddingTop: '3px' }}>{subset.name}</span>{' '}
-            <Label name={key} value={subset.labels[key]} />
-            <DetailObject name="trafficPolicy" detail={subset.trafficPolicy} />
-          </li>
-        )
+      childrenList.push(
+        <li key={this.generateKey() + '_k' + subset.name} style={{ marginBottom: '13px' }}>
+          <Row>
+            <Col xs={3}>
+              <span style={{ paddingRight: '10px', paddingTop: '3px' }}>{subset.name}</span>{' '}
+            </Col>
+            <Col xs={4}>
+              {Object.keys(subset.labels).map((key, _) => <Label key={key} name={key} value={subset.labels[key]} />)}
+            </Col>
+            <Col xs={4}>
+              <DetailObject name={subset.trafficPolicy ? 'trafficPolicy' : ''} detail={subset.trafficPolicy} />
+            </Col>
+          </Row>
+        </li>
       );
     });
-    return <ul style={{ listStyleType: 'none', float: 'left' }}>{childrenList}</ul>;
+    return <ul style={{ listStyleType: 'none', paddingLeft: '0px' }}>{childrenList}</ul>;
   }
 
   renderTable() {
