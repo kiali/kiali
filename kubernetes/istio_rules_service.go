@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"github.com/kiali/kiali/log"
 )
 
 // GetIstioRules returns a list of mixer rules for a given namespace.
@@ -87,12 +88,13 @@ func (in *IstioClient) getAdaptersTemplates(namespace string, itemType string, p
 
 	results := make([]IstioObject, 0)
 	for i := 0; i < len(pluralsMap); i++ {
-		adapter := <-resultsChan
-		if adapter.err != nil {
-			return nil, adapter.err
-		}
-		for _, istioObject := range adapter.results {
-			results = append(results, istioObject)
+		adapterTemplate := <-resultsChan
+		if adapterTemplate.err == nil {
+			for _, istioObject := range adapterTemplate.results {
+				results = append(results, istioObject)
+			}
+		} else {
+			log.Warningf("Querying %s got an error: %s", itemType, adapterTemplate.err)
 		}
 	}
 	return results, nil
