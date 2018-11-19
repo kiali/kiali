@@ -3483,6 +3483,10 @@
       "description": "This type type is used for returning a IstioAdapter",
       "type": "object",
       "title": "IstioAdapter istioAdapter",
+      "required": [
+        "createdAt",
+        "resourceVersion"
+      ],
       "properties": {
         "adapter": {
           "type": "string",
@@ -3493,9 +3497,19 @@
           "type": "string",
           "x-go-name": "Adapters"
         },
+        "createdAt": {
+          "description": "The creation date of the virtualService",
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
+        },
+        "resourceVersion": {
+          "description": "The resource version of the virtualService",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
         },
         "spec": {
           "type": "object",
@@ -3520,12 +3534,19 @@
       "type": "object",
       "title": "IstioRule istioRule",
       "required": [
-        "name"
+        "name",
+        "createdAt",
+        "resourceVersion"
       ],
       "properties": {
         "actions": {
           "type": "object",
           "x-go-name": "Actions"
+        },
+        "createdAt": {
+          "description": "The creation date of the virtualService",
+          "type": "string",
+          "x-go-name": "CreatedAt"
         },
         "match": {
           "type": "object",
@@ -3535,6 +3556,11 @@
           "description": "The name of the istioRule",
           "type": "string",
           "x-go-name": "Name"
+        },
+        "resourceVersion": {
+          "description": "The resource version of the virtualService",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
         }
       },
       "x-go-name": "IstioRule",
@@ -3554,10 +3580,24 @@
       "description": "This type type is used for returning a IstioTemplate",
       "type": "object",
       "title": "IstioTemplate istioTemplate",
+      "required": [
+        "createdAt",
+        "resourceVersion"
+      ],
       "properties": {
+        "createdAt": {
+          "description": "The creation date of the virtualService",
+          "type": "string",
+          "x-go-name": "CreatedAt"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
+        },
+        "resourceVersion": {
+          "description": "The resource version of the virtualService",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
         },
         "spec": {
           "type": "object",
