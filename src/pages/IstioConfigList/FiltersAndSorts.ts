@@ -4,6 +4,9 @@ import { FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } from '../../ty
 import NamespaceFilter from '../../components/Filters/NamespaceFilter';
 
 export namespace IstioConfigListFilters {
+  export const getType = (item: IstioConfigItem): string => {
+    return item.type === 'adapter' ? item.type + '_' + item.adapter!.adapter : item.type === 'template' ? item.type + '_' + item.template!.template : item.type;
+  };
   export const sortFields: SortField<IstioConfigItem>[] = [
     {
       id: 'namespace',
@@ -20,7 +23,7 @@ export namespace IstioConfigListFilters {
       isNumeric: false,
       param: 'it',
       compare: (a: IstioConfigItem, b: IstioConfigItem) => {
-        return a.type.localeCompare(b.type) || a.name.localeCompare(b.name);
+        return getType(a).localeCompare(getType(b)) || a.name.localeCompare(b.name);
       }
     },
     {
@@ -28,7 +31,12 @@ export namespace IstioConfigListFilters {
       title: 'Istio Name',
       isNumeric: false,
       param: 'in',
-      compare: (a: IstioConfigItem, b: IstioConfigItem) => a.name.localeCompare(b.name)
+      compare: (a: IstioConfigItem, b: IstioConfigItem) => {
+        // On same name order is not well defined, we need some fallback methods
+        // This happens specially on adapters/templates where Istio 1.0.x calls them "handler"
+        // So, we have a lot of objects with same namespace+name
+        return a.name.localeCompare(b.name) || a.namespace.localeCompare(b.namespace) || getType(a).localeCompare(getType(b));
+      }
     },
     {
       id: 'configvalidation',
@@ -95,6 +103,14 @@ export namespace IstioConfigListFilters {
       {
         id: 'Rule',
         title: 'Rule'
+      },
+      {
+        id: 'Adapter',
+        title: 'Adapter'
+      },
+      {
+        id: 'Template',
+        title: 'Template'
       },
       {
         id: 'QuotaSpec',

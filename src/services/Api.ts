@@ -120,6 +120,22 @@ export const getIstioConfigDetail = (
   return newRequest(HTTP_VERBS.GET, urls.istioConfigDetail(namespace, objectType, object), {}, {}, auth);
 };
 
+export const getIstioConfigDetailSubtype = (
+  auth: AuthToken,
+  namespace: string,
+  objectType: string,
+  objectSubtype: string,
+  object: string
+): Promise<Response<IstioConfigDetails>> => {
+  return newRequest(
+    HTTP_VERBS.GET,
+    urls.istioConfigDetailSubtype(namespace, objectType, objectSubtype, object),
+    {},
+    {},
+    auth
+  );
+};
+
 export const deleteIstioConfigDetail = (
   auth: AuthToken,
   namespace: string,
@@ -127,6 +143,22 @@ export const deleteIstioConfigDetail = (
   object: string
 ): Promise<Response<string>> => {
   return newRequest(HTTP_VERBS.DELETE, urls.istioConfigDetail(namespace, objectType, object), {}, {}, auth);
+};
+
+export const deleteIstioConfigDetailSubtype = (
+  auth: AuthToken,
+  namespace: string,
+  objectType: string,
+  objectSubtype: string,
+  object: string
+): Promise<Response<string>> => {
+  return newRequest(
+    HTTP_VERBS.DELETE,
+    urls.istioConfigDetailSubtype(namespace, objectType, objectSubtype, object),
+    {},
+    {},
+    auth
+  );
 };
 
 export const getServices = (auth: AuthToken, namespace: string): Promise<Response<ServiceList>> => {

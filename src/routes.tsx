@@ -91,6 +91,11 @@ const pathRoutes: Path[] = [
     path: '/namespaces/:namespace/services/:service',
     component: ServiceDetailsPageContainer
   },
+  // NOTE that order on routes is important
+  {
+    path: '/namespaces/:namespace/istio/:objectType/:objectSubtype/:object',
+    component: IstioConfigDetailsPage
+  },
   {
     path: '/namespaces/:namespace/istio/:objectType/:object',
     component: IstioConfigDetailsPage

@@ -1,21 +1,22 @@
 import Namespace from './Namespace';
 import { DestinationPolicy, DestinationRule, RouteRule, VirtualService } from './ServiceInfo';
-import { RuleAction } from './IstioRuleInfo';
 import { AceOptions } from 'react-ace';
-import { Gateway, QuotaSpec, QuotaSpecBinding, ServiceEntry } from './IstioConfigList';
+import {
+  Gateway,
+  IstioAdapter,
+  IstioRule,
+  IstioTemplate,
+  QuotaSpec,
+  QuotaSpecBinding,
+  ServiceEntry
+} from './IstioConfigList';
 import { ResourcePermissions } from './Permissions';
 
 export interface IstioConfigId {
   namespace: string;
   objectType: string;
+  objectSubtype: string;
   object: string;
-}
-
-export interface IstioRuleDetails {
-  name: string;
-  namespace: Namespace;
-  match: string;
-  actions: RuleAction[];
 }
 
 export interface IstioConfigDetails {
@@ -26,7 +27,9 @@ export interface IstioConfigDetails {
   virtualService: VirtualService;
   destinationRule: DestinationRule;
   serviceEntry: ServiceEntry;
-  rule: IstioRuleDetails;
+  rule: IstioRule;
+  adapter: IstioAdapter;
+  template: IstioTemplate;
   quotaSpec: QuotaSpec;
   quotaSpecBinding: QuotaSpecBinding;
   permissions: ResourcePermissions;
