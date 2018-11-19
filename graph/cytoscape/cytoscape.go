@@ -20,7 +20,6 @@ import (
 
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/options"
-	"github.com/kiali/kiali/log"
 )
 
 type NodeData struct {
@@ -356,7 +355,6 @@ func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
 
 // groupByVersion adds compound nodes to group multiple versions of the same app
 func groupByVersion(nodes *[]*NodeWrapper) {
-	log.Warningf("GroupByVersion...")
 	appBox := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
@@ -387,7 +385,6 @@ func generateGroupCompoundNodes(appBox map[string][]*NodeData, nodes *[]*NodeWra
 	for k, members := range appBox {
 		if len(members) > 1 {
 			// create the compound (parent) node for the member nodes
-			log.Warningf("GroupBy %s adding node %s...", groupBy, k)
 			nodeId := nodeHash(k)
 			nd := NodeData{
 				Id:        nodeId,

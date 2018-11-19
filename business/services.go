@@ -93,36 +93,8 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetService")
 	defer promtimer.ObserveNow(&err)
 
-	var svc *v1.Service
-	var eps *v1.Endpoints
-
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	errChan := make(chan error, 2)
-
-	go func() {
-		defer wg.Done()
-		var err2 error
-		svc, err2 = in.k8s.GetService(namespace, service)
-		if err2 != nil {
-			log.Errorf("Error fetching Service per namespace %s and service %s: %s", namespace, service, err2)
-			errChan <- err2
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		var err2 error
-		eps, err2 = in.k8s.GetEndpoints(namespace, service)
-		if err2 != nil {
-			log.Errorf("Error fetching Endpoints per namespace %s and service %s: %s", namespace, service, err2)
-			errChan <- err2
-		}
-	}()
-
-	wg.Wait()
-	if len(errChan) != 0 {
-		err = <-errChan
+	svc, eps, err := in.getServiceDefinition(namespace, service)
+	if err != nil {
 		return nil, err
 	}
 
@@ -132,9 +104,9 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var sWk map[string][]prometheus.Workload
 	var ws models.Workloads
 
-	wg = sync.WaitGroup{}
+	wg := sync.WaitGroup{}
 	wg.Add(8)
-	errChan = make(chan error, 6)
+	errChan := make(chan error, 6)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
 
@@ -237,9 +209,18 @@ func (in *SvcService) GetServiceDefinition(namespace, service string) (*models.S
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceDefinition")
 	defer promtimer.ObserveNow(&err)
 
-	var svc *v1.Service
-	var eps *v1.Endpoints
+	svc, eps, err := in.getServiceDefinition(namespace, service)
+	if err != nil {
+		return nil, err
+	}
 
+	s := models.ServiceDetails{}
+	s.SetService(svc)
+	s.SetEndpoints(eps)
+	return &s, nil
+}
+
+func (in *SvcService) getServiceDefinition(namespace, service string) (svc *v1.Service, eps *v1.Endpoints, err error) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	errChan := make(chan error, 2)
@@ -267,11 +248,8 @@ func (in *SvcService) GetServiceDefinition(namespace, service string) (*models.S
 	wg.Wait()
 	if len(errChan) != 0 {
 		err = <-errChan
-		return nil, err
+		return nil, nil, err
 	}
 
-	s := models.ServiceDetails{}
-	s.SetService(svc)
-	s.SetEndpoints(eps)
-	return &s, nil
+	return svc, eps, nil
 }
