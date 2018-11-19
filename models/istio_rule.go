@@ -47,9 +47,11 @@ type IstioAdapters []IstioAdapter
 //
 // swagger:model istioAdapter
 type IstioAdapter struct {
-	Name    string      `json:"name"`
-	Adapter string      `json:"adapter"`
-	Spec    interface{} `json:"spec"`
+	Name    string `json:"name"`
+	Adapter string `json:"adapter"`
+	// We need to bring the plural to use it from the UI to build the API
+	Adapters string      `json:"adapters"`
+	Spec     interface{} `json:"spec"`
 }
 
 // IstioTemplates istioTemplates
@@ -67,9 +69,11 @@ type IstioTemplates []IstioTemplate
 //
 // swagger:model istioTemplate
 type IstioTemplate struct {
-	Name     string      `json:"name"`
-	Template string      `json:"template"`
-	Spec     interface{} `json:"spec"`
+	Name     string `json:"name"`
+	Template string `json:"template"`
+	// We need to bring the plural to use it from the UI to build the API
+	Templates string      `json:"templates"`
+	Spec      interface{} `json:"spec"`
 }
 
 func CastIstioRulesCollection(rules []kubernetes.IstioObject) IstioRules {
@@ -100,6 +104,7 @@ func CastIstioAdapter(adapter kubernetes.IstioObject) IstioAdapter {
 	istioAdapter := IstioAdapter{}
 	istioAdapter.Name = adapter.GetObjectMeta().Name
 	istioAdapter.Adapter = adapter.GetObjectMeta().Labels["adapter"]
+	istioAdapter.Adapters = adapter.GetObjectMeta().Labels["adapters"]
 	istioAdapter.Spec = adapter.GetSpec()
 	return istioAdapter
 }
@@ -116,6 +121,7 @@ func CastIstioTemplate(template kubernetes.IstioObject) IstioTemplate {
 	istioTemplate := IstioTemplate{}
 	istioTemplate.Name = template.GetObjectMeta().Name
 	istioTemplate.Template = template.GetObjectMeta().Labels["template"]
+	istioTemplate.Templates = template.GetObjectMeta().Labels["templates"]
 	istioTemplate.Spec = template.GetSpec()
 	return istioTemplate
 }

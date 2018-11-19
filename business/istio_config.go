@@ -172,6 +172,12 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	return istioConfigList, nil
 }
 
+// GetIstioConfigDetails returns a specific Istio configuration object.
+// It uses following parameters:
+// - "namespace": 		namespace where configuration is stored
+// - "objectType":		type of the configuration
+// - "objectSubtype":	subtype of the configuration, used when objectType == "adapters" or "templates", empty/not used otherwise
+// - "object":			name of the configuration
 func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objectSubtype, object string) (models.IstioConfigDetails, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "GetIstioConfigDetails")

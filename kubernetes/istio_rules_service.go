@@ -58,8 +58,7 @@ func (in *IstioClient) getAdaptersTemplates(namespace string, itemType string, p
 			istioObjects := istioResponse{}
 			resultList, ok := results.(*GenericIstioObjectList)
 			if !ok {
-				istioObjects.results = nil
-				istioObjects.err = fmt.Errorf("%s doesn't return a %s list", namespace, plural)
+				err = fmt.Errorf("%s doesn't return a %s list", namespace, plural)
 			}
 			if err == nil {
 				istioObjects.results = make([]IstioObject, 0)
@@ -72,6 +71,9 @@ func (in *IstioClient) getAdaptersTemplates(namespace string, itemType string, p
 						adapter.SetObjectMeta(objectMeta)
 					}
 					adapter.GetObjectMeta().Labels[itemType] = name
+					// To support plural, we have only adapter/template -> adapters/templates
+					adapter.GetObjectMeta().Labels[itemType] = name
+					adapter.GetObjectMeta().Labels[itemType+"s"] = plural
 					istioObjects.results = append(istioObjects.results, adapter)
 					istioObjects.err = nil
 				}
