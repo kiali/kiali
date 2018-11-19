@@ -27,6 +27,7 @@ const aceOptions: AceOptions = {
 };
 
 type IstioObjectDetailsProps = {
+  namespace: string;
   object: VirtualService | DestinationRule;
   validations: Validations;
   onSelectTab: (tabName: string, tabKey?: string) => void;
@@ -128,7 +129,11 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
     if (this.isVirtualService()) {
       return (
         <TabPane eventKey="overview">
-          <VirtualServiceDetail virtualService={istioObj} validations={this.props.validations['virtualservice']} />
+          <VirtualServiceDetail
+            virtualService={istioObj}
+            validations={this.props.validations['virtualservice']}
+            namespace={this.props.namespace}
+          />
         </TabPane>
       );
     }

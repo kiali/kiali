@@ -13,8 +13,10 @@ import { ObjectValidation } from '../../../../types/IstioObjects';
 import LocalTime from '../../../../components/Time/LocalTime';
 import DetailObject from '../../../../components/Details/DetailObject';
 import VirtualServiceRoute from './VirtualServiceRoute';
+import { Link } from 'react-router-dom';
 
 interface VirtualServiceProps {
+  namespace: string;
   virtualService: VirtualService;
   validations: { [key: string]: ObjectValidation };
 }
@@ -66,6 +68,28 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
     };
   }
 
+  generateGatewaysList(gateways: string[]) {
+    let childrenList: any = [];
+    Object.keys(gateways).forEach((key, j) =>
+      childrenList.push(
+        <li key={'gateway_' + gateways[key] + '_' + j}>
+          {gateways[key] === 'mesh' ? (
+            gateways[key]
+          ) : (
+            <Link to={`/namespaces/${this.props.namespace}/istio/gateways/${gateways[key]}`}>{gateways[key]}</Link>
+          )}
+        </li>
+      )
+    );
+
+    return (
+      <div>
+        <strong className="text-capitalize">Gateways</strong>
+        <ul className={'details'}>{childrenList}</ul>
+      </div>
+    );
+  }
+
   rawConfig(virtualService: VirtualService) {
     return (
       <div className="card-pf-body" key={'virtualServiceConfig'}>
@@ -86,11 +110,9 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
         ) : (
           undefined
         )}
-        {virtualService.gateways && virtualService.gateways.length > 0 ? (
-          <DetailObject name="Gateways" detail={virtualService.gateways} />
-        ) : (
-          undefined
-        )}
+        {virtualService.gateways && virtualService.gateways.length > 0
+          ? this.generateGatewaysList(virtualService.gateways)
+          : undefined}
       </div>
     );
   }
