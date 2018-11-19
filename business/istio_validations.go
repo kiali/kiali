@@ -194,6 +194,12 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		// Validations on ServiceEntries are not yet in place
 	case Rules:
 		// Validations on Istio Rules are not yet in place
+	case Templates:
+		// Validations on Templates are not yet in place
+		// TODO Support subtypes
+	case Adapters:
+		// Validations on Adapters are not yet in place
+		// TODO Support subtypes
 	case QuotaSpecs:
 		// Validations on QuotaSpecs are not yet in place
 	case QuotaSpecBindings:

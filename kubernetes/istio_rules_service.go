@@ -132,5 +132,6 @@ func (in *IstioClient) getAdapterTemplate(namespace string, itemType string, ite
 	}
 	// Adding the singular name of the adapter/template to propagate it into the Kiali model
 	istioObject.GetObjectMeta().Labels[itemType] = subtype
+	istioObject.GetObjectMeta().Labels[itemType + "s"] = itemSubtype
 	return istioObject, nil
 }
